@@ -1,0 +1,7 @@
+[package]
+name = "bee-core"
+version = "0.1.0"
+authors = ["IOTA Foundation"]
+edition = "2018"
+
+[dependencies]
