@@ -1,11 +1,9 @@
 [package]
-name = "bee"
+name = "bee-display"
 version = "0.1.0"
 authors = ["IOTA Foundation"]
 edition = "2018"
 
 [dependencies]
 bee-core = { path = "../bee-core" }
-bee-display = { path = "../bee-display" }
-log = "0.4.6"
-pretty_env_logger = "0.3.0"
+crossterm = "0.9.6"

@@ -5,3 +5,5 @@ authors = ["IOTA Foundation"]
 edition = "2018"
 
 [dependencies]
+tokio = "0.1.22"
+log = "0.4.6"

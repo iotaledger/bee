@@ -1,4 +1,4 @@
-mports_layout = "Vertical"
+imports_layout = "HorizontalVertical"
 max_width = 90
 use_small_heuristics = "Max"
 wrap_comments = true
