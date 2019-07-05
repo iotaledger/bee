@@ -22,7 +22,7 @@ pub struct Display {
 }
 
 impl Display {
-    /// Creates a new display.
+    /// Create a new display.
     ///
     /// # Example
     /// ```
@@ -36,14 +36,14 @@ impl Display {
         Self { cursor: crossterm::cursor(), terminal, width }
     }
 
-    /// Clears the display.
+    /// Clear the terminal.
     pub fn clear(&self) {
         self.terminal.clear(ClearType::All).expect("couldn't clear screen");
 
         self.cursor.hide().unwrap();
     }
 
-    /// Prints text in the specified color.
+    /// Print a header section with relevant node live data.
     pub fn header(&mut self) {
         let num = usize::from(self.width) - 2;
         let s = format!(" {} v{}", NAME, VERSION);
@@ -60,7 +60,7 @@ impl Display {
         self.save();
     }
 
-    /// Displays a heartbeat.
+    /// Display a heartbeat animation.
     pub fn heartbeat(&self) {
         let mut tick = true;
         let cursor = crossterm::cursor();
@@ -88,7 +88,7 @@ impl Display {
         });
     }
 
-    /// Closes the display.
+    /// Shutdown the display.
     pub fn close(&self) {
         self.cursor.show().unwrap();
     }
