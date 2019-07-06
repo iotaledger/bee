@@ -1,0 +1,42 @@
+[package]
+name = "bee-trinary"
+version = "0.1.0"
+authors = ["IOTA Foundation"]
+edition = "2018"
+categories = ["no-std"]
+repository = "https://github.com/iotaledger/bee"
+homepage = "https://iota.org"
+readme = "README.md"
+description = """
+A sub-crate for the trinary based IOTA Bee node software for converting 
+between trits, trytes, bytes, ascii, and integers.
+"""
+
+[features]
+default = ["std"]
+std = []
+no_std = []
+no_checks = []
+
+[dependencies]
+lazy_static = "1.3.0"
+heapless = "0.4.4"
+
+[dev-dependencies]
+rand = "0.7.0"
+criterion = "0.2.11"
+
+[[bench]]
+name = "benchmarks"
+harness = false
+
+#[lib]
+#bench = false
+
+[profile.bench]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
