@@ -1,7 +1,7 @@
 //! Display
 
 #![deny(bad_style, missing_docs, unsafe_code)]
-#![cfg_attr(release, deny(warnings))]
+#![cfg_attr(not(debug_assertions), deny(warnings))]
 
 mod constants;
 

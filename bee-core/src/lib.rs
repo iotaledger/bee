@@ -1,11 +1,9 @@
 //! Core functionality
 
 #![deny(bad_style, missing_docs, unsafe_code)]
-#![cfg_attr(release, deny(warnings))]
+#![cfg_attr(not(debug_assertions), deny(warnings))]
 
 pub mod constants;
-
-use constants::{NAME, VERSION};
 
 use std::fmt;
 use std::io::stdout;
@@ -79,11 +77,6 @@ impl Bee {
         self.state = State::Stopping;
         info!("{}", self.state);
     }
-}
-
-/// Returns a nice greeting.
-pub fn get_name() -> String {
-    format!("{} v{}", NAME, VERSION)
 }
 
 #[cfg(test)]

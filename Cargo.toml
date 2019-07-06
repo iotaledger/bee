@@ -2,6 +2,6 @@
 members = [
 	"bee",
 	"bee-core",
-	"bee-crypto",
+	"bee-troika",
 	"bee-display",
 ]

@@ -1,55 +1,35 @@
-/*
- * Copyright (c) 2019 Yu-Wei Wu
- *
- * MIT License
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+//! Troika implementation.
 
-use super::constants::{
-    Trit,
+use crate::constants::{
     COLUMNS,
-    NUM_ROUNDS,
+    NUM_MAX_ROUNDS,
     NUM_SBOXES,
-    PADDING,
-    ROUND_CONSTANTS,
     ROWS,
-    SBOX_LOOKUP,
-    SHIFT_ROWS_LANES,
     SLICES,
-    SLICESIZE,
+    SLICE_SIZE,
     STATE_SIZE,
     TROIKA_RATE,
 };
-use crate::Result;
+use crate::types::Trit;
+
+use super::constants::PADDING;
+use super::luts::{ROUND_CONSTANTS, SBOX_LOOKUP, SHIFT_ROWS_LANES};
+
 use core::fmt;
 
 /// The Troika struct is a Sponge that uses the Troika
 /// hashing algorithm.
-/// ```rust
-/// extern crate troika_rust;
-/// use troika_rust::Troika;
+///
+/// ```
+/// use bee_troika::Troika;
+///
 /// // Create an array of 243 1s
 /// let input = [1; 243];
+///
 /// // Create an array of 243 0s
 /// let mut out = [0; 243];
 /// let mut troika = Troika::default();
+///
 /// troika.absorb(&input);
 /// troika.squeeze(&mut out);
 /// ```
@@ -61,7 +41,7 @@ pub struct Troika {
 
 impl Default for Troika {
     fn default() -> Troika {
-        Troika { num_rounds: NUM_ROUNDS, state: [0u8; STATE_SIZE] }
+        Troika { num_rounds: NUM_MAX_ROUNDS, state: [0u8; STATE_SIZE] }
     }
 }
 
@@ -72,20 +52,29 @@ impl fmt::Debug for Troika {
 }
 
 impl Troika {
-    pub fn new(num_rounds: usize) -> Result<Troika> {
-        let mut troika = Troika::default();
-        troika.num_rounds = num_rounds;
-        Ok(troika)
+    /// Creates a new Troika instance.
+    ///
+    /// # Example
+    /// ```
+    /// use bee_troika::Troika;
+    ///
+    /// let troika = Troika::new(12);
+    /// ```  
+    pub fn new(num_rounds: usize) -> Self {
+        Self { num_rounds, ..Default::default() }
     }
 
+    /// Returns the current state.
     pub fn state(&self) -> &[Trit] {
         &self.state
     }
 
+    /// Resets the current state.
     pub fn reset(&mut self) {
         self.state = [0; STATE_SIZE];
     }
 
+    /// Absorbs a slice of trits.
     pub fn absorb(&mut self, message: &[Trit]) {
         let mut message_length = message.len();
         let mut message_idx = 0;
@@ -120,6 +109,7 @@ impl Troika {
         }
     }
 
+    /// Determines the hash of the current state.
     pub fn squeeze(&mut self, hash: &mut [Trit]) {
         let mut hash_length = hash.len();
         let mut hash_idx = 0;
@@ -143,8 +133,8 @@ impl Troika {
         }
     }
 
-    pub fn permutation(&mut self) {
-        assert!(self.num_rounds <= NUM_ROUNDS);
+    fn permutation(&mut self) {
+        assert!(self.num_rounds <= NUM_MAX_ROUNDS);
 
         for round in 0..self.num_rounds {
             self.sub_trytes();
@@ -185,7 +175,7 @@ impl Troika {
             for col in 0..COLUMNS {
                 let mut col_sum = 0;
                 for row in 0..ROWS {
-                    col_sum += self.state[SLICESIZE * slice + COLUMNS * row + col];
+                    col_sum += self.state[SLICE_SIZE * slice + COLUMNS * row + col];
                 }
                 parity[COLUMNS * slice + col] = col_sum % 3;
             }
@@ -195,7 +185,7 @@ impl Troika {
         for slice in 0..SLICES {
             for row in 0..ROWS {
                 for col in 0..COLUMNS {
-                    let idx = SLICESIZE * slice + COLUMNS * row + col;
+                    let idx = SLICE_SIZE * slice + COLUMNS * row + col;
                     let sum_to_add = parity[(col + 8) % 9 + COLUMNS * slice]
                         + parity[(col + 1) % 9 + COLUMNS * ((slice + 1) % SLICES)];
                     self.state[idx] = (self.state[idx] + sum_to_add) % 3;
@@ -207,7 +197,7 @@ impl Troika {
     fn add_round_constant(&mut self, round: usize) {
         for slice in 0..SLICES {
             for col in 0..COLUMNS {
-                let idx = SLICESIZE * slice + col;
+                let idx = SLICE_SIZE * slice + col;
                 self.state[idx] =
                     (self.state[idx] + ROUND_CONSTANTS[round][slice * COLUMNS + col]) % 3;
             }
@@ -232,7 +222,7 @@ mod test_troika {
     ];
 
     #[test]
-    fn test_hash() {
+    fn troika_all_zeros_as_input() {
         let mut troika = Troika::default();
         let mut output = [0u8; 243];
         let input = [0u8; 243];

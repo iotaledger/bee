@@ -1,19 +1,12 @@
-/*
- * Copyright (C) 2019 Yu-Wei Wu
- * All Rights Reserved.
- * This is free software; you can redistribute it and/or modify it under the
- * terms of the MIT license. A copy of the license can be found in the file
- * "LICENSE" at the root of this distribution.
- */
-
 #[macro_use]
 extern crate criterion;
 extern crate rand;
-use rand::{thread_rng, Rng};
+
+use bee_troika::Ftroika;
+use bee_troika::Troika;
 
 use criterion::Criterion;
-use troika_rust::Ftroika;
-use troika_rust::Troika;
+use rand::{thread_rng, Rng};
 
 fn basic_troika() {
     let mut troika = Troika::default();

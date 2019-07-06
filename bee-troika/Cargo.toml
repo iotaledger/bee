@@ -1,15 +1,14 @@
 [package]
-name = "troika-rust"
+name = "bee-troika"
 version = "0.1.0"
 authors = ["IOTA Foundation"]
 edition = "2018"
 
 [dependencies]
-failure = "0.1"
 
 [dev-dependencies]
 criterion = "0.2"
-rand = "0.6"
+rand = "0.7"
 
 [[bench]]
 name = "troika_benchmark"
@@ -20,3 +19,6 @@ opt-level = 3
 
 [profile.release]
 opt-level = 3
+
+[features]
+troika = []
