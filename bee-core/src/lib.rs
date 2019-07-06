@@ -33,20 +33,21 @@ impl fmt::Display for State {
 }
 
 /// The Bee node.
+///
+/// # Example
+/// ```
+/// use bee_core::Bee;
+///
+/// let mut bee = Bee::new();
+/// bee.init();
+/// ```
 pub struct Bee {
     runtime: Runtime,
     state: State,
 }
 
 impl Bee {
-    /// Creates a new Bee node.
-    ///
-    /// # Example
-    /// ```
-    /// use bee_core::Bee;
-    ///
-    /// let bee = Bee::new();
-    /// ```
+    /// Create a new Bee node.
     pub fn new() -> Self {
         let state = State::Starting;
         info!("{}", state);
@@ -54,15 +55,7 @@ impl Bee {
         Self { runtime: Runtime::new().expect("Couldn't create Tokio runtime."), state }
     }
 
-    /// Starts the node.
-    ///
-    /// # Example
-    /// ```
-    /// use bee_core::Bee;
-    ///
-    /// let mut bee = Bee::new();
-    /// bee.init();
-    /// ```
+    /// Start the node.
     pub fn init(&mut self) {
         let processing = Interval::new(Instant::now(), Duration::from_millis(250));
         self.runtime.spawn(
@@ -76,7 +69,7 @@ impl Bee {
         );
     }
 
-    /// Starts the node.
+    /// Run the node.
     pub fn run(mut self) {
         self.state = State::Running;
         info!("{}", self.state);
@@ -91,4 +84,17 @@ impl Bee {
 /// Returns a nice greeting.
 pub fn get_name() -> String {
     format!("{} v{}", NAME, VERSION)
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_core_init() {
+        let mut bee = Bee::new();
+
+        bee.init();
+    }
 }
