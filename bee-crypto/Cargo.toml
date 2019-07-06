@@ -1,0 +1,22 @@
+[package]
+name = "troika-rust"
+version = "0.1.0"
+authors = ["IOTA Foundation"]
+edition = "2018"
+
+[dependencies]
+failure = "0.1"
+
+[dev-dependencies]
+criterion = "0.2"
+rand = "0.6"
+
+[[bench]]
+name = "troika_benchmark"
+harness = false
+
+[profile.dev]
+opt-level = 3
+
+[profile.release]
+opt-level = 3
