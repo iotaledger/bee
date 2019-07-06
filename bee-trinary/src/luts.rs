@@ -5,7 +5,7 @@ use heapless::{consts::U32, FnvIndexMap, IndexMap as HashMap};
 use core::iter::FromIterator;
 
 // LUT-SIZE: 3 Bytes * 27 = 81 Byte
-pub(crate) const TRYTE_CODE_TO_TRITS: [[Trit; 3]; 27] = [
+pub const TRYTE_CODE_TO_TRITS: [[Trit; 3]; 27] = [
     [0, 0, 0],    //  0 => 0
     [1, 0, 0],    //  1 => 1
     [-1, 1, 0],   //  2 => 2
@@ -40,9 +40,9 @@ pub(crate) const TRYTE_CODE_TO_TRITS: [[Trit; 3]; 27] = [
 // ...
 // 26 => 90
 // LUT-SIZE: 27 Byte
-pub(crate) const TRYTE_CODE_TO_ASCII_CODE: [Tryte; 27] = [
-    57, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
-    88, 89, 90,
+pub const TRYTE_CODE_TO_ASCII_CODE: [Tryte; 27] = [
+    57, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84,
+    85, 86, 87, 88, 89, 90,
 ];
 
 //  0 => 57
@@ -50,9 +50,9 @@ pub(crate) const TRYTE_CODE_TO_ASCII_CODE: [Tryte; 27] = [
 // ...
 // 26 => 65
 // LUT-SIZE: 27 Byte
-pub(crate) const TRYTE_CODE_TO_ASCII_CODE_NEG: [Tryte; 27] = [
-    57, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68,
-    67, 66, 65,
+pub const TRYTE_CODE_TO_ASCII_CODE_NEG: [Tryte; 27] = [
+    57, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71,
+    70, 69, 68, 67, 66, 65,
 ];
 
 // 57 => 0
@@ -61,13 +61,16 @@ pub(crate) const TRYTE_CODE_TO_ASCII_CODE_NEG: [Tryte; 27] = [
 // 90 => 26
 // LUT-SIZE: 2 Byte * 27 = 54 Byte
 lazy_static! {
-    pub(crate) static ref ASCII_CODE_TO_TRYTE_CODE: FnvIndexMap::<Tryte, usize, U32> =
-        { HashMap::from_iter(TRYTE_CODE_TO_ASCII_CODE.iter().enumerate().map(|(v, &k)| (k, v))) };
+    pub static ref ASCII_CODE_TO_TRYTE_CODE: FnvIndexMap::<Tryte, usize, U32> = {
+        HashMap::from_iter(
+            TRYTE_CODE_TO_ASCII_CODE.iter().enumerate().map(|(v, &k)| (k, v)),
+        )
+    };
 }
 
 // LUT-SIZE: 4 Byte * 32 = 128 Byte
 lazy_static! {
-    pub(crate) static ref ASCII_CODE_TO_TRITS: FnvIndexMap::<Tryte, [Trit; 3], U32> = [
+    pub static ref ASCII_CODE_TO_TRITS: FnvIndexMap::<Tryte, [Trit; 3], U32> = [
         (57, [0, 0, 0]),
         (65, [1, 0, 0]),
         (66, [-1, 1, 0]),
@@ -105,7 +108,7 @@ lazy_static! {
 // LUT-SIZE: 8 Byte * 34 * 11 = 2992 Byte
 #[allow(clippy::unreadable_literal)]
 #[rustfmt::skip]
-pub(crate) const ASCII_CODE_SEQ_TO_NUM: [[i64; 34]; 11] = [
+pub const ASCII_CODE_SEQ_TO_NUM: [[i64; 34]; 11] = [
     [   0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1 ],
     [   0, 0, 0, 0, 0, 0, 0, 0, 27, 54, 81, 108, 135, 162, 189, 216, 243, 270, 297, 324, 351, -351, -324, -297, -270, -243, -216, -189, -162, -135, -108, -81, -54, -27 ],
     [   0, 0, 0, 0, 0, 0, 0, 0, 729, 1458, 2187, 2916, 3645, 4374, 5103, 5832, 6561, 7290, 8019, 8748, 9477, -9477, -8748, -8019, -7290, -6561, -5832, -5103, -4374, -3645, -2916, -2187, -1458, -729 ],

@@ -1,9 +1,15 @@
 # bee-trinary
 
-Converter functions for Bee.
+This crate contains the following converter functions for Bee:
+* from trits/trytes to bytes
+* from trits/trytes to integers
+* from bytes to trits
+* from trits to tryte characters (tryte strings)
+* from trits to trytes
+* from bytes to trytes
+* from integers to trytes
+* from trytes to ASCII text
 
-## Features
-* `no-std` (with `liballoc` dependency)
-* `no-checks` compile feature if consumer of this library already ensures valid inputs.
-* 9 Trits per 2 Bytes (9/2) byte encoding
-* no unsafe code
+## Special features
+* `no-std` library (requires `liballoc`)
+* 9 trits or 3 trytes are encoded with 2 bytes.
