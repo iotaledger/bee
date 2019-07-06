@@ -4,4 +4,5 @@ members = [
 	"bee-core",
 	"bee-troika",
 	"bee-display",
+	"bee-trinary",
 ]

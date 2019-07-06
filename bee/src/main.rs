@@ -1,3 +1,5 @@
+//! Entry point for the Bee node software.
+
 #![deny(warnings, bad_style, unsafe_code)]
 
 mod constants;
