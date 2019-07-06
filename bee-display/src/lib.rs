@@ -5,7 +5,7 @@
 
 mod constants;
 
-use crate::constants::{HEADER_SECTION_HEIGHT, HEART, HEART_BEAT, HEART_BEAT_POSITION};
+use crate::constants::{HEART, HEART_BEAT, HEART_BEAT_POSITION, LOGO};
 
 use bee_core::constants::{NAME, VERSION};
 
@@ -45,17 +45,23 @@ impl Display {
 
     /// Print a header section with relevant node live data.
     pub fn header(&mut self) {
-        let num = usize::from(self.width) - 2;
-        let s = format!(" {} v{}", NAME, VERSION);
+        let width = usize::from(self.width) - 1;
+        let name_version = format!(" {} v{}", NAME, VERSION);
+        let name_version_left = width as u16 / 2 - name_version.len() as u16 / 2;
+        let logo_lines = LOGO.split("\n").collect::<Vec<_>>();
 
-        println!("╔{:═<1$}╗", "", num);
-        print!("║{}", Colored::Fg(Color::Yellow));
-        print!("{: <1$}", s, num);
-        println!("{}║", Colored::Fg(Color::Reset));
-        for _ in 0..HEADER_SECTION_HEIGHT {
-            println!("║{: <1$}║", "", num);
+        print_topline(width);
+        for line in logo_lines.iter() {
+            print_colored_line(line, Color::White, width);
         }
-        println!("╚{:═<1$}╝", "", num);
+        print_text_at_pos(
+            &name_version,
+            name_version_left,
+            7,
+            Color::Yellow,
+            &self.cursor,
+        );
+        print_botline(width);
 
         self.save();
     }
@@ -96,6 +102,33 @@ impl Display {
     fn save(&self) {
         self.cursor.save_position().unwrap();
     }
+}
+
+#[inline]
+fn print_topline(width: usize) {
+    println!("╔{:═<1$}╗", "", width);
+}
+
+#[inline]
+fn print_botline(width: usize) {
+    println!("╚{:═<1$}╝", "", width);
+}
+
+#[inline]
+fn print_colored_line(text: &str, color: Color, width: usize) {
+    print!("║{}", Colored::Fg(color));
+    print!("{: <1$}", text, width);
+    println!("{}║", Colored::Fg(Color::Reset));
+}
+
+#[inline]
+fn print_text_at_pos(text: &str, x: u16, y: u16, color: Color, cursor: &TerminalCursor) {
+    let (old_x, old_y) = cursor.pos();
+    cursor.goto(x, y).expect("couldn't move cursor");
+
+    print!("{}{}{}", Colored::Fg(color), text, Colored::Fg(Color::Reset));
+
+    cursor.goto(old_x, old_y).expect("couldn't move cursor");
 }
 
 #[cfg(test)]
