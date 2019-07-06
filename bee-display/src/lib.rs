@@ -15,6 +15,12 @@ use std::thread;
 use std::time::Duration;
 
 /// A terminal display.
+///
+/// # Example
+/// ```
+/// use bee_display::Display;
+/// let display = Display::new();
+/// ```
 pub struct Display {
     cursor: TerminalCursor,
     terminal: Terminal,
@@ -23,12 +29,6 @@ pub struct Display {
 
 impl Display {
     /// Create a new display.
-    ///
-    /// # Example
-    /// ```
-    /// use bee_display::Display;
-    /// let display = Display::new();
-    /// ```
     pub fn new() -> Self {
         let terminal = crossterm::terminal();
         let (width, _) = terminal.terminal_size();
@@ -95,5 +95,20 @@ impl Display {
 
     fn save(&self) {
         self.cursor.save_position().unwrap();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_display() {
+        let mut display = Display::new();
+
+        display.header();
+        display.heartbeat();
+        display.close();
     }
 }

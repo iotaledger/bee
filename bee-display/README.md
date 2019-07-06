@@ -4,11 +4,10 @@ Printing relevant live data of Bee to the terminal.
 
 ## Documentation
 
-To see the current documention for this crate with code examples, simply run:
+To see the current documentation for this crate with code examples, simply run:
 
 ```Bash
-    $ cargo doc
-    $ your_browser target/doc/bee_display/index.html
+    $ cargo doc --open
 ```
 
 ## Usage
