@@ -10,7 +10,7 @@ The current IOTA mainnet is globally distributed network of nodes, each running 
 
 Bee is supposed to deliver on a varity of qualities with different priorities. Some are orthogonal, others are tricky to combine and must be carefully balanced out:
 
-Quality | Description | Solution
+Quality | Description
 -- | --
 Performance | Scalability and security of the Tangle depend on how many transactions can be processed. Resources like bandwidth, memory and computing power are limited. To use them to the fullest, performance is a major concern. The more efficient a node operates, the more transactions it can process and the more scalable and secure the network becomes.
 Light-Weightness | When it comes to computing, we think about servers, PC's and mobile devices. The IoT seeks to integrate countless tiny  devices into the network to take full advantage of available resources. Therefore it is necessary to grant even rather constrained devices access to the Tangle. The bee core (minimum required software to run a node) must be as slim as possible and be able to operate even if with limited resources.
