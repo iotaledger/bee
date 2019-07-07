@@ -17,3 +17,24 @@ Light-Weightness | When it comes to computing, we think about servers, PC's and 
 Interoperability | The IoT will be no less heterogenous than today's Internet. Not only devices will differ in hardware but there will be many physical means and standards for data transmission (optical, bluetooth, RFI, ...). Building on top of this infrastructure requires abstracting from individual details yet still considering these for maximum efficiency.
 Extendibility |  IOTA seeks to become the standard protocol for applications developed for the IoT. These applications must be able to connect to build on top of this protocol by extending the bee core with use-case specific functionality.
 Modularity | Building a protocol for the IoT is a huge undertaking. To reduce bugs during and increase speed of the development process, software quality is a major concern. A modular architecture is the best step towards a maintainable, flexible and long-living code base.
+
+## Implementation
+
+### Design Decisions
+
+Category | Decision | Description
+-- | -- | --
+Programming Language | Rust | A low level programming language
+Software Architecture | EEE | An event driven software architecture invented by the IOTA Foundation
+
+### Solutions
+
+Solution | Supported Quality | Description
+-- | -- | --
+Rust | Performance | Due to its low level, Rust performance is on par with C. Rust employs additional safety-mechanisms to reduce the amount of bugs that are common with C (such as memory corruption or concurrency issues). However, these checks happen during compile-time and have therefore rarely consequences on the performance. C is a sub-set of Rust and can therefore still be employed if necessary.
+Rust | Light-Weightness | Once compiled, Rust is as light-weight as C for the same reasons.
+Rust | Interoperability | Rust is quite portable and can be compiled for individual processors.
+EEE | Light-Weightness | EEE strongly decouples components in such a way that new components can often be added without affecting the existing ones. Therefore the bee core can be minimal (a gossip protocol) with extending features (e.g. consensus) being added only if required.
+EEE | Interoperability | Due to the decoupling provided by EEE, component implementations can be easily swapped out or customized without breaking other components.
+EEE | Extendibility | With EEE, components communicate only indirectly via environments with each other. Therefore, they are not necessarily aware of which components are participating in an environment but only about the purpose of the environment. Therefore extensions can be smoothly added that plug themselves into the existing communication infrastructure. Since any relevant communication path will be done via EEE, there will be little limits of what they can technically extend.
+EEE | Modularity | EEE enforces a strong decoupling by nature.
