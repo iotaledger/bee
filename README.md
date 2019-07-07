@@ -25,7 +25,7 @@ Modularity | Building a protocol for the IoT is a huge undertaking. To reduce bu
 Category | Decision | Description
 -- | -- | --
 Programming Language | Rust | A low level programming language
-Software Architecture | EEE | An event driven software architecture invented by the IOTA Foundation
+Software Architecture | EEE | Environment-Entity-Effect: an event driven software architecture proposed by the IOTA Foundation
 
 ### Solutions
 
@@ -38,3 +38,19 @@ EEE | Light-Weightness | EEE strongly decouples components in such a way that ne
 EEE | Interoperability | Due to the decoupling provided by EEE, component implementations can be easily swapped out or customized without breaking other components.
 EEE | Extendibility | With EEE, components communicate only indirectly via environments with each other. Therefore, they are not necessarily aware of which components are participating in an environment but only about the purpose of the environment. Therefore extensions can be smoothly added that plug themselves into the existing communication infrastructure. Since any relevant communication path will be done via EEE, there will be little limits of what they can technically extend.
 EEE | Modularity | EEE enforces a strong decoupling by nature.
+
+## Crates
+
+In Rust, a crate provides a library for a clear responsiblity. Every major component in bee will be developed in a seperate crate for modularity reasons. Required crates can then be plugged together to form an executable bee node.
+
+Crate | Responsibility
+-- | --
+EEE | Provides the architectural framework for inter-crate and a lot of intra-crate communication.
+Main | Executes a regular run of a bee node by spinning up and maintaining a single bee instance.
+Core | Provides control over a bee node instance and bundles bee components together.
+Transport | Data transmission to neighbor bees. Implemented protocol is hidden.
+Node | Gossip: logic for receiving and broadcasting transactions.
+Trinary | Library for trinary operations and conversions.
+Hash | Provides the protocol's default hash function (to derive transaction hashes etc.).
+Compression | Library to compress/decompress data before/after transmission to neighbors.
+Tangle | Provides data structure to model, store/access and link transactions.
