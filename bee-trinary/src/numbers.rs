@@ -1,11 +1,11 @@
 //! Converter functions that convert trits/trytes to numbers.
 //!
-//! Note: Currently 11 trytes / 33 trits are sufficient to represent the total IOTA supply.
-//! of (3^33-1)/2 = 2,779530283×10^15 since an `i64` can even hold (2^64-1)/2 =
-//! 9,223372037×10^18 positive values. However, in the future it is likely that with increased value
-//! of each single token fractional iotas will have to be introduced. In that case it is necessary
-//! to represent (3^81-1)/2 = 2,217132441×10^38 different positive values, which couldn't even be
-//! represented by an i128.
+//! Note: Currently 11 trytes / 33 trits are sufficient to represent the total IOTA
+//! supply. of (3^33-1)/2 = 2,779530283×10^15 since an `i64` can even hold (2^64-1)/2 =
+//! 9,223372037×10^18 positive values. However, in the future it is likely that with
+//! increased value of each single token fractional iotas will have to be introduced. In
+//! that case it is necessary to represent (3^81-1)/2 = 2,217132441×10^38 different
+//! positive values, which couldn't even be represented by an i128.
 
 use crate::{
     luts::ASCII_CODE_SEQ_TO_NUM,

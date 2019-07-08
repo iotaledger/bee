@@ -161,10 +161,7 @@ mod tests {
     fn test_from_trytes() {
         let trytes = &TRANSACTION.as_bytes()[13..574];
 
-        assert_eq!(
-            trytes,
-            &crate::trytes::from_bytes(&from_trytes(trytes)).to_vec()[..]
-        );
+        assert_eq!(trytes, &crate::trytes::from_bytes(&from_trytes(trytes)).to_vec()[..]);
     }
 
     #[test]
@@ -194,9 +191,6 @@ mod tests {
         let trytes = &TRANSACTION.as_bytes()[13..574];
         let trits = crate::trits::from_trytes(trytes);
 
-        assert_eq!(
-            trytes,
-            &crate::trytes::from_bytes(&from_trits(&trits)).to_vec()[..]
-        );
+        assert_eq!(trytes, &crate::trytes::from_bytes(&from_trits(&trits)).to_vec()[..]);
     }
 }

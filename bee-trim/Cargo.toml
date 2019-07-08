@@ -1,0 +1,18 @@
+[package]
+name = "bee-trim"
+version = "0.1.0"
+authors = ["IOTA Foundation"]
+edition = "2018"
+
+[dependencies]
+bee-trinary = { path = "../bee-trinary" }
+bee-protocol = { path = "../bee-protocol", features = ["constants"] }
+
+[dev-dependencies]
+bee-protocol = { path = "../bee-protocol", features = ["all"] }
+
+[features]
+default = ["all"]
+all = ["trim_full", "trim_data"]
+trim_full = []
+trim_data = []

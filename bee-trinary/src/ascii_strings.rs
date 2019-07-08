@@ -38,7 +38,8 @@ pub fn from_tryte_str(tryte_str: &str) -> String {
     }
 
     // Remove 9s from the str
-    // TODO: instead of removing first and then adding again we should be able to customize unpadding function
+    // TODO: instead of removing first and then adding again we should be able to
+    // customize unpadding function
     let tryte_string = unpad_right(tryte_str);
 
     let mut trytes = tryte_string.as_bytes().to_vec();
@@ -56,7 +57,8 @@ fn inner(trytes: &[Tryte]) -> String {
     let mut ascii_chars = vec![0; trytes.len() / 3 * 2];
 
     for i in 0..trytes.len() / 3 {
-        let index = from_trytes_max11(&trytes[(i * 3)..(i * 3 + 3)]) + MAX_TRYTE_TRIPLET_ABS;
+        let index =
+            from_trytes_max11(&trytes[(i * 3)..(i * 3 + 3)]) + MAX_TRYTE_TRIPLET_ABS;
 
         ascii_chars[i * 2] = (index / 127) as u8;
         ascii_chars[i * 2 + 1] = (index % 127) as u8;

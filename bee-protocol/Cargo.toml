@@ -1,0 +1,14 @@
+[package]
+name = "bee-protocol"
+version = "0.1.0"
+authors = ["IOTA Foundation"]
+edition = "2018"
+
+[dependencies]
+bee-trinary = { path = "../bee-trinary" }
+
+[features]
+default = ["all"]
+all = ["constants", "types"]
+constants = []
+types = []

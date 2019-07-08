@@ -5,4 +5,21 @@ members = [
 	"bee-troika",
 	"bee-display",
 	"bee-trinary",
+	"bee-trim",
+	"bee-protocol",
 ]
+
+[profile.dev]
+opt-level = 3
+
+[profile.release]
+opt-level = 3
+
+[profile.bench]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+

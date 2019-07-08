@@ -78,7 +78,8 @@ macro_rules! from_trits_conv {
             let mut trytes = [TRYTE_CODE_TO_ASCII_CODE[0]; $length];
 
             for (i, t) in trytes.iter_mut().enumerate() {
-                let mut index = trits[i * 3] + 3 * trits[i * 3 + 1] + 9 * trits[i * 3 + 2];
+                let mut index =
+                    trits[i * 3] + 3 * trits[i * 3 + 1] + 9 * trits[i * 3 + 2];
                 index = if index < 0 { index + 27 } else { index };
                 *t = TRYTE_CODE_TO_ASCII_CODE[index as usize];
             }
@@ -124,8 +125,11 @@ macro_rules! from_num_i64_conv {
                 assert!(number.abs() <= range_abs);
             }
 
-            let lut =
-                if number > 0 { &TRYTE_CODE_TO_ASCII_CODE } else { &TRYTE_CODE_TO_ASCII_CODE_NEG };
+            let lut = if number > 0 {
+                &TRYTE_CODE_TO_ASCII_CODE
+            } else {
+                &TRYTE_CODE_TO_ASCII_CODE_NEG
+            };
 
             let mut trytes = [TRYTE_CODE_TO_ASCII_CODE[0]; $length];
 
@@ -148,13 +152,19 @@ macro_rules! from_num_i64_conv {
 
 from_num_i64_conv!(from_num_i64_to_13, 13);
 from_num_i64_conv!(from_num_i64_to_11, 11);
+from_num_i64_conv!(from_num_i64_to_9, 9);
 from_num_i64_conv!(from_num_i64_to_3, 3); //TODO: don't make this public
 
 /// Converts an `i64` number to trytes.
 pub fn from_num_i64(number: i64) -> Vec<Tryte> {
-    let num_trytes = ((((number.abs() as f64 * 2.0) + 1.0).log(3.0)) / 3.0).ceil() as usize;
+    let num_trytes =
+        ((((number.abs() as f64 * 2.0) + 1.0).log(3.0)) / 3.0).ceil() as usize;
 
-    let lut = if number > 0 { &TRYTE_CODE_TO_ASCII_CODE } else { &TRYTE_CODE_TO_ASCII_CODE_NEG };
+    let lut = if number > 0 {
+        &TRYTE_CODE_TO_ASCII_CODE
+    } else {
+        &TRYTE_CODE_TO_ASCII_CODE_NEG
+    };
 
     let mut trytes = vec![TRYTE_CODE_TO_ASCII_CODE[0]; num_trytes];
 
@@ -280,18 +290,24 @@ mod tests {
     fn test_from_trits_all() {
         let all_trits = &crate::trits::from_tryte_str(TRANSACTION)[..];
 
-        assert_eq!(&all_trits[..], &crate::trits::from_trytes(&from_trits_all(&all_trits))[..]);
+        assert_eq!(
+            &all_trits[..],
+            &crate::trits::from_trytes(&from_trits_all(&all_trits))[..]
+        );
 
         let sig_trits = &crate::trits::from_tryte_str(TRANSACTION)[0..6561];
 
-        assert_eq!(&sig_trits[..], &crate::trits::from_trytes(&from_trits_sig(&sig_trits))[..]);
+        assert_eq!(
+            &sig_trits[..],
+            &crate::trits::from_trytes(&from_trits_sig(&sig_trits))[..]
+        );
     }
 
     #[test]
     fn test_from_trits_27() {
         let trits = [
-            1, 1, 0, -1, -1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 1, 1, -1, -1, 1, -1, 0, 1, -1, 0, 1, -1,
-            0,
+            1, 1, 0, -1, -1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 1, 1, -1, -1, 1, -1, 0, 1, -1,
+            0, 1, -1, 0,
         ];
 
         assert_eq!(&trits, &crate::trits::from_trytes(&from_trits_27(&trits))[..]);
@@ -312,7 +328,10 @@ mod tests {
 
         assert_eq!(0, crate::numbers::from_trytes_max13(&from_num_i64(0)[..]));
 
-        assert_eq!(1234567890, crate::numbers::from_trytes_max13(&from_num_i64(1234567890)[..]));
+        assert_eq!(
+            1234567890,
+            crate::numbers::from_trytes_max13(&from_num_i64(1234567890)[..])
+        );
 
         assert_eq!(
             core::i64::MAX / 8,
@@ -332,7 +351,10 @@ mod tests {
 
     #[test]
     fn test_from_ascii_6() {
-        assert_eq!("Hello!", crate::ascii_strings::from_trytes(&from_ascii_6("Hello!")[..]));
+        assert_eq!(
+            "Hello!",
+            crate::ascii_strings::from_trytes(&from_ascii_6("Hello!")[..])
+        );
     }
 
     #[test]

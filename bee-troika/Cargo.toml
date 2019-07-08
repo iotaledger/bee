@@ -14,11 +14,5 @@ rand = "0.7"
 name = "troika_benchmark"
 harness = false
 
-[profile.dev]
-opt-level = 3
-
-[profile.release]
-opt-level = 3
-
 [features]
 troika = []

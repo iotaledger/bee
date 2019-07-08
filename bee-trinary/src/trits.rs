@@ -31,8 +31,10 @@ macro_rules! from_bytes_conv {
 
                 let offset = i * 9;
 
-                trits[offset..offset + 3].copy_from_slice(&TRYTE_CODE_TO_TRITS[b0 / 8][..]);
-                trits[(offset + 3)..(offset + 6)].copy_from_slice(&TRYTE_CODE_TO_TRITS[b1 / 8]);
+                trits[offset..offset + 3]
+                    .copy_from_slice(&TRYTE_CODE_TO_TRITS[b0 / 8][..]);
+                trits[(offset + 3)..(offset + 6)]
+                    .copy_from_slice(&TRYTE_CODE_TO_TRITS[b1 / 8]);
                 trits[(offset + 6)..(offset + 9)]
                     .copy_from_slice(&TRYTE_CODE_TO_TRITS[b0 % 8 + 8 * (b1 % 8)]);
             }
@@ -87,8 +89,9 @@ macro_rules! from_tryte_str_conv {
             let mut trits = [0i8; $length];
 
             trytes.iter().enumerate().for_each(|(i, c)| {
-                trits[(i * 3)..(i * 3) + 3]
-                    .copy_from_slice(&TRYTE_CODE_TO_TRITS[ASCII_CODE_TO_TRYTE_CODE[c]][..]);
+                trits[(i * 3)..(i * 3) + 3].copy_from_slice(
+                    &TRYTE_CODE_TO_TRITS[ASCII_CODE_TO_TRYTE_CODE[c]][..],
+                );
             });
 
             trits
