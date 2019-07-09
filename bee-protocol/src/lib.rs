@@ -1,6 +1,7 @@
 //! This crate contains types as specified by the IOTA protocol.
 
 #![deny(
+    bad_style,
     missing_docs,
     missing_debug_implementations,
     missing_copy_implementations,

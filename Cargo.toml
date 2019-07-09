@@ -1,6 +1,7 @@
 [workspace]
 members = [
 	"bee",
+	"bee-cli",
 	"bee-core",
 	"bee-troika",
 	"bee-display",

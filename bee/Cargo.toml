@@ -5,6 +5,7 @@ authors = ["IOTA Foundation"]
 edition = "2018"
 
 [dependencies]
+bee-cli = { path = "../bee-cli" }
 bee-core = { path = "../bee-core" }
 bee-display = { path = "../bee-display" }
 log = "0.4.6"

@@ -1,6 +1,18 @@
 //! Entry point for the Bee node software.
 
-#![deny(warnings, bad_style, unsafe_code)]
+#![deny(
+    bad_style,
+    missing_docs,
+    missing_debug_implementations,
+    missing_copy_implementations,
+    trivial_casts,
+    trivial_numeric_casts,
+    unsafe_code,
+    unstable_features,
+    unused_import_braces,
+    unused_qualifications
+)]
+#![cfg_attr(not(debug_assertions), deny(warnings))]
 
 mod constants;
 
@@ -8,11 +20,14 @@ use crate::constants::{CUSTOM_ENV_VAR, DEBUG_LEVEL};
 
 use bee_core::Bee;
 use bee_display::Display;
+use bee_cli::Cli;
 
 use std::env;
 
 fn main() {
-    env::set_var(CUSTOM_ENV_VAR, DEBUG_LEVEL);
+    let cli = Cli::new();
+
+    env::set_var(CUSTOM_ENV_VAR, cli.debug_level());
     pretty_env_logger::init_custom_env(CUSTOM_ENV_VAR);
 
     let mut display = Display::new();

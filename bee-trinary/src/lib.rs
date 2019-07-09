@@ -21,8 +21,6 @@
 )]
 #![cfg_attr(not(debug_assertions), deny(warnings))]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![feature(test)]
-extern crate test;
 
 #[cfg(not(feature = "std"))]
 #[macro_use]
