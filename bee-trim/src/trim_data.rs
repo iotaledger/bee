@@ -1,6 +1,6 @@
 //! A module for trimming only the data field of a transaction.
 
-use bee_protocol::constants::{PACKET_SIZE, SIGNATURE_FRAGMENTS};
+use bee_transaction::constants::{PACKET_SIZE, SIGNATURE_FRAGMENTS};
 
 const NOT_SIGNATURE_FRAGMENTS: usize = PACKET_SIZE - SIGNATURE_FRAGMENTS.5; // 324
 

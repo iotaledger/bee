@@ -6,10 +6,10 @@ edition = "2018"
 
 [dependencies]
 bee-trinary = { path = "../bee-trinary" }
-bee-protocol = { path = "../bee-protocol", features = ["constants"] }
+bee-transaction = { path = "../bee-transaction", features = ["constants"] }
 
 [dev-dependencies]
-bee-protocol = { path = "../bee-protocol", features = ["all"] }
+bee-transaction = { path = "../bee-transaction", features = ["all"] }
 
 [features]
 default = ["all"]

@@ -3,11 +3,11 @@ members = [
 	"bee",
 	"bee-cli",
 	"bee-core",
-	"bee-troika",
 	"bee-display",
-	"bee-trinary",
+	"bee-transaction",
 	"bee-trim",
-	"bee-protocol",
+	"bee-trinary",
+	"bee-troika",
 ]
 
 [profile.dev]

@@ -1,5 +1,5 @@
 [package]
-name = "bee-protocol"
+name = "bee-transaction"
 version = "0.1.0"
 authors = ["IOTA Foundation"]
 edition = "2018"

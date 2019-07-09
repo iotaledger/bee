@@ -1,6 +1,6 @@
 //! A module for trimming all transaction fields.
 
-use bee_protocol::constants::*;
+use bee_transaction::constants::*;
 
 const DELIMITER_BYTE: u8 = 0xFF;
 const OFFSETS: [usize; 15] = [
