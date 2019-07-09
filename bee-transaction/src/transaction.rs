@@ -140,7 +140,7 @@ impl Transaction {
             attachment_timestamp,
             attachment_timestamp_lower_bound,
             attachment_timestamp_upper_bound,
-            nonce, 
+            nonce,
         }
     }
 

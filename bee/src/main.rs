@@ -18,9 +18,9 @@ mod constants;
 
 use crate::constants::{CUSTOM_ENV_VAR, DEBUG_LEVEL};
 
+use bee_cli::Cli;
 use bee_core::Bee;
 use bee_display::Display;
-use bee_cli::Cli;
 
 use std::env;
 

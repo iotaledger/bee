@@ -39,9 +39,7 @@ pub struct Cli {
 impl Cli {
     /// Create a new command line interface.
     pub fn new() -> Self {
-        Self  {
-            args: Args::from_args(),
-        }
+        Self { args: Args::from_args() }
     }
 
     /// Returns the debug level.
