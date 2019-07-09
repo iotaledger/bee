@@ -49,12 +49,12 @@ impl Cli {
         &self.args.debug_level
     }
 
-    /// Returns the debug level.
+    /// Returns the host name.
     pub fn host(&self) -> &str {
         &self.args.host
     }
 
-    /// Returns the debug level.
+    /// Returns the port number.
     pub fn port(&self) -> u16 {
         self.args.port
     }
