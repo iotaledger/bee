@@ -16,7 +16,7 @@
 
 mod constants;
 
-use crate::constants::{CUSTOM_ENV_VAR, DEBUG_LEVEL};
+use crate::constants::CUSTOM_ENV_VAR;
 
 use bee_cli::Cli;
 use bee_core::Bee;
@@ -33,7 +33,6 @@ fn main() {
     let mut display = Display::new();
     display.clear();
     display.header();
-    display.heartbeat();
 
     let mut bee = Bee::new();
     bee.init();

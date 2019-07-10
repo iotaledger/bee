@@ -40,7 +40,7 @@ impl Display {
     pub fn clear(&self) {
         self.terminal.clear(ClearType::All).expect("couldn't clear screen");
 
-        self.cursor.hide().unwrap();
+        //self.cursor.hide().unwrap();
     }
 
     /// Print a header section with relevant node live data.

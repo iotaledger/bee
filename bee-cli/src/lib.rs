@@ -18,7 +18,7 @@ use structopt::StructOpt;
 #[derive(StructOpt)]
 pub struct Args {
     //
-    #[structopt(long, name = "debug_level", default_value = "debug")]
+    #[structopt(long, name = "debug_level", default_value = "info")]
     debug_level: String,
 
     #[structopt(short, long, name = "host", default_value = "localhost")]
