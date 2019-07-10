@@ -12,23 +12,26 @@ use std::time::{Duration, Instant};
 use log::info;
 use stream_cancel::{StreamExt, Trigger, Tripwire};
 use tokio::prelude::*;
+use tokio::runtime::current_thread;
 use tokio::runtime::Runtime;
 use tokio::timer::Interval;
-use tokio::runtime::current_thread;
 
 enum State {
     Starting,
-    Running,
+    Started,
     Stopping,
+    Stopped,
 }
 
 impl fmt::Display for State {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            State::Starting => write!(f, "Starting..."),
-            State::Running => write!(f, "Running..."),
-            State::Stopping => write!(f, "Stopping..."),
-        }
+        let log_text = match *self {
+            State::Starting => "Starting...",
+            State::Started => "Started.",
+            State::Stopping => "Stopping...",
+            State::Stopped => "Stopped.",
+        };
+        write!(f, "{}", log_text)
     }
 }
 
@@ -63,27 +66,27 @@ impl Bee {
     /// Start the node.
     pub fn init(&mut self) {
         let processing = Interval::new(Instant::now(), Duration::from_millis(250))
-                .take_until(self.shutdown.1.clone())
-                .for_each(|_| {
-                    print!("");
-                    stdout().flush().unwrap();
-                    Ok(())
-                })
-                .map_err(|e| panic!("error: {}", e));
-        
+            .take_until(self.shutdown.1.clone())
+            .for_each(|_| {
+                print!("");
+                stdout().flush().unwrap();
+                Ok(())
+            })
+            .map_err(|e| panic!("error: {}", e));
+
         self.runtime.spawn(processing);
     }
 
     /// Run the node.
     pub fn run(mut self) {
-        self.state = State::Running;
+        self.state = State::Started;
         info!("{}", self.state);
 
         // Block the current thread until CTRL-C is detected
-        current_thread::block_on_all(tokio_signal::ctrl_c()
-            .flatten_stream()
-            .take(1)
-            .for_each(|_| Ok(()))).expect("error waiting for CTRL-C");
+        current_thread::block_on_all(
+            tokio_signal::ctrl_c().flatten_stream().take(1).for_each(|_| Ok(())),
+        )
+        .expect("error waiting for CTRL-C");
 
         self.state = State::Stopping;
         info!("{}", self.state);
@@ -93,6 +96,9 @@ impl Bee {
 
         // Block until all futures have finished terminating
         self.runtime.shutdown_on_idle().wait().unwrap();
+
+        self.state = State::Stopped;
+        info!("{}", self.state);
     }
 }
 
