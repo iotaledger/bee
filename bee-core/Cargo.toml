@@ -7,3 +7,5 @@ edition = "2018"
 [dependencies]
 tokio = "0.1.22"
 log = "0.4.6"
+stream-cancel = "0.4.4"
+tokio-signal = "0.2.7"

@@ -10,9 +10,11 @@ use std::io::stdout;
 use std::time::{Duration, Instant};
 
 use log::info;
+use stream_cancel::{StreamExt, Trigger, Tripwire};
 use tokio::prelude::*;
 use tokio::runtime::Runtime;
 use tokio::timer::Interval;
+use tokio::runtime::current_thread;
 
 enum State {
     Starting,
@@ -42,6 +44,7 @@ impl fmt::Display for State {
 pub struct Bee {
     runtime: Runtime,
     state: State,
+    shutdown: (Trigger, Tripwire),
 }
 
 impl Bee {
@@ -50,21 +53,25 @@ impl Bee {
         let state = State::Starting;
         info!("{}", state);
 
-        Self { runtime: Runtime::new().expect("Couldn't create Tokio runtime."), state }
+        Self {
+            runtime: Runtime::new().expect("Couldn't create Tokio runtime."),
+            state,
+            shutdown: Tripwire::new(),
+        }
     }
 
     /// Start the node.
     pub fn init(&mut self) {
-        let processing = Interval::new(Instant::now(), Duration::from_millis(250));
-        self.runtime.spawn(
-            processing
+        let processing = Interval::new(Instant::now(), Duration::from_millis(250))
+                .take_until(self.shutdown.1.clone())
                 .for_each(|_| {
-                    print!(".");
+                    print!("");
                     stdout().flush().unwrap();
                     Ok(())
                 })
-                .map_err(|_| {}),
-        );
+                .map_err(|e| panic!("error: {}", e));
+        
+        self.runtime.spawn(processing);
     }
 
     /// Run the node.
@@ -72,10 +79,20 @@ impl Bee {
         self.state = State::Running;
         info!("{}", self.state);
 
-        self.runtime.shutdown_on_idle().wait().unwrap();
+        // Block the current thread until CTRL-C is detected
+        current_thread::block_on_all(tokio_signal::ctrl_c()
+            .flatten_stream()
+            .take(1)
+            .for_each(|_| Ok(()))).expect("error waiting for CTRL-C");
 
         self.state = State::Stopping;
         info!("{}", self.state);
+
+        // Stop all threads/tasks
+        drop(self.shutdown.0);
+
+        // Block until all futures have finished terminating
+        self.runtime.shutdown_on_idle().wait().unwrap();
     }
 }
 
