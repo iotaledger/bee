@@ -28,3 +28,4 @@ pub mod transaction;
 
 #[cfg(any(feature = "types", feature = "all"))]
 pub use crate::transaction::Transaction;
+pub use crate::transaction::TransactionBuilder;
