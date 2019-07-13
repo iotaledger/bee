@@ -3,114 +3,12 @@
 #![deny(bad_style, missing_docs, unsafe_code)]
 #![cfg_attr(not(debug_assertions), deny(warnings))]
 
+#[macro_use]
+pub mod common;
+
+pub mod bee;
 pub mod constants;
+pub mod errors;
+pub mod messaging;
 
-use std::fmt;
-use std::io::stdout;
-use std::time::{Duration, Instant};
-
-use log::info;
-use stream_cancel::{StreamExt, Trigger, Tripwire};
-use tokio::prelude::*;
-use tokio::runtime::current_thread;
-use tokio::runtime::Runtime;
-use tokio::timer::Interval;
-
-enum State {
-    Starting,
-    Started,
-    Stopping,
-    Stopped,
-}
-
-impl fmt::Display for State {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let log_text = match *self {
-            State::Starting => "Starting...",
-            State::Started => "Started.",
-            State::Stopping => "Stopping...",
-            State::Stopped => "Stopped.",
-        };
-        write!(f, "{}", log_text)
-    }
-}
-
-/// The Bee node.
-///
-/// # Example
-/// ```
-/// use bee_core::Bee;
-///
-/// let mut bee = Bee::new();
-/// bee.init();
-/// ```
-pub struct Bee {
-    runtime: Runtime,
-    state: State,
-    shutdown: (Trigger, Tripwire),
-}
-
-impl Bee {
-    /// Create a new Bee node.
-    pub fn new() -> Self {
-        let state = State::Starting;
-        info!("{}", state);
-
-        Self {
-            runtime: Runtime::new().expect("Couldn't create Tokio runtime."),
-            state,
-            shutdown: Tripwire::new(),
-        }
-    }
-
-    /// Start the node.
-    pub fn init(&mut self) {
-        let processing = Interval::new(Instant::now(), Duration::from_millis(250))
-            .take_until(self.shutdown.1.clone())
-            .for_each(|_| {
-                print!("");
-                stdout().flush().unwrap();
-                Ok(())
-            })
-            .map_err(|e| panic!("error: {}", e));
-
-        self.runtime.spawn(processing);
-    }
-
-    /// Run the node.
-    pub fn run(mut self) {
-        self.state = State::Started;
-        info!("{}", self.state);
-
-        // Block the current thread until CTRL-C is detected
-        current_thread::block_on_all(
-            tokio_signal::ctrl_c().flatten_stream().take(1).for_each(|_| Ok(())),
-        )
-        .expect("error waiting for CTRL-C");
-
-        self.state = State::Stopping;
-        info!("{}", self.state);
-
-        // Stop all threads/tasks
-        drop(self.shutdown.0);
-
-        // Block until all futures have finished terminating
-        self.runtime.shutdown_on_idle().wait().unwrap();
-
-        self.state = State::Stopped;
-        info!("{}", self.state);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-
-    #[test]
-    fn test_core_init() {
-        let mut bee = Bee::new();
-
-        bee.init();
-    }
-}
+pub use bee::Bee;

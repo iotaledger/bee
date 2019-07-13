@@ -19,12 +19,13 @@ mod constants;
 use crate::constants::CUSTOM_ENV_VAR;
 
 use bee_cli::Cli;
+use bee_core::errors::Result;
 use bee_core::Bee;
 use bee_display::Display;
 
 use std::env;
 
-fn main() {
+fn main() -> Result<()> {
     let cli = Cli::new();
 
     env::set_var(CUSTOM_ENV_VAR, cli.debug_level());
@@ -34,7 +35,21 @@ fn main() {
     display.clear();
     display.header();
 
-    let mut bee = Bee::new();
+    let mut bee = Bee::new()?;
+
+    // Start basic tasks
     bee.init();
-    bee.run();
+
+    // Let the display join some environments of interest
+    bee.join(&vec!["IP_ADDR", "CPU_LOAD", "MEM_USE", "TPS"], display.clone());
+
+    // Additionally update the display regularly
+    bee.spawn(display);
+
+    // Blocking call until termination signal observed
+    bee.run()?;
+
+    env::remove_var(CUSTOM_ENV_VAR);
+
+    Ok(())
 }

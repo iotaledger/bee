@@ -6,4 +6,7 @@ edition = "2018"
 
 [dependencies]
 bee-core = { path = "../bee-core" }
+
 crossterm = "0.9.6"
+futures = "0.1.28"
+tokio-timer = "0.2.11"
