@@ -1,0 +1,9 @@
+[package]
+name = "bee-main"
+authors = ["IOTA Foundation developers"]
+edition = "2018"
+homepage = "https://iota.org"
+license = "Apache 2.0"
+version = "0.1.0"
+
+[dependencies]
