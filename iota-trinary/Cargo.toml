@@ -1,0 +1,8 @@
+[package]
+name = "iota-trinary"
+version = "0.1.0"
+authors = ["Yu-Wei Wu <wusyong9104@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+failure = "0.1"
