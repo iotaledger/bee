@@ -29,7 +29,6 @@ impl Trytes {
     ///
     /// let t = Trytes::new();
     /// ```
-    #[inline]
     pub fn new() -> Trytes {
         Trytes(Vec::new())
     }
@@ -62,24 +61,12 @@ impl Trytes {
     /// // ...but this may make the vector reallocate
     /// t.push('a');
     /// ```
-    #[inline]
     pub fn with_capacity(capacity: usize) -> Trytes {
         Trytes(Vec::with_capacity(capacity))
     }
 
-    #[inline]
-    pub fn from_utf8(vec: Vec<u8>) -> Result<Trytes> {
-        Self::all_tryte_alphabete(vec.iter().copied())?;
-        Ok(Trytes(vec))
-    }
-
     pub unsafe fn from_utf8_unchecked(bytes: Vec<u8>) -> Trytes {
         Trytes(bytes)
-    }
-
-    #[inline]
-    pub unsafe fn from_raw_parts(buf: *mut u8, length: usize, capacity: usize) -> Trytes {
-        Trytes(Vec::from_raw_parts(buf, length, capacity))
     }
 
     /// Converts a `Trytes` into a byte vector.
@@ -178,6 +165,32 @@ impl Trytes {
         Ok(())
     }
 
+    /// Appends the given [`char`] to the end of this `Trytes`.
+    ///
+    /// [`char`]: ../../std/primitive.char.html
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use iota_trinary::*;
+    ///
+    /// let mut t = Trytes::try_from("I").unwrap();
+    ///
+    /// t.push('O');
+    /// t.push('T');
+    /// t.push('A');
+    ///
+    /// assert_eq!("IOTA", t.as_str());
+    /// ```
+    #[inline]
+    pub fn push(&mut self, ch: char) -> Result<()> {
+        match Self::is_tryte_alphabete(ch as u8) {
+            true => self.0.push(ch as u8),
+            false => return Err(format_err!("Invalid tryte alphabete")),
+        }
+        Ok(())
+    }
+
     /// Returns this `Trytes`' capacity, in bytes.
     ///
     /// # Examples
@@ -222,32 +235,6 @@ impl Trytes {
     #[inline]
     pub fn shrink_to_fit(&mut self) {
         self.0.shrink_to_fit()
-    }
-
-    /// Appends the given [`char`] to the end of this `Trytes`.
-    ///
-    /// [`char`]: ../../std/primitive.char.html
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use iota_trinary::*;
-    ///
-    /// let mut t = Trytes::try_from("I").unwrap();
-    ///
-    /// t.push('O');
-    /// t.push('T');
-    /// t.push('A');
-    ///
-    /// assert_eq!("IOTA", t.as_str());
-    /// ```
-    #[inline]
-    pub fn push(&mut self, ch: char) -> Result<()> {
-        match Self::is_tryte_alphabete(ch as u8) {
-            true => self.0.push(ch as u8),
-            false => return Err(format_err!("Invalid tryte alphabete")),
-        }
-        Ok(())
     }
 
     /// Shorten this `Trytes` to the specified length.
@@ -401,34 +388,6 @@ impl Trytes {
         Ok(())
     }
 
-    /// Returns a mutable reference to the contents of this `Trytes`.
-    ///
-    /// # Safety
-    ///
-    /// This function is unsafe because it does not check that the bytes passed
-    /// to it are valid tryte alphabete in UTF=8. If this constraint is
-    /// violated, it may cause memory unsafety issues with future users of the
-    /// `Trytes`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use iota_trinary::*;
-    ///
-    /// let mut t = Trytes::try_from("ABC").unwrap();
-    ///
-    /// unsafe {
-    ///     let vec = t.as_mut_vec();
-    ///     assert_eq!(&[65, 66, 67][..], &vec[..]);
-    ///
-    ///     vec.reverse();
-    /// }
-    /// assert_eq!("CBA", t.as_str());
-    /// ```
-    pub unsafe fn as_mut_vec(&mut self) -> &mut Vec<u8> {
-        &mut self.0
-    }
-
     /// Returns the length of this `Trytes`, in bytes.
     ///
     /// # Examples
@@ -551,8 +510,6 @@ impl Trytes {
         }
         s
     }
-
-    // TODO: retain, drain, replace_range, into_boxed_str
 
     unsafe fn insert_bytes(&mut self, idx: usize, bytes: &[u8]) {
         let len = self.len();
@@ -771,13 +728,6 @@ impl Trinary for String {
     }
 }
 
-impl Trinary for Trytes {
-    #[inline]
-    fn to_trytes(&self) -> Result<Trytes> {
-        Ok(Trytes::from(self))
-    }
-}
-
 impl AsRef<str> for Trytes {
     #[inline]
     fn as_ref(&self) -> &str {
@@ -806,7 +756,6 @@ impl TryFrom<&str> for Trytes {
 impl TryFrom<&String> for Trytes {
     type Error = failure::Error;
 
-    #[inline]
     fn try_from(s: &String) -> Result<Trytes> {
         let bytes = s.as_bytes();
         Self::all_tryte_alphabete(bytes.iter().copied())?;
@@ -827,7 +776,6 @@ impl From<Trytes> for Vec<u8> {
 }
 
 impl fmt::Write for Trytes {
-    #[inline]
     fn write_str(&mut self, s: &str) -> fmt::Result {
         if let Err(_) = self.push_str(s) {
             return Err(fmt::Error);
@@ -835,7 +783,6 @@ impl fmt::Write for Trytes {
         Ok(())
     }
 
-    #[inline]
     fn write_char(&mut self, c: char) -> fmt::Result {
         if let Err(_) = self.push(c) {
             return Err(fmt::Error);
