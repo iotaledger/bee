@@ -17,9 +17,7 @@ pub const TRYTE_ALPHABET: [u8; 27] = [
 ];
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Trytes {
-    vec: Vec<Tryte>,
-}
+pub struct Trytes(Vec<Tryte>);
 
 impl Trytes {
     /// Creates a new empty `Trytes`.
@@ -33,7 +31,7 @@ impl Trytes {
     /// ```
     #[inline]
     pub fn new() -> Trytes {
-        Trytes { vec: Vec::new() }
+        Trytes(Vec::new())
     }
 
     /// Creates a new empty `Trytes` with a particular capacity.
@@ -66,26 +64,22 @@ impl Trytes {
     /// ```
     #[inline]
     pub fn with_capacity(capacity: usize) -> Trytes {
-        Trytes {
-            vec: Vec::with_capacity(capacity),
-        }
+        Trytes(Vec::with_capacity(capacity))
     }
 
     #[inline]
     pub fn from_utf8(vec: Vec<u8>) -> Result<Trytes> {
         Self::all_tryte_alphabete(vec.iter().copied())?;
-        Ok(Trytes { vec })
+        Ok(Trytes(vec))
     }
 
     pub unsafe fn from_utf8_unchecked(bytes: Vec<u8>) -> Trytes {
-        Trytes { vec: bytes }
+        Trytes(bytes)
     }
 
     #[inline]
     pub unsafe fn from_raw_parts(buf: *mut u8, length: usize, capacity: usize) -> Trytes {
-        Trytes {
-            vec: Vec::from_raw_parts(buf, length, capacity),
-        }
+        Trytes(Vec::from_raw_parts(buf, length, capacity))
     }
 
     /// Converts a `Trytes` into a byte vector.
@@ -104,7 +98,7 @@ impl Trytes {
     /// ```
     #[inline]
     pub fn into_bytes(self) -> Vec<u8> {
-        self.vec
+        self.0
     }
 
     /// Returns a byte slice of this `Trytes`'s contents.
@@ -124,7 +118,7 @@ impl Trytes {
     /// ```
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
-        &self.vec
+        &self.0
     }
 
     /// Extracts a string slice containing the entire `Trytes`.
@@ -140,7 +134,7 @@ impl Trytes {
     /// ```
     #[inline]
     pub fn as_str(&self) -> &str {
-        str::from_utf8(&self.vec).unwrap()
+        str::from_utf8(&self.0).unwrap()
     }
 
     /// Converts a `Trytes` into a mutable string slice.
@@ -159,7 +153,7 @@ impl Trytes {
     /// ```
     #[inline]
     pub fn as_mut_str(&mut self) -> &mut str {
-        str::from_utf8_mut(&mut self.vec).unwrap()
+        str::from_utf8_mut(&mut self.0).unwrap()
     }
 
     /// Appends a given string slice onto the end of this `Trytes`.
@@ -180,7 +174,7 @@ impl Trytes {
     pub fn push_str(&mut self, string: &str) -> Result<()> {
         let bytes = string.as_bytes();
         Self::all_tryte_alphabete(bytes.iter().copied())?;
-        self.vec.extend_from_slice(bytes);
+        self.0.extend_from_slice(bytes);
         Ok(())
     }
 
@@ -197,17 +191,17 @@ impl Trytes {
     /// ```
     #[inline]
     pub fn capacity(&self) -> usize {
-        self.vec.capacity()
+        self.0.capacity()
     }
 
     #[inline]
     pub fn reserve(&mut self, additional: usize) {
-        self.vec.reserve(additional)
+        self.0.reserve(additional)
     }
 
     #[inline]
     pub fn reserve_exact(&mut self, additional: usize) {
-        self.vec.reserve_exact(additional)
+        self.0.reserve_exact(additional)
     }
 
     /// Shrinks the capacity of this `Trytes` to match its length.
@@ -227,7 +221,7 @@ impl Trytes {
     /// ```
     #[inline]
     pub fn shrink_to_fit(&mut self) {
-        self.vec.shrink_to_fit()
+        self.0.shrink_to_fit()
     }
 
     /// Appends the given [`char`] to the end of this `Trytes`.
@@ -250,7 +244,7 @@ impl Trytes {
     #[inline]
     pub fn push(&mut self, ch: char) -> Result<()> {
         match Self::is_tryte_alphabete(ch as u8) {
-            true => self.vec.push(ch as u8),
+            true => self.0.push(ch as u8),
             false => return Err(format_err!("Invalid tryte alphabete")),
         }
         Ok(())
@@ -278,7 +272,7 @@ impl Trytes {
     #[inline]
     pub fn truncate(&mut self, new_len: usize) {
         if new_len <= self.len() {
-            self.vec.truncate(new_len)
+            self.0.truncate(new_len)
         }
     }
 
@@ -302,7 +296,7 @@ impl Trytes {
     /// ```
     #[inline]
     pub fn pop(&mut self) -> Option<char> {
-        let ch = self.vec.pop()?;
+        let ch = self.0.pop()?;
         Some(ch as char)
     }
 
@@ -335,11 +329,11 @@ impl Trytes {
         let len = self.len();
         unsafe {
             ptr::copy(
-                self.vec.as_ptr().add(next),
-                self.vec.as_mut_ptr().add(idx),
+                self.0.as_ptr().add(next),
+                self.0.as_mut_ptr().add(idx),
                 len - next,
             );
-            self.vec.set_len(len - (next - idx));
+            self.0.set_len(len - (next - idx));
         }
         ch as char
     }
@@ -432,7 +426,7 @@ impl Trytes {
     /// assert_eq!("CBA", t.as_str());
     /// ```
     pub unsafe fn as_mut_vec(&mut self) -> &mut Vec<u8> {
-        &mut self.vec
+        &mut self.0
     }
 
     /// Returns the length of this `Trytes`, in bytes.
@@ -448,7 +442,7 @@ impl Trytes {
     /// ```
     #[inline]
     pub fn len(&self) -> usize {
-        self.vec.len()
+        self.0.len()
     }
 
     /// Returns `true` if this `Trytes` has a length of zero, and `false` otherwise.
@@ -492,7 +486,7 @@ impl Trytes {
     /// ```
     #[inline]
     pub fn split_off(&mut self, at: usize) -> Trytes {
-        let other = self.vec.split_off(at);
+        let other = self.0.split_off(at);
         unsafe { Self::from_utf8_unchecked(other) }
     }
 
@@ -516,7 +510,7 @@ impl Trytes {
     /// ```
     #[inline]
     pub fn clear(&mut self) {
-        self.vec.clear()
+        self.0.clear()
     }
 
     /// Encode a string literal as bytes to trytes.
@@ -534,8 +528,8 @@ impl Trytes {
         for byte in plain.bytes() {
             let first = byte % 27;
             let second = (byte - first) / 27;
-            self.vec.push(TRYTE_ALPHABET[first as usize]);
-            self.vec.push(TRYTE_ALPHABET[second as usize]);
+            self.0.push(TRYTE_ALPHABET[first as usize]);
+            self.0.push(TRYTE_ALPHABET[second as usize]);
         }
     }
 
@@ -563,15 +557,15 @@ impl Trytes {
     unsafe fn insert_bytes(&mut self, idx: usize, bytes: &[u8]) {
         let len = self.len();
         let amt = bytes.len();
-        self.vec.reserve(amt);
+        self.0.reserve(amt);
 
         ptr::copy(
-            self.vec.as_ptr().add(idx),
-            self.vec.as_mut_ptr().add(idx + amt),
+            self.0.as_ptr().add(idx),
+            self.0.as_mut_ptr().add(idx + amt),
             len - idx,
         );
-        ptr::copy(bytes.as_ptr(), self.vec.as_mut_ptr().add(idx), amt);
-        self.vec.set_len(len + amt);
+        ptr::copy(bytes.as_ptr(), self.0.as_mut_ptr().add(idx), amt);
+        self.0.set_len(len + amt);
     }
 
     fn all_tryte_alphabete<I>(vals: I) -> Result<()>
@@ -611,7 +605,7 @@ impl Add<&Trytes> for Trytes {
 
     #[inline]
     fn add(mut self, rhs: &Trytes) -> Self::Output {
-        self.vec.extend_from_slice(rhs.as_bytes());
+        self.0.extend_from_slice(rhs.as_bytes());
         self
     }
 }
@@ -619,7 +613,7 @@ impl Add<&Trytes> for Trytes {
 impl AddAssign<&Trytes> for Trytes {
     #[inline]
     fn add_assign(&mut self, rhs: &Trytes) {
-        self.vec.extend_from_slice(rhs.as_bytes());
+        self.0.extend_from_slice(rhs.as_bytes());
     }
 }
 
@@ -664,7 +658,7 @@ impl ops::Index<ops::RangeFull> for Trytes {
 
     #[inline]
     fn index(&self, _index: ops::RangeFull) -> &Self::Output {
-        &self.vec[..]
+        &self.0[..]
     }
 }
 
@@ -717,7 +711,7 @@ impl ops::IndexMut<ops::RangeFrom<usize>> for Trytes {
 impl ops::IndexMut<ops::RangeFull> for Trytes {
     #[inline]
     fn index_mut(&mut self, _index: ops::RangeFull) -> &mut [u8] {
-        &mut self.vec[..]
+        &mut self.0[..]
     }
 }
 
@@ -740,14 +734,14 @@ impl Deref for Trytes {
 
     #[inline]
     fn deref(&self) -> &[Tryte] {
-        &self.vec[..]
+        &self.0[..]
     }
 }
 
 impl DerefMut for Trytes {
     #[inline]
     fn deref_mut(&mut self) -> &mut [Tryte] {
-        &mut self.vec[..]
+        &mut self.0[..]
     }
 }
 
@@ -805,9 +799,7 @@ impl TryFrom<&str> for Trytes {
     fn try_from(s: &str) -> Result<Trytes> {
         let bytes = s.as_bytes();
         Self::all_tryte_alphabete(bytes.iter().copied())?;
-        Ok(Trytes {
-            vec: bytes.to_vec(),
-        })
+        Ok(Trytes(bytes.to_vec()))
     }
 }
 
@@ -818,9 +810,7 @@ impl TryFrom<&String> for Trytes {
     fn try_from(s: &String) -> Result<Trytes> {
         let bytes = s.as_bytes();
         Self::all_tryte_alphabete(bytes.iter().copied())?;
-        Ok(Trytes {
-            vec: bytes.to_vec(),
-        })
+        Ok(Trytes(bytes.to_vec()))
     }
 }
 
