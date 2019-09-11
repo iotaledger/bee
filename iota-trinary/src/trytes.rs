@@ -1,4 +1,5 @@
-use alloc::{string::String, vec::Vec};
+use alloc::string::String;
+use bytes::{BufMut, BytesMut};
 use core::ops::{self, Add, AddAssign, Deref, DerefMut, Index, IndexMut};
 use core::str::{self, FromStr};
 use core::{fmt, ptr};
@@ -17,7 +18,7 @@ pub const TRYTE_ALPHABET: [u8; 27] = [
 ];
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Trytes(Vec<Tryte>);
+pub struct Trytes(BytesMut);
 
 impl Trytes {
     /// Creates a new empty `Trytes`.
@@ -30,7 +31,7 @@ impl Trytes {
     /// let t = Trytes::new();
     /// ```
     pub fn new() -> Trytes {
-        Trytes(Vec::new())
+        Trytes(BytesMut::new())
     }
 
     /// Creates a new empty `Trytes` with a particular capacity.
@@ -62,30 +63,7 @@ impl Trytes {
     /// t.push('a');
     /// ```
     pub fn with_capacity(capacity: usize) -> Trytes {
-        Trytes(Vec::with_capacity(capacity))
-    }
-
-    pub unsafe fn from_utf8_unchecked(bytes: Vec<u8>) -> Trytes {
-        Trytes(bytes)
-    }
-
-    /// Converts a `Trytes` into a byte vector.
-    ///
-    /// This consumes the `Trytes`, so we do not need to copy its contents.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use iota_trinary::*;
-    ///
-    /// let t = Trytes::try_from("ABCD").unwrap();
-    /// let bytes = t.into_bytes();
-    ///
-    /// assert_eq!(&[65, 66, 67, 68][..], &bytes[..]);
-    /// ```
-    #[inline]
-    pub fn into_bytes(self) -> Vec<u8> {
-        self.0
+        Trytes(BytesMut::with_capacity(capacity))
     }
 
     /// Returns a byte slice of this `Trytes`'s contents.
@@ -103,9 +81,8 @@ impl Trytes {
     ///
     /// assert_eq!(&[65, 66, 67, 68], t.as_bytes());
     /// ```
-    #[inline]
     pub fn as_bytes(&self) -> &[u8] {
-        &self.0
+        &self.0.as_ref()
     }
 
     /// Extracts a string slice containing the entire `Trytes`.
@@ -119,9 +96,8 @@ impl Trytes {
     ///
     /// assert_eq!("FOO", t.as_str());
     /// ```
-    #[inline]
     pub fn as_str(&self) -> &str {
-        str::from_utf8(&self.0).unwrap()
+        unsafe { str::from_utf8_unchecked(&self.0) }
     }
 
     /// Converts a `Trytes` into a mutable string slice.
@@ -138,9 +114,8 @@ impl Trytes {
     ///
     /// assert_eq!("foo", s_mut_str);
     /// ```
-    #[inline]
     pub fn as_mut_str(&mut self) -> &mut str {
-        str::from_utf8_mut(&mut self.0).unwrap()
+        unsafe { str::from_utf8_unchecked_mut(&mut self.0) }
     }
 
     /// Appends a given string slice onto the end of this `Trytes`.
@@ -157,7 +132,6 @@ impl Trytes {
     ///
     /// assert_eq!(t, t2);
     /// ```
-    #[inline]
     pub fn push_str(&mut self, string: &str) -> Result<()> {
         let bytes = string.as_bytes();
         Self::all_tryte_alphabete(bytes.iter().copied())?;
@@ -182,10 +156,9 @@ impl Trytes {
     ///
     /// assert_eq!("IOTA", t.as_str());
     /// ```
-    #[inline]
     pub fn push(&mut self, ch: char) -> Result<()> {
         match Self::is_tryte_alphabete(ch as u8) {
-            true => self.0.push(ch as u8),
+            true => self.0.put(ch as u8),
             false => return Err(format_err!("Invalid tryte alphabete")),
         }
         Ok(())
@@ -202,39 +175,12 @@ impl Trytes {
     ///
     /// assert!(t.capacity() >= 10);
     /// ```
-    #[inline]
     pub fn capacity(&self) -> usize {
         self.0.capacity()
     }
 
-    #[inline]
     pub fn reserve(&mut self, additional: usize) {
         self.0.reserve(additional)
-    }
-
-    #[inline]
-    pub fn reserve_exact(&mut self, additional: usize) {
-        self.0.reserve_exact(additional)
-    }
-
-    /// Shrinks the capacity of this `Trytes` to match its length.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use iota_trinary::*;
-    ///
-    /// let mut t = Trytes::try_from("FOO").unwrap();
-    ///
-    /// t.reserve(100);
-    /// assert!(t.capacity() >= 100);
-    ///
-    /// t.shrink_to_fit();
-    /// assert_eq!(3, t.capacity());
-    /// ```
-    #[inline]
-    pub fn shrink_to_fit(&mut self) {
-        self.0.shrink_to_fit()
     }
 
     /// Shorten this `Trytes` to the specified length.
@@ -256,35 +202,10 @@ impl Trytes {
     ///
     /// assert_eq!("IO", t.as_str());
     /// ```
-    #[inline]
     pub fn truncate(&mut self, new_len: usize) {
         if new_len <= self.len() {
             self.0.truncate(new_len)
         }
-    }
-
-    /// Removes the last character from the string buffer and returns it.
-    ///
-    /// Returns [`None`] if this `String` is empty.
-    ///
-    /// [`None`]: ../../std/option/enum.Option.html#variant.None
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use iota_trinary::*;
-    ///
-    /// let mut t = Trytes::try_from("ABC").unwrap();
-    ///
-    /// assert_eq!(t.pop(), Some('C'));
-    /// assert_eq!(t.pop(), Some('B'));
-    /// assert_eq!(t.pop(), Some('A'));
-    /// assert_eq!(t.pop(), None);
-    /// ```
-    #[inline]
-    pub fn pop(&mut self) -> Option<char> {
-        let ch = self.0.pop()?;
-        Some(ch as char)
     }
 
     /// Removes a [`char`] from this `Trytes` at a byte position and returns it.
@@ -347,7 +268,6 @@ impl Trytes {
     ///
     /// assert_eq!("BEE", t.as_str());
     /// ```
-    #[inline]
     pub fn insert(&mut self, idx: usize, ch: char) -> Result<()> {
         match Self::is_tryte_alphabete(ch as u8) {
             true => unsafe {
@@ -378,7 +298,6 @@ impl Trytes {
     ///
     /// assert_eq!("FOOBAR", t.as_str());
     /// ```
-    #[inline]
     pub fn insert_str(&mut self, idx: usize, string: &str) -> Result<()> {
         let bytes = string.as_bytes();
         Self::all_tryte_alphabete(bytes.iter().copied())?;
@@ -399,7 +318,6 @@ impl Trytes {
     ///
     /// assert_eq!(t.len(), 3);
     /// ```
-    #[inline]
     pub fn len(&self) -> usize {
         self.0.len()
     }
@@ -417,7 +335,6 @@ impl Trytes {
     /// t.push('9');
     /// assert!(!t.is_empty());
     /// ```
-    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -443,10 +360,9 @@ impl Trytes {
     /// assert_eq!(t.as_str(), "IO");
     /// assert_eq!(t2.as_str(), "TA");
     /// ```
-    #[inline]
     pub fn split_off(&mut self, at: usize) -> Trytes {
         let other = self.0.split_off(at);
-        unsafe { Self::from_utf8_unchecked(other) }
+        Trytes(other)
     }
 
     /// Truncates this `Trytes`, removing all contents.
@@ -465,9 +381,7 @@ impl Trytes {
     ///
     /// assert!(t.is_empty());
     /// assert_eq!(0, t.len());
-    /// assert_eq!(3, t.capacity());
     /// ```
-    #[inline]
     pub fn clear(&mut self) {
         self.0.clear()
     }
@@ -487,8 +401,8 @@ impl Trytes {
         for byte in plain.bytes() {
             let first = byte % 27;
             let second = (byte - first) / 27;
-            self.0.push(TRYTE_ALPHABET[first as usize]);
-            self.0.push(TRYTE_ALPHABET[second as usize]);
+            self.0.put(TRYTE_ALPHABET[first as usize]);
+            self.0.put(TRYTE_ALPHABET[second as usize]);
         }
     }
 
@@ -544,14 +458,12 @@ impl Trytes {
 
 impl Default for Trytes {
     /// Creates an empty `Trytes`.
-    #[inline]
     fn default() -> Trytes {
         Trytes::new()
     }
 }
 
 impl fmt::Display for Trytes {
-    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
@@ -560,7 +472,6 @@ impl fmt::Display for Trytes {
 impl Add<&Trytes> for Trytes {
     type Output = Trytes;
 
-    #[inline]
     fn add(mut self, rhs: &Trytes) -> Self::Output {
         self.0.extend_from_slice(rhs.as_bytes());
         self
@@ -568,7 +479,6 @@ impl Add<&Trytes> for Trytes {
 }
 
 impl AddAssign<&Trytes> for Trytes {
-    #[inline]
     fn add_assign(&mut self, rhs: &Trytes) {
         self.0.extend_from_slice(rhs.as_bytes());
     }
@@ -577,7 +487,6 @@ impl AddAssign<&Trytes> for Trytes {
 impl ops::Index<usize> for Trytes {
     type Output = u8;
 
-    #[inline]
     fn index(&self, index: usize) -> &Self::Output {
         &self[..][index]
     }
@@ -586,7 +495,6 @@ impl ops::Index<usize> for Trytes {
 impl ops::Index<ops::Range<usize>> for Trytes {
     type Output = [u8];
 
-    #[inline]
     fn index(&self, index: ops::Range<usize>) -> &Self::Output {
         &self[..][index]
     }
@@ -595,7 +503,6 @@ impl ops::Index<ops::Range<usize>> for Trytes {
 impl ops::Index<ops::RangeTo<usize>> for Trytes {
     type Output = [u8];
 
-    #[inline]
     fn index(&self, index: ops::RangeTo<usize>) -> &Self::Output {
         &self[..][index]
     }
@@ -604,7 +511,6 @@ impl ops::Index<ops::RangeTo<usize>> for Trytes {
 impl ops::Index<ops::RangeFrom<usize>> for Trytes {
     type Output = [u8];
 
-    #[inline]
     fn index(&self, index: ops::RangeFrom<usize>) -> &Self::Output {
         &self[..][index]
     }
@@ -613,7 +519,6 @@ impl ops::Index<ops::RangeFrom<usize>> for Trytes {
 impl ops::Index<ops::RangeFull> for Trytes {
     type Output = [u8];
 
-    #[inline]
     fn index(&self, _index: ops::RangeFull) -> &Self::Output {
         &self.0[..]
     }
@@ -622,7 +527,6 @@ impl ops::Index<ops::RangeFull> for Trytes {
 impl ops::Index<ops::RangeInclusive<usize>> for Trytes {
     type Output = [u8];
 
-    #[inline]
     fn index(&self, index: ops::RangeInclusive<usize>) -> &Self::Output {
         Index::index(&**self, index)
     }
@@ -631,56 +535,48 @@ impl ops::Index<ops::RangeInclusive<usize>> for Trytes {
 impl ops::Index<ops::RangeToInclusive<usize>> for Trytes {
     type Output = [u8];
 
-    #[inline]
     fn index(&self, index: ops::RangeToInclusive<usize>) -> &Self::Output {
         Index::index(&**self, index)
     }
 }
 
 impl ops::IndexMut<usize> for Trytes {
-    #[inline]
     fn index_mut(&mut self, index: usize) -> &mut u8 {
         &mut self[..][index]
     }
 }
 
 impl ops::IndexMut<ops::Range<usize>> for Trytes {
-    #[inline]
     fn index_mut(&mut self, index: ops::Range<usize>) -> &mut [u8] {
         &mut self[..][index]
     }
 }
 
 impl ops::IndexMut<ops::RangeTo<usize>> for Trytes {
-    #[inline]
     fn index_mut(&mut self, index: ops::RangeTo<usize>) -> &mut [u8] {
         &mut self[..][index]
     }
 }
 
 impl ops::IndexMut<ops::RangeFrom<usize>> for Trytes {
-    #[inline]
     fn index_mut(&mut self, index: ops::RangeFrom<usize>) -> &mut [u8] {
         &mut self[..][index]
     }
 }
 
 impl ops::IndexMut<ops::RangeFull> for Trytes {
-    #[inline]
     fn index_mut(&mut self, _index: ops::RangeFull) -> &mut [u8] {
         &mut self.0[..]
     }
 }
 
 impl ops::IndexMut<ops::RangeInclusive<usize>> for Trytes {
-    #[inline]
     fn index_mut(&mut self, index: ops::RangeInclusive<usize>) -> &mut [u8] {
         IndexMut::index_mut(&mut **self, index)
     }
 }
 
 impl ops::IndexMut<ops::RangeToInclusive<usize>> for Trytes {
-    #[inline]
     fn index_mut(&mut self, index: ops::RangeToInclusive<usize>) -> &mut [u8] {
         IndexMut::index_mut(&mut **self, index)
     }
@@ -689,14 +585,12 @@ impl ops::IndexMut<ops::RangeToInclusive<usize>> for Trytes {
 impl Deref for Trytes {
     type Target = [Tryte];
 
-    #[inline]
     fn deref(&self) -> &[Tryte] {
         &self.0[..]
     }
 }
 
 impl DerefMut for Trytes {
-    #[inline]
     fn deref_mut(&mut self) -> &mut [Tryte] {
         &mut self.0[..]
     }
@@ -715,28 +609,24 @@ pub trait Trinary {
 }
 
 impl Trinary for str {
-    #[inline]
     fn to_trytes(&self) -> Result<Trytes> {
         Trytes::try_from(self)
     }
 }
 
 impl Trinary for String {
-    #[inline]
     fn to_trytes(&self) -> Result<Trytes> {
         Trytes::try_from(self)
     }
 }
 
 impl AsRef<str> for Trytes {
-    #[inline]
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
 impl AsRef<[u8]> for Trytes {
-    #[inline]
     fn as_ref(&self) -> &[u8] {
         self.as_bytes()
     }
@@ -745,11 +635,10 @@ impl AsRef<[u8]> for Trytes {
 impl TryFrom<&str> for Trytes {
     type Error = failure::Error;
 
-    #[inline]
     fn try_from(s: &str) -> Result<Trytes> {
         let bytes = s.as_bytes();
         Self::all_tryte_alphabete(bytes.iter().copied())?;
-        Ok(Trytes(bytes.to_vec()))
+        Ok(Trytes(BytesMut::from(bytes)))
     }
 }
 
@@ -759,19 +648,13 @@ impl TryFrom<&String> for Trytes {
     fn try_from(s: &String) -> Result<Trytes> {
         let bytes = s.as_bytes();
         Self::all_tryte_alphabete(bytes.iter().copied())?;
-        Ok(Trytes(bytes.to_vec()))
+        Ok(Trytes(BytesMut::from(bytes)))
     }
 }
 
 impl From<&Trytes> for Trytes {
     fn from(trytes: &Trytes) -> Trytes {
         trytes.clone()
-    }
-}
-
-impl From<Trytes> for Vec<u8> {
-    fn from(trytes: Trytes) -> Vec<u8> {
-        trytes.into_bytes()
     }
 }
 
