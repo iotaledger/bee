@@ -12,7 +12,7 @@ pub type Tryte = u8;
 
 /// A char array holding all acceptable characters in the tryte
 /// alphabet. Used because strings can't be cheaply indexed in rust.
-pub const TRYTE_ALPHABET: [u8; 27] = [
+pub(crate) const TRYTE_ALPHABET: [u8; 27] = [
     57, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
     88, 89, 90,
 ];
@@ -30,7 +30,7 @@ impl Trytes {
     ///
     /// let t = Trytes::new();
     /// ```
-    pub fn new() -> Trytes {
+    pub fn new() -> Self {
         Trytes(BytesMut::new())
     }
 
@@ -62,7 +62,7 @@ impl Trytes {
     /// // ...but this may make the vector reallocate
     /// t.push('a');
     /// ```
-    pub fn with_capacity(capacity: usize) -> Trytes {
+    pub fn with_capacity(capacity: usize) -> Self {
         Trytes(BytesMut::with_capacity(capacity))
     }
 
@@ -360,7 +360,7 @@ impl Trytes {
     /// assert_eq!(t.as_str(), "IO");
     /// assert_eq!(t2.as_str(), "TA");
     /// ```
-    pub fn split_off(&mut self, at: usize) -> Trytes {
+    pub fn split_off(&mut self, at: usize) -> Self {
         let other = self.0.split_off(at);
         Trytes(other)
     }
@@ -585,13 +585,13 @@ impl ops::IndexMut<ops::RangeToInclusive<usize>> for Trytes {
 impl Deref for Trytes {
     type Target = [Tryte];
 
-    fn deref(&self) -> &[Tryte] {
+    fn deref(&self) -> &Self::Target {
         &self.0[..]
     }
 }
 
 impl DerefMut for Trytes {
-    fn deref_mut(&mut self) -> &mut [Tryte] {
+    fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0[..]
     }
 }
@@ -599,7 +599,7 @@ impl DerefMut for Trytes {
 impl FromStr for Trytes {
     type Err = failure::Error;
 
-    fn from_str(s: &str) -> Result<Trytes> {
+    fn from_str(s: &str) -> Result<Self> {
         Ok(Trytes::try_from(s)?)
     }
 }
@@ -635,7 +635,7 @@ impl AsRef<[u8]> for Trytes {
 impl TryFrom<&str> for Trytes {
     type Error = failure::Error;
 
-    fn try_from(s: &str) -> Result<Trytes> {
+    fn try_from(s: &str) -> Result<Self> {
         let bytes = s.as_bytes();
         Self::all_tryte_alphabete(bytes.iter().copied())?;
         Ok(Trytes(BytesMut::from(bytes)))
@@ -645,7 +645,7 @@ impl TryFrom<&str> for Trytes {
 impl TryFrom<&String> for Trytes {
     type Error = failure::Error;
 
-    fn try_from(s: &String) -> Result<Trytes> {
+    fn try_from(s: &String) -> Result<Self> {
         let bytes = s.as_bytes();
         Self::all_tryte_alphabete(bytes.iter().copied())?;
         Ok(Trytes(BytesMut::from(bytes)))
