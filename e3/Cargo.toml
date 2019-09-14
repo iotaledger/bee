@@ -1,0 +1,14 @@
+[package]
+name = "e3"
+version = "0.1.0"
+authors = ["Alexander Schmidt <alexander.schmidt@iota.org>"]
+edition = "2018"
+
+[dependencies]
+bus = "2.2"
+tokio = { version = "0.1", features = ["rt-full"] }
+crossbeam-channel = "0.3"
+uuid = { version = "0.7", features = ["v4" ] }
+tokio-signal = "0.2"
+lazy_static = "1.4"
+futures = "0.1"
