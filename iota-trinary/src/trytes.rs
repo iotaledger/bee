@@ -1,21 +1,21 @@
 use alloc::string::String;
 use bytes::{BufMut, BytesMut};
-use core::ops::{self, Add, AddAssign, Deref, DerefMut, Index, IndexMut};
+use core::ops::{self, Add, AddAssign, Deref, Index};
 use core::str::{self, FromStr};
 use core::{fmt, ptr};
 
 pub use core::convert::TryFrom;
 
-use crate::Result;
+type Result<T> = core::result::Result<T, TrytesError>;
+
+#[derive(Debug)]
+pub enum TrytesError {
+    InvalidTryteStr,
+    InvalidTryteChar,
+    DecodeLength,
+}
 
 pub type Tryte = u8;
-
-/// A char array holding all acceptable characters in the tryte
-/// alphabet. Used because strings can't be cheaply indexed in rust.
-pub(crate) const TRYTE_ALPHABET: [u8; 27] = [
-    57, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
-    88, 89, 90,
-];
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Trytes(BytesMut);
@@ -159,7 +159,7 @@ impl Trytes {
     pub fn push(&mut self, ch: char) -> Result<()> {
         match Self::is_tryte_alphabete(ch as u8) {
             true => self.0.put(ch as u8),
-            false => return Err(format_err!("Invalid tryte alphabete")),
+            false => return Err(TrytesError::InvalidTryteChar),
         }
         Ok(())
     }
@@ -273,7 +273,7 @@ impl Trytes {
             true => unsafe {
                 self.insert_bytes(idx, &[ch as u8]);
             },
-            false => return Err(format_err!("Invalid tryte alphabete")),
+            false => return Err(TrytesError::InvalidTryteChar),
         }
         Ok(())
     }
@@ -386,7 +386,7 @@ impl Trytes {
         self.0.clear()
     }
 
-    /// Append encoding a string literal as bytes to trytes.
+    /// Append encoded string literal as bytes to trytes.
     ///
     /// ```
     /// use iota_trinary::*;
@@ -401,8 +401,8 @@ impl Trytes {
         for byte in plain.bytes() {
             let first = byte % 27;
             let second = (byte - first) / 27;
-            self.0.put(TRYTE_ALPHABET[first as usize]);
-            self.0.put(TRYTE_ALPHABET[second as usize]);
+            self.0.put(Self::encode_from_index(first).unwrap());
+            self.0.put(Self::encode_from_index(second).unwrap());
         }
     }
 
@@ -411,18 +411,24 @@ impl Trytes {
     ///
     /// let t = Trytes::try_from("VBCDFDTCAD").unwrap();
     ///
-    /// assert_eq!("Lorem", t.decode());
+    /// assert_eq!("Lorem", t.decode().unwrap());
     /// ```
-    pub fn decode(&self) -> String {
-        let mut s = String::with_capacity(self.len() / 2);
-        for slice in self.chunks(2) {
-            let first = TRYTE_ALPHABET.iter().position(|&x| x == slice[0]).unwrap() as u8;
-            let second = TRYTE_ALPHABET.iter().position(|&x| x == slice[1]).unwrap() as u8;
-            let decimal = first + second * 27;
+    pub fn decode(&self) -> Result<String> {
+        match self.len() & 0b1 {
+            0 => {
+                let mut s = String::with_capacity(self.len() / 2);
+                for slice in self.chunks(2) {
+                    let first = Self::decode_to_byte(slice[0]).unwrap();
+                    let second = Self::decode_to_byte(slice[1]).unwrap();
+                    let decimal = first + second * 27;
 
-            s.push(decimal as char);
+                    s.push(decimal as char);
+                }
+                Ok(s)
+            },
+            _ => Err(TrytesError::DecodeLength),
+            
         }
-        s
     }
 
     unsafe fn insert_bytes(&mut self, idx: usize, bytes: &[u8]) {
@@ -441,8 +447,11 @@ impl Trytes {
 
     fn all_tryte_alphabete(vals: impl Iterator<Item=u8>) -> Result<()> {
         let mut v = vals;
-        ensure!(v.all(Self::is_tryte_alphabete), "Invalid trytes alphabete.");
-        Ok(())
+        match v.all(Self::is_tryte_alphabete) {
+            true => Ok(()),
+            false => Err(TrytesError::InvalidTryteStr),
+        }
+        
     }
 
     fn is_tryte_alphabete(t: u8) -> bool {
@@ -452,13 +461,21 @@ impl Trytes {
         }
     }
 
-    fn char_to_tryte(c: char) -> Option<Tryte> {
-    match c {
-        'A'...'Z' => Some(c as u8 - b'A'),
-        '9' => Some(26),
-        _ => None,
+    fn decode_to_byte(t: Tryte) -> Option<u8> {
+        match t {
+            65..=90 => Some(t - 64),
+            57 => Some(0),
+            _ => None,
+        }
     }
-}
+
+    fn encode_from_index(b: u8) -> Option<Tryte> {
+        match b {
+            1..=26 => Some(b + 64),
+            0 => Some(57),
+            _ => None,
+        }
+    }
 }
 
 impl Default for Trytes {
@@ -554,7 +571,7 @@ impl Deref for Trytes {
 }
 
 impl FromStr for Trytes {
-    type Err = failure::Error;
+    type Err = TrytesError;
 
     fn from_str(s: &str) -> Result<Self> {
         Ok(Trytes::try_from(s)?)
@@ -590,7 +607,7 @@ impl AsRef<[u8]> for Trytes {
 }
 
 impl TryFrom<&str> for Trytes {
-    type Error = failure::Error;
+    type Error = TrytesError;
 
     fn try_from(s: &str) -> Result<Self> {
         let bytes = s.as_bytes();
@@ -600,7 +617,7 @@ impl TryFrom<&str> for Trytes {
 }
 
 impl TryFrom<&String> for Trytes {
-    type Error = failure::Error;
+    type Error = TrytesError;
 
     fn try_from(s: &String) -> Result<Self> {
         let bytes = s.as_bytes();

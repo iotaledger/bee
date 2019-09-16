@@ -6,4 +6,3 @@ edition = "2018"
 
 [dependencies]
 bytes = "0.4"
-failure = "0.1"
