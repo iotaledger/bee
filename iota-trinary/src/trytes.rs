@@ -386,18 +386,18 @@ impl Trytes {
         self.0.clear()
     }
 
-    /// Encode a string literal as bytes to trytes.
+    /// Append encoding a string literal as bytes to trytes.
     ///
     /// ```
     /// use iota_trinary::*;
     ///
     /// let mut t = Trytes::new();
     ///
-    /// t.encode("Lorem");
+    /// t.append_encoding("Lorem");
     ///
     /// assert_eq!("VBCDFDTCAD", t.as_str());
     /// ```
-    pub fn encode(&mut self, plain: &str) {
+    pub fn append_encoding(&mut self, plain: &str) {
         for byte in plain.bytes() {
             let first = byte % 27;
             let second = (byte - first) / 27;
@@ -416,8 +416,8 @@ impl Trytes {
     pub fn decode(&self) -> String {
         let mut s = String::with_capacity(self.len() / 2);
         for slice in self.chunks(2) {
-            let first: u8 = TRYTE_ALPHABET.iter().position(|&x| x == slice[0]).unwrap() as u8;
-            let second: u8 = TRYTE_ALPHABET.iter().position(|&x| x == slice[1]).unwrap() as u8;
+            let first = TRYTE_ALPHABET.iter().position(|&x| x == slice[0]).unwrap() as u8;
+            let second = TRYTE_ALPHABET.iter().position(|&x| x == slice[1]).unwrap() as u8;
             let decimal = first + second * 27;
 
             s.push(decimal as char);
@@ -439,10 +439,7 @@ impl Trytes {
         self.0.set_len(len + amt);
     }
 
-    fn all_tryte_alphabete<I>(vals: I) -> Result<()>
-    where
-        I: Iterator<Item = u8>,
-    {
+    fn all_tryte_alphabete(vals: impl Iterator<Item=u8>) -> Result<()> {
         let mut v = vals;
         ensure!(v.all(Self::is_tryte_alphabete), "Invalid trytes alphabete.");
         Ok(())
@@ -454,6 +451,14 @@ impl Trytes {
             _ => false,
         }
     }
+
+    fn char_to_tryte(c: char) -> Option<Tryte> {
+    match c {
+        'A'...'Z' => Some(c as u8 - b'A'),
+        '9' => Some(26),
+        _ => None,
+    }
+}
 }
 
 impl Default for Trytes {
@@ -540,59 +545,11 @@ impl ops::Index<ops::RangeToInclusive<usize>> for Trytes {
     }
 }
 
-impl ops::IndexMut<usize> for Trytes {
-    fn index_mut(&mut self, index: usize) -> &mut u8 {
-        &mut self[..][index]
-    }
-}
-
-impl ops::IndexMut<ops::Range<usize>> for Trytes {
-    fn index_mut(&mut self, index: ops::Range<usize>) -> &mut [u8] {
-        &mut self[..][index]
-    }
-}
-
-impl ops::IndexMut<ops::RangeTo<usize>> for Trytes {
-    fn index_mut(&mut self, index: ops::RangeTo<usize>) -> &mut [u8] {
-        &mut self[..][index]
-    }
-}
-
-impl ops::IndexMut<ops::RangeFrom<usize>> for Trytes {
-    fn index_mut(&mut self, index: ops::RangeFrom<usize>) -> &mut [u8] {
-        &mut self[..][index]
-    }
-}
-
-impl ops::IndexMut<ops::RangeFull> for Trytes {
-    fn index_mut(&mut self, _index: ops::RangeFull) -> &mut [u8] {
-        &mut self.0[..]
-    }
-}
-
-impl ops::IndexMut<ops::RangeInclusive<usize>> for Trytes {
-    fn index_mut(&mut self, index: ops::RangeInclusive<usize>) -> &mut [u8] {
-        IndexMut::index_mut(&mut **self, index)
-    }
-}
-
-impl ops::IndexMut<ops::RangeToInclusive<usize>> for Trytes {
-    fn index_mut(&mut self, index: ops::RangeToInclusive<usize>) -> &mut [u8] {
-        IndexMut::index_mut(&mut **self, index)
-    }
-}
-
 impl Deref for Trytes {
     type Target = [Tryte];
 
     fn deref(&self) -> &Self::Target {
         &self.0[..]
-    }
-}
-
-impl DerefMut for Trytes {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0[..]
     }
 }
 
