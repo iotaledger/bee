@@ -1,9 +1,49 @@
-# Basic Workflow Document (proposal/draft)
+# Contributing to bee
 
-This document outlines the development process of the `bee` project and related
-crates.
+This document outlines the development process of the `bee` project and its
+constituent crates. It explains how its core development team operates, and
+how community members can contribute.
 
-## Project Management
+## Outline
+
++ Language
++ Features, issues, pull requests
++ Documentation and comments
++ Formatting
++ Versioning
++ Testing
++ Toolchains and suppported platforms
++ Compiler Settings
++ Commit Messages
++ PR guidelines and workflow
++ On `unsafe`
++ Continuous Integration (open for discussion)
++ License
+
+## Language
+
+At this time, the `bee` framework is implemented in the Rust programming language.
+All software documentation, and comments, and all communication between contributors
+is to be held in English.
+
+## Features, issues, pull requests
+
+If you want to propose a new feature, we ask you to write an RFC (Request for
+Comments) document and submit it in the form of a pull request to the
+[`iotaledger/bee-rfcs`](https://github.com/iotaledger/bee-rfcs) repository. The
+readme of that repository outlines all necessary steps.
+
+If there is a new feature in the form of an accepted RFC waiting to be
+implemented, please comment on its tracking issue to indicate your interest to
+avoid double work.
+
+If you find a bug in one of the crates, please open a Github issue on the
+[`iotaledger/bee`](https://github.com/iotaledger/bee) repository. Please also
+open an issue prior to submitting a bugfix.
+
+Minor cosmetic changes like fixing a typo or the wording of a comment or piece
+of documentation can but do not need to have an issue opened prior to providing
+a fix.
 
 New features should enter the project by opening an issue in the github
 repository. The issue should outline the intent and functionality, and steps
@@ -11,11 +51,6 @@ required to implement it. If the feature is more involved, consider splitting
 it up into several distinct pieces, creating one issue for each piece. You can
 then create a super issue referencing all individual pieces so that other
 contributors can keep track.
-
-The IOTA team will make use of Zenhub, which allows the creation of so-called
-epics as super-issues.
-
-**NOTE:** Can we integrate external contributors in zenhub?
 
 ## Documentation and comments
 
@@ -28,13 +63,9 @@ unavoidable.
 Try to keep code comments to a minimum. If code needs to be commented to
 explain its function it can probably be refactored and be made more simple.
 
-## Language
-
-`bee` is primarily developed in the Rust programming language.
-
 ## Formatting
 
-`rustfmt` will be the canonical source of truth for formatting. We use the
+`rustfmt` is the canonical source of truth for formatting. We use the
 default formatting options as defined by `rustfmt`, except for `edition
 = "2018"`.
 
@@ -64,17 +95,17 @@ a piece of code.
 
 ## Toolchains and suppported platforms
 
-At the moment, we aim to support `x86_64`
-[Rust Tier 1 platforms](https://forge.rust-lang.org/platform-support.html).
+At the moment, all `x86_64`
+[Rust Tier 1 platforms](https://forge.rust-lang.org/platform-support.html) are supported.
+Code that doesn't compile or pass testing on either of these platforms will not be merged.
 
-Testing will be done against Linux, MacOS, and Windows, and all code should compile
-against these three platforms.
+Testing will be done against Linux, MacOS, and Windows.
 
 ## Compiler Settings
 
 We stick with the default `rustc` lints, except for the ones mentioned below.
 To not interfer with development, these lints are merely warnings. In PRs these
-will be denied. 
+will be denied using the setting `RUSTFLAGS="-D warnings"`.
 
 ```rust
 #![warn(
@@ -85,10 +116,14 @@ will be denied.
 )]
 ```
 
+
 ## Commit Messages
 
-Follow the guidelines laid out in
-[Conventional Commits v1.0.0-beta.2](https://www.conventionalcommits.org/en/v1.0.0-beta.2/)
+Commit messages should clearly outline what has been implemented or changed. If
+a commit addresses an issue opened in the repository, it should contain one of
+the closing keywords as outlined
+[here](https://help.github.com/en/articles/closing-issues-using-keywords), for
+example `close`, `fix`, or `resolve`.
 
 ## PR guidelines and workflow
 
@@ -97,20 +132,19 @@ Prior to merging a pull request, the following conditions have to be fulfilled:
 + A pull request should have exactly one concern (one feature, one bug, etc)
     + if a PR attempts to address more than one concern, it should be split
       into two or more PRs 
-+ All commits should be signed
+    + A new feature can only be implemented if it has an accompanying accepted
+      RFC and an associated tracking issue, which the PR has to reference.
+    + A bug fix can only be merged if there is an accompanying issue raising it.i
 + All code should be well tested
     + what constitutes “well tested” is at the descretion of the author. It is
       suggested to follow TDD when coding. In case of doubt, the review process
       will determine if the implemented tests are sufficient.
 + A PR should be squashed into one commit and have a descriptive message on
   what the code does (see the section on Commit messages)
-+ All public interfaces have to be properly tested (see the section on documentation
-  and comments)
 + All code should be formatted according to the current `rustfmt` settings
-+ Code using `unsafe` will be rejected unless usage is absolutely necessary and
-  justified.
-+ Building and testing in CI have to pass
-+ Only PRs that underwent review by two or more maintainers will be merged
++ Code using `unsafe` will be rejected unless usage is necessary and justified.
++ CI Builds and tests have to pass.
++ Only PRs that underwent review by at least one core maintainer will be merged.
 
 The typical life cycle of a new pull request looks like this:
 
@@ -126,23 +160,12 @@ The typical life cycle of a new pull request looks like this:
 For now, we will merge PRs manually. Once the project grows in size and it
 becomes necessary, we will introduce a mergebot such as `bors-ng`.
 
-## On usage of `unsafe`
+## On `unsafe`
 
 Usage of `unsafe` Rust is discouraged. Code that uses it will be rejected
 unless it is absolutely necessary and justified by the author.
 
 This also extends to dependencies pulled into the project.
-
-## Continuous Integration (open for discussion)
-
-We use `buildkite` for our CI needs, because it is very flexible, can support
-building and testing against all relevant platforms, and because other IOTA
-teams are already using it and we have in-house experience.
-
-For now, CI will be run with the following rustc lints set via the `RUSTFLAGS`
-environment variable:
-
-+ `RUSTFLAGS="-W rustdoc -W missing-docs -D warnings"`
 
 ## License
 
