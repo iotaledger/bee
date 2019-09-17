@@ -148,14 +148,6 @@ environment variable:
 
 + `RUSTFLAGS="-W rustdoc -W missing-docs -D warnings"`
 
-## Code of conduct
-
-**NOTE:** Which CoC should we adopt? Suggestions include:
-
-+ https://berlincodeofconduct.org/
-+ https://opensourcedesign.net/code-of-conduct/
-+ https://www.rust-lang.org/policies/code-of-conduct
-
 ## License
 
 To be compatible with the guidelines of the Eclipse foundation, all code is to
