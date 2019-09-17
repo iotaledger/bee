@@ -3,10 +3,6 @@
 This document outlines the development process of the `bee` project and related
 crates.
 
-## Intended Audience
-
-Bee developers and contributors.
-
 ## Project Management
 
 New features should enter the project by opening an issue in the github
