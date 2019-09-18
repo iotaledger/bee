@@ -134,7 +134,7 @@ Prior to merging a pull request, the following conditions have to be fulfilled:
       into two or more PRs 
     + A new feature can only be implemented if it has an accompanying accepted
       RFC and an associated tracking issue, which the PR has to reference.
-    + A bug fix can only be merged if there is an accompanying issue raising it.i
+    + A bug fix can only be merged if there is an accompanying issue raising it.
 + All code should be well tested
     + what constitutes “well tested” is at the descretion of the author. It is
       suggested to follow TDD when coding. In case of doubt, the review process
