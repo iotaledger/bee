@@ -109,13 +109,45 @@ This section guides you through submitting a pull request (PR). Following these 
 
 ### Before submitting a pull request
 
-When creating a pull request, please follow these steps to have your contribution considered by the maintainers:
+Before submitting a pull request, please follow these steps to have your contribution considered by the maintainers:
 
 - A pull request should have exactly one concern (for example one feature or one bug). If a PR addresses more than one concern, it should be split into two or more PRs.
 
 - A pull request can be merged only if it references an open issue
 
-    **Note:** Minor changes such as fixing a typo can but do not need an open issue.
+    **Note:** You don't need to open an issue for minor changes such as typos, but you can if you want.
+
+- All public interfaces should have descriptive documentation, including an
+example that compiles and passes [documentation tests](https://doc.rust-lang.org/rustdoc/documentation-tests.html)
+
+- All instances of `unsafe` should have a comment that explains why its use was
+unavoidable
+
+- Try to keep code comments to a minimum. If code needs to be commented to
+explain its function it can probably be refactored and be made more simple.
+
+- All code should be well tested, using unit tests and integration tests
+
+     `rustfmt` is the canonical source of truth for formatting. We use the default formatting options as defined by `rustfmt`, except for `edition = "2018"`.
+
+    If you want to prevent rustfmt from formatting code you have organized by hand(say macros, attributes, or lookup tables), you can do so by using the attribute `#[rustfmt::skip]`. A more finegrained configuration is possible, see the [rustfmt tips](https://github.com/rust-lang/rustfmt#tips).
+
+- Code must compile and pass tests for `x86_64` [Rust Tier 1 platforms](https://forge.rust-lang.org/platform-support.html). Testing will be done against Linux, macOS, and Windows operating systems.
+
+    We use the default `rustc` lints, except for the ones mentioned below. To not interfer with development, these lints are merely warnings. In PRs these warnings will be ignored, using the `RUSTFLAGS="-D warnings"` setting.
+
+    ```rust
+    #![warn(
+        missing_debug_implementations,
+        missing_docs,
+        rust_2018_idioms,
+        unreachable_pub
+    )]
+    ```
+
+- Commit messages should clearly outline what has been implemented or changed. If
+a commit addresses an issue opened in the repository, it should contain one of
+the closing keywords as outlined [here](https://help.github.com/en/articles/closing-issues-using-keywords), for example `close`, `fix`, or `resolve`.
 
 ### Submitting a pull request
 
@@ -124,8 +156,8 @@ The following is a typical workflow for submitting a new pull request:
 1. Fork this repository
 2. Create a new branch based on your fork. For example, `git checkout -b fix/my-fix` or ` git checkout -b feat/my-feature`.
 3. Commit changes and push them to your fork
-4. Run the `go fmt` command to make sure your code is well formatted
-5. Target your pull request to be merged with `develop`
+4. Run the `rustfmt` command to make sure your code is well formatted
+5. Target your pull request to be merged with `master`
 
 If all [status checks](https://help.github.com/articles/about-status-checks/) pass, and the maintainer approves the PR, it will be merged.
 
