@@ -1,0 +1,19 @@
+# Order is important, the last matching pattern takes the most precedence
+
+# Working group   Lead                        Members
+*                 thibault@iota.org
+/.github/         thibault@iota.org           alexander.schmidt@iota.org
+/bee-api/         samuel.rufinatscha@iota.org yuwei.wu@iota.org thibault@iota.org
+/bee-bundle/      yuwei.wu@iota.org           thibault@iota.org samuel.rufinatscha@iota.org
+/bee-crypto/      thibault@iota.org           alexander.schmidt@iota.org
+/bee-ledger/      thibault@iota.org           samuel.rufinatscha@iota.org joshua.barretto@iota.org
+/bee-network/     alexander.schmidt@iota.org  joshua.barretto@iota.org
+/bee-node/        thibault@iota.org           alexander.schmidt@iota.org
+/bee-peering/     samuel.rufinatscha@iota.org thibault@iota.org alexander.schmidt@iota.org
+/bee-pow/         alexander.schmidt@iota.org  yuwei.wu@iota.org
+/bee-protocol/    thibault@iota.org           samuel.rufinatscha@iota.org joshua.barretto@iota.org
+/bee-signing/     thibault@iota.org           yuwei.wu@iota.org
+/bee-snapshot/    thibault@iota.org           alexander.schmidt@iota.org samuel.rufinatscha@iota.org
+/bee-storage/     yuwei.wu@iota.org           bingyang.lin@iota.org louay.kamel@iota.org
+/bee-tangle/      joshua.barretto@iota.org    alexander.schmidt@iota.org samuel.rufinatscha@iota.org
+/bee-ternary/     joshua.barretto@iota.org    thibault@iota.org
