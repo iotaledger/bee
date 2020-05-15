@@ -97,7 +97,7 @@ Otherwise, your feature may not be approved at all.
 
 To build a new feature, check out a new branch based on the `master` branch, and be sure to consider the following:
 
-- If the feature has a public facing API, make sure to document it, using Godoc code comments
+- If the feature has a public facing API, make sure to document it, using Rust code comments
 </details>
 
 <br>
@@ -108,9 +108,11 @@ To build a new feature, check out a new branch based on the `master` branch, and
 
 The [Bee Initiative](https://github.com/iota-community/bee) is a collaborative effort to improve the Bee developer experience by focussing on the following goals:
 
-- Quality assurance and review
+- Quality Assurance and Quality Control
 - Documentation
-- Code samples
+- Benchmarks
+- RFCs
+- Node usability
 - Improvements to modules and libraries
 
 ## How much time is involved
@@ -149,9 +151,6 @@ Before submitting a pull request, please follow these steps to have your contrib
 example that compiles and passes [documentation tests](https://doc.rust-lang.org/rustdoc/documentation-tests.html)
 
 - All instances of `unsafe` should have a comment that explains why its use was unavoidable
-
-- Try to keep code comments to a minimum. If code needs to be commented to
-explain its function it can probably be refactored and be made more simple.
 
 - All code should be well tested, using unit tests and integration tests
 

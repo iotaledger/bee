@@ -1,8 +1,8 @@
 <h1 align="center">
-  <br><img src="bee.png"></a>
+  <br><img src=".github/Bee.png"></a>
 </h1>
 
-<h2 align="center">A Rust framework for building IOTA nodes and Tangle utilities after Coordicide</h2>
+<h2 align="center">A framework for building IOTA nodes, clients, and applications in Rust.</h2>
 
 <p align="center">
   <a href="https://discord.iota.org/" style="text-decoration:none;"><img src="https://img.shields.io/badge/Discord-9cf.svg?logo=discord" alt="Discord"></a>
@@ -20,8 +20,6 @@
 ---
 
 # About
-
-Bee is a Rust framework for building IOTA nodes and tools for IOTA networks without a Coordinator (after [Coordicide](https://coordicide.iota.org/)).
 
 The IOTA Foundation aims to allow machines of all performance levels to
 contribute to the IOTA network, from microcontrollers and single-board
