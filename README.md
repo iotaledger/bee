@@ -1,79 +1,55 @@
-# The IOTA Bee framework
+<h1 align="center">
+  <br><img src="bee.png"></a>
+</h1>
 
-Bee is a Rust framework to build IOTA nodes and tools that interact with the IOTA network. The final product is
-envisioned to be a highly modular collection of foundational crates that can be mixed and matched, and extended upon.
+<h2 align="center">A Rust framework for building IOTA nodes and Tangle utilities after Coordicide</h2>
 
-Bee may be seen as an effort to streamline the IOTA Foundation's different libraries into one fundamental collection of
-Rust crates. These will expose foreign function interfaces (FFIs) to be used in more high level languages, and form the
-basis for the next iteration of client APIs.
+<p align="center">
+  <a href="https://discord.iota.org/" style="text-decoration:none;"><img src="https://img.shields.io/badge/Discord-9cf.svg?logo=discord" alt="Discord"></a>
+    <a href="https://iota.stackexchange.com/" style="text-decoration:none;"><img src="https://img.shields.io/badge/StackExchange-9cf.svg?logo=stackexchange" alt="StackExchange"></a>
+    <a href="https://github.com/iotaledger/bee/blob/master/LICENSE" style="text-decoration:none;"><img src="https://img.shields.io/github/license/iotaledger/bee.svg" alt="Apache 2.0 license"></a>
+</p>
+      
+<p align="center">
+  <a href="#about">About</a> ◈
+  <a href="#design">Design</a> ◈
+  <a href="#supporting-the-project">Supporting the project</a> ◈
+  <a href="#joining-the-discussion">Joining the discussion</a> 
+</p>
 
-## Outline
+---
 
-+ [Motivation]
-+ [Milestones]
-+ [Contributing]
-+ [Why Rust?]
+# About
 
-## Motivation
-[Motivation]: #motivation
+Bee is a Rust framework for building IOTA nodes and tools for IOTA networks without a Coordinator (after [Coordicide](https://coordicide.iota.org/)).
 
-Our primary motivation is to make IOTA an exemplary open source project, with great documentation, clear examples of
-increasing complexity, and well-tested code. Entry into the IOTA developer ecosystem should be as straight forward as
-possible, so that people can start contributing, extending, and building their ideas on top of the IOTA network using
-the Bee framework. As such, we want to be ready for development driven by our own dev and research teams, as well as
-novel ideas coming out of our community.
+The IOTA Foundation aims to allow machines of all performance levels to
+contribute to the IOTA network, from microcontrollers and single-board
+computers, to phones, web browsers, desktop machines, and servers.
 
-Bee will provide one central reference implementation of the most important data structures and algorithms, which will
-be verified and eventually certified. By this approach, we hope that improvements in any core components will quickly
-propagate to all other libraries building on them, rather than having to fix each single implementation we encounter.
+Therefore, Bee is being developed as a modular collection of extendable crates, which expose foreign function interfaces (FFIs) for the next iteration of client libraries.
 
-The IOTA Foundation aims to allow machines of all performance levels to contribute to the IOTA network, from
-microcontrollers and single-board computers, to phones, web browsers, desktop machines and servers. We therefore want to
-implement Bee's constituent libraries from the ground up, to allow the import of each library on its own, with each
-library having as few dependencies as possible. Having microcontrollers in mind, we want these libraries to not rely on
-a runtime — this includes language runtimes such as garbage collection, but also OS integration (which, in the case of
-Rust, is provided by its `libstd` standard library).
+**Note:** You can find details about future development plans in our [roadmap](https://roadmap.iota.org).
 
-## Milestones
-[Milestones]: #milestones
+## Design
 
-The Bee framework was primarily created to support the implementation of the IOTA
-[Coordicide](https://coordicide.iota.org/). As previously stated, on the path to Coordicide we aim to make this
-framework as open, vetted and usable as possible, by supporting the creation of tools, clients, nodes…
+Bee will provide one central reference implementation of the most important
+data structures and algorithms, which will be verified and eventually
+certified.
 
-Our proposed milestones are:
+By using this approach, we hope that improvements in any core components will quickly propagate to all other client libraries, rather than
+having to fix each one individually.
 
-1. **Fundamental crates**: Specification and implementation of the Bee fundamental crates `bee-trinary`, `bee-model`,
-and `bee-crypto`. These are the essential bricks for IOTA development.
-2. **FFI**: Foreign Function Interface to make the Bee crates available to other languages. The first project relying on
-Bee crates through FFI will be Trinity v2.
-  + We will also investigate in how far WebAssembly, `wasm`, might be an intermediate milestone.
-3. **Rust IRI**: Specification and implementation of the node-specific crates `bee-network`, `bee-tangle`, `bee-api`,
-`bee-consensus`, and `bee-gossip`. To demonstrate the modularity and robustness of the Bee framework, a node for the
-current mainnet will be implemented. Some of these crates will be repurposed for the Coordicide node.
-4. **Coordicide**: Specification and implementation of new Coordicide node-specific crates once research specifications
-are delivered.
-
-## Contributing
-[Contributing]: #contributing
+## Supporting the project
 
 If you want to discuss Bee or have some questions about it, join us on the
-[IOTA Discord server](https://discord.iota.org/) in the `#bee-dev` and `#bee-discussion` channels.
+[IOTA Discord server](https://discord.iota.org/) in the `#bee-dev` and
+`#bee-discussion` channels.
 
-If you want to contribute bug reports and pull requests or suggest new features, please see
-[`bee/CONTRIBUTING.md`](./CONTRIBUTING.md) for guidelines on how to contribute. Please note that we have a Request for
-Comments (RFC) process in place to propose, discuss, and vote on new features entering the Bee framework. You can find
-more information at [`iotaledger/bee-rfcs`](https://github.com/iotaledger/bee-rfcs/).
+If you want to be a part of development, please see the [contributing guidelines](.github/CONTRIBUTING.md) for information on how to contribute.
 
-## Why Rust?
-[Why Rust?]: #why-rust
+**Note:** We have a Request for Comments (RFC) process in place to propose, discuss, and vote on new features for the Bee framework. You can find more information at [`iotaledger/bee-rfcs`](https://github.com/iotaledger/bee-rfcs/).
 
-The IOTA Foundation aims to allow machines of all performance levels to contribute to the IOTA network: from
-microcontrollers to phones and servers. Some of these systems will have minimal resources and lack an operating system.
-Microcontrollers aside, we also aim for energy efficiency, high performance, and a great user and developer experience.
+## Joining the discussion
 
-From the available choice of languages, we felt that Rust was the best fit. Rust being a system programming language, it
-operates at a high level of performance while providing strong memory safety guarantees. Together with its
-well-integrated modern tooling, this helps us iterate on our designs faster while being more confident that our code
-does what we intend it to do (without accessing uninitialized memory, double free, use after free, null pointer
-dereference, and buffer overflows that are all security concerns).
+If you want to get involved in the community, need help getting started, have any issues related to the repository or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord](https://discord.iota.org/).
