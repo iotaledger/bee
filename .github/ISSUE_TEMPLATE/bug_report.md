@@ -2,7 +2,7 @@
 name: Report a bug in Bee
 about: Create a report to help us improve
 title: ""
-labels: C-Bug
+labels: c-bug
 ---
 
 ## Bug description
@@ -14,6 +14,12 @@ Briefly describe the bug.
 Which version of Rust are you running?
 
 - Rust version:
+
+## Bee version
+
+Which version of Bee are you using?
+
+- Bee version (version number, commit, or branch): 
 
 ## Hardware specification
 

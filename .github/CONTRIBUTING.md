@@ -154,26 +154,9 @@ example that compiles and passes [documentation tests](https://doc.rust-lang.org
 
 - All code should be well tested, using unit tests and integration tests
 
-     `rustfmt` is the canonical source of truth for formatting. We use the default formatting options as defined by `rustfmt`, except for `edition = "2018"`.
+- Code must compile and pass our [continuous integration tests](.github/workflows)
 
-    If you want to prevent rustfmt from formatting code you have organized by hand(say macros, attributes, or lookup tables), you can do so by using the attribute `#[rustfmt::skip]`. A more finegrained configuration is possible, see the [rustfmt tips](https://github.com/rust-lang/rustfmt#tips).
-
-- Code must compile and pass tests for `x86_64` [Rust Tier 1 platforms](https://forge.rust-lang.org/platform-support.html). Testing will be done against Linux, macOS, and Windows operating systems.
-
-    We use the default `rustc` lints, except for the ones mentioned below. To not interfer with development, these lints are merely warnings. In PRs these warnings will be ignored, using the `RUSTFLAGS="-D warnings"` setting.
-
-    ```rust
-    #![warn(
-        missing_debug_implementations,
-        missing_docs,
-        rust_2018_idioms,
-        unreachable_pub
-    )]
-    ```
-
-- Commit messages should clearly outline what has been implemented or changed. If a commit addresses an issue opened in the repository, it should contain one of the closing keywords as outlined [here](https://help.github.com/en/articles/closing-issues-using-keywords), for example `close`, `fix`, or `resolve`.
-
-- To be compatible with the guidelines of the Eclipse foundation, all code is to be licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0), which has to be referenced in every crate of the workspace by copying [`./LICENSE-APACHE`] to its top level directory. For Rust crates, every `Cargo.toml` has to contained the line `license = "Apache-2.0"`
+- To be compatible with the guidelines of the Eclipse foundation, all code is to be licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0), which has to be referenced in every crate of the workspace by copying [`./LICENSE`] to its top level directory. For Rust crates, every `Cargo.toml` has to contained the line `license = "Apache-2.0"`
 
 ### Submitting a pull request
 
