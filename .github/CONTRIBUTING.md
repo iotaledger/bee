@@ -95,9 +95,7 @@ Otherwise, your feature may not be approved at all.
 
 ### Building a new feature
 
-To build a new feature, check out a new branch based on the `master` branch, and be sure to consider the following:
-
-- If the feature has a public facing API, make sure to document it, using Rust code comments
+To build a new feature, check out a new branch based on the `master` branch, and be sure to document any public-facing APIs, using Rust code comments.
 </details>
 
 <br>
@@ -156,7 +154,7 @@ example that compiles and passes [documentation tests](https://doc.rust-lang.org
 
 - Code must compile and pass our [continuous integration tests](.github/workflows)
 
-- To be compatible with the guidelines of the Eclipse foundation, all code is to be licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0), which has to be referenced in every crate of the workspace by copying [`./LICENSE`] to its top level directory. For Rust crates, every `Cargo.toml` has to contained the line `license = "Apache-2.0"`
+- To be compatible with the guidelines of the Eclipse foundation, all code must be licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). This license must be referenced in every crate of the workspace (add [`./LICENSE`] to the crate's top level directory). For Rust crates, every `Cargo.toml` must contain the line `license = "Apache-2.0"`.
 
 ### Submitting a pull request
 
@@ -164,8 +162,8 @@ The following is a typical workflow for submitting a new pull request:
 
 1. Fork this repository
 2. Create a new branch based on your fork. For example, `git checkout -b fix/my-fix` or ` git checkout -b feat/my-feature`.
-3. Commit changes and push them to your fork
-4. Run the `rustfmt` command to make sure your code is well formatted
+3. Run the `rustfmt` command to make sure your code is well formatted
+4. Commit changes and push them to your fork
 5. Target your pull request to be merged with `master`
 
 If all [status checks](https://help.github.com/articles/about-status-checks/) pass, and the maintainer approves the PR, it will be merged.

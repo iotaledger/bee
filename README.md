@@ -22,8 +22,7 @@
 # About
 
 The IOTA Foundation aims to allow machines of all performance levels to
-contribute to the IOTA network, from microcontrollers and single-board
-computers, to phones, web browsers, desktop machines, and servers.
+contribute to the IOTA network, from microcontrollers to phones, web browsers, and servers.
 
 Therefore, Bee is being developed as a modular collection of extendable crates, which expose foreign function interfaces (FFIs) for the next iteration of client libraries.
 
@@ -31,12 +30,13 @@ Therefore, Bee is being developed as a modular collection of extendable crates, 
 
 ## Design
 
-Bee will provide one central reference implementation of the most important
-data structures and algorithms, which will be verified and eventually
-certified.
+Bee will be a central reference implementation for the most important
+data structures and algorithms. This implementation will be verified during a [Request for Comments](https://github.com/iotaledger/bee-rfcs/) (RFC) process and eventually certified.
 
-By using this approach, we hope that improvements in any core components will quickly propagate to all other client libraries, rather than
+By using this approach, we hope that improvements to core components will quickly propagate to all other client libraries, rather than
 having to fix each one individually.
+
+**Note:** The Rust programming language was chosen for Bee because of its C/C++ like performance and its strong memory safety guarantees. [Learn more about Rust](https://www.rust-lang.org/).
 
 ## Supporting the project
 
@@ -45,8 +45,6 @@ If you want to discuss Bee or have some questions about it, join us on the
 `#bee-discussion` channels.
 
 If you want to be a part of development, please see the [contributing guidelines](.github/CONTRIBUTING.md) for information on how to contribute.
-
-**Note:** We have a Request for Comments (RFC) process in place to propose, discuss, and vote on new features for the Bee framework. You can find more information at [`iotaledger/bee-rfcs`](https://github.com/iotaledger/bee-rfcs/).
 
 ## Joining the discussion
 
