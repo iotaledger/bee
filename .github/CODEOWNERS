@@ -4,7 +4,7 @@
 *                 thibault@iota.org
 /.github/         thibault@iota.org           alexander.schmidt@iota.org
 /bee-api/         samuel.rufinatscha@iota.org yuwei.wu@iota.org thibault@iota.org
-/bee-bundle/      yuwei.wu@iota.org           thibault@iota.org samuel.rufinatscha@iota.org
+/bee-common/      thibault@iota.org           alexander.schmidt@iota.org
 /bee-crypto/      thibault@iota.org           alexander.schmidt@iota.org
 /bee-ledger/      thibault@iota.org           samuel.rufinatscha@iota.org joshua.barretto@iota.org
 /bee-network/     alexander.schmidt@iota.org  joshua.barretto@iota.org
@@ -14,6 +14,7 @@
 /bee-protocol/    thibault@iota.org           samuel.rufinatscha@iota.org joshua.barretto@iota.org
 /bee-signing/     thibault@iota.org           yuwei.wu@iota.org
 /bee-snapshot/    thibault@iota.org           alexander.schmidt@iota.org samuel.rufinatscha@iota.org
-/bee-storage/     yuwei.wu@iota.org           bingyang.lin@iota.org louay.kamel@iota.org
+/bee-storage/     thibault@iota.org           yuwei.wu@iota.org bingyang.lin@iota.org louay.kamel@iota.org
 /bee-tangle/      joshua.barretto@iota.org    alexander.schmidt@iota.org samuel.rufinatscha@iota.org
 /bee-ternary/     joshua.barretto@iota.org    thibault@iota.org
+/bee-transaction/ thibault@iota.org           yuwei.wu@iota.org samuel.rufinatscha@iota.org
