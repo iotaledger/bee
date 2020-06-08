@@ -81,8 +81,8 @@ where
         &mut *(Self::make(self.ptr(0), range.start, range.end - range.start) as *mut _)
     }
 
-    fn is_valid(b: &i8) -> bool {
-        TryInto::<T>::try_into(*b).is_ok()
+    fn is_valid(b: i8) -> bool {
+        TryInto::<T>::try_into(b).is_ok()
     }
 
     unsafe fn from_raw_unchecked(b: &[i8], num_trits: usize) -> &Self {

@@ -145,7 +145,7 @@ where
     /// be used. Calling this function with an invalid [`i8`] slice is undefined behaviour.
     pub unsafe fn from_raw_unchecked(raw: &[i8], num_trits: usize) -> &Self {
         debug_assert!(
-            raw.iter().all(T::is_valid),
+            raw.iter().copied().all(T::is_valid),
             "Invalid i8 slice used to create trit slice"
         );
         &*(T::from_raw_unchecked(raw, num_trits) as *const _ as *const _)
@@ -169,7 +169,7 @@ where
     /// be used. Calling this function with an invalid [`i8`] slice is undefined behaviour.
     pub unsafe fn from_raw_unchecked_mut(raw: &mut [i8], num_trits: usize) -> &mut Self {
         debug_assert!(
-            raw.iter().all(T::is_valid),
+            raw.iter().copied().all(T::is_valid),
             "Invalid i8 slice used to create trit slice"
         );
         &mut *(T::from_raw_unchecked_mut(raw, num_trits) as *mut _ as *mut _)
@@ -184,7 +184,7 @@ where
     /// This function will panic if `num_trits` is more than can be represented with the slice in
     /// the given encoding.
     pub fn try_from_raw(raw: &[i8], num_trits: usize) -> Result<&Self, Error> {
-        if raw.iter().all(T::is_valid) {
+        if raw.iter().copied().all(T::is_valid) {
             Ok(unsafe { Self::from_raw_unchecked(raw, num_trits) })
         } else {
             Err(Error::InvalidRepr)
@@ -200,7 +200,7 @@ where
     /// This function will panic if `num_trits` is more than can be represented with the slice in
     /// the given encoding.
     pub fn try_from_raw_mut(raw: &mut [i8], num_trits: usize) -> Result<&mut Self, Error> {
-        if raw.iter().all(T::is_valid) {
+        if raw.iter().copied().all(T::is_valid) {
             Ok(unsafe { Self::from_raw_unchecked_mut(raw, num_trits) })
         } else {
             Err(Error::InvalidRepr)

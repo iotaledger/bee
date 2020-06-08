@@ -106,8 +106,8 @@ impl RawEncoding for T3B1 {
         ) as *mut Self)
     }
 
-    fn is_valid(b: &i8) -> bool {
-        *b >= -BAL && *b <= BAL
+    fn is_valid(b: i8) -> bool {
+        b >= -BAL && b <= BAL
     }
 
     unsafe fn from_raw_unchecked(b: &[i8], num_trits: usize) -> &Self {
@@ -134,13 +134,13 @@ impl RawEncodingBuf for T3B1Buf {
     fn push(&mut self, trit: <Self::Slice as RawEncoding>::Trit) {
         if self.1 % TPB == 0 {
             let b = insert(0, 0, trit);
-            debug_assert!(T3B1::is_valid(&b));
+            debug_assert!(T3B1::is_valid(b));
             self.0.push(b);
         } else {
             let last_index = self.0.len() - 1;
             let b = unsafe { self.0.get_unchecked_mut(last_index) };
             *b = insert(*b, self.1 % TPB, trit);
-            debug_assert!(T3B1::is_valid(b));
+            debug_assert!(T3B1::is_valid(*b));
         }
         self.1 += 1;
     }

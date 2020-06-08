@@ -104,8 +104,8 @@ impl RawEncoding for T4B1 {
         ) as *mut Self)
     }
 
-    fn is_valid(b: &i8) -> bool {
-        *b >= -BAL && *b <= BAL
+    fn is_valid(b: i8) -> bool {
+        b >= -BAL && b <= BAL
     }
 
     unsafe fn from_raw_unchecked(b: &[i8], num_trits: usize) -> &Self {

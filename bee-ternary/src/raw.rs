@@ -41,7 +41,7 @@ pub trait RawEncoding {
     unsafe fn slice_unchecked_mut(&mut self, range: Range<usize>) -> &mut Self;
 
     /// Decide whether a byte is a valid series of trits in this encoding
-    fn is_valid(repr: &i8) -> bool;
+    fn is_valid(repr: i8) -> bool;
 
     /// Unsafely reinterpret a slice of bytes as trit slice
     unsafe fn from_raw_unchecked(b: &[i8], num_trits: usize) -> &Self;
