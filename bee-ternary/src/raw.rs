@@ -12,6 +12,8 @@
 use crate::{Trit, TritBuf};
 use std::ops::Range;
 
+#[allow(clippy::len_without_is_empty)]
+#[allow(clippy::missing_safety_doc)]
 pub trait RawEncoding {
     type Trit: Trit;
     type Buf: RawEncodingBuf<Slice = Self>;

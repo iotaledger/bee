@@ -100,7 +100,7 @@ impl TryFrom<i8> for Utrit {
             0 => Zero,
             1 => One,
             2 => Two,
-            _ => Err(())?,
+            _ => return Err(()),
         };
         Ok(converted)
     }
@@ -114,7 +114,7 @@ impl TryFrom<u8> for Utrit {
             0 => Zero,
             1 => One,
             2 => Two,
-            _ => Err(())?,
+            _ => return Err(()),
         };
         Ok(converted)
     }
