@@ -115,7 +115,7 @@ where
 {
     fuzz(49, || {
         let a = gen_buf::<T>(0..100).0;
-        let b = a.clone().encode::<U>();
+        let b = a.encode::<U>();
 
         assert_eq!(a, b);
         assert_eq!(a.len(), b.len());

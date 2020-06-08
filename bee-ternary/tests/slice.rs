@@ -29,7 +29,7 @@ fn get_generic<T: raw::RawEncodingBuf + Clone>() {
         let mut sl = a.as_slice();
         let mut sl_i8 = &a_i8[..];
         for _ in 0..20 {
-            if sl.len() == 0 {
+            if sl.is_empty() {
                 break;
             }
             let i = thread_rng().gen_range(0, sl.len());
@@ -57,7 +57,7 @@ fn get_generic_unbalanced<T: raw::RawEncodingBuf + Clone>() {
         let mut sl = a.as_slice();
         let mut sl_i8 = &a_i8[..];
         for _ in 0..20 {
-            if sl.len() == 0 {
+            if sl.is_empty() {
                 break;
             }
             let i = thread_rng().gen_range(0, sl.len());
@@ -83,7 +83,7 @@ fn set_generic<T: raw::RawEncodingBuf + Clone>() {
             let mut sl = a.as_slice_mut();
             let mut sl_i8 = &mut a_i8[..];
             for _ in 0..10 {
-                if sl.len() == 0 {
+                if sl.is_empty() {
                     break;
                 }
 
@@ -123,7 +123,7 @@ fn set_generic_unbalanced<T: raw::RawEncodingBuf + Clone>() {
             let mut sl = a.as_slice_mut();
             let mut sl_i8 = &mut a_i8[..];
             for _ in 0..10 {
-                if sl.len() == 0 {
+                if sl.is_empty() {
                     break;
                 }
 
