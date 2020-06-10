@@ -18,7 +18,7 @@ pub mod unbalanced;
 pub use self::{balanced::Btrit, unbalanced::Utrit};
 
 pub trait Trit:
-    Copy + Sized + fmt::Debug + hash::Hash + Into<i8> + Ord + PartialEq + ShiftTernary + TryFrom<i8>
+    Copy + Sized + fmt::Debug + hash::Hash + Into<i8> + Ord + PartialEq + ShiftTernary + TryFrom<i8> + fmt::Display
 {
     fn checked_increment(self) -> Option<Self>;
     fn zero() -> Self;

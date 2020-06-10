@@ -659,6 +659,21 @@ impl<T: RawEncoding + ?Sized> ToOwned for Trits<T> {
     }
 }
 
+impl<T: RawEncoding + ?Sized> fmt::Display for Trits<T> {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "[")?;
+		for (i, t) in self.iter().enumerate() {
+			if i != 0 {
+				write!(f, ", ")?;
+			}
+			write!(f, "{}", t)?;
+
+		}
+		write!(f, "]")
+
+	}
+}
+
 /// A buffer containing trits.
 ///
 /// This type is roughly analogous to [`Vec`] or [`String`]. It supports pushing and popping trits
@@ -803,6 +818,12 @@ impl<T: RawEncodingBuf> fmt::Debug for TritBuf<T> {
         }
         write!(f, "]")
     }
+}
+
+impl<T: RawEncodingBuf> fmt::Display for TritBuf<T> {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "{}", self.as_slice())
+	}
 }
 
 impl<T: RawEncodingBuf> Borrow<Trits<T::Slice>> for TritBuf<T> {
