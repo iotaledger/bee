@@ -212,18 +212,3 @@ impl fmt::Display for TryteBuf {
         Ok(())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::*;
-
-    #[test]
-    fn zeroes() {
-        let _ = TritBuf::<T3B1Buf>::filled(243, Btrit::Zero)
-            .encode::<T3B1Buf>()
-            .as_trytes()
-            .iter()
-            .map(|t| char::from(*t))
-            .collect::<String>();
-    }
-}
