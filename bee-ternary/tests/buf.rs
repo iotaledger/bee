@@ -64,8 +64,6 @@ fn push_pop_generic<T: raw::RawEncodingBuf>() {
                     b.pop().map(|x| x.try_into().unwrap_or_else(|_| unreachable!()))
                 );
             }
-            // println!("{:?}", a);
-            // println!("{:?}", b);
         }
     });
 }
@@ -85,8 +83,6 @@ fn push_pop_generic_unbalanced<T: raw::RawEncodingBuf>() {
                     b.pop().map(|x| x.try_into().unwrap_or_else(|_| unreachable!()))
                 );
             }
-            // println!("{:?}", a);
-            // println!("{:?}", b);
         }
     });
 }
@@ -113,7 +109,7 @@ fn encode_generic<T: raw::RawEncodingBuf + Clone, U: raw::RawEncodingBuf>()
 where
     U::Slice: raw::RawEncoding<Trit = <T::Slice as raw::RawEncoding>::Trit>,
 {
-    fuzz(49, || {
+    fuzz(100, || {
         let a = gen_buf::<T>(0..100).0;
         let b = a.encode::<U>();
 

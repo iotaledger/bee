@@ -60,8 +60,6 @@
 
 use std::slice;
 
-/// Utilities for converting to and from ternary and binary numerical representations.
-pub mod num_conversions;
 /// Types and traits that allow the implementation of new encoding formats.
 pub mod raw;
 /// The [`T1B1`] and [`T1B1Buf`] encodings.
@@ -222,7 +220,6 @@ where
     /// # Panics
     ///
     /// This function will panic if the slice is not byte-aligned
-    // TODO: Evaluate whether this API makes sense to be `unsafe`
     pub fn as_i8_slice(&self) -> &[i8] {
         self.0.as_i8_slice()
     }
@@ -458,24 +455,19 @@ impl<T: Trit> Trits<T1B1<T>> {
         })
     }
 
-    // Helper
-    // TODO: Make this public? Is it needed?
-    // Q: Why isn't this method on Trits<T>?
-    // A: Because overlapping slice lifetimes make this unsound on squashed encodings
-    fn split_at_mut<'a>(this: &mut &'a mut Self, idx: usize) -> (&'a mut Self, &'a mut Self) {
+    /// Divides this mutable slice into two mutually exclusive mutable slices at the given index.
+    ///
+    /// The first slice will contain the indices within the range `0..mid` and the second `mid..len`.
+    fn split_at_mut<'a>(this: &mut &'a mut Self, mid: usize) -> (&'a mut Self, &'a mut Self) {
         assert!(
-            idx <= this.len(),
+            mid <= this.len(),
             "Cannot split at an index outside the trit slice bounds"
         );
         (
-            unsafe { &mut *(this.0.slice_unchecked_mut(0..idx) as *mut _ as *mut Self) },
-            unsafe { &mut *(this.0.slice_unchecked_mut(idx..this.len()) as *mut _ as *mut Self) },
+            unsafe { &mut *(this.0.slice_unchecked_mut(0..mid) as *mut _ as *mut Self) },
+            unsafe { &mut *(this.0.slice_unchecked_mut(mid..this.len()) as *mut _ as *mut Self) },
         )
     }
-
-    // pub fn iter<'a>(&'a self) -> slice::Iter<'a, T> {
-    //     self.as_raw_slice().iter()
-    // }
 
     /// Returns a mutable iterator over the trits in this slice.
     ///
@@ -833,43 +825,5 @@ impl<T: RawEncodingBuf> Borrow<Trits<T::Slice>> for TritBuf<T> {
 impl<T: RawEncodingBuf> BorrowMut<Trits<T::Slice>> for TritBuf<T> {
     fn borrow_mut(&mut self) -> &mut Trits<T::Slice> {
         self.as_slice_mut()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn conv() {
-        let trits = TritBuf::<T3B1Buf>::from_trits(&[
-            Btrit::PlusOne,
-            Btrit::Zero,
-            Btrit::NegOne,
-            Btrit::Zero,
-            Btrit::PlusOne,
-            Btrit::Zero,
-        ]);
-
-        let s0 = trits
-            .chunks(3)
-            .map(|trits| {
-                char::from(Tryte::from_trits([
-                    trits.get(0).unwrap(),
-                    trits.get(1).unwrap(),
-                    trits.get(2).unwrap(),
-                ]))
-            })
-            .collect::<String>();
-
-        assert_eq!(s0.as_str(), "SC");
-
-        let s1 = trits.as_trytes().iter().map(|t| char::from(*t)).collect::<String>();
-
-        assert_eq!(s1.as_str(), "SC");
-
-        let s2 = trits.iter_trytes().map(char::from).collect::<String>();
-
-        assert_eq!(s2.as_str(), "SC");
     }
 }
