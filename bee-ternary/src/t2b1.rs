@@ -12,7 +12,9 @@
 use crate::{Btrit, RawEncoding, RawEncodingBuf, ShiftTernary, Utrit};
 use std::ops::Range;
 
+// Trits Per Byte
 const TPB: usize = 2;
+// Number required to push a byte between balanced and unbalanced representations
 const BAL: i8 = 4;
 
 #[repr(transparent)]
