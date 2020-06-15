@@ -9,12 +9,21 @@
     <a href="https://iota.stackexchange.com/" style="text-decoration:none;"><img src="https://img.shields.io/badge/StackExchange-9cf.svg?logo=stackexchange" alt="StackExchange"></a>
     <a href="https://github.com/iotaledger/bee/blob/master/LICENSE" style="text-decoration:none;"><img src="https://img.shields.io/github/license/iotaledger/bee.svg" alt="Apache 2.0 license"></a>
 </p>
-      
+
+<p align="center">
+  <img src="https://github.com/iotaledger/bee/workflows/Format/badge.svg">
+  <img src="https://github.com/iotaledger/bee/workflows/Audit/badge.svg">
+  <img src="https://github.com/iotaledger/bee/workflows/Clippy/badge.svg">
+  <img src="https://github.com/iotaledger/bee/workflows/Build/badge.svg">
+  <img src="https://github.com/iotaledger/bee/workflows/Test/badge.svg">
+  <img src="https://coveralls.io/repos/github/iotaledger/bee/badge.svg?branch=master">
+</p>
+
 <p align="center">
   <a href="#about">About</a> ◈
   <a href="#design">Design</a> ◈
   <a href="#supporting-the-project">Supporting the project</a> ◈
-  <a href="#joining-the-discussion">Joining the discussion</a> 
+  <a href="#joining-the-discussion">Joining the discussion</a>
 </p>
 
 ---
