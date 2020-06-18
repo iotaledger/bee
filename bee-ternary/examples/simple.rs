@@ -16,11 +16,9 @@
 // ```
 // cargo run --example simple
 // ```
-// 
-
+//
 
 use bee_ternary::{T1B1Buf, TryteBuf};
-
 
 fn main() {
     // String with Trytes [alphabet: A-Z and 9]
@@ -34,5 +32,4 @@ fn main() {
 
     // Print trits
     println!("'HELLOWORLD9' in trits: {}", hello_trits);
-
 }
