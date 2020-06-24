@@ -76,6 +76,8 @@ pub mod t5b1;
 pub mod trit;
 /// Types and traits used to represent trytes and buffers of trytes.
 pub mod tryte;
+/// Conversions between to and from standard types.
+pub mod convert;
 
 #[cfg(feature = "serde1")]
 mod serde;
