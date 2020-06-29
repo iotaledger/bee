@@ -60,6 +60,8 @@
 
 use std::slice;
 
+/// Conversions between to and from standard types.
+pub mod convert;
 /// Types and traits that allow the implementation of new encoding formats.
 pub mod raw;
 /// The [`T1B1`] and [`T1B1Buf`] encodings.
@@ -76,8 +78,6 @@ pub mod t5b1;
 pub mod trit;
 /// Types and traits used to represent trytes and buffers of trytes.
 pub mod tryte;
-/// Conversions between to and from standard types.
-pub mod convert;
 
 #[cfg(feature = "serde1")]
 mod serde;

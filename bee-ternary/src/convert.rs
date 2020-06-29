@@ -9,17 +9,11 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
+use crate::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits};
+use num_traits::{AsPrimitive, Bounded, FromPrimitive, One, ToPrimitive, Zero};
 use std::{
     convert::TryFrom,
-    ops::{Neg, Add, Mul},
-};
-use num_traits::{AsPrimitive, ToPrimitive, FromPrimitive, Bounded, Zero, One};
-use crate::{
-    RawEncoding,
-    RawEncodingBuf,
-    Trits,
-    TritBuf,
-    Btrit,
+    ops::{Add, Mul, Neg},
 };
 
 #[derive(Debug, PartialEq)]
@@ -29,7 +23,8 @@ pub enum Error {
 }
 
 impl<I: AsPrimitive<i64>, T: RawEncodingBuf> From<I> for TritBuf<T>
-    where T::Slice: RawEncoding<Trit=Btrit>
+where
+    T::Slice: RawEncoding<Trit = Btrit>,
 {
     fn from(x: I) -> Self {
         integer_trits(x).collect()
@@ -40,7 +35,9 @@ macro_rules! try_from_trits {
     ($int:ident) => {
         impl<'a, T: RawEncoding<Trit = Btrit> + ?Sized> TryFrom<&'a Trits<T>> for $int {
             type Error = Error;
-            fn try_from(trits: &'a Trits<T>) -> Result<Self, Self::Error> { trits_to_int(trits) }
+            fn try_from(trits: &'a Trits<T>) -> Result<Self, Self::Error> {
+                trits_to_int(trits)
+            }
         }
     };
 }
@@ -54,10 +51,11 @@ pub(crate) fn max_trits<I: ToPrimitive + Bounded>() -> usize {
     (0.63 * std::mem::size_of::<I>() as f32 * 8.0) as usize + 1 // (log2/log3)*64
 }
 
-fn trits_to_int<'a, I, T: RawEncoding<Trit = Btrit> + ?Sized>(trits: &'a Trits<T>) -> Result<I, Error>
-    where I: Copy + FromPrimitive + ToPrimitive + Bounded + Zero + One + Neg<Output=I> + Add + Mul
+fn trits_to_int<I, T: RawEncoding<Trit = Btrit> + ?Sized>(trits: &Trits<T>) -> Result<I, Error>
+where
+    I: Copy + FromPrimitive + ToPrimitive + Bounded + Zero + One + Neg<Output = I> + Add + Mul,
 {
-    if trits.len() == 0 {
+    if trits.is_empty() {
         Err(Error::Empty)
     } else {
         let max_trits: usize = max_trits::<I>();
@@ -110,7 +108,7 @@ fn trits_to_int<'a, I, T: RawEncoding<Trit = Btrit> + ?Sized>(trits: &'a Trits<T
 
 const RADIX: u8 = 3;
 
-pub fn integer_trits<I: AsPrimitive<i64>>(x: I) -> impl Iterator<Item=Btrit> {
+pub fn integer_trits<I: AsPrimitive<i64>>(x: I) -> impl Iterator<Item = Btrit> {
     let x = x.as_();
     let is_neg = x < 0;
 
@@ -120,18 +118,20 @@ pub fn integer_trits<I: AsPrimitive<i64>>(x: I) -> impl Iterator<Item=Btrit> {
         x.abs() as u64
     };
 
-    std::iter::from_fn(move || if x_abs == 0 {
-        None
-    } else {
-        let trit = match ((x_abs + 1) % RADIX as u64) as i8 - 1 {
-            x if is_neg => -x,
-            x => x,
-        };
+    std::iter::from_fn(move || {
+        if x_abs == 0 {
+            None
+        } else {
+            let trit = match ((x_abs + 1) % RADIX as u64) as i8 - 1 {
+                x if is_neg => -x,
+                x => x,
+            };
 
-        x_abs += 1;
-        x_abs /= RADIX as u64;
+            x_abs += 1;
+            x_abs /= RADIX as u64;
 
-        Some(Btrit::try_from(trit).unwrap())
+            Some(Btrit::try_from(trit).unwrap())
+        }
     })
     // If the integer is exactly 0, add an extra trit
     .chain(Some(Btrit::Zero).filter(|_| x == 0))
