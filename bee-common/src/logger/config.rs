@@ -14,6 +14,8 @@ use crate::logger::LOGGER_STDOUT_NAME;
 use log::LevelFilter;
 use serde::Deserialize;
 
+use std::borrow::Cow;
+
 /// Default value for the color flag.
 const DEFAULT_COLOR_ENABLED: bool = true;
 /// Default name for an output.
@@ -37,8 +39,8 @@ impl LoggerOutputConfigBuilder {
     }
 
     /// Sets the name of a logger output.
-    pub fn name(mut self, name: &str) -> Self {
-        self.name.replace(name.to_string());
+    pub fn name<'a>(mut self, name: impl Into<Cow<'a, str>>) -> Self {
+        self.name.replace(name.into().into_owned());
         self
     }
 
@@ -88,10 +90,12 @@ impl LoggerConfigBuilder {
     }
 
     /// Sets the level of an output of a logger.
-    pub fn level(&mut self, name: &str, level: LevelFilter) {
+    pub fn level<'a>(&mut self, name: impl Into<Cow<'a, str>>, level: LevelFilter) {
+        let name = name.into();
+
         if let Some(outputs) = self.outputs.as_deref_mut() {
             if let Some(stdout) = outputs.iter_mut().find(|output| match output.name.as_ref() {
-                Some(output_name) => output_name == name,
+                Some(output_name) => &output_name[..] == name,
                 None => false,
             }) {
                 stdout.level.replace(level);
