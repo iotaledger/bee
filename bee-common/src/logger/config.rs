@@ -15,11 +15,11 @@ use log::LevelFilter;
 use serde::Deserialize;
 
 /// Default value for the color flag.
-const DEFAULT_COLOR: bool = true;
+const DEFAULT_COLOR_ENABLED: bool = true;
 /// Default name for an output.
-const DEFAULT_NAME: &str = LOGGER_STDOUT_NAME;
+const DEFAULT_OUTPUT_NAME: &str = LOGGER_STDOUT_NAME;
 /// Default log level for an output.
-const DEFAULT_LEVEL: &str = "info";
+const DEFAULT_OUTPUT_LEVEL: &str = "info";
 
 /// Builder for a logger output configuration.
 #[derive(Default, Deserialize)]
@@ -50,7 +50,7 @@ impl LoggerOutputConfigBuilder {
 
     /// Builds a logger output configuration.
     pub fn finish(self) -> LoggerOutputConfig {
-        let level = match self.level.unwrap_or_else(|| DEFAULT_LEVEL.to_owned()).as_str() {
+        let level = match self.level.unwrap_or_else(|| DEFAULT_OUTPUT_LEVEL.to_owned()).as_str() {
             "trace" => LevelFilter::Trace,
             "debug" => LevelFilter::Debug,
             "info" => LevelFilter::Info,
@@ -60,7 +60,7 @@ impl LoggerOutputConfigBuilder {
         };
 
         LoggerOutputConfig {
-            name: self.name.unwrap_or_else(|| DEFAULT_NAME.to_owned()),
+            name: self.name.unwrap_or_else(|| DEFAULT_OUTPUT_NAME.to_owned()),
             level,
         }
     }
@@ -79,7 +79,7 @@ pub struct LoggerOutputConfig {
 #[derive(Default, Deserialize)]
 pub struct LoggerConfigBuilder {
     // Color flag of the logger.
-    color: Option<bool>,
+    color_enabled: Option<bool>,
     // Outputs of the logger.
     outputs: Option<Vec<LoggerOutputConfigBuilder>>,
 }
@@ -91,32 +91,32 @@ impl LoggerConfigBuilder {
     }
 
     /// Sets the color flag of a logger.
-    pub fn color(mut self, color: bool) -> Self {
-        self.color.replace(color);
+    pub fn color_enabled(mut self, color: bool) -> Self {
+        self.color_enabled.replace(color);
         self
     }
 
     /// Sets the level of an output of a logger.
-    pub fn level(&mut self, name: &str, level: String) {
+    pub fn level(&mut self, name: &str, level: &str) {
         if let Some(outputs) = self.outputs.as_deref_mut() {
-            if let Some(stdout) = outputs.iter_mut().find(|output| name == output.name.as_ref().unwrap()) {
-                stdout.level.replace(level);
+            if let Some(stdout) = outputs.iter_mut().find(|output| match output.name.as_ref() {
+                Some(output_name) => output_name == name,
+                None => false,
+            }) {
+                stdout.level.replace(level.to_string());
             }
         }
     }
 
     /// Builds a logger configuration.
     pub fn finish(self) -> LoggerConfig {
-        let mut outputs = Vec::new();
-
-        if let Some(content) = self.outputs {
-            for output in content {
-                outputs.push(output.finish());
-            }
-        }
+        let outputs = self
+            .outputs
+            .map(|os| os.into_iter().map(|o| o.finish()).collect())
+            .unwrap_or_default();
 
         LoggerConfig {
-            color: self.color.unwrap_or(DEFAULT_COLOR),
+            color_enabled: self.color_enabled.unwrap_or(DEFAULT_COLOR_ENABLED),
             outputs,
         }
     }
@@ -126,7 +126,7 @@ impl LoggerConfigBuilder {
 #[derive(Clone)]
 pub struct LoggerConfig {
     // Color flag of the logger.
-    pub(crate) color: bool,
+    pub(crate) color_enabled: bool,
     // Outputs of the logger.
     pub(crate) outputs: Vec<LoggerOutputConfig>,
 }

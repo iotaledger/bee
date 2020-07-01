@@ -37,7 +37,7 @@ pub enum Error {
 pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
     let timestamp_format = "[%Y-%m-%d][%H:%M:%S]";
 
-    let mut logger = if config.color {
+    let mut logger = if config.color_enabled {
         let colors = ColoredLevelConfig::new()
             .trace(Color::BrightMagenta)
             .debug(Color::BrightBlue)
