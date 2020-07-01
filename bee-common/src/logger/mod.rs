@@ -34,14 +34,24 @@ pub enum Error {
     InitializationFailed,
 }
 
+macro_rules! log_format {
+    ($record:expr, $level:expr, $message:expr) => {
+        format_args!(
+            "{}[{}][{}] {}",
+            chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+            $record,
+            $level,
+            $message
+        )
+    };
+}
+
 /// Initializes a `fern` logger backend for the `log` crate.
 ///
 /// # Arguments
 ///
 /// * `config`  -   Logger configuration
 pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
-    let timestamp_format = "[%Y-%m-%d][%H:%M:%S]";
-
     let mut logger = if config.color_enabled {
         let colors = ColoredLevelConfig::new()
             .trace(Color::BrightMagenta)
@@ -52,25 +62,12 @@ pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
 
         // Creates a logger dispatch with color support.
         Dispatch::new().format(move |out, message, record| {
-            out.finish(format_args!(
-                "{}[{}][{}] {}",
-                chrono::Local::now().format(timestamp_format),
-                record.target(),
-                colors.color(record.level()),
-                message
-            ))
+            out.finish(log_format!(record.target(), colors.color(record.level()), message))
         })
     } else {
         // Creates a logger dispatch without color support.
-        Dispatch::new().format(move |out, message, record| {
-            out.finish(format_args!(
-                "{}[{}][{}] {}",
-                chrono::Local::now().format(timestamp_format),
-                record.target(),
-                record.level(),
-                message
-            ))
-        })
+        Dispatch::new()
+            .format(move |out, message, record| out.finish(log_format!(record.target(), record.level(), message)))
     };
 
     for output in config.outputs {
