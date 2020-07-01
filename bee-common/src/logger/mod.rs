@@ -9,6 +9,8 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
+//! A logger backend for the `log` crate.
+
 mod config;
 
 pub use config::{LoggerConfig, LoggerConfigBuilder, LoggerOutputConfig, LoggerOutputConfigBuilder};
@@ -17,15 +19,18 @@ use fern::{
     colors::{Color, ColoredLevelConfig},
     Dispatch,
 };
+use thiserror::Error;
 
 /// Name of the standard output.
 pub const LOGGER_STDOUT_NAME: &str = "stdout";
 
 /// Error occuring when initializing a logger backend.
-#[derive(Debug)]
+#[derive(Error, Debug)]
 #[non_exhaustive]
 pub enum Error {
+    #[error("Creating output file failed.")]
     CreatingFileFailed,
+    #[error("Initializing the logger backend failed.")]
     InitializationFailed,
 }
 
