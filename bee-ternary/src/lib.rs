@@ -87,6 +87,7 @@ use std::{
     any,
     borrow::{Borrow, BorrowMut},
     cmp::{self, Ordering},
+    convert::TryFrom,
     fmt, hash,
     iter::FromIterator,
     ops::{Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive},
@@ -733,6 +734,26 @@ impl<T: RawEncodingBuf> TritBuf<T> {
     /// explicitly calling this method first.
     pub fn as_slice_mut(&mut self) -> &mut Trits<T::Slice> {
         unsafe { &mut *(self.0.as_slice_mut() as *mut T::Slice as *mut Trits<T::Slice>) }
+    }
+}
+
+impl<T: RawEncodingBuf> TritBuf<T>
+where
+    T::Slice: RawEncoding<Trit = Btrit>,
+{
+    /// Create a new [`TritBuf`] containing the trits given by the slice of i8s.
+    pub fn from_i8s(trits: &[i8]) -> Result<Self, <Btrit as TryFrom<i8>>::Error> {
+        trits.iter().map(|x| Btrit::try_from(*x)).collect()
+    }
+}
+
+impl<T: RawEncodingBuf> TritBuf<T>
+where
+    T::Slice: RawEncoding<Trit = Utrit>,
+{
+    /// Create a new [`TritBuf`] containing the trits given by the slice of u8s.
+    pub fn from_u8s(trits: &[u8]) -> Result<Self, <Btrit as TryFrom<u8>>::Error> {
+        trits.iter().map(|x| Utrit::try_from(*x)).collect()
     }
 }
 

@@ -60,10 +60,7 @@ where
     } else {
         let max_trits: usize = max_trits::<I>();
 
-        assert!(max_trits == 41, "{}", max_trits);
-
         if trits.len() > max_trits {
-            // TODO test
             for index in max_trits..trits.len() {
                 if trits.get(index).unwrap() != Btrit::Zero {
                     return Err(Error::TooBig);
@@ -73,7 +70,7 @@ where
 
         let mut acc = I::zero();
         // TODO change end if ending 0s
-        let end = trits.len();
+        let end = trits.len().min(max_trits);
 
         if trits.len() >= max_trits {
             let mut acc_i128: i128 = 0;
@@ -180,5 +177,20 @@ mod tests {
     fn error_on_num_too_big() {
         let buf = TritBuf::<T1B1Buf>::filled(max_trits::<i64>(), Btrit::PlusOne);
         assert_eq!(i64::try_from(buf.as_slice()).is_ok(), false);
+    }
+
+    #[test]
+    fn max_trits_types() {
+        assert!(max_trits::<u64>() == 41, "{}", max_trits::<u64>());
+        assert!(max_trits::<u32>() == 21, "{}", max_trits::<u32>());
+        assert!(max_trits::<u16>() == 11, "{}", max_trits::<u16>());
+        assert!(max_trits::<u8>() == 6, "{}", max_trits::<u8>());
+    }
+
+    #[test]
+    fn max_trits_zero() {
+        let make_trits = |trits| TritBuf::<T1B1Buf>::from_i8s(trits).unwrap();
+        assert!(trits_to_int::<i8, _>(&make_trits(&[1, 0, -1, -1, -1, 1, 0, 0, 0])).is_ok());
+        assert!(trits_to_int::<i8, _>(&make_trits(&[1, 0, -1, -1, -1, 1, 1, 0, 0])).is_err());
     }
 }
