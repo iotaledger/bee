@@ -1,0 +1,17 @@
+[package]
+name = "bee-common"
+version = "0.1.0-alpha"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = "Common utilities used across the bee framework"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "bee", "framework", "common"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+chrono = "0.4.11"
+fern = { version = "0.6.0", features = ["colored"] }
+log = "0.4.8"
+serde = { version = "1.0.114", features = ["derive" ] }
