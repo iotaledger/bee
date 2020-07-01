@@ -35,11 +35,11 @@ pub enum Error {
 }
 
 macro_rules! log_format {
-    ($record:expr, $level:expr, $message:expr) => {
+    ($target:expr, $level:expr, $message:expr) => {
         format_args!(
             "{}[{}][{}] {}",
             chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-            $record,
+            $target,
             $level,
             $message
         )
