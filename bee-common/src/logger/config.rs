@@ -19,7 +19,7 @@ const DEFAULT_COLOR_ENABLED: bool = true;
 /// Default name for an output.
 const DEFAULT_OUTPUT_NAME: &str = LOGGER_STDOUT_NAME;
 /// Default log level for an output.
-const DEFAULT_OUTPUT_LEVEL: &str = "info";
+const DEFAULT_OUTPUT_LEVEL: LevelFilter = LevelFilter::Info;
 
 /// Builder for a logger output configuration.
 #[derive(Default, Deserialize)]
@@ -27,7 +27,7 @@ pub struct LoggerOutputConfigBuilder {
     // Name of an output.
     name: Option<String>,
     // Log level of an output.
-    level: Option<String>,
+    level: Option<LevelFilter>,
 }
 
 impl LoggerOutputConfigBuilder {
@@ -43,25 +43,16 @@ impl LoggerOutputConfigBuilder {
     }
 
     /// Sets the level of a logger output.
-    pub fn level(mut self, level: &str) -> Self {
-        self.level.replace(level.to_string());
+    pub fn level(mut self, level: LevelFilter) -> Self {
+        self.level.replace(level);
         self
     }
 
     /// Builds a logger output configuration.
     pub fn finish(self) -> LoggerOutputConfig {
-        let level = match self.level.unwrap_or_else(|| DEFAULT_OUTPUT_LEVEL.to_owned()).as_str() {
-            "trace" => LevelFilter::Trace,
-            "debug" => LevelFilter::Debug,
-            "info" => LevelFilter::Info,
-            "warn" => LevelFilter::Warn,
-            "error" => LevelFilter::Error,
-            _ => LevelFilter::Info,
-        };
-
         LoggerOutputConfig {
             name: self.name.unwrap_or_else(|| DEFAULT_OUTPUT_NAME.to_owned()),
-            level,
+            level: self.level.unwrap_or(DEFAULT_OUTPUT_LEVEL),
         }
     }
 }
@@ -97,13 +88,13 @@ impl LoggerConfigBuilder {
     }
 
     /// Sets the level of an output of a logger.
-    pub fn level(&mut self, name: &str, level: &str) {
+    pub fn level(&mut self, name: &str, level: LevelFilter) {
         if let Some(outputs) = self.outputs.as_deref_mut() {
             if let Some(stdout) = outputs.iter_mut().find(|output| match output.name.as_ref() {
                 Some(output_name) => output_name == name,
                 None => false,
             }) {
-                stdout.level.replace(level.to_string());
+                stdout.level.replace(level);
             }
         }
     }
