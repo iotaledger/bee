@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Logger backend based on [fern](https://crates.io/crates/fern) for the [log](https://crates.io/crates/log) crate;
+- Shutdown mechanism;
 
 ### Changed
 
