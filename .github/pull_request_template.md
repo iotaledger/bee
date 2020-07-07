@@ -30,5 +30,5 @@ Tick the boxes that are relevant to your changes, and delete any items that are 
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
 - [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
-- [ ] If relevant, I updated `CHANGELOG.md`
+- [ ] I have checked that new and existing unit tests pass locally with my changes
+- [ ] I have updated the CHANGELOG.md, if my changes are significant enough
