@@ -9,9 +9,18 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-//! A crate that provides common functionalities shared across multiple crates within the Bee framework, and for
-//! applications built on-top.
+//! A module that deals with asynchronous workers in general.
 
-pub mod logger;
-pub mod shutdown;
-pub mod worker;
+use thiserror::Error;
+
+/// Errors, that might occur during the lifetime of asynchronous workers.
+#[derive(Error, Debug)]
+pub enum Error {
+    /// Occurs, when there is some asynchronous I/O error.
+    #[error("An asynchronous operation failed.")]
+    AsynchronousOperationFailed(#[from] std::io::Error),
+
+    /// Occurs, when a message couldn't be sent over a `futures::channel::mpsc` channel.
+    #[error("Sending a message to a task failed.")]
+    SendingMessageFailed(#[from] futures::channel::mpsc::SendError),
+}
