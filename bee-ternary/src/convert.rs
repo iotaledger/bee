@@ -9,129 +9,189 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-use crate::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits};
-use num_traits::{AsPrimitive, Bounded, FromPrimitive, One, ToPrimitive, Zero};
-use std::{
-    convert::TryFrom,
-    ops::{Add, Mul, Neg},
-};
+use crate::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits, Utrit};
+use num_traits::{AsPrimitive, CheckedAdd, FromPrimitive, Signed, Unsigned};
+use std::convert::TryFrom;
 
+/// An error that may be produced during numeric conversion
 #[derive(Debug, PartialEq)]
 pub enum Error {
+    /// The trit slice didn't contain enough trits to be considered a numeric value.
     Empty,
+    /// The trit slice has a numeric value that's too big to contain within the requested numeric
+    /// type.
     TooBig,
 }
 
-impl<I: AsPrimitive<i64>, T: RawEncodingBuf> From<I> for TritBuf<T>
-where
-    T::Slice: RawEncoding<Trit = Btrit>,
-{
-    fn from(x: I) -> Self {
-        integer_trits(x).collect()
-    }
-}
+// TODO: Find a way to implement this without conflicting impls
+// impl<I, T: RawEncodingBuf> From<I> for TritBuf<T>
+// where
+//     T::Slice: RawEncoding<Trit = Btrit>,
+//     I: AsPrimitive<i8> + FromPrimitive + Signed,
+// {
+//     fn from(x: I) -> Self {
+//         signed_int_trits(x).collect()
+//     }
+// }
 
-macro_rules! try_from_trits {
+macro_rules! signed_try_from_trits {
     ($int:ident) => {
         impl<'a, T: RawEncoding<Trit = Btrit> + ?Sized> TryFrom<&'a Trits<T>> for $int {
             type Error = Error;
             fn try_from(trits: &'a Trits<T>) -> Result<Self, Self::Error> {
-                trits_to_int(trits)
+                trits_to_signed_int(trits)
+            }
+        }
+
+        impl<T: RawEncodingBuf> From<$int> for TritBuf<T>
+        where
+            T::Slice: RawEncoding<Trit = Btrit>,
+        {
+            fn from(x: $int) -> Self {
+                signed_int_trits(x).collect()
             }
         }
     };
 }
 
-try_from_trits!(i64);
-try_from_trits!(i32);
-try_from_trits!(i16);
-try_from_trits!(i8);
+// We have to implement manually due to Rust's orphan rules :(
+// This macro accepts anything that implements:
+// `Clone + CheckedAdd + Signed + AsPrimitive<i8> + FromPrimitive`
+signed_try_from_trits!(i64);
+signed_try_from_trits!(i32);
+signed_try_from_trits!(i16);
+signed_try_from_trits!(i8);
 
-pub(crate) fn max_trits<I: ToPrimitive + Bounded>() -> usize {
-    (0.63 * std::mem::size_of::<I>() as f32 * 8.0) as usize + 1 // (log2/log3)*64
+macro_rules! unsigned_try_from_trits {
+    ($int:ident) => {
+        impl<'a, T: RawEncoding<Trit = Utrit> + ?Sized> TryFrom<&'a Trits<T>> for $int {
+            type Error = Error;
+            fn try_from(trits: &'a Trits<T>) -> Result<Self, Self::Error> {
+                trits_to_unsigned_int(trits)
+            }
+        }
+
+        impl<T: RawEncodingBuf> From<$int> for TritBuf<T>
+        where
+            T::Slice: RawEncoding<Trit = Utrit>,
+        {
+            fn from(x: $int) -> Self {
+                unsigned_int_trits(x).collect()
+            }
+        }
+    };
 }
 
-fn trits_to_int<I, T: RawEncoding<Trit = Btrit> + ?Sized>(trits: &Trits<T>) -> Result<I, Error>
+// We have to implement manually due to Rust's orphan rules :(
+// This macro accepts anything that implements:
+// `Clone + CheckedAdd + Unsigned + AsPrimitive<u8> + FromPrimitive`
+unsigned_try_from_trits!(u64);
+unsigned_try_from_trits!(u32);
+unsigned_try_from_trits!(u16);
+unsigned_try_from_trits!(u8);
+
+/// Attempt to convert the given trit slice into a number. If the numeric representation of the
+/// trit slice is too large or small to fit the numeric type, or does not contain any trits, an
+/// error will be returned.
+pub fn trits_to_signed_int<I, T: RawEncoding<Trit = Btrit> + ?Sized>(trits: &Trits<T>) -> Result<I, Error>
 where
-    I: Copy + FromPrimitive + ToPrimitive + Bounded + Zero + One + Neg<Output = I> + Add + Mul,
+    I: Clone + CheckedAdd + Signed,
 {
     if trits.is_empty() {
         Err(Error::Empty)
     } else {
-        let max_trits: usize = max_trits::<I>();
-
-        if trits.len() > max_trits {
-            for index in max_trits..trits.len() {
-                if trits.get(index).unwrap() != Btrit::Zero {
-                    return Err(Error::TooBig);
-                }
-            }
-        }
-
         let mut acc = I::zero();
-        // TODO change end if ending 0s
-        let end = trits.len().min(max_trits);
 
-        if trits.len() >= max_trits {
-            let mut acc_i128: i128 = 0;
-            for index in (0..end).rev() {
-                let trit_value = match trits.get(index).unwrap() {
-                    Btrit::Zero => 0,
-                    Btrit::NegOne => -1,
-                    Btrit::PlusOne => 1,
-                };
-                acc_i128 = (acc_i128 * RADIX as i128) as i128 + trit_value;
-                if acc_i128 > 0 && acc_i128 > I::max_value().to_i128().unwrap()
-                    || acc_i128 < 0 && acc_i128 < I::min_value().to_i128().unwrap() - 1
-                {
-                    return Err(Error::TooBig);
-                }
-                acc = I::from_i128(acc_i128).unwrap();
+        for trit in trits.iter().rev() {
+            let old_acc = acc.clone();
+            acc = match trit {
+                Btrit::NegOne => -I::one(),
+                Btrit::Zero => I::zero(),
+                Btrit::PlusOne => I::one(),
             }
-        } else {
-            for index in (0..end).rev() {
-                let trit_value = match trits.get(index).unwrap() {
-                    Btrit::Zero => I::zero(),
-                    Btrit::NegOne => -I::one(),
-                    Btrit::PlusOne => I::one(),
-                };
-                acc = (acc * I::from_u8(RADIX).unwrap()) + trit_value;
-            }
+            .checked_add(&old_acc)
+            .and_then(|acc| acc.checked_add(&old_acc))
+            .and_then(|acc| acc.checked_add(&old_acc))
+            .ok_or(Error::TooBig)?;
         }
 
         Ok(acc)
     }
 }
 
-const RADIX: u8 = 3;
-
-pub fn integer_trits<I: AsPrimitive<i64>>(x: I) -> impl Iterator<Item = Btrit> {
-    let x = x.as_();
-    let is_neg = x < 0;
-
-    let mut x_abs = if x == i64::MIN {
-        i64::MAX as u64 + 1
+/// Attempt to convert the given trit slice into a number. If the numeric representation of the
+/// trit slice is too large to fit the desired integer, or does not contain any trits, an error
+/// will be returned.
+pub fn trits_to_unsigned_int<I, T: RawEncoding<Trit = Utrit> + ?Sized>(trits: &Trits<T>) -> Result<I, Error>
+where
+    I: Clone + CheckedAdd + Unsigned,
+{
+    if trits.is_empty() {
+        Err(Error::Empty)
     } else {
-        x.abs() as u64
-    };
+        let mut acc = I::zero();
+
+        for trit in trits.iter().rev() {
+            let old_acc = acc.clone();
+            acc = match trit {
+                Utrit::Zero => I::zero(),
+                Utrit::One => I::one(),
+                Utrit::Two => I::one() + I::one(),
+            }
+            .checked_add(&old_acc)
+            .and_then(|acc| acc.checked_add(&old_acc))
+            .and_then(|acc| acc.checked_add(&old_acc))
+            .ok_or(Error::TooBig)?;
+        }
+
+        Ok(acc)
+    }
+}
+
+/// Produce an iterator over the [`Btrit`]s that make up a given integer.
+pub fn signed_int_trits<I>(x: I) -> impl Iterator<Item = Btrit> + Clone
+where
+    I: Clone + AsPrimitive<i8> + FromPrimitive + Signed,
+{
+    let is_neg = x.is_negative();
+    let mut x = if is_neg { x } else { -x };
+
+    let radix = I::from_i8(3).unwrap();
 
     std::iter::from_fn(move || {
-        if x_abs == 0 {
+        if x.is_zero() {
             None
         } else {
-            let trit = match ((x_abs + 1) % RADIX as u64) as i8 - 1 {
-                x if is_neg => -x,
-                x => x,
-            };
-
-            x_abs += 1;
-            x_abs /= RADIX as u64;
-
-            Some(Btrit::try_from(trit).unwrap())
+            let modulus = ((x + I::one()).abs() % radix).as_();
+            x = x / radix;
+            if modulus == 1 {
+                x = x + -I::one();
+            }
+            Some(Btrit::try_from(((modulus + 2) % 3 - 1) * if is_neg { -1 } else { 1 }).unwrap())
         }
     })
     // If the integer is exactly 0, add an extra trit
-    .chain(Some(Btrit::Zero).filter(|_| x == 0))
+    .chain(Some(Btrit::Zero).filter(|_| x.is_zero()))
+}
+
+/// Produce an iterator over the [`Utrit`]s that make up a given integer.
+pub fn unsigned_int_trits<I>(mut x: I) -> impl Iterator<Item = Utrit> + Clone
+where
+    I: Clone + AsPrimitive<u8> + FromPrimitive + Unsigned,
+{
+    let radix = I::from_u8(3).unwrap();
+
+    std::iter::from_fn(move || {
+        if x.is_zero() {
+            None
+        } else {
+            let modulus = (x % radix).as_();
+            x = x / radix;
+            Some(Utrit::try_from(modulus).unwrap())
+        }
+    })
+    // If the integer is exactly 0, add an extra trit
+    .chain(Some(Utrit::Zero).filter(|_| x.is_zero()))
 }
 
 #[cfg(test)]
@@ -147,27 +207,63 @@ mod tests {
     #[test]
     fn error_empty_trits() {
         let buf = TritBuf::<T1B1Buf>::zeros(0);
-        match i64::try_from(buf.as_slice()) {
-            Ok(_) => unreachable!(),
-            Err(e) => assert_eq!(e, Error::Empty),
-        }
+        assert_eq!(i64::try_from(buf.as_slice()).unwrap_err(), Error::Empty);
+
+        let buf = TritBuf::<T1B1Buf<Utrit>>::zeros(0);
+        assert_eq!(u64::try_from(buf.as_slice()).unwrap_err(), Error::Empty);
     }
 
     #[test]
-    fn round_robin() {
-        let nums = [1, -1, i64::MAX, i64::MIN];
+    fn signed_round_robin() {
+        let nums = [
+            0,
+            1,
+            -1,
+            42,
+            -42,
+            7331,
+            -7331,
+            i64::MAX - 1,
+            i64::MIN + 1,
+            i64::MAX,
+            i64::MIN,
+        ];
         for n in &nums {
-            assert_eq!(i64::try_from(TritBuf::<T1B1Buf>::from(*n).as_slice()).unwrap(), *n);
+            let x = TritBuf::<T1B1Buf>::from(*n);
+            let new = i64::try_from(x.as_slice()).unwrap();
+            assert_eq!(new, *n);
         }
     }
 
     #[test]
-    fn convert_range_to_trits() {
+    fn unsigned_round_robin() {
+        let nums = [0, 1, 42, 7331, u64::MAX - 1, u64::MAX];
+        for n in &nums {
+            let x = TritBuf::<T1B1Buf<_>>::from(*n);
+            let new = u64::try_from(x.as_slice()).unwrap();
+            assert_eq!(new, *n);
+        }
+    }
+
+    #[test]
+    fn signed_range_to_trits() {
         let now = Instant::now();
-        for num in -100_000..100_000i64 {
+        for num in -100_000..100_001i64 {
             let buf = TritBuf::<T1B1Buf>::from(num);
             let converted_num = i64::try_from(buf.as_slice()).unwrap();
-            assert_eq!(converted_num, num);
+            assert_eq!(converted_num, num, "num {}, trits {}", num, buf.as_slice());
+        }
+        let message = format!("\nconvert_range_to_trits Elapsed: {}\n", now.elapsed().as_secs_f64());
+        io::stdout().write_all(message.as_bytes()).unwrap();
+    }
+
+    #[test]
+    fn unsigned_range_to_trits() {
+        let now = Instant::now();
+        for num in 0..100_001u64 {
+            let buf = TritBuf::<T1B1Buf<_>>::from(num);
+            let converted_num = u64::try_from(buf.as_slice()).unwrap();
+            assert_eq!(converted_num, num, "num {}, trits {}", num, buf.as_slice());
         }
         let message = format!("\nconvert_range_to_trits Elapsed: {}\n", now.elapsed().as_secs_f64());
         io::stdout().write_all(message.as_bytes()).unwrap();
@@ -175,22 +271,99 @@ mod tests {
 
     #[test]
     fn error_on_num_too_big() {
-        let buf = TritBuf::<T1B1Buf>::filled(max_trits::<i64>(), Btrit::PlusOne);
+        let buf = TritBuf::<T1B1Buf>::filled(41, Btrit::PlusOne);
         assert_eq!(i64::try_from(buf.as_slice()).is_ok(), false);
+
+        let buf = TritBuf::<T1B1Buf<_>>::filled(42, Utrit::One);
+        assert_eq!(u64::try_from(buf.as_slice()).is_ok(), false);
     }
 
     #[test]
-    fn max_trits_types() {
-        assert!(max_trits::<u64>() == 41, "{}", max_trits::<u64>());
-        assert!(max_trits::<u32>() == 21, "{}", max_trits::<u32>());
-        assert!(max_trits::<u16>() == 11, "{}", max_trits::<u16>());
-        assert!(max_trits::<u8>() == 6, "{}", max_trits::<u8>());
-    }
-
-    #[test]
-    fn max_trits_zero() {
+    fn signed_int_to_trits() {
         let make_trits = |trits| TritBuf::<T1B1Buf>::from_i8s(trits).unwrap();
-        assert!(trits_to_int::<i8, _>(&make_trits(&[1, 0, -1, -1, -1, 1, 0, 0, 0])).is_ok());
-        assert!(trits_to_int::<i8, _>(&make_trits(&[1, 0, -1, -1, -1, 1, 1, 0, 0])).is_err());
+
+        let tests = [
+            (0, make_trits(&[0])),
+            (45, make_trits(&[0, 0, -1, -1, 1])),
+            (
+                3777554354,
+                make_trits(&[-1, -1, -1, -1, 1, 1, -1, 0, -1, 1, 1, 0, 1, -1, 1, -1, 1, -1, 1, 0, 1]),
+            ),
+            (
+                522626226,
+                make_trits(&[0, -1, 0, -1, 1, 1, 1, 1, 0, -1, 1, 1, -1, 1, 1, 0, 0, 1, 1]),
+            ),
+        ];
+
+        for (n, buf) in &tests {
+            let neg_buf = -buf.clone(); // Test the negation too
+
+            assert_eq!(&TritBuf::<T1B1Buf>::from(*n), buf);
+            assert_eq!(&TritBuf::<T1B1Buf>::from(-*n), &neg_buf);
+
+            assert_eq!(i64::try_from(buf.as_slice()).unwrap(), *n);
+            assert_eq!(i64::try_from(neg_buf.as_slice()).unwrap(), -*n);
+        }
+    }
+
+    #[test]
+    fn unsigned_int_to_trits() {
+        let make_trits = |trits| TritBuf::<T1B1Buf<Utrit>>::from_u8s(trits).unwrap();
+
+        let tests = [
+            (0, make_trits(&[0])),
+            (45, make_trits(&[0, 0, 2, 1])),
+            (
+                3777554354,
+                make_trits(&[2, 1, 1, 1, 0, 1, 2, 2, 1, 0, 1, 0, 1, 2, 0, 2, 0, 2, 0, 0, 1]),
+            ),
+            (
+                522626226,
+                make_trits(&[0, 2, 2, 1, 0, 1, 1, 1, 0, 2, 0, 1, 2, 0, 1, 0, 0, 1, 1]),
+            ),
+        ];
+
+        for (n, buf) in &tests {
+            assert_eq!(&TritBuf::<T1B1Buf<_>>::from(*n), buf);
+            assert_eq!(u64::try_from(buf.as_slice()).unwrap(), *n);
+        }
+    }
+
+    #[test]
+    fn signed_max_trits_zero() {
+        let make_trits = |trits| TritBuf::<T1B1Buf>::from_i8s(trits).unwrap();
+
+        // Maximum i8
+        assert!(i8::try_from(make_trits(&[1, 0, -1, -1, -1, 1]).as_slice()).is_ok());
+        // Overflow!
+        assert!(i8::try_from(make_trits(&[-1, 1, -1, -1, -1, 1]).as_slice()).is_err());
+        // Minimum i8 (we can go back to -128 because 2's complement repr)
+        assert!(i8::try_from(make_trits(&[1, -1, 1, 1, 1, -1]).as_slice()).is_ok());
+        // Underflow!
+        assert!(i8::try_from(make_trits(&[0, -1, 1, 1, 1, -1]).as_slice()).is_err());
+        // Zero-padded
+        assert!(i8::try_from(make_trits(&[1, 0, -1, -1, -1, 1, 0, 0, 0]).as_slice()).is_ok());
+        // All the zeros
+        assert_eq!(
+            i8::try_from(make_trits(&[0, 0, 0, 0, 0, 0, 0, 0, 0]).as_slice()).ok(),
+            Some(0)
+        );
+    }
+
+    #[test]
+    fn unsigned_max_trits_zero() {
+        let make_trits = |trits| TritBuf::<T1B1Buf<Utrit>>::from_u8s(trits).unwrap();
+
+        // Maximum u8
+        assert!(u8::try_from(make_trits(&[0, 1, 1, 0, 0, 1]).as_slice()).is_ok());
+        // Overflow!
+        assert!(u8::try_from(make_trits(&[1, 1, 1, 0, 0, 1]).as_slice()).is_err());
+        // Zero-padded
+        assert!(u8::try_from(make_trits(&[0, 1, 1, 0, 0, 1, 0, 0, 0]).as_slice()).is_ok());
+        // All the zeros
+        assert_eq!(
+            u8::try_from(make_trits(&[0, 0, 0, 0, 0, 0, 0, 0, 0]).as_slice()).ok(),
+            Some(0)
+        );
     }
 }

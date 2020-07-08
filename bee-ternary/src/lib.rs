@@ -88,9 +88,11 @@ use std::{
     borrow::{Borrow, BorrowMut},
     cmp::{self, Ordering},
     convert::TryFrom,
-    fmt, hash,
+    error, fmt, hash,
     iter::FromIterator,
-    ops::{Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive},
+    ops::{
+        Deref, DerefMut, Index, IndexMut, Neg, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+    },
 };
 
 // Reexports
@@ -109,6 +111,16 @@ pub use crate::{
 pub enum Error {
     InvalidRepr,
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::InvalidRepr => write!(f, "invalid representation"),
+        }
+    }
+}
+
+impl error::Error for Error {}
 
 /// A type that represents a buffer of trits of unknown length.
 ///
@@ -419,6 +431,18 @@ where
         assert!(self.len() % 3 == 0, "Trit slice length must be a multiple of 3");
         self.chunks(3)
             .map(|trits| Tryte::from_trits([trits.get(0).unwrap(), trits.get(1).unwrap(), trits.get(2).unwrap()]))
+    }
+
+    /// Negate each trit in this buffer.
+    ///
+    /// This has the effect of making the trit buffer negative when expressed in numeric form.
+    pub fn negate(&mut self) {
+        for i in 0..self.len() {
+            unsafe {
+                let t = self.get_unchecked(i);
+                self.set_unchecked(i, -t);
+            }
+        }
     }
 }
 
@@ -734,6 +758,37 @@ impl<T: RawEncodingBuf> TritBuf<T> {
     /// explicitly calling this method first.
     pub fn as_slice_mut(&mut self) -> &mut Trits<T::Slice> {
         unsafe { &mut *(self.0.as_slice_mut() as *mut T::Slice as *mut Trits<T::Slice>) }
+    }
+}
+
+impl TritBuf<T3B1Buf> {
+    /// Pad the trit buffer with [`Btrit::Zero`] until the buffer's length is a multiple of 3.
+    ///
+    /// This method is often used in conjunction with [`Trites::as_trytes`].
+    pub fn pad_zeros(&mut self) {
+        while self.len() % 3 != 0 {
+            self.push(Btrit::Zero);
+        }
+    }
+
+    /// Pad the trit buffer with [`Btrit::Zero`] until the buffer's length is a multiple of 3.
+    ///
+    /// This method is often used in conjunction with [`Trites::as_trytes`].
+    pub fn padded_zeros(mut self) -> Self {
+        self.pad_zeros();
+        self
+    }
+}
+
+impl<T: RawEncodingBuf> Neg for TritBuf<T>
+where
+    T::Slice: RawEncoding<Trit = Btrit>,
+{
+    type Output = Self;
+
+    fn neg(mut self) -> Self {
+        self.negate();
+        self
     }
 }
 

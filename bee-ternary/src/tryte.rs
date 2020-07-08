@@ -15,6 +15,7 @@ use std::{
     fmt,
     iter::FromIterator,
     ops::{Deref, DerefMut},
+    str::FromStr,
 };
 
 /// A ternary tryte. Equivalent to 3 trits.
@@ -195,6 +196,20 @@ impl FromIterator<Tryte> for TryteBuf {
             this.push(tryte);
         }
         this
+    }
+}
+
+impl<'a> From<&'a [Tryte]> for TryteBuf {
+    fn from(trytes: &'a [Tryte]) -> Self {
+        Self { inner: trytes.to_vec() }
+    }
+}
+
+impl FromStr for TryteBuf {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::try_from_str(s)
     }
 }
 
