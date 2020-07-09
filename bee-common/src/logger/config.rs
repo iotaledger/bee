@@ -122,7 +122,7 @@ pub struct LoggerConfig {
 }
 
 impl LoggerConfig {
-    // Creates a builder for a logger config.
+    /// Creates a builder for a logger config.
     pub fn build() -> LoggerConfigBuilder {
         LoggerConfigBuilder::default()
     }
