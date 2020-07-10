@@ -1,5 +1,6 @@
 [workspace]
 members = [
 	"bee-common",
+	"bee-signing/bee-signing-derive",
 	"bee-ternary",
 ]
