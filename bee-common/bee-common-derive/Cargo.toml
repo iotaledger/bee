@@ -1,13 +1,13 @@
 [package]
-name = "bee-signing-derive"
+name = "bee-common-derive"
 version = "0.1.0-alpha"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = "Derive macros for the bee-signing crate"
+description = "Derive macros for the bee-common crate"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "signing"]
+keywords = ["iota", "tangle", "bee", "framework", "common"]
 homepage = "https://www.iota.org"
 
 [lib]
