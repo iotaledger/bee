@@ -11,20 +11,10 @@
 
 //! Endianness markers for big integers.
 
-use crate::bigint::sealed::Sealed;
-
-trait Endianness: Sealed {}
-
 /// Big endian marker.
 #[derive(Clone, Copy, Debug)]
 pub struct BigEndian {}
 
-impl Sealed for BigEndian {}
-impl Endianness for BigEndian {}
-
 /// Little endian marker.
 #[derive(Clone, Copy, Debug)]
 pub struct LittleEndian {}
-
-impl Sealed for LittleEndian {}
-impl Endianness for LittleEndian {}
