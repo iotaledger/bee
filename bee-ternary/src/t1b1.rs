@@ -12,6 +12,7 @@
 use crate::{trit::ShiftTernary, Btrit, RawEncoding, RawEncodingBuf, Trit};
 use std::{convert::TryInto, hash, marker::PhantomData, ops::Range};
 
+/// An encoding scheme slice that uses a single byte to represent one trit.
 #[repr(transparent)]
 pub struct T1B1<T: Trit = Btrit> {
     _phantom: PhantomData<T>,
@@ -27,11 +28,11 @@ impl<T: Trit> T1B1<T> {
         (self.inner.as_ptr() as *const T).add(index)
     }
 
-    pub fn as_raw_slice(&self) -> &[T] {
+    pub(crate) fn as_raw_slice(&self) -> &[T] {
         unsafe { &*(Self::make(self.ptr(0), 0, self.len()) as *const _) }
     }
 
-    pub fn as_raw_slice_mut(&mut self) -> &mut [T] {
+    pub(crate) fn as_raw_slice_mut(&mut self) -> &mut [T] {
         unsafe { &mut *(Self::make(self.ptr(0), 0, self.len()) as *mut _) }
     }
 }
@@ -96,6 +97,7 @@ where
     }
 }
 
+/// An encoding scheme buffer that uses a single byte to represent one trit.
 #[derive(Clone)]
 pub struct T1B1Buf<T: Trit = Btrit> {
     _phantom: PhantomData<T>,
@@ -107,7 +109,7 @@ where
     T: Trit,
     <T as ShiftTernary>::Target: Trit,
 {
-    pub fn into_shifted(self) -> T1B1Buf<T::Target> {
+    pub(crate) fn into_shifted(self) -> T1B1Buf<T::Target> {
         // Shift each trit, cast it to i8, and update the inner buffer.
         // This puts the inner buffer into an incorrect state!
         let mut trit_buf = self;
@@ -136,12 +138,6 @@ where
             _phantom: PhantomData,
             inner: raw_shifted_trits,
         }
-    }
-}
-
-impl<T: Trit> T1B1Buf<T> {
-    pub fn into_inner(self) -> Vec<T> {
-        self.inner
     }
 }
 

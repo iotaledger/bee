@@ -12,8 +12,9 @@
 use super::{ShiftTernary, Trit, Utrit};
 use std::{convert::TryFrom, fmt, ops::Neg};
 
-#[repr(i8)]
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(i8)]
+#[allow(missing_docs)]
 pub enum Btrit {
     NegOne = -1,
     Zero = 0,

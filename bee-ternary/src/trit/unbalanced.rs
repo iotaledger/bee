@@ -13,8 +13,9 @@ use super::{Btrit, ShiftTernary, Trit};
 
 use std::{convert::TryFrom, fmt};
 
-#[repr(i8)]
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(i8)]
+#[allow(missing_docs)]
 pub enum Utrit {
     Zero = 0,
     One = 1,

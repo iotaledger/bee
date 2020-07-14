@@ -58,6 +58,8 @@
 //! starting index is a multiple of the compression factor. For example a byte-aligned [`T3B1`]
 //! buffer will always start on an index of the *original* buffer that is a multiple of 3.
 
+#![deny(missing_docs)]
+
 use std::slice;
 
 /// Conversions between to and from standard types.
@@ -109,6 +111,7 @@ pub use crate::{
 /// An error that may be produced as a result of fallible conversions.
 #[derive(Debug)]
 pub enum Error {
+    /// A value that does not represent a valid ternary representation was encountered.
     InvalidRepr,
 }
 

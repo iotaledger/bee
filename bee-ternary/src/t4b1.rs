@@ -17,6 +17,7 @@ const TPB: usize = 4;
 // Number required to push a byte between balanced and unbalanced representationsconst TPB: usize = 4;
 const BAL: i8 = 40;
 
+/// An encoding scheme slice that uses a single byte to represent four trits.
 #[repr(transparent)]
 pub struct T4B1([()]);
 
@@ -121,6 +122,7 @@ impl RawEncoding for T4B1 {
     }
 }
 
+/// An encoding scheme buffer that uses a single byte to represent four trits.
 #[derive(Clone)]
 pub struct T4B1Buf(Vec<i8>, usize);
 

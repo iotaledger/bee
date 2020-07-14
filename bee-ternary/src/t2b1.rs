@@ -17,6 +17,7 @@ const TPB: usize = 2;
 // Number required to push a byte between balanced and unbalanced representations
 const BAL: i8 = 4;
 
+/// An encoding scheme slice that uses a single byte to represent two trits.
 #[repr(transparent)]
 pub struct T2B1([()]);
 
@@ -121,6 +122,7 @@ impl RawEncoding for T2B1 {
     }
 }
 
+/// An encoding scheme buffer that uses a single byte to represent two trits.
 #[derive(Clone)]
 pub struct T2B1Buf(Vec<i8>, usize);
 

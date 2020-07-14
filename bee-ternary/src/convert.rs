@@ -10,7 +10,7 @@
 // See the License for the specific language governing permissions and limitations under the License.
 
 use crate::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits, Utrit};
-use num_traits::{AsPrimitive, CheckedAdd, FromPrimitive, Signed, Unsigned};
+use num_traits::{AsPrimitive, CheckedAdd, FromPrimitive, Signed, Num};
 use std::convert::TryFrom;
 
 /// An error that may be produced during numeric conversion
@@ -124,7 +124,7 @@ where
 /// will be returned.
 pub fn trits_to_unsigned_int<I, T: RawEncoding<Trit = Utrit> + ?Sized>(trits: &Trits<T>) -> Result<I, Error>
 where
-    I: Clone + CheckedAdd + Unsigned,
+    I: Clone + CheckedAdd + Num,
 {
     if trits.is_empty() {
         Err(Error::Empty)
@@ -177,7 +177,7 @@ where
 /// Produce an iterator over the [`Utrit`]s that make up a given integer.
 pub fn unsigned_int_trits<I>(mut x: I) -> impl Iterator<Item = Utrit> + Clone
 where
-    I: Clone + AsPrimitive<u8> + FromPrimitive + Unsigned,
+    I: Clone + AsPrimitive<u8> + FromPrimitive + Num,
 {
     let radix = I::from_u8(3).unwrap();
 

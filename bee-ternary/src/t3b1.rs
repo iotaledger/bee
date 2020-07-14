@@ -17,6 +17,7 @@ const TPB: usize = 3;
 // Number required to push a byte between balanced and unbalanced representations
 const BAL: i8 = 13;
 
+/// An encoding scheme slice that uses a single byte to represent three trits.
 #[repr(transparent)]
 pub struct T3B1([()]);
 
@@ -123,6 +124,7 @@ impl RawEncoding for T3B1 {
     }
 }
 
+/// An encoding scheme buffer that uses a single byte to represent three trits.
 #[derive(Clone)]
 pub struct T3B1Buf(Vec<i8>, usize);
 

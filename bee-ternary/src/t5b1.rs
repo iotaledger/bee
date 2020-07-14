@@ -17,6 +17,7 @@ const TPB: usize = 5;
 // Number required to push a byte between balanced and unbalanced representations
 const BAL: i8 = 121;
 
+/// An encoding scheme slice that uses a single byte to represent five trits.
 #[repr(transparent)]
 pub struct T5B1([()]);
 
@@ -121,6 +122,7 @@ impl RawEncoding for T5B1 {
     }
 }
 
+/// An encoding scheme buffer that uses a single byte to represent five trits.
 #[derive(Clone)]
 pub struct T5B1Buf(Vec<i8>, usize);
 
