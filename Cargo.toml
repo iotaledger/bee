@@ -2,5 +2,6 @@
 members = [
 	"bee-common/bee-common",
 	"bee-common/bee-common-derive",
+	"bee-crypto",
 	"bee-ternary",
 ]

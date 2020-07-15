@@ -11,7 +11,7 @@
 
 //! Binary representation of big integers.
 
-use crate::bigint::sealed::Sealed;
+use crate::ternary::bigint::sealed::Sealed;
 
 /// The number of bits in an U384/I384.
 pub const BINARY_LEN: usize = 384;
