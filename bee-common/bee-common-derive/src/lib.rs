@@ -63,3 +63,27 @@ pub fn derive_secret_display(input: proc_macro::TokenStream) -> proc_macro::Toke
 
     expanded.into()
 }
+
+/// Derives an implementation of the trait `std::ops::Drop` for a secret type that calls `Zeroize::zeroize`.
+/// Implements TODO
+/// Based on https://github.com/dtolnay/syn/blob/master/examples/heapsize/heapsize_derive/src/lib.rs.
+#[proc_macro_derive(SecretDrop)]
+pub fn derive_secret_drop(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    // Parse the input tokens into a syntax tree.
+    let input = parse_macro_input!(input as DeriveInput);
+    // Used in the quasi-quotation below as `#name`.
+    let name = input.ident;
+    // Get the different implementation elements from the input.
+    let (impl_generics, ty_generics, _) = input.generics.split_for_impl();
+
+    // The generated implementation.
+    let expanded = quote! {
+        impl #impl_generics std::ops::Drop for #name #ty_generics {
+            fn drop(&mut self) {
+                self.zeroize()
+            }
+        }
+    };
+
+    expanded.into()
+}
