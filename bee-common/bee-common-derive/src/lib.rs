@@ -65,7 +65,7 @@ pub fn derive_secret_display(input: proc_macro::TokenStream) -> proc_macro::Toke
 }
 
 /// Derives an implementation of the trait `std::ops::Drop` for a secret type that calls `Zeroize::zeroize`.
-/// Implements TODO
+/// Implements https://github.com/iotaledger/bee-rfcs/blob/master/text/0044-secret-zeroize-drop.md.
 /// Based on https://github.com/dtolnay/syn/blob/master/examples/heapsize/heapsize_derive/src/lib.rs.
 #[proc_macro_derive(SecretDrop)]
 pub fn derive_secret_drop(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
