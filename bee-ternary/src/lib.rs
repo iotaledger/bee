@@ -60,8 +60,6 @@
 
 use std::slice;
 
-/// Functionality pertaining to trit big integers.
-pub mod bigint;
 /// Types and traits that allow the implementation of new encoding formats.
 pub mod raw;
 /// The [`T1B1`] and [`T1B1Buf`] encodings.
