@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Binary/ternary numeric conversion
+- FromStr implementation for TryteBuf
+- TritBuf::from_i8s and TritBuf::from_u8s
+
 ### Changed
 
 ### Deprecated
