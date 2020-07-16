@@ -13,5 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-ternary = { path = "../bee-ternary" }
 
+byteorder = "1.3.4"
+lazy_static = "1.4.0"
 thiserror = "1.0.20"
 tiny-keccak = { version = "2.0.1", features = ["keccak"] }
