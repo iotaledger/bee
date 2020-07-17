@@ -10,10 +10,11 @@
 // See the License for the specific language governing permissions and limitations under the License.
 
 use super::{ShiftTernary, Trit, Utrit};
-use std::{convert::TryFrom, fmt};
+use std::{convert::TryFrom, fmt, ops::Neg};
 
-#[repr(i8)]
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[repr(i8)]
+#[allow(missing_docs)]
 pub enum Btrit {
     NegOne = -1,
     Zero = 0,
@@ -41,6 +42,19 @@ impl ShiftTernary for Btrit {
             NegOne => Self::Target::Zero,
             Zero => Self::Target::One,
             PlusOne => Self::Target::Two,
+        }
+    }
+}
+
+impl Neg for Btrit {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        use Btrit::*;
+        match self {
+            NegOne => PlusOne,
+            Zero => Zero,
+            PlusOne => NegOne,
         }
     }
 }

@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.2.0-alpha - 2020-07-17
+
+### Added
+
+- Binary/ternary numeric conversion
+- FromStr implementation for TryteBuf
+- TritBuf::from_i8s and TritBuf::from_u8s
+
 ## 0.1.0-alpha - 2020-06-12
 
 ### Added

@@ -58,8 +58,12 @@
 //! starting index is a multiple of the compression factor. For example a byte-aligned [`T3B1`]
 //! buffer will always start on an index of the *original* buffer that is a multiple of 3.
 
+#![deny(missing_docs)]
+
 use std::slice;
 
+/// Conversions between to and from standard types.
+pub mod convert;
 /// Types and traits that allow the implementation of new encoding formats.
 pub mod raw;
 /// The [`T1B1`] and [`T1B1Buf`] encodings.
@@ -85,12 +89,14 @@ use std::{
     any,
     borrow::{Borrow, BorrowMut},
     cmp::{self, Ordering},
-    fmt, hash,
+    convert::TryFrom,
+    error, fmt, hash,
     iter::FromIterator,
-    ops::{Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive},
+    ops::{
+        Deref, DerefMut, Index, IndexMut, Neg, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+    },
 };
 
-// Reexports
 pub use crate::{
     t1b1::{T1B1Buf, T1B1},
     t2b1::{T2B1Buf, T2B1},
@@ -104,8 +110,19 @@ pub use crate::{
 /// An error that may be produced as a result of fallible conversions.
 #[derive(Debug)]
 pub enum Error {
+    /// A value that does not represent a valid ternary representation was encountered.
     InvalidRepr,
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::InvalidRepr => write!(f, "invalid representation"),
+        }
+    }
+}
+
+impl error::Error for Error {}
 
 /// A type that represents a buffer of trits of unknown length.
 ///
@@ -219,7 +236,7 @@ where
     ///
     /// # Panics
     ///
-    /// This function will panic if the slice is not byte-aligned
+    /// This function will panic if the slice is not byte-aligned.
     pub fn as_i8_slice(&self) -> &[i8] {
         self.0.as_i8_slice()
     }
@@ -228,7 +245,7 @@ where
     ///
     /// # Panics
     ///
-    /// This function will panic if the slice is not byte-aligned
+    /// This function will panic if the slice is not byte-aligned.
     ///
     /// # Safety
     ///
@@ -348,7 +365,7 @@ where
     ///
     /// # Panics
     ///
-    /// This function will panic if the length of the slices are different
+    /// This function will panic if the length of the slices are different.
     pub fn copy_from<U: RawEncoding<Trit = T::Trit> + ?Sized>(&mut self, trits: &Trits<U>) {
         assert!(
             self.len() == trits.len(),
@@ -416,6 +433,18 @@ where
         assert!(self.len() % 3 == 0, "Trit slice length must be a multiple of 3");
         self.chunks(3)
             .map(|trits| Tryte::from_trits([trits.get(0).unwrap(), trits.get(1).unwrap(), trits.get(2).unwrap()]))
+    }
+
+    /// Negate each trit in this buffer.
+    ///
+    /// This has the effect of making the trit buffer negative when expressed in numeric form.
+    pub fn negate(&mut self) {
+        for i in 0..self.len() {
+            unsafe {
+                let t = self.get_unchecked(i);
+                self.set_unchecked(i, -t);
+            }
+        }
     }
 }
 
@@ -731,6 +760,57 @@ impl<T: RawEncodingBuf> TritBuf<T> {
     /// explicitly calling this method first.
     pub fn as_slice_mut(&mut self) -> &mut Trits<T::Slice> {
         unsafe { &mut *(self.0.as_slice_mut() as *mut T::Slice as *mut Trits<T::Slice>) }
+    }
+}
+
+impl TritBuf<T3B1Buf> {
+    /// Pad the trit buffer with [`Btrit::Zero`] until the buffer's length is a multiple of 3.
+    ///
+    /// This method is often used in conjunction with [`Trites::as_trytes`].
+    pub fn pad_zeros(&mut self) {
+        while self.len() % 3 != 0 {
+            self.push(Btrit::Zero);
+        }
+    }
+
+    /// Pad the trit buffer with [`Btrit::Zero`] until the buffer's length is a multiple of 3.
+    ///
+    /// This method is often used in conjunction with [`Trites::as_trytes`].
+    pub fn padded_zeros(mut self) -> Self {
+        self.pad_zeros();
+        self
+    }
+}
+
+impl<T: RawEncodingBuf> Neg for TritBuf<T>
+where
+    T::Slice: RawEncoding<Trit = Btrit>,
+{
+    type Output = Self;
+
+    fn neg(mut self) -> Self {
+        self.negate();
+        self
+    }
+}
+
+impl<T: RawEncodingBuf> TritBuf<T>
+where
+    T::Slice: RawEncoding<Trit = Btrit>,
+{
+    /// Create a new [`TritBuf`] containing the trits given by the slice of i8s.
+    pub fn from_i8s(trits: &[i8]) -> Result<Self, <Btrit as TryFrom<i8>>::Error> {
+        trits.iter().map(|x| Btrit::try_from(*x)).collect()
+    }
+}
+
+impl<T: RawEncodingBuf> TritBuf<T>
+where
+    T::Slice: RawEncoding<Trit = Utrit>,
+{
+    /// Create a new [`TritBuf`] containing the trits given by the slice of u8s.
+    pub fn from_u8s(trits: &[u8]) -> Result<Self, <Btrit as TryFrom<u8>>::Error> {
+        trits.iter().map(|x| Utrit::try_from(*x)).collect()
     }
 }
 

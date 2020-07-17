@@ -12,10 +12,14 @@
 use crate::{Trit, TritBuf};
 use std::ops::Range;
 
+/// A trait to be implemented by alternative trit encoding scheme slices.
 #[allow(clippy::len_without_is_empty)]
 #[allow(clippy::missing_safety_doc)]
 pub trait RawEncoding {
+    /// The type of trit associated with this trit encoding.
     type Trit: Trit;
+
+    /// The trit buffer encoding associated with this trit slice encoding.
     type Buf: RawEncodingBuf<Slice = Self>;
 
     /// Get an empty slice of this encoding
@@ -24,8 +28,10 @@ pub trait RawEncoding {
     /// Get the number of trits in this buffer
     fn len(&self) -> usize;
 
+    /// Interpret the raw data of this encoding as a slice of [`i8`].
     fn as_i8_slice(&self) -> &[i8];
 
+    /// Interpret the raw data of this encoding as a mutable slice of [`i8`].
     unsafe fn as_i8_slice_mut(&mut self) -> &mut [i8];
 
     /// Get the trit at the given index
@@ -50,7 +56,9 @@ pub trait RawEncoding {
     unsafe fn from_raw_unchecked_mut(b: &mut [i8], num_trits: usize) -> &mut Self;
 }
 
+/// A trait to be implemented by alternative trit encoding scheme buffers.
 pub trait RawEncodingBuf {
+    /// The trit slice encoding associated with this trit buffer encoding.
     type Slice: RawEncoding + ?Sized;
 
     /// Create a new empty buffer

@@ -15,11 +15,13 @@ use std::{
     fmt,
     iter::FromIterator,
     ops::{Deref, DerefMut},
+    str::FromStr,
 };
 
 /// A ternary tryte. Equivalent to 3 trits.
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 #[repr(i8)]
+#[allow(missing_docs)]
 pub enum Tryte {
     N = -13,
     O = -12,
@@ -51,11 +53,13 @@ pub enum Tryte {
 }
 
 impl Tryte {
-    /// The minimum value that this [`Tryte`] can hold
+    /// The minimum value that this [`Tryte`] can hold.
     pub const MIN_VALUE: Self = Tryte::N;
-    /// The maximum value that this [`Tryte`] can hold
+
+    /// The maximum value that this [`Tryte`] can hold.
     pub const MAX_VALUE: Self = Tryte::M;
 
+    /// Turn an array of three [`Btrit`]s into a [`Tryte`].
     pub fn from_trits(trits: [Btrit; 3]) -> Self {
         let x = i8::from(trits[0]) + i8::from(trits[1]) * 3 + i8::from(trits[2]) * 9;
         Tryte::try_from(x).unwrap()
@@ -80,6 +84,12 @@ impl From<Tryte> for char {
             1..=13 => (((tryte as i8 - 1) as u8) + b'A') as char,
             x => unreachable!("Tried to decode Tryte with variant {}", x),
         }
+    }
+}
+
+impl From<[Btrit; 3]> for Tryte {
+    fn from(trits: [Btrit; 3]) -> Self {
+        Self::from_trits(trits)
     }
 }
 
@@ -195,6 +205,20 @@ impl FromIterator<Tryte> for TryteBuf {
             this.push(tryte);
         }
         this
+    }
+}
+
+impl<'a> From<&'a [Tryte]> for TryteBuf {
+    fn from(trytes: &'a [Tryte]) -> Self {
+        Self { inner: trytes.to_vec() }
+    }
+}
+
+impl FromStr for TryteBuf {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::try_from_str(s)
     }
 }
 
