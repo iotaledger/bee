@@ -53,12 +53,13 @@ pub enum Tryte {
 }
 
 impl Tryte {
-    /// The minimum value that this [`Tryte`] can hold
+    /// The minimum value that this [`Tryte`] can hold.
     pub const MIN_VALUE: Self = Tryte::N;
-    /// The maximum value that this [`Tryte`] can hold
+
+    /// The maximum value that this [`Tryte`] can hold.
     pub const MAX_VALUE: Self = Tryte::M;
 
-    /// Turn an array of three [`Btrit`]s into a [`Tryte`]
+    /// Turn an array of three [`Btrit`]s into a [`Tryte`].
     pub fn from_trits(trits: [Btrit; 3]) -> Self {
         let x = i8::from(trits[0]) + i8::from(trits[1]) * 3 + i8::from(trits[2]) * 9;
         Tryte::try_from(x).unwrap()

@@ -13,7 +13,7 @@ use crate::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits, Utrit};
 use num_traits::{AsPrimitive, CheckedAdd, FromPrimitive, Num, Signed};
 use std::convert::TryFrom;
 
-/// An error that may be produced during numeric conversion
+/// An error that may be produced during numeric conversion.
 #[derive(Debug, PartialEq)]
 pub enum Error {
     /// The trit slice didn't contain enough trits to be considered a numeric value.

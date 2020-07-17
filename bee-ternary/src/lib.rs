@@ -97,7 +97,6 @@ use std::{
     },
 };
 
-// Reexports
 pub use crate::{
     t1b1::{T1B1Buf, T1B1},
     t2b1::{T2B1Buf, T2B1},
@@ -237,7 +236,7 @@ where
     ///
     /// # Panics
     ///
-    /// This function will panic if the slice is not byte-aligned
+    /// This function will panic if the slice is not byte-aligned.
     pub fn as_i8_slice(&self) -> &[i8] {
         self.0.as_i8_slice()
     }
@@ -246,7 +245,7 @@ where
     ///
     /// # Panics
     ///
-    /// This function will panic if the slice is not byte-aligned
+    /// This function will panic if the slice is not byte-aligned.
     ///
     /// # Safety
     ///
@@ -366,7 +365,7 @@ where
     ///
     /// # Panics
     ///
-    /// This function will panic if the length of the slices are different
+    /// This function will panic if the length of the slices are different.
     pub fn copy_from<U: RawEncoding<Trit = T::Trit> + ?Sized>(&mut self, trits: &Trits<U>) {
         assert!(
             self.len() == trits.len(),
