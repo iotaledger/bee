@@ -19,6 +19,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+<!-- ## Unreleased - YYYY-MM-DD
+
+### Added
+
+- Support for arbitrary trit to numeric type conversion
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security -->
+
 ## 0.2.0-alpha - 2020-07-17
 
 ### Added
