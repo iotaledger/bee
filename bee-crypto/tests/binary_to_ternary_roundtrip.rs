@@ -14,17 +14,6 @@ use bee_ternary::{Btrit, Utrit};
 
 use std::convert::TryInto;
 
-// #[test]
-// fn ut243_all_ones_as_u384_to_self() {
-//     println!("cloning original");
-//     let original = crypto::u384::LE_U32_UT243_HALF_MAX.clone();
-//     println!("constructing ternary");
-//     let ternary = UT243::from(original);
-//     let roundtripped = TryInto::<U384<LittleEndian, U32Repr>>::try_into(ternary);
-//     assert!(roundtripped.is_ok());
-//     assert_eq!(roundtripped.unwrap(), original);
-// }
-
 macro_rules! binary_to_ternary_roundtrip {
     ( ( $($binary_type:tt)* ), ( $($ternary_type:tt)* ), $testname:ident, $val_fn:ident ) => {
         #[test]
@@ -93,21 +82,3 @@ binary_to_ternary_roundtrip!(
     [max_to_self, max],
     [min_to_self, min],
 );
-
-// test_binary_to_ternary_roundtrip!(
-// [le_u32_ternary_0, LE_U32_TERNARY_0, LittleEndian],
-// [be_u32_0, BigEndian, zero],
-// [be_u32_1, BigEndian, one],
-// [be_u32_neg_1, BigEndian, neg_one],
-// [be_u32_max, BigEndian, max],
-// [be_u32_min, BigEndian, min],
-// [be_u32_2, BigEndian, two],
-// [be_u32_neg_2, BigEndian, neg_two],
-// [le_u32_0, LittleEndian, zero],
-// [le_u32_1, LittleEndian, one],
-// [le_u32_neg_1, LittleEndian, neg_one],
-// [le_u32_max, LittleEndian, max],
-// [le_u32_min, LittleEndian, min],
-// [le_u32_2, LittleEndian, two],
-// [le_u32_neg_2, LittleEndian, neg_two],
-// );

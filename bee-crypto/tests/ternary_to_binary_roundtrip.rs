@@ -21,29 +21,6 @@ fn t243_max_exceeds_u384_range() {
     assert!(error.is_err());
 }
 
-// #[test]
-// fn t243_min_exceeds_u384_range() {
-//     let t243_min = T243::min();
-//     let error = TryInto::<I384<LittleEndian, U32Repr>>::try_into(t243_min);
-//     assert!(error.is_err());
-// }
-
-// #[test]
-// fn u384_max_in_t243_is_u384_max_in_t243() {
-//     let converted = TryInto::<I384<LittleEndian, U32Repr>>::try_into(t243::I384_MAX.clone());
-//     assert!(converted.is_ok());
-//     let roundtripped: T243 = converted.unwrap().into();
-//     assert_eq!(roundtripped, *t243::I384_MAX);
-// }
-
-// #[test]
-// fn u384_min_in_t243_is_u384_min_in_t243() {
-//     let converted = TryInto::<I384<LittleEndian, U32Repr>>::try_into(t243::I384_MIN.clone());
-//     assert!(converted.is_ok());
-//     let roundtripped: T243 = converted.unwrap().into();
-//     assert_eq!(roundtripped, *t243::I384_MIN);
-// }
-
 macro_rules! ternary_roundtrip {
     ( @basecase: ($($ternary_type:tt)*), ($($binary_type:tt)*), $testname:ident, $val_fn:ident ) => {
         #[test]

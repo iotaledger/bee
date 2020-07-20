@@ -47,21 +47,3 @@ test_binary_op_calc_result!([
     LE_U32_MAX,
     LE_U32_1
 ],);
-
-// test_endianness_toggle!(
-//     ( U384 ),
-//     [u8_repr, U8Repr],
-//     [u32_repr, U32Repr],
-// );
-
-// test_endianness_roundtrip!(
-//     ( U384 ),
-//     [u8_repr, U8Repr],
-//     [u32_repr, U32Repr],
-// );
-
-// test_repr_roundtrip!(
-//     ( U384 ),
-//     [big_endian, BigEndian],
-//     [little_endian, LittleEndian],
-// );
