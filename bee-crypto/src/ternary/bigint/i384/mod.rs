@@ -178,10 +178,7 @@ impl PartialOrd for I384<BigEndian, U8Repr> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         use Ordering::*;
 
-        let self_iter = self.inner.iter();
-        let other_iter = other.inner.iter();
-
-        let mut zipped_iter = self_iter.zip(other_iter);
+        let mut zipped_iter = self.inner.iter().zip(other.inner.iter());
 
         // The most significant `u8` (MSU8) has to be handled separately.
         //
@@ -221,22 +218,11 @@ impl PartialOrd for I384<BigEndian, U8Repr> {
             None => unreachable!(),
         };
 
-        // Create two separate loops as to avoid repeatedly checking `numbers_negative`.
-        if numbers_negative {
-            for (s, o) in zipped_iter {
-                if s > o {
-                    return Some(Less);
-                } else if s < o {
-                    return Some(Greater);
-                }
-            }
-        } else {
-            for (s, o) in zipped_iter {
-                if s > o {
-                    return Some(Greater);
-                } else if s < o {
-                    return Some(Less);
-                }
+        for (s, o) in zipped_iter {
+            if s > o {
+                return if numbers_negative { Some(Less) } else { Some(Greater) };
+            } else if s < o {
+                return if numbers_negative { Some(Greater) } else { Some(Less) };
             }
         }
 
@@ -442,10 +428,7 @@ impl PartialOrd for I384<BigEndian, U32Repr> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         use Ordering::*;
 
-        let self_iter = self.inner.iter();
-        let other_iter = other.inner.iter();
-
-        let mut zipped_iter = self_iter.zip(other_iter);
+        let mut zipped_iter = self.inner.iter().zip(other.inner.iter());
 
         // The most significant `u32` (MSU32) has to be handled separately.
         //
@@ -485,22 +468,11 @@ impl PartialOrd for I384<BigEndian, U32Repr> {
             None => unreachable!(),
         };
 
-        // Create two separate loops as to avoid repeatedly checking `numbers_negative`.
-        if numbers_negative {
-            for (s, o) in zipped_iter {
-                if s > o {
-                    return Some(Less);
-                } else if s < o {
-                    return Some(Greater);
-                }
-            }
-        } else {
-            for (s, o) in zipped_iter {
-                if s > o {
-                    return Some(Greater);
-                } else if s < o {
-                    return Some(Less);
-                }
+        for (s, o) in zipped_iter {
+            if s > o {
+                return if numbers_negative { Some(Less) } else { Some(Greater) };
+            } else if s < o {
+                return if numbers_negative { Some(Greater) } else { Some(Less) };
             }
         }
 
@@ -561,10 +533,7 @@ impl PartialOrd for I384<LittleEndian, U8Repr> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         use Ordering::*;
 
-        let self_iter = self.inner.iter().rev();
-        let other_iter = other.inner.iter().rev();
-
-        let mut zipped_iter = self_iter.zip(other_iter);
+        let mut zipped_iter = self.inner.iter().rev().zip(other.inner.iter().rev());
 
         // The most significant `u8` (MSU8) has to be handled separately.
         //
@@ -604,22 +573,11 @@ impl PartialOrd for I384<LittleEndian, U8Repr> {
             None => unreachable!(),
         };
 
-        // Create two separate loops as to avoid repeatedly checking `numbers_negative`.
-        if numbers_negative {
-            for (s, o) in zipped_iter {
-                if s > o {
-                    return Some(Less);
-                } else if s < o {
-                    return Some(Greater);
-                }
-            }
-        } else {
-            for (s, o) in zipped_iter {
-                if s > o {
-                    return Some(Greater);
-                } else if s < o {
-                    return Some(Less);
-                }
+        for (s, o) in zipped_iter {
+            if s > o {
+                return if numbers_negative { Some(Less) } else { Some(Greater) };
+            } else if s < o {
+                return if numbers_negative { Some(Greater) } else { Some(Less) };
             }
         }
 
@@ -806,10 +764,7 @@ impl PartialOrd for I384<LittleEndian, U32Repr> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         use Ordering::*;
 
-        let self_iter = self.inner.iter().rev();
-        let other_iter = other.inner.iter().rev();
-
-        let mut zipped_iter = self_iter.zip(other_iter);
+        let mut zipped_iter = self.inner.iter().rev().zip(other.inner.iter().rev());
 
         // The most significant `u32` (MSU32) has to be handled separately.
         //
@@ -850,22 +805,11 @@ impl PartialOrd for I384<LittleEndian, U32Repr> {
             None => unreachable!(),
         };
 
-        // Create two separate loops as to avoid repeatedly checking `numbers_negative`.
-        if numbers_negative {
-            for (s, o) in zipped_iter {
-                if s > o {
-                    return Some(Less);
-                } else if s < o {
-                    return Some(Greater);
-                }
-            }
-        } else {
-            for (s, o) in zipped_iter {
-                if s > o {
-                    return Some(Greater);
-                } else if s < o {
-                    return Some(Less);
-                }
+        for (s, o) in zipped_iter {
+            if s > o {
+                return if numbers_negative { Some(Less) } else { Some(Greater) };
+            } else if s < o {
+                return if numbers_negative { Some(Greater) } else { Some(Less) };
             }
         }
 
