@@ -45,8 +45,8 @@ use std::{
 /// `T` is usually taken as a `[u32; 12]` or `[u8; 48]`.
 ///
 /// `E` refers to the endianness of the digits in `T`. This means that in the case of `[u32; 12]`, if `E == BigEndian`,
-/// that the u32 at position i=0 is considered the most significant digit. The endianness `E` here makes no statement
-/// about the endianness of each single digit within itself (this then is dependent on the endianness of the platform
+/// that the `u32` at position i=0 is considered the most significant digit. The endianness `E` here makes no statement
+/// about the endianness of each single digit within itself (this is then dependent on the endianness of the platform
 /// this code is run on).
 ///
 /// For `E == LittleEndian` the digit at the last position is considered to be the most significant.
@@ -70,10 +70,10 @@ impl<E, T> DerefMut for U384<E, T> {
     }
 }
 
-impl<E: fmt::Debug, R: BinaryRepresentation, D> fmt::Debug for U384<E, R>
+impl<E, T, D> fmt::Debug for U384<E, T>
 where
     E: fmt::Debug,
-    R: BinaryRepresentation<Inner = D>,
+    T: BinaryRepresentation<Inner = D>,
     D: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -85,12 +85,12 @@ where
 }
 
 impl U384<BigEndian, U32Repr> {
-    /// Reinterprets the U384 as an I384.
+    /// Reinterprets the `U384` as an `I384`.
     pub fn as_i384(self) -> I384<BigEndian, U32Repr> {
         I384::<BigEndian, U32Repr>::from_array(self.inner)
     }
 
-    /// Shifts the U384 in signed space.
+    /// Shifts the `U384` into signed space.
     pub fn shift_into_i384(mut self) -> I384<BigEndian, U32Repr> {
         self.sub_inplace(*BE_U32_HALF_MAX);
         self.sub_inplace(Self::one());
@@ -110,7 +110,7 @@ impl U384<BigEndian, U32Repr> {
         }
     }
 
-    /// Adds `other` in place, returning the number of digits required accomodate `other` (starting from the least
+    /// Adds `other` in place, returning the number of digits required to accomodate `other` (starting from the least
     /// significant one).
     pub fn add_digit_inplace<T: Into<u32>>(&mut self, other: T) -> usize {
         let other = other.into();
@@ -132,7 +132,7 @@ impl U384<BigEndian, U32Repr> {
         i
     }
 
-    /// Divides the u384 by 2 by bitshifting all bits one position to the right.
+    /// Divides the `U384` by 2 by bitshifting all bits one position to the right.
     pub fn divide_by_two(&mut self) {
         let mut i = self.inner.len() - 1;
         while i < self.inner.len() - 1 {
@@ -146,7 +146,7 @@ impl U384<BigEndian, U32Repr> {
         self.inner[0] >>= 1;
     }
 
-    /// Creates an U384 from an unbalanced T242.
+    /// Creates an `U384` from an unbalanced `T242`.
     pub fn from_t242(trits: T242<Utrit>) -> Self {
         let u384_le = U384::<LittleEndian, U32Repr>::from_t242(trits);
         u384_le.into()
@@ -159,27 +159,24 @@ impl U384<BigEndian, U32Repr> {
     ///
     /// !x = -x - 1 => -x = !x + 1
     pub fn sub_inplace(&mut self, other: Self) {
-        let self_iter = self.inner.iter_mut().rev();
-        let other_iter = other.inner.iter().rev();
-
         // The first `borrow` is always true because the addition operation needs to account for the above).
         let mut borrow = true;
 
-        for (s, o) in self_iter.zip(other_iter) {
+        for (s, o) in self.inner.iter_mut().rev().zip(other.inner.iter().rev()) {
             let (sum, has_overflown) = s.overflowing_add_with_carry(!*o, borrow as u32);
             *s = sum;
             borrow = has_overflown;
         }
     }
 
-    /// Converts a signed integer represented by the balanced trits in `t243` to the unsigned binary integer `u384`.
-    /// It does this by shifting the `t243` into signed range (by adding 1 to all its trits).  `t243` is assumed to be
+    /// Converts a signed integer represented by the balanced trits in `T243` to the unsigned binary integer `U384`.
+    /// It does this by shifting the `T243` into signed range (by adding 1 to all its trits).  `T243` is assumed to be
     /// in little endian representation, with the most significant trit being at the largest index in the array.
     ///
     /// This is done in the following steps:
     ///
     /// 1. `1` is added to all balanced trits, making them *unsigned*: `{-1, 0, 1} -> {0, 1, 2}`.
-    /// 2. The `t243` are converted to base 10 and through this immediately to `i384` by calculating the sum `s
+    /// 2. The `T243` are converted to base 10 and through this immediately to `I384` by calculating the sum `s
     ///
     /// ```ignore
     /// s = t_242 * 3^241 + t_241 * 3^240 + ...
@@ -210,7 +207,7 @@ impl U384<BigEndian, U32Repr> {
 }
 
 impl U384<LittleEndian, U32Repr> {
-    /// Reinterprets the U384 as an I384.
+    /// Reinterprets the `U384` as an `I384`.
     pub fn as_i384(self) -> I384<LittleEndian, U32Repr> {
         I384::<LittleEndian, U32Repr>::from_array(self.inner)
     }
@@ -228,7 +225,7 @@ impl U384<LittleEndian, U32Repr> {
         }
     }
 
-    /// Adds `other` in place, returning the number of digits required accomodate `other` (starting from the least
+    /// Adds `other` in place, returning the number of digits required to accomodate `other` (starting from the least
     /// significant one).
     pub fn add_digit_inplace<T: Into<u32>>(&mut self, other: T) -> usize {
         let other = other.into();
@@ -248,7 +245,7 @@ impl U384<LittleEndian, U32Repr> {
         i
     }
 
-    /// Divides the u384 by 2 by bitshifting all bits one position to the right.
+    /// Divides the `U384` by 2 by bitshifting all bits one position to the right.
     pub fn divide_by_two(&mut self) {
         let mut i = 0;
         while i < self.inner.len() - 1 {
@@ -262,7 +259,7 @@ impl U384<LittleEndian, U32Repr> {
         self.inner[self.inner.len() - 1] >>= 1;
     }
 
-    /// Creates an U384 from an unbalanced T242.
+    /// Creates an `U384` from an unbalanced `T242`.
     pub fn from_t242(trits: T242<Utrit>) -> Self {
         let t243 = trits.into_t243();
 
@@ -270,7 +267,7 @@ impl U384<LittleEndian, U32Repr> {
         Self::try_from_t243(t243).unwrap()
     }
 
-    /// Shifts the U384 in signed space.
+    /// Shifts the `U384` into signed space.
     pub fn shift_into_i384(mut self) -> I384<LittleEndian, U32Repr> {
         self.sub_inplace(*LE_U32_HALF_MAX);
         self.sub_inplace(Self::one());
@@ -297,14 +294,14 @@ impl U384<LittleEndian, U32Repr> {
         }
     }
 
-    /// Converts a signed integer represented by the balanced trits in `t243` to the unsigned binary integer `u384`.
-    /// It does this by shifting the `t243` into signed range (by adding 1 to all its trits).  `t243` is assumed to be
+    /// Converts a signed integer represented by the balanced trits in `T243` to the unsigned binary integer `U384`.
+    /// It does this by shifting the `T243` into signed range (by adding 1 to all its trits).  `T243` is assumed to be
     /// in little endian representation, with the most significant trit being at the largest index in the array.
     ///
     /// This is done in the following steps:
     ///
     /// 1. `1` is added to all balanced trits, making them *unsigned*: `{-1, 0, 1} -> {0, 1, 2}`.
-    /// 2. The `t243` are converted to base 10 and through this immediately to `i384` by calculating the sum `s
+    /// 2. The `T243` are converted to base 10 and through this immediately to `I384` by calculating the sum `s
     ///
     /// ```ignore
     /// s = t_242 * 3^241 + t_241 * 3^240 + ...

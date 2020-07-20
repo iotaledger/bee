@@ -40,7 +40,7 @@ use std::{
 def_and_impl_ternary!(T242, 242);
 
 impl<T: Trit> T242<T> {
-    /// Converts the T242 to a T243.
+    /// Converts the `T242` to a `T243`.
     pub fn into_t243(self) -> T243<T> {
         let mut trit_buf = self.into_inner();
         trit_buf.push(T::zero());
@@ -49,7 +49,7 @@ impl<T: Trit> T242<T> {
 }
 
 impl T242<Btrit> {
-    /// Converts a big-endian `u8` represented I384 to a balanced T242 while ignoring its MST.
+    /// Converts a big-endian `u8` represented `I384` to a balanced `T242` while ignoring its MST.
     pub fn from_i384_ignoring_mst(value: I384<BigEndian, U8Repr>) -> Self {
         let value: I384<LittleEndian, U8Repr> = value.into();
         let mut value: I384<LittleEndian, U32Repr> = value.into();
@@ -64,7 +64,7 @@ impl T242<Btrit> {
         t243_btrit.into_t242()
     }
 
-    /// Tries to convert a big-endian `u32` represented I384 to a balanced T242.
+    /// Tries to convert a big-endian `u32` represented `I384` to a balanced `T242`.
     pub fn try_from_i384(value: I384<LittleEndian, U32Repr>) -> Result<Self, Error> {
         let mut unsigned_binary = value.as_u384();
         unsigned_binary.add_inplace(*u384::LE_U32_HALF_MAX_T242);
@@ -78,7 +78,7 @@ impl T242<Btrit> {
 }
 
 impl T242<Utrit> {
-    /// Converts a big-endian `u8` represented U384 to an unbalanced T242 while ignoring its MSB.
+    /// Converts a big-endian `u8` represented `U384` to an unbalanced `T242` while ignoring its MSB.
     pub fn from_u384_be_u8repr_ignoring_msd(value: U384<BigEndian, U8Repr>) -> Self {
         let value: U384<LittleEndian, U8Repr> = value.into();
         let value: U384<LittleEndian, U32Repr> = value.into();
@@ -86,7 +86,7 @@ impl T242<Utrit> {
         t243_utrit.into_t242()
     }
 
-    /// Tries to convert a little-endian `u32` represented I384 to an unbalanced T242.
+    /// Tries to convert a little-endian `u32` represented `I384` to an unbalanced `T242`.
     pub fn try_from_i384(value: I384<LittleEndian, U32Repr>) -> Result<Self, Error> {
         let mut unsigned_binary = value.as_u384();
         unsigned_binary.add_inplace(*u384::LE_U32_HALF_MAX_T242);

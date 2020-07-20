@@ -46,8 +46,8 @@ use std::{
 /// `T` is usually taken as a `[u32; 12]` or `[u8; 48]`.
 ///
 /// `E` refers to the endianness of the digits in `T`. This means that in the case of `[u32; 12]`, if `E == BigEndian`,
-/// that the u32 at position i=0 is considered the most significant digit. The endianness `E` here makes no statement
-/// about the endianness of each single digit within itself (this then is dependent on the endianness of the platform
+/// that the `u32` at position i=0 is considered the most significant digit. The endianness `E` here makes no statement
+/// about the endianness of each single digit within itself (this is then dependent on the endianness of the platform
 /// this code is run on).
 ///
 /// For `E == LittleEndian` the digit at the last position is considered to be the most significant.
@@ -71,10 +71,10 @@ impl<E, T> DerefMut for I384<E, T> {
     }
 }
 
-impl<E: fmt::Debug, R: BinaryRepresentation, D> fmt::Debug for I384<E, R>
+impl<E, T, D> fmt::Debug for I384<E, T>
 where
     E: fmt::Debug,
-    R: BinaryRepresentation<Inner = D>,
+    T: BinaryRepresentation<Inner = D>,
     D: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -144,7 +144,7 @@ macro_rules! impl_default {
 }
 
 impl I384<BigEndian, U8Repr> {
-    /// Applies not on all bytes of the I384.
+    /// Applies not to all bytes of the `I384`.
     pub fn not_inplace(&mut self) {
         for digit in &mut self.inner[..] {
             *digit = !*digit;
@@ -183,12 +183,12 @@ impl PartialOrd for I384<BigEndian, U8Repr> {
 
         let mut zipped_iter = self_iter.zip(other_iter);
 
-        // The most significant u8 (MSU8) has to be handled separately.
+        // The most significant `u8` (MSU8) has to be handled separately.
         //
         // If the most significant bit of both numbers is set, then the comparison operators have to be reversed.
         //
-        // Note that this is only relevant to the comparison operators between the less significant u8 if the two MSU8s
-        // are equal. If they are not equal, then an early return will be triggered.
+        // Note that this is only relevant to the comparison operators between the less significant `u8` if the two
+        // MSU8s are equal. If they are not equal, then an early return will be triggered.
 
         const NEGBIT: u8 = 0x80;
         const UMAX: u8 = std::u8::MAX;
@@ -287,7 +287,7 @@ impl I384<BigEndian, U32Repr> {
         }
     }
 
-    /// Adds `other` in place, returning the number of digits required accomodate `other` (starting from the least
+    /// Adds `other` in place, returning the number of digits required to accomodate `other` (starting from the least
     /// significant one).
     pub fn add_digit_inplace<T: Into<u32>>(&mut self, other: T) -> usize {
         let other = other.into();
@@ -309,12 +309,12 @@ impl I384<BigEndian, U32Repr> {
         i
     }
 
-    /// Reinterprets the I384 as an U384.
+    /// Reinterprets the `I384` as an `U384`.
     pub fn as_u384(self) -> U384<BigEndian, U32Repr> {
         U384::<BigEndian, U32Repr>::from_array(self.inner)
     }
 
-    /// Creates an I384 from a balanced T242.
+    /// Creates an `I384` from a balanced `T242`.
     pub fn from_t242(value: T242<Btrit>) -> Self {
         // First make it unbalanced.
         let t242_unbalanced = value.into_shifted();
@@ -322,18 +322,18 @@ impl I384<BigEndian, U32Repr> {
         // Then expand the size.
         let t243_unbalanced = t242_unbalanced.into_t243();
 
-        // Unwrapping here is ok because a ut242 always fits into a u384.
+        // Unwrapping here is ok because a `UT242` always fits into a `U384`.
         let mut u384_integer = U384::<BigEndian, U32Repr>::try_from_t243(t243_unbalanced).unwrap();
         u384_integer.sub_inplace(*u384::BE_U32_HALF_MAX_T242);
         u384_integer.as_i384()
     }
 
-    /// Checks if the I384 is positive.
+    /// Checks if the `I384` is positive.
     pub fn is_positive(&self) -> bool {
         (self.inner[LEN_IN_U32 - 1] & 0x8000_0000) == 0x0000_0000
     }
 
-    /// Checks if the I384 is negative.
+    /// Checks if the `I384` is negative.
     pub fn is_negative(&self) -> bool {
         (self.inner[LEN_IN_U32 - 1] & 0x8000_0000) == 0x8000_0000
     }
@@ -354,7 +354,7 @@ impl I384<BigEndian, U32Repr> {
         }
     }
 
-    /// Shifts the I384 in unsigned space.
+    /// Shifts the `I384` into unsigned space.
     pub fn shift_into_u384(self) -> U384<BigEndian, U32Repr> {
         let mut u384_value = self.as_u384();
         u384_value.sub_inplace(*u384::BE_U32_HALF_MAX);
@@ -372,22 +372,18 @@ impl I384<BigEndian, U32Repr> {
     /// TODO: Verifiy that the final assert is indeed not necessary. Preliminary testing shows that results are as
     /// expected.
     pub fn sub_inplace(&mut self, other: Self) {
-        let self_iter = self.inner.iter_mut().rev();
-        let other_iter = other.inner.iter().rev();
-
-        // The first `borrow` is always true because the addition operation needs to account for the
-        // above).
+        // The first `borrow` is always true because the addition operation needs to account for the above).
         let mut borrow = true;
 
-        for (s, o) in self_iter.zip(other_iter) {
+        for (s, o) in self.inner.iter_mut().rev().zip(other.inner.iter().rev()) {
             let (sum, has_overflown) = s.overflowing_add_with_carry(!*o, borrow as u32);
             *s = sum;
             borrow = has_overflown;
         }
     }
 
-    /// Subtracts `other` in place, returning the number of digits required accomodate `other` (starting from the least
-    /// significant one).
+    /// Subtracts `other` in place, returning the number of digits required to accomodate `other` (starting from the
+    /// least significant one).
     pub fn sub_integer_inplace<T: Into<u32>>(&mut self, other: T) -> usize {
         let other = other.into();
 
@@ -405,7 +401,7 @@ impl I384<BigEndian, U32Repr> {
         i
     }
 
-    /// Creates an I384 from a balanced T243.
+    /// Creates an `I384` from a balanced `T243`.
     pub fn try_from_t243(balanced_trits: T243<Btrit>) -> Result<Self, Error> {
         let unbalanced_trits = balanced_trits.into_shifted();
         let u384_integer = U384::<BigEndian, U32Repr>::try_from_t243(unbalanced_trits)?;
@@ -451,11 +447,11 @@ impl PartialOrd for I384<BigEndian, U32Repr> {
 
         let mut zipped_iter = self_iter.zip(other_iter);
 
-        // The most significant u32 (MSU32) has to be handled separately.
+        // The most significant `u32` (MSU32) has to be handled separately.
         //
         // If the most significant bit of both numbers is set, then the comparison operators have to be reversed.
         //
-        // Note that this is only relevant to the comparison operators between the less significant u32 if the two
+        // Note that this is only relevant to the comparison operators between the less significant `u32` if the two
         // MSU32s are equal. If they are not equal, then an early return will be triggered.
 
         const NEGBIT: u32 = 0x8000_0000;
@@ -570,12 +566,12 @@ impl PartialOrd for I384<LittleEndian, U8Repr> {
 
         let mut zipped_iter = self_iter.zip(other_iter);
 
-        // The most significant u8 (MSU8) has to be handled separately.
+        // The most significant `u8` (MSU8) has to be handled separately.
         //
         // If the most significant bit of both numbers is set, then the comparison operators have to be reversed.
         //
-        // Note that this is only relevant to the comparison operators between the less significant u8 if the two MSU8s
-        // are equal. If they are not equal, then an early return will be triggered.
+        // Note that this is only relevant to the comparison operators between the less significant `u8` if the two
+        // MSU8s are equal. If they are not equal, then an early return will be triggered.
 
         const NEGBIT: u8 = 0x80;
         const UMAX: u8 = std::u8::MAX;
@@ -645,7 +641,7 @@ impl I384<LittleEndian, U32Repr> {
         }
     }
 
-    /// Adds `other` in place, returning the number of digits required accomodate `other` (starting from the least
+    /// Adds `other` in place, returning the number of digits required to accomodate `other` (starting from the least
     /// significant one).
     pub fn add_digit_inplace<T: Into<u32>>(&mut self, other: T) -> usize {
         let other = other.into();
@@ -665,12 +661,12 @@ impl I384<LittleEndian, U32Repr> {
         i
     }
 
-    /// Reinterprets the I384 as an U384.
+    /// Reinterprets the `I384` as an `U384`.
     pub fn as_u384(self) -> U384<LittleEndian, U32Repr> {
         U384::<LittleEndian, U32Repr>::from_array(self.inner)
     }
 
-    /// Creates an I384 from a balanced T242.
+    /// Creates an `I384` from a balanced `T242`.
     pub fn from_t242(value: T242<Btrit>) -> Self {
         // First make it unbalanced.
         let t242_unbalanced = value.into_shifted();
@@ -678,18 +674,18 @@ impl I384<LittleEndian, U32Repr> {
         // Then expand the size.
         let t243_unbalanced = t242_unbalanced.into_t243();
 
-        // Unwrapping here is okay, because a ut242 always fits into a u384.
+        // Unwrapping here is ok, because a `UT242` always fits into a `U384`.
         let mut u384_integer = U384::<LittleEndian, U32Repr>::try_from_t243(t243_unbalanced).unwrap();
         u384_integer.sub_inplace(*u384::LE_U32_HALF_MAX_T242);
         u384_integer.as_i384()
     }
 
-    /// Checks if the I384 is positive.
+    /// Checks if the `I384` is positive.
     pub fn is_positive(&self) -> bool {
         (self.inner[LEN_IN_U32 - 1] & 0x8000_0000) == 0x0000_0000
     }
 
-    /// Checks if the I384 is negative.
+    /// Checks if the `I384` is negative.
     pub fn is_negative(&self) -> bool {
         (self.inner[LEN_IN_U32 - 1] & 0x8000_0000) == 0x8000_0000
     }
@@ -710,7 +706,7 @@ impl I384<LittleEndian, U32Repr> {
         }
     }
 
-    /// Shifts the I384 in unsigned space.
+    /// Shifts the `I384` into unsigned space.
     pub fn shift_into_u384(self) -> U384<LittleEndian, U32Repr> {
         let mut u384_value = self.as_u384();
         u384_value.sub_inplace(*u384::LE_U32_HALF_MAX);
@@ -741,8 +737,8 @@ impl I384<LittleEndian, U32Repr> {
         }
     }
 
-    /// Subtracts `other` in place, returning the number of digits required accomodate `other` (starting from the least
-    /// significant one).
+    /// Subtracts `other` in place, returning the number of digits required to accomodate `other` (starting from the
+    /// least significant one).
     pub fn sub_integer_inplace<T: Into<u32>>(&mut self, other: T) -> usize {
         let other = other.into();
 
@@ -760,14 +756,14 @@ impl I384<LittleEndian, U32Repr> {
         i
     }
 
-    /// Tries to create an I384 from a balanced T243.
+    /// Tries to create an `I384` from a balanced `T243`.
     pub fn try_from_t243(balanced_trits: T243<Btrit>) -> Result<Self, Error> {
         let unbalanced_trits = balanced_trits.into_shifted();
         let u384_integer = U384::<LittleEndian, U32Repr>::try_from_t243(unbalanced_trits)?;
         Ok(u384_integer.shift_into_i384())
     }
 
-    /// Zeroes the most significant trit of the I384.
+    /// Zeroes the most significant trit of the `I384`.
     pub fn zero_most_significant_trit(&mut self) {
         if *self > u384::LE_U32_HALF_MAX_T242.as_i384() {
             self.sub_inplace(u384::LE_U32_ONLY_T243_OCCUPIED.as_i384());
@@ -815,11 +811,11 @@ impl PartialOrd for I384<LittleEndian, U32Repr> {
 
         let mut zipped_iter = self_iter.zip(other_iter);
 
-        // The most significant u32 (MSU32) has to be handled separately.
+        // The most significant `u32` (MSU32) has to be handled separately.
         //
         // If the most significant bit of both numbers is set, then the comparison operators have to be reversed.
         //
-        // Note that this is only relevant to the comparison operators between the less significant u32 if the two
+        // Note that this is only relevant to the comparison operators between the less significant `u32` if the two
         // MSU32s are equal. If they are not equal, then an early return will be triggered.
 
         const NEGBIT: u32 = 0x8000_0000;

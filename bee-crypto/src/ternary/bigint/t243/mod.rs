@@ -34,7 +34,7 @@ use std::cmp::Ordering;
 def_and_impl_ternary!(T243, 243);
 
 impl<T: Trit> T243<T> {
-    /// Converts the T243 to a T242.
+    /// Converts the `T243` to a `T242`.
     pub fn into_t242(self) -> T242<T> {
         let mut trit_buf = self.into_inner();
         trit_buf.pop();
@@ -43,7 +43,7 @@ impl<T: Trit> T243<T> {
 }
 
 impl T243<Utrit> {
-    /// Converts a big-endian `u32` represented U384 to an unbalanced T243.
+    /// Converts a big-endian `u32` represented `U384` to an unbalanced `T243`.
     pub fn from_u384(value: U384<BigEndian, U32Repr>) -> Self {
         let mut u384_value = value;
         let mut u384_inner_slice = &mut u384_value.inner[..];
