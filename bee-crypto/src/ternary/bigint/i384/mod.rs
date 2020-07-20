@@ -219,10 +219,10 @@ impl PartialOrd for I384<BigEndian, U8Repr> {
         };
 
         for (s, o) in zipped_iter {
-            if s > o {
-                return if numbers_negative { Some(Less) } else { Some(Greater) };
-            } else if s < o {
-                return if numbers_negative { Some(Greater) } else { Some(Less) };
+            match s.cmp(o) {
+                Ordering::Greater => return if numbers_negative { Some(Less) } else { Some(Greater) },
+                Ordering::Less => return if numbers_negative { Some(Greater) } else { Some(Less) },
+                Ordering::Equal => continue,
             }
         }
 
@@ -469,10 +469,10 @@ impl PartialOrd for I384<BigEndian, U32Repr> {
         };
 
         for (s, o) in zipped_iter {
-            if s > o {
-                return if numbers_negative { Some(Less) } else { Some(Greater) };
-            } else if s < o {
-                return if numbers_negative { Some(Greater) } else { Some(Less) };
+            match s.cmp(o) {
+                Ordering::Greater => return if numbers_negative { Some(Less) } else { Some(Greater) },
+                Ordering::Less => return if numbers_negative { Some(Greater) } else { Some(Less) },
+                Ordering::Equal => continue,
             }
         }
 
@@ -574,10 +574,10 @@ impl PartialOrd for I384<LittleEndian, U8Repr> {
         };
 
         for (s, o) in zipped_iter {
-            if s > o {
-                return if numbers_negative { Some(Less) } else { Some(Greater) };
-            } else if s < o {
-                return if numbers_negative { Some(Greater) } else { Some(Less) };
+            match s.cmp(o) {
+                Ordering::Greater => return if numbers_negative { Some(Less) } else { Some(Greater) },
+                Ordering::Less => return if numbers_negative { Some(Greater) } else { Some(Less) },
+                Ordering::Equal => continue,
             }
         }
 
@@ -806,10 +806,10 @@ impl PartialOrd for I384<LittleEndian, U32Repr> {
         };
 
         for (s, o) in zipped_iter {
-            if s > o {
-                return if numbers_negative { Some(Less) } else { Some(Greater) };
-            } else if s < o {
-                return if numbers_negative { Some(Greater) } else { Some(Less) };
+            match s.cmp(o) {
+                Ordering::Greater => return if numbers_negative { Some(Less) } else { Some(Greater) },
+                Ordering::Less => return if numbers_negative { Some(Greater) } else { Some(Less) },
+                Ordering::Equal => continue,
             }
         }
 

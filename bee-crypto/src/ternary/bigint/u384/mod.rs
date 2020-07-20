@@ -440,16 +440,13 @@ impl PartialOrd for U384<LittleEndian, U32Repr> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         use Ordering::*;
 
-        let self_iter = self.inner.iter().rev();
-        let other_iter = other.inner.iter().rev();
-
-        let zipped_iter = self_iter.zip(other_iter);
+        let zipped_iter = self.inner.iter().rev().zip(other.inner.iter().rev());
 
         for (s, o) in zipped_iter {
-            if s > o {
-                return Some(Greater);
-            } else if s < o {
-                return Some(Less);
+            match s.cmp(o) {
+                Ordering::Greater => return Some(Greater),
+                Ordering::Less => return Some(Less),
+                Ordering::Equal => continue,
             }
         }
 
@@ -461,7 +458,6 @@ impl Ord for U384<LittleEndian, U32Repr> {
     fn cmp(&self, other: &Self) -> Ordering {
         match self.partial_cmp(other) {
             Some(ordering) => ordering,
-
             // The ordering is total, hence `partial_cmp` will never return `None`.
             None => unreachable!(),
         }
