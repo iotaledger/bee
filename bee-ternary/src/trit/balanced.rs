@@ -10,6 +10,8 @@
 // See the License for the specific language governing permissions and limitations under the License.
 
 use super::{ShiftTernary, Trit, Utrit};
+use crate::convert;
+use num_traits::{CheckedAdd, CheckedSub, Num};
 use std::{convert::TryFrom, fmt, ops::Neg};
 
 #[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -81,6 +83,14 @@ impl Trit for Btrit {
             Btrit::NegOne => &NEG_ONE,
             Btrit::Zero => &ZERO,
             Btrit::PlusOne => &PLUS_ONE,
+        }
+    }
+
+    fn add_to_num<I: Num + CheckedAdd + CheckedSub>(&self, n: I) -> Result<I, convert::Error> {
+        match self {
+            Btrit::NegOne => n.checked_sub(&I::one()).ok_or(convert::Error::Underflow),
+            Btrit::Zero => Ok(n),
+            Btrit::PlusOne => n.checked_add(&I::one()).ok_or(convert::Error::Overflow),
         }
     }
 }
