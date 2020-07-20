@@ -9,18 +9,19 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-use crate::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits, Utrit};
-use num_traits::{AsPrimitive, CheckedAdd, FromPrimitive, Num, Signed};
-use std::convert::TryFrom;
+use crate::{Btrit, RawEncoding, RawEncodingBuf, Trit, TritBuf, Trits, Utrit};
+use num_traits::{AsPrimitive, CheckedAdd, CheckedSub, FromPrimitive, Num, Signed};
+use std::{cmp::PartialOrd, convert::TryFrom};
 
 /// An error that may be produced during numeric conversion.
 #[derive(Debug, PartialEq)]
 pub enum Error {
     /// The trit slice didn't contain enough trits to be considered a numeric value.
     Empty,
-    /// The trit slice has a numeric value that's too big to contain within the requested numeric
-    /// type.
-    TooBig,
+    /// An overflow occurred during a numeric operation.
+    Overflow,
+    /// An underflow occurred during a numeric operation.
+    Underflow,
 }
 
 // TODO: Find a way to implement this without conflicting impls
@@ -39,7 +40,7 @@ macro_rules! signed_try_from_trits {
         impl<'a, T: RawEncoding<Trit = Btrit> + ?Sized> TryFrom<&'a Trits<T>> for $int {
             type Error = Error;
             fn try_from(trits: &'a Trits<T>) -> Result<Self, Self::Error> {
-                trits_to_signed_int(trits)
+                trits_to_int(trits)
             }
         }
 
@@ -57,6 +58,7 @@ macro_rules! signed_try_from_trits {
 // We have to implement manually due to Rust's orphan rules :(
 // This macro accepts anything that implements:
 // `Clone + CheckedAdd + Signed + AsPrimitive<i8> + FromPrimitive`
+signed_try_from_trits!(i128);
 signed_try_from_trits!(i64);
 signed_try_from_trits!(i32);
 signed_try_from_trits!(i16);
@@ -67,7 +69,7 @@ macro_rules! unsigned_try_from_trits {
         impl<'a, T: RawEncoding<Trit = Utrit> + ?Sized> TryFrom<&'a Trits<T>> for $int {
             type Error = Error;
             fn try_from(trits: &'a Trits<T>) -> Result<Self, Self::Error> {
-                trits_to_unsigned_int(trits)
+                trits_to_int(trits)
             }
         }
 
@@ -85,6 +87,7 @@ macro_rules! unsigned_try_from_trits {
 // We have to implement manually due to Rust's orphan rules :(
 // This macro accepts anything that implements:
 // `Clone + CheckedAdd + Unsigned + AsPrimitive<u8> + FromPrimitive`
+unsigned_try_from_trits!(u128);
 unsigned_try_from_trits!(u64);
 unsigned_try_from_trits!(u32);
 unsigned_try_from_trits!(u16);
@@ -93,9 +96,9 @@ unsigned_try_from_trits!(u8);
 /// Attempt to convert the given trit slice into a number. If the numeric representation of the
 /// trit slice is too large or small to fit the numeric type, or does not contain any trits, an
 /// error will be returned.
-pub fn trits_to_signed_int<I, T: RawEncoding<Trit = Btrit> + ?Sized>(trits: &Trits<T>) -> Result<I, Error>
+pub fn trits_to_int<I, T: RawEncoding + ?Sized>(trits: &Trits<T>) -> Result<I, Error>
 where
-    I: Clone + CheckedAdd + Signed,
+    I: Clone + CheckedAdd + CheckedSub + PartialOrd + Num,
 {
     if trits.is_empty() {
         Err(Error::Empty)
@@ -104,44 +107,17 @@ where
 
         for trit in trits.iter().rev() {
             let old_acc = acc.clone();
-            acc = match trit {
-                Btrit::NegOne => -I::one(),
-                Btrit::Zero => I::zero(),
-                Btrit::PlusOne => I::one(),
-            }
-            .checked_add(&old_acc)
-            .and_then(|acc| acc.checked_add(&old_acc))
-            .and_then(|acc| acc.checked_add(&old_acc))
-            .ok_or(Error::TooBig)?;
-        }
-
-        Ok(acc)
-    }
-}
-
-/// Attempt to convert the given trit slice into a number. If the numeric representation of the
-/// trit slice is too large to fit the desired integer, or does not contain any trits, an error
-/// will be returned.
-pub fn trits_to_unsigned_int<I, T: RawEncoding<Trit = Utrit> + ?Sized>(trits: &Trits<T>) -> Result<I, Error>
-where
-    I: Clone + CheckedAdd + Num,
-{
-    if trits.is_empty() {
-        Err(Error::Empty)
-    } else {
-        let mut acc = I::zero();
-
-        for trit in trits.iter().rev() {
-            let old_acc = acc.clone();
-            acc = match trit {
-                Utrit::Zero => I::zero(),
-                Utrit::One => I::one(),
-                Utrit::Two => I::one() + I::one(),
-            }
-            .checked_add(&old_acc)
-            .and_then(|acc| acc.checked_add(&old_acc))
-            .and_then(|acc| acc.checked_add(&old_acc))
-            .ok_or(Error::TooBig)?;
+            acc = trit
+                .add_to_num(acc)?
+                .checked_add(&old_acc)
+                .and_then(|acc| acc.checked_add(&old_acc))
+                .ok_or_else(|| {
+                    if old_acc < I::zero() {
+                        Error::Underflow
+                    } else {
+                        Error::Overflow
+                    }
+                })?;
         }
 
         Ok(acc)

@@ -9,6 +9,8 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
+use crate::convert;
+use num_traits::{CheckedAdd, CheckedSub, Num};
 use std::{convert::TryFrom, fmt, hash};
 
 /// Balanced trits.
@@ -33,6 +35,9 @@ pub trait Trit:
     ///
     /// Note that this is largely an implementation detail and is rarely useful for API users.
     fn as_arbitrary_ref<'a>(&self) -> &'a Self;
+
+    /// Attempt to add this trit to a numeric value.
+    fn add_to_num<I: Num + CheckedAdd + CheckedSub>(&self, n: I) -> Result<I, convert::Error>;
 }
 
 /// A trait implemented by trits that can be shifted between balance domains.
