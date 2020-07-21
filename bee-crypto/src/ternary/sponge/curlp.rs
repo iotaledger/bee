@@ -64,7 +64,7 @@ impl CurlP {
         #[inline]
         fn truth_table_get(state: &Trits, p: usize, q: usize) -> Btrit {
             // Safe to unwrap since indexes come from iteration on the state.
-            TRUTH_TABLE[state.get(q).unwrap() as usize + 1][state.get(p).unwrap() as usize + 1]
+            TRUTH_TABLE[(state.get(q).unwrap() as i8 + 1) as usize][(state.get(p).unwrap() as i8 + 1) as usize]
         }
 
         fn substitution_box(input: &Trits, output: &mut Trits) {
