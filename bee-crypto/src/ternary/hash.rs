@@ -40,8 +40,8 @@ impl Hash {
     pub fn weight(&self) -> u8 {
         let mut weight = 0u8;
 
-        for i in (0..self.0.len()).rev() {
-            if self.0[i] != 0 {
+        for t in self.0.iter().rev() {
+            if *t != 0 {
                 break;
             }
             weight += 1;
