@@ -18,3 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security -->
+
+## 0.1.0-alpha - YYYY-MM-DD
+
+### Added
+
+- Ternary big integer utilities;
+- Ternary cryptographic `Sponge` trait;
+- `CurlP` ternary cryptographic function and its variants `CurlP27` and `CurlP81`;
+- `Kerl` ternary cryptographic function;
