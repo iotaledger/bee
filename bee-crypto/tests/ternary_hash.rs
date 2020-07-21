@@ -9,11 +9,14 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-//! Ternary cryptographic primitives of the IOTA protocol.
+use bee_crypto::ternary::{Hash, HASH_LENGTH};
 
-mod hash;
-
-pub mod bigint;
-pub mod sponge;
-
-pub use hash::{Hash, HASH_LENGTH};
+#[test]
+fn hash_weigth() {
+    for i in 0..20 {
+        let mut trits = [0i8; HASH_LENGTH];
+        trits[HASH_LENGTH - i - 1] = 1;
+        let hash = Hash::new(trits);
+        assert_eq!(hash.weight(), i as u8);
+    }
+}
