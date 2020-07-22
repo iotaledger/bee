@@ -12,7 +12,7 @@
 use bee_crypto::ternary::{Hash, HASH_LENGTH};
 
 #[test]
-fn hash_weigth() {
+fn hash_weight() {
     for i in 0..20 {
         let mut trits = [0i8; HASH_LENGTH];
         trits[HASH_LENGTH - i - 1] = 1;

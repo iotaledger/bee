@@ -10,7 +10,7 @@
 // See the License for the specific language governing permissions and limitations under the License.
 
 /// The different kinds of Sponges.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum SpongeKind {
     /// Kerl.
     Kerl,
