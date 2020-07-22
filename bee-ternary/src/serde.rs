@@ -125,8 +125,7 @@ impl<'de> Visitor<'de> for UtritVisitor {
     }
 
     fn visit_u8<E: Error>(self, trit: u8) -> Result<Self::Value, E> {
-        u8::try_from(trit)
-            .map_err(|_| ())
+        Ok(trit)
             .and_then(|trit| Utrit::try_from(trit).map_err(|_| ()))
             .map_err(|_| E::invalid_value(Unexpected::Unsigned(trit as u64), &self))
     }
