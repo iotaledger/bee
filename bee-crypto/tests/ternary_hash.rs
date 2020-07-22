@@ -10,13 +10,13 @@
 // See the License for the specific language governing permissions and limitations under the License.
 
 use bee_crypto::ternary::{Hash, HASH_LENGTH};
+use bee_ternary::Btrit;
 
 #[test]
 fn hash_weight() {
     for i in 0..20 {
-        let mut trits = [0i8; HASH_LENGTH];
-        trits[HASH_LENGTH - i - 1] = 1;
-        let hash = Hash::new(trits);
+        let mut hash = Hash::zeros();
+        hash.as_trits_mut().set(HASH_LENGTH - i - 1, Btrit::PlusOne);
         assert_eq!(hash.weight(), i as u8);
     }
 }

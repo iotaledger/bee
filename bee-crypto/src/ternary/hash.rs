@@ -9,17 +9,17 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-use bee_ternary::{Trits, T1B1, Btrit, raw::RawEncoding};
+use bee_ternary::{raw::RawEncoding, Btrit, Trits, T1B1};
 
 use std::{
     cmp::PartialEq,
     convert::TryFrom,
-    ops::{Deref, DerefMut},
     fmt, hash,
+    ops::{Deref, DerefMut},
 };
 
 #[derive(Debug)]
-pub enum HashError {
+pub enum Error {
     WrongLength,
 }
 
@@ -48,16 +48,19 @@ impl Hash {
 
     /// Returns the weight - number of ending 0s - of the `Hash`.
     pub fn weight(&self) -> u8 {
-        self
-            .iter()
-            .rev()
-            .take_while(|t| *t != Btrit::Zero)
-            .count() as u8
+        let mut weight = 0u8;
+        for t in self.0.iter().rev() {
+            if *t != Btrit::Zero {
+                break;
+            }
+            weight += 1;
+        }
+        weight
     }
 }
 
-impl<'a, T: RawEncoding<Trit=Btrit>> TryFrom<&'a Trits<T>> for Hash {
-    type Error = HashError;
+impl<'a, T: RawEncoding<Trit = Btrit>> TryFrom<&'a Trits<T>> for Hash {
+    type Error = Error;
 
     fn try_from(trits: &'a Trits<T>) -> Result<Self, Self::Error> {
         if trits.len() == HASH_LENGTH {
@@ -65,7 +68,7 @@ impl<'a, T: RawEncoding<Trit=Btrit>> TryFrom<&'a Trits<T>> for Hash {
             hash.copy_from(trits);
             Ok(hash)
         } else {
-            Err(HashError::WrongLength)
+            Err(Error::WrongLength)
         }
     }
 }
