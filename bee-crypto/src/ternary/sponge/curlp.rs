@@ -27,7 +27,7 @@ const TRUTH_TABLE: [[Btrit; 3]; 3] = [
     [Btrit::NegOne, Btrit::PlusOne, Btrit::Zero],
 ];
 
-/// Available round numbers for CurlP.
+/// Available round numbers for `CurlP`.
 #[derive(Copy, Clone)]
 pub enum CurlPRounds {
     /// 27 rounds.
