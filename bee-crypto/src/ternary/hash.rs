@@ -48,14 +48,11 @@ impl Hash {
 
     /// Returns the weight - number of ending 0s - of the `Hash`.
     pub fn weight(&self) -> u8 {
-        let mut weight = 0u8;
-        for t in self.0.iter().rev() {
-            if *t != Btrit::Zero {
-                break;
-            }
-            weight += 1;
-        }
-        weight
+        self
+            .iter()
+            .rev()
+            .take_while(|t| *t == Btrit::Zero)
+            .count() as u8
     }
 }
 
