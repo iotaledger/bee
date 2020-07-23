@@ -19,19 +19,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.3.1-alpha - 2020-07-23
+
+### Added
+
+- Conversions between `&[Trit]` and `&Trits<T1B1<T>>`.
+
+### Removed
+
+- A useless conversion to same type.
+
 ## 0.3.0-alpha - 2020-07-20
 
 ### Added
 
-- Support for arbitrary trit to numeric type conversion
+- Support for arbitrary trit to numeric type conversion.
 
 ## 0.2.0-alpha - 2020-07-17
 
 ### Added
 
-- Binary/ternary numeric conversion
-- FromStr implementation for TryteBuf
-- TritBuf::from_i8s and TritBuf::from_u8s
+- Binary/ternary numeric conversion.
+- FromStr implementation for TryteBuf.
+- TritBuf::from_i8s and TritBuf::from_u8s.
 
 ## 0.1.0-alpha - 2020-06-12
 

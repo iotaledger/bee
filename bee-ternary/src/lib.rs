@@ -507,6 +507,30 @@ impl<T: Trit> Trits<T1B1<T>> {
     }
 }
 
+impl<'a, T: Trit> From<&'a [T]> for &'a Trits<T1B1<T>> {
+    fn from(xs: &'a [T]) -> Self {
+        unsafe { Trits::from_raw_unchecked(&*(xs as *const _ as *const _), xs.len()) }
+    }
+}
+
+impl<'a, T: Trit> From<&'a mut [T]> for &'a mut Trits<T1B1<T>> {
+    fn from(xs: &'a mut [T]) -> Self {
+        unsafe { Trits::from_raw_unchecked_mut(&mut *(xs as *mut _ as *mut _), xs.len()) }
+    }
+}
+
+impl<'a, T: Trit> From<&'a Trits<T1B1<T>>> for &'a [T] {
+    fn from(trits: &'a Trits<T1B1<T>>) -> Self {
+        trits.as_raw_slice()
+    }
+}
+
+impl<'a, T: Trit> From<&'a mut Trits<T1B1<T>>> for &'a mut [T] {
+    fn from(trits: &'a mut Trits<T1B1<T>>) -> Self {
+        trits.as_raw_slice_mut()
+    }
+}
+
 /// These functions are only implemented for trit slices with the [`T3B1`] encoding because only
 /// the [`T3B1`] encoding has a representation compatible with a slice of `Tryte`s. If you find
 /// yourself commonly needing to convert between trits and trytes, [`T3B1`] is the encoding to use.

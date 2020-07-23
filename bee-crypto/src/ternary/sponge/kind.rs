@@ -9,11 +9,13 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-//! Ternary cryptographic primitives of the IOTA protocol.
-
-mod hash;
-
-pub mod bigint;
-pub mod sponge;
-
-pub use hash::{Hash, HASH_LENGTH};
+/// The different kinds of Sponges.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum SpongeKind {
+    /// Kerl.
+    Kerl,
+    /// CurlP with 27 rounds.
+    CurlP27,
+    /// CurlP with 81 rounds.
+    CurlP81,
+}
