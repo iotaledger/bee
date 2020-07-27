@@ -65,7 +65,7 @@ impl T243<Utrit> {
 
                 // Iterate over the digits of the bigint, starting from the most significant one.
                 for digit in u384_inner_slice.iter_mut() {
-                    let digit_with_rem = ((rem as u64) << 32) | *digit as u64;
+                    let digit_with_rem = (u64::from(rem) << 32) | u64::from(*digit);
                     *digit = (digit_with_rem / 3u64) as u32;
                     rem = (digit_with_rem % 3u64) as u32;
                 }

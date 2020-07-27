@@ -350,7 +350,7 @@ impl U384<LittleEndian, U32Repr> {
             // Overflow is handled by taking the lower `u32` as the new digit, and the higher `u32` as the carry.
             let mut carry: u32 = 0;
             for digit in accumulator.inner[0..accumulator_extent].iter_mut() {
-                let new_digit = *digit as u64 * 3u64 + carry as u64;
+                let new_digit = 3 * u64::from(*digit) + u64::from(carry);
 
                 *digit = new_digit.lo();
                 carry = new_digit.hi();
