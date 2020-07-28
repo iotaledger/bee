@@ -54,10 +54,10 @@ fn subseed_kerl() {
 fn from_str_invalid_length() {
     let trytes = "VBAZOIZIWGBRAXMFDUBLP";
 
-    match Seed::from_str(&trytes) {
-        Err(Error::InvalidLength(len)) => assert_eq!(len, trytes.len() * 3),
-        _ => unreachable!(),
-    }
+    assert_eq!(
+        Seed::from_str(&trytes).err(),
+        Some(Error::InvalidLength(trytes.len() * 3))
+    );
 }
 
 #[test]
@@ -71,10 +71,10 @@ fn from_str_invalid_trytes() {
 fn from_trits_invalid_length() {
     let trits = TritBuf::zeros(42);
 
-    match Seed::from_trits(trits.clone()) {
-        Err(Error::InvalidLength(len)) => assert_eq!(len, trits.len()),
-        _ => unreachable!(),
-    }
+    assert_eq!(
+        Seed::from_trits(trits.clone()).err(),
+        Some(Error::InvalidLength(trits.len()))
+    );
 }
 
 #[test]

@@ -26,13 +26,13 @@ fn generator_missing_depth() {
         .security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
-    match MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
-        .generator(wots_private_key_generator)
-        .build()
-    {
-        Ok(_) => unreachable!(),
-        Err(err) => assert_eq!(err, MssError::MissingDepth),
-    }
+    assert_eq!(
+        MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
+            .generator(wots_private_key_generator)
+            .build()
+            .err(),
+        Some(MssError::MissingDepth)
+    );
 }
 
 #[test]
@@ -41,25 +41,25 @@ fn generator_invalid_depth() {
         .security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
-    match MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
-        .generator(wots_private_key_generator)
-        .depth(21)
-        .build()
-    {
-        Ok(_) => unreachable!(),
-        Err(err) => assert_eq!(err, MssError::InvalidDepth(21)),
-    }
+    assert_eq!(
+        MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
+            .generator(wots_private_key_generator)
+            .depth(21)
+            .build()
+            .err(),
+        Some(MssError::InvalidDepth(21))
+    );
 }
 
 #[test]
 fn generator_missing_generator() {
-    match MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
-        .depth(5)
-        .build()
-    {
-        Ok(_) => unreachable!(),
-        Err(err) => assert_eq!(err, MssError::MissingGenerator),
-    }
+    assert_eq!(
+        MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
+            .depth(5)
+            .build()
+            .err(),
+        Some(MssError::MissingGenerator)
+    );
 }
 
 fn wots_generic_signature_verify<S>(public_key: &str, message: &str, signature: &str, depth: u8, index: u64)
@@ -80,9 +80,7 @@ where
         .unwrap()
         .depth(depth);
     let signature = MssSignature::<S>::from_trits(signature_trits).unwrap().index(index);
-    let valid = public_key.verify(&message_trits, &signature).unwrap();
-
-    assert!(valid);
+    assert!(public_key.verify(&message_trits, &signature).unwrap());
 }
 
 #[test]
@@ -152,9 +150,7 @@ where
 
     for _ in 0..1 << (DEPTH - 1) {
         let signature = private_key.sign(&message_trits).unwrap();
-        let valid = public_key.verify(&message_trits, &signature).unwrap();
-
-        assert!(valid);
+        assert!(public_key.verify(&message_trits, &signature).unwrap());
     }
 }
 
