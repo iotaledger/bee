@@ -338,9 +338,7 @@ where
                 sponge.absorb(&hash).map_err(|_| Self::Error::FailedSpongeOperation)?;
             } else {
                 sponge.absorb(&hash).map_err(|_| Self::Error::FailedSpongeOperation)?;
-                sponge
-                    .absorb(&sibling)
-                    .map_err(|_| Self::Error::FailedSpongeOperation)?;
+                sponge.absorb(sibling).map_err(|_| Self::Error::FailedSpongeOperation)?;
             }
             sponge
                 .squeeze_into(&mut hash)
