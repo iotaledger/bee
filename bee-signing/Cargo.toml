@@ -1,0 +1,21 @@
+[package]
+name = "bee-signing"
+version = "0.1.0-alpha"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = "IOTA signing primitives"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "bee", "framework", "signing"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-common-derive = { git = "https://github.com/iotaledger/bee.git" }
+bee-crypto = { git = "https://github.com/iotaledger/bee.git" }
+bee-ternary = { git = "https://github.com/iotaledger/bee.git" }
+
+rand = "0.7"
+sha3 = "0.9.0"
+thiserror = "1.0.20"
+zeroize = "1.1.0"
