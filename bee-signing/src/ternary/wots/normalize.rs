@@ -22,8 +22,8 @@ use std::convert::TryFrom;
 #[derive(Debug, Error, PartialEq)]
 pub enum Error {
     /// Invalid message length.
-    #[error("Invalid message length.")]
-    InvalidMessageLength,
+    #[error("Invalid message length, should be 243 trits, was {0}.")]
+    InvalidMessageLength(usize),
 }
 
 /// When applying WOTS on a non-normalized message, the amount of private key data leaked is not uniform and some
@@ -32,7 +32,7 @@ pub enum Error {
 /// cases get alleviated, so that every signature exactly leaks half of the private key.
 pub fn normalize(message: &Trits<T1B1>) -> Result<TritBuf<T1B1Buf>, Error> {
     if message.len() != HASH_LENGTH {
-        return Err(Error::InvalidMessageLength);
+        return Err(Error::InvalidMessageLength(message.len()));
     }
 
     let mut normalized = [0i8; WotsSecurityLevel::High as usize * MESSAGE_FRAGMENT_LENGTH];

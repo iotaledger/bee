@@ -28,7 +28,7 @@ use std::str::FromStr;
 #[derive(Debug, Error, PartialEq)]
 pub enum Error {
     /// Invalid seed length.
-    #[error("Invalid seed length.")]
+    #[error("Invalid seed length, should be 243 trits, was {0}.")]
     InvalidLength(usize),
     /// Invalid seed trytes.
     #[error("Invalid seed trytes.")]

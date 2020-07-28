@@ -45,16 +45,16 @@ pub enum Error {
     #[error("Failed sponge operation.")]
     FailedSpongeOperation,
     /// Invalid entropy length.
-    #[error("Invalid entropy length, should be 243 trits.")]
+    #[error("Invalid entropy length, should be 243 trits, was {0}.")]
     InvalidEntropyLength(usize),
     /// Invalid message length.
-    #[error("Invalid message length, should be 243 trits.")]
+    #[error("Invalid message length, should be 243 trits, was {0}.")]
     InvalidMessageLength(usize),
     /// Invalid public key length.
-    #[error("Invalid public key length, should be 243 trits.")]
+    #[error("Invalid public key length, should be 243 trits, was {0}.")]
     InvalidPublicKeyLength(usize),
     /// Invalid signature length.
-    #[error("Invalid signature length, should be 243 trits.")]
+    #[error("Invalid signature length, should be a multiple of 6561 trits, was {0}.")]
     InvalidSignatureLength(usize),
     /// Last trit of the entropy is not null.
     #[error("Last trit of the entropy is not null.")]

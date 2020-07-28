@@ -20,7 +20,10 @@ fn invalid_message_length() {
         .as_trits()
         .encode::<T1B1Buf>();
 
-    assert_eq!(normalize(&hash).err(), Some(NormalizeError::InvalidMessageLength));
+    assert_eq!(
+        normalize(&hash).err(),
+        Some(NormalizeError::InvalidMessageLength(hash.len()))
+    );
 }
 
 #[test]
