@@ -43,7 +43,7 @@ pub trait PrivateKeyGenerator {
     /// let seed =
     ///     Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
     /// let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-    ///     .security_level(WotsSecurityLevel::Medium)
+    ///     .with_security_level(WotsSecurityLevel::Medium)
     ///     .build()
     ///     .unwrap();
     /// let private_key = private_key_generator.generate_from_seed(&seed, 0).unwrap();
@@ -72,7 +72,7 @@ pub trait PrivateKeyGenerator {
     /// let seed =
     ///     Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
     /// let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-    ///     .security_level(WotsSecurityLevel::Medium)
+    ///     .with_security_level(WotsSecurityLevel::Medium)
     ///     .build()
     ///     .unwrap();
     /// let private_key = private_key_generator.generate_from_entropy(seed.as_trits()).unwrap();
@@ -105,7 +105,7 @@ pub trait PrivateKey: Zeroize + Drop {
     ///
     /// # let seed = Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
     /// # let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-    ///     .security_level(WotsSecurityLevel::Medium)
+    ///     .with_security_level(WotsSecurityLevel::Medium)
     ///     .build()
     ///     .unwrap();
     /// # let private_key = private_key_generator.generate_from_seed(&seed, 0).unwrap();
@@ -137,7 +137,7 @@ pub trait PrivateKey: Zeroize + Drop {
     ///
     /// # let seed = Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
     /// # let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-    ///     .security_level(WotsSecurityLevel::Medium)
+    ///     .with_security_level(WotsSecurityLevel::Medium)
     ///     .build()
     ///     .unwrap();
     /// # let mut private_key = private_key_generator.generate_from_seed(&seed, 0).unwrap();
@@ -181,7 +181,7 @@ pub trait PublicKey {
     ///
     /// # let seed = Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
     /// # let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-    ///     .security_level(WotsSecurityLevel::Medium)
+    ///     .with_security_level(WotsSecurityLevel::Medium)
     ///     .build()
     ///     .unwrap();
     /// # let mut private_key = private_key_generator.generate_from_seed(&seed, 0).unwrap();
@@ -254,7 +254,7 @@ pub trait RecoverableSignature: Signature {
     ///
     /// # let seed = Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
     /// # let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-    ///     .security_level(WotsSecurityLevel::Medium)
+    ///     .with_security_level(WotsSecurityLevel::Medium)
     ///     .build()
     ///     .unwrap();
     /// # let mut private_key = private_key_generator.generate_from_seed(&seed, 0).unwrap();

@@ -39,7 +39,7 @@ fn generator_valid() {
     ];
     for security in security_levels {
         assert!(WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-            .security_level(security)
+            .with_security_level(security)
             .build()
             .is_ok(),);
     }
@@ -56,7 +56,7 @@ fn roundtrip<S: Sponge + Default>() {
     for security in security_levels {
         for index in 0..3 {
             let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<S>::default()
-                .security_level(security)
+                .with_security_level(security)
                 .build()
                 .unwrap();
             let mut private_key = private_key_generator.generate_from_seed(&seed, index).unwrap();
@@ -98,7 +98,7 @@ fn example() {
         .as_trits()
         .encode::<T1B1Buf>();
     let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-        .security_level(WotsSecurityLevel::Medium)
+        .with_security_level(WotsSecurityLevel::Medium)
         .build()
         .unwrap();
     let generated_key = private_key_generator.generate_from_entropy(&entropy).unwrap();
@@ -113,7 +113,7 @@ fn invalid_entropy_length() {
         .as_trits()
         .encode::<T1B1Buf>();
     let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-        .security_level(WotsSecurityLevel::Medium)
+        .with_security_level(WotsSecurityLevel::Medium)
         .build()
         .unwrap();
 
@@ -131,7 +131,7 @@ fn non_null_last_entropy_trit() {
             .as_trits()
             .encode::<T1B1Buf>();
     let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-        .security_level(WotsSecurityLevel::Medium)
+        .with_security_level(WotsSecurityLevel::Medium)
         .build()
         .unwrap();
 

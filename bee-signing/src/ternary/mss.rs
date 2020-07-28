@@ -100,13 +100,13 @@ where
     G: PrivateKeyGenerator,
 {
     /// Sets the depth of the MSS.
-    pub fn depth(mut self, depth: u8) -> Self {
+    pub fn with_depth(mut self, depth: u8) -> Self {
         self.depth.replace(depth);
         self
     }
 
     /// Sets the underlying private key generator.
-    pub fn generator(mut self, generator: G) -> Self {
+    pub fn with_generator(mut self, generator: G) -> Self {
         self.generator.replace(generator);
         self
     }
@@ -225,7 +225,7 @@ where
     fn generate_public_key(&self) -> Result<Self::PublicKey, Self::Error> {
         Ok(Self::PublicKey::from_trits(self.tree[0..HASH_LENGTH].to_buf())
             .map_err(|_| Error::PublicKeyGenerationFailed)?
-            .depth(self.depth))
+            .with_depth(self.depth))
     }
 
     fn sign(&mut self, message: &Trits<T1B1>) -> Result<Self::Signature, Self::Error> {
@@ -264,7 +264,7 @@ where
 
         Ok(Self::Signature::from_trits(state)
             .map_err(|_| Error::SignatureGenerationFailed)?
-            .index(self.index - 1))
+            .with_index(self.index - 1))
     }
 }
 
@@ -282,7 +282,7 @@ where
     K: PublicKey,
 {
     /// Sets the depth of the public key.
-    pub fn depth(mut self, depth: u8) -> Self {
+    pub fn with_depth(mut self, depth: u8) -> Self {
         self.depth.replace(depth);
         self
     }
@@ -371,7 +371,7 @@ pub struct MssSignature<S> {
 
 impl<S: Sponge + Default> MssSignature<S> {
     /// Set the index of the signature.
-    pub fn index(mut self, index: u64) -> Self {
+    pub fn with_index(mut self, index: u64) -> Self {
         self.index.replace(index);
         self
     }

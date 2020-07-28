@@ -23,12 +23,12 @@ use std::str::FromStr;
 #[test]
 fn generator_missing_depth() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-        .security_level(WotsSecurityLevel::Low)
+        .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
     assert_eq!(
         MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
-            .generator(wots_private_key_generator)
+            .with_generator(wots_private_key_generator)
             .build()
             .err(),
         Some(MssError::MissingDepth)
@@ -38,13 +38,13 @@ fn generator_missing_depth() {
 #[test]
 fn generator_invalid_depth() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-        .security_level(WotsSecurityLevel::Low)
+        .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
     assert_eq!(
         MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
-            .generator(wots_private_key_generator)
-            .depth(21)
+            .with_generator(wots_private_key_generator)
+            .with_depth(21)
             .build()
             .err(),
         Some(MssError::InvalidDepth(21))
@@ -55,7 +55,7 @@ fn generator_invalid_depth() {
 fn generator_missing_generator() {
     assert_eq!(
         MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
-            .depth(5)
+            .with_depth(5)
             .build()
             .err(),
         Some(MssError::MissingGenerator)
@@ -78,8 +78,10 @@ where
 
     let public_key = MssPublicKey::<S, WotsPublicKey<S>>::from_trits(public_key_trits)
         .unwrap()
-        .depth(depth);
-    let signature = MssSignature::<S>::from_trits(signature_trits).unwrap().index(index);
+        .with_depth(depth);
+    let signature = MssSignature::<S>::from_trits(signature_trits)
+        .unwrap()
+        .with_index(index);
     assert!(public_key.verify(&message_trits, &signature).unwrap());
 }
 
@@ -141,8 +143,8 @@ where
     let message_trits = TryteBuf::try_from_str(MESSAGE).unwrap().as_trits().encode::<T1B1Buf>();
 
     let private_key_generator = MssPrivateKeyGeneratorBuilder::<S, G>::default()
-        .depth(DEPTH)
-        .generator(generator)
+        .with_depth(DEPTH)
+        .with_generator(generator)
         .build()
         .unwrap();
     let mut private_key = private_key_generator.generate_from_seed(&seed, 0).unwrap();
@@ -157,7 +159,7 @@ where
 #[test]
 fn kerl_wots_kerl_roundtrip() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-        .security_level(WotsSecurityLevel::Low)
+        .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
     wots_generic_roundtrip::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>(wots_private_key_generator);
@@ -166,7 +168,7 @@ fn kerl_wots_kerl_roundtrip() {
 #[test]
 fn kerl_wots_curl27_roundtrip() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<CurlP27>::default()
-        .security_level(WotsSecurityLevel::Low)
+        .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
     wots_generic_roundtrip::<Kerl, WotsSpongePrivateKeyGenerator<CurlP27>>(wots_private_key_generator);
@@ -175,7 +177,7 @@ fn kerl_wots_curl27_roundtrip() {
 #[test]
 fn kerl_wots_curl81_roundtrip() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<CurlP81>::default()
-        .security_level(WotsSecurityLevel::Low)
+        .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
     wots_generic_roundtrip::<Kerl, WotsSpongePrivateKeyGenerator<CurlP81>>(wots_private_key_generator);
@@ -184,7 +186,7 @@ fn kerl_wots_curl81_roundtrip() {
 #[test]
 fn curl27_wots_kerl_roundtrip() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-        .security_level(WotsSecurityLevel::Low)
+        .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
     wots_generic_roundtrip::<CurlP27, WotsSpongePrivateKeyGenerator<Kerl>>(wots_private_key_generator);
@@ -193,7 +195,7 @@ fn curl27_wots_kerl_roundtrip() {
 #[test]
 fn curl27_wots_curl27_roundtrip() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<CurlP27>::default()
-        .security_level(WotsSecurityLevel::Low)
+        .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
     wots_generic_roundtrip::<CurlP27, WotsSpongePrivateKeyGenerator<CurlP27>>(wots_private_key_generator);
@@ -202,7 +204,7 @@ fn curl27_wots_curl27_roundtrip() {
 #[test]
 fn curl27_wots_curl81_roundtrip() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<CurlP81>::default()
-        .security_level(WotsSecurityLevel::Low)
+        .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
     wots_generic_roundtrip::<CurlP27, WotsSpongePrivateKeyGenerator<CurlP81>>(wots_private_key_generator);
@@ -211,7 +213,7 @@ fn curl27_wots_curl81_roundtrip() {
 #[test]
 fn curl81_wots_kerl_roundtrip() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-        .security_level(WotsSecurityLevel::Low)
+        .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
     wots_generic_roundtrip::<CurlP81, WotsSpongePrivateKeyGenerator<Kerl>>(wots_private_key_generator);
@@ -220,7 +222,7 @@ fn curl81_wots_kerl_roundtrip() {
 #[test]
 fn curl81_wots_curl27_roundtrip() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<CurlP27>::default()
-        .security_level(WotsSecurityLevel::Low)
+        .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
     wots_generic_roundtrip::<CurlP81, WotsSpongePrivateKeyGenerator<CurlP27>>(wots_private_key_generator);
@@ -229,7 +231,7 @@ fn curl81_wots_curl27_roundtrip() {
 #[test]
 fn curl81_wots_curl81_roundtrip() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<CurlP81>::default()
-        .security_level(WotsSecurityLevel::Low)
+        .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
     wots_generic_roundtrip::<CurlP81, WotsSpongePrivateKeyGenerator<CurlP81>>(wots_private_key_generator);
@@ -238,7 +240,7 @@ fn curl81_wots_curl81_roundtrip() {
 #[test]
 fn signatures_exhausted() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-        .security_level(WotsSecurityLevel::Low)
+        .with_security_level(WotsSecurityLevel::Low)
         .build()
         .unwrap();
     const SEED: &str = "NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN";
@@ -249,8 +251,8 @@ fn signatures_exhausted() {
     let message_trits = TryteBuf::try_from_str(MESSAGE).unwrap().as_trits().encode::<T1B1Buf>();
 
     let private_key_generator = MssPrivateKeyGeneratorBuilder::<Kerl, WotsSpongePrivateKeyGenerator<Kerl>>::default()
-        .depth(DEPTH)
-        .generator(wots_private_key_generator)
+        .with_depth(DEPTH)
+        .with_generator(wots_private_key_generator)
         .build()
         .unwrap();
     let mut private_key = private_key_generator.generate_from_seed(&seed, 0).unwrap();

@@ -28,7 +28,7 @@ pub struct WotsSpongePrivateKeyGeneratorBuilder<S> {
 
 impl<S: Sponge + Default> WotsSpongePrivateKeyGeneratorBuilder<S> {
     /// Sets the security level of the private key.
-    pub fn security_level(mut self, security_level: WotsSecurityLevel) -> Self {
+    pub fn with_security_level(mut self, security_level: WotsSecurityLevel) -> Self {
         self.security_level.replace(security_level);
         self
     }

@@ -28,7 +28,7 @@ fn invalid_message_length() {
             .as_trits()
             .encode::<T1B1Buf>();
     let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-        .security_level(WotsSecurityLevel::Medium)
+        .with_security_level(WotsSecurityLevel::Medium)
         .build()
         .unwrap();
     let mut private_key = private_key_generator.generate_from_entropy(&entropy).unwrap();
