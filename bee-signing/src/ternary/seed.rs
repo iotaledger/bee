@@ -18,7 +18,7 @@ use bee_crypto::ternary::{
 };
 use bee_ternary::{Btrit, T1B1Buf, Trit, TritBuf, Trits, TryteBuf, T1B1};
 
-use rand::Rng;
+use rand::distributions::{Distribution, Uniform};
 use thiserror::Error;
 use zeroize::Zeroize;
 
@@ -56,10 +56,11 @@ impl Seed {
         // https://rust-random.github.io/rand/rand/trait.CryptoRng.html
         let mut rng = rand::thread_rng();
         let trits = [Btrit::NegOne, Btrit::Zero, Btrit::PlusOne];
+        let range = Uniform::from(0..trits.len());
         let mut seed = [Btrit::Zero; HASH_LENGTH];
 
         for trit in seed.iter_mut() {
-            *trit = trits[rng.gen_range(0, trits.len())];
+            *trit = trits[range.sample(&mut rng)];
         }
 
         Self(<&Trits>::from(&seed as &[_]).to_buf())
