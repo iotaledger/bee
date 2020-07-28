@@ -81,7 +81,6 @@ fn from_trits_invalid_length() {
 fn to_trits_from_trits() {
     for _ in 0..10 {
         let seed_1 = Seed::rand();
-        println!("{:?}", seed_1.as_trits());
         let seed_2 = Seed::from_trits(seed_1.as_trits().to_buf()).unwrap();
 
         assert_eq!(seed_1.as_trits(), seed_2.as_trits());
