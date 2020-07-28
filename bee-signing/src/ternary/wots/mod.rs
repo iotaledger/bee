@@ -108,9 +108,9 @@ impl<S: Sponge + Default> PrivateKey for WotsPrivateKey<S> {
         // Hash each chunk of the private key the maximum amount of times.
         for chunk in hashed_private_key.chunks_mut(HASH_LENGTH) {
             for _ in 0..Tryte::MAX_VALUE as i8 - Tryte::MIN_VALUE as i8 {
-                sponge.absorb(chunk).map_err(|_| Self::Error::FailedSpongeOperation)?;
                 sponge
-                    .squeeze_into(chunk)
+                    .absorb(chunk)
+                    .and_then(|_| sponge.squeeze_into(chunk))
                     .map_err(|_| Self::Error::FailedSpongeOperation)?;
                 sponge.reset();
             }
@@ -148,9 +148,9 @@ impl<S: Sponge + Default> PrivateKey for WotsPrivateKey<S> {
 
             // Hash each chunk of the private key an amount of times given by the corresponding byte of the message.
             for _ in 0..(Tryte::MAX_VALUE as i8 - val) {
-                sponge.absorb(chunk).map_err(|_| Self::Error::FailedSpongeOperation)?;
                 sponge
-                    .squeeze_into(chunk)
+                    .absorb(chunk)
+                    .and_then(|_| sponge.squeeze_into(chunk))
                     .map_err(|_| Self::Error::FailedSpongeOperation)?;
                 sponge.reset();
             }
@@ -269,9 +269,7 @@ impl<S: Sponge + Default> RecoverableSignature for WotsSignature<S> {
             for _ in 0..(val - Tryte::MIN_VALUE as i8) {
                 sponge
                     .absorb(chunk)
-                    .map_err(|_| <Self as RecoverableSignature>::Error::FailedSpongeOperation)?;
-                sponge
-                    .squeeze_into(chunk)
+                    .and_then(|_| sponge.squeeze_into(chunk))
                     .map_err(|_| <Self as RecoverableSignature>::Error::FailedSpongeOperation)?;
                 sponge.reset();
             }

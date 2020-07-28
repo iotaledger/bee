@@ -175,12 +175,8 @@ where
 
                 sponge
                     .absorb(&tree[left_index * HASH_LENGTH..(left_index + 1) * HASH_LENGTH])
-                    .map_err(|_| Self::Error::FailedSpongeOperation)?;
-                sponge
-                    .absorb(&tree[right_index * HASH_LENGTH..(right_index + 1) * HASH_LENGTH])
-                    .map_err(|_| Self::Error::FailedSpongeOperation)?;
-                sponge
-                    .squeeze_into(&mut tree[index * HASH_LENGTH..(index + 1) * HASH_LENGTH])
+                    .and_then(|_| sponge.absorb(&tree[right_index * HASH_LENGTH..(right_index + 1) * HASH_LENGTH]))
+                    .and_then(|_| sponge.squeeze_into(&mut tree[index * HASH_LENGTH..(index + 1) * HASH_LENGTH]))
                     .map_err(|_| Self::Error::FailedSpongeOperation)?;
                 sponge.reset();
             }
@@ -334,15 +330,12 @@ where
             }
 
             if signature_index & j != 0 {
-                sponge.absorb(sibling).map_err(|_| Self::Error::FailedSpongeOperation)?;
-                sponge.absorb(&hash).map_err(|_| Self::Error::FailedSpongeOperation)?;
+                sponge.absorb(sibling).and_then(|_| sponge.absorb(&hash))
             } else {
-                sponge.absorb(&hash).map_err(|_| Self::Error::FailedSpongeOperation)?;
-                sponge.absorb(sibling).map_err(|_| Self::Error::FailedSpongeOperation)?;
+                sponge.absorb(&hash).and_then(|_| sponge.absorb(sibling))
             }
-            sponge
-                .squeeze_into(&mut hash)
-                .map_err(|_| Self::Error::FailedSpongeOperation)?;
+            .and_then(|_| sponge.squeeze_into(&mut hash))
+            .map_err(|_| Self::Error::FailedSpongeOperation)?;
             sponge.reset();
 
             j <<= 1;
