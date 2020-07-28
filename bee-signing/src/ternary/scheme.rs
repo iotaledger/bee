@@ -199,7 +199,7 @@ pub trait PublicKey {
     /// Creates a public key from trits.
     fn from_trits(buf: TritBuf<T1B1Buf>) -> Result<Self, Self::Error>
     where
-        Self: std::marker::Sized;
+        Self: Sized;
 
     /// Interprets the public key as trits.
     fn as_trits(&self) -> &Trits<T1B1>;
@@ -216,7 +216,7 @@ pub trait Signature {
     /// Creates a signature from trits.
     fn from_trits(buf: TritBuf<T1B1Buf>) -> Result<Self, Self::Error>
     where
-        Self: std::marker::Sized;
+        Self: Sized;
 
     /// Interprets the signature as trits.
     fn as_trits(&self) -> &Trits<T1B1>;
