@@ -363,6 +363,7 @@ impl U384<LittleEndian, U32Repr> {
                 accumulator_extent += 1;
             }
 
+            #[allow(clippy::cast_sign_loss)] // This is an slice of `UTrit`s, so `binary_trit` is always positive.
             let new_extent = accumulator.add_digit_inplace(*binary_trit as u32);
             if new_extent > accumulator_extent {
                 accumulator_extent = new_extent;

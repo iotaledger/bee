@@ -11,7 +11,11 @@
 
 //! Cryptographic primitives of the IOTA protocol.
 
-#![warn(missing_docs, clippy::cast_possible_truncate, clippy::cast_sign_loss)]
-#![deny(clippy::cast_lossless, clippy::cast_possible_wrap, clippy::checked_conversions)]
-
+#![deny(clippy::cast_lossless, clippy::checked_conversions)]
+#![warn(
+    missing_docs,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_wrap
+)]
 pub mod ternary;
