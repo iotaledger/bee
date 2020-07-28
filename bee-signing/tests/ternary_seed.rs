@@ -13,6 +13,8 @@ use bee_crypto::ternary::sponge::{Kerl, Sponge};
 use bee_signing::ternary::seed::{Error, Seed};
 use bee_ternary::{T1B1Buf, TritBuf, TryteBuf};
 
+use std::str::FromStr;
+
 const SEED: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9";
 
 fn subseed_generic<S: Sponge + Default>(seed_string: &str, subseed_strings: &[&str]) {

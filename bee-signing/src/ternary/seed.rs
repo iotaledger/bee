@@ -22,6 +22,8 @@ use rand::Rng;
 use thiserror::Error;
 use zeroize::Zeroize;
 
+use std::str::FromStr;
+
 /// Errors occuring when handling a `Seed`.
 #[derive(Debug, Error, PartialEq)]
 pub enum Error {
@@ -82,20 +84,6 @@ impl Seed {
         Self(Kerl::default().digest(&subseed).unwrap())
     }
 
-    /// Creates a `Seed` from &str.
-    pub fn from_str(str: &str) -> Result<Self, Error> {
-        if str.len() != HASH_LENGTH / 3 {
-            return Err(Error::InvalidLength(str.len() * 3));
-        }
-
-        Ok(Self(
-            TryteBuf::try_from_str(str)
-                .map_err(|_| Error::InvalidTrytes)?
-                .as_trits()
-                .encode::<T1B1Buf>(),
-        ))
-    }
-
     /// Creates a `Seed` from trits.
     pub fn from_trits(buf: TritBuf<T1B1Buf>) -> Result<Self, Error> {
         if buf.len() != HASH_LENGTH {
@@ -108,5 +96,23 @@ impl Seed {
     /// Returns the inner trits.
     pub fn as_trits(&self) -> &Trits<T1B1> {
         &self.0
+    }
+}
+
+impl FromStr for Seed {
+    type Err = Error;
+
+    /// Creates a `Seed` from &str.
+    fn from_str(str: &str) -> Result<Self, Self::Err> {
+        if str.len() != HASH_LENGTH / 3 {
+            return Err(Error::InvalidLength(str.len() * 3));
+        }
+
+        Ok(Self(
+            TryteBuf::try_from_str(str)
+                .map_err(|_| Error::InvalidTrytes)?
+                .as_trits()
+                .encode::<T1B1Buf>(),
+        ))
     }
 }

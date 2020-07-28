@@ -18,6 +18,8 @@ use bee_signing::ternary::{
 };
 use bee_ternary::{T1B1Buf, TryteBuf};
 
+use std::str::FromStr;
+
 #[test]
 fn generator_missing_depth() {
     let wots_private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()

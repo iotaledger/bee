@@ -38,6 +38,7 @@ pub trait PrivateKeyGenerator {
     ///     wots::{WotsSecurityLevel, WotsSpongePrivateKeyGeneratorBuilder},
     ///     PrivateKeyGenerator,
     /// };
+    /// use std::str::FromStr;
     ///
     /// let seed =
     ///     Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
@@ -66,6 +67,7 @@ pub trait PrivateKeyGenerator {
     ///     wots::{WotsSecurityLevel, WotsSpongePrivateKeyGeneratorBuilder},
     ///     PrivateKeyGenerator,
     /// };
+    /// use std::str::FromStr;
     ///
     /// let seed =
     ///     Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
@@ -99,6 +101,7 @@ pub trait PrivateKey: Zeroize + Drop {
     ///     PrivateKeyGenerator
     /// };
     /// use bee_signing::ternary::PrivateKey;
+    /// use std::str::FromStr;
     ///
     /// # let seed = Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
     /// # let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
@@ -130,6 +133,7 @@ pub trait PrivateKey: Zeroize + Drop {
     ///     T1B1Buf,
     ///     TryteBuf,
     /// };
+    /// use std::str::FromStr;
     ///
     /// # let seed = Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
     /// # let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
@@ -173,6 +177,7 @@ pub trait PublicKey {
     ///     T1B1Buf,
     ///     TryteBuf,
     /// };
+    /// use std::str::FromStr;
     ///
     /// # let seed = Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
     /// # let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
@@ -245,6 +250,7 @@ pub trait RecoverableSignature: Signature {
     ///     T1B1Buf,
     ///     TryteBuf,
     /// };
+    /// use std::str::FromStr;
     ///
     /// # let seed = Seed::from_str("AVXX9XWUSUVKUTWXKTBG9BJVBTZSAISBILKJNVWUHOQNYDMQWXNUCLTTOZGTTLLIYDXXJJGJSEOKVOSSZ").unwrap();
     /// # let private_key_generator = WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
