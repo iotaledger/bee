@@ -48,7 +48,7 @@ pub trait PrivateKeyGenerator {
     ///     .unwrap();
     /// let private_key = private_key_generator.generate_from_seed(&seed, 0).unwrap();
     /// ```
-    fn generate_from_seed(&self, seed: &Seed, index: u64) -> Result<Self::PrivateKey, Self::Error> {
+    fn generate_from_seed(&self, seed: &Seed, index: usize) -> Result<Self::PrivateKey, Self::Error> {
         self.generate_from_entropy(seed.subseed(index).as_trits())
     }
 

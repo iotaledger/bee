@@ -21,7 +21,7 @@ fn subseed_generic<S: Sponge + Default>(seed_string: &str, subseed_strings: &[&s
     let seed = Seed::from_str(seed_string).unwrap();
 
     for (i, subseed_string) in subseed_strings.iter().enumerate() {
-        let subseed = seed.subseed(i as u64);
+        let subseed = seed.subseed(i);
         let subseed_trits = TryteBuf::try_from_str(subseed_string)
             .unwrap()
             .as_trits()
