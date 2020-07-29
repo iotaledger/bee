@@ -5,13 +5,15 @@ on:
     - cron: '0 0 * * *'
   push:
     branches:
-      - master
+      - dev
+      - stable
     paths:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
   pull_request:
     branches:
-      - master
+      - dev
+      - stable
     paths:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
