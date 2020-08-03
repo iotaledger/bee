@@ -15,7 +15,10 @@ bee-common-derive = { version = "0.1.0-alpha", path = "../bee-common/bee-common-
 bee-crypto = { version = "0.1.0-alpha", path = "../bee-crypto" }
 bee-ternary = { version = "0.3.1-alpha", path = "../bee-ternary" }
 
+blake2 = "0.9.0"
+ed25519-dalek = { version = "1.0.0-pre.4", features = ["serde"] }
 rand = "0.7"
+serde = "1.0"
 sha3 = "0.9.0"
 thiserror = "1.0.20"
 zeroize = "1.1.0"
