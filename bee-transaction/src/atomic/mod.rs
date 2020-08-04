@@ -9,8 +9,8 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-mod message;
 mod hash;
+mod message;
 pub mod payload;
 
 pub use hash::Hash;
@@ -22,6 +22,7 @@ pub enum Error {
     CountError,
     EmptyError,
     DuplicateError,
+    IndexError,
 }
 
 impl std::fmt::Display for Error {
@@ -31,6 +32,7 @@ impl std::fmt::Display for Error {
             Error::CountError => "Invalid count number provided.".fmt(f),
             Error::DuplicateError => "The object in the set must be unique".fmt(f),
             Error::EmptyError => "The length of the object is empty".fmt(f),
+            Error::IndexError => "The position of index is not correct.".fmt(f),
         }
     }
 }

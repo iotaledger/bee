@@ -9,18 +9,22 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct WotsSignature(Vec<u8>);
 
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Ed25519Signature {
     pub public_key: [u8; 32],
-    pub signature: [u8; 64]
+    pub signature: Vec<u8>,
 }
 
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum Signature {
     Wots(WotsSignature),
-    Ed25519(Ed25519Signature)
+    Ed25519(Ed25519Signature),
 }
 
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct SignatureUnlock {
-    pub signature: Signature
+    pub signature: Signature,
 }

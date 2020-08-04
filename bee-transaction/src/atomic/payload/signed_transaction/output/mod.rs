@@ -11,8 +11,8 @@
 
 mod sig_locked_single_deposit;
 
-pub use sig_locked_single_deposit::{SigLockedSingleDeposit, Address};
+pub use sig_locked_single_deposit::{Address, SigLockedSingleDeposit};
 
 pub enum Output {
-    SigLockedSingleDeposit(SigLockedSingleDeposit)
+    SigLockedSingleDeposit(SigLockedSingleDeposit),
 }

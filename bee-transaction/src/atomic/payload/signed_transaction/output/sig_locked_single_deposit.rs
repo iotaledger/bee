@@ -15,10 +15,10 @@ pub struct Ed25519Address([u8; 32]);
 
 pub enum Address {
     Wots(WotsAddress),
-    Ed25519(Ed25519Address)
+    Ed25519(Ed25519Address),
 }
 
 pub struct SigLockedSingleDeposit {
     pub address: Address,
-    pub amount: u64
+    pub amount: u64,
 }

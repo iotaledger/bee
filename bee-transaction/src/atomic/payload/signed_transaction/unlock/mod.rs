@@ -17,5 +17,5 @@ pub use signature::SignatureUnlock;
 
 pub enum UnlockBlock {
     Reference(ReferenceUnlock),
-    Signature(SignatureUnlock)
+    Signature(SignatureUnlock),
 }

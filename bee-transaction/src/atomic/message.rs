@@ -9,13 +9,16 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-use crate::{Vertex, atomic::{Hash, payload::Payload}};
+use crate::{
+    atomic::{payload::Payload, Hash},
+    Vertex,
+};
 
 pub struct Message {
     pub trunk: Hash,
     pub branch: Hash,
     pub payload: Payload,
-    pub nonce: u64
+    pub nonce: u64,
 }
 
 impl Vertex for Message {
