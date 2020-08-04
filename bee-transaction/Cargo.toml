@@ -1,0 +1,16 @@
+[package]
+name = "bee-transaction"
+version = "0.1.0-alpha"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = ""
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "bee", "framework", "transaction"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-crypto = { git = "https://github.com/iotaledger/bee.git" }
+bee-signing = { git = "https://github.com/iotaledger/bee.git" }
+bee-ternary = { git = "https://github.com/iotaledger/bee.git", features = ["serde1"] }
