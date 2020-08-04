@@ -15,3 +15,22 @@ pub mod payload;
 
 pub use hash::Hash;
 pub use message::Message;
+
+#[derive(Debug)]
+pub enum Error {
+    AmountError,
+    CountError,
+    EmptyError,
+    DuplicateError,
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::AmountError => "Invalid amount provided.".fmt(f),
+            Error::CountError => "Invalid count number provided.".fmt(f),
+            Error::DuplicateError => "The object in the set must be unique".fmt(f),
+            Error::EmptyError => "The length of the object is empty".fmt(f),
+        }
+    }
+}
