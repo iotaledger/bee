@@ -28,10 +28,13 @@ impl SplitInteger for i64 {
     type High = i32;
     type Low = u32;
 
+    #[allow(clippy::cast_possible_truncation)] // Truncation is used to remove the low part of the integer.
     fn hi(self) -> Self::High {
         (self >> 32) as Self::High
     }
 
+    #[allow(clippy::cast_possible_truncation)] // Truncation is used to remove the high part of the integer.
+    #[allow(clippy::cast_sign_loss)] // Sign loss is expected as `Self::Low` represents the lower part of the integer.
     fn lo(self) -> Self::Low {
         self as Self::Low
     }
@@ -41,10 +44,12 @@ impl SplitInteger for u64 {
     type High = u32;
     type Low = u32;
 
+    #[allow(clippy::cast_possible_truncation)] // Truncation is used to remove the low part of the integer.
     fn hi(self) -> Self::High {
         (self >> 32) as Self::High
     }
 
+    #[allow(clippy::cast_possible_truncation)] // Truncation is used to remove the high part of the integer.
     fn lo(self) -> Self::Low {
         self as Self::Low
     }

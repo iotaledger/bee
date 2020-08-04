@@ -11,6 +11,12 @@
 
 //! Signing scheme primitives.
 
-#![warn(missing_docs)]
+#![deny(clippy::cast_lossless, clippy::checked_conversions)]
+#![warn(
+    missing_docs,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_wrap
+)]
 
 pub mod ternary;

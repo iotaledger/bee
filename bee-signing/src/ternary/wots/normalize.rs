@@ -43,7 +43,7 @@ pub fn normalize(message: &Trits<T1B1>) -> Result<TritBuf<T1B1Buf>, Error> {
         for j in (i * MESSAGE_FRAGMENT_LENGTH)..((i + 1) * MESSAGE_FRAGMENT_LENGTH) {
             // Safe to unwrap because 3 trits can't underflow/overflow an i8.
             normalized[j] = i8::try_from(&message[j * 3..j * 3 + 3]).unwrap();
-            sum += normalized[j] as i16;
+            sum += i16::from(normalized[j]);
         }
 
         while sum > 0 {

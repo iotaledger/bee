@@ -160,7 +160,7 @@ where
             let underlying_public_key = underlying_private_key
                 .generate_public_key()
                 .map_err(|_| Self::Error::FailedUnderlyingPublicKeyGeneration)?;
-            let tree_index = ((1 << (self.depth - 1)) + key_index - 1) as usize;
+            let tree_index = (1 << (self.depth - 1)) + key_index - 1;
 
             keys.push(underlying_private_key);
             tree[tree_index * HASH_LENGTH..(tree_index + 1) * HASH_LENGTH].copy_from(underlying_public_key.as_trits());
@@ -196,7 +196,7 @@ where
 #[derive(SecretDebug, SecretDisplay, SecretDrop)]
 pub struct MssPrivateKey<S, K: Zeroize> {
     depth: u8,
-    index: u64,
+    index: usize,
     keys: Vec<K>,
     tree: TritBuf<T1B1Buf>,
     sponge: PhantomData<S>,
@@ -229,16 +229,16 @@ where
     }
 
     fn sign(&mut self, message: &Trits<T1B1>) -> Result<Self::Signature, Self::Error> {
-        if self.index as usize >= self.keys.len() {
+        if self.index >= self.keys.len() {
             return Err(Error::SignaturesExhausted);
         }
 
-        let underlying_private_key = &mut self.keys[self.index as usize];
+        let underlying_private_key = &mut self.keys[self.index];
         let underlying_signature = underlying_private_key
             .sign(message)
             .map_err(|_| Self::Error::FailedUnderlyingSignatureGeneration)?;
         let mut state = TritBuf::<T1B1Buf>::zeros(underlying_signature.size() + SIGNATURE_FRAGMENT_LENGTH);
-        let mut tree_index = ((1 << (self.depth - 1)) + self.index - 1) as usize;
+        let mut tree_index = (1 << (self.depth - 1)) + self.index - 1;
         let mut sibling_index;
         let mut i = 0;
 
@@ -325,6 +325,7 @@ where
         // Hash the underlying public key with the merkle branch to recover the merkle root.
         let mut j = 1;
         for (i, sibling) in siblings.chunks(HASH_LENGTH).enumerate() {
+            #[allow(clippy::cast_possible_truncation)] // HASH_LENGTH < u8::max_value()
             if depth - 1 == i as u8 {
                 break;
             }
@@ -365,13 +366,13 @@ where
 /// Merkle Signature Scheme signature.
 pub struct MssSignature<S> {
     state: TritBuf<T1B1Buf>,
-    index: Option<u64>,
+    index: Option<usize>,
     sponge: PhantomData<S>,
 }
 
 impl<S: Sponge + Default> MssSignature<S> {
     /// Set the index of the signature.
-    pub fn with_index(mut self, index: u64) -> Self {
+    pub fn with_index(mut self, index: usize) -> Self {
         self.index.replace(index);
         self
     }

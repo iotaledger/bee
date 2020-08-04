@@ -65,12 +65,18 @@ impl T243<Utrit> {
 
                 // Iterate over the digits of the bigint, starting from the most significant one.
                 for digit in u384_inner_slice.iter_mut() {
-                    let digit_with_rem = ((rem as u64) << 32) | *digit as u64;
-                    *digit = (digit_with_rem / 3u64) as u32;
-                    rem = (digit_with_rem % 3u64) as u32;
+                    let digit_with_rem = (u64::from(rem) << 32) | u64::from(*digit);
+                    #[allow(clippy::cast_possible_truncation)]
+                    // `digit_with_rem` is already truncated and `digit_with_rem % 3` is an integer modulo 3
+                    {
+                        *digit = (digit_with_rem / 3u64) as u32;
+                        rem = (digit_with_rem % 3u64) as u32;
+                    }
                 }
-
-                *trit = rem as i8;
+                #[allow(clippy::cast_possible_truncation)] // `rem` is an integer modulo 3.
+                {
+                    *trit = rem as i8;
+                }
             }
         }
 

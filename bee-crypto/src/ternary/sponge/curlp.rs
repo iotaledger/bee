@@ -64,6 +64,7 @@ impl CurlP {
         #[inline]
         fn truth_table_get(state: &Trits, p: usize, q: usize) -> Btrit {
             // Safe to index `state` since indexes come from iteration on `state`.
+            #[allow(clippy::cast_sign_loss)] // Reason: "`BTrit`'s repr is between `-1` and `1`
             TRUTH_TABLE[(state[q] as i8 + 1) as usize][(state[p] as i8 + 1) as usize]
         }
 
