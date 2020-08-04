@@ -12,10 +12,10 @@
 use crate::{Vertex, atomic::{Hash, payload::Payload}};
 
 pub struct Message {
-    trunk: Hash,
-    branch: Hash,
-    payload: Payload,
-    nonce: u64
+    pub trunk: Hash,
+    pub branch: Hash,
+    pub payload: Payload,
+    pub nonce: u64
 }
 
 impl Vertex for Message {

@@ -16,6 +16,6 @@ pub use reference::ReferenceUnlock;
 pub use signature::SignatureUnlock;
 
 pub enum UnlockBlock {
-    Reference(Box<ReferenceUnlock>),
-    Signature(Box<SignatureUnlock>)
+    Reference(ReferenceUnlock),
+    Signature(SignatureUnlock)
 }

@@ -10,7 +10,7 @@
 // See the License for the specific language governing permissions and limitations under the License.
 
 pub struct SignedData {
-    data: Vec<u8>,
-    public_key: [u8; 32],
-    signature: [u8; 64],
+    pub data: Vec<u8>,
+    pub public_key: [u8; 32],
+    pub signature: [u8; 64],
 }

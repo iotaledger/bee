@@ -14,5 +14,5 @@ mod utxo;
 pub use utxo::UTXOInput;
 
 pub enum Input {
-    UTXO(Box<UTXOInput>)
+    UTXO(UTXOInput)
 }

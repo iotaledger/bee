@@ -12,8 +12,8 @@
 pub struct WotsSignature(Vec<u8>);
 
 pub struct Ed25519Signature {
-    public_key: [u8; 32],
-    signature: [u8; 64]
+    pub public_key: [u8; 32],
+    pub signature: [u8; 64]
 }
 
 pub enum Signature {
@@ -22,5 +22,5 @@ pub enum Signature {
 }
 
 pub struct SignatureUnlock {
-    signature: Signature
+    pub signature: Signature
 }

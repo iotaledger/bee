@@ -10,8 +10,8 @@
 // See the License for the specific language governing permissions and limitations under the License.
 
 pub struct Milestone {
-    index: u32,
-    timestamp: u64,
-    merkle_proof: [u8; 64],
-    signature: [u8; 64],
+    pub index: u32,
+    pub timestamp: u64,
+    pub merkle_proof: [u8; 64],
+    pub signature: [u8; 64],
 }

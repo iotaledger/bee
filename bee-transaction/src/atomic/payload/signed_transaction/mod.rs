@@ -9,7 +9,7 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-mod input;
+pub mod input;
 mod output;
 mod unsigned_transaction;
 mod unlock;
@@ -18,7 +18,7 @@ pub use unsigned_transaction::UnsignedTransaction;
 pub use unlock::UnlockBlock;
 
 pub struct SignedTransaction {
-    unsigned_transaction: UnsignedTransaction,
-    unlock_block_count: u16,
-    unlock_blocks: Vec<UnlockBlock>
+    pub unsigned_transaction: UnsignedTransaction,
+    pub unlock_block_count: u16,
+    pub unlock_blocks: Vec<UnlockBlock>
 }

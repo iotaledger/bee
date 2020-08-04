@@ -10,5 +10,5 @@
 // See the License for the specific language governing permissions and limitations under the License.
 
 pub struct ReferenceUnlock {
-    index: u16
+    pub index: u16
 }

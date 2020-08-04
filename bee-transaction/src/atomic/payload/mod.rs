@@ -12,7 +12,7 @@
 mod indexation;
 mod milestone;
 mod signed_data;
-mod signed_transaction;
+pub mod signed_transaction;
 mod unsigned_data;
 
 pub use indexation::Indexation;

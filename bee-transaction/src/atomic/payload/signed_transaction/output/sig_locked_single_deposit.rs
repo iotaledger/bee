@@ -19,6 +19,6 @@ pub enum Address {
 }
 
 pub struct SigLockedSingleDeposit {
-    address: Address,
-    amount: u64
+    pub address: Address,
+    pub amount: u64
 }

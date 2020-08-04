@@ -11,6 +11,7 @@
 
 mod message;
 mod hash;
-mod payload;
+pub mod payload;
 
 pub use hash::Hash;
+pub use message::Message;

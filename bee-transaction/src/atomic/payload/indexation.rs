@@ -10,5 +10,5 @@
 // See the License for the specific language governing permissions and limitations under the License.
 
 pub struct Indexation {
-    tag: [u8; 16]
+    pub tag: [u8; 16]
 }
