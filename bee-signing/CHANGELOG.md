@@ -19,6 +19,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+<!-- ## Unreleased - YYYY-MM-DD
+
+### Added
+
+### Changed
+
+- Update `bee-crypto` dependency to `0.1.1-alpha`;
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security -->
+
 ## 0.1.0-alpha - 2020-07-28
 
 ### Added
