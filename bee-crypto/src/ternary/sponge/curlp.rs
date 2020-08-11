@@ -21,10 +21,16 @@ use std::{
 const STATE_LENGTH: usize = HASH_LENGTH * 3;
 const HALF_STATE_LENGTH: usize = STATE_LENGTH / 2;
 
-const TRUTH_TABLE: [[Btrit; 3]; 3] = [
-    [Btrit::PlusOne, Btrit::Zero, Btrit::NegOne],
-    [Btrit::PlusOne, Btrit::NegOne, Btrit::Zero],
-    [Btrit::NegOne, Btrit::PlusOne, Btrit::Zero],
+const TRUTH_TABLE: [Btrit; 9] = [
+    Btrit::PlusOne,
+    Btrit::Zero,
+    Btrit::NegOne,
+    Btrit::PlusOne,
+    Btrit::NegOne,
+    Btrit::Zero,
+    Btrit::NegOne,
+    Btrit::PlusOne,
+    Btrit::Zero,
 ];
 
 /// Available round numbers for `CurlP`.
@@ -61,30 +67,46 @@ impl CurlP {
     /// The essence of this transformation is the application of a substitution box to the internal state, which happens
     /// `rounds` number of times.
     fn transform(&mut self) {
+        /// # Safety
+        ///
+        /// For performance reasons, this method is unsafe.
+        /// It is however fine since:
+        /// - It is not publicly exposed.
+        /// - `state` is indexed with `p` and `q` that come from iteration on `state`.
+        /// - `TRUTH_TABLE`, of size 9, is indexed with a value that is in [0, 8].
         #[inline]
-        fn truth_table_get(state: &Trits, p: usize, q: usize) -> Btrit {
-            // Safe to index `state` since indexes come from iteration on `state`.
+        unsafe fn truth_table_get(state: &Trits, p: usize, q: usize) -> Btrit {
             #[allow(clippy::cast_sign_loss)] // Reason: "`BTrit`'s repr is between `-1` and `1`
-            TRUTH_TABLE[(state[q] as i8 + 1) as usize][(state[p] as i8 + 1) as usize]
+            *TRUTH_TABLE
+                .get_unchecked((3 * (state.get_unchecked(q) as i8 + 1) + (state.get_unchecked(p) as i8 + 1)) as usize)
         }
 
-        fn substitution_box(input: &Trits, output: &mut Trits) {
-            output.set(0, truth_table_get(input, 0, HALF_STATE_LENGTH));
+        /// # Safety
+        ///
+        /// For performance reasons, this method is unsafe.
+        /// It is however fine since:
+        /// - It is not publicly exposed.
+        /// - `input` and `output` have the same known sizes.
+        #[inline]
+        unsafe fn substitution_box(input: &Trits, output: &mut Trits) {
+            output.set_unchecked(0, truth_table_get(input, 0, HALF_STATE_LENGTH));
 
             for state_index in 0..HALF_STATE_LENGTH {
                 let left_idx = HALF_STATE_LENGTH - state_index;
                 let right_idx = STATE_LENGTH - state_index - 1;
                 let state_index_2 = 2 * state_index;
 
-                output.set(state_index_2 + 1, truth_table_get(input, left_idx, right_idx));
-                output.set(state_index_2 + 2, truth_table_get(input, right_idx, left_idx - 1));
+                output.set_unchecked(state_index_2 + 1, truth_table_get(input, left_idx, right_idx));
+                output.set_unchecked(state_index_2 + 2, truth_table_get(input, right_idx, left_idx - 1));
             }
         }
 
         let (lhs, rhs) = (&mut self.state, &mut self.work_state);
 
         for _ in 0..self.rounds as usize {
-            substitution_box(lhs, rhs);
+            unsafe {
+                substitution_box(lhs, rhs);
+            }
             std::mem::swap(lhs, rhs);
         }
     }
