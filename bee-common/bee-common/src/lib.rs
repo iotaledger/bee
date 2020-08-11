@@ -16,4 +16,5 @@
 
 pub mod logger;
 pub mod shutdown;
+pub mod shutdown_stream;
 pub mod worker;
