@@ -12,7 +12,7 @@ fn length_243(c: &mut Criterion) {
     let inputs = vec![input_trit_buf; 64];
 
     c.bench_function("length 243", |b| {
-        b.iter(|| BatchHasher::new(length, 81).process(black_box(inputs.clone())))
+        b.iter(|| BatchHasher::new(length, 81).process(black_box(&inputs)))
     });
 }
 
@@ -23,7 +23,7 @@ fn length_6561(c: &mut Criterion) {
     let inputs = vec![input_trit_buf; 64];
 
     c.bench_function("length 6561", |b| {
-        b.iter(|| BatchHasher::new(length, 81).process(black_box(inputs.clone())))
+        b.iter(|| BatchHasher::new(length, 81).process(black_box(&inputs)))
     });
 }
 

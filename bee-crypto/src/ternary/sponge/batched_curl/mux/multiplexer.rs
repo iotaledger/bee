@@ -1,17 +1,17 @@
-use crate::ternary::sponge::batched_curl::{BATCH_SIZE, mux::BCTrits};
+use crate::ternary::sponge::batched_curl::{mux::BCTrits, BATCH_SIZE};
 use bee_ternary::{Btrit, TritBuf};
 
-pub struct BCTernaryMultiplexer {
-    trinaries: Vec<TritBuf>,
+pub struct BCTernaryMultiplexer<'a> {
+    trinaries: &'a [TritBuf; BATCH_SIZE],
 }
 
-impl BCTernaryMultiplexer {
-    pub fn new() -> Self {
-        Self { trinaries: Vec::new() }
-    }
-
-    pub fn add(&mut self, trits: TritBuf) {
-        self.trinaries.push(trits);
+impl<'a> BCTernaryMultiplexer<'a> {
+    pub fn new(trinaries: &'a [TritBuf]) -> Self {
+        assert_eq!(trinaries.len(), BATCH_SIZE);
+        let ptr = trinaries.as_ptr() as *const [TritBuf; BATCH_SIZE];
+        Self {
+            trinaries: unsafe { &*ptr },
+        }
     }
 
     pub fn extract(&mut self) -> BCTrits {

@@ -11,19 +11,15 @@ pub struct BCTCurl {
 
 impl BCTCurl {
     pub fn new(hash_length: usize, number_of_rounds: usize) -> Self {
-        let mut this = Self {
+        Self {
             hash_length,
             number_of_rounds,
             state_length: NUMBER_OF_TRITS_IN_A_TRYTE * hash_length,
             state: BCTrits {
-                lo: vec![0; NUMBER_OF_TRITS_IN_A_TRYTE * hash_length],
-                hi: vec![0; NUMBER_OF_TRITS_IN_A_TRYTE * hash_length],
+                lo: vec![HIGH_BITS; NUMBER_OF_TRITS_IN_A_TRYTE * hash_length],
+                hi: vec![HIGH_BITS; NUMBER_OF_TRITS_IN_A_TRYTE * hash_length],
             },
-        };
-
-        this.reset();
-
-        this
+        }
     }
 
     pub fn reset(&mut self) {
