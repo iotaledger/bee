@@ -24,7 +24,7 @@ impl BatchHasher {
 
             let bc_trits = multiplexer.extract();
 
-            let mut bct_curl = bct_curl::BCTCurl::new(self.hash_length, self.rounds, 8 * std::mem::size_of::<usize>());
+            let mut bct_curl = bct_curl::BCTCurl::new(self.hash_length, self.rounds);
 
             bct_curl.reset();
             bct_curl.absorb(bc_trits);
