@@ -14,6 +14,7 @@
 mod curlp;
 mod kerl;
 mod kind;
+mod batched_curl;
 
 use super::HASH_LENGTH;
 
