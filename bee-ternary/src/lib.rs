@@ -741,11 +741,7 @@ impl<T: RawEncodingBuf> TritBuf<T> {
 
     /// Create a new [`TritBuf`] of the given length, filled with copies of the provided trit.
     pub fn filled(len: usize, trit: <T::Slice as RawEncoding>::Trit) -> Self {
-        let mut this = Self::with_capacity(len);
-        for _ in 0..len {
-            this.push(trit);
-        }
-        this
+        Self::from_trits(&vec![trit; len])
     }
 
     /// Create a new [`TritBuf`] of the given length, filled with zero trit.

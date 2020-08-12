@@ -154,6 +154,17 @@ where
         }
     }
 
+    /// Create a new buffer containing the given trits
+    fn from_trits(trits: &[<Self::Slice as RawEncoding>::Trit]) -> Self
+    where
+        Self: Sized,
+    {
+        Self {
+            _phantom: PhantomData,
+            inner: trits.to_vec(),
+        }
+    }
+
     fn push(&mut self, trit: <Self::Slice as RawEncoding>::Trit) {
         self.inner.push(trit);
     }
