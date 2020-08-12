@@ -1,8 +1,6 @@
-use crate::ternary::sponge::batched_curl::mux::BCTrits;
+use crate::ternary::sponge::batched_curl::{mux::BCTrits, HIGH_BITS};
 
 const NUMBER_OF_TRITS_IN_A_TRYTE: usize = 3;
-const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
-const HIGH_BITS: usize = usize::max_value();
 
 pub struct BCTCurl {
     hash_length: usize,
