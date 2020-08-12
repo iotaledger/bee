@@ -79,13 +79,10 @@ impl BCTCurl {
                 self.hash_length
             };
 
-            for i in 0..length_to_copy {
-                self.state.lo[i] = bc_trits.lo[offset + i];
-                self.state.hi[i] = bc_trits.hi[offset + i];
-            }
+            self.state.lo[0..length_to_copy].copy_from_slice(&bc_trits.lo[offset..offset + length_to_copy]);
+            self.state.hi[0..length_to_copy].copy_from_slice(&bc_trits.hi[offset..offset + length_to_copy]);
 
             self.transform();
-
 
             if length <= length_to_copy {
                 break;
@@ -115,10 +112,8 @@ impl BCTCurl {
 
         let last = trit_count - hash_count * self.hash_length;
 
-        for i in 0..last {
-            result.lo[trit_count - last + i] = self.state.lo[i];
-            result.hi[trit_count - last + i] = self.state.hi[i];
-        }
+        result.lo[trit_count - last..trit_count].copy_from_slice(&self.state.lo[0..last]);
+        result.hi[trit_count - last..trit_count].copy_from_slice(&self.state.hi[0..last]);
 
         if trit_count % self.hash_length != 0 {
             self.transform();
