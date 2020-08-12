@@ -2,27 +2,20 @@ use crate::ternary::sponge::batched_curl::mux::BCTrits;
 
 const NUMBER_OF_TRITS_IN_A_TRYTE: usize = 3;
 const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
+const HIGH_BITS: usize = usize::max_value();
 
 pub struct BCTCurl {
     hash_length: usize,
     number_of_rounds: usize,
-    high_long_bits: usize,
     state_length: usize,
     state: BCTrits,
 }
 
 impl BCTCurl {
     pub fn new(hash_length: usize, number_of_rounds: usize) -> Self {
-        let mut high_long_bits = 0;
-
-        for i in 0..BATCH_SIZE {
-            high_long_bits += 1 << i;
-        }
-
         let mut this = Self {
             hash_length,
             number_of_rounds,
-            high_long_bits,
             state_length: NUMBER_OF_TRITS_IN_A_TRYTE * hash_length,
             state: BCTrits {
                 lo: vec![0; NUMBER_OF_TRITS_IN_A_TRYTE * hash_length],
@@ -37,8 +30,8 @@ impl BCTCurl {
 
     pub fn reset(&mut self) {
         for i in 0..self.state_length {
-            self.state.lo[i] = self.high_long_bits;
-            self.state.hi[i] = self.high_long_bits;
+            self.state.lo[i] = HIGH_BITS;
+            self.state.hi[i] = HIGH_BITS;
         }
     }
 
