@@ -20,3 +20,9 @@ tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 
 [dev-dependencies]
 rand = "0.7.3"
+criterion = "0.3"
+
+
+[[bench]]
+name = "batched_hash"
+harness = false
