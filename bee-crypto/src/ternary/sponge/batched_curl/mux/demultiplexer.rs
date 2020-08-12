@@ -12,7 +12,7 @@ impl BCTernaryDemultiplexer {
 
     pub fn get(&self, index: usize) -> TritBuf {
         let length = self.bc_trits.lo.len();
-        let mut result = TritBuf::new();
+        let mut result = Vec::with_capacity(length);
 
         for i in 0..length {
             let low = (self.bc_trits.lo[i] >> index) & 1;
@@ -28,6 +28,6 @@ impl BCTernaryDemultiplexer {
             result.push(trit);
         }
 
-        result
+        TritBuf::from_trits(&result)
     }
 }
