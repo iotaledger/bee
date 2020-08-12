@@ -29,21 +29,19 @@ impl BCTernaryMultiplexer {
         };
 
         for i in 0..trits_count {
-            let mut bc_trit = BCTrit { lo: 0, hi: 0 };
+            let bc_trit_lo = &mut result.lo[i];
+            let bc_trit_hi = &mut result.hi[i];
 
             for j in 0..trinaries_count {
                 match self.trinaries[j][i] {
-                    Btrit::NegOne => bc_trit.lo |= 1 << j,
-                    Btrit::PlusOne => bc_trit.hi |= 1 << j,
+                    Btrit::NegOne => *bc_trit_lo |= 1 << j,
+                    Btrit::PlusOne => *bc_trit_hi |= 1 << j,
                     Btrit::Zero => {
-                        bc_trit.lo |= 1 << j;
-                        bc_trit.hi |= 1 << j;
+                        *bc_trit_lo |= 1 << j;
+                        *bc_trit_hi |= 1 << j;
                     }
                 }
             }
-
-            result.lo[i] = bc_trit.lo;
-            result.hi[i] = bc_trit.hi;
         }
         result
     }
