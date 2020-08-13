@@ -25,16 +25,14 @@ impl BCTCurl {
     }
 
     pub fn transform(&mut self) {
-        let mut scratch_pad_lo;
-        let mut scratch_pad_hi;
+        let mut scratch_pad;
         let mut scratch_pad_index = 0;
 
         for _round in 0..self.number_of_rounds {
-            scratch_pad_lo = self.state.lo().to_vec();
-            scratch_pad_hi = self.state.hi().to_vec();
+            scratch_pad = self.state.clone();
 
-            let mut alpha = unsafe { *scratch_pad_lo.get_unchecked(scratch_pad_index) };
-            let mut beta = unsafe { *scratch_pad_hi.get_unchecked(scratch_pad_index) };
+            let mut alpha = unsafe { *scratch_pad.lo().get_unchecked(scratch_pad_index) };
+            let mut beta = unsafe { *scratch_pad.hi().get_unchecked(scratch_pad_index) };
 
             for state_index in 0..self.state.len() {
                 if scratch_pad_index < 365 {
@@ -43,8 +41,8 @@ impl BCTCurl {
                     scratch_pad_index -= 365;
                 }
 
-                let a = unsafe { *scratch_pad_lo.get_unchecked(scratch_pad_index) };
-                let b = unsafe { *scratch_pad_hi.get_unchecked(scratch_pad_index) };
+                let a = unsafe { *scratch_pad.lo().get_unchecked(scratch_pad_index) };
+                let b = unsafe { *scratch_pad.hi().get_unchecked(scratch_pad_index) };
 
                 let delta = beta ^ a;
 
@@ -68,8 +66,9 @@ impl BCTCurl {
                 self.hash_length
             };
 
-            self.state.lo_mut()[0..length_to_copy].copy_from_slice(&bc_trits.lo()[offset..offset + length_to_copy]);
-            self.state.hi_mut()[0..length_to_copy].copy_from_slice(&bc_trits.hi()[offset..offset + length_to_copy]);
+            self.state
+                .get_mut(0..length_to_copy)
+                .copy_from_slice(bc_trits.get(offset..offset + length_to_copy));
 
             self.transform();
 
@@ -88,18 +87,18 @@ impl BCTCurl {
         let hash_count = trit_count / self.hash_length;
 
         for i in 0..hash_count {
-            for j in 0..self.hash_length {
-                result.lo_mut()[i * self.hash_length + j] = self.state.lo()[j];
-                result.hi_mut()[i * self.hash_length + j] = self.state.hi()[j];
-            }
+            result
+                .get_mut(i * self.hash_length..(i + 1) * self.hash_length)
+                .copy_from_slice(self.state.get(0..self.hash_length));
 
             self.transform();
         }
 
         let last = trit_count - hash_count * self.hash_length;
 
-        result.lo_mut()[trit_count - last..trit_count].copy_from_slice(&self.state.lo()[0..last]);
-        result.hi_mut()[trit_count - last..trit_count].copy_from_slice(&self.state.hi()[0..last]);
+        result
+            .get_mut(trit_count - last..trit_count)
+            .copy_from_slice(self.state.get(0..last));
 
         if trit_count % self.hash_length != 0 {
             self.transform();

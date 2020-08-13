@@ -1,6 +1,9 @@
 pub mod demultiplexer;
 pub mod multiplexer;
 
+use std::ops::Range;
+
+#[derive(Clone)]
 pub struct BCTritBuf {
     lo: Vec<usize>,
     hi: Vec<usize>,
@@ -30,6 +33,20 @@ impl BCTritBuf {
         &self.hi
     }
 
+    pub fn get<'a>(&'a self, range: Range<usize>) -> BCTritSlice<'a> {
+        BCTritSlice {
+            lo: &self.lo[range.clone()],
+            hi: &self.hi[range],
+        }
+    }
+
+    pub fn get_mut<'a>(&'a mut self, range: Range<usize>) -> BCTritSliceMut<'a> {
+        BCTritSliceMut {
+            lo: &mut self.lo[range.clone()],
+            hi: &mut self.hi[range],
+        }
+    }
+
     pub fn lo_mut(&mut self) -> &mut [usize] {
         &mut self.lo
     }
@@ -37,9 +54,21 @@ impl BCTritBuf {
     pub fn hi_mut(&mut self) -> &mut [usize] {
         &mut self.hi
     }
+}
 
-    pub fn copy_from_slices(&mut self, lo: &[usize], hi: &[usize]) {
-        self.lo.copy_from_slice(lo);
-        self.hi.copy_from_slice(hi);
+pub struct BCTritSlice<'a> {
+    lo: &'a [usize],
+    hi: &'a [usize],
+}
+
+pub struct BCTritSliceMut<'a> {
+    lo: &'a mut [usize],
+    hi: &'a mut [usize],
+}
+
+impl<'a> BCTritSliceMut<'a> {
+    pub fn copy_from_slice(&mut self, slice: BCTritSlice) {
+        self.lo.copy_from_slice(slice.lo);
+        self.hi.copy_from_slice(slice.hi);
     }
 }

@@ -1,4 +1,3 @@
-
 use bee_ternary::{T1B1Buf, TryteBuf};
 
 use bee_crypto::ternary::sponge::batched_curl::BatchHasher;
@@ -26,7 +25,6 @@ fn length_6561(c: &mut Criterion) {
         b.iter(|| BatchHasher::new(length, 81).process(black_box(&inputs)))
     });
 }
-
 
 criterion_group!(benches, length_243, length_6561);
 criterion_main!(benches);
