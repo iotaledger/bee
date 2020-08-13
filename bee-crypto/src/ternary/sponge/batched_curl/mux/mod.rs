@@ -1,7 +1,7 @@
 pub mod demultiplexer;
 pub mod multiplexer;
 
-use std::ops::Range;
+use std::slice::SliceIndex;
 
 #[derive(Clone)]
 pub struct BCTritBuf {
@@ -33,17 +33,34 @@ impl BCTritBuf {
         &self.hi
     }
 
-    pub fn get<'a>(&'a self, range: Range<usize>) -> BCTritSlice<'a> {
-        BCTritSlice {
-            lo: &self.lo[range.clone()],
-            hi: &self.hi[range],
+    pub fn get<'a, I: SliceIndex<[usize]> + Clone>(&'a self, index: I) -> BCTritRef<'a, I::Output> {
+        BCTritRef {
+            lo: &self.lo[index.clone()],
+            hi: &self.hi[index],
         }
     }
 
-    pub fn get_mut<'a>(&'a mut self, range: Range<usize>) -> BCTritSliceMut<'a> {
-        BCTritSliceMut {
-            lo: &mut self.lo[range.clone()],
-            hi: &mut self.hi[range],
+    pub fn get_mut<'a, I: SliceIndex<[usize]> + Clone>(&'a mut self, index: I) -> BCTritMut<'a, I::Output> {
+        BCTritMut {
+            lo: &mut self.lo[index.clone()],
+            hi: &mut self.hi[index],
+        }
+    }
+
+    pub unsafe fn get_unchecked<'a, I: SliceIndex<[usize]> + Clone>(&'a self, index: I) -> BCTritRef<'a, I::Output> {
+        BCTritRef {
+            lo: self.lo.get_unchecked(index.clone()),
+            hi: self.hi.get_unchecked(index),
+        }
+    }
+
+    pub unsafe fn get_unchecked_mut<'a, I: SliceIndex<[usize]> + Clone>(
+        &'a mut self,
+        index: I,
+    ) -> BCTritMut<'a, I::Output> {
+        BCTritMut {
+            lo: self.lo.get_unchecked_mut(index.clone()),
+            hi: self.hi.get_unchecked_mut(index),
         }
     }
 
@@ -56,19 +73,20 @@ impl BCTritBuf {
     }
 }
 
-pub struct BCTritSlice<'a> {
-    lo: &'a [usize],
-    hi: &'a [usize],
+pub struct BCTritRef<'a, T: ?Sized> {
+    lo: &'a T,
+    hi: &'a T,
 }
 
-pub struct BCTritSliceMut<'a> {
-    lo: &'a mut [usize],
-    hi: &'a mut [usize],
+pub struct BCTritMut<'a, T: ?Sized> {
+    lo: &'a mut T,
+    hi: &'a mut T,
 }
 
-impl<'a> BCTritSliceMut<'a> {
-    pub fn copy_from_slice(&mut self, slice: BCTritSlice) {
+impl<'a> BCTritMut<'a, [usize]> {
+    pub fn copy_from_slice(&mut self, slice: BCTritRef<'_, [usize]>) {
         self.lo.copy_from_slice(slice.lo);
         self.hi.copy_from_slice(slice.hi);
     }
 }
+
