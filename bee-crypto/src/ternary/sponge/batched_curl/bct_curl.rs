@@ -34,7 +34,7 @@ impl BCTCurl {
         let mut scratch_pad_hi;
         let mut scratch_pad_index = 0;
 
-        for _round in (1..=self.number_of_rounds).rev() {
+        for _round in 0..self.number_of_rounds {
             scratch_pad_lo = self.state.lo.clone();
             scratch_pad_hi = self.state.hi.clone();
 
