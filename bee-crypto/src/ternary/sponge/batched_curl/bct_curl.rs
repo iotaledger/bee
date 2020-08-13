@@ -38,22 +38,26 @@ impl BCTCurl {
             scratch_pad_lo = self.state.lo.clone();
             scratch_pad_hi = self.state.hi.clone();
 
+            let mut alpha = unsafe { *scratch_pad_lo.get_unchecked(scratch_pad_index) };
+            let mut beta = unsafe { *scratch_pad_hi.get_unchecked(scratch_pad_index) };
+
             for state_index in 0..self.state_length {
-                unsafe {
-                    let alpha = *scratch_pad_lo.get_unchecked(scratch_pad_index);
-                    let beta = *scratch_pad_hi.get_unchecked(scratch_pad_index);
-
-                    if scratch_pad_index < 365 {
-                        scratch_pad_index += 364;
-                    } else {
-                        scratch_pad_index -= 365;
-                    }
-
-                    let delta = beta ^ *scratch_pad_lo.get_unchecked(scratch_pad_index);
-
-                    *self.state.lo.get_unchecked_mut(state_index) = !(delta & alpha);
-                    *self.state.hi.get_unchecked_mut(state_index) = delta | (alpha ^ *scratch_pad_hi.get_unchecked(scratch_pad_index));
+                if scratch_pad_index < 365 {
+                    scratch_pad_index += 364;
+                } else {
+                    scratch_pad_index -= 365;
                 }
+
+                let a = unsafe { *scratch_pad_lo.get_unchecked(scratch_pad_index) };
+                let b = unsafe { *scratch_pad_hi.get_unchecked(scratch_pad_index) };
+
+                let delta = beta ^ a;
+
+                *unsafe { self.state.lo.get_unchecked_mut(state_index) } = !(delta & alpha);
+                *unsafe { self.state.hi.get_unchecked_mut(state_index) } = delta | (alpha ^ b);
+
+                alpha = a;
+                beta = b;
             }
         }
     }
