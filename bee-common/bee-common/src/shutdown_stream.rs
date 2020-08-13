@@ -22,27 +22,29 @@
 //! ```
 //! by this one:
 //! ```ignore
-//! let mut shutdown_stream = ShutdownStream::new(stream, shutdown);
+//! let mut shutdown_stream = ShutdownStream::new(shutdown, stream);
 //!
 //! while let Some(item) = shutdown_stream.next().await {
 //!     /* actual logic */
 //! }
 //! ```
+
 use futures::{
-    channel::oneshot::Receiver,
+    channel::oneshot,
     future, stream,
     task::{Context, Poll},
     FutureExt, Stream, StreamExt,
 };
 
 use std::pin::Pin;
+
 /// A stream with a shutdown.
 ///
-/// This type wraps a regular stream and a shutdown receiver to produce a new stream that ends when
-/// the shutdown receiver is triggered or when the stream ends.
+/// This type wraps a shutdown receiver and a stream to produce a new stream that ends when the
+/// shutdown receiver is triggered or when the stream ends.
 pub struct ShutdownStream<S> {
+    shutdown: future::Fuse<oneshot::Receiver<()>>,
     stream: stream::Fuse<S>,
-    shutdown: future::Fuse<Receiver<()>>,
 }
 
 impl<S: Stream> ShutdownStream<S> {
@@ -51,10 +53,10 @@ impl<S: Stream> ShutdownStream<S> {
     /// This method receives the stream to be wrapped and a `oneshot::Receiver` for the shutdown.
     /// Both the stream and the shutdown receiver are fused to avoid polling already completed
     /// futures.
-    pub fn new(stream: S, shutdown: Receiver<()>) -> Self {
+    pub fn new(shutdown: oneshot::Receiver<()>, stream: S) -> Self {
         Self {
-            stream: stream.fuse(),
             shutdown: shutdown.fuse(),
+            stream: stream.fuse(),
         }
     }
 }
@@ -90,7 +92,7 @@ mod tests {
         let (mut sender, receiver) = mpsc::unbounded::<usize>();
         let (_shutdown_sender, shutdown_receiver) = oneshot::channel::<()>();
         let handle = task::spawn(async move {
-            let mut shutdown_stream = ShutdownStream::new(receiver, shutdown_receiver);
+            let mut shutdown_stream = ShutdownStream::new(shutdown_receiver, receiver);
 
             let mut acc = 0;
 
@@ -119,7 +121,7 @@ mod tests {
         let (mut sender, receiver) = mpsc::unbounded::<usize>();
         let (shutdown_sender, shutdown_receiver) = oneshot::channel::<()>();
         let handle = task::spawn(async move {
-            let mut shutdown_stream = ShutdownStream::new(receiver, shutdown_receiver);
+            let mut shutdown_stream = ShutdownStream::new(shutdown_receiver, receiver);
 
             let mut acc = 0;
 
