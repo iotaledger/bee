@@ -23,16 +23,18 @@ impl<'a> BCTernaryMultiplexer<'a> {
         };
 
         for i in 0..trits_count {
-            let bc_trit_lo = &mut result.lo[i];
-            let bc_trit_hi = &mut result.hi[i];
+            unsafe {
+                let bc_trit_lo = result.lo.get_unchecked_mut(i);
+                let bc_trit_hi = result.hi.get_unchecked_mut(i);
 
-            for j in 0..BATCH_SIZE {
-                match self.trinaries[j][i] {
-                    Btrit::NegOne => *bc_trit_lo |= 1 << j,
-                    Btrit::PlusOne => *bc_trit_hi |= 1 << j,
-                    Btrit::Zero => {
-                        *bc_trit_lo |= 1 << j;
-                        *bc_trit_hi |= 1 << j;
+                for j in 0..BATCH_SIZE {
+                    match self.trinaries.get_unchecked(j).get_unchecked(i) {
+                        Btrit::NegOne => *bc_trit_lo |= 1 << j,
+                        Btrit::PlusOne => *bc_trit_hi |= 1 << j,
+                        Btrit::Zero => {
+                            *bc_trit_lo |= 1 << j;
+                            *bc_trit_hi |= 1 << j;
+                        }
                     }
                 }
             }

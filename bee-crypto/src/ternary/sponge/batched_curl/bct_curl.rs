@@ -39,19 +39,21 @@ impl BCTCurl {
             scratch_pad_hi = self.state.hi.clone();
 
             for state_index in 0..self.state_length {
-                let alpha = scratch_pad_lo[scratch_pad_index];
-                let beta = scratch_pad_hi[scratch_pad_index];
+                unsafe {
+                    let alpha = *scratch_pad_lo.get_unchecked(scratch_pad_index);
+                    let beta = *scratch_pad_hi.get_unchecked(scratch_pad_index);
 
-                if scratch_pad_index < 365 {
-                    scratch_pad_index += 364;
-                } else {
-                    scratch_pad_index -= 365;
+                    if scratch_pad_index < 365 {
+                        scratch_pad_index += 364;
+                    } else {
+                        scratch_pad_index -= 365;
+                    }
+
+                    let delta = beta ^ *scratch_pad_lo.get_unchecked(scratch_pad_index);
+
+                    *self.state.lo.get_unchecked_mut(state_index) = !(delta & alpha);
+                    *self.state.hi.get_unchecked_mut(state_index) = delta | (alpha ^ *scratch_pad_hi.get_unchecked(scratch_pad_index));
                 }
-
-                let delta = beta ^ scratch_pad_lo[scratch_pad_index];
-
-                self.state.lo[state_index] = !(delta & alpha);
-                self.state.hi[state_index] = delta | (alpha ^ scratch_pad_hi[scratch_pad_index]);
             }
         }
     }
