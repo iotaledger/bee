@@ -1,12 +1,12 @@
+use crate::ternary::sponge::batched_curl::mux::BCTritBuf;
 use bee_ternary::{Btrit, TritBuf};
-use crate::ternary::sponge::batched_curl::mux::BCTrits;
 
 pub struct BCTernaryDemultiplexer {
-    bc_trits: BCTrits,
+    bc_trits: BCTritBuf,
 }
 
 impl BCTernaryDemultiplexer {
-    pub fn new(bc_trits: BCTrits) -> Self {
+    pub fn new(bc_trits: BCTritBuf) -> Self {
         Self { bc_trits }
     }
 

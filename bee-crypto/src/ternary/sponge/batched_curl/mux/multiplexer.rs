@@ -1,4 +1,4 @@
-use crate::ternary::sponge::batched_curl::{mux::BCTrits, BATCH_SIZE};
+use crate::ternary::sponge::batched_curl::{mux::BCTritBuf, BATCH_SIZE};
 use bee_ternary::{Btrit, TritBuf};
 
 pub struct BCTernaryMultiplexer<'a> {
@@ -14,13 +14,10 @@ impl<'a> BCTernaryMultiplexer<'a> {
         }
     }
 
-    pub fn extract(&mut self) -> BCTrits {
+    pub fn extract(&mut self) -> BCTritBuf {
         let trits_count = self.trinaries[0].len();
 
-        let mut result = BCTrits {
-            lo: vec![0; trits_count],
-            hi: vec![0; trits_count],
-        };
+        let mut result = BCTritBuf::zeros(trits_count);
 
         for i in 0..trits_count {
             unsafe {

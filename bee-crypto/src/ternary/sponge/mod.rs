@@ -11,10 +11,10 @@
 
 //! Ternary sponge constructions.
 
+pub mod batched_curl;
 mod curlp;
 mod kerl;
 mod kind;
-pub mod batched_curl;
 
 use super::HASH_LENGTH;
 

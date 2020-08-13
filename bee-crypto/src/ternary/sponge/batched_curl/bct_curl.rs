@@ -1,12 +1,11 @@
-use crate::ternary::sponge::batched_curl::{mux::BCTrits, HIGH_BITS};
+use crate::ternary::sponge::batched_curl::{mux::BCTritBuf, HIGH_BITS};
 
 const NUMBER_OF_TRITS_IN_A_TRYTE: usize = 3;
 
 pub struct BCTCurl {
     hash_length: usize,
     number_of_rounds: usize,
-    state_length: usize,
-    state: BCTrits,
+    state: BCTritBuf,
 }
 
 impl BCTCurl {
@@ -14,18 +13,14 @@ impl BCTCurl {
         Self {
             hash_length,
             number_of_rounds,
-            state_length: NUMBER_OF_TRITS_IN_A_TRYTE * hash_length,
-            state: BCTrits {
-                lo: vec![HIGH_BITS; NUMBER_OF_TRITS_IN_A_TRYTE * hash_length],
-                hi: vec![HIGH_BITS; NUMBER_OF_TRITS_IN_A_TRYTE * hash_length],
-            },
+            state: BCTritBuf::filled(HIGH_BITS, NUMBER_OF_TRITS_IN_A_TRYTE * hash_length),
         }
     }
 
     pub fn reset(&mut self) {
-        for i in 0..self.state_length {
-            self.state.lo[i] = HIGH_BITS;
-            self.state.hi[i] = HIGH_BITS;
+        for i in 0..self.state.len() {
+            self.state.lo_mut()[i] = HIGH_BITS;
+            self.state.hi_mut()[i] = HIGH_BITS;
         }
     }
 
@@ -35,13 +30,13 @@ impl BCTCurl {
         let mut scratch_pad_index = 0;
 
         for _round in 0..self.number_of_rounds {
-            scratch_pad_lo = self.state.lo.clone();
-            scratch_pad_hi = self.state.hi.clone();
+            scratch_pad_lo = self.state.lo().to_vec();
+            scratch_pad_hi = self.state.hi().to_vec();
 
             let mut alpha = unsafe { *scratch_pad_lo.get_unchecked(scratch_pad_index) };
             let mut beta = unsafe { *scratch_pad_hi.get_unchecked(scratch_pad_index) };
 
-            for state_index in 0..self.state_length {
+            for state_index in 0..self.state.len() {
                 if scratch_pad_index < 365 {
                     scratch_pad_index += 364;
                 } else {
@@ -53,8 +48,8 @@ impl BCTCurl {
 
                 let delta = beta ^ a;
 
-                *unsafe { self.state.lo.get_unchecked_mut(state_index) } = !(delta & alpha);
-                *unsafe { self.state.hi.get_unchecked_mut(state_index) } = delta | (alpha ^ b);
+                *unsafe { self.state.lo_mut().get_unchecked_mut(state_index) } = !(delta & alpha);
+                *unsafe { self.state.hi_mut().get_unchecked_mut(state_index) } = delta | (alpha ^ b);
 
                 alpha = a;
                 beta = b;
@@ -62,8 +57,8 @@ impl BCTCurl {
         }
     }
 
-    pub fn absorb(&mut self, bc_trits: BCTrits) {
-        let mut length = bc_trits.lo.len();
+    pub fn absorb(&mut self, bc_trits: BCTritBuf) {
+        let mut length = bc_trits.len();
         let mut offset = 0;
 
         loop {
@@ -73,8 +68,8 @@ impl BCTCurl {
                 self.hash_length
             };
 
-            self.state.lo[0..length_to_copy].copy_from_slice(&bc_trits.lo[offset..offset + length_to_copy]);
-            self.state.hi[0..length_to_copy].copy_from_slice(&bc_trits.hi[offset..offset + length_to_copy]);
+            self.state.lo_mut()[0..length_to_copy].copy_from_slice(&bc_trits.lo()[offset..offset + length_to_copy]);
+            self.state.hi_mut()[0..length_to_copy].copy_from_slice(&bc_trits.hi()[offset..offset + length_to_copy]);
 
             self.transform();
 
@@ -87,18 +82,15 @@ impl BCTCurl {
         }
     }
 
-    pub fn squeeze(&mut self, trit_count: usize) -> BCTrits {
-        let mut result = BCTrits {
-            lo: vec![0; trit_count],
-            hi: vec![0; trit_count],
-        };
+    pub fn squeeze(&mut self, trit_count: usize) -> BCTritBuf {
+        let mut result = BCTritBuf::zeros(trit_count);
 
         let hash_count = trit_count / self.hash_length;
 
         for i in 0..hash_count {
             for j in 0..self.hash_length {
-                result.lo[i * self.hash_length + j] = self.state.lo[j];
-                result.hi[i * self.hash_length + j] = self.state.hi[j];
+                result.lo_mut()[i * self.hash_length + j] = self.state.lo()[j];
+                result.hi_mut()[i * self.hash_length + j] = self.state.hi()[j];
             }
 
             self.transform();
@@ -106,8 +98,8 @@ impl BCTCurl {
 
         let last = trit_count - hash_count * self.hash_length;
 
-        result.lo[trit_count - last..trit_count].copy_from_slice(&self.state.lo[0..last]);
-        result.hi[trit_count - last..trit_count].copy_from_slice(&self.state.hi[0..last]);
+        result.lo_mut()[trit_count - last..trit_count].copy_from_slice(&self.state.lo()[0..last]);
+        result.hi_mut()[trit_count - last..trit_count].copy_from_slice(&self.state.hi()[0..last]);
 
         if trit_count % self.hash_length != 0 {
             self.transform();
