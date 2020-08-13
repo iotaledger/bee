@@ -55,7 +55,7 @@ impl BCTCurl {
         }
     }
 
-    pub fn absorb(&mut self, bc_trits: BCTritBuf) {
+    pub fn absorb(&mut self, bc_trits: &BCTritBuf) {
         let mut length = bc_trits.len();
         let mut offset = 0;
 
@@ -81,8 +81,8 @@ impl BCTCurl {
         }
     }
 
-    pub fn squeeze(&mut self, trit_count: usize) -> BCTritBuf {
-        let mut result = BCTritBuf::zeros(trit_count);
+    pub fn squeeze_into(&mut self, result: &mut BCTritBuf) {
+        let trit_count = result.len();
 
         let hash_count = trit_count / self.hash_length;
 
@@ -103,7 +103,5 @@ impl BCTCurl {
         if trit_count % self.hash_length != 0 {
             self.transform();
         }
-
-        result
     }
 }

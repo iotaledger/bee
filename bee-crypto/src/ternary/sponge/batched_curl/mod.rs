@@ -6,32 +6,81 @@ pub mod mux;
 const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
 const HIGH_BITS: usize = usize::max_value();
 
-use bee_ternary::TritBuf;
+use bct_curl::BCTCurl;
+use bee_ternary::{Btrit, TritBuf};
+use mux::BCTritBuf;
 
 pub struct BatchHasher {
-    hash_length: usize,
-    rounds: usize,
+    trits: Vec<TritBuf>,
+    inputs: BCTritBuf,
+    hashes: BCTritBuf,
+    bct_curl: BCTCurl,
 }
 
 impl BatchHasher {
-    pub fn new(hash_length: usize, rounds: usize) -> Self {
-        Self { hash_length, rounds }
+    pub fn new(input_length: usize, hash_length: usize, rounds: usize) -> Self {
+        Self {
+            trits: Vec::with_capacity(BATCH_SIZE),
+            inputs: BCTritBuf::zeros(input_length),
+            hashes: BCTritBuf::zeros(hash_length),
+            bct_curl: BCTCurl::new(hash_length, rounds),
+        }
     }
 
-    pub fn process(&self, inputs: &[TritBuf]) -> Vec<TritBuf> {
-        let mut multiplexer = mux::multiplexer::BCTernaryMultiplexer::new(inputs);
+    pub fn add(&mut self, input: TritBuf) -> usize {
+        self.trits.push(input);
+        self.trits.len()
+    }
 
-        let bc_trits = multiplexer.extract();
+    pub fn process(&mut self) {
+        self.hashes.fill_with_zeros();
+        self.bct_curl.reset();
+        self.mux();
+        self.bct_curl.absorb(&self.inputs);
+        self.bct_curl.squeeze_into(&mut self.hashes);
+        self.trits.clear();
+        self.inputs.fill_with_zeros();
+    }
 
-        let mut bct_curl = bct_curl::BCTCurl::new(self.hash_length, self.rounds);
+    pub fn demux(&self, index: usize) -> TritBuf {
+        let length = self.hashes.len();
+        let mut result = Vec::with_capacity(length);
 
-        bct_curl.absorb(bc_trits);
+        for i in 0..length {
+            let low = (self.hashes.lo()[i] >> index) & 1;
+            let hi = (self.hashes.hi()[i] >> index) & 1;
 
-        let bc_trits = bct_curl.squeeze(243);
+            let trit = match (low, hi) {
+                (1, 0) => Btrit::NegOne,
+                (0, 1) => Btrit::PlusOne,
+                (1, 1) => Btrit::Zero,
+                _ => Btrit::Zero,
+            };
 
-        let demux = mux::demultiplexer::BCTernaryDemultiplexer::new(bc_trits);
+            result.push(trit);
+        }
 
-        (0..inputs.len()).map(|i| demux.get(i)).collect()
+        TritBuf::from_trits(&result)
+    }
+
+    fn mux(&mut self) {
+        let count = self.trits.len();
+        for i in 0..self.inputs.len() {
+            unsafe {
+                let bc_trit = self.inputs.get_unchecked_mut(i);
+
+                for j in 0..count {
+                    match self.trits.get_unchecked(j).get_unchecked(i) {
+                        Btrit::NegOne => *bc_trit.lo |= 1 << j,
+                        Btrit::PlusOne => *bc_trit.hi |= 1 << j,
+                        Btrit::Zero => {
+                            *bc_trit.lo |= 1 << j;
+                            *bc_trit.hi |= 1 << j;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -50,15 +99,17 @@ mod tests {
 
         let expected_hash = TryteBuf::try_from_str(output).unwrap().as_trits().encode::<T1B1Buf>();
 
-        let batch_hasher = BatchHasher::new(expected_hash.len(), 81);
+        let mut batch_hasher = BatchHasher::new(input_trit_buf.len(), expected_hash.len(), 81);
 
-        let hashes = batch_hasher.process(&vec![input_trit_buf; 64]);
-
-        for (index, hash) in hashes.iter().enumerate() {
-            assert_eq!(hash, &hashes[0], "input {} failed", index);
+        for _ in 0..64 {
+            batch_hasher.add(input_trit_buf.clone());
         }
 
-        assert_eq!(hashes[0], expected_hash);
+        batch_hasher.process();
+
+        for index in 0..64 {
+            assert_eq!(expected_hash, batch_hasher.demux(index), "input {} failed", index);
+        }
     }
 
     #[test]
@@ -70,14 +121,16 @@ mod tests {
 
         let expected_hash = TryteBuf::try_from_str(output).unwrap().as_trits().encode::<T1B1Buf>();
 
-        let batch_hasher = BatchHasher::new(expected_hash.len(), 81);
+        let mut batch_hasher = BatchHasher::new(input_trit_buf.len(), expected_hash.len(), 81);
 
-        let hashes = batch_hasher.process(&vec![input_trit_buf; 64]);
-
-        for (index, hash) in hashes.iter().enumerate() {
-            assert_eq!(hash, &hashes[0], "input {} failed", index);
+        for _ in 0..64 {
+            batch_hasher.add(input_trit_buf.clone());
         }
 
-        assert_eq!(hashes[0], expected_hash);
+        batch_hasher.process();
+
+        for index in 0..64 {
+            assert_eq!(expected_hash, batch_hasher.demux(index), "input {} failed", index);
+        }
     }
 }

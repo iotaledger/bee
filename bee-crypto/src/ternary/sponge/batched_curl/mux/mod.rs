@@ -10,6 +10,13 @@ pub struct BCTritBuf {
 }
 
 impl BCTritBuf {
+    pub fn fill_with_zeros(&mut self) {
+        for i in 0..self.len() {
+            self.lo[i] = 0;
+            self.hi[i] = 0;
+        }
+    }
+
     pub fn filled(value: usize, len: usize) -> Self {
         BCTritBuf {
             lo: vec![value; len],
@@ -74,13 +81,13 @@ impl BCTritBuf {
 }
 
 pub struct BCTritRef<'a, T: ?Sized> {
-    lo: &'a T,
-    hi: &'a T,
+    pub lo: &'a T,
+    pub hi: &'a T,
 }
 
 pub struct BCTritMut<'a, T: ?Sized> {
-    lo: &'a mut T,
-    hi: &'a mut T,
+    pub lo: &'a mut T,
+    pub hi: &'a mut T,
 }
 
 impl<'a> BCTritMut<'a, [usize]> {
@@ -89,4 +96,3 @@ impl<'a> BCTritMut<'a, [usize]> {
         self.hi.copy_from_slice(slice.hi);
     }
 }
-
