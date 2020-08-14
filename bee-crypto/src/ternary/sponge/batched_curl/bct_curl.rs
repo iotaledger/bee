@@ -6,6 +6,7 @@ pub struct BCTCurl {
     hash_length: usize,
     number_of_rounds: usize,
     state: BCTritBuf,
+    scratch_pad: BCTritBuf,
 }
 
 impl BCTCurl {
@@ -14,6 +15,7 @@ impl BCTCurl {
             hash_length,
             number_of_rounds,
             state: BCTritBuf::filled(HIGH_BITS, NUMBER_OF_TRITS_IN_A_TRYTE * hash_length),
+            scratch_pad: BCTritBuf::filled(HIGH_BITS, NUMBER_OF_TRITS_IN_A_TRYTE * hash_length),
         }
     }
 
@@ -22,14 +24,13 @@ impl BCTCurl {
     }
 
     pub fn transform(&mut self) {
-        let mut scratch_pad;
         let mut scratch_pad_index = 0;
 
         for _round in 0..self.number_of_rounds {
-            scratch_pad = self.state.clone();
+            self.scratch_pad.as_slice_mut().copy_from_slice(self.state.as_slice());
 
-            let mut alpha = scratch_pad.lo()[scratch_pad_index];
-            let mut beta = scratch_pad.hi()[scratch_pad_index];
+            let mut alpha = self.scratch_pad.lo()[scratch_pad_index];
+            let mut beta = self.scratch_pad.hi()[scratch_pad_index];
 
             for state_index in 0..self.state.len() {
                 if scratch_pad_index < 365 {
@@ -38,8 +39,8 @@ impl BCTCurl {
                     scratch_pad_index -= 365;
                 }
 
-                let a = scratch_pad.lo()[scratch_pad_index];
-                let b = scratch_pad.hi()[scratch_pad_index];
+                let a = self.scratch_pad.lo()[scratch_pad_index];
+                let b = self.scratch_pad.hi()[scratch_pad_index];
 
                 let delta = beta ^ a;
 

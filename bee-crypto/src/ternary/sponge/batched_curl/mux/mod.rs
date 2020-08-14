@@ -10,6 +10,20 @@ pub struct BCTritBuf {
 }
 
 impl BCTritBuf {
+    pub fn as_slice(&self) -> BCTritRef<'_, [usize]> {
+        BCTritRef {
+            lo: &self.lo,
+            hi: &self.hi,
+        }
+    }
+
+    pub fn as_slice_mut(&mut self) -> BCTritMut<'_, [usize]> {
+        BCTritMut {
+            lo: &mut self.lo,
+            hi: &mut self.hi,
+        }
+    }
+
     pub fn fill(&mut self, value: usize) {
         for i in 0..self.len() {
             self.lo[i] = value;
