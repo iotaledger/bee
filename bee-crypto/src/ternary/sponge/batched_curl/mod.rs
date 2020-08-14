@@ -6,6 +6,7 @@ pub mod mux;
 pub const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
 const HIGH_BITS: usize = usize::max_value();
 
+use super::{CurlP81, Sponge};
 use bct_curl::BCTCurl;
 use bee_ternary::{Btrit, TritBuf};
 use mux::BCTritBuf;
@@ -15,6 +16,7 @@ pub struct BatchHasher {
     inputs: BCTritBuf,
     hashes: BCTritBuf,
     bct_curl: BCTCurl,
+    curl: CurlP81,
 }
 
 impl BatchHasher {
@@ -24,22 +26,33 @@ impl BatchHasher {
             inputs: BCTritBuf::zeros(input_length),
             hashes: BCTritBuf::zeros(hash_length),
             bct_curl: BCTCurl::new(hash_length, rounds),
+            curl: CurlP81::new(),
         }
     }
 
-    pub fn add(&mut self, input: TritBuf) -> usize {
+    pub fn add(&mut self, input: TritBuf) {
         self.trits.push(input);
-        self.trits.len()
     }
 
-    pub fn process(&mut self) {
-        self.hashes.fill(0);
-        self.bct_curl.reset();
-        self.mux();
-        self.bct_curl.absorb(&self.inputs);
-        self.bct_curl.squeeze_into(&mut self.hashes);
-        self.trits.clear();
-        self.inputs.fill(0);
+    pub fn process<'a>(&'a mut self) -> Option<Vec<TritBuf>> {
+        let trits_len = self.trits.len();
+        if trits_len > 3 {
+            self.hashes.fill(0);
+            self.bct_curl.reset();
+            self.mux();
+            self.bct_curl.absorb(&self.inputs);
+            self.bct_curl.squeeze_into(&mut self.hashes);
+            self.trits.clear();
+            self.inputs.fill(0);
+            None
+        } else {
+            let mut hashes = Vec::with_capacity(trits_len);
+            for buf in self.trits.drain(..) {
+                let hash = self.curl.digest(&buf).unwrap();
+                hashes.push(hash)
+            }
+            Some(hashes)
+        }
     }
 
     pub fn demux(&self, index: usize) -> TritBuf {
