@@ -31,8 +31,8 @@ impl BCTCurl {
         for _round in 0..self.number_of_rounds {
             scratch_pad = self.state.clone();
 
-            let mut alpha = unsafe { *scratch_pad.lo().get_unchecked(scratch_pad_index) };
-            let mut beta = unsafe { *scratch_pad.hi().get_unchecked(scratch_pad_index) };
+            let mut alpha = scratch_pad.lo()[scratch_pad_index];
+            let mut beta = scratch_pad.hi()[scratch_pad_index];
 
             for state_index in 0..self.state.len() {
                 if scratch_pad_index < 365 {
@@ -41,13 +41,13 @@ impl BCTCurl {
                     scratch_pad_index -= 365;
                 }
 
-                let a = unsafe { *scratch_pad.lo().get_unchecked(scratch_pad_index) };
-                let b = unsafe { *scratch_pad.hi().get_unchecked(scratch_pad_index) };
+                let a = scratch_pad.lo()[scratch_pad_index];
+                let b = scratch_pad.hi()[scratch_pad_index];
 
                 let delta = beta ^ a;
 
-                *unsafe { self.state.lo_mut().get_unchecked_mut(state_index) } = !(delta & alpha);
-                *unsafe { self.state.hi_mut().get_unchecked_mut(state_index) } = delta | (alpha ^ b);
+                self.state.lo_mut()[state_index] = !(delta & alpha);
+                self.state.hi_mut()[state_index] = delta | (alpha ^ b);
 
                 alpha = a;
                 beta = b;

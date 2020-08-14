@@ -66,17 +66,15 @@ impl BatchHasher {
     fn mux(&mut self) {
         let count = self.trits.len();
         for i in 0..self.inputs.len() {
-            unsafe {
-                let bc_trit = self.inputs.get_unchecked_mut(i);
+            let bc_trit = self.inputs.get_mut(i);
 
-                for j in 0..count {
-                    match self.trits.get_unchecked(j).get_unchecked(i) {
-                        Btrit::NegOne => *bc_trit.lo |= 1 << j,
-                        Btrit::PlusOne => *bc_trit.hi |= 1 << j,
-                        Btrit::Zero => {
-                            *bc_trit.lo |= 1 << j;
-                            *bc_trit.hi |= 1 << j;
-                        }
+            for j in 0..count {
+                match self.trits[j][i] {
+                    Btrit::NegOne => *bc_trit.lo |= 1 << j,
+                    Btrit::PlusOne => *bc_trit.hi |= 1 << j,
+                    Btrit::Zero => {
+                        *bc_trit.lo |= 1 << j;
+                        *bc_trit.hi |= 1 << j;
                     }
                 }
             }
