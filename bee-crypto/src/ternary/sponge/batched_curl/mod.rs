@@ -33,13 +33,13 @@ impl BatchHasher {
     }
 
     pub fn process(&mut self) {
-        self.hashes.fill_with_zeros();
+        self.hashes.fill(0);
         self.bct_curl.reset();
         self.mux();
         self.bct_curl.absorb(&self.inputs);
         self.bct_curl.squeeze_into(&mut self.hashes);
         self.trits.clear();
-        self.inputs.fill_with_zeros();
+        self.inputs.fill(0);
     }
 
     pub fn demux(&self, index: usize) -> TritBuf {

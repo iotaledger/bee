@@ -10,10 +10,10 @@ pub struct BCTritBuf {
 }
 
 impl BCTritBuf {
-    pub fn fill_with_zeros(&mut self) {
+    pub fn fill(&mut self, value: usize) {
         for i in 0..self.len() {
-            self.lo[i] = 0;
-            self.hi[i] = 0;
+            self.lo[i] = value;
+            self.hi[i] = value;
         }
     }
 

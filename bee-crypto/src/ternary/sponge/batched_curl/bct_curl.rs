@@ -18,10 +18,7 @@ impl BCTCurl {
     }
 
     pub fn reset(&mut self) {
-        for i in 0..self.state.len() {
-            self.state.lo_mut()[i] = HIGH_BITS;
-            self.state.hi_mut()[i] = HIGH_BITS;
-        }
+        self.state.fill(HIGH_BITS);
     }
 
     pub fn transform(&mut self) {
