@@ -3,7 +3,7 @@
 pub mod bct_curl;
 pub mod mux;
 
-const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
+pub const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
 const HIGH_BITS: usize = usize::max_value();
 
 use bct_curl::BCTCurl;
