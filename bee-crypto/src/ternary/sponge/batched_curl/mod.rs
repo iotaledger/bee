@@ -10,11 +10,16 @@ use bct_curl::BCTCurl;
 use bee_ternary::{Btrit, TritBuf};
 use mux::BCTritBuf;
 
+use crate::ternary::sponge::{CurlP81, Sponge};
+use std::ops::Range;
+use std::vec::Drain;
+
 pub struct BatchHasher {
     trits: Vec<TritBuf>,
     inputs: BCTritBuf,
     hashes: BCTritBuf,
     bct_curl: BCTCurl,
+    curl: CurlP81,
 }
 
 impl BatchHasher {
@@ -24,6 +29,8 @@ impl BatchHasher {
             inputs: BCTritBuf::zeros(input_length),
             hashes: BCTritBuf::zeros(hash_length),
             bct_curl: BCTCurl::new(hash_length, rounds),
+            // FIXME use the same round convention than the rest of the crate
+            curl: CurlP81::new(),
         }
     }
 
@@ -70,7 +77,7 @@ impl BatchHasher {
         TritBuf::from_trits(&result)
     }
 
-    pub fn process<'a>(&'a mut self) -> impl Iterator<Item = TritBuf> + 'a {
+    pub fn hash_batched<'a>(&'a mut self) -> impl Iterator<Item = TritBuf> + 'a {
         let total = self.trits.len();
         self.hashes.fill(0);
         self.bct_curl.reset();
@@ -80,30 +87,44 @@ impl BatchHasher {
         self.trits.clear();
         self.inputs.fill(0);
         BatchedHashes {
-            index: 0,
-            total,
             hasher: self,
+            range: 0..total,
+        }
+    }
+
+    pub fn hash_unbatched<'a>(&'a mut self) -> impl Iterator<Item = TritBuf> + 'a {
+        UnbatchedHashes {
+            curl: &mut self.curl,
+            trits: self.trits.drain(..),
         }
     }
 }
 
 struct BatchedHashes<'a> {
-    index: usize,
-    total: usize,
     hasher: &'a mut BatchHasher,
+    range: Range<usize>,
 }
 
 impl<'a> Iterator for BatchedHashes<'a> {
     type Item = TritBuf;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index < self.total {
-            let hash = self.hasher.demux(self.index);
-            self.index += 1;
-            Some(hash)
-        } else {
-            None
-        }
+        let index = self.range.next()?;
+        Some(self.hasher.demux(index))
+    }
+}
+
+struct UnbatchedHashes<'a> {
+    curl: &'a mut CurlP81,
+    trits: Drain<'a, TritBuf>,
+}
+
+impl<'a> Iterator for UnbatchedHashes<'a> {
+    type Item = TritBuf;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let buf = self.trits.next()?;
+        Some(self.curl.digest(&buf).unwrap())
     }
 }
 
@@ -128,7 +149,7 @@ mod tests {
             batch_hasher.add(input_trit_buf.clone());
         }
 
-        for (index, hash) in batch_hasher.process().enumerate() {
+        for (index, hash) in batch_hasher.hash_batched().enumerate() {
             assert_eq!(expected_hash, hash, "input {} failed", index);
         }
     }
@@ -148,7 +169,7 @@ mod tests {
             batch_hasher.add(input_trit_buf.clone());
         }
 
-        for (index, hash) in batch_hasher.process().enumerate() {
+        for (index, hash) in batch_hasher.hash_batched().enumerate() {
             assert_eq!(expected_hash, hash, "input {} failed", index);
         }
     }

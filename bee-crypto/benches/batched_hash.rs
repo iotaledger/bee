@@ -10,12 +10,21 @@ fn length_243(c: &mut Criterion) {
     let length = input_trit_buf.len();
     let mut hasher = BatchHasher::new(length, 243, 81);
 
-    c.bench_function("length 243", |b| {
+    c.bench_function("batched 243", |b| {
         b.iter(|| {
             for _ in 0..64 {
                 hasher.add(black_box(input_trit_buf.clone()));
             }
-            for _ in hasher.process() {}
+            for _ in hasher.hash_batched() {}
+        })
+    });
+
+    c.bench_function("unbatched 243", |b| {
+        b.iter(|| {
+            for _ in 0..64 {
+                hasher.add(black_box(input_trit_buf.clone()));
+            }
+            for _ in hasher.hash_unbatched() {}
         })
     });
 }
@@ -26,12 +35,21 @@ fn length_6561(c: &mut Criterion) {
     let length = input_trit_buf.len();
     let mut hasher = BatchHasher::new(length, 243, 81);
 
-    c.bench_function("length 6561", |b| {
+    c.bench_function("batched 6561", |b| {
         b.iter(|| {
             for _ in 0..64 {
                 hasher.add(black_box(input_trit_buf.clone()));
             }
-            for _ in hasher.process() {}
+            for _ in hasher.hash_batched() {}
+        })
+    });
+
+    c.bench_function("unbatched 6561", |b| {
+        b.iter(|| {
+            for _ in 0..64 {
+                hasher.add(black_box(input_trit_buf.clone()));
+            }
+            for _ in hasher.hash_unbatched() {}
         })
     });
 }
