@@ -10,27 +10,24 @@ use bct_curl::BCTCurl;
 use bee_ternary::{Btrit, TritBuf};
 use mux::BCTritBuf;
 
-use crate::ternary::sponge::{CurlP81, Sponge};
-use std::ops::Range;
-use std::vec::Drain;
+use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge};
 
 pub struct BatchHasher {
     trits: Vec<TritBuf>,
     inputs: BCTritBuf,
     hashes: BCTritBuf,
     bct_curl: BCTCurl,
-    curl: CurlP81,
+    curl: CurlP,
 }
 
 impl BatchHasher {
-    pub fn new(input_length: usize, hash_length: usize, rounds: usize) -> Self {
+    pub fn new(input_length: usize, hash_length: usize, rounds: CurlPRounds) -> Self {
         Self {
             trits: Vec::with_capacity(BATCH_SIZE),
             inputs: BCTritBuf::zeros(input_length),
             hashes: BCTritBuf::zeros(hash_length),
-            bct_curl: BCTCurl::new(hash_length, rounds),
-            // FIXME use the same round convention than the rest of the crate
-            curl: CurlP81::new(),
+            bct_curl: BCTCurl::new(hash_length, rounds as usize),
+            curl: CurlP::new(rounds),
         }
     }
 
@@ -102,7 +99,7 @@ impl BatchHasher {
 
 struct BatchedHashes<'a> {
     hasher: &'a mut BatchHasher,
-    range: Range<usize>,
+    range: std::ops::Range<usize>,
 }
 
 impl<'a> Iterator for BatchedHashes<'a> {
@@ -115,8 +112,8 @@ impl<'a> Iterator for BatchedHashes<'a> {
 }
 
 struct UnbatchedHashes<'a> {
-    curl: &'a mut CurlP81,
-    trits: Drain<'a, TritBuf>,
+    curl: &'a mut CurlP,
+    trits: std::vec::Drain<'a, TritBuf>,
 }
 
 impl<'a> Iterator for UnbatchedHashes<'a> {
@@ -143,7 +140,7 @@ mod tests {
 
         let expected_hash = TryteBuf::try_from_str(output).unwrap().as_trits().encode::<T1B1Buf>();
 
-        let mut batch_hasher = BatchHasher::new(input_trit_buf.len(), expected_hash.len(), 81);
+        let mut batch_hasher = BatchHasher::new(input_trit_buf.len(), expected_hash.len(), CurlPRounds::Rounds81);
 
         for _ in 0..64 {
             batch_hasher.add(input_trit_buf.clone());
@@ -163,7 +160,7 @@ mod tests {
 
         let expected_hash = TryteBuf::try_from_str(output).unwrap().as_trits().encode::<T1B1Buf>();
 
-        let mut batch_hasher = BatchHasher::new(input_trit_buf.len(), expected_hash.len(), 81);
+        let mut batch_hasher = BatchHasher::new(input_trit_buf.len(), expected_hash.len(), CurlPRounds::Rounds81);
 
         for _ in 0..64 {
             batch_hasher.add(input_trit_buf.clone());
