@@ -25,9 +25,9 @@ impl BCTritBuf {
     }
 
     pub fn fill(&mut self, value: usize) {
-        for i in 0..self.len() {
-            self.lo[i] = value;
-            self.hi[i] = value;
+        for (lo, hi) in self.lo.iter_mut().zip(self.hi.iter_mut()) {
+            *lo = value;
+            *hi = value;
         }
     }
 
@@ -54,17 +54,25 @@ impl BCTritBuf {
         &self.hi
     }
 
+    pub fn lo_mut(&mut self) -> &mut [usize] {
+        &mut self.lo
+    }
+
+    pub fn hi_mut(&mut self) -> &mut [usize] {
+        &mut self.hi
+    }
+
     pub fn get<'a, I: SliceIndex<[usize]> + Clone>(&'a self, index: I) -> BCTritRef<'a, I::Output> {
         BCTritRef {
             lo: &self.lo[index.clone()],
-            hi: &self.hi[index],
+            hi: unsafe { self.hi.get_unchecked(index) },
         }
     }
 
     pub fn get_mut<'a, I: SliceIndex<[usize]> + Clone>(&'a mut self, index: I) -> BCTritMut<'a, I::Output> {
         BCTritMut {
             lo: &mut self.lo[index.clone()],
-            hi: &mut self.hi[index],
+            hi: unsafe { self.hi.get_unchecked_mut(index) },
         }
     }
 
@@ -83,14 +91,6 @@ impl BCTritBuf {
             lo: self.lo.get_unchecked_mut(index.clone()),
             hi: self.hi.get_unchecked_mut(index),
         }
-    }
-
-    pub fn lo_mut(&mut self) -> &mut [usize] {
-        &mut self.lo
-    }
-
-    pub fn hi_mut(&mut self) -> &mut [usize] {
-        &mut self.hi
     }
 }
 
