@@ -15,10 +15,7 @@ fn length_243(c: &mut Criterion) {
             for _ in 0..64 {
                 hasher.add(black_box(input_trit_buf.clone()));
             }
-            hasher.process();
-            for i in 0..64 {
-                hasher.demux(i);
-            }
+            for _ in hasher.process() {}
         })
     });
 }
@@ -34,10 +31,7 @@ fn length_6561(c: &mut Criterion) {
             for _ in 0..64 {
                 hasher.add(black_box(input_trit_buf.clone()));
             }
-            hasher.process();
-            for i in 0..64 {
-                hasher.demux(i);
-            }
+            for _ in hasher.process() {}
         })
     });
 }
