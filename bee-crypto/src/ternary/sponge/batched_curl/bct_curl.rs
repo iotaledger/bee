@@ -1,4 +1,4 @@
-use crate::ternary::sponge::batched_curl::{mux::BCTritBuf, HIGH_BITS};
+use crate::ternary::sponge::batched_curl::{bct::BCTritBuf, HIGH_BITS};
 
 const NUMBER_OF_TRITS_IN_A_TRYTE: usize = 3;
 

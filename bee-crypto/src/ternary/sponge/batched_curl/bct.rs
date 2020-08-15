@@ -1,6 +1,3 @@
-pub mod demultiplexer;
-pub mod multiplexer;
-
 use std::slice::SliceIndex;
 
 #[derive(Clone)]
