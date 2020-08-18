@@ -190,10 +190,3 @@ impl<'a> Iterator for UnbatchedHashes<'a> {
         Some(self.curl.digest(&buf).unwrap())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    use bee_ternary::{T1B1Buf, TryteBuf};
-}
