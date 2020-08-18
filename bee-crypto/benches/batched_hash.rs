@@ -1,6 +1,17 @@
+// Copyright 2020 IOTA Stiftung
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+// the License. You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+// an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and limitations under the License.
+
 use bee_ternary::{T1B1Buf, TryteBuf};
 
-use bee_crypto::ternary::sponge::{batched_curl::BatchHasher, CurlPRounds};
+use bee_crypto::ternary::sponge::{BatchHasher, CurlPRounds, BATCH_SIZE};
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
@@ -12,7 +23,7 @@ fn length_243(c: &mut Criterion) {
 
     c.bench_function("batched 243", |b| {
         b.iter(|| {
-            for _ in 0..64 {
+            for _ in 0..BATCH_SIZE {
                 hasher.add(black_box(input_trit_buf.clone()));
             }
             for _ in hasher.hash_batched() {}
@@ -21,7 +32,7 @@ fn length_243(c: &mut Criterion) {
 
     c.bench_function("unbatched 243", |b| {
         b.iter(|| {
-            for _ in 0..64 {
+            for _ in 0..BATCH_SIZE {
                 hasher.add(black_box(input_trit_buf.clone()));
             }
             for _ in hasher.hash_unbatched() {}
@@ -37,7 +48,7 @@ fn length_6561(c: &mut Criterion) {
 
     c.bench_function("batched 6561", |b| {
         b.iter(|| {
-            for _ in 0..64 {
+            for _ in 0..BATCH_SIZE {
                 hasher.add(black_box(input_trit_buf.clone()));
             }
             for _ in hasher.hash_batched() {}
@@ -46,7 +57,7 @@ fn length_6561(c: &mut Criterion) {
 
     c.bench_function("unbatched 6561", |b| {
         b.iter(|| {
-            for _ in 0..64 {
+            for _ in 0..BATCH_SIZE {
                 hasher.add(black_box(input_trit_buf.clone()));
             }
             for _ in hasher.hash_unbatched() {}
