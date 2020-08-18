@@ -83,23 +83,6 @@ impl BCTritBuf {
             hi: unsafe { self.hi.get_unchecked_mut(index) },
         }
     }
-
-    pub unsafe fn get_unchecked<'a, I: SliceIndex<[usize]> + Clone>(&'a self, index: I) -> BCTritRef<'a, I::Output> {
-        BCTritRef {
-            lo: self.lo.get_unchecked(index.clone()),
-            hi: self.hi.get_unchecked(index),
-        }
-    }
-
-    pub unsafe fn get_unchecked_mut<'a, I: SliceIndex<[usize]> + Clone>(
-        &'a mut self,
-        index: I,
-    ) -> BCTritMut<'a, I::Output> {
-        BCTritMut {
-            lo: self.lo.get_unchecked_mut(index.clone()),
-            hi: self.hi.get_unchecked_mut(index),
-        }
-    }
 }
 
 pub struct BCTritRef<'a, T: ?Sized> {
