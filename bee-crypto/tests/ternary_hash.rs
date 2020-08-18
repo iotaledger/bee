@@ -10,7 +10,9 @@
 // See the License for the specific language governing permissions and limitations under the License.
 
 use bee_crypto::ternary::{Hash, HASH_LENGTH};
-use bee_ternary::Btrit;
+use bee_ternary::{Btrit, TritBuf, T1B1Buf};
+
+use std::convert::TryFrom;
 
 #[test]
 fn hash_weight() {
@@ -19,4 +21,10 @@ fn hash_weight() {
         hash.as_trits_mut().set(HASH_LENGTH - i - 1, Btrit::PlusOne);
         assert_eq!(hash.weight(), i as u8);
     }
+}
+
+#[test]
+fn trits_to_hash() {
+    let trits = TritBuf::<T1B1Buf>::zeros(243);
+    let _hash = Hash::try_from(trits.as_slice()).unwrap();
 }

@@ -9,7 +9,7 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-use bee_ternary::{raw::RawEncoding, Btrit, Trits, T1B1};
+use bee_ternary::{Btrit, Trits, T1B1};
 
 use std::{
     cmp::PartialEq,
@@ -53,10 +53,10 @@ impl Hash {
     }
 }
 
-impl<'a, T: RawEncoding<Trit = Btrit>> TryFrom<&'a Trits<T>> for Hash {
+impl<'a> TryFrom<&'a Trits> for Hash {
     type Error = Error;
 
-    fn try_from(trits: &'a Trits<T>) -> Result<Self, Self::Error> {
+    fn try_from(trits: &'a Trits) -> Result<Self, Self::Error> {
         if trits.len() == HASH_LENGTH {
             let mut hash = Self([Btrit::Zero; HASH_LENGTH]);
             hash.copy_from(trits);
