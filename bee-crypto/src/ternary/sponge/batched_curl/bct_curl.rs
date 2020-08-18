@@ -43,12 +43,23 @@ impl BCTCurl {
             let mut alpha = self.scratch_pad.lo()[scratch_pad_index];
             let mut beta = self.scratch_pad.hi()[scratch_pad_index];
 
-            for state_index in 0..self.state.len() {
-                if scratch_pad_index < 365 {
-                    scratch_pad_index += 364;
-                } else {
-                    scratch_pad_index -= 365;
-                }
+            scratch_pad_index += 364;
+
+            let a = self.scratch_pad.lo()[scratch_pad_index];
+            let b = self.scratch_pad.hi()[scratch_pad_index];
+
+            let delta = beta ^ a;
+
+            self.state.lo_mut()[0] = !(delta & alpha);
+            self.state.hi_mut()[0] = delta | (alpha ^ b);
+
+            alpha = a;
+            beta = b;
+
+            let mut state_index = 1;
+
+            while state_index < self.state.len() {
+                scratch_pad_index += 364;
 
                 let a = self.scratch_pad.lo()[scratch_pad_index];
                 let b = self.scratch_pad.hi()[scratch_pad_index];
@@ -60,6 +71,23 @@ impl BCTCurl {
 
                 alpha = a;
                 beta = b;
+
+                state_index += 1;
+
+                scratch_pad_index -= 365;
+
+                let a = self.scratch_pad.lo()[scratch_pad_index];
+                let b = self.scratch_pad.hi()[scratch_pad_index];
+
+                let delta = beta ^ a;
+
+                self.state.lo_mut()[state_index] = !(delta & alpha);
+                self.state.hi_mut()[state_index] = delta | (alpha ^ b);
+
+                alpha = a;
+                beta = b;
+
+                state_index += 1;
             }
         }
     }
