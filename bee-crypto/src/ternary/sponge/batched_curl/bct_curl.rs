@@ -41,17 +41,20 @@ impl BCTCurl {
             self.scratch_pad.as_slice_mut().copy_from_slice(self.state.as_slice());
 
             let mut alpha = self.scratch_pad.lo()[scratch_pad_index];
-            let mut beta = self.scratch_pad.hi()[scratch_pad_index];
+            // This is safe as the previous acces to `self.lo` took care of checking the index.
+            let mut beta = unsafe { *self.scratch_pad.hi().get_unchecked(scratch_pad_index) };
 
             scratch_pad_index += 364;
 
             let mut a = self.scratch_pad.lo()[scratch_pad_index];
-            let mut b = self.scratch_pad.hi()[scratch_pad_index];
+            // This is safe as the previous acces to `self.lo` took care of checking the index.
+            let mut b = unsafe { *self.scratch_pad.hi().get_unchecked(scratch_pad_index) };
 
             let delta = beta ^ a;
 
             self.state.lo_mut()[0] = !(delta & alpha);
-            self.state.hi_mut()[0] = delta | (alpha ^ b);
+            // This is safe as the previous acces to `self.lo` took care of checking the index.
+            *unsafe { self.state.hi_mut().get_unchecked_mut(0) } = delta | (alpha ^ b);
 
             let mut state_index = 1;
 
@@ -61,7 +64,8 @@ impl BCTCurl {
                 alpha = a;
                 beta = b;
                 a = self.scratch_pad.lo()[scratch_pad_index];
-                b = self.scratch_pad.hi()[scratch_pad_index];
+                // This is safe as the previous acces to `self.lo` took care of checking the index.
+                b = unsafe { *self.scratch_pad.hi().get_unchecked(scratch_pad_index) };
 
                 let delta = beta ^ a;
 
@@ -75,12 +79,14 @@ impl BCTCurl {
                 alpha = a;
                 beta = b;
                 a = self.scratch_pad.lo()[scratch_pad_index];
-                b = self.scratch_pad.hi()[scratch_pad_index];
+                // This is safe as the previous acces to `self.lo` took care of checking the index.
+                b = unsafe { *self.scratch_pad.hi().get_unchecked(scratch_pad_index) };
 
                 let delta = beta ^ a;
 
                 self.state.lo_mut()[state_index] = !(delta & alpha);
-                self.state.hi_mut()[state_index] = delta | (alpha ^ b);
+                // This is safe as the previous acces to `self.lo` took care of checking the index.
+                *unsafe { self.state.hi_mut().get_unchecked_mut(state_index) } = delta | (alpha ^ b);
 
                 state_index += 1;
             }

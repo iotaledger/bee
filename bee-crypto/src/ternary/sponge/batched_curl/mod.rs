@@ -107,7 +107,8 @@ impl BatchHasher {
 
         for i in 0..length {
             let low = (self.bct_hashes.lo()[i] >> index) & 1;
-            let hi = (self.bct_hashes.hi()[i] >> index) & 1;
+            // This is safe as the previous acces to `self.lo` took care of checking the index.
+            let hi = (unsafe { *self.bct_hashes.hi().get_unchecked(i) } >> index) & 1;
 
             let trit = match (low, hi) {
                 (1, 0) => Btrit::NegOne,
