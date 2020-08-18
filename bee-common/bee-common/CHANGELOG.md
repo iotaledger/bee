@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Logger backend based on [fern](https://crates.io/crates/fern) for the [log](https://crates.io/crates/log) crate;
 - Shutdown mechanism;
+- Shutdown Stream helper to join a shutdown receiver and a regular stream;
 
 ### Changed
 

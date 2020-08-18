@@ -9,12 +9,4 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-//! A crate that provides common functionalities shared across multiple crates within the Bee framework, and for
-//! applications built on-top.
-
-#![warn(missing_docs)]
-
-pub mod logger;
-pub mod shutdown;
-pub mod shutdown_stream;
-pub mod worker;
+mod shutdown_stream;
