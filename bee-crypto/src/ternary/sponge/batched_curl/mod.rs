@@ -61,6 +61,10 @@ impl BatchHasher {
         assert!(self.trit_inputs.len() <= BATCH_SIZE);
         self.trit_inputs.push(input);
     }
+    /// Return the length of the current batch.
+    pub fn len(&self) -> usize {
+        self.trit_inputs.len()
+    }
     /// Multiplex or interleave the input trits in the bash.
     ///
     /// Before doing the actual interleaving, each trit is encoded as two bits which are usually
