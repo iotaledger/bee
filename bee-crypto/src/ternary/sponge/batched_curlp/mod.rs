@@ -11,13 +11,13 @@
 
 /// A batched version of the `CurlP` hash.
 mod bct;
-mod bct_curl;
+mod bct_curlp;
 
 use bee_ternary::{Btrit, TritBuf};
 
 use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge};
 use bct::BCTritBuf;
-use bct_curl::BCTCurl;
+use bct_curlp::BCTCurlP;
 
 /// The number of inputs that can be processed in a single batch.
 pub const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
@@ -35,9 +35,9 @@ pub struct BatchHasher {
     /// An interleaved representation of the output trits.
     bct_hashes: BCTritBuf,
     /// The CurlP hasher for binary coded trits.
-    bct_curl: BCTCurl,
+    bct_curlp: BCTCurlP,
     /// The regular CurlP hasher.
-    curl: CurlP,
+    curlp: CurlP,
 }
 
 impl BatchHasher {
@@ -50,8 +50,8 @@ impl BatchHasher {
             trit_inputs: Vec::with_capacity(BATCH_SIZE),
             bct_inputs: BCTritBuf::zeros(input_length),
             bct_hashes: BCTritBuf::zeros(hash_length),
-            bct_curl: BCTCurl::new(hash_length, rounds as usize),
-            curl: CurlP::new(rounds),
+            bct_curlp: BCTCurlP::new(hash_length, rounds as usize),
+            curlp: CurlP::new(rounds),
         }
     }
     /// Add a new input to the batch.
@@ -136,12 +136,12 @@ impl BatchHasher {
         // Fill the `hashes` buffer with zeros.
         self.bct_hashes.fill(0);
         // Reset batched CurlP hasher.
-        self.bct_curl.reset();
+        self.bct_curlp.reset();
         // Multiplex the trits in `trits` and dump them into `inputs`
         self.mux();
         // Do the regular sponge steps.
-        self.bct_curl.absorb(&self.bct_inputs);
-        self.bct_curl.squeeze_into(&mut self.bct_hashes);
+        self.bct_curlp.absorb(&self.bct_inputs);
+        self.bct_curlp.squeeze_into(&mut self.bct_hashes);
         // Clear the `trits` buffer to allow receiving a new batch.
         self.trit_inputs.clear();
         // Fill the `inputs` buffer with zeros.
@@ -158,9 +158,9 @@ impl BatchHasher {
     /// care of cleaning the `trit_inputs` buffer and resets the regular CurlP hasher so it can be
     /// called at any time.
     pub fn hash_unbatched<'a>(&'a mut self) -> impl Iterator<Item = TritBuf> + 'a {
-        self.curl.reset();
+        self.curlp.reset();
         UnbatchedHashes {
-            curl: &mut self.curl,
+            curl: &mut self.curlp,
             trit_inputs: self.trit_inputs.drain(..),
         }
     }

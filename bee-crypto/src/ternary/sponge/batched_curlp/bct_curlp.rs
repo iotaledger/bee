@@ -9,18 +9,18 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-use crate::ternary::sponge::batched_curl::{bct::BCTritBuf, HIGH_BITS};
+use crate::ternary::sponge::batched_curlp::{bct::BCTritBuf, HIGH_BITS};
 
 const NUMBER_OF_TRITS_IN_A_TRYTE: usize = 3;
 
-pub struct BCTCurl {
+pub struct BCTCurlP {
     hash_length: usize,
     number_of_rounds: usize,
     state: BCTritBuf,
     scratch_pad: BCTritBuf,
 }
 
-impl BCTCurl {
+impl BCTCurlP {
     pub fn new(hash_length: usize, number_of_rounds: usize) -> Self {
         Self {
             hash_length,
