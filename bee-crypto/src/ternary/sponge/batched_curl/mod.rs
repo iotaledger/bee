@@ -17,11 +17,11 @@ const HIGH_BITS: usize = usize::max_value();
 /// required.
 pub struct BatchHasher {
     /// The trits of the inputs before being interleaved.
-    trits: Vec<TritBuf>,
+    trit_inputs: Vec<TritBuf>,
     /// An interleaved representation of the input trits.
-    inputs: BCTritBuf,
+    bct_inputs: BCTritBuf,
     /// An interleaved representation of the output trits.
-    hashes: BCTritBuf,
+    bct_hashes: BCTritBuf,
     /// The CurlP hasher for binary coded trits.
     bct_curl: BCTCurl,
     /// The regular CurlP hasher.
@@ -35,9 +35,9 @@ impl BatchHasher {
     /// rounds.
     pub fn new(input_length: usize, hash_length: usize, rounds: CurlPRounds) -> Self {
         Self {
-            trits: Vec::with_capacity(BATCH_SIZE),
-            inputs: BCTritBuf::zeros(input_length),
-            hashes: BCTritBuf::zeros(hash_length),
+            trit_inputs: Vec::with_capacity(BATCH_SIZE),
+            bct_inputs: BCTritBuf::zeros(input_length),
+            bct_hashes: BCTritBuf::zeros(hash_length),
             bct_curl: BCTCurl::new(hash_length, rounds as usize),
             curl: CurlP::new(rounds),
         }
@@ -46,8 +46,8 @@ impl BatchHasher {
     ///
     /// It panics if the size of the batch exceeds `BATCH_SIZE`.
     pub fn add(&mut self, input: TritBuf) {
-        assert!(self.trits.len() <= BATCH_SIZE);
-        self.trits.push(input);
+        assert!(self.trit_inputs.len() <= BATCH_SIZE);
+        self.trit_inputs.push(input);
     }
     /// Multiplex or interleave the input trits in the bash.
     ///
@@ -67,12 +67,12 @@ impl BatchHasher {
     ///
     /// This step works correctly even if there are less than `BATCH_SIZE` inputs.
     fn mux(&mut self) {
-        let count = self.trits.len();
-        for i in 0..self.inputs.len() {
-            let bc_trit = self.inputs.get_mut(i);
+        let count = self.trit_inputs.len();
+        for i in 0..self.bct_inputs.len() {
+            let bc_trit = self.bct_inputs.get_mut(i);
 
             for j in 0..count {
-                match self.trits[j][i] {
+                match self.trit_inputs[j][i] {
                     Btrit::NegOne => *bc_trit.lo |= 1 << j,
                     Btrit::PlusOne => *bc_trit.hi |= 1 << j,
                     Btrit::Zero => {
@@ -86,18 +86,16 @@ impl BatchHasher {
     /// Demultiplex the bits of the output to obtain the hash of the input with an specific index.
     ///
     /// This is the inverse of the `mux` function, but it is applied over the vector with the
-    /// binary encoding of the output hashes. Each pair of low and high bits in the `hashes` field
-    /// is decoded into a trit using the same convention as the `mux` step with an additional rule
-    /// for the `(0, 0)` pair of bits which is mapped to the `0` trit.
-    ///
-    /// This function will panic if called with an index larger than `BATCH_SIZE`.
+    /// binary encoding of the output hashes. Each pair of low and high bits in the `bct_hashes`
+    /// field is decoded into a trit using the same convention as the `mux` step with an additional
+    /// rule for the `(0, 0)` pair of bits which is mapped to the `0` trit.
     fn demux(&self, index: usize) -> TritBuf {
-        let length = self.hashes.len();
+        let length = self.bct_hashes.len();
         let mut result = Vec::with_capacity(length);
 
         for i in 0..length {
-            let low = (self.hashes.lo()[i] >> index) & 1;
-            let hi = (self.hashes.hi()[i] >> index) & 1;
+            let low = (self.bct_hashes.lo()[i] >> index) & 1;
+            let hi = (self.bct_hashes.hi()[i] >> index) & 1;
 
             let trit = match (low, hi) {
                 (1, 0) => Btrit::NegOne,
@@ -117,20 +115,20 @@ impl BatchHasher {
     /// This function also takes care of cleaning all the buffers of the struct and resetting the
     /// batched CurlP hasher so it can be called at any time.
     pub fn hash_batched<'a>(&'a mut self) -> impl Iterator<Item = TritBuf> + 'a {
-        let total = self.trits.len();
+        let total = self.trit_inputs.len();
         // Fill the `hashes` buffer with zeros.
-        self.hashes.fill(0);
+        self.bct_hashes.fill(0);
         // Reset batched CurlP hasher.
         self.bct_curl.reset();
         // Multiplex the trits in `trits` and dump them into `inputs`
         self.mux();
         // Do the regular sponge steps.
-        self.bct_curl.absorb(&self.inputs);
-        self.bct_curl.squeeze_into(&mut self.hashes);
+        self.bct_curl.absorb(&self.bct_inputs);
+        self.bct_curl.squeeze_into(&mut self.bct_hashes);
         // Clear the `trits` buffer to allow receiving a new batch.
-        self.trits.clear();
+        self.trit_inputs.clear();
         // Fill the `inputs` buffer with zeros.
-        self.inputs.fill(0);
+        self.bct_inputs.fill(0);
         // Return an iterator for the output hashes.
         BatchedHashes {
             hasher: self,
@@ -139,14 +137,14 @@ impl BatchHasher {
     }
     /// Hash the received inputs using the regular version of CurlP.
     ///
-    /// In particular this function does not use the `inputs` and `hashes` buffers, takes care of
-    /// cleaning the `trits` buffer of the struct and resets the regular CurlP hasher so it can be
+    /// In particular this function does not use the `bct_inputs` and `bct_hashes` buffers, takes
+    /// care of cleaning the `trit_inputs` buffer and resets the regular CurlP hasher so it can be
     /// called at any time.
     pub fn hash_unbatched<'a>(&'a mut self) -> impl Iterator<Item = TritBuf> + 'a {
         self.curl.reset();
         UnbatchedHashes {
             curl: &mut self.curl,
-            trits: self.trits.drain(..),
+            trit_inputs: self.trit_inputs.drain(..),
         }
     }
 }
@@ -169,14 +167,14 @@ impl<'a> Iterator for BatchedHashes<'a> {
 /// A helper iterator type for the output of the `hash_unbatched` method.
 struct UnbatchedHashes<'a> {
     curl: &'a mut CurlP,
-    trits: std::vec::Drain<'a, TritBuf>,
+    trit_inputs: std::vec::Drain<'a, TritBuf>,
 }
 
 impl<'a> Iterator for UnbatchedHashes<'a> {
     type Item = TritBuf;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let buf = self.trits.next()?;
+        let buf = self.trit_inputs.next()?;
         Some(self.curl.digest(&buf).unwrap())
     }
 }
