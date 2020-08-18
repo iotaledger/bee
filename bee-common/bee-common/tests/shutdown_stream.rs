@@ -12,7 +12,6 @@
 use bee_common::shutdown_stream::ShutdownStream;
 
 use async_std::task;
-
 use futures::{
     channel::{mpsc, oneshot},
     SinkExt, StreamExt,
