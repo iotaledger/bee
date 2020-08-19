@@ -52,7 +52,7 @@ impl BatchHasher {
             trit_inputs: Vec::with_capacity(BATCH_SIZE),
             bct_inputs: BCTritBuf::zeros(input_length),
             bct_hashes: BCTritBuf::zeros(hash_length),
-            bct_curlp: BCTCurlP::new(hash_length, rounds as usize),
+            bct_curlp: BCTCurlP::new(hash_length, rounds),
             curlp: CurlP::new(rounds),
         }
     }

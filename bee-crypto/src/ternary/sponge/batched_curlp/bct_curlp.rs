@@ -9,24 +9,22 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-use crate::ternary::sponge::batched_curlp::{bct::BCTritBuf, HIGH_BITS};
-
-const NUMBER_OF_TRITS_IN_A_TRYTE: usize = 3;
+use crate::ternary::sponge::{CurlPRounds, batched_curlp::{bct::BCTritBuf, HIGH_BITS}};
 
 pub struct BCTCurlP {
     hash_length: usize,
-    number_of_rounds: usize,
+    rounds: CurlPRounds,
     state: BCTritBuf,
     scratch_pad: BCTritBuf,
 }
 
 impl BCTCurlP {
-    pub fn new(hash_length: usize, number_of_rounds: usize) -> Self {
+    pub fn new(hash_length: usize, rounds: CurlPRounds) -> Self {
         Self {
             hash_length,
-            number_of_rounds,
-            state: BCTritBuf::filled(HIGH_BITS, NUMBER_OF_TRITS_IN_A_TRYTE * hash_length),
-            scratch_pad: BCTritBuf::filled(HIGH_BITS, NUMBER_OF_TRITS_IN_A_TRYTE * hash_length),
+            rounds,
+            state: BCTritBuf::filled(HIGH_BITS, 3 * hash_length),
+            scratch_pad: BCTritBuf::filled(HIGH_BITS, 3 * hash_length),
         }
     }
 
@@ -37,7 +35,7 @@ impl BCTCurlP {
     pub fn transform(&mut self) {
         let mut scratch_pad_index = 0;
 
-        for _round in 0..self.number_of_rounds {
+        for _round in 0..self.rounds as usize {
             self.scratch_pad.as_slice_mut().copy_from_slice(self.state.as_slice());
 
             let mut alpha = self.scratch_pad.lo()[scratch_pad_index];
