@@ -119,6 +119,8 @@ impl BCTCurlP {
         }
     }
 
+    // This method shouldn't assume that `result` has any particular content, just that it has an
+    // adequate size.
     pub fn squeeze_into(&mut self, result: &mut BCTritBuf) {
         let trit_count = result.len();
 

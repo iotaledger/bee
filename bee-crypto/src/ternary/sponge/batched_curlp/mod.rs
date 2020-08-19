@@ -10,15 +10,15 @@
 // See the License for the specific language governing permissions and limitations under the License.
 
 //! A batched version of the `CurlP` hash.
+
 mod bct;
 mod bct_curlp;
 
-use bee_ternary::{Btrit, TritBuf};
-
 use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge};
-
 use bct::BCTritBuf;
 use bct_curlp::BCTCurlP;
+
+use bee_ternary::{Btrit, TritBuf};
 
 /// The number of inputs that can be processed in a single batch.
 pub const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
@@ -56,6 +56,7 @@ impl BatchHasher {
             curlp: CurlP::new(rounds),
         }
     }
+
     /// Add a new input to the batch.
     ///
     /// It panics if the size of the batch exceeds `BATCH_SIZE` or if `input.len()` is not equal to
@@ -65,10 +66,12 @@ impl BatchHasher {
         assert_eq!(input.len(), self.bct_inputs.len(), "Input has an incorrect size.");
         self.trit_inputs.push(input);
     }
+
     /// Return the length of the current batch.
     pub fn len(&self) -> usize {
         self.trit_inputs.len()
     }
+
     /// Multiplex or interleave the input trits in the bash.
     ///
     /// Before doing the actual interleaving, each trit is encoded as two bits which are usually
@@ -89,7 +92,7 @@ impl BatchHasher {
     fn mux(&mut self) {
         let count = self.trit_inputs.len();
         for i in 0..self.bct_inputs.len() {
-            // This is safe because `i < self.bct_inputs.len()`
+            // This is safe because `i < self.bct_inputs.len()`.
             let bc_trit = unsafe { self.bct_inputs.get_unchecked_mut(i) };
 
             for j in 0..count {
@@ -107,7 +110,8 @@ impl BatchHasher {
             }
         }
     }
-    /// Demultiplex the bits of the output to obtain the hash of the input with an specific index.
+
+    /// Demultiplex the bits of the output to obtain the hash of the input with a specific index.
     ///
     /// This is the inverse of the `mux` function, but it is applied over the vector with the
     /// binary encoding of the output hashes. Each pair of low and high bits in the `bct_hashes`
@@ -118,7 +122,7 @@ impl BatchHasher {
         let mut result = Vec::with_capacity(length);
 
         for i in 0..length {
-            // This is safe because `i < self.bct_hashes.len()`
+            // This is safe because `i < self.bct_hashes.len()`.
             let low = (unsafe { *self.bct_hashes.lo().get_unchecked(i) } >> index) & 1;
             let hi = (unsafe { *self.bct_hashes.hi().get_unchecked(i) } >> index) & 1;
 
@@ -135,14 +139,13 @@ impl BatchHasher {
 
         TritBuf::from_trits(&result)
     }
+
     /// Hash the received inputs using the batched version of CurlP.
     ///
-    /// This function also takes care of cleaning all the buffers of the struct and resetting the
+    /// This function also takes care of cleaning the buffers of the struct and resetting the
     /// batched CurlP hasher so it can be called at any time.
     pub fn hash_batched<'a>(&'a mut self) -> impl Iterator<Item = TritBuf> + 'a {
         let total = self.trit_inputs.len();
-        // Fill the `hashes` buffer with zeros.
-        self.bct_hashes.fill(0);
         // Reset batched CurlP hasher.
         self.bct_curlp.reset();
         // Multiplex the trits in `trits` and dump them into `inputs`
@@ -160,6 +163,7 @@ impl BatchHasher {
             range: 0..total,
         }
     }
+
     /// Hash the received inputs using the regular version of CurlP.
     ///
     /// In particular this function does not use the `bct_inputs` and `bct_hashes` buffers, takes
