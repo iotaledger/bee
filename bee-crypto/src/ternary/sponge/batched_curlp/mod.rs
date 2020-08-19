@@ -72,6 +72,11 @@ impl BatchHasher {
         self.trit_inputs.len()
     }
 
+    /// Check if the current batch is empty
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Multiplex or interleave the input trits in the bash.
     ///
     /// Before doing the actual interleaving, each trit is encoded as two bits which are usually
