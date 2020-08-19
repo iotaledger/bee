@@ -9,19 +9,21 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-/// A batched version of the `CurlP` hash.
+//! A batched version of the `CurlP` hash.
 mod bct;
 mod bct_curlp;
 
 use bee_ternary::{Btrit, TritBuf};
 
 use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge};
+
 use bct::BCTritBuf;
 use bct_curlp::BCTCurlP;
 
 /// The number of inputs that can be processed in a single batch.
 pub const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
 const HIGH_BITS: usize = usize::max_value();
+
 /// A hasher that can process several inputs at the same time in batches.
 ///
 /// This hasher works by interleaving the trits of the inputs in each batch and hashing this
@@ -56,9 +58,11 @@ impl BatchHasher {
     }
     /// Add a new input to the batch.
     ///
-    /// It panics if the size of the batch exceeds `BATCH_SIZE`.
+    /// It panics if the size of the batch exceeds `BATCH_SIZE` or if `input.len()` is not equal to
+    /// the `input_length` parameter of the constructor.
     pub fn add(&mut self, input: TritBuf) {
-        assert!(self.trit_inputs.len() <= BATCH_SIZE);
+        assert!(self.trit_inputs.len() < BATCH_SIZE, "Batch is full.");
+        assert_eq!(input.len(), self.bct_inputs.len(), "Input has an incorrect size.");
         self.trit_inputs.push(input);
     }
     /// Return the length of the current batch.
@@ -85,10 +89,14 @@ impl BatchHasher {
     fn mux(&mut self) {
         let count = self.trit_inputs.len();
         for i in 0..self.bct_inputs.len() {
-            let bc_trit = self.bct_inputs.get_mut(i);
+            // This is safe because `i < self.bct_inputs.len()`
+            let bc_trit = unsafe { self.bct_inputs.get_unchecked_mut(i) };
 
             for j in 0..count {
-                match self.trit_inputs[j][i] {
+                // this is safe because `j < self.trit_inputs.len()` and
+                // `i < self.trit_inputs[j].len()` (the `add` method guarantees that all the inputs
+                // have the same length as `self.trit_inputs`).
+                match unsafe { self.trit_inputs.get_unchecked(j).get_unchecked(i) } {
                     Btrit::NegOne => *bc_trit.lo |= 1 << j,
                     Btrit::PlusOne => *bc_trit.hi |= 1 << j,
                     Btrit::Zero => {
@@ -110,8 +118,8 @@ impl BatchHasher {
         let mut result = Vec::with_capacity(length);
 
         for i in 0..length {
-            let low = (self.bct_hashes.lo()[i] >> index) & 1;
-            // This is safe as the previous access to `self.lo` took care of checking the index.
+            // This is safe because `i < self.bct_hashes.len()`
+            let low = (unsafe { *self.bct_hashes.lo().get_unchecked(i) } >> index) & 1;
             let hi = (unsafe { *self.bct_hashes.hi().get_unchecked(i) } >> index) & 1;
 
             let trit = match (low, hi) {
