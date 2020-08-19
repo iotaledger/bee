@@ -14,7 +14,7 @@
 mod bct;
 mod bct_curlp;
 
-use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge};
+use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge, HASH_LENGTH};
 use bct::BCTritBuf;
 use bct_curlp::BCTCurlP;
 
@@ -47,12 +47,12 @@ impl BatchHasher {
     ///
     /// It requires the length of the input, the length of the output hash and the number of
     /// rounds.
-    pub fn new(input_length: usize, hash_length: usize, rounds: CurlPRounds) -> Self {
+    pub fn new(input_length: usize, rounds: CurlPRounds) -> Self {
         Self {
             trit_inputs: Vec::with_capacity(BATCH_SIZE),
             bct_inputs: BCTritBuf::zeros(input_length),
-            bct_hashes: BCTritBuf::zeros(hash_length),
-            bct_curlp: BCTCurlP::new(hash_length, rounds),
+            bct_hashes: BCTritBuf::zeros(HASH_LENGTH),
+            bct_curlp: BCTCurlP::new(rounds),
             curlp: CurlP::new(rounds),
         }
     }
@@ -72,7 +72,7 @@ impl BatchHasher {
         self.trit_inputs.len()
     }
 
-    /// Check if the current batch is empty
+    /// Check if the current batch is empty.
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }

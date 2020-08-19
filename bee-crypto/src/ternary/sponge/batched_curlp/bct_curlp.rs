@@ -9,22 +9,29 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-use crate::ternary::sponge::{CurlPRounds, batched_curlp::{bct::BCTritBuf, HIGH_BITS}};
+use crate::ternary::{
+    sponge::{
+        batched_curlp::{bct::BCTritBuf, HIGH_BITS},
+        CurlPRounds,
+    },
+    HASH_LENGTH,
+};
 
 pub struct BCTCurlP {
-    hash_length: usize,
     rounds: CurlPRounds,
     state: BCTritBuf,
     scratch_pad: BCTritBuf,
 }
 
 impl BCTCurlP {
-    pub fn new(hash_length: usize, rounds: CurlPRounds) -> Self {
+    #[allow(clippy::assertions_on_constants)]
+    pub fn new(rounds: CurlPRounds) -> Self {
+        // Ensure that changing the hash length will not cause undefined behaviour.
+        assert!(3 * HASH_LENGTH > 728);
         Self {
-            hash_length,
             rounds,
-            state: BCTritBuf::filled(HIGH_BITS, 3 * hash_length),
-            scratch_pad: BCTritBuf::filled(HIGH_BITS, 3 * hash_length),
+            state: BCTritBuf::filled(HIGH_BITS, 3 * HASH_LENGTH),
+            scratch_pad: BCTritBuf::filled(HIGH_BITS, 3 * HASH_LENGTH),
         }
     }
 
@@ -35,23 +42,21 @@ impl BCTCurlP {
     pub fn transform(&mut self) {
         let mut scratch_pad_index = 0;
 
+        // All the unchecked accesses here are guaranteed to be safe by the assertion inside `new`.
         for _round in 0..self.rounds as usize {
             self.scratch_pad.as_slice_mut().copy_from_slice(self.state.as_slice());
 
-            let mut alpha = self.scratch_pad.lo()[scratch_pad_index];
-            // This is safe as the previous access to `self.lo` took care of checking the index.
+            let mut alpha = unsafe { *self.scratch_pad.lo().get_unchecked(scratch_pad_index) };
             let mut beta = unsafe { *self.scratch_pad.hi().get_unchecked(scratch_pad_index) };
 
             scratch_pad_index += 364;
 
-            let mut a = self.scratch_pad.lo()[scratch_pad_index];
-            // This is safe as the previous access to `self.lo` took care of checking the index.
+            let mut a = unsafe { *self.scratch_pad.lo().get_unchecked(scratch_pad_index) };
             let mut b = unsafe { *self.scratch_pad.hi().get_unchecked(scratch_pad_index) };
 
             let delta = beta ^ a;
 
-            self.state.lo_mut()[0] = !(delta & alpha);
-            // This is safe as the previous access to `self.lo` took care of checking the index.
+            *unsafe { self.state.lo_mut().get_unchecked_mut(0) } = !(delta & alpha);
             *unsafe { self.state.hi_mut().get_unchecked_mut(0) } = delta | (alpha ^ b);
 
             let mut state_index = 1;
@@ -61,14 +66,13 @@ impl BCTCurlP {
 
                 alpha = a;
                 beta = b;
-                a = self.scratch_pad.lo()[scratch_pad_index];
-                // This is safe as the previous access to `self.lo` took care of checking the index.
+                a = unsafe { *self.scratch_pad.lo().get_unchecked(scratch_pad_index) };
                 b = unsafe { *self.scratch_pad.hi().get_unchecked(scratch_pad_index) };
 
                 let delta = beta ^ a;
 
-                self.state.lo_mut()[state_index] = !(delta & alpha);
-                self.state.hi_mut()[state_index] = delta | (alpha ^ b);
+                *unsafe { self.state.lo_mut().get_unchecked_mut(state_index) } = !(delta & alpha);
+                *unsafe { self.state.hi_mut().get_unchecked_mut(state_index) } = delta | (alpha ^ b);
 
                 state_index += 1;
 
@@ -76,14 +80,12 @@ impl BCTCurlP {
 
                 alpha = a;
                 beta = b;
-                a = self.scratch_pad.lo()[scratch_pad_index];
-                // This is safe as the previous access to `self.lo` took care of checking the index.
+                a = unsafe { *self.scratch_pad.lo().get_unchecked(scratch_pad_index) };
                 b = unsafe { *self.scratch_pad.hi().get_unchecked(scratch_pad_index) };
 
                 let delta = beta ^ a;
 
-                self.state.lo_mut()[state_index] = !(delta & alpha);
-                // This is safe as the previous access to `self.lo` took care of checking the index.
+                *unsafe { self.state.lo_mut().get_unchecked_mut(state_index) } = !(delta & alpha);
                 *unsafe { self.state.hi_mut().get_unchecked_mut(state_index) } = delta | (alpha ^ b);
 
                 state_index += 1;
@@ -96,11 +98,7 @@ impl BCTCurlP {
         let mut offset = 0;
 
         loop {
-            let length_to_copy = if length < self.hash_length {
-                length
-            } else {
-                self.hash_length
-            };
+            let length_to_copy = if length < HASH_LENGTH { length } else { HASH_LENGTH };
 
             self.state
                 .get_mut(0..length_to_copy)
@@ -122,23 +120,23 @@ impl BCTCurlP {
     pub fn squeeze_into(&mut self, result: &mut BCTritBuf) {
         let trit_count = result.len();
 
-        let hash_count = trit_count / self.hash_length;
+        let hash_count = trit_count / HASH_LENGTH;
 
         for i in 0..hash_count {
             result
-                .get_mut(i * self.hash_length..(i + 1) * self.hash_length)
-                .copy_from_slice(self.state.get(0..self.hash_length));
+                .get_mut(i * HASH_LENGTH..(i + 1) * HASH_LENGTH)
+                .copy_from_slice(self.state.get(0..HASH_LENGTH));
 
             self.transform();
         }
 
-        let last = trit_count - hash_count * self.hash_length;
+        let last = trit_count - hash_count * HASH_LENGTH;
 
         result
             .get_mut(trit_count - last..trit_count)
             .copy_from_slice(self.state.get(0..last));
 
-        if trit_count % self.hash_length != 0 {
+        if trit_count % HASH_LENGTH != 0 {
             self.transform();
         }
     }
