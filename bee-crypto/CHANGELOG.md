@@ -13,13 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-- Fix `try_from` method of `Hash`
-
 ### Removed
 
 ### Fixed
 
 ### Security -->
+
+## 0.1.2-alpha - 2020-08-19
+
+### Fixed
+
+- Fix `try_from` method of `Hash`
 
 ## 0.1.1-alpha - 2020-08-11
 
