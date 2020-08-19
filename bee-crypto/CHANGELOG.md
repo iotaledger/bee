@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fix `try_from` method of `Hash`
+- `TryFrom<&'a Trits> for Hash`;
 
 ## 0.1.1-alpha - 2020-08-11
 
