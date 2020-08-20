@@ -1,6 +1,6 @@
 [package]
 name = "bee-crypto"
-version = "0.1.1-alpha"
+version = "0.2.0-alpha"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "Cryptographic primitives of the IOTA protocol"
@@ -19,4 +19,9 @@ thiserror = "1.0.20"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
 
 [dev-dependencies]
+criterion = "0.3"
 rand = "0.7.3"
+
+[[bench]]
+name = "batched_hash"
+harness = false
