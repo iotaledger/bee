@@ -99,10 +99,9 @@ impl BCTCurlP {
 
         loop {
             let length_to_copy = if length < HASH_LENGTH { length } else { HASH_LENGTH };
-
-            self.state
-                .get_mut(0..length_to_copy)
-                .copy_from_slice(bc_trits.get(offset..offset + length_to_copy));
+            // This is safe as `length_to_copy <= HASH_LENGTH`.
+            unsafe { self.state.get_unchecked_mut(0..length_to_copy) }
+                .copy_from_slice(unsafe { bc_trits.get_unchecked(offset..offset + length_to_copy) });
 
             self.transform();
 
@@ -123,18 +122,16 @@ impl BCTCurlP {
         let hash_count = trit_count / HASH_LENGTH;
 
         for i in 0..hash_count {
-            result
-                .get_mut(i * HASH_LENGTH..(i + 1) * HASH_LENGTH)
-                .copy_from_slice(self.state.get(0..HASH_LENGTH));
+            unsafe { result.get_unchecked_mut(i * HASH_LENGTH..(i + 1) * HASH_LENGTH) }
+                .copy_from_slice(unsafe { self.state.get_unchecked(0..HASH_LENGTH) });
 
             self.transform();
         }
 
         let last = trit_count - hash_count * HASH_LENGTH;
 
-        result
-            .get_mut(trit_count - last..trit_count)
-            .copy_from_slice(self.state.get(0..last));
+        unsafe { result.get_unchecked_mut(trit_count - last..trit_count) }
+            .copy_from_slice(unsafe { self.state.get_unchecked(0..last) });
 
         if trit_count % HASH_LENGTH != 0 {
             self.transform();

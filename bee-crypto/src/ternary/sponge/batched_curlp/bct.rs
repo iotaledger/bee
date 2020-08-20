@@ -70,19 +70,10 @@ impl BCTritBuf {
         &mut self.hi
     }
 
-    pub fn get<I: SliceIndex<[usize]> + Clone>(&self, index: I) -> BCTritRef<I::Output> {
+    pub unsafe fn get_unchecked<I: SliceIndex<[usize]> + Clone>(&self, index: I) -> BCTritRef<I::Output> {
         BCTritRef {
-            lo: &self.lo[index.clone()],
-            // This is safe as the previous access to `self.lo` took care of checking the index.
-            hi: unsafe { self.hi.get_unchecked(index) },
-        }
-    }
-
-    pub fn get_mut<I: SliceIndex<[usize]> + Clone>(&mut self, index: I) -> BCTritMut<I::Output> {
-        BCTritMut {
-            lo: &mut self.lo[index.clone()],
-            // This is safe as the previous access to `self.lo` took care of checking the index.
-            hi: unsafe { self.hi.get_unchecked_mut(index) },
+            lo: self.lo.get_unchecked(index.clone()),
+            hi: self.hi.get_unchecked(index),
         }
     }
 
