@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.2.0-alpha - 2020-08-20
+
+### Added
+
+- Batched version of `CurlP`;
+
 ## 0.1.1-alpha - 2020-08-11
 
 ### Changed
