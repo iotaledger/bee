@@ -96,6 +96,6 @@ impl<S: Stream<Item = T> + FusedStream + Unpin, T> Stream for ShutdownStream<S> 
 
 impl<S: Stream<Item = T> + FusedStream + Unpin, T> FusedStream for ShutdownStream<S> {
     fn is_terminated(&self) -> bool {
-        self.shutdown.is_terminated() && self.stream.is_terminated()
+        self.shutdown.is_terminated() || self.stream.is_terminated()
     }
 }
