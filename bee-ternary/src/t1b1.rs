@@ -154,6 +154,13 @@ where
         }
     }
 
+    fn with_capacity(cap: usize) -> Self {
+        Self {
+            _phantom: PhantomData,
+            inner: Vec::with_capacity(cap),
+        }
+    }
+
     fn push(&mut self, trit: <Self::Slice as RawEncoding>::Trit) {
         self.inner.push(trit);
     }

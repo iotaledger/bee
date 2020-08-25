@@ -734,9 +734,8 @@ impl<T: RawEncodingBuf> TritBuf<T> {
     /// Create a new empty [`TritBuf`], backed by the given capacity, `cap`. The resulting
     /// [`TritBuf`] will contain at least enough space to contain `cap` trits without needing to
     /// reallocate.
-    fn with_capacity(_cap: usize) -> Self {
-        // TODO: Allocate capacity
-        Self::new()
+    fn with_capacity(cap: usize) -> Self {
+        Self(T::with_capacity(cap))
     }
 
     /// Create a new [`TritBuf`] of the given length, filled with copies of the provided trit.
