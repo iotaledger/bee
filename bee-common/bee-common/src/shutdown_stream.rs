@@ -31,12 +31,13 @@
 
 use futures::{
     channel::oneshot,
-    future, stream,
+    future::{self, FusedFuture},
+    stream::{self, FusedStream},
     task::{Context, Poll},
     FutureExt, Stream, StreamExt,
 };
 
-use std::pin::Pin;
+use std::{marker::Unpin, pin::Pin};
 
 /// A stream with a shutdown.
 ///
@@ -44,11 +45,11 @@ use std::pin::Pin;
 /// shutdown receiver is triggered or when the stream ends.
 pub struct ShutdownStream<S> {
     shutdown: future::Fuse<oneshot::Receiver<()>>,
-    stream: stream::Fuse<S>,
+    stream: S,
 }
 
-impl<S: Stream> ShutdownStream<S> {
-    /// Create a new `ShutdownStream`.
+impl<S: Stream> ShutdownStream<stream::Fuse<S>> {
+    /// Create a new `ShutdownStream` from a shutdown receiver and an unfused stream.
     ///
     /// This method receives the stream to be wrapped and a `oneshot::Receiver` for the shutdown.
     /// Both the stream and the shutdown receiver are fused to avoid polling already completed
@@ -61,15 +62,40 @@ impl<S: Stream> ShutdownStream<S> {
     }
 }
 
-impl<S: Stream<Item = T> + std::marker::Unpin, T> Stream for ShutdownStream<S> {
+impl<S: Stream + FusedStream> ShutdownStream<S> {
+    /// Create a new `ShutdownStream` from a shutdown receiver and a fused stream.
+    ///
+    /// This method receives the fused stream to be wrapped and a `oneshot::Receiver` for the shutdown.
+    /// The shutdown receiver is fused to avoid polling already completed futures.
+    pub fn from_fused(shutdown: oneshot::Receiver<()>, stream: S) -> Self {
+        Self {
+            shutdown: shutdown.fuse(),
+            stream,
+        }
+    }
+}
+
+impl<S: Stream<Item = T> + FusedStream + Unpin, T> Stream for ShutdownStream<S> {
     type Item = T;
     /// The shutdown receiver is polled first, if it is not ready, the stream is polled. This
     /// guarantees that checking for shutdown always happens first.
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-        if let Poll::Ready(_) = self.shutdown.poll_unpin(cx) {
-            Poll::Ready(None)
-        } else {
-            self.stream.poll_next_unpin(cx)
+        if !self.shutdown.is_terminated() {
+            if let Poll::Ready(_) = self.shutdown.poll_unpin(cx) {
+                return Poll::Ready(None);
+            }
+
+            if !self.stream.is_terminated() {
+                return self.stream.poll_next_unpin(cx);
+            }
         }
+
+        Poll::Ready(None)
+    }
+}
+
+impl<S: Stream<Item = T> + FusedStream + Unpin, T> FusedStream for ShutdownStream<S> {
+    fn is_terminated(&self) -> bool {
+        self.shutdown.is_terminated() || self.stream.is_terminated()
     }
 }
