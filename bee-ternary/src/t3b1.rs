@@ -136,7 +136,7 @@ impl RawEncodingBuf for T3B1Buf {
     }
 
     fn with_capacity(cap: usize) -> Self {
-        let cap = (cap / 3) + if cap % 3 == 0 { 0 } else { 1 };
+        let cap = (cap / 3) + (cap % 3 != 0) as usize;
         Self(Vec::with_capacity(cap), 0)
     }
 

@@ -134,7 +134,7 @@ impl RawEncodingBuf for T5B1Buf {
     }
 
     fn with_capacity(cap: usize) -> Self {
-        let cap = (cap / 5) + if cap % 5 == 0 { 0 } else { 1 };
+        let cap = (cap / 5) + (cap % 5 != 0) as usize;
         Self(Vec::with_capacity(cap), 0)
     }
 
