@@ -18,7 +18,7 @@ use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge, HASH_LENGTH};
 use bct::{BCTrit, BCTritBuf};
 use bct_curlp::BCTCurlP;
 
-use bee_ternary::{Btrit, TritBuf};
+use bee_ternary::{Btrit, T1B1Buf, T5B1Buf, TritBuf};
 
 /// The number of inputs that can be processed in a single batch.
 pub const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
@@ -31,7 +31,7 @@ const HIGH_BITS: usize = usize::max_value();
 /// required.
 pub struct BatchHasher {
     /// The trits of the inputs before being interleaved.
-    trit_inputs: Vec<TritBuf>,
+    trit_inputs: Vec<TritBuf<T5B1Buf>>,
     /// An interleaved representation of the input trits.
     bct_inputs: BCTritBuf,
     /// An interleaved representation of the output trits.
@@ -64,7 +64,7 @@ impl BatchHasher {
     ///
     /// It panics if the size of the batch exceeds `BATCH_SIZE` or if `input.len()` is not equal to
     /// the `input_length` parameter of the constructor.
-    pub fn add(&mut self, input: TritBuf) {
+    pub fn add(&mut self, input: TritBuf<T5B1Buf>) {
         assert!(self.trit_inputs.len() < BATCH_SIZE, "Batch is full.");
         assert_eq!(input.len(), self.bct_inputs.len(), "Input has an incorrect size.");
         self.trit_inputs.push(input);
@@ -197,7 +197,7 @@ impl<'a> Iterator for BatchedHashes<'a> {
 /// A helper iterator type for the output of the `hash_unbatched` method.
 struct UnbatchedHashes<'a> {
     curl: &'a mut CurlP,
-    trit_inputs: std::vec::Drain<'a, TritBuf>,
+    trit_inputs: std::vec::Drain<'a, TritBuf<T5B1Buf>>,
 }
 
 impl<'a> Iterator for UnbatchedHashes<'a> {
@@ -205,6 +205,6 @@ impl<'a> Iterator for UnbatchedHashes<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let buf = self.trit_inputs.next()?;
-        Some(self.curl.digest(&buf).unwrap())
+        Some(self.curl.digest(&buf.encode::<T1B1Buf>()).unwrap())
     }
 }
