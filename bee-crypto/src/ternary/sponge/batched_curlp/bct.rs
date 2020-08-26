@@ -9,95 +9,115 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-use std::slice::SliceIndex;
+use std::ops::{Deref, DerefMut, Range};
+
+#[derive(Clone, Copy, Debug)]
+pub struct BCTrit(pub usize, pub usize);
+
+impl BCTrit {
+    const fn zero() -> Self {
+        Self(0, 0)
+    }
+
+    pub fn lo(&self) -> usize {
+        self.0
+    }
+
+    pub fn hi(&self) -> usize {
+        self.1
+    }
+}
 
 #[derive(Clone)]
 pub struct BCTritBuf {
-    lo: Vec<usize>,
-    hi: Vec<usize>,
+    inner: Vec<BCTrit>,
 }
 
 impl BCTritBuf {
-    pub fn as_slice(&self) -> BCTritRef<'_, [usize]> {
-        BCTritRef {
-            lo: &self.lo,
-            hi: &self.hi,
+    pub fn zeros(len: usize) -> Self {
+        Self {
+            inner: vec![BCTrit::zero(); len],
         }
     }
 
-    pub fn as_slice_mut(&mut self) -> BCTritMut<'_, [usize]> {
-        BCTritMut {
-            lo: &mut self.lo,
-            hi: &mut self.hi,
+    pub fn filled(value: usize, len: usize) -> Self {
+        Self {
+            inner: vec![BCTrit(value, value); len],
         }
     }
+}
 
+impl Deref for BCTritBuf {
+    type Target = BCTrits;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(self.inner.deref() as *const [BCTrit] as *const BCTrits) }
+    }
+}
+
+impl DerefMut for BCTritBuf {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *(self.inner.deref_mut() as *mut [BCTrit] as *mut BCTrits) }
+    }
+}
+
+#[repr(transparent)]
+pub struct BCTrits {
+    inner: [BCTrit],
+}
+
+impl BCTrits {
     pub fn fill(&mut self, value: usize) {
-        for (lo, hi) in self.lo.iter_mut().zip(self.hi.iter_mut()) {
+        for BCTrit(hi, lo) in &mut self.inner {
             *lo = value;
             *hi = value;
         }
     }
 
-    pub fn filled(value: usize, len: usize) -> Self {
-        BCTritBuf {
-            lo: vec![value; len],
-            hi: vec![value; len],
-        }
-    }
-
-    pub fn zeros(len: usize) -> Self {
-        Self::filled(0, len)
-    }
-
     pub fn len(&self) -> usize {
-        self.lo.len()
+        self.inner.len()
     }
 
-    pub fn lo(&self) -> &[usize] {
-        &self.lo
+    pub fn copy_from_slice(&mut self, slice: &Self) {
+        self.inner.copy_from_slice(&slice.inner)
     }
 
-    pub fn hi(&self) -> &[usize] {
-        &self.hi
+    pub unsafe fn get_unchecked<I: BCTritsIndex>(&self, index: I) -> &I::Output {
+        index.get_unchecked(self)
     }
 
-    pub fn lo_mut(&mut self) -> &mut [usize] {
-        &mut self.lo
-    }
-
-    pub fn hi_mut(&mut self) -> &mut [usize] {
-        &mut self.hi
-    }
-
-    pub unsafe fn get_unchecked<I: SliceIndex<[usize]> + Clone>(&self, index: I) -> BCTritRef<I::Output> {
-        BCTritRef {
-            lo: self.lo.get_unchecked(index.clone()),
-            hi: self.hi.get_unchecked(index),
-        }
-    }
-
-    pub unsafe fn get_unchecked_mut<I: SliceIndex<[usize]> + Clone>(&mut self, index: I) -> BCTritMut<I::Output> {
-        BCTritMut {
-            lo: self.lo.get_unchecked_mut(index.clone()),
-            hi: self.hi.get_unchecked_mut(index),
-        }
+    pub unsafe fn get_unchecked_mut<I: BCTritsIndex>(&mut self, index: I) -> &mut I::Output {
+        index.get_unchecked_mut(self)
     }
 }
 
-pub struct BCTritRef<'a, T: ?Sized> {
-    pub lo: &'a T,
-    pub hi: &'a T,
+pub trait BCTritsIndex {
+    type Output: ?Sized;
+
+    unsafe fn get_unchecked(self, trits: &BCTrits) -> &Self::Output;
+    unsafe fn get_unchecked_mut(self, trits: &mut BCTrits) -> &mut Self::Output;
 }
 
-pub struct BCTritMut<'a, T: ?Sized> {
-    pub lo: &'a mut T,
-    pub hi: &'a mut T,
+impl BCTritsIndex for usize {
+    type Output = BCTrit;
+
+    unsafe fn get_unchecked(self, trits: &BCTrits) -> &Self::Output {
+        trits.inner.get_unchecked(self)
+    }
+
+    unsafe fn get_unchecked_mut(self, trits: &mut BCTrits) -> &mut Self::Output {
+        trits.inner.get_unchecked_mut(self)
+    }
 }
 
-impl<'a> BCTritMut<'a, [usize]> {
-    pub fn copy_from_slice(&mut self, slice: BCTritRef<'_, [usize]>) {
-        self.lo.copy_from_slice(slice.lo);
-        self.hi.copy_from_slice(slice.hi);
+impl BCTritsIndex for Range<usize> {
+    type Output = BCTrits;
+
+    unsafe fn get_unchecked(self, trits: &BCTrits) -> &Self::Output {
+        &*(trits.inner.get_unchecked(self) as *const [BCTrit] as *const BCTrits)
+    }
+
+    unsafe fn get_unchecked_mut(self, trits: &mut BCTrits) -> &mut Self::Output {
+        &mut *(trits.inner.get_unchecked_mut(self) as *mut [BCTrit] as *mut BCTrits)
     }
 }

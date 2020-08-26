@@ -15,7 +15,7 @@ mod bct;
 mod bct_curlp;
 
 use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge, HASH_LENGTH};
-use bct::BCTritBuf;
+use bct::{BCTrit, BCTritBuf};
 use bct_curlp::BCTCurlP;
 
 use bee_ternary::{Btrit, TritBuf};
@@ -98,18 +98,18 @@ impl BatchHasher {
         let count = self.trit_inputs.len();
         for i in 0..self.bct_inputs.len() {
             // This is safe because `i < self.bct_inputs.len()`.
-            let bc_trit = unsafe { self.bct_inputs.get_unchecked_mut(i) };
+            let BCTrit(lo, hi) = unsafe { self.bct_inputs.get_unchecked_mut(i) };
 
             for j in 0..count {
                 // this is safe because `j < self.trit_inputs.len()` and
                 // `i < self.trit_inputs[j].len()` (the `add` method guarantees that all the inputs
                 // have the same length as `self.trit_inputs`).
                 match unsafe { self.trit_inputs.get_unchecked(j).get_unchecked(i) } {
-                    Btrit::NegOne => *bc_trit.lo |= 1 << j,
-                    Btrit::PlusOne => *bc_trit.hi |= 1 << j,
+                    Btrit::NegOne => *lo |= 1 << j,
+                    Btrit::PlusOne => *hi |= 1 << j,
                     Btrit::Zero => {
-                        *bc_trit.lo |= 1 << j;
-                        *bc_trit.hi |= 1 << j;
+                        *lo |= 1 << j;
+                        *hi |= 1 << j;
                     }
                 }
             }
@@ -128,8 +128,9 @@ impl BatchHasher {
 
         for i in 0..length {
             // This is safe because `i < self.bct_hashes.len()`.
-            let low = (unsafe { *self.bct_hashes.lo().get_unchecked(i) } >> index) & 1;
-            let hi = (unsafe { *self.bct_hashes.hi().get_unchecked(i) } >> index) & 1;
+            let bc_trit = unsafe { *self.bct_hashes.get_unchecked(i) };
+            let low = (bc_trit.lo() >> index) & 1;
+            let hi = (bc_trit.hi() >> index) & 1;
 
             let trit = match (low, hi) {
                 (1, 0) => Btrit::NegOne,
