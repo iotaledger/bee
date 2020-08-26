@@ -89,6 +89,10 @@ impl BCTrits {
     pub unsafe fn get_unchecked_mut<I: BCTritsIndex>(&mut self, index: I) -> &mut I::Output {
         index.get_unchecked_mut(self)
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &BCTrit> {
+        self.inner.iter()
+    }
 }
 
 pub trait BCTritsIndex {
