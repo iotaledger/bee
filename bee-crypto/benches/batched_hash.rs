@@ -10,24 +10,26 @@
 // See the License for the specific language governing permissions and limitations under the License.
 
 use bee_crypto::ternary::sponge::{BatchHasher, CurlPRounds, BATCH_SIZE};
-use bee_ternary::{T1B1Buf, TritBuf, TryteBuf};
+use bee_ternary::{T1B1Buf, T5B1Buf, TritBuf, TryteBuf};
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
-fn batched_hasher(input: TritBuf) {
+fn batched_hasher(input: TritBuf<T5B1Buf>) {
     let mut hasher = BatchHasher::new(input.len(), CurlPRounds::Rounds81);
 
     for _ in 0..BATCH_SIZE {
-        hasher.add(input.clone());
+        let input = input.encode::<T1B1Buf>();
+        hasher.add(input);
     }
     for _ in hasher.hash_batched() {}
 }
 
-fn unbatched_hasher(input: TritBuf) {
+fn unbatched_hasher(input: TritBuf<T5B1Buf>) {
     let mut hasher = BatchHasher::new(input.len(), CurlPRounds::Rounds81);
 
     for _ in 0..BATCH_SIZE {
-        hasher.add(input.clone());
+        let input = input.encode::<T1B1Buf>();
+        hasher.add(input);
     }
     for _ in hasher.hash_unbatched() {}
 }
@@ -39,11 +41,11 @@ fn bench_hasher(c: &mut Criterion) {
     let input_243 = TryteBuf::try_from_str(input_243)
         .unwrap()
         .as_trits()
-        .encode::<T1B1Buf>();
+        .encode::<T5B1Buf>();
     let input_8019 = TryteBuf::try_from_str(input_8019)
         .unwrap()
         .as_trits()
-        .encode::<T1B1Buf>();
+        .encode::<T5B1Buf>();
 
     let mut group = c.benchmark_group("CurlP");
     group.throughput(Throughput::Elements(BATCH_SIZE as u64));
