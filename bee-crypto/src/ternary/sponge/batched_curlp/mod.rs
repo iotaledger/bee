@@ -127,10 +127,10 @@ impl BatchHasher {
     /// rule for the `(0, 0)` pair of bits which is mapped to the `0` trit.
     fn demux(&mut self, index: usize) -> TritBuf {
         for (bc_trit, btrit) in self.bct_hashes.iter().zip(self.buf_demux.iter_mut()) {
-            let low = (bc_trit.lo() >> index) & 1;
+            let lo = (bc_trit.lo() >> index) & 1;
             let hi = (bc_trit.hi() >> index) & 1;
 
-            *btrit = match (low, hi) {
+            *btrit = match (lo, hi) {
                 (1, 0) => Btrit::NegOne,
                 (0, 1) => Btrit::PlusOne,
                 // This can only be `(0, 0)` or `(1, 1)`.
