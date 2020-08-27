@@ -134,7 +134,7 @@ impl RawEncodingBuf for T2B1Buf {
     }
 
     fn with_capacity(cap: usize) -> Self {
-        let cap = (cap / 2) + (cap % 2);
+        let cap = (cap / TPB) + (cap % TPB);
         Self(Vec::with_capacity(cap), 0)
     }
 
