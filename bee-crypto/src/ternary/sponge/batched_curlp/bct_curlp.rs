@@ -20,7 +20,7 @@ use crate::ternary::{
     HASH_LENGTH,
 };
 
-pub struct BCTCurlP {
+pub(crate) struct BCTCurlP {
     rounds: CurlPRounds,
     state: BCTritBuf,
     scratch_pad: BCTritBuf,
@@ -28,7 +28,7 @@ pub struct BCTCurlP {
 
 impl BCTCurlP {
     #[allow(clippy::assertions_on_constants)]
-    pub fn new(rounds: CurlPRounds) -> Self {
+    pub(crate) fn new(rounds: CurlPRounds) -> Self {
         // Ensure that changing the hash length will not cause undefined behaviour.
         assert!(3 * HASH_LENGTH > 728);
         Self {
@@ -38,11 +38,11 @@ impl BCTCurlP {
         }
     }
 
-    pub fn reset(&mut self) {
+    pub(crate) fn reset(&mut self) {
         self.state.fill(HIGH_BITS);
     }
 
-    pub fn transform(&mut self) {
+    pub(crate) fn transform(&mut self) {
         let mut scratch_pad_index = 0;
 
         // All the unchecked accesses here are guaranteed to be safe by the assertion inside `new`.
@@ -91,7 +91,7 @@ impl BCTCurlP {
         }
     }
 
-    pub fn absorb(&mut self, bc_trits: &BCTritBuf) {
+    pub(crate) fn absorb(&mut self, bc_trits: &BCTritBuf) {
         let mut length = bc_trits.len();
         let mut offset = 0;
 
@@ -114,7 +114,7 @@ impl BCTCurlP {
 
     // This method shouldn't assume that `result` has any particular content, just that it has an
     // adequate size.
-    pub fn squeeze_into(&mut self, result: &mut BCTritBuf) {
+    pub(crate) fn squeeze_into(&mut self, result: &mut BCTritBuf) {
         let trit_count = result.len();
 
         let hash_count = trit_count / HASH_LENGTH;

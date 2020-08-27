@@ -12,35 +12,35 @@
 use std::ops::{Deref, DerefMut, Range};
 
 #[derive(Clone, Copy, Debug)]
-pub struct BCTrit(pub usize, pub usize);
+pub(crate) struct BCTrit(pub(crate) usize, pub(crate) usize);
 
 impl BCTrit {
     const fn zero() -> Self {
         Self(0, 0)
     }
 
-    pub fn lo(&self) -> usize {
+    pub(crate) fn lo(&self) -> usize {
         self.0
     }
 
-    pub fn hi(&self) -> usize {
+    pub(crate) fn hi(&self) -> usize {
         self.1
     }
 }
 
 #[derive(Clone)]
-pub struct BCTritBuf {
+pub(crate) struct BCTritBuf {
     inner: Vec<BCTrit>,
 }
 
 impl BCTritBuf {
-    pub fn zeros(len: usize) -> Self {
+    pub(crate) fn zeros(len: usize) -> Self {
         Self {
             inner: vec![BCTrit::zero(); len],
         }
     }
 
-    pub fn filled(value: usize, len: usize) -> Self {
+    pub(crate) fn filled(value: usize, len: usize) -> Self {
         Self {
             inner: vec![BCTrit(value, value); len],
         }
@@ -62,40 +62,40 @@ impl DerefMut for BCTritBuf {
 }
 
 #[repr(transparent)]
-pub struct BCTrits {
+pub(crate) struct BCTrits {
     inner: [BCTrit],
 }
 
 impl BCTrits {
-    pub fn fill(&mut self, value: usize) {
+    pub(crate) fn fill(&mut self, value: usize) {
         for BCTrit(hi, lo) in &mut self.inner {
             *lo = value;
             *hi = value;
         }
     }
 
-    pub fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.inner.len()
     }
 
-    pub fn copy_from_slice(&mut self, slice: &Self) {
+    pub(crate) fn copy_from_slice(&mut self, slice: &Self) {
         self.inner.copy_from_slice(&slice.inner)
     }
 
-    pub unsafe fn get_unchecked<I: BCTritsIndex>(&self, index: I) -> &I::Output {
+    pub(crate) unsafe fn get_unchecked<I: BCTritsIndex>(&self, index: I) -> &I::Output {
         index.get_unchecked(self)
     }
 
-    pub unsafe fn get_unchecked_mut<I: BCTritsIndex>(&mut self, index: I) -> &mut I::Output {
+    pub(crate) unsafe fn get_unchecked_mut<I: BCTritsIndex>(&mut self, index: I) -> &mut I::Output {
         index.get_unchecked_mut(self)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &BCTrit> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &BCTrit> {
         self.inner.iter()
     }
 }
 
-pub trait BCTritsIndex {
+pub(crate) trait BCTritsIndex {
     type Output: ?Sized;
 
     unsafe fn get_unchecked(self, trits: &BCTrits) -> &Self::Output;
