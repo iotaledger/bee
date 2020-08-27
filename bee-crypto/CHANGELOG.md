@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+<!-- ## 0.2.1-alpha - 2020-08-27
+
+### Changed
+
+- Transpose binary encoded trit representation to be more performant; -->
+
 ## 0.2.0-alpha - 2020-08-20
 
 ### Added
