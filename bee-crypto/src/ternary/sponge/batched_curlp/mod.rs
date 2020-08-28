@@ -15,7 +15,7 @@ mod bct;
 mod bct_curlp;
 
 use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge, HASH_LENGTH};
-use bct::BCTritBuf;
+use bct::{BCTrit, BCTritBuf};
 use bct_curlp::BCTCurlP;
 
 use bee_ternary::{Btrit, TritBuf};
@@ -36,6 +36,8 @@ pub struct BatchHasher {
     bct_inputs: BCTritBuf,
     /// An interleaved representation of the output trits.
     bct_hashes: BCTritBuf,
+    /// A buffer for demultiplexing.
+    buf_demux: TritBuf,
     /// The CurlP hasher for binary coded trits.
     bct_curlp: BCTCurlP,
     /// The regular CurlP hasher.
@@ -52,6 +54,7 @@ impl BatchHasher {
             trit_inputs: Vec::with_capacity(BATCH_SIZE),
             bct_inputs: BCTritBuf::zeros(input_length),
             bct_hashes: BCTritBuf::zeros(HASH_LENGTH),
+            buf_demux: TritBuf::zeros(HASH_LENGTH),
             bct_curlp: BCTCurlP::new(rounds),
             curlp: CurlP::new(rounds),
         }
@@ -98,18 +101,18 @@ impl BatchHasher {
         let count = self.trit_inputs.len();
         for i in 0..self.bct_inputs.len() {
             // This is safe because `i < self.bct_inputs.len()`.
-            let bc_trit = unsafe { self.bct_inputs.get_unchecked_mut(i) };
+            let BCTrit(lo, hi) = unsafe { self.bct_inputs.get_unchecked_mut(i) };
 
             for j in 0..count {
                 // this is safe because `j < self.trit_inputs.len()` and
                 // `i < self.trit_inputs[j].len()` (the `add` method guarantees that all the inputs
                 // have the same length as `self.trit_inputs`).
                 match unsafe { self.trit_inputs.get_unchecked(j).get_unchecked(i) } {
-                    Btrit::NegOne => *bc_trit.lo |= 1 << j,
-                    Btrit::PlusOne => *bc_trit.hi |= 1 << j,
+                    Btrit::NegOne => *lo |= 1 << j,
+                    Btrit::PlusOne => *hi |= 1 << j,
                     Btrit::Zero => {
-                        *bc_trit.lo |= 1 << j;
-                        *bc_trit.hi |= 1 << j;
+                        *lo |= 1 << j;
+                        *hi |= 1 << j;
                     }
                 }
             }
@@ -122,27 +125,20 @@ impl BatchHasher {
     /// binary encoding of the output hashes. Each pair of low and high bits in the `bct_hashes`
     /// field is decoded into a trit using the same convention as the `mux` step with an additional
     /// rule for the `(0, 0)` pair of bits which is mapped to the `0` trit.
-    fn demux(&self, index: usize) -> TritBuf {
-        let length = self.bct_hashes.len();
-        let mut result = Vec::with_capacity(length);
+    fn demux(&mut self, index: usize) -> TritBuf {
+        for (bc_trit, btrit) in self.bct_hashes.iter().zip(self.buf_demux.iter_mut()) {
+            let lo = (bc_trit.lo() >> index) & 1;
+            let hi = (bc_trit.hi() >> index) & 1;
 
-        for i in 0..length {
-            // This is safe because `i < self.bct_hashes.len()`.
-            let low = (unsafe { *self.bct_hashes.lo().get_unchecked(i) } >> index) & 1;
-            let hi = (unsafe { *self.bct_hashes.hi().get_unchecked(i) } >> index) & 1;
-
-            let trit = match (low, hi) {
+            *btrit = match (lo, hi) {
                 (1, 0) => Btrit::NegOne,
                 (0, 1) => Btrit::PlusOne,
-                (1, 1) => Btrit::Zero,
-                // This can only be `(0, 0)`.
+                // This can only be `(0, 0)` or `(1, 1)`.
                 _ => Btrit::Zero,
             };
-
-            result.push(trit);
         }
 
-        TritBuf::from_trits(&result)
+        self.buf_demux.clone()
     }
 
     /// Hash the received inputs using the batched version of CurlP.
