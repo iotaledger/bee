@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+<!-- ## 0.3.2-alpha - 2020-08-27
+
+### Added
+
+- `with_capacity` constructor for the buffers of every trit encoding. -->
+
 ## 0.3.1-alpha - 2020-07-23
 
 ### Added

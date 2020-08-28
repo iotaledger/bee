@@ -133,6 +133,11 @@ impl RawEncodingBuf for T4B1Buf {
         Self(Vec::new(), 0)
     }
 
+    fn with_capacity(cap: usize) -> Self {
+        let cap = (cap / TPB) + (cap % TPB != 0) as usize;
+        Self(Vec::with_capacity(cap), 0)
+    }
+
     fn push(&mut self, trit: <Self::Slice as RawEncoding>::Trit) {
         if self.1 % TPB == 0 {
             self.0.push(insert(0, 0, trit));

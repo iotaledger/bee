@@ -61,12 +61,17 @@ pub trait RawEncodingBuf {
     /// The trit slice encoding associated with this trit buffer encoding.
     type Slice: RawEncoding + ?Sized;
 
-    /// Create a new empty buffer
+    /// Create a new empty buffer.
     fn new() -> Self
     where
         Self: Sized;
 
-    /// Create a new buffer containing the given trits
+    /// Create a new empty buffer with a given capacity.
+    fn with_capacity(cap: usize) -> Self
+    where
+        Self: Sized;
+
+    /// Create a new buffer containing the given trits.
     fn from_trits(trits: &[<Self::Slice as RawEncoding>::Trit]) -> Self
     where
         Self: Sized,
@@ -78,19 +83,19 @@ pub trait RawEncodingBuf {
         this
     }
 
-    /// Push a trit to the back of this buffer
+    /// Push a trit to the back of this buffer.
     fn push(&mut self, trit: <Self::Slice as RawEncoding>::Trit);
 
-    /// Pop a trit from the back of this buffer
+    /// Pop a trit from the back of this buffer.
     fn pop(&mut self) -> Option<<Self::Slice as RawEncoding>::Trit>;
 
-    /// View the trits in this buffer as a slice
+    /// View the trits in this buffer as a slice.
     fn as_slice(&self) -> &Self::Slice;
 
-    /// View the trits in this buffer as a mutable slice
+    /// View the trits in this buffer as a mutable slice.
     fn as_slice_mut(&mut self) -> &mut Self::Slice;
 
-    /// Convert this encoding into another encoding
+    /// Convert this encoding into another encoding.
     fn into_encoding<T: RawEncodingBuf>(this: TritBuf<Self>) -> TritBuf<T>
     where
         Self: Sized,
