@@ -47,10 +47,10 @@ pub struct BatchHasher<B: RawEncodingBuf> {
     curlp: CurlP,
 }
 
-impl<B, S> BatchHasher<B>
+impl<B> BatchHasher<B>
 where
-    B: RawEncodingBuf<Slice = S>,
-    S: RawEncoding<Trit = Btrit, Buf = B> + ?Sized,
+    B: RawEncodingBuf,
+    B::Slice: RawEncoding<Trit = Btrit>,
 {
     /// Create a new hasher.
     ///
@@ -192,10 +192,10 @@ struct BatchedHashes<'a, B: RawEncodingBuf> {
     range: std::ops::Range<usize>,
 }
 
-impl<'a, B, S> Iterator for BatchedHashes<'a, B>
+impl<'a, B> Iterator for BatchedHashes<'a, B>
 where
-    B: RawEncodingBuf<Slice = S>,
-    S: RawEncoding<Trit = Btrit, Buf = B> + ?Sized,
+    B: RawEncodingBuf,
+    B::Slice: RawEncoding<Trit = Btrit>,
 {
     type Item = TritBuf;
 
@@ -211,10 +211,10 @@ struct UnbatchedHashes<'a, B: RawEncodingBuf> {
     trit_inputs: std::vec::Drain<'a, TritBuf<B>>,
 }
 
-impl<'a, B, S> Iterator for UnbatchedHashes<'a, B>
+impl<'a, B> Iterator for UnbatchedHashes<'a, B>
 where
-    B: RawEncodingBuf<Slice = S>,
-    S: RawEncoding<Trit = Btrit, Buf = B> + ?Sized,
+    B: RawEncodingBuf,
+    B::Slice: RawEncoding<Trit = Btrit>,
 {
     type Item = TritBuf;
 
