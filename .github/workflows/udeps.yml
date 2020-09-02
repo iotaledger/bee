@@ -1,0 +1,51 @@
+name: Udeps
+
+on:
+  push:
+    branches:
+      - dev
+      - stable
+  pull_request:
+    branches:
+      - dev
+      - stable
+
+jobs:
+  udeps:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        override: true
+
+    - name: Cache cargo registry
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/registry
+        key: ubuntu-latest-nightly-cargo-registry-${{ hashFiles('**/Cargo.toml') }}
+
+    - name: Cache cargo index
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/git
+        key: ubuntu-latest-nightly-cargo-index-${{ hashFiles('**/Cargo.toml') }}
+
+    - name: Cache cargo target
+      uses: actions/cache@v2
+      with:
+        path: target
+        key: ubuntu-latest-nightly-cargo-target-${{ hashFiles('**/Cargo.toml') }}
+
+    - uses: actions-rs/cargo@v1
+      with:
+        command: install
+        args: cargo-udeps
+
+    - uses: actions-rs/cargo@v1
+      with:
+        command: udeps
+        args: --all-targets
