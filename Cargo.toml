@@ -5,4 +5,5 @@ members = [
 	"bee-crypto",
 	"bee-signing",
 	"bee-ternary",
+	"bee-test",
 ]

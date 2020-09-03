@@ -9,13 +9,12 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-use std::convert::{TryFrom, TryInto};
-
-mod common;
-use self::common::*;
-
 use bee_ternary::*;
+use bee_test::ternary::*;
+
 use rand::prelude::*;
+
+use std::convert::{TryFrom, TryInto};
 
 fn get_generic<T: raw::RawEncodingBuf + Clone>() {
     println!("{}", std::any::type_name::<T>());

@@ -9,12 +9,9 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
-#![cfg(feature = "serde1")]
-
-mod common;
-use self::common::*;
-
 use bee_ternary::{raw::*, *};
+use bee_test::ternary::*;
+
 use serde::{de::DeserializeOwned, *};
 
 fn serialize_generic<T: raw::RawEncodingBuf>()
