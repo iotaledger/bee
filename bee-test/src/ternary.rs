@@ -13,6 +13,7 @@
 #![allow(dead_code)]
 
 use bee_ternary::*;
+
 use rand::prelude::*;
 
 use std::{convert::TryFrom, ops::Range};
