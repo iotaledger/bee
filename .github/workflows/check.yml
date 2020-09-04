@@ -1,4 +1,4 @@
-name: Build
+name: Check
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
       - stable
 
 jobs:
-  build:
+  check:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -48,5 +48,5 @@ jobs:
     - name: Build
       uses: actions-rs/cargo@v1
       with:
-        command: build
+        command: check
         args: --all --release
