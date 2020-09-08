@@ -79,7 +79,7 @@ impl<S: Sponge + Default> PrivateKeyGenerator for WotsSpongePrivateKeyGenerator<
 
         Ok(Self::PrivateKey {
             state,
-            sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 }
