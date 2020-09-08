@@ -83,7 +83,7 @@ impl Default for WotsSecurityLevel {
 #[derive(SecretDebug, SecretDisplay, SecretDrop)]
 pub struct WotsPrivateKey<S> {
     pub(crate) state: TritBuf<T1B1Buf>,
-    pub(crate) sponge: PhantomData<S>,
+    pub(crate) marker: PhantomData<S>,
 }
 
 impl<S> Zeroize for WotsPrivateKey<S> {
@@ -130,7 +130,7 @@ impl<S: Sponge + Default> PrivateKey for WotsPrivateKey<S> {
 
         Ok(Self::PublicKey {
             state: public_key_state,
-            sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 
@@ -158,7 +158,7 @@ impl<S: Sponge + Default> PrivateKey for WotsPrivateKey<S> {
 
         Ok(Self::Signature {
             state: signature,
-            sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 }
@@ -173,7 +173,7 @@ impl<S: Sponge + Default> WotsPrivateKey<S> {
 /// Winternitz One Time Signature public key.
 pub struct WotsPublicKey<S> {
     state: TritBuf<T1B1Buf>,
-    sponge: PhantomData<S>,
+    marker: PhantomData<S>,
 }
 
 impl<S: Sponge + Default> PublicKey for WotsPublicKey<S> {
@@ -195,7 +195,7 @@ impl<S: Sponge + Default> PublicKey for WotsPublicKey<S> {
 
         Ok(Self {
             state,
-            sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 
@@ -217,7 +217,7 @@ impl<S: Sponge + Default> Display for WotsPublicKey<S> {
 /// Winternitz One Time Signature signature.
 pub struct WotsSignature<S> {
     state: TritBuf<T1B1Buf>,
-    sponge: PhantomData<S>,
+    marker: PhantomData<S>,
 }
 
 impl<S: Sponge + Default> Signature for WotsSignature<S> {
@@ -234,7 +234,7 @@ impl<S: Sponge + Default> Signature for WotsSignature<S> {
 
         Ok(Self {
             state,
-            sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 
@@ -289,7 +289,7 @@ impl<S: Sponge + Default> RecoverableSignature for WotsSignature<S> {
 
         Ok(Self::PublicKey {
             state: public_key_state,
-            sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 }

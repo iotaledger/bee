@@ -23,7 +23,7 @@ use std::marker::PhantomData;
 #[derive(Default)]
 pub struct WotsSpongePrivateKeyGeneratorBuilder<S> {
     security_level: Option<WotsSecurityLevel>,
-    _sponge: PhantomData<S>,
+    marker: PhantomData<S>,
 }
 
 impl<S: Sponge + Default> WotsSpongePrivateKeyGeneratorBuilder<S> {
@@ -37,7 +37,7 @@ impl<S: Sponge + Default> WotsSpongePrivateKeyGeneratorBuilder<S> {
     pub fn build(self) -> Result<WotsSpongePrivateKeyGenerator<S>, WotsError> {
         Ok(WotsSpongePrivateKeyGenerator {
             security_level: self.security_level.ok_or(WotsError::MissingSecurityLevel)?,
-            _sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 }
@@ -45,7 +45,7 @@ impl<S: Sponge + Default> WotsSpongePrivateKeyGeneratorBuilder<S> {
 /// Sponge-based Winternitz One Time Signature private key generator.
 pub struct WotsSpongePrivateKeyGenerator<S> {
     security_level: WotsSecurityLevel,
-    _sponge: PhantomData<S>,
+    marker: PhantomData<S>,
 }
 
 impl<S: Sponge + Default> PrivateKeyGenerator for WotsSpongePrivateKeyGenerator<S> {

@@ -77,7 +77,7 @@ pub enum Error {
 pub struct MssPrivateKeyGeneratorBuilder<S, G> {
     depth: Option<u8>,
     generator: Option<G>,
-    sponge: PhantomData<S>,
+    marker: PhantomData<S>,
 }
 
 impl<S, G> Default for MssPrivateKeyGeneratorBuilder<S, G>
@@ -89,7 +89,7 @@ where
         Self {
             depth: None,
             generator: None,
-            sponge: PhantomData,
+            marker: PhantomData,
         }
     }
 }
@@ -124,7 +124,7 @@ where
         Ok(MssPrivateKeyGenerator {
             depth,
             generator: self.generator.ok_or(Error::MissingGenerator)?,
-            sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 }
@@ -133,7 +133,7 @@ where
 pub struct MssPrivateKeyGenerator<S, G> {
     depth: u8,
     generator: G,
-    sponge: PhantomData<S>,
+    marker: PhantomData<S>,
 }
 
 impl<S, G> PrivateKeyGenerator for MssPrivateKeyGenerator<S, G>
@@ -187,7 +187,7 @@ where
             index: 0,
             keys,
             tree,
-            sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 }
@@ -199,7 +199,7 @@ pub struct MssPrivateKey<S, K: Zeroize> {
     index: usize,
     keys: Vec<K>,
     tree: TritBuf<T1B1Buf>,
-    sponge: PhantomData<S>,
+    marker: PhantomData<S>,
 }
 
 impl<S, K: Zeroize> Zeroize for MssPrivateKey<S, K> {
@@ -272,8 +272,7 @@ where
 pub struct MssPublicKey<S, K> {
     state: TritBuf<T1B1Buf>,
     depth: Option<u8>,
-    sponge: PhantomData<S>,
-    key: PhantomData<K>,
+    marker: PhantomData<(S, K)>,
 }
 
 impl<S, K> MssPublicKey<S, K>
@@ -353,8 +352,7 @@ where
         Ok(Self {
             state,
             depth: None,
-            sponge: PhantomData,
-            key: PhantomData,
+            marker: PhantomData,
         })
     }
 
@@ -367,7 +365,7 @@ where
 pub struct MssSignature<S> {
     state: TritBuf<T1B1Buf>,
     index: Option<usize>,
-    sponge: PhantomData<S>,
+    marker: PhantomData<S>,
 }
 
 impl<S: Sponge + Default> MssSignature<S> {
@@ -389,7 +387,7 @@ impl<S: Sponge + Default> Signature for MssSignature<S> {
         Ok(Self {
             state,
             index: None,
-            sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 
