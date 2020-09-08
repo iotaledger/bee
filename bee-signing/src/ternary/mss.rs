@@ -148,11 +148,11 @@ where
     fn generate_from_entropy(&self, entropy: &Trits<T1B1>) -> Result<Self::PrivateKey, Self::Error> {
         let seed = Seed::from_trits(entropy.to_buf()).map_err(|_| Error::FailedSeedGeneration)?;
         let mut sponge = S::default();
-        let mut keys = Vec::with_capacity(1 << (self.depth - 1));
-        let mut tree = TritBuf::<T1B1Buf>::zeros(((1 << self.depth) - 1) * HASH_LENGTH);
+        let mut keys = Vec::with_capacity(1 << self.depth);
+        let mut tree = TritBuf::<T1B1Buf>::zeros(((1 << (self.depth + 1)) - 1) * HASH_LENGTH);
 
         // Generate all the underlying private keys and public keys.
-        for key_index in 0..(1 << (self.depth - 1)) {
+        for key_index in 0..(1 << self.depth) {
             let underlying_private_key = self
                 .generator
                 .generate_from_entropy(seed.subseed(key_index).as_trits())
@@ -160,14 +160,14 @@ where
             let underlying_public_key = underlying_private_key
                 .generate_public_key()
                 .map_err(|_| Self::Error::FailedUnderlyingPublicKeyGeneration)?;
-            let tree_index = (1 << (self.depth - 1)) + key_index - 1;
+            let tree_index = (1 << self.depth) + key_index - 1;
 
             keys.push(underlying_private_key);
             tree[tree_index * HASH_LENGTH..(tree_index + 1) * HASH_LENGTH].copy_from(underlying_public_key.as_trits());
         }
 
         // Create the merkle tree by hashing from botton to top.
-        for depth in (0..self.depth - 1).rev() {
+        for depth in (0..self.depth).rev() {
             for i in 0..(1 << depth) {
                 let index = (1 << depth) + i - 1;
                 let left_index = index * 2 + 1;
@@ -238,7 +238,7 @@ where
             .sign(message)
             .map_err(|_| Self::Error::FailedUnderlyingSignatureGeneration)?;
         let mut state = TritBuf::<T1B1Buf>::zeros(underlying_signature.size() + SIGNATURE_FRAGMENT_LENGTH);
-        let mut tree_index = (1 << (self.depth - 1)) + self.index - 1;
+        let mut tree_index = (1 << self.depth) + self.index - 1;
         let mut sibling_index;
         let mut i = 0;
 
@@ -326,7 +326,7 @@ where
         let mut j = 1;
         for (i, sibling) in siblings.chunks(HASH_LENGTH).enumerate() {
             #[allow(clippy::cast_possible_truncation)] // HASH_LENGTH < u8::max_value()
-            if depth - 1 == i as u8 {
+            if depth == i as u8 {
                 break;
             }
 
