@@ -77,7 +77,7 @@ pub enum Error {
 pub struct MssPrivateKeyGeneratorBuilder<S, G> {
     depth: Option<u8>,
     generator: Option<G>,
-    sponge: PhantomData<S>,
+    marker: PhantomData<S>,
 }
 
 impl<S, G> Default for MssPrivateKeyGeneratorBuilder<S, G>
@@ -89,7 +89,7 @@ where
         Self {
             depth: None,
             generator: None,
-            sponge: PhantomData,
+            marker: PhantomData,
         }
     }
 }
@@ -124,7 +124,7 @@ where
         Ok(MssPrivateKeyGenerator {
             depth,
             generator: self.generator.ok_or(Error::MissingGenerator)?,
-            sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 }
@@ -133,7 +133,7 @@ where
 pub struct MssPrivateKeyGenerator<S, G> {
     depth: u8,
     generator: G,
-    sponge: PhantomData<S>,
+    marker: PhantomData<S>,
 }
 
 impl<S, G> PrivateKeyGenerator for MssPrivateKeyGenerator<S, G>
@@ -148,11 +148,11 @@ where
     fn generate_from_entropy(&self, entropy: &Trits<T1B1>) -> Result<Self::PrivateKey, Self::Error> {
         let seed = Seed::from_trits(entropy.to_buf()).map_err(|_| Error::FailedSeedGeneration)?;
         let mut sponge = S::default();
-        let mut keys = Vec::with_capacity(1 << (self.depth - 1));
-        let mut tree = TritBuf::<T1B1Buf>::zeros(((1 << self.depth) - 1) * HASH_LENGTH);
+        let mut keys = Vec::with_capacity(1 << self.depth);
+        let mut tree = TritBuf::<T1B1Buf>::zeros(((1 << (self.depth + 1)) - 1) * HASH_LENGTH);
 
         // Generate all the underlying private keys and public keys.
-        for key_index in 0..(1 << (self.depth - 1)) {
+        for key_index in 0..(1 << self.depth) {
             let underlying_private_key = self
                 .generator
                 .generate_from_entropy(seed.subseed(key_index).as_trits())
@@ -160,14 +160,14 @@ where
             let underlying_public_key = underlying_private_key
                 .generate_public_key()
                 .map_err(|_| Self::Error::FailedUnderlyingPublicKeyGeneration)?;
-            let tree_index = (1 << (self.depth - 1)) + key_index - 1;
+            let tree_index = (1 << self.depth) + key_index - 1;
 
             keys.push(underlying_private_key);
             tree[tree_index * HASH_LENGTH..(tree_index + 1) * HASH_LENGTH].copy_from(underlying_public_key.as_trits());
         }
 
         // Create the merkle tree by hashing from botton to top.
-        for depth in (0..self.depth - 1).rev() {
+        for depth in (0..self.depth).rev() {
             for i in 0..(1 << depth) {
                 let index = (1 << depth) + i - 1;
                 let left_index = index * 2 + 1;
@@ -187,7 +187,7 @@ where
             index: 0,
             keys,
             tree,
-            sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 }
@@ -199,7 +199,7 @@ pub struct MssPrivateKey<S, K: Zeroize> {
     index: usize,
     keys: Vec<K>,
     tree: TritBuf<T1B1Buf>,
-    sponge: PhantomData<S>,
+    marker: PhantomData<S>,
 }
 
 impl<S, K: Zeroize> Zeroize for MssPrivateKey<S, K> {
@@ -238,7 +238,7 @@ where
             .sign(message)
             .map_err(|_| Self::Error::FailedUnderlyingSignatureGeneration)?;
         let mut state = TritBuf::<T1B1Buf>::zeros(underlying_signature.size() + SIGNATURE_FRAGMENT_LENGTH);
-        let mut tree_index = (1 << (self.depth - 1)) + self.index - 1;
+        let mut tree_index = (1 << self.depth) + self.index - 1;
         let mut sibling_index;
         let mut i = 0;
 
@@ -272,8 +272,7 @@ where
 pub struct MssPublicKey<S, K> {
     state: TritBuf<T1B1Buf>,
     depth: Option<u8>,
-    sponge: PhantomData<S>,
-    key: PhantomData<K>,
+    marker: PhantomData<(S, K)>,
 }
 
 impl<S, K> MssPublicKey<S, K>
@@ -326,7 +325,7 @@ where
         let mut j = 1;
         for (i, sibling) in siblings.chunks(HASH_LENGTH).enumerate() {
             #[allow(clippy::cast_possible_truncation)] // HASH_LENGTH < u8::max_value()
-            if depth - 1 == i as u8 {
+            if depth == i as u8 {
                 break;
             }
 
@@ -353,8 +352,7 @@ where
         Ok(Self {
             state,
             depth: None,
-            sponge: PhantomData,
-            key: PhantomData,
+            marker: PhantomData,
         })
     }
 
@@ -367,7 +365,7 @@ where
 pub struct MssSignature<S> {
     state: TritBuf<T1B1Buf>,
     index: Option<usize>,
-    sponge: PhantomData<S>,
+    marker: PhantomData<S>,
 }
 
 impl<S: Sponge + Default> MssSignature<S> {
@@ -389,7 +387,7 @@ impl<S: Sponge + Default> Signature for MssSignature<S> {
         Ok(Self {
             state,
             index: None,
-            sponge: PhantomData,
+            marker: PhantomData,
         })
     }
 

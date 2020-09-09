@@ -19,21 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-<!-- ## Unreleased - YYYY-MM-DD
-
-### Added
+## 0.1.1-alpha - 2020-09-09
 
 ### Changed
 
-- Update `bee-crypto` dependency to `0.1.1-alpha`;
-
-### Deprecated
-
-### Removed
+- Harmonise usage of `PhantomData` markers across bee;
 
 ### Fixed
 
-### Security -->
+- MSS depth now follows strict definition of a binary tree depth;
 
 ## 0.1.0-alpha - 2020-07-28
 
