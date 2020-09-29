@@ -11,7 +11,7 @@ keywords = ["iota", "tangle", "bee", "framework", "signing"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common-derive = { version = "0.1.0-alpha", path = "../bee-common/bee-common-derive" }
+bee-common-derive = { version = "0.1.1-alpha", path = "../bee-common/bee-common-derive" }
 bee-crypto = { version = "0.2.0-alpha", path = "../bee-crypto" }
 bee-ternary = { version = "0.3.1-alpha", path = "../bee-ternary" }
 
