@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.1.1-alpha - 2020-09-29
+
+### Added
+
+- `no_std` support;
+
 ## 0.1.0-alpha - 2020-07-16
 
 ### Added
