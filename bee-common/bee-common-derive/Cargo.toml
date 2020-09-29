@@ -1,6 +1,6 @@
 [package]
 name = "bee-common-derive"
-version = "0.1.0-alpha"
+version = "0.1.1-alpha"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "Derive macros for the bee-common crate"
