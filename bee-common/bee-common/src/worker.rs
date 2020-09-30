@@ -20,7 +20,7 @@ pub enum Error {
     #[error("An asynchronous operation failed.")]
     AsynchronousOperationFailed(#[from] std::io::Error),
 
-    /// Occurs, when a message couldn't be sent over a `futures::channel::mpsc` channel.
+    /// Occurs, when a message could not be sent over a channel.
     #[error("Sending a message to a task failed.")]
-    SendingMessageFailed(#[from] futures::channel::mpsc::SendError),
+    SendingMessageFailed,
 }
