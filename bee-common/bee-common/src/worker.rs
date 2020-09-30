@@ -13,7 +13,7 @@
 
 /// Errors that might occur during the lifetime of asynchronous workers.
 #[derive(Debug)]
-pub struct Error(Box<dyn std::error::Error>);
+pub struct Error(pub Box<dyn std::error::Error>);
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
