@@ -11,16 +11,18 @@
 
 //! A module that deals with asynchronous workers in general.
 
-use thiserror::Error;
+/// Errors that might occur during the lifetime of asynchronous workers.
+#[derive(Debug)]
+pub struct Error(pub Box<dyn std::error::Error + Send>);
 
-/// Errors, that might occur during the lifetime of asynchronous workers.
-#[derive(Error, Debug)]
-pub enum Error {
-    /// Occurs, when there is some asynchronous I/O error.
-    #[error("An asynchronous operation failed.")]
-    AsynchronousOperationFailed(#[from] std::io::Error),
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Worker error: {:?}.", self.0)
+    }
+}
 
-    /// Occurs, when a message couldn't be sent over a `futures::channel::mpsc` channel.
-    #[error("Sending a message to a task failed.")]
-    SendingMessageFailed(#[from] futures::channel::mpsc::SendError),
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        self.0.source()
+    }
 }
