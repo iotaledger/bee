@@ -24,7 +24,7 @@ jobs:
           RUSTFLAGS: "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests"
       - id: grcov
         uses: actions-rs/grcov@v0.1
-      - uses: coverallsapp/github-action@master
+      - uses: coverallsapp/github-action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ${{ steps.grcov.outputs.report }}
