@@ -16,8 +16,3 @@ serde = { version = "1.0", optional = true }
 
 [features]
 serde1 = ["serde"]
-
-[dev-dependencies]
-bee-test = { version = "0.1.0-alpha", path = "../bee-test" }
-
-rand = "0.7.3"
