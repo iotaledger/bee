@@ -44,7 +44,7 @@ macro_rules! impl_packable_for_num {
             type Error = std::io::Error;
 
             fn packed_len(&self) -> usize {
-                std::mem::size_of::<$ty>()
+                std::mem::size_of_val(&self.to_le_bytes())
             }
 
             fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -54,7 +54,7 @@ macro_rules! impl_packable_for_num {
             }
 
             fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-                let mut bytes = [0; std::mem::size_of::<$ty>()];
+                let mut bytes = [0; $ty::MIN.to_le_bytes().len()];
                 reader.read_exact(&mut bytes)?;
 
                 Ok($ty::from_le_bytes(bytes))
