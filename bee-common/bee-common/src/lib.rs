@@ -15,6 +15,7 @@
 #![warn(missing_docs)]
 
 pub mod logger;
+pub mod packable;
 pub mod shutdown;
 pub mod shutdown_stream;
 pub mod worker;
