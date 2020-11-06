@@ -13,7 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-common-derive = { version = "0.1.1-alpha", path = "../bee-common/bee-common-derive" }
 bee-crypto = { version = "0.2.0-alpha", path = "../bee-crypto" }
-bee-ternary = { version = "0.3.2-alpha", path = "../bee-ternary" }
+bee-ternary = { version = "0.3.3-alpha", path = "../bee-ternary" }
 
 rand = "0.7"
 sha3 = "0.9.0"
