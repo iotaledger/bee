@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.3.3-alpha - 2020-11-06
+
+### Fixed
+
+- `TryFrom<Trits>` implemented for `u128` and `i128` only when `cfg(has_i128)`.
+
 ## 0.3.2-alpha - 2020-10-19
 
 ### Added
