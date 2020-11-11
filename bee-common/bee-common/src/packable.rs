@@ -16,7 +16,7 @@ pub use std::io::{Read, Write};
 /// A trait to pack and unpack types to and from bytes.
 pub trait Packable {
     /// Associated error type.
-    type Error;
+    type Error: std::fmt::Debug;
 
     /// Returns the length of the packed bytes.
     fn packed_len(&self) -> usize;
@@ -25,11 +25,12 @@ pub trait Packable {
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error>;
 
     /// Packs the instance to bytes and writes them to a newly allocated vector.
-    fn pack_new(&self) -> Result<Vec<u8>, Self::Error> {
+    fn pack_new(&self) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(self.packed_len());
-        self.pack(&mut bytes)?;
+        // Packing to bytes can't fail.
+        self.pack(&mut bytes).unwrap();
 
-        Ok(bytes)
+        bytes
     }
 
     /// Reads bytes from the passed reader and unpacks them into an instance.

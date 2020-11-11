@@ -16,7 +16,7 @@ macro_rules! impl_packable_test_for_num {
         #[test]
         fn $name() {
             let num: $ty = $value;
-            assert_eq!($ty::unpack(&mut num.pack_new().unwrap().as_slice()).unwrap(), num);
+            assert_eq!($ty::unpack(&mut num.pack_new().as_slice()).unwrap(), num);
         }
     };
 }
@@ -35,11 +35,11 @@ impl_packable_test_for_num!(packable_u128, u128, 0x6F7BD423100423DBFF127B91CA0AB
 #[test]
 fn packable_bool() {
     assert_eq!(false.packed_len(), 1);
-    assert_eq!(bool::unpack(&mut false.pack_new().unwrap().as_slice()).unwrap(), false);
-    assert_eq!(bool::unpack(&mut 0u8.pack_new().unwrap().as_slice()).unwrap(), false);
+    assert_eq!(bool::unpack(&mut false.pack_new().as_slice()).unwrap(), false);
+    assert_eq!(bool::unpack(&mut 0u8.pack_new().as_slice()).unwrap(), false);
 
     assert_eq!(true.packed_len(), 1);
-    assert_eq!(bool::unpack(&mut true.pack_new().unwrap().as_slice()).unwrap(), true);
-    assert_eq!(bool::unpack(&mut 1u8.pack_new().unwrap().as_slice()).unwrap(), true);
-    assert_eq!(bool::unpack(&mut 42u8.pack_new().unwrap().as_slice()).unwrap(), true);
+    assert_eq!(bool::unpack(&mut true.pack_new().as_slice()).unwrap(), true);
+    assert_eq!(bool::unpack(&mut 1u8.pack_new().as_slice()).unwrap(), true);
+    assert_eq!(bool::unpack(&mut 42u8.pack_new().as_slice()).unwrap(), true);
 }
