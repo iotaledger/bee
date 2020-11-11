@@ -19,6 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.1.1-alpha - 2020-11-12
+
+### Added
+
+- Impl `Packable` for `bool`;
+- Impl `Packable` for `Option<P: Packable>`;
+
+### Changed
+
+- Make `pack_new` return a `Vec<u8>` instead of a `Result`;
+- Require `Packable::Error` to be `Debug`;
+
 ## 0.1.0-alpha - 2020-11-02
 
 ### Added
