@@ -38,6 +38,28 @@ pub trait Packable {
         Self: Sized;
 }
 
+impl Packable for bool {
+    type Error = std::io::Error;
+
+    fn packed_len(&self) -> usize {
+        (*self as u8).packed_len()
+    }
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        (*self as u8).pack(writer)
+    }
+
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
+    where
+        Self: Sized,
+    {
+        Ok(match u8::unpack(reader)? {
+            0 => false,
+            _ => true,
+        })
+    }
+}
+
 macro_rules! impl_packable_for_num {
     ($ty:ident) => {
         impl Packable for $ty {
@@ -53,7 +75,10 @@ macro_rules! impl_packable_for_num {
                 Ok(())
             }
 
-            fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
+            fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
+            where
+                Self: Sized,
+            {
                 let mut bytes = [0; $ty::MIN.to_le_bytes().len()];
                 reader.read_exact(&mut bytes)?;
 
