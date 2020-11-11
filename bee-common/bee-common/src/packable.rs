@@ -16,7 +16,7 @@ pub use std::io::{Read, Write};
 /// A trait to pack and unpack types to and from bytes.
 pub trait Packable {
     /// Associated error type.
-    type Error;
+    type Error: std::fmt::Debug;
 
     /// Returns the length of the packed bytes.
     fn packed_len(&self) -> usize;
@@ -25,17 +25,82 @@ pub trait Packable {
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error>;
 
     /// Packs the instance to bytes and writes them to a newly allocated vector.
-    fn pack_new(&self) -> Result<Vec<u8>, Self::Error> {
+    fn pack_new(&self) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(self.packed_len());
-        self.pack(&mut bytes)?;
+        // Packing to bytes can't fail.
+        self.pack(&mut bytes).unwrap();
 
-        Ok(bytes)
+        bytes
     }
 
     /// Reads bytes from the passed reader and unpacks them into an instance.
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
     where
         Self: Sized;
+}
+
+impl Packable for bool {
+    type Error = std::io::Error;
+
+    fn packed_len(&self) -> usize {
+        (*self as u8).packed_len()
+    }
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        (*self as u8).pack(writer)
+    }
+
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
+    where
+        Self: Sized,
+    {
+        Ok(!matches!(u8::unpack(reader)?, 0))
+    }
+}
+
+/// Error that occurs on `Option<P: Packable>` operations.
+#[derive(Debug)]
+pub enum OptionError<E> {
+    /// Error that occurs on boolean `Packable` operations.
+    Bool(<bool as Packable>::Error),
+    /// Error that occurs on inner `Packable` operations.
+    Inner(E),
+}
+
+impl<P: Packable> Packable for Option<P> {
+    type Error = OptionError<P::Error>;
+
+    fn packed_len(&self) -> usize {
+        true.packed_len()
+            + match self {
+                Some(p) => p.packed_len(),
+                None => 0,
+            }
+    }
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        match self {
+            Some(p) => {
+                true.pack(writer).map_err(OptionError::Bool)?;
+                p.pack(writer).map_err(OptionError::Inner)?;
+            }
+            None => {
+                false.pack(writer).map_err(OptionError::Bool)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
+    where
+        Self: Sized,
+    {
+        Ok(match bool::unpack(reader).map_err(OptionError::Bool)? {
+            true => Some(P::unpack(reader).map_err(OptionError::Inner)?),
+            false => None,
+        })
+    }
 }
 
 macro_rules! impl_packable_for_num {
@@ -53,7 +118,10 @@ macro_rules! impl_packable_for_num {
                 Ok(())
             }
 
-            fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
+            fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
+            where
+                Self: Sized,
+            {
                 let mut bytes = [0; $ty::MIN.to_le_bytes().len()];
                 reader.read_exact(&mut bytes)?;
 
