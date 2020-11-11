@@ -60,11 +60,11 @@ impl Packable for bool {
 
 /// Error that occurs on `Option<P: Packable>` operations.
 #[derive(Debug)]
-pub enum OptionError<P> {
+pub enum OptionError<E> {
     /// Error that occurs on boolean `Packable` operations.
     Bool(<bool as Packable>::Error),
     /// Error that occurs on inner `Packable` operations.
-    Inner(P),
+    Inner(E),
 }
 
 impl<P: Packable> Packable for Option<P> {
