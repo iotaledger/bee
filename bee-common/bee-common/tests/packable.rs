@@ -46,3 +46,18 @@ fn packable_bool() {
     assert_eq!(bool::unpack(&mut 1u8.pack_new().as_slice()).unwrap(), true);
     assert_eq!(bool::unpack(&mut 42u8.pack_new().as_slice()).unwrap(), true);
 }
+
+#[test]
+fn packable_option() {
+    assert_eq!(None::<u64>.packed_len(), 1);
+    assert_eq!(
+        Option::<u64>::unpack(&mut None::<u64>.pack_new().as_slice()).unwrap(),
+        None
+    );
+
+    assert_eq!(Some(42u64).packed_len(), 9);
+    assert_eq!(
+        Option::<u64>::unpack(&mut Some(42u64).pack_new().as_slice()).unwrap(),
+        Some(42u64)
+    );
+}

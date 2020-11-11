@@ -61,6 +61,51 @@ impl Packable for bool {
     }
 }
 
+/// Error that occurs on `Option<P: Packable>` operations.
+#[derive(Debug)]
+pub enum OptionError<P> {
+    /// Error that occurs on boolean `Packable` operations.
+    Bool(<bool as Packable>::Error),
+    /// Error that occurs on inner `Packable` operations.
+    Inner(P),
+}
+
+impl<P: Packable> Packable for Option<P> {
+    type Error = OptionError<P::Error>;
+
+    fn packed_len(&self) -> usize {
+        true.packed_len()
+            + match self {
+                Some(p) => p.packed_len(),
+                None => 0,
+            }
+    }
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        match self {
+            Some(p) => {
+                true.pack(writer).map_err(|e| OptionError::Bool(e))?;
+                p.pack(writer).map_err(|e| OptionError::Inner(e))?;
+            }
+            None => {
+                false.pack(writer).map_err(|e| OptionError::Bool(e))?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
+    where
+        Self: Sized,
+    {
+        Ok(match bool::unpack(reader).map_err(|e| OptionError::Bool(e))? {
+            true => Some(P::unpack(reader).map_err(|e| OptionError::Inner(e))?),
+            false => None,
+        })
+    }
+}
+
 macro_rules! impl_packable_for_num {
     ($ty:ident) => {
         impl Packable for $ty {
