@@ -54,10 +54,7 @@ impl Packable for bool {
     where
         Self: Sized,
     {
-        Ok(match u8::unpack(reader)? {
-            0 => false,
-            _ => true,
-        })
+        Ok(!matches!(u8::unpack(reader)?, 0))
     }
 }
 
@@ -84,11 +81,11 @@ impl<P: Packable> Packable for Option<P> {
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Some(p) => {
-                true.pack(writer).map_err(|e| OptionError::Bool(e))?;
-                p.pack(writer).map_err(|e| OptionError::Inner(e))?;
+                true.pack(writer).map_err(OptionError::Bool)?;
+                p.pack(writer).map_err(OptionError::Inner)?;
             }
             None => {
-                false.pack(writer).map_err(|e| OptionError::Bool(e))?;
+                false.pack(writer).map_err(OptionError::Bool)?;
             }
         }
 
@@ -99,8 +96,8 @@ impl<P: Packable> Packable for Option<P> {
     where
         Self: Sized,
     {
-        Ok(match bool::unpack(reader).map_err(|e| OptionError::Bool(e))? {
-            true => Some(P::unpack(reader).map_err(|e| OptionError::Inner(e))?),
+        Ok(match bool::unpack(reader).map_err(OptionError::Bool)? {
+            true => Some(P::unpack(reader).map_err(OptionError::Inner)?),
             false => None,
         })
     }
