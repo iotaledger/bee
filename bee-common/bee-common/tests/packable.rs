@@ -16,7 +16,10 @@ macro_rules! impl_packable_test_for_num {
         #[test]
         fn $name() {
             let num: $ty = $value;
-            assert_eq!($ty::unpack(&mut num.pack_new().as_slice()).unwrap(), num);
+            let bytes = num.pack_new();
+
+            assert_eq!(bytes.len(), num.packed_len());
+            assert_eq!($ty::unpack(&mut bytes.as_slice()).unwrap(), num);
         }
     };
 }
