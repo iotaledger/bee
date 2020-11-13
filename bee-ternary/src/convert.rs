@@ -88,7 +88,7 @@ macro_rules! unsigned_try_from_trits {
 // We have to implement manually due to Rust's orphan rules :(
 // This macro accepts anything that implements:
 // `Clone + CheckedAdd + Unsigned + AsPrimitive<u8> + FromPrimitive`
-#[cfg(has_i128)]
+#[cfg(has_u128)]
 unsigned_try_from_trits!(u128);
 unsigned_try_from_trits!(u64);
 unsigned_try_from_trits!(u32);

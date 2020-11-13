@@ -1,6 +1,6 @@
 [package]
 name = "bee-ternary"
-version = "0.3.3-alpha"
+version = "0.3.4-alpha"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "Ergonomic ternary manipulation utilities"
@@ -13,6 +13,9 @@ homepage = "https://www.iota.org"
 [dependencies]
 num-traits = "0.2"
 serde = { version = "1.0", optional = true }
+
+[build-dependencies]
+autocfg = "1"
 
 [features]
 serde1 = ["serde"]

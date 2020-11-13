@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.3.4-alpha - 2020-11-13
+
+### Added
+
+- Added proper `i128`/`u128` support detection.
+
 ## 0.3.3-alpha - 2020-11-06
 
 ### Fixed
