@@ -13,10 +13,10 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-ternary = { version = "0.3.4-alpha", path = "../bee-ternary" }
 
-byteorder = "1.3.4"
-lazy_static = "1.4.0"
-thiserror = "1.0.20"
-tiny-keccak = { version = "2.0.2", features = ["keccak"] }
+byteorder = "1.3"
+lazy_static = "1.4"
+thiserror = "1.0"
+tiny-keccak = { version = "2.0", features = ["keccak"] }
 
 [dev-dependencies]
 criterion = "0.3"
