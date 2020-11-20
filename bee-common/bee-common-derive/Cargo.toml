@@ -14,5 +14,5 @@ homepage = "https://www.iota.org"
 proc-macro = true
 
 [dependencies]
-quote = "1.0.7"
-syn = "1.0.33"
+quote = "1.0"
+syn = "1.0"
