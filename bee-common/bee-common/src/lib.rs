@@ -6,6 +6,7 @@
 
 #![warn(missing_docs)]
 
+pub mod event;
 pub mod logger;
 pub mod packable;
 pub mod shutdown;
