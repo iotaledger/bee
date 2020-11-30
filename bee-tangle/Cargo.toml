@@ -1,0 +1,27 @@
+[package]
+name = "bee-tangle"
+version = "0.1.0-alpha"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = ""
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "bee", "framework"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
+
+async-trait = "0.1"
+dashmap = "3.10"
+log = "0.4"
+lru = "0.6"
+
+[dev-dependencies]
+bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-test = { path = "../bee-test" }
+
+criterion = "0.3"
+pollster = "0.2"
