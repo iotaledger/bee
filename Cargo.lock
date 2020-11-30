@@ -224,6 +224,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-crypto"
+version = "0.2.0-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#0bd24a8cba28c9400a876268fc5f8931f74b9a71"
+dependencies = [
+ "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "byteorder",
+ "lazy_static",
+ "thiserror",
+ "tiny-keccak",
+]
+
+[[package]]
 name = "bee-message"
 version = "0.1.0-alpha"
 dependencies = [
@@ -255,11 +267,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-pow"
+version = "0.1.0-alpha"
+dependencies = [
+ "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "blake2",
+]
+
+[[package]]
 name = "bee-signing"
 version = "0.1.1-alpha"
 dependencies = [
  "bee-common-derive",
- "bee-crypto",
+ "bee-crypto 0.2.0-alpha",
  "bee-ternary 0.3.4-alpha",
  "rand",
  "sha3",

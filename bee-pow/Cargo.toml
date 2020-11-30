@@ -1,0 +1,18 @@
+[package]
+name = "bee-pow"
+version = "0.1.0-alpha"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = ""
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "bee", "framework", "pow"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
+bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+
+blake2 = "0.9"
