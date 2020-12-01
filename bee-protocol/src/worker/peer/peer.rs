@@ -81,7 +81,10 @@ impl PeerWorker {
             Some(self.peer.id.clone()),
         );
 
+        let tangle = tangle.into_weak();
+
         while let Some((header, bytes)) = message_handler.fetch_message().await {
+            let tangle = tangle.upgrade().expect("Needed Tangle resource but it was removed");
             if let Err(e) = self.process_message(&tangle, &header, bytes) {
                 error!("[{}] Processing message failed: {:?}.", self.peer.address, e);
             }
