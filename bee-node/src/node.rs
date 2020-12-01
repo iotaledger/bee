@@ -24,7 +24,6 @@ use futures::{
 };
 use log::{debug, info, trace, warn};
 use thiserror::Error;
-use tokio::spawn;
 
 use std::{
     any::{type_name, Any, TypeId},
@@ -228,7 +227,7 @@ impl<B: Backend> Node for BeeNode<B> {
         self.tasks
             .entry(TypeId::of::<W>())
             .or_default()
-            .push((tx, Box::new(spawn(g(rx)))));
+            .push((tx, Box::new(tokio::spawn(g(rx)))));
     }
 
     fn worker<W>(&self) -> Option<&W>
@@ -409,13 +408,9 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         // TODO: turn into worker
         info!("Starting manual peer manager...");
-        spawn({
-            let network = node.resource::<Network>();
-            let peering_manual = config.peering.manual.clone();
-            async move {
-                ManualPeerManager::new(peering_manual).run(&network).await;
-            }
-        });
+        let network = node.resource::<Network>();
+        let manual_peering_config = config.peering.manual.clone();
+        ManualPeerManager::start(manual_peering_config, &network).await;
 
         info!("Registering events...");
         bee_snapshot::events(&node);

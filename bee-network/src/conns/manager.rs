@@ -96,8 +96,6 @@ impl<N: Node> Worker<N> for ConnectionManager {
             ..
         } = config;
 
-        // let mut fused_incoming_streams = peer_listener.fuse();
-
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Listener started.");
 

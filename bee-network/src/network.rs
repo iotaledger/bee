@@ -42,7 +42,7 @@ impl Network {
         }
     }
 
-    pub async fn send(&mut self, command: Command) -> Result<(), Error> {
+    pub async fn send(&self, command: Command) -> Result<(), Error> {
         Ok(self
             .command_sender
             .send_async(command)
