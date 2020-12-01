@@ -1,6 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::config::DEFAULT_CONNECTION_TIMEOUT_SECS;
+
 use libp2p::{
     core::{
         muxing::StreamMuxerBox,
@@ -24,6 +26,6 @@ pub fn build_transport(local_keys: &identity::Keypair) -> io::Result<Boxed<(Peer
         .authenticate(noise::NoiseConfig::xx(noise_keys).into_authenticated())
         .multiplex(mplex::MplexConfig::new())
         // .multiplex(SelectUpgrade::new(yamux::Config::default(), mplex::MplexConfig::new()))
-        .timeout(std::time::Duration::from_secs(20))
+        .timeout(std::time::Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))
         .boxed())
 }
