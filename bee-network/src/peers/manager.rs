@@ -148,65 +148,65 @@ impl<N: Node> Worker<N> for PeerManager {
             info!("Event processor stopped.");
         });
 
-        // node.spawn::<Self, _, _>(|shutdown| async move {
-        //     info!("Reconnector started.");
+        node.spawn::<Self, _, _>(|shutdown| async move {
+            info!("Reconnector started.");
 
-        //     // // let start = Instant::now() + Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed));
-        //     // let mut connected_check = ShutdownStream::new(
-        //     //     shutdown,
-        //     //     // time::interval_at(start, Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed))),
-        //     //     time::interval(Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed))),
-        //     // );
+            let start = Instant::now() + Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed));
+            let mut connected_check = ShutdownStream::new(
+                shutdown,
+                time::interval_at(start, Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed))),
+                // time::interval(Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed))),
+            );
 
-        //     let ticker = &mut time::interval(Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed)));
-        //     let mut fused_shutdown = &mut shutdown.fuse();
+            // let ticker = &mut time::interval(Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed)));
+            // let mut fused_shutdown = &mut shutdown.fuse();
 
-        //     let mut first = true;
+            // let mut first = true;
 
-        //     loop {
-        //         select! {
-        //             _ = fused_shutdown => {
-        //                 break;
-        //             }
-        //             _ = ticker.next().fuse() => {
-        //                 if first {
-        //                     first = false;
-        //                     continue;
-        //                 }
-        //                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for
-        // each of                 // those.
-        //                 for peer_id in peers.iter_if(|info, state| info.is_known() && state.is_disconnected()) {
-        //                     if let Err(e) = internal_event_sender
-        //                         .send_async(InternalEvent::ReconnectScheduled { peer_id })
-        //                         .await
-        //                         .map_err(|_| Error::InternalEventSendFailure("ReconnectScheduled"))
-        //                     {
-        //                         warn!("{:?}", e)
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
+            // loop {
+            //     select! {
+            //             _ = fused_shutdown => {
+            //                 break;
+            //             }
+            //             _ = ticker.next().fuse() => {
+            //                 if first {
+            //                     first = false;
+            //                     continue;
+            //                 }
+            //                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for
+            //                 // each of                 // those.
+            //                 for peer_id in peers.iter_if(|info, state| info.is_known() && state.is_disconnected()) {
+            //                     if let Err(e) = internal_event_sender
+            //                         .send_async(InternalEvent::ReconnectScheduled { peer_id })
+            //                         .await
+            //                         .map_err(|_| Error::InternalEventSendFailure("ReconnectScheduled"))
+            //                     {
+            //                         warn!("{:?}", e)
+            //                     }
+            //                 }
+            //             }
+            //         }
+            // }
 
-        //     // // Start with the 2nd tick
-        //     // if connected_check.next().await.is_some() {
-        //     //     while connected_check.next().await.is_some() {
-        //     //         // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
-        // of     //         // those.
-        //     //         for peer_id in peers.iter_if(|info, state| info.is_known() && state.is_disconnected()) {
-        //     //             if let Err(e) = internal_event_sender
-        //     //                 .send_async(InternalEvent::ReconnectScheduled { peer_id })
-        //     //                 .await
-        //     //                 .map_err(|_| Error::InternalEventSendFailure("ReconnectScheduled"))
-        //     //             {
-        //     //                 warn!("{:?}", e)
-        //     //             }
-        //     //         }
-        //     //     }
-        //     // }
+            // Start with the 2nd tick
+            // if connected_check.next().await.is_some() {
+            while connected_check.next().await.is_some() {
+                // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
+                // of those.
+                for peer_id in peers.iter_if(|info, state| info.is_known() && state.is_disconnected()) {
+                    if let Err(e) = internal_event_sender
+                        .send_async(InternalEvent::ReconnectScheduled { peer_id })
+                        .await
+                        .map_err(|_| Error::InternalEventSendFailure("ReconnectScheduled"))
+                    {
+                        warn!("{:?}", e)
+                    }
+                }
+            }
+            // }
 
-        //     info!("Reconnector stopped.");
-        // });
+            info!("Reconnector stopped.");
+        });
 
         trace!("Peer Manager started.");
 
@@ -233,21 +233,34 @@ async fn process_command(
             relation,
         } => {
             info!("Command::AddPeer");
+
             // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
             if relation == PeerRelation::Known {
                 add_peer(id.clone(), address, alias, relation, peers, event_sender).await?;
 
-                // We automatically connect to known peers.
-                connect_peer(
-                    id,
-                    local_keys,
-                    peers,
-                    banned_addrs,
-                    banned_peers,
-                    internal_event_sender,
-                    event_sender,
-                )
-                .await?;
+                let local_keys = local_keys.clone();
+                let peers = peers.clone();
+                let banned_addrs = banned_addrs.clone();
+                let banned_peers = banned_peers.clone();
+                let event_sender = event_sender.clone();
+                let internal_event_sender = internal_event_sender.clone();
+
+                // We automatically connect to known peers. Since we can connect concurrently, we spawn a task here.
+                tokio::spawn(async move {
+                    if let Err(e) = connect_peer(
+                        id,
+                        local_keys,
+                        peers,
+                        banned_addrs,
+                        banned_peers,
+                        internal_event_sender,
+                        event_sender,
+                    )
+                    .await
+                    {
+                        warn!("Failed to connect to peer. Cause: {:?}", e);
+                    }
+                });
             } else {
                 add_peer(id, address, alias, relation, peers, event_sender).await?;
             }
@@ -258,16 +271,29 @@ async fn process_command(
         }
         Command::ConnectPeer { id } => {
             info!("Command::ConnectPeer");
-            connect_peer(
-                id,
-                local_keys,
-                peers,
-                banned_addrs,
-                banned_peers,
-                internal_event_sender,
-                event_sender,
-            )
-            .await?;
+
+            let local_keys = local_keys.clone();
+            let peers = peers.clone();
+            let banned_addrs = banned_addrs.clone();
+            let banned_peers = banned_peers.clone();
+            let event_sender = event_sender.clone();
+            let internal_event_sender = internal_event_sender.clone();
+
+            tokio::spawn(async move {
+                if let Err(e) = connect_peer(
+                    id,
+                    local_keys,
+                    peers,
+                    banned_addrs,
+                    banned_peers,
+                    internal_event_sender,
+                    event_sender,
+                )
+                .await
+                {
+                    warn!("Failed to connect to peer. Cause: {:?}", e);
+                }
+            });
         }
         Command::DisconnectPeer { id } => {
             info!("Command::DisconnectPeer");
@@ -275,18 +301,32 @@ async fn process_command(
         }
         Command::DialAddress { address } => {
             info!("Command::DialAddress");
-            dial_address(
-                address,
-                local_keys,
-                &peers,
-                &banned_addrs,
-                &banned_peers,
-                &internal_event_sender,
-                &event_sender,
-            )
-            .await?;
+
+            let local_keys = local_keys.clone();
+            let peers = peers.clone();
+            let banned_addrs = banned_addrs.clone();
+            let banned_peers = banned_peers.clone();
+            let event_sender = event_sender.clone();
+            let internal_event_sender = internal_event_sender.clone();
+
+            tokio::spawn(async move {
+                if let Err(e) = dial_address(
+                    address,
+                    local_keys,
+                    peers,
+                    banned_addrs,
+                    banned_peers,
+                    internal_event_sender,
+                    event_sender,
+                )
+                .await
+                {
+                    warn!("Failed to connect to peer. Cause: {:?}", e);
+                }
+            });
         }
         Command::SendMessage { message, to } => {
+            // TODO: tokio::spawn
             send_message(message, &to, peers).await?;
         }
         Command::BanAddress { address } => {
@@ -377,12 +417,12 @@ async fn process_internal_event(
 
             connect_peer(
                 peer_id,
-                &local_keys,
-                &peers,
-                &banned_addrs,
-                &banned_peers,
-                &internal_event_sender,
-                &event_sender,
+                local_keys.clone(),
+                peers.clone(),
+                banned_addrs.clone(),
+                banned_peers.clone(),
+                internal_event_sender.clone(),
+                event_sender.clone(),
             )
             .await?
         }
@@ -459,21 +499,21 @@ async fn remove_peer(id: PeerId, peers: &PeerList, event_sender: &EventSender) -
 
 async fn connect_peer(
     id: PeerId,
-    local_keys: &identity::Keypair,
-    peers: &PeerList,
-    banned_addrs: &BannedAddrList,
-    banned_peers: &BannedPeerList,
-    internal_event_sender: &InternalEventSender,
-    event_sender: &EventSender,
+    local_keys: identity::Keypair,
+    peers: PeerList,
+    banned_addrs: BannedAddrList,
+    banned_peers: BannedPeerList,
+    internal_event_sender: InternalEventSender,
+    event_sender: EventSender,
 ) -> Result<(), Error> {
     // Try to reach the peer by its known ID.
     if let Err(e) = conns::dial_peer(
         &id,
-        local_keys,
-        internal_event_sender,
-        peers,
-        banned_addrs,
-        banned_peers,
+        &local_keys,
+        &internal_event_sender,
+        &peers,
+        &banned_addrs,
+        &banned_peers,
     )
     .await
     .map_err(|e| Error::ConnectFailure(e))
@@ -519,21 +559,21 @@ async fn disconnect_peer(id: PeerId, peers: &PeerList, event_sender: &EventSende
 
 async fn dial_address(
     address: Multiaddr,
-    local_keys: &identity::Keypair,
-    peers: &PeerList,
-    banned_addrs: &BannedAddrList,
-    banned_peers: &BannedPeerList,
-    internal_event_sender: &InternalEventSender,
-    event_sender: &EventSender,
+    local_keys: identity::Keypair,
+    peers: PeerList,
+    banned_addrs: BannedAddrList,
+    banned_peers: BannedPeerList,
+    internal_event_sender: InternalEventSender,
+    event_sender: EventSender,
 ) -> Result<(), Error> {
     // Try to reach a peer by its known address.
     if let Err(e) = conns::dial_address(
         &address,
-        local_keys,
-        internal_event_sender,
-        peers,
-        banned_addrs,
-        banned_peers,
+        &local_keys,
+        &internal_event_sender,
+        &peers,
+        &banned_addrs,
+        &banned_peers,
     )
     .await
     .map_err(|e| Error::ConnectFailure(e))
