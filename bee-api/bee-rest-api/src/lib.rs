@@ -7,10 +7,7 @@ mod handlers;
 pub mod storage;
 mod types;
 
-use crate::{
-    config::RestApiConfig,
-    types::{ErrorBody, ErrorResponse},
-};
+use crate::config::RestApiConfig;
 use async_trait::async_trait;
 use bee_common::{
     node::{Node, NodeBuilder},
@@ -21,7 +18,11 @@ use log::info;
 use std::{any::TypeId, convert::Infallible};
 use warp::{http::StatusCode, Filter, Rejection, Reply};
 
-use crate::{filters::CustomRejection, storage::Backend};
+use crate::{
+    filters::CustomRejection,
+    storage::Backend,
+    types::responses::{ErrorBody, ErrorResponse},
+};
 
 pub(crate) type NetworkId = (String, u64);
 

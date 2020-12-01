@@ -4,29 +4,26 @@
 use crate::{
     filters::CustomRejection::{BadRequest, NotFound, ServiceUnavailable},
     storage::Backend,
-    types::{DataResponse, GetInfoResponse, GetMilestoneResponse, GetTipsResponse, *},
+    types::{responses::*, *},
     NetworkId,
 };
-
 use bee_common::{node::ResHandle, packable::Packable};
 use bee_ledger::spent::Spent;
 use bee_message::{payload::milestone::MilestoneEssence, prelude::*};
 use bee_protocol::{tangle::MsTangle, MessageSubmitterError, MessageSubmitterWorkerEvent, MilestoneIndex};
 use bee_storage::access::Fetch;
-
 use blake2::Blake2s;
 use digest::Digest;
 use futures::channel::oneshot;
-use warp::{
-    http::{Response, StatusCode},
-    reject, Rejection, Reply,
-};
-
 use std::{
-    convert::{Infallible, TryInto},
+    convert::{Infallible, TryFrom, TryInto},
     iter::FromIterator,
     ops::Deref,
     time::{SystemTime, UNIX_EPOCH},
+};
+use warp::{
+    http::{Response, StatusCode},
+    reject, Rejection, Reply,
 };
 
 async fn is_healthy<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> bool {
@@ -136,6 +133,8 @@ pub async fn post_json_message<B: Backend>(
         }
     };
 
+    unimplemented!();
+
     Ok(StatusCode::OK)
 }
 
@@ -150,16 +149,17 @@ pub async fn post_raw_message(
         return Err(reject::custom(BadRequest("invalid message length")));
     }
 
-    let (notifier_tx, notifier_rx) = oneshot::channel::<Result<MessageId, MessageSubmitterError>>();
+    let (message_inserted_notifier, message_inserted_waiter) =
+        oneshot::channel::<Result<MessageId, MessageSubmitterError>>();
 
     message_submitter
         .send(MessageSubmitterWorkerEvent {
             buf: buf.to_vec(),
-            notifier: notifier_tx,
+            notifier: message_inserted_notifier,
         })
         .map_err(|_| reject::custom(ServiceUnavailable("service unavailable")))?;
 
-    match notifier_rx
+    match message_inserted_waiter
         .await
         .map_err(|_| reject::custom(ServiceUnavailable("service unavailable")))?
     {
@@ -204,111 +204,9 @@ pub async fn get_message_by_message_id<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     match tangle.get(&message_id).await {
-        Some(message) => {
-            let network_id = message.network_id().to_string();
-            let parent_1_message_id = message.parent1().to_string();
-            let parent_2_message_id = message.parent2().to_string();
-            let payload = {
-                match message.payload() {
-                    Some(Payload::Transaction(t)) => Some(PayloadDto::Transaction(TransactionPayloadDto {
-                        kind: 0,
-                        essence: TransactionEssenceDto {
-                            kind: 0,
-                            inputs: t
-                                .essence()
-                                .inputs()
-                                .iter()
-                                .map(|input| match input {
-                                    Input::UTXO(input) => UtxoInputDto {
-                                        kind: 0,
-                                        transaction_id: input.output_id().transaction_id().to_string(),
-                                        transaction_output_index: input.output_id().index(),
-                                    },
-                                    _ => unimplemented!(),
-                                })
-                                .collect(),
-                            outputs: t
-                                .essence()
-                                .outputs()
-                                .iter()
-                                .map(|output| match output {
-                                    Output::SignatureLockedSingle(output) => {
-                                        OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
-                                            kind: 0,
-                                            address: match output.address() {
-                                                Address::Ed25519(ed) => Ed25519AddressDto {
-                                                    kind: 1,
-                                                    address: ed.to_bech32(),
-                                                },
-                                                _ => unimplemented!(),
-                                            },
-                                            amount: output.amount().to_string(),
-                                        })
-                                    }
-                                    _ => unimplemented!(),
-                                })
-                                .collect(),
-                            payload: match t.essence().payload() {
-                                Some(Payload::Indexation(i)) => Some(IndexationPayloadDto {
-                                    kind: 2,
-                                    index: i.index().to_owned(),
-                                    data: hex::encode(i.data()),
-                                }),
-                                Some(_) => unreachable!(),
-                                None => None,
-                            },
-                        },
-                        unlock_blocks: t
-                            .unlock_blocks()
-                            .iter()
-                            .map(|unlock_block| match unlock_block {
-                                UnlockBlock::Signature(s) => match s {
-                                    SignatureUnlock::Ed25519(ed) => {
-                                        UnlockBlockDto::Signature(SignatureUnlockBlockDto {
-                                            kind: 1,
-                                            signature: crate::types::Ed25519SignatureDto {
-                                                kind: 0,
-                                                public_key: hex::encode(ed.public_key()),
-                                                signature: hex::encode(ed.signature()),
-                                            },
-                                        })
-                                    }
-                                    _ => unimplemented!(),
-                                },
-                                UnlockBlock::Reference(r) => UnlockBlockDto::Reference(ReferenceUnlockBlockDto {
-                                    kind: 1,
-                                    reference: r.index(),
-                                }),
-                                _ => unimplemented!(),
-                            })
-                            .collect(),
-                    })),
-                    Some(Payload::Milestone(m)) => Some(PayloadDto::Milestone(MilestonePayloadDto {
-                        kind: 1,
-                        index: m.essence().index(),
-                        timestamp: m.essence().timestamp(),
-                        inclusion_merkle_proof: hex::encode(m.essence().merkle_proof()),
-                        signatures: m.signatures().iter().map(|sig| hex::encode(sig)).collect(),
-                    })),
-                    Some(Payload::Indexation(i)) => Some(PayloadDto::Indexation(IndexationPayloadDto {
-                        kind: 2,
-                        index: i.index().to_owned(),
-                        data: hex::encode(i.data()),
-                    })),
-                    Some(_) => unimplemented!(),
-                    None => None,
-                }
-            };
-            let nonce = message.nonce().to_string();
-
-            Ok(warp::reply::json(&DataResponse::new(GetMessageResponse(MessageDto {
-                network_id,
-                parent_1_message_id,
-                parent_2_message_id,
-                payload,
-                nonce,
-            }))))
-        }
+        Some(message) => Ok(warp::reply::json(&DataResponse::new(GetMessageResponse(
+            MessageDto::try_from(&*message).map_err(|e| reject::custom(BadRequest(e)))?,
+        )))),
         None => Err(reject::custom(NotFound("can not find data"))),
     }
 }
@@ -475,10 +373,10 @@ pub async fn get_output_by_output_id<B: Backend>(
                     Output::SignatureLockedSingle(output) => {
                         OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
                             kind: 0,
-                            address: Ed25519AddressDto {
+                            address: AddressDto::Ed25519(Ed25519AddressDto {
                                 kind: 1,
                                 address: output.address().to_bech32(),
-                            },
+                            }),
                             amount: output.amount().to_string(),
                         })
                     }
@@ -569,7 +467,6 @@ pub mod tests {
 
     use super::*;
 
-    #[allow(dead_code)]
     pub fn message_without_payload() -> Message {
         Message::builder()
             .with_network_id(1)
@@ -585,7 +482,6 @@ pub mod tests {
             .unwrap()
     }
 
-    #[allow(dead_code)]
     pub fn indexation_message() -> Message {
         Message::builder()
             .with_network_id(1)
@@ -608,7 +504,6 @@ pub mod tests {
             .unwrap()
     }
 
-    #[allow(dead_code)]
     pub fn milestone_message() -> Message {
         Message::builder()
             //.with_network_id(1)

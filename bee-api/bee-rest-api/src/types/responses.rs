@@ -1,6 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::types::{MessageDto, OutputDto};
 use serde::Serialize;
 
 /// Marker trait for data bodies.
@@ -17,7 +18,6 @@ impl<T: DataBody> DataResponse<T> {
     pub(crate) fn new(data: T) -> Self {
         Self { data }
     }
-    #[allow(dead_code)]
     /// Get the body of the response.
     pub(crate) fn body(&self) -> &T {
         &self.data
@@ -41,7 +41,6 @@ impl ErrorResponse {
     pub(crate) fn new(error: ErrorBody) -> Self {
         Self { error }
     }
-    #[allow(dead_code)]
     /// Get the body of the response.
     pub(crate) fn body(&self) -> &ErrorBody {
         &self.error
@@ -106,124 +105,6 @@ impl DataBody for GetMessagesByIndexResponse {}
 pub struct GetMessageResponse(pub MessageDto);
 
 impl DataBody for GetMessageResponse {}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct MessageDto {
-    #[serde(rename = "networkId")]
-    pub network_id: String,
-    #[serde(rename = "parent1MessageId")]
-    pub parent_1_message_id: String,
-    #[serde(rename = "parent2MessageId")]
-    pub parent_2_message_id: String,
-    pub payload: Option<PayloadDto>,
-    pub nonce: String,
-}
-
-#[derive(Clone, Debug, Serialize)]
-#[serde(untagged)]
-pub enum PayloadDto {
-    Transaction(TransactionPayloadDto),
-    Indexation(IndexationPayloadDto),
-    Milestone(MilestonePayloadDto),
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct TransactionPayloadDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    pub essence: TransactionEssenceDto,
-    #[serde(rename = "unlockBlocks")]
-    pub unlock_blocks: Vec<UnlockBlockDto>,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct TransactionEssenceDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    pub inputs: Vec<UtxoInputDto>,
-    pub outputs: Vec<OutputDto>,
-    pub payload: Option<IndexationPayloadDto>,
-}
-
-#[derive(Clone, Debug, Serialize)]
-#[serde(untagged)]
-pub enum OutputDto {
-    SignatureLockedSingle(SignatureLockedSingleOutputDto),
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct UtxoInputDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    #[serde(rename = "transactionId")]
-    pub transaction_id: String,
-    #[serde(rename = "transactionOutputIndex")]
-    pub transaction_output_index: u16,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct SignatureLockedSingleOutputDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    pub address: Ed25519AddressDto,
-    pub amount: String,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct Ed25519AddressDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    pub address: String,
-}
-
-#[derive(Clone, Debug, Serialize)]
-#[serde(untagged)]
-pub enum UnlockBlockDto {
-    Signature(SignatureUnlockBlockDto),
-    Reference(ReferenceUnlockBlockDto),
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct SignatureUnlockBlockDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    pub signature: Ed25519SignatureDto,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct Ed25519SignatureDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    #[serde(rename = "publicKey")]
-    pub public_key: String,
-    pub signature: String,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct ReferenceUnlockBlockDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    pub reference: u16,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct IndexationPayloadDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    pub index: String,
-    pub data: String,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct MilestonePayloadDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    pub index: u32,
-    pub timestamp: u64,
-    #[serde(rename = "inclusionMerkleProof")]
-    pub inclusion_merkle_proof: String,
-    pub signatures: Vec<String>,
-}
 
 /// Response of GET /api/v1/messages/{message_id}/metadata
 #[derive(Clone, Debug, Serialize)]
