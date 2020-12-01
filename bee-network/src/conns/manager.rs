@@ -222,6 +222,11 @@ impl<N: Node> Worker<N> for ConnectionManager {
 
         Ok(Self::default())
     }
+
+    async fn stop(self, _node: &mut N) -> Result<(), Self::Error> {
+        info!("Stopping spawned tasks...");
+        Ok(())
+    }
 }
 
 #[inline]
