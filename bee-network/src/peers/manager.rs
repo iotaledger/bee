@@ -151,22 +151,26 @@ impl<N: Node> Worker<N> for PeerManager {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Reconnector started.");
 
-            let start = Instant::now() + Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed));
+            // let start = Instant::now() + Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed));
             let mut connected_check = ShutdownStream::new(
                 shutdown,
-                time::interval_at(start, Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed))),
+                // time::interval_at(start, Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed))),
+                time::interval(Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed))),
             );
 
-            while connected_check.next().await.is_some() {
-                // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each of
-                // those.
-                for peer_id in peers.iter_if(|info, state| info.is_known() && state.is_disconnected()) {
-                    if let Err(e) = internal_event_sender
-                        .send_async(InternalEvent::ReconnectScheduled { peer_id })
-                        .await
-                        .map_err(|_| Error::InternalEventSendFailure("ReconnectScheduled"))
-                    {
-                        warn!("{:?}", e)
+            // Start with the 2nd tick
+            if connected_check.next().await.is_some() {
+                while connected_check.next().await.is_some() {
+                    // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each of
+                    // those.
+                    for peer_id in peers.iter_if(|info, state| info.is_known() && state.is_disconnected()) {
+                        if let Err(e) = internal_event_sender
+                            .send_async(InternalEvent::ReconnectScheduled { peer_id })
+                            .await
+                            .map_err(|_| Error::InternalEventSendFailure("ReconnectScheduled"))
+                        {
+                            warn!("{:?}", e)
+                        }
                     }
                 }
             }
