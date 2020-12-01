@@ -5,6 +5,7 @@ members = [
 	"bee-crypto",
 	"bee-message",
 	"bee-network",
+	"bee-peering",
 	"bee-pow",
 	"bee-signing",
 	"bee-snapshot",

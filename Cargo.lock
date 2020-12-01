@@ -417,6 +417,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-network"
+version = "0.1.0-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2#ff37ba9bc61cceec9ee185e5665765d56baa6126"
+dependencies = [
+ "async-trait",
+ "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "dashmap",
+ "flume",
+ "futures",
+ "libp2p",
+ "log",
+ "serde",
+ "thiserror",
+ "tokio",
+ "url",
+]
+
+[[package]]
+name = "bee-peering"
+version = "0.1.0-alpha"
+dependencies = [
+ "async-trait",
+ "bee-network 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "hex",
+ "log",
+ "serde",
+]
+
+[[package]]
 name = "bee-pow"
 version = "0.1.0-alpha"
 dependencies = [
