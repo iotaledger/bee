@@ -1,0 +1,62 @@
+# Duplicate this file to config.toml to use it
+
+network_id  = "alphanet1"
+
+[logger]
+color_enabled = true
+[[logger.outputs]]
+name  = "stdout"
+level = "info"
+
+[network]
+bind_address      = "/ip4/0.0.0.0/tcp/15600"
+msg_buffer_size   = 10000
+peer_limit        = 8
+reconnect_millis  = 60000
+
+[peering]
+# hex representation of an Ed25519 keypair
+local_keypair = ""
+[peering.manual]
+limit   = 5
+# known peers
+# [[peering.manual.peers]]
+# address = ""
+# alias   = ""
+# [[peering.manual.peers]]
+# address = ""
+# alias   = ""
+
+[protocol]
+minimum_pow_score = 100
+[protocol.coordinator]
+public_key_count  = 2
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "7205c145525cee64f1c9363696811d239919d830ad964b4e29359e6475848f5a"
+start       = 0
+end         = 0
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "e468e82df33d10dea3bd0eadcd7867946a674d207c39f5af4cc44365d268a7e6"
+start       = 0
+end         = 0
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "0758028d34508079ba1f223907ac3bb5ce8f6bdccc6b961c7c85a2f460b30c1d"
+start       = 0
+end         = 0
+[protocol.workers]
+status_interval = 10
+
+[snapshot]
+path              = "./snapshots/alphanet/export.bin"
+download_urls     = [
+  "https://dbfiles.iota.org/alphanet/hornet/export.bin"
+]
+depth             = 50
+interval_synced   = 50
+interval_unsynced = 1000
+[snapshot.pruning]
+enabled = true
+delay   = 60480
+
+[database]
+path = "./database/alphanet"

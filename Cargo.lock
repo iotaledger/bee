@@ -94,6 +94,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf8dcb5b4bbaa28653b647d8c77bd4ed40183b48882e130c1f1ffb73de069fd7"
 
 [[package]]
+name = "anymap"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33954243bd79057c2de7338850b85983a44588021f8a5fee574a8888c6de4344"
+
+[[package]]
 name = "arrayref"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -309,30 +315,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdcf67bb7ba7797a081cd19009948ab533af7c355d5caf1d08c777582d351e9c"
 
 [[package]]
-name = "bee-api"
-version = "0.1.0-alpha"
-dependencies = [
- "async-trait",
- "bee-common",
- "bee-ledger",
- "bee-message",
- "bee-protocol",
- "bee-storage",
- "bee-tangle",
- "blake2",
- "digest 0.9.0",
- "flume",
- "futures",
- "futures-util",
- "hex",
- "log",
- "serde",
- "serde_json",
- "tokio",
- "warp",
-]
-
-[[package]]
 name = "bee-common"
 version = "0.1.1-alpha"
 dependencies = [
@@ -452,6 +434,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-node"
+version = "0.1.0-alpha"
+dependencies = [
+ "anymap",
+ "async-trait",
+ "bee-common",
+ "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ledger",
+ "bee-message",
+ "bee-network",
+ "bee-peering",
+ "bee-protocol",
+ "bee-rest-api",
+ "bee-snapshot",
+ "bee-storage",
+ "bee-storage-rocksdb",
+ "blake2",
+ "chrono",
+ "flume",
+ "futures",
+ "hex",
+ "iota-crypto",
+ "log",
+ "serde",
+ "structopt",
+ "thiserror",
+ "tokio",
+ "toml",
+]
+
+[[package]]
 name = "bee-peering"
 version = "0.1.0-alpha"
 dependencies = [
@@ -501,6 +514,30 @@ dependencies = [
  "spin 0.7.0",
  "tokio",
  "twox-hash",
+]
+
+[[package]]
+name = "bee-rest-api"
+version = "0.1.0-alpha"
+dependencies = [
+ "async-trait",
+ "bee-common",
+ "bee-ledger",
+ "bee-message",
+ "bee-protocol",
+ "bee-storage",
+ "bee-tangle",
+ "blake2",
+ "digest 0.9.0",
+ "flume",
+ "futures",
+ "futures-util",
+ "hex",
+ "log",
+ "serde",
+ "serde_json",
+ "tokio",
+ "warp",
 ]
 
 [[package]]
@@ -617,10 +654,18 @@ dependencies = [
 name = "bee-test"
 version = "0.1.0-alpha"
 dependencies = [
- "bee-ternary 0.3.4-alpha",
+ "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-message",
+ "bee-protocol",
+ "bee-storage",
+ "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "futures",
+ "num_cpus",
  "rand 0.7.3",
  "serde",
  "serde_json",
+ "tokio",
+ "toml",
 ]
 
 [[package]]
@@ -1827,7 +1872,9 @@ name = "iota-crypto"
 version = "0.1.0"
 source = "git+https://github.com/iotaledger/crypto.rs?branch=dev#bc35d38561efcf20a50aeb0f0b08028b4b4fda46"
 dependencies = [
+ "blake2b_simd",
  "ed25519-zebra",
+ "getrandom 0.2.0",
 ]
 
 [[package]]
@@ -3693,6 +3740,15 @@ dependencies = [
  "log",
  "pin-project-lite 0.1.11",
  "tokio",
+]
+
+[[package]]
+name = "toml"
+version = "0.5.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75cf45bb0bef80604d001caaec0d09da99611b3c0fd39d3080468875cdb65645"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

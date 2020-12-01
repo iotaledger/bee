@@ -11,9 +11,17 @@ keywords = ["iota", "tangle", "bee", "framework", "test"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-ternary = { version = "0.3.4-alpha", features = [ "serde1" ], path = "../bee-ternary" }
+bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-message = { path = "../bee-message" }
+bee-protocol = { path = "../bee-protocol" }
+bee-storage = { path = "../bee-storage/bee-storage" }
+bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
+futures = "0.3"
+num_cpus = "1.12"
 rand = "0.7"
+tokio = { version = "0.2", features = ["macros"] }
+toml = "0.5"
 
 [dev-dependencies]
 serde = "1.0"

@@ -7,6 +7,7 @@ members = [
 	"bee-ledger",
 	"bee-message",
 	"bee-network",
+	"bee-node",
 	"bee-peering",
 	"bee-pow",
 	"bee-protocol",
