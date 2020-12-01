@@ -3,7 +3,7 @@
 
 use crate::{
     interaction::events::InternalEventSender,
-    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerRelation, PeerState},
+    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerManager, PeerRelation, PeerState},
     transport::build_transport,
     Multiaddr, PeerId, ShortId,
 };
@@ -21,6 +21,7 @@ use libp2p::{
 use log::*;
 
 use std::{
+    any::TypeId,
     convert::Infallible,
     io,
     pin::Pin,
@@ -85,6 +86,10 @@ impl ConnectionManagerConfig {
 impl<N: Node> Worker<N> for ConnectionManager {
     type Config = ConnectionManagerConfig;
     type Error = Infallible;
+
+    fn dependencies() -> &'static [TypeId] {
+        vec![TypeId::of::<PeerManager>()].leak()
+    }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let ConnectionManagerConfig {

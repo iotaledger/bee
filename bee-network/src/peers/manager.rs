@@ -77,10 +77,6 @@ impl<N: Node> Worker<N> for PeerManager {
     type Config = PeerManagerConfig;
     type Error = Infallible;
 
-    fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<ConnectionManager>()].leak()
-    }
-
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let PeerManagerConfig {
             local_keys,
