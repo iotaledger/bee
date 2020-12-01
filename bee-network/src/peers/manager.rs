@@ -3,6 +3,7 @@
 
 use crate::{
     conns,
+    conns::ConnectionManager,
     interaction::{
         commands::Command,
         events::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
@@ -22,6 +23,7 @@ use log::*;
 use tokio::time;
 
 use std::{
+    any::TypeId,
     convert::Infallible,
     sync::atomic::{AtomicUsize, Ordering},
     time::Duration,
@@ -74,6 +76,10 @@ impl PeerManagerConfig {
 impl<N: Node> Worker<N> for PeerManager {
     type Config = PeerManagerConfig;
     type Error = Infallible;
+
+    fn dependencies() -> &'static [TypeId] {
+        vec![TypeId::of::<ConnectionManager>()].leak()
+    }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let PeerManagerConfig {
