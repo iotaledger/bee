@@ -3,7 +3,6 @@
 
 use crate::{
     conns,
-    conns::ConnectionManager,
     interaction::{
         commands::Command,
         events::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
@@ -191,7 +190,7 @@ async fn process_command(
     event_sender: &EventSender,
     internal_event_sender: &InternalEventSender,
 ) -> Result<(), Error> {
-    trace!("Received {:?}.", command);
+    // trace!("Received {:?}.", command);
 
     match command {
         Command::AddPeer {
@@ -200,6 +199,7 @@ async fn process_command(
             alias,
             relation,
         } => {
+            info!("Command::AddPeer");
             // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
             if relation == PeerRelation::Known {
                 add_peer(id.clone(), address, alias, relation, peers, event_sender).await?;
@@ -219,8 +219,12 @@ async fn process_command(
                 add_peer(id, address, alias, relation, peers, event_sender).await?;
             }
         }
-        Command::RemovePeer { id } => remove_peer(id, peers, event_sender).await?,
+        Command::RemovePeer { id } => {
+            info!("Command::RemovePeer");
+            remove_peer(id, peers, event_sender).await?;
+        }
         Command::ConnectPeer { id } => {
+            info!("Command::ConnectPeer");
             connect_peer(
                 id,
                 local_keys,
@@ -233,9 +237,11 @@ async fn process_command(
             .await?;
         }
         Command::DisconnectPeer { id } => {
+            info!("Command::DisconnectPeer");
             disconnect_peer(id, peers, event_sender).await?;
         }
         Command::DialAddress { address } => {
+            info!("Command::DialAddress");
             dial_address(
                 address,
                 local_keys,
