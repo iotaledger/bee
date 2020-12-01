@@ -143,7 +143,7 @@ fn spawn_substream_task(
                 }
             }
         }
-        println!("!!!! Exiting possibly not always finishing tokio task !!!!");
+        info!("!!!! Exiting possibly not always finishing tokio task !!!!");
     })
 }
 

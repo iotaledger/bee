@@ -313,7 +313,7 @@ async fn process_internal_event(
             message_sender,
             ..
         } => {
-            info!("Command::ConnectionEstablished");
+            info!("Event::ConnectionEstablished");
             peers.update_state(&peer_id, PeerState::Connected(message_sender))?;
 
             event_sender
@@ -326,7 +326,7 @@ async fn process_internal_event(
         }
 
         InternalEvent::ConnectionDropped { peer_id } => {
-            info!("Command::ConnectionDropped");
+            info!("Event::ConnectionDropped");
             peers.update_state(&peer_id, PeerState::Disconnected)?;
 
             // TODO: maybe allow some fixed timespan for a connection recovery from either end before removing.
@@ -340,7 +340,7 @@ async fn process_internal_event(
 
         InternalEvent::MessageReceived { message, from } => recv_message(message, from, &event_sender).await?,
         InternalEvent::ReconnectScheduled { peer_id } => {
-            info!("Command::ReconnectScheduled");
+            info!("Event::ReconnectScheduled");
 
             connect_peer(
                 peer_id,
