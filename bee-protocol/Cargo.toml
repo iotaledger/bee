@@ -11,14 +11,14 @@ keywords = ["iota", "tangle", "bee", "framework", "protocol"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
+bee-common = { path = "../bee-common/bee-common" }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
-bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
+bee-message = { path = "../bee-message" }
+bee-network = { path = "../bee-network" }
 bee-signing = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-snapshot = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
-bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
-bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
+bee-snapshot = { path = "../bee-snapshot" }
+bee-storage = { path = "../bee-storage/bee-storage" }
+bee-tangle = { path = "../bee-tangle" }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 async-trait = "0.1"

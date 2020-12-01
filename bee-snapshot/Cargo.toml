@@ -11,9 +11,9 @@ keywords = ["iota", "tangle", "bee", "framework", "snapshot"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
-bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
-bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
+bee-common = { path = "../bee-common/bee-common" }
+bee-message = { path = "../bee-message" }
+bee-storage = { path = "../bee-storage/bee-storage" }
 
 async-trait = "0.1"
 bytemuck = "1.2"
