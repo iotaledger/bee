@@ -11,7 +11,7 @@ keywords = ["iota", "tangle", "bee", "framework", "peering"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
+bee-network = { path = "../bee-network" }
 
 async-trait = "0.1"
 hex = "0.4"
