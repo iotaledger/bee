@@ -101,7 +101,7 @@ impl<N: Node> Worker<N> for PeerManager {
         let internal_event_sender_clone = internal_event_sender.clone();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            trace!("Command processor started.");
+            info!("Command processor started.");
 
             let mut commands = ShutdownStream::new(shutdown, command_receiver);
 
@@ -123,14 +123,14 @@ impl<N: Node> Worker<N> for PeerManager {
                 }
             }
 
-            trace!("Command processor stopped.");
+            info!("Command processor stopped.");
         });
 
         let peers_clone = peers.clone();
         let internal_event_sender_clone = internal_event_sender.clone();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            trace!("Internal event processor started.");
+            info!("Event processor started.");
 
             let mut internal_events = ShutdownStream::new(shutdown, internal_event_receiver);
 
@@ -152,11 +152,11 @@ impl<N: Node> Worker<N> for PeerManager {
                 }
             }
 
-            trace!("Internal event processor stopped.");
+            info!("Event processor stopped.");
         });
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            trace!("Reconnector started.");
+            info!("Reconnector started.");
 
             let mut connected_check = ShutdownStream::new(
                 shutdown,
@@ -177,7 +177,7 @@ impl<N: Node> Worker<N> for PeerManager {
                 }
             }
 
-            trace!("Reconnector stopped.");
+            info!("Reconnector stopped.");
         });
 
         trace!("Peer Manager started.");

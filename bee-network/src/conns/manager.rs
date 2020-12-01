@@ -99,7 +99,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
         // let mut fused_incoming_streams = peer_listener.fuse();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            trace!("Peer listener started.");
+            info!("Listener started.");
 
             let mut incoming = ShutdownStream::new(shutdown, peer_listener);
 
@@ -189,7 +189,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                 }
             }
 
-            trace!("Peer listener stopped.")
+            info!("Listener stopped.")
         });
 
         // loop {
