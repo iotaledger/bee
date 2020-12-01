@@ -399,6 +399,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-ledger"
+version = "0.1.0-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2#9c07405f981aaf8a8f7bd3fa350551a9a702bc3d"
+dependencies = [
+ "async-trait",
+ "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-message 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-protocol 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-storage 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-tangle 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "blake2",
+ "bytemuck",
+ "digest 0.9.0",
+ "flume",
+ "futures",
+ "hex",
+ "log",
+ "tokio",
+]
+
+[[package]]
 name = "bee-message"
 version = "0.1.0-alpha"
 dependencies = [
@@ -635,6 +658,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-storage-rocksdb"
+version = "0.1.0-alpha"
+dependencies = [
+ "async-trait",
+ "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ledger 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-message 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-protocol 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-storage 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-test",
+ "futures",
+ "num_cpus",
+ "pin-project 1.0.1",
+ "rocksdb",
+ "serde",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "bee-tangle"
 version = "0.1.0-alpha"
 dependencies = [
@@ -689,6 +734,30 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "bindgen"
+version = "0.54.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "66c0bb6167449588ff70803f4127f0684f9063097eca5016f37eb52b92c2cf36"
+dependencies = [
+ "bitflags",
+ "cexpr",
+ "cfg-if 0.1.10",
+ "clang-sys",
+ "clap",
+ "env_logger",
+ "lazy_static",
+ "lazycell",
+ "log",
+ "peeking_take_while",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "rustc-hash",
+ "shlex",
+ "which",
 ]
 
 [[package]]
@@ -864,6 +933,18 @@ name = "cc"
 version = "1.0.62"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1770ced377336a88a67c473594ccc14eca6f4559217c34f64aac8f83d641b40"
+dependencies = [
+ "jobserver",
+]
+
+[[package]]
+name = "cexpr"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4aedb84272dbe89af497cf81375129abda4fc0a9e7c5d317498c15cc30c0d27"
+dependencies = [
+ "nom",
+]
 
 [[package]]
 name = "cfg-if"
@@ -911,6 +992,17 @@ dependencies = [
  "num-traits",
  "time",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "clang-sys"
+version = "0.29.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe6837df1d5cba2397b835c8530f51723267e16abbf83892e9e5af4f0e5dd10a"
+dependencies = [
+ "glob",
+ "libc",
+ "libloading",
 ]
 
 [[package]]
@@ -1550,6 +1642,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "glob"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
+
+[[package]]
 name = "gloo-timers"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1820,6 +1918,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc6f3ad7b9d11a0c00842ff8de1b60ee58661048eb8049ed33c73594f359d7e6"
 
 [[package]]
+name = "jobserver"
+version = "0.1.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c71313ebb9439f74b00d9d2dcec36440beaf57a6aa0623068441dd7cd81a7f2"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "js-sys"
 version = "0.3.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1860,10 +1967,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
+name = "lazycell"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
+
+[[package]]
 name = "libc"
 version = "0.2.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4d58d1b70b004888f764dfbf6a26a3b0342a1632d33968e4a179d8011c760614"
+
+[[package]]
+name = "libloading"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f2b111a074963af1d37a139918ac6d49ad1d0d5e47f72fd55388619691a7d753"
+dependencies = [
+ "cc",
+ "winapi 0.3.9",
+]
 
 [[package]]
 name = "libp2p"
@@ -2029,6 +2152,18 @@ dependencies = [
  "parking_lot",
  "thiserror",
  "yamux",
+]
+
+[[package]]
+name = "librocksdb-sys"
+version = "6.11.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb5b56f651c204634b936be2f92dbb42c36867e00ff7fe2405591f3b9fa66f09"
+dependencies = [
+ "bindgen",
+ "cc",
+ "glob",
+ "libc",
 ]
 
 [[package]]
@@ -2266,6 +2401,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
 
 [[package]]
+name = "nom"
+version = "5.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffb4262d26ed83a1c0a33a38fe2bb15797329c85770da05e6b828ddb782627af"
+dependencies = [
+ "memchr",
+ "version_check",
+]
+
+[[package]]
 name = "num-integer"
 version = "0.1.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2400,6 +2545,12 @@ dependencies = [
  "smallvec",
  "winapi 0.3.9",
 ]
+
+[[package]]
+name = "peeking_take_while"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19b17cddbe7ec3f8bc800887bab5e717348c95ea2ca0b1bf0837fb964dc67099"
 
 [[package]]
 name = "percent-encoding"
@@ -2818,6 +2969,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "rocksdb"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23d83c02c429044d58474eaf5ae31e062d0de894e21125b47437ec0edc1397e6"
+dependencies = [
+ "libc",
+ "librocksdb-sys",
+]
+
+[[package]]
+name = "rustc-hash"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
+
+[[package]]
 name = "rustc_version"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3020,6 +3187,12 @@ dependencies = [
  "keccak",
  "opaque-debug 0.3.0",
 ]
+
+[[package]]
+name = "shlex"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fdf1b9db47230893d76faad238fd6097fd6d6a9245cd7a4d90dbd639536bbd2"
 
 [[package]]
 name = "signal-hook-registry"
