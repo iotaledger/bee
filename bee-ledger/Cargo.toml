@@ -1,0 +1,36 @@
+[package]
+name = "bee-ledger"
+version = "0.1.0-alpha"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = ""
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "bee", "framework", "ledger"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
+bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
+bee-protocol = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
+bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
+bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2" }
+
+async-trait = "0.1"
+blake2 = "0.9"
+bytemuck = "1.2"
+digest = "0.9"
+flume = "0.9"
+futures = "0.3"
+hex = "0.4"
+log = "0.4"
+tokio = { version = "0.2", features = ["time", "io-util", "stream"] }
+
+[dev-dependencies]
+bee-test = { path = "../bee-test" }
+
+hex = "0.4"
+rand = "0.7"

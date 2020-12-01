@@ -375,6 +375,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-ledger"
+version = "0.1.0-alpha"
+dependencies = [
+ "async-trait",
+ "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-message 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-protocol 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-storage 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-tangle 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-test",
+ "blake2",
+ "bytemuck",
+ "digest 0.9.0",
+ "flume",
+ "futures",
+ "hex",
+ "log",
+ "rand",
+ "tokio",
+]
+
+[[package]]
 name = "bee-message"
 version = "0.1.0-alpha"
 dependencies = [
@@ -467,6 +491,38 @@ dependencies = [
 [[package]]
 name = "bee-protocol"
 version = "0.1.0-alpha"
+dependencies = [
+ "async-trait",
+ "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-message 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-network 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-signing 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-snapshot 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-storage 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-tangle 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bitflags",
+ "blake2",
+ "dashmap",
+ "flume",
+ "futures",
+ "futures-util",
+ "hex",
+ "iota-crypto",
+ "log",
+ "pin-project 1.0.1",
+ "rand",
+ "serde",
+ "spin 0.7.0",
+ "tokio",
+ "twox-hash",
+]
+
+[[package]]
+name = "bee-protocol"
+version = "0.1.0-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2#dc4787ad49b390b3842c4547975595fb6d8fe626"
 dependencies = [
  "async-trait",
  "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
