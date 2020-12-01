@@ -19,13 +19,11 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use libp2p::{identity, Multiaddr, PeerId};
 use log::*;
-use tokio::time;
+use tokio::time::{self, Duration, Instant};
 
 use std::{
-    any::TypeId,
     convert::Infallible,
     sync::atomic::{AtomicUsize, Ordering},
-    time::Duration,
 };
 
 type CommandReceiver = flume::Receiver<Command>;
@@ -153,9 +151,10 @@ impl<N: Node> Worker<N> for PeerManager {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Reconnector started.");
 
+            let start = Instant::now() + Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed));
             let mut connected_check = ShutdownStream::new(
                 shutdown,
-                time::interval(Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed))),
+                time::interval_at(start, Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed))),
             );
 
             while connected_check.next().await.is_some() {
