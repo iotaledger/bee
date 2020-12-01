@@ -342,6 +342,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-common-derive"
+version = "0.1.1-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#0bd24a8cba28c9400a876268fc5f8931f74b9a71"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "bee-crypto"
 version = "0.2.0-alpha"
 dependencies = [
@@ -417,11 +426,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-network"
+version = "0.1.0-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2#672bd5923b2a6bf1e4ddf7f5a325addcc9bbfb18"
+dependencies = [
+ "async-trait",
+ "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "dashmap",
+ "flume",
+ "futures",
+ "libp2p",
+ "log",
+ "serde",
+ "thiserror",
+ "tokio",
+ "url",
+]
+
+[[package]]
 name = "bee-peering"
 version = "0.1.0-alpha"
 dependencies = [
  "async-trait",
- "bee-network",
+ "bee-network 0.1.0-alpha",
  "hex",
  "log",
  "serde",
@@ -438,10 +465,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-protocol"
+version = "0.1.0-alpha"
+dependencies = [
+ "async-trait",
+ "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-message 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-network 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-signing 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-snapshot 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-storage 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-tangle 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bitflags",
+ "blake2",
+ "dashmap",
+ "flume",
+ "futures",
+ "futures-util",
+ "hex",
+ "iota-crypto",
+ "log",
+ "pin-project 1.0.1",
+ "rand",
+ "serde",
+ "spin 0.7.0",
+ "tokio",
+ "twox-hash",
+]
+
+[[package]]
 name = "bee-signing"
 version = "0.1.1-alpha"
 dependencies = [
- "bee-common-derive",
+ "bee-common-derive 0.1.1-alpha",
  "bee-crypto 0.2.0-alpha",
  "bee-ternary 0.3.4-alpha",
  "rand",
@@ -451,8 +509,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-signing"
+version = "0.1.1-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#0bd24a8cba28c9400a876268fc5f8931f74b9a71"
+dependencies = [
+ "bee-common-derive 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "rand",
+ "sha3",
+ "thiserror",
+ "zeroize",
+]
+
+[[package]]
 name = "bee-snapshot"
 version = "0.1.0-alpha"
+dependencies = [
+ "async-trait",
+ "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-message 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bee-storage 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "bytemuck",
+ "chrono",
+ "dashmap",
+ "futures",
+ "log",
+ "reqwest",
+ "serde",
+ "tokio",
+]
+
+[[package]]
+name = "bee-snapshot"
+version = "0.1.0-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2#672bd5923b2a6bf1e4ddf7f5a325addcc9bbfb18"
 dependencies = [
  "async-trait",
  "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
@@ -500,6 +591,19 @@ dependencies = [
  "log",
  "lru",
  "pollster",
+]
+
+[[package]]
+name = "bee-tangle"
+version = "0.1.0-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2#672bd5923b2a6bf1e4ddf7f5a325addcc9bbfb18"
+dependencies = [
+ "async-trait",
+ "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-message 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=chrysalis-pt-2)",
+ "dashmap",
+ "log",
+ "lru",
 ]
 
 [[package]]
@@ -1072,6 +1176,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ed25519-zebra"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a128b76af6dd4b427e34a6fd43dc78dbfe73672ec41ff615a2414c1a0ad0409"
+dependencies = [
+ "curve25519-dalek",
+ "hex",
+ "rand_core",
+ "sha2 0.9.2",
+ "thiserror",
+]
+
+[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1597,6 +1714,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb1fc4429a33e1f80d41dc9fea4d108a88bec1de8053878898ae448a0b52f613"
 dependencies = [
  "cfg-if 1.0.0",
+]
+
+[[package]]
+name = "iota-crypto"
+version = "0.1.0"
+source = "git+https://github.com/iotaledger/crypto.rs?branch=dev#bc35d38561efcf20a50aeb0f0b08028b4b4fda46"
+dependencies = [
+ "ed25519-zebra",
 ]
 
 [[package]]
@@ -2630,7 +2755,7 @@ dependencies = [
  "cc",
  "libc",
  "once_cell",
- "spin",
+ "spin 0.5.2",
  "untrusted",
  "web-sys",
  "winapi 0.3.9",
@@ -2902,6 +3027,12 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "spin"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "652ac3743312871a5fb703f0337e68ffa3cdc28c863efad0b8dc858fa10c991b"
 
 [[package]]
 name = "spinning_top"
@@ -3249,6 +3380,17 @@ name = "try-lock"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
+
+[[package]]
+name = "twox-hash"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
+dependencies = [
+ "cfg-if 0.1.10",
+ "rand",
+ "static_assertions",
+]
 
 [[package]]
 name = "typenum"
