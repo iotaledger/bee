@@ -155,41 +155,8 @@ impl<N: Node> Worker<N> for PeerManager {
             let mut connected_check = ShutdownStream::new(
                 shutdown,
                 time::interval_at(start, Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed))),
-                // time::interval(Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed))),
             );
 
-            // let ticker = &mut time::interval(Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed)));
-            // let mut fused_shutdown = &mut shutdown.fuse();
-
-            // let mut first = true;
-
-            // loop {
-            //     select! {
-            //             _ = fused_shutdown => {
-            //                 break;
-            //             }
-            //             _ = ticker.next().fuse() => {
-            //                 if first {
-            //                     first = false;
-            //                     continue;
-            //                 }
-            //                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for
-            //                 // each of                 // those.
-            //                 for peer_id in peers.iter_if(|info, state| info.is_known() && state.is_disconnected()) {
-            //                     if let Err(e) = internal_event_sender
-            //                         .send_async(InternalEvent::ReconnectScheduled { peer_id })
-            //                         .await
-            //                         .map_err(|_| Error::InternalEventSendFailure("ReconnectScheduled"))
-            //                     {
-            //                         warn!("{:?}", e)
-            //                     }
-            //                 }
-            //             }
-            //         }
-            // }
-
-            // Start with the 2nd tick
-            // if connected_check.next().await.is_some() {
             while connected_check.next().await.is_some() {
                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
                 // of those.
@@ -203,7 +170,6 @@ impl<N: Node> Worker<N> for PeerManager {
                     }
                 }
             }
-            // }
 
             info!("Reconnector stopped.");
         });
@@ -415,16 +381,28 @@ async fn process_internal_event(
         InternalEvent::ReconnectScheduled { peer_id } => {
             info!("Event::ReconnectScheduled");
 
-            connect_peer(
-                peer_id,
-                local_keys.clone(),
-                peers.clone(),
-                banned_addrs.clone(),
-                banned_peers.clone(),
-                internal_event_sender.clone(),
-                event_sender.clone(),
-            )
-            .await?
+            let local_keys = local_keys.clone();
+            let peers = peers.clone();
+            let banned_addrs = banned_addrs.clone();
+            let banned_peers = banned_peers.clone();
+            let event_sender = event_sender.clone();
+            let internal_event_sender = internal_event_sender.clone();
+
+            tokio::spawn(async move {
+                if let Err(e) = connect_peer(
+                    peer_id,
+                    local_keys,
+                    peers,
+                    banned_addrs,
+                    banned_peers,
+                    internal_event_sender,
+                    event_sender,
+                )
+                .await
+                {
+                    warn!("Failed to connect to peer. Cause: {:?}", e);
+                }
+            });
         }
     }
 
