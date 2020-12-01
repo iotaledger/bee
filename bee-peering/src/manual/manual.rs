@@ -25,7 +25,7 @@ impl PeerManager for ManualPeerManager {
                 if let Protocol::P2p(multihash) = address.pop().unwrap() {
                     let id = PeerId::from_multihash(multihash).expect("Invalid Multiaddr.");
 
-                    add_peer(network, id, address, alias).await;
+                    add_peer(network, id, address, alias);
                 } else {
                     unreachable!(
                         "Invalid Peer descriptor. The multiaddress did not have a valid peer id as its last segment."
@@ -45,16 +45,13 @@ impl PeerManager for ManualPeerManager {
 }
 
 #[inline]
-async fn add_peer(network: &Network, id: PeerId, address: Multiaddr, alias: Option<String>) {
-    if let Err(e) = network
-        .send(AddPeer {
-            id,
-            address,
-            alias,
-            relation: PeerRelation::Known,
-        })
-        .await
-    {
+fn add_peer(network: &Network, id: PeerId, address: Multiaddr, alias: Option<String>) {
+    if let Err(e) = network.unbounded_send(AddPeer {
+        id,
+        address,
+        alias,
+        relation: PeerRelation::Known,
+    }) {
         warn!("Failed to add peer: {}", e);
     }
 }
