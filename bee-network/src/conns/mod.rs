@@ -101,11 +101,16 @@ fn spawn_substream_task(
 
         loop {
             select! {
-                num_read = recv_message(&mut substream, &mut buffer).fuse() => {
-                    match num_read {
+                recv_result = recv_message(&mut substream, &mut buffer).fuse() => {
+                    match recv_result {
+                        Ok(num_read) => {
+                            if let Err(e) = process_read(peer_id.clone(), num_read, &mut internal_event_sender, &buffer).await
+                            {
+                                error!("{:?}", e);
+                            }
+                        }
                         Err(e) => {
-                            // TODO: maybe only break if e == StreamClosedByRemote
-                            error!("{:?}", e);
+                            debug!("{:?}", e);
 
                             if let Err(e) = internal_event_sender
                                 .send_async(InternalEvent::ConnectionDropped {
@@ -114,18 +119,12 @@ fn spawn_substream_task(
                                 .await
                                 .map_err(|_| Error::InternalEventSendFailure("ConnectionDropped"))
                             {
-                                warn!("{:?}", e);
+                                error!("{:?}", e);
                             }
 
 
                             // Stream to remote stopped => shut down this task
                             break;
-                        }
-                        Ok(num_read) => {
-                            if let Err(e) = process_read(peer_id.clone(), num_read, &mut internal_event_sender, &buffer).await
-                            {
-                                error!("{:?}", e);
-                            }
                         }
                     }
                 }

@@ -150,6 +150,10 @@ impl PeerList {
     pub fn remove_if(&self, id: &PeerId, predicate: impl Fn(&PeerInfo, &PeerState) -> bool) {
         let _ = self.0.remove_if(id, |_, (info, state)| predicate(info, state));
     }
+
+    pub fn clear(&self) {
+        self.0.clear();
+    }
 }
 
 #[derive(Clone, Debug)]

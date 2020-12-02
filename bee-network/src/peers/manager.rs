@@ -116,6 +116,8 @@ impl<N: Node> Worker<N> for PeerManager {
                 }
             }
 
+            peers_clone.clear();
+
             info!("Command processor stopped.");
         });
 
