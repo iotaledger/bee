@@ -13,15 +13,15 @@ pub use manager::*;
 
 use futures::channel::mpsc;
 
-// pub type DataSender = flume::Sender<Vec<u8>>;
-// pub type DataReceiver = flume::Receiver<Vec<u8>>;
+pub type DataSender = flume::Sender<Vec<u8>>;
+pub type DataReceiver = flume::Receiver<Vec<u8>>;
 
-pub type DataSender = mpsc::UnboundedSender<Vec<u8>>;
-pub type DataReceiver = mpsc::UnboundedReceiver<Vec<u8>>;
+// pub type DataSender = mpsc::UnboundedSender<Vec<u8>>;
+// pub type DataReceiver = mpsc::UnboundedReceiver<Vec<u8>>;
 
 pub fn channel() -> (DataSender, DataReceiver) {
-    // flume::unbounded()
-    mpsc::unbounded()
+    flume::unbounded()
+    // mpsc::unbounded()
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

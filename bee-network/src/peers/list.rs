@@ -117,8 +117,8 @@ impl PeerList {
 
         if let PeerState::Connected(sender) = state {
             sender
-                // .send(message)
-                .unbounded_send(message)
+                .send(message)
+                // .unbounded_send(message)
                 // NOTE: this has lifetime consequence for 'this'
                 // .send_async(message)
                 // .await
