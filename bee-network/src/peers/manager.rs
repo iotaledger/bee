@@ -295,8 +295,7 @@ async fn process_command(
             });
         }
         Command::SendMessage { message, to } => {
-            // TODO: tokio::spawn
-            send_message(message, &to, peers).await?;
+            send_message(message, &to, peers)?;
         }
         Command::BanAddress { address } => {
             if !banned_addrs.insert(address.to_string()) {
@@ -574,8 +573,8 @@ async fn dial_address(
 }
 
 #[inline]
-async fn send_message(message: Vec<u8>, to: &PeerId, peers: &PeerList) -> Result<(), Error> {
-    peers.send_message(message, to).await
+fn send_message(message: Vec<u8>, to: &PeerId, peers: &PeerList) -> Result<(), Error> {
+    peers.send_message(message, to)
 }
 
 #[inline]
