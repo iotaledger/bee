@@ -101,9 +101,9 @@ fn spawn_substream_task(
         let mut buffer = vec![0u8; MSG_BUFFER_SIZE.load(Ordering::Relaxed)];
 
         loop {
-            info!("!!!! LOOP !!!!");
             select! {
                 message = fused_message_receiver.next() => {
+                    info!("!!!! SEND MESSAGE !!!!");
                     if let Some(message) = message {
                         if let Err(e) = send_message(&mut substream, &message).await {
                             error!("{:?}", e);
@@ -116,6 +116,7 @@ fn spawn_substream_task(
 
                 }
                 recv_result = recv_message(&mut substream, &mut buffer).fuse() => {
+                    info!("!!!! RECV MESSAGE !!!!");
                     match recv_result {
                         Ok(num_read) => {
                             if let Err(e) = process_read(peer_id.clone(), num_read, &mut internal_event_sender, &buffer).await
