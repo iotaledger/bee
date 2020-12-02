@@ -146,10 +146,7 @@ impl TryFrom<&Message> for MessageDto {
             network_id: value.network_id().to_string(),
             parent_1_message_id: value.parent1().to_string(),
             parent_2_message_id: value.parent2().to_string(),
-            payload: match value.payload() {
-                Some(p) => Some(p.try_into()?),
-                None => None,
-            },
+            payload: value.payload().as_ref().map(TryInto::try_into).transpose()?,
             nonce: value.nonce().to_string(),
         })
     }
@@ -269,7 +266,7 @@ impl TryFrom<&Address> for AddressDto {
 impl From<&Ed25519Address> for Ed25519AddressDto {
     fn from(value: &Ed25519Address) -> Self {
         Self {
-            kind: 0,
+            kind: 1,
             address: value.to_string(),
         }
     }
@@ -282,7 +279,7 @@ impl TryFrom<&UnlockBlock> for UnlockBlockDto {
             UnlockBlock::Signature(s) => match s {
                 SignatureUnlock::Ed25519(ed) => Ok(UnlockBlockDto::Signature(SignatureUnlockDto::Ed25519(
                     Ed25519SignatureDto {
-                        kind: 0,
+                        kind: 1,
                         public_key: hex::encode(ed.public_key()),
                         signature: hex::encode(ed.signature()),
                     },
@@ -290,7 +287,7 @@ impl TryFrom<&UnlockBlock> for UnlockBlockDto {
                 _ => Err("signature unlock type not supported"),
             },
             UnlockBlock::Reference(r) => Ok(UnlockBlockDto::Reference(ReferenceUnlockDto {
-                kind: 0,
+                kind: 1,
                 reference: r.index(),
             })),
             _ => Err("unlock block type not supported"),
