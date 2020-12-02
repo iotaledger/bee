@@ -114,7 +114,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                     // Prevent accepting from banned addresses.
                     let peer_address_str = peer_address.to_string();
                     if banned_addrs.contains(&peer_address_str) {
-                        trace!("Ignoring peer. Cause: '{}' is banned.", peer_address_str);
+                        trace!("Ignoring peer. Cause: {} is banned.", peer_address_str);
                         NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                         continue;
                     }
@@ -139,7 +139,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
 
                     // Prevent accepting banned peers.
                     if banned_peers.contains(&peer_id) {
-                        trace!("Ignoring peer. Cause: '{}' is banned.", peer_id);
+                        trace!("Ignoring peer. Cause: {} is banned.", peer_id);
                         NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                         continue;
                     }
@@ -164,11 +164,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                             continue;
                         } else {
                             // We also allow for a certain number of unknown peers.
-                            info!(
-                                "Allowing connection to unknown peer '{}' [{}]",
-                                peer_id.short(),
-                                peer_info.address
-                            );
+                            info!("Allowing connection to unknown peer {}.", peer_id.short(),);
 
                             peer_info
                         }
@@ -232,8 +228,8 @@ impl<N: Node> Worker<N> for ConnectionManager {
 #[inline]
 fn log_inbound_connection_success(peer_id: &PeerId, peer_info: &PeerInfo) {
     if let Some(alias) = peer_info.alias.as_ref() {
-        info!("Established (inbound) connection with '{}/{}'.", alias, peer_id.short(),)
+        info!("Established (inbound) connection with {}:{}.", alias, peer_id.short(),)
     } else {
-        info!("Established (inbound) connection with '{}'.", peer_id.short(),);
+        info!("Established (inbound) connection with {}.", peer_id.short(),);
     }
 }
