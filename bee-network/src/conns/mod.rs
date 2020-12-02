@@ -100,6 +100,7 @@ fn spawn_substream_task(
         let mut buffer = vec![0u8; MSG_BUFFER_SIZE.load(Ordering::Relaxed)];
 
         loop {
+            info!("!!!! LOOP !!!!");
             select! {
                 recv_result = recv_message(&mut substream, &mut buffer).fuse() => {
                     match recv_result {

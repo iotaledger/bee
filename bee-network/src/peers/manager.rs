@@ -118,6 +118,7 @@ impl<N: Node> Worker<N> for PeerManager {
 
             peers_clone.clear();
 
+            info!("peers.len() = {}", peers_clone.count());
             info!("Command processor stopped.");
         });
 
