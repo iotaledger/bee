@@ -119,14 +119,15 @@ where
 
 impl ShortId for PeerId {
     const ORIGINAL_LENGTH: usize = 52;
-    const LEADING_LENGTH: usize = 2;
+    const LEADING_LENGTH: usize = 0;
     const TRAILING_LENGTH: usize = 6;
 
     fn short(&self) -> String {
         let s = self.to_string();
         format!(
-            "{}~{}",
-            &s[0..Self::LEADING_LENGTH],
+            // "{}~{}",
+            // &s[..Self::LEADING_LENGTH],
+            "{}",
             &s[(Self::ORIGINAL_LENGTH - Self::TRAILING_LENGTH)..]
         )
     }
