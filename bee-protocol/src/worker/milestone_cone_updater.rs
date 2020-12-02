@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{tangle::MsTangle, worker::TangleWorker, Milestone, MilestoneIndex};
+use crate::{tangle::MsTangle, worker::TangleWorker, MilestoneIndex};
 
 use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_message::MessageId;
@@ -17,7 +17,10 @@ use std::{
     convert::Infallible,
 };
 
-pub(crate) struct MilestoneConeUpdaterWorkerEvent(pub(crate) Milestone);
+pub(crate) struct MilestoneConeUpdaterWorkerEvent {
+    pub(crate) milestone_message_id: MessageId,
+    pub(crate) milestone_index: MilestoneIndex,
+}
 
 pub(crate) struct MilestoneConeUpdaterWorker {
     pub(crate) tx: flume::Sender<MilestoneConeUpdaterWorkerEvent>,
@@ -42,10 +45,17 @@ impl<N: Node> Worker<N> for MilestoneConeUpdaterWorker {
 
             let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
 
-            while let Some(MilestoneConeUpdaterWorkerEvent(milestone)) = receiver.next().await {
+            while let Some(event) = receiver.next().await {
+                let event: MilestoneConeUpdaterWorkerEvent = event;
+
                 // When a new milestone gets solid, OTRSI and YTRSI of all messages that belong to the given cone
                 // must be updated. Furthermore, updated values will be propagated to the future.
-                update_messages_referenced_by_milestone::<N>(&tangle, milestone.message_id, milestone.index).await;
+                update_messages_referenced_by_milestone::<N>(
+                    &tangle,
+                    event.milestone_message_id,
+                    event.milestone_index,
+                )
+                .await;
                 // Update tip pool after all values got updated.
                 tangle.update_tip_scores().await;
             }
@@ -59,10 +69,10 @@ impl<N: Node> Worker<N> for MilestoneConeUpdaterWorker {
 
 async fn update_messages_referenced_by_milestone<N: Node>(
     tangle: &MsTangle<N::Backend>,
-    message_id: MessageId,
+    milestone_message_id: MessageId,
     milestone_index: MilestoneIndex,
 ) {
-    let mut to_visit = vec![message_id];
+    let mut to_visit = vec![milestone_message_id];
     let mut visited = HashSet::new();
 
     while let Some(ref hash) = to_visit.pop() {

@@ -15,6 +15,7 @@ mod peer;
 mod propagator;
 mod requester;
 mod responder;
+mod solid_milestone_announcer;
 mod solidifier;
 mod status;
 mod storage;
@@ -38,6 +39,7 @@ pub(crate) use requester::{
 pub(crate) use responder::{
     MessageResponderWorker, MessageResponderWorkerEvent, MilestoneResponderWorker, MilestoneResponderWorkerEvent,
 };
+pub(crate) use solid_milestone_announcer::{SolidMilestoneAnnouncerWorker, SolidMilestoneAnnouncerWorkerEvent};
 pub(crate) use solidifier::{KickstartWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
 pub(crate) use status::StatusWorker;
 pub use storage::StorageWorker;

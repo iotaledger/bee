@@ -3,16 +3,15 @@
 
 use crate::{
     config::ProtocolConfig,
-    event::{LatestMilestoneChanged, LatestSolidMilestoneChanged},
     milestone::{key_manager::KeyManager, Milestone, MilestoneIndex},
     tangle::MsTangle,
     worker::{
-        MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent, MilestoneRequesterWorker,
-        MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, RequestedMilestones, TangleWorker,
+        MilestoneRequesterWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, RequestedMilestones,
+        TangleWorker,
     },
 };
 
-use bee_common::{event::Bus, node::Node, packable::Packable, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_common::{node::Node, packable::Packable, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_message::{payload::Payload, MessageId};
 
 use async_trait::async_trait;
@@ -39,7 +38,10 @@ pub(crate) enum Error {
     InvalidSignature(usize, String),
 }
 
-pub(crate) struct MilestoneValidatorWorkerEvent(pub(crate) MessageId);
+pub(crate) struct MilestoneValidatorWorkerEvent {
+    pub(crate) message_id: MessageId,
+    pub(crate) milestone_validator_notifier: futures::channel::oneshot::Sender<MilestoneIndex>,
+}
 
 pub(crate) struct MilestoneValidatorWorker {
     pub(crate) tx: flume::Sender<MilestoneValidatorWorkerEvent>,
@@ -133,7 +135,6 @@ where
     fn dependencies() -> &'static [TypeId] {
         vec![
             TypeId::of::<MilestoneSolidifierWorker>(),
-            TypeId::of::<MilestoneConeUpdaterWorker>(),
             TypeId::of::<TangleWorker>(),
             TypeId::of::<MilestoneRequesterWorker>(),
         ]
@@ -143,7 +144,6 @@ where
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = flume::unbounded();
         let milestone_solidifier = node.worker::<MilestoneSolidifierWorker>().unwrap().tx.clone();
-        let milestone_cone_updater = node.worker::<MilestoneConeUpdaterWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
@@ -152,37 +152,26 @@ where
             config.coordinator.public_key_ranges.into_boxed_slice(),
         );
 
-        let bus = node.resource::<Bus>();
-
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
 
-            while let Some(MilestoneValidatorWorkerEvent(message_id)) = receiver.next().await {
-                if let Some(meta) = tangle.get_metadata(&message_id) {
+            while let Some(event) = receiver.next().await {
+                let event: MilestoneValidatorWorkerEvent = event;
+
+                if let Some(meta) = tangle.get_metadata(&event.message_id) {
                     if meta.flags().is_milestone() {
                         continue;
                     }
-                    match validate::<N>(&tangle, &key_manager, message_id).await {
+                    match validate::<N>(&tangle, &key_manager, event.message_id).await {
                         Ok(milestone) => {
                             tangle.add_milestone(milestone.index, milestone.message_id);
 
-                            // This is possibly not sufficient as there is no guarantee a milestone has been
-                            // solidified before being validated, we then also need
-                            // to check when a milestone gets solidified if it's
-                            // already vadidated.
-                            if meta.flags().is_solid() {
-                                bus.dispatch(LatestSolidMilestoneChanged(milestone.clone()));
-                                if let Err(e) =
-                                    milestone_cone_updater.send(MilestoneConeUpdaterWorkerEvent(milestone.clone()))
-                                {
-                                    error!("Sending message id to milestone validation failed: {:?}.", e);
-                                }
-                            }
-
                             if milestone.index > tangle.get_latest_milestone_index() {
-                                bus.dispatch(LatestMilestoneChanged(milestone.clone()));
+                                if let Err(e) = event.milestone_validator_notifier.send(milestone.index) {
+                                    error!("Failed to report back from milestone validator: {:?}.", e);
+                                }
                             }
 
                             if requested_milestones.remove(&milestone.index).is_some() {

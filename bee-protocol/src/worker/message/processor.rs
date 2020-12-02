@@ -25,6 +25,8 @@ use blake2::{
 use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info, trace, warn};
 
+use crate::worker::{SolidMilestoneAnnouncerWorker, SolidMilestoneAnnouncerWorkerEvent};
+use futures::channel::oneshot;
 use std::{any::TypeId, convert::Infallible};
 
 pub(crate) struct ProcessorWorkerEvent {
@@ -50,6 +52,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
             TypeId::of::<PropagatorWorker>(),
             TypeId::of::<BroadcasterWorker>(),
             TypeId::of::<MessageRequesterWorker>(),
+            TypeId::of::<SolidMilestoneAnnouncerWorker>(),
         ]
         .leak()
     }
@@ -60,6 +63,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         let propagator = node.worker::<PropagatorWorker>().unwrap().tx.clone();
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
+        let solid_milestone_announcer = node.worker::<SolidMilestoneAnnouncerWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
@@ -127,11 +131,19 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                         }
                     }
 
+                    // reports back if the propagator processed the message successfully
+                    let (propagator_notifier, propagator_waiter) = oneshot::channel();
+                    // reports back if the milestone validator processed the message successfully
+                    let (milestone_validator_notifier, milestone_validator_waiter) = oneshot::channel();
+
                     // TODO this was temporarily moved from the tangle.
                     // Reason is that since the tangle is not a worker, it can't have access to the propagator tx.
                     // When the tangle is made a worker, this should be put back on.
 
-                    if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
+                    if let Err(e) = propagator.send(PropagatorWorkerEvent {
+                        message_id,
+                        propagator_notifier,
+                    }) {
                         error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
                     }
 
@@ -174,9 +186,22 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                     };
 
                     if let Some(Payload::Milestone(_)) = message.payload() {
-                        if let Err(e) = milestone_validator.send(MilestoneValidatorWorkerEvent(message_id)) {
+                        if let Err(e) = milestone_validator.send(MilestoneValidatorWorkerEvent {
+                            message_id,
+                            milestone_validator_notifier,
+                        }) {
                             error!(
                                 "Sending message id {} to milestone validation failed: {:?}.",
+                                message_id, e
+                            );
+                        }
+                        if let Err(e) = solid_milestone_announcer.send(SolidMilestoneAnnouncerWorkerEvent {
+                            milestone_message_id: message_id,
+                            propagator_waiter,
+                            milestone_validator_waiter,
+                        }) {
+                            error!(
+                                "Sending message id {} to milestone announcer failed: {:?}.",
                                 message_id, e
                             );
                         }

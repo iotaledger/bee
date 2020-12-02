@@ -29,6 +29,7 @@ use futures::channel::oneshot;
 use log::{debug, error, info};
 use tokio::task::spawn;
 
+use crate::worker::SolidMilestoneAnnouncerWorker;
 use std::sync::Arc;
 
 static PROTOCOL: spin::RwLock<Option<&'static Protocol>> = spin::RwLock::new(None);
@@ -76,6 +77,7 @@ impl Protocol {
             .with_worker_cfg::<StatusWorker>(config.workers.status_interval)
             .with_worker::<HeartbeaterWorker>()
             .with_worker::<MessageSubmitterWorker>()
+            .with_worker::<SolidMilestoneAnnouncerWorker>()
     }
 
     pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
