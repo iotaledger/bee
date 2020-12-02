@@ -11,11 +11,17 @@ pub use errors::Error;
 pub use list::*;
 pub use manager::*;
 
-pub type DataSender = flume::Sender<Vec<u8>>;
-pub type DataReceiver = flume::Receiver<Vec<u8>>;
+use futures::channel::mpsc;
+
+// pub type DataSender = flume::Sender<Vec<u8>>;
+// pub type DataReceiver = flume::Receiver<Vec<u8>>;
+
+pub type DataSender = mpsc::UnboundedSender<Vec<u8>>;
+pub type DataReceiver = mpsc::UnboundedReceiver<Vec<u8>>;
 
 pub fn channel() -> (DataSender, DataReceiver) {
-    flume::unbounded()
+    // flume::unbounded()
+    mpsc::unbounded()
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

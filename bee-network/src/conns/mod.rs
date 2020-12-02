@@ -96,7 +96,8 @@ fn spawn_substream_task(
     mut internal_event_sender: InternalEventSender,
 ) -> JoinHandle<()> {
     tokio::spawn(async move {
-        let mut fused_message_receiver = message_receiver.into_stream();
+        // let mut fused_message_receiver = message_receiver.into_stream();
+        let mut fused_message_receiver = message_receiver.fuse();
         let mut buffer = vec![0u8; MSG_BUFFER_SIZE.load(Ordering::Relaxed)];
 
         loop {
