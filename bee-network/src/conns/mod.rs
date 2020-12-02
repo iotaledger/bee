@@ -102,6 +102,18 @@ fn spawn_substream_task(
         loop {
             info!("!!!! LOOP !!!!");
             select! {
+                message = fused_message_receiver.next() => {
+                    if let Some(message) = message {
+                        if let Err(e) = send_message(&mut substream, &message).await {
+                            error!("{:?}", e);
+                            continue;
+                        }
+                    } else {
+                        debug!("!!! Message sender was deallocated. Shutting down this task. !!!");
+                        break;
+                    }
+
+                }
                 recv_result = recv_message(&mut substream, &mut buffer).fuse() => {
                     match recv_result {
                         Ok(num_read) => {
@@ -128,18 +140,6 @@ fn spawn_substream_task(
                             break;
                         }
                     }
-                }
-                message = fused_message_receiver.next() => {
-                    if let Some(message) = message {
-                        if let Err(e) = send_message(&mut substream, &message).await {
-                            error!("{:?}", e);
-                            continue;
-                        }
-                    } else {
-                        debug!("!!! Message sender was deallocated. Shutting down this task. !!!");
-                        break;
-                    }
-
                 }
             }
         }
