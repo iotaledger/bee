@@ -124,7 +124,7 @@ fn spawn_substream_task(
                             }
 
 
-                            // Stream to remote stopped => shut down this task
+                            debug!("!!! Stream to remote stopped. Shutting down this task. !!!");
                             break;
                         }
                     }
@@ -136,7 +136,7 @@ fn spawn_substream_task(
                             continue;
                         }
                     } else {
-                        // Data receiver closed (due to deallocation) => shut down this task
+                        debug!("!!! Message sender was deallocated. Shutting down this task. !!!");
                         break;
                     }
 
