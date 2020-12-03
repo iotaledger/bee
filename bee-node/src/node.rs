@@ -357,9 +357,9 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             .with_resource(PeerList::default());
 
         info!("Initializing network layer...");
-        let (mut this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
+        let (this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
 
-        this = this.with_resource(ShutdownStream::new(ctrl_c_listener(), events.into_stream()));
+        let this = this.with_resource(ShutdownStream::new(ctrl_c_listener(), events.into_stream()));
 
         info!("Initializing snapshot handler...");
         let (this, snapshot) = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, this)
@@ -375,20 +375,20 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         //     bus.clone(),
         // );
 
-        info!("Initializing protocol layer...");
-        let mut this = Protocol::init::<BeeNode<B>>(
-            config.protocol.clone(),
-            config.database.clone(),
-            snapshot,
-            network_id,
-            this,
-        );
+        // info!("Initializing protocol layer...");
+        // let this = Protocol::init::<BeeNode<B>>(
+        //     config.protocol.clone(),
+        //     config.database.clone(),
+        //     snapshot,
+        //     network_id,
+        //     this,
+        // );
 
-        this = this.with_worker::<VersionCheckerWorker>();
+        let this = this.with_worker::<VersionCheckerWorker>();
 
-        // info!("Initializing REST API...");
-        // this = bee_rest_api::init::<BeeNode<B>>(RestApiConfig::build().finish(), config.network_id.clone(),
-        // this).await; // TODO: Read config from file
+        info!("Initializing REST API...");
+        let mut this =
+            bee_rest_api::init::<BeeNode<B>>(RestApiConfig::build().finish(), config.network_id.clone(), this).await; // TODO: Read config from file
 
         let mut node = BeeNode {
             workers: Map::new(),
