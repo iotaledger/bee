@@ -114,12 +114,13 @@ impl PeerList {
         // let state = &mut kv.1;
 
         if let PeerState::Connected(sender) = state {
-            sender.send(message).await;
-            // .unbounded_send(message)
-            // NOTE: this has lifetime consequence for 'this'
-            // .send_async(message)
-            // .await
-            // .map_err(|_| Error::SendMessageFailure(to.short()))?;
+            sender
+                .send(message)
+                // .unbounded_send(message)
+                // NOTE: this has lifetime consequence for 'this'
+                // .send_async(message)
+                // .await
+                .map_err(|_| Error::SendMessageFailure(to.short()))?;
 
             Ok(())
         } else {
