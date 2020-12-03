@@ -375,14 +375,14 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         //     bus.clone(),
         // );
 
-        // info!("Initializing protocol layer...");
-        // let this = Protocol::init::<BeeNode<B>>(
-        //     config.protocol.clone(),
-        //     config.database.clone(),
-        //     snapshot,
-        //     network_id,
-        //     this,
-        // );
+        info!("Initializing protocol layer...");
+        let this = Protocol::init::<BeeNode<B>>(
+            config.protocol.clone(),
+            config.database.clone(),
+            snapshot,
+            network_id,
+            this,
+        );
 
         let this = this.with_worker::<VersionCheckerWorker>();
 
