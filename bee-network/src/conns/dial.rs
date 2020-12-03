@@ -23,7 +23,7 @@ pub async fn dial_peer(
     banned_peers: &BannedPeerList,
 ) -> Result<(), Error> {
     // Prevent duplicate connections.
-    if let Ok(connected) = peers.is(peer_id, |_, state| state.is_connected()) {
+    if let Ok(connected) = peers.is(peer_id, |_, state| state.is_connected()).await {
         if connected {
             return Err(Error::DuplicateConnection(peer_id.short()));
         }
@@ -37,6 +37,7 @@ pub async fn dial_peer(
     // Prevent dialing unlisted/unregistered peers.
     let peer_info = peers
         .get_info(peer_id)
+        .await
         .map_err(|_| Error::DialedUnlistedPeer(peer_id.short()))?;
 
     // Prevent dialing banned addresses.
@@ -109,7 +110,7 @@ pub async fn dial_address(
         .map_err(|_| Error::DialingFailed(address.clone()))?;
 
     // Prevent duplicate connections.
-    if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()) {
+    if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()).await {
         if connected {
             return Err(Error::DuplicateConnection(peer_id.short()));
         }
@@ -120,7 +121,7 @@ pub async fn dial_address(
         return Err(Error::DialedBannedPeer(peer_id.short()));
     }
 
-    let peer_info = if let Ok(peer_info) = peers.get_info(&peer_id) {
+    let peer_info = if let Ok(peer_info) = peers.get_info(&peer_id).await {
         // If we have this peer id in our peerlist (but are not already connected to it),
         // then we allow the connection.
         peer_info
@@ -134,6 +135,7 @@ pub async fn dial_address(
 
         peers
             .insert(peer_id.clone(), peer_info.clone(), PeerState::Disconnected)
+            .await
             .map_err(|_| Error::DialedRejectedPeer(peer_id.short()))?;
 
         info!("Allowing connection to unknown peer {}", peer_id.short(),);

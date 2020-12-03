@@ -92,17 +92,17 @@ pub(crate) async fn spawn_connection_handler(
 fn spawn_substream_task(
     peer_id: PeerId,
     mut substream: GossipSubstream,
-    message_receiver: DataReceiver,
+    mut message_receiver: DataReceiver,
     mut internal_event_sender: InternalEventSender,
 ) -> JoinHandle<()> {
     tokio::spawn(async move {
-        let mut fused_message_receiver = message_receiver.into_stream();
+        // let mut fused_message_receiver = message_receiver.into_stream();
         // let mut fused_message_receiver = message_receiver.fuse();
         let mut buffer = vec![0u8; MSG_BUFFER_SIZE.load(Ordering::Relaxed)];
 
         loop {
             select! {
-                message = fused_message_receiver.next() => {
+                message = message_receiver.next() => {
                     info!("!!!! SEND MESSAGE !!!!");
                     if let Some(message) = message {
                         if let Err(e) = send_message(&mut substream, &message).await {

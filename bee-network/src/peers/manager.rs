@@ -116,9 +116,9 @@ impl<N: Node> Worker<N> for PeerManager {
                 }
             }
 
+            // Clear the peer list; this will end all active connections.
             peers_clone.clear();
 
-            info!("peers.len() = {}", peers_clone.count());
             info!("Command processor stopped.");
         });
 
@@ -163,7 +163,10 @@ impl<N: Node> Worker<N> for PeerManager {
             while connected_check.next().await.is_some() {
                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
                 // of those.
-                for peer_id in peers.iter_if(|info, state| info.is_known() && state.is_disconnected()) {
+                for peer_id in peers
+                    .iter_if(|info, state| info.is_known() && state.is_disconnected())
+                    .await
+                {
                     if let Err(e) = internal_event_sender
                         .send_async(InternalEvent::ReconnectScheduled { peer_id })
                         .await
@@ -295,7 +298,7 @@ async fn process_command(
             });
         }
         Command::SendMessage { message, to } => {
-            send_message(message, &to, peers)?;
+            send_message(message, &to, peers).await?;
         }
         Command::BanAddress { address } => {
             if !banned_addrs.insert(address.to_string()) {
@@ -328,7 +331,7 @@ async fn process_command(
             }
         }
         Command::UpdateRelation { id, relation } => {
-            peers.update_relation(&id, relation)?;
+            peers.update_relation(&id, relation).await?;
         }
     }
 
@@ -355,7 +358,9 @@ async fn process_internal_event(
             ..
         } => {
             info!("Event::ConnectionEstablished");
-            peers.update_state(&peer_id, PeerState::Connected(message_sender))?;
+            peers
+                .update_state(&peer_id, PeerState::Connected(message_sender))
+                .await?;
 
             event_sender
                 .send_async(Event::PeerConnected {
@@ -368,7 +373,7 @@ async fn process_internal_event(
 
         InternalEvent::ConnectionDropped { peer_id } => {
             info!("Event::ConnectionDropped");
-            peers.update_state(&peer_id, PeerState::Disconnected)?;
+            peers.update_state(&peer_id, PeerState::Disconnected).await?;
 
             // TODO: maybe allow some fixed timespan for a connection recovery from either end before removing.
             peers.remove_if(&peer_id, |info, _| info.is_unknown());
@@ -426,7 +431,7 @@ async fn add_peer(
     };
 
     // If the insert fails for some reason, we get the peer info back.
-    if let Err((id, info, e)) = peers.insert(id.clone(), info, PeerState::Disconnected) {
+    if let Err((id, info, e)) = peers.insert(id.clone(), info, PeerState::Disconnected).await {
         // Inform the user that the command failed.
         event_sender
             .send_async(Event::CommandFailed {
@@ -453,7 +458,7 @@ async fn add_peer(
 }
 
 async fn remove_peer(id: PeerId, peers: &PeerList, event_sender: &EventSender) -> Result<(), Error> {
-    match peers.remove(&id) {
+    match peers.remove(&id).await {
         Err(e) => {
             // Inform the user that the command failed.
             event_sender
@@ -513,7 +518,7 @@ async fn connect_peer(
 }
 
 async fn disconnect_peer(id: PeerId, peers: &PeerList, event_sender: &EventSender) -> Result<(), Error> {
-    match peers.update_state(&id, PeerState::Disconnected) {
+    match peers.update_state(&id, PeerState::Disconnected).await {
         Err(e) => {
             // Inform the user that the command failed.
             event_sender
@@ -573,8 +578,8 @@ async fn dial_address(
 }
 
 #[inline]
-fn send_message(message: Vec<u8>, to: &PeerId, peers: &PeerList) -> Result<(), Error> {
-    peers.send_message(message, to)
+async fn send_message(message: Vec<u8>, to: &PeerId, peers: &PeerList) -> Result<(), Error> {
+    peers.send_message(message, to).await
 }
 
 #[inline]

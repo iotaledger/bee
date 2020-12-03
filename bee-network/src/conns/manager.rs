@@ -129,7 +129,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                     };
 
                     // Prevent accepting duplicate connections.
-                    if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()) {
+                    if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()).await {
                         if connected {
                             trace!("Already connected to {}", peer_id);
                             NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
@@ -144,7 +144,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                         continue;
                     }
 
-                    let peer_info = if let Ok(peer_info) = peers.get_info(&peer_id) {
+                    let peer_info = if let Ok(peer_info) = peers.get_info(&peer_id).await {
                         // If we have this peer id in our peerlist (but are not already connected to it),
                         // then we allow the connection.
                         peer_info
@@ -157,6 +157,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
 
                         if peers
                             .insert(peer_id.clone(), peer_info.clone(), PeerState::Disconnected)
+                            .await
                             .is_err()
                         {
                             trace!("Ignoring peer. Cause: Denied by peerlist.");
