@@ -55,8 +55,9 @@ impl Protocol {
 
         // let (ms_send, ms_recv) = oneshot::channel();
 
-        node_builder.with_worker_cfg::<StorageWorker>(database_config)
-        // .with_worker_cfg::<TangleWorker>(snapshot)
+        node_builder
+            .with_worker_cfg::<StorageWorker>(database_config)
+            .with_worker_cfg::<TangleWorker>(snapshot)
         // .with_worker_cfg::<HasherWorker>(config.workers.message_worker_cache)
         // .with_worker_cfg::<ProcessorWorker>((config.clone(), network_id))
         // .with_worker::<MessageResponderWorker>()
