@@ -143,11 +143,11 @@ impl<'a, B: Backend> NodeRuntime<'a, B> {
 
     #[inline]
     async fn peer_disconnected_handler(&mut self, id: PeerId) {
-        // TODO unregister ?
         if let Some((_, shutdown)) = self.peers.remove(&id) {
             if let Err(e) = shutdown.send(()) {
                 warn!("Sending shutdown to {} failed: {:?}.", id.short(), e);
             }
+            Protocol::unregister(id).await;
         }
     }
 
