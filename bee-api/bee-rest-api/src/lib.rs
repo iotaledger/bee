@@ -14,7 +14,7 @@ use bee_common::{
     worker::{Error as WorkerError, Worker},
 };
 use bee_protocol::{tangle::MsTangle, MessageSubmitterWorker, TangleWorker};
-use log::info;
+use log::{error, info};
 use std::{any::TypeId, convert::Infallible};
 use warp::{http::StatusCode, Filter, Rejection, Reply};
 
@@ -75,18 +75,28 @@ where
 async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (http_code, err_code, reason) = match err.find() {
         // handle custom rejections
-        Some(CustomRejection::NotFound(reason)) => (StatusCode::NOT_FOUND, "404", reason),
-        Some(CustomRejection::BadRequest(reason)) => (StatusCode::BAD_REQUEST, "400", reason),
-        Some(CustomRejection::ServiceUnavailable(reason)) => (StatusCode::SERVICE_UNAVAILABLE, "503", reason),
+        Some(CustomRejection::NotFound(reason)) => (StatusCode::NOT_FOUND, "404".to_string(), reason.to_owned()),
+        Some(CustomRejection::BadRequest(reason)) => (StatusCode::BAD_REQUEST, "400".to_string(), reason.to_owned()),
+        Some(CustomRejection::ServiceUnavailable(reason)) => {
+            (StatusCode::SERVICE_UNAVAILABLE, "503".to_string(), reason.to_owned())
+        }
         // handle default rejections
         _ => {
             if err.is_not_found() {
-                (StatusCode::NOT_FOUND, "404", &"data not found")
+                (StatusCode::NOT_FOUND, "404".to_string(), "data not found".to_string())
             } else if let Some(_) = err.find::<warp::reject::MethodNotAllowed>() {
-                (StatusCode::METHOD_NOT_ALLOWED, "405", &"method not allowed")
+                (
+                    StatusCode::METHOD_NOT_ALLOWED,
+                    "405".to_string(),
+                    "method not allowed".to_string(),
+                )
             } else {
-                eprintln!("unhandled rejection: {:?}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR, "500", &"internal server error")
+                error!("unhandled rejection: {:?}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "500".to_string(),
+                    "internal server error".to_string(),
+                )
             }
         }
     };

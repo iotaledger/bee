@@ -4,15 +4,14 @@
 use bee_message::prelude::*;
 
 use bee_message::payload::milestone::MilestoneEssence;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::convert::{TryFrom, TryInto};
 
 use std::num::NonZeroU64;
 
-pub mod requests;
 pub mod responses;
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
     #[serde(rename = "networkId")]
     pub network_id: String,
@@ -24,7 +23,7 @@ pub struct MessageDto {
     pub nonce: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PayloadDto {
     Transaction(TransactionDto),
@@ -32,7 +31,7 @@ pub enum PayloadDto {
     Indexation(IndexationDto),
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionDto {
     #[serde(rename = "type")]
     pub kind: u32,
@@ -41,7 +40,7 @@ pub struct TransactionDto {
     pub unlock_blocks: Vec<UnlockBlockDto>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionEssenceDto {
     #[serde(rename = "type")]
     pub kind: u32,
@@ -50,13 +49,13 @@ pub struct TransactionEssenceDto {
     pub payload: Option<IndexationDto>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum InputDto {
-    Utxo(UtxoInputDto),
+    UTXO(UtxoInputDto),
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UtxoInputDto {
     #[serde(rename = "type")]
     pub kind: u32,
@@ -66,13 +65,13 @@ pub struct UtxoInputDto {
     pub transaction_output_index: u16,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum OutputDto {
     SignatureLockedSingle(SignatureLockedSingleOutputDto),
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedSingleOutputDto {
     #[serde(rename = "type")]
     pub kind: u32,
@@ -80,33 +79,33 @@ pub struct SignatureLockedSingleOutputDto {
     pub amount: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AddressDto {
     Ed25519(Ed25519AddressDto),
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Ed25519AddressDto {
     #[serde(rename = "type")]
     pub kind: u32,
     pub address: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum UnlockBlockDto {
     Signature(SignatureUnlockDto),
     Reference(ReferenceUnlockDto),
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SignatureUnlockDto {
     Ed25519(Ed25519SignatureDto),
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Ed25519SignatureDto {
     #[serde(rename = "type")]
     pub kind: u32,
@@ -115,14 +114,14 @@ pub struct Ed25519SignatureDto {
     pub signature: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReferenceUnlockDto {
     #[serde(rename = "type")]
     pub kind: u32,
     pub index: u16,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MilestoneDto {
     #[serde(rename = "type")]
     pub kind: u32,
@@ -130,7 +129,7 @@ pub struct MilestoneDto {
     pub signatures: Vec<String>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MilestoneEssenceDto {
     pub index: u32,
     pub timestamp: u64,
@@ -142,7 +141,7 @@ pub struct MilestoneEssenceDto {
     pub public_keys: Vec<String>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IndexationDto {
     #[serde(rename = "type")]
     pub kind: u32,
@@ -299,7 +298,7 @@ impl TryFrom<&Input> for InputDto {
     type Error = &'static str;
     fn try_from(value: &Input) -> Result<Self, Self::Error> {
         match value {
-            Input::UTXO(u) => Ok(InputDto::Utxo(UtxoInputDto {
+            Input::UTXO(u) => Ok(InputDto::UTXO(UtxoInputDto {
                 kind: 0,
                 transaction_id: u.output_id().transaction_id().to_string(),
                 transaction_output_index: u.output_id().index(),
@@ -314,7 +313,7 @@ impl TryFrom<&InputDto> for Input {
     type Error = &'static str;
     fn try_from(value: &InputDto) -> Result<Self, Self::Error> {
         match value {
-            InputDto::Utxo(u) => Ok(Input::UTXO(
+            InputDto::UTXO(u) => Ok(Input::UTXO(
                 UTXOInput::new(
                     u.transaction_id
                         .parse::<TransactionId>()
@@ -322,8 +321,7 @@ impl TryFrom<&InputDto> for Input {
                     u.transaction_output_index,
                 )
                 .map_err(|_| "can not parse UTXO input")?,
-            )),
-            _ => Err("input type not supported"),
+            ))
         }
     }
 }
@@ -352,8 +350,7 @@ impl TryFrom<&OutputDto> for Output {
                 (&s.address).try_into()?,
                 NonZeroU64::new(s.amount.parse::<u64>().map_err(|_| "can not parse amount")?)
                     .ok_or("can not parse amount")?,
-            ))),
-            _ => Err("input type not supported"),
+            )))
         }
     }
 }
@@ -375,7 +372,6 @@ impl TryFrom<&AddressDto> for Address {
     fn try_from(value: &AddressDto) -> Result<Self, Self::Error> {
         match value {
             AddressDto::Ed25519(ed) => Ok(Address::Ed25519(ed.try_into()?)),
-            _ => Err("address type not supported"),
         }
     }
 }
@@ -443,12 +439,10 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
                         public_key, signature,
                     ))))
                 }
-                _ => Err("signature unlock type not supported"),
             },
             UnlockBlockDto::Reference(r) => Ok(UnlockBlock::Reference(
                 ReferenceUnlock::new(r.index).map_err(|_| "invalid reference unlock block")?,
-            )),
-            _ => Err("unlock block type not supported"),
+            ))
         }
     }
 }

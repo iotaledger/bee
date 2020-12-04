@@ -20,18 +20,16 @@ use log::{error, info};
 use std::{any::TypeId, fmt};
 
 #[derive(Debug)]
-pub struct MessageSubmitterError {
-    pub reason: String,
-}
+pub struct MessageSubmitterError(pub String);
 
 impl fmt::Display for MessageSubmitterError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.reason)
+        write!(f, "{}", self.0)
     }
 }
 
 pub struct MessageSubmitterWorkerEvent {
-    pub buf: Vec<u8>,
+    pub message: Vec<u8>,
     pub notifier: Sender<Result<MessageId, MessageSubmitterError>>,
 }
 
@@ -62,10 +60,9 @@ impl<N: Node> Worker<N> for MessageSubmitterWorker {
                 let event: MessageSubmitterWorkerEvent = event;
                 let event = HasherWorkerEvent {
                     from: None,
-                    message_packet: Message::new(&event.buf),
+                    message_packet: Message::new(&event.message),
                     notifier: Some(event.notifier),
                 };
-
                 if let Err(e) = hasher.send(event) {
                     error!("Sending HasherWorkerEvent failed: {}", e);
                 }

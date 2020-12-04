@@ -3,7 +3,6 @@
 
 use crate::{handlers, NetworkId};
 use bee_common::node::ResHandle;
-use serde::de::DeserializeOwned;
 use warp::{reject, Filter, Rejection};
 
 use bee_protocol::{tangle::MsTangle, MessageSubmitterWorkerEvent};
@@ -13,9 +12,9 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub(crate) enum CustomRejection {
-    BadRequest(&'static str),
-    NotFound(&'static str),
-    ServiceUnavailable(&'static str),
+    BadRequest(String),
+    NotFound(String),
+    ServiceUnavailable(String),
 }
 
 impl reject::Reject for CustomRejection {}
@@ -90,8 +89,7 @@ fn post_json_message<B: Backend>(
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("messages"))
-        .and(warp::path::end())
-        .and(json_body())
+        .and(warp::body::json())
         .and(with_message_submitter(message_submitter))
         .and(with_network_id(network_id))
         .and(with_tangle(tangle))
@@ -122,7 +120,7 @@ fn get_message_by_index<B: Backend>(
         .and(warp::query().and_then(|query: HashMap<String, String>| async move {
             match query.get("index") {
                 Some(i) => Ok(i.to_string()),
-                None => Err(reject::custom(BadRequest("invalid query parameter"))),
+                None => Err(reject::custom(BadRequest("invalid query parameter".to_string()))),
             }
         }))
         .and(with_storage(storage))
@@ -247,7 +245,7 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<OutputId>() {
                 Ok(id) => Ok(id),
-                Err(_) => Err(reject::custom(BadRequest("invalid output id"))),
+                Err(_) => Err(reject::custom(BadRequest("invalid output id".to_string()))),
             }
         })
     }
@@ -256,7 +254,7 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<MessageId>() {
                 Ok(msg) => Ok(msg),
-                Err(_) => Err(reject::custom(BadRequest("invalid message id"))),
+                Err(_) => Err(reject::custom(BadRequest("invalid message id".to_string()))),
             }
         })
     }
@@ -265,7 +263,7 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<u32>() {
                 Ok(i) => Ok(MilestoneIndex(i)),
-                Err(_) => Err(reject::custom(BadRequest("invalid milestone index"))),
+                Err(_) => Err(reject::custom(BadRequest("invalid milestone index".to_string()))),
             }
         })
     }
@@ -274,7 +272,7 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<Ed25519Address>() {
                 Ok(addr) => Ok(addr),
-                Err(_) => Err(reject::custom(BadRequest("invalid ed25519 address"))),
+                Err(_) => Err(reject::custom(BadRequest("invalid ed25519 address".to_string()))),
             }
         })
     }
@@ -302,8 +300,4 @@ fn with_message_submitter(
     message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
 ) -> impl Filter<Extract = (flume::Sender<MessageSubmitterWorkerEvent>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || message_submitter.clone())
-}
-
-fn json_body<T: DeserializeOwned + Send>() -> impl Filter<Extract = (T,), Error = Rejection> + Copy {
-    warp::body::content_length_limit(1024 * 32).and(warp::body::json())
 }

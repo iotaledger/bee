@@ -26,8 +26,8 @@ impl<T: DataBody> DataResponse<T> {
 
 #[derive(Clone, Debug, Serialize)]
 pub struct ErrorBody {
-    pub code: &'static str,
-    pub message: &'static str,
+    pub code: String,
+    pub message: String,
 }
 
 /// Error response.
