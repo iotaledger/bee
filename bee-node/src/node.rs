@@ -386,10 +386,10 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         let mut this = this.with_worker::<VersionCheckerWorker>();
 
-        // info!("Initializing REST API...");
-        // let mut this =
-        //     bee_rest_api::init::<BeeNode<B>>(RestApiConfig::build().finish(), config.network_id.clone(), this).await;
-        // // TODO: Read config from file
+        info!("Initializing REST API...");
+        let mut this =
+            bee_rest_api::init::<BeeNode<B>>(RestApiConfig::build().finish(), config.network_id.clone(), this).await;
+        // TODO: Read config from file
 
         let mut node = BeeNode {
             workers: Map::new(),

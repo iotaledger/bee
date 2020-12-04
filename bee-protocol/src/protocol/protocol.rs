@@ -53,29 +53,29 @@ impl Protocol {
 
         *PROTOCOL.write() = Some(Box::leak(Box::new(protocol)));
 
-        // let (ms_send, ms_recv) = oneshot::channel();
+        let (ms_send, ms_recv) = oneshot::channel();
 
         node_builder
             .with_worker_cfg::<StorageWorker>(database_config)
             .with_worker_cfg::<TangleWorker>(snapshot)
-        // .with_worker_cfg::<HasherWorker>(config.workers.message_worker_cache)
-        // .with_worker_cfg::<ProcessorWorker>((config.clone(), network_id))
-        // .with_worker::<MessageResponderWorker>()
-        // .with_worker::<MilestoneResponderWorker>()
-        // .with_worker::<MessageRequesterWorker>()
-        // .with_worker::<MilestoneRequesterWorker>()
-        // .with_worker_cfg::<MilestoneValidatorWorker>(config.clone())
-        // .with_worker::<BroadcasterWorker>()
-        // .with_worker::<MessageValidatorWorker>()
-        // .with_worker::<PropagatorWorker>()
-        // .with_worker::<MpsWorker>()
-        // .with_worker_cfg::<KickstartWorker>((ms_send, config.workers.ms_sync_count))
-        // .with_worker_cfg::<MilestoneSolidifierWorker>(ms_recv)
-        // .with_worker::<MilestoneConeUpdaterWorker>()
-        // .with_worker::<TipPoolCleanerWorker>()
-        // .with_worker_cfg::<StatusWorker>(config.workers.status_interval)
-        // .with_worker::<HeartbeaterWorker>()
-        // .with_worker::<MessageSubmitterWorker>()
+            .with_worker_cfg::<HasherWorker>(config.workers.message_worker_cache)
+            .with_worker_cfg::<ProcessorWorker>((config.clone(), network_id))
+            .with_worker::<MessageResponderWorker>()
+            .with_worker::<MilestoneResponderWorker>()
+            .with_worker::<MessageRequesterWorker>()
+            .with_worker::<MilestoneRequesterWorker>()
+            .with_worker_cfg::<MilestoneValidatorWorker>(config.clone())
+            .with_worker::<BroadcasterWorker>()
+            .with_worker::<MessageValidatorWorker>()
+            .with_worker::<PropagatorWorker>()
+            .with_worker::<MpsWorker>()
+            .with_worker_cfg::<KickstartWorker>((ms_send, config.workers.ms_sync_count))
+            .with_worker_cfg::<MilestoneSolidifierWorker>(ms_recv)
+            .with_worker::<MilestoneConeUpdaterWorker>()
+            .with_worker::<TipPoolCleanerWorker>()
+            .with_worker_cfg::<StatusWorker>(config.workers.status_interval)
+            .with_worker::<HeartbeaterWorker>()
+            .with_worker::<MessageSubmitterWorker>()
     }
 
     pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
