@@ -73,20 +73,27 @@ where
 }
 
 async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
-    let (http_code, err_code, desc) = match err.find() {
-        Some(CustomRejection::NotFound(msg)) => (StatusCode::NOT_FOUND, "404", msg),
-        Some(CustomRejection::BadRequest(msg)) => (StatusCode::BAD_REQUEST, "400", msg),
-        Some(CustomRejection::ServiceUnavailable(msg)) => (StatusCode::SERVICE_UNAVAILABLE, "503", msg),
+    let (http_code, err_code, reason) = match err.find() {
+        // handle custom rejections
+        Some(CustomRejection::NotFound(reason)) => (StatusCode::NOT_FOUND, "404", reason),
+        Some(CustomRejection::BadRequest(reason)) => (StatusCode::BAD_REQUEST, "400", reason),
+        Some(CustomRejection::ServiceUnavailable(reason)) => (StatusCode::SERVICE_UNAVAILABLE, "503", reason),
+        // handle default rejections
         _ => {
-            eprintln!("unhandled rejection: {:?}", err);
-            (StatusCode::INTERNAL_SERVER_ERROR, "500", &"internal server error")
+            if err.is_not_found() {
+                (StatusCode::NOT_FOUND, "404", &"data not found")
+            } else if let Some(_) = err.find::<warp::reject::MethodNotAllowed>() {
+                (StatusCode::METHOD_NOT_ALLOWED, "405", &"method not allowed")
+            } else {
+                eprintln!("unhandled rejection: {:?}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR, "500", &"internal server error")
+            }
         }
     };
-
     Ok(warp::reply::with_status(
         warp::reply::json(&ErrorResponse::new(ErrorBody {
             code: err_code,
-            message: desc,
+            message: reason,
         })),
         http_code,
     ))
