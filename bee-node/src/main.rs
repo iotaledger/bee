@@ -31,7 +31,7 @@ async fn main() {
     .finish();
 
     Node::<Rocksdb>::build(config)
-        .with_plugin::<default_plugins::Mps>()
+        // .with_plugin::<default_plugins::Mps>()
         .with_logging()
         .finish()
         .await

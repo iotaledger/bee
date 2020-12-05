@@ -263,16 +263,16 @@ impl<B: Backend> BeeNodeBuilder<B> {
         &self.config
     }
 
-    pub fn with_plugin<P: plugin::Plugin>(self) -> Self
-    where
-        P::Config: Default,
-    {
-        self.with_worker::<plugin::PluginWorker<P>>()
-    }
+    // pub fn with_plugin<P: plugin::Plugin>(self) -> Self
+    // where
+    //     P::Config: Default,
+    // {
+    //     self.with_worker::<plugin::PluginWorker<P>>()
+    // }
 
-    pub fn with_plugin_cfg<P: plugin::Plugin>(self, config: P::Config) -> Self {
-        self.with_worker_cfg::<plugin::PluginWorker<P>>(config)
-    }
+    // pub fn with_plugin_cfg<P: plugin::Plugin>(self, config: P::Config) -> Self {
+    //     self.with_worker_cfg::<plugin::PluginWorker<P>>(config)
+    // }
 }
 
 #[async_trait(?Send)]
