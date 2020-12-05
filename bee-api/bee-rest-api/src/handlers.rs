@@ -60,11 +60,11 @@ pub(crate) async fn get_tips<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> Resu
             tip_1_message_id: tips.0.to_string(),
             tip_2_message_id: tips.1.to_string(),
         }))),
-        None => Err(reject::custom(ServiceUnavailable("no tips available".to_string()))),
+        None => Err(reject::custom(ServiceUnavailable("tip pool is empty".to_string()))),
     }
 }
 
-pub(crate) async fn post_json_message<B: Backend>(
+pub(crate) async fn submit_json_message<B: Backend>(
     value: JsonValue,
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: Sender<MessageSubmitterWorkerEvent>,
@@ -83,10 +83,14 @@ pub(crate) async fn post_json_message<B: Backend>(
             network_id_v
                 .as_str()
                 .ok_or(reject::custom(BadRequest(
-                    "can not parse networkId: expected an u64-string".to_string(),
+                    "can not parse network id: expected an u64-string".to_string(),
                 )))?
                 .parse::<u64>()
-                .map_err(|_| reject::custom(BadRequest("can not networkId: expected an u64-string".to_string())))?
+                .map_err(|_| {
+                    reject::custom(BadRequest(
+                        "can not parse network id: expected an u64-string".to_string(),
+                    ))
+                })?
         }
     };
 
@@ -99,25 +103,17 @@ pub(crate) async fn post_json_message<B: Backend>(
             let parent1 = parent_1_v
                 .as_str()
                 .ok_or(reject::custom(BadRequest(
-                    "can not parse parent1MessageId: expected a hex-string".to_string(),
+                    "can not parse parent 1: expected a hex-string".to_string(),
                 )))?
                 .parse::<MessageId>()
-                .map_err(|_| {
-                    reject::custom(BadRequest(
-                        "can not parse parent1MessageId: invalid hex-string".to_string(),
-                    ))
-                })?;
+                .map_err(|_| reject::custom(BadRequest("can not parse parent 1: not a message id".to_string())))?;
             let parent2 = parent_2_v
                 .as_str()
                 .ok_or(reject::custom(BadRequest(
-                    "can not parse parent2MessageId: expected a hex-string".to_string(),
+                    "can not parse parent 2: expected a hex-string".to_string(),
                 )))?
                 .parse::<MessageId>()
-                .map_err(|_| {
-                    reject::custom(BadRequest(
-                        "can not parse parent2MessageId: invalid hex-string".to_string(),
-                    ))
-                })?;
+                .map_err(|_| reject::custom(BadRequest("can not parse parent 2: not a message id".to_string())))?;
             (parent1, parent2)
         } else if parent_1_v.is_null() && parent_2_v.is_null() {
             // if none of the parents are set
@@ -125,7 +121,7 @@ pub(crate) async fn post_json_message<B: Backend>(
                 .get_messages_to_approve()
                 .await
                 .ok_or(reject::custom(ServiceUnavailable(
-                    "can not auto-fill tips: no tips available".to_string(),
+                    "can not auto-fill tips: tip pool is empty".to_string(),
                 )))?
         } else {
             // if only one parent is set
@@ -133,26 +129,18 @@ pub(crate) async fn post_json_message<B: Backend>(
                 parent_1_v
                     .as_str()
                     .ok_or(reject::custom(BadRequest(
-                        "can not parse parent1MessageId: expected a hex-string".to_string(),
+                        "can not parse parent 1: expected a hex-string".to_string(),
                     )))?
                     .parse::<MessageId>()
-                    .map_err(|_| {
-                        reject::custom(BadRequest(
-                            "can not parse parent1MessageId: invalid hex-string".to_string(),
-                        ))
-                    })?
+                    .map_err(|_| reject::custom(BadRequest("can not parse parent 1: not a message id".to_string())))?
             } else {
                 parent_2_v
                     .as_str()
                     .ok_or(reject::custom(BadRequest(
-                        "can not parse parent2MessageId: expected a hex-string".to_string(),
+                        "can not parse parent 2: expected a hex-string".to_string(),
                     )))?
                     .parse::<MessageId>()
-                    .map_err(|_| {
-                        reject::custom(BadRequest(
-                            "can not parse parent2MessageId: invalid hex-string".to_string(),
-                        ))
-                    })?
+                    .map_err(|_| reject::custom(BadRequest("can not parse parent 2: not a message id".to_string())))?
             };
             (parent, parent)
         }
@@ -173,7 +161,7 @@ pub(crate) async fn post_json_message<B: Backend>(
         let nonce_v = &value["nonce"];
         if nonce_v.is_null() {
             return Err(reject::custom(ServiceUnavailable(
-                "can not auto-fill nonce: remote proof of work not supported at the moment".to_string(),
+                "can not auto-fill nonce: remote proof-of-work not supported at the moment".to_string(),
             )));
         } else {
             nonce_v
@@ -207,7 +195,7 @@ pub(crate) async fn post_json_message<B: Backend>(
     })))
 }
 
-pub(crate) async fn post_raw_message<B: Backend>(
+pub(crate) async fn submit_raw_message<B: Backend>(
     buf: warp::hyper::body::Bytes,
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
@@ -223,34 +211,32 @@ pub(crate) async fn get_message_by_index<B: Backend>(
     index: String,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    use digest::Digest;
+    let hashed_index = {
+        use digest::Digest;
+        let mut hasher = Blake2s::new();
+        hasher.update(index.as_bytes());
+        // `Blake2s` output is `HASHED_INDEX_LENGTH` bytes long.
+        HashedIndex::new(hasher.finalize_reset().as_slice().try_into().unwrap())
+    };
 
-    let mut hasher = Blake2s::new();
-    hasher.update(index.as_bytes());
-    let hashed_index = HashedIndex::new(hasher.finalize_reset().as_slice().try_into().unwrap());
+    let mut fetched = match Fetch::<HashedIndex, Vec<MessageId>>::fetch(storage.deref(), &hashed_index)
+        .await
+        .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
+    {
+        Some(ids) => ids,
+        None => vec![],
+    };
 
+    let count = fetched.len();
     let max_results = 1000;
-    match storage.deref().fetch(&hashed_index).await {
-        Ok(ret) => match ret {
-            Some(mut fetched) => {
-                let count = fetched.len();
-                fetched.truncate(max_results);
-                Ok(warp::reply::json(&DataResponse::new(GetMessagesByIndexResponse {
-                    index,
-                    max_results,
-                    count,
-                    message_ids: fetched.iter().map(|id| id.to_string()).collect(),
-                })))
-            }
-            None => Ok(warp::reply::json(&DataResponse::new(GetMessagesByIndexResponse {
-                index,
-                max_results,
-                count: 0,
-                message_ids: vec![],
-            }))),
-        },
-        Err(_) => Err(reject::custom(ServiceUnavailable("service unavailable".to_string()))),
-    }
+    fetched.truncate(max_results);
+
+    Ok(warp::reply::json(&DataResponse::new(GetMessagesByIndexResponse {
+        index,
+        max_results,
+        count,
+        message_ids: fetched.iter().map(|id| id.to_string()).collect(),
+    })))
 }
 
 pub(crate) async fn get_message_by_message_id<B: Backend>(
@@ -261,7 +247,7 @@ pub(crate) async fn get_message_by_message_id<B: Backend>(
         Some(message) => Ok(warp::reply::json(&DataResponse::new(GetMessageResponse(
             MessageDto::try_from(&*message).map_err(|e| reject::custom(BadRequest(e.to_string())))?,
         )))),
-        None => Err(reject::custom(NotFound("can not find data".to_string()))),
+        None => Err(reject::custom(NotFound("can not find message".to_string()))),
     }
 }
 
@@ -270,9 +256,7 @@ pub(crate) async fn get_message_metadata<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     if !tangle.is_synced() {
-        return Err(reject::custom(ServiceUnavailable(
-            "service unavailable: the tangle is not synced".to_string(),
-        )));
+        return Err(reject::custom(ServiceUnavailable("tangle not synced".to_string())));
     }
 
     let ytrsi_delta = 8;
@@ -367,7 +351,7 @@ pub async fn get_raw_message<B: Backend>(
         Some(message) => Ok(Response::builder()
             .header("Content-Type", "application/octet-stream")
             .body(message.pack_new())),
-        None => Err(reject::custom(NotFound("can not find data".to_string()))),
+        None => Err(reject::custom(NotFound("can not find message".to_string()))),
     }
 }
 
@@ -375,20 +359,16 @@ pub async fn get_children_by_message_id<B: Backend>(
     message_id: MessageId,
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    if tangle.contains(&message_id).await {
-        let max_results = 1000;
-        let mut children = Vec::from_iter(tangle.get_children(&message_id));
-        let count = children.len();
-        children.truncate(max_results);
-        Ok(warp::reply::json(&DataResponse::new(GetChildrenResponse {
-            message_id: message_id.to_string(),
-            max_results,
-            count,
-            children_message_ids: children.iter().map(|id| id.to_string()).collect(),
-        })))
-    } else {
-        Err(reject::custom(NotFound("can not find data".to_string())))
-    }
+    let mut children = Vec::from_iter(tangle.get_children(&message_id));
+    let count = children.len();
+    let max_results = 1000;
+    children.truncate(max_results);
+    Ok(warp::reply::json(&DataResponse::new(GetChildrenResponse {
+        message_id: message_id.to_string(),
+        max_results,
+        count,
+        children_message_ids: children.iter().map(|id| id.to_string()).collect(),
+    })))
 }
 
 pub(crate) async fn get_milestone_by_milestone_index<B: Backend>(
@@ -402,9 +382,11 @@ pub(crate) async fn get_milestone_by_milestone_index<B: Backend>(
                 message_id: message_id.to_string(),
                 timestamp: metadata.arrival_timestamp(),
             }))),
-            None => Err(reject::custom(NotFound("can not find data".to_string()))),
+            None => Err(reject::custom(NotFound(
+                "can not find metadata for milestone".to_string(),
+            ))),
         },
-        None => Err(reject::custom(NotFound("can not find data".to_string()))),
+        None => Err(reject::custom(NotFound("can not find milestone".to_string()))),
     }
 }
 
@@ -412,28 +394,24 @@ pub(crate) async fn get_output_by_output_id<B: Backend>(
     output_id: OutputId,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    let output: Result<Option<bee_ledger::output::Output>, <B as bee_storage::storage::Backend>::Error> =
-        storage.fetch(&output_id).await;
-    let is_spent: Result<Option<Spent>, <B as bee_storage::storage::Backend>::Error> = storage.fetch(&output_id).await;
-
-    if let (Ok(output), Ok(is_spent)) = (output, is_spent) {
-        match output {
-            Some(output) => Ok(warp::reply::json(&DataResponse::new(GetOutputByOutputIdResponse {
-                message_id: output.message_id().to_string(),
-                transaction_id: output_id.transaction_id().to_string(),
-                output_index: output_id.index(),
-                is_spent: is_spent.is_some(),
-                output: output
-                    .inner()
-                    .try_into()
-                    .map_err(|e: &str| reject::custom(BadRequest(e.to_string())))?,
-            }))),
-            None => Err(reject::custom(NotFound("can not find data".to_string()))),
-        }
-    } else {
-        Err(reject::custom(ServiceUnavailable(
-            "service unavailable: can not fetch from storage".to_string(),
-        )))
+    let output = Fetch::<OutputId, bee_ledger::output::Output>::fetch(storage.deref(), &output_id)
+        .await
+        .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?;
+    let is_spent = Fetch::<OutputId, Spent>::fetch(storage.deref(), &output_id)
+        .await
+        .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?;
+    match output {
+        Some(output) => Ok(warp::reply::json(&DataResponse::new(GetOutputByOutputIdResponse {
+            message_id: output.message_id().to_string(),
+            transaction_id: output_id.transaction_id().to_string(),
+            output_index: output_id.index(),
+            is_spent: is_spent.is_some(),
+            output: output
+                .inner()
+                .try_into()
+                .map_err(|e: &str| reject::custom(BadRequest(e.to_string())))?,
+        }))),
+        None => Err(reject::custom(NotFound("can not find output".to_string()))),
     }
 }
 
@@ -443,42 +421,29 @@ pub(crate) async fn get_balance_for_address<B: Backend>(
 ) -> Result<impl Reply, Rejection> {
     match Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage.deref(), &addr)
         .await
-        .map_err(|_| {
-            reject::custom(ServiceUnavailable(
-                "service unavailable: can not fetch from storage".to_string(),
-            ))
-        })? {
+        .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
+    {
         Some(mut ids) => {
             let max_results = 1000;
             let count = ids.len();
             ids.truncate(max_results);
             let mut balance = 0;
-
             for id in ids {
                 if let Some(output) = Fetch::<OutputId, bee_ledger::output::Output>::fetch(storage.deref(), &id)
                     .await
-                    .map_err(|_| {
-                        reject::custom(ServiceUnavailable(
-                            "service unavailable: can not fetch from storage".to_string(),
-                        ))
-                    })?
+                    .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
                 {
                     if let None = Fetch::<OutputId, Spent>::fetch(storage.deref(), &id)
                         .await
-                        .map_err(|_| {
-                            reject::custom(ServiceUnavailable(
-                                "service unavailable: can not fetch from storage".to_string(),
-                            ))
-                        })?
+                        .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
                     {
                         match output.inner() {
-                            Output::SignatureLockedSingle(o) => balance += o.amount().get() as u32,
-                            _ => {}
+                            Output::SignatureLockedSingle(o) => balance += o.amount().get() as u64,
+                            _ => return Err(reject::custom(ServiceUnavailable("output type not supported".to_string())))
                         }
                     }
                 }
             }
-
             Ok(warp::reply::json(&DataResponse::new(GetBalanceForAddressResponse {
                 address: addr.to_string(),
                 max_results,
@@ -486,7 +451,7 @@ pub(crate) async fn get_balance_for_address<B: Backend>(
                 balance,
             })))
         }
-        None => Err(reject::custom(NotFound("can not find data".to_string()))),
+        None => Err(reject::custom(NotFound("can not find output ids".to_string()))),
     }
 }
 
@@ -494,32 +459,29 @@ pub(crate) async fn get_outputs_for_address<B: Backend>(
     addr: Ed25519Address,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    match Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage.deref(), &addr).await {
-        Ok(res) => match res {
-            Some(mut ids) => {
-                let max_results = 1000;
-                let count = ids.len();
-                ids.truncate(max_results);
-                Ok(warp::reply::json(&DataResponse::new(GetOutputsForAddressResponse {
-                    address: addr.to_string(),
-                    max_results,
-                    count,
-                    output_ids: ids.iter().map(|id| id.to_string()).collect(),
-                })))
-            }
-            None => Err(reject::custom(NotFound("can not find data".to_string()))),
-        },
-        Err(_err) => Err(reject::custom(ServiceUnavailable(
-            "service unavailable: can not fetch from storage".to_string(),
-        ))),
-    }
+    let mut fetched = match Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage.deref(), &addr)
+        .await
+        .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
+    {
+        Some(ids) => ids,
+        None => vec![],
+    };
+
+    let count = fetched.len();
+    let max_results = 1000;
+    fetched.truncate(max_results);
+
+    Ok(warp::reply::json(&DataResponse::new(GetOutputsForAddressResponse {
+        address: addr.to_string(),
+        max_results,
+        count,
+        output_ids: fetched.iter().map(|id| id.to_string()).collect(),
+    })))
 }
 
 async fn is_healthy<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> bool {
-    let mut is_healthy = true;
-
     if !tangle.is_synced() {
-        is_healthy = false;
+        return false;
     }
 
     // TODO: check if number of peers != 0 else return false
@@ -533,15 +495,15 @@ async fn is_healthy<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> bool {
                     .as_millis() as u64;
                 let latest_milestone_arrival_timestamp = metadata.arrival_timestamp();
                 if current_time - latest_milestone_arrival_timestamp > 5 * 60 * 60000 {
-                    is_healthy = false;
+                    return false;
                 }
             }
-            None => is_healthy = false,
+            None => return false,
         },
-        None => is_healthy = false,
+        None => return false,
     }
 
-    is_healthy
+    true
 }
 
 async fn submit_message<B: Backend>(
@@ -550,7 +512,7 @@ async fn submit_message<B: Backend>(
     message_submitter: Sender<MessageSubmitterWorkerEvent>,
 ) -> Result<MessageId, Rejection> {
     let message_bytes = message.pack_new();
-    let message_id = calc_message_id(&message_bytes);
+    let message_id = hash_message(&message_bytes);
 
     if tangle.contains(&message_id).await {
         return Ok(message_id);
@@ -582,7 +544,7 @@ async fn submit_message<B: Backend>(
     }
 }
 
-fn calc_message_id(bytes: &[u8]) -> MessageId {
+fn hash_message(bytes: &[u8]) -> MessageId {
     use blake2::digest::{Update, VariableOutput};
 
     let mut blake2b = VarBlake2b::new(MESSAGE_ID_LENGTH).unwrap();

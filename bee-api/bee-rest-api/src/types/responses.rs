@@ -190,7 +190,7 @@ pub struct GetBalanceForAddressResponse {
     #[serde(rename = "maxResults")]
     pub max_results: usize,
     pub count: usize,
-    pub balance: u32,
+    pub balance: u64,
 }
 
 impl DataBody for GetBalanceForAddressResponse {}

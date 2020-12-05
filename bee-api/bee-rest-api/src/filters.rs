@@ -93,7 +93,7 @@ fn post_json_message<B: Backend>(
         .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
         .and(with_network_id(network_id))
-        .and_then(handlers::post_json_message)
+        .and_then(handlers::submit_json_message)
 }
 
 fn post_raw_message<B: Backend>(
@@ -108,7 +108,7 @@ fn post_raw_message<B: Backend>(
         .and(warp::body::bytes())
         .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
-        .and_then(handlers::post_raw_message)
+        .and_then(handlers::submit_raw_message)
 }
 
 fn get_message_by_index<B: Backend>(
