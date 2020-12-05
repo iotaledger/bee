@@ -10,7 +10,7 @@ use bee_common::{
     shutdown_stream::ShutdownStream,
     worker::Worker,
 };
-use bee_network::{self, Event, Multiaddr, NetworkController, PeerId, ShortId};
+use bee_network::{self, Event, Multiaddr, NetworkController, NetworkListener, PeerId, ShortId};
 use bee_peering::{ManualPeerManager, PeerManager};
 use bee_protocol::Protocol;
 use bee_rest_api::config::RestApiConfig;
@@ -33,7 +33,7 @@ use std::{
     pin::Pin,
 };
 
-type NetworkEventStream = ShutdownStream<Fuse<flume::r#async::RecvStream<'static, Event>>>;
+type NetworkEventStream = ShutdownStream<Fuse<NetworkListener>>;
 
 // TODO design proper type `PeerList`
 type PeerList = HashMap<PeerId, (flume::Sender<Vec<u8>>, oneshot::Sender<()>)>;
