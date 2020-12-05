@@ -10,7 +10,7 @@ use crate::{
 };
 
 use bee_message::MessageId;
-use bee_network::{Command::SendMessage, Network, PeerId};
+use bee_network::{Command::SendMessage, NetworkController, PeerId};
 use bee_storage::storage::Backend;
 
 use log::warn;
@@ -24,7 +24,7 @@ pub(crate) struct Sender<P: Packet> {
 macro_rules! implement_sender_worker {
     ($type:ty, $sender:tt, $incrementor:tt) => {
         impl Sender<$type> {
-            pub(crate) fn send(network: &Network, id: &PeerId, packet: $type) {
+            pub(crate) fn send(network: &NetworkController, id: &PeerId, packet: $type) {
                 match network.unbounded_send(SendMessage {
                     to: id.clone(),
                     message: tlv_into_bytes(packet),
@@ -97,7 +97,7 @@ impl Protocol {
     // Heartbeat
 
     pub fn send_heartbeat(
-        network: &Network,
+        network: &NetworkController,
         to: PeerId,
         latest_solid_milestone_index: MilestoneIndex,
         pruning_milestone_index: MilestoneIndex,
@@ -117,7 +117,7 @@ impl Protocol {
     }
 
     pub fn broadcast_heartbeat(
-        network: &Network,
+        network: &NetworkController,
         latest_solid_milestone_index: MilestoneIndex,
         pruning_milestone_index: MilestoneIndex,
         latest_milestone_index: MilestoneIndex,

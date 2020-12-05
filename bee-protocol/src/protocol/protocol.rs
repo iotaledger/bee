@@ -21,7 +21,7 @@ use bee_common::{
     event::Bus,
     node::{Node, NodeBuilder},
 };
-use bee_network::{Multiaddr, Network, PeerId};
+use bee_network::{Multiaddr, NetworkController, PeerId};
 use bee_snapshot::Snapshot;
 use bee_storage::storage::Backend;
 
@@ -80,7 +80,7 @@ impl Protocol {
 
     pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
         let tangle = node.resource::<MsTangle<N::Backend>>().into_weak();
-        let network = node.resource::<Network>(); // TODO: Use a weak handle?
+        let network = node.resource::<NetworkController>(); // TODO: Use a weak handle?
 
         node.resource::<Bus>()
             .add_listener::<(), _, _>(move |latest_milestone: &LatestMilestoneChanged| {
@@ -113,7 +113,7 @@ impl Protocol {
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>().into_weak();
-        let network = node.resource::<Network>(); // TODO: Use a weak handle?
+        let network = node.resource::<NetworkController>(); // TODO: Use a weak handle?
         let requested_milestones = node.resource::<RequestedMilestones>();
 
         node.resource::<Bus>()

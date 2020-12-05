@@ -10,7 +10,7 @@ use bee_common::{
     shutdown_stream::ShutdownStream,
     worker::Worker,
 };
-use bee_network::{self, Event, Multiaddr, Network, PeerId, ShortId};
+use bee_network::{self, Event, Multiaddr, NetworkController, PeerId, ShortId};
 use bee_peering::{ManualPeerManager, PeerManager};
 use bee_protocol::Protocol;
 use bee_rest_api::config::RestApiConfig;
@@ -359,7 +359,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         info!("Initializing network layer...");
         let (this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
 
-        let this = this.with_resource(ShutdownStream::new(ctrl_c_listener(), events.into_stream()));
+        let this = this.with_resource(ShutdownStream::new(ctrl_c_listener(), events));
 
         info!("Initializing snapshot handler...");
         let (this, snapshot) = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, this)
@@ -410,7 +410,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         // TODO: turn into worker
         info!("Starting manual peer manager...");
-        let network = node.resource::<Network>();
+        let network = node.resource::<NetworkController>();
         let manual_peering_config = config.peering.manual.clone();
         ManualPeerManager::start(manual_peering_config, &network).await;
 

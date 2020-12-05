@@ -10,7 +10,7 @@ use crate::{
 
 use bee_common::{node::Node, packable::Packable, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_message::MessageId;
-use bee_network::{Network, PeerId};
+use bee_network::{NetworkController, PeerId};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -40,7 +40,7 @@ impl<N: Node> Worker<N> for MessageResponderWorker {
         let (tx, rx) = flume::unbounded();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let network = node.resource::<Network>();
+        let network = node.resource::<NetworkController>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

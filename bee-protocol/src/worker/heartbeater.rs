@@ -4,7 +4,7 @@
 use crate::{protocol::Protocol, tangle::MsTangle, worker::TangleWorker};
 
 use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_network::Network;
+use bee_network::NetworkController;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -31,7 +31,7 @@ impl<N: Node> Worker<N> for HeartbeaterWorker {
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let network = node.resource::<Network>();
+        let network = node.resource::<NetworkController>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

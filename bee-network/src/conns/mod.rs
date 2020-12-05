@@ -77,13 +77,12 @@ pub(crate) async fn spawn_connection_handler(
     );
 
     internal_event_sender
-        .send_async(InternalEvent::ConnectionEstablished {
+        .send(InternalEvent::ConnectionEstablished {
             peer_id,
             peer_info,
             origin,
             message_sender,
         })
-        .await
         .map_err(|_| Error::InternalEventSendFailure("ConnectionEstablished"))?;
 
     Ok(())
@@ -128,10 +127,9 @@ fn spawn_substream_task(
                             debug!("{:?}", e);
 
                             if let Err(e) = internal_event_sender
-                                .send_async(InternalEvent::ConnectionDropped {
+                                .send(InternalEvent::ConnectionDropped {
                                     peer_id: peer_id.clone(),
                                 })
-                                .await
                                 .map_err(|_| Error::InternalEventSendFailure("ConnectionDropped"))
                             {
                                 error!("{:?}", e);
@@ -186,11 +184,10 @@ async fn process_read(
     message.copy_from_slice(&buffer[0..num_read]);
 
     internal_event_sender
-        .send_async(InternalEvent::MessageReceived {
+        .send(InternalEvent::MessageReceived {
             message,
             from: peer_id.clone(),
         })
-        .await
         .map_err(|_| Error::InternalEventSendFailure("MessageReceived"))?;
 
     Ok(())

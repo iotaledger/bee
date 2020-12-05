@@ -7,7 +7,7 @@ use crate::{
 };
 
 use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_network::{Command::SendMessage, Network, PeerId};
+use bee_network::{Command::SendMessage, NetworkController, PeerId};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -32,7 +32,7 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = flume::unbounded();
 
-        let network = node.resource::<Network>();
+        let network = node.resource::<NetworkController>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

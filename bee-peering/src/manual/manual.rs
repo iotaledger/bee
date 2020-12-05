@@ -3,7 +3,7 @@
 
 use crate::{manual::config::ManualPeeringConfig, PeerManager};
 
-use bee_network::{Command::*, Multiaddr, Network, PeerId, PeerRelation, Protocol};
+use bee_network::{Command::*, Multiaddr, NetworkController, PeerId, PeerRelation, Protocol};
 
 use async_trait::async_trait;
 use log::warn;
@@ -18,7 +18,7 @@ pub struct ManualPeerManager {}
 impl PeerManager for ManualPeerManager {
     type Config = ManualPeeringConfig;
 
-    async fn start(config: Self::Config, network: &Network) -> Self {
+    async fn start(config: Self::Config, network: &NetworkController) -> Self {
         for (i, (mut address, alias)) in config.peers.into_iter().enumerate() {
             if i < config.limit {
                 // NOTE: `unwrap`ping should be fine here since it comes from the config.
@@ -39,13 +39,13 @@ impl PeerManager for ManualPeerManager {
         ManualPeerManager {}
     }
 
-    async fn run(self, network: &Network) {
+    async fn run(self, network: &NetworkController) {
         // TODO config file watcher
     }
 }
 
 #[inline]
-fn add_peer(network: &Network, id: PeerId, address: Multiaddr, alias: Option<String>) {
+fn add_peer(network: &NetworkController, id: PeerId, address: Multiaddr, alias: Option<String>) {
     if let Err(e) = network.unbounded_send(AddPeer {
         id,
         address,

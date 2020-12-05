@@ -15,19 +15,19 @@ use std::sync::Arc;
 pub enum Error {
     #[error("Error sending command.")]
     CommandSendFailure,
-    #[error("Error sending unbounded command.")]
-    CommandSendUnboundedFailure,
+    /* #[error("Error sending unbounded command.")]
+     * CommandSendUnboundedFailure, */
 }
 
 #[derive(Clone, Debug)]
-pub struct Network {
+pub struct NetworkController {
     config: Arc<NetworkConfig>,
     command_sender: CommandSender,
     listen_address: Multiaddr,
     local_id: PeerId,
 }
 
-impl Network {
+impl NetworkController {
     pub(crate) fn new(
         config: NetworkConfig,
         command_sender: CommandSender,
@@ -42,19 +42,21 @@ impl Network {
         }
     }
 
-    pub async fn send(&self, command: Command) -> Result<(), Error> {
-        Ok(self
-            .command_sender
-            .send_async(command)
-            .await
-            .map_err(|_| Error::CommandSendFailure)?)
-    }
+    // pub async fn send(&mut self, command: Command) -> Result<(), Error> {
+    //     Ok(self
+    //         .command_sender
+    //         .send(command)
+    //         .map_err(|_| Error::CommandSendFailure)?)
+    // }
 
+    // TODO: rename to `send`.
+    // NOTE: never blocks.
     pub fn unbounded_send(&self, command: Command) -> Result<(), Error> {
         Ok(self
             .command_sender
             .send(command)
-            .map_err(|_| Error::CommandSendUnboundedFailure)?)
+            // .map_err(|_| Error::CommandSendUnboundedFailure)?)
+            .map_err(|_| Error::CommandSendFailure)?)
     }
 
     pub fn config(&self) -> &NetworkConfig {
