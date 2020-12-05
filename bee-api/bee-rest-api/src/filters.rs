@@ -29,11 +29,11 @@ pub fn all<B: Backend>(
         .or(get_info(tangle.clone(), network_id.clone()).or(get_milestone_by_milestone_index(tangle.clone())))
         .or(get_tips(tangle.clone()))
         .or(post_json_message(
+            tangle.clone(),
             message_submitter.clone(),
             network_id.clone(),
-            tangle.clone(),
         ))
-        .or(post_raw_message(message_submitter.clone()))
+        .or(post_raw_message(tangle.clone(), message_submitter.clone()))
         .or(get_message_by_index(storage.clone()))
         .or(get_message_by_message_id(tangle.clone()))
         .or(get_message_metadata(tangle.clone()))
@@ -81,22 +81,23 @@ fn get_tips<B: Backend>(
 }
 
 fn post_json_message<B: Backend>(
+    tangle: ResHandle<MsTangle<B>>,
     message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
-    tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::post()
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("messages"))
         .and(warp::body::json())
+        .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
         .and(with_network_id(network_id))
-        .and(with_tangle(tangle))
         .and_then(handlers::post_json_message)
 }
 
-fn post_raw_message(
+fn post_raw_message<B: Backend>(
+    tangle: ResHandle<MsTangle<B>>,
     message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::post()
@@ -105,6 +106,7 @@ fn post_raw_message(
         .and(warp::path("messages"))
         .and(warp::path::end())
         .and(warp::body::bytes())
+        .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
         .and_then(handlers::post_raw_message)
 }

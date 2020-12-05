@@ -12,8 +12,8 @@ use bee_ledger::spent::Spent;
 use bee_message::{payload::milestone::MilestoneEssence, prelude::*};
 use bee_protocol::{tangle::MsTangle, MessageSubmitterError, MessageSubmitterWorkerEvent, MilestoneIndex};
 use bee_storage::access::Fetch;
-use blake2::Blake2s;
-use digest::Digest;
+use blake2::{Blake2s, VarBlake2b};
+
 use futures::channel::oneshot;
 use std::{
     convert::{Infallible, TryFrom, TryInto},
@@ -23,7 +23,7 @@ use std::{
 };
 use warp::{
     http::{Response, StatusCode},
-    reject, Rejection, Reply,
+    reject, Buf, Rejection, Reply,
 };
 
 use flume::Sender;
@@ -66,9 +66,9 @@ pub(crate) async fn get_tips<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> Resu
 
 pub(crate) async fn post_json_message<B: Backend>(
     value: JsonValue,
+    tangle: ResHandle<MsTangle<B>>,
     message_submitter: Sender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
-    tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     let is_set = |value: &JsonValue| -> bool { !value.is_null() };
 
@@ -200,32 +200,31 @@ pub(crate) async fn post_json_message<B: Backend>(
             .map_err(|e| reject::custom(BadRequest(e.to_string())))?
     };
 
-    let message_id = submit_message(message.pack_new(), message_submitter).await?;
+    let message_id = submit_message(message, tangle, message_submitter).await?;
 
     Ok(warp::reply::json(&DataResponse::new(PostMessageResponse {
         message_id: message_id.to_string(),
     })))
 }
 
-pub async fn post_raw_message(
+pub(crate) async fn post_raw_message<B: Backend>(
     buf: warp::hyper::body::Bytes,
+    tangle: ResHandle<MsTangle<B>>,
     message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
 ) -> Result<impl Reply, Rejection> {
-    let min_msg_size: usize = 77;
-    let max_msg_size: usize = 1024;
-
-    if buf.len() < min_msg_size || buf.len() > max_msg_size {
-        return Err(reject::custom(BadRequest("invalid message length".to_string())));
-    }
-
-    let message_id = submit_message(buf.to_vec(), message_submitter).await?;
-
+    let message = Message::unpack(&mut buf.bytes()).map_err(|e| reject::custom(BadRequest(e.to_string())))?;
+    let message_id = submit_message(message, tangle, message_submitter).await?;
     Ok(warp::reply::json(&DataResponse::new(PostMessageResponse {
         message_id: message_id.to_string(),
     })))
 }
 
-pub async fn get_message_by_index<B: Backend>(index: String, storage: ResHandle<B>) -> Result<impl Reply, Rejection> {
+pub(crate) async fn get_message_by_index<B: Backend>(
+    index: String,
+    storage: ResHandle<B>,
+) -> Result<impl Reply, Rejection> {
+    use digest::Digest;
+
     let mut hasher = Blake2s::new();
     hasher.update(index.as_bytes());
     let hashed_index = HashedIndex::new(hasher.finalize_reset().as_slice().try_into().unwrap());
@@ -254,7 +253,7 @@ pub async fn get_message_by_index<B: Backend>(index: String, storage: ResHandle<
     }
 }
 
-pub async fn get_message_by_message_id<B: Backend>(
+pub(crate) async fn get_message_by_message_id<B: Backend>(
     message_id: MessageId,
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
@@ -266,7 +265,7 @@ pub async fn get_message_by_message_id<B: Backend>(
     }
 }
 
-pub async fn get_message_metadata<B: Backend>(
+pub(crate) async fn get_message_metadata<B: Backend>(
     message_id: MessageId,
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
@@ -392,7 +391,7 @@ pub async fn get_children_by_message_id<B: Backend>(
     }
 }
 
-pub async fn get_milestone_by_milestone_index<B: Backend>(
+pub(crate) async fn get_milestone_by_milestone_index<B: Backend>(
     milestone_index: MilestoneIndex,
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
@@ -409,7 +408,7 @@ pub async fn get_milestone_by_milestone_index<B: Backend>(
     }
 }
 
-pub async fn get_output_by_output_id<B: Backend>(
+pub(crate) async fn get_output_by_output_id<B: Backend>(
     output_id: OutputId,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {
@@ -424,19 +423,10 @@ pub async fn get_output_by_output_id<B: Backend>(
                 transaction_id: output_id.transaction_id().to_string(),
                 output_index: output_id.index(),
                 is_spent: is_spent.is_some(),
-                output: match output.inner() {
-                    Output::SignatureLockedSingle(output) => {
-                        OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
-                            kind: 0,
-                            address: AddressDto::Ed25519(Ed25519AddressDto {
-                                kind: 1,
-                                address: output.address().to_bech32(),
-                            }),
-                            amount: output.amount().to_string(),
-                        })
-                    }
-                    _ => panic!("unexpected signature scheme".to_string()),
-                },
+                output: output
+                    .inner()
+                    .try_into()
+                    .map_err(|e: &str| reject::custom(BadRequest(e.to_string())))?,
             }))),
             None => Err(reject::custom(NotFound("can not find data".to_string()))),
         }
@@ -447,7 +437,7 @@ pub async fn get_output_by_output_id<B: Backend>(
     }
 }
 
-pub async fn get_balance_for_address<B: Backend>(
+pub(crate) async fn get_balance_for_address<B: Backend>(
     addr: Ed25519Address,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {
@@ -500,7 +490,7 @@ pub async fn get_balance_for_address<B: Backend>(
     }
 }
 
-pub async fn get_outputs_for_address<B: Backend>(
+pub(crate) async fn get_outputs_for_address<B: Backend>(
     addr: Ed25519Address,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {
@@ -554,23 +544,36 @@ async fn is_healthy<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> bool {
     is_healthy
 }
 
-async fn submit_message(
-    message: Vec<u8>,
+async fn submit_message<B: Backend>(
+    message: Message,
+    tangle: ResHandle<MsTangle<B>>,
     message_submitter: Sender<MessageSubmitterWorkerEvent>,
 ) -> Result<MessageId, Rejection> {
+    let message_bytes = message.pack_new();
+    let message_id = calc_message_id(&message_bytes);
+
+    if tangle.contains(&message_id).await {
+        return Ok(message_id);
+    }
 
     let (notifier, waiter) = oneshot::channel::<Result<MessageId, MessageSubmitterError>>();
 
     message_submitter
-        .send(MessageSubmitterWorkerEvent { message, notifier })
+        .send(MessageSubmitterWorkerEvent {
+            message: message_bytes,
+            notifier,
+        })
         .map_err(|e| {
             error!("can not submit message: {:?}", e);
             reject::custom(ServiceUnavailable("can not submit message".to_string()))
         })?;
 
     let result = waiter.await.map_err(|_| {
-        // TODO: `error!("can not submit message: {:?}", e);`
-        reject::custom(BadRequest("message already present".to_string()))
+        // TODO: report back from HasherWorker and replace following line with:
+        // error!("can not submit message: {:?}",e);
+        reject::custom(BadRequest(
+            "invalid message, already received in a previous request".to_string(),
+        ))
     })?;
 
     match result {
@@ -579,10 +582,22 @@ async fn submit_message(
     }
 }
 
+fn calc_message_id(bytes: &[u8]) -> MessageId {
+    use blake2::digest::{Update, VariableOutput};
+
+    let mut blake2b = VarBlake2b::new(MESSAGE_ID_LENGTH).unwrap();
+    blake2b.update(bytes);
+    let mut bytes = [0u8; 32];
+    // TODO Do we have to copy ?
+    blake2b.finalize_variable_reset(|digest| bytes.copy_from_slice(&digest));
+    MessageId::from(bytes)
+}
+
 pub mod tests {
 
     use super::*;
 
+    #[allow(dead_code)]
     pub fn message_without_payload() -> Message {
         Message::builder()
             .with_network_id(1)
@@ -598,7 +613,8 @@ pub mod tests {
             .unwrap()
     }
 
-    pub fn indexation_message() -> Message {
+    #[allow(dead_code)]
+    pub fn message_with_indexation_payload() -> Message {
         Message::builder()
             .with_network_id(1)
             .with_parent1(MessageId::new([
@@ -620,7 +636,8 @@ pub mod tests {
             .unwrap()
     }
 
-    pub fn milestone_message() -> Message {
+    #[allow(dead_code)]
+    pub fn message_with_milestone_payload() -> Message {
         Message::builder()
             .with_network_id(1)
             .with_parent1(MessageId::new([
@@ -649,8 +666,7 @@ pub mod tests {
                 ),
                 vec![
                     hex::decode("a3676743c128a78323598965ef89c43ab412e207083feb80fbb3e3a4327aa4bb161f7be427641a21b23af9a58c5a0efdd36f26b2af893e7ad899b76f19cc410d").unwrap().into_boxed_slice(),
-                    hex::decode("b3676743c128a78323598965ef89c43ab412e207083feb80fbb3e3a4327aa4bb161f7be427641a21b23af9a58c5a0efdd36f26b2af893e7ad899b76f19cc410d").unwrap().into_boxed_slice(),
-                ]
+             ]
             )))).finish()
             .unwrap()
     }

@@ -133,7 +133,9 @@ pub struct MilestoneDto {
 pub struct MilestoneEssenceDto {
     pub index: u32,
     pub timestamp: u64,
+    #[serde(rename = "parent1MessageId")]
     pub parent_1_message_id: String,
+    #[serde(rename = "parent2MessageId")]
     pub parent_2_message_id: String,
     #[serde(rename = "merkleProof")]
     pub merkle_proof: String,
@@ -321,7 +323,7 @@ impl TryFrom<&InputDto> for Input {
                     u.transaction_output_index,
                 )
                 .map_err(|_| "can not parse UTXO input")?,
-            ))
+            )),
         }
     }
 }
@@ -350,7 +352,7 @@ impl TryFrom<&OutputDto> for Output {
                 (&s.address).try_into()?,
                 NonZeroU64::new(s.amount.parse::<u64>().map_err(|_| "can not parse amount")?)
                     .ok_or("can not parse amount")?,
-            )))
+            ))),
         }
     }
 }
@@ -442,7 +444,7 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
             },
             UnlockBlockDto::Reference(r) => Ok(UnlockBlock::Reference(
                 ReferenceUnlock::new(r.index).map_err(|_| "invalid reference unlock block")?,
-            ))
+            )),
         }
     }
 }
