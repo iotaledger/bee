@@ -18,10 +18,10 @@ pub struct ManualPeerManager {}
 impl PeerManager for ManualPeerManager {
     type Config = ManualPeeringConfig;
 
-    async fn start(config: Self::Config, network: &NetworkController) -> Self {
+    async fn new(config: Self::Config, network: &NetworkController) -> Self {
         for (i, (mut address, alias)) in config.peers.into_iter().enumerate() {
             if i < config.limit {
-                // NOTE: `unwrap`ping should be fine here since it comes from the config.
+                // NOTE: `unwrap`ing should be fine here since it comes from the config.
                 if let Protocol::P2p(multihash) = address.pop().unwrap() {
                     let id = PeerId::from_multihash(multihash).expect("Invalid Multiaddr.");
 
@@ -39,7 +39,7 @@ impl PeerManager for ManualPeerManager {
         ManualPeerManager {}
     }
 
-    async fn run(self, network: &NetworkController) {
+    async fn run(self, _: &NetworkController) {
         // TODO config file watcher
     }
 }

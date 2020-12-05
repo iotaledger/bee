@@ -8,6 +8,6 @@ use bee_network::NetworkController;
 pub trait PeerManager {
     type Config;
 
-    async fn start(config: Self::Config, network: &NetworkController) -> Self;
+    async fn new(config: Self::Config, network: &NetworkController) -> Self;
     async fn run(self, network: &NetworkController);
 }

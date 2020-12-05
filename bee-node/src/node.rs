@@ -412,7 +412,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         info!("Starting manual peer manager...");
         let network = node.resource::<NetworkController>();
         let manual_peering_config = config.peering.manual.clone();
-        ManualPeerManager::start(manual_peering_config, &network).await;
+        ManualPeerManager::new(manual_peering_config, &network).await;
 
         info!("Registering events...");
         bee_snapshot::events(&node);
