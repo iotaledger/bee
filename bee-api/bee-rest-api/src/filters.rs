@@ -4,6 +4,7 @@
 use crate::{handlers, NetworkId};
 use bee_common::node::ResHandle;
 use serde::de::DeserializeOwned;
+use tokio::sync::mpsc;
 use warp::{reject, Filter, Rejection};
 
 use bee_protocol::{tangle::MsTangle, MessageSubmitterWorkerEvent};
@@ -23,7 +24,7 @@ impl reject::Reject for CustomRejection {}
 pub fn all<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     storage: ResHandle<B>,
-    message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     get_health(tangle.clone())
@@ -82,7 +83,7 @@ fn get_tips<B: Backend>(
 }
 
 fn post_json_message<B: Backend>(
-    message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -99,7 +100,7 @@ fn post_json_message<B: Backend>(
 }
 
 fn post_raw_message(
-    message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::post()
         .and(warp::path("api"))
@@ -299,8 +300,9 @@ fn with_storage<B: Backend>(
 }
 
 fn with_message_submitter(
-    message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
-) -> impl Filter<Extract = (flume::Sender<MessageSubmitterWorkerEvent>,), Error = std::convert::Infallible> + Clone {
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+) -> impl Filter<Extract = (mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,), Error = std::convert::Infallible> + Clone
+{
     warp::any().map(move || message_submitter.clone())
 }
 

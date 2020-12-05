@@ -14,6 +14,7 @@ use bee_network::{Command::SendMessage, NetworkController, PeerId};
 use bee_storage::storage::Backend;
 
 use log::warn;
+use tokio::sync::mpsc;
 
 use std::marker::PhantomData;
 
@@ -54,7 +55,7 @@ impl Protocol {
 
     pub(crate) fn request_milestone<B: Backend>(
         tangle: &MsTangle<B>,
-        milestone_requester: &flume::Sender<MilestoneRequesterWorkerEvent>,
+        milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
         requested_milestones: &RequestedMilestones,
         index: MilestoneIndex,
         to: Option<PeerId>,
@@ -68,7 +69,7 @@ impl Protocol {
 
     pub(crate) fn request_latest_milestone<B: Backend>(
         tangle: &MsTangle<B>,
-        milestone_requester: &flume::Sender<MilestoneRequesterWorkerEvent>,
+        milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
         requested_milestones: &RequestedMilestones,
         to: Option<PeerId>,
     ) {
@@ -79,7 +80,7 @@ impl Protocol {
 
     pub(crate) async fn request_message<B: Backend>(
         tangle: &MsTangle<B>,
-        message_requester: &flume::Sender<MessageRequesterWorkerEvent>,
+        message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
         requested_messages: &RequestedMessages,
         message_id: MessageId,
         index: MilestoneIndex,

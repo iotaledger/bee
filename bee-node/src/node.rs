@@ -24,6 +24,7 @@ use futures::{
 };
 use log::{debug, info, trace, warn};
 use thiserror::Error;
+use tokio::sync::mpsc;
 
 use std::{
     any::{type_name, Any, TypeId},
@@ -36,7 +37,7 @@ use std::{
 type NetworkEventStream = ShutdownStream<Fuse<NetworkListener>>;
 
 // TODO design proper type `PeerList`
-type PeerList = HashMap<PeerId, (flume::Sender<Vec<u8>>, oneshot::Sender<()>)>;
+type PeerList = HashMap<PeerId, (mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)>;
 
 type WorkerStart<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + 'a>>;
 type WorkerStop<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> + Send;
@@ -263,16 +264,16 @@ impl<B: Backend> BeeNodeBuilder<B> {
         &self.config
     }
 
-    // pub fn with_plugin<P: plugin::Plugin>(self) -> Self
-    // where
-    //     P::Config: Default,
-    // {
-    //     self.with_worker::<plugin::PluginWorker<P>>()
-    // }
+    pub fn with_plugin<P: plugin::Plugin>(self) -> Self
+    where
+        P::Config: Default,
+    {
+        self.with_worker::<plugin::PluginWorker<P>>()
+    }
 
-    // pub fn with_plugin_cfg<P: plugin::Plugin>(self, config: P::Config) -> Self {
-    //     self.with_worker_cfg::<plugin::PluginWorker<P>>(config)
-    // }
+    pub fn with_plugin_cfg<P: plugin::Plugin>(self, config: P::Config) -> Self {
+        self.with_worker_cfg::<plugin::PluginWorker<P>>(config)
+    }
 }
 
 #[async_trait(?Send)]

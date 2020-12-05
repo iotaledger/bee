@@ -15,18 +15,19 @@ use bee_tangle::traversal;
 use async_trait::async_trait;
 use futures::{channel::oneshot, StreamExt};
 use log::{debug, info};
+use tokio::sync::mpsc;
 
 use std::{any::TypeId, convert::Infallible};
 
 pub(crate) struct MilestoneSolidifierWorkerEvent(pub MilestoneIndex);
 
 pub(crate) struct MilestoneSolidifierWorker {
-    pub(crate) tx: flume::Sender<MilestoneSolidifierWorkerEvent>,
+    pub(crate) tx: mpsc::UnboundedSender<MilestoneSolidifierWorkerEvent>,
 }
 
 async fn trigger_solidification_unchecked<B: Backend>(
     tangle: &MsTangle<B>,
-    message_requester: &flume::Sender<MessageRequesterWorkerEvent>,
+    message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
     requested_messages: &RequestedMessages,
     target_index: MilestoneIndex,
     next_index: &mut MilestoneIndex,
@@ -77,7 +78,7 @@ impl<N: Node> Worker<N> for MilestoneSolidifierWorker {
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
@@ -86,7 +87,7 @@ impl<N: Node> Worker<N> for MilestoneSolidifierWorker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut receiver = ShutdownStream::new(shutdown, rx);
 
             let mut queue = vec![];
             let mut next_index = if let Ok(idx) = config.await {

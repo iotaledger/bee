@@ -12,6 +12,7 @@ use bee_network::{Command::SendMessage, NetworkController, PeerId};
 use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::{info, warn};
+use tokio::sync::mpsc;
 
 use std::convert::Infallible;
 
@@ -21,7 +22,7 @@ pub(crate) struct BroadcasterWorkerEvent {
 }
 
 pub(crate) struct BroadcasterWorker {
-    pub(crate) tx: flume::Sender<BroadcasterWorkerEvent>,
+    pub(crate) tx: mpsc::UnboundedSender<BroadcasterWorkerEvent>,
 }
 
 #[async_trait]
@@ -30,14 +31,14 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
     type Error = Infallible;
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         let network = node.resource::<NetworkController>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(BroadcasterWorkerEvent { source, message }) = receiver.next().await {
                 let bytes = tlv_into_bytes(message);

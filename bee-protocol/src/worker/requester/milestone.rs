@@ -16,7 +16,7 @@ use async_trait::async_trait;
 use dashmap::DashMap;
 use futures::{select, StreamExt};
 use log::{debug, info};
-use tokio::time::interval;
+use tokio::{sync::mpsc, time::interval};
 
 use std::{
     any::TypeId,
@@ -42,7 +42,7 @@ impl Deref for RequestedMilestones {
 pub(crate) struct MilestoneRequesterWorkerEvent(pub(crate) MilestoneIndex, pub(crate) Option<PeerId>);
 
 pub(crate) struct MilestoneRequesterWorker {
-    pub(crate) tx: flume::Sender<MilestoneRequesterWorkerEvent>,
+    pub(crate) tx: mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
 }
 
 async fn process_request(
@@ -129,7 +129,7 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let network = node.resource::<NetworkController>();
@@ -140,7 +140,7 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut receiver = ShutdownStream::new(shutdown, rx);
 
             let mut counter: usize = 0;
             let mut timeouts = interval(Duration::from_secs(RETRY_INTERVAL_SEC)).fuse();
