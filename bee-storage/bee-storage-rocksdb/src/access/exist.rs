@@ -4,7 +4,7 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::{output::Output, spent::Spent, unspent::Unspent};
+use bee_ledger::{index::LedgerIndex, output::Output, spent::Spent, unspent::Unspent};
 use bee_message::{
     payload::{
         indexation::HashedIndex,
@@ -141,5 +141,20 @@ impl Exist<(Ed25519Address, OutputId), ()> for Storage {
         key.extend_from_slice(&output_id.pack_new());
 
         Ok(self.inner.get_cf(&cf, key)?.is_some())
+    }
+}
+
+#[async_trait::async_trait]
+impl Exist<(), LedgerIndex> for Storage {
+    async fn exist(&self, (): &()) -> Result<bool, <Self as Backend>::Error>
+    where
+        Self: Sized,
+    {
+        let cf = self
+            .inner
+            .cf_handle(CF_LEDGER_INDEX)
+            .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
+
+        Ok(self.inner.get_cf(&cf, [])?.is_some())
     }
 }

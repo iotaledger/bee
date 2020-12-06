@@ -4,7 +4,7 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::{output::Output, spent::Spent};
+use bee_ledger::{index::LedgerIndex, output::Output, spent::Spent};
 use bee_message::{
     payload::{
         indexation::{HashedIndex, HASHED_INDEX_LENGTH},
@@ -164,5 +164,24 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
                 .take(self.config.fetch_output_id_limit)
                 .collect(),
         ))
+    }
+}
+
+#[async_trait::async_trait]
+impl Fetch<(), LedgerIndex> for Storage {
+    async fn fetch(&self, (): &()) -> Result<Option<LedgerIndex>, <Self as Backend>::Error>
+    where
+        Self: Sized,
+    {
+        let cf = self
+            .inner
+            .cf_handle(CF_LEDGER_INDEX)
+            .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
+
+        if let Some(res) = self.inner.get_cf(&cf, [])? {
+            Ok(Some(LedgerIndex::unpack(&mut res.as_slice()).unwrap()))
+        } else {
+            Ok(None)
+        }
     }
 }

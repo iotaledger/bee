@@ -116,6 +116,7 @@ where
     Ok(())
 }
 
+// TODO make it a tangle method
 pub(crate) async fn visit_dfs<N: Node>(
     tangle: &MsTangle<N::Backend>,
     storage: &ResHandle<N::Backend>,

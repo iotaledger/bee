@@ -4,7 +4,7 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::{output::Output, spent::Spent, unspent::Unspent};
+use bee_ledger::{index::LedgerIndex, output::Output, spent::Spent, unspent::Unspent};
 use bee_message::{
     payload::{
         indexation::HashedIndex,
@@ -139,6 +139,20 @@ impl Insert<(Ed25519Address, OutputId), ()> for Storage {
         key.extend_from_slice(&output_id.pack_new());
 
         self.inner.put_cf(&cf, key, [])?;
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl Insert<(), LedgerIndex> for Storage {
+    async fn insert(&self, (): &(), index: &LedgerIndex) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_LEDGER_INDEX)
+            .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
+
+        self.inner.put_cf(&cf, [], index.pack_new())?;
 
         Ok(())
     }

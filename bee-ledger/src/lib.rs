@@ -5,6 +5,7 @@
 
 mod error;
 pub mod event;
+pub mod index;
 mod merkle_hasher;
 mod metadata;
 pub mod output;

@@ -11,7 +11,7 @@ pub enum Error {
     Io(std::io::Error),
     #[error("")]
     Message(MessageError),
-    #[error("")]
+    #[error("Message {0} is missing in the past cone of the milestone")]
     MissingMessage(MessageId),
     #[error("")]
     UnsupportedInputType,
