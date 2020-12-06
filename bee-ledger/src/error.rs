@@ -3,18 +3,31 @@
 
 use bee_message::{payload::transaction::OutputId, Error as MessageError, MessageId};
 
-#[derive(Debug)]
+use thiserror::Error;
+
+#[derive(Debug, Error)]
 pub enum Error {
+    #[error("I/O error {0}")]
     Io(std::io::Error),
+    #[error("")]
     Message(MessageError),
+    #[error("")]
     MissingMessage(MessageId),
+    #[error("")]
     UnsupportedInputType,
+    #[error("Message was not found")]
     MilestoneMessageNotFound,
+    #[error("Message payload was not a milestone")]
     NoMilestonePayload,
-    NonContiguousMilestone,
-    MerkleProofMismatch,
-    InvalidMessagesCount,
+    #[error("Tried to confirm {0} on top of {1}")]
+    NonContiguousMilestone(u32, u32),
+    #[error("The computed merkle proof on milestone {0} does not match the one provided by the coordinator {1}")]
+    MerkleProofMismatch(String, String),
+    #[error("Invalid messages count: referenced ({0}) != no transaction ({1}) + conflicting ({2}) + included ({3})")]
+    InvalidMessagesCount(usize, usize, usize, usize),
+    #[error("")]
     OutputNotFound(OutputId),
+    #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
 }
 

@@ -26,8 +26,6 @@ use log::{error, info, warn};
 
 use std::{any::TypeId, convert::Infallible, sync::Arc};
 
-// TODO refactor errors
-
 pub(crate) struct LedgerWorker {}
 
 async fn confirm<N: Node>(
@@ -49,12 +47,7 @@ where
     };
 
     if milestone.essence().index() != index.0 + 1 {
-        error!(
-            "Tried to confirm {} on top of {}.",
-            milestone.essence().index(),
-            index.0
-        );
-        return Err(Error::NonContiguousMilestone);
+        return Err(Error::NonContiguousMilestone(milestone.essence().index(), index.0));
     }
 
     let mut metadata = WhiteFlagMetadata::new(
@@ -66,24 +59,16 @@ where
     let batch = N::Backend::batch_begin();
 
     if let Err(e) = visit_dfs::<N>(tangle, storage, message_id, &mut metadata).await {
-        error!(
-            "Error occured while traversing to confirm {}: {:?}.",
-            milestone.essence().index(),
-            e
-        );
         return Err(e);
     };
 
     let merkle_proof = MerkleHasher::<Blake2b>::new().digest(&metadata.messages_included);
 
     if !merkle_proof.eq(&milestone.essence().merkle_proof()) {
-        error!(
-            "The computed merkle proof on milestone {}, {}, does not match the one provided by the coordinator, {}.",
-            milestone.essence().index(),
+        return Err(Error::MerkleProofMismatch(
             hex::encode(merkle_proof),
-            hex::encode(milestone.essence().merkle_proof())
-        );
-        return Err(Error::MerkleProofMismatch);
+            hex::encode(milestone.essence().merkle_proof()),
+        ));
     }
 
     if metadata.num_messages_referenced
@@ -91,15 +76,12 @@ where
             + metadata.num_messages_excluded_conflicting
             + metadata.messages_included.len()
     {
-        error!(
-            "Invalid messages count at {}: referenced ({}) != no transaction ({}) + conflicting ({}) + included ({}).",
-            milestone.essence().index(),
+        return Err(Error::InvalidMessagesCount(
             metadata.num_messages_referenced,
             metadata.num_messages_excluded_no_transaction,
             metadata.num_messages_excluded_conflicting,
-            metadata.messages_included.len()
-        );
-        return Err(Error::InvalidMessagesCount);
+            metadata.messages_included.len(),
+        ));
     }
 
     // TODO unwrap
@@ -170,14 +152,9 @@ where
             let bus = config.2;
 
             while let Some(message_id) = receiver.next().await {
-                if confirm::<N>(&tangle, &storage, message_id, &mut index, &coo_config, &bus)
-                    .await
-                    .is_err()
-                {
-                    panic!(
-                        "Error while confirming milestone from message {}, aborting.",
-                        message_id
-                    );
+                if let Err(e) = confirm::<N>(&tangle, &storage, message_id, &mut index, &coo_config, &bus).await {
+                    error!("Confirmation error on {}: {}.", message_id, e);
+                    panic!("Aborting due to unexpected ledger error.");
                 }
             }
 
