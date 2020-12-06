@@ -18,22 +18,12 @@ pub use error::Error;
 use storage::Backend;
 use worker::LedgerWorker;
 
-use bee_common::{
-    event::Bus,
-    node::{Node, NodeBuilder},
-};
-use bee_protocol::{config::ProtocolCoordinatorConfig, MilestoneIndex};
+use bee_common::node::{Node, NodeBuilder};
+use bee_protocol::MilestoneIndex;
 
-use std::sync::Arc;
-
-pub fn init<N: Node>(
-    index: u32,
-    coo_config: ProtocolCoordinatorConfig,
-    node_builder: N::Builder,
-    bus: Arc<Bus<'static>>,
-) -> N::Builder
+pub fn init<N: Node>(index: u32, node_builder: N::Builder) -> N::Builder
 where
     N::Backend: Backend,
 {
-    node_builder.with_worker_cfg::<LedgerWorker>((MilestoneIndex(index), coo_config, bus.clone()))
+    node_builder.with_worker_cfg::<LedgerWorker>(MilestoneIndex(index))
 }

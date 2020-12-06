@@ -13,10 +13,7 @@ use bee_common::{
     worker::Worker,
 };
 use bee_message::{payload::Payload, MessageId};
-use bee_protocol::{
-    config::ProtocolCoordinatorConfig, event::LatestSolidMilestoneChanged, tangle::MsTangle, MilestoneIndex,
-    StorageWorker, TangleWorker,
-};
+use bee_protocol::{event::LatestSolidMilestoneChanged, tangle::MsTangle, MilestoneIndex, StorageWorker, TangleWorker};
 use bee_storage::access::BatchBuilder;
 
 use async_trait::async_trait;
@@ -24,7 +21,7 @@ use blake2::Blake2b;
 use futures::stream::StreamExt;
 use log::{error, info, warn};
 
-use std::{any::TypeId, convert::Infallible, sync::Arc};
+use std::{any::TypeId, convert::Infallible};
 
 pub(crate) struct LedgerWorker {}
 
@@ -33,8 +30,7 @@ async fn confirm<N: Node>(
     storage: &ResHandle<N::Backend>,
     message_id: MessageId,
     index: &mut MilestoneIndex,
-    _coo_config: &ProtocolCoordinatorConfig,
-    bus: &Arc<Bus<'static>>,
+    bus: &ResHandle<Bus<'static>>,
 ) -> Result<(), Error>
 where
     N::Backend: Backend,
@@ -117,7 +113,7 @@ impl<N: Node> Worker<N> for LedgerWorker
 where
     N::Backend: Backend,
 {
-    type Config = (MilestoneIndex, ProtocolCoordinatorConfig, Arc<Bus<'static>>);
+    type Config = MilestoneIndex;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -146,13 +142,10 @@ where
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
-
-            let mut index = config.0;
-            let coo_config = config.1;
-            let bus = config.2;
+            let mut index = config;
 
             while let Some(message_id) = receiver.next().await {
-                if let Err(e) = confirm::<N>(&tangle, &storage, message_id, &mut index, &coo_config, &bus).await {
+                if let Err(e) = confirm::<N>(&tangle, &storage, message_id, &mut index, &bus).await {
                     error!("Confirmation error on {}: {}.", message_id, e);
                     panic!("Aborting due to unexpected ledger error.");
                 }
