@@ -23,6 +23,7 @@ const PAYLOAD_INDEXATION_TYPE: u32 = 2;
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", content = "data")]
 pub enum Payload {
     Transaction(Box<Transaction>),
     Milestone(Box<Milestone>),
