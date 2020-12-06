@@ -49,9 +49,14 @@ impl<T> Backend for T where
 {
 }
 
+pub(crate) async fn get_output<B: Backend>(storage: &B, output_id: &OutputId) -> Result<Option<Output>, Error> {
+    Fetch::<OutputId, Output>::fetch(storage, output_id)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
 pub(crate) async fn is_output_unspent<B: Backend>(storage: &B, output_id: &OutputId) -> Result<bool, Error> {
-    storage
-        .exist(&Unspent::new(*output_id))
+    Exist::<Unspent, ()>::exist(storage, &Unspent::new(*output_id))
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }

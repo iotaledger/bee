@@ -18,7 +18,6 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_protocol::tangle::MsTangle;
-use bee_storage::access::Fetch;
 
 use std::{
     collections::{HashMap, HashSet},
@@ -54,27 +53,30 @@ where
             if let Input::UTXO(utxo_input) = input {
                 let output_id = utxo_input.output_id();
 
+                // Check if this input was already spent during the confirmation.
                 if metadata.spent_outputs.contains_key(output_id) {
                     conflicting = true;
                     break;
                 }
 
+                // Check if this input was newly created during the confirmation.
                 if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
                     outputs.insert(output_id, output);
                     continue;
                 }
 
-                if let Some(output) = Fetch::<OutputId, Output>::fetch(storage.deref(), output_id)
-                    .await
-                    .map_err(|e| Error::Storage(Box::new(e)))?
-                {
+                // Check current ledger for this input.
+                if let Some(output) = storage::get_output(storage.deref(), output_id).await? {
+                    // Check if this output is already spent.
                     if !storage::is_output_unspent(storage.deref(), output_id).await? {
                         conflicting = true;
                         break;
                     }
                     outputs.insert(output_id, output);
                 } else {
-                    return Err(Error::OutputNotFound(*output_id));
+                    // TODO conflicting ?
+                    conflicting = true;
+                    break;
                 }
             } else {
                 return Err(Error::UnsupportedInputType);
