@@ -13,23 +13,22 @@ use bee_common::{
     worker::Worker,
 };
 use bee_message::{payload::Payload, MessageId};
-use bee_protocol::{config::ProtocolCoordinatorConfig, tangle::MsTangle, MilestoneIndex, StorageWorker, TangleWorker};
+use bee_protocol::{
+    config::ProtocolCoordinatorConfig, event::LatestSolidMilestoneChanged, tangle::MsTangle, MilestoneIndex,
+    StorageWorker, TangleWorker,
+};
 use bee_storage::access::BatchBuilder;
 
 use async_trait::async_trait;
 use blake2::Blake2b;
 use futures::stream::StreamExt;
-use log::{error, info};
+use log::{error, info, warn};
 
 use std::{any::TypeId, convert::Infallible, sync::Arc};
 
 // TODO refactor errors
 
-pub struct LedgerWorkerEvent(MessageId);
-
-pub(crate) struct LedgerWorker {
-    // pub(crate) tx: flume::Sender<LedgerWorkerEvent>,
-}
+pub(crate) struct LedgerWorker {}
 
 async fn confirm<N: Node>(
     tangle: &MsTangle<N::Backend>,
@@ -144,10 +143,22 @@ where
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let (_tx, rx) = flume::unbounded();
+        let (tx, rx) = flume::unbounded();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
+        let bus = node.resource::<Bus>();
+
+        bus.add_listener::<(), LatestSolidMilestoneChanged, _>(move |milestone| {
+            if let Err(e) = tx.send(*milestone.0.message_id()) {
+                warn!(
+                    "Sending solid milestone {} {} to confirmation failed: {:?}.",
+                    *milestone.0.index(),
+                    milestone.0.message_id(),
+                    e
+                )
+            }
+        });
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -158,7 +169,7 @@ where
             let coo_config = config.1;
             let bus = config.2;
 
-            while let Some(LedgerWorkerEvent(message_id)) = receiver.next().await {
+            while let Some(message_id) = receiver.next().await {
                 if confirm::<N>(&tangle, &storage, message_id, &mut index, &coo_config, &bus)
                     .await
                     .is_err()

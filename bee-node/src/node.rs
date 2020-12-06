@@ -419,7 +419,6 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         info!("Registering events...");
         bee_snapshot::events(&node);
-        // bee_ledger::whiteflag::events(&bee_node, bus.clone());
         Protocol::events(&node, config.protocol.clone());
 
         info!("Initialized.");

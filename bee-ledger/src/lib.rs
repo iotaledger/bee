@@ -17,7 +17,6 @@ mod worker;
 pub use error::Error;
 use storage::Backend;
 use worker::LedgerWorker;
-pub use worker::LedgerWorkerEvent;
 
 use bee_common::{
     event::Bus,
@@ -37,18 +36,4 @@ where
     N::Backend: Backend,
 {
     node_builder.with_worker_cfg::<LedgerWorker>((MilestoneIndex(index), coo_config, bus.clone()))
-}
-
-pub fn events<N: Node>(_node: &N, _bus: Arc<Bus<'static>>) {
-    // let ledger_worker = node.worker::<LedgerWorker>().unwrap().tx.clone();
-    //
-    // bus.add_listener(move |latest_solid_milestone: &LatestSolidMilestoneChanged| {
-    //     if let Err(e) = ledger_worker.send(LedgerWorkerEvent::Confirm(latest_solid_milestone.0.clone())) {
-    //         warn!(
-    //             "Sending solid milestone {:?} to confirmation failed: {:?}.",
-    //             latest_solid_milestone.0.index(),
-    //             e
-    //         );
-    //     }
-    // });
 }
