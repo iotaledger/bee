@@ -25,10 +25,7 @@ use std::{any::TypeId, convert::Infallible, sync::Arc};
 
 // TODO refactor errors
 
-pub enum LedgerWorkerEvent {
-    Confirm(MessageId),
-    // GetBalance(Address, oneshot::Sender<u64>),
-}
+pub struct LedgerWorkerEvent(MessageId);
 
 pub(crate) struct LedgerWorker {
     // pub(crate) tx: flume::Sender<LedgerWorkerEvent>,
@@ -134,12 +131,6 @@ where
     Ok(())
 }
 
-// fn get_balance(state: &LedgerState, address: Address, sender: oneshot::Sender<u64>) {
-//     if let Err(e) = sender.send(state.get_or_zero(&address)) {
-//         warn!("Failed to send balance: {:?}.", e);
-//     }
-// }
-
 #[async_trait]
 impl<N: Node> Worker<N> for LedgerWorker
 where
@@ -167,19 +158,15 @@ where
             let coo_config = config.1;
             let bus = config.2;
 
-            while let Some(event) = receiver.next().await {
-                match event {
-                    LedgerWorkerEvent::Confirm(message_id) => {
-                        if confirm::<N>(&tangle, &storage, message_id, &mut index, &coo_config, &bus)
-                            .await
-                            .is_err()
-                        {
-                            panic!(
-                                "Error while confirming milestone from message {}, aborting.",
-                                message_id
-                            );
-                        }
-                    } // LedgerWorkerEvent::GetBalance(address, sender) => get_balance(&state, address, sender),
+            while let Some(LedgerWorkerEvent(message_id)) = receiver.next().await {
+                if confirm::<N>(&tangle, &storage, message_id, &mut index, &coo_config, &bus)
+                    .await
+                    .is_err()
+                {
+                    panic!(
+                        "Error while confirming milestone from message {}, aborting.",
+                        message_id
+                    );
                 }
             }
 
@@ -189,86 +176,3 @@ where
         Ok(Self {})
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//
-//     use super::*;
-//
-//     use bee_test::field::rand_trits_field;
-//
-//     use async_std::task::{block_on, spawn};
-//     use futures::sink::SinkExt;
-//     use rand::Rng;
-//
-//     #[test]
-//     fn get_balances() {
-//         let mut rng = rand::thread_rng();
-//         let mut state = HashMap::new();
-//         let (mut tx, rx) = flume::unbounded();
-//         let (_shutdown_tx, shutdown_rx) = oneshot::channel();
-//
-//         for _ in 0..100 {
-//             state.insert(rand_trits_field::<Address>(), rng.gen_range(0, 100_000_000));
-//         }
-//
-//         spawn(LedgerStateWorker::new(state.clone(), ShutdownStream::new(shutdown_rx, rx)).run());
-//
-//         for (address, balance) in state {
-//             let (get_balance_tx, get_balance_rx) = oneshot::channel();
-//             block_on(tx.send(LedgerStateWorkerEvent::GetBalance(address, get_balance_tx))).unwrap();
-//             let value = block_on(get_balance_rx).unwrap().unwrap();
-//             assert_eq!(balance, value)
-//         }
-//     }
-//
-//     #[test]
-//     fn get_balances_not_found() {
-//         let mut rng = rand::thread_rng();
-//         let mut state = HashMap::new();
-//         let (mut tx, rx) = flume::unbounded();
-//         let (_shutdown_tx, shutdown_rx) = oneshot::channel();
-//
-//         for _ in 0..100 {
-//             state.insert(rand_trits_field::<Address>(), rng.gen_range(0, 100_000_000));
-//         }
-//
-//         spawn(LedgerStateWorker::new(state.clone(), ShutdownStream::new(shutdown_rx, rx)).run());
-//
-//         for _ in 0..100 {
-//             let (get_balance_tx, get_balance_rx) = oneshot::channel();
-//             block_on(tx.send(LedgerStateWorkerEvent::GetBalance(
-//                 rand_trits_field::<Address>(),
-//                 get_balance_tx,
-//             )))
-//             .unwrap();
-//             let value = block_on(get_balance_rx).unwrap();
-//             assert!(value.is_none());
-//         }
-//     }
-//
-//     #[test]
-//     fn apply_diff_on_not_found() {
-//         let mut rng = rand::thread_rng();
-//         let mut diff = HashMap::new();
-//         let (mut tx, rx) = flume::unbounded();
-//         let (_shutdown_tx, shutdown_rx) = oneshot::channel();
-//
-//         for _ in 0..100 {
-//             diff.insert(rand_trits_field::<Address>(), rng.gen_range(0, 100_000_000));
-//         }
-//
-//         block_on(tx.send(LedgerStateWorkerEvent::ApplyDiff(diff.clone()))).unwrap();
-//
-//         spawn(LedgerStateWorker::new(HashMap::new(), ShutdownStream::new(shutdown_rx, rx)).run());
-//
-//         for (address, balance) in diff {
-//             let (get_balance_tx, get_balance_rx) = oneshot::channel();
-//             block_on(tx.send(LedgerStateWorkerEvent::GetBalance(address, get_balance_tx))).unwrap();
-//             let value = block_on(get_balance_rx).unwrap().unwrap();
-//             assert_eq!(balance as u64, value)
-//         }
-//     }
-//
-//     // TODO test LedgerStateWorkerEvent::ApplyDiff
-// }
