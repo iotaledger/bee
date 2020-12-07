@@ -503,17 +503,20 @@ impl TryFrom<&MilestoneEssenceDto> for MilestoneEssence {
             .parent_2_message_id
             .parse::<MessageId>()
             .map_err(|_| "invalid parent2 in milestone payload")?;
-        let merkle_proof = hex::decode(&value.merkle_proof)
-            .map_err(|_| "invalid merkle proof")?
-            .into_boxed_slice();
+        let merkle_proof = {
+            let mut buf = [0u8; 32];
+            hex::decode_to_slice(&value.merkle_proof, &mut buf).map_err(|_| "invalid merkle proof")?;
+            buf
+        };
         let mut public_keys = Vec::new();
-
         for v in &value.public_keys {
-            let mut p = [0u8; 32];
-            hex::decode_to_slice(v, &mut p).map_err(|_| "invalid public key")?;
-            public_keys.push(p);
+            let key = {
+                let mut buf = [0u8; 32];
+                hex::decode_to_slice(v, &mut buf).map_err(|_| "invalid public key")?;
+                buf
+            };
+            public_keys.push(key);
         }
-
         Ok(MilestoneEssence::new(
             index,
             timestamp,
