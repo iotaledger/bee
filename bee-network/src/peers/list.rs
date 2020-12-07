@@ -5,8 +5,6 @@ use crate::{Multiaddr, ShortId, KNOWN_PEER_LIMIT, UNKNOWN_PEER_LIMIT};
 
 use super::{errors::Error, DataSender, PeerRelation};
 
-// use dashmap::DashMap;
-use futures::SinkExt;
 use libp2p::PeerId;
 use tokio::sync::RwLock;
 
@@ -81,7 +79,6 @@ impl PeerList {
     }
 
     pub async fn update_state(&self, id: &PeerId, state: PeerState) -> Result<(), Error> {
-        // TODO: unwrap
         let mut this = self.0.write().await;
         let mut kv = this.get_mut(id).ok_or(Error::UnlistedPeer(id.short()))?;
 
@@ -97,9 +94,7 @@ impl PeerList {
     }
 
     pub async fn remove(&self, id: &PeerId) -> Result<PeerInfo, Error> {
-        // TODO: unwrap
-        // let (_, (info, _)) = self
-        let (info, state) = self.0.write().await.remove(id).ok_or(Error::UnlistedPeer(id.short()))?;
+        let (info, _) = self.0.write().await.remove(id).ok_or(Error::UnlistedPeer(id.short()))?;
 
         Ok(info)
     }

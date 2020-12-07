@@ -379,7 +379,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             this,
         );
 
-        let mut this = this.with_worker::<VersionCheckerWorker>();
+        let this = this.with_worker::<VersionCheckerWorker>();
 
         info!("Initializing REST API...");
         let mut this =

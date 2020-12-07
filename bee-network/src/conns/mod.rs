@@ -91,7 +91,7 @@ pub(crate) async fn spawn_connection_handler(
 fn spawn_substream_task(
     peer_id: PeerId,
     mut substream: GossipSubstream,
-    mut message_receiver: DataReceiver,
+    message_receiver: DataReceiver,
     mut internal_event_sender: InternalEventSender,
 ) -> JoinHandle<()> {
     tokio::spawn(async move {

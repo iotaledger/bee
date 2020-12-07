@@ -16,7 +16,7 @@ use super::{errors::Error, BannedAddrList, BannedPeerList, PeerInfo, PeerList};
 use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
-use futures::{select, FutureExt, StreamExt};
+use futures::StreamExt;
 use libp2p::{identity, Multiaddr, PeerId};
 use log::*;
 use tokio::time::{self, Duration, Instant};
@@ -115,7 +115,7 @@ impl<N: Node> Worker<N> for PeerManager {
             }
 
             // Clear the peer list; this will end all active connections.
-            peers_clone.clear();
+            peers_clone.clear().await;
 
             info!("Command processor stopped.");
         });
@@ -370,7 +370,7 @@ async fn process_internal_event(
             peers.update_state(&peer_id, PeerState::Disconnected).await?;
 
             // TODO: maybe allow some fixed timespan for a connection recovery from either end before removing.
-            peers.remove_if(&peer_id, |info, _| info.is_unknown());
+            peers.remove_if(&peer_id, |info, _| info.is_unknown()).await;
 
             event_sender
                 .send(Event::PeerDisconnected { id: peer_id })
