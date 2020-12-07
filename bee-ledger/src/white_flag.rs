@@ -2,11 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    error::Error,
-    metadata::WhiteFlagMetadata,
-    output::Output,
-    spent::Spent,
     storage::{self, Backend},
+    error::Error, model::{Output, Spent}, metadata::WhiteFlagMetadata,
 };
 
 use bee_common::node::{Node, ResHandle};

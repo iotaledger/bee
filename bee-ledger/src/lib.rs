@@ -3,19 +3,16 @@
 
 //#![warn(missing_docs)]
 
-mod error;
+pub mod error;
 pub mod event;
-pub mod index;
+pub mod model;
+pub mod storage;
+
 mod merkle_hasher;
 mod metadata;
-pub mod output;
-pub mod spent;
-pub mod storage;
-pub mod unspent;
 mod white_flag;
 mod worker;
 
-pub use error::Error;
 use storage::Backend;
 use worker::LedgerWorker;
 

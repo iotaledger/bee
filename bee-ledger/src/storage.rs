@@ -1,9 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    error::Error, index::LedgerIndex, metadata::WhiteFlagMetadata, output::Output, spent::Spent, unspent::Unspent,
-};
+use crate::{error::Error, model::{LedgerIndex, Output, Spent, Unspent}, metadata::WhiteFlagMetadata};
 
 use bee_message::payload::transaction::OutputId;
 use bee_storage::{

@@ -9,7 +9,7 @@ use crate::{
 };
 
 use bee_common::{node::ResHandle, packable::Packable};
-use bee_ledger::spent::Spent;
+use bee_ledger::model::Spent;
 use bee_message::{payload::milestone::MilestoneEssence, prelude::*};
 use bee_protocol::{tangle::MsTangle, MessageSubmitterError, MessageSubmitterWorkerEvent, MilestoneIndex};
 use bee_storage::access::Fetch;
@@ -460,7 +460,7 @@ pub async fn get_output_by_output_id<B: Backend>(
     output_id: OutputId,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    let output: Result<Option<bee_ledger::output::Output>, <B as bee_storage::storage::Backend>::Error> =
+    let output: Result<Option<bee_ledger::model::Output>, <B as bee_storage::storage::Backend>::Error> =
         storage.fetch(&output_id).await;
     let is_spent: Result<Option<Spent>, <B as bee_storage::storage::Backend>::Error> = storage.fetch(&output_id).await;
 
@@ -509,7 +509,7 @@ pub async fn get_balance_for_address<B: Backend>(
             let mut balance = 0;
 
             for id in ids {
-                if let Some(output) = Fetch::<OutputId, bee_ledger::output::Output>::fetch(storage.deref(), &id)
+                if let Some(output) = Fetch::<OutputId, bee_ledger::model::Output>::fetch(storage.deref(), &id)
                     .await
                     .map_err(|_| {
                         reject::custom(ServiceUnavailable("service unavailable: can not fetch from storage"))
