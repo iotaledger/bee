@@ -190,9 +190,12 @@ pub(crate) async fn submit_json_message<B: Backend>(
 
     let message_id = submit_message(message, tangle, message_submitter).await?;
 
-    Ok(warp::reply::json(&DataResponse::new(PostMessageResponse {
-        message_id: message_id.to_string(),
-    })))
+    Ok(warp::reply::with_status(
+        warp::reply::json(&DataResponse::new(PostMessageResponse {
+            message_id: message_id.to_string(),
+        })),
+        StatusCode::CREATED,
+    ))
 }
 
 pub(crate) async fn submit_raw_message<B: Backend>(
@@ -202,9 +205,12 @@ pub(crate) async fn submit_raw_message<B: Backend>(
 ) -> Result<impl Reply, Rejection> {
     let message = Message::unpack(&mut buf.bytes()).map_err(|e| reject::custom(BadRequest(e.to_string())))?;
     let message_id = submit_message(message, tangle, message_submitter).await?;
-    Ok(warp::reply::json(&DataResponse::new(PostMessageResponse {
-        message_id: message_id.to_string(),
-    })))
+    Ok(warp::reply::with_status(
+        warp::reply::json(&DataResponse::new(PostMessageResponse {
+            message_id: message_id.to_string(),
+        })),
+        StatusCode::CREATED,
+    ))
 }
 
 pub(crate) async fn get_message_by_index<B: Backend>(
