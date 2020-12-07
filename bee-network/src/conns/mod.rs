@@ -95,27 +95,26 @@ fn spawn_substream_task(
     mut internal_event_sender: InternalEventSender,
 ) -> JoinHandle<()> {
     tokio::spawn(async move {
-        // let mut fused_message_receiver = message_receiver.into_stream();
         let mut fused_message_receiver = message_receiver.fuse();
         let mut buffer = vec![0u8; MSG_BUFFER_SIZE.load(Ordering::Relaxed)];
 
         loop {
             select! {
                 message = fused_message_receiver.next() => {
-                    info!("!!!! SEND MESSAGE !!!!");
+                    trace!("Outgoing message channel event.");
                     if let Some(message) = message {
                         if let Err(e) = send_message(&mut substream, &message).await {
                             error!("{:?}", e);
                             continue;
                         }
                     } else {
-                        debug!("!!! Message sender was deallocated. Shutting down this task. !!!");
+                        trace!("Dropping connection");
                         break;
                     }
 
                 }
                 recv_result = recv_message(&mut substream, &mut buffer).fuse() => {
-                    info!("!!!! RECV MESSAGE !!!!");
+                    trace!("Incoming substream event.");
                     match recv_result {
                         Ok(num_read) => {
                             if let Err(e) = process_read(peer_id.clone(), num_read, &mut internal_event_sender, &buffer).await
@@ -136,14 +135,14 @@ fn spawn_substream_task(
                             }
 
 
-                            debug!("!!! Stream to remote stopped. Shutting down this task. !!!");
+                            trace!("Remote dropped connection.");
                             break;
                         }
                     }
                 }
             }
         }
-        info!("!!!! Exiting possibly not always finishing tokio task !!!!");
+        trace!("Shutting down connection handler task.");
     })
 }
 

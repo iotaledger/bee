@@ -6,6 +6,7 @@ use crate::{Multiaddr, ShortId, KNOWN_PEER_LIMIT, UNKNOWN_PEER_LIMIT};
 use super::{errors::Error, DataSender, PeerRelation};
 
 use libp2p::PeerId;
+use log::trace;
 use tokio::sync::RwLock;
 
 use std::{
@@ -192,6 +193,7 @@ impl PeerList {
     }
 
     pub async fn clear(&self) {
+        trace!("Dropping message senders.");
         self.0.write().await.clear();
     }
 }
