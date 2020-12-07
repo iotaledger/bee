@@ -395,6 +395,7 @@ dependencies = [
  "hex",
  "log",
  "rand 0.7.3",
+ "thiserror",
  "tokio",
 ]
 

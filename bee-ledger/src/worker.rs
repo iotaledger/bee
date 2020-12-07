@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    error::Error, event::MilestoneConfirmed, merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata,
-    storage::Backend, white_flag::visit_dfs,
+    error::Error,
+    event::MilestoneConfirmed,
+    merkle_hasher::MerkleHasher,
+    metadata::WhiteFlagMetadata,
+    storage::{self, Backend},
+    white_flag::visit_dfs,
 };
 
 use bee_common::{
@@ -13,34 +17,23 @@ use bee_common::{
     worker::Worker,
 };
 use bee_message::{payload::Payload, MessageId};
-use bee_protocol::{config::ProtocolCoordinatorConfig, tangle::MsTangle, MilestoneIndex, StorageWorker, TangleWorker};
-use bee_storage::access::BatchBuilder;
+use bee_protocol::{event::LatestSolidMilestoneChanged, tangle::MsTangle, MilestoneIndex, StorageWorker, TangleWorker};
 
 use async_trait::async_trait;
 use blake2::Blake2b;
 use futures::stream::StreamExt;
-use log::{error, info};
+use log::{error, info, warn};
 
-use std::{any::TypeId, convert::Infallible, sync::Arc};
+use std::{any::TypeId, convert::Infallible, ops::Deref};
 
-// TODO refactor errors
-
-pub enum LedgerWorkerEvent {
-    Confirm(MessageId),
-    // GetBalance(Address, oneshot::Sender<u64>),
-}
-
-pub(crate) struct LedgerWorker {
-    // pub(crate) tx: flume::Sender<LedgerWorkerEvent>,
-}
+pub(crate) struct LedgerWorker {}
 
 async fn confirm<N: Node>(
     tangle: &MsTangle<N::Backend>,
     storage: &ResHandle<N::Backend>,
     message_id: MessageId,
     index: &mut MilestoneIndex,
-    _coo_config: &ProtocolCoordinatorConfig,
-    bus: &Arc<Bus<'static>>,
+    bus: &ResHandle<Bus<'static>>,
 ) -> Result<(), Error>
 where
     N::Backend: Backend,
@@ -53,12 +46,7 @@ where
     };
 
     if milestone.essence().index() != index.0 + 1 {
-        error!(
-            "Tried to confirm {} on top of {}.",
-            milestone.essence().index(),
-            index.0
-        );
-        return Err(Error::NonContiguousMilestone);
+        return Err(Error::NonContiguousMilestone(milestone.essence().index(), index.0));
     }
 
     let mut metadata = WhiteFlagMetadata::new(
@@ -67,27 +55,17 @@ where
         milestone.essence().timestamp(),
     );
 
-    let batch = N::Backend::batch_begin();
-
     if let Err(e) = visit_dfs::<N>(tangle, storage, message_id, &mut metadata).await {
-        error!(
-            "Error occured while traversing to confirm {}: {:?}.",
-            milestone.essence().index(),
-            e
-        );
         return Err(e);
     };
 
     let merkle_proof = MerkleHasher::<Blake2b>::new().digest(&metadata.messages_included);
 
     if !merkle_proof.eq(&milestone.essence().merkle_proof()) {
-        error!(
-            "The computed merkle proof on milestone {}, {}, does not match the one provided by the coordinator, {}.",
-            milestone.essence().index(),
+        return Err(Error::MerkleProofMismatch(
             hex::encode(merkle_proof),
-            hex::encode(milestone.essence().merkle_proof())
-        );
-        return Err(Error::MerkleProofMismatch);
+            hex::encode(milestone.essence().merkle_proof()),
+        ));
     }
 
     if metadata.num_messages_referenced
@@ -95,21 +73,15 @@ where
             + metadata.num_messages_excluded_conflicting
             + metadata.messages_included.len()
     {
-        error!(
-            "Invalid messages count at {}: referenced ({}) != no transaction ({}) + conflicting ({}) + included ({}).",
-            milestone.essence().index(),
+        return Err(Error::InvalidMessagesCount(
             metadata.num_messages_referenced,
             metadata.num_messages_excluded_no_transaction,
             metadata.num_messages_excluded_conflicting,
-            metadata.messages_included.len()
-        );
-        return Err(Error::InvalidMessagesCount);
+            metadata.messages_included.len(),
+        ));
     }
 
-    // TODO unwrap
-    storage.batch_commit(batch, true).await.unwrap();
-
-    // TODO update meta only when sure everything is fine
+    storage::apply_metadata(storage.deref(), &metadata).await?;
 
     *index = MilestoneIndex(milestone.essence().index());
 
@@ -134,18 +106,12 @@ where
     Ok(())
 }
 
-// fn get_balance(state: &LedgerState, address: Address, sender: oneshot::Sender<u64>) {
-//     if let Err(e) = sender.send(state.get_or_zero(&address)) {
-//         warn!("Failed to send balance: {:?}.", e);
-//     }
-// }
-
 #[async_trait]
 impl<N: Node> Worker<N> for LedgerWorker
 where
     N::Backend: Backend,
 {
-    type Config = (MilestoneIndex, ProtocolCoordinatorConfig, Arc<Bus<'static>>);
+    type Config = MilestoneIndex;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -153,33 +119,33 @@ where
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let (_tx, rx) = flume::unbounded();
+        let (tx, rx) = flume::unbounded();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
+        let bus = node.resource::<Bus>();
+
+        bus.add_listener::<(), LatestSolidMilestoneChanged, _>(move |milestone| {
+            if let Err(e) = tx.send(*milestone.0.message_id()) {
+                warn!(
+                    "Sending solid milestone {} {} to confirmation failed: {:?}.",
+                    *milestone.0.index(),
+                    milestone.0.message_id(),
+                    e
+                )
+            }
+        });
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut index = config;
 
-            let mut index = config.0;
-            let coo_config = config.1;
-            let bus = config.2;
-
-            while let Some(event) = receiver.next().await {
-                match event {
-                    LedgerWorkerEvent::Confirm(message_id) => {
-                        if confirm::<N>(&tangle, &storage, message_id, &mut index, &coo_config, &bus)
-                            .await
-                            .is_err()
-                        {
-                            panic!(
-                                "Error while confirming milestone from message {}, aborting.",
-                                message_id
-                            );
-                        }
-                    } // LedgerWorkerEvent::GetBalance(address, sender) => get_balance(&state, address, sender),
+            while let Some(message_id) = receiver.next().await {
+                if let Err(e) = confirm::<N>(&tangle, &storage, message_id, &mut index, &bus).await {
+                    error!("Confirmation error on {}: {}.", message_id, e);
+                    panic!("Aborting due to unexpected ledger error.");
                 }
             }
 
@@ -189,86 +155,3 @@ where
         Ok(Self {})
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//
-//     use super::*;
-//
-//     use bee_test::field::rand_trits_field;
-//
-//     use async_std::task::{block_on, spawn};
-//     use futures::sink::SinkExt;
-//     use rand::Rng;
-//
-//     #[test]
-//     fn get_balances() {
-//         let mut rng = rand::thread_rng();
-//         let mut state = HashMap::new();
-//         let (mut tx, rx) = flume::unbounded();
-//         let (_shutdown_tx, shutdown_rx) = oneshot::channel();
-//
-//         for _ in 0..100 {
-//             state.insert(rand_trits_field::<Address>(), rng.gen_range(0, 100_000_000));
-//         }
-//
-//         spawn(LedgerStateWorker::new(state.clone(), ShutdownStream::new(shutdown_rx, rx)).run());
-//
-//         for (address, balance) in state {
-//             let (get_balance_tx, get_balance_rx) = oneshot::channel();
-//             block_on(tx.send(LedgerStateWorkerEvent::GetBalance(address, get_balance_tx))).unwrap();
-//             let value = block_on(get_balance_rx).unwrap().unwrap();
-//             assert_eq!(balance, value)
-//         }
-//     }
-//
-//     #[test]
-//     fn get_balances_not_found() {
-//         let mut rng = rand::thread_rng();
-//         let mut state = HashMap::new();
-//         let (mut tx, rx) = flume::unbounded();
-//         let (_shutdown_tx, shutdown_rx) = oneshot::channel();
-//
-//         for _ in 0..100 {
-//             state.insert(rand_trits_field::<Address>(), rng.gen_range(0, 100_000_000));
-//         }
-//
-//         spawn(LedgerStateWorker::new(state.clone(), ShutdownStream::new(shutdown_rx, rx)).run());
-//
-//         for _ in 0..100 {
-//             let (get_balance_tx, get_balance_rx) = oneshot::channel();
-//             block_on(tx.send(LedgerStateWorkerEvent::GetBalance(
-//                 rand_trits_field::<Address>(),
-//                 get_balance_tx,
-//             )))
-//             .unwrap();
-//             let value = block_on(get_balance_rx).unwrap();
-//             assert!(value.is_none());
-//         }
-//     }
-//
-//     #[test]
-//     fn apply_diff_on_not_found() {
-//         let mut rng = rand::thread_rng();
-//         let mut diff = HashMap::new();
-//         let (mut tx, rx) = flume::unbounded();
-//         let (_shutdown_tx, shutdown_rx) = oneshot::channel();
-//
-//         for _ in 0..100 {
-//             diff.insert(rand_trits_field::<Address>(), rng.gen_range(0, 100_000_000));
-//         }
-//
-//         block_on(tx.send(LedgerStateWorkerEvent::ApplyDiff(diff.clone()))).unwrap();
-//
-//         spawn(LedgerStateWorker::new(HashMap::new(), ShutdownStream::new(shutdown_rx, rx)).run());
-//
-//         for (address, balance) in diff {
-//             let (get_balance_tx, get_balance_rx) = oneshot::channel();
-//             block_on(tx.send(LedgerStateWorkerEvent::GetBalance(address, get_balance_tx))).unwrap();
-//             let value = block_on(get_balance_rx).unwrap().unwrap();
-//             assert_eq!(balance as u64, value)
-//         }
-//     }
-//
-//     // TODO test LedgerStateWorkerEvent::ApplyDiff
-// }

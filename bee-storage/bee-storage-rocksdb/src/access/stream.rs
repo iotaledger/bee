@@ -4,7 +4,7 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::{output::Output, spent::Spent, unspent::Unspent};
+use bee_ledger::model::{Output, Spent, Unspent};
 use bee_message::{
     payload::{
         indexation::{HashedIndex, HASHED_INDEX_LENGTH},

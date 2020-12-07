@@ -4,7 +4,7 @@
 use crate::plugin::Plugin;
 
 use bee_common::event::Bus;
-use bee_protocol::event::TpsMetricsUpdated;
+use bee_protocol::event::MpsMetricsUpdated;
 
 use async_trait::async_trait;
 use log::info;
@@ -19,7 +19,7 @@ impl Plugin for Mps {
     type Error = Infallible;
 
     async fn start(_: Self::Config, bus: &Bus<'_>) -> Result<Self, Self::Error> {
-        bus.add_listener::<(), TpsMetricsUpdated, _>(|metrics| {
+        bus.add_listener::<(), MpsMetricsUpdated, _>(|metrics| {
             info!(
                 "incoming {} new {} known {} invalid {} outgoing {}",
                 metrics.incoming, metrics.new, metrics.known, metrics.invalid, metrics.outgoing

@@ -144,11 +144,11 @@ impl<'a, B: Backend> NodeRuntime<'a, B> {
 
     #[inline]
     async fn peer_disconnected_handler(&mut self, id: PeerId) {
-        // TODO unregister ?
         if let Some((_, shutdown)) = self.peers.remove(&id) {
             if let Err(e) = shutdown.send(()) {
                 warn!("Sending shutdown to {} failed: {:?}.", id.short(), e);
             }
+            Protocol::unregister(id).await;
         }
     }
 
@@ -368,13 +368,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             .map_err(Error::SnapshotError)?;
 
         // info!("Initializing ledger...");
-        // node_builder = bee_ledger::whiteflag::init::<BeeNode<B>>(
-        //     snapshot_metadata.index(),
-        //     snapshot_state.into(),
-        //     self.config.protocol.coordinator().clone(),
-        //     node_builder,
-        //     bus.clone(),
-        // );
+        // let mut this = bee_ledger::init::<BeeNode<B>>(snapshot.header().ledger_index(), this);
 
         info!("Initializing protocol layer...");
         let mut this = Protocol::init::<BeeNode<B>>(
@@ -419,7 +413,6 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         info!("Registering events...");
         bee_snapshot::events(&node);
-        // bee_ledger::whiteflag::events(&bee_node, bus.clone());
         Protocol::events(&node, config.protocol.clone());
 
         info!("Initialized.");

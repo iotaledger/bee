@@ -45,6 +45,8 @@ impl Transaction {
     pub fn id(&self) -> TransactionId {
         let mut hasher = VarBlake2b::new(TRANSACTION_ID_LENGTH).unwrap();
 
+        // TODO temporary until we know if we want to put IDs in or out of the enum types.
+        hasher.update(0u32.to_le_bytes());
         hasher.update(self.pack_new());
 
         let mut bytes = [0u8; TRANSACTION_ID_LENGTH];
