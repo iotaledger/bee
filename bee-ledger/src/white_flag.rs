@@ -84,16 +84,18 @@ where
         }
 
         // TODO semantic validation
+        // Verify that all outputs consume all inputs and have valid signatures. Also verify that the amounts match.
 
         if conflicting {
             metadata.num_messages_excluded_conflicting += 1;
         } else {
+            // Go through all deposits and generate unspent outputs.
             for (index, output) in essence.outputs().iter().enumerate() {
-                // Can't fail because we know the index is valid.
-                let output_id = OutputId::new(transaction_id, index as u16).unwrap();
-                metadata
-                    .created_outputs
-                    .insert(output_id, Output::new(*message_id, output.clone()));
+                metadata.created_outputs.insert(
+                    // Can't fail because we know the index is valid.
+                    OutputId::new(transaction_id, index as u16).unwrap(),
+                    Output::new(*message_id, output.clone()),
+                );
             }
             for (output_id, _) in outputs {
                 metadata.created_outputs.remove(output_id);
@@ -102,7 +104,6 @@ where
                     .insert(*output_id, Spent::new(transaction_id, metadata.index));
             }
             metadata.messages_included.push(*message_id);
-            // metadata.spent_outputs.extend(spent_outputs.into_iter());
         }
     } else {
         metadata.num_messages_excluded_no_transaction += 1;

@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    error::Error, event::MilestoneConfirmed, merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata,
-    storage::Backend, white_flag::visit_dfs,
+    error::Error,
+    event::MilestoneConfirmed,
+    merkle_hasher::MerkleHasher,
+    metadata::WhiteFlagMetadata,
+    storage::{self, Backend},
+    white_flag::visit_dfs,
 };
 
 use bee_common::{
@@ -14,14 +18,13 @@ use bee_common::{
 };
 use bee_message::{payload::Payload, MessageId};
 use bee_protocol::{event::LatestSolidMilestoneChanged, tangle::MsTangle, MilestoneIndex, StorageWorker, TangleWorker};
-use bee_storage::access::BatchBuilder;
 
 use async_trait::async_trait;
 use blake2::Blake2b;
 use futures::stream::StreamExt;
 use log::{error, info, warn};
 
-use std::{any::TypeId, convert::Infallible};
+use std::{any::TypeId, convert::Infallible, ops::Deref};
 
 pub(crate) struct LedgerWorker {}
 
@@ -52,8 +55,6 @@ where
         milestone.essence().timestamp(),
     );
 
-    let batch = N::Backend::batch_begin();
-
     if let Err(e) = visit_dfs::<N>(tangle, storage, message_id, &mut metadata).await {
         return Err(e);
     };
@@ -80,10 +81,7 @@ where
         ));
     }
 
-    // TODO unwrap
-    storage.batch_commit(batch, true).await.unwrap();
-
-    // TODO update meta only when sure everything is fine
+    storage::apply_metadata(storage.deref(), &metadata).await?;
 
     *index = MilestoneIndex(milestone.essence().index());
 
