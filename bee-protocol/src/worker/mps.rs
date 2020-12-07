@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{event::TpsMetricsUpdated, protocol::Protocol};
+use crate::{event::MpsMetricsUpdated, protocol::Protocol};
 
 use bee_common::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
@@ -43,7 +43,7 @@ impl<N: Node> Worker<N> for MpsWorker {
                 let invalid = Protocol::get().metrics.invalid_messages();
                 let outgoing = Protocol::get().metrics.messages_sent();
 
-                bus.dispatch(TpsMetricsUpdated {
+                bus.dispatch(MpsMetricsUpdated {
                     incoming: incoming - total_incoming,
                     new: new - total_new,
                     known: known - total_known,
