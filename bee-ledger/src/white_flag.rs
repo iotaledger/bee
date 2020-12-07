@@ -2,11 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    error::Error,
-    metadata::WhiteFlagMetadata,
-    output::Output,
-    spent::Spent,
     storage::{self, Backend},
+    error::Error, model::{Output, Spent}, metadata::WhiteFlagMetadata,
 };
 
 use bee_common::node::{Node, ResHandle};
@@ -18,7 +15,6 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_protocol::tangle::MsTangle;
-use bee_storage::access::Fetch;
 
 use std::{
     collections::{HashMap, HashSet},
@@ -54,27 +50,30 @@ where
             if let Input::UTXO(utxo_input) = input {
                 let output_id = utxo_input.output_id();
 
+                // Check if this input was already spent during the confirmation.
                 if metadata.spent_outputs.contains_key(output_id) {
                     conflicting = true;
                     break;
                 }
 
+                // Check if this input was newly created during the confirmation.
                 if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
                     outputs.insert(output_id, output);
                     continue;
                 }
 
-                if let Some(output) = Fetch::<OutputId, Output>::fetch(storage.deref(), output_id)
-                    .await
-                    .map_err(|e| Error::Storage(Box::new(e)))?
-                {
+                // Check current ledger for this input.
+                if let Some(output) = storage::get_output(storage.deref(), output_id).await? {
+                    // Check if this output is already spent.
                     if !storage::is_output_unspent(storage.deref(), output_id).await? {
                         conflicting = true;
                         break;
                     }
                     outputs.insert(output_id, output);
                 } else {
-                    return Err(Error::OutputNotFound(*output_id));
+                    // TODO conflicting ?
+                    conflicting = true;
+                    break;
                 }
             } else {
                 return Err(Error::UnsupportedInputType);
@@ -82,16 +81,18 @@ where
         }
 
         // TODO semantic validation
+        // Verify that all outputs consume all inputs and have valid signatures. Also verify that the amounts match.
 
         if conflicting {
             metadata.num_messages_excluded_conflicting += 1;
         } else {
+            // Go through all deposits and generate unspent outputs.
             for (index, output) in essence.outputs().iter().enumerate() {
-                // Can't fail because we know the index is valid.
-                let output_id = OutputId::new(transaction_id, index as u16).unwrap();
-                metadata
-                    .created_outputs
-                    .insert(output_id, Output::new(*message_id, output.clone()));
+                metadata.created_outputs.insert(
+                    // Can't fail because we know the index is valid.
+                    OutputId::new(transaction_id, index as u16).unwrap(),
+                    Output::new(*message_id, output.clone()),
+                );
             }
             for (output_id, _) in outputs {
                 metadata.created_outputs.remove(output_id);
@@ -100,7 +101,6 @@ where
                     .insert(*output_id, Spent::new(transaction_id, metadata.index));
             }
             metadata.messages_included.push(*message_id);
-            // metadata.spent_outputs.extend(spent_outputs.into_iter());
         }
     } else {
         metadata.num_messages_excluded_no_transaction += 1;
@@ -116,6 +116,7 @@ where
     Ok(())
 }
 
+// TODO make it a tangle method
 pub(crate) async fn visit_dfs<N: Node>(
     tangle: &MsTangle<N::Backend>,
     storage: &ResHandle<N::Backend>,

@@ -4,7 +4,7 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::{output::Output, spent::Spent, unspent::Unspent};
+use bee_ledger::model::{LedgerIndex, Output, Spent, Unspent};
 use bee_message::{
     payload::{
         indexation::HashedIndex,
@@ -334,6 +334,39 @@ impl Batch<(Ed25519Address, OutputId), ()> for Storage {
         batch.key_buf.extend_from_slice(&output_id.pack_new());
 
         batch.inner.delete_cf(&cf, &batch.key_buf);
+
+        Ok(())
+    }
+}
+
+impl Batch<(), LedgerIndex> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        (): &(),
+        index: &LedgerIndex,
+    ) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_LEDGER_INDEX)
+            .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
+
+        batch.value_buf.clear();
+        // Packing to bytes can't fail.
+        index.pack(&mut batch.value_buf).unwrap();
+
+        batch.inner.put_cf(&cf, [], &batch.value_buf);
+
+        Ok(())
+    }
+
+    fn batch_delete(&self, batch: &mut Self::Batch, (): &()) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_LEDGER_INDEX)
+            .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
+
+        batch.inner.delete_cf(&cf, []);
 
         Ok(())
     }

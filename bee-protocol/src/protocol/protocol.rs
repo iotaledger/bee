@@ -183,4 +183,8 @@ impl Protocol {
 
         (receiver_tx, receiver_shutdown_tx)
     }
+
+    pub async fn unregister(id: PeerId) {
+        Protocol::get().peer_manager.remove(&id).await;
+    }
 }

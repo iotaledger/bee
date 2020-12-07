@@ -24,6 +24,7 @@ pub(crate) const CF_OUTPUT_ID_TO_OUTPUT: &str = "output_id_to_output";
 pub(crate) const CF_OUTPUT_ID_TO_SPENT: &str = "output_id_to_spent";
 pub(crate) const CF_OUTPUT_ID_UNSPENT: &str = "output_id_unspent";
 pub(crate) const CF_ED25519_ADDRESS_TO_OUTPUT_ID: &str = "ed25519_address_to_output_id";
+pub(crate) const CF_LEDGER_INDEX: &str = "ledger_index";
 
 pub struct Storage {
     pub(crate) config: StorageConfig,
@@ -57,6 +58,8 @@ impl Storage {
         options.set_prefix_extractor(prefix_extractor);
         let cf_ed25519_address_to_output_id = ColumnFamilyDescriptor::new(CF_ED25519_ADDRESS_TO_OUTPUT_ID, options);
 
+        let cf_ledger_index = ColumnFamilyDescriptor::new(CF_LEDGER_INDEX, Options::default());
+
         let mut opts = Options::default();
 
         opts.create_if_missing(config.create_if_missing);
@@ -89,6 +92,7 @@ impl Storage {
             cf_output_id_to_spent,
             cf_output_id_unspent,
             cf_ed25519_address_to_output_id,
+            cf_ledger_index,
         ];
 
         Ok(DB::open_cf_descriptors(&opts, config.path, column_familes)?)
