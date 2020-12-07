@@ -1,31 +1,26 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
-
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::payload::transaction::OutputId;
+use bee_protocol::MilestoneIndex;
 
-pub struct Unspent(OutputId);
+#[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct LedgerIndex(MilestoneIndex);
 
-impl From<OutputId> for Unspent {
-    fn from(id: OutputId) -> Self {
-        Unspent(id)
+impl From<MilestoneIndex> for LedgerIndex {
+    fn from(index: MilestoneIndex) -> Self {
+        Self(index)
     }
 }
 
-impl Unspent {
-    pub fn new(output_id: OutputId) -> Self {
-        output_id.into()
-    }
-
-    pub fn id(&self) -> &OutputId {
-        &self.0
+impl LedgerIndex {
+    pub fn new(index: MilestoneIndex) -> Self {
+        index.into()
     }
 }
 
-impl Packable for Unspent {
-    type Error = Error;
+impl Packable for LedgerIndex {
+    type Error = std::io::Error;
 
     fn packed_len(&self) -> usize {
         self.0.packed_len()
@@ -41,6 +36,6 @@ impl Packable for Unspent {
     where
         Self: Sized,
     {
-        Ok(Self(OutputId::unpack(reader)?))
+        Ok(Self(MilestoneIndex::unpack(reader)?))
     }
 }

@@ -9,7 +9,7 @@ use crate::{
 };
 
 use bee_common::{node::ResHandle, packable::Packable};
-use bee_ledger::spent::Spent;
+use bee_ledger::model::Spent;
 use bee_message::{payload::milestone::MilestoneEssence, prelude::*};
 use bee_protocol::{tangle::MsTangle, MessageSubmitterError, MessageSubmitterWorkerEvent, MilestoneIndex};
 use bee_storage::access::Fetch;
@@ -461,7 +461,7 @@ pub async fn get_output_by_output_id<B: Backend>(
     output_id: OutputId,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    let output: Result<Option<bee_ledger::output::Output>, <B as bee_storage::storage::Backend>::Error> =
+    let output: Result<Option<bee_ledger::model::Output>, <B as bee_storage::storage::Backend>::Error> =
         storage.fetch(&output_id).await;
     let is_spent: Result<Option<Spent>, <B as bee_storage::storage::Backend>::Error> = storage.fetch(&output_id).await;
 
@@ -510,7 +510,7 @@ pub async fn get_balance_for_address<B: Backend>(
             let mut balance = 0;
 
             for id in ids {
-                if let Some(output) = Fetch::<OutputId, bee_ledger::output::Output>::fetch(storage.deref(), &id)
+                if let Some(output) = Fetch::<OutputId, bee_ledger::model::Output>::fetch(storage.deref(), &id)
                     .await
                     .map_err(|_| {
                         reject::custom(ServiceUnavailable("service unavailable: can not fetch from storage"))
@@ -633,7 +633,7 @@ pub mod tests {
                         0x78, 0xD5, 0x46, 0xB4, 0x6A, 0xEC, 0x45, 0x57, 0x87, 0x21, 0x39, 0xA4, 0x8F, 0x66, 0xBC, 0x56, 0x76,
                         0x87, 0xE8, 0x41, 0x35, 0x78, 0xA1, 0x43, 0x23, 0x54, 0x87, 0x32, 0x35, 0x89, 0x14, 0xA2,
                     ]),
-                    hex::decode("786a02f742015903c6c6fd852552d272912f4740e15847618a86e217f71f5419d25e1031afee585313896444934eb04b903a685b1448b755d56f701afe9be2ce").unwrap().into_boxed_slice(),
+                    hex::decode("786a02f742015903c6c6fd852552d272912f4740e15847618a86e217f71f5419d25e1031afee585313896444934eb04b903a685b1448b755d56f701afe9be2ce").unwrap().try_into().unwrap(),
 
                     vec![[0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x49, 0x6f,0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x49, 0x6f,0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x49, 0x6f,0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x49, 0x6f,]],
                 ),

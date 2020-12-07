@@ -11,7 +11,7 @@ pub struct LatestSolidMilestoneChanged(pub Milestone);
 
 pub struct MessageSolidified(pub MessageId);
 
-pub struct TpsMetricsUpdated {
+pub struct MpsMetricsUpdated {
     pub incoming: u64,
     pub new: u64,
     pub known: u64,

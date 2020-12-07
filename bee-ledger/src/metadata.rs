@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{output::Output, spent::Spent};
+use crate::model::{Output, Spent};
 
 use bee_message::{payload::transaction::OutputId, MessageId};
 use bee_protocol::MilestoneIndex;

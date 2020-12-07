@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use alloc::{boxed::Box, vec::Vec};
 
-pub const MILESTONE_MERKLE_PROOF_LENGTH: usize = 64;
+pub const MILESTONE_MERKLE_PROOF_LENGTH: usize = 32;
 pub const MILESTONE_PUBLIC_KEY_LENGTH: usize = 32;
 pub const MILESTONE_SIGNATURE_LENGTH: usize = 64;
 
@@ -76,8 +76,7 @@ pub struct MilestoneEssence {
     timestamp: u64,
     parent1: MessageId,
     parent2: MessageId,
-    // TODO length is 64, change to array when std::array::LengthAtMost32 disappears.
-    merkle_proof: Box<[u8]>,
+    merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
     public_keys: Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>,
 }
 
@@ -87,7 +86,7 @@ impl MilestoneEssence {
         timestamp: u64,
         parent1: MessageId,
         parent2: MessageId,
-        merkle_proof: Box<[u8]>,
+        merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
         public_keys: Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>,
     ) -> Self {
         Self {
@@ -184,7 +183,7 @@ impl Packable for MilestoneEssence {
             timestamp,
             parent1,
             parent2,
-            merkle_proof: Box::new(merkle_proof),
+            merkle_proof,
             public_keys,
         })
     }
