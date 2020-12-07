@@ -8,6 +8,8 @@ use warp::{reject, Filter, Rejection};
 use bee_protocol::{tangle::MsTangle, MessageSubmitterWorkerEvent};
 
 use crate::{filters::CustomRejection::BadRequest, storage::Backend};
+use bech32::FromBase32;
+use bee_common::packable::Packable;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -25,8 +27,7 @@ pub fn all<B: Backend>(
     message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    get_health(tangle.clone())
-        .or(get_info(tangle.clone(), network_id.clone()).or(get_milestone_by_milestone_index(tangle.clone())))
+    get_health(tangle.clone()).or(get_info(tangle.clone(), network_id.clone())
         .or(get_tips(tangle.clone()))
         .or(post_json_message(
             tangle.clone(),
@@ -40,8 +41,11 @@ pub fn all<B: Backend>(
         .or(get_raw_message(tangle.clone()))
         .or(get_children_by_message_id(tangle.clone()))
         .or(get_output_by_output_id(storage.clone()))
-        .or(get_outputs_for_address(storage.clone()))
-        .or(get_balance_for_address(storage.clone()))
+        .or(get_balance_for_bech32_address(storage.clone()))
+        .or(get_balance_for_ed25519_address(storage.clone()))
+        .or(get_outputs_for_bech32_address(storage.clone()))
+        .or(get_outputs_for_ed25519_address(storage.clone()))
+        .or(get_milestone_by_milestone_index(tangle.clone())))
 }
 
 fn get_health<B: Backend>(
@@ -184,19 +188,6 @@ fn get_children_by_message_id<B: Backend>(
         .and_then(handlers::get_children_by_message_id)
 }
 
-fn get_milestone_by_milestone_index<B: Backend>(
-    tangle: ResHandle<MsTangle<B>>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(warp::path("api"))
-        .and(warp::path("v1"))
-        .and(warp::path("milestones"))
-        .and(custom_path_param::milestone_index())
-        .and(warp::path::end())
-        .and(with_tangle(tangle))
-        .and_then(handlers::get_milestone_by_milestone_index)
-}
-
 fn get_output_by_output_id<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -210,20 +201,48 @@ fn get_output_by_output_id<B: Backend>(
         .and_then(handlers::get_output_by_output_id)
 }
 
-fn get_balance_for_address<B: Backend>(
+fn get_balance_for_bech32_address<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
+        .and(custom_path_param::bech32_address())
+        .and(warp::path::end())
+        .and(with_storage(storage))
+        .and_then(handlers::get_balance_for_bech32_address)
+}
+
+fn get_balance_for_ed25519_address<B: Backend>(
+    storage: ResHandle<B>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("addresses"))
+        .and(warp::path("ed25519"))
         .and(custom_path_param::ed25519_address())
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::get_balance_for_address)
+        .and_then(handlers::get_balance_for_ed25519_address)
 }
 
-fn get_outputs_for_address<B: Backend>(
+fn get_outputs_for_bech32_address<B: Backend>(
+    storage: ResHandle<B>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("addresses"))
+        .and(custom_path_param::bech32_address())
+        .and(warp::path("outputs"))
+        .and(warp::path::end())
+        .and(with_storage(storage))
+        .and_then(handlers::get_outputs_for_bech32_address)
+}
+
+fn get_outputs_for_ed25519_address<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -234,13 +253,30 @@ fn get_outputs_for_address<B: Backend>(
         .and(warp::path("outputs"))
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::get_outputs_for_address)
+        .and_then(handlers::get_outputs_for_ed25519_address)
+}
+
+fn get_milestone_by_milestone_index<B: Backend>(
+    tangle: ResHandle<MsTangle<B>>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("milestones"))
+        .and(custom_path_param::milestone_index())
+        .and(warp::path::end())
+        .and(with_tangle(tangle))
+        .and_then(handlers::get_milestone_by_milestone_index)
 }
 
 mod custom_path_param {
 
     use super::*;
-    use bee_message::{payload::transaction::OutputId, prelude::Ed25519Address, MessageId};
+    use bee_message::{
+        payload::transaction::{Address, OutputId},
+        prelude::Ed25519Address,
+        MessageId,
+    };
     use bee_protocol::MilestoneIndex;
 
     pub(super) fn output_id() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Copy {
@@ -266,6 +302,24 @@ mod custom_path_param {
             match value.parse::<u32>() {
                 Ok(i) => Ok(MilestoneIndex(i)),
                 Err(_) => Err(reject::custom(BadRequest("invalid milestone index".to_string()))),
+            }
+        })
+    }
+
+    pub(super) fn bech32_address() -> impl Filter<Extract = (Address,), Error = Rejection> + Copy {
+        warp::path::param().and_then(|value: String| async move {
+            match bech32::decode(&value) {
+                Ok((hrp, data)) => {
+                    if hrp.eq("iota") || hrp.eq("atoi") {
+                        let bytes = Vec::<u8>::from_base32(&data)
+                            .map_err(|_| reject::custom(BadRequest("invalid IOTA address".to_string())))?;
+                        Ok(Address::unpack(&mut bytes.as_slice())
+                            .map_err(|_| reject::custom(BadRequest("invalid IOTA address".to_string())))?)
+                    } else {
+                        Err(reject::custom(BadRequest("not an IOTA address".to_string())))
+                    }
+                }
+                Err(_) => Err(reject::custom(BadRequest("not a bech32 address".to_string()))),
             }
         })
     }

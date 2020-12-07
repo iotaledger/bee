@@ -186,6 +186,10 @@ impl DataBody for GetOutputByOutputIdResponse {}
 /// Response of GET /api/v1/addresses/{address}
 #[derive(Clone, Debug, Serialize)]
 pub struct GetBalanceForAddressResponse {
+    // The type of the address (0=WOTS, 1=Ed25519).
+    #[serde(rename = "type")]
+    pub kind: u8,
+    // hex encoded address
     pub address: String,
     #[serde(rename = "maxResults")]
     pub max_results: usize,

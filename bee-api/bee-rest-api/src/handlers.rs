@@ -371,25 +371,6 @@ pub async fn get_children_by_message_id<B: Backend>(
     })))
 }
 
-pub(crate) async fn get_milestone_by_milestone_index<B: Backend>(
-    milestone_index: MilestoneIndex,
-    tangle: ResHandle<MsTangle<B>>,
-) -> Result<impl Reply, Rejection> {
-    match tangle.get_milestone_message_id(milestone_index) {
-        Some(message_id) => match tangle.get_metadata(&message_id) {
-            Some(metadata) => Ok(warp::reply::json(&DataResponse::new(GetMilestoneResponse {
-                milestone_index: *milestone_index,
-                message_id: message_id.to_string(),
-                timestamp: metadata.arrival_timestamp(),
-            }))),
-            None => Err(reject::custom(NotFound(
-                "can not find metadata for milestone".to_string(),
-            ))),
-        },
-        None => Err(reject::custom(NotFound("can not find milestone".to_string()))),
-    }
-}
-
 pub(crate) async fn get_output_by_output_id<B: Backend>(
     output_id: OutputId,
     storage: ResHandle<B>,
@@ -415,7 +396,17 @@ pub(crate) async fn get_output_by_output_id<B: Backend>(
     }
 }
 
-pub(crate) async fn get_balance_for_address<B: Backend>(
+pub(crate) async fn get_balance_for_bech32_address<B: Backend>(
+    addr: Address,
+    storage: ResHandle<B>,
+) -> Result<impl Reply, Rejection> {
+    match addr {
+        Address::Ed25519(a) => get_balance_for_ed25519_address(a, storage).await,
+        _ => Err(reject::custom(BadRequest("address type not supported".to_string()))),
+    }
+}
+
+pub(crate) async fn get_balance_for_ed25519_address<B: Backend>(
     addr: Ed25519Address,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {
@@ -439,12 +430,17 @@ pub(crate) async fn get_balance_for_address<B: Backend>(
                     {
                         match output.inner() {
                             Output::SignatureLockedSingle(o) => balance += o.amount().get() as u64,
-                            _ => return Err(reject::custom(ServiceUnavailable("output type not supported".to_string())))
+                            _ => {
+                                return Err(reject::custom(ServiceUnavailable(
+                                    "output type not supported".to_string(),
+                                )))
+                            }
                         }
                     }
                 }
             }
             Ok(warp::reply::json(&DataResponse::new(GetBalanceForAddressResponse {
+                kind: 1,
                 address: addr.to_string(),
                 max_results,
                 count,
@@ -455,7 +451,17 @@ pub(crate) async fn get_balance_for_address<B: Backend>(
     }
 }
 
-pub(crate) async fn get_outputs_for_address<B: Backend>(
+pub(crate) async fn get_outputs_for_bech32_address<B: Backend>(
+    addr: Address,
+    storage: ResHandle<B>,
+) -> Result<impl Reply, Rejection> {
+    match addr {
+        Address::Ed25519(a) => get_outputs_for_ed25519_address(a, storage).await,
+        _ => Err(reject::custom(BadRequest("address type not supported".to_string()))),
+    }
+}
+
+pub(crate) async fn get_outputs_for_ed25519_address<B: Backend>(
     addr: Ed25519Address,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {
@@ -477,6 +483,25 @@ pub(crate) async fn get_outputs_for_address<B: Backend>(
         count,
         output_ids: fetched.iter().map(|id| id.to_string()).collect(),
     })))
+}
+
+pub(crate) async fn get_milestone_by_milestone_index<B: Backend>(
+    milestone_index: MilestoneIndex,
+    tangle: ResHandle<MsTangle<B>>,
+) -> Result<impl Reply, Rejection> {
+    match tangle.get_milestone_message_id(milestone_index) {
+        Some(message_id) => match tangle.get_metadata(&message_id) {
+            Some(metadata) => Ok(warp::reply::json(&DataResponse::new(GetMilestoneResponse {
+                milestone_index: *milestone_index,
+                message_id: message_id.to_string(),
+                timestamp: metadata.arrival_timestamp(),
+            }))),
+            None => Err(reject::custom(NotFound(
+                "can not find metadata for milestone".to_string(),
+            ))),
+        },
+        None => Err(reject::custom(NotFound("can not find milestone".to_string()))),
+    }
 }
 
 async fn is_healthy<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> bool {
@@ -534,7 +559,7 @@ async fn submit_message<B: Backend>(
         // TODO: report back from HasherWorker and replace following line with:
         // error!("can not submit message: {:?}",e);
         reject::custom(BadRequest(
-            "invalid message, already received in a previous request".to_string(),
+            "invalid message already received by a previous request".to_string(),
         ))
     })?;
 
