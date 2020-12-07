@@ -15,7 +15,6 @@ bee-common = { path = "../bee-common/bee-common" }
 
 async-trait = "0.1"
 dashmap = "3.11"
-flume = "0.9"
 futures = "0.3"
 libp2p = { version = "0.29", default-features = false, features = ["dns", "mplex", "noise", "tcp-tokio", "yamux"]}
 log = "0.4"

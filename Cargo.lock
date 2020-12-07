@@ -422,7 +422,6 @@ dependencies = [
  "bee-common",
  "dashmap",
  "env_logger",
- "flume",
  "futures",
  "libp2p",
  "log",
