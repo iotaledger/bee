@@ -203,7 +203,7 @@ pub struct PeerInfo {
     pub relation: PeerRelation,
 }
 
-macro_rules! impl_relation_iter {
+macro_rules! impl_is_relation {
     ($is:tt) => {
         impl PeerInfo {
             pub fn $is(&self) -> bool {
@@ -213,9 +213,9 @@ macro_rules! impl_relation_iter {
     };
 }
 
-impl_relation_iter!(is_known);
-impl_relation_iter!(is_unknown);
-impl_relation_iter!(is_discovered);
+impl_is_relation!(is_known);
+impl_is_relation!(is_unknown);
+impl_is_relation!(is_discovered);
 
 #[derive(Clone)]
 pub enum PeerState {
