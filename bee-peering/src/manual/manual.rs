@@ -46,7 +46,7 @@ impl PeerManager for ManualPeerManager {
 
 #[inline]
 fn add_peer(network: &NetworkController, id: PeerId, address: Multiaddr, alias: Option<String>) {
-    if let Err(e) = network.unbounded_send(AddPeer {
+    if let Err(e) = network.send(AddPeer {
         id,
         address,
         alias,

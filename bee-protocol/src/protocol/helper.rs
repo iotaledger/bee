@@ -26,7 +26,7 @@ macro_rules! implement_sender_worker {
     ($type:ty, $sender:tt, $incrementor:tt) => {
         impl Sender<$type> {
             pub(crate) fn send(network: &NetworkController, id: &PeerId, packet: $type) {
-                match network.unbounded_send(SendMessage {
+                match network.send(SendMessage {
                     to: id.clone(),
                     message: tlv_into_bytes(packet),
                 }) {

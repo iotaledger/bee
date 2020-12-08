@@ -48,7 +48,7 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
                         Some(ref source) => source != peer.key(),
                         None => true,
                     } {
-                        match network.unbounded_send(SendMessage {
+                        match network.send(SendMessage {
                             message: bytes.clone(),
                             to: peer.key().clone(),
                         }) {
