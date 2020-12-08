@@ -33,7 +33,7 @@ pub enum Event {
     CommandFailed { command: Command }, // TODO: maybe we should provide the reason as well!
 }
 
-// #[derive(Debug)]
+#[derive(Debug)]
 pub enum InternalEvent {
     ConnectionEstablished {
         peer_id: PeerId,

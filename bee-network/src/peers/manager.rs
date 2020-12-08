@@ -189,7 +189,7 @@ async fn process_command(
     event_sender: &EventSender,
     internal_event_sender: &InternalEventSender,
 ) -> Result<(), Error> {
-    // trace!("Received {:?}.", command);
+    trace!("Received {:?}.", command);
 
     match command {
         Command::AddPeer {
@@ -198,8 +198,6 @@ async fn process_command(
             alias,
             relation,
         } => {
-            info!("Command::AddPeer");
-
             // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
             if relation == PeerRelation::Known {
                 add_peer(id.clone(), address, alias, relation, peers, event_sender).await?;
@@ -232,12 +230,9 @@ async fn process_command(
             }
         }
         Command::RemovePeer { id } => {
-            info!("Command::RemovePeer");
             remove_peer(id, peers, event_sender).await?;
         }
         Command::ConnectPeer { id } => {
-            info!("Command::ConnectPeer");
-
             let local_keys = local_keys.clone();
             let peers = peers.clone();
             let banned_addrs = banned_addrs.clone();
@@ -262,12 +257,9 @@ async fn process_command(
             });
         }
         Command::DisconnectPeer { id } => {
-            info!("Command::DisconnectPeer");
             disconnect_peer(id, peers, event_sender).await?;
         }
         Command::DialAddress { address } => {
-            info!("Command::DialAddress");
-
             let local_keys = local_keys.clone();
             let peers = peers.clone();
             let banned_addrs = banned_addrs.clone();
@@ -340,7 +332,7 @@ async fn process_internal_event(
     event_sender: &EventSender,
     internal_event_sender: &InternalEventSender,
 ) -> Result<(), Error> {
-    // trace!("Received {:?}.", internal_event);
+    trace!("Received {:?}.", internal_event);
 
     match internal_event {
         InternalEvent::ConnectionEstablished {
@@ -349,7 +341,6 @@ async fn process_internal_event(
             message_sender,
             ..
         } => {
-            info!("Event::ConnectionEstablished");
             peers
                 .update_state(&peer_id, PeerState::Connected(message_sender))
                 .await?;
@@ -363,7 +354,6 @@ async fn process_internal_event(
         }
 
         InternalEvent::ConnectionDropped { peer_id } => {
-            info!("Event::ConnectionDropped");
             peers.update_state(&peer_id, PeerState::Disconnected).await?;
 
             // TODO: maybe allow some fixed timespan for a connection recovery from either end before removing.
@@ -376,8 +366,6 @@ async fn process_internal_event(
 
         InternalEvent::MessageReceived { message, from } => recv_message(message, from, &event_sender).await?,
         InternalEvent::ReconnectScheduled { peer_id } => {
-            info!("Event::ReconnectScheduled");
-
             let local_keys = local_keys.clone();
             let peers = peers.clone();
             let banned_addrs = banned_addrs.clone();
