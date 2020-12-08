@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{errors::Error, Origin};
+use super::{errors::Error, manager::LISTEN_ADDRESSES, Origin};
 
 use crate::{
     interaction::events::InternalEventSender,
@@ -22,8 +22,13 @@ pub async fn dial_peer(
     banned_addrs: &BannedAddrList,
     banned_peers: &BannedPeerList,
 ) -> Result<(), Error> {
+    // Prevent dialing oneself.
+    if peer_id == &local_keys.public().into_peer_id() {
+        return Err(Error::DialedSelf(peer_id.short()));
+    }
+
     // Prevent duplicate connections.
-    if let Ok(connected) = peers.is(peer_id, |_, state| state.is_connected()) {
+    if let Ok(connected) = peers.is(peer_id, |_, state| state.is_connected()).await {
         if connected {
             return Err(Error::DuplicateConnection(peer_id.short()));
         }
@@ -37,6 +42,7 @@ pub async fn dial_peer(
     // Prevent dialing unlisted/unregistered peers.
     let peer_info = peers
         .get_info(peer_id)
+        .await
         .map_err(|_| Error::DialedUnlistedPeer(peer_id.short()))?;
 
     // Prevent dialing banned addresses.
@@ -80,9 +86,9 @@ pub async fn dial_peer(
 #[inline]
 fn log_dialing_peer(peer_id: &PeerId, peer_info: &PeerInfo) {
     if let Some(alias) = peer_info.alias.as_ref() {
-        info!("Dialing '{}/{}'...", alias, peer_id.short());
+        info!("Dialing {}:{}...", alias, peer_id.short());
     } else {
-        info!("Dialing '{}'...", peer_id.short());
+        info!("Dialing {}...", peer_id.short());
     }
 }
 
@@ -94,6 +100,11 @@ pub async fn dial_address(
     banned_addrs: &BannedAddrList,
     banned_peers: &BannedPeerList,
 ) -> Result<(), Error> {
+    // Prevent dialing listen addresses.
+    if LISTEN_ADDRESSES.read().unwrap().contains(address) {
+        return Err(Error::DialedOwnAddress(address.clone()));
+    }
+
     // Prevent dialing banned addresses.
     if banned_addrs.contains(&address.to_string()) {
         return Err(Error::DialedBannedAddress(address.clone()));
@@ -109,7 +120,7 @@ pub async fn dial_address(
         .map_err(|_| Error::DialingFailed(address.clone()))?;
 
     // Prevent duplicate connections.
-    if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()) {
+    if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()).await {
         if connected {
             return Err(Error::DuplicateConnection(peer_id.short()));
         }
@@ -120,7 +131,7 @@ pub async fn dial_address(
         return Err(Error::DialedBannedPeer(peer_id.short()));
     }
 
-    let peer_info = if let Ok(peer_info) = peers.get_info(&peer_id) {
+    let peer_info = if let Ok(peer_info) = peers.get_info(&peer_id).await {
         // If we have this peer id in our peerlist (but are not already connected to it),
         // then we allow the connection.
         peer_info
@@ -134,9 +145,10 @@ pub async fn dial_address(
 
         peers
             .insert(peer_id.clone(), peer_info.clone(), PeerState::Disconnected)
+            .await
             .map_err(|_| Error::DialedRejectedPeer(peer_id.short()))?;
 
-        info!("Allowing connection to unknown peer '{}'", peer_id.short(),);
+        info!("Allowing connection to unknown peer {}", peer_id.short(),);
 
         peer_info
     };
@@ -158,12 +170,8 @@ pub async fn dial_address(
 #[inline]
 fn log_outbound_connection_success(peer_id: &PeerId, peer_info: &PeerInfo) {
     if let Some(alias) = peer_info.alias.as_ref() {
-        info!(
-            "Established (outbound) connection with '{}/{}'.",
-            alias,
-            peer_id.short(),
-        )
+        info!("Established (outbound) connection with {}:{}.", alias, peer_id.short(),)
     } else {
-        info!("Established (outbound) connection with '{}'.", peer_id.short(),);
+        info!("Established (outbound) connection with {}.", peer_id.short(),);
     }
 }

@@ -29,20 +29,16 @@ pub trait Node: Send + Sized + 'static {
         Self::Builder::new(config)
     }
 
-    async fn stop(mut self) -> Result<(), shutdown::Error>
-    where
-        Self: Sized;
+    async fn stop(mut self) -> Result<(), shutdown::Error>;
 
     fn spawn<W, G, F>(&mut self, g: G)
     where
-        Self: Sized,
         W: Worker<Self>,
         G: FnOnce(oneshot::Receiver<()>) -> F,
         F: Future<Output = ()> + Send + 'static;
 
     fn worker<W>(&self) -> Option<&W>
     where
-        Self: Sized,
         W: Worker<Self> + Send + Sync;
 
     fn register_resource<R: Any + Send + Sync>(&mut self, res: R);

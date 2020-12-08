@@ -35,14 +35,9 @@ pub trait Worker<N: Node>: Any + Send + Sync + Sized {
         &[]
     }
 
-    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error>
-    where
-        Self: Sized;
+    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error>;
 
-    async fn stop(self, _node: &mut N) -> Result<(), Self::Error>
-    where
-        Self: Sized,
-    {
+    async fn stop(self, _node: &mut N) -> Result<(), Self::Error> {
         Ok(())
     }
 }

@@ -12,6 +12,7 @@ pub const DEFAULT_MSG_BUFFER_SIZE: usize = 10000;
 pub const DEFAULT_KNOWN_PEER_LIMIT: usize = 6;
 pub const DEFAULT_UNKNOWN_PEER_LIMIT: usize = 2;
 pub const DEFAULT_RECONNECT_MILLIS: u64 = 60000;
+pub const DEFAULT_CONNECTION_TIMEOUT_SECS: u64 = 10;
 
 /// Network configuration builder.
 #[derive(Default, Deserialize)]

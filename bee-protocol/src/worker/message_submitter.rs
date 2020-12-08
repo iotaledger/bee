@@ -16,6 +16,7 @@ use bee_message::MessageId;
 use async_trait::async_trait;
 use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info};
+use tokio::sync::mpsc;
 
 use std::{any::TypeId, fmt};
 
@@ -34,7 +35,7 @@ pub struct MessageSubmitterWorkerEvent {
 }
 
 pub struct MessageSubmitterWorker {
-    pub tx: flume::Sender<MessageSubmitterWorkerEvent>,
+    pub tx: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 }
 
 #[async_trait]
@@ -47,14 +48,14 @@ impl<N: Node> Worker<N> for MessageSubmitterWorker {
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         let hasher = node.worker::<HasherWorker>().unwrap().tx.clone();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(event) = receiver.next().await {
                 let event: MessageSubmitterWorkerEvent = event;

@@ -9,7 +9,7 @@ pub use index::MilestoneIndex;
 
 use bee_message::MessageId;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Milestone {
     pub(crate) index: MilestoneIndex,
     pub(crate) message_id: MessageId,

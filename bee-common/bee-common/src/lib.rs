@@ -11,6 +11,5 @@ pub mod node;
 pub mod packable;
 pub mod shutdown;
 pub mod shutdown_stream;
-pub mod shutdown_tokio;
 pub mod wait_priority_queue;
 pub mod worker;

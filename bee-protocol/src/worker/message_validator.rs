@@ -9,13 +9,15 @@ use bee_message::MessageId;
 use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::info;
+use tokio::sync::mpsc;
 
 use std::{any::TypeId, convert::Infallible};
 
+#[derive(Debug)]
 pub(crate) struct MessageValidatorWorkerEvent(pub(crate) MessageId);
 
 pub(crate) struct MessageValidatorWorker {
-    pub(crate) tx: flume::Sender<MessageValidatorWorkerEvent>,
+    pub(crate) tx: mpsc::UnboundedSender<MessageValidatorWorkerEvent>,
 }
 
 #[async_trait]
@@ -28,14 +30,14 @@ impl<N: Node> Worker<N> for MessageValidatorWorker {
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(MessageValidatorWorkerEvent(id)) = receiver.next().await {
                 if let Some(message) = tangle.get(&id).await {
