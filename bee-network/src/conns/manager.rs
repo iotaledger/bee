@@ -3,7 +3,7 @@
 
 use crate::{
     interaction::events::InternalEventSender,
-    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerRelation, PeerState},
+    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerManager, PeerRelation, PeerState},
     transport::build_transport,
     Multiaddr, PeerId, ShortId,
 };
@@ -14,6 +14,7 @@ use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
 use futures::prelude::*;
+use lazy_static::lazy_static;
 use libp2p::{
     core::{muxing::StreamMuxerBox, transport::ListenerEvent},
     identity, Transport,
@@ -21,10 +22,14 @@ use libp2p::{
 use log::*;
 
 use std::{
+    any::TypeId,
     convert::Infallible,
     io,
     pin::Pin,
-    sync::atomic::{AtomicUsize, Ordering},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc, RwLock,
+    },
 };
 
 type ListenerUpgrade = Pin<Box<(dyn Future<Output = Result<(PeerId, StreamMuxerBox), io::Error>> + Send + 'static)>>;
@@ -32,11 +37,14 @@ type PeerListener = Pin<Box<dyn Stream<Item = Result<ListenerEvent<ListenerUpgra
 
 pub static NUM_LISTENER_EVENT_PROCESSING_ERRORS: AtomicUsize = AtomicUsize::new(0);
 
+lazy_static! {
+    pub static ref LISTEN_ADDRESSES: Arc<RwLock<Vec<Multiaddr>>> = Arc::new(RwLock::new(Vec::new()));
+}
+
 #[derive(Default)]
 pub struct ConnectionManager {}
 
 pub struct ConnectionManagerConfig {
-    pub listen_address: Multiaddr,
     peers: PeerList,
     banned_addrs: BannedAddrList,
     banned_peers: BannedPeerList,
@@ -47,6 +55,7 @@ pub struct ConnectionManagerConfig {
 impl ConnectionManagerConfig {
     pub fn new(
         local_keys: identity::Keypair,
+        // TODO: allow multiple bind addresses
         bind_address: Multiaddr,
         peers: PeerList,
         banned_addrs: BannedAddrList,
@@ -70,8 +79,9 @@ impl ConnectionManagerConfig {
 
         trace!("Accepting connections on {}.", listen_address);
 
+        LISTEN_ADDRESSES.write().unwrap().push(listen_address);
+
         Ok(Self {
-            listen_address,
             peers,
             banned_peers,
             banned_addrs,
@@ -86,6 +96,10 @@ impl<N: Node> Worker<N> for ConnectionManager {
     type Config = ConnectionManagerConfig;
     type Error = Infallible;
 
+    fn dependencies() -> &'static [TypeId] {
+        vec![TypeId::of::<PeerManager>()].leak()
+    }
+
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let ConnectionManagerConfig {
             peers,
@@ -96,10 +110,8 @@ impl<N: Node> Worker<N> for ConnectionManager {
             ..
         } = config;
 
-        // let mut fused_incoming_streams = peer_listener.fuse();
-
         node.spawn::<Self, _, _>(|shutdown| async move {
-            trace!("Peer listener started.");
+            info!("Listener started.");
 
             let mut incoming = ShutdownStream::new(shutdown, peer_listener);
 
@@ -111,7 +123,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                     // Prevent accepting from banned addresses.
                     let peer_address_str = peer_address.to_string();
                     if banned_addrs.contains(&peer_address_str) {
-                        trace!("Ignoring peer. Cause: '{}' is banned.", peer_address_str);
+                        trace!("Ignoring peer. Cause: {} is banned.", peer_address_str);
                         NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                         continue;
                     }
@@ -126,7 +138,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                     };
 
                     // Prevent accepting duplicate connections.
-                    if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()) {
+                    if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()).await {
                         if connected {
                             trace!("Already connected to {}", peer_id);
                             NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
@@ -136,12 +148,12 @@ impl<N: Node> Worker<N> for ConnectionManager {
 
                     // Prevent accepting banned peers.
                     if banned_peers.contains(&peer_id) {
-                        trace!("Ignoring peer. Cause: '{}' is banned.", peer_id);
+                        trace!("Ignoring peer. Cause: {} is banned.", peer_id);
                         NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                         continue;
                     }
 
-                    let peer_info = if let Ok(peer_info) = peers.get_info(&peer_id) {
+                    let peer_info = if let Ok(peer_info) = peers.get_info(&peer_id).await {
                         // If we have this peer id in our peerlist (but are not already connected to it),
                         // then we allow the connection.
                         peer_info
@@ -154,6 +166,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
 
                         if peers
                             .insert(peer_id.clone(), peer_info.clone(), PeerState::Disconnected)
+                            .await
                             .is_err()
                         {
                             trace!("Ignoring peer. Cause: Denied by peerlist.");
@@ -161,11 +174,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                             continue;
                         } else {
                             // We also allow for a certain number of unknown peers.
-                            info!(
-                                "Allowing connection to unknown peer '{}' [{}]",
-                                peer_id.short(),
-                                peer_info.address
-                            );
+                            info!("Allowing connection to unknown peer {}.", peer_id.short(),);
 
                             peer_info
                         }
@@ -189,7 +198,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                 }
             }
 
-            trace!("Peer listener stopped.")
+            info!("Listener stopped.")
         });
 
         // loop {
@@ -219,13 +228,18 @@ impl<N: Node> Worker<N> for ConnectionManager {
 
         Ok(Self::default())
     }
+
+    async fn stop(self, _node: &mut N) -> Result<(), Self::Error> {
+        info!("Stopping spawned tasks...");
+        Ok(())
+    }
 }
 
 #[inline]
 fn log_inbound_connection_success(peer_id: &PeerId, peer_info: &PeerInfo) {
     if let Some(alias) = peer_info.alias.as_ref() {
-        info!("Established (inbound) connection with '{}/{}'.", alias, peer_id.short(),)
+        info!("Established (inbound) connection with {}:{}.", alias, peer_id.short(),)
     } else {
-        info!("Established (inbound) connection with '{}'.", peer_id.short(),);
+        info!("Established (inbound) connection with {}.", peer_id.short(),);
     }
 }

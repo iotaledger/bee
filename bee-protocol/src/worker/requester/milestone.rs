@@ -10,13 +10,13 @@ use crate::{
 };
 
 use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_network::{Network, PeerId};
+use bee_network::{NetworkController, PeerId};
 
 use async_trait::async_trait;
 use dashmap::DashMap;
 use futures::{select, StreamExt};
 use log::{debug, info};
-use tokio::time::interval;
+use tokio::{sync::mpsc, time::interval};
 
 use std::{
     any::TypeId,
@@ -42,11 +42,11 @@ impl Deref for RequestedMilestones {
 pub(crate) struct MilestoneRequesterWorkerEvent(pub(crate) MilestoneIndex, pub(crate) Option<PeerId>);
 
 pub(crate) struct MilestoneRequesterWorker {
-    pub(crate) tx: flume::Sender<MilestoneRequesterWorkerEvent>,
+    pub(crate) tx: mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
 }
 
 async fn process_request(
-    network: &Network,
+    network: &NetworkController,
     requested_milestones: &RequestedMilestones,
     index: MilestoneIndex,
     peer_id: Option<PeerId>,
@@ -65,7 +65,7 @@ async fn process_request(
 
 /// Return `true` if the milestone was requested
 async fn process_request_unchecked(
-    network: &Network,
+    network: &NetworkController,
     index: MilestoneIndex,
     peer_id: Option<PeerId>,
     counter: &mut usize,
@@ -100,7 +100,7 @@ async fn process_request_unchecked(
     }
 }
 
-async fn retry_requests(network: &Network, requested_milestones: &RequestedMilestones, counter: &mut usize) {
+async fn retry_requests(network: &NetworkController, requested_milestones: &RequestedMilestones, counter: &mut usize) {
     let mut retry_counts: usize = 0;
 
     for mut milestone in requested_milestones.iter_mut() {
@@ -129,10 +129,10 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let network = node.resource::<Network>();
+        let network = node.resource::<NetworkController>();
         let requested_milestones: RequestedMilestones = Default::default();
         node.register_resource(requested_milestones);
         let requested_milestones = node.resource::<RequestedMilestones>();
@@ -140,7 +140,7 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut receiver = ShutdownStream::new(shutdown, rx);
 
             let mut counter: usize = 0;
             let mut timeouts = interval(Duration::from_secs(RETRY_INTERVAL_SEC)).fuse();

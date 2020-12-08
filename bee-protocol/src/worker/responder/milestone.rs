@@ -10,11 +10,12 @@ use crate::{
 
 use bee_common::{node::Node, packable::Packable, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_message::MessageId;
-use bee_network::{Network, PeerId};
+use bee_network::{NetworkController, PeerId};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::info;
+use tokio::sync::mpsc;
 
 use std::{any::TypeId, convert::Infallible};
 
@@ -24,7 +25,7 @@ pub(crate) struct MilestoneResponderWorkerEvent {
 }
 
 pub(crate) struct MilestoneResponderWorker {
-    pub(crate) tx: flume::Sender<MilestoneResponderWorkerEvent>,
+    pub(crate) tx: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
 }
 
 #[async_trait]
@@ -37,15 +38,15 @@ impl<N: Node> Worker<N> for MilestoneResponderWorker {
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let network = node.resource::<Network>();
+        let network = node.resource::<NetworkController>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(MilestoneResponderWorkerEvent { peer_id, request }) = receiver.next().await {
                 let index = match request.index {

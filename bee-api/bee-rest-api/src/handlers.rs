@@ -17,6 +17,7 @@ use bee_storage::access::Fetch;
 use blake2::Blake2s;
 use digest::Digest;
 use futures::channel::oneshot;
+use tokio::sync::mpsc;
 use warp::{
     http::{Response, StatusCode},
     reject, Rejection, Reply,
@@ -94,7 +95,7 @@ pub async fn get_tips<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> Result<impl
 
 pub async fn post_json_message<B: Backend>(
     input: serde_json::Value,
-    _message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
+    _message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
@@ -141,7 +142,7 @@ pub async fn post_json_message<B: Backend>(
 
 pub async fn post_raw_message(
     buf: warp::hyper::body::Bytes,
-    message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<impl Reply, Rejection> {
     let min_msg_size: usize = 77;
     let max_msg_size: usize = 1024;

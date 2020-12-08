@@ -17,6 +17,10 @@ pub enum Error {
     DialedBannedAddress(Multiaddr),
     #[error("Tried to dial a banned peer: {}.", .0)]
     DialedBannedPeer(String),
+    #[error("Tried to dial self: {}.", .0)]
+    DialedSelf(String),
+    #[error("Tried to dial own listen address: {}.", .0)]
+    DialedOwnAddress(Multiaddr),
     #[error("Tried to dial an unlisted peer: {}.", .0)]
     DialedUnlistedPeer(String),
     #[error("Tried to dial a peer, that was rejected from the peerlist: {}.", .0)]

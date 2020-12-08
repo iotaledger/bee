@@ -11,11 +11,13 @@ pub use errors::Error;
 pub use list::*;
 pub use manager::*;
 
-pub type DataSender = flume::Sender<Vec<u8>>;
-pub type DataReceiver = flume::Receiver<Vec<u8>>;
+use tokio::sync::mpsc;
+
+pub type DataSender = mpsc::UnboundedSender<Vec<u8>>;
+pub type DataReceiver = mpsc::UnboundedReceiver<Vec<u8>>;
 
 pub fn channel() -> (DataSender, DataReceiver) {
-    flume::unbounded()
+    mpsc::unbounded_channel()
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

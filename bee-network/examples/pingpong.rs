@@ -19,21 +19,27 @@ mod common;
 
 use common::*;
 
-use bee_common::shutdown_tokio::Shutdown;
-use bee_network::{Command::*, Event, EventReceiver, Keypair, Multiaddr, Network, NetworkConfig, PeerId};
+use bee_common::{
+    node::{Node, NodeBuilder},
+    shutdown_stream::ShutdownStream,
+    worker::Worker,
+};
+use bee_network::{Command::*, Event, Keypair, Multiaddr, NetworkConfig, NetworkController, NetworkListener, PeerId};
 
 use futures::{
     channel::oneshot,
-    select,
     sink::SinkExt,
     stream::{Fuse, StreamExt},
-    AsyncWriteExt, FutureExt,
+    AsyncWriteExt, Future, FutureExt,
 };
 use log::*;
 use structopt::StructOpt;
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use std::{
+    any::Any,
     collections::{HashMap, HashSet},
+    convert::Infallible,
     time::Duration,
 };
 
@@ -46,22 +52,20 @@ async fn main() {
 
     logger::init(log::LevelFilter::Trace);
 
-    let node = Node::builder(config).finish().await;
+    let node = ExampleNode::build(config)
+        .finish()
+        .await
+        .unwrap_or_else(|e| error!("Error creating node. Cause: {:?}", e));
 
-    let mut network = node.network.clone();
+    let mut network_controller = node.network_controller.clone();
     let config = node.config.clone();
 
-    info!("[EXAMPLE] Adding static peers...");
-
-    // for (peer_address, peer_id) in &config.peers {
+    info!("[EXAMPLE] Dialing unkown peers (by address)...");
     for peer_address in &config.peers {
-        if let Err(e) = network
-            .send(DialAddress {
-                address: peer_address.clone(),
-            })
-            .await
-        {
-            warn!("Connecting to unknown peer failed. Error: {:?}", e);
+        if let Err(e) = network_controller.send(DialAddress {
+            address: peer_address.clone(),
+        }) {
+            warn!("Dialing peer (by address) failed. Error: {:?}", e);
         }
     }
 
@@ -70,53 +74,131 @@ async fn main() {
     node.run().await;
 }
 
-struct Node {
+struct ExampleNode {
     config: Config,
-    network: Network,
-    events: flume::r#async::RecvStream<'static, Event>,
-    peers: HashSet<PeerId>,
-    shutdown: Shutdown,
+    network_controller: NetworkController,
+    network_listener: NetworkListener,
+    connected_peers: HashSet<PeerId>,
 }
 
-impl Node {
+impl ExampleNode {
     async fn run(self) {
-        let Node {
+        let ExampleNode {
             config,
-            mut network,
-            mut events,
-            mut peers,
-            shutdown,
+            mut network_controller,
+            network_listener,
+            mut connected_peers,
         } = self;
 
         info!("[EXAMPLE] Node running.");
 
-        let mut ctrl_c = ctrl_c_listener().fuse();
+        let sigterm_listener = ctrl_c_listener();
+        let mut network_events = ShutdownStream::new(sigterm_listener, network_listener);
 
-        loop {
-            select! {
-                _ = ctrl_c => {
-                    break;
-                },
-                event = events.next() => {
-                    if let Some(event) = event {
-                        info!("Received {:?}.", event);
+        while let Some(event) = network_events.next().await {
+            info!("Received {:?}.", event);
 
-                        process_event(event, &config.message, &mut network, &mut peers).await;
-                    }
-                },
-            }
+            process_event(event, &config.message, &mut network_controller, &mut connected_peers).await;
         }
 
         info!("[EXAMPLE] Stopping node...");
-        if let Err(e) = shutdown.execute().await {
-            warn!("Sending shutdown signal failed. Error: {:?}", e);
-        }
+        // if let Err(e) = shutdown.execute().await {
+        //     warn!("Sending shutdown signal failed. Error: {:?}", e);
+        // }
 
-        info!("[EXAMPLE] Shutdown complete.");
+        info!("[EXAMPLE] Stopped.");
+    }
+}
+
+impl Node for ExampleNode {
+    type Builder = ExampleNodeBuilder;
+    type Backend = DummyBackend;
+
+    async fn stop(mut self) -> Result<(), shutdown::Error> {
+        //
     }
 
-    pub fn builder(config: Config) -> NodeBuilder {
-        NodeBuilder { config }
+    fn spawn<W, G, F>(&mut self, g: G)
+    where
+        W: Worker<Self>,
+        G: FnOnce(oneshot::Receiver<()>) -> F,
+        F: Future<Output = ()> + Send + 'static,
+    {
+        //
+    }
+
+    fn worker<W>(&self) -> Option<&W>
+    where
+        W: Worker<Self> + Send + Sync,
+    {
+        //
+    }
+
+    fn register_resource<R: Any + Send + Sync>(&mut self, res: R) {
+        todo!("remove_resource")
+    }
+
+    fn remove_resource<R: Any + Send + Sync>(&mut self) -> Option<R> {
+        todo!("remove_resource")
+    }
+
+    #[track_caller]
+    fn resource<R: Any + Send + Sync>(&self) -> ResHandle<R> {
+        todo!("resource")
+    }
+}
+
+struct ExampleNodeBuilder {
+    config: Config,
+}
+
+impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
+    type Error = Infallible;
+    type Config = Config;
+
+    fn new(config: Self::Config) -> Self {
+        Self { config }
+    }
+
+    fn with_worker<W: Worker<N> + 'static>(self) -> Self
+    where
+        W::Config: Default,
+    {
+        self
+    }
+
+    fn with_worker_cfg<W: Worker<N> + 'static>(self, config: W::Config) -> Self {
+        self
+    }
+
+    fn with_resource<R: Any + Send + Sync>(self, res: R) -> Self {
+        self
+    }
+
+    async fn finish(self) -> Result<ExampleNode, Self::Error> {
+        let ExampleNodeBuilder { config } = self;
+
+        let network_config = NetworkConfig::build()
+            .bind_address(&self.config.bind_address.to_string())
+            .reconnect_millis(RECONNECT_MILLIS)
+            .finish();
+
+        info!("[EXAMPLE] Initializing network...");
+
+        let local_keys = Keypair::generate();
+        let network_id = 1;
+        // let mut node_builder =
+
+        let (network_controller, network_listener) =
+            bee_network::init(network_config, local_keys, network_id, node_builder).await;
+
+        info!("[EXAMPLE] Node initialized.");
+        Ok(ExampleNode {
+            config,
+            network_controller,
+            network_listener,
+            connected_peers: HashSet::new(),
+        })
     }
 }
 
@@ -187,32 +269,4 @@ fn spam_endpoint(mut network: Network, peer_id: PeerId) {
             }
         }
     });
-}
-
-struct NodeBuilder {
-    config: Config,
-}
-
-impl NodeBuilder {
-    pub async fn finish(self) -> Node {
-        let network_config = NetworkConfig::build()
-            .bind_address(&self.config.bind_address.to_string())
-            .reconnect_millis(RECONNECT_MILLIS)
-            .finish();
-
-        let mut shutdown = Shutdown::new();
-
-        info!("[EXAMPLE] Initializing network...");
-        let local_keys = Keypair::generate();
-        let (network, events) = bee_network::init(network_config, local_keys, 1, &mut shutdown).await;
-
-        info!("[EXAMPLE] Node initialized.");
-        Node {
-            config: self.config,
-            network,
-            events: events.into_stream(),
-            peers: HashSet::new(),
-            shutdown,
-        }
-    }
 }

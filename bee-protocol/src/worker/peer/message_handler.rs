@@ -11,10 +11,10 @@ use futures::{
     select,
     stream::StreamExt,
 };
-
 use log::trace;
+use tokio::sync::mpsc;
 
-type EventRecv = flume::r#async::RecvStream<'static, std::vec::Vec<u8>>;
+type EventRecv = mpsc::UnboundedReceiver<Vec<u8>>;
 type ShutdownRecv = future::Fuse<oneshot::Receiver<()>>;
 
 /// The read state of the message handler.
@@ -199,7 +199,7 @@ mod tests {
         let events = gen_events(event_size, msg_size, msg_count);
         // Create a new message handler
         let (sender_shutdown, receiver_shutdown) = oneshot::channel::<()>();
-        let (sender, receiver) = flume::unbounded::<Vec<u8>>();
+        let (sender, receiver) = mpsc::unbounded_channel::<Vec<u8>>();
         let mut msg_handler = MessageHandler::new(
             receiver.into_stream(),
             receiver_shutdown.fuse(),
@@ -292,7 +292,7 @@ mod tests {
         let last_event = events.pop().unwrap();
 
         let (sender_shutdown, receiver_shutdown) = oneshot::channel::<()>();
-        let (sender, receiver) = flume::unbounded::<Vec<u8>>();
+        let (sender, receiver) = mpsc::unbounded_channel::<Vec<u8>>();
 
         let mut msg_handler = MessageHandler::new(
             receiver.into_stream(),

@@ -10,7 +10,7 @@ use bee_common::{
     shutdown_stream::ShutdownStream,
     worker::Worker,
 };
-use bee_network::{self, Event, Multiaddr, Network, PeerId, ShortId};
+use bee_network::{self, Event, Multiaddr, NetworkController, NetworkListener, PeerId, ShortId};
 use bee_peering::{ManualPeerManager, PeerManager};
 use bee_protocol::Protocol;
 use bee_rest_api::config::RestApiConfig;
@@ -24,7 +24,7 @@ use futures::{
 };
 use log::{debug, info, trace, warn};
 use thiserror::Error;
-use tokio::spawn;
+use tokio::sync::mpsc;
 
 use std::{
     any::{type_name, Any, TypeId},
@@ -34,10 +34,10 @@ use std::{
     pin::Pin,
 };
 
-type NetworkEventStream = ShutdownStream<Fuse<flume::r#async::RecvStream<'static, Event>>>;
+type NetworkEventStream = ShutdownStream<Fuse<NetworkListener>>;
 
 // TODO design proper type `PeerList`
-type PeerList = HashMap<PeerId, (flume::Sender<Vec<u8>>, oneshot::Sender<()>)>;
+type PeerList = HashMap<PeerId, (mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)>;
 
 type WorkerStart<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + 'a>>;
 type WorkerStop<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> + Send;
@@ -228,7 +228,7 @@ impl<B: Backend> Node for BeeNode<B> {
         self.tasks
             .entry(TypeId::of::<W>())
             .or_default()
-            .push((tx, Box::new(spawn(g(rx)))));
+            .push((tx, Box::new(tokio::spawn(g(rx)))));
     }
 
     fn worker<W>(&self) -> Option<&W>
@@ -358,9 +358,9 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             .with_resource(PeerList::default());
 
         info!("Initializing network layer...");
-        let (mut this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
+        let (this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
 
-        this = this.with_resource(ShutdownStream::new(ctrl_c_listener(), events.into_stream()));
+        let this = this.with_resource(ShutdownStream::new(ctrl_c_listener(), events));
 
         info!("Initializing snapshot handler...");
         let (this, snapshot) = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, this)
@@ -371,7 +371,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         // let mut this = bee_ledger::init::<BeeNode<B>>(snapshot.header().ledger_index(), this);
 
         info!("Initializing protocol layer...");
-        let mut this = Protocol::init::<BeeNode<B>>(
+        let this = Protocol::init::<BeeNode<B>>(
             config.protocol.clone(),
             config.database.clone(),
             snapshot,
@@ -379,10 +379,12 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             this,
         );
 
-        this = this.with_worker::<VersionCheckerWorker>();
+        let this = this.with_worker::<VersionCheckerWorker>();
 
         info!("Initializing REST API...");
-        this = bee_rest_api::init::<BeeNode<B>>(RestApiConfig::build().finish(), config.network_id.clone(), this).await; // TODO: Read config from file
+        let mut this =
+            bee_rest_api::init::<BeeNode<B>>(RestApiConfig::build().finish(), config.network_id.clone(), this).await;
+        // TODO: Read config from file
 
         let mut node = BeeNode {
             workers: Map::new(),
@@ -403,13 +405,9 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         // TODO: turn into worker
         info!("Starting manual peer manager...");
-        spawn({
-            let network = node.resource::<Network>();
-            let peering_manual = config.peering.manual.clone();
-            async move {
-                ManualPeerManager::new(peering_manual).run(&network).await;
-            }
-        });
+        let network = node.resource::<NetworkController>();
+        let manual_peering_config = config.peering.manual.clone();
+        ManualPeerManager::new(manual_peering_config, &network).await;
 
         info!("Registering events...");
         bee_snapshot::events(&node);

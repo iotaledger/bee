@@ -18,6 +18,7 @@ use bee_storage::storage::Backend;
 
 use futures::{channel::oneshot, future::FutureExt};
 use log::{error, info, trace, warn};
+use tokio::sync::mpsc;
 
 use std::sync::Arc;
 
@@ -28,19 +29,19 @@ pub(crate) enum PeerWorkerError {
 
 pub struct PeerWorker {
     peer: Arc<Peer>,
-    hasher: flume::Sender<HasherWorkerEvent>,
-    message_responder: flume::Sender<MessageResponderWorkerEvent>,
-    milestone_responder: flume::Sender<MilestoneResponderWorkerEvent>,
-    milestone_requester: flume::Sender<MilestoneRequesterWorkerEvent>,
+    hasher: mpsc::UnboundedSender<HasherWorkerEvent>,
+    message_responder: mpsc::UnboundedSender<MessageResponderWorkerEvent>,
+    milestone_responder: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
+    milestone_requester: mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
 }
 
 impl PeerWorker {
     pub(crate) fn new(
         peer: Arc<Peer>,
-        hasher: flume::Sender<HasherWorkerEvent>,
-        message_responder: flume::Sender<MessageResponderWorkerEvent>,
-        milestone_responder: flume::Sender<MilestoneResponderWorkerEvent>,
-        milestone_requester: flume::Sender<MilestoneRequesterWorkerEvent>,
+        hasher: mpsc::UnboundedSender<HasherWorkerEvent>,
+        message_responder: mpsc::UnboundedSender<MessageResponderWorkerEvent>,
+        milestone_responder: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
+        milestone_requester: mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
     ) -> Self {
         Self {
             peer,
@@ -55,15 +56,14 @@ impl PeerWorker {
         mut self,
         tangle: ResHandle<MsTangle<B>>,
         requested_milestones: ResHandle<RequestedMilestones>,
-        receiver: flume::Receiver<Vec<u8>>,
+        receiver: mpsc::UnboundedReceiver<Vec<u8>>,
         shutdown: oneshot::Receiver<()>,
     ) {
         info!("[{}] Running.", self.peer.address);
 
-        let receiver_fused = receiver.into_stream();
         let shutdown_fused = shutdown.fuse();
 
-        let mut message_handler = MessageHandler::new(receiver_fused, shutdown_fused, self.peer.address.clone());
+        let mut message_handler = MessageHandler::new(receiver, shutdown_fused, self.peer.address.clone());
 
         //                 Protocol::send_heartbeat(
         //                     self.peer.id,
@@ -81,7 +81,10 @@ impl PeerWorker {
             Some(self.peer.id.clone()),
         );
 
+        let tangle = tangle.into_weak();
+
         while let Some((header, bytes)) = message_handler.fetch_message().await {
+            let tangle = tangle.upgrade().expect("Needed Tangle resource but it was removed");
             if let Err(e) = self.process_message(&tangle, &header, bytes) {
                 error!("[{}] Processing message failed: {:?}.", self.peer.address, e);
             }
