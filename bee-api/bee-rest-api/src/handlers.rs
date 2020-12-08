@@ -26,9 +26,9 @@ use warp::{
     reject, Buf, Rejection, Reply,
 };
 
-use flume::Sender;
 use log::error;
 use serde_json::Value as JsonValue;
+use tokio::sync::mpsc;
 
 pub(crate) async fn get_health<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> Result<impl Reply, Infallible> {
     if is_healthy(tangle).await {
@@ -67,7 +67,7 @@ pub(crate) async fn get_tips<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> Resu
 pub(crate) async fn submit_json_message<B: Backend>(
     value: JsonValue,
     tangle: ResHandle<MsTangle<B>>,
-    message_submitter: Sender<MessageSubmitterWorkerEvent>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
 ) -> Result<impl Reply, Rejection> {
     let is_set = |value: &JsonValue| -> bool { !value.is_null() };
@@ -221,7 +221,7 @@ pub(crate) async fn submit_json_message<B: Backend>(
 pub(crate) async fn submit_raw_message<B: Backend>(
     buf: warp::hyper::body::Bytes,
     tangle: ResHandle<MsTangle<B>>,
-    message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<impl Reply, Rejection> {
     let message = Message::unpack(&mut buf.bytes()).map_err(|e| reject::custom(BadRequest(e.to_string())))?;
     let message_id = submit_message(message, tangle, message_submitter).await?;
@@ -557,7 +557,7 @@ async fn is_healthy<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> bool {
 async fn submit_message<B: Backend>(
     message: Message,
     tangle: ResHandle<MsTangle<B>>,
-    message_submitter: Sender<MessageSubmitterWorkerEvent>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<MessageId, Rejection> {
     let message_bytes = message.pack_new();
     let message_id = hash_message(&message_bytes);
@@ -574,7 +574,7 @@ async fn submit_message<B: Backend>(
             notifier,
         })
         .map_err(|e| {
-            error!("can not submit message: {:?}", e);
+            error!("can not submit message: {}", e);
             reject::custom(ServiceUnavailable("can not submit message".to_string()))
         })?;
 

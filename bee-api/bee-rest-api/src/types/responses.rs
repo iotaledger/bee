@@ -18,10 +18,6 @@ impl<T: DataBody> DataResponse<T> {
     pub(crate) fn new(data: T) -> Self {
         Self { data }
     }
-    /// Get the body of the response.
-    pub(crate) fn body(&self) -> &T {
-        &self.data
-    }
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -40,10 +36,6 @@ impl ErrorResponse {
     /// Create a new error response.
     pub(crate) fn new(error: ErrorBody) -> Self {
         Self { error }
-    }
-    /// Get the body of the response.
-    pub(crate) fn body(&self) -> &ErrorBody {
-        &self.error
     }
 }
 

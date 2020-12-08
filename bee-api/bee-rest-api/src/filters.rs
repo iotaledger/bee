@@ -11,6 +11,7 @@ use crate::{filters::CustomRejection::BadRequest, storage::Backend};
 use bech32::FromBase32;
 use bee_common::packable::Packable;
 use std::collections::HashMap;
+use tokio::sync::mpsc;
 
 #[derive(Debug, Clone)]
 pub(crate) enum CustomRejection {
@@ -24,7 +25,7 @@ impl reject::Reject for CustomRejection {}
 pub fn all<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     storage: ResHandle<B>,
-    message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     get_health(tangle.clone()).or(get_info(tangle.clone(), network_id.clone())
@@ -86,7 +87,7 @@ fn get_tips<B: Backend>(
 
 fn post_json_message<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
-    message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::post()
@@ -102,7 +103,7 @@ fn post_json_message<B: Backend>(
 
 fn post_raw_message<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
-    message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::post()
         .and(warp::path("api"))
@@ -328,7 +329,7 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<Ed25519Address>() {
                 Ok(addr) => Ok(addr),
-                Err(_) => Err(reject::custom(BadRequest("invalid ed25519 address".to_string()))),
+                Err(_) => Err(reject::custom(BadRequest("invalid Ed25519 address".to_string()))),
             }
         })
     }
@@ -353,7 +354,8 @@ fn with_storage<B: Backend>(
 }
 
 fn with_message_submitter(
-    message_submitter: flume::Sender<MessageSubmitterWorkerEvent>,
-) -> impl Filter<Extract = (flume::Sender<MessageSubmitterWorkerEvent>,), Error = std::convert::Infallible> + Clone {
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+) -> impl Filter<Extract = (mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,), Error = std::convert::Infallible> + Clone
+{
     warp::any().map(move || message_submitter.clone())
 }
