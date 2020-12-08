@@ -393,10 +393,7 @@ pub(crate) async fn get_output_by_output_id<B: Backend>(
             transaction_id: output_id.transaction_id().to_string(),
             output_index: output_id.index(),
             is_spent: is_spent.is_some(),
-            output: output
-                .inner()
-                .try_into()
-                .map_err(|e: &str| reject::custom(BadRequest(e.to_string())))?,
+            output: output.inner().try_into().map_err(|e| reject::custom(BadRequest(e)))?,
         }))),
         None => Err(reject::custom(NotFound("can not find output".to_string()))),
     }

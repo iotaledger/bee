@@ -153,7 +153,7 @@ pub struct IndexationDto {
 
 // &Message -> MessageDto
 impl TryFrom<&Message> for MessageDto {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &Message) -> Result<Self, Self::Error> {
         Ok(MessageDto {
             network_id: value.network_id().to_string(),
@@ -167,46 +167,56 @@ impl TryFrom<&Message> for MessageDto {
 
 // &MessageDto -> Message
 impl TryFrom<&MessageDto> for Message {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &MessageDto) -> Result<Self, Self::Error> {
         let mut builder = Message::builder()
-            .with_network_id(value.network_id.parse::<u64>().map_err(|_| "invalid network id")?)
-            .with_parent1(
+            .with_network_id(
                 value
-                    .parent_1_message_id
-                    .parse::<MessageId>()
-                    .map_err(|_| "invalid parent 1")?,
+                    .network_id
+                    .parse::<u64>()
+                    .map_err(|_| "invalid network id: expected an u64-string")?,
             )
-            .with_parent2(
+            .with_parent1(value.parent_1_message_id.parse::<MessageId>().map_err(|_| {
+                format!(
+                    "invalid parent 1: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH
+                )
+            })?)
+            .with_parent2(value.parent_2_message_id.parse::<MessageId>().map_err(|_| {
+                format!(
+                    "invalid parent 2: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH
+                )
+            })?)
+            .with_nonce(
                 value
-                    .parent_2_message_id
-                    .parse::<MessageId>()
-                    .map_err(|_| "invalid parent 2")?,
-            )
-            .with_nonce(value.nonce.parse::<u64>().map_err(|_| "invalid nonce")?);
+                    .nonce
+                    .parse::<u64>()
+                    .map_err(|_| "invalid nonce: expected an u64-string".to_string())?,
+            );
         if let Some(p) = value.payload.as_ref() {
             builder = builder.with_payload(p.try_into()?);
         }
-        Ok(builder.finish().map_err(|_| "invalid message")?)
+        Ok(builder.finish().map_err(|e| format!("invalid message: {}", e))?)
     }
 }
 
 // &Payload -> PayloadDto
 impl TryFrom<&Payload> for PayloadDto {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &Payload) -> Result<Self, Self::Error> {
         match value {
             Payload::Transaction(t) => Ok(PayloadDto::Transaction(t.try_into()?)),
             Payload::Milestone(m) => Ok(PayloadDto::Milestone(m.into())),
             Payload::Indexation(i) => Ok(PayloadDto::Indexation(i.into())),
-            _ => Err("payload type not supported"),
+            _ => Err("payload type not supported".to_string()),
         }
     }
 }
 
 // &PayloadDto -> Payload
 impl TryFrom<&PayloadDto> for Payload {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &PayloadDto) -> Result<Self, Self::Error> {
         match value {
             PayloadDto::Transaction(t) => Ok(Payload::Transaction(t.try_into()?)),
@@ -218,7 +228,7 @@ impl TryFrom<&PayloadDto> for Payload {
 
 // &Box<Transaction> -> TransactionDto
 impl TryFrom<&Box<Transaction>> for TransactionDto {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &Box<Transaction>) -> Result<Self, Self::Error> {
         Ok(TransactionDto {
             kind: 0,
@@ -234,23 +244,23 @@ impl TryFrom<&Box<Transaction>> for TransactionDto {
 
 // &TransactionDto -> Box<Transaction>
 impl TryFrom<&TransactionDto> for Box<Transaction> {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &TransactionDto) -> Result<Self, Self::Error> {
-        let mut builder = Transaction::builder().with_essence(
-            (&value.essence)
-                .try_into()
-                .map_err(|_| "can not parse transaction essence")?,
-        );
+        let mut builder = Transaction::builder().with_essence((&value.essence).try_into()?);
         for b in &value.unlock_blocks {
-            builder = builder.add_unlock_block(b.try_into().map_err(|_| "can not parse unlock block")?);
+            builder = builder.add_unlock_block(b.try_into()?);
         }
-        Ok(Box::new(builder.finish().map_err(|_| "can not parse message")?))
+        Ok(Box::new(
+            builder
+                .finish()
+                .map_err(|e| format!("invalid transaction payload: {}", e))?,
+        ))
     }
 }
 
 // &TransactionEssence -> TransactionEssenceDto
 impl TryFrom<&TransactionEssence> for TransactionEssenceDto {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &TransactionEssence) -> Result<Self, Self::Error> {
         Ok(TransactionEssenceDto {
             kind: 0, // TODO: should this be removed?
@@ -266,7 +276,9 @@ impl TryFrom<&TransactionEssence> for TransactionEssenceDto {
                 .collect::<Result<Vec<_>, _>>()?,
             payload: match value.payload() {
                 Some(Payload::Indexation(i)) => Some(i.into()),
-                Some(_) => return Err("a transaction payload only can have nested indexation payload"),
+                Some(_) => {
+                    return Err("invalid transaction essence: expected an optional indexation-payload".to_string())
+                }
                 None => None,
             },
         })
@@ -275,29 +287,31 @@ impl TryFrom<&TransactionEssence> for TransactionEssenceDto {
 
 // &TransactionEssenceDto -> TransactionEssence
 impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &TransactionEssenceDto) -> Result<Self, Self::Error> {
         let mut builder = TransactionEssence::builder();
 
         for i in &value.inputs {
-            builder = builder.add_input(i.try_into().map_err(|_| "can not parse input")?);
+            builder = builder.add_input(i.try_into()?);
         }
 
         for o in &value.outputs {
-            builder = builder.add_output(o.try_into().map_err(|_| "can not parse output")?);
+            builder = builder.add_output(o.try_into()?);
         }
 
         if let Some(p) = &value.payload {
             builder = builder.with_payload(Payload::Indexation((p).try_into()?));
         }
 
-        Ok(builder.finish().map_err(|_| "can not parse transaction essence")?)
+        Ok(builder
+            .finish()
+            .map_err(|e| format!("invalid transaction essence: {}", e))?)
     }
 }
 
 // &Input -> InputDto
 impl TryFrom<&Input> for InputDto {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &Input) -> Result<Self, Self::Error> {
         match value {
             Input::UTXO(u) => Ok(InputDto::UTXO(UtxoInputDto {
@@ -305,24 +319,27 @@ impl TryFrom<&Input> for InputDto {
                 transaction_id: u.output_id().transaction_id().to_string(),
                 transaction_output_index: u.output_id().index(),
             })),
-            _ => Err("input type not supported"),
+            _ => Err("input type not supported".to_string()),
         }
     }
 }
 
 // &InputDto -> Input
 impl TryFrom<&InputDto> for Input {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &InputDto) -> Result<Self, Self::Error> {
         match value {
-            InputDto::UTXO(u) => Ok(Input::UTXO(
+            InputDto::UTXO(i) => Ok(Input::UTXO(
                 UTXOInput::new(
-                    u.transaction_id
-                        .parse::<TransactionId>()
-                        .map_err(|_| "can not parse transaction id")?,
-                    u.transaction_output_index,
+                    i.transaction_id.parse::<TransactionId>().map_err(|_| {
+                        format!(
+                            "invalid transaction id: expected a hex-string of length {}",
+                            TRANSACTION_ID_LENGTH
+                        )
+                    })?,
+                    i.transaction_output_index,
                 )
-                .map_err(|_| "can not parse UTXO input")?,
+                .map_err(|e| format!("invalid input: {}", e))?,
             )),
         }
     }
@@ -330,7 +347,7 @@ impl TryFrom<&InputDto> for Input {
 
 // &Output -> OutputDto
 impl TryFrom<&Output> for OutputDto {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &Output) -> Result<Self, Self::Error> {
         match value {
             Output::SignatureLockedSingle(s) => Ok(OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
@@ -338,20 +355,24 @@ impl TryFrom<&Output> for OutputDto {
                 address: s.address().try_into()?,
                 amount: s.amount().to_string(),
             })),
-            _ => return Err("output type not supported"),
+            _ => return Err("output type not supported".to_string()),
         }
     }
 }
 
 // &OutputDto -> Output
 impl TryFrom<&OutputDto> for Output {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
         match value {
             OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(
                 (&s.address).try_into()?,
-                NonZeroU64::new(s.amount.parse::<u64>().map_err(|_| "can not parse amount")?)
-                    .ok_or("can not parse amount")?,
+                NonZeroU64::new(
+                    s.amount
+                        .parse::<u64>()
+                        .map_err(|_| "invalid amount: expected a non-zero u64-string")?,
+                )
+                .ok_or("invalid amount: expected a non-zero u64-string")?,
             ))),
         }
     }
@@ -359,21 +380,21 @@ impl TryFrom<&OutputDto> for Output {
 
 // &Address -> AddressDto
 impl TryFrom<&Address> for AddressDto {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &Address) -> Result<Self, Self::Error> {
         match value {
             Address::Ed25519(ed) => Ok(AddressDto::Ed25519(ed.into())),
-            _ => Err("address type not supported"),
+            _ => Err("address type not supported".to_string()),
         }
     }
 }
 
 // &AddressDto -> Address
 impl TryFrom<&AddressDto> for Address {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &AddressDto) -> Result<Self, Self::Error> {
         match value {
-            AddressDto::Ed25519(ed) => Ok(Address::Ed25519(ed.try_into()?)),
+            AddressDto::Ed25519(a) => Ok(Address::Ed25519(a.try_into()?)),
         }
     }
 }
@@ -390,18 +411,20 @@ impl From<&Ed25519Address> for Ed25519AddressDto {
 
 // &Ed25519AddressDto -> Ed25519Address
 impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &Ed25519AddressDto) -> Result<Self, Self::Error> {
-        Ok(value
-            .address
-            .parse::<Ed25519Address>()
-            .map_err(|_| "can not parse Ed25519 address")?)
+        Ok(value.address.parse::<Ed25519Address>().map_err(|_| {
+            format!(
+                "invalid Ed25519 address: expected a hex-string of length {}",
+                ED25519_ADDRESS_LENGTH
+            )
+        })?)
     }
 }
 
 // &UnlockBlock -> UnlockBlockDto
 impl TryFrom<&UnlockBlock> for UnlockBlockDto {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &UnlockBlock) -> Result<Self, Self::Error> {
         match value {
             UnlockBlock::Signature(s) => match s {
@@ -412,38 +435,38 @@ impl TryFrom<&UnlockBlock> for UnlockBlockDto {
                         signature: hex::encode(ed.signature()),
                     },
                 ))),
-                _ => Err("signature unlock type not supported"),
+                _ => Err("signature unlock type not supported".to_string()),
             },
             UnlockBlock::Reference(r) => Ok(UnlockBlockDto::Reference(ReferenceUnlockDto {
                 kind: 1,
                 index: r.index(),
             })),
-            _ => Err("unlock block type not supported"),
+            _ => Err("unlock block type not supported".to_string()),
         }
     }
 }
 
 // &UnlockBlockDto -> UnlockBlock
 impl TryFrom<&UnlockBlockDto> for UnlockBlock {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &UnlockBlockDto) -> Result<Self, Self::Error> {
         match value {
             UnlockBlockDto::Signature(s) => match s {
                 SignatureUnlockDto::Ed25519(ed) => {
                     let mut public_key = [0u8; 32];
-                    hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(|_| "invalid public key")?;
-
+                    hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(|_| {
+                        "invalid public key in signature unlock block: expected a hex-string of length 32"
+                    })?; // TODO access ED25519_PUBLIC_KEY_LENGTH when available
                     let signature = hex::decode(&ed.signature)
-                        .map_err(|_| "invalid signature")?
+                        .map_err(|_| "invalid signature in signature unlock block: expected a hex-string of length 64")? // TODO access ED25519_SIGNATURE_LENGTH when available
                         .into_boxed_slice();
-
                     Ok(UnlockBlock::Signature(SignatureUnlock::Ed25519(Ed25519Signature::new(
                         public_key, signature,
                     ))))
                 }
             },
             UnlockBlockDto::Reference(r) => Ok(UnlockBlock::Reference(
-                ReferenceUnlock::new(r.index).map_err(|_| "invalid reference unlock block")?,
+                ReferenceUnlock::new(r.index).map_err(|e| format!("invalid reference unlock block: {}", e))?,
             )),
         }
     }
@@ -462,15 +485,22 @@ impl From<&Box<Milestone>> for MilestoneDto {
 
 // MilestoneDto -> Box<Milestone>
 impl TryFrom<&MilestoneDto> for Box<Milestone> {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &MilestoneDto) -> Result<Self, Self::Error> {
         let essence = (&value.essence).try_into()?;
         let mut signatures = Vec::new();
-
         for v in &value.signatures {
-            signatures.push(hex::decode(v).map_err(|_| "invalid signature")?.into_boxed_slice())
+            signatures.push(
+                hex::decode(v)
+                    .map_err(|_| {
+                        format!(
+                            "invalid signature: expected a hex-string of length {}",
+                            MILESTONE_SIGNATURE_LENGTH
+                        )
+                    })?
+                    .into_boxed_slice(),
+            )
         }
-
         Ok(Box::new(Milestone::new(essence, signatures)))
     }
 }
@@ -491,28 +521,42 @@ impl From<&MilestoneEssence> for MilestoneEssenceDto {
 
 // MilestoneEssenceDto ->MilestoneEssence
 impl TryFrom<&MilestoneEssenceDto> for MilestoneEssence {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &MilestoneEssenceDto) -> Result<Self, Self::Error> {
         let index = value.index;
         let timestamp = value.timestamp;
-        let parent_1_message_id = value
-            .parent_1_message_id
-            .parse::<MessageId>()
-            .map_err(|_| "invalid parent1 in milestone payload")?;
-        let parent_2_message_id = value
-            .parent_2_message_id
-            .parse::<MessageId>()
-            .map_err(|_| "invalid parent2 in milestone payload")?;
+        let parent_1_message_id = value.parent_1_message_id.parse::<MessageId>().map_err(|_| {
+            format!(
+                "invalid parent 1 in milestone essence: expected a hex-string of length {}",
+                MESSAGE_ID_LENGTH
+            )
+        })?;
+        let parent_2_message_id = value.parent_2_message_id.parse::<MessageId>().map_err(|_| {
+            format!(
+                "invalid parent 2 in milestone essence: expected a hex-string of length {}",
+                MESSAGE_ID_LENGTH
+            )
+        })?;
         let merkle_proof = {
-            let mut buf = [0u8; 32];
-            hex::decode_to_slice(&value.merkle_proof, &mut buf).map_err(|_| "invalid merkle proof")?;
+            let mut buf = [0u8; MILESTONE_MERKLE_PROOF_LENGTH];
+            hex::decode_to_slice(&value.merkle_proof, &mut buf).map_err(|_| {
+                format!(
+                    "invalid merkle proof in milestone essence: expected a hex-string of length {}",
+                    MILESTONE_MERKLE_PROOF_LENGTH
+                )
+            })?;
             buf
         };
         let mut public_keys = Vec::new();
         for v in &value.public_keys {
             let key = {
-                let mut buf = [0u8; 32];
-                hex::decode_to_slice(v, &mut buf).map_err(|_| "invalid public key")?;
+                let mut buf = [0u8; MILESTONE_PUBLIC_KEY_LENGTH];
+                hex::decode_to_slice(v, &mut buf).map_err(|_| {
+                    format!(
+                        "invalid public key in milestone essence: expected a hex-string of length {}",
+                        MILESTONE_PUBLIC_KEY_LENGTH
+                    )
+                })?;
                 buf
             };
             public_keys.push(key);
@@ -540,14 +584,15 @@ impl From<&Box<Indexation>> for IndexationDto {
 
 // IndexationDto -> Box<Indexation>
 impl TryFrom<&IndexationDto> for Box<Indexation> {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(value: &IndexationDto) -> Result<Self, Self::Error> {
         Ok(Box::new(
             Indexation::new(
                 value.index.clone(),
-                &hex::decode(value.data.clone()).map_err(|_| "invalid data in indexation")?,
+                &hex::decode(value.data.clone())
+                    .map_err(|_| "invalid data in indexation payload: expected a hex-string")?,
             )
-            .map_err(|_| "invalid indexation")?,
+            .map_err(|e| format!("invalid indexation payload: {}", e))?,
         ))
     }
 }
