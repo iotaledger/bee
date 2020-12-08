@@ -5,11 +5,13 @@ use crate::peers::PeerRelation;
 
 use libp2p::{Multiaddr, PeerId};
 
-pub type CommandSender = flume::Sender<Command>;
-pub type CommandReceiver = flume::Receiver<Command>;
+use tokio::sync::mpsc;
+
+pub type CommandReceiver = mpsc::UnboundedReceiver<Command>;
+pub type CommandSender = mpsc::UnboundedSender<Command>;
 
 pub fn channel() -> (CommandSender, CommandReceiver) {
-    flume::unbounded()
+    mpsc::unbounded_channel()
 }
 
 #[derive(Debug, Eq, PartialEq)]

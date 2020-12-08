@@ -9,13 +9,15 @@ use crate::{
 
 use super::commands::Command;
 
-pub type EventReceiver = flume::Receiver<Event>;
-pub type EventSender = flume::Sender<Event>;
-pub type InternalEventReceiver = flume::Receiver<InternalEvent>;
-pub type InternalEventSender = flume::Sender<InternalEvent>;
+use tokio::sync::mpsc;
 
-pub fn channel<T>() -> (flume::Sender<T>, flume::Receiver<T>) {
-    flume::unbounded()
+pub type EventReceiver = mpsc::UnboundedReceiver<Event>;
+pub type EventSender = mpsc::UnboundedSender<Event>;
+pub type InternalEventReceiver = mpsc::UnboundedReceiver<InternalEvent>;
+pub type InternalEventSender = mpsc::UnboundedSender<InternalEvent>;
+
+pub fn channel<T>() -> (mpsc::UnboundedSender<T>, mpsc::UnboundedReceiver<T>) {
+    mpsc::unbounded_channel()
 }
 
 #[derive(Debug)]

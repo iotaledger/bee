@@ -10,10 +10,11 @@ use crate::{
 };
 
 use bee_message::MessageId;
-use bee_network::{Command::SendMessage, Network, PeerId};
+use bee_network::{Command::SendMessage, NetworkController, PeerId};
 use bee_storage::storage::Backend;
 
 use log::warn;
+use tokio::sync::mpsc;
 
 use std::marker::PhantomData;
 
@@ -24,8 +25,8 @@ pub(crate) struct Sender<P: Packet> {
 macro_rules! implement_sender_worker {
     ($type:ty, $sender:tt, $incrementor:tt) => {
         impl Sender<$type> {
-            pub(crate) fn send(network: &Network, id: &PeerId, packet: $type) {
-                match network.unbounded_send(SendMessage {
+            pub(crate) fn send(network: &NetworkController, id: &PeerId, packet: $type) {
+                match network.send(SendMessage {
                     to: id.clone(),
                     message: tlv_into_bytes(packet),
                 }) {
@@ -54,7 +55,7 @@ impl Protocol {
 
     pub(crate) fn request_milestone<B: Backend>(
         tangle: &MsTangle<B>,
-        milestone_requester: &flume::Sender<MilestoneRequesterWorkerEvent>,
+        milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
         requested_milestones: &RequestedMilestones,
         index: MilestoneIndex,
         to: Option<PeerId>,
@@ -68,7 +69,7 @@ impl Protocol {
 
     pub(crate) fn request_latest_milestone<B: Backend>(
         tangle: &MsTangle<B>,
-        milestone_requester: &flume::Sender<MilestoneRequesterWorkerEvent>,
+        milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
         requested_milestones: &RequestedMilestones,
         to: Option<PeerId>,
     ) {
@@ -79,7 +80,7 @@ impl Protocol {
 
     pub(crate) async fn request_message<B: Backend>(
         tangle: &MsTangle<B>,
-        message_requester: &flume::Sender<MessageRequesterWorkerEvent>,
+        message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
         requested_messages: &RequestedMessages,
         message_id: MessageId,
         index: MilestoneIndex,
@@ -97,7 +98,7 @@ impl Protocol {
     // Heartbeat
 
     pub fn send_heartbeat(
-        network: &Network,
+        network: &NetworkController,
         to: PeerId,
         latest_solid_milestone_index: MilestoneIndex,
         pruning_milestone_index: MilestoneIndex,
@@ -117,7 +118,7 @@ impl Protocol {
     }
 
     pub fn broadcast_heartbeat(
-        network: &Network,
+        network: &NetworkController,
         latest_solid_milestone_index: MilestoneIndex,
         pruning_milestone_index: MilestoneIndex,
         latest_milestone_index: MilestoneIndex,

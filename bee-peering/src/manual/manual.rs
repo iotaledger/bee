@@ -3,7 +3,7 @@
 
 use crate::{manual::config::ManualPeeringConfig, PeerManager};
 
-use bee_network::{Command::*, Multiaddr, Network, PeerId, PeerRelation, Protocol};
+use bee_network::{Command::*, Multiaddr, NetworkController, PeerId, PeerRelation, Protocol};
 
 use async_trait::async_trait;
 use log::warn;
@@ -11,25 +11,17 @@ use log::warn;
 // Manages a peer list and watches a config file for changes
 // Sends changes (peer added/removed) to the network
 
-pub struct ManualPeerManager {
-    config: ManualPeeringConfig,
-}
-
-impl ManualPeerManager {
-    pub fn new(config: ManualPeeringConfig) -> Self {
-        Self { config }
-    }
-}
+#[derive(Default)]
+pub struct ManualPeerManager {}
 
 #[async_trait]
 impl PeerManager for ManualPeerManager {
-    async fn run(self, network: &Network) {
-        let ManualPeerManager { config } = self;
+    type Config = ManualPeeringConfig;
 
-        // TODO config file watcher
+    async fn new(config: Self::Config, network: &NetworkController) -> Self {
         for (i, (mut address, alias)) in config.peers.into_iter().enumerate() {
             if i < config.limit {
-                // NOTE: `unwrap`ping should be fine here since it comes from the config.
+                // NOTE: `unwrap`ing should be fine here since it comes from the config.
                 if let Protocol::P2p(multihash) = address.pop().unwrap() {
                     let id = PeerId::from_multihash(multihash).expect("Invalid Multiaddr.");
 
@@ -43,11 +35,18 @@ impl PeerManager for ManualPeerManager {
                 warn!("Tried to add more peers than specified in limit(={})", config.limit);
             }
         }
+
+        ManualPeerManager {}
+    }
+
+    async fn run(self, _: &NetworkController) {
+        // TODO config file watcher
     }
 }
 
-fn add_peer(network: &Network, id: PeerId, address: Multiaddr, alias: Option<String>) {
-    if let Err(e) = network.unbounded_send(AddPeer {
+#[inline]
+fn add_peer(network: &NetworkController, id: PeerId, address: Multiaddr, alias: Option<String>) {
+    if let Err(e) = network.send(AddPeer {
         id,
         address,
         alias,

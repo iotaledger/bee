@@ -21,7 +21,6 @@ bee-storage = { path = "../../bee-storage/bee-storage" }
 async-trait = "0.1"
 blake2 = "0.9"
 digest = "0.9"
-flume = "0.9"
 futures = "0.3"
 futures-util = "0.3"
 hex = "0.4"

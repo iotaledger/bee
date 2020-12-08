@@ -19,6 +19,7 @@ use async_trait::async_trait;
 use crypto::ed25519::{verify, PublicKey, Signature};
 use futures::stream::StreamExt;
 use log::{debug, error, info};
+use tokio::sync::mpsc;
 
 use std::{
     any::TypeId,
@@ -39,10 +40,11 @@ pub(crate) enum Error {
     InvalidSignature(usize, String),
 }
 
+#[derive(Debug)]
 pub(crate) struct MilestoneValidatorWorkerEvent(pub(crate) MessageId);
 
 pub(crate) struct MilestoneValidatorWorker {
-    pub(crate) tx: flume::Sender<MilestoneValidatorWorkerEvent>,
+    pub(crate) tx: mpsc::UnboundedSender<MilestoneValidatorWorkerEvent>,
 }
 
 async fn validate<N: Node>(
@@ -141,7 +143,7 @@ where
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
         let milestone_solidifier = node.worker::<MilestoneSolidifierWorker>().unwrap().tx.clone();
         let milestone_cone_updater = node.worker::<MilestoneConeUpdaterWorker>().unwrap().tx.clone();
 
@@ -157,7 +159,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(MilestoneValidatorWorkerEvent(message_id)) = receiver.next().await {
                 if let Some(meta) = tangle.get_metadata(&message_id) {

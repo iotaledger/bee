@@ -17,6 +17,7 @@ use bee_message::MessageId;
 use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::{error, info, warn};
+use tokio::sync::mpsc;
 
 use std::{
     any::TypeId,
@@ -24,10 +25,11 @@ use std::{
     convert::Infallible,
 };
 
+#[derive(Debug)]
 pub(crate) struct PropagatorWorkerEvent(pub(crate) MessageId);
 
 pub(crate) struct PropagatorWorker {
-    pub(crate) tx: flume::Sender<PropagatorWorkerEvent>,
+    pub(crate) tx: mpsc::UnboundedSender<PropagatorWorkerEvent>,
 }
 
 #[async_trait]
@@ -45,7 +47,7 @@ impl<N: Node> Worker<N> for PropagatorWorker {
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
         let message_validator = node.worker::<MessageValidatorWorker>().unwrap().tx.clone();
         let milestone_cone_updater = node.worker::<MilestoneConeUpdaterWorker>().unwrap().tx.clone();
 
@@ -55,7 +57,7 @@ impl<N: Node> Worker<N> for PropagatorWorker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(PropagatorWorkerEvent(hash)) = receiver.next().await {
                 let mut children = vec![hash];

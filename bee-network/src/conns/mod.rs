@@ -77,13 +77,12 @@ pub(crate) async fn spawn_connection_handler(
     );
 
     internal_event_sender
-        .send_async(InternalEvent::ConnectionEstablished {
+        .send(InternalEvent::ConnectionEstablished {
             peer_id,
             peer_info,
             origin,
             message_sender,
         })
-        .await
         .map_err(|_| Error::InternalEventSendFailure("ConnectionEstablished"))?;
 
     Ok(())
@@ -96,53 +95,54 @@ fn spawn_substream_task(
     mut internal_event_sender: InternalEventSender,
 ) -> JoinHandle<()> {
     tokio::spawn(async move {
-        let mut fused_message_receiver = message_receiver.into_stream();
+        let mut fused_message_receiver = message_receiver.fuse();
         let mut buffer = vec![0u8; MSG_BUFFER_SIZE.load(Ordering::Relaxed)];
 
         loop {
             select! {
-                num_read = recv_message(&mut substream, &mut buffer).fuse() => {
-                    match num_read {
-                        Err(e) => {
-                            // TODO: maybe only break if e == StreamClosedByRemote
-                            error!("{:?}", e);
-
-                            if let Err(e) = internal_event_sender
-                                .send_async(InternalEvent::ConnectionDropped {
-                                    peer_id: peer_id.clone(),
-                                })
-                                .await
-                                .map_err(|_| Error::InternalEventSendFailure("ConnectionDropped"))
-                            {
-                                warn!("{:?}", e);
-                            }
-
-
-                            // Stream to remote stopped => shut down this task
-                            break;
-                        }
-                        Ok(num_read) => {
-                            if let Err(e) = process_read(peer_id.clone(), num_read, &mut internal_event_sender, &buffer).await
-                            {
-                                error!("{:?}", e);
-                            }
-                        }
-                    }
-                }
                 message = fused_message_receiver.next() => {
+                    trace!("Outgoing message channel event.");
                     if let Some(message) = message {
                         if let Err(e) = send_message(&mut substream, &message).await {
                             error!("{:?}", e);
                             continue;
                         }
                     } else {
-                        // Data receiver closed (due to deallocation) => shut down this task
+                        trace!("Dropping connection");
                         break;
                     }
 
                 }
+                recv_result = recv_message(&mut substream, &mut buffer).fuse() => {
+                    trace!("Incoming substream event.");
+                    match recv_result {
+                        Ok(num_read) => {
+                            if let Err(e) = process_read(peer_id.clone(), num_read, &mut internal_event_sender, &buffer).await
+                            {
+                                error!("{:?}", e);
+                            }
+                        }
+                        Err(e) => {
+                            debug!("{:?}", e);
+
+                            if let Err(e) = internal_event_sender
+                                .send(InternalEvent::ConnectionDropped {
+                                    peer_id: peer_id.clone(),
+                                })
+                                .map_err(|_| Error::InternalEventSendFailure("ConnectionDropped"))
+                            {
+                                error!("{:?}", e);
+                            }
+
+
+                            trace!("Remote dropped connection.");
+                            break;
+                        }
+                    }
+                }
             }
         }
+        trace!("Shutting down connection handler task.");
     })
 }
 
@@ -183,11 +183,10 @@ async fn process_read(
     message.copy_from_slice(&buffer[0..num_read]);
 
     internal_event_sender
-        .send_async(InternalEvent::MessageReceived {
+        .send(InternalEvent::MessageReceived {
             message,
             from: peer_id.clone(),
         })
-        .await
         .map_err(|_| Error::InternalEventSendFailure("MessageReceived"))?;
 
     Ok(())

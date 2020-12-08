@@ -9,13 +9,13 @@ use crate::{
 
 use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_message::MessageId;
-use bee_network::Network;
+use bee_network::NetworkController;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
 use futures::{select, StreamExt};
 use log::{debug, info, trace};
-use tokio::time::interval;
+use tokio::{sync::mpsc, time::interval};
 
 use std::{
     convert::Infallible,
@@ -39,11 +39,11 @@ impl Deref for RequestedMessages {
 pub(crate) struct MessageRequesterWorkerEvent(pub(crate) MessageId, pub(crate) MilestoneIndex);
 
 pub(crate) struct MessageRequesterWorker {
-    pub(crate) tx: flume::Sender<MessageRequesterWorkerEvent>,
+    pub(crate) tx: mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
 }
 
 async fn process_request(
-    network: &Network,
+    network: &NetworkController,
     requested_messages: &RequestedMessages,
     message_id: MessageId,
     index: MilestoneIndex,
@@ -60,7 +60,7 @@ async fn process_request(
 
 /// Return `true` if the message was requested.
 async fn process_request_unchecked(
-    network: &Network,
+    network: &NetworkController,
     message_id: MessageId,
     index: MilestoneIndex,
     counter: &mut usize,
@@ -100,7 +100,7 @@ async fn process_request_unchecked(
     false
 }
 
-async fn retry_requests(network: &Network, requested_messages: &RequestedMessages, counter: &mut usize) {
+async fn retry_requests(network: &NetworkController, requested_messages: &RequestedMessages, counter: &mut usize) {
     let mut retry_counts: usize = 0;
 
     for mut message in requested_messages.iter_mut() {
@@ -125,17 +125,17 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
     type Error = Infallible;
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         let requested_messages: RequestedMessages = Default::default();
         node.register_resource(requested_messages);
         let requested_messages = node.resource::<RequestedMessages>();
-        let network = node.resource::<Network>();
+        let network = node.resource::<NetworkController>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut receiver = ShutdownStream::new(shutdown, rx);
 
             let mut counter: usize = 0;
             let mut timeouts = interval(Duration::from_secs(RETRY_INTERVAL_SEC)).fuse();

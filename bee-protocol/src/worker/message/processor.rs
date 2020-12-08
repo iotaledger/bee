@@ -24,6 +24,7 @@ use blake2::{
 };
 use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info, trace, warn};
+use tokio::sync::mpsc;
 
 use std::{any::TypeId, convert::Infallible};
 
@@ -35,7 +36,7 @@ pub(crate) struct ProcessorWorkerEvent {
 }
 
 pub(crate) struct ProcessorWorker {
-    pub(crate) tx: flume::Sender<ProcessorWorkerEvent>,
+    pub(crate) tx: mpsc::UnboundedSender<ProcessorWorkerEvent>,
 }
 
 #[async_trait]
@@ -55,7 +56,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
         let milestone_validator = node.worker::<MilestoneValidatorWorker>().unwrap().tx.clone();
         let propagator = node.worker::<PropagatorWorker>().unwrap().tx.clone();
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
@@ -67,7 +68,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut receiver = ShutdownStream::new(shutdown, rx);
             let mut blake2b = VarBlake2b::new(MESSAGE_ID_LENGTH).unwrap();
 
             while let Some(ProcessorWorkerEvent {

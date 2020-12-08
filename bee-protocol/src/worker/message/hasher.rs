@@ -33,6 +33,7 @@ use futures::{
 };
 use log::{info, trace, warn};
 use pin_project::pin_project;
+use tokio::sync::mpsc;
 
 use std::{any::TypeId, convert::Infallible, pin::Pin};
 
@@ -46,13 +47,13 @@ pub(crate) struct HasherWorkerEvent {
 }
 
 pub(crate) struct HasherWorker {
-    pub(crate) tx: flume::Sender<HasherWorkerEvent>,
+    pub(crate) tx: mpsc::UnboundedSender<HasherWorkerEvent>,
 }
 
 fn trigger_hashing(
     batch_size: usize,
     receiver: &mut BatchStream,
-    processor_worker: &mut flume::Sender<ProcessorWorkerEvent>,
+    processor_worker: &mut mpsc::UnboundedSender<ProcessorWorkerEvent>,
 ) {
     if batch_size < BATCH_SIZE_THRESHOLD {
         send_hashes(receiver.hasher.hash_unbatched(), &mut receiver.events, processor_worker);
@@ -65,7 +66,7 @@ fn trigger_hashing(
 fn send_hashes(
     hashes: impl Iterator<Item = TritBuf>,
     events: &mut Vec<HasherWorkerEvent>,
-    processor_worker: &mut flume::Sender<ProcessorWorkerEvent>,
+    processor_worker: &mut mpsc::UnboundedSender<ProcessorWorkerEvent>,
 ) {
     for (
         HasherWorkerEvent {
@@ -101,11 +102,11 @@ impl<N: Node> Worker<N> for HasherWorker {
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
         let mut processor_worker = node.worker::<ProcessorWorker>().unwrap().tx.clone();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            let mut receiver = BatchStream::new(config, ShutdownStream::new(shutdown, rx.into_stream()));
+            let mut receiver = BatchStream::new(config, ShutdownStream::new(shutdown, rx));
 
             info!("Running.");
 
@@ -123,7 +124,7 @@ impl<N: Node> Worker<N> for HasherWorker {
 #[pin_project(project = BatchStreamProj)]
 pub(crate) struct BatchStream {
     #[pin]
-    receiver: ShutdownStream<Fuse<flume::r#async::RecvStream<'static, HasherWorkerEvent>>>,
+    receiver: ShutdownStream<Fuse<mpsc::UnboundedReceiver<HasherWorkerEvent>>>,
     cache: HashCache,
     hasher: BatchHasher<T5B1Buf>,
     events: Vec<HasherWorkerEvent>,
@@ -133,7 +134,7 @@ pub(crate) struct BatchStream {
 impl BatchStream {
     pub(crate) fn new(
         cache_size: usize,
-        receiver: ShutdownStream<Fuse<flume::r#async::RecvStream<'static, HasherWorkerEvent>>>,
+        receiver: ShutdownStream<Fuse<mpsc::UnboundedReceiver<HasherWorkerEvent>>>,
     ) -> Self {
         assert!(BATCH_SIZE_THRESHOLD <= BATCH_SIZE);
         Self {
