@@ -83,14 +83,10 @@ pub(crate) async fn submit_json_message<B: Backend>(
             network_id_v
                 .as_str()
                 .ok_or(reject::custom(BadRequest(
-                    "can not parse network id: expected an u64-string".to_string(),
+                    "invalid network id: expected an u64-string".to_string(),
                 )))?
                 .parse::<u64>()
-                .map_err(|_| {
-                    reject::custom(BadRequest(
-                        "can not parse network id: expected an u64-string".to_string(),
-                    ))
-                })?
+                .map_err(|_| reject::custom(BadRequest("invalid network id: expected an u64-string".to_string())))?
         }
     };
 
@@ -102,18 +98,30 @@ pub(crate) async fn submit_json_message<B: Backend>(
             // if both parents are set
             let parent1 = parent_1_v
                 .as_str()
-                .ok_or(reject::custom(BadRequest(
-                    "can not parse parent 1: expected a hex-string".to_string(),
-                )))?
+                .ok_or(reject::custom(BadRequest(format!(
+                    "invalid parent 1: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH
+                ))))?
                 .parse::<MessageId>()
-                .map_err(|_| reject::custom(BadRequest("can not parse parent 1: not a message id".to_string())))?;
+                .map_err(|_| {
+                    reject::custom(BadRequest(format!(
+                        "invalid parent 1: expected a hex-string of length {}",
+                        MESSAGE_ID_LENGTH
+                    )))
+                })?;
             let parent2 = parent_2_v
                 .as_str()
-                .ok_or(reject::custom(BadRequest(
-                    "can not parse parent 2: expected a hex-string".to_string(),
-                )))?
+                .ok_or(reject::custom(BadRequest(format!(
+                    "invalid parent 2: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH
+                ))))?
                 .parse::<MessageId>()
-                .map_err(|_| reject::custom(BadRequest("can not parse parent 2: not a message id".to_string())))?;
+                .map_err(|_| {
+                    reject::custom(BadRequest(format!(
+                        "invalid parent 2: expected a hex-string of length {}",
+                        MESSAGE_ID_LENGTH
+                    )))
+                })?;
             (parent1, parent2)
         } else if parent_1_v.is_null() && parent_2_v.is_null() {
             // if none of the parents are set
@@ -128,19 +136,31 @@ pub(crate) async fn submit_json_message<B: Backend>(
             let parent = if is_set(parent_1_v) {
                 parent_1_v
                     .as_str()
-                    .ok_or(reject::custom(BadRequest(
-                        "can not parse parent 1: expected a hex-string".to_string(),
-                    )))?
+                    .ok_or(reject::custom(BadRequest(format!(
+                        "invalid parent 1: expected a hex-string of length {}",
+                        MESSAGE_ID_LENGTH
+                    ))))?
                     .parse::<MessageId>()
-                    .map_err(|_| reject::custom(BadRequest("can not parse parent 1: not a message id".to_string())))?
+                    .map_err(|_| {
+                        reject::custom(BadRequest(format!(
+                            "invalid parent 1: expected a hex-string of length {}",
+                            MESSAGE_ID_LENGTH
+                        )))
+                    })?
             } else {
                 parent_2_v
                     .as_str()
-                    .ok_or(reject::custom(BadRequest(
-                        "can not parse parent 2: expected a hex-string".to_string(),
-                    )))?
+                    .ok_or(reject::custom(BadRequest(format!(
+                        "invalid parent 2: expected a hex-string of length {}",
+                        MESSAGE_ID_LENGTH
+                    ))))?
                     .parse::<MessageId>()
-                    .map_err(|_| reject::custom(BadRequest("can not parse parent 2: not a message id".to_string())))?
+                    .map_err(|_| {
+                        reject::custom(BadRequest(format!(
+                            "invalid parent 2: expected a hex-string of length {}",
+                            MESSAGE_ID_LENGTH
+                        )))
+                    })?
             };
             (parent, parent)
         }
@@ -167,10 +187,10 @@ pub(crate) async fn submit_json_message<B: Backend>(
             nonce_v
                 .as_str()
                 .ok_or(reject::custom(BadRequest(
-                    "can not parse nonce: expected an u64-string".to_string(),
+                    "invalid nonce: expected an u64-string".to_string(),
                 )))?
                 .parse::<u64>()
-                .map_err(|_| reject::custom(BadRequest("can not parse nonce: expected an u64-string".to_string())))?
+                .map_err(|_| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?
         }
     };
 
@@ -561,9 +581,7 @@ async fn submit_message<B: Backend>(
     let result = waiter.await.map_err(|_| {
         // TODO: report back from HasherWorker and replace following line with:
         // error!("can not submit message: {:?}",e);
-        reject::custom(BadRequest(
-            "invalid message already received by a previous request".to_string(),
-        ))
+        reject::custom(BadRequest("invalid message recognized by hash-cache".to_string()))
     })?;
 
     match result {
