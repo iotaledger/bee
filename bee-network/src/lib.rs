@@ -65,7 +65,7 @@ pub async fn init<N: Node>(
 
     let local_keys = identity::Keypair::Ed25519(local_keys);
     let local_id = PeerId::from_public_key(local_keys.public());
-    info!("Own Peer Id = {}", local_id);
+    info!("Own peer id: {}", local_id);
 
     let (command_sender, command_receiver) = commands::channel();
     let (event_sender, event_receiver) = events::channel::<Event>();
@@ -98,8 +98,8 @@ pub async fn init<N: Node>(
         panic!("Fatal error: {}", e);
     });
 
-    let listen_address = conn_manager_config.listen_address.clone();
-    let network_controller = NetworkController::new(config, command_sender, listen_address, local_id);
+    // let listen_address = conn_manager_config.listen_address.clone();
+    let network_controller = NetworkController::new(config, command_sender, local_id);
 
     node_builder = node_builder
         .with_worker_cfg::<PeerManager>(peer_manager_config)

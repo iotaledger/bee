@@ -4,7 +4,7 @@
 use crate::{
     config::NetworkConfig,
     interaction::commands::{Command, CommandSender},
-    Multiaddr, PeerId,
+    PeerId,
 };
 
 use thiserror::Error;
@@ -23,22 +23,22 @@ pub enum Error {
 pub struct NetworkController {
     config: Arc<NetworkConfig>,
     command_sender: CommandSender,
-    listen_address: Multiaddr,
-    local_id: PeerId,
+    // listen_address: Multiaddr,
+    own_id: PeerId,
 }
 
 impl NetworkController {
     pub(crate) fn new(
         config: NetworkConfig,
         command_sender: CommandSender,
-        listen_address: Multiaddr,
-        local_id: PeerId,
+        // listen_address: Multiaddr,
+        own_id: PeerId,
     ) -> Self {
         Self {
             config: Arc::new(config),
             command_sender,
-            listen_address,
-            local_id,
+            // listen_address,
+            own_id,
         }
     }
 
@@ -63,11 +63,11 @@ impl NetworkController {
         &self.config
     }
 
-    pub fn listen_address(&self) -> &Multiaddr {
-        &self.listen_address
-    }
+    // pub fn listen_address(&self) -> &Multiaddr {
+    //     &self.listen_address
+    // }
 
-    pub fn local_id(&self) -> &PeerId {
-        &self.local_id
+    pub fn own_id(&self) -> &PeerId {
+        &self.own_id
     }
 }

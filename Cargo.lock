@@ -423,6 +423,7 @@ dependencies = [
  "dashmap",
  "env_logger",
  "futures",
+ "lazy_static",
  "libp2p",
  "log",
  "pretty_env_logger",

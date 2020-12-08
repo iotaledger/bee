@@ -14,6 +14,7 @@ use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
 use futures::prelude::*;
+use lazy_static::lazy_static;
 use libp2p::{
     core::{muxing::StreamMuxerBox, transport::ListenerEvent},
     identity, Transport,
@@ -25,7 +26,10 @@ use std::{
     convert::Infallible,
     io,
     pin::Pin,
-    sync::atomic::{AtomicUsize, Ordering},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc, RwLock,
+    },
 };
 
 type ListenerUpgrade = Pin<Box<(dyn Future<Output = Result<(PeerId, StreamMuxerBox), io::Error>> + Send + 'static)>>;
@@ -33,11 +37,14 @@ type PeerListener = Pin<Box<dyn Stream<Item = Result<ListenerEvent<ListenerUpgra
 
 pub static NUM_LISTENER_EVENT_PROCESSING_ERRORS: AtomicUsize = AtomicUsize::new(0);
 
+lazy_static! {
+    pub static ref LISTEN_ADDRESSES: Arc<RwLock<Vec<Multiaddr>>> = Arc::new(RwLock::new(Vec::new()));
+}
+
 #[derive(Default)]
 pub struct ConnectionManager {}
 
 pub struct ConnectionManagerConfig {
-    pub listen_address: Multiaddr,
     peers: PeerList,
     banned_addrs: BannedAddrList,
     banned_peers: BannedPeerList,
@@ -48,6 +55,7 @@ pub struct ConnectionManagerConfig {
 impl ConnectionManagerConfig {
     pub fn new(
         local_keys: identity::Keypair,
+        // TODO: allow multiple bind addresses
         bind_address: Multiaddr,
         peers: PeerList,
         banned_addrs: BannedAddrList,
@@ -71,8 +79,9 @@ impl ConnectionManagerConfig {
 
         trace!("Accepting connections on {}.", listen_address);
 
+        LISTEN_ADDRESSES.write().unwrap().push(listen_address);
+
         Ok(Self {
-            listen_address,
             peers,
             banned_peers,
             banned_addrs,

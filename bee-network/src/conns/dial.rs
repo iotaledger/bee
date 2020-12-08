@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{errors::Error, Origin};
+use super::{errors::Error, manager::LISTEN_ADDRESSES, Origin};
 
 use crate::{
     interaction::events::InternalEventSender,
@@ -22,6 +22,11 @@ pub async fn dial_peer(
     banned_addrs: &BannedAddrList,
     banned_peers: &BannedPeerList,
 ) -> Result<(), Error> {
+    // Prevent dialing oneself.
+    if peer_id == &local_keys.public().into_peer_id() {
+        return Err(Error::DialedSelf(peer_id.short()));
+    }
+
     // Prevent duplicate connections.
     if let Ok(connected) = peers.is(peer_id, |_, state| state.is_connected()).await {
         if connected {
@@ -95,6 +100,11 @@ pub async fn dial_address(
     banned_addrs: &BannedAddrList,
     banned_peers: &BannedPeerList,
 ) -> Result<(), Error> {
+    // Prevent dialing listen addresses.
+    if LISTEN_ADDRESSES.read().unwrap().contains(address) {
+        return Err(Error::DialedOwnAddress(address.clone()));
+    }
+
     // Prevent dialing banned addresses.
     if banned_addrs.contains(&address.to_string()) {
         return Err(Error::DialedBannedAddress(address.clone()));
