@@ -16,21 +16,16 @@ use std::{
 
 const DEFAULT_PEERLIST_CAPACITY: usize = 8;
 
-// #[derive(Clone, Debug, Default)]
-// pub struct PeerList(Arc<DashMap<PeerId, (PeerInfo, PeerState)>>);
-
 #[derive(Clone, Default)]
 pub struct PeerList(Arc<RwLock<HashMap<PeerId, (PeerInfo, PeerState)>>>);
 
 impl PeerList {
     pub fn new() -> Self {
-        // Self(Arc::new(DashMap::with_capacity(DEFAULT_PEERLIST_CAPACITY)))
         Self(Arc::new(RwLock::new(HashMap::with_capacity(DEFAULT_PEERLIST_CAPACITY))))
     }
 
     // If the insertion fails for some reason, we give it back to the caller.
     pub async fn insert(&self, id: PeerId, info: PeerInfo, state: PeerState) -> Result<(), (PeerId, PeerInfo, Error)> {
-        // TODO: unwrap
         if self.0.read().await.contains_key(&id) {
             let short = id.short();
             return Err((id, info, Error::PeerAlreadyAdded(short)));
@@ -62,18 +57,15 @@ impl PeerList {
         }
 
         // Since we already checked that such an `id` is not yet present, the returned value is always `None`.
-        // TODO: unwrap
         let _ = self.0.write().await.insert(id, (info, state));
 
         Ok(())
     }
 
     pub async fn update_relation(&self, id: &PeerId, relation: PeerRelation) -> Result<(), Error> {
-        // TODO: unwrap
         let mut this = self.0.write().await;
         let mut kv = this.get_mut(id).ok_or(Error::UnlistedPeer(id.short()))?;
 
-        // kv.value_mut().0.relation = relation;
         kv.0.relation = relation;
 
         Ok(())
@@ -83,7 +75,6 @@ impl PeerList {
         let mut this = self.0.write().await;
         let mut kv = this.get_mut(id).ok_or(Error::UnlistedPeer(id.short()))?;
 
-        // kv.value_mut().1 = state;
         kv.1 = state;
 
         Ok(())
@@ -102,20 +93,12 @@ impl PeerList {
 
     // TODO: batch messages before sending using 'send_all' (e.g. batch messages for like 50ms)
     pub async fn send_message(&self, message: Vec<u8>, to: &PeerId) -> Result<(), Error> {
-        // TODO: unwrap
         let mut this = self.0.write().await;
         let (_, state) = this.get_mut(to).ok_or(Error::UnlistedPeer(to.short()))?;
-
-        // let state = &mut kv.value_mut().1;
-        // let state = &mut kv.1;
 
         if let PeerState::Connected(sender) = state {
             sender
                 .send(message)
-                // .unbounded_send(message)
-                // NOTE: this has lifetime consequence for 'this'
-                // .send_async(message)
-                // .await
                 .map_err(|_| Error::SendMessageFailure(to.short()))?;
 
             Ok(())
@@ -188,10 +171,10 @@ impl PeerList {
 
         if remove {
             let _ = self.0.write().await.remove(id);
-            // .remove_if(id, |_, (info, state)| predicate(info, state));
         }
     }
 
+    #[allow(dead_code)]
     pub async fn clear(&self) {
         trace!("Dropping message senders.");
         self.0.write().await.clear();
