@@ -76,7 +76,7 @@ pub struct SignatureLockedSingleOutputDto {
     #[serde(rename = "type")]
     pub kind: u32,
     pub address: AddressDto,
-    pub amount: String,
+    pub amount: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -100,8 +100,15 @@ pub enum UnlockBlockDto {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SignatureUnlockDto {
+    #[serde(rename = "type")]
+    pub kind: u32,
+    pub signature: SignatureDto,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum SignatureUnlockDto {
+pub enum SignatureDto {
     Ed25519(Ed25519SignatureDto),
 }
 
@@ -353,7 +360,7 @@ impl TryFrom<&Output> for OutputDto {
             Output::SignatureLockedSingle(s) => Ok(OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
                 kind: 0,
                 address: s.address().try_into()?,
-                amount: s.amount().to_string(),
+                amount: s.amount().get(),
             })),
             _ => return Err("output type not supported".to_string()),
         }
@@ -367,12 +374,7 @@ impl TryFrom<&OutputDto> for Output {
         match value {
             OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(
                 (&s.address).try_into()?,
-                NonZeroU64::new(
-                    s.amount
-                        .parse::<u64>()
-                        .map_err(|_| "invalid amount: expected a non-zero u64-string")?,
-                )
-                .ok_or("invalid amount: expected a non-zero u64-string")?,
+                NonZeroU64::new(s.amount).ok_or("invalid amount: expected a non-zero u64-string")?,
             ))),
         }
     }
@@ -428,13 +430,14 @@ impl TryFrom<&UnlockBlock> for UnlockBlockDto {
     fn try_from(value: &UnlockBlock) -> Result<Self, Self::Error> {
         match value {
             UnlockBlock::Signature(s) => match s {
-                SignatureUnlock::Ed25519(ed) => Ok(UnlockBlockDto::Signature(SignatureUnlockDto::Ed25519(
-                    Ed25519SignatureDto {
+                SignatureUnlock::Ed25519(ed) => Ok(UnlockBlockDto::Signature(SignatureUnlockDto {
+                    kind: 0,
+                    signature: SignatureDto::Ed25519(Ed25519SignatureDto {
                         kind: 1,
                         public_key: hex::encode(ed.public_key()),
                         signature: hex::encode(ed.signature()),
-                    },
-                ))),
+                    }),
+                })),
                 _ => Err("signature unlock type not supported".to_string()),
             },
             UnlockBlock::Reference(r) => Ok(UnlockBlockDto::Reference(ReferenceUnlockDto {
@@ -451,8 +454,8 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
     type Error = String;
     fn try_from(value: &UnlockBlockDto) -> Result<Self, Self::Error> {
         match value {
-            UnlockBlockDto::Signature(s) => match s {
-                SignatureUnlockDto::Ed25519(ed) => {
+            UnlockBlockDto::Signature(s) => match &s.signature {
+                SignatureDto::Ed25519(ed) => {
                     let mut public_key = [0u8; 32];
                     hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(|_| {
                         "invalid public key in signature unlock block: expected a hex-string of length 32"
