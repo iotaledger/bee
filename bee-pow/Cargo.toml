@@ -16,3 +16,7 @@ bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 blake2 = "0.9"
+thiserror = "1.0"
+
+[dev-dependencies]
+bee-test = { path = "../bee-test" }

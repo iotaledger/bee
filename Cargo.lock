@@ -482,7 +482,9 @@ dependencies = [
  "bee-common",
  "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-test",
  "blake2",
+ "thiserror",
 ]
 
 [[package]]
