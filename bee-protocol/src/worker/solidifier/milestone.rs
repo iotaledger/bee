@@ -6,6 +6,7 @@ use crate::{
     helper,
     milestone::MilestoneIndex,
     peer::PeerManager,
+    storage::Backend,
     tangle::MsTangle,
     worker::{
         MessageRequesterWorker, MessageRequesterWorkerEvent, MetricsWorker, MilestoneRequesterWorker,
@@ -17,7 +18,7 @@ use crate::{
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_network::NetworkController;
-use bee_storage::storage::Backend;
+use bee_storage::storage::Backend as _;
 use bee_tangle::traversal;
 
 use async_trait::async_trait;
@@ -78,7 +79,10 @@ fn save_index(target_index: MilestoneIndex, queue: &mut Vec<MilestoneIndex>) {
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for MilestoneSolidifierWorker {
+impl<N: Node> Worker<N> for MilestoneSolidifierWorker
+where
+    N::Backend: Backend,
+{
     type Config = u32;
     type Error = Infallible;
 

@@ -7,6 +7,7 @@ use crate::{
     tangle::MsTangle,
     worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
     ProtocolMetrics,
+    storage::Backend,
 };
 
 use bee_common::shutdown_stream::ShutdownStream;
@@ -28,7 +29,10 @@ const CHECK_HEARTBEATS_INTERVAL_SEC: u64 = 5;
 pub(crate) struct HeartbeaterWorker {}
 
 #[async_trait]
-impl<N: Node> Worker<N> for HeartbeaterWorker {
+impl<N: Node> Worker<N> for HeartbeaterWorker
+where
+    N::Backend: Backend,
+{
     type Config = ();
     type Error = Infallible;
 

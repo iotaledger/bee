@@ -13,11 +13,14 @@ pub use flags::Flags;
 pub use metadata::MessageMetadata;
 pub use solid_entry_point::SolidEntryPoint;
 
-use crate::milestone::{Milestone, MilestoneIndex};
+use crate::{
+    milestone::{Milestone, MilestoneIndex},
+    storage::Backend,
+};
 
 use bee_common_pt2::node::ResHandle;
 use bee_message::{Message, MessageId};
-use bee_storage::storage::Backend;
+use bee_storage::storage::Backend as _;
 use bee_tangle::{Hooks, MessageRef, Tangle};
 
 use async_trait::async_trait;
@@ -38,13 +41,15 @@ pub struct StorageHooks<B> {
 impl<B: Backend> Hooks<MessageMetadata> for StorageHooks<B> {
     type Error = ();
 
-    async fn get(&self, _hash: &MessageId) -> Result<(Message, MessageMetadata), Self::Error> {
-        // println!("Attempted to fetch {:?} from storage", hash);
+    async fn get(&self, hash: &MessageId) -> Result<(Message, MessageMetadata), Self::Error> {
+        println!("Attempted to fetch {:?} from storage", hash);
         Err(())
     }
 
-    async fn insert(&self, _hash: MessageId, _tx: Message, _metadata: MessageMetadata) -> Result<(), Self::Error> {
-        // println!("Attempted to insert {:?} into storage", hash);
+    async fn insert(&self, hash: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
+        println!("Attempted to insert {:?} into storage", hash);
+        self.storage.insert(&hash, &tx).await;
+        self.storage.insert(&hash, &metadata).await;
         Ok(())
     }
 }

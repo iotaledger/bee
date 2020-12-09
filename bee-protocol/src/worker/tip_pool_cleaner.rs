@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{tangle::MsTangle, worker::TangleWorker};
+use crate::{storage::Backend, tangle::MsTangle, worker::TangleWorker};
 
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
@@ -19,7 +19,10 @@ const TIP_POOL_CLEANER_INTERVAL_SEC: u64 = 1;
 pub(crate) struct TipPoolCleanerWorker {}
 
 #[async_trait]
-impl<N: Node> Worker<N> for TipPoolCleanerWorker {
+impl<N: Node> Worker<N> for TipPoolCleanerWorker
+where
+    N::Backend: Backend,
+{
     type Config = ();
     type Error = Infallible;
 

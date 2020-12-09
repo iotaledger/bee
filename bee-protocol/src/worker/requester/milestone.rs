@@ -5,6 +5,7 @@ use crate::{
     milestone::MilestoneIndex,
     packet::MilestoneRequest,
     peer::PeerManager,
+    storage::Backend,
     tangle::MsTangle,
     worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
     ProtocolMetrics, Sender,
@@ -140,7 +141,10 @@ async fn retry_requests(
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for MilestoneRequesterWorker {
+impl<N: Node> Worker<N> for MilestoneRequesterWorker
+where
+    N::Backend: Backend,
+{
     type Config = ();
     type Error = Infallible;
 

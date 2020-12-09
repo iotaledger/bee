@@ -6,6 +6,7 @@ use crate::{
     milestone::MilestoneIndex,
     packet::{tlv_from_bytes, Header, Heartbeat, Message, MessageRequest, MilestoneRequest, Packet, TlvError},
     peer::{Peer, PeerManager},
+    storage::Backend,
     tangle::MsTangle,
     worker::{
         peer::packet_handler::PacketHandler, HasherWorkerEvent, MessageResponderWorkerEvent,
@@ -15,7 +16,7 @@ use crate::{
 };
 
 use bee_common_pt2::node::ResHandle;
-use bee_storage::storage::Backend;
+use bee_storage::storage::Backend as _;
 
 use futures::{channel::oneshot, future::FutureExt};
 use log::{error, info, trace, warn};

@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{tangle::MsTangle, worker::TangleWorker};
+use crate::{tangle::MsTangle, worker::TangleWorker, storage::Backend};
 
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
@@ -25,6 +25,7 @@ pub(crate) struct IndexationPayloadWorker {
 impl<N> Worker<N> for IndexationPayloadWorker
 where
     N: Node,
+    N::Backend: Backend,
 {
     type Config = ();
     type Error = Infallible;

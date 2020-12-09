@@ -8,11 +8,12 @@ use crate::{
     tangle::MsTangle,
     worker::{MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages, RequestedMilestones},
     ProtocolMetrics, Sender,
+    storage::Backend,
 };
 
 use bee_message::MessageId;
 use bee_network::{NetworkController, PeerId};
-use bee_storage::storage::Backend;
+use bee_storage::storage::Backend as _;
 
 use log::warn;
 use tokio::sync::mpsc;

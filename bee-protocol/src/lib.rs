@@ -7,6 +7,7 @@
 pub mod config;
 pub mod event;
 pub mod milestone;
+pub mod storage;
 pub mod tangle;
 
 mod helper;
@@ -18,6 +19,7 @@ mod worker;
 
 pub use metrics::ProtocolMetrics;
 pub use milestone::{Milestone, MilestoneIndex};
+pub use storage::Backend;
 pub use worker::{
     MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent, MetricsWorker, TangleWorker,
 };
@@ -42,7 +44,10 @@ pub fn init<N: Node>(
     network_id: u64,
     events: NetworkListener,
     node_builder: N::Builder,
-) -> N::Builder {
+) -> N::Builder
+where
+    N::Backend: Backend,
+{
     node_builder
         .with_worker::<TangleWorker>()
         .with_worker::<MetricsWorker>()
