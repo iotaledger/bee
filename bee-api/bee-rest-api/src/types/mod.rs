@@ -137,8 +137,8 @@ pub struct MilestoneEssenceDto {
     pub parent_1_message_id: String,
     #[serde(rename = "parent2MessageId")]
     pub parent_2_message_id: String,
-    #[serde(rename = "merkleProof")]
-    pub merkle_proof: String,
+    #[serde(rename = "inclusionMerkleProof")]
+    pub inclusion_merkle_proof: String,
     #[serde(rename = "publicKeys")]
     pub public_keys: Vec<String>,
 }
@@ -513,7 +513,7 @@ impl From<&MilestoneEssence> for MilestoneEssenceDto {
             timestamp: value.timestamp(),
             parent_1_message_id: value.parent1().to_string(),
             parent_2_message_id: value.parent2().to_string(),
-            merkle_proof: hex::encode(value.merkle_proof()),
+            inclusion_merkle_proof: hex::encode(value.merkle_proof()),
             public_keys: value.public_keys().iter().map(|p| hex::encode(p)).collect(),
         }
     }
@@ -539,7 +539,7 @@ impl TryFrom<&MilestoneEssenceDto> for MilestoneEssence {
         })?;
         let merkle_proof = {
             let mut buf = [0u8; MILESTONE_MERKLE_PROOF_LENGTH];
-            hex::decode_to_slice(&value.merkle_proof, &mut buf).map_err(|_| {
+            hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf).map_err(|_| {
                 format!(
                     "invalid merkle proof in milestone essence: expected a hex-string of length {}",
                     MILESTONE_MERKLE_PROOF_LENGTH
