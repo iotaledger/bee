@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{handlers, NetworkId};
+use crate::{NetworkId, handlers};
 use bee_common::node::ResHandle;
 use warp::{reject, Filter, Rejection};
 
@@ -56,7 +56,7 @@ fn get_health<B: Backend>(
         .and(warp::path("health"))
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_health)
+        .and_then(handlers::health::health)
 }
 
 fn get_info<B: Backend>(
@@ -70,7 +70,7 @@ fn get_info<B: Backend>(
         .and(warp::path::end())
         .and(with_tangle(tangle))
         .and(with_network_id(network_id))
-        .and_then(handlers::get_info)
+        .and_then(handlers::info::info)
 }
 
 fn get_tips<B: Backend>(
@@ -82,7 +82,7 @@ fn get_tips<B: Backend>(
         .and(warp::path("tips"))
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_tips)
+        .and_then(handlers::tips::tips)
 }
 
 fn post_json_message<B: Backend>(
@@ -98,7 +98,7 @@ fn post_json_message<B: Backend>(
         .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
         .and(with_network_id(network_id))
-        .and_then(handlers::submit_json_message)
+        .and_then(handlers::submit_message::submit_message)
 }
 
 fn post_raw_message<B: Backend>(
@@ -113,7 +113,7 @@ fn post_raw_message<B: Backend>(
         .and(warp::body::bytes())
         .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
-        .and_then(handlers::submit_raw_message)
+        .and_then(handlers::submit_message_raw::submit_message_raw)
 }
 
 fn get_message_by_index<B: Backend>(
@@ -131,7 +131,7 @@ fn get_message_by_index<B: Backend>(
             }
         }))
         .and(with_storage(storage))
-        .and_then(handlers::get_message_by_index)
+        .and_then(handlers::message_indexation::message_indexation)
 }
 
 fn get_message_by_message_id<B: Backend>(
@@ -144,7 +144,7 @@ fn get_message_by_message_id<B: Backend>(
         .and(custom_path_param::message_id())
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_message_by_message_id)
+        .and_then(handlers::message::message)
 }
 
 fn get_message_metadata<B: Backend>(
@@ -158,7 +158,7 @@ fn get_message_metadata<B: Backend>(
         .and(warp::path("metadata"))
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_message_metadata)
+        .and_then(handlers::message_metadata::message_metadata)
 }
 
 fn get_raw_message<B: Backend>(
@@ -172,7 +172,7 @@ fn get_raw_message<B: Backend>(
         .and(warp::path("raw"))
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_raw_message)
+        .and_then(handlers::message_raw::message_raw)
 }
 
 fn get_children_by_message_id<B: Backend>(
@@ -186,7 +186,7 @@ fn get_children_by_message_id<B: Backend>(
         .and(warp::path("children"))
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_children_by_message_id)
+        .and_then(handlers::children::children)
 }
 
 fn get_output_by_output_id<B: Backend>(
@@ -199,7 +199,7 @@ fn get_output_by_output_id<B: Backend>(
         .and(custom_path_param::output_id())
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::get_output_by_output_id)
+        .and_then(handlers::output::output)
 }
 
 fn get_balance_for_bech32_address<B: Backend>(
@@ -212,7 +212,7 @@ fn get_balance_for_bech32_address<B: Backend>(
         .and(custom_path_param::bech32_address())
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::get_balance_for_bech32_address)
+        .and_then(handlers::balance_bech32_address::balance_bech32_address)
 }
 
 fn get_balance_for_ed25519_address<B: Backend>(
@@ -226,7 +226,7 @@ fn get_balance_for_ed25519_address<B: Backend>(
         .and(custom_path_param::ed25519_address())
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::get_balance_for_ed25519_address)
+        .and_then(handlers::balance_ed25519_address::balance_ed25519_address)
 }
 
 fn get_outputs_for_bech32_address<B: Backend>(
@@ -240,7 +240,7 @@ fn get_outputs_for_bech32_address<B: Backend>(
         .and(warp::path("outputs"))
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::get_outputs_for_bech32_address)
+        .and_then(handlers::outputs_bech32_address::outputs_bech32_address)
 }
 
 fn get_outputs_for_ed25519_address<B: Backend>(
@@ -254,7 +254,7 @@ fn get_outputs_for_ed25519_address<B: Backend>(
         .and(warp::path("outputs"))
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::get_outputs_for_ed25519_address)
+        .and_then(handlers::outputs_ed25519_address::outputs_ed25519_address)
 }
 
 fn get_milestone_by_milestone_index<B: Backend>(
@@ -267,7 +267,7 @@ fn get_milestone_by_milestone_index<B: Backend>(
         .and(custom_path_param::milestone_index())
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_milestone_by_milestone_index)
+        .and_then(handlers::milestone::milestone)
 }
 
 mod custom_path_param {

@@ -9,7 +9,7 @@ use std::convert::{TryFrom, TryInto};
 
 use std::num::NonZeroU64;
 
-pub mod responses;
+
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {

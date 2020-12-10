@@ -21,8 +21,9 @@ use warp::{http::StatusCode, Filter, Rejection, Reply};
 use crate::{
     filters::CustomRejection,
     storage::Backend,
-    types::responses::{ErrorBody, ErrorResponse},
+
 };
+use crate::handlers::{ErrorEnvelope, ErrorEnvelopeContent};
 
 pub(crate) type NetworkId = (String, u64);
 
@@ -101,7 +102,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
         }
     };
     Ok(warp::reply::with_status(
-        warp::reply::json(&ErrorResponse::new(ErrorBody {
+        warp::reply::json(&ErrorEnvelope::new(ErrorEnvelopeContent {
             code: err_code,
             message: reason,
         })),
