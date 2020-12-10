@@ -81,6 +81,11 @@ impl RocksDBConfigBuilder {
         Self::default()
     }
 
+    pub fn with_path(mut self, path: String) -> Self {
+        self.path = Some(path);
+        self
+    }
+
     pub fn finish(self) -> RocksDBConfig {
         RocksDBConfig::from(self)
     }

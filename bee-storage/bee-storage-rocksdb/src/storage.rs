@@ -16,15 +16,15 @@ use bee_message::{
 use async_trait::async_trait;
 use rocksdb::{ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Options, SliceTransform, DB};
 
-pub(crate) const CF_MESSAGE_ID_TO_MESSAGE: &str = "message_id_to_message";
-pub(crate) const CF_MESSAGE_ID_TO_METADATA: &str = "message_id_to_metadata";
-pub(crate) const CF_MESSAGE_ID_TO_MESSAGE_ID: &str = "message_id_to_message_id";
-pub(crate) const CF_INDEX_TO_MESSAGE_ID: &str = "index_to_message_id";
-pub(crate) const CF_OUTPUT_ID_TO_OUTPUT: &str = "output_id_to_output";
-pub(crate) const CF_OUTPUT_ID_TO_SPENT: &str = "output_id_to_spent";
-pub(crate) const CF_OUTPUT_ID_UNSPENT: &str = "output_id_unspent";
-pub(crate) const CF_ED25519_ADDRESS_TO_OUTPUT_ID: &str = "ed25519_address_to_output_id";
-pub(crate) const CF_LEDGER_INDEX: &str = "ledger_index";
+pub const CF_MESSAGE_ID_TO_MESSAGE: &str = "message_id_to_message";
+pub const CF_MESSAGE_ID_TO_METADATA: &str = "message_id_to_metadata";
+pub const CF_MESSAGE_ID_TO_MESSAGE_ID: &str = "message_id_to_message_id";
+pub const CF_INDEX_TO_MESSAGE_ID: &str = "index_to_message_id";
+pub const CF_OUTPUT_ID_TO_OUTPUT: &str = "output_id_to_output";
+pub const CF_OUTPUT_ID_TO_SPENT: &str = "output_id_to_spent";
+pub const CF_OUTPUT_ID_UNSPENT: &str = "output_id_unspent";
+pub const CF_ED25519_ADDRESS_TO_OUTPUT_ID: &str = "ed25519_address_to_output_id";
+pub const CF_LEDGER_INDEX: &str = "ledger_index";
 
 pub struct Storage {
     pub(crate) config: StorageConfig,

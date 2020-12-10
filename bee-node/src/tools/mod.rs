@@ -3,6 +3,7 @@
 
 mod ed25519;
 mod p2p_identity;
+mod rocksdb;
 mod snapshot_info;
 
 use structopt::StructOpt;
@@ -14,6 +15,8 @@ pub enum Tool {
     Ed25519(ed25519::Ed25519Tool),
     /// Generates a p2p identity.
     P2pIdentity(p2p_identity::P2pIdentityTool),
+    /// Rocksdb database analyser.
+    Rocksdb(rocksdb::Rocksdb),
     /// Outputs information about a snapshot file.
     SnapshotInfo(snapshot_info::SnapshotInfo),
 }
@@ -22,6 +25,7 @@ pub fn exec(tool: &Tool) {
     match tool {
         Tool::Ed25519(tool) => ed25519::exec(tool),
         Tool::P2pIdentity(tool) => p2p_identity::exec(tool),
+        Tool::Rocksdb(tool) => rocksdb::exec(tool),
         Tool::SnapshotInfo(tool) => snapshot_info::exec(tool),
     }
 }

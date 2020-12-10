@@ -8,7 +8,7 @@ use bee_message::{payload::transaction, MessageId};
 
 use std::ops::Deref;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Output {
     message_id: MessageId,
     inner: transaction::Output,
