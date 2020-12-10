@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::node::{Node as _, NodeBuilder as _};
-use bee_node::{default_plugins, print_banner_and_version, tools, CliArgs, Node, NodeConfigBuilder};
+use bee_node::{plugins, print_banner_and_version, tools, CliArgs, Node, NodeConfigBuilder};
 use bee_storage_rocksdb::storage::Storage as Rocksdb;
 
 const CONFIG_PATH: &str = "./config.toml";
@@ -31,7 +31,7 @@ async fn main() {
     .finish();
 
     Node::<Rocksdb>::build(config)
-        .with_plugin::<default_plugins::Mps>()
+        .with_plugin::<plugins::Mps>()
         .with_logging()
         .finish()
         .await

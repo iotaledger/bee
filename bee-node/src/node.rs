@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::NodeConfig, plugin, storage::Backend, version_checker::VersionCheckerWorker};
+use crate::{config::NodeConfig, plugins, storage::Backend, version_checker::VersionCheckerWorker};
 
 use bee_common::{
     event::Bus,
@@ -264,15 +264,15 @@ impl<B: Backend> BeeNodeBuilder<B> {
         &self.config
     }
 
-    pub fn with_plugin<P: plugin::Plugin>(self) -> Self
+    pub fn with_plugin<P: plugins::Plugin>(self) -> Self
     where
         P::Config: Default,
     {
-        self.with_worker::<plugin::PluginWorker<P>>()
+        self.with_worker::<plugins::PluginWorker<P>>()
     }
 
-    pub fn with_plugin_cfg<P: plugin::Plugin>(self, config: P::Config) -> Self {
-        self.with_worker_cfg::<plugin::PluginWorker<P>>(config)
+    pub fn with_plugin_cfg<P: plugins::Plugin>(self, config: P::Config) -> Self {
+        self.with_worker_cfg::<plugins::PluginWorker<P>>(config)
     }
 }
 
