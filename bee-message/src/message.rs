@@ -4,6 +4,10 @@
 use crate::{payload::Payload, Error, MessageId, Vertex, MESSAGE_ID_LENGTH};
 
 use bee_common::packable::{Packable, Read, Write};
+use bee_pow::{
+    miner::Miner,
+    provider::{Provider, ProviderBuilder},
+};
 
 use blake2::{
     digest::{Update, VariableOutput},
@@ -135,17 +139,27 @@ impl Vertex for Message {
     }
 }
 
-// TODO generic over PoW provider
-#[derive(Default)]
-pub struct MessageBuilder {
+pub struct MessageBuilder<P: Provider = Miner> {
     network_id: Option<u64>,
     parent1: Option<MessageId>,
     parent2: Option<MessageId>,
     payload: Option<Payload>,
-    nonce: Option<u64>,
+    nonce_provider: Option<(P, f64)>,
 }
 
-impl MessageBuilder {
+impl<P: Provider> Default for MessageBuilder<P> {
+    fn default() -> Self {
+        Self {
+            network_id: None,
+            parent1: None,
+            parent2: None,
+            payload: None,
+            nonce_provider: None,
+        }
+    }
+}
+
+impl<P: Provider> MessageBuilder<P> {
     pub fn new() -> Self {
         Default::default()
     }
@@ -170,18 +184,32 @@ impl MessageBuilder {
         self
     }
 
-    pub fn with_nonce(mut self, nonce: u64) -> Self {
-        self.nonce = Some(nonce);
+    pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: f64) -> Self {
+        self.nonce_provider = Some((nonce_provider, target_score));
         self
     }
 
     pub fn finish(self) -> Result<Message, Error> {
-        Ok(Message {
+        let mut message = Message {
             network_id: self.network_id.ok_or(Error::MissingField("network_id"))?,
             parent1: self.parent1.ok_or(Error::MissingField("parent1"))?,
             parent2: self.parent2.ok_or(Error::MissingField("parent2"))?,
             payload: self.payload,
-            nonce: self.nonce.unwrap_or(0),
-        })
+            nonce: 0,
+        };
+
+        let message_bytes = message.pack_new();
+        let (nonce_provider, target_score) = self.nonce_provider.unwrap_or((P::Builder::new().finish(), 4000f64));
+
+        let nonce = nonce_provider
+            .nonce(
+                &message_bytes[..message_bytes.len() - std::mem::size_of::<u64>()],
+                target_score,
+            )
+            .unwrap_or(0);
+
+        message.nonce = nonce;
+
+        Ok(message)
     }
 }

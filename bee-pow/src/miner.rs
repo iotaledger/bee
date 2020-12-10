@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::provider::Provider;
+use crate::provider::{Provider, ProviderBuilder};
 
 use bee_common::b1t6;
 use bee_crypto::ternary::{
@@ -40,16 +40,20 @@ pub struct MinerBuilder {
 }
 
 impl MinerBuilder {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     pub fn with_num_workers(mut self, num_workers: usize) -> Self {
         self.num_workers = Some(num_workers);
         self
     }
+}
 
-    pub fn finish(self) -> Miner {
+impl ProviderBuilder for MinerBuilder {
+    type Provider = Miner;
+
+    fn new() -> Self {
+        Self::default()
+    }
+
+    fn finish(self) -> Miner {
         Miner {
             num_workers: self.num_workers.unwrap_or(DEFAULT_NUM_WORKERS),
         }
@@ -101,6 +105,7 @@ impl Miner {
 }
 
 impl Provider for Miner {
+    type Builder = MinerBuilder;
     type Error = Error;
 
     fn nonce(&self, bytes: &[u8], target_score: f64) -> Result<u64, Self::Error> {
