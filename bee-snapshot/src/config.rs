@@ -5,7 +5,8 @@ use crate::pruning::{PruningConfig, PruningConfigBuilder};
 
 use serde::Deserialize;
 
-const DEFAULT_PATH: &str = "./snapshots/mainnet/export.bin";
+const DEFAULT_FULL_PATH: &str = "./snapshots/mainnet/full_snapshot.bin";
+const DEFAULT_DELTA_PATH: &str = "./snapshots/mainnet/delta_snapshot.bin";
 const DEFAULT_DOWNLOAD_URLS: Vec<String> = Vec::new();
 const DEFAULT_DEPTH: u32 = 50;
 const DEFAULT_INTERVAL_SYNCED: u32 = 50;
@@ -13,7 +14,8 @@ const DEFAULT_INTERVAL_UNSYNCED: u32 = 1000;
 
 #[derive(Default, Deserialize)]
 pub struct SnapshotConfigBuilder {
-    path: Option<String>,
+    full_path: Option<String>,
+    delta_path: Option<String>,
     download_urls: Option<Vec<String>>,
     depth: Option<u32>,
     interval_synced: Option<u32>,
@@ -26,8 +28,13 @@ impl SnapshotConfigBuilder {
         Self::default()
     }
 
-    pub fn path(mut self, path: String) -> Self {
-        self.path.replace(path);
+    pub fn full_path(mut self, full_path: String) -> Self {
+        self.full_path.replace(full_path);
+        self
+    }
+
+    pub fn delta_path(mut self, delta_path: String) -> Self {
+        self.delta_path.replace(delta_path);
         self
     }
 
@@ -53,7 +60,8 @@ impl SnapshotConfigBuilder {
 
     pub fn finish(self) -> SnapshotConfig {
         SnapshotConfig {
-            path: self.path.unwrap_or_else(|| DEFAULT_PATH.to_string()),
+            full_path: self.full_path.unwrap_or_else(|| DEFAULT_FULL_PATH.to_string()),
+            delta_path: self.delta_path.unwrap_or_else(|| DEFAULT_DELTA_PATH.to_string()),
             download_urls: self.download_urls.unwrap_or(DEFAULT_DOWNLOAD_URLS),
             depth: self.depth.unwrap_or(DEFAULT_DEPTH),
             interval_synced: self.interval_synced.unwrap_or(DEFAULT_INTERVAL_SYNCED),
@@ -65,7 +73,8 @@ impl SnapshotConfigBuilder {
 
 #[derive(Clone)]
 pub struct SnapshotConfig {
-    path: String,
+    full_path: String,
+    delta_path: String,
     download_urls: Vec<String>,
     depth: u32,
     interval_synced: u32,
@@ -78,8 +87,12 @@ impl SnapshotConfig {
         SnapshotConfigBuilder::new()
     }
 
-    pub fn path(&self) -> &String {
-        &self.path
+    pub fn full_path(&self) -> &String {
+        &self.full_path
+    }
+
+    pub fn delta_path(&self) -> &String {
+        &self.delta_path
     }
 
     pub fn download_urls(&self) -> &Vec<String> {
