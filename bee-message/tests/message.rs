@@ -4,8 +4,7 @@
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
 use bee_pow::{
-    miner::{Miner, MinerBuilder},
-    provider::ProviderBuilder,
+    providers::{Miner, MinerBuilder, ProviderBuilder},
     score::compute_pow_score,
 };
 
