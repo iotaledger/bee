@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_pow::compute_pow_score;
+use bee_pow::score::compute_pow_score;
 
 #[test]
 fn score() {

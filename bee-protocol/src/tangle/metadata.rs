@@ -8,7 +8,7 @@ use bee_common::packable::{OptionError, Packable, Read, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 // TODO Should it really be copy ?
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, Debug)]
 pub struct MessageMetadata {
     flags: Flags,
     milestone_index: MilestoneIndex,

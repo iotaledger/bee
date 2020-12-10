@@ -47,9 +47,10 @@ end         = 0
 status_interval = 10
 
 [snapshot]
-path              = "./snapshots/alphanet/export.bin"
+full_path         = "./snapshots/alphanet/full_snapshot.bin"
+delta_path        = "./snapshots/alphanet/delta_snapshot.bin"
 download_urls     = [
-  "https://dbfiles.iota.org/alphanet/hornet/export.bin"
+  "https://dbfiles.testnet.chrysalis2.com/"
 ]
 depth             = 50
 interval_synced   = 50

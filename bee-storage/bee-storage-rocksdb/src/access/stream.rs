@@ -4,7 +4,7 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Output, Spent, Unspent};
+use bee_ledger::model::{LedgerIndex, Output, Spent, Unspent};
 use bee_message::{
     payload::{
         indexation::{HashedIndex, HASHED_INDEX_LENGTH},
@@ -173,6 +173,12 @@ impl<'a> StorageStream<'a, (Ed25519Address, OutputId), ()> {
     }
 }
 
+impl<'a> StorageStream<'a, (), LedgerIndex> {
+    fn unpack_key_value(_: &[u8], mut value: &[u8]) -> ((), LedgerIndex) {
+        ((), LedgerIndex::unpack(&mut value).unwrap())
+    }
+}
+
 impl_stream!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_stream!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_stream!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
@@ -181,3 +187,4 @@ impl_stream!(OutputId, Output, CF_OUTPUT_ID_TO_OUTPUT);
 impl_stream!(OutputId, Spent, CF_OUTPUT_ID_TO_SPENT);
 impl_stream!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
 impl_stream!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
+impl_stream!((), LedgerIndex, CF_ED25519_ADDRESS_TO_OUTPUT_ID);
