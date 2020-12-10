@@ -9,8 +9,9 @@ use crate::rand::{
 
 use bee_message::{
     payload::{indexation::Indexation, Payload},
-    Message, MessageId,
+    Message, MessageBuilder, MessageId,
 };
+use bee_pow::providers::{Constant, ConstantBuilder, ProviderBuilder};
 
 pub fn random_message_id() -> MessageId {
     MessageId::new(random_bytes_32())
@@ -26,12 +27,12 @@ pub fn random_payload() -> Payload {
 }
 
 pub fn random_message_with_parents(parent1: MessageId, parent2: MessageId) -> Message {
-    Message::builder()
+    MessageBuilder::<Constant>::new()
         .with_network_id(random_integer())
         .with_parent1(parent1)
         .with_parent2(parent2)
         .with_payload(random_payload())
-        .with_nonce(random_integer())
+        .with_nonce_provider(ConstantBuilder::new().with_value(random_integer()).finish(), 0f64)
         .finish()
         .unwrap()
 }

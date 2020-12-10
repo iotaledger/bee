@@ -4,10 +4,7 @@
 use crate::{payload::Payload, Error, MessageId, Vertex, MESSAGE_ID_LENGTH};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_pow::{
-    miner::Miner,
-    provider::{Provider, ProviderBuilder},
-};
+use bee_pow::providers::{Miner, Provider, ProviderBuilder};
 
 use blake2::{
     digest::{Update, VariableOutput},

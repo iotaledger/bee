@@ -1,6 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod constant;
+mod miner;
+
+pub use constant::{Constant, ConstantBuilder};
+pub use miner::{Miner, MinerBuilder};
+
 pub trait ProviderBuilder: Default + Sized {
     type Provider: Provider<Builder = Self>;
 
