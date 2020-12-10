@@ -10,10 +10,10 @@ use crate::{
     tangle::MsTangle,
     worker::{
         BroadcasterWorker, HasherWorker, HeartbeaterWorker, KickstartWorker, MessageRequesterWorker,
-        MessageResponderWorker, MessageSubmitterWorker, MessageValidatorWorker, MilestoneConeUpdaterWorker,
-        MilestoneRequesterWorker, MilestoneResponderWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
-        MilestoneValidatorWorker, MpsWorker, PeerWorker, ProcessorWorker, PropagatorWorker, RequestedMilestones,
-        StatusWorker, StorageWorker, TangleWorker, TipPoolCleanerWorker,
+        MessageResponderWorker, MessageSubmitterWorker, MessageValidatorWorker, MetricsWorker,
+        MilestoneConeUpdaterWorker, MilestoneRequesterWorker, MilestoneResponderWorker, MilestoneSolidifierWorker,
+        MilestoneSolidifierWorkerEvent, MilestoneValidatorWorker, MpsWorker, PeerWorker, ProcessorWorker,
+        PropagatorWorker, RequestedMilestones, StatusWorker, StorageWorker, TangleWorker, TipPoolCleanerWorker,
     },
 };
 
@@ -34,7 +34,6 @@ use std::sync::Arc;
 static PROTOCOL: spin::RwLock<Option<&'static Protocol>> = spin::RwLock::new(None);
 
 pub struct Protocol {
-    pub(crate) metrics: ProtocolMetrics,
     pub(crate) peer_manager: PeerManager,
 }
 
@@ -47,7 +46,6 @@ impl Protocol {
         node_builder: N::Builder,
     ) -> N::Builder {
         let protocol = Protocol {
-            metrics: ProtocolMetrics::new(),
             peer_manager: PeerManager::new(),
         };
 
@@ -58,6 +56,7 @@ impl Protocol {
         node_builder
             .with_worker_cfg::<StorageWorker>(database_config)
             .with_worker_cfg::<TangleWorker>(snapshot)
+            .with_worker::<MetricsWorker>()
             .with_worker_cfg::<HasherWorker>(config.workers.message_worker_cache)
             .with_worker_cfg::<ProcessorWorker>((config.clone(), network_id))
             .with_worker::<MessageResponderWorker>()
@@ -169,10 +168,12 @@ impl Protocol {
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
+        let metrics = node.resource::<ProtocolMetrics>();
 
         spawn(
             PeerWorker::new(
                 peer,
+                metrics,
                 node.worker::<HasherWorker>().unwrap().tx.clone(),
                 node.worker::<MessageResponderWorker>().unwrap().tx.clone(),
                 node.worker::<MilestoneResponderWorker>().unwrap().tx.clone(),

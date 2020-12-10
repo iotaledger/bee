@@ -5,7 +5,7 @@ use crate::{
     milestone::MilestoneIndex,
     packet::{tlv_from_bytes, Header, Heartbeat, Message, MessageRequest, MilestoneRequest, Packet},
     peer::Peer,
-    protocol::Protocol,
+    protocol::{Protocol, ProtocolMetrics},
     tangle::MsTangle,
     worker::{
         peer::message_handler::MessageHandler, HasherWorkerEvent, MessageResponderWorkerEvent,
@@ -29,6 +29,7 @@ pub(crate) enum PeerWorkerError {
 
 pub struct PeerWorker {
     peer: Arc<Peer>,
+    metrics: ResHandle<ProtocolMetrics>,
     hasher: mpsc::UnboundedSender<HasherWorkerEvent>,
     message_responder: mpsc::UnboundedSender<MessageResponderWorkerEvent>,
     milestone_responder: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
@@ -38,6 +39,7 @@ pub struct PeerWorker {
 impl PeerWorker {
     pub(crate) fn new(
         peer: Arc<Peer>,
+        metrics: ResHandle<ProtocolMetrics>,
         hasher: mpsc::UnboundedSender<HasherWorkerEvent>,
         message_responder: mpsc::UnboundedSender<MessageResponderWorkerEvent>,
         milestone_responder: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
@@ -45,6 +47,7 @@ impl PeerWorker {
     ) -> Self {
         Self {
             peer,
+            metrics,
             hasher,
             message_responder,
             milestone_responder,
@@ -114,13 +117,13 @@ impl PeerWorker {
                             .map_err(|_| PeerWorkerError::FailedSend)?;
 
                         self.peer.metrics.milestone_requests_received_inc();
-                        Protocol::get().metrics.milestone_requests_received_inc();
+                        self.metrics.milestone_requests_received_inc();
                     }
                     Err(e) => {
                         warn!("[{}] Reading MilestoneRequest failed: {:?}.", self.peer.address, e);
 
                         self.peer.metrics.invalid_messages_inc();
-                        Protocol::get().metrics.invalid_messages_inc();
+                        self.metrics.invalid_messages_inc();
                     }
                 }
             }
@@ -137,13 +140,13 @@ impl PeerWorker {
                             .map_err(|_| PeerWorkerError::FailedSend)?;
 
                         self.peer.metrics.messages_received_inc();
-                        Protocol::get().metrics.messages_received_inc();
+                        self.metrics.messages_received_inc();
                     }
                     Err(e) => {
                         warn!("[{}] Reading Message failed: {:?}.", self.peer.address, e);
 
                         self.peer.metrics.invalid_messages_inc();
-                        Protocol::get().metrics.invalid_messages_inc();
+                        self.metrics.invalid_messages_inc();
                     }
                 }
             }
@@ -159,13 +162,13 @@ impl PeerWorker {
                             .map_err(|_| PeerWorkerError::FailedSend)?;
 
                         self.peer.metrics.message_requests_received_inc();
-                        Protocol::get().metrics.message_requests_received_inc();
+                        self.metrics.message_requests_received_inc();
                     }
                     Err(e) => {
                         warn!("[{}] Reading MessageRequest failed: {:?}.", self.peer.address, e);
 
                         self.peer.metrics.invalid_messages_inc();
-                        Protocol::get().metrics.invalid_messages_inc();
+                        self.metrics.invalid_messages_inc();
                     }
                 }
             }
@@ -193,13 +196,13 @@ impl PeerWorker {
                         // Also drop connection if autopeered and we can't help it sync
 
                         self.peer.metrics.heartbeats_received_inc();
-                        Protocol::get().metrics.heartbeats_received_inc();
+                        self.metrics.heartbeats_received_inc();
                     }
                     Err(e) => {
                         warn!("[{}] Reading Heartbeat failed: {:?}.", self.peer.address, e);
 
                         self.peer.metrics.invalid_messages_inc();
-                        Protocol::get().metrics.invalid_messages_inc();
+                        self.metrics.invalid_messages_inc();
                     }
                 }
             }
@@ -210,7 +213,7 @@ impl PeerWorker {
                 );
 
                 self.peer.metrics.invalid_messages_inc();
-                Protocol::get().metrics.invalid_messages_inc();
+                self.metrics.invalid_messages_inc();
             }
         };
 
