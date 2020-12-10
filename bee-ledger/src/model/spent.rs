@@ -7,6 +7,7 @@ use bee_common::packable::{Packable, Read, Write};
 use bee_message::payload::transaction::TransactionId;
 use bee_protocol::MilestoneIndex;
 
+#[derive(Debug)]
 pub struct Spent {
     target: TransactionId,
     index: MilestoneIndex,

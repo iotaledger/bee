@@ -405,11 +405,13 @@ version = "0.1.0-alpha"
 dependencies = [
  "bech32",
  "bee-common",
+ "bee-pow",
  "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "blake2",
  "bytemuck",
  "digest 0.9.0",
  "hex",
+ "num_cpus",
  "serde",
  "thiserror",
 ]
@@ -482,7 +484,9 @@ dependencies = [
  "bee-common",
  "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-test",
  "blake2",
+ "thiserror",
 ]
 
 [[package]]
@@ -654,6 +658,7 @@ version = "0.1.0-alpha"
 dependencies = [
  "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "bee-message",
+ "bee-pow",
  "bee-protocol",
  "bee-storage",
  "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",

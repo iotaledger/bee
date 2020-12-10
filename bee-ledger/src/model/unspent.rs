@@ -6,6 +6,7 @@ use crate::error::Error;
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::payload::transaction::OutputId;
 
+#[derive(Debug)]
 pub struct Unspent(OutputId);
 
 impl From<OutputId> for Unspent {

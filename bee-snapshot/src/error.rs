@@ -9,6 +9,7 @@ pub enum Error {
     InvalidVariant,
     InvalidVersion(u8, u8),
     NoDownloadSourceAvailable,
+    InvalidFilePath(String),
     Message(MessageError),
 }
 
@@ -19,6 +20,7 @@ impl std::fmt::Display for Error {
             Error::InvalidVariant => write!(f, "Invalid variant read."),
             Error::InvalidVersion(expected, actual) => write!(f, "Invalid version read: {}, {}.", expected, actual),
             Error::NoDownloadSourceAvailable => write!(f, ""),
+            Error::InvalidFilePath(_) => write!(f, ""),
             Error::Message(_) => write!(f, ""),
         }
     }
