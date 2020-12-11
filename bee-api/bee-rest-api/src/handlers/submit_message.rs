@@ -139,7 +139,7 @@ pub(crate) async fn submit_message<B: Backend>(
     let nonce = {
         let nonce_v = &value["nonce"];
         if nonce_v.is_null() {
-            if !config.allow_proof_of_work() {
+            if !config.feature_proof_of_work() {
                 return Err(reject::custom(ServiceUnavailable(
                     "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
                 )));
@@ -161,10 +161,10 @@ pub(crate) async fn submit_message<B: Backend>(
     let message = {
         if let Some(nonce) = nonce {
             let mut builder = MessageBuilder::new()
-                .with_nonce_provider(ConstantBuilder::new().with_value(nonce).finish(), 0f64)
                 .with_network_id(network_id)
                 .with_parent1(parent_1_message_id)
-                .with_parent2(parent_2_message_id);
+                .with_parent2(parent_2_message_id)
+                .with_nonce_provider(ConstantBuilder::new().with_value(nonce).finish(), 0f64);
             if let Some(payload) = payload {
                 builder = builder.with_payload(payload)
             }
@@ -173,9 +173,10 @@ pub(crate) async fn submit_message<B: Backend>(
                 .map_err(|e| reject::custom(BadRequest(e.to_string())))?
         } else {
             let mut builder = MessageBuilder::new()
-                .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64)
+                .with_network_id(network_id)
                 .with_parent1(parent_1_message_id)
-                .with_parent2(parent_2_message_id);
+                .with_parent2(parent_2_message_id)
+                .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64);
             if let Some(payload) = payload {
                 builder = builder.with_payload(payload)
             }

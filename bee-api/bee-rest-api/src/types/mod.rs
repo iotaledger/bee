@@ -131,12 +131,6 @@ pub struct ReferenceUnlockDto {
 pub struct MilestoneDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    pub essence: MilestoneEssenceDto,
-    pub signatures: Vec<String>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MilestoneEssenceDto {
     pub index: u32,
     pub timestamp: u64,
     #[serde(rename = "parent1MessageId")]
@@ -147,6 +141,7 @@ pub struct MilestoneEssenceDto {
     pub inclusion_merkle_proof: String,
     #[serde(rename = "publicKeys")]
     pub public_keys: Vec<String>,
+    pub signatures: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -484,7 +479,12 @@ impl From<&Box<Milestone>> for MilestoneDto {
     fn from(value: &Box<Milestone>) -> Self {
         MilestoneDto {
             kind: 1,
-            essence: value.essence().into(),
+            index: value.essence().index(),
+            timestamp: value.essence().timestamp(),
+            parent_1_message_id: value.essence().parent1().to_string(),
+            parent_2_message_id: value.essence().parent2().to_string(),
+            inclusion_merkle_proof: hex::encode(value.essence().merkle_proof()),
+            public_keys: value.essence().public_keys().iter().map(|p| hex::encode(p)).collect(),
             signatures: value.signatures().iter().map(|s| hex::encode(s)).collect(),
         }
     }
@@ -494,7 +494,54 @@ impl From<&Box<Milestone>> for MilestoneDto {
 impl TryFrom<&MilestoneDto> for Box<Milestone> {
     type Error = String;
     fn try_from(value: &MilestoneDto) -> Result<Self, Self::Error> {
-        let essence = (&value.essence).try_into()?;
+        let essence = {
+            let index = value.index;
+            let timestamp = value.timestamp;
+            let parent_1_message_id = value.parent_1_message_id.parse::<MessageId>().map_err(|_| {
+                format!(
+                    "invalid parent 1 in milestone essence: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH
+                )
+            })?;
+            let parent_2_message_id = value.parent_2_message_id.parse::<MessageId>().map_err(|_| {
+                format!(
+                    "invalid parent 2 in milestone essence: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH
+                )
+            })?;
+            let merkle_proof = {
+                let mut buf = [0u8; MILESTONE_MERKLE_PROOF_LENGTH];
+                hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf).map_err(|_| {
+                    format!(
+                        "invalid merkle proof in milestone essence: expected a hex-string of length {}",
+                        MILESTONE_MERKLE_PROOF_LENGTH
+                    )
+                })?;
+                buf
+            };
+            let mut public_keys = Vec::new();
+            for v in &value.public_keys {
+                let key = {
+                    let mut buf = [0u8; MILESTONE_PUBLIC_KEY_LENGTH];
+                    hex::decode_to_slice(v, &mut buf).map_err(|_| {
+                        format!(
+                            "invalid public key in milestone essence: expected a hex-string of length {}",
+                            MILESTONE_PUBLIC_KEY_LENGTH
+                        )
+                    })?;
+                    buf
+                };
+                public_keys.push(key);
+            }
+            MilestoneEssence::new(
+                index,
+                timestamp,
+                parent_1_message_id,
+                parent_2_message_id,
+                merkle_proof,
+                public_keys,
+            )
+        };
         let mut signatures = Vec::new();
         for v in &value.signatures {
             signatures.push(
@@ -509,73 +556,6 @@ impl TryFrom<&MilestoneDto> for Box<Milestone> {
             )
         }
         Ok(Box::new(Milestone::new(essence, signatures)))
-    }
-}
-
-// MilestoneEssence -> MilestoneEssenceDto
-impl From<&MilestoneEssence> for MilestoneEssenceDto {
-    fn from(value: &MilestoneEssence) -> Self {
-        MilestoneEssenceDto {
-            index: value.index(),
-            timestamp: value.timestamp(),
-            parent_1_message_id: value.parent1().to_string(),
-            parent_2_message_id: value.parent2().to_string(),
-            inclusion_merkle_proof: hex::encode(value.merkle_proof()),
-            public_keys: value.public_keys().iter().map(|p| hex::encode(p)).collect(),
-        }
-    }
-}
-
-// MilestoneEssenceDto ->MilestoneEssence
-impl TryFrom<&MilestoneEssenceDto> for MilestoneEssence {
-    type Error = String;
-    fn try_from(value: &MilestoneEssenceDto) -> Result<Self, Self::Error> {
-        let index = value.index;
-        let timestamp = value.timestamp;
-        let parent_1_message_id = value.parent_1_message_id.parse::<MessageId>().map_err(|_| {
-            format!(
-                "invalid parent 1 in milestone essence: expected a hex-string of length {}",
-                MESSAGE_ID_LENGTH
-            )
-        })?;
-        let parent_2_message_id = value.parent_2_message_id.parse::<MessageId>().map_err(|_| {
-            format!(
-                "invalid parent 2 in milestone essence: expected a hex-string of length {}",
-                MESSAGE_ID_LENGTH
-            )
-        })?;
-        let merkle_proof = {
-            let mut buf = [0u8; MILESTONE_MERKLE_PROOF_LENGTH];
-            hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf).map_err(|_| {
-                format!(
-                    "invalid merkle proof in milestone essence: expected a hex-string of length {}",
-                    MILESTONE_MERKLE_PROOF_LENGTH
-                )
-            })?;
-            buf
-        };
-        let mut public_keys = Vec::new();
-        for v in &value.public_keys {
-            let key = {
-                let mut buf = [0u8; MILESTONE_PUBLIC_KEY_LENGTH];
-                hex::decode_to_slice(v, &mut buf).map_err(|_| {
-                    format!(
-                        "invalid public key in milestone essence: expected a hex-string of length {}",
-                        MILESTONE_PUBLIC_KEY_LENGTH
-                    )
-                })?;
-                buf
-            };
-            public_keys.push(key);
-        }
-        Ok(MilestoneEssence::new(
-            index,
-            timestamp,
-            parent_1_message_id,
-            parent_2_message_id,
-            merkle_proof,
-            public_keys,
-        ))
     }
 }
 

@@ -28,7 +28,7 @@ pub(crate) async fn info<B: Backend>(
         pruning_index: *tangle.get_pruning_index(),
         features: {
             let mut features = Vec::new();
-            if config.allow_proof_of_work() {
+            if config.feature_proof_of_work() {
                 features.push("PoW".to_string())
             }
             features
