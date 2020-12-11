@@ -60,26 +60,26 @@ pub(crate) async fn submit_message<B: Backend>(
                 .as_str()
                 .ok_or(reject::custom(BadRequest(format!(
                     "invalid parent 1: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH
+                    MESSAGE_ID_LENGTH * 2
                 ))))?
                 .parse::<MessageId>()
                 .map_err(|_| {
                     reject::custom(BadRequest(format!(
                         "invalid parent 1: expected a hex-string of length {}",
-                        MESSAGE_ID_LENGTH
+                        MESSAGE_ID_LENGTH * 2
                     )))
                 })?;
             let parent2 = parent_2_v
                 .as_str()
                 .ok_or(reject::custom(BadRequest(format!(
                     "invalid parent 2: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH
+                    MESSAGE_ID_LENGTH * 2
                 ))))?
                 .parse::<MessageId>()
                 .map_err(|_| {
                     reject::custom(BadRequest(format!(
                         "invalid parent 2: expected a hex-string of length {}",
-                        MESSAGE_ID_LENGTH
+                        MESSAGE_ID_LENGTH * 2
                     )))
                 })?;
             (parent1, parent2)
@@ -98,13 +98,13 @@ pub(crate) async fn submit_message<B: Backend>(
                     .as_str()
                     .ok_or(reject::custom(BadRequest(format!(
                         "invalid parent 1: expected a hex-string of length {}",
-                        MESSAGE_ID_LENGTH
+                        MESSAGE_ID_LENGTH * 2
                     ))))?
                     .parse::<MessageId>()
                     .map_err(|_| {
                         reject::custom(BadRequest(format!(
                             "invalid parent 1: expected a hex-string of length {}",
-                            MESSAGE_ID_LENGTH
+                            MESSAGE_ID_LENGTH * 2
                         )))
                     })?
             } else {
@@ -112,13 +112,13 @@ pub(crate) async fn submit_message<B: Backend>(
                     .as_str()
                     .ok_or(reject::custom(BadRequest(format!(
                         "invalid parent 2: expected a hex-string of length {}",
-                        MESSAGE_ID_LENGTH
+                        MESSAGE_ID_LENGTH * 2
                     ))))?
                     .parse::<MessageId>()
                     .map_err(|_| {
                         reject::custom(BadRequest(format!(
                             "invalid parent 2: expected a hex-string of length {}",
-                            MESSAGE_ID_LENGTH
+                            MESSAGE_ID_LENGTH * 2
                         )))
                     })?
             };

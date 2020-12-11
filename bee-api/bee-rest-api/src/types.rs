@@ -180,13 +180,13 @@ impl TryFrom<&MessageDto> for Message {
             .with_parent1(value.parent_1_message_id.parse::<MessageId>().map_err(|_| {
                 format!(
                     "invalid parent 1: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH
+                    MESSAGE_ID_LENGTH * 2
                 )
             })?)
             .with_parent2(value.parent_2_message_id.parse::<MessageId>().map_err(|_| {
                 format!(
                     "invalid parent 2: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH
+                    MESSAGE_ID_LENGTH * 2
                 )
             })?)
             .with_nonce_provider(
@@ -340,7 +340,7 @@ impl TryFrom<&InputDto> for Input {
                     i.transaction_id.parse::<TransactionId>().map_err(|_| {
                         format!(
                             "invalid transaction id: expected a hex-string of length {}",
-                            TRANSACTION_ID_LENGTH
+                            TRANSACTION_ID_LENGTH * 2
                         )
                     })?,
                     i.transaction_output_index,
@@ -417,7 +417,7 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
         Ok(value.address.parse::<Ed25519Address>().map_err(|_| {
             format!(
                 "invalid Ed25519 address: expected a hex-string of length {}",
-                ED25519_ADDRESS_LENGTH
+                ED25519_ADDRESS_LENGTH * 2
             )
         })?)
     }
@@ -457,10 +457,12 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
                 SignatureDto::Ed25519(ed) => {
                     let mut public_key = [0u8; 32];
                     hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(|_| {
-                        "invalid public key in signature unlock block: expected a hex-string of length 32"
+                        "invalid public key in signature unlock block: expected a hex-string of length 64"
                     })?; // TODO access ED25519_PUBLIC_KEY_LENGTH when available
                     let signature = hex::decode(&ed.signature)
-                        .map_err(|_| "invalid signature in signature unlock block: expected a hex-string of length 64")? // TODO access ED25519_SIGNATURE_LENGTH when available
+                        .map_err(|_| {
+                            "invalid signature in signature unlock block: expected a hex-string of length 128"
+                        })? // TODO access ED25519_SIGNATURE_LENGTH when available
                         .into_boxed_slice();
                     Ok(UnlockBlock::Signature(SignatureUnlock::Ed25519(Ed25519Signature::new(
                         public_key, signature,
@@ -500,13 +502,13 @@ impl TryFrom<&MilestoneDto> for Box<Milestone> {
             let parent_1_message_id = value.parent_1_message_id.parse::<MessageId>().map_err(|_| {
                 format!(
                     "invalid parent 1 in milestone essence: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH
+                    MESSAGE_ID_LENGTH * 2
                 )
             })?;
             let parent_2_message_id = value.parent_2_message_id.parse::<MessageId>().map_err(|_| {
                 format!(
                     "invalid parent 2 in milestone essence: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH
+                    MESSAGE_ID_LENGTH * 2
                 )
             })?;
             let merkle_proof = {
@@ -514,7 +516,7 @@ impl TryFrom<&MilestoneDto> for Box<Milestone> {
                 hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf).map_err(|_| {
                     format!(
                         "invalid merkle proof in milestone essence: expected a hex-string of length {}",
-                        MILESTONE_MERKLE_PROOF_LENGTH
+                        MILESTONE_MERKLE_PROOF_LENGTH * 2
                     )
                 })?;
                 buf
@@ -526,7 +528,7 @@ impl TryFrom<&MilestoneDto> for Box<Milestone> {
                     hex::decode_to_slice(v, &mut buf).map_err(|_| {
                         format!(
                             "invalid public key in milestone essence: expected a hex-string of length {}",
-                            MILESTONE_PUBLIC_KEY_LENGTH
+                            MILESTONE_PUBLIC_KEY_LENGTH * 2
                         )
                     })?;
                     buf
@@ -549,7 +551,7 @@ impl TryFrom<&MilestoneDto> for Box<Milestone> {
                     .map_err(|_| {
                         format!(
                             "invalid signature: expected a hex-string of length {}",
-                            MILESTONE_SIGNATURE_LENGTH
+                            MILESTONE_SIGNATURE_LENGTH * 2
                         )
                     })?
                     .into_boxed_slice(),
