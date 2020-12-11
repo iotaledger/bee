@@ -1,113 +1,16 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use serde::Serialize;
+use bee_message::prelude::*;
 
-/// Marker trait for data bodies.
-pub trait DataBody {}
+use bee_message::payload::milestone::MilestoneEssence;
+use serde::{Deserialize, Serialize};
+use std::convert::{TryFrom, TryInto};
 
-/// Data response.
-#[derive(Clone, Debug, Serialize)]
-pub struct DataResponse<T: DataBody> {
-    pub data: T,
-}
+use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
+use std::num::NonZeroU64;
 
-impl<T: DataBody> DataResponse<T> {
-    /// Create a new data response.
-    pub(crate) fn new(data: T) -> Self {
-        Self { data }
-    }
-    #[allow(dead_code)]
-    /// Get the body of the response.
-    pub(crate) fn body(&self) -> &T {
-        &self.data
-    }
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct ErrorBody {
-    pub code: &'static str,
-    pub message: &'static str,
-}
-
-/// Error response.
-#[derive(Clone, Debug, Serialize)]
-pub struct ErrorResponse {
-    pub error: ErrorBody,
-}
-
-impl ErrorResponse {
-    /// Create a new error response.
-    pub(crate) fn new(error: ErrorBody) -> Self {
-        Self { error }
-    }
-    #[allow(dead_code)]
-    /// Get the body of the response.
-    pub(crate) fn body(&self) -> &ErrorBody {
-        &self.error
-    }
-}
-
-/// Response of GET /api/v1/info
-#[derive(Clone, Debug, Serialize)]
-pub struct GetInfoResponse {
-    pub name: String,
-    pub version: String,
-    #[serde(rename = "isHealthy")]
-    pub is_healthy: bool,
-    #[serde(rename = "networkId")]
-    pub network_id: String,
-    #[serde(rename = "latestMilestoneIndex")]
-    pub latest_milestone_index: u32,
-    #[serde(rename = "solidMilestoneIndex")]
-    pub solid_milestone_index: u32,
-    #[serde(rename = "pruningIndex")]
-    pub pruning_index: u32,
-    pub features: Vec<String>,
-}
-
-impl DataBody for GetInfoResponse {}
-
-/// Response of GET /api/v1/tips
-#[derive(Clone, Debug, Serialize)]
-pub struct GetTipsResponse {
-    #[serde(rename = "tip1MessageId")]
-    pub tip_1_message_id: String,
-    #[serde(rename = "tip2MessageId")]
-    pub tip_2_message_id: String,
-}
-
-impl DataBody for GetTipsResponse {}
-
-/// Response of POST /api/v1/messages
-#[derive(Clone, Debug, Serialize)]
-pub struct PostMessageResponse {
-    #[serde(rename = "messageId")]
-    pub message_id: String,
-}
-
-impl DataBody for PostMessageResponse {}
-
-/// Response of GET /api/v1/messages/{message_id}?index={INDEX}
-#[derive(Clone, Debug, Serialize)]
-pub struct GetMessagesByIndexResponse {
-    pub index: String,
-    #[serde(rename = "maxResults")]
-    pub max_results: usize,
-    pub count: usize,
-    #[serde(rename = "messageIds")]
-    pub message_ids: Vec<String>,
-}
-
-impl DataBody for GetMessagesByIndexResponse {}
-
-/// Response of GET /api/v1/messages/{message_id}
-#[derive(Clone, Debug, Serialize)]
-pub struct GetMessageResponse(pub MessageDto);
-
-impl DataBody for GetMessageResponse {}
-
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
     #[serde(rename = "networkId")]
     pub network_id: String,
@@ -119,16 +22,16 @@ pub struct MessageDto {
     pub nonce: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PayloadDto {
-    Transaction(TransactionPayloadDto),
-    Indexation(IndexationPayloadDto),
-    Milestone(MilestonePayloadDto),
+    Transaction(TransactionDto),
+    Milestone(MilestoneDto),
+    Indexation(IndexationDto),
 }
 
-#[derive(Clone, Debug, Serialize)]
-pub struct TransactionPayloadDto {
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TransactionDto {
     #[serde(rename = "type")]
     pub kind: u32,
     pub essence: TransactionEssenceDto,
@@ -136,22 +39,22 @@ pub struct TransactionPayloadDto {
     pub unlock_blocks: Vec<UnlockBlockDto>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionEssenceDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    pub inputs: Vec<UtxoInputDto>,
+    pub inputs: Vec<InputDto>,
     pub outputs: Vec<OutputDto>,
-    pub payload: Option<IndexationPayloadDto>,
+    pub payload: Option<IndexationDto>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum OutputDto {
-    SignatureLockedSingle(SignatureLockedSingleOutputDto),
+pub enum InputDto {
+    UTXO(UtxoInputDto),
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UtxoInputDto {
     #[serde(rename = "type")]
     pub kind: u32,
@@ -161,36 +64,54 @@ pub struct UtxoInputDto {
     pub transaction_output_index: u16,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum OutputDto {
+    SignatureLockedSingle(SignatureLockedSingleOutputDto),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedSingleOutputDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    pub address: Ed25519AddressDto,
-    pub amount: String,
+    pub address: AddressDto,
+    pub amount: u64,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AddressDto {
+    Ed25519(Ed25519AddressDto),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Ed25519AddressDto {
     #[serde(rename = "type")]
     pub kind: u32,
     pub address: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum UnlockBlockDto {
-    Signature(SignatureUnlockBlockDto),
-    Reference(ReferenceUnlockBlockDto),
+    Signature(SignatureUnlockDto),
+    Reference(ReferenceUnlockDto),
 }
 
-#[derive(Clone, Debug, Serialize)]
-pub struct SignatureUnlockBlockDto {
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SignatureUnlockDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    pub signature: Ed25519SignatureDto,
+    pub signature: SignatureDto,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SignatureDto {
+    Ed25519(Ed25519SignatureDto),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Ed25519SignatureDto {
     #[serde(rename = "type")]
     pub kind: u32,
@@ -199,130 +120,468 @@ pub struct Ed25519SignatureDto {
     pub signature: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
-pub struct ReferenceUnlockBlockDto {
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReferenceUnlockDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    pub reference: u16,
+    pub index: u16,
 }
 
-#[derive(Clone, Debug, Serialize)]
-pub struct IndexationPayloadDto {
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MilestoneDto {
+    #[serde(rename = "type")]
+    pub kind: u32,
+    pub index: u32,
+    pub timestamp: u64,
+    #[serde(rename = "parent1MessageId")]
+    pub parent_1_message_id: String,
+    #[serde(rename = "parent2MessageId")]
+    pub parent_2_message_id: String,
+    #[serde(rename = "inclusionMerkleProof")]
+    pub inclusion_merkle_proof: String,
+    #[serde(rename = "publicKeys")]
+    pub public_keys: Vec<String>,
+    pub signatures: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct IndexationDto {
     #[serde(rename = "type")]
     pub kind: u32,
     pub index: String,
     pub data: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
-pub struct MilestonePayloadDto {
-    #[serde(rename = "type")]
-    pub kind: u32,
-    pub index: u32,
-    pub timestamp: u64,
-    #[serde(rename = "inclusionMerkleProof")]
-    pub inclusion_merkle_proof: String,
-    pub signatures: Vec<String>,
+// &Message -> MessageDto
+impl TryFrom<&Message> for MessageDto {
+    type Error = String;
+    fn try_from(value: &Message) -> Result<Self, Self::Error> {
+        Ok(MessageDto {
+            network_id: value.network_id().to_string(),
+            parent_1_message_id: value.parent1().to_string(),
+            parent_2_message_id: value.parent2().to_string(),
+            payload: value.payload().as_ref().map(TryInto::try_into).transpose()?,
+            nonce: value.nonce().to_string(),
+        })
+    }
 }
 
-/// Response of GET /api/v1/messages/{message_id}/metadata
-#[derive(Clone, Debug, Serialize)]
-pub struct GetMessageMetadataResponse {
-    #[serde(rename = "messageId")]
-    pub message_id: String,
-    #[serde(rename = "parent1MessageId")]
-    pub parent_1_message_id: String,
-    #[serde(rename = "parent2MessageId")]
-    pub parent_2_message_id: String,
-    #[serde(rename = "isSolid")]
-    pub is_solid: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "referencedByMilestoneIndex")]
-    pub referenced_by_milestone_index: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "ledgerInclusionState")]
-    pub ledger_inclusion_state: Option<LedgerInclusionStateDto>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "shouldPromote")]
-    pub should_promote: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "shouldReattach")]
-    pub should_reattach: Option<bool>,
+// &MessageDto -> Message
+impl TryFrom<&MessageDto> for Message {
+    type Error = String;
+    fn try_from(value: &MessageDto) -> Result<Self, Self::Error> {
+        let mut builder = MessageBuilder::new()
+            .with_network_id(
+                value
+                    .network_id
+                    .parse::<u64>()
+                    .map_err(|_| "invalid network id: expected an u64-string")?,
+            )
+            .with_parent1(value.parent_1_message_id.parse::<MessageId>().map_err(|_| {
+                format!(
+                    "invalid parent 1: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH * 2
+                )
+            })?)
+            .with_parent2(value.parent_2_message_id.parse::<MessageId>().map_err(|_| {
+                format!(
+                    "invalid parent 2: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH * 2
+                )
+            })?)
+            .with_nonce_provider(
+                ConstantBuilder::new()
+                    .with_value(
+                        value
+                            .nonce
+                            .parse::<u64>()
+                            .map_err(|_| "invalid nonce: expected an u64-string".to_string())?,
+                    )
+                    .finish(),
+                0f64,
+            );
+        if let Some(p) = value.payload.as_ref() {
+            builder = builder.with_payload(p.try_into()?);
+        }
+        Ok(builder.finish().map_err(|e| format!("invalid message: {}", e))?)
+    }
 }
 
-#[derive(Clone, Debug, Serialize)]
-#[serde(untagged)]
-pub enum LedgerInclusionStateDto {
-    Conflicting,
-    Included,
-    NoTransaction,
+// &Payload -> PayloadDto
+impl TryFrom<&Payload> for PayloadDto {
+    type Error = String;
+    fn try_from(value: &Payload) -> Result<Self, Self::Error> {
+        match value {
+            Payload::Transaction(t) => Ok(PayloadDto::Transaction(t.try_into()?)),
+            Payload::Milestone(m) => Ok(PayloadDto::Milestone(m.into())),
+            Payload::Indexation(i) => Ok(PayloadDto::Indexation(i.into())),
+            _ => Err("payload type not supported".to_string()),
+        }
+    }
 }
 
-impl DataBody for GetMessageMetadataResponse {}
-
-/// Response of GET /api/v1/messages/{message_id}/children
-#[derive(Clone, Debug, Serialize)]
-pub struct GetChildrenResponse {
-    #[serde(rename = "messageId")]
-    pub message_id: String,
-    #[serde(rename = "maxResults")]
-    pub max_results: usize,
-    pub count: usize,
-    #[serde(rename = "childrenMessageIds")]
-    pub children_message_ids: Vec<String>,
+// &PayloadDto -> Payload
+impl TryFrom<&PayloadDto> for Payload {
+    type Error = String;
+    fn try_from(value: &PayloadDto) -> Result<Self, Self::Error> {
+        match value {
+            PayloadDto::Transaction(t) => Ok(Payload::Transaction(t.try_into()?)),
+            PayloadDto::Milestone(m) => Ok(Payload::Milestone(m.try_into()?)),
+            PayloadDto::Indexation(i) => Ok(Payload::Indexation(i.try_into()?)),
+        }
+    }
 }
 
-impl DataBody for GetChildrenResponse {}
-
-/// Response of GET /api/v1/milestone/{milestone_index}
-#[derive(Clone, Debug, Serialize)]
-pub struct GetMilestoneResponse {
-    #[serde(rename = "milestoneIndex")]
-    pub milestone_index: u32,
-    #[serde(rename = "messageId")]
-    pub message_id: String,
-    pub timestamp: u64,
+// &Box<Transaction> -> TransactionDto
+impl TryFrom<&Box<Transaction>> for TransactionDto {
+    type Error = String;
+    fn try_from(value: &Box<Transaction>) -> Result<Self, Self::Error> {
+        Ok(TransactionDto {
+            kind: 0,
+            essence: value.essence().try_into()?,
+            unlock_blocks: value
+                .unlock_blocks()
+                .iter()
+                .map(|u| u.try_into())
+                .collect::<Result<Vec<_>, _>>()?,
+        })
+    }
 }
 
-impl DataBody for GetMilestoneResponse {}
-
-/// Response of GET /api/v1/outputs/{output_id}
-#[derive(Clone, Debug, Serialize)]
-pub struct GetOutputByOutputIdResponse {
-    #[serde(rename = "messageId")]
-    pub message_id: String,
-    #[serde(rename = "transactionId")]
-    pub transaction_id: String,
-    #[serde(rename = "outputIndex")]
-    pub output_index: u16,
-    #[serde(rename = "isSpent")]
-    pub is_spent: bool,
-    pub output: OutputDto,
+// &TransactionDto -> Box<Transaction>
+impl TryFrom<&TransactionDto> for Box<Transaction> {
+    type Error = String;
+    fn try_from(value: &TransactionDto) -> Result<Self, Self::Error> {
+        let mut builder = Transaction::builder().with_essence((&value.essence).try_into()?);
+        for b in &value.unlock_blocks {
+            builder = builder.add_unlock_block(b.try_into()?);
+        }
+        Ok(Box::new(
+            builder
+                .finish()
+                .map_err(|e| format!("invalid transaction payload: {}", e))?,
+        ))
+    }
 }
 
-impl DataBody for GetOutputByOutputIdResponse {}
-
-/// Response of GET /api/v1/addresses/{address}
-#[derive(Clone, Debug, Serialize)]
-pub struct GetBalanceForAddressResponse {
-    pub address: String,
-    #[serde(rename = "maxResults")]
-    pub max_results: usize,
-    pub count: usize,
-    pub balance: u32,
+// &TransactionEssence -> TransactionEssenceDto
+impl TryFrom<&TransactionEssence> for TransactionEssenceDto {
+    type Error = String;
+    fn try_from(value: &TransactionEssence) -> Result<Self, Self::Error> {
+        Ok(TransactionEssenceDto {
+            kind: 0, // TODO: should this be removed?
+            inputs: value
+                .inputs()
+                .iter()
+                .map(|i| i.try_into())
+                .collect::<Result<Vec<_>, _>>()?,
+            outputs: value
+                .outputs()
+                .iter()
+                .map(|o| o.try_into())
+                .collect::<Result<Vec<_>, _>>()?,
+            payload: match value.payload() {
+                Some(Payload::Indexation(i)) => Some(i.into()),
+                Some(_) => {
+                    return Err("invalid transaction essence: expected an optional indexation-payload".to_string())
+                }
+                None => None,
+            },
+        })
+    }
 }
 
-impl DataBody for GetBalanceForAddressResponse {}
+// &TransactionEssenceDto -> TransactionEssence
+impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
+    type Error = String;
+    fn try_from(value: &TransactionEssenceDto) -> Result<Self, Self::Error> {
+        let mut builder = TransactionEssence::builder();
 
-/// Response of GET /api/v1/addresses/{address}/outputs
-#[derive(Clone, Debug, Serialize)]
-pub struct GetOutputsForAddressResponse {
-    pub address: String,
-    #[serde(rename = "maxResults")]
-    pub max_results: usize,
-    pub count: usize,
-    #[serde(rename = "outputIds")]
-    pub output_ids: Vec<String>,
+        for i in &value.inputs {
+            builder = builder.add_input(i.try_into()?);
+        }
+
+        for o in &value.outputs {
+            builder = builder.add_output(o.try_into()?);
+        }
+
+        if let Some(p) = &value.payload {
+            builder = builder.with_payload(Payload::Indexation((p).try_into()?));
+        }
+
+        Ok(builder
+            .finish()
+            .map_err(|e| format!("invalid transaction essence: {}", e))?)
+    }
 }
 
-impl DataBody for GetOutputsForAddressResponse {}
+// &Input -> InputDto
+impl TryFrom<&Input> for InputDto {
+    type Error = String;
+    fn try_from(value: &Input) -> Result<Self, Self::Error> {
+        match value {
+            Input::UTXO(u) => Ok(InputDto::UTXO(UtxoInputDto {
+                kind: 0,
+                transaction_id: u.output_id().transaction_id().to_string(),
+                transaction_output_index: u.output_id().index(),
+            })),
+            _ => Err("input type not supported".to_string()),
+        }
+    }
+}
+
+// &InputDto -> Input
+impl TryFrom<&InputDto> for Input {
+    type Error = String;
+    fn try_from(value: &InputDto) -> Result<Self, Self::Error> {
+        match value {
+            InputDto::UTXO(i) => Ok(Input::UTXO(
+                UTXOInput::new(
+                    i.transaction_id.parse::<TransactionId>().map_err(|_| {
+                        format!(
+                            "invalid transaction id: expected a hex-string of length {}",
+                            TRANSACTION_ID_LENGTH * 2
+                        )
+                    })?,
+                    i.transaction_output_index,
+                )
+                .map_err(|e| format!("invalid input: {}", e))?,
+            )),
+        }
+    }
+}
+
+// &Output -> OutputDto
+impl TryFrom<&Output> for OutputDto {
+    type Error = String;
+    fn try_from(value: &Output) -> Result<Self, Self::Error> {
+        match value {
+            Output::SignatureLockedSingle(s) => Ok(OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
+                kind: 0,
+                address: s.address().try_into()?,
+                amount: s.amount().get(),
+            })),
+            _ => return Err("output type not supported".to_string()),
+        }
+    }
+}
+
+// &OutputDto -> Output
+impl TryFrom<&OutputDto> for Output {
+    type Error = String;
+    fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
+        match value {
+            OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(
+                (&s.address).try_into()?,
+                NonZeroU64::new(s.amount).ok_or("invalid amount: expected a non-zero u64-string")?,
+            ))),
+        }
+    }
+}
+
+// &Address -> AddressDto
+impl TryFrom<&Address> for AddressDto {
+    type Error = String;
+    fn try_from(value: &Address) -> Result<Self, Self::Error> {
+        match value {
+            Address::Ed25519(ed) => Ok(AddressDto::Ed25519(ed.into())),
+            _ => Err("address type not supported".to_string()),
+        }
+    }
+}
+
+// &AddressDto -> Address
+impl TryFrom<&AddressDto> for Address {
+    type Error = String;
+    fn try_from(value: &AddressDto) -> Result<Self, Self::Error> {
+        match value {
+            AddressDto::Ed25519(a) => Ok(Address::Ed25519(a.try_into()?)),
+        }
+    }
+}
+
+// &Ed25519Address -> Ed25519AddressDto
+impl From<&Ed25519Address> for Ed25519AddressDto {
+    fn from(value: &Ed25519Address) -> Self {
+        Self {
+            kind: 1,
+            address: value.to_string(),
+        }
+    }
+}
+
+// &Ed25519AddressDto -> Ed25519Address
+impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
+    type Error = String;
+    fn try_from(value: &Ed25519AddressDto) -> Result<Self, Self::Error> {
+        Ok(value.address.parse::<Ed25519Address>().map_err(|_| {
+            format!(
+                "invalid Ed25519 address: expected a hex-string of length {}",
+                ED25519_ADDRESS_LENGTH * 2
+            )
+        })?)
+    }
+}
+
+// &UnlockBlock -> UnlockBlockDto
+impl TryFrom<&UnlockBlock> for UnlockBlockDto {
+    type Error = String;
+    fn try_from(value: &UnlockBlock) -> Result<Self, Self::Error> {
+        match value {
+            UnlockBlock::Signature(s) => match s {
+                SignatureUnlock::Ed25519(ed) => Ok(UnlockBlockDto::Signature(SignatureUnlockDto {
+                    kind: 0,
+                    signature: SignatureDto::Ed25519(Ed25519SignatureDto {
+                        kind: 1,
+                        public_key: hex::encode(ed.public_key()),
+                        signature: hex::encode(ed.signature()),
+                    }),
+                })),
+                _ => Err("signature unlock type not supported".to_string()),
+            },
+            UnlockBlock::Reference(r) => Ok(UnlockBlockDto::Reference(ReferenceUnlockDto {
+                kind: 1,
+                index: r.index(),
+            })),
+            _ => Err("unlock block type not supported".to_string()),
+        }
+    }
+}
+
+// &UnlockBlockDto -> UnlockBlock
+impl TryFrom<&UnlockBlockDto> for UnlockBlock {
+    type Error = String;
+    fn try_from(value: &UnlockBlockDto) -> Result<Self, Self::Error> {
+        match value {
+            UnlockBlockDto::Signature(s) => match &s.signature {
+                SignatureDto::Ed25519(ed) => {
+                    let mut public_key = [0u8; 32];
+                    hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(|_| {
+                        "invalid public key in signature unlock block: expected a hex-string of length 64"
+                    })?; // TODO access ED25519_PUBLIC_KEY_LENGTH when available
+                    let signature = hex::decode(&ed.signature)
+                        .map_err(|_| {
+                            "invalid signature in signature unlock block: expected a hex-string of length 128"
+                        })? // TODO access ED25519_SIGNATURE_LENGTH when available
+                        .into_boxed_slice();
+                    Ok(UnlockBlock::Signature(SignatureUnlock::Ed25519(Ed25519Signature::new(
+                        public_key, signature,
+                    ))))
+                }
+            },
+            UnlockBlockDto::Reference(r) => Ok(UnlockBlock::Reference(
+                ReferenceUnlock::new(r.index).map_err(|e| format!("invalid reference unlock block: {}", e))?,
+            )),
+        }
+    }
+}
+
+// Box<Milestone> -> MilestoneDto
+impl From<&Box<Milestone>> for MilestoneDto {
+    fn from(value: &Box<Milestone>) -> Self {
+        MilestoneDto {
+            kind: 1,
+            index: value.essence().index(),
+            timestamp: value.essence().timestamp(),
+            parent_1_message_id: value.essence().parent1().to_string(),
+            parent_2_message_id: value.essence().parent2().to_string(),
+            inclusion_merkle_proof: hex::encode(value.essence().merkle_proof()),
+            public_keys: value.essence().public_keys().iter().map(|p| hex::encode(p)).collect(),
+            signatures: value.signatures().iter().map(|s| hex::encode(s)).collect(),
+        }
+    }
+}
+
+// MilestoneDto -> Box<Milestone>
+impl TryFrom<&MilestoneDto> for Box<Milestone> {
+    type Error = String;
+    fn try_from(value: &MilestoneDto) -> Result<Self, Self::Error> {
+        let essence = {
+            let index = value.index;
+            let timestamp = value.timestamp;
+            let parent_1_message_id = value.parent_1_message_id.parse::<MessageId>().map_err(|_| {
+                format!(
+                    "invalid parent 1 in milestone essence: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH * 2
+                )
+            })?;
+            let parent_2_message_id = value.parent_2_message_id.parse::<MessageId>().map_err(|_| {
+                format!(
+                    "invalid parent 2 in milestone essence: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH * 2
+                )
+            })?;
+            let merkle_proof = {
+                let mut buf = [0u8; MILESTONE_MERKLE_PROOF_LENGTH];
+                hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf).map_err(|_| {
+                    format!(
+                        "invalid merkle proof in milestone essence: expected a hex-string of length {}",
+                        MILESTONE_MERKLE_PROOF_LENGTH * 2
+                    )
+                })?;
+                buf
+            };
+            let mut public_keys = Vec::new();
+            for v in &value.public_keys {
+                let key = {
+                    let mut buf = [0u8; MILESTONE_PUBLIC_KEY_LENGTH];
+                    hex::decode_to_slice(v, &mut buf).map_err(|_| {
+                        format!(
+                            "invalid public key in milestone essence: expected a hex-string of length {}",
+                            MILESTONE_PUBLIC_KEY_LENGTH * 2
+                        )
+                    })?;
+                    buf
+                };
+                public_keys.push(key);
+            }
+            MilestoneEssence::new(
+                index,
+                timestamp,
+                parent_1_message_id,
+                parent_2_message_id,
+                merkle_proof,
+                public_keys,
+            )
+        };
+        let mut signatures = Vec::new();
+        for v in &value.signatures {
+            signatures.push(
+                hex::decode(v)
+                    .map_err(|_| {
+                        format!(
+                            "invalid signature: expected a hex-string of length {}",
+                            MILESTONE_SIGNATURE_LENGTH * 2
+                        )
+                    })?
+                    .into_boxed_slice(),
+            )
+        }
+        Ok(Box::new(Milestone::new(essence, signatures)))
+    }
+}
+
+impl From<&Box<Indexation>> for IndexationDto {
+    fn from(value: &Box<Indexation>) -> Self {
+        IndexationDto {
+            kind: 2,
+            index: value.index().to_owned(),
+            data: hex::encode(value.data()),
+        }
+    }
+}
+
+// IndexationDto -> Box<Indexation>
+impl TryFrom<&IndexationDto> for Box<Indexation> {
+    type Error = String;
+    fn try_from(value: &IndexationDto) -> Result<Self, Self::Error> {
+        Ok(Box::new(
+            Indexation::new(
+                value.index.clone(),
+                &hex::decode(value.data.clone())
+                    .map_err(|_| "invalid data in indexation payload: expected a hex-string")?,
+            )
+            .map_err(|e| format!("invalid indexation payload: {}", e))?,
+        ))
+    }
+}
