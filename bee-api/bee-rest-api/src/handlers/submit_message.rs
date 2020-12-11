@@ -12,7 +12,7 @@ use crate::{
 use bee_common::{node::ResHandle, packable::Packable};
 use bee_message::prelude::*;
 use bee_pow::providers::{ConstantBuilder, MinerBuilder, ProviderBuilder};
-use bee_protocol::{tangle::MsTangle, MessageSubmitterError, MessageSubmitterWorkerEvent};
+use bee_protocol::{config::ProtocolConfig, tangle::MsTangle, MessageSubmitterError, MessageSubmitterWorkerEvent};
 use blake2::VarBlake2b;
 use futures::channel::oneshot;
 use log::error;
@@ -27,7 +27,8 @@ pub(crate) async fn submit_message<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
-    config: RestApiConfig,
+    rest_api_config: RestApiConfig,
+    protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Rejection> {
     let is_set = |value: &JsonValue| -> bool { !value.is_null() };
 
@@ -139,7 +140,7 @@ pub(crate) async fn submit_message<B: Backend>(
     let nonce = {
         let nonce_v = &value["nonce"];
         if nonce_v.is_null() {
-            if !config.feature_proof_of_work() {
+            if !rest_api_config.feature_proof_of_work() {
                 return Err(reject::custom(ServiceUnavailable(
                     "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
                 )));
@@ -176,7 +177,10 @@ pub(crate) async fn submit_message<B: Backend>(
                 .with_network_id(network_id)
                 .with_parent1(parent_1_message_id)
                 .with_parent2(parent_2_message_id)
-                .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64);
+                .with_nonce_provider(
+                    MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
+                    protocol_config.minimum_pow_score(),
+                );
             if let Some(payload) = payload {
                 builder = builder.with_payload(payload)
             }

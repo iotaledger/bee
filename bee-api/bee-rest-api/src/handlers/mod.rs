@@ -3,10 +3,10 @@
 
 pub mod balance_bech32;
 pub mod balance_ed25519;
-pub mod message_children;
 pub mod health;
 pub mod info;
 pub mod message;
+pub mod message_children;
 pub mod message_indexation;
 pub mod message_metadata;
 pub mod message_raw;

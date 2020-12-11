@@ -10,6 +10,7 @@ use bee_protocol::{tangle::MsTangle, MessageSubmitterWorkerEvent};
 use crate::{config::RestApiConfig, filters::CustomRejection::BadRequest, storage::Backend};
 use bech32::FromBase32;
 use bee_common::packable::Packable;
+use bee_protocol::config::ProtocolConfig;
 use std::collections::HashMap;
 use tokio::sync::mpsc;
 
@@ -27,31 +28,33 @@ pub fn all<B: Backend>(
     storage: ResHandle<B>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
-    config: RestApiConfig,
+    rest_api_config: RestApiConfig,
+    protocol_config: ProtocolConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    get_health(tangle.clone()).or(get_info(tangle.clone(), network_id.clone(), config.clone())
-        .or(get_tips(tangle.clone()))
-        .or(post_json_message(
+    health(tangle.clone()).or(info(tangle.clone(), network_id.clone(), rest_api_config.clone())
+        .or(tips(tangle.clone()))
+        .or(submit_message(
             tangle.clone(),
             message_submitter.clone(),
             network_id.clone(),
-            config.clone(),
+            rest_api_config.clone(),
+            protocol_config.clone(),
         ))
-        .or(post_raw_message(tangle.clone(), message_submitter.clone()))
-        .or(get_message_by_index(storage.clone()))
-        .or(get_message_by_message_id(tangle.clone()))
-        .or(get_message_metadata(tangle.clone()))
-        .or(get_raw_message(tangle.clone()))
-        .or(get_children_by_message_id(tangle.clone()))
-        .or(get_output_by_output_id(storage.clone()))
-        .or(get_balance_for_bech32_address(storage.clone()))
-        .or(get_balance_for_ed25519_address(storage.clone()))
-        .or(get_outputs_for_bech32_address(storage.clone()))
-        .or(get_outputs_for_ed25519_address(storage.clone()))
-        .or(get_milestone_by_milestone_index(tangle.clone())))
+        .or(submit_message_raw(tangle.clone(), message_submitter.clone()))
+        .or(message_indexation(storage.clone()))
+        .or(message(tangle.clone()))
+        .or(message_metadata(tangle.clone()))
+        .or(message_raw(tangle.clone()))
+        .or(message_children(tangle.clone()))
+        .or(output(storage.clone()))
+        .or(balance_bech32(storage.clone()))
+        .or(balance_ed25519(storage.clone()))
+        .or(outputs_bech32(storage.clone()))
+        .or(outputs_ed25519(storage.clone()))
+        .or(milestone(tangle.clone())))
 }
 
-fn get_health<B: Backend>(
+fn health<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -61,7 +64,7 @@ fn get_health<B: Backend>(
         .and_then(handlers::health::health)
 }
 
-fn get_info<B: Backend>(
+fn info<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     network_id: NetworkId,
     config: RestApiConfig,
@@ -77,7 +80,7 @@ fn get_info<B: Backend>(
         .and_then(handlers::info::info)
 }
 
-fn get_tips<B: Backend>(
+fn tips<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -89,11 +92,12 @@ fn get_tips<B: Backend>(
         .and_then(handlers::tips::tips)
 }
 
-fn post_json_message<B: Backend>(
+fn submit_message<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
-    config: RestApiConfig,
+    rest_api_config: RestApiConfig,
+    protocol_config: ProtocolConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::post()
         .and(warp::path("api"))
@@ -103,11 +107,12 @@ fn post_json_message<B: Backend>(
         .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
         .and(with_network_id(network_id))
-        .and(with_rest_api_config(config))
+        .and(with_rest_api_config(rest_api_config))
+        .and(with_protocol_config(protocol_config))
         .and_then(handlers::submit_message::submit_message)
 }
 
-fn post_raw_message<B: Backend>(
+fn submit_message_raw<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -122,7 +127,7 @@ fn post_raw_message<B: Backend>(
         .and_then(handlers::submit_message_raw::submit_message_raw)
 }
 
-fn get_message_by_index<B: Backend>(
+fn message_indexation<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -140,7 +145,7 @@ fn get_message_by_index<B: Backend>(
         .and_then(handlers::message_indexation::message_indexation)
 }
 
-fn get_message_by_message_id<B: Backend>(
+fn message<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -153,7 +158,7 @@ fn get_message_by_message_id<B: Backend>(
         .and_then(handlers::message::message)
 }
 
-fn get_message_metadata<B: Backend>(
+fn message_metadata<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -167,7 +172,7 @@ fn get_message_metadata<B: Backend>(
         .and_then(handlers::message_metadata::message_metadata)
 }
 
-fn get_raw_message<B: Backend>(
+fn message_raw<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -181,7 +186,7 @@ fn get_raw_message<B: Backend>(
         .and_then(handlers::message_raw::message_raw)
 }
 
-fn get_children_by_message_id<B: Backend>(
+fn message_children<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -195,7 +200,7 @@ fn get_children_by_message_id<B: Backend>(
         .and_then(handlers::message_children::message_children)
 }
 
-fn get_output_by_output_id<B: Backend>(
+fn output<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -208,7 +213,7 @@ fn get_output_by_output_id<B: Backend>(
         .and_then(handlers::output::output)
 }
 
-fn get_balance_for_bech32_address<B: Backend>(
+fn balance_bech32<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -221,7 +226,7 @@ fn get_balance_for_bech32_address<B: Backend>(
         .and_then(handlers::balance_bech32::balance_bech32)
 }
 
-fn get_balance_for_ed25519_address<B: Backend>(
+fn balance_ed25519<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -235,7 +240,7 @@ fn get_balance_for_ed25519_address<B: Backend>(
         .and_then(handlers::balance_ed25519::balance_ed25519)
 }
 
-fn get_outputs_for_bech32_address<B: Backend>(
+fn outputs_bech32<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -249,7 +254,7 @@ fn get_outputs_for_bech32_address<B: Backend>(
         .and_then(handlers::outputs_bech32::outputs_bech32)
 }
 
-fn get_outputs_for_ed25519_address<B: Backend>(
+fn outputs_ed25519<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -263,7 +268,7 @@ fn get_outputs_for_ed25519_address<B: Backend>(
         .and_then(handlers::outputs_ed25519::outputs_ed25519)
 }
 
-fn get_milestone_by_milestone_index<B: Backend>(
+fn milestone<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -350,6 +355,12 @@ fn with_network_id(
 fn with_rest_api_config(
     config: RestApiConfig,
 ) -> impl Filter<Extract = (RestApiConfig,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || config.clone())
+}
+
+fn with_protocol_config(
+    config: ProtocolConfig,
+) -> impl Filter<Extract = (ProtocolConfig,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || config.clone())
 }
 
