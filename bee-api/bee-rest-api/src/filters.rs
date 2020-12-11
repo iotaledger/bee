@@ -142,7 +142,7 @@ fn message_indexation<B: Backend>(
             }
         }))
         .and(with_storage(storage))
-        .and_then(handlers::message_indexation::message_indexation)
+        .and_then(handlers::messages_find::messages_find)
 }
 
 fn message<B: Backend>(
@@ -322,7 +322,7 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match bech32::decode(&value) {
                 Ok((hrp, data)) => {
-                    if hrp.eq("iota") || hrp.eq("atoi") {
+                    if hrp.eq("iot") || hrp.eq("toi") {
                         let bytes = Vec::<u8>::from_base32(&data)
                             .map_err(|_| reject::custom(BadRequest("invalid IOTA address".to_string())))?;
                         Ok(Address::unpack(&mut bytes.as_slice())

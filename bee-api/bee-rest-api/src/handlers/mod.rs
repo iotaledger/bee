@@ -7,7 +7,7 @@ pub mod health;
 pub mod info;
 pub mod message;
 pub mod message_children;
-pub mod message_indexation;
+pub mod messages_find;
 pub mod message_metadata;
 pub mod message_raw;
 pub mod milestone;

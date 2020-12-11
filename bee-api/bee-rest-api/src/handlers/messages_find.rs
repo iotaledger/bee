@@ -14,7 +14,7 @@ use serde::Serialize;
 use std::{convert::TryInto, ops::Deref};
 use warp::{reject, Rejection, Reply};
 
-pub(crate) async fn message_indexation<B: Backend>(
+pub(crate) async fn messages_find<B: Backend>(
     index: String,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {
