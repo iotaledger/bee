@@ -20,10 +20,9 @@ use warp::{http::StatusCode, Filter, Rejection, Reply};
 
 use crate::{
     filters::CustomRejection,
+    handlers::{ErrorEnvelope, ErrorEnvelopeContent},
     storage::Backend,
-
 };
-use crate::handlers::{ErrorEnvelope, ErrorEnvelopeContent};
 
 pub(crate) type NetworkId = (String, u64);
 
@@ -47,7 +46,7 @@ where
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let rest_config = config.0;
+        let rest_api_config = config.0;
         let network_id = config.1;
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
@@ -57,10 +56,11 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let routes = filters::all(tangle, storage, message_submitter, network_id).recover(handle_rejection);
+            let routes =
+                filters::all(tangle, storage, message_submitter, network_id, rest_api_config).recover(handle_rejection);
 
             let (_, server) =
-                warp::serve(routes).bind_with_graceful_shutdown(rest_config.binding_socket_addr(), async {
+                warp::serve(routes).bind_with_graceful_shutdown(rest_api_config.binding_socket_addr(), async {
                     shutdown.await.ok();
                 });
 

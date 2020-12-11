@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    config::RestApiConfig,
     handlers::{health::is_healthy, EnvelopeContent, SuccessEnvelope},
     storage::Backend,
     NetworkId,
@@ -15,6 +16,7 @@ use warp::Reply;
 pub(crate) async fn info<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     network_id: NetworkId,
+    config: RestApiConfig,
 ) -> Result<impl Reply, Infallible> {
     Ok(warp::reply::json(&SuccessEnvelope::new(GetInfoResponse {
         name: String::from("Bee"),
@@ -24,7 +26,13 @@ pub(crate) async fn info<B: Backend>(
         latest_milestone_index: *tangle.get_latest_milestone_index(),
         solid_milestone_index: *tangle.get_latest_milestone_index(),
         pruning_index: *tangle.get_pruning_index(),
-        features: Vec::new(), // TODO: look up features
+        features: {
+            let mut features = Vec::new();
+            if config.allow_proof_of_work() {
+                features.push("PoW".to_string())
+            }
+            features
+        },
     })))
 }
 

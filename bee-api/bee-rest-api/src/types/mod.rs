@@ -7,9 +7,8 @@ use bee_message::payload::milestone::MilestoneEssence;
 use serde::{Deserialize, Serialize};
 use std::convert::{TryFrom, TryInto};
 
+use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
 use std::num::NonZeroU64;
-
-
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
@@ -176,7 +175,7 @@ impl TryFrom<&Message> for MessageDto {
 impl TryFrom<&MessageDto> for Message {
     type Error = String;
     fn try_from(value: &MessageDto) -> Result<Self, Self::Error> {
-        let mut builder = Message::builder()
+        let mut builder = MessageBuilder::new()
             .with_network_id(
                 value
                     .network_id
@@ -195,11 +194,16 @@ impl TryFrom<&MessageDto> for Message {
                     MESSAGE_ID_LENGTH
                 )
             })?)
-            .with_nonce(
-                value
-                    .nonce
-                    .parse::<u64>()
-                    .map_err(|_| "invalid nonce: expected an u64-string".to_string())?,
+            .with_nonce_provider(
+                ConstantBuilder::new()
+                    .with_value(
+                        value
+                            .nonce
+                            .parse::<u64>()
+                            .map_err(|_| "invalid nonce: expected an u64-string".to_string())?,
+                    )
+                    .finish(),
+                0f64,
             );
         if let Some(p) = value.payload.as_ref() {
             builder = builder.with_payload(p.try_into()?);

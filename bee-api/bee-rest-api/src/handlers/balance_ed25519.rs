@@ -14,7 +14,7 @@ use serde::Serialize;
 use std::ops::Deref;
 use warp::{reject, Rejection, Reply};
 
-pub(crate) async fn balance_ed25519_address<B: Backend>(
+pub(crate) async fn balance_ed25519<B: Backend>(
     addr: Ed25519Address,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {

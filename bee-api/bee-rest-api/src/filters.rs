@@ -1,13 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{NetworkId, handlers};
+use crate::{handlers, NetworkId};
 use bee_common::node::ResHandle;
 use warp::{reject, Filter, Rejection};
 
 use bee_protocol::{tangle::MsTangle, MessageSubmitterWorkerEvent};
 
-use crate::{filters::CustomRejection::BadRequest, storage::Backend};
+use crate::{config::RestApiConfig, filters::CustomRejection::BadRequest, storage::Backend};
 use bech32::FromBase32;
 use bee_common::packable::Packable;
 use std::collections::HashMap;
@@ -27,13 +27,15 @@ pub fn all<B: Backend>(
     storage: ResHandle<B>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
+    config: RestApiConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    get_health(tangle.clone()).or(get_info(tangle.clone(), network_id.clone())
+    get_health(tangle.clone()).or(get_info(tangle.clone(), network_id.clone(), config.clone())
         .or(get_tips(tangle.clone()))
         .or(post_json_message(
             tangle.clone(),
             message_submitter.clone(),
             network_id.clone(),
+            config.clone(),
         ))
         .or(post_raw_message(tangle.clone(), message_submitter.clone()))
         .or(get_message_by_index(storage.clone()))
@@ -62,6 +64,7 @@ fn get_health<B: Backend>(
 fn get_info<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     network_id: NetworkId,
+    config: RestApiConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -70,6 +73,7 @@ fn get_info<B: Backend>(
         .and(warp::path::end())
         .and(with_tangle(tangle))
         .and(with_network_id(network_id))
+        .and(with_rest_api_config(config))
         .and_then(handlers::info::info)
 }
 
@@ -89,6 +93,7 @@ fn post_json_message<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
+    config: RestApiConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::post()
         .and(warp::path("api"))
@@ -98,6 +103,7 @@ fn post_json_message<B: Backend>(
         .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
         .and(with_network_id(network_id))
+        .and(with_rest_api_config(config))
         .and_then(handlers::submit_message::submit_message)
 }
 
@@ -186,7 +192,7 @@ fn get_children_by_message_id<B: Backend>(
         .and(warp::path("children"))
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::children::children)
+        .and_then(handlers::message_children::message_children)
 }
 
 fn get_output_by_output_id<B: Backend>(
@@ -212,7 +218,7 @@ fn get_balance_for_bech32_address<B: Backend>(
         .and(custom_path_param::bech32_address())
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::balance_bech32_address::balance_bech32_address)
+        .and_then(handlers::balance_bech32::balance_bech32)
 }
 
 fn get_balance_for_ed25519_address<B: Backend>(
@@ -226,7 +232,7 @@ fn get_balance_for_ed25519_address<B: Backend>(
         .and(custom_path_param::ed25519_address())
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::balance_ed25519_address::balance_ed25519_address)
+        .and_then(handlers::balance_ed25519::balance_ed25519)
 }
 
 fn get_outputs_for_bech32_address<B: Backend>(
@@ -240,7 +246,7 @@ fn get_outputs_for_bech32_address<B: Backend>(
         .and(warp::path("outputs"))
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::outputs_bech32_address::outputs_bech32_address)
+        .and_then(handlers::outputs_bech32::outputs_bech32)
 }
 
 fn get_outputs_for_ed25519_address<B: Backend>(
@@ -254,7 +260,7 @@ fn get_outputs_for_ed25519_address<B: Backend>(
         .and(warp::path("outputs"))
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::outputs_ed25519_address::outputs_ed25519_address)
+        .and_then(handlers::outputs_ed25519::outputs_ed25519)
 }
 
 fn get_milestone_by_milestone_index<B: Backend>(
@@ -339,6 +345,12 @@ fn with_network_id(
     network_id: NetworkId,
 ) -> impl Filter<Extract = (NetworkId,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || network_id.clone())
+}
+
+fn with_rest_api_config(
+    config: RestApiConfig,
+) -> impl Filter<Extract = (RestApiConfig,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || config.clone())
 }
 
 fn with_tangle<B: Backend>(

@@ -14,6 +14,7 @@ homepage = "https://www.iota.org"
 bee-common = { path = "../../bee-common/bee-common" }
 bee-ledger = { path = "../../bee-ledger" }
 bee-message = { path = "../../bee-message" }
+bee-pow = { path = "../../bee-pow" }
 bee-protocol = { path = "../../bee-protocol" }
 bee-tangle = { path = "../../bee-tangle" }
 bee-storage = { path = "../../bee-storage/bee-storage" }
@@ -25,6 +26,7 @@ digest = "0.9"
 futures = "0.3"
 hex = "0.4"
 log = "0.4"
+num_cpus = "1.13"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.55"
 tokio = { version = "0.2", features = ["fs", "stream", "sync", "time"] }

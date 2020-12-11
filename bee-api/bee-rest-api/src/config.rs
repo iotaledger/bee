@@ -7,12 +7,14 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 pub(crate) const DEFAULT_BINDING_PORT: u16 = 14265;
 pub(crate) const DEFAULT_BINDING_IP_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+pub(crate) const DEFAULT_ALLOW_PROOF_OF_WORK: bool = true;
 
 /// REST API configuration builder.
 #[derive(Default, Deserialize)]
 pub struct RestApiConfigBuilder {
     binding_port: Option<u16>,
     binding_ip_addr: Option<IpAddr>,
+    allow_proof_of_work: Option<bool>,
 }
 
 impl RestApiConfigBuilder {
@@ -38,13 +40,23 @@ impl RestApiConfigBuilder {
         self
     }
 
+    /// Sets the binding IP address for the REST API.
+    pub fn allow_proof_of_work(mut self, value: bool) -> Self {
+        self.allow_proof_of_work.replace(value);
+        self
+    }
+
     /// Builds the REST API config.
     pub fn finish(self) -> RestApiConfig {
         let binding_socket_addr = match self.binding_ip_addr.unwrap_or(DEFAULT_BINDING_IP_ADDR) {
             IpAddr::V4(ip) => SocketAddr::new(IpAddr::V4(ip), self.binding_port.unwrap_or(DEFAULT_BINDING_PORT)),
             IpAddr::V6(ip) => SocketAddr::new(IpAddr::V6(ip), self.binding_port.unwrap_or(DEFAULT_BINDING_PORT)),
         };
-        RestApiConfig { binding_socket_addr }
+        let allow_proof_of_work = self.allow_proof_of_work.unwrap_or(DEFAULT_ALLOW_PROOF_OF_WORK);
+        RestApiConfig {
+            binding_socket_addr,
+            allow_proof_of_work,
+        }
     }
 }
 
@@ -52,6 +64,7 @@ impl RestApiConfigBuilder {
 #[derive(Clone, Copy, Debug)]
 pub struct RestApiConfig {
     pub(crate) binding_socket_addr: SocketAddr,
+    pub(crate) allow_proof_of_work: bool,
 }
 
 impl RestApiConfig {
@@ -62,5 +75,9 @@ impl RestApiConfig {
     /// Returns the binding address.
     pub fn binding_socket_addr(&self) -> SocketAddr {
         self.binding_socket_addr
+    }
+    /// Returns if feature "Proof-of-Work" is allowed
+    pub fn allow_proof_of_work(&self) -> bool {
+        self.allow_proof_of_work
     }
 }

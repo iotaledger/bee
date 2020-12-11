@@ -12,7 +12,7 @@ use serde::Serialize;
 use std::iter::FromIterator;
 use warp::{Rejection, Reply};
 
-pub async fn children<B: Backend>(
+pub async fn message_children<B: Backend>(
     message_id: MessageId,
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {

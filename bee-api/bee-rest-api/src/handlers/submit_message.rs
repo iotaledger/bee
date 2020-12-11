@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    config::RestApiConfig,
     filters::CustomRejection::{BadRequest, ServiceUnavailable},
     handlers::{EnvelopeContent, SuccessEnvelope},
     storage::Backend,
@@ -10,6 +11,7 @@ use crate::{
 };
 use bee_common::{node::ResHandle, packable::Packable};
 use bee_message::prelude::*;
+use bee_pow::providers::{ConstantBuilder, MinerBuilder, ProviderBuilder};
 use bee_protocol::{tangle::MsTangle, MessageSubmitterError, MessageSubmitterWorkerEvent};
 use blake2::VarBlake2b;
 use futures::channel::oneshot;
@@ -25,6 +27,7 @@ pub(crate) async fn submit_message<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
+    config: RestApiConfig,
 ) -> Result<impl Reply, Rejection> {
     let is_set = |value: &JsonValue| -> bool { !value.is_null() };
 
@@ -136,32 +139,50 @@ pub(crate) async fn submit_message<B: Backend>(
     let nonce = {
         let nonce_v = &value["nonce"];
         if nonce_v.is_null() {
-            return Err(reject::custom(ServiceUnavailable(
-                "can not auto-fill nonce: remote proof-of-work not supported at the moment".to_string(),
-            )));
+            if !config.allow_proof_of_work() {
+                return Err(reject::custom(ServiceUnavailable(
+                    "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
+                )));
+            }
+            None
         } else {
-            nonce_v
-                .as_str()
-                .ok_or(reject::custom(BadRequest(
-                    "invalid nonce: expected an u64-string".to_string(),
-                )))?
-                .parse::<u64>()
-                .map_err(|_| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?
+            Some(
+                nonce_v
+                    .as_str()
+                    .ok_or(reject::custom(BadRequest(
+                        "invalid nonce: expected an u64-string".to_string(),
+                    )))?
+                    .parse::<u64>()
+                    .map_err(|_| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?,
+            )
         }
     };
 
     let message = {
-        let mut builder = Message::builder()
-            .with_network_id(network_id)
-            .with_parent1(parent_1_message_id)
-            .with_parent2(parent_2_message_id)
-            .with_nonce(nonce);
-        if let Some(payload) = payload {
-            builder = builder.with_payload(payload)
+        if let Some(nonce) = nonce {
+            let mut builder = MessageBuilder::new()
+                .with_nonce_provider(ConstantBuilder::new().with_value(nonce).finish(), 0f64)
+                .with_network_id(network_id)
+                .with_parent1(parent_1_message_id)
+                .with_parent2(parent_2_message_id);
+            if let Some(payload) = payload {
+                builder = builder.with_payload(payload)
+            }
+            builder
+                .finish()
+                .map_err(|e| reject::custom(BadRequest(e.to_string())))?
+        } else {
+            let mut builder = MessageBuilder::new()
+                .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64)
+                .with_parent1(parent_1_message_id)
+                .with_parent2(parent_2_message_id);
+            if let Some(payload) = payload {
+                builder = builder.with_payload(payload)
+            }
+            builder
+                .finish()
+                .map_err(|e| reject::custom(BadRequest(e.to_string())))?
         }
-        builder
-            .finish()
-            .map_err(|e| reject::custom(BadRequest(e.to_string())))?
     };
 
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
