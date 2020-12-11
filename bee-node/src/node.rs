@@ -12,7 +12,7 @@ use bee_common::{
 };
 use bee_network::{self, Event, Multiaddr, NetworkController, NetworkListener, PeerId, ShortId};
 use bee_peering::{ManualPeerManager, PeerManager};
-use bee_protocol::Protocol;
+use bee_protocol::protocol::{events as protocol_events, init, register, unregister};
 use bee_rest_api::config::RestApiConfig;
 
 use anymap::{any::Any as AnyMapAny, Map};
@@ -137,7 +137,7 @@ impl<'a, B: Backend> NodeRuntime<'a, B> {
 
     #[inline]
     async fn peer_connected_handler(&mut self, id: PeerId, address: Multiaddr) {
-        let (receiver_tx, receiver_shutdown_tx) = Protocol::register(self.node, id.clone(), address).await;
+        let (receiver_tx, receiver_shutdown_tx) = register(self.node, id.clone(), address).await;
 
         self.peers.insert(id, (receiver_tx, receiver_shutdown_tx));
     }
@@ -148,7 +148,7 @@ impl<'a, B: Backend> NodeRuntime<'a, B> {
             if let Err(e) = shutdown.send(()) {
                 warn!("Sending shutdown to {} failed: {:?}.", id.short(), e);
             }
-            Protocol::unregister(id).await;
+            unregister(self.node, id).await;
         }
     }
 
@@ -371,7 +371,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         // let mut this = bee_ledger::init::<BeeNode<B>>(snapshot.header().ledger_index(), this);
 
         info!("Initializing protocol layer...");
-        let this = Protocol::init::<BeeNode<B>>(
+        let this = init::<BeeNode<B>>(
             config.protocol.clone(),
             config.database.clone(),
             snapshot,
@@ -411,7 +411,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         info!("Registering events...");
         bee_snapshot::events(&node);
-        Protocol::events(&node, config.protocol.clone());
+        protocol_events(&node, config.protocol.clone());
 
         info!("Initialized.");
 

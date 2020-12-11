@@ -3,9 +3,12 @@
 
 use crate::{
     milestone::MilestoneIndex,
-    protocol::Protocol,
+    peer::PeerManager,
+    protocol::helper,
     tangle::MsTangle,
-    worker::{MilestoneRequesterWorker, MilestoneSolidifierWorker, RequestedMilestones, TangleWorker},
+    worker::{
+        MilestoneRequesterWorker, MilestoneSolidifierWorker, PeerManagerWorker, RequestedMilestones, TangleWorker,
+    },
 };
 
 use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
@@ -33,6 +36,7 @@ impl<N: Node> Worker<N> for KickstartWorker {
             TypeId::of::<TangleWorker>(),
             // TODO Temporary until we find a better design for the kickstart
             TypeId::of::<MilestoneSolidifierWorker>(),
+            TypeId::of::<PeerManagerWorker>(),
         ]
         .leak()
     }
@@ -42,6 +46,7 @@ impl<N: Node> Worker<N> for KickstartWorker {
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
+        let peer_manager = node.resource::<PeerManager>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -52,8 +57,8 @@ impl<N: Node> Worker<N> for KickstartWorker {
                 let next_ms = *tangle.get_latest_solid_milestone_index() + 1;
                 let latest_ms = *tangle.get_latest_milestone_index();
 
-                if !Protocol::get().peer_manager.peers.is_empty() && next_ms + config.1 < latest_ms {
-                    Protocol::request_milestone(
+                if !peer_manager.peers.is_empty() && next_ms + config.1 < latest_ms {
+                    helper::request_milestone(
                         &tangle,
                         &milestone_requester,
                         &*requested_milestones,
@@ -65,7 +70,7 @@ impl<N: Node> Worker<N> for KickstartWorker {
                     }
 
                     for index in next_ms..(next_ms + config.1) {
-                        Protocol::request_milestone(
+                        helper::request_milestone(
                             &tangle,
                             &milestone_requester,
                             &*requested_milestones,

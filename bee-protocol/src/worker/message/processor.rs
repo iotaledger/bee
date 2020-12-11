@@ -4,7 +4,7 @@
 use crate::{
     config::ProtocolConfig,
     packet::Message as MessagePacket,
-    protocol::{Protocol, ProtocolMetrics},
+    protocol::{helper, ProtocolMetrics},
     tangle::{MessageMetadata, MsTangle},
     worker::{
         message_submitter::MessageSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker,
@@ -146,7 +146,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                             let parent1 = message.parent1();
                             let parent2 = message.parent2();
 
-                            Protocol::request_message(
+                            helper::request_message(
                                 &tangle,
                                 &message_requester,
                                 &*requested_messages,
@@ -155,7 +155,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                             )
                             .await;
                             if parent1 != parent2 {
-                                Protocol::request_message(
+                                helper::request_message(
                                     &tangle,
                                     &message_requester,
                                     &*requested_messages,

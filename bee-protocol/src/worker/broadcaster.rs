@@ -3,8 +3,9 @@
 
 use crate::{
     packet::{tlv_into_bytes, Message},
-    protocol::{Protocol, ProtocolMetrics},
-    worker::MetricsWorker,
+    peer::PeerManager,
+    protocol::ProtocolMetrics,
+    worker::{MetricsWorker, PeerManagerWorker},
 };
 
 use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
@@ -32,7 +33,7 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<MetricsWorker>()].leak()
+        vec![TypeId::of::<MetricsWorker>(), TypeId::of::<PeerManagerWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
@@ -40,6 +41,7 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
 
         let network = node.resource::<NetworkController>();
         let metrics = node.resource::<ProtocolMetrics>();
+        let peer_manager = node.resource::<PeerManager>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -49,7 +51,7 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
             while let Some(BroadcasterWorkerEvent { source, message }) = receiver.next().await {
                 let bytes = tlv_into_bytes(message);
 
-                for peer in Protocol::get().peer_manager.peers.iter() {
+                for peer in peer_manager.peers.iter() {
                     if match source {
                         Some(ref source) => source != peer.key(),
                         None => true,
