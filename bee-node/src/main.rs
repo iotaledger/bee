@@ -5,6 +5,8 @@ use bee_common::node::{Node as _, NodeBuilder as _};
 use bee_node::{plugins, print_banner_and_version, tools, CliArgs, Node, NodeConfigBuilder};
 use bee_storage_rocksdb::storage::Storage as Rocksdb;
 
+use log::error;
+
 const CONFIG_PATH: &str = "./config.toml";
 
 #[tokio::main]
@@ -30,13 +32,17 @@ async fn main() {
     .with_cli_args(cli)
     .finish();
 
-    Node::<Rocksdb>::build(config)
+    match Node::<Rocksdb>::build(config)
         .with_plugin::<plugins::Mps>()
         .with_logging()
         .finish()
         .await
-        .expect("Failed to build node")
-        .run()
-        .await
-        .expect("Failed to run node");
+    {
+        Ok(node) => {
+            if let Err(e) = node.run().await {
+                error!("Failed to run node: {}", e)
+            }
+        }
+        Err(e) => error!("Failed to build node: {}", e),
+    }
 }

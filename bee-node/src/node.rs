@@ -243,12 +243,8 @@ impl<B: Backend> Node for BeeNode<B> {
 #[derive(Error, Debug)]
 pub enum Error {
     /// Occurs, when there is an error while reading the snapshot file.
-    #[error("Reading snapshot file failed.")]
+    #[error("Reading snapshot file failed: {0}")]
     SnapshotError(bee_snapshot::Error),
-
-    /// Occurs, when there is an error while shutting down the node.
-    #[error("Shutting down failed.")]
-    ShutdownError(#[from] bee_common::shutdown::Error),
 }
 
 pub struct BeeNodeBuilder<B: Backend> {
@@ -363,7 +359,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let this = this.with_resource(ShutdownStream::new(ctrl_c_listener(), events));
 
         info!("Initializing snapshot handler...");
-        let (this, snapshot) = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, this)
+        let (this, snapshot) = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, network_id, this)
             .await
             .map_err(Error::SnapshotError)?;
 
