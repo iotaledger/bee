@@ -11,8 +11,10 @@ pub enum Error {
     NoDownloadSourceAvailable,
     InvalidFilePath(String),
     Message(MessageError),
+    NetworkIdMismatch(u64, u64),
 }
 
+// TODO thiserror
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -22,6 +24,13 @@ impl std::fmt::Display for Error {
             Error::NoDownloadSourceAvailable => write!(f, ""),
             Error::InvalidFilePath(_) => write!(f, ""),
             Error::Message(_) => write!(f, ""),
+            Error::NetworkIdMismatch(config, snapshot) => {
+                write!(
+                    f,
+                    "Network Id mismatch: configuration {} != snapshot {}.",
+                    config, snapshot
+                )
+            }
         }
     }
 }

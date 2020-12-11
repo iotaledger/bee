@@ -4,11 +4,12 @@
 use crate::{
     milestone::MilestoneIndex,
     packet::{tlv_into_bytes, Heartbeat, Message as MessagePacket, MessageRequest, MilestoneRequest, Packet},
-    protocol::Protocol,
+    peer::PeerManager,
     tangle::MsTangle,
     worker::{MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages, RequestedMilestones},
 };
 
+use bee_common::node::ResHandle;
 use bee_message::MessageId;
 use bee_network::{Command::SendMessage, NetworkController, PeerId};
 use bee_storage::storage::Backend;
@@ -48,89 +49,90 @@ implement_sender_worker!(MessagePacket, message, messages_sent_inc);
 implement_sender_worker!(MessageRequest, message_request, message_requests_sent_inc);
 implement_sender_worker!(Heartbeat, heartbeat, heartbeats_sent_inc);
 
-impl Protocol {
-    // TODO move some functions to workers
+// TODO move some functions to workers
 
-    // MilestoneRequest
+// MilestoneRequest
 
-    pub(crate) fn request_milestone<B: Backend>(
-        tangle: &MsTangle<B>,
-        milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
-        requested_milestones: &RequestedMilestones,
-        index: MilestoneIndex,
-        to: Option<PeerId>,
-    ) {
-        if !requested_milestones.contains_key(&index) && !tangle.contains_milestone(index) {
-            if let Err(e) = milestone_requester.send(MilestoneRequesterWorkerEvent(index, to)) {
-                warn!("Requesting milestone failed: {}.", e);
-            }
+pub(crate) fn request_milestone<B: Backend>(
+    tangle: &MsTangle<B>,
+    milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
+    requested_milestones: &RequestedMilestones,
+    index: MilestoneIndex,
+    to: Option<PeerId>,
+) {
+    if !requested_milestones.contains_key(&index) && !tangle.contains_milestone(index) {
+        if let Err(e) = milestone_requester.send(MilestoneRequesterWorkerEvent(index, to)) {
+            warn!("Requesting milestone failed: {}.", e);
         }
     }
+}
 
-    pub(crate) fn request_latest_milestone<B: Backend>(
-        tangle: &MsTangle<B>,
-        milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
-        requested_milestones: &RequestedMilestones,
-        to: Option<PeerId>,
-    ) {
-        Protocol::request_milestone(tangle, milestone_requester, requested_milestones, MilestoneIndex(0), to)
-    }
+pub(crate) fn request_latest_milestone<B: Backend>(
+    tangle: &MsTangle<B>,
+    milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
+    requested_milestones: &RequestedMilestones,
+    to: Option<PeerId>,
+) {
+    request_milestone(tangle, milestone_requester, requested_milestones, MilestoneIndex(0), to)
+}
 
-    // MessageRequest
+// MessageRequest
 
-    pub(crate) async fn request_message<B: Backend>(
-        tangle: &MsTangle<B>,
-        message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
-        requested_messages: &RequestedMessages,
-        message_id: MessageId,
-        index: MilestoneIndex,
-    ) {
-        if !tangle.contains(&message_id).await
-            && !tangle.is_solid_entry_point(&message_id)
-            && !requested_messages.contains_key(&message_id)
-        {
-            if let Err(e) = message_requester.send(MessageRequesterWorkerEvent(message_id, index)) {
-                warn!("Requesting message failed: {}.", e);
-            }
+pub(crate) async fn request_message<B: Backend>(
+    tangle: &MsTangle<B>,
+    message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
+    requested_messages: &RequestedMessages,
+    message_id: MessageId,
+    index: MilestoneIndex,
+) {
+    if !tangle.contains(&message_id).await
+        && !tangle.is_solid_entry_point(&message_id)
+        && !requested_messages.contains_key(&message_id)
+    {
+        if let Err(e) = message_requester.send(MessageRequesterWorkerEvent(message_id, index)) {
+            warn!("Requesting message failed: {}.", e);
         }
     }
+}
 
-    // Heartbeat
+// Heartbeat
 
-    pub fn send_heartbeat(
-        network: &NetworkController,
-        to: PeerId,
-        latest_solid_milestone_index: MilestoneIndex,
-        pruning_milestone_index: MilestoneIndex,
-        latest_milestone_index: MilestoneIndex,
-    ) {
-        Sender::<Heartbeat>::send(
+pub fn send_heartbeat(
+    peer_manager: &ResHandle<PeerManager>,
+    network: &NetworkController,
+    to: PeerId,
+    latest_solid_milestone_index: MilestoneIndex,
+    pruning_milestone_index: MilestoneIndex,
+    latest_milestone_index: MilestoneIndex,
+) {
+    Sender::<Heartbeat>::send(
+        network,
+        &to,
+        Heartbeat::new(
+            *latest_solid_milestone_index,
+            *pruning_milestone_index,
+            *latest_milestone_index,
+            peer_manager.connected_peers(),
+            peer_manager.synced_peers(),
+        ),
+    );
+}
+
+pub fn broadcast_heartbeat(
+    peer_manager: &ResHandle<PeerManager>,
+    network: &NetworkController,
+    latest_solid_milestone_index: MilestoneIndex,
+    pruning_milestone_index: MilestoneIndex,
+    latest_milestone_index: MilestoneIndex,
+) {
+    for entry in peer_manager.peers.iter() {
+        send_heartbeat(
+            peer_manager,
             network,
-            &to,
-            Heartbeat::new(
-                *latest_solid_milestone_index,
-                *pruning_milestone_index,
-                *latest_milestone_index,
-                Protocol::get().peer_manager.connected_peers(),
-                Protocol::get().peer_manager.synced_peers(),
-            ),
+            entry.key().clone(),
+            latest_solid_milestone_index,
+            pruning_milestone_index,
+            latest_milestone_index,
         );
-    }
-
-    pub fn broadcast_heartbeat(
-        network: &NetworkController,
-        latest_solid_milestone_index: MilestoneIndex,
-        pruning_milestone_index: MilestoneIndex,
-        latest_milestone_index: MilestoneIndex,
-    ) {
-        for entry in Protocol::get().peer_manager.peers.iter() {
-            Protocol::send_heartbeat(
-                network,
-                entry.key().clone(),
-                latest_solid_milestone_index,
-                pruning_milestone_index,
-                latest_milestone_index,
-            );
-        }
     }
 }

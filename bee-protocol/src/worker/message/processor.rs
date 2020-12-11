@@ -4,12 +4,12 @@
 use crate::{
     config::ProtocolConfig,
     packet::Message as MessagePacket,
-    protocol::Protocol,
+    protocol::{helper, ProtocolMetrics},
     tangle::{MessageMetadata, MsTangle},
     worker::{
         message_submitter::MessageSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker,
-        MilestoneValidatorWorker, MilestoneValidatorWorkerEvent, PropagatorWorker, PropagatorWorkerEvent,
-        RequestedMessages, TangleWorker,
+        MetricsWorker, MilestoneValidatorWorker, MilestoneValidatorWorkerEvent, PropagatorWorker,
+        PropagatorWorkerEvent, RequestedMessages, TangleWorker,
     },
 };
 
@@ -51,6 +51,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
             TypeId::of::<PropagatorWorker>(),
             TypeId::of::<BroadcasterWorker>(),
             TypeId::of::<MessageRequesterWorker>(),
+            TypeId::of::<MetricsWorker>(),
         ]
         .leak()
     }
@@ -64,6 +65,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
+        let metrics = node.resource::<ProtocolMetrics>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -87,7 +89,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                     }
                     Err(e) => {
                         trace!("Invalid message: {:?}.", e);
-                        Protocol::get().metrics.invalid_messages_inc();
+                        metrics.invalid_messages_inc();
                         if let Some(tx) = notifier {
                             notify_err(format!("Invalid message: {:?}.", e), tx).await;
                         }
@@ -97,7 +99,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
                 if message.network_id() != config.1 {
                     trace!("Incompatible network ID {} != {}.", message.network_id(), config.1);
-                    Protocol::get().metrics.invalid_messages_inc();
+                    metrics.invalid_messages_inc();
                     if let Some(tx) = notifier {
                         notify_err(
                             format!("Incompatible network ID {} != {}.", message.network_id(), config.1),
@@ -121,7 +123,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                         pow_score,
                         config.0.minimum_pow_score
                     );
-                    Protocol::get().metrics.invalid_messages_inc();
+                    metrics.invalid_messages_inc();
                     if let Some(tx) = notifier {
                         notify_err(
                             format!(
@@ -154,7 +156,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                         error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
                     }
 
-                    Protocol::get().metrics.new_messages_inc();
+                    metrics.new_messages_inc();
 
                     match requested_messages.remove(&message_id) {
                         Some((_, (index, _))) => {
@@ -162,7 +164,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                             let parent1 = message.parent1();
                             let parent2 = message.parent2();
 
-                            Protocol::request_message(
+                            helper::request_message(
                                 &tangle,
                                 &message_requester,
                                 &*requested_messages,
@@ -171,7 +173,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                             )
                             .await;
                             if parent1 != parent2 {
-                                Protocol::request_message(
+                                helper::request_message(
                                     &tangle,
                                     &message_requester,
                                     &*requested_messages,
@@ -201,7 +203,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                         }
                     }
                 } else {
-                    Protocol::get().metrics.known_messages_inc();
+                    metrics.known_messages_inc();
                     if let Some(tx) = notifier {
                         notify_message_id(message_id, tx).await;
                     }

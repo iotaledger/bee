@@ -29,6 +29,7 @@ impl Fetch<MessageId, Message> for Storage {
             .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE))?;
 
         if let Some(res) = self.inner.get_cf(&cf, message_id)? {
+            // Unpacking from storage is fine.
             Ok(Some(Message::unpack(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
@@ -48,6 +49,7 @@ impl Fetch<MessageId, MessageMetadata> for Storage {
             .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_METADATA))?;
 
         if let Some(res) = self.inner.get_cf(&cf, message_id)? {
+            // Unpacking from storage is fine.
             Ok(Some(MessageMetadata::unpack(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
@@ -71,6 +73,7 @@ impl Fetch<MessageId, Vec<MessageId>> for Storage {
                 .prefix_iterator_cf(&cf, parent)
                 .map(|(key, _)| {
                     let (_, child) = key.split_at(MESSAGE_ID_LENGTH);
+                    // Unpacking from storage is fine.
                     let child: [u8; MESSAGE_ID_LENGTH] = child.try_into().unwrap();
                     MessageId::from(child)
                 })
@@ -96,6 +99,7 @@ impl Fetch<HashedIndex, Vec<MessageId>> for Storage {
                 .prefix_iterator_cf(&cf, index)
                 .map(|(key, _)| {
                     let (_, message_id) = key.split_at(HASHED_INDEX_LENGTH);
+                    // Unpacking from storage is fine.
                     let message_id: [u8; MESSAGE_ID_LENGTH] = message_id.try_into().unwrap();
                     MessageId::from(message_id)
                 })
@@ -117,6 +121,7 @@ impl Fetch<OutputId, Output> for Storage {
             .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_OUTPUT))?;
 
         if let Some(res) = self.inner.get_cf(&cf, output_id.pack_new())? {
+            // Unpacking from storage is fine.
             Ok(Some(Output::unpack(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
@@ -136,6 +141,7 @@ impl Fetch<OutputId, Spent> for Storage {
             .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_SPENT))?;
 
         if let Some(res) = self.inner.get_cf(&cf, output_id.pack_new())? {
+            // Unpacking from storage is fine.
             Ok(Some(Spent::unpack(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
@@ -159,6 +165,7 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
                 .prefix_iterator_cf(&cf, address)
                 .map(|(key, _)| {
                     let (_, output_id) = key.split_at(ED25519_ADDRESS_LENGTH);
+                    // Unpacking from storage is fine.
                     From::<[u8; OUTPUT_ID_LENGTH]>::from(output_id.try_into().unwrap())
                 })
                 .take(self.config.fetch_output_id_limit)
@@ -179,6 +186,7 @@ impl Fetch<(), LedgerIndex> for Storage {
             .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
 
         if let Some(res) = self.inner.get_cf(&cf, [])? {
+            // Unpacking from storage is fine.
             Ok(Some(LedgerIndex::unpack(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)

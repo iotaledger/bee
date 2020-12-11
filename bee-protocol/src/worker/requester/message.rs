@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    milestone::MilestoneIndex,
-    packet::MessageRequest,
-    protocol::{Protocol, Sender},
+    milestone::MilestoneIndex, packet::MessageRequest, peer::PeerManager, protocol::Sender, worker::PeerManagerWorker,
 };
 
-use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_common::{
+    node::{Node, ResHandle},
+    shutdown_stream::ShutdownStream,
+    worker::Worker,
+};
 use bee_message::MessageId;
 use bee_network::NetworkController;
 
@@ -18,6 +20,7 @@ use log::{debug, info, trace};
 use tokio::{sync::mpsc, time::interval};
 
 use std::{
+    any::TypeId,
     convert::Infallible,
     ops::Deref,
     time::{Duration, Instant},
@@ -43,40 +46,42 @@ pub(crate) struct MessageRequesterWorker {
 }
 
 async fn process_request(
-    network: &NetworkController,
-    requested_messages: &RequestedMessages,
     message_id: MessageId,
     index: MilestoneIndex,
+    network: &NetworkController,
+    peer_manager: &ResHandle<PeerManager>,
+    requested_messages: &RequestedMessages,
     counter: &mut usize,
 ) {
     if requested_messages.contains_key(&message_id) {
         return;
     }
 
-    if process_request_unchecked(network, message_id, index, counter).await {
+    if process_request_unchecked(message_id, index, network, peer_manager, counter).await {
         requested_messages.insert(message_id, (index, Instant::now()));
     }
 }
 
 /// Return `true` if the message was requested.
 async fn process_request_unchecked(
-    network: &NetworkController,
     message_id: MessageId,
     index: MilestoneIndex,
+    network: &NetworkController,
+    peer_manager: &ResHandle<PeerManager>,
     counter: &mut usize,
 ) -> bool {
-    if Protocol::get().peer_manager.peers.is_empty() {
+    if peer_manager.peers.is_empty() {
         return false;
     }
 
-    let guard = Protocol::get().peer_manager.peers_keys.read().await;
+    let guard = peer_manager.peers_keys.read().await;
 
     for _ in 0..guard.len() {
         let peer_id = &guard[*counter % guard.len()];
 
         *counter += 1;
 
-        if let Some(peer) = Protocol::get().peer_manager.peers.get(peer_id) {
+        if let Some(peer) = peer_manager.peers.get(peer_id) {
             if peer.has_data(index) {
                 Sender::<MessageRequest>::send(network, peer_id, MessageRequest::new(message_id.as_ref()));
                 return true;
@@ -89,7 +94,7 @@ async fn process_request_unchecked(
 
         *counter += 1;
 
-        if let Some(peer) = Protocol::get().peer_manager.peers.get(peer_id) {
+        if let Some(peer) = peer_manager.peers.get(peer_id) {
             if peer.maybe_has_data(index) {
                 Sender::<MessageRequest>::send(network, peer_id, MessageRequest::new(message_id.as_ref()));
                 return true;
@@ -100,14 +105,19 @@ async fn process_request_unchecked(
     false
 }
 
-async fn retry_requests(network: &NetworkController, requested_messages: &RequestedMessages, counter: &mut usize) {
+async fn retry_requests(
+    network: &NetworkController,
+    requested_messages: &RequestedMessages,
+    peer_manager: &ResHandle<PeerManager>,
+    counter: &mut usize,
+) {
     let mut retry_counts: usize = 0;
 
     for mut message in requested_messages.iter_mut() {
         let (message_id, (index, instant)) = message.pair_mut();
         let now = Instant::now();
         if (now - *instant).as_secs() > RETRY_INTERVAL_SEC
-            && process_request_unchecked(network, *message_id, *index, counter).await
+            && process_request_unchecked(*message_id, *index, network, peer_manager, counter).await
         {
             *instant = now;
             retry_counts += 1;
@@ -124,6 +134,10 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
     type Config = ();
     type Error = Infallible;
 
+    fn dependencies() -> &'static [TypeId] {
+        vec![TypeId::of::<PeerManagerWorker>()].leak()
+    }
+
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
@@ -131,6 +145,7 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
         node.register_resource(requested_messages);
         let requested_messages = node.resource::<RequestedMessages>();
         let network = node.resource::<NetworkController>();
+        let peer_manager = node.resource::<PeerManager>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -142,11 +157,11 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
 
             loop {
                 select! {
-                    _ = timeouts.next() => retry_requests(&network, &*requested_messages,&mut counter).await,
+                    _ = timeouts.next() => retry_requests(&network, &*requested_messages, &peer_manager, &mut counter).await,
                     entry = receiver.next() => match entry {
                         Some(MessageRequesterWorkerEvent(message_id, index)) => {
                             trace!("Requesting message {}.", message_id);
-                            process_request(&network, &*requested_messages, message_id, index, &mut counter).await
+                            process_request(message_id, index, &network, &peer_manager, &*requested_messages, &mut counter).await
                         },
                         None => break,
                     },

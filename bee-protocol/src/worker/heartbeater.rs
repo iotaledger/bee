@@ -1,7 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{protocol::Protocol, tangle::MsTangle, worker::TangleWorker};
+use crate::{
+    peer::PeerManager,
+    protocol::helper,
+    tangle::MsTangle,
+    worker::{PeerManagerWorker, TangleWorker},
+};
 
 use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_network::NetworkController;
@@ -26,12 +31,13 @@ impl<N: Node> Worker<N> for HeartbeaterWorker {
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>()].leak()
+        vec![TypeId::of::<TangleWorker>(), TypeId::of::<PeerManagerWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let network = node.resource::<NetworkController>();
+        let peer_manager = node.resource::<PeerManager>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -41,7 +47,8 @@ impl<N: Node> Worker<N> for HeartbeaterWorker {
 
             while ticker.next().await.is_some() {
                 // TODO real impl
-                Protocol::broadcast_heartbeat(
+                helper::broadcast_heartbeat(
+                    &peer_manager,
                     &network,
                     tangle.get_latest_solid_milestone_index(),
                     tangle.get_pruning_index(),
