@@ -99,7 +99,9 @@ macro_rules! impl_stream {
 impl<'a> StorageStream<'a, MessageId, Message> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MessageId, Message) {
         (
+            // Unpacking from storage is fine.
             MessageId::unpack(&mut key).unwrap(),
+            // Unpacking from storage is fine.
             Message::unpack(&mut value).unwrap(),
         )
     }
@@ -108,7 +110,9 @@ impl<'a> StorageStream<'a, MessageId, Message> {
 impl<'a> StorageStream<'a, MessageId, MessageMetadata> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MessageId, MessageMetadata) {
         (
+            // Unpacking from storage is fine.
             MessageId::unpack(&mut key).unwrap(),
+            // Unpacking from storage is fine.
             MessageMetadata::unpack(&mut value).unwrap(),
         )
     }
@@ -120,7 +124,9 @@ impl<'a> StorageStream<'a, (MessageId, MessageId), ()> {
 
         (
             (
+                // Unpacking from storage is fine.
                 MessageId::unpack(&mut parent).unwrap(),
+                // Unpacking from storage is fine.
                 MessageId::unpack(&mut child).unwrap(),
             ),
             (),
@@ -132,9 +138,11 @@ impl<'a> StorageStream<'a, (HashedIndex, MessageId), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((HashedIndex, MessageId), ()) {
         let (index, mut message_id) = key.split_at(HASHED_INDEX_LENGTH);
         // TODO review when we have fixed size index
+        // Unpacking from storage is fine.
         let index: [u8; HASHED_INDEX_LENGTH] = index.try_into().unwrap();
 
         (
+            // Unpacking from storage is fine.
             (HashedIndex::new(index), MessageId::unpack(&mut message_id).unwrap()),
             (),
         )
@@ -143,19 +151,33 @@ impl<'a> StorageStream<'a, (HashedIndex, MessageId), ()> {
 
 impl<'a> StorageStream<'a, OutputId, Output> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, Output) {
-        (OutputId::unpack(&mut key).unwrap(), Output::unpack(&mut value).unwrap())
+        (
+            // Unpacking from storage is fine.
+            OutputId::unpack(&mut key).unwrap(),
+            // Unpacking from storage is fine.
+            Output::unpack(&mut value).unwrap(),
+        )
     }
 }
 
 impl<'a> StorageStream<'a, OutputId, Spent> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, Spent) {
-        (OutputId::unpack(&mut key).unwrap(), Spent::unpack(&mut value).unwrap())
+        (
+            // Unpacking from storage is fine.
+            OutputId::unpack(&mut key).unwrap(),
+            // Unpacking from storage is fine.
+            Spent::unpack(&mut value).unwrap(),
+        )
     }
 }
 
 impl<'a> StorageStream<'a, Unspent, ()> {
     fn unpack_key_value(mut key: &[u8], _: &[u8]) -> (Unspent, ()) {
-        (Unspent::unpack(&mut key).unwrap(), ())
+        (
+            // Unpacking from storage is fine.
+            Unspent::unpack(&mut key).unwrap(),
+            (),
+        )
     }
 }
 
@@ -165,7 +187,9 @@ impl<'a> StorageStream<'a, (Ed25519Address, OutputId), ()> {
 
         (
             (
+                // Unpacking from storage is fine.
                 Ed25519Address::unpack(&mut address).unwrap(),
+                // Unpacking from storage is fine.
                 OutputId::unpack(&mut output_id).unwrap(),
             ),
             (),
@@ -175,7 +199,11 @@ impl<'a> StorageStream<'a, (Ed25519Address, OutputId), ()> {
 
 impl<'a> StorageStream<'a, (), LedgerIndex> {
     fn unpack_key_value(_: &[u8], mut value: &[u8]) -> ((), LedgerIndex) {
-        ((), LedgerIndex::unpack(&mut value).unwrap())
+        (
+            (),
+            // Unpacking from storage is fine.
+            LedgerIndex::unpack(&mut value).unwrap(),
+        )
     }
 }
 

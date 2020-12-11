@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::NodeConfig, plugin, storage::Backend, version_checker::VersionCheckerWorker};
+use crate::{config::NodeConfig, plugins, storage::Backend, version_checker::VersionCheckerWorker};
 
 use bee_common::{
     event::Bus,
@@ -12,7 +12,7 @@ use bee_common::{
 };
 use bee_network::{self, Event, Multiaddr, NetworkController, NetworkListener, PeerId, ShortId};
 use bee_peering::{ManualPeerManager, PeerManager};
-use bee_protocol::Protocol;
+use bee_protocol::protocol::{events as protocol_events, init, register, unregister};
 use bee_rest_api::config::RestApiConfig;
 
 use anymap::{any::Any as AnyMapAny, Map};
@@ -137,7 +137,7 @@ impl<'a, B: Backend> NodeRuntime<'a, B> {
 
     #[inline]
     async fn peer_connected_handler(&mut self, id: PeerId, address: Multiaddr) {
-        let (receiver_tx, receiver_shutdown_tx) = Protocol::register(self.node, id.clone(), address).await;
+        let (receiver_tx, receiver_shutdown_tx) = register(self.node, id.clone(), address).await;
 
         self.peers.insert(id, (receiver_tx, receiver_shutdown_tx));
     }
@@ -148,7 +148,7 @@ impl<'a, B: Backend> NodeRuntime<'a, B> {
             if let Err(e) = shutdown.send(()) {
                 warn!("Sending shutdown to {} failed: {:?}.", id.short(), e);
             }
-            Protocol::unregister(id).await;
+            unregister(self.node, id).await;
         }
     }
 
@@ -243,12 +243,8 @@ impl<B: Backend> Node for BeeNode<B> {
 #[derive(Error, Debug)]
 pub enum Error {
     /// Occurs, when there is an error while reading the snapshot file.
-    #[error("Reading snapshot file failed.")]
+    #[error("Reading snapshot file failed: {0}")]
     SnapshotError(bee_snapshot::Error),
-
-    /// Occurs, when there is an error while shutting down the node.
-    #[error("Shutting down failed.")]
-    ShutdownError(#[from] bee_common::shutdown::Error),
 }
 
 pub struct BeeNodeBuilder<B: Backend> {
@@ -264,15 +260,15 @@ impl<B: Backend> BeeNodeBuilder<B> {
         &self.config
     }
 
-    pub fn with_plugin<P: plugin::Plugin>(self) -> Self
+    pub fn with_plugin<P: plugins::Plugin>(self) -> Self
     where
         P::Config: Default,
     {
-        self.with_worker::<plugin::PluginWorker<P>>()
+        self.with_worker::<plugins::PluginWorker<P>>()
     }
 
-    pub fn with_plugin_cfg<P: plugin::Plugin>(self, config: P::Config) -> Self {
-        self.with_worker_cfg::<plugin::PluginWorker<P>>(config)
+    pub fn with_plugin_cfg<P: plugins::Plugin>(self, config: P::Config) -> Self {
+        self.with_worker_cfg::<plugins::PluginWorker<P>>(config)
     }
 }
 
@@ -363,7 +359,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let this = this.with_resource(ShutdownStream::new(ctrl_c_listener(), events));
 
         info!("Initializing snapshot handler...");
-        let (this, snapshot) = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, this)
+        let (this, snapshot) = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, network_id, this)
             .await
             .map_err(Error::SnapshotError)?;
 
@@ -371,7 +367,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         // let mut this = bee_ledger::init::<BeeNode<B>>(snapshot.header().ledger_index(), this);
 
         info!("Initializing protocol layer...");
-        let this = Protocol::init::<BeeNode<B>>(
+        let this = init::<BeeNode<B>>(
             config.protocol.clone(),
             config.database.clone(),
             snapshot,
@@ -411,7 +407,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         info!("Registering events...");
         bee_snapshot::events(&node);
-        Protocol::events(&node, config.protocol.clone());
+        protocol_events(&node, config.protocol.clone());
 
         info!("Initialized.");
 

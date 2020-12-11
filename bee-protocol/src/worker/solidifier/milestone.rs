@@ -3,7 +3,7 @@
 
 use crate::{
     milestone::MilestoneIndex,
-    protocol::Protocol,
+    protocol::helper,
     tangle::MsTangle,
     worker::{MessageRequesterWorker, MessageRequesterWorkerEvent, RequestedMessages, TangleWorker},
 };
@@ -53,8 +53,7 @@ async fn trigger_solidification_unchecked<B: Backend>(
             );
 
             for missing_id in missing {
-                Protocol::request_message(tangle, message_requester, requested_messages, missing_id, target_index)
-                    .await;
+                helper::request_message(tangle, message_requester, requested_messages, missing_id, target_index).await;
             }
         }
         *next_index = target_index + MilestoneIndex(1);

@@ -7,11 +7,10 @@ mod config;
 mod constants;
 mod logger;
 mod node;
-mod plugin;
 mod storage;
 mod version_checker;
 
-pub mod default_plugins;
+pub mod plugins;
 pub mod tools;
 
 pub use banner::print_banner_and_version;

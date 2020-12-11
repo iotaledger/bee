@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugin::Plugin;
+use crate::plugins::Plugin;
 
 use bee_common::event::Bus;
 use bee_protocol::event::MpsMetricsUpdated;

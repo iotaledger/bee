@@ -36,6 +36,7 @@ use std::path::Path;
 pub async fn init<N: Node>(
     // tangle: &MsTangle<B>,
     config: &config::SnapshotConfig,
+    network_id: u64,
     node_builder: N::Builder,
 ) -> Result<(N::Builder, Snapshot), Error> {
     if !Path::new(config.full_path()).exists() || !Path::new(config.delta_path()).exists() {
@@ -50,6 +51,13 @@ pub async fn init<N: Node>(
         snapshot_full.solid_entry_points().len(),
     );
 
+    if snapshot_full.header().network_id() != network_id {
+        return Err(Error::NetworkIdMismatch(
+            network_id,
+            snapshot_full.header().network_id(),
+        ));
+    }
+
     info!("Loading snapshot delta file {}...", config.delta_path());
     let snapshot_delta = Snapshot::from_file(config.delta_path())?;
     info!(
@@ -58,6 +66,13 @@ pub async fn init<N: Node>(
             .to_rfc2822(),
         snapshot_delta.solid_entry_points().len(),
     );
+
+    if snapshot_delta.header().network_id() != network_id {
+        return Err(Error::NetworkIdMismatch(
+            network_id,
+            snapshot_delta.header().network_id(),
+        ));
+    }
 
     // The genesis transaction must be marked as SEP with snapshot index during loading a snapshot because coordinator
     // bootstraps the network by referencing the genesis tx.

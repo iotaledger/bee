@@ -1,6 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+pub mod mps;
+
+pub use self::mps::Mps;
+
 use bee_common::{event::Bus, node::Node, worker::Worker};
 
 use async_trait::async_trait;

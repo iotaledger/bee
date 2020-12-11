@@ -8,6 +8,7 @@ mod heartbeater;
 mod message;
 mod message_submitter;
 mod message_validator;
+mod metrics;
 mod milestone_cone_updater;
 mod milestone_validator;
 mod mps;
@@ -26,10 +27,11 @@ pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use message::{HasherWorker, HasherWorkerEvent, ProcessorWorker};
 pub use message_submitter::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 pub(crate) use message_validator::{MessageValidatorWorker, MessageValidatorWorkerEvent};
+pub(crate) use metrics::MetricsWorker;
 pub(crate) use milestone_cone_updater::{MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent};
 pub(crate) use milestone_validator::{MilestoneValidatorWorker, MilestoneValidatorWorkerEvent};
 pub(crate) use mps::MpsWorker;
-pub(crate) use peer::PeerWorker;
+pub(crate) use peer::{PeerManagerWorker, PeerWorker};
 pub(crate) use propagator::{PropagatorWorker, PropagatorWorkerEvent};
 pub(crate) use requester::{
     MessageRequesterWorker, MessageRequesterWorkerEvent, MilestoneRequesterWorker, MilestoneRequesterWorkerEvent,

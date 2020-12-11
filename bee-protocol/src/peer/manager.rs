@@ -11,7 +11,7 @@ use tokio::sync::RwLock;
 
 use std::sync::Arc;
 
-pub(crate) struct PeerManager {
+pub struct PeerManager {
     pub(crate) peers: DashMap<PeerId, Arc<Peer>>,
     pub(crate) peers_keys: RwLock<Vec<PeerId>>,
 }
