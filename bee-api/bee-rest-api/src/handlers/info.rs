@@ -24,7 +24,7 @@ pub(crate) async fn info<B: Backend>(
         is_healthy: is_healthy(tangle.clone()).await,
         network_id: network_id.0,
         latest_milestone_index: *tangle.get_latest_milestone_index(),
-        solid_milestone_index: *tangle.get_latest_milestone_index(),
+        solid_milestone_index: *tangle.get_latest_solid_milestone_index(),
         pruning_index: *tangle.get_pruning_index(),
         features: {
             let mut features = Vec::new();
