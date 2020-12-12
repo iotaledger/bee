@@ -322,7 +322,7 @@ dependencies = [
  "async-std",
  "async-trait",
  "bee-storage",
- "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary",
  "chrono",
  "dashmap",
  "fern",
@@ -354,21 +354,9 @@ dependencies = [
 [[package]]
 name = "bee-crypto"
 version = "0.2.0-alpha"
-dependencies = [
- "bee-ternary 0.3.4-alpha",
- "byteorder",
- "criterion",
- "lazy_static",
- "thiserror",
- "tiny-keccak",
-]
-
-[[package]]
-name = "bee-crypto"
-version = "0.2.0-alpha"
 source = "git+https://github.com/iotaledger/bee.git?branch=dev#0bd24a8cba28c9400a876268fc5f8931f74b9a71"
 dependencies = [
- "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary",
  "byteorder",
  "lazy_static",
  "thiserror",
@@ -381,12 +369,12 @@ version = "0.1.0-alpha"
 dependencies = [
  "async-trait",
  "bee-common",
- "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-crypto",
  "bee-message",
  "bee-protocol",
  "bee-storage",
  "bee-tangle",
- "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary",
  "bee-test",
  "blake2",
  "bytemuck",
@@ -407,7 +395,7 @@ dependencies = [
  "bech32",
  "bee-common",
  "bee-pow",
- "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary",
  "blake2",
  "bytemuck",
  "digest 0.9.0",
@@ -444,7 +432,7 @@ dependencies = [
  "anymap",
  "async-trait",
  "bee-common",
- "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-crypto",
  "bee-ledger",
  "bee-message",
  "bee-network",
@@ -483,8 +471,8 @@ name = "bee-pow"
 version = "0.1.0-alpha"
 dependencies = [
  "bee-common",
- "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-crypto",
+ "bee-ternary",
  "bee-test",
  "blake2",
  "thiserror",
@@ -496,14 +484,14 @@ version = "0.1.0-alpha"
 dependencies = [
  "async-trait",
  "bee-common",
- "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-crypto",
  "bee-message",
  "bee-network",
- "bee-signing 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-signing",
  "bee-snapshot",
  "bee-storage",
  "bee-tangle",
- "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary",
  "bitflags",
  "blake2",
  "dashmap",
@@ -548,24 +536,11 @@ dependencies = [
 [[package]]
 name = "bee-signing"
 version = "0.1.1-alpha"
-dependencies = [
- "bee-common-derive 0.1.1-alpha",
- "bee-crypto 0.2.0-alpha",
- "bee-ternary 0.3.4-alpha",
- "rand 0.7.3",
- "sha3",
- "thiserror",
- "zeroize",
-]
-
-[[package]]
-name = "bee-signing"
-version = "0.1.1-alpha"
 source = "git+https://github.com/iotaledger/bee.git?branch=dev#0bd24a8cba28c9400a876268fc5f8931f74b9a71"
 dependencies = [
  "bee-common-derive 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-crypto",
+ "bee-ternary",
  "rand 0.7.3",
  "sha3",
  "thiserror",
@@ -605,12 +580,12 @@ version = "0.1.0-alpha"
 dependencies = [
  "async-trait",
  "bee-common",
- "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-crypto",
  "bee-ledger",
  "bee-message",
  "bee-protocol",
  "bee-storage",
- "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary",
  "bee-test",
  "futures",
  "num_cpus",
@@ -626,7 +601,7 @@ name = "bee-tangle"
 version = "0.1.0-alpha"
 dependencies = [
  "async-trait",
- "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-crypto",
  "bee-message",
  "bee-test",
  "criterion",
@@ -634,15 +609,6 @@ dependencies = [
  "log",
  "lru",
  "pollster",
-]
-
-[[package]]
-name = "bee-ternary"
-version = "0.3.4-alpha"
-dependencies = [
- "autocfg 1.0.1",
- "num-traits",
- "serde",
 ]
 
 [[package]]
@@ -659,12 +625,12 @@ dependencies = [
 name = "bee-test"
 version = "0.1.0-alpha"
 dependencies = [
- "bee-crypto 0.2.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-crypto",
  "bee-message",
  "bee-pow",
  "bee-protocol",
  "bee-storage",
- "bee-ternary 0.3.4-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary",
  "futures",
  "num_cpus",
  "rand 0.7.3",
