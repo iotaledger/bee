@@ -3,20 +3,22 @@
 
 use crate::{handlers, NetworkId};
 use bee_common::node::ResHandle;
-use serde::de::DeserializeOwned;
-use tokio::sync::mpsc;
 use warp::{reject, Filter, Rejection};
 
 use bee_protocol::{tangle::MsTangle, MessageSubmitterWorkerEvent};
 
-use crate::{filters::CustomRejection::BadRequest, storage::Backend};
+use crate::{config::RestApiConfig, filters::CustomRejection::BadRequest, storage::Backend};
+use bech32::FromBase32;
+use bee_common::packable::Packable;
+use bee_protocol::config::ProtocolConfig;
 use std::collections::HashMap;
+use tokio::sync::mpsc;
 
 #[derive(Debug, Clone)]
 pub(crate) enum CustomRejection {
-    BadRequest(&'static str),
-    NotFound(&'static str),
-    ServiceUnavailable(&'static str),
+    BadRequest(String),
+    NotFound(String),
+    ServiceUnavailable(String),
 }
 
 impl reject::Reject for CustomRejection {}
@@ -26,39 +28,46 @@ pub fn all<B: Backend>(
     storage: ResHandle<B>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
+    rest_api_config: RestApiConfig,
+    protocol_config: ProtocolConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    get_health(tangle.clone())
-        .or(get_info(tangle.clone(), network_id.clone()).or(get_milestone_by_milestone_index(tangle.clone())))
-        .or(get_tips(tangle.clone()))
-        .or(post_json_message(
+    health(tangle.clone()).or(info(tangle.clone(), network_id.clone(), rest_api_config.clone())
+        .or(tips(tangle.clone()))
+        .or(submit_message(
+            tangle.clone(),
             message_submitter.clone(),
             network_id.clone(),
-            tangle.clone(),
+            rest_api_config.clone(),
+            protocol_config.clone(),
         ))
-        .or(post_raw_message(message_submitter.clone()))
-        .or(get_message_by_index(storage.clone()))
-        .or(get_message_by_message_id(tangle.clone()))
-        .or(get_message_metadata(tangle.clone()))
-        .or(get_raw_message(tangle.clone()))
-        .or(get_children_by_message_id(tangle.clone()))
-        .or(get_output_by_output_id(storage.clone()))
-        .or(get_outputs_for_address(storage.clone()))
-        .or(get_balance_for_address(storage.clone()))
+        .or(submit_message_raw(tangle.clone(), message_submitter.clone()))
+        .or(message_indexation(storage.clone()))
+        .or(message(tangle.clone()))
+        .or(message_metadata(tangle.clone()))
+        .or(message_raw(tangle.clone()))
+        .or(message_children(tangle.clone()))
+        .or(output(storage.clone()))
+        .or(balance_bech32(storage.clone()))
+        .or(balance_ed25519(storage.clone()))
+        .or(outputs_bech32(storage.clone()))
+        .or(outputs_ed25519(storage.clone()))
+        .or(milestone(tangle.clone())))
 }
 
-fn get_health<B: Backend>(
+fn health<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("health"))
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_health)
+        .and_then(handlers::health::health)
 }
 
-fn get_info<B: Backend>(
+fn info<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     network_id: NetworkId,
+    config: RestApiConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -67,10 +76,11 @@ fn get_info<B: Backend>(
         .and(warp::path::end())
         .and(with_tangle(tangle))
         .and(with_network_id(network_id))
-        .and_then(handlers::get_info)
+        .and(with_rest_api_config(config))
+        .and_then(handlers::info::info)
 }
 
-fn get_tips<B: Backend>(
+fn tips<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -79,27 +89,31 @@ fn get_tips<B: Backend>(
         .and(warp::path("tips"))
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_tips)
+        .and_then(handlers::tips::tips)
 }
 
-fn post_json_message<B: Backend>(
+fn submit_message<B: Backend>(
+    tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
-    tangle: ResHandle<MsTangle<B>>,
+    rest_api_config: RestApiConfig,
+    protocol_config: ProtocolConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::post()
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("messages"))
-        .and(warp::path::end())
-        .and(json_body())
+        .and(warp::body::json())
+        .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
         .and(with_network_id(network_id))
-        .and(with_tangle(tangle))
-        .and_then(handlers::post_json_message)
+        .and(with_rest_api_config(rest_api_config))
+        .and(with_protocol_config(protocol_config))
+        .and_then(handlers::submit_message::submit_message)
 }
 
-fn post_raw_message(
+fn submit_message_raw<B: Backend>(
+    tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::post()
@@ -108,11 +122,12 @@ fn post_raw_message(
         .and(warp::path("messages"))
         .and(warp::path::end())
         .and(warp::body::bytes())
+        .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
-        .and_then(handlers::post_raw_message)
+        .and_then(handlers::submit_message_raw::submit_message_raw)
 }
 
-fn get_message_by_index<B: Backend>(
+fn message_indexation<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -123,14 +138,14 @@ fn get_message_by_index<B: Backend>(
         .and(warp::query().and_then(|query: HashMap<String, String>| async move {
             match query.get("index") {
                 Some(i) => Ok(i.to_string()),
-                None => Err(reject::custom(BadRequest("invalid query parameter"))),
+                None => Err(reject::custom(BadRequest("invalid query parameter".to_string()))),
             }
         }))
         .and(with_storage(storage))
-        .and_then(handlers::get_message_by_index)
+        .and_then(handlers::messages_find::messages_find)
 }
 
-fn get_message_by_message_id<B: Backend>(
+fn message<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -140,10 +155,10 @@ fn get_message_by_message_id<B: Backend>(
         .and(custom_path_param::message_id())
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_message_by_message_id)
+        .and_then(handlers::message::message)
 }
 
-fn get_message_metadata<B: Backend>(
+fn message_metadata<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -154,10 +169,10 @@ fn get_message_metadata<B: Backend>(
         .and(warp::path("metadata"))
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_message_metadata)
+        .and_then(handlers::message_metadata::message_metadata)
 }
 
-fn get_raw_message<B: Backend>(
+fn message_raw<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -168,10 +183,10 @@ fn get_raw_message<B: Backend>(
         .and(warp::path("raw"))
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_raw_message)
+        .and_then(handlers::message_raw::message_raw)
 }
 
-fn get_children_by_message_id<B: Backend>(
+fn message_children<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -182,23 +197,10 @@ fn get_children_by_message_id<B: Backend>(
         .and(warp::path("children"))
         .and(warp::path::end())
         .and(with_tangle(tangle))
-        .and_then(handlers::get_children_by_message_id)
+        .and_then(handlers::message_children::message_children)
 }
 
-fn get_milestone_by_milestone_index<B: Backend>(
-    tangle: ResHandle<MsTangle<B>>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(warp::path("api"))
-        .and(warp::path("v1"))
-        .and(warp::path("milestones"))
-        .and(custom_path_param::milestone_index())
-        .and(warp::path::end())
-        .and(with_tangle(tangle))
-        .and_then(handlers::get_milestone_by_milestone_index)
-}
-
-fn get_output_by_output_id<B: Backend>(
+fn output<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -208,23 +210,51 @@ fn get_output_by_output_id<B: Backend>(
         .and(custom_path_param::output_id())
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::get_output_by_output_id)
+        .and_then(handlers::output::output)
 }
 
-fn get_balance_for_address<B: Backend>(
+fn balance_bech32<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
+        .and(custom_path_param::bech32_address())
+        .and(warp::path::end())
+        .and(with_storage(storage))
+        .and_then(handlers::balance_bech32::balance_bech32)
+}
+
+fn balance_ed25519<B: Backend>(
+    storage: ResHandle<B>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("addresses"))
+        .and(warp::path("ed25519"))
         .and(custom_path_param::ed25519_address())
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::get_balance_for_address)
+        .and_then(handlers::balance_ed25519::balance_ed25519)
 }
 
-fn get_outputs_for_address<B: Backend>(
+fn outputs_bech32<B: Backend>(
+    storage: ResHandle<B>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("addresses"))
+        .and(custom_path_param::bech32_address())
+        .and(warp::path("outputs"))
+        .and(warp::path::end())
+        .and(with_storage(storage))
+        .and_then(handlers::outputs_bech32::outputs_bech32)
+}
+
+fn outputs_ed25519<B: Backend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -235,20 +265,37 @@ fn get_outputs_for_address<B: Backend>(
         .and(warp::path("outputs"))
         .and(warp::path::end())
         .and(with_storage(storage))
-        .and_then(handlers::get_outputs_for_address)
+        .and_then(handlers::outputs_ed25519::outputs_ed25519)
+}
+
+fn milestone<B: Backend>(
+    tangle: ResHandle<MsTangle<B>>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("milestones"))
+        .and(custom_path_param::milestone_index())
+        .and(warp::path::end())
+        .and(with_tangle(tangle))
+        .and_then(handlers::milestone::milestone)
 }
 
 mod custom_path_param {
 
     use super::*;
-    use bee_message::{payload::transaction::OutputId, prelude::Ed25519Address, MessageId};
+    use bee_message::{
+        payload::transaction::{Address, OutputId},
+        prelude::Ed25519Address,
+        MessageId,
+    };
     use bee_protocol::MilestoneIndex;
 
     pub(super) fn output_id() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Copy {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<OutputId>() {
                 Ok(id) => Ok(id),
-                Err(_) => Err(reject::custom(BadRequest("invalid output id"))),
+                Err(_) => Err(reject::custom(BadRequest("invalid output id".to_string()))),
             }
         })
     }
@@ -257,7 +304,7 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<MessageId>() {
                 Ok(msg) => Ok(msg),
-                Err(_) => Err(reject::custom(BadRequest("invalid message id"))),
+                Err(_) => Err(reject::custom(BadRequest("invalid message id".to_string()))),
             }
         })
     }
@@ -266,7 +313,25 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<u32>() {
                 Ok(i) => Ok(MilestoneIndex(i)),
-                Err(_) => Err(reject::custom(BadRequest("invalid milestone index"))),
+                Err(_) => Err(reject::custom(BadRequest("invalid milestone index".to_string()))),
+            }
+        })
+    }
+
+    pub(super) fn bech32_address() -> impl Filter<Extract = (Address,), Error = Rejection> + Copy {
+        warp::path::param().and_then(|value: String| async move {
+            match bech32::decode(&value) {
+                Ok((hrp, data)) => {
+                    if hrp.eq("iot") || hrp.eq("toi") {
+                        let bytes = Vec::<u8>::from_base32(&data)
+                            .map_err(|_| reject::custom(BadRequest("invalid IOTA address".to_string())))?;
+                        Ok(Address::unpack(&mut bytes.as_slice())
+                            .map_err(|_| reject::custom(BadRequest("invalid IOTA address".to_string())))?)
+                    } else {
+                        Err(reject::custom(BadRequest("not an IOTA address".to_string())))
+                    }
+                }
+                Err(_) => Err(reject::custom(BadRequest("not a bech32 address".to_string()))),
             }
         })
     }
@@ -275,7 +340,7 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<Ed25519Address>() {
                 Ok(addr) => Ok(addr),
-                Err(_) => Err(reject::custom(BadRequest("invalid ed25519 address"))),
+                Err(_) => Err(reject::custom(BadRequest("invalid Ed25519 address".to_string()))),
             }
         })
     }
@@ -285,6 +350,18 @@ fn with_network_id(
     network_id: NetworkId,
 ) -> impl Filter<Extract = (NetworkId,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || network_id.clone())
+}
+
+fn with_rest_api_config(
+    config: RestApiConfig,
+) -> impl Filter<Extract = (RestApiConfig,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || config.clone())
+}
+
+fn with_protocol_config(
+    config: ProtocolConfig,
+) -> impl Filter<Extract = (ProtocolConfig,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || config.clone())
 }
 
 fn with_tangle<B: Backend>(
@@ -304,8 +381,4 @@ fn with_message_submitter(
 ) -> impl Filter<Extract = (mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,), Error = std::convert::Infallible> + Clone
 {
     warp::any().map(move || message_submitter.clone())
-}
-
-fn json_body<T: DeserializeOwned + Send>() -> impl Filter<Extract = (T,), Error = Rejection> + Copy {
-    warp::body::content_length_limit(1024 * 32).and(warp::body::json())
 }

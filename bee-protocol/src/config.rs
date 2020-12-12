@@ -133,7 +133,9 @@ impl ProtocolConfig {
     pub fn build() -> ProtocolConfigBuilder {
         ProtocolConfigBuilder::new()
     }
-
+    pub fn minimum_pow_score(&self) -> f64 {
+        self.minimum_pow_score
+    }
     pub fn coordinator(&self) -> &ProtocolCoordinatorConfig {
         &self.coordinator
     }

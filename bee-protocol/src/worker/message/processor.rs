@@ -90,6 +90,9 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                     Err(e) => {
                         trace!("Invalid message: {:?}.", e);
                         metrics.invalid_messages_inc();
+                        if let Some(tx) = notifier {
+                            notify_err(format!("Invalid message: {:?}.", e), tx).await;
+                        }
                         continue;
                     }
                 };
@@ -97,6 +100,13 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                 if message.network_id() != config.1 {
                     trace!("Incompatible network ID {} != {}.", message.network_id(), config.1);
                     metrics.invalid_messages_inc();
+                    if let Some(tx) = notifier {
+                        notify_err(
+                            format!("Incompatible network ID {} != {}.", message.network_id(), config.1),
+                            tx,
+                        )
+                        .await;
+                    }
                     continue;
                 }
 
@@ -114,6 +124,16 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                         config.0.minimum_pow_score
                     );
                     metrics.invalid_messages_inc();
+                    if let Some(tx) = notifier {
+                        notify_err(
+                            format!(
+                                "Insufficient pow score: {} < {}.",
+                                pow_score, config.0.minimum_pow_score
+                            ),
+                            tx,
+                        )
+                        .await;
+                    }
                     continue;
                 }
 
@@ -125,9 +145,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                 // store message
                 if let Some(message) = tangle.insert(message, message_id, metadata).await {
                     if let Some(tx) = notifier {
-                        if let Err(e) = tx.send(Ok(message_id)) {
-                            error!("Failed to return message id {}: {:?}.", message_id, e);
-                        }
+                        notify_message_id(message_id, tx).await;
                     }
 
                     // TODO this was temporarily moved from the tangle.
@@ -186,6 +204,9 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                     }
                 } else {
                     metrics.known_messages_inc();
+                    if let Some(tx) = notifier {
+                        notify_message_id(message_id, tx).await;
+                    }
                 }
             }
 
@@ -193,5 +214,17 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         });
 
         Ok(Self { tx })
+    }
+}
+
+async fn notify_err(err: String, notifier: Sender<Result<MessageId, MessageSubmitterError>>) {
+    if let Err(e) = notifier.send(Err(MessageSubmitterError(err))) {
+        error!("Failed to send error: {:?}.", e);
+    }
+}
+
+async fn notify_message_id(message_id: MessageId, notifier: Sender<Result<MessageId, MessageSubmitterError>>) {
+    if let Err(e) = notifier.send(Ok(message_id)) {
+        error!("Failed to send message id: {:?}.", e);
     }
 }
