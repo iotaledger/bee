@@ -52,10 +52,10 @@ impl RestApiConfigBuilder {
             IpAddr::V4(ip) => SocketAddr::new(IpAddr::V4(ip), self.binding_port.unwrap_or(DEFAULT_BINDING_PORT)),
             IpAddr::V6(ip) => SocketAddr::new(IpAddr::V6(ip), self.binding_port.unwrap_or(DEFAULT_BINDING_PORT)),
         };
-        let allow_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
+        let feature_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
         RestApiConfig {
             binding_socket_addr,
-            feature_proof_of_work: allow_proof_of_work,
+            feature_proof_of_work,
         }
     }
 }
