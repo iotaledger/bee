@@ -8,7 +8,7 @@ use crate::{
     peer::{Peer, PeerManager},
     tangle::MsTangle,
     worker::{
-        peer::message_handler::MessageHandler, HasherWorkerEvent, MessageResponderWorkerEvent,
+        peer::packet_handler::PacketHandler, HasherWorkerEvent, MessageResponderWorkerEvent,
         MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent, RequestedMilestones,
     },
     ProtocolMetrics,
@@ -78,7 +78,7 @@ impl PeerWorker {
 
         let shutdown_fused = shutdown.fuse();
 
-        let mut message_handler = MessageHandler::new(receiver, shutdown_fused, self.peer.address.clone());
+        let mut packet_handler = PacketHandler::new(receiver, shutdown_fused, self.peer.address.clone());
 
         //                 Protocol::send_heartbeat(
         //                     self.peer.id,
@@ -99,7 +99,7 @@ impl PeerWorker {
         // TODO is this needed ?
         let tangle = tangle.into_weak();
 
-        while let Some((header, bytes)) = message_handler.fetch_message().await {
+        while let Some((header, bytes)) = packet_handler.fetch_packet().await {
             let tangle = tangle.upgrade().expect("Needed Tangle resource but it was removed");
 
             if let Err(e) = self.process_packet(&tangle, &header, bytes) {
