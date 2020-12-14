@@ -1,9 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    milestone::MilestoneIndex, packet::MessageRequest, peer::PeerManager, protocol::Sender, worker::PeerManagerWorker,
-};
+use crate::{milestone::MilestoneIndex, packet::MessageRequest, peer::PeerManager, worker::PeerManagerWorker, Sender};
 
 use bee_common::{
     node::{Node, ResHandle},

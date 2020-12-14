@@ -3,9 +3,9 @@
 
 use crate::{
     packet::{Message as MessagePacket, MilestoneRequest},
-    protocol::Sender,
     tangle::MsTangle,
     worker::TangleWorker,
+    Sender,
 };
 
 use bee_common::{node::Node, packable::Packable, shutdown_stream::ShutdownStream, worker::Worker};

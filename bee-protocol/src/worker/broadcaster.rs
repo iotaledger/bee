@@ -4,8 +4,8 @@
 use crate::{
     packet::{tlv_into_bytes, Message},
     peer::PeerManager,
-    protocol::ProtocolMetrics,
     worker::{MetricsWorker, PeerManagerWorker},
+    ProtocolMetrics,
 };
 
 use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
