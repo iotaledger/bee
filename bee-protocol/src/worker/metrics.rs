@@ -3,11 +3,16 @@
 
 use crate::ProtocolMetrics;
 
-use bee_common::{node::Node, worker::Worker};
+use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
+use futures::StreamExt;
+use log::info;
+use tokio::time::interval;
 
-use std::convert::Infallible;
+use std::{convert::Infallible, time::Duration};
+
+const METRICS_INTERVAL_SECS: u64 = 60;
 
 pub(crate) struct MetricsWorker {}
 
@@ -18,6 +23,19 @@ impl<N: Node> Worker<N> for MetricsWorker {
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         node.register_resource(ProtocolMetrics::new());
+        let metrics = node.resource::<ProtocolMetrics>();
+
+        node.spawn::<Self, _, _>(|shutdown| async move {
+            info!("Running.");
+
+            let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_secs(METRICS_INTERVAL_SECS)));
+
+            while ticker.next().await.is_some() {
+                info!("{:?}", *metrics);
+            }
+
+            info!("Stopped.");
+        });
 
         Ok(Self {})
     }

@@ -3,7 +3,7 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ProtocolMetrics {
     invalid_messages: AtomicU64,
     new_messages: AtomicU64,
