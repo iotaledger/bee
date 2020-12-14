@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    helper,
     milestone::MilestoneIndex,
     packet::{tlv_from_bytes, Header, Heartbeat, Message, MessageRequest, MilestoneRequest, Packet},
     peer::{Peer, PeerManager},
-    protocol::{helper, ProtocolMetrics},
     tangle::MsTangle,
     worker::{
         peer::message_handler::MessageHandler, HasherWorkerEvent, MessageResponderWorkerEvent,
         MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent, RequestedMilestones,
     },
+    ProtocolMetrics,
 };
 
 use bee_common::node::ResHandle;

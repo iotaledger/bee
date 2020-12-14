@@ -15,7 +15,7 @@ use bee_common::{
     worker::Worker,
 };
 use bee_network::{self, Event, Multiaddr, NetworkListener, PeerId, ShortId};
-use bee_protocol::protocol::{register, unregister};
+use bee_protocol::{register, unregister};
 
 use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;

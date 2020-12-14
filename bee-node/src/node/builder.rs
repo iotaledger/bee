@@ -11,7 +11,7 @@ use bee_common::{
 };
 use bee_network::{self, NetworkController, PeerId};
 use bee_peering::{ManualPeerManager, PeerManager};
-use bee_protocol::protocol::{events as protocol_events, init};
+use bee_protocol::{events as protocol_events, init};
 use bee_rest_api::config::RestApiConfig;
 
 use anymap::Map;
