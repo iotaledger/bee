@@ -3,14 +3,15 @@
 
 use crate::{
     config::ProtocolConfig,
+    helper,
     packet::Message as MessagePacket,
-    protocol::{helper, ProtocolMetrics},
     tangle::{MessageMetadata, MsTangle},
     worker::{
         message_submitter::MessageSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker,
         MetricsWorker, MilestoneValidatorWorker, MilestoneValidatorWorkerEvent, PropagatorWorker,
         PropagatorWorkerEvent, RequestedMessages, TangleWorker,
     },
+    ProtocolMetrics,
 };
 
 use bee_common::{node::Node, packable::Packable, shutdown_stream::ShutdownStream, worker::Worker};
@@ -164,14 +165,8 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                             let parent1 = message.parent1();
                             let parent2 = message.parent2();
 
-                            helper::request_message(
-                                &tangle,
-                                &message_requester,
-                                &*requested_messages,
-                                *parent1,
-                                index,
-                            )
-                            .await;
+                            helper::request_message(&tangle, &message_requester, &*requested_messages, *parent1, index)
+                                .await;
                             if parent1 != parent2 {
                                 helper::request_message(
                                     &tangle,

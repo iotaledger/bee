@@ -26,11 +26,14 @@ impl KeyManager {
     }
 
     pub(crate) fn get_public_keys(&self, index: MilestoneIndex) -> HashSet<String> {
-        let mut public_keys = HashSet::new();
+        let mut public_keys = HashSet::with_capacity(self.key_ranges.len());
 
         for key_range in self.key_ranges.iter() {
             if key_range.start() <= index {
-                if key_range.end() >= index || key_range.start() == key_range.end() {
+                if key_range.end() >= index
+                // start == end means the key is valid forever.
+                || key_range.start() == key_range.end()
+                {
                     public_keys.insert(key_range.public_key().clone());
                 }
                 continue;
@@ -43,7 +46,7 @@ impl KeyManager {
 }
 
 #[test]
-fn key_manager_sort() {
+fn key_manager_is_sorted() {
     let krs = vec![
         KeyRange::new("kr1".to_string(), 42.into(), 1000.into()),
         KeyRange::new("kr2".to_string(), 21.into(), 1000.into()),

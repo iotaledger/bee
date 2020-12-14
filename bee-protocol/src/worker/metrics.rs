@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::protocol::ProtocolMetrics;
+use crate::ProtocolMetrics;
 
 use bee_common::{node::Node, worker::Worker};
 

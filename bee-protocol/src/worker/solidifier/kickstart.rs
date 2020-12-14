@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    helper,
     milestone::MilestoneIndex,
     peer::PeerManager,
-    protocol::helper,
     tangle::MsTangle,
     worker::{
         MilestoneRequesterWorker, MilestoneSolidifierWorker, PeerManagerWorker, RequestedMilestones, TangleWorker,

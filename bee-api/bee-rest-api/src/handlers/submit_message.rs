@@ -32,31 +32,68 @@ pub(crate) async fn submit_message<B: Backend>(
 ) -> Result<impl Reply, Rejection> {
     let is_set = |value: &JsonValue| -> bool { !value.is_null() };
 
-    // validate json input, take care of missing fields, try to build the message and submit it to the node for further
+    let network_id_v = &value["network_id"];
+    let parent_1_v = &value["parent1MessageId"];
+    let parent_2_v = &value["parent2MessageId"];
+    let payload_v = &value["payload"];
+    let nonce_v = &value["nonce"];
+
+    // parse the values, take care of missing fields, build the message and submit it to the node for further
     // processing
 
-    let network_id = {
-        let network_id_v = &value["network_id"];
-        if network_id_v.is_null() {
-            network_id.1
-        } else {
-            network_id_v
-                .as_str()
-                .ok_or(reject::custom(BadRequest(
-                    "invalid network id: expected an u64-string".to_string(),
-                )))?
-                .parse::<u64>()
-                .map_err(|_| reject::custom(BadRequest("invalid network id: expected an u64-string".to_string())))?
-        }
+    let network_id = if network_id_v.is_null() {
+        network_id.1
+    } else {
+        network_id_v
+            .as_str()
+            .ok_or(reject::custom(BadRequest(
+                "invalid network id: expected an u64-string".to_string(),
+            )))?
+            .parse::<u64>()
+            .map_err(|_| reject::custom(BadRequest("invalid network id: expected an u64-string".to_string())))?
     };
 
-    let (parent_1_message_id, parent_2_message_id) = {
-        let parent_1_v = &value["parent1MessageId"];
-        let parent_2_v = &value["parent2MessageId"];
-
-        if is_set(parent_1_v) && is_set(parent_2_v) {
-            // if both parents are set
-            let parent1 = parent_1_v
+    let (parent_1_message_id, parent_2_message_id) = if is_set(parent_1_v) && is_set(parent_2_v) {
+        // if both parents are set
+        let parent1 = parent_1_v
+            .as_str()
+            .ok_or(reject::custom(BadRequest(format!(
+                "invalid parent 1: expected a hex-string of length {}",
+                MESSAGE_ID_LENGTH * 2
+            ))))?
+            .parse::<MessageId>()
+            .map_err(|_| {
+                reject::custom(BadRequest(format!(
+                    "invalid parent 1: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH * 2
+                )))
+            })?;
+        let parent2 = parent_2_v
+            .as_str()
+            .ok_or(reject::custom(BadRequest(format!(
+                "invalid parent 2: expected a hex-string of length {}",
+                MESSAGE_ID_LENGTH * 2
+            ))))?
+            .parse::<MessageId>()
+            .map_err(|_| {
+                reject::custom(BadRequest(format!(
+                    "invalid parent 2: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH * 2
+                )))
+            })?;
+        (parent1, parent2)
+    } else if parent_1_v.is_null() && parent_2_v.is_null() {
+        // if none of the parents are set
+        tangle
+            .get_messages_to_approve()
+            .await
+            .ok_or(reject::custom(ServiceUnavailable(
+                "can not auto-fill tips: tip pool is empty".to_string(),
+            )))?
+    } else {
+        // if only one parent is set
+        let parent = if is_set(parent_1_v) {
+            parent_1_v
                 .as_str()
                 .ok_or(reject::custom(BadRequest(format!(
                     "invalid parent 1: expected a hex-string of length {}",
@@ -68,8 +105,9 @@ pub(crate) async fn submit_message<B: Backend>(
                         "invalid parent 1: expected a hex-string of length {}",
                         MESSAGE_ID_LENGTH * 2
                     )))
-                })?;
-            let parent2 = parent_2_v
+                })?
+        } else {
+            parent_2_v
                 .as_str()
                 .ok_or(reject::custom(BadRequest(format!(
                     "invalid parent 2: expected a hex-string of length {}",
@@ -81,113 +119,65 @@ pub(crate) async fn submit_message<B: Backend>(
                         "invalid parent 2: expected a hex-string of length {}",
                         MESSAGE_ID_LENGTH * 2
                     )))
-                })?;
-            (parent1, parent2)
-        } else if parent_1_v.is_null() && parent_2_v.is_null() {
-            // if none of the parents are set
-            tangle
-                .get_messages_to_approve()
-                .await
-                .ok_or(reject::custom(ServiceUnavailable(
-                    "can not auto-fill tips: tip pool is empty".to_string(),
+                })?
+        };
+        (parent, parent)
+    };
+
+    let payload = if payload_v.is_null() {
+        None
+    } else {
+        let payload_dto = serde_json::from_value::<PayloadDto>(payload_v.clone())
+            .map_err(|e| reject::custom(BadRequest(e.to_string())))?;
+        Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(BadRequest(e.to_string())))?)
+    };
+
+    let nonce = if nonce_v.is_null() {
+        if !rest_api_config.feature_proof_of_work() {
+            return Err(reject::custom(ServiceUnavailable(
+                "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
+            )));
+        }
+        None
+    } else {
+        Some(
+            nonce_v
+                .as_str()
+                .ok_or(reject::custom(BadRequest(
+                    "invalid nonce: expected an u64-string".to_string(),
                 )))?
-        } else {
-            // if only one parent is set
-            let parent = if is_set(parent_1_v) {
-                parent_1_v
-                    .as_str()
-                    .ok_or(reject::custom(BadRequest(format!(
-                        "invalid parent 1: expected a hex-string of length {}",
-                        MESSAGE_ID_LENGTH * 2
-                    ))))?
-                    .parse::<MessageId>()
-                    .map_err(|_| {
-                        reject::custom(BadRequest(format!(
-                            "invalid parent 1: expected a hex-string of length {}",
-                            MESSAGE_ID_LENGTH * 2
-                        )))
-                    })?
-            } else {
-                parent_2_v
-                    .as_str()
-                    .ok_or(reject::custom(BadRequest(format!(
-                        "invalid parent 2: expected a hex-string of length {}",
-                        MESSAGE_ID_LENGTH * 2
-                    ))))?
-                    .parse::<MessageId>()
-                    .map_err(|_| {
-                        reject::custom(BadRequest(format!(
-                            "invalid parent 2: expected a hex-string of length {}",
-                            MESSAGE_ID_LENGTH * 2
-                        )))
-                    })?
-            };
-            (parent, parent)
-        }
+                .parse::<u64>()
+                .map_err(|_| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?,
+        )
     };
 
-    let payload = {
-        let payload_v = &value["payload"];
-        if payload_v.is_null() {
-            None
-        } else {
-            let payload_dto = serde_json::from_value::<PayloadDto>(payload_v.clone())
-                .map_err(|e| reject::custom(BadRequest(e.to_string())))?;
-            Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(BadRequest(e.to_string())))?)
+    let message = if let Some(nonce) = nonce {
+        let mut builder = MessageBuilder::new()
+            .with_network_id(network_id)
+            .with_parent1(parent_1_message_id)
+            .with_parent2(parent_2_message_id)
+            .with_nonce_provider(ConstantBuilder::new().with_value(nonce).finish(), 0f64);
+        if let Some(payload) = payload {
+            builder = builder.with_payload(payload)
         }
-    };
-
-    let nonce = {
-        let nonce_v = &value["nonce"];
-        if nonce_v.is_null() {
-            if !rest_api_config.feature_proof_of_work() {
-                return Err(reject::custom(ServiceUnavailable(
-                    "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
-                )));
-            }
-            None
-        } else {
-            Some(
-                nonce_v
-                    .as_str()
-                    .ok_or(reject::custom(BadRequest(
-                        "invalid nonce: expected an u64-string".to_string(),
-                    )))?
-                    .parse::<u64>()
-                    .map_err(|_| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?,
-            )
+        builder
+            .finish()
+            .map_err(|e| reject::custom(BadRequest(e.to_string())))?
+    } else {
+        let mut builder = MessageBuilder::new()
+            .with_network_id(network_id)
+            .with_parent1(parent_1_message_id)
+            .with_parent2(parent_2_message_id)
+            .with_nonce_provider(
+                MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
+                protocol_config.minimum_pow_score(),
+            );
+        if let Some(payload) = payload {
+            builder = builder.with_payload(payload)
         }
-    };
-
-    let message = {
-        if let Some(nonce) = nonce {
-            let mut builder = MessageBuilder::new()
-                .with_network_id(network_id)
-                .with_parent1(parent_1_message_id)
-                .with_parent2(parent_2_message_id)
-                .with_nonce_provider(ConstantBuilder::new().with_value(nonce).finish(), 0f64);
-            if let Some(payload) = payload {
-                builder = builder.with_payload(payload)
-            }
-            builder
-                .finish()
-                .map_err(|e| reject::custom(BadRequest(e.to_string())))?
-        } else {
-            let mut builder = MessageBuilder::new()
-                .with_network_id(network_id)
-                .with_parent1(parent_1_message_id)
-                .with_parent2(parent_2_message_id)
-                .with_nonce_provider(
-                    MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
-                    protocol_config.minimum_pow_score(),
-                );
-            if let Some(payload) = payload {
-                builder = builder.with_payload(payload)
-            }
-            builder
-                .finish()
-                .map_err(|e| reject::custom(BadRequest(e.to_string())))?
-        }
+        builder
+            .finish()
+            .map_err(|e| reject::custom(BadRequest(e.to_string())))?
     };
 
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;

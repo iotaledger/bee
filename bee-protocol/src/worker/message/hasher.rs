@@ -5,12 +5,12 @@
 
 use crate::{
     packet::Message as MessagePacket,
-    protocol::ProtocolMetrics,
     worker::{
         message::{HashCache, ProcessorWorker, ProcessorWorkerEvent},
         message_submitter::MessageSubmitterError,
         MetricsWorker,
     },
+    ProtocolMetrics,
 };
 
 use bee_common::{

@@ -3,9 +3,9 @@
 
 pub mod config;
 mod filters;
-mod handlers;
+pub mod handlers;
 pub mod storage;
-mod types;
+pub mod types;
 
 use crate::config::RestApiConfig;
 use async_trait::async_trait;

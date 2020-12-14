@@ -5,9 +5,9 @@ use crate::{
     milestone::MilestoneIndex,
     packet::MilestoneRequest,
     peer::PeerManager,
-    protocol::Sender,
     tangle::MsTangle,
     worker::{PeerManagerWorker, TangleWorker},
+    Sender,
 };
 
 use bee_common::{
