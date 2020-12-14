@@ -87,6 +87,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
     let tangle = node.resource::<MsTangle<N::Backend>>().into_weak();
     let network = node.resource::<NetworkController>(); // TODO: Use a weak handle?
     let peer_manager = node.resource::<PeerManager>();
+    let metrics = node.resource::<ProtocolMetrics>();
 
     node.resource::<Bus>()
         .add_listener::<(), _, _>(move |latest_milestone: &LatestMilestoneChanged| {
@@ -100,6 +101,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
                 helper::broadcast_heartbeat(
                     &peer_manager,
                     &network,
+                    &metrics,
                     tangle.get_latest_solid_milestone_index(),
                     tangle.get_pruning_index(),
                     latest_milestone.0.index,
@@ -123,6 +125,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
     let network = node.resource::<NetworkController>(); // TODO: Use a weak handle?
     let requested_milestones = node.resource::<RequestedMilestones>();
     let peer_manager = node.resource::<PeerManager>();
+    let metrics = node.resource::<ProtocolMetrics>();
 
     node.resource::<Bus>()
         .add_listener::<(), _, _>(move |latest_solid_milestone: &LatestSolidMilestoneChanged| {
@@ -144,6 +147,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
                 helper::broadcast_heartbeat(
                     &peer_manager,
                     &network,
+                    &metrics,
                     latest_solid_milestone.0.index,
                     tangle.get_pruning_index(),
                     tangle.get_latest_milestone_index(),

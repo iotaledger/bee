@@ -7,6 +7,7 @@ use crate::{
     peer::PeerManager,
     tangle::MsTangle,
     worker::{MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages, RequestedMilestones},
+    ProtocolMetrics,
 };
 
 use bee_common::node::ResHandle;
@@ -26,14 +27,19 @@ pub(crate) struct Sender<P: Packet> {
 macro_rules! implement_sender_worker {
     ($type:ty, $sender:tt, $incrementor:tt) => {
         impl Sender<$type> {
-            pub(crate) fn send(network: &NetworkController, id: &PeerId, packet: $type) {
+            pub(crate) fn send(
+                network: &NetworkController,
+                metrics: &ResHandle<ProtocolMetrics>,
+                id: &PeerId,
+                packet: $type,
+            ) {
                 match network.send(SendMessage {
                     to: id.clone(),
                     message: tlv_into_bytes(packet),
                 }) {
                     Ok(_) => {
                         // self.peer.metrics.$incrementor();
-                        // Protocol::get().metrics.$incrementor();
+                        metrics.$incrementor();
                     }
                     Err(e) => {
                         warn!("Sending {} to {} failed: {:?}.", stringify!($type), id, e);
@@ -100,6 +106,7 @@ pub(crate) async fn request_message<B: Backend>(
 pub fn send_heartbeat(
     peer_manager: &ResHandle<PeerManager>,
     network: &NetworkController,
+    metrics: &ResHandle<ProtocolMetrics>,
     to: PeerId,
     latest_solid_milestone_index: MilestoneIndex,
     pruning_milestone_index: MilestoneIndex,
@@ -107,6 +114,7 @@ pub fn send_heartbeat(
 ) {
     Sender::<Heartbeat>::send(
         network,
+        metrics,
         &to,
         Heartbeat::new(
             *latest_solid_milestone_index,
@@ -121,6 +129,7 @@ pub fn send_heartbeat(
 pub fn broadcast_heartbeat(
     peer_manager: &ResHandle<PeerManager>,
     network: &NetworkController,
+    metrics: &ResHandle<ProtocolMetrics>,
     latest_solid_milestone_index: MilestoneIndex,
     pruning_milestone_index: MilestoneIndex,
     latest_milestone_index: MilestoneIndex,
@@ -129,6 +138,7 @@ pub fn broadcast_heartbeat(
         send_heartbeat(
             peer_manager,
             network,
+            metrics,
             entry.key().clone(),
             latest_solid_milestone_index,
             pruning_milestone_index,

@@ -1,7 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{milestone::MilestoneIndex, packet::MessageRequest, peer::PeerManager, worker::PeerManagerWorker, Sender};
+use crate::{
+    milestone::MilestoneIndex,
+    packet::MessageRequest,
+    peer::PeerManager,
+    worker::{MetricsWorker, PeerManagerWorker},
+    ProtocolMetrics, Sender,
+};
 
 use bee_common::{
     node::{Node, ResHandle},
@@ -48,14 +54,15 @@ async fn process_request(
     index: MilestoneIndex,
     network: &NetworkController,
     peer_manager: &ResHandle<PeerManager>,
-    requested_messages: &RequestedMessages,
+    metrics: &ResHandle<ProtocolMetrics>,
+    requested_messages: &ResHandle<RequestedMessages>,
     counter: &mut usize,
 ) {
     if requested_messages.contains_key(&message_id) {
         return;
     }
 
-    if process_request_unchecked(message_id, index, network, peer_manager, counter).await {
+    if process_request_unchecked(message_id, index, network, peer_manager, metrics, counter).await {
         requested_messages.insert(message_id, (index, Instant::now()));
     }
 }
@@ -66,6 +73,7 @@ async fn process_request_unchecked(
     index: MilestoneIndex,
     network: &NetworkController,
     peer_manager: &ResHandle<PeerManager>,
+    metrics: &ResHandle<ProtocolMetrics>,
     counter: &mut usize,
 ) -> bool {
     if peer_manager.peers.is_empty() {
@@ -81,7 +89,7 @@ async fn process_request_unchecked(
 
         if let Some(peer) = peer_manager.peers.get(peer_id) {
             if peer.has_data(index) {
-                Sender::<MessageRequest>::send(network, peer_id, MessageRequest::new(message_id.as_ref()));
+                Sender::<MessageRequest>::send(network, metrics, peer_id, MessageRequest::new(message_id.as_ref()));
                 return true;
             }
         }
@@ -94,7 +102,7 @@ async fn process_request_unchecked(
 
         if let Some(peer) = peer_manager.peers.get(peer_id) {
             if peer.maybe_has_data(index) {
-                Sender::<MessageRequest>::send(network, peer_id, MessageRequest::new(message_id.as_ref()));
+                Sender::<MessageRequest>::send(network, metrics, peer_id, MessageRequest::new(message_id.as_ref()));
                 return true;
             }
         }
@@ -105,8 +113,9 @@ async fn process_request_unchecked(
 
 async fn retry_requests(
     network: &NetworkController,
-    requested_messages: &RequestedMessages,
+    requested_messages: &ResHandle<RequestedMessages>,
     peer_manager: &ResHandle<PeerManager>,
+    metrics: &ResHandle<ProtocolMetrics>,
     counter: &mut usize,
 ) {
     let mut retry_counts: usize = 0;
@@ -115,7 +124,7 @@ async fn retry_requests(
         let (message_id, (index, instant)) = message.pair_mut();
         let now = Instant::now();
         if (now - *instant).as_secs() > RETRY_INTERVAL_SEC
-            && process_request_unchecked(*message_id, *index, network, peer_manager, counter).await
+            && process_request_unchecked(*message_id, *index, network, peer_manager, metrics, counter).await
         {
             *instant = now;
             retry_counts += 1;
@@ -133,7 +142,7 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<PeerManagerWorker>()].leak()
+        vec![TypeId::of::<PeerManagerWorker>(), TypeId::of::<MetricsWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
@@ -141,9 +150,11 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
 
         let requested_messages: RequestedMessages = Default::default();
         node.register_resource(requested_messages);
+
         let requested_messages = node.resource::<RequestedMessages>();
         let network = node.resource::<NetworkController>();
         let peer_manager = node.resource::<PeerManager>();
+        let metrics = node.resource::<ProtocolMetrics>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -155,11 +166,11 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
 
             loop {
                 select! {
-                    _ = timeouts.next() => retry_requests(&network, &*requested_messages, &peer_manager, &mut counter).await,
+                    _ = timeouts.next() => retry_requests(&network, &requested_messages, &peer_manager, &metrics, &mut counter).await,
                     entry = receiver.next() => match entry {
                         Some(MessageRequesterWorkerEvent(message_id, index)) => {
                             trace!("Requesting message {}.", message_id);
-                            process_request(message_id, index, &network, &peer_manager, &*requested_messages, &mut counter).await
+                            process_request(message_id, index, &network, &peer_manager, &metrics, &requested_messages, &mut counter).await
                         },
                         None => break,
                     },
