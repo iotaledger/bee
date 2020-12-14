@@ -5,10 +5,11 @@ use crate::{
     config::ProtocolConfig,
     helper,
     packet::Message as MessagePacket,
+    peer::PeerManager,
     tangle::{MessageMetadata, MsTangle},
     worker::{
         message_submitter::MessageSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker,
-        MetricsWorker, MilestoneValidatorWorker, MilestoneValidatorWorkerEvent, PropagatorWorker,
+        MetricsWorker, MilestoneValidatorWorker, MilestoneValidatorWorkerEvent, PeerManagerWorker, PropagatorWorker,
         PropagatorWorkerEvent, RequestedMessages, TangleWorker,
     },
     ProtocolMetrics,
@@ -53,6 +54,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
             TypeId::of::<BroadcasterWorker>(),
             TypeId::of::<MessageRequesterWorker>(),
             TypeId::of::<MetricsWorker>(),
+            TypeId::of::<PeerManagerWorker>(),
         ]
         .leak()
     }
@@ -67,6 +69,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
         let metrics = node.resource::<ProtocolMetrics>();
+        let peer_manager = node.resource::<PeerManager>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -199,6 +202,11 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                     }
                 } else {
                     metrics.known_messages_inc();
+                    if let Some(peer_id) = from {
+                        if let Some(peer) = peer_manager.peers.get(&peer_id) {
+                            peer.metrics.known_messages_inc();
+                        }
+                    }
                     if let Some(tx) = notifier {
                         notify_message_id(message_id, tx).await;
                     }
