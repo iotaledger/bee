@@ -184,7 +184,7 @@ impl<B: Backend> MsTangle<B> {
 
     // TODO reduce to one atomic value ?
     pub fn is_synced_threshold(&self, threshold: u32) -> bool {
-        *self.get_latest_solid_milestone_index() >= (*self.get_latest_milestone_index() - threshold)
+        *self.get_latest_solid_milestone_index() >= self.get_latest_milestone_index().saturating_sub(threshold)
     }
 
     pub fn get_solid_entry_point_index(&self, hash: &MessageId) -> Option<MilestoneIndex> {
