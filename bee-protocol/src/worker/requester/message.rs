@@ -89,7 +89,13 @@ async fn process_request_unchecked(
 
         if let Some(peer) = peer_manager.peers.get(peer_id) {
             if peer.has_data(index) {
-                Sender::<MessageRequest>::send(network, metrics, peer_id, MessageRequest::new(message_id.as_ref()));
+                Sender::<MessageRequest>::send(
+                    network,
+                    peer_manager,
+                    metrics,
+                    peer_id,
+                    MessageRequest::new(message_id.as_ref()),
+                );
                 return true;
             }
         }
@@ -102,7 +108,13 @@ async fn process_request_unchecked(
 
         if let Some(peer) = peer_manager.peers.get(peer_id) {
             if peer.maybe_has_data(index) {
-                Sender::<MessageRequest>::send(network, metrics, peer_id, MessageRequest::new(message_id.as_ref()));
+                Sender::<MessageRequest>::send(
+                    network,
+                    peer_manager,
+                    metrics,
+                    peer_id,
+                    MessageRequest::new(message_id.as_ref()),
+                );
                 return true;
             }
         }

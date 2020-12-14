@@ -3,8 +3,9 @@
 
 use crate::{
     packet::{Message as MessagePacket, MilestoneRequest},
+    peer::PeerManager,
     tangle::MsTangle,
-    worker::{MetricsWorker, TangleWorker},
+    worker::{MetricsWorker, PeerManagerWorker, TangleWorker},
     ProtocolMetrics, Sender,
 };
 
@@ -34,7 +35,12 @@ impl<N: Node> Worker<N> for MilestoneResponderWorker {
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>(), TypeId::of::<MetricsWorker>()].leak()
+        vec![
+            TypeId::of::<TangleWorker>(),
+            TypeId::of::<MetricsWorker>(),
+            TypeId::of::<PeerManagerWorker>(),
+        ]
+        .leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
@@ -43,6 +49,7 @@ impl<N: Node> Worker<N> for MilestoneResponderWorker {
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let network = node.resource::<NetworkController>();
         let metrics = node.resource::<ProtocolMetrics>();
+        let peer_manager = node.resource::<PeerManager>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -60,7 +67,13 @@ impl<N: Node> Worker<N> for MilestoneResponderWorker {
                         let mut bytes = Vec::new();
 
                         if message.pack(&mut bytes).is_ok() {
-                            Sender::<MessagePacket>::send(&network, &metrics, &peer_id, MessagePacket::new(&bytes));
+                            Sender::<MessagePacket>::send(
+                                &network,
+                                &peer_manager,
+                                &metrics,
+                                &peer_id,
+                                MessagePacket::new(&bytes),
+                            );
                         }
                     }
                 }

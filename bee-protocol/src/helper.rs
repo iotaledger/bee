@@ -29,20 +29,23 @@ macro_rules! implement_sender_worker {
         impl Sender<$type> {
             pub(crate) fn send(
                 network: &NetworkController,
+                peer_manager: &ResHandle<PeerManager>,
                 metrics: &ResHandle<ProtocolMetrics>,
                 id: &PeerId,
                 packet: $type,
             ) {
-                match network.send(SendMessage {
-                    to: id.clone(),
-                    message: tlv_into_bytes(packet),
-                }) {
-                    Ok(_) => {
-                        // self.peer.metrics.$incrementor();
-                        metrics.$incrementor();
-                    }
-                    Err(e) => {
-                        warn!("Sending {} to {} failed: {:?}.", stringify!($type), id, e);
+                if let Some(peer) = peer_manager.peers.get(id) {
+                    match network.send(SendMessage {
+                        to: id.clone(),
+                        message: tlv_into_bytes(packet),
+                    }) {
+                        Ok(_) => {
+                            peer.metrics.$incrementor();
+                            metrics.$incrementor();
+                        }
+                        Err(e) => {
+                            warn!("Sending {} to {} failed: {:?}.", stringify!($type), id, e);
+                        }
                     }
                 }
             }
@@ -114,6 +117,7 @@ pub fn send_heartbeat(
 ) {
     Sender::<Heartbeat>::send(
         network,
+        peer_manager,
         metrics,
         &to,
         Heartbeat::new(

@@ -85,7 +85,7 @@ async fn process_request_unchecked(
 
     match peer_id {
         Some(peer_id) => {
-            Sender::<MilestoneRequest>::send(network, metrics, &peer_id, MilestoneRequest::new(*index));
+            Sender::<MilestoneRequest>::send(network, peer_manager, metrics, &peer_id, MilestoneRequest::new(*index));
             true
         }
         None => {
@@ -98,7 +98,13 @@ async fn process_request_unchecked(
 
                 if let Some(peer) = peer_manager.peers.get(peer_id) {
                     if peer.maybe_has_data(index) {
-                        Sender::<MilestoneRequest>::send(network, metrics, &peer_id, MilestoneRequest::new(*index));
+                        Sender::<MilestoneRequest>::send(
+                            network,
+                            peer_manager,
+                            metrics,
+                            &peer_id,
+                            MilestoneRequest::new(*index),
+                        );
                         return true;
                     }
                 }
