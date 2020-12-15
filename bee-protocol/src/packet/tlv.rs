@@ -7,7 +7,7 @@ use crate::packet::{Header, Packet, HEADER_SIZE};
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug)]
-pub(crate) enum TlvError {
+pub(crate) enum Error {
     InvalidAdvertisedType(u8, u8),
     InvalidAdvertisedLength(usize, usize),
     InvalidLength(usize),
@@ -25,20 +25,20 @@ pub(crate) enum TlvError {
 /// * The advertised packet type does not match the required packet type.
 /// * The advertised packet length does not match the buffer length.
 /// * The buffer length is not within the allowed size range of the required packet type.
-pub(crate) fn tlv_from_bytes<P: Packet>(header: &Header, bytes: &[u8]) -> Result<P, TlvError> {
+pub(crate) fn tlv_from_bytes<P: Packet>(header: &Header, bytes: &[u8]) -> Result<P, Error> {
     if header.packet_type != P::ID {
-        return Err(TlvError::InvalidAdvertisedType(header.packet_type, P::ID));
+        return Err(Error::InvalidAdvertisedType(header.packet_type, P::ID));
     }
 
     if header.packet_length as usize != bytes.len() {
-        return Err(TlvError::InvalidAdvertisedLength(
+        return Err(Error::InvalidAdvertisedLength(
             header.packet_length as usize,
             bytes.len(),
         ));
     }
 
     if !P::size_range().contains(&bytes.len()) {
-        return Err(TlvError::InvalidLength(bytes.len()));
+        return Err(Error::InvalidLength(bytes.len()));
     }
 
     Ok(P::from_bytes(bytes))
@@ -83,7 +83,7 @@ mod tests {
             },
             &Vec::with_capacity(P::size_range().start),
         ) {
-            Err(TlvError::InvalidAdvertisedType(advertised_type, actual_type)) => {
+            Err(Error::InvalidAdvertisedType(advertised_type, actual_type)) => {
                 assert_eq!(advertised_type, P::ID + 1);
                 assert_eq!(actual_type, P::ID);
             }
@@ -99,7 +99,7 @@ mod tests {
             },
             &vec![0u8; P::size_range().start + 1],
         ) {
-            Err(TlvError::InvalidAdvertisedLength(advertised_length, actual_length)) => {
+            Err(Error::InvalidAdvertisedLength(advertised_length, actual_length)) => {
                 assert_eq!(advertised_length, P::size_range().start);
                 assert_eq!(actual_length, P::size_range().start + 1);
             }
@@ -115,7 +115,7 @@ mod tests {
             },
             &vec![0u8; P::size_range().start - 1],
         ) {
-            Err(TlvError::InvalidLength(length)) => assert_eq!(length, P::size_range().start - 1),
+            Err(Error::InvalidLength(length)) => assert_eq!(length, P::size_range().start - 1),
             _ => unreachable!(),
         }
 
@@ -126,7 +126,7 @@ mod tests {
             },
             &vec![0u8; P::size_range().end],
         ) {
-            Err(TlvError::InvalidLength(length)) => assert_eq!(length, P::size_range().end),
+            Err(Error::InvalidLength(length)) => assert_eq!(length, P::size_range().end),
             _ => unreachable!(),
         }
     }

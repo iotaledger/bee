@@ -6,13 +6,13 @@ use crate::{
     packet::MilestoneRequest,
     peer::PeerManager,
     tangle::MsTangle,
-    worker::{PeerManagerWorker, TangleWorker},
-    Sender,
+    worker::{MetricsWorker, PeerManagerWorker, TangleWorker},
+    ProtocolMetrics, Sender,
 };
 
-use bee_common::{
+use bee_common::shutdown_stream::ShutdownStream;
+use bee_common_pt2::{
     node::{Node, ResHandle},
-    shutdown_stream::ShutdownStream,
     worker::Worker,
 };
 use bee_network::{NetworkController, PeerId};
@@ -55,14 +55,15 @@ async fn process_request(
     peer_id: Option<PeerId>,
     network: &NetworkController,
     peer_manager: &ResHandle<PeerManager>,
-    requested_milestones: &RequestedMilestones,
+    metrics: &ResHandle<ProtocolMetrics>,
+    requested_milestones: &ResHandle<RequestedMilestones>,
     counter: &mut usize,
 ) {
     if requested_milestones.contains_key(&index) {
         return;
     }
 
-    process_request_unchecked(index, peer_id, network, peer_manager, counter).await;
+    process_request_unchecked(index, peer_id, network, peer_manager, metrics, counter).await;
 
     if index.0 != 0 {
         requested_milestones.insert(index, Instant::now());
@@ -75,6 +76,7 @@ async fn process_request_unchecked(
     peer_id: Option<PeerId>,
     network: &NetworkController,
     peer_manager: &ResHandle<PeerManager>,
+    metrics: &ResHandle<ProtocolMetrics>,
     counter: &mut usize,
 ) -> bool {
     if peer_manager.peers.is_empty() {
@@ -83,7 +85,7 @@ async fn process_request_unchecked(
 
     match peer_id {
         Some(peer_id) => {
-            Sender::<MilestoneRequest>::send(network, &peer_id, MilestoneRequest::new(*index));
+            Sender::<MilestoneRequest>::send(network, peer_manager, metrics, &peer_id, MilestoneRequest::new(*index));
             true
         }
         None => {
@@ -96,7 +98,13 @@ async fn process_request_unchecked(
 
                 if let Some(peer) = peer_manager.peers.get(peer_id) {
                     if peer.maybe_has_data(index) {
-                        Sender::<MilestoneRequest>::send(network, &peer_id, MilestoneRequest::new(*index));
+                        Sender::<MilestoneRequest>::send(
+                            network,
+                            peer_manager,
+                            metrics,
+                            &peer_id,
+                            MilestoneRequest::new(*index),
+                        );
                         return true;
                     }
                 }
@@ -110,7 +118,8 @@ async fn process_request_unchecked(
 async fn retry_requests(
     network: &NetworkController,
     peer_manager: &ResHandle<PeerManager>,
-    requested_milestones: &RequestedMilestones,
+    metrics: &ResHandle<ProtocolMetrics>,
+    requested_milestones: &ResHandle<RequestedMilestones>,
     counter: &mut usize,
 ) {
     let mut retry_counts: usize = 0;
@@ -119,7 +128,7 @@ async fn retry_requests(
         let (index, instant) = milestone.pair_mut();
         let now = Instant::now();
         if (now - *instant).as_secs() > RETRY_INTERVAL_SEC
-            && process_request_unchecked(*index, None, network, peer_manager, counter).await
+            && process_request_unchecked(*index, None, network, peer_manager, metrics, counter).await
         {
             *instant = now;
             retry_counts += 1;
@@ -137,18 +146,25 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>(), TypeId::of::<PeerManagerWorker>()].leak()
+        vec![
+            TypeId::of::<TangleWorker>(),
+            TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<MetricsWorker>(),
+        ]
+        .leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
-        let tangle = node.resource::<MsTangle<N::Backend>>();
-        let network = node.resource::<NetworkController>();
         let requested_milestones: RequestedMilestones = Default::default();
         node.register_resource(requested_milestones);
+
+        let tangle = node.resource::<MsTangle<N::Backend>>();
+        let network = node.resource::<NetworkController>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let peer_manager = node.resource::<PeerManager>();
+        let metrics = node.resource::<ProtocolMetrics>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -160,12 +176,12 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
 
             loop {
                 select! {
-                    _ = timeouts.next() => retry_requests(&network, &peer_manager, &*requested_milestones, &mut counter).await,
+                    _ = timeouts.next() => retry_requests(&network, &peer_manager, &metrics, &requested_milestones, &mut counter).await,
                     entry = receiver.next() => match entry {
                         Some(MilestoneRequesterWorkerEvent(index, peer_id)) => {
                             if !tangle.contains_milestone(index.into()) {
                                 debug!("Requesting milestone {}.", *index);
-                                process_request(index, peer_id, &network, &peer_manager, &*requested_milestones, &mut counter).await;
+                                process_request(index, peer_id, &network, &peer_manager, &metrics, &requested_milestones, &mut counter).await;
                             }
                         },
                         None => break,

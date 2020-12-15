@@ -11,6 +11,7 @@ keywords = ["iota", "tangle", "bee", "framework", "common"]
 homepage = "https://www.iota.org"
 
 [dependencies]
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { path = "../../bee-storage/bee-storage" }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 

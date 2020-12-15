@@ -1,18 +1,17 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{handlers, NetworkId};
-use bee_common::node::ResHandle;
+use crate::{config::RestApiConfig, filters::CustomRejection::BadRequest, handlers, storage::Backend, NetworkId};
+
+use bee_common::packable::Packable;
+use bee_common_pt2::node::ResHandle;
+use bee_protocol::{config::ProtocolConfig, tangle::MsTangle, MessageSubmitterWorkerEvent};
+
+use bech32::FromBase32;
+use tokio::sync::mpsc;
 use warp::{reject, Filter, Rejection};
 
-use bee_protocol::{tangle::MsTangle, MessageSubmitterWorkerEvent};
-
-use crate::{config::RestApiConfig, filters::CustomRejection::BadRequest, storage::Backend};
-use bech32::FromBase32;
-use bee_common::packable::Packable;
-use bee_protocol::config::ProtocolConfig;
 use std::collections::HashMap;
-use tokio::sync::mpsc;
 
 #[derive(Debug, Clone)]
 pub(crate) enum CustomRejection {

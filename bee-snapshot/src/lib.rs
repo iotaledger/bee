@@ -23,7 +23,7 @@ pub use error::Error;
 pub use header::SnapshotHeader;
 pub use snapshot::Snapshot;
 
-use bee_common::node::Node;
+use bee_common_pt2::node::Node;
 // use bee_protocol::{event::LatestSolidMilestoneChanged, MilestoneIndex};
 
 use chrono::{offset::TimeZone, Utc};

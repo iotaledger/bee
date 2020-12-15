@@ -9,18 +9,22 @@ use crate::{
     types::*,
     NetworkId,
 };
-use bee_common::{node::ResHandle, packable::Packable};
+
+use bee_common::packable::Packable;
+use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
 use bee_pow::providers::{ConstantBuilder, MinerBuilder, ProviderBuilder};
 use bee_protocol::{config::ProtocolConfig, tangle::MsTangle, MessageSubmitterError, MessageSubmitterWorkerEvent};
+
 use blake2::VarBlake2b;
 use futures::channel::oneshot;
 use log::error;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
-use std::convert::TryFrom;
 use tokio::sync::mpsc;
 use warp::{http::StatusCode, reject, Rejection, Reply};
+
+use std::convert::TryFrom;
 
 pub(crate) async fn submit_message<B: Backend>(
     value: JsonValue,

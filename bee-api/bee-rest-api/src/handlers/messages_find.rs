@@ -6,18 +6,18 @@ use crate::{
     handlers::{EnvelopeContent, SuccessEnvelope},
     storage::Backend,
 };
-use bee_common::node::ResHandle;
+
+use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
 use bee_storage::access::Fetch;
+
 use blake2::Blake2s;
 use serde::Serialize;
-use std::{convert::TryInto, ops::Deref};
 use warp::{reject, Rejection, Reply};
 
-pub(crate) async fn messages_find<B: Backend>(
-    index: String,
-    storage: ResHandle<B>,
-) -> Result<impl Reply, Rejection> {
+use std::{convert::TryInto, ops::Deref};
+
+pub(crate) async fn messages_find<B: Backend>(index: String, storage: ResHandle<B>) -> Result<impl Reply, Rejection> {
     let hashed_index = {
         use digest::Digest;
         let mut hasher = Blake2s::new();

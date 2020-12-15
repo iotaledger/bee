@@ -6,9 +6,9 @@ use crate::{
     worker::{HasherWorker, HasherWorkerEvent},
 };
 
-use bee_common::{
+use bee_common::shutdown_stream::ShutdownStream;
+use bee_common_pt2::{
     node::Node,
-    shutdown_stream::ShutdownStream,
     worker::{Error as WorkerError, Worker},
 };
 use bee_message::MessageId;

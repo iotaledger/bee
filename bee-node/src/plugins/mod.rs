@@ -5,7 +5,7 @@ pub mod mps;
 
 pub use self::mps::Mps;
 
-use bee_common::{event::Bus, node::Node, worker::Worker};
+use bee_common_pt2::{event::Bus, node::Node, worker::Worker};
 
 use async_trait::async_trait;
 

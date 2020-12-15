@@ -11,7 +11,8 @@ use crate::{
     },
 };
 
-use bee_common::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_common::shutdown_stream::ShutdownStream;
+use bee_common_pt2::{event::Bus, node::Node, worker::Worker};
 use bee_message::MessageId;
 
 use async_trait::async_trait;
@@ -81,6 +82,10 @@ impl<N: Node> Worker<N> for PropagatorWorker {
                             let mut index = None;
 
                             tangle.update_metadata(&hash, |metadata| {
+                                // OTRSI/YTRSI values need to be set before the solid flag, to ensure that the
+                                // MilestoneConeUpdater (called in milestone_validator.rs) is aware of all values.
+                                metadata.set_otrsi(best_otrsi);
+                                metadata.set_ytrsi(best_ytrsi);
                                 metadata.solidify();
 
                                 // This is possibly not sufficient as there is no guarantee a milestone has been
@@ -90,9 +95,6 @@ impl<N: Node> Worker<N> for PropagatorWorker {
                                 if metadata.flags().is_milestone() {
                                     index = Some(metadata.milestone_index());
                                 }
-
-                                metadata.set_otrsi(best_otrsi);
-                                metadata.set_ytrsi(best_ytrsi);
                             });
 
                             for child in tangle.get_children(&hash) {

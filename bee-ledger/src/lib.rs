@@ -16,7 +16,7 @@ mod worker;
 use storage::Backend;
 use worker::LedgerWorker;
 
-use bee_common::node::{Node, NodeBuilder};
+use bee_common_pt2::node::{Node, NodeBuilder};
 use bee_protocol::MilestoneIndex;
 
 pub fn init<N: Node>(index: u32, node_builder: N::Builder) -> N::Builder

@@ -17,23 +17,23 @@ use tokio::sync::mpsc;
 type EventRecv = mpsc::UnboundedReceiver<Vec<u8>>;
 type ShutdownRecv = future::Fuse<oneshot::Receiver<()>>;
 
-/// The read state of the message handler.
+/// The read state of the packet handler.
 ///
-/// This type is used by `MessageHandler` to decide what should be read next when handling an
+/// This type is used by `PacketHandler` to decide what should be read next when handling an
 /// event.
 enum ReadState {
-    /// `MessageHandler` should read a header.
+    /// `PacketHandler` should read a header.
     Header,
-    /// `MessageHandler` should read a payload based on a header.
+    /// `PacketHandler` should read a payload based on a header.
     Payload(Header),
 }
 
-/// A message handler.
+/// A packet handler.
 ///
-/// It takes care of processing events into messages that can be processed by the workers.
-pub(super) struct MessageHandler {
+/// It takes care of processing events into packets that can be processed by the workers.
+pub(super) struct PacketHandler {
     events: EventHandler,
-    // FIXME: see if we can implement `Stream` for the `MessageHandler` and use the
+    // FIXME: see if we can implement `Stream` for the `PacketHandler` and use the
     // `ShutdownStream` type instead.
     shutdown: ShutdownRecv,
     state: ReadState,
@@ -41,8 +41,8 @@ pub(super) struct MessageHandler {
     address: Multiaddr,
 }
 
-impl MessageHandler {
-    /// Create a new message handler from an event receiver, a shutdown receiver and the peer's
+impl PacketHandler {
+    /// Create a new packet handler from an event receiver, a shutdown receiver and the peer's
     /// address.
     pub(super) fn new(receiver: EventRecv, shutdown: ShutdownRecv, address: Multiaddr) -> Self {
         Self {
@@ -53,10 +53,10 @@ impl MessageHandler {
             address,
         }
     }
-    /// Fetch the header and payload of a message.
+    /// Fetch the header and payload of a packet.
     ///
     /// This method only returns `None` if a shutdown signal is received.
-    pub(super) async fn fetch_message(&mut self) -> Option<(Header, &[u8])> {
+    pub(super) async fn fetch_packet(&mut self) -> Option<(Header, &[u8])> {
         // loop until we can return the header and payload
         loop {
             match &self.state {
@@ -81,9 +81,9 @@ impl MessageHandler {
                         .await?;
                     // FIXME: Avoid this clone
                     let header = header.clone();
-                    // Now we are ready to read the next message's header.
+                    // Now we are ready to read the next packet's header.
                     self.state = ReadState::Header;
-                    // We return the current message's header and payload.
+                    // We return the current packet's header and payload.
                     return Some((header, bytes));
                 }
             }
@@ -94,7 +94,7 @@ impl MessageHandler {
 // An event handler.
 //
 // This type takes care of actually receiving the events and appending them to an inner buffer so
-// they can be used seamlessly by the `MessageHandler`.
+// they can be used seamlessly by the `PacketHandler`.
 struct EventHandler {
     receiver: EventRecv,
     buffer: Vec<u8>,
@@ -149,7 +149,7 @@ impl EventHandler {
         bytes
     }
 
-    /// Helper method to be able to shutdown when fetching bytes for a message.
+    /// Helper method to be able to shutdown when fetching bytes for a packet.
     ///
     /// This method returns `None` if a shutdown signal is received, otherwise it returns the
     /// requested bytes.
@@ -173,14 +173,14 @@ mod tests {
     use std::time::Duration;
     use tokio::{spawn, time::delay_for};
 
-    /// Generate a vector of events filled with messages of a desired length.
+    /// Generate a vector of events filled with packets of a desired length.
     fn gen_events(event_len: usize, msg_size: usize, n_msg: usize) -> Vec<Vec<u8>> {
-        // Bytes of all the messages.
+        // Bytes of all the packets.
         let mut msgs = vec![0u8; msg_size * n_msg];
-        // We need 3 bytes for the header. Thus the message length stored in the header should be 3
+        // We need 3 bytes for the header. Thus the packet length stored in the header should be 3
         // bytes shorter.
         let msg_len = ((msg_size - 3) as u16).to_le_bytes();
-        // We write the bytes that correspond to the message length in the header.
+        // We write the bytes that correspond to the packet length in the header.
         for i in (0..n_msg).map(|i| i * msg_size + 1) {
             msgs[i] = msg_len[0];
             msgs[i + 1] = msg_len[1];
@@ -189,25 +189,25 @@ mod tests {
         msgs.chunks(event_len).map(Vec::from).collect()
     }
 
-    /// Test if the `MessageHandler` can produce an exact number of messages of a desired length,
+    /// Test if the `PacketHandler` can produce an exact number of packets of a desired length,
     /// divided in events of an specified length. This test checks that:
-    /// - The header and payload of all the messages have the right content.
-    /// - The number of produced messages is the desired one.
+    /// - The header and payload of all the packets have the right content.
+    /// - The number of produced packets is the desired one.
     async fn test(event_size: usize, msg_size: usize, msg_count: usize) {
         let msg_len = msg_size - 3;
         // Produce the events
         let events = gen_events(event_size, msg_size, msg_count);
-        // Create a new message handler
+        // Create a new packet handler
         let (sender_shutdown, receiver_shutdown) = oneshot::channel::<()>();
         let (sender, receiver) = mpsc::unbounded_channel::<Vec<u8>>();
-        let mut msg_handler = MessageHandler::new(
+        let mut msg_handler = PacketHandler::new(
             receiver.into_stream(),
             receiver_shutdown.fuse(),
             "127.0.0.1:8080".parse().unwrap(),
         );
         // Create the task that does the checks of the test.
         let handle = spawn(async move {
-            // The messages are expected to be filled with zeroes except for the message length
+            // The packets are expected to be filled with zeroes except for the packet length
             // field of the header.
             let expected_bytes = vec![0u8; msg_len];
             let expected_msg = (
@@ -217,24 +217,24 @@ mod tests {
                 },
                 expected_bytes.as_slice(),
             );
-            // Count how many messages can be fetched.
+            // Count how many packets can be fetched.
             let mut counter = 0;
-            while let Some(msg) = msg_handler.fetch_message().await {
-                // Assert that the messages' content is correct.
+            while let Some(msg) = msg_handler.fetch_packet().await {
+                // Assert that the packets' content is correct.
                 assert_eq!(msg, expected_msg);
                 counter += 1;
             }
-            // Assert that the number of messages is correct.
+            // Assert that the number of packets is correct.
             assert_eq!(msg_count, counter);
-            // Return back the message handler to avoid dropping the channels.
+            // Return back the packet handler to avoid dropping the channels.
             msg_handler
         });
-        // Send all the events to the message handler.
+        // Send all the events to the packet handler.
         for event in events {
             sender.send(event).unwrap();
             delay_for(Duration::from_millis(1)).await;
         }
-        // Sleep to be sure the handler had time to produce all the messages.
+        // Sleep to be sure the handler had time to produce all the packets.
         delay_for(Duration::from_millis(1)).await;
         // Send a shutdown signal.
         sender_shutdown.send(()).unwrap();
@@ -242,43 +242,43 @@ mod tests {
         assert!(handle.await.is_ok());
     }
 
-    /// Test that messages are produced correctly when they are divided into one byte events.
+    /// Test that packets are produced correctly when they are divided into one byte events.
     #[tokio::test]
     async fn one_byte_events() {
         test(1, 5, 10).await;
     }
 
-    /// Test that messages are produced correctly when each mes// let peer_id: PeerId =
+    /// Test that packets are produced correctly when each mes// let peer_id: PeerId =
     /// Url::from_url_str("tcp://[::1]:16000").await.unwrap().into();sage fits exactly into an event.
     #[tokio::test]
-    async fn one_message_per_event() {
+    async fn one_packet_per_event() {
         test(5, 5, 10).await;
     }
 
-    /// Test that messages are produced correctly when two messages fit exactly into an event.
+    /// Test that packets are produced correctly when two packets fit exactly into an event.
     #[tokio::test]
-    async fn two_messages_per_event() {
+    async fn two_packets_per_event() {
         test(10, 5, 10).await;
     }
 
-    /// Test that messages are produced correctly when a message fits exactly into two events.
+    /// Test that packets are produced correctly when a packet fits exactly into two events.
     #[tokio::test]
-    async fn two_events_per_message() {
+    async fn two_events_per_packet() {
         test(5, 10, 10).await;
     }
 
-    /// Test that messages are produced correctly when a message does not fit in a single event and
+    /// Test that packets are produced correctly when a packet does not fit in a single event and
     /// it is not aligned either.
     #[tokio::test]
-    async fn misaligned_messages() {
+    async fn misaligned_packets() {
         test(3, 5, 10).await;
     }
 
-    /// Test that the handler stops producing messages after receiving the shutdown signal.
+    /// Test that the handler stops producing packets after receiving the shutdown signal.
     ///
-    /// This test is basically the same as the `one_message_per_event` test. But the last event is
-    /// sent after the shutdown signal. As a consequence, the last message is not produced by the
-    /// message handler.
+    /// This test is basically the same as the `one_packet_per_event` test. But the last event is
+    /// sent after the shutdown signal. As a consequence, the last packet is not produced by the
+    /// packet handler.
     #[tokio::test]
     async fn shutdown() {
         let event_size = 5;
@@ -294,7 +294,7 @@ mod tests {
         let (sender_shutdown, receiver_shutdown) = oneshot::channel::<()>();
         let (sender, receiver) = mpsc::unbounded_channel::<Vec<u8>>();
 
-        let mut msg_handler = MessageHandler::new(
+        let mut msg_handler = PacketHandler::new(
             receiver.into_stream(),
             receiver_shutdown.fuse(),
             "127.0.0.1:8080".parse().unwrap(),
@@ -311,11 +311,11 @@ mod tests {
             );
 
             let mut counter = 0;
-            while let Some(msg) = msg_handler.fetch_message().await {
+            while let Some(msg) = msg_handler.fetch_packet().await {
                 assert_eq!(msg, expected_msg);
                 counter += 1;
             }
-            // Assert that we are missing one message
+            // Assert that we are missing one packet.
             assert_eq!(msg_count - 1, counter);
 
             msg_handler

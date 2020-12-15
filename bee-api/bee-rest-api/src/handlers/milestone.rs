@@ -6,8 +6,10 @@ use crate::{
     handlers::{EnvelopeContent, SuccessEnvelope},
     storage::Backend,
 };
-use bee_common::node::ResHandle;
+
+use bee_common_pt2::node::ResHandle;
 use bee_protocol::{tangle::MsTangle, MilestoneIndex};
+
 use serde::Serialize;
 use warp::{reject, Rejection, Reply};
 

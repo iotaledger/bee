@@ -3,12 +3,14 @@
 
 use crate::{
     packet::{Message as MessagePacket, MessageRequest},
+    peer::PeerManager,
     tangle::MsTangle,
-    worker::TangleWorker,
-    Sender,
+    worker::{MetricsWorker, PeerManagerWorker, TangleWorker},
+    ProtocolMetrics, Sender,
 };
 
-use bee_common::{node::Node, packable::Packable, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
+use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
 use bee_network::{NetworkController, PeerId};
 
@@ -34,7 +36,12 @@ impl<N: Node> Worker<N> for MessageResponderWorker {
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>()].leak()
+        vec![
+            TypeId::of::<TangleWorker>(),
+            TypeId::of::<MetricsWorker>(),
+            TypeId::of::<PeerManagerWorker>(),
+        ]
+        .leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
@@ -42,6 +49,8 @@ impl<N: Node> Worker<N> for MessageResponderWorker {
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let network = node.resource::<NetworkController>();
+        let metrics = node.resource::<ProtocolMetrics>();
+        let peer_manager = node.resource::<PeerManager>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -53,7 +62,13 @@ impl<N: Node> Worker<N> for MessageResponderWorker {
                     let mut bytes = Vec::new();
 
                     if message.pack(&mut bytes).is_ok() {
-                        Sender::<MessagePacket>::send(&network, &peer_id, MessagePacket::new(&bytes));
+                        Sender::<MessagePacket>::send(
+                            &network,
+                            &peer_manager,
+                            &metrics,
+                            &peer_id,
+                            MessagePacket::new(&bytes),
+                        );
                     }
                 }
             }

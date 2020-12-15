@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{filters::CustomRejection::NotFound, storage::Backend};
-use bee_common::{node::ResHandle, packable::Packable};
+
+use bee_common::packable::Packable;
+use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
 use bee_protocol::tangle::MsTangle;
+
 use warp::{http::Response, reject, Rejection, Reply};
 
 pub async fn message_raw<B: Backend>(
