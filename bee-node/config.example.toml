@@ -7,6 +7,7 @@ color_enabled = true
 [[logger.outputs]]
 name  = "stdout"
 level = "info"
+# filters = ["case insensitive filter strings"]
 
 [network]
 bind_address      = "/ip4/0.0.0.0/tcp/15600"

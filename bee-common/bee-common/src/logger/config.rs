@@ -56,7 +56,9 @@ impl LoggerOutputConfigBuilder {
         LoggerOutputConfig {
             name: self.name.unwrap_or_else(|| DEFAULT_OUTPUT_NAME.to_owned()),
             level: self.level.unwrap_or(DEFAULT_OUTPUT_LEVEL),
-            filters: self.filters,
+            filters: self
+                .filters
+                .map(|filters| filters.into_iter().map(|f| f.to_lowercase()).collect()),
         }
     }
 }

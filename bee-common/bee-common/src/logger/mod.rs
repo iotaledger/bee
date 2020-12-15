@@ -69,7 +69,10 @@ pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
         let mut dispatch = Dispatch::new().level(output.level);
 
         if let Some(filters) = output.filters {
-            dispatch = dispatch.filter(move |metadata| filters.iter().any(|f| metadata.target().contains(f)));
+            dispatch = dispatch.filter(move |metadata| {
+                let target = metadata.target().to_lowercase();
+                filters.iter().any(|f| target.contains(f))
+            });
         }
 
         // Special case for the standard output.
