@@ -66,9 +66,9 @@ pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
 
     for output in config.outputs {
         // Creates a logger dispatch for each output of the configuration.
-        let mut dispatch = Dispatch::new().level(output.level);
+        let mut dispatch = Dispatch::new().level(output.level_filter);
 
-        if let Some(filters) = output.filters {
+        if let Some(filters) = output.target_filters {
             dispatch = dispatch.filter(move |metadata| {
                 let target = metadata.target().to_lowercase();
                 filters.iter().any(|f| target.contains(f))

@@ -21,9 +21,9 @@ pub struct LoggerOutputConfigBuilder {
     /// Name of an output file, or `stdout` for standard output.
     name: Option<String>,
     /// Log level of an output.
-    level: Option<LevelFilter>,
+    level_filter: Option<LevelFilter>,
     /// Log filters of the output.
-    filters: Option<Vec<String>>,
+    target_filters: Option<Vec<String>>,
 }
 
 impl LoggerOutputConfigBuilder {
@@ -39,15 +39,16 @@ impl LoggerOutputConfigBuilder {
     }
 
     /// Sets the level of a logger output.
-    pub fn level(mut self, level: LevelFilter) -> Self {
-        self.level.replace(level);
+    pub fn level_filter(mut self, level: LevelFilter) -> Self {
+        self.level_filter.replace(level);
         self
     }
 
     /// Sets a collection of filters of a logger output.
     /// A message is logged only if one of the filters is part of the log's metadata target.
-    pub fn filters(mut self, filters: &[&str]) -> Self {
-        self.filters.replace(filters.iter().map(|f| f.to_string()).collect());
+    pub fn target_filters(mut self, target_filters: &[&str]) -> Self {
+        self.target_filters
+            .replace(target_filters.iter().map(|f| f.to_string()).collect());
         self
     }
 
@@ -55,9 +56,9 @@ impl LoggerOutputConfigBuilder {
     pub fn finish(self) -> LoggerOutputConfig {
         LoggerOutputConfig {
             name: self.name.unwrap_or_else(|| DEFAULT_OUTPUT_NAME.to_owned()),
-            level: self.level.unwrap_or(DEFAULT_OUTPUT_LEVEL),
-            filters: self
-                .filters
+            level_filter: self.level_filter.unwrap_or(DEFAULT_OUTPUT_LEVEL),
+            target_filters: self
+                .target_filters
                 .map(|filters| filters.into_iter().map(|f| f.to_lowercase()).collect()),
         }
     }
@@ -69,9 +70,9 @@ pub struct LoggerOutputConfig {
     /// Name of an output file, or `stdout` for standard output.
     pub(crate) name: String,
     /// Log level of an output.
-    pub(crate) level: LevelFilter,
+    pub(crate) level_filter: LevelFilter,
     /// Log filters of the output.
-    pub(crate) filters: Option<Vec<String>>,
+    pub(crate) target_filters: Option<Vec<String>>,
 }
 
 /// Builder for a logger configuration.
@@ -99,7 +100,7 @@ impl LoggerConfigBuilder {
                 Some(output_name) => output_name[..] == name,
                 None => false,
             }) {
-                stdout.level.replace(level);
+                stdout.level_filter.replace(level);
             }
         }
     }
