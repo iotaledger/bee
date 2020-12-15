@@ -19,20 +19,16 @@ impl PeerManager for ManualPeerManager {
     type Config = ManualPeeringConfig;
 
     async fn new(config: Self::Config, network: &NetworkController) -> Self {
-        for (i, (mut address, alias)) in config.peers.into_iter().enumerate() {
-            if i < config.limit {
-                // NOTE: `unwrap`ing should be fine here since it comes from the config.
-                if let Protocol::P2p(multihash) = address.pop().unwrap() {
-                    let id = PeerId::from_multihash(multihash).expect("Invalid Multiaddr.");
+        for (mut address, alias) in config.peers {
+            // NOTE: `unwrap`ing should be fine here since it comes from the config.
+            if let Protocol::P2p(multihash) = address.pop().unwrap() {
+                let id = PeerId::from_multihash(multihash).expect("Invalid Multiaddr.");
 
-                    add_peer(network, id, address, alias);
-                } else {
-                    unreachable!(
-                        "Invalid Peer descriptor. The multiaddress did not have a valid peer id as its last segment."
-                    )
-                }
+                add_peer(network, id, address, alias);
             } else {
-                warn!("Tried to add more peers than specified in limit(={})", config.limit);
+                unreachable!(
+                    "Invalid Peer descriptor. The multiaddress did not have a valid peer id as its last segment."
+                )
             }
         }
 

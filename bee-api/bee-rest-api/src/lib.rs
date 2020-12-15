@@ -7,23 +7,24 @@ pub mod handlers;
 pub mod storage;
 pub mod types;
 
-use crate::config::RestApiConfig;
-use async_trait::async_trait;
-use bee_common::{
-    node::{Node, NodeBuilder},
-    worker::{Error as WorkerError, Worker},
-};
-use bee_protocol::{tangle::MsTangle, MessageSubmitterWorker, TangleWorker};
-use log::{error, info};
-use std::{any::TypeId, convert::Infallible};
-use warp::{http::StatusCode, Filter, Rejection, Reply};
-
 use crate::{
+    config::RestApiConfig,
     filters::CustomRejection,
     handlers::{ErrorEnvelope, ErrorEnvelopeContent},
     storage::Backend,
 };
-use bee_protocol::config::ProtocolConfig;
+
+use bee_common_pt2::{
+    node::{Node, NodeBuilder},
+    worker::{Error as WorkerError, Worker},
+};
+use bee_protocol::{config::ProtocolConfig, tangle::MsTangle, MessageSubmitterWorker, TangleWorker};
+
+use async_trait::async_trait;
+use log::{error, info};
+use warp::{http::StatusCode, Filter, Rejection, Reply};
+
+use std::{any::TypeId, convert::Infallible};
 
 pub(crate) type NetworkId = (String, u64);
 

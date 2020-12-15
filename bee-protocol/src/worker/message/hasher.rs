@@ -5,18 +5,19 @@
 
 use crate::{
     packet::Message as MessagePacket,
+    peer::PeerManager,
     worker::{
         message::{HashCache, ProcessorWorker, ProcessorWorkerEvent},
         message_submitter::MessageSubmitterError,
-        MetricsWorker,
+        MetricsWorker, PeerManagerWorker,
     },
     ProtocolMetrics,
 };
 
-use bee_common::{
+use bee_common::shutdown_stream::ShutdownStream;
+use bee_common_pt2::{
     b1t6,
     node::{Node, ResHandle},
-    shutdown_stream::ShutdownStream,
     worker::Worker,
 };
 use bee_crypto::ternary::{
@@ -104,16 +105,22 @@ impl<N: Node> Worker<N> for HasherWorker {
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<ProcessorWorker>(), TypeId::of::<MetricsWorker>()].leak()
+        vec![
+            TypeId::of::<ProcessorWorker>(),
+            TypeId::of::<MetricsWorker>(),
+            TypeId::of::<PeerManagerWorker>(),
+        ]
+        .leak()
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
         let mut processor_worker = node.worker::<ProcessorWorker>().unwrap().tx.clone();
         let metrics = node.resource::<ProtocolMetrics>();
+        let peer_manager = node.resource::<PeerManager>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            let mut receiver = BatchStream::new(config, metrics, ShutdownStream::new(shutdown, rx));
+            let mut receiver = BatchStream::new(config, metrics, peer_manager, ShutdownStream::new(shutdown, rx));
 
             info!("Running.");
 
@@ -131,6 +138,7 @@ impl<N: Node> Worker<N> for HasherWorker {
 #[pin_project(project = BatchStreamProj)]
 pub(crate) struct BatchStream {
     metrics: ResHandle<ProtocolMetrics>,
+    peer_manager: ResHandle<PeerManager>,
     #[pin]
     receiver: ShutdownStream<Fuse<mpsc::UnboundedReceiver<HasherWorkerEvent>>>,
     cache: HashCache,
@@ -143,11 +151,13 @@ impl BatchStream {
     pub(crate) fn new(
         cache_size: usize,
         metrics: ResHandle<ProtocolMetrics>,
+        peer_manager: ResHandle<PeerManager>,
         receiver: ShutdownStream<Fuse<mpsc::UnboundedReceiver<HasherWorkerEvent>>>,
     ) -> Self {
         assert!(BATCH_SIZE_THRESHOLD <= BATCH_SIZE);
         Self {
             metrics,
+            peer_manager,
             receiver,
             cache: HashCache::new(cache_size),
             hasher: BatchHasher::new(HASH_LENGTH, CurlPRounds::Rounds81),
@@ -164,6 +174,7 @@ impl Stream for BatchStream {
         // We need to do this because `receiver` needs to be pinned to be polled.
         let BatchStreamProj {
             metrics,
+            peer_manager,
             mut receiver,
             cache,
             hasher,
@@ -198,6 +209,11 @@ impl Stream for BatchStream {
                     if !cache.insert(&event.message_packet.bytes) {
                         trace!("Message already received.");
                         metrics.known_messages_inc();
+                        if let Some(peer_id) = event.from {
+                            if let Some(peer) = peer_manager.peers.get(&peer_id) {
+                                peer.metrics.known_messages_inc();
+                            }
+                        }
                         continue;
                     }
 

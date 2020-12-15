@@ -6,10 +6,6 @@
 
 pub mod b1t6;
 pub mod event;
-pub mod logger;
 pub mod node;
-pub mod packable;
-pub mod shutdown;
-pub mod shutdown_stream;
 pub mod wait_priority_queue;
 pub mod worker;

@@ -7,13 +7,16 @@ use crate::{
     storage::Backend,
     types::OutputDto,
 };
-use bee_common::node::ResHandle;
+
+use bee_common_pt2::node::ResHandle;
 use bee_ledger::model::Spent;
 use bee_message::prelude::*;
 use bee_storage::access::Fetch;
+
 use serde::Serialize;
-use std::{convert::TryInto, ops::Deref};
 use warp::{reject, Rejection, Reply};
+
+use std::{convert::TryInto, ops::Deref};
 
 pub(crate) async fn output<B: Backend>(output_id: OutputId, storage: ResHandle<B>) -> Result<impl Reply, Rejection> {
     let output = Fetch::<OutputId, bee_ledger::model::Output>::fetch(storage.deref(), &output_id)

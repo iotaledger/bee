@@ -7,11 +7,10 @@ pub use builder::{BeeNodeBuilder, Error};
 
 use crate::{config::NodeConfig, storage::Backend};
 
-use bee_common::{
+use bee_common::{shutdown, shutdown_stream::ShutdownStream};
+use bee_common_pt2::{
     event::Bus,
     node::{Node, ResHandle},
-    shutdown,
-    shutdown_stream::ShutdownStream,
     worker::Worker,
 };
 use bee_network::{self, Event, Multiaddr, NetworkListener, PeerId, ShortId};

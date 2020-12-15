@@ -11,7 +11,8 @@ keywords = ["iota", "tangle", "bee", "framework", "network"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { path = "../bee-common/bee-common" }
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-common-pt2 = { path = "../bee-common/bee-common", package = "bee-common" }
 
 async-trait = "0.1"
 dashmap = "3.11"

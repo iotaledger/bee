@@ -15,7 +15,7 @@ pub(crate) use heartbeat::Heartbeat;
 pub(crate) use message::Message;
 pub(crate) use message_request::MessageRequest;
 pub(crate) use milestone_request::MilestoneRequest;
-pub(crate) use tlv::{tlv_from_bytes, tlv_into_bytes};
+pub(crate) use tlv::{tlv_from_bytes, tlv_into_bytes, Error as TlvError};
 
 use std::ops::Range;
 

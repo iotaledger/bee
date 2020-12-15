@@ -5,10 +5,12 @@ use crate::{
     helper,
     peer::PeerManager,
     tangle::MsTangle,
-    worker::{PeerManagerWorker, TangleWorker},
+    worker::{MetricsWorker, PeerManagerWorker, TangleWorker},
+    ProtocolMetrics,
 };
 
-use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_common::shutdown_stream::ShutdownStream;
+use bee_common_pt2::{node::Node, worker::Worker};
 use bee_network::NetworkController;
 
 use async_trait::async_trait;
@@ -31,13 +33,19 @@ impl<N: Node> Worker<N> for HeartbeaterWorker {
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>(), TypeId::of::<PeerManagerWorker>()].leak()
+        vec![
+            TypeId::of::<TangleWorker>(),
+            TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<MetricsWorker>(),
+        ]
+        .leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let network = node.resource::<NetworkController>();
         let peer_manager = node.resource::<PeerManager>();
+        let metrics = node.resource::<ProtocolMetrics>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -50,6 +58,7 @@ impl<N: Node> Worker<N> for HeartbeaterWorker {
                 helper::broadcast_heartbeat(
                     &peer_manager,
                     &network,
+                    &metrics,
                     tangle.get_latest_solid_milestone_index(),
                     tangle.get_pruning_index(),
                     tangle.get_latest_milestone_index(),

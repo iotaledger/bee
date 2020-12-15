@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::prelude::*;
-
-use bee_message::payload::milestone::MilestoneEssence;
-use serde::{Deserialize, Serialize};
-use std::convert::{TryFrom, TryInto};
-
 use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
-use std::num::NonZeroU64;
+
+use serde::{Deserialize, Serialize};
+
+use std::{
+    convert::{TryFrom, TryInto},
+    num::NonZeroU64,
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {

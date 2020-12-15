@@ -79,7 +79,8 @@ fn unpack_non_utf8_index() {
     .unwrap();
     let bytes = indexation.pack_new();
 
-    assert!(
-        matches!(Indexation::unpack(&mut bytes.as_slice()).err(), Some(Error::Utf8String(std::string::FromUtf8Error{..})))
-    );
+    assert!(matches!(
+        Indexation::unpack(&mut bytes.as_slice()).err(),
+        Some(Error::Utf8String(std::string::FromUtf8Error { .. }))
+    ));
 }

@@ -6,9 +6,12 @@ use crate::{
     handlers::{submit_message::forward_to_message_submitter, SuccessEnvelope},
     storage::Backend,
 };
-use bee_common::{node::ResHandle, packable::Packable};
+
+use bee_common::packable::Packable;
+use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
 use bee_protocol::{tangle::MsTangle, MessageSubmitterWorkerEvent};
+
 use tokio::sync::mpsc;
 use warp::{http::StatusCode, reject, Buf, Rejection, Reply};
 

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{filters::CustomRejection::BadRequest, handlers::balance_ed25519::balance_ed25519, storage::Backend};
-use bee_common::node::ResHandle;
+
+use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
+
 use warp::{reject, Rejection, Reply};
 
 pub(crate) async fn balance_bech32<B: Backend>(addr: Address, storage: ResHandle<B>) -> Result<impl Reply, Rejection> {

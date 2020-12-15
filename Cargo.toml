@@ -2,7 +2,6 @@
 members = [
 	"bee-api/bee-rest-api",
 	"bee-common/bee-common",
-	"bee-common/bee-common-derive",
 	"bee-ledger",
 	"bee-message",
 	"bee-network",
