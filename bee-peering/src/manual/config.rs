@@ -9,11 +9,11 @@ use std::str::FromStr;
 
 // TODO add acceptAnyConnection
 
-const DEFAULT_LIMIT: usize = 5;
+const DEFAULT_UNKNOWN_PEERS_LIMIT: usize = 4;
 
 #[derive(Default, Deserialize)]
 pub struct ManualPeeringConfigBuilder {
-    pub(crate) limit: Option<usize>,
+    pub(crate) unknown_peers_limit: Option<usize>,
     pub(crate) peers: Option<Vec<Peer>>,
 }
 
@@ -28,8 +28,8 @@ impl ManualPeeringConfigBuilder {
         Self::default()
     }
 
-    pub fn limit(mut self, limit: usize) -> Self {
-        self.limit.replace(limit);
+    pub fn unknown_peers_limit(mut self, limit: usize) -> Self {
+        self.unknown_peers_limit.replace(limit);
         self
     }
 
@@ -53,7 +53,7 @@ impl ManualPeeringConfigBuilder {
         };
 
         ManualPeeringConfig {
-            limit: self.limit.unwrap_or(DEFAULT_LIMIT),
+            unknown_peers_limit: self.unknown_peers_limit.unwrap_or(DEFAULT_UNKNOWN_PEERS_LIMIT),
             peers,
         }
     }
@@ -61,7 +61,7 @@ impl ManualPeeringConfigBuilder {
 
 #[derive(Clone)]
 pub struct ManualPeeringConfig {
-    pub(crate) limit: usize,
+    pub(crate) unknown_peers_limit: usize,
     pub(crate) peers: Vec<(Multiaddr, Option<String>)>,
 }
 
