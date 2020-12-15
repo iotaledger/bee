@@ -22,6 +22,8 @@ pub struct LoggerOutputConfigBuilder {
     name: Option<String>,
     /// Log level of an output.
     level: Option<LevelFilter>,
+    /// Log filters of the output.
+    filters: Option<Vec<String>>,
 }
 
 impl LoggerOutputConfigBuilder {
@@ -42,11 +44,19 @@ impl LoggerOutputConfigBuilder {
         self
     }
 
+    /// Sets a collection of filters of a logger output.
+    /// A message is logged only if one of the filters is part of the log's metadata target.
+    pub fn filters(mut self, filters: &[&str]) -> Self {
+        self.filters.replace(filters.iter().map(|f| f.to_string()).collect());
+        self
+    }
+
     /// Builds a logger output configuration.
     pub fn finish(self) -> LoggerOutputConfig {
         LoggerOutputConfig {
             name: self.name.unwrap_or_else(|| DEFAULT_OUTPUT_NAME.to_owned()),
             level: self.level.unwrap_or(DEFAULT_OUTPUT_LEVEL),
+            filters: self.filters,
         }
     }
 }
@@ -58,6 +68,8 @@ pub struct LoggerOutputConfig {
     pub(crate) name: String,
     /// Log level of an output.
     pub(crate) level: LevelFilter,
+    /// Log filters of the output.
+    pub(crate) filters: Option<Vec<String>>,
 }
 
 /// Builder for a logger configuration.
