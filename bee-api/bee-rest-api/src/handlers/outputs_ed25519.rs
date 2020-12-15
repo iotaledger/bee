@@ -6,12 +6,15 @@ use crate::{
     handlers::{EnvelopeContent, SuccessEnvelope},
     storage::Backend,
 };
-use bee_common::node::ResHandle;
+
+use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
 use bee_storage::access::Fetch;
+
 use serde::Serialize;
-use std::ops::Deref;
 use warp::{reject, Rejection, Reply};
+
+use std::ops::Deref;
 
 pub(crate) async fn outputs_ed25519<B: Backend>(
     addr: Ed25519Address,

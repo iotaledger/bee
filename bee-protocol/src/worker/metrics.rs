@@ -3,7 +3,8 @@
 
 use crate::ProtocolMetrics;
 
-use bee_common::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_common::shutdown_stream::ShutdownStream;
+use bee_common_pt2::{node::Node, worker::Worker};
 
 use async_trait::async_trait;
 use futures::StreamExt;

@@ -13,7 +13,7 @@ use crate::{
     tangle::{flags::Flags, urts::UrtsTipPool},
 };
 
-use bee_common::node::ResHandle;
+use bee_common_pt2::node::ResHandle;
 use bee_message::{Message, MessageId};
 use bee_storage::storage::Backend;
 use bee_tangle::{Hooks, MessageRef, Tangle};

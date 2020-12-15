@@ -14,7 +14,7 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::node::ResHandle;
+use bee_common_pt2::node::ResHandle;
 use bee_storage::storage::Backend;
 
 use futures::{channel::oneshot, future::FutureExt};

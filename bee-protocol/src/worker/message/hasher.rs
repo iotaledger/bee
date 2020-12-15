@@ -14,10 +14,10 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::{
+use bee_common::shutdown_stream::ShutdownStream;
+use bee_common_pt2::{
     b1t6,
     node::{Node, ResHandle},
-    shutdown_stream::ShutdownStream,
     worker::Worker,
 };
 use bee_crypto::ternary::{

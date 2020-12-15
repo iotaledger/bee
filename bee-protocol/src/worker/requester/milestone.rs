@@ -10,9 +10,9 @@ use crate::{
     ProtocolMetrics, Sender,
 };
 
-use bee_common::{
+use bee_common::shutdown_stream::ShutdownStream;
+use bee_common_pt2::{
     node::{Node, ResHandle},
-    shutdown_stream::ShutdownStream,
     worker::Worker,
 };
 use bee_network::{NetworkController, PeerId};

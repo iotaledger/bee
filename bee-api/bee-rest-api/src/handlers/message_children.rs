@@ -5,12 +5,15 @@ use crate::{
     handlers::{EnvelopeContent, SuccessEnvelope},
     storage::Backend,
 };
-use bee_common::node::ResHandle;
+
+use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
 use bee_protocol::tangle::MsTangle;
+
 use serde::Serialize;
-use std::iter::FromIterator;
 use warp::{Rejection, Reply};
+
+use std::iter::FromIterator;
 
 pub async fn message_children<B: Backend>(
     message_id: MessageId,

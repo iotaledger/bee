@@ -37,7 +37,7 @@ use conns::{ConnectionManager, ConnectionManagerConfig};
 use interaction::events::InternalEvent;
 use peers::{BannedAddrList, BannedPeerList, PeerList, PeerManager, PeerManagerConfig};
 
-use bee_common::node::{Node, NodeBuilder};
+use bee_common_pt2::node::{Node, NodeBuilder};
 
 use libp2p::identity;
 use log::info;

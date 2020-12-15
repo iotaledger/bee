@@ -7,12 +7,15 @@ use crate::{
     storage::Backend,
     types::*,
 };
-use bee_common::node::ResHandle;
+
+use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
 use bee_protocol::tangle::MsTangle;
+
 use serde::Serialize;
-use std::convert::TryFrom;
 use warp::{reject, Rejection, Reply};
+
+use std::convert::TryFrom;
 
 pub(crate) async fn message<B: Backend>(
     message_id: MessageId,

@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::storage::Backend;
-use bee_common::node::ResHandle;
+
+use bee_common_pt2::node::ResHandle;
 use bee_protocol::tangle::MsTangle;
+
+use warp::{http::StatusCode, Reply};
+
 use std::{
     convert::Infallible,
     time::{SystemTime, UNIX_EPOCH},
 };
-use warp::{http::StatusCode, Reply};
 
 pub(crate) async fn health<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> Result<impl Reply, Infallible> {
     if is_healthy(tangle).await {

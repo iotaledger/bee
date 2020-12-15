@@ -7,11 +7,14 @@ use crate::{
     storage::Backend,
     NetworkId,
 };
-use bee_common::node::ResHandle;
+
+use bee_common_pt2::node::ResHandle;
 use bee_protocol::tangle::MsTangle;
+
 use serde::Serialize;
-use std::convert::Infallible;
 use warp::Reply;
+
+use std::convert::Infallible;
 
 pub(crate) async fn info<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,

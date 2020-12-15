@@ -15,7 +15,8 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::{node::Node, packable::Packable, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
+use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, Message, MessageId, MESSAGE_ID_LENGTH};
 use bee_network::PeerId;
 

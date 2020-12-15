@@ -9,7 +9,8 @@ use crate::{
     ProtocolMetrics, Sender,
 };
 
-use bee_common::{node::Node, packable::Packable, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
+use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
 use bee_network::{NetworkController, PeerId};
 

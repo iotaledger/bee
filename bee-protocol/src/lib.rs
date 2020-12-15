@@ -35,7 +35,7 @@ use crate::{
     },
 };
 
-use bee_common::{
+use bee_common_pt2::{
     event::Bus,
     node::{Node, NodeBuilder},
 };

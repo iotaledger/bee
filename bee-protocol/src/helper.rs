@@ -10,7 +10,7 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::node::ResHandle;
+use bee_common_pt2::node::ResHandle;
 use bee_message::MessageId;
 use bee_network::{Command::SendMessage, NetworkController, PeerId};
 use bee_storage::storage::Backend;
