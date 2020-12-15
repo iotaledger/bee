@@ -5,8 +5,8 @@ network_id  = "alphanet1"
 [logger]
 color_enabled = true
 [[logger.outputs]]
-name  = "stdout"
-level = "info"
+name          = "stdout"
+level_filter  = "info"
 
 [network]
 bind_address      = "/ip4/0.0.0.0/tcp/15600"
