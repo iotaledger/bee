@@ -136,8 +136,6 @@ where
         let r = match self.vertices.entry(message_id) {
             Entry::Occupied(_) => None,
             Entry::Vacant(entry) => {
-                let _gtl_guard = self.gtl.write().await;
-
                 self.add_child_inner(*message.parent1(), message_id).await;
                 self.add_child_inner(*message.parent2(), message_id).await;
                 let vtx = Vertex::new(message, metadata);
@@ -161,11 +159,12 @@ where
 
     /// Inserts a message, and returns a thread-safe reference to it in case it didn't already exist.
     pub async fn insert(&self, message_id: MessageId, message: Message, metadata: T) -> Option<MessageRef> {
-        let _gtl_guard = self.gtl.write().await;
 
         if self.contains_inner(&message_id) {
             None
         } else {
+            let _gtl_guard = self.gtl.write().await;
+
             // Insert into backend using hooks
             self.hooks
                 .insert(message_id, message.clone(), metadata.clone())
@@ -236,6 +235,7 @@ where
 
     /// Updates the metadata of a particular vertex.
     pub async fn set_metadata(&self, message_id: &MessageId, metadata: T) {
+        self.pull_message(message_id).await;
         if let Some(mut vtx) = self.vertices.get_mut(message_id) {
             let _gtl_guard = self.gtl.write().await;
 
@@ -252,6 +252,7 @@ where
     where
         Update: FnMut(&mut T),
     {
+        self.pull_message(message_id).await;
         if let Some(mut vtx) = self.vertices.get_mut(message_id) {
             let _gtl_guard = self.gtl.write().await;
 
@@ -320,6 +321,7 @@ where
             true
         } else {
             let _gtl_guard = self.gtl.write().await;
+
             if let Ok(Some((tx, metadata))) = self.hooks.get(message_id).await {
                 self.insert_inner(*message_id, tx, metadata).await;
                 true
@@ -334,8 +336,6 @@ where
     }
 
     async fn perform_eviction(&self) {
-        let _gtl_guard = self.gtl.write().await;
-
         let mut cache = self.cache_queue.lock().unwrap();
 
         assert_eq!(cache.len(), self.len());
