@@ -53,3 +53,18 @@ fn packable_option() {
         Some(42u64)
     );
 }
+
+#[test]
+fn packable_vector() {
+    assert_eq!(Vec::<u32>::new().packed_len(), 8);
+    assert_eq!(
+        Vec::<u32>::unpack(&mut Vec::<u32>::new().pack_new().as_slice()).unwrap(),
+        Vec::<u32>::new(),
+    );
+
+    assert_eq!(vec![Some(0u32), None].packed_len(), 8 + (1 + 4) + 1);
+    assert_eq!(
+        Vec::<Option<u32>>::unpack(&mut vec![Some(42u32), None, Some(13)].pack_new().as_slice()).unwrap(),
+        vec![Some(42u32), None, Some(13)],
+    );
+}
