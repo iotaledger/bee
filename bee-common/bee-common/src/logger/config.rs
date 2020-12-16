@@ -20,9 +20,9 @@ const DEFAULT_OUTPUT_LEVEL: LevelFilter = LevelFilter::Info;
 pub struct LoggerOutputConfigBuilder {
     /// Name of an output file, or `stdout` for standard output.
     name: Option<String>,
-    /// Log level of an output.
+    /// Log level filter of an output.
     level_filter: Option<LevelFilter>,
-    /// Log filters of the output.
+    /// Log target filters of an output.
     target_filters: Option<Vec<String>>,
 }
 
