@@ -12,7 +12,7 @@ const VARIABLE_MIN_SIZE: usize = 77;
 const VARIABLE_MAX_SIZE: usize = 1024;
 
 /// A packet to send a message.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct Message {
     /// Message to send.
     pub(crate) bytes: Vec<u8>,
