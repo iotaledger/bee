@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::index::LedgerIndex;
+use bee_ledger::model::LedgerIndex;
 use bee_protocol::MilestoneIndex;
 use bee_storage::{
     access::{Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
