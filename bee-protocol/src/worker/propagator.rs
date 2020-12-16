@@ -70,12 +70,15 @@ impl<N: Node> Worker<N> for PropagatorWorker {
 
                     if let Some(message) = tangle.get(&hash).await {
                         if tangle.is_solid_message(message.parent1()) && tangle.is_solid_message(message.parent2()) {
-                            // get otrsi and ytrsi from parents
+                            // get OTRSI/YTRSI from parents
                             let parent1_otsri = tangle.otrsi(message.parent1());
                             let parent2_otsri = tangle.otrsi(message.parent2());
                             let parent1_ytrsi = tangle.ytrsi(message.parent1());
                             let parent2_ytrsi = tangle.ytrsi(message.parent2());
 
+                            // get best OTRSI/YTRSI from parents
+                            // unwrap() is safe because parents are solid which implies that OTRSI/YTRSI values are
+                            // available.
                             let best_otrsi = max(parent1_otsri.unwrap(), parent2_otsri.unwrap());
                             let best_ytrsi = min(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
 
