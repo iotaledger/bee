@@ -9,9 +9,13 @@ use bee_storage::{
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
 
+const DB_DIRECTORY: &str = "./tests/database/ledger_index";
+
 #[tokio::test]
 async fn access() {
-    let config = RocksDBConfigBuilder::default().finish();
+    let _ = std::fs::remove_dir_all(DB_DIRECTORY);
+
+    let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
     let index_1 = LedgerIndex::from(MilestoneIndex::from(42));

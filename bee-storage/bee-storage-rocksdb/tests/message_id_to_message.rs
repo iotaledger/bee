@@ -12,9 +12,13 @@ use bee_test::rand::message::{random_message, random_message_id};
 
 use futures::stream::StreamExt;
 
+const DB_DIRECTORY: &str = "./tests/database/message_id_to_message";
+
 #[tokio::test]
 async fn access() {
-    let config = RocksDBConfigBuilder::default().finish();
+    let _ = std::fs::remove_dir_all(DB_DIRECTORY);
+
+    let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
     let message_id = random_message_id();
