@@ -29,7 +29,7 @@ pub(crate) async fn is_healthy<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> bo
     // TODO: check if number of peers != 0 else return false
 
     match tangle.get_milestone_message_id(tangle.get_latest_milestone_index()) {
-        Some(message_id) => match tangle.get_metadata(&message_id) {
+        Some(message_id) => match tangle.get_metadata(&message_id).await {
             Some(metadata) => {
                 let current_time = SystemTime::now()
                     .duration_since(UNIX_EPOCH)

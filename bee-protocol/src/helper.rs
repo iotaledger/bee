@@ -13,7 +13,6 @@ use crate::{
 
 use bee_message::MessageId;
 use bee_network::{NetworkController, PeerId};
-use bee_storage::storage::Backend as _;
 
 use log::warn;
 use tokio::sync::mpsc;

@@ -16,7 +16,6 @@ use crate::{
 };
 
 use bee_common_pt2::node::ResHandle;
-use bee_storage::storage::Backend as _;
 
 use futures::{channel::oneshot, future::FutureExt};
 use log::{error, info, trace, warn};

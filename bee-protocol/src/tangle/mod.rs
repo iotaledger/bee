@@ -20,12 +20,12 @@ use crate::{
 
 use bee_common_pt2::node::ResHandle;
 use bee_message::{Message, MessageId};
-use bee_storage::storage::Backend as _;
 use bee_tangle::{Hooks, MessageRef, Tangle};
 
 use async_trait::async_trait;
 use dashmap::DashMap;
 use tokio::sync::Mutex;
+use log::trace;
 
 use std::{
     ops::Deref,
@@ -39,17 +39,36 @@ pub struct StorageHooks<B> {
 
 #[async_trait]
 impl<B: Backend> Hooks<MessageMetadata> for StorageHooks<B> {
-    type Error = ();
+    type Error = B::Error;
 
-    async fn get(&self, hash: &MessageId) -> Result<(Message, MessageMetadata), Self::Error> {
-        println!("Attempted to fetch {:?} from storage", hash);
-        Err(())
+    async fn get(&self, msg: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
+        trace!("Attempted to fetch {:?}", msg);
+        Ok(self.storage.fetch(msg).await?.zip(self.storage.fetch(msg).await?))
     }
 
-    async fn insert(&self, hash: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
-        println!("Attempted to insert {:?} into storage", hash);
-        self.storage.insert(&hash, &tx).await;
-        self.storage.insert(&hash, &metadata).await;
+    async fn insert(&self, msg: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
+        trace!("Attempted to insert {:?}", msg);
+        self.storage.insert(&msg, &tx).await?;
+        self.storage.insert(&msg, &metadata).await?;
+        Ok(())
+    }
+
+    async fn fetch_approvers(&self, msg: &MessageId) -> Result<Option<Vec<MessageId>>, Self::Error> {
+        trace!("Attempted to fetch approvers for {:?}", msg);
+        self.storage.fetch(msg).await
+    }
+
+    async fn insert_approver(&self, msg: MessageId, approver: MessageId) -> Result<(), Self::Error> {
+        trace!("Attempted to insert approver for {:?}", msg);
+        self.storage.insert(&(msg, approver), &()).await
+    }
+
+    async fn update_approvers(&self, msg: MessageId, approvers: &Vec<MessageId>) -> Result<(), Self::Error> {
+        trace!("Attempted to update approvers for {:?}", msg);
+        //self.storage.insert(&msg, approvers).await
+        for approver in approvers {
+            self.storage.insert(&(msg, *approver), &()).await?;
+        }
         Ok(())
     }
 }
@@ -111,12 +130,12 @@ impl<B: Backend> MsTangle<B> {
         self.inner.insert(hash, message, metadata).await
     }
 
-    pub fn add_milestone(&self, index: MilestoneIndex, milestone: Milestone) {
+    pub async fn add_milestone(&self, index: MilestoneIndex, milestone: Milestone) {
         // TODO: only insert if vacant
         self.inner.update_metadata(&milestone.message_id(), |metadata| {
             metadata.flags_mut().set_milestone(true);
             metadata.set_milestone_index(index);
-        });
+        }).await;
         // TODO can there be a race condition between 2 ops ?
         self.milestones.insert(index, milestone);
     }
@@ -215,31 +234,32 @@ impl<B: Backend> MsTangle<B> {
     }
 
     /// Returns whether the message associated with `hash` is deemed `solid`.
-    pub fn is_solid_message(&self, hash: &MessageId) -> bool {
+    pub async fn is_solid_message(&self, hash: &MessageId) -> bool {
         if self.is_solid_entry_point(hash) {
             true
         } else {
             self.inner
                 .get_metadata(hash)
+                .await
                 .map(|metadata| metadata.flags().is_solid())
                 .unwrap_or(false)
         }
     }
 
-    pub fn otrsi(&self, hash: &MessageId) -> Option<MilestoneIndex> {
+    pub async fn otrsi(&self, hash: &MessageId) -> Option<MilestoneIndex> {
         match self.solid_entry_points.get(hash) {
             Some(sep) => Some(*sep.value()),
-            None => match self.get_metadata(hash) {
+            None => match self.get_metadata(hash).await {
                 Some(metadata) => metadata.otrsi(),
                 None => None,
             },
         }
     }
 
-    pub fn ytrsi(&self, hash: &MessageId) -> Option<MilestoneIndex> {
+    pub async fn ytrsi(&self, hash: &MessageId) -> Option<MilestoneIndex> {
         match self.solid_entry_points.get(hash) {
             Some(sep) => Some(*sep.value()),
-            None => match self.get_metadata(hash) {
+            None => match self.get_metadata(hash).await {
                 Some(metadata) => metadata.ytrsi(),
                 None => None,
             },

@@ -176,14 +176,13 @@ where
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(MilestonePayloadWorkerEvent(message_id)) = receiver.next().await {
-                if let Some(meta) = tangle.get_metadata(&message_id) {
+                if let Some(meta) = tangle.get_metadata(&message_id).await {
                     if meta.flags().is_milestone() {
                         continue;
                     }
                     match validate::<N>(&tangle, &key_manager, message_id).await {
                         Ok((index, milestone)) => {
-                            tangle.add_milestone(index, milestone.clone());
-
+                            tangle.add_milestone(index, milestone.clone()).await;
                             // This is possibly not sufficient as there is no guarantee a milestone has been
                             // solidified before being validated, we then also need
                             // to check when a milestone gets solidified if it's
@@ -221,7 +220,7 @@ where
                             if requested_milestones.remove(&index).is_some() {
                                 tangle.update_metadata(&milestone.message_id, |meta| {
                                     meta.flags_mut().set_requested(true)
-                                });
+                                }).await;
 
                                 if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
                                     error!("Sending solidification event failed: {}", e);

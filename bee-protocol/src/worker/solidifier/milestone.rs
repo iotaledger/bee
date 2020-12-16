@@ -18,7 +18,6 @@ use crate::{
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_network::NetworkController;
-use bee_storage::storage::Backend as _;
 use bee_tangle::traversal;
 
 use async_trait::async_trait;
@@ -44,7 +43,7 @@ async fn trigger_solidification_unchecked<B: Backend>(
     next_index: &mut MilestoneIndex,
 ) {
     if let Some(target_id) = tangle.get_milestone_message_id(target_index) {
-        if !tangle.is_solid_message(&target_id) {
+        if !tangle.is_solid_message(&target_id).await {
             debug!("Triggering solidification for milestone {}.", *target_index);
 
             // TODO: This wouldn't be necessary if the traversal code wasn't closure-driven

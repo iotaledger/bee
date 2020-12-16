@@ -24,7 +24,7 @@ pub(crate) async fn message_metadata<B: Backend>(
     match tangle.get(&message_id).await {
         Some(message) => {
             // existing message <=> existing metadata, therefore unwrap() is safe
-            let metadata = tangle.get_metadata(&message_id).unwrap();
+            let metadata = tangle.get_metadata(&message_id).await.unwrap();
 
             // TODO: access constants from URTS
             let ytrsi_delta = 8;

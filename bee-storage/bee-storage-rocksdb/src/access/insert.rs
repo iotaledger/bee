@@ -47,6 +47,22 @@ impl Insert<MessageId, MessageMetadata> for Storage {
     }
 }
 
+/*
+#[async_trait::async_trait]
+impl Insert<MessageId, Vec<MessageId>> for Storage {
+    async fn insert(&self, message_id: &MessageId, approvers: &Vec<MessageId>) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MESSAGE_ID_TO_APPROVERS)
+            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_METADATA))?;
+
+        self.inner.put_cf(&cf, message_id, approvers.pack_new())?;
+
+        Ok(())
+    }
+}
+*/
+
 #[async_trait::async_trait]
 impl Insert<(MessageId, MessageId), ()> for Storage {
     async fn insert(&self, (parent, child): &(MessageId, MessageId), (): &()) -> Result<(), <Self as Backend>::Error> {
