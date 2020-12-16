@@ -50,6 +50,29 @@ impl Packable for bool {
     }
 }
 
+impl<P: Packable> Packable for Vec<P>
+where
+    P::Error: From<std::io::Error>,
+{
+    type Error = P::Error;
+
+    fn packed_len(&self) -> usize {
+        0u64.packed_len() + self.iter().map(|x| x.packed_len()).sum::<usize>()
+    }
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        (self.len() as u64).pack(writer)?;
+        self.iter().map(|x| x.pack(writer)).collect()
+    }
+
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
+    where
+        Self: Sized,
+    {
+        (0..u64::unpack(reader)?).map(|_| P::unpack(reader)).collect()
+    }
+}
+
 /// Error that occurs on `Option<P: Packable>` operations.
 #[derive(Debug)]
 pub enum OptionError<E> {
@@ -57,6 +80,12 @@ pub enum OptionError<E> {
     Bool(<bool as Packable>::Error),
     /// Error that occurs on inner `Packable` operations.
     Inner(E),
+}
+
+impl<E> From<E> for OptionError<E> {
+    fn from(inner: E) -> Self {
+        OptionError::Inner(inner)
+    }
 }
 
 impl<P: Packable> Packable for Option<P> {
