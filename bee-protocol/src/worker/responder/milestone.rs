@@ -57,9 +57,10 @@ impl<N: Node> Worker<N> for MilestoneResponderWorker {
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(MilestoneResponderWorkerEvent { peer_id, request }) = receiver.next().await {
-                let index = match request.index {
-                    0 => tangle.get_latest_milestone_index(),
-                    _ => request.index.into(),
+                let index = if request.index == 0 {
+                    tangle.get_latest_milestone_index()
+                } else {
+                    request.index.into()
                 };
 
                 if let Some(message) = tangle.get_milestone(index).await {
