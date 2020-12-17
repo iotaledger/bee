@@ -51,7 +51,7 @@ pub(crate) async fn balance_ed25519<B: Backend>(
                 }
             }
             Ok(warp::reply::json(&SuccessEnvelope::new(GetBalanceForAddressResponse {
-                kind: 1,
+                address_type: 1,
                 address: addr.to_string(),
                 max_results,
                 count,
@@ -66,8 +66,8 @@ pub(crate) async fn balance_ed25519<B: Backend>(
 #[derive(Clone, Debug, Serialize)]
 pub struct GetBalanceForAddressResponse {
     // The type of the address (0=WOTS, 1=Ed25519).
-    #[serde(rename = "type")]
-    pub kind: u8,
+    #[serde(rename = "addressType")]
+    pub address_type: u8,
     // hex encoded address
     pub address: String,
     #[serde(rename = "maxResults")]
