@@ -10,5 +10,5 @@ pub fn random_milestone_index() -> MilestoneIndex {
 }
 
 pub fn random_milestone() -> Milestone {
-    Milestone::new(random_milestone_index(), random_message_id(), random_integer::<u64>())
+    Milestone::new(random_message_id(), random_integer::<u64>())
 }

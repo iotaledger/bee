@@ -114,21 +114,23 @@ impl<N: Node> Worker<N> for PropagatorWorker {
                                 // TODO we need to get the milestone from the tangle to dispatch it.
                                 // At the time of writing, the tangle only contains an index <-> id mapping.
                                 // timestamp is obviously wrong in thr meantime.
-                                bus.dispatch(LatestSolidMilestoneChanged(Milestone {
-                                    message_id: *hash,
+                                bus.dispatch(LatestSolidMilestoneChanged {
                                     index,
-                                    timestamp: 0,
-                                }));
+                                    milestone: Milestone {
+                                        message_id: *hash,
+                                        timestamp: 0,
+                                    },
+                                });
                                 // TODO we need to get the milestone from the tangle to dispatch it.
                                 // At the time of writing, the tangle only contains an index <-> id mapping.
                                 // timestamp is obviously wrong in thr meantime.
-                                if let Err(e) =
-                                    milestone_cone_updater.send(MilestoneConeUpdaterWorkerEvent(Milestone {
+                                if let Err(e) = milestone_cone_updater.send(MilestoneConeUpdaterWorkerEvent(
+                                    index,
+                                    Milestone {
                                         message_id: *hash,
-                                        index,
                                         timestamp: 0,
-                                    }))
-                                {
+                                    },
+                                )) {
                                     error!("Sending hash to `MilestoneConeUpdater` failed: {:?}.", e);
                                 }
                             }

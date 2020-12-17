@@ -22,22 +22,16 @@ pub enum Error {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Milestone {
-    pub(crate) index: MilestoneIndex,
     pub(crate) message_id: MessageId,
     pub(crate) timestamp: u64,
 }
 
 impl Milestone {
-    pub fn new(index: MilestoneIndex, message_id: MessageId, timestamp: u64) -> Self {
+    pub fn new(message_id: MessageId, timestamp: u64) -> Self {
         Self {
-            index,
             message_id,
             timestamp,
         }
-    }
-
-    pub fn index(&self) -> MilestoneIndex {
-        self.index
     }
 
     pub fn message_id(&self) -> &MessageId {
@@ -53,11 +47,10 @@ impl Packable for Milestone {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.index.packed_len() + self.message_id.packed_len() + self.timestamp.packed_len()
+        self.message_id.packed_len() + self.timestamp.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.index.pack(writer)?;
         self.message_id.pack(writer).map_err(Error::MessageId)?;
         self.timestamp.pack(writer).map_err(Error::IO)
     }
@@ -67,7 +60,6 @@ impl Packable for Milestone {
         Self: Sized,
     {
         Ok(Self {
-            index: MilestoneIndex::unpack(reader)?,
             message_id: MessageId::unpack(reader).map_err(Error::MessageId)?,
             timestamp: u64::unpack(reader)?,
         })

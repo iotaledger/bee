@@ -20,7 +20,7 @@ use std::{
 };
 
 #[derive(Debug)]
-pub(crate) struct MilestoneConeUpdaterWorkerEvent(pub(crate) Milestone);
+pub(crate) struct MilestoneConeUpdaterWorkerEvent(pub(crate) MilestoneIndex, pub(crate) Milestone);
 
 pub(crate) struct MilestoneConeUpdaterWorker {
     pub(crate) tx: mpsc::UnboundedSender<MilestoneConeUpdaterWorkerEvent>,
@@ -45,10 +45,10 @@ impl<N: Node> Worker<N> for MilestoneConeUpdaterWorker {
 
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
-            while let Some(MilestoneConeUpdaterWorkerEvent(milestone)) = receiver.next().await {
+            while let Some(MilestoneConeUpdaterWorkerEvent(index, milestone)) = receiver.next().await {
                 // When a new milestone gets solid, OTRSI and YTRSI of all messages that belong to the given cone
                 // must be updated. Furthermore, updated values will be propagated to the future.
-                update_messages_referenced_by_milestone::<N>(&tangle, milestone.message_id, milestone.index).await;
+                update_messages_referenced_by_milestone::<N>(&tangle, milestone.message_id, index).await;
                 // Update tip pool after all values got updated.
                 tangle.update_tip_scores().await;
             }

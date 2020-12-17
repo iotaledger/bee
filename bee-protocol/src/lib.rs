@@ -93,10 +93,10 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
         .add_listener::<(), _, _>(move |latest_milestone: &LatestMilestoneChanged| {
             info!(
                 "New milestone {} {}.",
-                *latest_milestone.0.index, latest_milestone.0.message_id
+                *latest_milestone.index, latest_milestone.milestone.message_id
             );
             tangle.upgrade().map(|tangle| {
-                tangle.update_latest_milestone_index(latest_milestone.0.index);
+                tangle.update_latest_milestone_index(latest_milestone.index);
 
                 helper::broadcast_heartbeat(
                     &peer_manager,
@@ -104,7 +104,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
                     &metrics,
                     tangle.get_latest_solid_milestone_index(),
                     tangle.get_pruning_index(),
-                    latest_milestone.0.index,
+                    latest_milestone.index,
                 );
             });
         });
@@ -130,11 +130,11 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
     node.resource::<Bus>()
         .add_listener::<(), _, _>(move |latest_solid_milestone: &LatestSolidMilestoneChanged| {
             tangle.upgrade().map(|tangle| {
-                debug!("New solid milestone {}.", *latest_solid_milestone.0.index);
-                tangle.update_latest_solid_milestone_index(latest_solid_milestone.0.index);
+                debug!("New solid milestone {}.", *latest_solid_milestone.index);
+                tangle.update_latest_solid_milestone_index(latest_solid_milestone.index);
 
                 let ms_sync_count = config.workers.ms_sync_count;
-                let next_ms = latest_solid_milestone.0.index + MilestoneIndex(ms_sync_count);
+                let next_ms = latest_solid_milestone.index + MilestoneIndex(ms_sync_count);
 
                 if tangle.contains_milestone(next_ms) {
                     if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(next_ms)) {
@@ -148,7 +148,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
                     &peer_manager,
                     &network,
                     &metrics,
-                    latest_solid_milestone.0.index,
+                    latest_solid_milestone.index,
                     tangle.get_pruning_index(),
                     tangle.get_latest_milestone_index(),
                 );
