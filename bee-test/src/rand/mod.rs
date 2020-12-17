@@ -5,6 +5,7 @@ pub mod bytes;
 pub mod input;
 pub mod integer;
 pub mod message;
+pub mod metadata;
 pub mod milestone;
 pub mod option;
 pub mod output;
