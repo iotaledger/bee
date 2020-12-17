@@ -23,7 +23,7 @@ pub struct LoggerOutputConfigBuilder {
     /// Log level filter of an output.
     level_filter: Option<LevelFilter>,
     /// Log target filters of an output.
-    target_filters: Vec<String>,
+    target_filters: Option<Vec<String>>,
 }
 
 impl LoggerOutputConfigBuilder {
@@ -47,8 +47,7 @@ impl LoggerOutputConfigBuilder {
     /// Sets a collection of filters of a logger output.
     /// A message is logged only if one of the filters is part of the log's metadata target.
     pub fn target_filters(mut self, target_filters: &[&str]) -> Self {
-        self.target_filters
-            .extend(target_filters.iter().map(|f| f.to_string()).collect::<Vec<String>>());
+        self.target_filters = Some(target_filters.iter().map(|f| f.to_string()).collect::<Vec<String>>());
         self
     }
 
@@ -57,7 +56,12 @@ impl LoggerOutputConfigBuilder {
         LoggerOutputConfig {
             name: self.name.unwrap_or_else(|| DEFAULT_OUTPUT_NAME.to_owned()),
             level_filter: self.level_filter.unwrap_or(DEFAULT_OUTPUT_LEVEL),
-            target_filters: self.target_filters.iter().map(|f| f.to_lowercase()).collect(),
+            target_filters: self
+                .target_filters
+                .unwrap_or(Vec::new())
+                .iter()
+                .map(|f| f.to_lowercase())
+                .collect(),
         }
     }
 }
