@@ -3,6 +3,7 @@
 
 use crate::{
     config::ProtocolConfig,
+    event::MessageProcessed,
     helper,
     packet::Message as MessagePacket,
     peer::PeerManager,
@@ -16,7 +17,7 @@ use crate::{
 };
 
 use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_common_pt2::{event::Bus, node::Node, worker::Worker};
 use bee_message::{payload::Payload, Message, MessageId};
 use bee_network::PeerId;
 
@@ -69,6 +70,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         let requested_messages = node.resource::<RequestedMessages>();
         let metrics = node.resource::<ProtocolMetrics>();
         let peer_manager = node.resource::<PeerManager>();
+        let bus = node.resource::<Bus>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -139,6 +141,8 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
                 // store message
                 if let Some(message) = tangle.insert(message, message_id, metadata).await {
+                    bus.dispatch(MessageProcessed(message_id));
+
                     if let Some(tx) = notifier {
                         notify_message_id(message_id, tx).await;
                     }

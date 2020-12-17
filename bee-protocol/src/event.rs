@@ -15,6 +15,8 @@ pub struct LatestSolidMilestoneChanged {
     pub milestone: Milestone,
 }
 
+pub struct MessageProcessed(pub MessageId);
+
 pub struct MessageSolidified(pub MessageId);
 
 pub struct MpsMetricsUpdated {
