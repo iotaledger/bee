@@ -58,17 +58,13 @@ impl<N: Node> Worker<N> for MessageResponderWorker {
 
             while let Some(MessageResponderWorkerEvent { peer_id, request }) = receiver.next().await {
                 if let Some(message) = tangle.get(&request.message_id.into()).await {
-                    let mut bytes = Vec::new();
-
-                    if message.pack(&mut bytes).is_ok() {
-                        Sender::<MessagePacket>::send(
-                            &network,
-                            &peer_manager,
-                            &metrics,
-                            &peer_id,
-                            MessagePacket::new(&bytes),
-                        );
-                    }
+                    Sender::<MessagePacket>::send(
+                        &network,
+                        &peer_manager,
+                        &metrics,
+                        &peer_id,
+                        MessagePacket::new(&message.pack_new()),
+                    );
                 }
             }
 
