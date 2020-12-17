@@ -215,4 +215,4 @@ impl_stream!(OutputId, Output, CF_OUTPUT_ID_TO_OUTPUT);
 impl_stream!(OutputId, Spent, CF_OUTPUT_ID_TO_SPENT);
 impl_stream!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
 impl_stream!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
-impl_stream!((), LedgerIndex, CF_ED25519_ADDRESS_TO_OUTPUT_ID);
+impl_stream!((), LedgerIndex, CF_LEDGER_INDEX);
