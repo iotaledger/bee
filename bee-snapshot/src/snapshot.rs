@@ -9,16 +9,15 @@ use bee_message::MessageId;
 use log::{error, info};
 
 use std::{
-    collections::HashSet,
     fs::OpenOptions,
     io::{BufReader, BufWriter},
 };
 
 pub struct Snapshot {
     pub(crate) header: SnapshotHeader,
-    pub(crate) solid_entry_points: HashSet<MessageId>,
-    pub(crate) outputs: Vec<Output>,
-    pub(crate) milestone_diffs: Vec<MilestoneDiff>,
+    pub(crate) solid_entry_points: Box<[MessageId]>,
+    pub(crate) outputs: Box<[Output]>,
+    pub(crate) milestone_diffs: Box<[MilestoneDiff]>,
 }
 
 impl Snapshot {
@@ -26,7 +25,7 @@ impl Snapshot {
         &self.header
     }
 
-    pub fn solid_entry_points(&self) -> &HashSet<MessageId> {
+    pub fn solid_entry_points(&self) -> &[MessageId] {
         &self.solid_entry_points
     }
 
@@ -123,9 +122,9 @@ impl Packable for Snapshot {
         };
         let milestone_diff_count = u64::unpack(reader)? as usize;
 
-        let mut solid_entry_points = HashSet::with_capacity(sep_count);
+        let mut solid_entry_points = Vec::with_capacity(sep_count);
         for _ in 0..sep_count {
-            solid_entry_points.insert(MessageId::unpack(reader)?);
+            solid_entry_points.push(MessageId::unpack(reader)?);
         }
 
         let mut outputs = Vec::with_capacity(output_count);
@@ -142,9 +141,9 @@ impl Packable for Snapshot {
 
         Ok(Self {
             header,
-            solid_entry_points,
-            outputs,
-            milestone_diffs,
+            solid_entry_points: solid_entry_points.into_boxed_slice(),
+            outputs: outputs.into_boxed_slice(),
+            milestone_diffs: milestone_diffs.into_boxed_slice(),
         })
     }
 }
@@ -161,9 +160,9 @@ pub(crate) fn snapshot(path: &str, index: u32) -> Result<(), Error> {
             sep_index: 0,
             ledger_index: 0,
         },
-        solid_entry_points: HashSet::new(),
-        outputs: Vec::new(),
-        milestone_diffs: Vec::new(),
+        solid_entry_points: Box::new([]),
+        outputs: Box::new([]),
+        milestone_diffs: Box::new([]),
     };
 
     let file = path.to_string() + "_tmp";
