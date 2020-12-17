@@ -12,6 +12,8 @@ use bee_test::rand::message::{random_message, random_message_id};
 
 use futures::stream::StreamExt;
 
+use std::collections::HashMap;
+
 const DB_DIRECTORY: &str = "./tests/database/message_id_to_message";
 
 #[tokio::test]
@@ -22,7 +24,7 @@ async fn access() {
     let storage = Storage::start(config).await.unwrap();
 
     let message_id = random_message_id();
-    let message_1 = random_message();
+    let message = random_message();
 
     assert!(!Exist::<MessageId, Message>::exist(&storage, &message_id).await.unwrap());
     assert!(Fetch::<MessageId, Message>::fetch(&storage, &message_id)
@@ -30,18 +32,19 @@ async fn access() {
         .unwrap()
         .is_none());
 
-    Insert::<MessageId, Message>::insert(&storage, &message_id, &message_1)
+    Insert::<MessageId, Message>::insert(&storage, &message_id, &message)
         .await
         .unwrap();
 
     assert!(Exist::<MessageId, Message>::exist(&storage, &message_id).await.unwrap());
-
-    let message_2 = Fetch::<MessageId, Message>::fetch(&storage, &message_id)
-        .await
-        .unwrap()
-        .unwrap();
-
-    assert_eq!(message_1.pack_new(), message_2.pack_new());
+    assert_eq!(
+        Fetch::<MessageId, Message>::fetch(&storage, &message_id)
+            .await
+            .unwrap()
+            .unwrap()
+            .pack_new(),
+        message.pack_new()
+    );
 
     Delete::<MessageId, Message>::delete(&storage, &message_id)
         .await
@@ -53,40 +56,35 @@ async fn access() {
         .unwrap()
         .is_none());
 
-    let mut message_ids = Vec::new();
+    let mut batch = Storage::batch_begin();
 
-    for _ in 0usize..100usize {
+    for _ in 0usize..10usize {
         let (message_id, message) = (random_message_id(), random_message());
-        message_ids.push(message_id);
         Insert::<MessageId, Message>::insert(&storage, &message_id, &message)
             .await
             .unwrap();
+        Batch::<MessageId, Message>::batch_delete(&storage, &mut batch, &message_id).unwrap();
     }
 
-    let mut batch = Storage::batch_begin();
+    let mut messages = HashMap::new();
 
-    for (i, message_id) in message_ids.iter().enumerate() {
-        storage
-            .batch_insert(&mut batch, &random_message_id(), &random_message())
-            .unwrap();
-        if i % 2 == 0 {
-            Batch::<MessageId, Message>::batch_delete(&storage, &mut batch, message_id).unwrap();
-        }
+    for _ in 0usize..10usize {
+        let (message_id, message) = (random_message_id(), random_message());
+        Batch::<MessageId, Message>::batch_insert(&storage, &mut batch, &message_id, &message).unwrap();
+        messages.insert(message_id, message);
     }
 
     storage.batch_commit(batch, true).await.unwrap();
 
-    for (i, message_id) in message_ids.iter().enumerate() {
-        if i % 2 == 0 {
-            assert!(!Exist::<MessageId, Message>::exist(&storage, message_id).await.unwrap());
-        } else {
-            assert!(Exist::<MessageId, Message>::exist(&storage, message_id).await.unwrap());
-        }
-    }
-
     let mut stream = AsStream::<MessageId, Message>::stream(&storage).await.unwrap();
+    let mut count = 0;
 
-    while let Some((key, value)) = stream.next().await {
-        println!("{:?} {:?}", key, value);
+    while let Some((message_id, message)) = stream.next().await {
+        assert_eq!(messages.get(&message_id).unwrap().pack_new(), message.pack_new());
+        count += 1;
     }
+
+    assert_eq!(count, messages.len());
+
+    let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 }

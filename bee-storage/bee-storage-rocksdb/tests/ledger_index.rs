@@ -70,4 +70,6 @@ async fn access() {
     }
 
     assert_eq!(count, 1);
+
+    let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 }
