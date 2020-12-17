@@ -1,14 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
-use bee_message::{Message, MessageId};
+use bee_protocol::{Milestone, MilestoneIndex};
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
     storage::Backend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
-use bee_test::rand::message::{random_message, random_message_id};
+use bee_test::rand::milestone::random_milestone;
 
 use futures::stream::StreamExt;
 
@@ -23,68 +22,75 @@ async fn access() {
     let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
-    // let message_id = random_message_id();
-    // let message = random_message();
-    //
-    // assert!(!Exist::<MessageId, Message>::exist(&storage, &message_id).await.unwrap());
-    // assert!(Fetch::<MessageId, Message>::fetch(&storage, &message_id)
-    //     .await
-    //     .unwrap()
-    //     .is_none());
-    //
-    // Insert::<MessageId, Message>::insert(&storage, &message_id, &message)
-    //     .await
-    //     .unwrap();
-    //
-    // assert!(Exist::<MessageId, Message>::exist(&storage, &message_id).await.unwrap());
-    // assert_eq!(
-    //     Fetch::<MessageId, Message>::fetch(&storage, &message_id)
-    //         .await
-    //         .unwrap()
-    //         .unwrap()
-    //         .pack_new(),
-    //     message.pack_new()
-    // );
-    //
-    // Delete::<MessageId, Message>::delete(&storage, &message_id)
-    //     .await
-    //     .unwrap();
-    //
-    // assert!(!Exist::<MessageId, Message>::exist(&storage, &message_id).await.unwrap());
-    // assert!(Fetch::<MessageId, Message>::fetch(&storage, &message_id)
-    //     .await
-    //     .unwrap()
-    //     .is_none());
-    //
-    // let mut batch = Storage::batch_begin();
-    //
-    // for _ in 0usize..10usize {
-    //     let (message_id, message) = (random_message_id(), random_message());
-    //     Insert::<MessageId, Message>::insert(&storage, &message_id, &message)
-    //         .await
-    //         .unwrap();
-    //     Batch::<MessageId, Message>::batch_delete(&storage, &mut batch, &message_id).unwrap();
-    // }
-    //
-    // let mut messages = HashMap::new();
-    //
-    // for _ in 0usize..10usize {
-    //     let (message_id, message) = (random_message_id(), random_message());
-    //     Batch::<MessageId, Message>::batch_insert(&storage, &mut batch, &message_id, &message).unwrap();
-    //     messages.insert(message_id, message);
-    // }
-    //
-    // storage.batch_commit(batch, true).await.unwrap();
-    //
-    // let mut stream = AsStream::<MessageId, Message>::stream(&storage).await.unwrap();
-    // let mut count = 0;
-    //
-    // while let Some((message_id, message)) = stream.next().await {
-    //     assert_eq!(messages.get(&message_id).unwrap().pack_new(), message.pack_new());
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, messages.len());
+    let milestone = random_milestone();
+    let index = milestone.index();
+
+    assert!(!Exist::<MilestoneIndex, Milestone>::exist(&storage, &index)
+        .await
+        .unwrap());
+    assert!(Fetch::<MilestoneIndex, Milestone>::fetch(&storage, &index)
+        .await
+        .unwrap()
+        .is_none());
+
+    Insert::<MilestoneIndex, Milestone>::insert(&storage, &index, &milestone)
+        .await
+        .unwrap();
+
+    assert!(Exist::<MilestoneIndex, Milestone>::exist(&storage, &index)
+        .await
+        .unwrap());
+    assert_eq!(
+        Fetch::<MilestoneIndex, Milestone>::fetch(&storage, &index)
+            .await
+            .unwrap()
+            .unwrap(),
+        milestone
+    );
+
+    Delete::<MilestoneIndex, Milestone>::delete(&storage, &index)
+        .await
+        .unwrap();
+
+    assert!(!Exist::<MilestoneIndex, Milestone>::exist(&storage, &index)
+        .await
+        .unwrap());
+    assert!(Fetch::<MilestoneIndex, Milestone>::fetch(&storage, &index)
+        .await
+        .unwrap()
+        .is_none());
+
+    let mut batch = Storage::batch_begin();
+
+    for _ in 0usize..10usize {
+        let milestone = random_milestone();
+        let index = milestone.index();
+        Insert::<MilestoneIndex, Milestone>::insert(&storage, &index, &milestone)
+            .await
+            .unwrap();
+        Batch::<MilestoneIndex, Milestone>::batch_delete(&storage, &mut batch, &index).unwrap();
+    }
+
+    let mut milestones = HashMap::new();
+
+    for _ in 0usize..10usize {
+        let milestone = random_milestone();
+        let index = milestone.index();
+        Batch::<MilestoneIndex, Milestone>::batch_insert(&storage, &mut batch, &index, &milestone).unwrap();
+        milestones.insert(index, milestone);
+    }
+
+    storage.batch_commit(batch, true).await.unwrap();
+
+    let mut stream = AsStream::<MilestoneIndex, Milestone>::stream(&storage).await.unwrap();
+    let mut count = 0;
+
+    while let Some((index, milestone)) = stream.next().await {
+        assert_eq!(milestones.get(&index).unwrap(), &milestone);
+        count += 1;
+    }
+
+    assert_eq!(count, milestones.len());
 
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 }

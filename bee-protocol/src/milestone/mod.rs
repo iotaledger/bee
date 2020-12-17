@@ -20,7 +20,7 @@ pub enum Error {
     MessageId(<MessageId as Packable>::Error),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Milestone {
     pub(crate) index: MilestoneIndex,
     pub(crate) message_id: MessageId,
