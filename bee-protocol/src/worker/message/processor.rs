@@ -10,7 +10,7 @@ use crate::{
     worker::{
         message_submitter::MessageSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker,
         MetricsWorker, MilestoneValidatorWorker, MilestoneValidatorWorkerEvent, PeerManagerWorker, PropagatorWorker,
-        PropagatorWorkerEvent, RequestedMessages, TangleWorker,
+        PropagatorWorkerEvent, RequestedMessages, StorageWorker, TangleWorker,
     },
     ProtocolMetrics,
 };
@@ -49,6 +49,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
     fn dependencies() -> &'static [TypeId] {
         vec![
+            TypeId::of::<StorageWorker>(),
             TypeId::of::<TangleWorker>(),
             TypeId::of::<MilestoneValidatorWorker>(),
             TypeId::of::<PropagatorWorker>(),
@@ -67,6 +68,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
 
+        let _storage = node.storage();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
         let metrics = node.resource::<ProtocolMetrics>();
@@ -88,10 +90,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                 trace!("Processing received message...");
 
                 let message = match Message::unpack(&mut &message_packet.bytes[..]) {
-                    Ok(message) => {
-                        // TODO validation
-                        message
-                    }
+                    Ok(message) => message,
                     Err(e) => {
                         trace!("Invalid message: {:?}.", e);
                         metrics.invalid_messages_inc();
@@ -193,13 +192,21 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                         }
                     };
 
-                    if let Some(Payload::Milestone(_)) = message.payload() {
-                        if let Err(e) = milestone_validator.send(MilestoneValidatorWorkerEvent(message_id)) {
-                            error!(
-                                "Sending message id {} to milestone validation failed: {:?}.",
-                                message_id, e
-                            );
+                    match message.payload() {
+                        Some(Payload::Milestone(_)) => {
+                            if let Err(e) = milestone_validator.send(MilestoneValidatorWorkerEvent(message_id)) {
+                                error!(
+                                    "Sending message id {} to milestone validation failed: {:?}.",
+                                    message_id, e
+                                );
+                            }
                         }
+                        Some(Payload::Indexation(_payload)) => {
+                            // TODO when protocol backend is merged
+                            // let index = payload.hash();
+                            // storage.insert(&index, &message_id);
+                        }
+                        _ => {}
                     }
                 } else {
                     metrics.known_messages_inc();
