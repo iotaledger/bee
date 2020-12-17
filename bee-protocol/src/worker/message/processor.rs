@@ -17,14 +17,10 @@ use crate::{
 
 use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{node::Node, worker::Worker};
-use bee_message::{payload::Payload, Message, MessageId, MESSAGE_ID_LENGTH};
+use bee_message::{payload::Payload, Message, MessageId};
 use bee_network::PeerId;
 
 use async_trait::async_trait;
-use blake2::{
-    digest::{Update, VariableOutput},
-    VarBlake2b,
-};
 use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info, trace, warn};
 use tokio::sync::mpsc;
@@ -78,7 +74,6 @@ impl<N: Node> Worker<N> for ProcessorWorker {
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, rx);
-            let mut blake2b = VarBlake2b::new(MESSAGE_ID_LENGTH).unwrap();
 
             while let Some(ProcessorWorkerEvent {
                 pow_score,
@@ -92,6 +87,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                 let message = match Message::unpack(&mut &message_packet.bytes[..]) {
                     Ok(message) => message,
                     Err(e) => {
+                        // TODO put this in a function to avoid duplication
                         trace!("Invalid message: {:?}.", e);
                         metrics.invalid_messages_inc();
                         if let Some(tx) = notifier {
@@ -114,13 +110,6 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                     continue;
                 }
 
-                // TODO should be passed by the hasher worker ?
-                blake2b.update(&message_packet.bytes);
-                let mut bytes = [0u8; 32];
-                // TODO Do we have to copy ?
-                blake2b.finalize_variable_reset(|digest| bytes.copy_from_slice(&digest));
-                let message_id = MessageId::from(bytes);
-
                 if pow_score < config.0.minimum_pow_score {
                     trace!(
                         "Insufficient pow score: {} < {}.",
@@ -141,6 +130,8 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                     continue;
                 }
 
+                // TODO should be passed by the hasher worker ?
+                let message_id = message.id();
                 let requested = requested_messages.contains_key(&message_id);
 
                 let mut metadata = MessageMetadata::arrived();

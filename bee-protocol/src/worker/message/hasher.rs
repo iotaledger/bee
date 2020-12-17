@@ -84,6 +84,7 @@ fn send_hashes(
         hash,
     ) in events.drain(..).zip(hashes)
     {
+        // TODO replace this with scoring function
         let zeros = hash.iter().rev().take_while(|t| *t == Btrit::Zero).count() as u32;
         let pow_score = 3u128.pow(zeros) as f64 / message_packet.bytes.len() as f64;
         // TODO check score
@@ -222,6 +223,7 @@ impl Stream for BatchStream {
 
                     // TODO const
                     // TODO check
+                    // TODO see if there is something we can reuse from pow crate
                     blake2b.update(&event.message_packet.bytes[..event.message_packet.bytes.len() - 8]);
                     let mut pow_input = TritBuf::with_capacity(243);
                     blake2b.finalize_variable_reset(|pow_digest| {
