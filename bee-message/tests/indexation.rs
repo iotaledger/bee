@@ -7,8 +7,8 @@ use bee_message::prelude::*;
 #[test]
 fn empty_index() {
     assert!(matches!(
-        Indexation::new("".to_string(), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).err(),
-        Some(Error::EmptyIndex)
+        Indexation::new("".to_string(), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
+        Err(Error::EmptyIndex)
     ));
 }
 
@@ -49,8 +49,8 @@ fn unpack_invalid_index_len() {
     bytes[0..2].copy_from_slice(&1000u16.to_le_bytes());
 
     assert!(matches!(
-        Indexation::unpack(&mut bytes.as_slice()).err(),
-        Some(Error::Io { .. })
+        Indexation::unpack(&mut bytes.as_slice()),
+        Err(Error::Io { .. })
     ));
 }
 
@@ -65,8 +65,8 @@ fn unpack_invalid_data_len() {
     bytes[14..18].copy_from_slice(&1000u32.to_le_bytes());
 
     assert!(matches!(
-        Indexation::unpack(&mut bytes.as_slice()).err(),
-        Some(Error::Io { .. })
+        Indexation::unpack(&mut bytes.as_slice()),
+        Err(Error::Io { .. })
     ));
 }
 
@@ -80,7 +80,7 @@ fn unpack_non_utf8_index() {
     let bytes = indexation.pack_new();
 
     assert!(matches!(
-        Indexation::unpack(&mut bytes.as_slice()).err(),
-        Some(Error::Utf8String(std::string::FromUtf8Error { .. }))
+        Indexation::unpack(&mut bytes.as_slice()),
+        Err(Error::Utf8String(std::string::FromUtf8Error { .. }))
     ));
 }

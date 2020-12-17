@@ -24,7 +24,7 @@ const CONSTANT_SIZE: usize = LATEST_SOLID_MILESTONE_INDEX_SIZE
 /// - did a snapshot and pruned away a part of the tangle;
 /// - solidified a new milestone;
 /// It also helps other nodes to know if they can ask it a specific message.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct Heartbeat {
     /// Index of the latest solid milestone.
     pub(crate) latest_solid_milestone_index: u32,

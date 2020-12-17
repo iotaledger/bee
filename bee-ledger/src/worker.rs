@@ -125,12 +125,12 @@ where
         let storage = node.storage();
         let bus = node.resource::<Bus>();
 
-        bus.add_listener::<(), LatestSolidMilestoneChanged, _>(move |milestone| {
-            if let Err(e) = tx.send(*milestone.0.message_id()) {
+        bus.add_listener::<(), LatestSolidMilestoneChanged, _>(move |event| {
+            if let Err(e) = tx.send(*event.milestone.message_id()) {
                 warn!(
                     "Sending solid milestone {} {} to confirmation failed: {:?}.",
-                    *milestone.0.index(),
-                    milestone.0.message_id(),
+                    *event.index,
+                    event.milestone.message_id(),
                     e
                 )
             }

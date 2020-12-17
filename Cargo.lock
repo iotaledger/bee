@@ -403,6 +403,7 @@ dependencies = [
  "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "bee-pow",
  "bee-ternary",
+ "bee-test",
  "blake2",
  "bytemuck",
  "digest 0.9.0",
@@ -514,6 +515,7 @@ dependencies = [
  "rand 0.7.3",
  "serde",
  "spin 0.7.0",
+ "thiserror",
  "tokio",
  "twox-hash",
 ]

@@ -11,6 +11,7 @@ const MESSAGE_ID_SIZE: usize = 32;
 const CONSTANT_SIZE: usize = MESSAGE_ID_SIZE;
 
 /// A packet to request a message.
+#[derive(Clone, Default)]
 pub(crate) struct MessageRequest {
     /// Message Id of the requested message.
     pub(crate) message_id: [u8; MESSAGE_ID_SIZE],
@@ -23,14 +24,6 @@ impl MessageRequest {
         new.message_id.copy_from_slice(message_id);
 
         new
-    }
-}
-
-impl Default for MessageRequest {
-    fn default() -> Self {
-        Self {
-            message_id: [0; MESSAGE_ID_SIZE],
-        }
     }
 }
 

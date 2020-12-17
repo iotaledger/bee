@@ -12,7 +12,7 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_protocol::tangle::MessageMetadata;
+use bee_protocol::{tangle::MessageMetadata, Milestone, MilestoneIndex};
 use bee_storage::access::{Batch, BatchBuilder};
 
 use rocksdb::{WriteBatch, WriteOptions};
@@ -367,6 +367,46 @@ impl Batch<(), LedgerIndex> for Storage {
             .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
 
         batch.inner.delete_cf(&cf, []);
+
+        Ok(())
+    }
+}
+
+impl Batch<MilestoneIndex, Milestone> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        index: &MilestoneIndex,
+        milestone: &Milestone,
+    ) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_MILESTONE))?;
+
+        batch.key_buf.clear();
+        // Packing to bytes can't fail.
+        index.pack(&mut batch.key_buf).unwrap();
+        batch.value_buf.clear();
+        // Packing to bytes can't fail.
+        milestone.pack(&mut batch.value_buf).unwrap();
+
+        batch.inner.put_cf(&cf, &batch.key_buf, &batch.value_buf);
+
+        Ok(())
+    }
+
+    fn batch_delete(&self, batch: &mut Self::Batch, index: &MilestoneIndex) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_MILESTONE))?;
+
+        batch.key_buf.clear();
+        // Packing to bytes can't fail.
+        index.pack(&mut batch.key_buf).unwrap();
+
+        batch.inner.delete_cf(&cf, &batch.key_buf);
 
         Ok(())
     }

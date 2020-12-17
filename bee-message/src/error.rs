@@ -26,6 +26,7 @@ pub enum Error {
     InvalidSyntax,
     InvalidHex,
     EmptyIndex,
+    InvalidMessageLength(usize),
 }
 
 impl fmt::Display for Error {
@@ -53,6 +54,7 @@ impl fmt::Display for Error {
             Error::InvalidSyntax => write!(f, "Syntax validation failed."),
             Error::InvalidHex => write!(f, "Invalid hexadecimal conversion."),
             Error::EmptyIndex => write!(f, "Empty index payload."),
+            Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
         }
     }
 }

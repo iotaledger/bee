@@ -9,7 +9,7 @@ pub mod flags;
 pub use metadata::MessageMetadata;
 
 use crate::{
-    milestone::MilestoneIndex,
+    milestone::{Milestone, MilestoneIndex},
     tangle::{flags::Flags, urts::UrtsTipPool},
 };
 
@@ -50,7 +50,7 @@ impl<B: Backend> Hooks<MessageMetadata> for StorageHooks<B> {
 /// Milestone-based Tangle.
 pub struct MsTangle<B> {
     pub(crate) inner: Tangle<MessageMetadata, StorageHooks<B>>,
-    pub(crate) milestones: DashMap<MilestoneIndex, MessageId>,
+    pub(crate) milestones: DashMap<MilestoneIndex, Milestone>,
     pub(crate) solid_entry_points: DashMap<MessageId, MilestoneIndex>,
     latest_milestone_index: AtomicU32,
     latest_solid_milestone_index: AtomicU32,
@@ -104,13 +104,14 @@ impl<B: Backend> MsTangle<B> {
         self.inner.insert(hash, message, metadata).await
     }
 
-    pub fn add_milestone(&self, index: MilestoneIndex, hash: MessageId) {
+    pub fn add_milestone(&self, index: MilestoneIndex, milestone: Milestone) {
         // TODO: only insert if vacant
-        self.milestones.insert(index, hash);
-        self.inner.update_metadata(&hash, |metadata| {
+        self.inner.update_metadata(&milestone.message_id(), |metadata| {
             metadata.flags_mut().set_milestone(true);
             metadata.set_milestone_index(index);
         });
+        // TODO can there be a race condition between 2 ops ?
+        self.milestones.insert(index, milestone);
     }
 
     pub fn remove_milestone(&self, index: MilestoneIndex) {
@@ -127,10 +128,7 @@ impl<B: Backend> MsTangle<B> {
 
     // TODO: use combinator instead of match
     pub fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
-        match self.milestones.get(&index) {
-            None => None,
-            Some(v) => Some(*v),
-        }
+        self.milestones.get(&index).map(|milestone| *milestone.message_id())
     }
 
     pub fn contains_milestone(&self, index: MilestoneIndex) -> bool {
