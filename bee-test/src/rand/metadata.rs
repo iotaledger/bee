@@ -7,7 +7,7 @@ use bee_protocol::tangle::{flags::Flags, MessageMetadata};
 
 pub fn random_metadata() -> MessageMetadata {
     MessageMetadata::new(
-        Flags::from_bits(random_integer::<u8>()).unwrap(),
+        unsafe { Flags::from_bits_unchecked(random_integer::<u8>()) },
         random_milestone_index(),
         random_integer::<u64>(),
         random_integer::<u64>(),
