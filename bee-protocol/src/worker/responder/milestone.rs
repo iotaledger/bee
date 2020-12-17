@@ -62,16 +62,14 @@ impl<N: Node> Worker<N> for MilestoneResponderWorker {
                     _ => request.index.into(),
                 };
 
-                if let Some(message_id) = tangle.get_milestone_message_id(index) {
-                    if let Some(message) = tangle.get(&message_id).await {
-                        Sender::<MessagePacket>::send(
-                            &network,
-                            &peer_manager,
-                            &metrics,
-                            &peer_id,
-                            MessagePacket::new(&message.pack_new()),
-                        );
-                    }
+                if let Some(message) = tangle.get_milestone(index).await {
+                    Sender::<MessagePacket>::send(
+                        &network,
+                        &peer_manager,
+                        &metrics,
+                        &peer_id,
+                        MessagePacket::new(&message.pack_new()),
+                    );
                 }
             }
 
