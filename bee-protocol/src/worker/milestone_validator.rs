@@ -119,6 +119,7 @@ where
             Ok(Milestone {
                 index: MilestoneIndex(milestone.essence().index()),
                 message_id,
+                timestamp: milestone.essence().timestamp(),
             })
         }
         _ => Err(Error::NoMilestonePayload),

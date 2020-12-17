@@ -24,11 +24,16 @@ pub enum Error {
 pub struct Milestone {
     pub(crate) index: MilestoneIndex,
     pub(crate) message_id: MessageId,
+    pub(crate) timestamp: u64,
 }
 
 impl Milestone {
-    pub fn new(index: MilestoneIndex, message_id: MessageId) -> Self {
-        Self { index, message_id }
+    pub fn new(index: MilestoneIndex, message_id: MessageId, timestamp: u64) -> Self {
+        Self {
+            index,
+            message_id,
+            timestamp,
+        }
     }
 
     pub fn index(&self) -> MilestoneIndex {
@@ -38,18 +43,23 @@ impl Milestone {
     pub fn message_id(&self) -> &MessageId {
         &self.message_id
     }
+
+    pub fn timestamp(&self) -> u64 {
+        self.timestamp
+    }
 }
 
 impl Packable for Milestone {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.index.packed_len() + self.message_id.packed_len()
+        self.index.packed_len() + self.message_id.packed_len() + self.timestamp.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.index.pack(writer)?;
-        self.message_id.pack(writer).map_err(Error::MessageId)
+        self.message_id.pack(writer).map_err(Error::MessageId)?;
+        self.timestamp.pack(writer).map_err(Error::IO)
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
@@ -59,6 +69,7 @@ impl Packable for Milestone {
         Ok(Self {
             index: MilestoneIndex::unpack(reader)?,
             message_id: MessageId::unpack(reader).map_err(Error::MessageId)?,
+            timestamp: u64::unpack(reader)?,
         })
     }
 }
