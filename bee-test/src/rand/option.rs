@@ -1,0 +1,12 @@
+// Copyright 2020 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use rand::Rng;
+
+pub fn random_option<T>(inner: T) -> Option<T> {
+    if rand::thread_rng().gen::<f64>() < 0.5 {
+        None
+    } else {
+        Some(inner)
+    }
+}
