@@ -4,20 +4,17 @@
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
 use bee_pow::{
-    providers::{Miner, MinerBuilder, ProviderBuilder},
+    providers::{ConstantBuilder, Miner, MinerBuilder, ProviderBuilder},
     score::compute_pow_score,
 };
-
-use core::str::FromStr;
-
-const PARENT: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+use bee_test::rand::message::random_message_id;
 
 #[test]
-fn message_pow_default_provider() {
+fn pow_default_provider() {
     let message = MessageBuilder::<Miner>::new()
         .with_network_id(0)
-        .with_parent1(MessageId::from_str(PARENT).unwrap())
-        .with_parent2(MessageId::from_str(PARENT).unwrap())
+        .with_parent1(random_message_id())
+        .with_parent2(random_message_id())
         .finish()
         .unwrap();
 
@@ -28,11 +25,11 @@ fn message_pow_default_provider() {
 }
 
 #[test]
-fn message_pow_provider() {
+fn pow_provider() {
     let message = MessageBuilder::new()
         .with_network_id(0)
-        .with_parent1(MessageId::from_str(PARENT).unwrap())
-        .with_parent2(MessageId::from_str(PARENT).unwrap())
+        .with_parent1(random_message_id())
+        .with_parent2(random_message_id())
         .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64)
         .finish()
         .unwrap();
@@ -41,4 +38,17 @@ fn message_pow_provider() {
     let score = compute_pow_score(&message_bytes);
 
     assert!(score >= 10000f64);
+}
+
+#[test]
+fn invalid_length() {
+    let res = MessageBuilder::new()
+        .with_network_id(0)
+        .with_parent1(random_message_id())
+        .with_parent2(random_message_id())
+        .with_nonce_provider(ConstantBuilder::new().with_value(42).finish(), 10000f64)
+        .with_payload(Indexation::new("42".to_owned(), &[0u8; 32000]).unwrap().into())
+        .finish();
+
+    assert!(matches!(res, Err(Error::InvalidMessageLength(32096))));
 }

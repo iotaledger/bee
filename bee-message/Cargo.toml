@@ -24,4 +24,6 @@ serde = "1.0"
 thiserror = "1.0"
 
 [dev-dependencies]
+bee-test = { path = "../bee-test" }
+
 num_cpus = "1.13"

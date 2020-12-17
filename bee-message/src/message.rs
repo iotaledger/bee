@@ -12,6 +12,8 @@ use blake2::{
 };
 use serde::{Deserialize, Serialize};
 
+const MESSAGE_LENGTH_MAX: usize = 32000;
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Message {
     network_id: u64,
@@ -196,6 +198,11 @@ impl<P: Provider> MessageBuilder<P> {
         };
 
         let message_bytes = message.pack_new();
+
+        if message_bytes.len() >= MESSAGE_LENGTH_MAX {
+            return Err(Error::InvalidMessageLength(message_bytes.len()));
+        }
+
         let (nonce_provider, target_score) = self.nonce_provider.unwrap_or((P::Builder::new().finish(), 4000f64));
 
         let nonce = nonce_provider
