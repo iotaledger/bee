@@ -12,7 +12,7 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_protocol::tangle::MessageMetadata;
+use bee_protocol::{tangle::MessageMetadata, Milestone, MilestoneIndex};
 use bee_storage::access::Delete;
 
 #[async_trait::async_trait]
@@ -145,6 +145,20 @@ impl Delete<(), LedgerIndex> for Storage {
             .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
 
         self.inner.delete_cf(&cf, [])?;
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl Delete<MilestoneIndex, Milestone> for Storage {
+    async fn delete(&self, index: &MilestoneIndex) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_MILESTONE))?;
+
+        self.inner.delete_cf(&cf, index.pack_new())?;
 
         Ok(())
     }

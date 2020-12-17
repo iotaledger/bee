@@ -201,7 +201,7 @@ mod tests {
         let (sender_shutdown, receiver_shutdown) = oneshot::channel::<()>();
         let (sender, receiver) = mpsc::unbounded_channel::<Vec<u8>>();
         let mut msg_handler = PacketHandler::new(
-            receiver.into_stream(),
+            receiver,
             receiver_shutdown.fuse(),
             "127.0.0.1:8080".parse().unwrap(),
         );
@@ -295,7 +295,7 @@ mod tests {
         let (sender, receiver) = mpsc::unbounded_channel::<Vec<u8>>();
 
         let mut msg_handler = PacketHandler::new(
-            receiver.into_stream(),
+            receiver,
             receiver_shutdown.fuse(),
             "127.0.0.1:8080".parse().unwrap(),
         );

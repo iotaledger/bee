@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    packet::{tlv_into_bytes, Message},
+    packet::Message,
     peer::PeerManager,
     worker::{MetricsWorker, PeerManagerWorker},
-    ProtocolMetrics,
+    ProtocolMetrics, Sender,
 };
 
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
-use bee_network::{Command::SendMessage, NetworkController, PeerId};
+use bee_network::{NetworkController, PeerId};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use log::{info, warn};
+use log::info;
 use tokio::sync::mpsc;
 
 use std::{any::TypeId, convert::Infallible};
@@ -50,25 +50,12 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(BroadcasterWorkerEvent { source, message }) = receiver.next().await {
-                let bytes = tlv_into_bytes(message);
-
                 for peer in peer_manager.peers.iter() {
                     if match source {
                         Some(ref source) => source != peer.key(),
                         None => true,
                     } {
-                        match network.send(SendMessage {
-                            message: bytes.clone(),
-                            to: peer.key().clone(),
-                        }) {
-                            Ok(_) => {
-                                (*peer.value()).metrics.messages_sent_inc();
-                                metrics.messages_sent_inc();
-                            }
-                            Err(e) => {
-                                warn!("Broadcasting message to {:?} failed: {:?}.", *peer.key(), e);
-                            }
-                        };
+                        Sender::<Message>::send(&network, &peer_manager, &metrics, peer.key(), message.clone());
                     }
                 }
             }

@@ -1,31 +1,37 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::index::LedgerIndex;
+use bee_ledger::model::LedgerIndex;
 use bee_protocol::MilestoneIndex;
 use bee_storage::{
-    access::{Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
     storage::Backend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
 
+use futures::stream::StreamExt;
+
+const DB_DIRECTORY: &str = "./tests/database/ledger_index";
+
 #[tokio::test]
 async fn access() {
-    let config = RocksDBConfigBuilder::default().finish();
+    let _ = std::fs::remove_dir_all(DB_DIRECTORY);
+
+    let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
-    let index_1 = LedgerIndex::from(MilestoneIndex::from(42));
+    let index = LedgerIndex::from(MilestoneIndex::from(42));
 
     assert!(!Exist::<(), LedgerIndex>::exist(&storage, &()).await.unwrap());
     assert!(Fetch::<(), LedgerIndex>::fetch(&storage, &()).await.unwrap().is_none());
 
-    storage.insert(&(), &index_1).await.unwrap();
+    Insert::<(), LedgerIndex>::insert(&storage, &(), &index).await.unwrap();
 
     assert!(Exist::<(), LedgerIndex>::exist(&storage, &()).await.unwrap());
-
-    let index_2 = Fetch::<(), LedgerIndex>::fetch(&storage, &()).await.unwrap().unwrap();
-
-    assert_eq!(index_1, index_2);
+    assert_eq!(
+        Fetch::<(), LedgerIndex>::fetch(&storage, &()).await.unwrap().unwrap(),
+        index
+    );
 
     Delete::<(), LedgerIndex>::delete(&storage, &()).await.unwrap();
 
@@ -34,22 +40,36 @@ async fn access() {
 
     let mut batch = Storage::batch_begin();
 
-    storage.batch_insert(&mut batch, &(), &index_1).unwrap();
+    Batch::<(), LedgerIndex>::batch_insert(&storage, &mut batch, &(), &index).unwrap();
 
     storage.batch_commit(batch, true).await.unwrap();
 
     assert!(Exist::<(), LedgerIndex>::exist(&storage, &()).await.unwrap());
-
-    let index_2 = Fetch::<(), LedgerIndex>::fetch(&storage, &()).await.unwrap().unwrap();
-
-    assert_eq!(index_1, index_2);
+    assert_eq!(
+        Fetch::<(), LedgerIndex>::fetch(&storage, &()).await.unwrap().unwrap(),
+        index
+    );
 
     let mut batch = Storage::batch_begin();
 
-    storage.batch_delete(&mut batch, &()).unwrap();
+    Batch::<(), LedgerIndex>::batch_delete(&storage, &mut batch, &()).unwrap();
 
     storage.batch_commit(batch, true).await.unwrap();
 
     assert!(!Exist::<(), LedgerIndex>::exist(&storage, &()).await.unwrap());
     assert!(Fetch::<(), LedgerIndex>::fetch(&storage, &()).await.unwrap().is_none());
+
+    Insert::<(), LedgerIndex>::insert(&storage, &(), &index).await.unwrap();
+
+    let mut stream = AsStream::<(), LedgerIndex>::stream(&storage).await.unwrap();
+    let mut count = 0;
+
+    while let Some((_, ledger_index)) = stream.next().await {
+        assert_eq!(ledger_index, index);
+        count += 1;
+    }
+
+    assert_eq!(count, 1);
+
+    let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 }

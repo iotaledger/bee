@@ -52,7 +52,7 @@ async fn validate<N: Node>(
     tangle: &MsTangle<N::Backend>,
     key_manager: &KeyManager,
     message_id: MessageId,
-) -> Result<Milestone, Error>
+) -> Result<(MilestoneIndex, Milestone), Error>
 where
     N: Node,
 {
@@ -116,10 +116,13 @@ where
                 }
             }
 
-            Ok(Milestone {
-                index: MilestoneIndex(milestone.essence().index()),
-                message_id,
-            })
+            Ok((
+                MilestoneIndex(milestone.essence().index()),
+                Milestone {
+                    message_id,
+                    timestamp: milestone.essence().timestamp(),
+                },
+            ))
         }
         _ => Err(Error::NoMilestonePayload),
     }
@@ -168,34 +171,38 @@ where
                         continue;
                     }
                     match validate::<N>(&tangle, &key_manager, message_id).await {
-                        Ok(milestone) => {
-                            tangle.add_milestone(milestone.index, milestone.message_id);
+                        Ok((index, milestone)) => {
+                            tangle.add_milestone(index, milestone.clone());
 
                             // This is possibly not sufficient as there is no guarantee a milestone has been
                             // solidified before being validated, we then also need
                             // to check when a milestone gets solidified if it's
                             // already vadidated.
                             if meta.flags().is_solid() {
-                                bus.dispatch(LatestSolidMilestoneChanged(milestone.clone()));
-                                if let Err(e) =
-                                    milestone_cone_updater.send(MilestoneConeUpdaterWorkerEvent(milestone.clone()))
+                                bus.dispatch(LatestSolidMilestoneChanged {
+                                    index,
+                                    milestone: milestone.clone(),
+                                });
+                                if let Err(e) = milestone_cone_updater
+                                    .send(MilestoneConeUpdaterWorkerEvent(index, milestone.clone()))
                                 {
                                     error!("Sending message id to milestone validation failed: {:?}.", e);
                                 }
                             }
 
-                            if milestone.index > tangle.get_latest_milestone_index() {
-                                bus.dispatch(LatestMilestoneChanged(milestone.clone()));
+                            if index > tangle.get_latest_milestone_index() {
+                                bus.dispatch(LatestMilestoneChanged {
+                                    index,
+                                    milestone: milestone.clone(),
+                                });
                             }
 
-                            if requested_milestones.remove(&milestone.index).is_some() {
+                            if requested_milestones.remove(&index).is_some() {
                                 tangle.update_metadata(&milestone.message_id, |meta| {
                                     meta.flags_mut().set_requested(true)
                                 });
 
-                                if let Err(e) =
-                                    milestone_solidifier.send(MilestoneSolidifierWorkerEvent(milestone.index))
-                                {
+                                if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
                                     error!("Sending solidification event failed: {}", e);
                                 }
                             }
