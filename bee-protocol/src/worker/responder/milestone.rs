@@ -11,7 +11,6 @@ use crate::{
 
 use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{node::Node, worker::Worker};
-use bee_message::MessageId;
 use bee_network::{NetworkController, PeerId};
 
 use async_trait::async_trait;
@@ -64,7 +63,7 @@ impl<N: Node> Worker<N> for MilestoneResponderWorker {
                 };
 
                 if let Some(message_id) = tangle.get_milestone_message_id(index) {
-                    if let Some(message) = tangle.get(&MessageId::from(message_id)).await {
+                    if let Some(message) = tangle.get(&message_id).await {
                         let mut bytes = Vec::new();
 
                         if message.pack(&mut bytes).is_ok() {
