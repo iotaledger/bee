@@ -66,7 +66,15 @@ pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
 
     for output in config.outputs {
         // Creates a logger dispatch for each output of the configuration.
-        let mut dispatch = Dispatch::new().level(output.level);
+        let mut dispatch = Dispatch::new().level(output.level_filter);
+
+        if !output.target_filters.is_empty() {
+            let target_filters = output.target_filters;
+            dispatch = dispatch.filter(move |metadata| {
+                let target = metadata.target().to_lowercase();
+                target_filters.iter().any(|f| target.contains(f))
+            });
+        }
 
         // Special case for the standard output.
         dispatch = if output.name == LOGGER_STDOUT_NAME {
