@@ -514,6 +514,7 @@ dependencies = [
  "rand 0.7.3",
  "serde",
  "spin 0.7.0",
+ "thiserror",
  "tokio",
  "twox-hash",
 ]
