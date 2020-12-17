@@ -30,7 +30,9 @@ async fn access() {
         .unwrap()
         .is_none());
 
-    storage.insert(&message_id, &message_1).await.unwrap();
+    Insert::<MessageId, Message>::insert(&storage, &message_id, &message_1)
+        .await
+        .unwrap();
 
     assert!(Exist::<MessageId, Message>::exist(&storage, &message_id).await.unwrap());
 
@@ -56,7 +58,9 @@ async fn access() {
     for _ in 0usize..100usize {
         let (message_id, message) = (random_message_id(), random_message());
         message_ids.push(message_id);
-        storage.insert(&message_id, &message).await.unwrap();
+        Insert::<MessageId, Message>::insert(&storage, &message_id, &message)
+            .await
+            .unwrap();
     }
 
     let mut batch = Storage::batch_begin();

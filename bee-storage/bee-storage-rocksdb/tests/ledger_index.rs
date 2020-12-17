@@ -23,7 +23,9 @@ async fn access() {
     assert!(!Exist::<(), LedgerIndex>::exist(&storage, &()).await.unwrap());
     assert!(Fetch::<(), LedgerIndex>::fetch(&storage, &()).await.unwrap().is_none());
 
-    storage.insert(&(), &index_1).await.unwrap();
+    Insert::<(), LedgerIndex>::insert(&storage, &(), &index_1)
+        .await
+        .unwrap();
 
     assert!(Exist::<(), LedgerIndex>::exist(&storage, &()).await.unwrap());
 
@@ -38,7 +40,7 @@ async fn access() {
 
     let mut batch = Storage::batch_begin();
 
-    storage.batch_insert(&mut batch, &(), &index_1).unwrap();
+    Batch::<(), LedgerIndex>::batch_insert(&storage, &mut batch, &(), &index_1).unwrap();
 
     storage.batch_commit(batch, true).await.unwrap();
 
@@ -50,7 +52,7 @@ async fn access() {
 
     let mut batch = Storage::batch_begin();
 
-    storage.batch_delete(&mut batch, &()).unwrap();
+    Batch::<(), LedgerIndex>::batch_delete(&storage, &mut batch, &()).unwrap();
 
     storage.batch_commit(batch, true).await.unwrap();
 
