@@ -58,7 +58,7 @@ impl LoggerOutputConfigBuilder {
             level_filter: self.level_filter.unwrap_or(DEFAULT_OUTPUT_LEVEL),
             target_filters: self
                 .target_filters
-                .unwrap_or(Vec::new())
+                .unwrap_or_else(Vec::new)
                 .iter()
                 .map(|f| f.to_lowercase())
                 .collect(),
