@@ -170,7 +170,7 @@ where
                     }
                     match validate::<N>(&tangle, &key_manager, message_id).await {
                         Ok(milestone) => {
-                            tangle.add_milestone(milestone.index, milestone.message_id);
+                            tangle.add_milestone(milestone.index, milestone.clone());
 
                             // This is possibly not sufficient as there is no guarantee a milestone has been
                             // solidified before being validated, we then also need
