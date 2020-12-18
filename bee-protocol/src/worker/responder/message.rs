@@ -11,7 +11,6 @@ use crate::{
 
 use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{node::Node, worker::Worker};
-use bee_message::MessageId;
 use bee_network::{NetworkController, PeerId};
 
 use async_trait::async_trait;
@@ -58,18 +57,14 @@ impl<N: Node> Worker<N> for MessageResponderWorker {
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(MessageResponderWorkerEvent { peer_id, request }) = receiver.next().await {
-                if let Some(message) = tangle.get(&MessageId::from(request.message_id)).await {
-                    let mut bytes = Vec::new();
-
-                    if message.pack(&mut bytes).is_ok() {
-                        Sender::<MessagePacket>::send(
-                            &network,
-                            &peer_manager,
-                            &metrics,
-                            &peer_id,
-                            MessagePacket::new(&bytes),
-                        );
-                    }
+                if let Some(message) = tangle.get(&request.message_id.into()).await {
+                    Sender::<MessagePacket>::send(
+                        &network,
+                        &peer_manager,
+                        &metrics,
+                        &peer_id,
+                        MessagePacket::new(&message.pack_new()),
+                    );
                 }
             }
 

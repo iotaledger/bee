@@ -7,8 +7,8 @@ use bee_common::packable::{Packable, Read, Write};
 
 pub(crate) struct MilestoneDiff {
     index: u32,
-    created: Vec<Output>,
-    consumed: Vec<Spent>,
+    created: Box<[Output]>,
+    consumed: Box<[Spent]>,
 }
 
 impl Packable for MilestoneDiff {
@@ -51,8 +51,8 @@ impl Packable for MilestoneDiff {
 
         Ok(Self {
             index,
-            created,
-            consumed,
+            created: created.into_boxed_slice(),
+            consumed: consumed.into_boxed_slice(),
         })
     }
 }

@@ -3,6 +3,7 @@
 
 use crate::{
     config::ProtocolConfig,
+    event::MessageProcessed,
     helper,
     packet::Message as MessagePacket,
     peer::PeerManager,
@@ -10,21 +11,17 @@ use crate::{
     worker::{
         message_submitter::MessageSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker,
         MetricsWorker, MilestoneValidatorWorker, MilestoneValidatorWorkerEvent, PeerManagerWorker, PropagatorWorker,
-        PropagatorWorkerEvent, RequestedMessages, TangleWorker,
+        PropagatorWorkerEvent, RequestedMessages, StorageWorker, TangleWorker,
     },
     ProtocolMetrics,
 };
 
 use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
-use bee_common_pt2::{node::Node, worker::Worker};
-use bee_message::{payload::Payload, Message, MessageId, MESSAGE_ID_LENGTH};
+use bee_common_pt2::{event::Bus, node::Node, worker::Worker};
+use bee_message::{payload::Payload, Message, MessageId};
 use bee_network::PeerId;
 
 use async_trait::async_trait;
-use blake2::{
-    digest::{Update, VariableOutput},
-    VarBlake2b,
-};
 use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info, trace, warn};
 use tokio::sync::mpsc;
@@ -49,6 +46,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
     fn dependencies() -> &'static [TypeId] {
         vec![
+            TypeId::of::<StorageWorker>(),
             TypeId::of::<TangleWorker>(),
             TypeId::of::<MilestoneValidatorWorker>(),
             TypeId::of::<PropagatorWorker>(),
@@ -67,16 +65,17 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
 
+        let _storage = node.storage();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
         let metrics = node.resource::<ProtocolMetrics>();
         let peer_manager = node.resource::<PeerManager>();
+        let bus = node.resource::<Bus>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, rx);
-            let mut blake2b = VarBlake2b::new(MESSAGE_ID_LENGTH).unwrap();
 
             while let Some(ProcessorWorkerEvent {
                 pow_score,
@@ -88,11 +87,9 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                 trace!("Processing received message...");
 
                 let message = match Message::unpack(&mut &message_packet.bytes[..]) {
-                    Ok(message) => {
-                        // TODO validation
-                        message
-                    }
+                    Ok(message) => message,
                     Err(e) => {
+                        // TODO put this in a function to avoid duplication
                         trace!("Invalid message: {:?}.", e);
                         metrics.invalid_messages_inc();
                         if let Some(tx) = notifier {
@@ -115,13 +112,6 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                     continue;
                 }
 
-                // TODO should be passed by the hasher worker ?
-                blake2b.update(&message_packet.bytes);
-                let mut bytes = [0u8; 32];
-                // TODO Do we have to copy ?
-                blake2b.finalize_variable_reset(|digest| bytes.copy_from_slice(&digest));
-                let message_id = MessageId::from(bytes);
-
                 if pow_score < config.0.minimum_pow_score {
                     trace!(
                         "Insufficient pow score: {} < {}.",
@@ -142,6 +132,8 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                     continue;
                 }
 
+                // TODO should be passed by the hasher worker ?
+                let message_id = message.id();
                 let requested = requested_messages.contains_key(&message_id);
 
                 let mut metadata = MessageMetadata::arrived();
@@ -149,6 +141,8 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
                 // store message
                 if let Some(message) = tangle.insert(message, message_id, metadata).await {
+                    bus.dispatch(MessageProcessed(message_id));
+
                     if let Some(tx) = notifier {
                         notify_message_id(message_id, tx).await;
                     }
@@ -193,13 +187,21 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                         }
                     };
 
-                    if let Some(Payload::Milestone(_)) = message.payload() {
-                        if let Err(e) = milestone_validator.send(MilestoneValidatorWorkerEvent(message_id)) {
-                            error!(
-                                "Sending message id {} to milestone validation failed: {:?}.",
-                                message_id, e
-                            );
+                    match message.payload() {
+                        Some(Payload::Milestone(_)) => {
+                            if let Err(e) = milestone_validator.send(MilestoneValidatorWorkerEvent(message_id)) {
+                                error!(
+                                    "Sending message id {} to milestone validation failed: {:?}.",
+                                    message_id, e
+                                );
+                            }
                         }
+                        Some(Payload::Indexation(_payload)) => {
+                            // TODO when protocol backend is merged
+                            // let index = payload.hash();
+                            // storage.insert(&index, &message_id);
+                        }
+                        _ => {}
                     }
                 } else {
                     metrics.known_messages_inc();

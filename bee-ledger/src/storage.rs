@@ -90,7 +90,21 @@ pub(crate) async fn apply_metadata<B: Backend>(storage: &B, metadata: &WhiteFlag
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) async fn get_output<B: Backend>(storage: &B, output_id: &OutputId) -> Result<Option<Output>, Error> {
+#[allow(dead_code)]
+pub(crate) async fn fetch_ledger_index<B: Backend>(storage: &B) -> Result<Option<LedgerIndex>, Error> {
+    Fetch::<(), LedgerIndex>::fetch(storage, &())
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+#[allow(dead_code)]
+pub(crate) async fn insert_ledger_index<B: Backend>(storage: &B, index: &LedgerIndex) -> Result<(), Error> {
+    Insert::<(), LedgerIndex>::insert(storage, &(), index)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub(crate) async fn fetch_output<B: Backend>(storage: &B, output_id: &OutputId) -> Result<Option<Output>, Error> {
     Fetch::<OutputId, Output>::fetch(storage, output_id)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))

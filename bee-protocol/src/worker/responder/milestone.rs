@@ -11,7 +11,6 @@ use crate::{
 
 use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{node::Node, worker::Worker};
-use bee_message::MessageId;
 use bee_network::{NetworkController, PeerId};
 
 use async_trait::async_trait;
@@ -58,25 +57,20 @@ impl<N: Node> Worker<N> for MilestoneResponderWorker {
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(MilestoneResponderWorkerEvent { peer_id, request }) = receiver.next().await {
-                let index = match request.index {
-                    0 => tangle.get_latest_milestone_index(),
-                    _ => request.index.into(),
+                let index = if request.index == 0 {
+                    tangle.get_latest_milestone_index()
+                } else {
+                    request.index.into()
                 };
 
-                if let Some(message_id) = tangle.get_milestone_message_id(index) {
-                    if let Some(message) = tangle.get(&MessageId::from(message_id)).await {
-                        let mut bytes = Vec::new();
-
-                        if message.pack(&mut bytes).is_ok() {
-                            Sender::<MessagePacket>::send(
-                                &network,
-                                &peer_manager,
-                                &metrics,
-                                &peer_id,
-                                MessagePacket::new(&bytes),
-                            );
-                        }
-                    }
+                if let Some(message) = tangle.get_milestone(index).await {
+                    Sender::<MessagePacket>::send(
+                        &network,
+                        &peer_manager,
+                        &metrics,
+                        &peer_id,
+                        MessagePacket::new(&message.pack_new()),
+                    );
                 }
             }
 
