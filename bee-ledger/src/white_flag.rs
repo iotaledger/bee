@@ -65,7 +65,7 @@ where
                 }
 
                 // Check current ledger for this input.
-                if let Some(output) = storage::get_output(storage.deref(), output_id).await? {
+                if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
                     // Check if this output is already spent.
                     if !storage::is_output_unspent(storage.deref(), output_id).await? {
                         conflicting = true;
