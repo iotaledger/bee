@@ -60,7 +60,7 @@ impl<N: Node> Worker<N> for Mqtt {
     type Error = Infallible;
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        match MqttManager::new(config).await {
+        match MqttManager::new(config) {
             Ok(manager) => {
                 // TODO log connected
                 node.register_resource(manager);
@@ -81,14 +81,5 @@ impl<N: Node> Worker<N> for Mqtt {
         }
 
         Ok(Self::default())
-    }
-
-    async fn stop(self, _node: &mut N) -> Result<(), Self::Error> {
-        // TODO when new bus is merged
-        // if let Some(client) = node.remove_resource::<MqttManager>() {
-        //     client.disconnect(None).wait().unwrap();
-        // }
-
-        Ok(())
     }
 }

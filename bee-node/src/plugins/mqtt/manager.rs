@@ -3,7 +3,7 @@
 
 use crate::plugins::mqtt::config::MqttConfig;
 
-use log::warn;
+use log::{error, warn};
 use paho_mqtt as mqtt;
 use thiserror::Error;
 
@@ -19,8 +19,16 @@ pub(crate) struct MqttManager {
     client: mqtt::AsyncClient,
 }
 
+impl Drop for MqttManager {
+    fn drop(&mut self) {
+        if let Err(e) = self.client.disconnect(None).wait() {
+            error!("Disconnecting mqtt broker failed: {:?}.", e);
+        }
+    }
+}
+
 impl MqttManager {
-    pub(crate) async fn new(config: MqttConfig) -> Result<Self, Error> {
+    pub(crate) fn new(config: MqttConfig) -> Result<Self, Error> {
         let options = mqtt::ConnectOptionsBuilder::new()
             .keep_alive_interval(Duration::from_secs(20))
             .clean_session(true)
@@ -30,7 +38,7 @@ impl MqttManager {
             client: mqtt::AsyncClient::new(config.address().as_str())?,
         };
 
-        manager.client.connect(options).await?;
+        manager.client.connect(options).wait()?;
 
         Ok(manager)
     }
