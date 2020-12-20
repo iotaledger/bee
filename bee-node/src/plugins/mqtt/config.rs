@@ -19,8 +19,4 @@ impl MqttConfigBuilder {
 #[derive(Clone)]
 pub struct MqttConfig {}
 
-impl MqttConfig {
-    pub fn build() -> MqttConfigBuilder {
-        MqttConfigBuilder::new()
-    }
-}
+impl MqttConfig {}
