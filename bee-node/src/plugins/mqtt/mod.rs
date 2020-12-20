@@ -27,9 +27,9 @@ pub struct Mqtt;
 fn topic_handler<N, E, P, F>(node: &mut N, topic: &'static str, f: F)
 where
     N: Node,
-    E: Any + Clone + Send,
-    P: Into<Vec<u8>>,
-    F: 'static + Fn(&E) -> P + Send,
+    E: Any + Clone + Send + Sync,
+    P: Into<Vec<u8>> + Send,
+    F: 'static + Fn(&E) -> P + Send + Sync,
 {
     let bus = node.resource::<Bus>();
     let manager = node.resource::<MqttManager>();
@@ -41,7 +41,7 @@ where
         let mut receiver = ShutdownStream::new(shutdown, rx);
 
         while let Some(event) = receiver.next().await {
-            manager.send(topic, f(&event));
+            manager.send(topic, f(&event)).await;
         }
 
         debug!("Mqtt {} topic handler stopped.", topic);
@@ -60,7 +60,7 @@ impl<N: Node> Worker<N> for Mqtt {
     type Error = Infallible;
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        match MqttManager::new(config) {
+        match MqttManager::new(config).await {
             Ok(manager) => {
                 // TODO log connected
                 node.register_resource(manager);

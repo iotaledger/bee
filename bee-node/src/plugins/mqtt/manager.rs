@@ -20,7 +20,7 @@ pub(crate) struct MqttManager {
 }
 
 impl MqttManager {
-    pub(crate) fn new(config: MqttConfig) -> Result<Self, Error> {
+    pub(crate) async fn new(config: MqttConfig) -> Result<Self, Error> {
         let options = mqtt::ConnectOptionsBuilder::new()
             .keep_alive_interval(Duration::from_secs(20))
             .clean_session(true)
@@ -30,17 +30,17 @@ impl MqttManager {
             client: mqtt::AsyncClient::new(config.address().as_str())?,
         };
 
-        manager.client.connect(options).wait()?;
+        manager.client.connect(options).await?;
 
         Ok(manager)
     }
 
-    pub(crate) fn send<P>(&self, topic: &'static str, payload: P)
+    pub(crate) async fn send<P>(&self, topic: &'static str, payload: P)
     where
         P: Into<Vec<u8>>,
     {
         // TODO Send to all that registered to this topic
-        if let Err(e) = self.client.publish(mqtt::Message::new(topic, payload, 0)).wait() {
+        if let Err(e) = self.client.publish(mqtt::Message::new(topic, payload, 0)).await {
             warn!("Publishing mqtt message on topic {} failed: {:?}.", topic, e);
         }
     }
