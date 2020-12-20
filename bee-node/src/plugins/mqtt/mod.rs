@@ -12,7 +12,7 @@ use bee_common_pt2::{
     node::{Node, ResHandle},
     worker::Worker,
 };
-use bee_protocol::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged, MpsMetricsUpdated};
+use bee_protocol::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -35,8 +35,13 @@ where
     }
 }
 
-// TODO closure param to transform the event to bytes
-fn spawn_topic_handler<N: Node, E: Any + Clone + Send>(node: &mut N, topic: &'static str) {
+fn topic_handler<N, E, P, F>(node: &mut N, topic: &'static str, f: F)
+where
+    N: Node,
+    E: Any + Clone + Send,
+    P: Into<Vec<u8>>,
+    F: 'static + Fn(&E) -> P + Send,
+{
     let bus = node.resource::<Bus>();
     let client = node.resource::<mqtt::AsyncClient>();
     let (tx, rx) = mpsc::unbounded_channel();
@@ -46,9 +51,8 @@ fn spawn_topic_handler<N: Node, E: Any + Clone + Send>(node: &mut N, topic: &'st
 
         let mut receiver = ShutdownStream::new(shutdown, rx);
 
-        while let Some(_) = receiver.next().await {
-            // TODO convert to bytes
-            send_message(&client, topic, "payload");
+        while let Some(event) = receiver.next().await {
+            send_message(&client, topic, f(&event));
         }
 
         debug!("Mqtt {} topic handler stopped.", topic);
@@ -82,17 +86,15 @@ impl<N: Node> Worker<N> for Mqtt {
                     Ok(_) => {
                         // TODO log connected
 
-                        // spawn_topic_handler::<_, MpsMetricsUpdated>(node, "bee");
-
-                        spawn_topic_handler::<N, LatestMilestoneChanged>(node, TOPIC_MILESTONES_LATEST);
-                        spawn_topic_handler::<N, LatestSolidMilestoneChanged>(node, TOPIC_MILESTONES_SOLID);
-                        // spawn_topic_handler::<N, _>(node, _TOPIC_MESSAGES);
-                        // spawn_topic_handler::<N, _>(node, _TOPIC_MESSAGES_REFERENCED);
-                        // spawn_topic_handler::<N, _>(node, _TOPIC_MESSAGES_INDEXATION);
-                        // spawn_topic_handler::<N, _>(node, _TOPIC_MESSAGES_METADATA);
-                        // spawn_topic_handler::<N, _>(node, _TOPIC_OUTPUTS);
-                        // spawn_topic_handler::<N, _>(node, _TOPIC_ADDRESSES_OUTPUTS);
-                        // spawn_topic_handler::<N, _>(node, _TOPIC_ADDRESSES_ED25519_OUTPUT);
+                        topic_handler(node, TOPIC_MILESTONES_LATEST, |_event: &LatestMilestoneChanged| "");
+                        topic_handler(node, TOPIC_MILESTONES_SOLID, |_event: &LatestSolidMilestoneChanged| "");
+                        // topic_handler(node, _TOPIC_MESSAGES, |_event: &_| {});
+                        // topic_handler(node, _TOPIC_MESSAGES_REFERENCED, |_event: &_| {});
+                        // topic_handler(node, _TOPIC_MESSAGES_INDEXATION, |_event: &_| {});
+                        // topic_handler(node, _TOPIC_MESSAGES_METADATA, |_event: &_| {});
+                        // topic_handler(node, _TOPIC_OUTPUTS, |_event: &_| {});
+                        // topic_handler(node, _TOPIC_ADDRESSES_OUTPUTS, |_event: &_| {});
+                        // topic_handler(node, _TOPIC_ADDRESSES_ED25519_OUTPUT, |_event: &_| {});
                     }
                     Err(e) => {
                         error!("Connecting mqtt client failed {:?}.", e);
