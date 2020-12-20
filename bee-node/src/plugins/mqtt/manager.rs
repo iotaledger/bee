@@ -20,14 +20,14 @@ pub(crate) struct MqttManager {
 }
 
 impl MqttManager {
-    pub(crate) fn new(_config: &MqttConfig) -> Result<Self, Error> {
+    pub(crate) fn new(config: MqttConfig) -> Result<Self, Error> {
         let options = mqtt::ConnectOptionsBuilder::new()
             .keep_alive_interval(Duration::from_secs(20))
             .clean_session(true)
             .finalize();
 
         let manager = Self {
-            client: mqtt::AsyncClient::new("tcp://localhost:1883")?,
+            client: mqtt::AsyncClient::new(config.address().as_str())?,
         };
 
         manager.client.connect(options).wait()?;

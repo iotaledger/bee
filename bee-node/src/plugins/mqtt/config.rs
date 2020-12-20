@@ -3,8 +3,12 @@
 
 use serde::Deserialize;
 
+const DEFAULT_ADDRESS: &str = "tcp://localhost:1883";
+
 #[derive(Default, Deserialize)]
-pub struct MqttConfigBuilder {}
+pub struct MqttConfigBuilder {
+    address: Option<String>,
+}
 
 impl MqttConfigBuilder {
     pub fn new() -> Self {
@@ -12,11 +16,19 @@ impl MqttConfigBuilder {
     }
 
     pub fn finish(self) -> MqttConfig {
-        MqttConfig {}
+        MqttConfig {
+            address: self.address.unwrap_or_else(|| DEFAULT_ADDRESS.to_owned()),
+        }
     }
 }
 
 #[derive(Clone)]
-pub struct MqttConfig {}
+pub struct MqttConfig {
+    address: String,
+}
 
-impl MqttConfig {}
+impl MqttConfig {
+    pub fn address(&self) -> &String {
+        &self.address
+    }
+}

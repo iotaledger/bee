@@ -1,6 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
+
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
 use bee_network::{NetworkConfig, NetworkConfigBuilder};
 use bee_peering::{PeeringConfig, PeeringConfigBuilder};
@@ -37,6 +39,7 @@ pub struct NodeConfigBuilder<B: Backend> {
     pub(crate) protocol: Option<ProtocolConfigBuilder>,
     pub(crate) snapshot: Option<SnapshotConfigBuilder>,
     pub(crate) database: Option<B::ConfigBuilder>,
+    pub(crate) mqtt: Option<MqttConfigBuilder>,
 }
 
 impl<B: Backend> NodeConfigBuilder<B> {
@@ -62,6 +65,7 @@ impl<B: Backend> NodeConfigBuilder<B> {
             protocol: self.protocol.unwrap_or_default().finish(),
             snapshot: self.snapshot.unwrap_or_default().finish(),
             database: self.database.unwrap_or_default().into(),
+            mqtt: self.mqtt.unwrap_or_default().finish(),
         }
     }
 }
@@ -74,6 +78,7 @@ pub struct NodeConfig<B: Backend> {
     pub protocol: ProtocolConfig,
     pub snapshot: SnapshotConfig,
     pub database: B::Config,
+    pub mqtt: MqttConfig,
 }
 
 impl<B: Backend> Clone for NodeConfig<B> {
@@ -86,6 +91,7 @@ impl<B: Backend> Clone for NodeConfig<B> {
             protocol: self.protocol.clone(),
             snapshot: self.snapshot.clone(),
             database: self.database.clone(),
+            mqtt: self.mqtt.clone(),
         }
     }
 }

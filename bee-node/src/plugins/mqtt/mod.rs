@@ -1,16 +1,18 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod config;
 mod manager;
 mod topics;
 
+pub mod config;
+
+use config::MqttConfig;
 use manager::MqttManager;
 use topics::*;
 
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{event::Bus, node::Node, worker::Worker};
-use bee_protocol::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged, MpsMetricsUpdated};
+use bee_protocol::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -54,17 +56,15 @@ where
 
 #[async_trait]
 impl<N: Node> Worker<N> for Mqtt {
-    type Config = ();
+    type Config = MqttConfig;
     type Error = Infallible;
 
-    async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        // TODO conf
-        match MqttManager::new(&config::MqttConfigBuilder::new().finish()) {
+    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+        match MqttManager::new(config) {
             Ok(manager) => {
                 // TODO log connected
                 node.register_resource(manager);
 
-                topic_handler(node, "bee", |_event: &MpsMetricsUpdated| "TEST");
                 topic_handler(node, TOPIC_MILESTONES_LATEST, |_event: &LatestMilestoneChanged| "");
                 topic_handler(node, TOPIC_MILESTONES_SOLID, |_event: &LatestSolidMilestoneChanged| "");
                 // topic_handler(node, _TOPIC_MESSAGES, |_event: &_| {});
@@ -84,6 +84,7 @@ impl<N: Node> Worker<N> for Mqtt {
     }
 
     async fn stop(self, _node: &mut N) -> Result<(), Self::Error> {
+        // TODO when new bus is merged
         // if let Some(client) = node.remove_resource::<MqttManager>() {
         //     client.disconnect(None).wait().unwrap();
         // }
