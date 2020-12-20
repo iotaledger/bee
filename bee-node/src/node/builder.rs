@@ -1,7 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::NodeConfig, node::BeeNode, plugins, storage::Backend, version_checker::VersionCheckerWorker};
+use crate::{
+    config::NodeConfig,
+    node::BeeNode,
+    plugins::{self, Mqtt},
+    storage::Backend,
+    version_checker::VersionCheckerWorker,
+};
 
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{
@@ -186,7 +192,8 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             this,
         );
 
-        let this = this.with_worker::<VersionCheckerWorker>();
+        let mut this = this.with_worker::<VersionCheckerWorker>();
+        this = this.with_worker::<Mqtt>();
 
         info!("Initializing REST API...");
         let mut this = bee_rest_api::init::<BeeNode<B>>(

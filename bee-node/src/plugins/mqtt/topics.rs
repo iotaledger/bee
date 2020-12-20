@@ -1,8 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub(crate) const _TOPIC_MILESTONES_LATEST: &'static str = "milestones/latest";
-pub(crate) const _TOPIC_MILESTONES_SOLID: &'static str = "milestones/solid";
+pub(crate) const TOPIC_MILESTONES_LATEST: &'static str = "milestones/latest";
+pub(crate) const TOPIC_MILESTONES_SOLID: &'static str = "milestones/solid";
 pub(crate) const _TOPIC_MESSAGES: &'static str = "messages";
 pub(crate) const _TOPIC_MESSAGES_REFERENCED: &'static str = "messages/referenced";
 pub(crate) const _TOPIC_MESSAGES_INDEXATION: &'static str = "messages/indexation/{index}";
