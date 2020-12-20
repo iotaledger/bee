@@ -43,13 +43,14 @@ impl MqttManager {
         Ok(manager)
     }
 
-    pub(crate) async fn send<P>(&self, topic: &'static str, payload: P)
+    pub(crate) async fn send<T, P>(&self, topic: T, payload: P)
     where
+        T: Into<String>,
         P: Into<Vec<u8>>,
     {
         // TODO Send to all that registered to this topic
         if let Err(e) = self.client.publish(mqtt::Message::new(topic, payload, 0)).await {
-            warn!("Publishing mqtt message on topic {} failed: {:?}.", topic, e);
+            warn!("Publishing mqtt message failed: {:?}.", e);
         }
     }
 }
