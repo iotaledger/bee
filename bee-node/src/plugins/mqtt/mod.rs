@@ -6,18 +6,21 @@ mod topics;
 
 use topics::*;
 
+use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{
     event::Bus,
     node::{Node, ResHandle},
     worker::Worker,
 };
-use bee_protocol::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
+use bee_protocol::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged, MpsMetricsUpdated};
 
 use async_trait::async_trait;
-use log::{error, warn};
+use futures::stream::StreamExt;
+use log::{debug, error, warn};
 use paho_mqtt as mqtt;
+use tokio::sync::mpsc;
 
-use std::{convert::Infallible, time::Duration};
+use std::{any::Any, convert::Infallible, time::Duration};
 
 #[derive(Default)]
 pub struct Mqtt;
@@ -26,9 +29,36 @@ fn send_message<P>(client: &ResHandle<mqtt::AsyncClient>, topic: &'static str, p
 where
     P: Into<Vec<u8>>,
 {
+    // TODO Send to all that registered to this topic
     if let Err(e) = client.publish(mqtt::Message::new(topic, payload, 0)).wait() {
         warn!("Publishing mqtt message on topic {} failed: {:?}.", topic, e);
     }
+}
+
+// TODO closure param to transform the event to bytes
+fn spawn_topic_handler<N: Node, E: Any + Clone + Send>(node: &mut N, topic: &'static str) {
+    let bus = node.resource::<Bus>();
+    let client = node.resource::<mqtt::AsyncClient>();
+    let (tx, rx) = mpsc::unbounded_channel();
+
+    node.spawn::<Mqtt, _, _>(|shutdown| async move {
+        debug!("Mqtt {} topic handler running.", topic);
+
+        let mut receiver = ShutdownStream::new(shutdown, rx);
+
+        while let Some(_) = receiver.next().await {
+            // TODO convert to bytes
+            send_message(&client, topic, "payload");
+        }
+
+        debug!("Mqtt {} topic handler stopped.", topic);
+    });
+
+    bus.add_listener::<Mqtt, _, _>(move |event: &E| {
+        if let Err(_) = tx.send((*event).clone()) {
+            warn!("Sending event to mqtt {} topic handler failed.", topic)
+        }
+    });
 }
 
 #[async_trait]
@@ -37,8 +67,6 @@ impl<N: Node> Worker<N> for Mqtt {
     type Error = Infallible;
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let bus = node.resource::<Bus>();
-
         // TODO conf
         match mqtt::AsyncClient::new("tcp://localhost:1883") {
             Ok(client) => {
@@ -54,50 +82,17 @@ impl<N: Node> Worker<N> for Mqtt {
                     Ok(_) => {
                         // TODO log connected
 
-                        let _client = client.clone();
-                        bus.add_listener::<Self, _, _>(move |_latest_milestone: &LatestMilestoneChanged| {
-                            send_message(&_client, TOPIC_MILESTONES_LATEST, "");
-                        });
+                        // spawn_topic_handler::<_, MpsMetricsUpdated>(node, "bee");
 
-                        let _client = client.clone();
-                        bus.add_listener::<Self, _, _>(move |_latest_solid_milestone: &LatestSolidMilestoneChanged| {
-                            send_message(&_client, TOPIC_MILESTONES_SOLID, "");
-                        });
-
-                        // let _client = client.clone();
-                        // bus.add_listener::<Self, _, _>(move |_: &_| {
-                        //     send_message(&_client, _TOPIC_MESSAGES, _);
-                        // });
-                        //
-                        // let _client = client.clone();
-                        // bus.add_listener::<Self, _, _>(move |_: &_| {
-                        //     send_message(&_client, _TOPIC_MESSAGES_REFERENCED, _);
-                        // });
-                        //
-                        // let _client = client.clone();
-                        // bus.add_listener::<Self, _, _>(move |_: &_| {
-                        //     send_message(&_client, _TOPIC_MESSAGES_INDEXATION, _);
-                        // });
-                        //
-                        // let _client = client.clone();
-                        // bus.add_listener::<Self, _, _>(move |_: &_| {
-                        //     send_message(&_client, _TOPIC_MESSAGES_METADATA, _);
-                        // });
-                        //
-                        // let _client = client.clone();
-                        // bus.add_listener::<Self, _, _>(move |_: &_| {
-                        //     send_message(&_client, _TOPIC_OUTPUTS, _);
-                        // });
-                        //
-                        // let _client = client.clone();
-                        // bus.add_listener::<Self, _, _>(move |_: &_| {
-                        //     send_message(&_client, _TOPIC_ADDRESSES_OUTPUTS, _);
-                        // });
-                        //
-                        // let _client = client.clone();
-                        // bus.add_listener::<Self, _, _>(move |_: &_| {
-                        //     send_message(&_client, _TOPIC_ADDRESSES_ED25519_OUTPUT, _);
-                        // });
+                        spawn_topic_handler::<N, LatestMilestoneChanged>(node, TOPIC_MILESTONES_LATEST);
+                        spawn_topic_handler::<N, LatestSolidMilestoneChanged>(node, TOPIC_MILESTONES_SOLID);
+                        // spawn_topic_handler::<N, _>(node, _TOPIC_MESSAGES);
+                        // spawn_topic_handler::<N, _>(node, _TOPIC_MESSAGES_REFERENCED);
+                        // spawn_topic_handler::<N, _>(node, _TOPIC_MESSAGES_INDEXATION);
+                        // spawn_topic_handler::<N, _>(node, _TOPIC_MESSAGES_METADATA);
+                        // spawn_topic_handler::<N, _>(node, _TOPIC_OUTPUTS);
+                        // spawn_topic_handler::<N, _>(node, _TOPIC_ADDRESSES_OUTPUTS);
+                        // spawn_topic_handler::<N, _>(node, _TOPIC_ADDRESSES_ED25519_OUTPUT);
                     }
                     Err(e) => {
                         error!("Connecting mqtt client failed {:?}.", e);
