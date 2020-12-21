@@ -26,6 +26,7 @@ pub const CF_OUTPUT_ID_UNSPENT: &str = "output_id_unspent";
 pub const CF_ED25519_ADDRESS_TO_OUTPUT_ID: &str = "ed25519_address_to_output_id";
 pub const CF_LEDGER_INDEX: &str = "ledger_index";
 pub const CF_MILESTONE_INDEX_TO_MILESTONE: &str = "milestone_index_to_milestone";
+pub const CF_SNAPSHOT_INFO: &str = "snapshot_info";
 
 pub struct Storage {
     pub(crate) config: StorageConfig,
@@ -64,6 +65,8 @@ impl Storage {
         let cf_milestone_index_to_milestone =
             ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_MILESTONE, Options::default());
 
+        let cf_snapshot_info = ColumnFamilyDescriptor::new(CF_SNAPSHOT_INFO, Options::default());
+
         let mut opts = Options::default();
 
         opts.create_if_missing(config.create_if_missing);
@@ -98,6 +101,7 @@ impl Storage {
             cf_ed25519_address_to_output_id,
             cf_ledger_index,
             cf_milestone_index_to_milestone,
+            cf_snapshot_info,
         ];
 
         Ok(DB::open_cf_descriptors(&opts, config.path, column_familes)?)

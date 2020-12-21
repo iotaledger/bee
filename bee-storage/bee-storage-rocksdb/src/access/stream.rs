@@ -13,6 +13,7 @@ use bee_message::{
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
 use bee_protocol::{tangle::MessageMetadata, Milestone, MilestoneIndex};
+use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::AsStream;
 
 use futures::{
@@ -218,6 +219,16 @@ impl<'a> StorageStream<'a, MilestoneIndex, Milestone> {
     }
 }
 
+impl<'a> StorageStream<'a, (), SnapshotInfo> {
+    fn unpack_key_value(_: &[u8], mut value: &[u8]) -> ((), SnapshotInfo) {
+        (
+            (),
+            // Unpacking from storage is fine.
+            SnapshotInfo::unpack(&mut value).unwrap(),
+        )
+    }
+}
+
 impl_stream!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_stream!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_stream!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
@@ -228,3 +239,4 @@ impl_stream!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
 impl_stream!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
 impl_stream!((), LedgerIndex, CF_LEDGER_INDEX);
 impl_stream!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
+impl_stream!((), SnapshotInfo, CF_SNAPSHOT_INFO);

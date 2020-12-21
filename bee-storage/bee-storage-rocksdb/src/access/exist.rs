@@ -13,6 +13,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_protocol::{tangle::MessageMetadata, Milestone, MilestoneIndex};
+use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Exist;
 
 #[async_trait::async_trait]
@@ -171,5 +172,20 @@ impl Exist<MilestoneIndex, Milestone> for Storage {
             .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_MILESTONE))?;
 
         Ok(self.inner.get_cf(&cf, index.pack_new())?.is_some())
+    }
+}
+
+#[async_trait::async_trait]
+impl Exist<(), SnapshotInfo> for Storage {
+    async fn exist(&self, (): &()) -> Result<bool, <Self as Backend>::Error>
+    where
+        Self: Sized,
+    {
+        let cf = self
+            .inner
+            .cf_handle(CF_SNAPSHOT_INFO)
+            .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
+
+        Ok(self.inner.get_cf(&cf, [])?.is_some())
     }
 }

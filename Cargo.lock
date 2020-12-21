@@ -599,6 +599,7 @@ dependencies = [
  "bee-ledger",
  "bee-message",
  "bee-protocol",
+ "bee-snapshot",
  "bee-storage",
  "bee-ternary",
  "bee-test",
