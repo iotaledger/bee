@@ -7,11 +7,19 @@ struct Foo;
 
 #[test]
 fn basic() {
+    use std::sync::atomic::{AtomicBool, Ordering};
+
     let bus = Bus::default();
 
-    bus.add_listener::<_, _>(|_: &Foo| println!("Received a foo!"));
+    let received = AtomicBool::new(false);
+
+    bus.add_static_listener::<_, _>(|_: &Foo| received.store(true, Ordering::SeqCst));
 
     bus.dispatch(Foo);
+
+    drop(bus);
+
+    assert_eq!(received.load(Ordering::SeqCst), true);
 }
 
 #[test]

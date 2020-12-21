@@ -49,14 +49,16 @@ impl<'a, ID: Clone + PartialEq> Bus<'a, ID> {
 }
 
 impl<'a> Bus<'a, TypeId> {
-    /// Add an event listener bound to a specific event type, `E`, and registered using the `TypeId` of a worker, `W`.
-    pub fn add_worker_listener<W: Any, E: Any, F: Fn(&E) + Send + Sync + 'a>(&self, handler: F) {
-        self.add_listener_raw(TypeId::of::<W>(), handler);
+    /// Add an event listener bound to a specific event type, `E`, and bound to a type `T`.
+    ///
+    /// This event listener will be removed when [`Bus::remove_listeners_by_id`] is called with the `TypeId` of `T`.
+    pub fn add_listener<T: Any, E: Any, F: Fn(&E) + Send + Sync + 'a>(&self, handler: F) {
+        self.add_listener_raw(TypeId::of::<T>(), handler);
     }
 
     /// Add an event listener bound to a specific event type, `E`, registered using a hidden type that will prevent its
     /// removal until the event bus is dropped.
-    pub fn add_listener<E: Any, F: Fn(&E) + Send + Sync + 'a>(&self, handler: F) {
+    pub fn add_static_listener<E: Any, F: Fn(&E) + Send + Sync + 'a>(&self, handler: F) {
         struct Static;
         self.add_listener_raw(TypeId::of::<Static>(), handler);
     }
