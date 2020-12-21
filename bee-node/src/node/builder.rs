@@ -228,8 +228,8 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let manual_peering_config = config.peering.manual.clone();
         ManualPeerManager::new(manual_peering_config, &network).await;
 
+        // TODO we should probably remove this
         info!("Registering events...");
-        bee_snapshot::events(&node);
         protocol_events(&node, config.protocol.clone());
 
         info!("Initialized.");
