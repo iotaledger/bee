@@ -7,7 +7,7 @@ use bee_storage::{
     storage::Backend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
-use bee_test::rand::message::random_message_id;
+use bee_test::rand::message::rand_message_id;
 
 use futures::stream::StreamExt;
 
@@ -22,8 +22,8 @@ async fn access() {
     let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
-    let parent = random_message_id();
-    let child = random_message_id();
+    let parent = rand_message_id();
+    let child = rand_message_id();
 
     assert!(!Exist::<(MessageId, MessageId), ()>::exist(&storage, &(parent, child))
         .await
@@ -65,7 +65,7 @@ async fn access() {
     let mut batch = Storage::batch_begin();
 
     for _ in 0usize..10usize {
-        let (parent, child) = (random_message_id(), random_message_id());
+        let (parent, child) = (rand_message_id(), rand_message_id());
         Insert::<(MessageId, MessageId), ()>::insert(&storage, &(parent, child), &())
             .await
             .unwrap();
@@ -75,7 +75,7 @@ async fn access() {
     let mut edges = HashMap::new();
 
     for _ in 0usize..10usize {
-        let (parent, child) = (random_message_id(), random_message_id());
+        let (parent, child) = (rand_message_id(), rand_message_id());
         Batch::<(MessageId, MessageId), ()>::batch_insert(&storage, &mut batch, &(parent, child), &()).unwrap();
         edges.insert(parent, child);
     }

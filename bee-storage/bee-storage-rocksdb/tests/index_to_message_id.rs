@@ -7,7 +7,7 @@ use bee_storage::{
     storage::Backend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
-use bee_test::rand::message::{random_indexation, random_message_id};
+use bee_test::rand::message::{rand_indexation, rand_message_id};
 
 use futures::stream::StreamExt;
 
@@ -22,8 +22,8 @@ async fn access() {
     let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
-    let index = random_indexation().hash();
-    let message_id = random_message_id();
+    let index = rand_indexation().hash();
+    let message_id = rand_message_id();
 
     assert!(
         !Exist::<(HashedIndex, MessageId), ()>::exist(&storage, &(index, message_id))
@@ -71,7 +71,7 @@ async fn access() {
     let mut batch = Storage::batch_begin();
 
     for _ in 0usize..10usize {
-        let (index, message_id) = (random_indexation().hash(), random_message_id());
+        let (index, message_id) = (rand_indexation().hash(), rand_message_id());
         Insert::<(HashedIndex, MessageId), ()>::insert(&storage, &(index, message_id), &())
             .await
             .unwrap();
@@ -81,7 +81,7 @@ async fn access() {
     let mut message_ids = HashMap::new();
 
     for _ in 0usize..10usize {
-        let (index, message_id) = (random_indexation().hash(), random_message_id());
+        let (index, message_id) = (rand_indexation().hash(), rand_message_id());
         Batch::<(HashedIndex, MessageId), ()>::batch_insert(&storage, &mut batch, &(index, message_id), &()).unwrap();
         message_ids.insert(index, message_id);
     }

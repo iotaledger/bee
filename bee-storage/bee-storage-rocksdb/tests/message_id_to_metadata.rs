@@ -9,7 +9,7 @@ use bee_storage::{
     storage::Backend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
-use bee_test::rand::{message::random_message_id, metadata::random_metadata};
+use bee_test::rand::{message::rand_message_id, metadata::rand_metadata};
 
 use futures::stream::StreamExt;
 
@@ -24,8 +24,8 @@ async fn access() {
     let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
-    let message_id = random_message_id();
-    let metadata = random_metadata();
+    let message_id = rand_message_id();
+    let metadata = rand_metadata();
 
     assert!(!Exist::<MessageId, MessageMetadata>::exist(&storage, &message_id)
         .await
@@ -66,7 +66,7 @@ async fn access() {
     let mut batch = Storage::batch_begin();
 
     for _ in 0usize..10usize {
-        let (message_id, metadata) = (random_message_id(), random_metadata());
+        let (message_id, metadata) = (rand_message_id(), rand_metadata());
         Insert::<MessageId, MessageMetadata>::insert(&storage, &message_id, &metadata)
             .await
             .unwrap();
@@ -76,7 +76,7 @@ async fn access() {
     let mut metadatas = HashMap::new();
 
     for _ in 0usize..10usize {
-        let (message_id, metadata) = (random_message_id(), random_metadata());
+        let (message_id, metadata) = (rand_message_id(), rand_metadata());
         Batch::<MessageId, MessageMetadata>::batch_insert(&storage, &mut batch, &message_id, &metadata).unwrap();
         metadatas.insert(message_id, metadata);
     }

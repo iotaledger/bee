@@ -7,7 +7,7 @@ use bee_storage::{
     storage::Backend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
-use bee_test::rand::snapshot::random_snapshot_info;
+use bee_test::rand::snapshot::rand_snapshot_info;
 
 use futures::stream::StreamExt;
 
@@ -20,7 +20,7 @@ async fn access() {
     let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
-    let snapshot_info = random_snapshot_info();
+    let snapshot_info = rand_snapshot_info();
 
     assert!(!Exist::<(), SnapshotInfo>::exist(&storage, &()).await.unwrap());
     assert!(Fetch::<(), SnapshotInfo>::fetch(&storage, &()).await.unwrap().is_none());

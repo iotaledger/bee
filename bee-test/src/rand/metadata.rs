@@ -1,19 +1,19 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{integer::random_integer, milestone::random_milestone_index, option::random_option};
+use crate::rand::{integer::rand_integer, milestone::rand_milestone_index, option::rand_option};
 
 use bee_protocol::tangle::{flags::Flags, MessageMetadata};
 
-pub fn random_metadata() -> MessageMetadata {
+pub fn rand_metadata() -> MessageMetadata {
     MessageMetadata::new(
-        unsafe { Flags::from_bits_unchecked(random_integer::<u8>()) },
-        random_milestone_index(),
-        random_integer::<u64>(),
-        random_integer::<u64>(),
-        random_integer::<u64>(),
-        random_option(random_milestone_index()),
-        random_option(random_milestone_index()),
-        random_option(random_milestone_index()),
+        unsafe { Flags::from_bits_unchecked(rand_integer::<u8>()) },
+        rand_milestone_index(),
+        rand_integer::<u64>(),
+        rand_integer::<u64>(),
+        rand_integer::<u64>(),
+        rand_option(rand_milestone_index()),
+        rand_option(rand_milestone_index()),
+        rand_option(rand_milestone_index()),
     )
 }
