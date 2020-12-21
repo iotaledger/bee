@@ -86,7 +86,7 @@ impl<N: Node> Worker<N> for PropagatorWorker {
 
                             tangle.update_metadata(&hash, |metadata| {
                                 // OTRSI/YTRSI values need to be set before the solid flag, to ensure that the
-                                // MilestoneConeUpdater (called in milestone_validator.rs) is aware of all values.
+                                // MilestoneConeUpdater is aware of all values.
                                 metadata.set_otrsi(best_otrsi);
                                 metadata.set_ytrsi(best_ytrsi);
                                 metadata.solidify();

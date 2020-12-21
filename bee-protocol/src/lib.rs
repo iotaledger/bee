@@ -29,8 +29,8 @@ use crate::{
     worker::{
         BroadcasterWorker, HasherWorker, HeartbeaterWorker, KickstartWorker, MessageRequesterWorker,
         MessageResponderWorker, MessageValidatorWorker, MetricsWorker, MilestoneConeUpdaterWorker,
-        MilestoneRequesterWorker, MilestoneResponderWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
-        MilestoneValidatorWorker, MpsWorker, PeerManagerWorker, PeerWorker, ProcessorWorker, PropagatorWorker,
+        MilestonePayloadWorker, MilestoneRequesterWorker, MilestoneResponderWorker, MilestoneSolidifierWorker,
+        MilestoneSolidifierWorkerEvent, MpsWorker, PeerManagerWorker, PeerWorker, ProcessorWorker, PropagatorWorker,
         RequestedMilestones, StatusWorker, TipPoolCleanerWorker,
     },
 };
@@ -67,7 +67,7 @@ pub fn init<N: Node>(
         .with_worker::<MilestoneResponderWorker>()
         .with_worker::<MessageRequesterWorker>()
         .with_worker::<MilestoneRequesterWorker>()
-        .with_worker_cfg::<MilestoneValidatorWorker>(config.clone())
+        .with_worker_cfg::<MilestonePayloadWorker>(config.clone())
         .with_worker::<BroadcasterWorker>()
         .with_worker::<MessageValidatorWorker>()
         .with_worker::<PropagatorWorker>()

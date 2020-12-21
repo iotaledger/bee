@@ -42,10 +42,10 @@ pub(crate) enum Error {
 }
 
 #[derive(Debug)]
-pub(crate) struct MilestoneValidatorWorkerEvent(pub(crate) MessageId);
+pub(crate) struct MilestonePayloadWorkerEvent(pub(crate) MessageId);
 
-pub(crate) struct MilestoneValidatorWorker {
-    pub(crate) tx: mpsc::UnboundedSender<MilestoneValidatorWorkerEvent>,
+pub(crate) struct MilestonePayloadWorker {
+    pub(crate) tx: mpsc::UnboundedSender<MilestonePayloadWorkerEvent>,
 }
 
 async fn validate<N: Node>(
@@ -129,7 +129,7 @@ where
 }
 
 #[async_trait]
-impl<N> Worker<N> for MilestoneValidatorWorker
+impl<N> Worker<N> for MilestonePayloadWorker
 where
     N: Node,
 {
@@ -165,7 +165,7 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
-            while let Some(MilestoneValidatorWorkerEvent(message_id)) = receiver.next().await {
+            while let Some(MilestonePayloadWorkerEvent(message_id)) = receiver.next().await {
                 if let Some(meta) = tangle.get_metadata(&message_id) {
                     if meta.flags().is_milestone() {
                         continue;

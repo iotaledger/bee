@@ -10,7 +10,7 @@ use crate::{
     tangle::{MessageMetadata, MsTangle},
     worker::{
         message_submitter::MessageSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker,
-        MetricsWorker, MilestoneValidatorWorker, MilestoneValidatorWorkerEvent, PeerManagerWorker, PropagatorWorker,
+        MetricsWorker, MilestonePayloadWorker, MilestonePayloadWorkerEvent, PeerManagerWorker, PropagatorWorker,
         PropagatorWorkerEvent, RequestedMessages, StorageWorker, TangleWorker,
     },
     ProtocolMetrics,
@@ -48,7 +48,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         vec![
             TypeId::of::<StorageWorker>(),
             TypeId::of::<TangleWorker>(),
-            TypeId::of::<MilestoneValidatorWorker>(),
+            TypeId::of::<MilestonePayloadWorker>(),
             TypeId::of::<PropagatorWorker>(),
             TypeId::of::<BroadcasterWorker>(),
             TypeId::of::<MessageRequesterWorker>(),
@@ -60,7 +60,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
-        let milestone_validator = node.worker::<MilestoneValidatorWorker>().unwrap().tx.clone();
+        let milestone_payload_worker = node.worker::<MilestonePayloadWorker>().unwrap().tx.clone();
         let propagator = node.worker::<PropagatorWorker>().unwrap().tx.clone();
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
@@ -189,9 +189,9 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
                     match message.payload() {
                         Some(Payload::Milestone(_)) => {
-                            if let Err(e) = milestone_validator.send(MilestoneValidatorWorkerEvent(message_id)) {
+                            if let Err(e) = milestone_payload_worker.send(MilestonePayloadWorkerEvent(message_id)) {
                                 error!(
-                                    "Sending message id {} to milestone validation failed: {:?}.",
+                                    "Sending message id {} to milestone payload worker failed: {:?}.",
                                     message_id, e
                                 );
                             }
