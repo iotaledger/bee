@@ -645,6 +645,7 @@ dependencies = [
  "bee-message",
  "bee-pow",
  "bee-protocol",
+ "bee-snapshot",
  "bee-storage",
  "bee-ternary",
  "futures 0.3.8",

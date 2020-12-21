@@ -15,6 +15,22 @@ pub struct SnapshotInfo {
 }
 
 impl SnapshotInfo {
+    pub fn new(
+        network_id: u64,
+        snapshot_index: u32,
+        entry_point_index: u32,
+        pruning_index: u32,
+        timestamp: u64,
+    ) -> Self {
+        Self {
+            network_id,
+            snapshot_index,
+            entry_point_index,
+            pruning_index,
+            timestamp,
+        }
+    }
+
     pub fn network_id(&self) -> u64 {
         self.network_id
     }

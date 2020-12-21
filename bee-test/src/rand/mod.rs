@@ -9,5 +9,6 @@ pub mod metadata;
 pub mod milestone;
 pub mod option;
 pub mod output;
+pub mod snapshot;
 pub mod string;
 pub mod transaction;
