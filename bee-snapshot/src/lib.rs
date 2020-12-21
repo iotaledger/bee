@@ -12,6 +12,7 @@ pub mod config;
 pub mod error;
 pub mod event;
 pub mod header;
+pub mod info;
 pub mod milestone_diff;
 pub mod output;
 pub mod snapshot;
