@@ -24,7 +24,8 @@ mod tip_pool_cleaner;
 pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use message::{
-    HasherWorker, HasherWorkerEvent, MilestonePayloadWorker, MilestonePayloadWorkerEvent, ProcessorWorker,
+    HasherWorker, HasherWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker,
+    MilestonePayloadWorkerEvent, ProcessorWorker,
 };
 pub use message_submitter::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 pub(crate) use message_validator::{MessageValidatorWorker, MessageValidatorWorkerEvent};
