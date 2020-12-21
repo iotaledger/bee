@@ -35,10 +35,8 @@ use crate::{
     },
 };
 
-use bee_common_pt2::{
-    event::Bus,
-    node::{Node, NodeBuilder},
-};
+use bee_common::event::Bus;
+use bee_common_pt2::node::{Node, NodeBuilder};
 use bee_network::{Multiaddr, NetworkController, PeerId};
 use bee_snapshot::Snapshot;
 use bee_storage::storage::Backend;

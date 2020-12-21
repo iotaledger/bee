@@ -9,9 +9,8 @@ use crate::{
     version_checker::VersionCheckerWorker,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
+use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{
-    event::Bus,
     node::{Node, NodeBuilder},
     worker::Worker,
 };
@@ -102,7 +101,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             resource_registers: Vec::default(),
             config,
         }
-        .with_resource(Bus::default())
+        .with_resource(Bus::<TypeId>::default())
     }
 
     fn with_worker<W: Worker<BeeNode<B>> + 'static>(self) -> Self

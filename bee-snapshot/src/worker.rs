@@ -10,8 +10,8 @@ use crate::{
     pruning::prune_database,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{event::Bus, node::Node, worker::Worker};
+use bee_common::{event::Bus,shutdown_stream::ShutdownStream};
+use bee_common_pt2::{ node::Node, worker::Worker};
 use bee_protocol::{tangle::MsTangle, Milestone, MilestoneIndex, TangleWorker};
 use bee_storage::storage::Backend;
 

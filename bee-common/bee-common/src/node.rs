@@ -1,9 +1,9 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{event::Bus, worker::Worker};
+use crate::worker::Worker;
 
-use bee_common::shutdown;
+use bee_common::{event::Bus, shutdown};
 use bee_storage::storage::Backend;
 
 use async_trait::async_trait;

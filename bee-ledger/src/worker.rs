@@ -10,9 +10,8 @@ use crate::{
     white_flag::visit_dfs,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
+use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{
-    event::Bus,
     node::{Node, ResHandle},
     worker::Worker,
 };
