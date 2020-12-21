@@ -101,6 +101,8 @@ async fn process_request_unchecked(
         }
     }
 
+    let mut requested = false;
+
     for _ in 0..guard.len() {
         let peer_id = &guard[*counter % guard.len()];
 
@@ -115,12 +117,12 @@ async fn process_request_unchecked(
                     peer_id,
                     MessageRequest::new(message_id.as_ref()),
                 );
-                return true;
+                requested = true;
             }
         }
     }
 
-    false
+    requested
 }
 
 async fn retry_requests(
@@ -138,6 +140,7 @@ async fn retry_requests(
         if (now - *instant).as_secs() > RETRY_INTERVAL_SEC
             && process_request_unchecked(*message_id, *index, network, peer_manager, metrics, counter).await
         {
+            // TODO should we actually update ?
             *instant = now;
             retry_counts += 1;
         }
