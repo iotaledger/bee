@@ -122,6 +122,37 @@ impl Packable for Snapshot {
         };
         let milestone_diff_count = u64::unpack(reader)? as usize;
 
+        match header.kind() {
+            Kind::Full => {
+                if header.ledger_index() < header.sep_index() {
+                    return Err(Error::LedgerSepIndexesInconsistency(
+                        header.ledger_index(),
+                        header.sep_index(),
+                    ));
+                }
+                if (header.ledger_index() - header.sep_index()) as usize != milestone_diff_count {
+                    return Err(Error::InvalidMilestoneDiffsCount(
+                        (header.ledger_index() - header.sep_index()) as usize,
+                        milestone_diff_count,
+                    ));
+                }
+            }
+            Kind::Delta => {
+                if header.sep_index() < header.ledger_index() {
+                    return Err(Error::LedgerSepIndexesInconsistency(
+                        header.ledger_index(),
+                        header.sep_index(),
+                    ));
+                }
+                if (header.sep_index() - header.ledger_index()) as usize != milestone_diff_count {
+                    return Err(Error::InvalidMilestoneDiffsCount(
+                        (header.sep_index() - header.ledger_index()) as usize,
+                        milestone_diff_count,
+                    ));
+                }
+            }
+        }
+
         let mut solid_entry_points = Vec::with_capacity(sep_count);
         for _ in 0..sep_count {
             solid_entry_points.push(MessageId::unpack(reader)?);

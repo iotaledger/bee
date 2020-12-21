@@ -12,6 +12,8 @@ pub enum Error {
     InvalidFilePath(String),
     Message(MessageError),
     NetworkIdMismatch(u64, u64),
+    LedgerSepIndexesInconsistency(u32, u32),
+    InvalidMilestoneDiffsCount(usize, usize),
 }
 
 // TODO thiserror
@@ -31,6 +33,8 @@ impl std::fmt::Display for Error {
                     config, snapshot
                 )
             }
+            Error::LedgerSepIndexesInconsistency(_ledger, _sep) => write!(f, ""),
+            Error::InvalidMilestoneDiffsCount(_expected, _actual) => write!(f, ""),
         }
     }
 }
