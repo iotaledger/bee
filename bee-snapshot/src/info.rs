@@ -5,7 +5,7 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SnapshotInfo {
     pub(crate) network_id: u64,
     pub(crate) snapshot_index: u32,
