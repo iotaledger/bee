@@ -4,10 +4,10 @@
 use crate::{
     helper,
     peer::PeerManager,
+    storage::Backend,
     tangle::MsTangle,
     worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
     ProtocolMetrics,
-    storage::Backend,
 };
 
 use bee_common::shutdown_stream::ShutdownStream;

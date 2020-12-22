@@ -21,27 +21,27 @@ use tokio::sync::mpsc;
 
 // MilestoneRequest
 
-pub(crate) fn request_milestone<B: Backend>(
+pub(crate) async fn request_milestone<B: Backend>(
     tangle: &MsTangle<B>,
     milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
     requested_milestones: &RequestedMilestones,
     index: MilestoneIndex,
     to: Option<PeerId>,
 ) {
-    if !requested_milestones.contains_key(&index) && !tangle.contains_milestone(index) {
+    if !requested_milestones.contains_key(&index) && !tangle.contains_milestone(index).await {
         if let Err(e) = milestone_requester.send(MilestoneRequesterWorkerEvent(index, to)) {
             warn!("Requesting milestone failed: {}.", e);
         }
     }
 }
 
-pub(crate) fn request_latest_milestone<B: Backend>(
+pub(crate) async fn request_latest_milestone<B: Backend>(
     tangle: &MsTangle<B>,
     milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
     requested_milestones: &RequestedMilestones,
     to: Option<PeerId>,
 ) {
-    request_milestone(tangle, milestone_requester, requested_milestones, MilestoneIndex(0), to)
+    request_milestone(tangle, milestone_requester, requested_milestones, MilestoneIndex(0), to).await
 }
 
 // MessageRequest

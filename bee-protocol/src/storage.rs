@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::tangle::MessageMetadata;
+use crate::{tangle::MessageMetadata, Milestone, MilestoneIndex};
 
 use bee_message::{Message, MessageId};
 use bee_storage::{
@@ -14,15 +14,23 @@ pub trait Backend: storage::Backend
     + Insert<MessageId, MessageMetadata>
     //+ Insert<MessageId, Vec<MessageId>>
     + Insert<(MessageId, MessageId), ()>
+    + Insert<MilestoneIndex, Milestone>
     + Fetch<MessageId, Message>
     + Fetch<MessageId, MessageMetadata>
-    + Fetch<MessageId, Vec<MessageId>> {}
+    + Fetch<MessageId, Vec<MessageId>>
+    + Fetch<MilestoneIndex, Milestone> {}
 
-impl<T> Backend for T where T: storage::Backend
-    + Insert<MessageId, Message>
-    + Insert<MessageId, MessageMetadata>
-    //+ Insert<MessageId, Vec<MessageId>>
-    + Insert<(MessageId, MessageId), ()>
-    + Fetch<MessageId, Message>
-    + Fetch<MessageId, MessageMetadata>
-    + Fetch<MessageId, Vec<MessageId>> {}
+impl<T> Backend for T where
+    T: storage::Backend
+        + Insert<MessageId, Message>
+        + Insert<MessageId, MessageMetadata>
+        //+ Insert<MessageId, Vec<MessageId>>
+        + Insert<(MessageId, MessageId), ()>
+        + Insert<MilestoneIndex, Milestone>
+        + Fetch<MessageId, Message>
+        + Fetch<MessageId, MessageMetadata>
+        + Fetch<MessageId, Vec<MessageId>>
+        + Fetch<MessageId, Vec<MessageId>>
+        + Fetch<MilestoneIndex, Milestone>
+{
+}

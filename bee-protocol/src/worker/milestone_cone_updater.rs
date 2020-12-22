@@ -91,11 +91,13 @@ async fn update_messages_referenced_by_milestone<N: Node>(
                 continue;
             }
 
-            tangle.update_metadata(&hash, |metadata| {
-                metadata.set_cone_index(milestone_index);
-                metadata.set_otrsi(milestone_index);
-                metadata.set_ytrsi(milestone_index);
-            }).await;
+            tangle
+                .update_metadata(&hash, |metadata| {
+                    metadata.set_cone_index(milestone_index);
+                    metadata.set_otrsi(milestone_index);
+                    metadata.set_ytrsi(milestone_index);
+                })
+                .await;
 
             for child in tangle.get_children(&hash).await {
                 update_future_cone::<N>(tangle, child).await;
@@ -147,10 +149,12 @@ where
             }
 
             // update outdated OTRSI/YTRSI values
-            tangle.update_metadata(&hash, |metadata| {
-                metadata.set_otrsi(best_otrsi);
-                metadata.set_ytrsi(best_ytrsi);
-            }).await;
+            tangle
+                .update_metadata(&hash, |metadata| {
+                    metadata.set_otrsi(best_otrsi);
+                    metadata.set_ytrsi(best_ytrsi);
+                })
+                .await;
 
             // propagate to children
             for child in tangle.get_children(&hash).await {

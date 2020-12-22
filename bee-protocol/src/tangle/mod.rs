@@ -24,8 +24,8 @@ use bee_tangle::{Hooks, MessageRef, Tangle};
 
 use async_trait::async_trait;
 use dashmap::DashMap;
+use log::{info, trace};
 use tokio::sync::Mutex;
-use log::trace;
 
 use std::{
     ops::Deref,
@@ -42,33 +42,46 @@ impl<B: Backend> Hooks<MessageMetadata> for StorageHooks<B> {
     type Error = B::Error;
 
     async fn get(&self, msg: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
-        trace!("Attempted to fetch {:?}", msg);
+        trace!("Attempted to fetch message {:?}", msg);
         Ok(self.storage.fetch(msg).await?.zip(self.storage.fetch(msg).await?))
     }
 
     async fn insert(&self, msg: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
-        trace!("Attempted to insert {:?}", msg);
+        trace!("Attempted to insert message {:?}", msg);
         self.storage.insert(&msg, &tx).await?;
         self.storage.insert(&msg, &metadata).await?;
         Ok(())
     }
 
     async fn fetch_approvers(&self, msg: &MessageId) -> Result<Option<Vec<MessageId>>, Self::Error> {
-        trace!("Attempted to fetch approvers for {:?}", msg);
+        trace!("Attempted to fetch approvers for message {:?}", msg);
         self.storage.fetch(msg).await
     }
 
     async fn insert_approver(&self, msg: MessageId, approver: MessageId) -> Result<(), Self::Error> {
-        trace!("Attempted to insert approver for {:?}", msg);
+        trace!("Attempted to insert approver for message {:?}", msg);
         self.storage.insert(&(msg, approver), &()).await
     }
 
     async fn update_approvers(&self, msg: MessageId, approvers: &Vec<MessageId>) -> Result<(), Self::Error> {
-        trace!("Attempted to update approvers for {:?}", msg);
-        //self.storage.insert(&msg, approvers).await
+        trace!("Attempted to update approvers for message {:?}", msg);
+        // self.storage.insert(&msg, approvers).await
         for approver in approvers {
             self.storage.insert(&(msg, *approver), &()).await?;
         }
+        Ok(())
+    }
+}
+
+impl<B: Backend> StorageHooks<B> {
+    async fn get_milestone(&self, idx: &MilestoneIndex) -> Result<Option<Milestone>, B::Error> {
+        trace!("Attempted to fetch milestone {:?}", idx);
+        Ok(self.storage.fetch(idx).await?)
+    }
+
+    async fn insert_milestone(&self, idx: MilestoneIndex, milestone: &Milestone) -> Result<(), B::Error> {
+        trace!("Attempted to insert milestone {:?}", idx);
+        self.storage.insert(&idx, milestone).await?;
         Ok(())
     }
 }
@@ -130,35 +143,54 @@ impl<B: Backend> MsTangle<B> {
         self.inner.insert(hash, message, metadata).await
     }
 
-    pub async fn add_milestone(&self, index: MilestoneIndex, milestone: Milestone) {
+    pub async fn add_milestone(&self, idx: MilestoneIndex, milestone: Milestone) {
         // TODO: only insert if vacant
         self.inner.update_metadata(&milestone.message_id(), |metadata| {
             metadata.flags_mut().set_milestone(true);
-            metadata.set_milestone_index(index);
+            metadata.set_milestone_index(idx);
         }).await;
+        self.inner
+            .hooks()
+            .insert_milestone(idx, &milestone)
+            .await
+            .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
         // TODO can there be a race condition between 2 ops ?
-        self.milestones.insert(index, milestone);
+        self.milestones.insert(idx, milestone);
     }
 
     pub fn remove_milestone(&self, index: MilestoneIndex) {
         self.milestones.remove(&index);
     }
 
+    async fn pull_milestone(&self, idx: MilestoneIndex) -> Option<impl Deref<Target = Milestone> + '_> {
+        if let Some(milestone) = self.inner.hooks().get_milestone(&idx).await.unwrap_or_else(|e| {
+            info!("Failed to insert message {:?}", e);
+            None
+        }) {
+            Some(self.milestones.entry(idx).or_insert(milestone))
+        } else {
+            None
+        }
+    }
+
     // TODO: use combinator instead of match
     pub async fn get_milestone(&self, index: MilestoneIndex) -> Option<MessageRef> {
-        match self.get_milestone_message_id(index) {
+        match self.get_milestone_message_id(index).await {
             None => None,
             Some(ref hash) => self.get(hash).await,
         }
     }
 
     // TODO: use combinator instead of match
-    pub fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
-        self.milestones.get(&index).map(|milestone| *milestone.message_id())
+    pub async fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
+        match self.milestones.get(&index) {
+            Some(m) => Some(*m.message_id()),
+            None => Some(*self.pull_milestone(index).await?.message_id()),
+        }
     }
 
-    pub fn contains_milestone(&self, index: MilestoneIndex) -> bool {
-        self.milestones.contains_key(&index)
+    pub async fn contains_milestone(&self, idx: MilestoneIndex) -> bool {
+        self.milestones.contains_key(&idx) || self.pull_milestone(idx).await.is_some()
     }
 
     pub fn get_latest_milestone_index(&self) -> MilestoneIndex {

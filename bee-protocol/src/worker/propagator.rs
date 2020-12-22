@@ -73,7 +73,9 @@ where
                     }
 
                     if let Some(message) = tangle.get(&hash).await {
-                        if tangle.is_solid_message(message.parent1()).await && tangle.is_solid_message(message.parent2()).await {
+                        if tangle.is_solid_message(message.parent1()).await
+                            && tangle.is_solid_message(message.parent2()).await
+                        {
                             // get OTRSI/YTRSI from parents
                             let parent1_otsri = tangle.otrsi(message.parent1()).await;
                             let parent2_otsri = tangle.otrsi(message.parent2()).await;

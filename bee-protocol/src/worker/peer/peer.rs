@@ -94,7 +94,7 @@ impl PeerWorker {
             &*requested_milestones,
             // TODO should be copy ?
             Some(self.peer.id().clone()),
-        );
+        ).await;
 
         // TODO is this needed ?
         let tangle = tangle.into_weak();
