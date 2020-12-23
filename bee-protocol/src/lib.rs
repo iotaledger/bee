@@ -94,7 +94,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
                 "New milestone {} {}.",
                 *latest_milestone.index, latest_milestone.milestone.message_id
             );
-            tangle.upgrade().map(|tangle| {
+            if let Some(tangle) = tangle.upgrade() {
                 tangle.update_latest_milestone_index(latest_milestone.index);
 
                 helper::broadcast_heartbeat(
@@ -105,7 +105,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
                     tangle.get_pruning_index(),
                     latest_milestone.index,
                 );
-            });
+            }
         });
 
     // node.resource::<Bus>().add_listener(|latest_solid_milestone: &LatestSolidMilestoneChanged| {
@@ -128,7 +128,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
 
     node.resource::<Bus>()
         .add_listener::<(), _, _>(move |latest_solid_milestone: &LatestSolidMilestoneChanged| {
-            tangle.upgrade().map(|tangle| {
+            if let Some(tangle) = tangle.upgrade() {
                 debug!("New solid milestone {}.", *latest_solid_milestone.index);
                 tangle.update_latest_solid_milestone_index(latest_solid_milestone.index);
 
@@ -151,7 +151,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
                     tangle.get_pruning_index(),
                     tangle.get_latest_milestone_index(),
                 );
-            });
+            }
         });
 }
 

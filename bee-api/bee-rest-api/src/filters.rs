@@ -30,16 +30,16 @@ pub fn all<B: Backend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    health(tangle.clone()).or(info(tangle.clone(), network_id.clone(), rest_api_config.clone())
+    health(tangle.clone()).or(info(tangle.clone(), network_id.clone(), rest_api_config)
         .or(tips(tangle.clone()))
         .or(submit_message(
             tangle.clone(),
             message_submitter.clone(),
-            network_id.clone(),
-            rest_api_config.clone(),
-            protocol_config.clone(),
+            network_id,
+            rest_api_config,
+            protocol_config,
         ))
-        .or(submit_message_raw(tangle.clone(), message_submitter.clone()))
+        .or(submit_message_raw(tangle.clone(), message_submitter))
         .or(message_indexation(storage.clone()))
         .or(message(tangle.clone()))
         .or(message_metadata(tangle.clone()))
@@ -49,8 +49,8 @@ pub fn all<B: Backend>(
         .or(balance_bech32(storage.clone()))
         .or(balance_ed25519(storage.clone()))
         .or(outputs_bech32(storage.clone()))
-        .or(outputs_ed25519(storage.clone()))
-        .or(milestone(tangle.clone())))
+        .or(outputs_ed25519(storage))
+        .or(milestone(tangle)))
 }
 
 fn health<B: Backend>(
@@ -354,7 +354,7 @@ fn with_network_id(
 fn with_rest_api_config(
     config: RestApiConfig,
 ) -> impl Filter<Extract = (RestApiConfig,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || config.clone())
+    warp::any().map(move || config)
 }
 
 fn with_protocol_config(

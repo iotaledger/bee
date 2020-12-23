@@ -23,7 +23,7 @@ pub(crate) async fn message<B: Backend>(
 ) -> Result<impl Reply, Rejection> {
     match tangle.get(&message_id).await {
         Some(message) => Ok(warp::reply::json(&SuccessEnvelope::new(GetMessageResponse(
-            MessageDto::try_from(&*message).map_err(|e| reject::custom(BadRequest(e.to_string())))?,
+            MessageDto::try_from(&*message).map_err(|e| reject::custom(BadRequest(e)))?,
         )))),
         None => Err(reject::custom(NotFound("can not find message".to_string()))),
     }

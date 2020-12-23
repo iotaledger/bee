@@ -362,7 +362,7 @@ impl TryFrom<&Output> for OutputDto {
                 address: s.address().try_into()?,
                 amount: s.amount().get(),
             })),
-            _ => return Err("output type not supported".to_string()),
+            _ => Err("output type not supported".to_string()),
         }
     }
 }
@@ -487,8 +487,8 @@ impl From<&Box<Milestone>> for MilestoneDto {
             parent_1_message_id: value.essence().parent1().to_string(),
             parent_2_message_id: value.essence().parent2().to_string(),
             inclusion_merkle_proof: hex::encode(value.essence().merkle_proof()),
-            public_keys: value.essence().public_keys().iter().map(|p| hex::encode(p)).collect(),
-            signatures: value.signatures().iter().map(|s| hex::encode(s)).collect(),
+            public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
+            signatures: value.signatures().iter().map(hex::encode).collect(),
         }
     }
 }

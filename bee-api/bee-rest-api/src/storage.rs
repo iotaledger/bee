@@ -7,10 +7,14 @@ use bee_message::{
     prelude::HashedIndex,
     MessageId,
 };
-use bee_storage::{access::Fetch, storage};
+use bee_storage::{
+    access::{Exist, Fetch},
+    storage,
+};
 
 pub trait Backend:
     storage::Backend
+    + Exist<OutputId, Spent>
     + Fetch<HashedIndex, Vec<MessageId>>
     + Fetch<OutputId, Output>
     + Fetch<OutputId, Spent>
@@ -20,6 +24,7 @@ pub trait Backend:
 
 impl<T> Backend for T where
     T: storage::Backend
+        + Exist<OutputId, Spent>
         + Fetch<HashedIndex, Vec<MessageId>>
         + Fetch<OutputId, Output>
         + Fetch<OutputId, Spent>

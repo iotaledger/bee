@@ -180,7 +180,7 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
                     _ = timeouts.next() => retry_requests(&network, &peer_manager, &metrics, &requested_milestones, &mut counter).await,
                     entry = receiver.next() => match entry {
                         Some(MilestoneRequesterWorkerEvent(index, peer_id)) => {
-                            if !tangle.contains_milestone(index.into()) {
+                            if !tangle.contains_milestone(index) {
                                 debug!("Requesting milestone {}.", *index);
                                 process_request(index, peer_id, &network, &peer_manager, &metrics, &requested_milestones, &mut counter).await;
                             }
