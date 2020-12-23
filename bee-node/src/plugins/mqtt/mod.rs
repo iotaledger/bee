@@ -50,7 +50,7 @@ where
     });
 
     bus.add_listener::<Mqtt, _, _>(move |event: &E| {
-        if let Err(_) = tx.send((*event).clone()) {
+        if tx.send((*event).clone()).is_err() {
             warn!("Sending event to mqtt {} topic handler failed.", topic)
         }
     });

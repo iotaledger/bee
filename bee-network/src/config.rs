@@ -60,7 +60,7 @@ impl NetworkConfigBuilder {
         NetworkConfig {
             bind_address: self
                 .bind_address
-                .unwrap_or(Multiaddr::from_str(DEFAULT_BIND_ADDRESS).unwrap()),
+                .unwrap_or_else(|| Multiaddr::from_str(DEFAULT_BIND_ADDRESS).unwrap()),
             msg_buffer_size: self.msg_buffer_size.unwrap_or(DEFAULT_MSG_BUFFER_SIZE),
             known_peer_limit: self.known_peer_limit.unwrap_or(DEFAULT_KNOWN_PEER_LIMIT),
             unknown_peer_limit: self.unknown_peer_limit.unwrap_or(DEFAULT_UNKNOWN_PEER_LIMIT),

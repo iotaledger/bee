@@ -476,7 +476,7 @@ async fn connect_peer(
         &banned_peers,
     )
     .await
-    .map_err(|e| Error::ConnectFailure(e))
+    .map_err(Error::ConnectFailure)
     {
         // Inform the user that the command failed.
         event_sender
@@ -533,7 +533,7 @@ async fn dial_address(
         &banned_peers,
     )
     .await
-    .map_err(|e| Error::ConnectFailure(e))
+    .map_err(Error::ConnectFailure)
     {
         // Inform the user that the command failed.
         event_sender
