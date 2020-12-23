@@ -27,7 +27,7 @@ macro_rules! string_serde_impl {
                     where
                         E: serde::de::Error,
                     {
-                        let value = <$type>::from_str(v).map_err(|e| serde::de::Error::custom(e))?;
+                        let value = <$type>::from_str(v).map_err(serde::de::Error::custom)?;
                         Ok(value)
                     }
                 }

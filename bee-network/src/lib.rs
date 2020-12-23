@@ -127,11 +127,12 @@ impl ShortId for PeerId {
 
     fn short(&self) -> String {
         let s = self.to_string();
-        format!(
-            // "{}~{}",
-            // &s[..Self::LEADING_LENGTH],
-            "{}",
-            &s[(Self::ORIGINAL_LENGTH - Self::TRAILING_LENGTH)..]
-        )
+        s[(Self::ORIGINAL_LENGTH - Self::TRAILING_LENGTH)..].to_string()
+        // format!(
+        //     // "{}~{}",
+        //     // &s[..Self::LEADING_LENGTH],
+        //     "{}",
+        //     &s[(Self::ORIGINAL_LENGTH - Self::TRAILING_LENGTH)..]
+        // )
     }
 }
