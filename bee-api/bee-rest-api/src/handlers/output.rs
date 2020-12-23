@@ -3,7 +3,7 @@
 
 use crate::{
     filters::CustomRejection::{BadRequest, NotFound, ServiceUnavailable},
-    handlers::{EnvelopeContent, SuccessEnvelope},
+    handlers::{BodyInner, SuccessBody},
     storage::Backend,
     types::OutputDto,
 };
@@ -26,7 +26,7 @@ pub(crate) async fn output<B: Backend>(output_id: OutputId, storage: ResHandle<B
         .await
         .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?;
     match output {
-        Some(output) => Ok(warp::reply::json(&SuccessEnvelope::new(GetOutputByOutputIdResponse {
+        Some(output) => Ok(warp::reply::json(&SuccessBody::new(OutputResponse {
             message_id: output.message_id().to_string(),
             transaction_id: output_id.transaction_id().to_string(),
             output_index: output_id.index(),
@@ -39,7 +39,7 @@ pub(crate) async fn output<B: Backend>(output_id: OutputId, storage: ResHandle<B
 
 /// Response of GET /api/v1/outputs/{output_id}
 #[derive(Clone, Debug, Serialize)]
-pub struct GetOutputByOutputIdResponse {
+pub struct OutputResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
     #[serde(rename = "transactionId")]
@@ -51,4 +51,4 @@ pub struct GetOutputByOutputIdResponse {
     pub output: OutputDto,
 }
 
-impl EnvelopeContent for GetOutputByOutputIdResponse {}
+impl BodyInner for OutputResponse {}

@@ -3,7 +3,7 @@
 
 use crate::{
     filters::CustomRejection::{NotFound, ServiceUnavailable},
-    handlers::{EnvelopeContent, SuccessEnvelope},
+    handlers::{BodyInner, SuccessBody},
     storage::Backend,
 };
 
@@ -33,7 +33,7 @@ pub(crate) async fn message_metadata<B: Backend>(
                     let res = {
                         // in case the message is referenced by a milestone
                         if let Some(milestone) = metadata.cone_index() {
-                            GetMessageMetadataResponse {
+                            MessageMetadataResponse {
                                 message_id: message_id.to_string(),
                                 parent_1_message_id: message.parent1().to_string(),
                                 parent_2_message_id: message.parent2().to_string(),
@@ -66,7 +66,7 @@ pub(crate) async fn message_metadata<B: Backend>(
                                     should_promote = true;
                                 }
 
-                                GetMessageMetadataResponse {
+                                MessageMetadataResponse {
                                     message_id: message_id.to_string(),
                                     parent_1_message_id: message.parent1().to_string(),
                                     parent_2_message_id: message.parent2().to_string(),
@@ -78,7 +78,7 @@ pub(crate) async fn message_metadata<B: Backend>(
                                 }
                             } else {
                                 // in case the message is not referenced by a milestone, not solid,
-                                GetMessageMetadataResponse {
+                                MessageMetadataResponse {
                                     message_id: message_id.to_string(),
                                     parent_1_message_id: message.parent1().to_string(),
                                     parent_2_message_id: message.parent2().to_string(),
@@ -92,7 +92,7 @@ pub(crate) async fn message_metadata<B: Backend>(
                         }
                     };
 
-                    Ok(warp::reply::json(&SuccessEnvelope::new(res)))
+                    Ok(warp::reply::json(&SuccessBody::new(res)))
                 }
                 None => Err(reject::custom(NotFound("can not find data".to_string()))),
             }
@@ -103,7 +103,7 @@ pub(crate) async fn message_metadata<B: Backend>(
 
 /// Response of GET /api/v1/messages/{message_id}/metadata
 #[derive(Clone, Debug, Serialize)]
-pub struct GetMessageMetadataResponse {
+pub struct MessageMetadataResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
     #[serde(rename = "parent1MessageId")]
@@ -134,4 +134,4 @@ pub enum LedgerInclusionStateDto {
     NoTransaction,
 }
 
-impl EnvelopeContent for GetMessageMetadataResponse {}
+impl BodyInner for MessageMetadataResponse {}

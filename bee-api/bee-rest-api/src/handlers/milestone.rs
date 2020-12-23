@@ -3,7 +3,7 @@
 
 use crate::{
     filters::CustomRejection::NotFound,
-    handlers::{EnvelopeContent, SuccessEnvelope},
+    handlers::{BodyInner, SuccessBody},
     storage::Backend,
 };
 
@@ -19,7 +19,7 @@ pub(crate) async fn milestone<B: Backend>(
 ) -> Result<impl Reply, Rejection> {
     match tangle.get_milestone_message_id(milestone_index) {
         Some(message_id) => match tangle.get_metadata(&message_id) {
-            Some(metadata) => Ok(warp::reply::json(&SuccessEnvelope::new(GetMilestoneResponse {
+            Some(metadata) => Ok(warp::reply::json(&SuccessBody::new(MilestoneResponse {
                 milestone_index: *milestone_index,
                 message_id: message_id.to_string(),
                 timestamp: metadata.arrival_timestamp(),
@@ -34,7 +34,7 @@ pub(crate) async fn milestone<B: Backend>(
 
 /// Response of GET /api/v1/milestone/{milestone_index}
 #[derive(Clone, Debug, Serialize)]
-pub struct GetMilestoneResponse {
+pub struct MilestoneResponse {
     #[serde(rename = "milestoneIndex")]
     pub milestone_index: u32,
     #[serde(rename = "messageId")]
@@ -42,4 +42,4 @@ pub struct GetMilestoneResponse {
     pub timestamp: u64,
 }
 
-impl EnvelopeContent for GetMilestoneResponse {}
+impl BodyInner for MilestoneResponse {}

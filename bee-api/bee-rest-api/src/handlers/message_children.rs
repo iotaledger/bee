@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    handlers::{EnvelopeContent, SuccessEnvelope},
+    handlers::{BodyInner, SuccessBody},
     storage::Backend,
 };
 
@@ -23,7 +23,7 @@ pub async fn message_children<B: Backend>(
     let count = children.len();
     let max_results = 1000;
     children.truncate(max_results);
-    Ok(warp::reply::json(&SuccessEnvelope::new(GetChildrenResponse {
+    Ok(warp::reply::json(&SuccessBody::new(MessageChildrenResponse {
         message_id: message_id.to_string(),
         max_results,
         count,
@@ -33,7 +33,7 @@ pub async fn message_children<B: Backend>(
 
 /// Response of GET /api/v1/messages/{message_id}/children
 #[derive(Clone, Debug, Serialize)]
-pub struct GetChildrenResponse {
+pub struct MessageChildrenResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
     #[serde(rename = "maxResults")]
@@ -43,4 +43,4 @@ pub struct GetChildrenResponse {
     pub children_message_ids: Vec<String>,
 }
 
-impl EnvelopeContent for GetChildrenResponse {}
+impl BodyInner for MessageChildrenResponse {}

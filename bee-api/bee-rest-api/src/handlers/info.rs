@@ -3,7 +3,7 @@
 
 use crate::{
     config::RestApiConfig,
-    handlers::{health::is_healthy, EnvelopeContent, SuccessEnvelope},
+    handlers::{health::is_healthy, BodyInner, SuccessBody},
     storage::Backend,
     NetworkId,
 };
@@ -21,7 +21,7 @@ pub(crate) async fn info<B: Backend>(
     network_id: NetworkId,
     config: RestApiConfig,
 ) -> Result<impl Reply, Infallible> {
-    Ok(warp::reply::json(&SuccessEnvelope::new(GetInfoResponse {
+    Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
         name: String::from("Bee"),
         version: String::from(env!("CARGO_PKG_VERSION")),
         is_healthy: is_healthy(tangle.clone()).await,
@@ -41,7 +41,7 @@ pub(crate) async fn info<B: Backend>(
 
 /// Response of GET /api/v1/info
 #[derive(Clone, Debug, Serialize)]
-pub struct GetInfoResponse {
+pub struct InfoResponse {
     pub name: String,
     pub version: String,
     #[serde(rename = "isHealthy")]
@@ -57,4 +57,4 @@ pub struct GetInfoResponse {
     pub features: Vec<String>,
 }
 
-impl EnvelopeContent for GetInfoResponse {}
+impl BodyInner for InfoResponse {}
