@@ -1,11 +1,16 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::NodeConfig, node::BeeNode, plugins, storage::Backend, version_checker::VersionCheckerWorker};
+use crate::{
+    config::NodeConfig,
+    node::BeeNode,
+    plugins::{self, Mqtt},
+    storage::Backend,
+    version_checker::VersionCheckerWorker,
+};
 
-use bee_common::shutdown_stream::ShutdownStream;
+use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{
-    event::Bus,
     node::{Node, NodeBuilder},
     worker::Worker,
 };
@@ -96,7 +101,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             resource_registers: Vec::default(),
             config,
         }
-        .with_resource(Bus::default())
+        .with_resource(Bus::<TypeId>::default())
     }
 
     fn with_worker<W: Worker<BeeNode<B>> + 'static>(self) -> Self
@@ -186,7 +191,8 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             this,
         );
 
-        let this = this.with_worker::<VersionCheckerWorker>();
+        let mut this = this.with_worker::<VersionCheckerWorker>();
+        this = this.with_worker_cfg::<Mqtt>(config.mqtt);
 
         info!("Initializing REST API...");
         let mut this = bee_rest_api::init::<BeeNode<B>>(
@@ -221,8 +227,8 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let manual_peering_config = config.peering.manual.clone();
         ManualPeerManager::new(manual_peering_config, &network).await;
 
+        // TODO we should probably remove this
         info!("Registering events...");
-        bee_snapshot::events(&node);
         protocol_events(&node, config.protocol.clone());
 
         info!("Initialized.");

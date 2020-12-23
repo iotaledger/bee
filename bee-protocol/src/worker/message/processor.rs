@@ -9,15 +9,16 @@ use crate::{
     peer::PeerManager,
     tangle::{MessageMetadata, MsTangle},
     worker::{
-        message_submitter::MessageSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker,
-        MetricsWorker, MilestoneValidatorWorker, MilestoneValidatorWorkerEvent, PeerManagerWorker, PropagatorWorker,
-        PropagatorWorkerEvent, RequestedMessages, StorageWorker, TangleWorker,
+        message_submitter::MessageSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, IndexationPayloadWorker,
+        IndexationPayloadWorkerEvent, MessageRequesterWorker, MetricsWorker, MilestonePayloadWorker,
+        MilestonePayloadWorkerEvent, PeerManagerWorker, PropagatorWorker, PropagatorWorkerEvent, RequestedMessages,
+        StorageWorker, TangleWorker,
     },
     ProtocolMetrics,
 };
 
-use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
-use bee_common_pt2::{event::Bus, node::Node, worker::Worker};
+use bee_common::{event::Bus, packable::Packable, shutdown_stream::ShutdownStream};
+use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, Message, MessageId};
 use bee_network::PeerId;
 
@@ -48,19 +49,21 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         vec![
             TypeId::of::<StorageWorker>(),
             TypeId::of::<TangleWorker>(),
-            TypeId::of::<MilestoneValidatorWorker>(),
+            TypeId::of::<MilestonePayloadWorker>(),
             TypeId::of::<PropagatorWorker>(),
             TypeId::of::<BroadcasterWorker>(),
             TypeId::of::<MessageRequesterWorker>(),
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<IndexationPayloadWorker>(),
         ]
         .leak()
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
-        let milestone_validator = node.worker::<MilestoneValidatorWorker>().unwrap().tx.clone();
+        let milestone_payload_worker = node.worker::<MilestonePayloadWorker>().unwrap().tx.clone();
+        let indexation_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();
         let propagator = node.worker::<PropagatorWorker>().unwrap().tx.clone();
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
@@ -189,19 +192,24 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
                     match message.payload() {
                         Some(Payload::Milestone(_)) => {
-                            if let Err(e) = milestone_validator.send(MilestoneValidatorWorkerEvent(message_id)) {
+                            if let Err(e) = milestone_payload_worker.send(MilestonePayloadWorkerEvent(message_id)) {
                                 error!(
-                                    "Sending message id {} to milestone validation failed: {:?}.",
+                                    "Sending message id {} to milestone payload worker failed: {:?}.",
                                     message_id, e
                                 );
                             }
                         }
-                        Some(Payload::Indexation(_payload)) => {
-                            // TODO when protocol backend is merged
-                            // let index = payload.hash();
-                            // storage.insert(&index, &message_id);
+                        Some(Payload::Indexation(_)) => {
+                            if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
+                                error!(
+                                    "Sending message id {} to indexation payload worker failed: {:?}.",
+                                    message_id, e
+                                );
+                            }
                         }
-                        _ => {}
+                        _ => {
+                            panic!("TODO not supposed to happen")
+                        }
                     }
                 } else {
                     metrics.known_messages_inc();

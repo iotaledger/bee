@@ -1,15 +1,15 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::output::random_output_id;
+use crate::rand::output::rand_output_id;
 
 use bee_message::payload::transaction::{Input, UTXOInput};
 
-pub fn random_input() -> Input {
+pub fn rand_input() -> Input {
     // TODO add other kind of inputs
-    random_utxo_input().into()
+    rand_utxo_input().into()
 }
 
-pub fn random_utxo_input() -> UTXOInput {
-    random_output_id().into()
+pub fn rand_utxo_input() -> UTXOInput {
+    rand_output_id().into()
 }

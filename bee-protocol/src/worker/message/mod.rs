@@ -3,10 +3,14 @@
 
 mod hash_cache;
 mod hasher;
+mod payload;
 mod processor;
 
 pub(crate) use hash_cache::HashCache;
 pub(crate) use hasher::{HasherWorker, HasherWorkerEvent};
+pub(crate) use payload::{
+    IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker, MilestonePayloadWorkerEvent,
+};
 pub(crate) use processor::{ProcessorWorker, ProcessorWorkerEvent};
 
 // #[cfg(test)]

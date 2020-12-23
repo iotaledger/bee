@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod mps;
+pub mod mqtt;
 
-pub use self::mps::Mps;
+pub use mps::Mps;
+pub use mqtt::Mqtt;
 
-use bee_common_pt2::{event::Bus, node::Node, worker::Worker};
+use bee_common::event::Bus;
+use bee_common_pt2::{node::Node, worker::Worker};
 
 use async_trait::async_trait;
 

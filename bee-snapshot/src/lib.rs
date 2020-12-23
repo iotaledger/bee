@@ -12,6 +12,7 @@ pub mod config;
 pub mod error;
 pub mod event;
 pub mod header;
+pub mod info;
 pub mod milestone_diff;
 pub mod output;
 pub mod snapshot;
@@ -81,18 +82,4 @@ pub async fn init<N: Node>(
     // node_builder = node_builder.with_worker_cfg::<worker::SnapshotWorker>(config.clone());
 
     Ok((node_builder, snapshot_full))
-}
-
-pub fn events<N: Node>(_node: &N) {
-    // let snapshot_worker = node.worker::<worker::SnapshotWorker>().unwrap().tx.clone();
-    //
-    // node.resource::<Bus>().add_listener(move |latest_solid_milestone: &LatestSolidMilestoneChanged| {
-    //     if let Err(e) = snapshot_worker.send(worker::SnapshotWorkerEvent(latest_solid_milestone.0.clone())) {
-    //         warn!(
-    //             "Failed to send milestone {} to snapshot worker: {:?}.",
-    //             *latest_solid_milestone.0.index(),
-    //             e
-    //         )
-    //     }
-    // });
 }

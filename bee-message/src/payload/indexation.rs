@@ -85,7 +85,7 @@ impl Packable for Indexation {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub struct HashedIndex([u8; HASHED_INDEX_LENGTH]);
 
 // TODO review when we have fixed size index

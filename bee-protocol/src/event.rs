@@ -5,20 +5,25 @@ use crate::{Milestone, MilestoneIndex};
 
 use bee_message::MessageId;
 
+#[derive(Clone)]
 pub struct LatestMilestoneChanged {
     pub index: MilestoneIndex,
     pub milestone: Milestone,
 }
 
+#[derive(Clone)]
 pub struct LatestSolidMilestoneChanged {
     pub index: MilestoneIndex,
     pub milestone: Milestone,
 }
 
+#[derive(Clone)]
 pub struct MessageProcessed(pub MessageId);
 
+#[derive(Clone)]
 pub struct MessageSolidified(pub MessageId);
 
+#[derive(Clone)]
 pub struct MpsMetricsUpdated {
     pub incoming: u64,
     pub new: u64,

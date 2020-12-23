@@ -27,18 +27,16 @@ use crate::{
     peer::{Peer, PeerManager},
     tangle::MsTangle,
     worker::{
-        BroadcasterWorker, HasherWorker, HeartbeaterWorker, KickstartWorker, MessageRequesterWorker,
-        MessageResponderWorker, MessageValidatorWorker, MetricsWorker, MilestoneConeUpdaterWorker,
-        MilestoneRequesterWorker, MilestoneResponderWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
-        MilestoneValidatorWorker, MpsWorker, PeerManagerWorker, PeerWorker, ProcessorWorker, PropagatorWorker,
-        RequestedMilestones, StatusWorker, TipPoolCleanerWorker,
+        BroadcasterWorker, HasherWorker, HeartbeaterWorker, IndexationPayloadWorker, KickstartWorker,
+        MessageRequesterWorker, MessageResponderWorker, MessageValidatorWorker, MetricsWorker,
+        MilestoneConeUpdaterWorker, MilestonePayloadWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
+        MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, MpsWorker, PeerManagerWorker, PeerWorker,
+        ProcessorWorker, PropagatorWorker, RequestedMilestones, StatusWorker, TipPoolCleanerWorker,
     },
 };
 
-use bee_common_pt2::{
-    event::Bus,
-    node::{Node, NodeBuilder},
-};
+use bee_common::event::Bus;
+use bee_common_pt2::node::{Node, NodeBuilder};
 use bee_network::{Multiaddr, NetworkController, PeerId};
 use bee_snapshot::Snapshot;
 use bee_storage::storage::Backend;
@@ -69,7 +67,8 @@ pub fn init<N: Node>(
         .with_worker::<MilestoneResponderWorker>()
         .with_worker::<MessageRequesterWorker>()
         .with_worker::<MilestoneRequesterWorker>()
-        .with_worker_cfg::<MilestoneValidatorWorker>(config.clone())
+        .with_worker_cfg::<MilestonePayloadWorker>(config.clone())
+        .with_worker::<IndexationPayloadWorker>()
         .with_worker::<BroadcasterWorker>()
         .with_worker::<MessageValidatorWorker>()
         .with_worker::<PropagatorWorker>()
@@ -95,7 +94,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
                 "New milestone {} {}.",
                 *latest_milestone.index, latest_milestone.milestone.message_id
             );
-            tangle.upgrade().map(|tangle| {
+            if let Some(tangle) = tangle.upgrade() {
                 tangle.update_latest_milestone_index(latest_milestone.index);
 
                 helper::broadcast_heartbeat(
@@ -106,7 +105,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
                     tangle.get_pruning_index(),
                     latest_milestone.index,
                 );
-            });
+            }
         });
 
     // node.resource::<Bus>().add_listener(|latest_solid_milestone: &LatestSolidMilestoneChanged| {
@@ -129,7 +128,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
 
     node.resource::<Bus>()
         .add_listener::<(), _, _>(move |latest_solid_milestone: &LatestSolidMilestoneChanged| {
-            tangle.upgrade().map(|tangle| {
+            if let Some(tangle) = tangle.upgrade() {
                 debug!("New solid milestone {}.", *latest_solid_milestone.index);
                 tangle.update_latest_solid_milestone_index(latest_solid_milestone.index);
 
@@ -152,7 +151,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
                     tangle.get_pruning_index(),
                     tangle.get_latest_milestone_index(),
                 );
-            });
+            }
         });
 }
 

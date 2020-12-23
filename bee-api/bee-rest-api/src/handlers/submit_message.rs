@@ -50,9 +50,7 @@ pub(crate) async fn submit_message<B: Backend>(
     } else {
         network_id_v
             .as_str()
-            .ok_or(reject::custom(BadRequest(
-                "invalid network id: expected an u64-string".to_string(),
-            )))?
+            .ok_or_else(|| reject::custom(BadRequest("invalid network id: expected an u64-string".to_string())))?
             .parse::<u64>()
             .map_err(|_| reject::custom(BadRequest("invalid network id: expected an u64-string".to_string())))?
     };
@@ -61,10 +59,12 @@ pub(crate) async fn submit_message<B: Backend>(
         // if both parents are set
         let parent1 = parent_1_v
             .as_str()
-            .ok_or(reject::custom(BadRequest(format!(
-                "invalid parent 1: expected a hex-string of length {}",
-                MESSAGE_ID_LENGTH * 2
-            ))))?
+            .ok_or_else(|| {
+                reject::custom(BadRequest(format!(
+                    "invalid parent 1: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH * 2
+                )))
+            })?
             .parse::<MessageId>()
             .map_err(|_| {
                 reject::custom(BadRequest(format!(
@@ -74,10 +74,12 @@ pub(crate) async fn submit_message<B: Backend>(
             })?;
         let parent2 = parent_2_v
             .as_str()
-            .ok_or(reject::custom(BadRequest(format!(
-                "invalid parent 2: expected a hex-string of length {}",
-                MESSAGE_ID_LENGTH * 2
-            ))))?
+            .ok_or_else(|| {
+                reject::custom(BadRequest(format!(
+                    "invalid parent 2: expected a hex-string of length {}",
+                    MESSAGE_ID_LENGTH * 2
+                )))
+            })?
             .parse::<MessageId>()
             .map_err(|_| {
                 reject::custom(BadRequest(format!(
@@ -88,21 +90,22 @@ pub(crate) async fn submit_message<B: Backend>(
         (parent1, parent2)
     } else if parent_1_v.is_null() && parent_2_v.is_null() {
         // if none of the parents are set
-        tangle
-            .get_messages_to_approve()
-            .await
-            .ok_or(reject::custom(ServiceUnavailable(
+        tangle.get_messages_to_approve().await.ok_or_else(|| {
+            reject::custom(ServiceUnavailable(
                 "can not auto-fill tips: tip pool is empty".to_string(),
-            )))?
+            ))
+        })?
     } else {
         // if only one parent is set
         let parent = if is_set(parent_1_v) {
             parent_1_v
                 .as_str()
-                .ok_or(reject::custom(BadRequest(format!(
-                    "invalid parent 1: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH * 2
-                ))))?
+                .ok_or_else(|| {
+                    reject::custom(BadRequest(format!(
+                        "invalid parent 1: expected a hex-string of length {}",
+                        MESSAGE_ID_LENGTH * 2
+                    )))
+                })?
                 .parse::<MessageId>()
                 .map_err(|_| {
                     reject::custom(BadRequest(format!(
@@ -113,10 +116,12 @@ pub(crate) async fn submit_message<B: Backend>(
         } else {
             parent_2_v
                 .as_str()
-                .ok_or(reject::custom(BadRequest(format!(
-                    "invalid parent 2: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH * 2
-                ))))?
+                .ok_or_else(|| {
+                    reject::custom(BadRequest(format!(
+                        "invalid parent 2: expected a hex-string of length {}",
+                        MESSAGE_ID_LENGTH * 2
+                    )))
+                })?
                 .parse::<MessageId>()
                 .map_err(|_| {
                     reject::custom(BadRequest(format!(
@@ -133,7 +138,7 @@ pub(crate) async fn submit_message<B: Backend>(
     } else {
         let payload_dto = serde_json::from_value::<PayloadDto>(payload_v.clone())
             .map_err(|e| reject::custom(BadRequest(e.to_string())))?;
-        Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(BadRequest(e.to_string())))?)
+        Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(BadRequest(e)))?)
     };
 
     let nonce = if nonce_v.is_null() {
@@ -147,9 +152,7 @@ pub(crate) async fn submit_message<B: Backend>(
         Some(
             nonce_v
                 .as_str()
-                .ok_or(reject::custom(BadRequest(
-                    "invalid nonce: expected an u64-string".to_string(),
-                )))?
+                .ok_or_else(|| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?
                 .parse::<u64>()
                 .map_err(|_| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?,
         )

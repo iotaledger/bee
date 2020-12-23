@@ -100,7 +100,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
         _ => {
             if err.is_not_found() {
                 (StatusCode::NOT_FOUND, "404".to_string(), "data not found".to_string())
-            } else if let Some(_) = err.find::<warp::reject::MethodNotAllowed>() {
+            } else if err.find::<warp::reject::MethodNotAllowed>().is_some() {
                 (
                     StatusCode::METHOD_NOT_ALLOWED,
                     "405".to_string(),

@@ -10,8 +10,8 @@ use crate::{
     pruning::prune_database,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common::{node::Node, worker::Worker};
+use bee_common::{event::Bus,shutdown_stream::ShutdownStream};
+use bee_common_pt2::{ node::Node, worker::Worker};
 use bee_protocol::{tangle::MsTangle, Milestone, MilestoneIndex, TangleWorker};
 use bee_storage::storage::Backend;
 
@@ -94,6 +94,7 @@ impl<N: Node> Worker<N> for SnapshotWorker {
         let (tx, rx) = flume::unbounded();
 
         let tangle = node.resource::<MsTangle<N::Backend>>().clone();
+        let bus = node.resource::<Bus>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -138,6 +139,16 @@ impl<N: Node> Worker<N> for SnapshotWorker {
 
             info!("Stopped.");
         });
+
+        // bus.add_listener(move |latest_solid_milestone: &LatestSolidMilestoneChanged| {
+        //     if let Err(e) = snapshot_worker.send(worker::SnapshotWorkerEvent(latest_solid_milestone.0.clone())) {
+        //         warn!(
+        //             "Failed to send milestone {} to snapshot worker: {:?}.",
+        //             *latest_solid_milestone.0.index(),
+        //             e
+        //         )
+        //     }
+        // });
 
         Ok(Self { tx })
     }

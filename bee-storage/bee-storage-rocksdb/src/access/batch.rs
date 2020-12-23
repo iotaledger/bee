@@ -13,6 +13,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_protocol::{tangle::MessageMetadata, Milestone, MilestoneIndex};
+use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::{Batch, BatchBuilder};
 
 use rocksdb::{WriteBatch, WriteOptions};
@@ -407,6 +408,39 @@ impl Batch<MilestoneIndex, Milestone> for Storage {
         index.pack(&mut batch.key_buf).unwrap();
 
         batch.inner.delete_cf(&cf, &batch.key_buf);
+
+        Ok(())
+    }
+}
+
+impl Batch<(), SnapshotInfo> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        (): &(),
+        info: &SnapshotInfo,
+    ) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_SNAPSHOT_INFO)
+            .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
+
+        batch.value_buf.clear();
+        // Packing to bytes can't fail.
+        info.pack(&mut batch.value_buf).unwrap();
+
+        batch.inner.put_cf(&cf, [], &batch.value_buf);
+
+        Ok(())
+    }
+
+    fn batch_delete(&self, batch: &mut Self::Batch, (): &()) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_SNAPSHOT_INFO)
+            .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
+
+        batch.inner.delete_cf(&cf, []);
 
         Ok(())
     }

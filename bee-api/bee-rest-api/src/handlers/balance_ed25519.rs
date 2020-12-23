@@ -10,7 +10,7 @@ use crate::{
 use bee_common_pt2::node::ResHandle;
 use bee_ledger::model::Spent;
 use bee_message::prelude::*;
-use bee_storage::access::Fetch;
+use bee_storage::access::{Exist, Fetch};
 
 use serde::Serialize;
 use warp::{reject, Rejection, Reply};
@@ -35,7 +35,7 @@ pub(crate) async fn balance_ed25519<B: Backend>(
                     .await
                     .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
                 {
-                    if let None = Fetch::<OutputId, Spent>::fetch(storage.deref(), &id)
+                    if !Exist::<OutputId, Spent>::exist(storage.deref(), &id)
                         .await
                         .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
                     {

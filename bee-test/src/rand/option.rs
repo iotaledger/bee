@@ -3,7 +3,7 @@
 
 use rand::Rng;
 
-pub fn random_option<T>(inner: T) -> Option<T> {
+pub fn rand_option<T>(inner: T) -> Option<T> {
     if rand::thread_rng().gen::<f64>() < 0.5 {
         None
     } else {

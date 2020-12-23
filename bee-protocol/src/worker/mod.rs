@@ -10,7 +10,6 @@ mod message_submitter;
 mod message_validator;
 mod metrics;
 mod milestone_cone_updater;
-mod milestone_validator;
 mod mps;
 mod peer;
 mod propagator;
@@ -24,12 +23,14 @@ mod tip_pool_cleaner;
 
 pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
-pub(crate) use message::{HasherWorker, HasherWorkerEvent, ProcessorWorker};
+pub(crate) use message::{
+    HasherWorker, HasherWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker,
+    MilestonePayloadWorkerEvent, ProcessorWorker,
+};
 pub use message_submitter::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 pub(crate) use message_validator::{MessageValidatorWorker, MessageValidatorWorkerEvent};
 pub(crate) use metrics::MetricsWorker;
 pub(crate) use milestone_cone_updater::{MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent};
-pub(crate) use milestone_validator::{MilestoneValidatorWorker, MilestoneValidatorWorkerEvent};
 pub(crate) use mps::MpsWorker;
 pub(crate) use peer::{PeerManagerWorker, PeerWorker};
 pub(crate) use propagator::{PropagatorWorker, PropagatorWorkerEvent};

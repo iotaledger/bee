@@ -8,14 +8,14 @@ use rand::{
 
 use std::ops::Range;
 
-pub fn random_integer<T>() -> T
+pub fn rand_integer<T>() -> T
 where
     Standard: Distribution<T>,
 {
     rand::thread_rng().gen()
 }
 
-pub fn random_integer_range<T>(range: Range<T>) -> T
+pub fn rand_integer_range<T>(range: Range<T>) -> T
 where
     T: SampleUniform,
 {

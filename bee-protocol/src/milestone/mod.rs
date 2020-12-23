@@ -28,10 +28,7 @@ pub struct Milestone {
 
 impl Milestone {
     pub fn new(message_id: MessageId, timestamp: u64) -> Self {
-        Self {
-            message_id,
-            timestamp,
-        }
+        Self { message_id, timestamp }
     }
 
     pub fn message_id(&self) -> &MessageId {

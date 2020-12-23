@@ -97,6 +97,7 @@ async fn process_request_unchecked(
                 *counter += 1;
 
                 if let Some(peer) = peer_manager.peers.get(peer_id) {
+                    // TODO also request if has_data ?
                     if peer.maybe_has_data(index) {
                         Sender::<MilestoneRequest>::send(
                             network,
@@ -179,7 +180,7 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
                     _ = timeouts.next() => retry_requests(&network, &peer_manager, &metrics, &requested_milestones, &mut counter).await,
                     entry = receiver.next() => match entry {
                         Some(MilestoneRequesterWorkerEvent(index, peer_id)) => {
-                            if !tangle.contains_milestone(index.into()) {
+                            if !tangle.contains_milestone(index) {
                                 debug!("Requesting milestone {}.", *index);
                                 process_request(index, peer_id, &network, &peer_manager, &metrics, &requested_milestones, &mut counter).await;
                             }

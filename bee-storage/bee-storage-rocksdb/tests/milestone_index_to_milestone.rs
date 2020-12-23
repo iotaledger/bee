@@ -7,7 +7,7 @@ use bee_storage::{
     storage::Backend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
-use bee_test::rand::milestone::{random_milestone, random_milestone_index};
+use bee_test::rand::milestone::{rand_milestone, rand_milestone_index};
 
 use futures::stream::StreamExt;
 
@@ -22,8 +22,8 @@ async fn access() {
     let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
-    let index = random_milestone_index();
-    let milestone = random_milestone();
+    let index = rand_milestone_index();
+    let milestone = rand_milestone();
 
     assert!(!Exist::<MilestoneIndex, Milestone>::exist(&storage, &index)
         .await
@@ -63,7 +63,7 @@ async fn access() {
     let mut batch = Storage::batch_begin();
 
     for _ in 0usize..10usize {
-        let (index, milestone) = (random_milestone_index(), random_milestone());
+        let (index, milestone) = (rand_milestone_index(), rand_milestone());
         Insert::<MilestoneIndex, Milestone>::insert(&storage, &index, &milestone)
             .await
             .unwrap();
@@ -73,7 +73,7 @@ async fn access() {
     let mut milestones = HashMap::new();
 
     for _ in 0usize..10usize {
-        let (index, milestone) = (random_milestone_index(), random_milestone());
+        let (index, milestone) = (rand_milestone_index(), rand_milestone());
         Batch::<MilestoneIndex, Milestone>::batch_insert(&storage, &mut batch, &index, &milestone).unwrap();
         milestones.insert(index, milestone);
     }

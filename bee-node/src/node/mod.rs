@@ -7,9 +7,8 @@ pub use builder::{BeeNodeBuilder, Error};
 
 use crate::{config::NodeConfig, storage::Backend};
 
-use bee_common::{shutdown, shutdown_stream::ShutdownStream};
+use bee_common::{event::Bus, shutdown, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{
-    event::Bus,
     node::{Node, ResHandle},
     worker::Worker,
 };
@@ -121,7 +120,7 @@ impl<B: Backend> Node for BeeNode<B> {
                 let _ = task_fut.await; //.map_err(|e| shutdown::Error::from(worker::Error(Box::new(e))))?;
             }
             self.worker_stops.remove(&worker_id).unwrap()(&mut self).await;
-            self.resource::<Bus>().purge_worker_listeners(worker_id);
+            self.resource::<Bus>().remove_listeners_by_id(worker_id);
         }
 
         Ok(())
