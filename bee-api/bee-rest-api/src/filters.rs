@@ -30,27 +30,32 @@ pub fn all<B: Backend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    health(tangle.clone()).or(info(tangle.clone(), network_id.clone(), rest_api_config)
-        .or(tips(tangle.clone()))
-        .or(submit_message(
-            tangle.clone(),
-            message_submitter.clone(),
-            network_id,
-            rest_api_config,
-            protocol_config,
-        ))
-        .or(submit_message_raw(tangle.clone(), message_submitter))
-        .or(message_indexation(storage.clone()))
-        .or(message(tangle.clone()))
-        .or(message_metadata(tangle.clone()))
-        .or(message_raw(tangle.clone()))
-        .or(message_children(tangle.clone()))
-        .or(output(storage.clone()))
-        .or(balance_bech32(storage.clone()))
-        .or(balance_ed25519(storage.clone()))
-        .or(outputs_bech32(storage.clone()))
-        .or(outputs_ed25519(storage))
-        .or(milestone(tangle)))
+    health(tangle.clone()).or(info(
+        tangle.clone(),
+        network_id.clone(),
+        rest_api_config,
+        protocol_config.clone(),
+    )
+    .or(tips(tangle.clone()))
+    .or(submit_message(
+        tangle.clone(),
+        message_submitter.clone(),
+        network_id,
+        rest_api_config,
+        protocol_config,
+    ))
+    .or(submit_message_raw(tangle.clone(), message_submitter))
+    .or(message_indexation(storage.clone()))
+    .or(message(tangle.clone()))
+    .or(message_metadata(tangle.clone()))
+    .or(message_raw(tangle.clone()))
+    .or(message_children(tangle.clone()))
+    .or(output(storage.clone()))
+    .or(balance_bech32(storage.clone()))
+    .or(balance_ed25519(storage.clone()))
+    .or(outputs_bech32(storage.clone()))
+    .or(outputs_ed25519(storage))
+    .or(milestone(tangle)))
 }
 
 fn health<B: Backend>(
@@ -66,7 +71,8 @@ fn health<B: Backend>(
 fn info<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     network_id: NetworkId,
-    config: RestApiConfig,
+    rest_api_config: RestApiConfig,
+    protocol_config: ProtocolConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -75,7 +81,8 @@ fn info<B: Backend>(
         .and(warp::path::end())
         .and(with_tangle(tangle))
         .and(with_network_id(network_id))
-        .and(with_rest_api_config(config))
+        .and(with_rest_api_config(rest_api_config))
+        .and(with_protocol_config(protocol_config))
         .and_then(handlers::info::info)
 }
 

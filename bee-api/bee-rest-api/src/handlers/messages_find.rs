@@ -3,7 +3,7 @@
 
 use crate::{
     filters::CustomRejection::ServiceUnavailable,
-    handlers::{EnvelopeContent, SuccessEnvelope},
+    handlers::{BodyInner, SuccessBody},
     storage::Backend,
 };
 
@@ -38,7 +38,7 @@ pub(crate) async fn messages_find<B: Backend>(index: String, storage: ResHandle<
     let max_results = 1000;
     fetched.truncate(max_results);
 
-    Ok(warp::reply::json(&SuccessEnvelope::new(GetMessagesByIndexResponse {
+    Ok(warp::reply::json(&SuccessBody::new(MessagesForIndexResponse {
         index,
         max_results,
         count,
@@ -48,7 +48,7 @@ pub(crate) async fn messages_find<B: Backend>(index: String, storage: ResHandle<
 
 /// Response of GET /api/v1/messages/{message_id}?index={INDEX}
 #[derive(Clone, Debug, Serialize)]
-pub struct GetMessagesByIndexResponse {
+pub struct MessagesForIndexResponse {
     pub index: String,
     #[serde(rename = "maxResults")]
     pub max_results: usize,
@@ -57,4 +57,4 @@ pub struct GetMessagesByIndexResponse {
     pub message_ids: Vec<String>,
 }
 
-impl EnvelopeContent for GetMessagesByIndexResponse {}
+impl BodyInner for MessagesForIndexResponse {}

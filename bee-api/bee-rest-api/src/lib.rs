@@ -10,7 +10,7 @@ pub mod types;
 use crate::{
     config::RestApiConfig,
     filters::CustomRejection,
-    handlers::{ErrorEnvelope, ErrorEnvelopeContent},
+    handlers::{DefaultErrorResponse, ErrorBody},
     storage::Backend,
 };
 
@@ -117,7 +117,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
         }
     };
     Ok(warp::reply::with_status(
-        warp::reply::json(&ErrorEnvelope::new(ErrorEnvelopeContent {
+        warp::reply::json(&ErrorBody::new(DefaultErrorResponse {
             code: err_code,
             message: reason,
         })),

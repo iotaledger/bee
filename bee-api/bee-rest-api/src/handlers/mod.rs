@@ -21,33 +21,34 @@ pub mod tips;
 use serde::Serialize;
 
 /// Marker trait
-pub trait EnvelopeContent {}
+pub trait BodyInner {}
 
 #[derive(Clone, Debug, Serialize)]
-pub struct SuccessEnvelope<T: EnvelopeContent> {
+pub struct SuccessBody<T: BodyInner> {
     pub data: T,
 }
 
-impl<T: EnvelopeContent> SuccessEnvelope<T> {
-    pub(crate) fn new(data: T) -> Self {
+impl<T: BodyInner> SuccessBody<T> {
+    pub fn new(data: T) -> Self {
         Self { data }
     }
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct ErrorEnvelope {
-    pub error: ErrorEnvelopeContent,
+pub struct ErrorBody<T: BodyInner> {
+    pub error: T,
 }
 
-// Default error content
+impl<T: BodyInner> ErrorBody<T> {
+    pub fn new(error: T) -> Self {
+        Self { error }
+    }
+}
+
 #[derive(Clone, Debug, Serialize)]
-pub struct ErrorEnvelopeContent {
+pub struct DefaultErrorResponse {
     pub code: String,
     pub message: String,
 }
 
-impl ErrorEnvelope {
-    pub(crate) fn new(error: ErrorEnvelopeContent) -> Self {
-        Self { error }
-    }
-}
+impl BodyInner for DefaultErrorResponse {}

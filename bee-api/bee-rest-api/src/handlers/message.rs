@@ -3,7 +3,7 @@
 
 use crate::{
     filters::CustomRejection::{BadRequest, NotFound},
-    handlers::{EnvelopeContent, SuccessEnvelope},
+    handlers::{BodyInner, SuccessBody},
     storage::Backend,
     types::*,
 };
@@ -22,7 +22,7 @@ pub(crate) async fn message<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     match tangle.get(&message_id).await {
-        Some(message) => Ok(warp::reply::json(&SuccessEnvelope::new(GetMessageResponse(
+        Some(message) => Ok(warp::reply::json(&SuccessBody::new(MessageResponse(
             MessageDto::try_from(&*message).map_err(|e| reject::custom(BadRequest(e)))?,
         )))),
         None => Err(reject::custom(NotFound("can not find message".to_string()))),
@@ -31,6 +31,6 @@ pub(crate) async fn message<B: Backend>(
 
 /// Response of GET /api/v1/messages/{message_id}
 #[derive(Clone, Debug, Serialize)]
-pub struct GetMessageResponse(pub MessageDto);
+pub struct MessageResponse(pub MessageDto);
 
-impl EnvelopeContent for GetMessageResponse {}
+impl BodyInner for MessageResponse {}

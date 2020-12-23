@@ -3,7 +3,7 @@
 
 use crate::{
     filters::CustomRejection::{NotFound, ServiceUnavailable},
-    handlers::{EnvelopeContent, SuccessEnvelope},
+    handlers::{BodyInner, SuccessBody},
     storage::Backend,
 };
 
@@ -50,7 +50,7 @@ pub(crate) async fn balance_ed25519<B: Backend>(
                     }
                 }
             }
-            Ok(warp::reply::json(&SuccessEnvelope::new(GetBalanceForAddressResponse {
+            Ok(warp::reply::json(&SuccessBody::new(BalanceForAddressResponse {
                 address_type: 1,
                 address: addr.to_string(),
                 max_results,
@@ -64,7 +64,7 @@ pub(crate) async fn balance_ed25519<B: Backend>(
 
 /// Response of GET /api/v1/addresses/{address}
 #[derive(Clone, Debug, Serialize)]
-pub struct GetBalanceForAddressResponse {
+pub struct BalanceForAddressResponse {
     // The type of the address (0=WOTS, 1=Ed25519).
     #[serde(rename = "addressType")]
     pub address_type: u8,
@@ -76,4 +76,4 @@ pub struct GetBalanceForAddressResponse {
     pub balance: u64,
 }
 
-impl EnvelopeContent for GetBalanceForAddressResponse {}
+impl BodyInner for BalanceForAddressResponse {}

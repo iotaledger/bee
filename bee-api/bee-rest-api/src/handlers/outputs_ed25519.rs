@@ -3,7 +3,7 @@
 
 use crate::{
     filters::CustomRejection::ServiceUnavailable,
-    handlers::{EnvelopeContent, SuccessEnvelope},
+    handlers::{BodyInner, SuccessBody},
     storage::Backend,
 };
 
@@ -32,7 +32,7 @@ pub(crate) async fn outputs_ed25519<B: Backend>(
     let max_results = 1000;
     fetched.truncate(max_results);
 
-    Ok(warp::reply::json(&SuccessEnvelope::new(GetOutputsForAddressResponse {
+    Ok(warp::reply::json(&SuccessBody::new(OutputsForAddressResponse {
         address_type: 1,
         address: addr.to_string(),
         max_results,
@@ -43,7 +43,7 @@ pub(crate) async fn outputs_ed25519<B: Backend>(
 
 /// Response of GET /api/v1/addresses/{address}/outputs
 #[derive(Clone, Debug, Serialize)]
-pub struct GetOutputsForAddressResponse {
+pub struct OutputsForAddressResponse {
     // The type of the address (0=WOTS, 1=Ed25519).
     #[serde(rename = "addressType")]
     pub address_type: u8,
@@ -55,4 +55,4 @@ pub struct GetOutputsForAddressResponse {
     pub output_ids: Vec<String>,
 }
 
-impl EnvelopeContent for GetOutputsForAddressResponse {}
+impl BodyInner for OutputsForAddressResponse {}
