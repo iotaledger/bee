@@ -3,7 +3,7 @@
 
 use crate::{
     filters::CustomRejection::ServiceUnavailable,
-    handlers::{EnvelopeContent, SuccessEnvelope},
+    handlers::{BodyInner, SuccessBody},
     storage::Backend,
 };
 
@@ -15,7 +15,7 @@ use warp::{reject, Rejection, Reply};
 
 pub(crate) async fn tips<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> Result<impl Reply, Rejection> {
     match tangle.get_messages_to_approve().await {
-        Some(tips) => Ok(warp::reply::json(&SuccessEnvelope::new(GetTipsResponse {
+        Some(tips) => Ok(warp::reply::json(&SuccessBody::new(TipsResponse {
             tip_1_message_id: tips.0.to_string(),
             tip_2_message_id: tips.1.to_string(),
         }))),
@@ -25,11 +25,11 @@ pub(crate) async fn tips<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> Result<i
 
 /// Response of GET /api/v1/tips
 #[derive(Clone, Debug, Serialize)]
-pub struct GetTipsResponse {
+pub struct TipsResponse {
     #[serde(rename = "tip1MessageId")]
     pub tip_1_message_id: String,
     #[serde(rename = "tip2MessageId")]
     pub tip_2_message_id: String,
 }
 
-impl EnvelopeContent for GetTipsResponse {}
+impl BodyInner for TipsResponse {}

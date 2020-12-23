@@ -4,7 +4,7 @@
 use crate::{
     config::RestApiConfig,
     filters::CustomRejection::{BadRequest, ServiceUnavailable},
-    handlers::{EnvelopeContent, SuccessEnvelope},
+    handlers::{BodyInner, SuccessBody},
     storage::Backend,
     types::*,
     NetworkId,
@@ -190,7 +190,7 @@ pub(crate) async fn submit_message<B: Backend>(
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
 
     Ok(warp::reply::with_status(
-        warp::reply::json(&SuccessEnvelope::new(PostMessageResponse {
+        warp::reply::json(&SuccessBody::new(SubmitMessageResponse {
             message_id: message_id.to_string(),
         })),
         StatusCode::CREATED,
@@ -246,9 +246,9 @@ fn hash_message(bytes: &[u8]) -> MessageId {
 
 /// Response of POST /api/v1/messages
 #[derive(Clone, Debug, Serialize)]
-pub struct PostMessageResponse {
+pub struct SubmitMessageResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
 }
 
-impl EnvelopeContent for PostMessageResponse {}
+impl BodyInner for SubmitMessageResponse {}

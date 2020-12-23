@@ -26,7 +26,7 @@ use std::{
 
 const DEFAULT_NUM_WORKERS: usize = 1;
 /// https://oeis.org/A002391
-const LN_3: f64 = 1.098612288668109691395245236922525704647490557822749451734694333;
+const LN_3: f64 = 1.098_612_288_668_109_8;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -82,10 +82,10 @@ impl Miner {
         }
 
         while !done.load(Ordering::Relaxed) {
-            for i in 0..BATCH_SIZE {
+            for (i, buffer) in buffers.iter_mut().enumerate().take(BATCH_SIZE) {
                 let nonce_trits = b1t6::encode(&(nonce + i as u64).to_le_bytes());
-                buffers[i][pow_digest.len()..pow_digest.len() + nonce_trits.len()].copy_from(&nonce_trits);
-                hasher.add(buffers[i].clone());
+                buffer[pow_digest.len()..pow_digest.len() + nonce_trits.len()].copy_from(&nonce_trits);
+                hasher.add(buffer.clone());
             }
 
             for (i, hash) in hasher.hash_batched().enumerate() {
