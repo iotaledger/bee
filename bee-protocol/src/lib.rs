@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(clippy::module_inception)]
+#![allow(clippy::unit_arg)]
 
 pub mod config;
 pub mod event;

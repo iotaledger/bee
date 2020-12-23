@@ -61,14 +61,9 @@ pub(crate) async fn message_metadata<B: Backend>(
                                 let lsmi = *tangle.get_latest_solid_milestone_index();
 
                                 if (lsmi - otrsi_delta) > below_max_depth {
-                                    should_promote = false;
                                     should_reattach = true;
-                                } else if (lsmi - ytrsi_delta) > ytrsi_delta {
+                                } else if (lsmi - ytrsi_delta) > ytrsi_delta || (lsmi - otrsi_delta) > otrsi_delta {
                                     should_promote = true;
-                                    should_reattach = false;
-                                } else if (lsmi - otrsi_delta) > otrsi_delta {
-                                    should_promote = true;
-                                    should_reattach = false;
                                 }
 
                                 GetMessageMetadataResponse {

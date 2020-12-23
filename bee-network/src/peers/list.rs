@@ -64,7 +64,7 @@ impl PeerList {
 
     pub async fn update_relation(&self, id: &PeerId, relation: PeerRelation) -> Result<(), Error> {
         let mut this = self.0.write().await;
-        let mut kv = this.get_mut(id).ok_or(Error::UnlistedPeer(id.short()))?;
+        let mut kv = this.get_mut(id).ok_or_else(|| Error::UnlistedPeer(id.short()))?;
 
         kv.0.relation = relation;
 
@@ -73,7 +73,7 @@ impl PeerList {
 
     pub async fn update_state(&self, id: &PeerId, state: PeerState) -> Result<(), Error> {
         let mut this = self.0.write().await;
-        let mut kv = this.get_mut(id).ok_or(Error::UnlistedPeer(id.short()))?;
+        let mut kv = this.get_mut(id).ok_or_else(|| Error::UnlistedPeer(id.short()))?;
 
         kv.1 = state;
 
@@ -86,7 +86,12 @@ impl PeerList {
     }
 
     pub async fn remove(&self, id: &PeerId) -> Result<PeerInfo, Error> {
-        let (info, _) = self.0.write().await.remove(id).ok_or(Error::UnlistedPeer(id.short()))?;
+        let (info, _) = self
+            .0
+            .write()
+            .await
+            .remove(id)
+            .ok_or_else(|| Error::UnlistedPeer(id.short()))?;
 
         Ok(info)
     }
@@ -94,7 +99,7 @@ impl PeerList {
     // TODO: batch messages before sending using 'send_all' (e.g. batch messages for like 50ms)
     pub async fn send_message(&self, message: Vec<u8>, to: &PeerId) -> Result<(), Error> {
         let mut this = self.0.write().await;
-        let (_, state) = this.get_mut(to).ok_or(Error::UnlistedPeer(to.short()))?;
+        let (_, state) = this.get_mut(to).ok_or_else(|| Error::UnlistedPeer(to.short()))?;
 
         if let PeerState::Connected(sender) = state {
             sender
@@ -117,7 +122,7 @@ impl PeerList {
             .read()
             .await
             .get(id)
-            .ok_or(Error::UnlistedPeer(id.short()))
+            .ok_or_else(|| Error::UnlistedPeer(id.short()))
             // .map(|kv| kv.value().0.clone())
             .map(|kv| kv.0.clone())
     }
@@ -127,7 +132,7 @@ impl PeerList {
             .read()
             .await
             .get(id)
-            .ok_or(Error::UnlistedPeer(id.short()))
+            .ok_or_else(|| Error::UnlistedPeer(id.short()))
             // .map(|kv| predicate(&kv.value().0, &kv.value().1))
             .map(|kv| predicate(&kv.0, &kv.1))
     }
@@ -210,18 +215,10 @@ pub enum PeerState {
 
 impl PeerState {
     pub fn is_connected(&self) -> bool {
-        if let PeerState::Connected(_) = *self {
-            true
-        } else {
-            false
-        }
+        matches!(*self, PeerState::Connected(_))
     }
 
     pub fn is_disconnected(&self) -> bool {
-        if let PeerState::Disconnected = *self {
-            true
-        } else {
-            false
-        }
+        matches!(*self, PeerState::Disconnected)
     }
 }

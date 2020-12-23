@@ -183,10 +183,7 @@ async fn process_read(
     message.copy_from_slice(&buffer[0..num_read]);
 
     internal_event_sender
-        .send(InternalEvent::MessageReceived {
-            message,
-            from: peer_id.clone(),
-        })
+        .send(InternalEvent::MessageReceived { message, from: peer_id })
         .map_err(|_| Error::InternalEventSendFailure("MessageReceived"))?;
 
     Ok(())

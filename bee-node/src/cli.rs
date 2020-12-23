@@ -25,6 +25,12 @@ pub struct CliArgs {
     version: bool,
 }
 
+impl Default for CliArgs {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CliArgs {
     pub fn new() -> Self {
         Self::from_args()
