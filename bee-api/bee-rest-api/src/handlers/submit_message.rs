@@ -90,7 +90,7 @@ pub(crate) async fn submit_message<B: Backend>(
         // if none of the parents are set
         tangle.get_messages_to_approve().await.ok_or_else(|| {
             reject::custom(ServiceUnavailable(
-                "can not auto-fill tips: tip pool is empty".to_string(),
+                "can not auto-fill parents: no tips available".to_string(),
             ))
         })?
     } else {
@@ -140,20 +140,18 @@ pub(crate) async fn submit_message<B: Backend>(
     };
 
     let nonce = if nonce_v.is_null() {
-        if !rest_api_config.feature_proof_of_work() {
-            return Err(reject::custom(ServiceUnavailable(
-                "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
-            )));
-        }
         None
     } else {
-        Some(
-            nonce_v
-                .as_str()
-                .ok_or_else(|| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?
-                .parse::<u64>()
-                .map_err(|_| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?,
-        )
+        let parsed = nonce_v
+            .as_str()
+            .ok_or_else(|| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?
+            .parse::<u64>()
+            .map_err(|_| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?;
+        if parsed == 0 {
+            None
+        } else {
+            Some(parsed)
+        }
     };
 
     let message = if let Some(nonce) = nonce {
@@ -169,6 +167,11 @@ pub(crate) async fn submit_message<B: Backend>(
             .finish()
             .map_err(|e| reject::custom(BadRequest(e.to_string())))?
     } else {
+        if !rest_api_config.feature_proof_of_work() {
+            return Err(reject::custom(ServiceUnavailable(
+                "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
+            )));
+        }
         let mut builder = MessageBuilder::new()
             .with_network_id(network_id)
             .with_parent1(parent_1_message_id)
