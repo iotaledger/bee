@@ -8,14 +8,14 @@ target/
 # bee-node
 bee-node/config.toml
 
-bee-node/database/alphanet/*
-!bee-node/database/alphanet/.gitkeep
-bee-node/database/comnet/*
-!bee-node/database/comnet/.gitkeep
-bee-node/database/mainnet/*
-!bee-node/database/mainnet/.gitkeep
-bee-node/database/testnet/*
-!bee-node/database/testnet/.gitkeep
+bee-node/storage/alphanet/*
+!bee-node/storage/alphanet/.gitkeep
+bee-node/storage/comnet/*
+!bee-node/storage/comnet/.gitkeep
+bee-node/storage/mainnet/*
+!bee-node/storage/mainnet/.gitkeep
+bee-node/storage/testnet/*
+!bee-node/storage/testnet/.gitkeep
 
 bee-node/snapshots/alphanet/*
 !bee-node/snapshots/alphanet/.gitkeep

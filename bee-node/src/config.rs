@@ -25,7 +25,6 @@ const DEFAULT_NETWORK_ID: &str = "alphanet1";
 pub enum Error {
     #[error("Reading the specified config file failed: {0}.")]
     ConfigFileReadFailure(#[from] std::io::Error),
-
     #[error("Deserializing the node config builder failed: {0}.")]
     NodeConfigBuilderCreationFailure(#[from] toml::de::Error),
 }
@@ -38,7 +37,7 @@ pub struct NodeConfigBuilder<B: Backend> {
     pub(crate) peering: Option<PeeringConfigBuilder>,
     pub(crate) protocol: Option<ProtocolConfigBuilder>,
     pub(crate) snapshot: Option<SnapshotConfigBuilder>,
-    pub(crate) database: Option<B::ConfigBuilder>,
+    pub(crate) storage: Option<B::ConfigBuilder>,
     pub(crate) mqtt: Option<MqttConfigBuilder>,
 }
 
@@ -64,7 +63,7 @@ impl<B: Backend> NodeConfigBuilder<B> {
             peering: self.peering.unwrap_or_default().finish(),
             protocol: self.protocol.unwrap_or_default().finish(),
             snapshot: self.snapshot.unwrap_or_default().finish(),
-            database: self.database.unwrap_or_default().into(),
+            storage: self.storage.unwrap_or_default().into(),
             mqtt: self.mqtt.unwrap_or_default().finish(),
         }
     }
@@ -77,7 +76,7 @@ pub struct NodeConfig<B: Backend> {
     pub peering: PeeringConfig,
     pub protocol: ProtocolConfig,
     pub snapshot: SnapshotConfig,
-    pub database: B::Config,
+    pub storage: B::Config,
     pub mqtt: MqttConfig,
 }
 
@@ -90,7 +89,7 @@ impl<B: Backend> Clone for NodeConfig<B> {
             peering: self.peering.clone(),
             protocol: self.protocol.clone(),
             snapshot: self.snapshot.clone(),
-            database: self.database.clone(),
+            storage: self.storage.clone(),
             mqtt: self.mqtt.clone(),
         }
     }

@@ -185,7 +185,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         info!("Initializing protocol layer...");
         let this = init::<BeeNode<B>>(
             config.protocol.clone(),
-            config.database.clone(),
+            config.storage.clone(),
             snapshot,
             network_id,
             this,

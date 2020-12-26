@@ -59,8 +59,8 @@ interval_unsynced = 1000
 enabled = true
 delay   = 60480
 
-[database]
-path = "./database/alphanet"
+[storage]
+path = "./storage/alphanet"
 
 [mqtt]
 address = "tcp://localhost:1883"
