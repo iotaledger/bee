@@ -7,6 +7,7 @@ use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
 use bee_network::{NetworkConfig, NetworkConfigBuilder};
 use bee_peering::{PeeringConfig, PeeringConfigBuilder};
 use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
+use bee_rest_api::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_snapshot::config::{SnapshotConfig, SnapshotConfigBuilder};
 use bee_storage::storage::Backend;
 
@@ -36,6 +37,7 @@ pub struct NodeConfigBuilder<B: Backend> {
     pub(crate) network: Option<NetworkConfigBuilder>,
     pub(crate) peering: Option<PeeringConfigBuilder>,
     pub(crate) protocol: Option<ProtocolConfigBuilder>,
+    pub(crate) rest_api: Option<RestApiConfigBuilder>,
     pub(crate) snapshot: Option<SnapshotConfigBuilder>,
     pub(crate) storage: Option<B::ConfigBuilder>,
     pub(crate) mqtt: Option<MqttConfigBuilder>,
@@ -62,6 +64,7 @@ impl<B: Backend> NodeConfigBuilder<B> {
             network: self.network.unwrap_or_default().finish(),
             peering: self.peering.unwrap_or_default().finish(),
             protocol: self.protocol.unwrap_or_default().finish(),
+            rest_api: self.rest_api.unwrap_or_default().finish(),
             snapshot: self.snapshot.unwrap_or_default().finish(),
             storage: self.storage.unwrap_or_default().into(),
             mqtt: self.mqtt.unwrap_or_default().finish(),
@@ -75,6 +78,7 @@ pub struct NodeConfig<B: Backend> {
     pub network: NetworkConfig,
     pub peering: PeeringConfig,
     pub protocol: ProtocolConfig,
+    pub rest_api: RestApiConfig,
     pub snapshot: SnapshotConfig,
     pub storage: B::Config,
     pub mqtt: MqttConfig,
@@ -88,6 +92,7 @@ impl<B: Backend> Clone for NodeConfig<B> {
             network: self.network.clone(),
             peering: self.peering.clone(),
             protocol: self.protocol.clone(),
+            rest_api: self.rest_api.clone(),
             snapshot: self.snapshot.clone(),
             storage: self.storage.clone(),
             mqtt: self.mqtt.clone(),

@@ -46,6 +46,11 @@ end         = 0
 [protocol.workers]
 status_interval = 10
 
+[rest_api]
+binding_port          = 14265
+binding_ip_addr       = "127.0.0.1"
+feature_proof_of_work = true
+
 [snapshot]
 full_path         = "./snapshots/alphanet/full_snapshot.bin"
 delta_path        = "./snapshots/alphanet/delta_snapshot.bin"
