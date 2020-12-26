@@ -28,15 +28,16 @@ impl Message {
         MessageBuilder::new()
     }
 
-    pub fn id(&self) -> MessageId {
+    pub fn id(&self) -> (MessageId, Vec<u8>) {
         let mut hasher = VarBlake2b::new(MESSAGE_ID_LENGTH).unwrap();
+        let bytes = self.pack_new();
 
-        hasher.update(self.pack_new());
+        hasher.update(&bytes);
 
-        let mut bytes = [0u8; MESSAGE_ID_LENGTH];
-        hasher.finalize_variable(|res| bytes.copy_from_slice(res));
+        let mut id = [0u8; MESSAGE_ID_LENGTH];
+        hasher.finalize_variable(|res| id.copy_from_slice(res));
 
-        MessageId::new(bytes)
+        (MessageId::new(id), bytes)
     }
 
     pub fn network_id(&self) -> u64 {

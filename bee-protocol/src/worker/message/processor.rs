@@ -136,7 +136,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                 }
 
                 // TODO should be passed by the hasher worker ?
-                let message_id = message.id();
+                let (message_id, _) = message.id();
                 let requested = requested_messages.contains_key(&message_id);
 
                 let mut metadata = MessageMetadata::arrived();
