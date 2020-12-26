@@ -1,8 +1,9 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod config;
 mod filters;
+
+pub mod config;
 pub mod handlers;
 pub mod storage;
 pub mod types;
@@ -39,6 +40,7 @@ where
 {
     node_builder.with_worker_cfg::<ApiWorker>((rest_api_config, protocol_config, network_id))
 }
+
 pub struct ApiWorker;
 #[async_trait]
 impl<N: Node> Worker<N> for ApiWorker

@@ -10,13 +10,11 @@ use crate::{
     NetworkId,
 };
 
-use bee_common::packable::Packable;
 use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
 use bee_pow::providers::{ConstantBuilder, MinerBuilder, ProviderBuilder};
 use bee_protocol::{config::ProtocolConfig, tangle::MsTangle, MessageSubmitterError, MessageSubmitterWorkerEvent};
 
-use blake2::VarBlake2b;
 use futures::channel::oneshot;
 use log::error;
 use serde::Serialize;
@@ -202,8 +200,7 @@ pub(crate) async fn forward_to_message_submitter<B: Backend>(
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<MessageId, Rejection> {
-    let message_bytes = message.pack_new();
-    let message_id = hash_message(&message_bytes);
+    let (message_id, message_bytes) = message.id();
 
     if tangle.contains(&message_id).await {
         return Ok(message_id);
@@ -231,17 +228,6 @@ pub(crate) async fn forward_to_message_submitter<B: Backend>(
         Ok(message_id) => Ok(message_id),
         Err(e) => Err(reject::custom(BadRequest(e.to_string()))),
     }
-}
-
-fn hash_message(bytes: &[u8]) -> MessageId {
-    use blake2::digest::{Update, VariableOutput};
-
-    let mut blake2b = VarBlake2b::new(MESSAGE_ID_LENGTH).unwrap();
-    blake2b.update(bytes);
-    let mut bytes = [0u8; 32];
-    // TODO Do we have to copy ?
-    blake2b.finalize_variable_reset(|digest| bytes.copy_from_slice(&digest));
-    MessageId::from(bytes)
 }
 
 /// Response of POST /api/v1/messages
