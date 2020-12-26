@@ -17,7 +17,6 @@ use bee_common_pt2::{
 use bee_network::{self, NetworkController, PeerId};
 use bee_peering::{ManualPeerManager, PeerManager};
 use bee_protocol::{events as protocol_events, init};
-use bee_rest_api::config::RestApiConfig;
 
 use anymap::Map;
 use async_trait::async_trait;
@@ -185,7 +184,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         info!("Initializing protocol layer...");
         let this = init::<BeeNode<B>>(
             config.protocol.clone(),
-            config.database.clone(),
+            config.storage.clone(),
             snapshot,
             network_id,
             this,
@@ -196,7 +195,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         info!("Initializing REST API...");
         let mut this = bee_rest_api::init::<BeeNode<B>>(
-            RestApiConfig::build().finish(),
+            config.rest_api.clone(),
             config.protocol.clone(),
             config.network_id.clone(),
             this,
