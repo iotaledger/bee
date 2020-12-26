@@ -207,8 +207,14 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                                 );
                             }
                         }
-                        _ => {
-                            panic!("TODO not supposed to happen")
+                        Some(Payload::Transaction(_)) => {
+                            // TODO
+                        }
+                        Some(_) => {
+                            // TODO
+                        }
+                        None => {
+                            // TODO
                         }
                     }
                 } else {
