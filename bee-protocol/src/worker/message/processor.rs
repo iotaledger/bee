@@ -18,7 +18,10 @@ use crate::{
 };
 
 use bee_common::{event::Bus, packable::Packable, shutdown_stream::ShutdownStream};
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_common_pt2::{
+    node::{Node, ResHandle},
+    worker::Worker,
+};
 use bee_message::{payload::Payload, Message, MessageId};
 use bee_network::PeerId;
 
@@ -92,46 +95,29 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                 let message = match Message::unpack(&mut &message_packet.bytes[..]) {
                     Ok(message) => message,
                     Err(e) => {
-                        // TODO put this in a function to avoid duplication
-                        trace!("Invalid message: {:?}.", e);
-                        metrics.invalid_messages_inc();
-                        if let Some(tx) = notifier {
-                            notify_err(format!("Invalid message: {:?}.", e), tx).await;
-                        }
+                        invalid_message(format!("Invalid message: {:?}.", e), &metrics, notifier);
                         continue;
                     }
                 };
 
                 if message.network_id() != config.1 {
-                    trace!("Incompatible network ID {} != {}.", message.network_id(), config.1);
-                    metrics.invalid_messages_inc();
-                    if let Some(tx) = notifier {
-                        notify_err(
-                            format!("Incompatible network ID {} != {}.", message.network_id(), config.1),
-                            tx,
-                        )
-                        .await;
-                    }
+                    invalid_message(
+                        format!("Incompatible network ID {} != {}.", message.network_id(), config.1),
+                        &metrics,
+                        notifier,
+                    );
                     continue;
                 }
 
                 if pow_score < config.0.minimum_pow_score {
-                    trace!(
-                        "Insufficient pow score: {} < {}.",
-                        pow_score,
-                        config.0.minimum_pow_score
+                    invalid_message(
+                        format!(
+                            "Insufficient pow score: {} < {}.",
+                            pow_score, config.0.minimum_pow_score
+                        ),
+                        &metrics,
+                        notifier,
                     );
-                    metrics.invalid_messages_inc();
-                    if let Some(tx) = notifier {
-                        notify_err(
-                            format!(
-                                "Insufficient pow score: {} < {}.",
-                                pow_score, config.0.minimum_pow_score
-                            ),
-                            tx,
-                        )
-                        .await;
-                    }
                     continue;
                 }
 
@@ -145,10 +131,6 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                 // store message
                 if let Some(message) = tangle.insert(message, message_id, metadata).await {
                     bus.dispatch(MessageProcessed(message_id));
-
-                    if let Some(tx) = notifier {
-                        notify_message_id(message_id, tx).await;
-                    }
 
                     // TODO this was temporarily moved from the tangle.
                     // Reason is that since the tangle is not a worker, it can't have access to the propagator tx.
@@ -220,12 +202,16 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                 } else {
                     metrics.known_messages_inc();
                     if let Some(peer_id) = from {
-                        if let Some(peer) = peer_manager.peers.get(&peer_id) {
-                            peer.metrics.known_messages_inc();
-                        }
+                        peer_manager
+                            .peers
+                            .get(&peer_id)
+                            .map(|peer| peer.metrics.known_messages_inc());
                     }
-                    if let Some(tx) = notifier {
-                        notify_message_id(message_id, tx).await;
+                }
+
+                if let Some(notifier) = notifier {
+                    if let Err(e) = notifier.send(Ok(message_id)) {
+                        error!("Failed to send message id: {:?}.", e);
                     }
                 }
             }
@@ -237,14 +223,17 @@ impl<N: Node> Worker<N> for ProcessorWorker {
     }
 }
 
-async fn notify_err(err: String, notifier: Sender<Result<MessageId, MessageSubmitterError>>) {
-    if let Err(e) = notifier.send(Err(MessageSubmitterError(err))) {
-        error!("Failed to send error: {:?}.", e);
-    }
-}
+fn invalid_message(
+    error: String,
+    metrics: &ResHandle<ProtocolMetrics>,
+    notifier: Option<Sender<Result<MessageId, MessageSubmitterError>>>,
+) {
+    trace!("{}", error);
+    metrics.invalid_messages_inc();
 
-async fn notify_message_id(message_id: MessageId, notifier: Sender<Result<MessageId, MessageSubmitterError>>) {
-    if let Err(e) = notifier.send(Ok(message_id)) {
-        error!("Failed to send message id: {:?}.", e);
+    if let Some(notifier) = notifier {
+        if let Err(e) = notifier.send(Err(MessageSubmitterError(error))) {
+            error!("Failed to send error: {:?}.", e);
+        }
     }
 }

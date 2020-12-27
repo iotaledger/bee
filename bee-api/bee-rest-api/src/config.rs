@@ -61,7 +61,7 @@ impl RestApiConfigBuilder {
 }
 
 /// REST API configuration.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone)]
 pub struct RestApiConfig {
     pub(crate) binding_socket_addr: SocketAddr,
     pub(crate) feature_proof_of_work: bool,

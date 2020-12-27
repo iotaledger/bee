@@ -9,15 +9,15 @@ use std::{fs::File, io::copy, path::Path};
 
 // TODO copy is not really streaming ?
 // TODO temporary file until fully downloaded ?
-pub async fn download_snapshot_file(file_path: &Path, download_urls: &Vec<String>) -> Result<(), Error> {
+pub async fn download_snapshot_file(file_path: &Path, download_urls: &[String]) -> Result<(), Error> {
     let file_name = file_path
         .file_name()
-        .ok_or(Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
+        .ok_or_else(||Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
 
     std::fs::create_dir_all(
         file_path
             .parent()
-            .ok_or(Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?,
+            .ok_or_else(||Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?,
     )
     .map_err(|_| Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
 
