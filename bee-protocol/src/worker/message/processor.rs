@@ -202,10 +202,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                 } else {
                     metrics.known_messages_inc();
                     if let Some(peer_id) = from {
-                        peer_manager
-                            .peers
-                            .get(&peer_id)
-                            .map(|peer| peer.metrics.known_messages_inc());
+                        peer_manager.get(&peer_id).map(|peer| peer.metrics.known_messages_inc());
                     }
                 }
 

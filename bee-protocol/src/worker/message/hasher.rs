@@ -211,7 +211,7 @@ impl Stream for BatchStream {
                         trace!("Message already received.");
                         metrics.known_messages_inc();
                         if let Some(peer_id) = event.from {
-                            if let Some(peer) = peer_manager.peers.get(&peer_id) {
+                            if let Some(peer) = peer_manager.get(&peer_id) {
                                 peer.metrics.known_messages_inc();
                             }
                         }

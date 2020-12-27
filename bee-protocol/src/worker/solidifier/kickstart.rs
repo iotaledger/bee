@@ -58,7 +58,7 @@ impl<N: Node> Worker<N> for KickstartWorker {
                 let next_ms = *tangle.get_latest_solid_milestone_index() + 1;
                 let latest_ms = *tangle.get_latest_milestone_index();
 
-                if !peer_manager.peers.is_empty() && next_ms + config.1 < latest_ms {
+                if !peer_manager.is_empty() && next_ms + config.1 < latest_ms {
                     helper::request_milestone(
                         &tangle,
                         &milestone_requester,

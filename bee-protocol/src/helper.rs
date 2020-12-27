@@ -34,7 +34,7 @@ macro_rules! implement_sender_worker {
                 id: &PeerId,
                 packet: $type,
             ) {
-                if let Some(peer) = peer_manager.peers.get(id) {
+                if let Some(peer) = peer_manager.get(id) {
                     match network.send(SendMessage {
                         to: id.clone(),
                         message: tlv_into_bytes(packet),
@@ -138,15 +138,15 @@ pub fn broadcast_heartbeat(
     pruning_milestone_index: MilestoneIndex,
     latest_milestone_index: MilestoneIndex,
 ) {
-    for entry in peer_manager.peers.iter() {
+    peer_manager.for_each_peer(|peer_id, _| {
         send_heartbeat(
             peer_manager,
             network,
             metrics,
-            entry.key().clone(),
+            peer_id.clone(),
             latest_solid_milestone_index,
             pruning_milestone_index,
             latest_milestone_index,
-        );
-    }
+        )
+    });
 }
