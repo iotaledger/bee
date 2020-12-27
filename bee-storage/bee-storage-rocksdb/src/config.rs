@@ -5,6 +5,8 @@ use crate::{compaction::CompactionStyle, compression::CompressionType};
 
 use serde::Deserialize;
 
+use std::path::PathBuf;
+
 const DEFAULT_FETCH_EDGE_LIMIT: usize = 1000;
 const DEFAULT_FETCH_INDEX_LIMIT: usize = 1000;
 const DEFAULT_FETCH_OUTPUT_ID_LIMIT: usize = 1000;
@@ -95,7 +97,7 @@ impl From<RocksDBConfigBuilder> for RocksDBConfig {
     fn from(builder: RocksDBConfigBuilder) -> Self {
         RocksDBConfig {
             storage: builder.storage.unwrap_or_default().finish(),
-            path: builder.path.unwrap_or_else(|| DEFAULT_PATH.to_string()),
+            path: PathBuf::from(builder.path.unwrap_or_else(|| DEFAULT_PATH.to_string())),
             create_if_missing: builder.create_if_missing.unwrap_or(DEFAULT_CREATE_IF_MISSING),
             create_missing_column_families: builder
                 .create_missing_column_families
@@ -147,7 +149,7 @@ pub struct StorageConfig {
 #[derive(Clone)]
 pub struct RocksDBConfig {
     pub(crate) storage: StorageConfig,
-    pub(crate) path: String,
+    pub(crate) path: PathBuf,
     pub(crate) create_if_missing: bool,
     pub(crate) create_missing_column_families: bool,
     pub(crate) enable_statistics: bool,
