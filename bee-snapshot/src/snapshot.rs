@@ -11,6 +11,7 @@ use log::{error, info};
 use std::{
     fs::OpenOptions,
     io::{BufReader, BufWriter},
+    path::Path,
 };
 
 pub struct Snapshot {
@@ -37,14 +38,14 @@ impl Snapshot {
         self.milestone_diffs.len()
     }
 
-    pub fn from_file(path: &str) -> Result<Snapshot, Error> {
+    pub fn from_file(path: &Path) -> Result<Snapshot, Error> {
         let mut reader = BufReader::new(OpenOptions::new().read(true).open(path).map_err(Error::Io)?);
 
         // TODO unwrap
         Ok(Snapshot::unpack(&mut reader).unwrap())
     }
 
-    pub fn to_file(&self, path: &str) -> Result<(), Error> {
+    pub fn to_file(&self, path: &Path) -> Result<(), Error> {
         let mut writer = BufWriter::new(
             OpenOptions::new()
                 .write(true)
@@ -180,7 +181,7 @@ impl Packable for Snapshot {
 }
 
 #[allow(dead_code)] // TODO: When pruning is enabled
-pub(crate) fn snapshot(path: &str, index: u32) -> Result<(), Error> {
+pub(crate) fn snapshot(path: &Path, index: u32) -> Result<(), Error> {
     info!("Creating snapshot at index {}...", index);
 
     let ls = Snapshot {
@@ -196,10 +197,11 @@ pub(crate) fn snapshot(path: &str, index: u32) -> Result<(), Error> {
         milestone_diffs: Box::new([]),
     };
 
-    let file = path.to_string() + "_tmp";
+    // let file = path.to_string() + "_tmp";
 
-    if let Err(e) = ls.to_file(&file) {
-        error!("Failed to write snapshot to file {}: {:?}.", file, e);
+    if let Err(e) = ls.to_file(&path) {
+        // TODO unwrap
+        error!("Failed to write snapshot to file {}: {:?}.", path.to_str().unwrap(), e);
     }
 
     info!("Created snapshot at index {}.", index);

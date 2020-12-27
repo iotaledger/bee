@@ -7,6 +7,7 @@ target/
 
 # bee-node
 bee-node/config.toml
+bee-node/snapshots/*
 
 bee-node/storage/alphanet/*
 !bee-node/storage/alphanet/.gitkeep
@@ -16,15 +17,6 @@ bee-node/storage/mainnet/*
 !bee-node/storage/mainnet/.gitkeep
 bee-node/storage/testnet/*
 !bee-node/storage/testnet/.gitkeep
-
-bee-node/snapshots/alphanet/*
-!bee-node/snapshots/alphanet/.gitkeep
-bee-node/snapshots/comnet/*
-!bee-node/snapshots/comnet/.gitkeep
-bee-node/snapshots/mainnet/*
-!bee-node/snapshots/mainnet/.gitkeep
-bee-node/snapshots/testnet/*
-!bee-node/snapshots/testnet/.gitkeep
 
 # bee-storage
 bee-storage/bee-storage-rocksdb/tests/database

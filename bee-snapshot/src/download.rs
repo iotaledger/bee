@@ -9,14 +9,20 @@ use std::{fs::File, io::copy, path::Path};
 
 // TODO copy is not really streaming ?
 // TODO temporary file until fully downloaded ?
-pub async fn download_snapshot_file(file_path: &str, download_urls: &Vec<String>) -> Result<(), Error> {
-    let file_name = match file_path.rfind('/') {
-        Some(index) => &file_path[index + 1..],
-        None => return Err(Error::InvalidFilePath(file_path.to_owned())),
-    };
+pub async fn download_snapshot_file(file_path: &Path, download_urls: &Vec<String>) -> Result<(), Error> {
+    let file_name = file_path
+        .file_name()
+        .ok_or(Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
+
+    std::fs::create_dir_all(
+        file_path
+            .parent()
+            .ok_or(Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?,
+    )
+    .map_err(|_| Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
 
     for url in download_urls {
-        let url = url.to_owned() + file_name;
+        let url = url.to_owned() + &file_name.to_string_lossy();
 
         info!("Downloading snapshot file {}...", url);
         match reqwest::get(&url).await {
@@ -32,11 +38,10 @@ pub async fn download_snapshot_file(file_path: &str, download_urls: &Vec<String>
         }
     }
 
-    // TODO here or outside ?
-    if Path::new(file_path).exists() {
-        Ok(())
-    } else {
+    if !file_path.exists() {
         error!("No working download source available.");
-        Err(Error::NoDownloadSourceAvailable)
+        return Err(Error::NoDownloadSourceAvailable);
     }
+
+    Ok(())
 }

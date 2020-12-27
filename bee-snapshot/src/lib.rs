@@ -31,8 +31,6 @@ use bee_common_pt2::node::Node;
 use chrono::{offset::TimeZone, Utc};
 use log::info;
 
-use std::path::Path;
-
 // TODO change return type
 
 pub async fn init<N: Node>(
@@ -41,8 +39,8 @@ pub async fn init<N: Node>(
     network_id: u64,
     node_builder: N::Builder,
 ) -> Result<(N::Builder, Snapshot), Error> {
-    let full_exists = Path::new(config.full_path()).exists();
-    let delta_exists = Path::new(config.delta_path()).exists();
+    let full_exists = config.full_path().exists();
+    let delta_exists = config.delta_path().exists();
 
     if !full_exists && delta_exists {
         return Err(Error::OnlyDeltaFileExists);
@@ -51,7 +49,10 @@ pub async fn init<N: Node>(
         download_snapshot_file(config.delta_path(), config.download_urls()).await?;
     }
 
-    info!("Loading full snapshot file {}...", config.full_path());
+    info!(
+        "Loading full snapshot file {}...",
+        &config.full_path().to_string_lossy()
+    );
     let full_snapshot = Snapshot::from_file(config.full_path())?;
     info!(
         "Loaded full snapshot file from {} with {} solid entry points.",
@@ -66,8 +67,12 @@ pub async fn init<N: Node>(
         ));
     }
 
-    if delta_exists {
-        info!("Loading delta snapshot file {}...", config.delta_path());
+    // Load delta file only if both full and delta files already existed or if they have just been downloaded.
+    if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
+        info!(
+            "Loading delta snapshot file {}...",
+            config.delta_path().to_string_lossy()
+        );
         let delta_snapshot = Snapshot::from_file(config.delta_path())?;
         info!(
             "Loaded delta snapshot file from {} with {} solid entry points.",
