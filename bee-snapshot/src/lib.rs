@@ -17,8 +17,9 @@ pub mod milestone_diff;
 pub mod output;
 pub mod snapshot;
 pub mod spent;
+pub mod storage;
 
-pub(crate) use download::download_snapshot_files;
+pub(crate) use download::download_snapshot_file;
 
 pub use error::Error;
 pub use header::SnapshotHeader;
@@ -40,39 +41,47 @@ pub async fn init<N: Node>(
     network_id: u64,
     node_builder: N::Builder,
 ) -> Result<(N::Builder, Snapshot), Error> {
-    if !Path::new(config.full_path()).exists() || !Path::new(config.delta_path()).exists() {
-        download_snapshot_files(config).await?;
+    let full_exists = Path::new(config.full_path()).exists();
+    let delta_exists = Path::new(config.delta_path()).exists();
+
+    if !full_exists && delta_exists {
+        return Err(Error::OnlyDeltaFileExists);
+    } else if !full_exists && !delta_exists {
+        download_snapshot_file(config.full_path(), config.download_urls()).await?;
+        download_snapshot_file(config.delta_path(), config.download_urls()).await?;
     }
 
-    info!("Loading snapshot full file {}...", config.full_path());
-    let snapshot_full = Snapshot::from_file(config.full_path())?;
+    info!("Loading full snapshot file {}...", config.full_path());
+    let full_snapshot = Snapshot::from_file(config.full_path())?;
     info!(
-        "Loaded snapshot full file from {} with {} solid entry points.",
-        Utc.timestamp(snapshot_full.header().timestamp() as i64, 0).to_rfc2822(),
-        snapshot_full.solid_entry_points().len(),
+        "Loaded full snapshot file from {} with {} solid entry points.",
+        Utc.timestamp(full_snapshot.header().timestamp() as i64, 0).to_rfc2822(),
+        full_snapshot.solid_entry_points().len(),
     );
 
-    if snapshot_full.header().network_id() != network_id {
+    if full_snapshot.header().network_id() != network_id {
         return Err(Error::NetworkIdMismatch(
             network_id,
-            snapshot_full.header().network_id(),
+            full_snapshot.header().network_id(),
         ));
     }
 
-    info!("Loading snapshot delta file {}...", config.delta_path());
-    let snapshot_delta = Snapshot::from_file(config.delta_path())?;
-    info!(
-        "Loaded snapshot delta file from {} with {} solid entry points.",
-        Utc.timestamp(snapshot_delta.header().timestamp() as i64, 0)
-            .to_rfc2822(),
-        snapshot_delta.solid_entry_points().len(),
-    );
+    if delta_exists {
+        info!("Loading delta snapshot file {}...", config.delta_path());
+        let delta_snapshot = Snapshot::from_file(config.delta_path())?;
+        info!(
+            "Loaded delta snapshot file from {} with {} solid entry points.",
+            Utc.timestamp(delta_snapshot.header().timestamp() as i64, 0)
+                .to_rfc2822(),
+            delta_snapshot.solid_entry_points().len(),
+        );
 
-    if snapshot_delta.header().network_id() != network_id {
-        return Err(Error::NetworkIdMismatch(
-            network_id,
-            snapshot_delta.header().network_id(),
-        ));
+        if delta_snapshot.header().network_id() != network_id {
+            return Err(Error::NetworkIdMismatch(
+                network_id,
+                delta_snapshot.header().network_id(),
+            ));
+        }
     }
 
     // The genesis transaction must be marked as SEP with snapshot index during loading a snapshot because coordinator
@@ -81,5 +90,5 @@ pub async fn init<N: Node>(
 
     // node_builder = node_builder.with_worker_cfg::<worker::SnapshotWorker>(config.clone());
 
-    Ok((node_builder, snapshot_full))
+    Ok((node_builder, full_snapshot))
 }

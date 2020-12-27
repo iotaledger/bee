@@ -14,6 +14,7 @@ pub enum Error {
     NetworkIdMismatch(u64, u64),
     LedgerSepIndexesInconsistency(u32, u32),
     InvalidMilestoneDiffsCount(usize, usize),
+    OnlyDeltaFileExists,
 }
 
 // TODO thiserror
@@ -35,6 +36,7 @@ impl std::fmt::Display for Error {
             }
             Error::LedgerSepIndexesInconsistency(_ledger, _sep) => write!(f, ""),
             Error::InvalidMilestoneDiffsCount(_expected, _actual) => write!(f, ""),
+            Error::OnlyDeltaFileExists => write!(f, "Only a delta snapshot file exists, without a full snapshot file. Remove the delta snapshot file and restart."),
         }
     }
 }
