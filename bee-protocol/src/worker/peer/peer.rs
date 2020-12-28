@@ -174,6 +174,7 @@ impl PeerWorker {
                     .set_latest_milestone_index(packet.latest_milestone_index.into());
                 self.peer.set_connected_peers(packet.connected_peers);
                 self.peer.set_synced_peers(packet.synced_peers);
+                self.peer.set_heartbeat_received_timestamp();
 
                 if !tangle.is_synced_threshold(2)
                     && !self

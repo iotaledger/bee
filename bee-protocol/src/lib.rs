@@ -13,6 +13,7 @@ mod helper;
 mod metrics;
 mod packet;
 mod peer;
+mod sender;
 mod worker;
 
 pub use metrics::ProtocolMetrics;
@@ -24,8 +25,8 @@ pub use worker::{
 use crate::{
     config::ProtocolConfig,
     event::{LatestMilestoneChanged, LatestSolidMilestoneChanged},
-    helper::Sender,
     peer::{Peer, PeerManager},
+    sender::Sender,
     tangle::MsTangle,
     worker::{
         BroadcasterWorker, HasherWorker, HeartbeaterWorker, IndexationPayloadWorker, KickstartWorker,
