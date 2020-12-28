@@ -32,7 +32,7 @@ impl Sender<MilestoneRequest> {
                 message: tlv_into_bytes(packet),
             }) {
                 Ok(_) => {
-                    peer.metrics.milestone_requests_sent_inc();
+                    peer.metrics().milestone_requests_sent_inc();
                     metrics.milestone_requests_sent_inc();
                 }
                 Err(e) => {
@@ -57,7 +57,7 @@ impl Sender<MessagePacket> {
                 message: tlv_into_bytes(packet),
             }) {
                 Ok(_) => {
-                    peer.metrics.messages_sent_inc();
+                    peer.metrics().messages_sent_inc();
                     metrics.messages_sent_inc();
                 }
                 Err(e) => {
@@ -82,7 +82,7 @@ impl Sender<MessageRequest> {
                 message: tlv_into_bytes(packet),
             }) {
                 Ok(_) => {
-                    peer.metrics.message_requests_sent_inc();
+                    peer.metrics().message_requests_sent_inc();
                     metrics.message_requests_sent_inc();
                 }
                 Err(e) => {
@@ -107,7 +107,7 @@ impl Sender<Heartbeat> {
                 message: tlv_into_bytes(packet),
             }) {
                 Ok(_) => {
-                    peer.metrics.heartbeats_sent_inc();
+                    peer.metrics().heartbeats_sent_inc();
                     peer.set_heartbeat_sent_timestamp();
                     metrics.heartbeats_sent_inc();
                 }

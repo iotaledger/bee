@@ -10,18 +10,17 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-// TODO make private
 pub struct Peer {
-    pub(crate) id: PeerId,
-    pub(crate) address: Multiaddr,
-    pub(crate) metrics: PeerMetrics,
-    pub(crate) latest_solid_milestone_index: AtomicU32,
-    pub(crate) pruned_index: AtomicU32,
-    pub(crate) latest_milestone_index: AtomicU32,
-    pub(crate) connected_peers: AtomicU8,
-    pub(crate) synced_peers: AtomicU8,
-    pub(crate) heartbeat_sent_timestamp: AtomicU64,
-    pub(crate) heartbeat_received_timestamp: AtomicU64,
+    id: PeerId,
+    address: Multiaddr,
+    metrics: PeerMetrics,
+    latest_solid_milestone_index: AtomicU32,
+    pruned_index: AtomicU32,
+    latest_milestone_index: AtomicU32,
+    connected_peers: AtomicU8,
+    synced_peers: AtomicU8,
+    heartbeat_sent_timestamp: AtomicU64,
+    heartbeat_received_timestamp: AtomicU64,
 }
 
 impl Peer {
@@ -38,6 +37,18 @@ impl Peer {
             heartbeat_sent_timestamp: AtomicU64::new(0),
             heartbeat_received_timestamp: AtomicU64::new(0),
         }
+    }
+
+    pub(crate) fn id(&self) -> &PeerId {
+        &self.id
+    }
+
+    pub(crate) fn address(&self) -> &Multiaddr {
+        &self.address
+    }
+
+    pub(crate) fn metrics(&self) -> &PeerMetrics {
+        &self.metrics
     }
 
     pub(crate) fn set_latest_solid_milestone_index(&self, index: MilestoneIndex) {
@@ -82,7 +93,6 @@ impl Peer {
         self.synced_peers.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
     pub(crate) fn set_heartbeat_sent_timestamp(&self) {
         self.heartbeat_sent_timestamp.store(
             SystemTime::now()
@@ -98,7 +108,6 @@ impl Peer {
         self.heartbeat_sent_timestamp.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
     pub(crate) fn set_heartbeat_received_timestamp(&self) {
         self.heartbeat_received_timestamp.store(
             SystemTime::now()

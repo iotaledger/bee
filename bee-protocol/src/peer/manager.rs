@@ -36,9 +36,9 @@ impl PeerManager {
     }
 
     pub(crate) async fn add(&self, peer: Arc<Peer>) {
-        debug!("Added peer {}.", peer.id);
-        self.peers_keys.write().await.push(peer.id.clone());
-        self.peers.insert(peer.id.clone(), peer);
+        debug!("Added peer {}.", peer.id());
+        self.peers_keys.write().await.push(peer.id().clone());
+        self.peers.insert(peer.id().clone(), peer);
     }
 
     pub(crate) async fn remove(&self, id: &PeerId) {

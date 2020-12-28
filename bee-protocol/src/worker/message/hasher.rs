@@ -212,7 +212,7 @@ impl Stream for BatchStream {
                         metrics.known_messages_inc();
                         if let Some(peer_id) = event.from {
                             if let Some(peer) = peer_manager.get(&peer_id) {
-                                peer.metrics.known_messages_inc();
+                                peer.metrics().known_messages_inc();
                             }
                         }
                         continue;

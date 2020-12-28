@@ -74,14 +74,14 @@ impl PeerWorker {
         receiver: mpsc::UnboundedReceiver<Vec<u8>>,
         shutdown: oneshot::Receiver<()>,
     ) {
-        info!("[{}] Running.", self.peer.address);
+        info!("[{}] Running.", self.peer.address());
 
         let shutdown_fused = shutdown.fuse();
 
-        let mut packet_handler = PacketHandler::new(receiver, shutdown_fused, self.peer.address.clone());
+        let mut packet_handler = PacketHandler::new(receiver, shutdown_fused, self.peer.address().clone());
 
         //                 Protocol::send_heartbeat(
-        //                     self.peer.id,
+        //                     self.peer.id(),
         //                     tangle.get_latest_solid_milestone_index(),
         //                     tangle.get_pruning_index(),
         //                     tangle.get_latest_milestone_index(),
@@ -93,7 +93,7 @@ impl PeerWorker {
             &self.milestone_requester,
             &*requested_milestones,
             // TODO should be copy ?
-            Some(self.peer.id.clone()),
+            Some(self.peer.id().clone()),
         );
 
         // TODO is this needed ?
@@ -103,67 +103,67 @@ impl PeerWorker {
             let tangle = tangle.upgrade().expect("Needed Tangle resource but it was removed");
 
             if let Err(e) = self.process_packet(&tangle, &header, bytes) {
-                error!("[{}] Processing packet failed: {:?}.", self.peer.address, e);
-                self.peer.metrics.invalid_packets_inc();
+                error!("[{}] Processing packet failed: {:?}.", self.peer.address(), e);
+                self.peer.metrics().invalid_packets_inc();
                 self.metrics.invalid_packets_inc();
             }
         }
 
-        info!("[{}] Stopped.", self.peer.address);
+        info!("[{}] Stopped.", self.peer.address());
 
-        self.peer_manager.remove(&self.peer.id).await;
+        self.peer_manager.remove(&self.peer.id()).await;
     }
 
     fn process_packet<B: Backend>(&mut self, tangle: &MsTangle<B>, header: &Header, bytes: &[u8]) -> Result<(), Error> {
         match header.packet_type {
             MilestoneRequest::ID => {
-                trace!("[{}] Reading MilestoneRequest...", self.peer.address);
+                trace!("[{}] Reading MilestoneRequest...", self.peer.address());
 
                 let packet = tlv_from_bytes::<MilestoneRequest>(&header, bytes)?;
 
                 self.milestone_responder
                     .send(MilestoneResponderWorkerEvent {
-                        peer_id: self.peer.id.clone(),
+                        peer_id: self.peer.id().clone(),
                         request: packet,
                     })
                     .map_err(|_| Error::FailedSend)?;
 
-                self.peer.metrics.milestone_requests_received_inc();
+                self.peer.metrics().milestone_requests_received_inc();
                 self.metrics.milestone_requests_received_inc();
             }
             Message::ID => {
-                trace!("[{}] Reading Message...", self.peer.address);
+                trace!("[{}] Reading Message...", self.peer.address());
 
                 let packet = tlv_from_bytes::<Message>(&header, bytes)?;
 
                 self.hasher
                     .send(HasherWorkerEvent {
-                        from: Some(self.peer.id.clone()),
+                        from: Some(self.peer.id().clone()),
                         message_packet: packet,
                         notifier: None,
                     })
                     .map_err(|_| Error::FailedSend)?;
 
-                self.peer.metrics.messages_received_inc();
+                self.peer.metrics().messages_received_inc();
                 self.metrics.messages_received_inc();
             }
             MessageRequest::ID => {
-                trace!("[{}] Reading MessageRequest...", self.peer.address);
+                trace!("[{}] Reading MessageRequest...", self.peer.address());
 
                 let packet = tlv_from_bytes::<MessageRequest>(&header, bytes)?;
 
                 self.message_responder
                     .send(MessageResponderWorkerEvent {
-                        peer_id: self.peer.id.clone(),
+                        peer_id: self.peer.id().clone(),
                         request: packet,
                     })
                     .map_err(|_| Error::FailedSend)?;
 
-                self.peer.metrics.message_requests_received_inc();
+                self.peer.metrics().message_requests_received_inc();
                 self.metrics.message_requests_received_inc();
             }
             Heartbeat::ID => {
-                trace!("[{}] Reading Heartbeat...", self.peer.address);
+                trace!("[{}] Reading Heartbeat...", self.peer.address());
 
                 let packet = tlv_from_bytes::<Heartbeat>(&header, bytes)?;
 
@@ -183,7 +183,7 @@ impl PeerWorker {
                 {
                     warn!(
                         "The peer {} can't help syncing: {} is needed but {} is pruned.",
-                        self.peer.address,
+                        self.peer.address(),
                         *tangle.get_latest_solid_milestone_index() + 1,
                         packet.pruned_index
                     );
@@ -192,7 +192,7 @@ impl PeerWorker {
 
                 // Also drop connection if autopeered and we can't help it sync
 
-                self.peer.metrics.heartbeats_received_inc();
+                self.peer.metrics().heartbeats_received_inc();
                 self.metrics.heartbeats_received_inc();
             }
             _ => return Err(Error::UnsupportedPacketType(header.packet_type)),
