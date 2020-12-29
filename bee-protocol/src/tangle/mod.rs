@@ -5,13 +5,15 @@ mod metadata;
 mod urts;
 
 pub mod flags;
+pub mod solid_entry_point;
 
+use urts::UrtsTipPool;
+
+pub use flags::Flags;
 pub use metadata::MessageMetadata;
+pub use solid_entry_point::SolidEntryPoint;
 
-use crate::{
-    milestone::{Milestone, MilestoneIndex},
-    tangle::{flags::Flags, urts::UrtsTipPool},
-};
+use crate::milestone::{Milestone, MilestoneIndex};
 
 use bee_common_pt2::node::ResHandle;
 use bee_message::{Message, MessageId};
