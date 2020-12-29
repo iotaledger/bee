@@ -56,7 +56,10 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
 }
 
 #[derive(Error, Debug)]
-pub enum Error {}
+pub enum Error {
+    #[error("Invalid or no keypair provided. Add the newly generated keypair {0} (or generate one with `bee p2p-identity`) to the configuration file and re-run the node.")]
+    InvalidOrNoKeypair(String),
+}
 
 pub struct BeeNodeBuilder<B: Backend> {
     deps: HashMap<TypeId, &'static [TypeId]>,
@@ -143,16 +146,15 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
     }
 
     async fn finish(mut self) -> Result<BeeNode<B>, Error> {
+        let generated_new_local_keypair = self.config.peering.local_keypair.2;
+        if generated_new_local_keypair {
+            return Err(Error::InvalidOrNoKeypair(self.config.peering.local_keypair.1));
+        }
+
         info!(
             "Joining network {}({}).",
             self.config.network_id.0, self.config.network_id.1
         );
-
-        let generated_new_local_keypair = self.config.peering.local_keypair.2;
-        if generated_new_local_keypair {
-            info!("Generated new local keypair: {}", self.config.peering.local_keypair.1);
-            info!("Add this to your config, and restart the node.");
-        }
 
         let config = self.config.clone();
 

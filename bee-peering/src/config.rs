@@ -23,6 +23,7 @@ impl PeeringConfigBuilder {
         self
     }
 
+    // TODO better error handling
     pub fn finish(self) -> PeeringConfig {
         let (keypair, kp_string, new) = if let Some(kp_string) = self.local_keypair {
             if kp_string.len() == 128 {
