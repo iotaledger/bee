@@ -191,14 +191,14 @@ impl Insert<(), SnapshotInfo> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Insert<SolidEntryPoint, ()> for Storage {
-    async fn insert(&self, sep: &SolidEntryPoint, (): &()) -> Result<(), <Self as Backend>::Error> {
+impl Insert<SolidEntryPoint, MilestoneIndex> for Storage {
+    async fn insert(&self, sep: &SolidEntryPoint, index: &MilestoneIndex) -> Result<(), <Self as Backend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_SOLID_ENTRY_POINT)
-            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT))?;
+            .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
+            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
 
-        self.inner.put_cf(&cf, sep.pack_new(), [])?;
+        self.inner.put_cf(&cf, sep.pack_new(), index.pack_new())?;
 
         Ok(())
     }

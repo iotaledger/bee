@@ -27,7 +27,7 @@ pub const CF_ED25519_ADDRESS_TO_OUTPUT_ID: &str = "ed25519_address_to_output_id"
 pub const CF_LEDGER_INDEX: &str = "ledger_index";
 pub const CF_MILESTONE_INDEX_TO_MILESTONE: &str = "milestone_index_to_milestone";
 pub const CF_SNAPSHOT_INFO: &str = "snapshot_info";
-pub const CF_SOLID_ENTRY_POINT: &str = "solid_entry_point";
+pub const CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX: &str = "solid_entry_point_to_milestone_index";
 
 pub struct Storage {
     pub(crate) config: StorageConfig,
@@ -68,7 +68,8 @@ impl Storage {
 
         let cf_snapshot_info = ColumnFamilyDescriptor::new(CF_SNAPSHOT_INFO, Options::default());
 
-        let cf_solid_entry_point = ColumnFamilyDescriptor::new(CF_SOLID_ENTRY_POINT, Options::default());
+        let cf_solid_entry_point_to_milestone_index =
+            ColumnFamilyDescriptor::new(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX, Options::default());
 
         let mut opts = Options::default();
 
@@ -105,7 +106,7 @@ impl Storage {
             cf_ledger_index,
             cf_milestone_index_to_milestone,
             cf_snapshot_info,
-            cf_solid_entry_point,
+            cf_solid_entry_point_to_milestone_index,
         ];
 
         Ok(DB::open_cf_descriptors(&opts, config.path, column_familes)?)

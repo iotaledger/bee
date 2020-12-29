@@ -12,7 +12,10 @@ use bee_message::{
     },
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
-use bee_protocol::{tangle::MessageMetadata, Milestone, MilestoneIndex};
+use bee_protocol::{
+    tangle::{MessageMetadata, SolidEntryPoint},
+    Milestone, MilestoneIndex,
+};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Fetch;
 
@@ -229,6 +232,26 @@ impl Fetch<(), SnapshotInfo> for Storage {
         if let Some(res) = self.inner.get_cf(&cf, [])? {
             // Unpacking from storage is fine.
             Ok(Some(SnapshotInfo::unpack(&mut res.as_slice()).unwrap()))
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
+    async fn fetch(&self, sep: &SolidEntryPoint) -> Result<Option<MilestoneIndex>, <Self as Backend>::Error>
+    where
+        Self: Sized,
+    {
+        let cf = self
+            .inner
+            .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
+            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
+
+        if let Some(res) = self.inner.get_cf(&cf, sep.pack_new())? {
+            // Unpacking from storage is fine.
+            Ok(Some(MilestoneIndex::unpack(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }

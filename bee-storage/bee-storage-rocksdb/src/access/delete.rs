@@ -183,12 +183,12 @@ impl Delete<(), SnapshotInfo> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Delete<SolidEntryPoint, ()> for Storage {
+impl Delete<SolidEntryPoint, MilestoneIndex> for Storage {
     async fn delete(&self, sep: &SolidEntryPoint) -> Result<(), <Self as Backend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_SOLID_ENTRY_POINT)
-            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT))?;
+            .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
+            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
 
         self.inner.delete_cf(&cf, sep.pack_new())?;
 

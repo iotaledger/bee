@@ -232,12 +232,13 @@ impl<'a> StorageStream<'a, (), SnapshotInfo> {
     }
 }
 
-impl<'a> StorageStream<'a, SolidEntryPoint, ()> {
-    fn unpack_key_value(mut key: &[u8], _: &[u8]) -> (SolidEntryPoint, ()) {
+impl<'a> StorageStream<'a, SolidEntryPoint, MilestoneIndex> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (SolidEntryPoint, MilestoneIndex) {
         (
             // Unpacking from storage is fine.
             SolidEntryPoint::unpack(&mut key).unwrap(),
-            (),
+            // Unpacking from storage is fine.
+            MilestoneIndex::unpack(&mut value).unwrap(),
         )
     }
 }
@@ -253,4 +254,4 @@ impl_stream!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
 impl_stream!((), LedgerIndex, CF_LEDGER_INDEX);
 impl_stream!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
 impl_stream!((), SnapshotInfo, CF_SNAPSHOT_INFO);
-impl_stream!(SolidEntryPoint, (), CF_SOLID_ENTRY_POINT);
+impl_stream!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);

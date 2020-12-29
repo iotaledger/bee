@@ -194,15 +194,15 @@ impl Exist<(), SnapshotInfo> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Exist<SolidEntryPoint, ()> for Storage {
+impl Exist<SolidEntryPoint, MilestoneIndex> for Storage {
     async fn exist(&self, sep: &SolidEntryPoint) -> Result<bool, <Self as Backend>::Error>
     where
         Self: Sized,
     {
         let cf = self
             .inner
-            .cf_handle(CF_SOLID_ENTRY_POINT)
-            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT))?;
+            .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
+            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
 
         Ok(self.inner.get_cf(&cf, sep.pack_new())?.is_some())
     }

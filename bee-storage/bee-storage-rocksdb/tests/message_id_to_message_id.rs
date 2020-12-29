@@ -22,8 +22,7 @@ async fn access() {
     let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
-    let parent = rand_message_id();
-    let child = rand_message_id();
+    let (parent, child) = (rand_message_id(), rand_message_id());
 
     assert!(!Exist::<(MessageId, MessageId), ()>::exist(&storage, &(parent, child))
         .await

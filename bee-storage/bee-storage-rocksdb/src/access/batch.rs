@@ -449,18 +449,26 @@ impl Batch<(), SnapshotInfo> for Storage {
     }
 }
 
-impl Batch<SolidEntryPoint, ()> for Storage {
-    fn batch_insert(&self, batch: &mut Self::Batch, sep: &SolidEntryPoint, (): &()) -> Result<(), Self::Error> {
+impl Batch<SolidEntryPoint, MilestoneIndex> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        sep: &SolidEntryPoint,
+        index: &MilestoneIndex,
+    ) -> Result<(), Self::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_SOLID_ENTRY_POINT)
-            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT))?;
+            .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
+            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
         sep.pack(&mut batch.key_buf).unwrap();
+        batch.value_buf.clear();
+        // Packing to bytes can't fail.
+        index.pack(&mut batch.value_buf).unwrap();
 
-        batch.inner.put_cf(&cf, &batch.key_buf, []);
+        batch.inner.put_cf(&cf, &batch.key_buf, &batch.value_buf);
 
         Ok(())
     }
@@ -468,8 +476,8 @@ impl Batch<SolidEntryPoint, ()> for Storage {
     fn batch_delete(&self, batch: &mut Self::Batch, sep: &SolidEntryPoint) -> Result<(), Self::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_SOLID_ENTRY_POINT)
-            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT))?;
+            .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
+            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
