@@ -10,5 +10,6 @@ pub mod milestone;
 pub mod option;
 pub mod output;
 pub mod snapshot;
+pub mod solid_entry_point;
 pub mod string;
 pub mod transaction;
