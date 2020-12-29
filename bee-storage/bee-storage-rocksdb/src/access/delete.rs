@@ -12,7 +12,10 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_protocol::{tangle::MessageMetadata, Milestone, MilestoneIndex};
+use bee_protocol::{
+    tangle::{MessageMetadata, SolidEntryPoint},
+    Milestone, MilestoneIndex,
+};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Delete;
 
@@ -174,6 +177,20 @@ impl Delete<(), SnapshotInfo> for Storage {
             .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
 
         self.inner.delete_cf(&cf, [])?;
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl Delete<SolidEntryPoint, ()> for Storage {
+    async fn delete(&self, sep: &SolidEntryPoint) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_SOLID_ENTRY_POINT)
+            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT))?;
+
+        self.inner.delete_cf(&cf, sep.pack_new())?;
 
         Ok(())
     }

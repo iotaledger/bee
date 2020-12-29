@@ -12,7 +12,10 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_protocol::{tangle::MessageMetadata, Milestone, MilestoneIndex};
+use bee_protocol::{
+    tangle::{MessageMetadata, SolidEntryPoint},
+    Milestone, MilestoneIndex,
+};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::{Batch, BatchBuilder};
 
@@ -441,6 +444,38 @@ impl Batch<(), SnapshotInfo> for Storage {
             .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
 
         batch.inner.delete_cf(&cf, []);
+
+        Ok(())
+    }
+}
+
+impl Batch<SolidEntryPoint, ()> for Storage {
+    fn batch_insert(&self, batch: &mut Self::Batch, sep: &SolidEntryPoint, (): &()) -> Result<(), Self::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_SOLID_ENTRY_POINT)
+            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT))?;
+
+        batch.key_buf.clear();
+        // Packing to bytes can't fail.
+        sep.pack(&mut batch.key_buf).unwrap();
+
+        batch.inner.put_cf(&cf, &batch.key_buf, []);
+
+        Ok(())
+    }
+
+    fn batch_delete(&self, batch: &mut Self::Batch, sep: &SolidEntryPoint) -> Result<(), Self::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_SOLID_ENTRY_POINT)
+            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT))?;
+
+        batch.key_buf.clear();
+        // Packing to bytes can't fail.
+        sep.pack(&mut batch.key_buf).unwrap();
+
+        batch.inner.delete_cf(&cf, &batch.key_buf);
 
         Ok(())
     }

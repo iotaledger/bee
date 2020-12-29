@@ -12,7 +12,10 @@ use bee_message::{
     },
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
-use bee_protocol::{tangle::MessageMetadata, Milestone, MilestoneIndex};
+use bee_protocol::{
+    tangle::{MessageMetadata, SolidEntryPoint},
+    Milestone, MilestoneIndex,
+};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::AsStream;
 
@@ -229,6 +232,16 @@ impl<'a> StorageStream<'a, (), SnapshotInfo> {
     }
 }
 
+impl<'a> StorageStream<'a, SolidEntryPoint, ()> {
+    fn unpack_key_value(mut key: &[u8], _: &[u8]) -> (SolidEntryPoint, ()) {
+        (
+            // Unpacking from storage is fine.
+            SolidEntryPoint::unpack(&mut key).unwrap(),
+            (),
+        )
+    }
+}
+
 impl_stream!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_stream!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_stream!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
@@ -240,3 +253,4 @@ impl_stream!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
 impl_stream!((), LedgerIndex, CF_LEDGER_INDEX);
 impl_stream!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
 impl_stream!((), SnapshotInfo, CF_SNAPSHOT_INFO);
+impl_stream!(SolidEntryPoint, (), CF_SOLID_ENTRY_POINT);
