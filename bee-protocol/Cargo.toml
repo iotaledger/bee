@@ -16,7 +16,6 @@ bee-common-pt2 = { path = "../bee-common/bee-common", package = "bee-common" }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-message = { path = "../bee-message" }
 bee-network = { path = "../bee-network" }
-bee-signing = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-snapshot = { path = "../bee-snapshot" }
 bee-storage = { path = "../bee-storage/bee-storage" }
 bee-tangle = { path = "../bee-tangle" }
