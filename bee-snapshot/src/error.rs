@@ -3,52 +3,30 @@
 
 use bee_message::Error as MessageError;
 
-#[derive(Debug)]
+use thiserror::Error;
+
+#[derive(Debug, Error)]
 pub enum Error {
-    Io(std::io::Error),
+    #[error("I/O error happened: {0}")]
+    Io(#[from] std::io::Error),
+    #[error("Invalid variant read")]
     InvalidVariant,
+    #[error("Invalid version read: {0}, {1}")]
     InvalidVersion(u8, u8),
+    #[error("")]
     NoDownloadSourceAvailable,
+    #[error("")]
     InvalidFilePath(String),
-    Message(MessageError),
+    #[error("{0}")]
+    Message(#[from] MessageError),
+    #[error("Network Id mismatch: configuration {0} != snapshot {1}")]
     NetworkIdMismatch(u64, u64),
+    #[error("")]
     LedgerSepIndexesInconsistency(u32, u32),
+    #[error("")]
     InvalidMilestoneDiffsCount(usize, usize),
+    #[error(
+        "Only a delta snapshot file exists, without a full snapshot file. Remove the delta snapshot file and restart"
+    )]
     OnlyDeltaFileExists,
-}
-
-// TODO thiserror
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Error::Io(e) => write!(f, "I/O error happened: {}.", e),
-            Error::InvalidVariant => write!(f, "Invalid variant read."),
-            Error::InvalidVersion(expected, actual) => write!(f, "Invalid version read: {}, {}.", expected, actual),
-            Error::NoDownloadSourceAvailable => write!(f, ""),
-            Error::InvalidFilePath(_) => write!(f, ""),
-            Error::Message(_) => write!(f, ""),
-            Error::NetworkIdMismatch(config, snapshot) => {
-                write!(
-                    f,
-                    "Network Id mismatch: configuration {} != snapshot {}.",
-                    config, snapshot
-                )
-            }
-            Error::LedgerSepIndexesInconsistency(_ledger, _sep) => write!(f, ""),
-            Error::InvalidMilestoneDiffsCount(_expected, _actual) => write!(f, ""),
-            Error::OnlyDeltaFileExists => write!(f, "Only a delta snapshot file exists, without a full snapshot file. Remove the delta snapshot file and restart."),
-        }
-    }
-}
-
-impl From<std::io::Error> for Error {
-    fn from(error: std::io::Error) -> Self {
-        Error::Io(error)
-    }
-}
-
-impl From<MessageError> for Error {
-    fn from(error: MessageError) -> Self {
-        Error::Message(error)
-    }
 }

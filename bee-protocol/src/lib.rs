@@ -40,7 +40,6 @@ use crate::{
 use bee_common::event::Bus;
 use bee_common_pt2::node::{Node, NodeBuilder};
 use bee_network::{Multiaddr, NetworkController, PeerId};
-use bee_snapshot::Snapshot;
 use bee_storage::storage::Backend;
 
 use futures::channel::oneshot;
@@ -52,7 +51,6 @@ use std::sync::Arc;
 pub fn init<N: Node>(
     config: ProtocolConfig,
     database_config: <N::Backend as Backend>::Config,
-    snapshot: Snapshot,
     network_id: u64,
     node_builder: N::Builder,
 ) -> N::Builder {
@@ -60,7 +58,7 @@ pub fn init<N: Node>(
 
     node_builder
         .with_worker_cfg::<StorageWorker>(database_config)
-        .with_worker_cfg::<TangleWorker>(snapshot)
+        .with_worker::<TangleWorker>()
         .with_worker::<MetricsWorker>()
         .with_worker::<PeerManagerWorker>()
         .with_worker_cfg::<HasherWorker>(config.workers.message_worker_cache)

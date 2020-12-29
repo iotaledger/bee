@@ -1,155 +1,77 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    config::SnapshotConfig,
-    constants::{
-        ADDITIONAL_PRUNING_THRESHOLD, SOLID_ENTRY_POINT_CHECK_THRESHOLD_FUTURE, SOLID_ENTRY_POINT_CHECK_THRESHOLD_PAST,
-    },
-    snapshot,
-    pruning::prune_database,
-};
+use crate::{config::SnapshotConfig, download::download_snapshot_file, error::Error, snapshot::Snapshot};
 
-use bee_common::{event::Bus,shutdown_stream::ShutdownStream};
-use bee_common_pt2::{ node::Node, worker::Worker};
-use bee_protocol::{tangle::MsTangle, Milestone, MilestoneIndex, TangleWorker};
-use bee_storage::storage::Backend;
+use bee_common_pt2::{node::Node, worker::Worker};
 
 use async_trait::async_trait;
-use futures::stream::StreamExt;
-use log::{error, info, warn};
+use chrono::{offset::TimeZone, Utc};
+use log::info;
 
-use std::{convert::Infailible, any::TypeId};
-
-pub(crate) struct SnapshotWorkerEvent(pub(crate) Milestone);
-
-pub(crate) struct SnapshotWorker {
-    pub(crate) tx: flume::Sender<SnapshotWorkerEvent>,
-}
-
-fn should_snapshot<B: Backend>(tangle: &MsTangle<B>, index: MilestoneIndex, config: &SnapshotConfig, depth: u32) -> bool {
-    let solid_index = *index;
-    let snapshot_index = *tangle.get_snapshot_index();
-    let pruning_index = *tangle.get_pruning_index();
-    let snapshot_interval = if tangle.is_synced() {
-        config.interval_synced()
-    } else {
-        config.interval_unsynced()
-    };
-
-    if (solid_index < depth + snapshot_interval)
-        || (solid_index - depth) < pruning_index + 1 + SOLID_ENTRY_POINT_CHECK_THRESHOLD_PAST
-    {
-        // Not enough history to calculate solid entry points.
-        return false;
-    }
-
-    solid_index - (depth + snapshot_interval) >= snapshot_index
-}
-
-fn should_prune<B: Backend>(tangle: &MsTangle<B>, mut index: MilestoneIndex, config: &SnapshotConfig, delay: u32) -> bool {
-    if !config.pruning().enabled() {
-        return false;
-    }
-
-    if *index <= delay {
-        return false;
-    }
-
-    // Pruning happens after creating the snapshot so the metadata should provide the latest index.
-    if *tangle.get_snapshot_index() < SOLID_ENTRY_POINT_CHECK_THRESHOLD_PAST + ADDITIONAL_PRUNING_THRESHOLD + 1 {
-        return false;
-    }
-
-    let target_index_max = MilestoneIndex(
-        *tangle.get_snapshot_index() - SOLID_ENTRY_POINT_CHECK_THRESHOLD_PAST - ADDITIONAL_PRUNING_THRESHOLD - 1,
-    );
-
-    if index > target_index_max {
-        index = target_index_max;
-    }
-
-    if tangle.get_pruning_index() >= index {
-        return false;
-    }
-
-    // We prune in "ADDITIONAL_PRUNING_THRESHOLD" steps to recalculate the solid_entry_points.
-    if *tangle.get_entry_point_index() + ADDITIONAL_PRUNING_THRESHOLD + 1 > *index {
-        return false;
-    }
-
-    true
-}
+pub struct SnapshotWorker {}
 
 #[async_trait]
 impl<N: Node> Worker<N> for SnapshotWorker {
-    type Config = SnapshotConfig;
-    type Error = Infailible;
-
-    fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>()].leak()
-    }
+    type Config = (u64, SnapshotConfig);
+    type Error = Error;
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (network_id, config) = (config.0, config.1);
 
-        let tangle = node.resource::<MsTangle<N::Backend>>().clone();
-        let bus = node.resource::<Bus>();
+        let full_exists = config.full_path().exists();
+        let delta_exists = config.delta_path().exists();
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Running.");
+        if !full_exists && delta_exists {
+            return Err(Error::OnlyDeltaFileExists);
+        } else if !full_exists && !delta_exists {
+            download_snapshot_file(config.full_path(), config.download_urls()).await?;
+            download_snapshot_file(config.delta_path(), config.download_urls()).await?;
+        }
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+        info!(
+            "Loading full snapshot file {}...",
+            &config.full_path().to_string_lossy()
+        );
+        let full_snapshot = Snapshot::from_file(config.full_path())?;
+        info!(
+            "Loaded full snapshot file from {} with {} solid entry points.",
+            Utc.timestamp(full_snapshot.header().timestamp() as i64, 0).to_rfc2822(),
+            full_snapshot.solid_entry_points().len(),
+        );
 
-            let depth = if config.depth() < SOLID_ENTRY_POINT_CHECK_THRESHOLD_FUTURE {
-                warn!(
-                    "Configuration value for \"depth\" is too low ({}), value changed to {}.",
-                    config.depth(),
-                    SOLID_ENTRY_POINT_CHECK_THRESHOLD_FUTURE
-                );
-                SOLID_ENTRY_POINT_CHECK_THRESHOLD_FUTURE
-            } else {
-                config.depth()
-            };
-            let delay_min =
-                config.depth() + SOLID_ENTRY_POINT_CHECK_THRESHOLD_PAST + ADDITIONAL_PRUNING_THRESHOLD + 1;
-            let delay = if config.pruning().delay() < delay_min {
-                warn!(
-                    "Configuration value for \"delay\" is too low ({}), value changed to {}.",
-                    config.pruning().delay(),
-                    delay_min
-                );
-                delay_min
-            } else {
-                config.pruning().delay()
-            };
+        if full_snapshot.header().network_id() != network_id {
+            return Err(Error::NetworkIdMismatch(
+                network_id,
+                full_snapshot.header().network_id(),
+            ));
+        }
 
-            while let Some(SnapshotWorkerEvent(milestone)) = receiver.next().await {
-                if should_snapshot(&tangle, milestone.index(), &config, depth) {
-                    if let Err(e) = snapshot(config.path(), *milestone.index() - depth) {
-                        error!("Failed to create snapshot: {:?}.", e);
-                    }
-                }
-                if should_prune(&tangle, milestone.index(), &config, delay) {
-                    if let Err(e) = prune_database(&tangle, MilestoneIndex(*milestone.index() - delay)) {
-                        error!("Failed to prune database: {:?}.", e);
-                    }
-                }
+        // Load delta file only if both full and delta files already existed or if they have just been downloaded.
+        if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
+            info!(
+                "Loading delta snapshot file {}...",
+                config.delta_path().to_string_lossy()
+            );
+            let delta_snapshot = Snapshot::from_file(config.delta_path())?;
+            info!(
+                "Loaded delta snapshot file from {} with {} solid entry points.",
+                Utc.timestamp(delta_snapshot.header().timestamp() as i64, 0)
+                    .to_rfc2822(),
+                delta_snapshot.solid_entry_points().len(),
+            );
+
+            if delta_snapshot.header().network_id() != network_id {
+                return Err(Error::NetworkIdMismatch(
+                    network_id,
+                    delta_snapshot.header().network_id(),
+                ));
             }
+        }
 
-            info!("Stopped.");
-        });
+        node.register_resource(full_snapshot.header().clone());
+        node.register_resource(full_snapshot.solid_entry_points().clone());
 
-        // bus.add_listener(move |latest_solid_milestone: &LatestSolidMilestoneChanged| {
-        //     if let Err(e) = snapshot_worker.send(worker::SnapshotWorkerEvent(latest_solid_milestone.0.clone())) {
-        //         warn!(
-        //             "Failed to send milestone {} to snapshot worker: {:?}.",
-        //             *latest_solid_milestone.0.index(),
-        //             e
-        //         )
-        //     }
-        // });
-
-        Ok(Self { tx })
+        Ok(Self {})
     }
 }

@@ -3,19 +3,18 @@
 
 use crate::{tangle::MsTangle, worker::storage::StorageWorker, MilestoneIndex};
 
-use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
-use bee_snapshot::Snapshot;
+use bee_snapshot::{SnapshotHeader, SnapshotWorker, SolidEntryPoints};
 
 use async_trait::async_trait;
-use futures::StreamExt;
 use log::{error, warn};
 use tokio::time::interval;
 
 use std::{
     any::TypeId,
     convert::Infallible,
+    ops::Deref,
     time::{Duration, Instant},
 };
 
@@ -23,40 +22,33 @@ pub struct TangleWorker;
 
 #[async_trait]
 impl<N: Node> Worker<N> for TangleWorker {
-    type Config = Snapshot;
+    type Config = ();
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<StorageWorker>()].leak()
+        vec![TypeId::of::<StorageWorker>(), TypeId::of::<SnapshotWorker>()].leak()
     }
 
-    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+    async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let storage = node.storage();
         let tangle = MsTangle::<N::Backend>::new(storage);
-
         node.register_resource(tangle);
-
         let tangle = node.resource::<MsTangle<N::Backend>>();
+        let snapshot_header = node.resource::<SnapshotHeader>();
+        let seps = node.resource::<SolidEntryPoints>();
 
-        tangle.update_latest_solid_milestone_index(config.header().sep_index().into());
-        tangle.update_latest_milestone_index(config.header().sep_index().into());
-        tangle.update_snapshot_index(config.header().sep_index().into());
-        tangle.update_pruning_index(config.header().sep_index().into());
+        tangle.update_latest_solid_milestone_index(snapshot_header.sep_index().into());
+        tangle.update_latest_milestone_index(snapshot_header.sep_index().into());
+        tangle.update_snapshot_index(snapshot_header.sep_index().into());
+        tangle.update_pruning_index(snapshot_header.sep_index().into());
+        // TODO
         // tangle.add_milestone(config.sep_index().into(), *config.sep_id());
 
-        tangle.add_solid_entry_point(MessageId::null(), MilestoneIndex(0));
-
-        for message_id in config.solid_entry_points() {
-            tangle.add_solid_entry_point(*message_id, MilestoneIndex(config.header().sep_index()));
+        // TODO oh no :(
+        for message_id in seps.deref().deref().deref() {
+            tangle.add_solid_entry_point(*message_id, MilestoneIndex(snapshot_header.sep_index()));
         }
-
-        node.spawn::<Self, _, _>(|shutdown| async move {
-            let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_secs(1)));
-
-            while ticker.next().await.is_some() {
-                // println!("Tangle len = {}", tangle.len());
-            }
-        });
+        tangle.add_solid_entry_point(MessageId::null(), MilestoneIndex(0));
 
         Ok(Self)
     }

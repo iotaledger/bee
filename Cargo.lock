@@ -401,7 +401,6 @@ dependencies = [
  "hex",
  "num_cpus",
  "serde",
- "thiserror",
 ]
 
 [[package]]
@@ -553,6 +552,7 @@ dependencies = [
  "log",
  "reqwest",
  "serde",
+ "thiserror",
  "tokio",
 ]
 

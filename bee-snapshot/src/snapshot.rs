@@ -1,7 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{header::SnapshotHeader, kind::Kind, milestone_diff::MilestoneDiff, output::Output, Error};
+use crate::{
+    header::SnapshotHeader, kind::Kind, milestone_diff::MilestoneDiff, output::Output,
+    solid_entry_points::SolidEntryPoints, Error,
+};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::MessageId;
@@ -16,7 +19,7 @@ use std::{
 
 pub struct Snapshot {
     pub(crate) header: SnapshotHeader,
-    pub(crate) solid_entry_points: Box<[MessageId]>,
+    pub(crate) solid_entry_points: SolidEntryPoints,
     pub(crate) outputs: Box<[Output]>,
     pub(crate) milestone_diffs: Box<[MilestoneDiff]>,
 }
@@ -26,7 +29,7 @@ impl Snapshot {
         &self.header
     }
 
-    pub fn solid_entry_points(&self) -> &[MessageId] {
+    pub fn solid_entry_points(&self) -> &SolidEntryPoints {
         &self.solid_entry_points
     }
 
@@ -173,7 +176,7 @@ impl Packable for Snapshot {
 
         Ok(Self {
             header,
-            solid_entry_points: solid_entry_points.into_boxed_slice(),
+            solid_entry_points: SolidEntryPoints::new(solid_entry_points.into_boxed_slice()),
             outputs: outputs.into_boxed_slice(),
             milestone_diffs: milestone_diffs.into_boxed_slice(),
         })
@@ -192,7 +195,7 @@ pub(crate) fn snapshot(path: &Path, index: u32) -> Result<(), Error> {
             sep_index: 0,
             ledger_index: 0,
         },
-        solid_entry_points: Box::new([]),
+        solid_entry_points: SolidEntryPoints::new(Box::new([])),
         outputs: Box::new([]),
         milestone_diffs: Box::new([]),
     };
