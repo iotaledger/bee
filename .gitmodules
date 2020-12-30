@@ -1,0 +1,5 @@
+[submodule "bee-node/src/plugins/dashboard/frontend"]
+	path = bee-node/src/plugins/dashboard/frontend
+	url = https://github.com/iotaledger/node-dashboard
+	branch = feature/chrysalis-pt2
+	ignore = dirty
