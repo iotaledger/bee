@@ -27,10 +27,6 @@ pub trait Node: Send + Sized + 'static {
     type Backend: Backend;
     type Error: std::error::Error;
 
-    fn build(config: <Self::Builder as NodeBuilder<Self>>::Config) -> Self::Builder {
-        Self::Builder::new(config)
-    }
-
     async fn stop(mut self) -> Result<(), Self::Error>;
 
     fn spawn<W, G, F>(&mut self, g: G)
@@ -50,21 +46,23 @@ pub trait Node: Send + Sized + 'static {
     #[track_caller]
     fn resource<R: Any + Send + Sync>(&self) -> ResHandle<R>;
 
+    #[track_caller]
     fn storage(&self) -> ResHandle<Self::Backend> {
         self.resource()
     }
 
+    #[track_caller]
     fn event_bus(&self) -> ResHandle<Bus<'static>> {
         self.resource()
     }
 }
 
 #[async_trait(?Send)]
-pub trait NodeBuilder<N: Node> {
+pub trait NodeBuilder<N: Node>: Sized {
     type Error;
     type Config;
 
-    fn new(config: Self::Config) -> Self;
+    fn new(config: Self::Config) -> Result<Self, Self::Error>;
 
     fn with_worker<W: Worker<N> + 'static>(self) -> Self
     where

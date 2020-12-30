@@ -16,7 +16,7 @@ use bee_common_pt2::{
     worker::Worker,
 };
 use bee_message::{payload::Payload, MessageId};
-use bee_protocol::{event::LatestSolidMilestoneChanged, tangle::MsTangle, MilestoneIndex, StorageWorker, TangleWorker};
+use bee_protocol::{event::LatestSolidMilestoneChanged, tangle::MsTangle, MilestoneIndex, TangleWorker};
 
 use async_trait::async_trait;
 use blake2::Blake2b;
@@ -114,7 +114,7 @@ where
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>(), TypeId::of::<StorageWorker>()].leak()
+        vec![TypeId::of::<TangleWorker>()].leak()
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {

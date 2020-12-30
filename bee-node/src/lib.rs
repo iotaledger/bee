@@ -17,4 +17,4 @@ pub mod tools;
 pub use banner::print_banner_and_version;
 pub use cli::CliArgs;
 pub use config::NodeConfigBuilder;
-pub use node::{BeeNode as Node, Error};
+pub use node::{BeeNode as Node, BeeNodeBuilder as NodeBuilder, Error};

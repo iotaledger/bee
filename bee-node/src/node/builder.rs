@@ -83,15 +83,17 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
     type Error = Error;
     type Config = NodeConfig<B>;
 
-    fn new(config: Self::Config) -> Self {
-        Self {
+    fn new(config: Self::Config) -> Result<Self, Self::Error> {
+        Ok(Self {
             deps: HashMap::default(),
             worker_starts: HashMap::default(),
             worker_stops: HashMap::default(),
             resource_registers: Vec::default(),
-            config,
+            config: config.clone(),
         }
         .with_resource(Bus::<TypeId>::default())
+        // TODO block ? Make new async ?
+        .with_resource(futures::executor::block_on(B::start(config.storage)).map_err(Error::StorageBackend)?))
     }
 
     fn with_worker<W: Worker<BeeNode<B>> + 'static>(self) -> Self
@@ -170,7 +172,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         // let mut this = bee_ledger::init::<BeeNode<B>>(snapshot.header().ledger_index(), this);
 
         info!("Initializing protocol layer...");
-        let this = init::<BeeNode<B>>(config.protocol.clone(), config.storage.clone(), network_id, this);
+        let this = init::<BeeNode<B>>(config.protocol.clone(), network_id, this);
 
         let mut this = this.with_worker::<VersionChecker>();
         this = this.with_worker_cfg::<Mqtt>(config.mqtt);

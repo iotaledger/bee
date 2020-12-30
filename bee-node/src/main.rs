@@ -1,8 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common_pt2::node::{Node as _, NodeBuilder as _};
-use bee_node::{plugins, print_banner_and_version, tools, CliArgs, Node, NodeConfigBuilder};
+use bee_common_pt2::node::NodeBuilder as _;
+use bee_node::{plugins, print_banner_and_version, tools, CliArgs, NodeBuilder, NodeConfigBuilder};
 use bee_storage_rocksdb::storage::Storage as Rocksdb;
 
 use log::error;
@@ -32,17 +32,15 @@ async fn main() {
     .with_cli_args(cli)
     .finish();
 
-    match Node::<Rocksdb>::build(config)
-        .with_plugin::<plugins::Mps>()
-        .with_logging()
-        .finish()
-        .await
-    {
-        Ok(node) => {
-            if let Err(e) = node.run().await {
-                error!("Failed to run node: {}", e)
+    match NodeBuilder::<Rocksdb>::new(config) {
+        Ok(builder) => match builder.with_plugin::<plugins::Mps>().with_logging().finish().await {
+            Ok(node) => {
+                if let Err(e) = node.run().await {
+                    error!("Failed to run node: {}", e)
+                }
             }
-        }
-        Err(e) => error!("Failed to build node: {}", e),
+            Err(e) => error!("Failed to build node: {}", e),
+        },
+        Err(e) => error!("Failed to build node builder: {}", e),
     }
 }

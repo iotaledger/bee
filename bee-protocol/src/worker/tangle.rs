@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{tangle::MsTangle, worker::storage::StorageWorker, MilestoneIndex};
+use crate::{tangle::MsTangle, MilestoneIndex};
 
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
@@ -26,7 +26,7 @@ impl<N: Node> Worker<N> for TangleWorker {
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<StorageWorker>(), TypeId::of::<SnapshotWorker>()].leak()
+        vec![TypeId::of::<SnapshotWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {

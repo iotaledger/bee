@@ -12,7 +12,7 @@ use crate::{
         message_submitter::MessageSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, IndexationPayloadWorker,
         IndexationPayloadWorkerEvent, MessageRequesterWorker, MetricsWorker, MilestonePayloadWorker,
         MilestonePayloadWorkerEvent, PeerManagerWorker, PropagatorWorker, PropagatorWorkerEvent, RequestedMessages,
-        StorageWorker, TangleWorker, TransactionPayloadWorker, TransactionPayloadWorkerEvent,
+        TangleWorker, TransactionPayloadWorker, TransactionPayloadWorkerEvent,
     },
     ProtocolMetrics,
 };
@@ -50,7 +50,6 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
     fn dependencies() -> &'static [TypeId] {
         vec![
-            TypeId::of::<StorageWorker>(),
             TypeId::of::<TangleWorker>(),
             TypeId::of::<PropagatorWorker>(),
             TypeId::of::<BroadcasterWorker>(),

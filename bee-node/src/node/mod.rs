@@ -112,10 +112,7 @@ impl<B: Backend> Node for BeeNode<B> {
     type Backend = B;
     type Error = Error;
 
-    async fn stop(mut self) -> Result<(), Self::Error>
-    where
-        Self: Sized,
-    {
+    async fn stop(mut self) -> Result<(), Self::Error> {
         for worker_id in self.worker_order.clone().into_iter().rev() {
             for (shutdown, task_fut) in self.tasks.remove(&worker_id).unwrap_or_default() {
                 let _ = shutdown.send(());
@@ -125,6 +122,13 @@ impl<B: Backend> Node for BeeNode<B> {
             self.worker_stops.remove(&worker_id).unwrap()(&mut self).await;
             self.resource::<Bus>().remove_listeners_by_id(worker_id);
         }
+
+        // Unwrapping is fine since the node register the backend itself.
+        self.remove_resource::<B>()
+            .unwrap()
+            .shutdown()
+            .await
+            .map_err(Error::StorageBackend)?;
 
         Ok(())
     }
@@ -147,7 +151,6 @@ impl<B: Backend> Node for BeeNode<B> {
 
     fn spawn<W, G, F>(&mut self, g: G)
     where
-        Self: Sized,
         W: Worker<Self>,
         G: FnOnce(oneshot::Receiver<()>) -> F,
         F: Future<Output = ()> + Send + 'static,
@@ -162,7 +165,6 @@ impl<B: Backend> Node for BeeNode<B> {
 
     fn worker<W>(&self) -> Option<&W>
     where
-        Self: Sized,
         W: Worker<Self> + Send + Sync,
     {
         self.workers.get::<W>()
