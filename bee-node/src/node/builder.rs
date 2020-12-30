@@ -4,7 +4,7 @@
 use crate::{
     config::NodeConfig,
     node::BeeNode,
-    plugins::{self, Mqtt},
+    plugins::{self, Dashboard, Mqtt},
     storage::Backend,
     version_checker::VersionCheckerWorker,
 };
@@ -182,6 +182,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         let mut this = this.with_worker::<VersionCheckerWorker>();
         this = this.with_worker_cfg::<Mqtt>(config.mqtt);
+        this = this.with_worker::<Dashboard>();
 
         info!("Initializing REST API...");
         let mut this = bee_rest_api::init::<BeeNode<B>>(
