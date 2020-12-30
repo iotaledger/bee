@@ -181,7 +181,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         let mut this = this.with_worker::<VersionChecker>();
         this = this.with_worker_cfg::<Mqtt>(config.mqtt);
-        this = this.with_worker::<Dashboard>();
+        this = this.with_worker_cfg::<Dashboard>(config.dashboard);
 
         info!("Initializing REST API...");
         let mut this = bee_rest_api::init::<BeeNode<B>>(

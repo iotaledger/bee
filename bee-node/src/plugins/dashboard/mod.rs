@@ -6,10 +6,11 @@ pub mod config;
 mod asset;
 mod websocket;
 
-use crate::plugins::dashboard::websocket::responses::{
-    milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, WsEvent,
+use config::DashboardConfig;
+use websocket::{
+    responses::{milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, WsEvent},
+    user_connected, WsUsers,
 };
-use websocket::{user_connected, WsUsers};
 
 use bee_common::event::Bus;
 use bee_common_pt2::{node::Node, worker::Worker};
@@ -36,10 +37,10 @@ pub struct Dashboard {}
 
 #[async_trait]
 impl<N: Node> Worker<N> for Dashboard {
-    type Config = ();
+    type Config = DashboardConfig;
     type Error = Infallible;
 
-    async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
+    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let bus = node.resource::<Bus>();
         node.spawn::<Self, _, _>(|shutdown| async move {
@@ -71,10 +72,10 @@ impl<N: Node> Worker<N> for Dashboard {
                         ws.on_upgrade(move |socket| user_connected(socket, users))
                     }));
 
-            info!("Dashboard available at ...");
+            info!("Dashboard available at http://localhost:{}.", config.port());
 
             let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(
-                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080),
+                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), config.port()),
                 async {
                     shutdown.await.ok();
                 },

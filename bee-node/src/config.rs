@@ -1,7 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
+use crate::plugins::{
+    dashboard::config::{DashboardConfig, DashboardConfigBuilder},
+    mqtt::config::{MqttConfig, MqttConfigBuilder},
+};
 
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
 use bee_network::{NetworkConfig, NetworkConfigBuilder};
@@ -41,6 +44,7 @@ pub struct NodeConfigBuilder<B: Backend> {
     pub(crate) snapshot: Option<SnapshotConfigBuilder>,
     pub(crate) storage: Option<B::ConfigBuilder>,
     pub(crate) mqtt: Option<MqttConfigBuilder>,
+    pub(crate) dashboard: Option<DashboardConfigBuilder>,
 }
 
 impl<B: Backend> NodeConfigBuilder<B> {
@@ -68,6 +72,7 @@ impl<B: Backend> NodeConfigBuilder<B> {
             snapshot: self.snapshot.unwrap_or_default().finish(),
             storage: self.storage.unwrap_or_default().into(),
             mqtt: self.mqtt.unwrap_or_default().finish(),
+            dashboard: self.dashboard.unwrap_or_default().finish(),
         }
     }
 }
@@ -82,6 +87,7 @@ pub struct NodeConfig<B: Backend> {
     pub snapshot: SnapshotConfig,
     pub storage: B::Config,
     pub mqtt: MqttConfig,
+    pub dashboard: DashboardConfig,
 }
 
 impl<B: Backend> Clone for NodeConfig<B> {
@@ -96,6 +102,7 @@ impl<B: Backend> Clone for NodeConfig<B> {
             snapshot: self.snapshot.clone(),
             storage: self.storage.clone(),
             mqtt: self.mqtt.clone(),
+            dashboard: self.dashboard.clone(),
         }
     }
 }

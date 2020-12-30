@@ -69,3 +69,6 @@ path = "./storage/alphanet"
 
 [mqtt]
 address = "tcp://localhost:1883"
+
+[dashboard]
+port  = 8081

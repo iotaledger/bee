@@ -3,8 +3,12 @@
 
 use serde::Deserialize;
 
+const DEFAULT_PORT: u16 = 8081;
+
 #[derive(Default, Deserialize)]
-pub struct DashboardConfigBuilder {}
+pub struct DashboardConfigBuilder {
+    port: Option<u16>,
+}
 
 impl DashboardConfigBuilder {
     pub fn new() -> Self {
@@ -12,15 +16,23 @@ impl DashboardConfigBuilder {
     }
 
     pub fn finish(self) -> DashboardConfig {
-        DashboardConfig {}
+        DashboardConfig {
+            port: self.port.unwrap_or(DEFAULT_PORT),
+        }
     }
 }
 
 #[derive(Clone)]
-pub struct DashboardConfig {}
+pub struct DashboardConfig {
+    port: u16,
+}
 
 impl DashboardConfig {
     pub fn build() -> DashboardConfigBuilder {
         DashboardConfigBuilder::new()
+    }
+
+    pub fn port(&self) -> u16 {
+        self.port
     }
 }
