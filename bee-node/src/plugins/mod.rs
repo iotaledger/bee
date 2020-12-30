@@ -1,9 +1,11 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+pub mod dashboard;
 pub mod mps;
 pub mod mqtt;
 
+pub use dashboard::Dashboard;
 pub use mps::Mps;
 pub use mqtt::Mqtt;
 
