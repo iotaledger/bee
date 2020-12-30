@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
+use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
 
@@ -53,7 +53,7 @@ impl<N: Node> Worker<N> for PropagatorWorker {
         let milestone_cone_updater = node.worker::<MilestoneConeUpdaterWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let bus = node.resource::<Bus>();
+        let bus = node.bus();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

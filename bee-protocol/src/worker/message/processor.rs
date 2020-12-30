@@ -17,7 +17,7 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::{event::Bus, packable::Packable, shutdown_stream::ShutdownStream};
+use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{
     node::{Node, ResHandle},
     worker::Worker,
@@ -78,7 +78,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         let requested_messages = node.resource::<RequestedMessages>();
         let metrics = node.resource::<ProtocolMetrics>();
         let peer_manager = node.resource::<PeerManager>();
-        let bus = node.resource::<Bus>();
+        let bus = node.bus();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

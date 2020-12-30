@@ -3,7 +3,7 @@
 
 use crate::{event::MpsMetricsUpdated, worker::MetricsWorker, ProtocolMetrics};
 
-use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
+use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 
 use async_trait::async_trait;
@@ -28,7 +28,7 @@ impl<N: Node> Worker<N> for MpsWorker {
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let bus = node.resource::<Bus>();
+        let bus = node.bus();
         let metrics = node.resource::<ProtocolMetrics>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {

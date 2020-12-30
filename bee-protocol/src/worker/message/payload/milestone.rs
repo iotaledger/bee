@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-use bee_common::{event::Bus, packable::Packable, shutdown_stream::ShutdownStream};
+use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, MessageId};
 
@@ -158,7 +158,7 @@ where
             config.coordinator.public_key_ranges.into_boxed_slice(),
         );
 
-        let bus = node.resource::<Bus>();
+        let bus = node.bus();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

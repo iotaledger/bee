@@ -52,7 +52,7 @@ pub trait Node: Send + Sized + 'static {
     }
 
     #[track_caller]
-    fn event_bus(&self) -> ResHandle<Bus<'static>> {
+    fn bus(&self) -> ResHandle<Bus<'static>> {
         self.resource()
     }
 }

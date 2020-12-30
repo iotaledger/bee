@@ -94,7 +94,7 @@ impl<N: Node> Worker<N> for SnapshotWorker {
         let (tx, rx) = flume::unbounded();
 
         let tangle = node.resource::<MsTangle<N::Backend>>().clone();
-        let bus = node.resource::<Bus>();
+        let bus = node.bus();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

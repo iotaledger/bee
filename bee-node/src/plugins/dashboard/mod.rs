@@ -12,7 +12,6 @@ use websocket::{
     user_connected, WsUsers,
 };
 
-use bee_common::event::Bus;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_protocol::tangle::MsTangle;
 
@@ -42,7 +41,7 @@ impl<N: Node> Worker<N> for Dashboard {
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let bus = node.resource::<Bus>();
+        let bus = node.bus();
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 

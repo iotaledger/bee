@@ -10,7 +10,7 @@ use config::MqttConfig;
 use manager::MqttManager;
 use topics::*;
 
-use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
+use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_protocol::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
 
@@ -32,7 +32,7 @@ where
     P: Into<Vec<u8>> + Send,
     F: 'static + Fn(&E) -> (T, P) + Send + Sync,
 {
-    let bus = node.resource::<Bus>();
+    let bus = node.bus();
     let manager = node.resource::<MqttManager>();
     let (tx, rx) = mpsc::unbounded_channel();
 

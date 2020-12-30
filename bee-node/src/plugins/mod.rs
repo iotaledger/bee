@@ -55,7 +55,7 @@ impl<P: Plugin, N: Node> Worker<N> for PluginWorker<P> {
     type Error = PluginError<P>;
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let bus = node.resource();
+        let bus = node.bus();
         Ok(Self {
             plugin: P::start(config, &bus).await.map_err(PluginError)?,
         })

@@ -36,7 +36,6 @@ use crate::{
     },
 };
 
-use bee_common::event::Bus;
 use bee_common_pt2::node::{Node, NodeBuilder};
 use bee_network::{Multiaddr, NetworkController, PeerId};
 
@@ -81,7 +80,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
     let peer_manager = node.resource::<PeerManager>();
     let metrics = node.resource::<ProtocolMetrics>();
 
-    node.resource::<Bus>()
+    node.bus()
         .add_listener::<(), _, _>(move |latest_milestone: &LatestMilestoneChanged| {
             info!(
                 "New milestone {} {}.",
@@ -101,7 +100,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
             }
         });
 
-    // node.resource::<Bus>().add_listener(|latest_solid_milestone: &LatestSolidMilestoneChanged| {
+    // node.bus().add_listener(|latest_solid_milestone: &LatestSolidMilestoneChanged| {
     //     // TODO block_on ?
     //     // TODO uncomment on Chrysalis Pt1.
     //     block_on(Protocol::broadcast_heartbeat(
@@ -119,7 +118,7 @@ pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
     let peer_manager = node.resource::<PeerManager>();
     let metrics = node.resource::<ProtocolMetrics>();
 
-    node.resource::<Bus>()
+    node.bus()
         .add_listener::<(), _, _>(move |latest_solid_milestone: &LatestSolidMilestoneChanged| {
             if let Some(tangle) = tangle.upgrade() {
                 debug!("New solid milestone {}.", *latest_solid_milestone.index);

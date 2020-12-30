@@ -122,7 +122,7 @@ where
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
-        let bus = node.resource::<Bus>();
+        let bus = node.bus();
 
         bus.add_listener::<(), LatestSolidMilestoneChanged, _>(move |event| {
             if let Err(e) = tx.send(*event.milestone.message_id()) {
