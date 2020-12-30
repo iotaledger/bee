@@ -1,19 +1,21 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod hash;
+
+pub use hash::{HashedIndex, HASHED_INDEX_LENGTH};
+
 use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use digest::Digest;
 use serde::{Deserialize, Serialize};
 
 use alloc::{boxed::Box, string::String};
-use blake2::Blake2s;
-
-use core::convert::TryInto;
-
-pub const HASHED_INDEX_LENGTH: usize = 32;
+use blake2::{
+    digest::{Update, VariableOutput},
+    VarBlake2b,
+};
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Indexation {
@@ -41,11 +43,17 @@ impl Indexation {
         &self.data
     }
 
+    // TODO use crypto.rs
     pub fn hash(&self) -> HashedIndex {
-        let mut hasher = Blake2s::new();
-        hasher.update(self.index.as_bytes());
-        // `Blake2s` output is `HASHED_INDEX_LENGTH` bytes long.
-        HashedIndex(hasher.finalize_reset().as_slice().try_into().unwrap())
+        let mut hasher = VarBlake2b::new(HASHED_INDEX_LENGTH).unwrap();
+        let bytes = self.pack_new();
+
+        hasher.update(&bytes);
+
+        let mut hash = [0u8; HASHED_INDEX_LENGTH];
+        hasher.finalize_variable(|res| hash.copy_from_slice(res));
+
+        HashedIndex::new(hash)
     }
 }
 
@@ -82,21 +90,5 @@ impl Packable for Indexation {
             index: String::from_utf8(index_bytes)?,
             data: data_bytes.into_boxed_slice(),
         })
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
-pub struct HashedIndex([u8; HASHED_INDEX_LENGTH]);
-
-// TODO review when we have fixed size index
-impl HashedIndex {
-    pub fn new(bytes: [u8; HASHED_INDEX_LENGTH]) -> Self {
-        Self(bytes)
-    }
-}
-
-impl AsRef<[u8]> for HashedIndex {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
     }
 }
