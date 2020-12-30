@@ -10,7 +10,6 @@ mod constants;
 mod logger;
 mod node;
 mod storage;
-mod version_checker;
 
 pub mod plugins;
 pub mod tools;

@@ -14,10 +14,10 @@ use std::{convert::Infallible, time::Duration};
 const CHECK_INTERVAL_SEC: u64 = 3600;
 
 #[derive(Default)]
-pub(crate) struct VersionCheckerWorker {}
+pub struct VersionChecker {}
 
 #[async_trait]
-impl<N: Node> Worker<N> for VersionCheckerWorker {
+impl<N: Node> Worker<N> for VersionChecker {
     type Config = ();
     type Error = Infallible;
 

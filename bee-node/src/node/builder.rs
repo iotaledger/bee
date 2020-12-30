@@ -4,9 +4,8 @@
 use crate::{
     config::NodeConfig,
     node::BeeNode,
-    plugins::{self, Dashboard, Mqtt},
+    plugins::{self, Dashboard, Mqtt, VersionChecker},
     storage::Backend,
-    version_checker::VersionCheckerWorker,
 };
 
 use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
@@ -180,7 +179,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         info!("Initializing protocol layer...");
         let this = init::<BeeNode<B>>(config.protocol.clone(), config.storage.clone(), network_id, this);
 
-        let mut this = this.with_worker::<VersionCheckerWorker>();
+        let mut this = this.with_worker::<VersionChecker>();
         this = this.with_worker_cfg::<Mqtt>(config.mqtt);
         this = this.with_worker::<Dashboard>();
 
