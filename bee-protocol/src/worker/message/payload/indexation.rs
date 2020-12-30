@@ -42,8 +42,8 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
-            while let Some(IndexationPayloadWorkerEvent(ref message_id)) = receiver.next().await {
-                if let Some(message) = tangle.get(message_id).await {
+            while let Some(IndexationPayloadWorkerEvent(message_id)) = receiver.next().await {
+                if let Some(message) = tangle.get(&message_id).await {
                     let indexation = match message.payload() {
                         Some(Payload::Indexation(indexation)) => indexation,
                         Some(Payload::Transaction(transaction)) => match transaction.essence().payload() {

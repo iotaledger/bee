@@ -12,7 +12,7 @@ use crate::{
         message_submitter::MessageSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, IndexationPayloadWorker,
         IndexationPayloadWorkerEvent, MessageRequesterWorker, MetricsWorker, MilestonePayloadWorker,
         MilestonePayloadWorkerEvent, PeerManagerWorker, PropagatorWorker, PropagatorWorkerEvent, RequestedMessages,
-        StorageWorker, TangleWorker,
+        StorageWorker, TangleWorker, TransactionPayloadWorker, TransactionPayloadWorkerEvent,
     },
     ProtocolMetrics,
 };
@@ -52,12 +52,13 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         vec![
             TypeId::of::<StorageWorker>(),
             TypeId::of::<TangleWorker>(),
-            TypeId::of::<MilestonePayloadWorker>(),
             TypeId::of::<PropagatorWorker>(),
             TypeId::of::<BroadcasterWorker>(),
             TypeId::of::<MessageRequesterWorker>(),
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<TransactionPayloadWorker>(),
+            TypeId::of::<MilestonePayloadWorker>(),
             TypeId::of::<IndexationPayloadWorker>(),
         ]
         .leak()
@@ -65,6 +66,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
+        let transaction_payload_worker = node.worker::<TransactionPayloadWorker>().unwrap().tx.clone();
         let milestone_payload_worker = node.worker::<MilestonePayloadWorker>().unwrap().tx.clone();
         let indexation_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();
         let propagator = node.worker::<PropagatorWorker>().unwrap().tx.clone();
@@ -173,9 +175,17 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                     };
 
                     match message.payload() {
+                        Some(Payload::Transaction(_)) => {
+                            if let Err(e) = transaction_payload_worker.send(TransactionPayloadWorkerEvent(message_id)) {
+                                warn!(
+                                    "Sending message id {} to transaction payload worker failed: {:?}.",
+                                    message_id, e
+                                );
+                            }
+                        }
                         Some(Payload::Milestone(_)) => {
                             if let Err(e) = milestone_payload_worker.send(MilestonePayloadWorkerEvent(message_id)) {
-                                error!(
+                                warn!(
                                     "Sending message id {} to milestone payload worker failed: {:?}.",
                                     message_id, e
                                 );
@@ -183,14 +193,11 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                         }
                         Some(Payload::Indexation(_)) => {
                             if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
-                                error!(
+                                warn!(
                                     "Sending message id {} to indexation payload worker failed: {:?}.",
                                     message_id, e
                                 );
                             }
-                        }
-                        Some(Payload::Transaction(_)) => {
-                            // TODO
                         }
                         Some(_) => {
                             // TODO
