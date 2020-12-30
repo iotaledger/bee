@@ -1,7 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{header::SnapshotHeader, kind::Kind, milestone_diff::MilestoneDiff, output::Output, Error};
+use crate::{
+    header::SnapshotHeader, kind::Kind, milestone_diff::MilestoneDiff, output::Output,
+    solid_entry_points::SolidEntryPoints, Error,
+};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::MessageId;
@@ -11,11 +14,12 @@ use log::{error, info};
 use std::{
     fs::OpenOptions,
     io::{BufReader, BufWriter},
+    path::Path,
 };
 
 pub struct Snapshot {
     pub(crate) header: SnapshotHeader,
-    pub(crate) solid_entry_points: Box<[MessageId]>,
+    pub(crate) solid_entry_points: SolidEntryPoints,
     pub(crate) outputs: Box<[Output]>,
     pub(crate) milestone_diffs: Box<[MilestoneDiff]>,
 }
@@ -25,7 +29,7 @@ impl Snapshot {
         &self.header
     }
 
-    pub fn solid_entry_points(&self) -> &[MessageId] {
+    pub fn solid_entry_points(&self) -> &SolidEntryPoints {
         &self.solid_entry_points
     }
 
@@ -37,14 +41,14 @@ impl Snapshot {
         self.milestone_diffs.len()
     }
 
-    pub fn from_file(path: &str) -> Result<Snapshot, Error> {
+    pub fn from_file(path: &Path) -> Result<Snapshot, Error> {
         let mut reader = BufReader::new(OpenOptions::new().read(true).open(path).map_err(Error::Io)?);
 
         // TODO unwrap
         Ok(Snapshot::unpack(&mut reader).unwrap())
     }
 
-    pub fn to_file(&self, path: &str) -> Result<(), Error> {
+    pub fn to_file(&self, path: &Path) -> Result<(), Error> {
         let mut writer = BufWriter::new(
             OpenOptions::new()
                 .write(true)
@@ -172,7 +176,7 @@ impl Packable for Snapshot {
 
         Ok(Self {
             header,
-            solid_entry_points: solid_entry_points.into_boxed_slice(),
+            solid_entry_points: SolidEntryPoints::new(solid_entry_points.into_boxed_slice()),
             outputs: outputs.into_boxed_slice(),
             milestone_diffs: milestone_diffs.into_boxed_slice(),
         })
@@ -180,7 +184,7 @@ impl Packable for Snapshot {
 }
 
 #[allow(dead_code)] // TODO: When pruning is enabled
-pub(crate) fn snapshot(path: &str, index: u32) -> Result<(), Error> {
+pub(crate) fn snapshot(path: &Path, index: u32) -> Result<(), Error> {
     info!("Creating snapshot at index {}...", index);
 
     let ls = Snapshot {
@@ -191,15 +195,16 @@ pub(crate) fn snapshot(path: &str, index: u32) -> Result<(), Error> {
             sep_index: 0,
             ledger_index: 0,
         },
-        solid_entry_points: Box::new([]),
+        solid_entry_points: SolidEntryPoints::new(Box::new([])),
         outputs: Box::new([]),
         milestone_diffs: Box::new([]),
     };
 
-    let file = path.to_string() + "_tmp";
+    // let file = path.to_string() + "_tmp";
 
-    if let Err(e) = ls.to_file(&file) {
-        error!("Failed to write snapshot to file {}: {:?}.", file, e);
+    if let Err(e) = ls.to_file(&path) {
+        // TODO unwrap
+        error!("Failed to write snapshot to file {}: {:?}.", path.to_str().unwrap(), e);
     }
 
     info!("Created snapshot at index {}.", index);

@@ -57,9 +57,8 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
 
 #[derive(Error, Debug)]
 pub enum Error {
-    /// Occurs, when there is an error while reading the snapshot file.
-    #[error("Reading snapshot file failed: {0}")]
-    SnapshotError(bee_snapshot::Error),
+    #[error("Invalid or no keypair provided. Add the newly generated keypair {0} (or generate one with `bee p2p-identity`) to the configuration file and re-run the node.")]
+    InvalidOrNoKeypair(String),
 }
 
 pub struct BeeNodeBuilder<B: Backend> {
@@ -147,16 +146,15 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
     }
 
     async fn finish(mut self) -> Result<BeeNode<B>, Error> {
+        let generated_new_local_keypair = self.config.peering.local_keypair.2;
+        if generated_new_local_keypair {
+            return Err(Error::InvalidOrNoKeypair(self.config.peering.local_keypair.1));
+        }
+
         info!(
             "Joining network {}({}).",
             self.config.network_id.0, self.config.network_id.1
         );
-
-        let generated_new_local_keypair = self.config.peering.local_keypair.2;
-        if generated_new_local_keypair {
-            info!("Generated new local keypair: {}", self.config.peering.local_keypair.1);
-            info!("Add this to your config, and restart the node.");
-        }
 
         let config = self.config.clone();
 
@@ -174,21 +172,13 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let this = this.with_resource(ShutdownStream::new(ctrl_c_listener(), events));
 
         info!("Initializing snapshot handler...");
-        let (this, snapshot) = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, network_id, this)
-            .await
-            .map_err(Error::SnapshotError)?;
+        let this = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, network_id, this).await;
 
         // info!("Initializing ledger...");
         // let mut this = bee_ledger::init::<BeeNode<B>>(snapshot.header().ledger_index(), this);
 
         info!("Initializing protocol layer...");
-        let this = init::<BeeNode<B>>(
-            config.protocol.clone(),
-            config.storage.clone(),
-            snapshot,
-            network_id,
-            this,
-        );
+        let this = init::<BeeNode<B>>(config.protocol.clone(), config.storage.clone(), network_id, this);
 
         let mut this = this.with_worker::<VersionCheckerWorker>();
         this = this.with_worker_cfg::<Mqtt>(config.mqtt);

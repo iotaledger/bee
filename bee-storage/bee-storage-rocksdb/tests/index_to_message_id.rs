@@ -22,8 +22,7 @@ async fn access() {
     let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
-    let index = rand_indexation().hash();
-    let message_id = rand_message_id();
+    let (index, message_id) = (rand_indexation().hash(), rand_message_id());
 
     assert!(
         !Exist::<(HashedIndex, MessageId), ()>::exist(&storage, &(index, message_id))

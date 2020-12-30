@@ -10,6 +10,7 @@ pub(crate) use hash_cache::HashCache;
 pub(crate) use hasher::{HasherWorker, HasherWorkerEvent};
 pub(crate) use payload::{
     IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker, MilestonePayloadWorkerEvent,
+    TransactionPayloadWorker, TransactionPayloadWorkerEvent,
 };
 pub(crate) use processor::{ProcessorWorker, ProcessorWorkerEvent};
 

@@ -71,7 +71,7 @@ where
                 storage,
                 message_submitter,
                 network_id,
-                rest_api_config,
+                rest_api_config.clone(),
                 protocol_config,
             )
             .recover(handle_rejection);

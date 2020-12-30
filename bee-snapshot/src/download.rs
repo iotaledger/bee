@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::SnapshotConfig, Error};
+use crate::Error;
 
 use log::{error, info, warn};
 
@@ -9,18 +9,22 @@ use std::{fs::File, io::copy, path::Path};
 
 // TODO copy is not really streaming ?
 // TODO temporary file until fully downloaded ?
-async fn download_snapshot_file(file_path: &str, config: &SnapshotConfig) -> Result<(), Error> {
-    let config = config.clone();
+pub async fn download_snapshot_file(file_path: &Path, download_urls: &[String]) -> Result<(), Error> {
+    let file_name = file_path
+        .file_name()
+        .ok_or_else(||Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
 
-    let file_name = match file_path.rfind('/') {
-        Some(index) => &file_path[index + 1..],
-        None => return Err(Error::InvalidFilePath(file_path.to_owned())),
-    };
+    std::fs::create_dir_all(
+        file_path
+            .parent()
+            .ok_or_else(||Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?,
+    )
+    .map_err(|_| Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
 
-    for url in config.download_urls() {
-        let url = url.to_owned() + file_name;
+    for url in download_urls {
+        let url = url.to_owned() + &file_name.to_string_lossy();
 
-        info!("Downloading snapshot file from {}...", url);
+        info!("Downloading snapshot file {}...", url);
         match reqwest::get(&url).await {
             Ok(res) => match File::create(file_path) {
                 // TODO unwrap
@@ -34,18 +38,10 @@ async fn download_snapshot_file(file_path: &str, config: &SnapshotConfig) -> Res
         }
     }
 
-    // TODO here or outside ?
-    if Path::new(file_path).exists() {
-        Ok(())
-    } else {
+    if !file_path.exists() {
         error!("No working download source available.");
-        Err(Error::NoDownloadSourceAvailable)
+        return Err(Error::NoDownloadSourceAvailable);
     }
-}
-
-pub async fn download_snapshot_files(config: &SnapshotConfig) -> Result<(), Error> {
-    download_snapshot_file(config.full_path(), &config).await?;
-    download_snapshot_file(config.delta_path(), &config).await?;
 
     Ok(())
 }

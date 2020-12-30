@@ -22,8 +22,7 @@ async fn access() {
     let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
-    let index = rand_milestone_index();
-    let milestone = rand_milestone();
+    let (index, milestone) = (rand_milestone_index(), rand_milestone());
 
     assert!(!Exist::<MilestoneIndex, Milestone>::exist(&storage, &index)
         .await

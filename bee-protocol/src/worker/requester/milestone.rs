@@ -79,7 +79,7 @@ async fn process_request_unchecked(
     metrics: &ResHandle<ProtocolMetrics>,
     counter: &mut usize,
 ) -> bool {
-    if peer_manager.peers.is_empty() {
+    if peer_manager.is_empty() {
         return false;
     }
 
@@ -96,7 +96,7 @@ async fn process_request_unchecked(
 
                 *counter += 1;
 
-                if let Some(peer) = peer_manager.peers.get(peer_id) {
+                if let Some(peer) = peer_manager.get(peer_id) {
                     // TODO also request if has_data ?
                     if peer.maybe_has_data(index) {
                         Sender::<MilestoneRequest>::send(

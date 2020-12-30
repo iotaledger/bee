@@ -33,7 +33,7 @@ pub fn all<B: Backend>(
     health(tangle.clone()).or(info(
         tangle.clone(),
         network_id.clone(),
-        rest_api_config,
+        rest_api_config.clone(),
         protocol_config.clone(),
     )
     .or(tips(tangle.clone()))
@@ -361,7 +361,7 @@ fn with_network_id(
 fn with_rest_api_config(
     config: RestApiConfig,
 ) -> impl Filter<Extract = (RestApiConfig,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || config)
+    warp::any().map(move || config.clone())
 }
 
 fn with_protocol_config(

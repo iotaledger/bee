@@ -6,13 +6,15 @@ use bee_snapshot::snapshot::Snapshot;
 use chrono::{offset::TimeZone, Utc};
 use structopt::StructOpt;
 
+use std::path::Path;
+
 #[derive(Debug, StructOpt)]
 pub struct SnapshotInfo {
     path: String,
 }
 
 pub fn exec(tool: &SnapshotInfo) {
-    let snapshot = Snapshot::from_file(&tool.path).unwrap();
+    let snapshot = Snapshot::from_file(Path::new(&tool.path)).unwrap();
 
     println!("Type:\t\t\t{:?}", snapshot.header().kind());
     println!(

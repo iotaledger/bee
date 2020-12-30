@@ -3,60 +3,20 @@
 
 use crate::{
     milestone::MilestoneIndex,
-    packet::{tlv_into_bytes, Heartbeat, Message as MessagePacket, MessageRequest, MilestoneRequest, Packet},
+    packet::Heartbeat,
     peer::PeerManager,
     tangle::MsTangle,
     worker::{MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages, RequestedMilestones},
-    ProtocolMetrics,
+    ProtocolMetrics, Sender,
 };
 
 use bee_common_pt2::node::ResHandle;
 use bee_message::MessageId;
-use bee_network::{Command::SendMessage, NetworkController, PeerId};
+use bee_network::{NetworkController, PeerId};
 use bee_storage::storage::Backend;
 
 use log::warn;
 use tokio::sync::mpsc;
-
-use std::marker::PhantomData;
-
-pub(crate) struct Sender<P: Packet> {
-    marker: PhantomData<P>,
-}
-
-macro_rules! implement_sender_worker {
-    ($type:ty, $sender:tt, $incrementor:tt) => {
-        impl Sender<$type> {
-            pub(crate) fn send(
-                network: &NetworkController,
-                peer_manager: &ResHandle<PeerManager>,
-                metrics: &ResHandle<ProtocolMetrics>,
-                id: &PeerId,
-                packet: $type,
-            ) {
-                if let Some(peer) = peer_manager.peers.get(id) {
-                    match network.send(SendMessage {
-                        to: id.clone(),
-                        message: tlv_into_bytes(packet),
-                    }) {
-                        Ok(_) => {
-                            peer.metrics.$incrementor();
-                            metrics.$incrementor();
-                        }
-                        Err(e) => {
-                            warn!("Sending {} to {} failed: {:?}.", stringify!($type), id, e);
-                        }
-                    }
-                }
-            }
-        }
-    };
-}
-
-implement_sender_worker!(MilestoneRequest, milestone_request, milestone_requests_sent_inc);
-implement_sender_worker!(MessagePacket, message, messages_sent_inc);
-implement_sender_worker!(MessageRequest, message_request, message_requests_sent_inc);
-implement_sender_worker!(Heartbeat, heartbeat, heartbeats_sent_inc);
 
 // TODO move some functions to workers
 
@@ -138,15 +98,15 @@ pub fn broadcast_heartbeat(
     pruning_milestone_index: MilestoneIndex,
     latest_milestone_index: MilestoneIndex,
 ) {
-    for entry in peer_manager.peers.iter() {
+    peer_manager.for_each_peer(|peer_id, _| {
         send_heartbeat(
             peer_manager,
             network,
             metrics,
-            entry.key().clone(),
+            peer_id.clone(),
             latest_solid_milestone_index,
             pruning_milestone_index,
             latest_milestone_index,
-        );
-    }
+        )
+    });
 }

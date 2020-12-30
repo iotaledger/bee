@@ -6,7 +6,6 @@ mod download;
 pub(crate) mod constants;
 pub(crate) mod kind;
 pub(crate) mod pruning;
-// pub(crate) mod worker;
 
 pub mod config;
 pub mod error;
@@ -16,70 +15,19 @@ pub mod info;
 pub mod milestone_diff;
 pub mod output;
 pub mod snapshot;
+pub mod solid_entry_points;
 pub mod spent;
-
-pub(crate) use download::download_snapshot_files;
+pub mod storage;
+pub mod worker;
 
 pub use error::Error;
 pub use header::SnapshotHeader;
 pub use snapshot::Snapshot;
+pub use solid_entry_points::SolidEntryPoints;
+pub use worker::SnapshotWorker;
 
-use bee_common_pt2::node::Node;
-// use bee_protocol::{event::LatestSolidMilestoneChanged, MilestoneIndex};
+use bee_common_pt2::node::{Node, NodeBuilder};
 
-use chrono::{offset::TimeZone, Utc};
-use log::info;
-
-use std::path::Path;
-
-// TODO change return type
-
-pub async fn init<N: Node>(
-    // tangle: &MsTangle<B>,
-    config: &config::SnapshotConfig,
-    network_id: u64,
-    node_builder: N::Builder,
-) -> Result<(N::Builder, Snapshot), Error> {
-    if !Path::new(config.full_path()).exists() || !Path::new(config.delta_path()).exists() {
-        download_snapshot_files(config).await?;
-    }
-
-    info!("Loading snapshot full file {}...", config.full_path());
-    let snapshot_full = Snapshot::from_file(config.full_path())?;
-    info!(
-        "Loaded snapshot full file from {} with {} solid entry points.",
-        Utc.timestamp(snapshot_full.header().timestamp() as i64, 0).to_rfc2822(),
-        snapshot_full.solid_entry_points().len(),
-    );
-
-    if snapshot_full.header().network_id() != network_id {
-        return Err(Error::NetworkIdMismatch(
-            network_id,
-            snapshot_full.header().network_id(),
-        ));
-    }
-
-    info!("Loading snapshot delta file {}...", config.delta_path());
-    let snapshot_delta = Snapshot::from_file(config.delta_path())?;
-    info!(
-        "Loaded snapshot delta file from {} with {} solid entry points.",
-        Utc.timestamp(snapshot_delta.header().timestamp() as i64, 0)
-            .to_rfc2822(),
-        snapshot_delta.solid_entry_points().len(),
-    );
-
-    if snapshot_delta.header().network_id() != network_id {
-        return Err(Error::NetworkIdMismatch(
-            network_id,
-            snapshot_delta.header().network_id(),
-        ));
-    }
-
-    // The genesis transaction must be marked as SEP with snapshot index during loading a snapshot because coordinator
-    // bootstraps the network by referencing the genesis tx.
-    // snapshot.solid_entry_points().insert(MessageId::null());
-
-    // node_builder = node_builder.with_worker_cfg::<worker::SnapshotWorker>(config.clone());
-
-    Ok((node_builder, snapshot_full))
+pub async fn init<N: Node>(config: &config::SnapshotConfig, network_id: u64, node_builder: N::Builder) -> N::Builder {
+    node_builder.with_worker_cfg::<worker::SnapshotWorker>((network_id, config.clone()))
 }

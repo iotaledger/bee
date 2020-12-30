@@ -12,7 +12,10 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_protocol::{tangle::MessageMetadata, Milestone, MilestoneIndex};
+use bee_protocol::{
+    tangle::{MessageMetadata, SolidEntryPoint},
+    Milestone, MilestoneIndex,
+};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Insert;
 
@@ -182,6 +185,20 @@ impl Insert<(), SnapshotInfo> for Storage {
             .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
 
         self.inner.put_cf(&cf, [], info.pack_new())?;
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl Insert<SolidEntryPoint, MilestoneIndex> for Storage {
+    async fn insert(&self, sep: &SolidEntryPoint, index: &MilestoneIndex) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
+            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
+
+        self.inner.put_cf(&cf, sep.pack_new(), index.pack_new())?;
 
         Ok(())
     }

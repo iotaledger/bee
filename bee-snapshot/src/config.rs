@@ -5,6 +5,8 @@ use crate::pruning::{PruningConfig, PruningConfigBuilder};
 
 use serde::Deserialize;
 
+use std::path::{Path, PathBuf};
+
 const DEFAULT_FULL_PATH: &str = "./snapshots/mainnet/full_snapshot.bin";
 const DEFAULT_DELTA_PATH: &str = "./snapshots/mainnet/delta_snapshot.bin";
 const DEFAULT_DOWNLOAD_URLS: Vec<String> = Vec::new();
@@ -60,8 +62,8 @@ impl SnapshotConfigBuilder {
 
     pub fn finish(self) -> SnapshotConfig {
         SnapshotConfig {
-            full_path: self.full_path.unwrap_or_else(|| DEFAULT_FULL_PATH.to_string()),
-            delta_path: self.delta_path.unwrap_or_else(|| DEFAULT_DELTA_PATH.to_string()),
+            full_path: PathBuf::from(self.full_path.unwrap_or_else(|| DEFAULT_FULL_PATH.to_string())),
+            delta_path: PathBuf::from(self.delta_path.unwrap_or_else(|| DEFAULT_DELTA_PATH.to_string())),
             download_urls: self.download_urls.unwrap_or(DEFAULT_DOWNLOAD_URLS),
             depth: self.depth.unwrap_or(DEFAULT_DEPTH),
             interval_synced: self.interval_synced.unwrap_or(DEFAULT_INTERVAL_SYNCED),
@@ -73,8 +75,8 @@ impl SnapshotConfigBuilder {
 
 #[derive(Clone)]
 pub struct SnapshotConfig {
-    full_path: String,
-    delta_path: String,
+    full_path: PathBuf,
+    delta_path: PathBuf,
     download_urls: Vec<String>,
     depth: u32,
     interval_synced: u32,
@@ -87,12 +89,12 @@ impl SnapshotConfig {
         SnapshotConfigBuilder::new()
     }
 
-    pub fn full_path(&self) -> &String {
-        &self.full_path
+    pub fn full_path(&self) -> &Path {
+        self.full_path.as_path()
     }
 
-    pub fn delta_path(&self) -> &String {
-        &self.delta_path
+    pub fn delta_path(&self) -> &Path {
+        self.delta_path.as_path()
     }
 
     pub fn download_urls(&self) -> &Vec<String> {
