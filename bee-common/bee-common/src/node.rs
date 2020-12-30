@@ -3,7 +3,7 @@
 
 use crate::worker::Worker;
 
-use bee_common::{event::Bus, shutdown};
+use bee_common::event::Bus;
 use bee_storage::storage::Backend;
 
 use async_trait::async_trait;
@@ -25,12 +25,13 @@ use std::{
 pub trait Node: Send + Sized + 'static {
     type Builder: NodeBuilder<Self>;
     type Backend: Backend;
+    type Error: std::error::Error;
 
     fn build(config: <Self::Builder as NodeBuilder<Self>>::Config) -> Self::Builder {
         Self::Builder::new(config)
     }
 
-    async fn stop(mut self) -> Result<(), shutdown::Error>;
+    async fn stop(mut self) -> Result<(), Self::Error>;
 
     fn spawn<W, G, F>(&mut self, g: G)
     where

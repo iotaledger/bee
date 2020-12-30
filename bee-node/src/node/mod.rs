@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod builder;
+mod error;
 
-pub use builder::{BeeNodeBuilder, Error};
+pub use builder::BeeNodeBuilder;
+pub use error::Error;
 
 use crate::{config::NodeConfig, storage::Backend};
 
-use bee_common::{event::Bus, shutdown, shutdown_stream::ShutdownStream};
+use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{
     node::{Node, ResHandle},
     worker::Worker,
@@ -108,8 +110,9 @@ impl<B: Backend> BeeNode<B> {
 impl<B: Backend> Node for BeeNode<B> {
     type Builder = BeeNodeBuilder<B>;
     type Backend = B;
+    type Error = Error;
 
-    async fn stop(mut self) -> Result<(), shutdown::Error>
+    async fn stop(mut self) -> Result<(), Self::Error>
     where
         Self: Sized,
     {
