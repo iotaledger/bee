@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    config::SnapshotConfig, download::download_snapshot_file, error::Error, info::SnapshotInfo, snapshot::Snapshot,
-    storage::Backend,
+    config::SnapshotConfig, download::download_snapshot_file, error::Error, info::SnapshotInfo, kind::Kind,
+    snapshot::Snapshot, storage::Backend,
 };
 
 use bee_common_pt2::{node::Node, worker::Worker};
@@ -12,6 +12,8 @@ use bee_storage::access::Fetch;
 use async_trait::async_trait;
 use chrono::{offset::TimeZone, Utc};
 use log::info;
+
+use std::path::Path;
 
 pub struct SnapshotWorker {}
 
@@ -37,6 +39,33 @@ where
     }
 }
 
+fn import_snapshot(kind: &str, path: &Path, network_id: u64) -> Result<Snapshot, Error> {
+    info!("Importing {} snapshot file {}...", kind, &path.to_string_lossy());
+
+    let snapshot = Snapshot::from_file(path)?;
+
+    if snapshot.header().network_id() != network_id {
+        return Err(Error::NetworkIdMismatch(network_id, snapshot.header().network_id()));
+    }
+
+    info!(
+        "Imported {} snapshot file from {} with sep index {}, ledger index {}, {} solid entry points{} and {} milestone diffs.",
+        kind,
+        Utc.timestamp(snapshot.header().timestamp() as i64, 0)
+            .format("%d-%m-%Y %H:%M:%S"),
+        snapshot.header().sep_index(),
+        snapshot.header().ledger_index(),
+        snapshot.solid_entry_points().len(),
+        match snapshot.header().kind() {
+            Kind::Full=> format!(", {} outputs", snapshot.outputs_len()),
+            Kind::Delta=> "".to_owned()
+        },
+        snapshot.milestone_diffs_len()
+    );
+
+    Ok(snapshot)
+}
+
 async fn import_snapshots<N: Node>(node: &mut N, network_id: u64, config: &SnapshotConfig) -> Result<(), Error> {
     let full_exists = config.full_path().exists();
     let delta_exists = config.delta_path().exists();
@@ -48,44 +77,11 @@ async fn import_snapshots<N: Node>(node: &mut N, network_id: u64, config: &Snaps
         download_snapshot_file(config.delta_path(), config.download_urls()).await?;
     }
 
-    info!(
-        "Loading full snapshot file {}...",
-        &config.full_path().to_string_lossy()
-    );
-    let full_snapshot = Snapshot::from_file(config.full_path())?;
-    info!(
-        "Loaded full snapshot file from {} with {} solid entry points.",
-        Utc.timestamp(full_snapshot.header().timestamp() as i64, 0).to_rfc2822(),
-        full_snapshot.solid_entry_points().len(),
-    );
-
-    if full_snapshot.header().network_id() != network_id {
-        return Err(Error::NetworkIdMismatch(
-            network_id,
-            full_snapshot.header().network_id(),
-        ));
-    }
+    let full_snapshot = import_snapshot("full", config.full_path(), network_id)?;
 
     // Load delta file only if both full and delta files already existed or if they have just been downloaded.
     if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
-        info!(
-            "Loading delta snapshot file {}...",
-            config.delta_path().to_string_lossy()
-        );
-        let delta_snapshot = Snapshot::from_file(config.delta_path())?;
-        info!(
-            "Loaded delta snapshot file from {} with {} solid entry points.",
-            Utc.timestamp(delta_snapshot.header().timestamp() as i64, 0)
-                .to_rfc2822(),
-            delta_snapshot.solid_entry_points().len(),
-        );
-
-        if delta_snapshot.header().network_id() != network_id {
-            return Err(Error::NetworkIdMismatch(
-                network_id,
-                delta_snapshot.header().network_id(),
-            ));
-        }
+        let _delta_snapshot = import_snapshot("delta", config.delta_path(), network_id)?;
     }
 
     node.register_resource(SnapshotInfo::new(

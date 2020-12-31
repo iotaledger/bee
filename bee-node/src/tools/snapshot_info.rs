@@ -20,7 +20,8 @@ pub fn exec(tool: &SnapshotInfo) {
     println!(
         "Timestamp:\t\t{} ({})",
         snapshot.header().timestamp(),
-        Utc.timestamp(snapshot.header().timestamp() as i64, 0).to_rfc2822()
+        Utc.timestamp(snapshot.header().timestamp() as i64, 0)
+            .format("%d-%m-%Y %H:%M:%S")
     );
     println!("Network ID:\t\t{}", snapshot.header().network_id());
     println!("SEP index:\t\t{}", snapshot.header().sep_index());
