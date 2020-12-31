@@ -8,6 +8,7 @@ use crate::plugins::dashboard::{
         topics::WsTopic,
         WsUsers,
     },
+    Dashboard,
 };
 
 use bee_common::event::Bus;
@@ -24,7 +25,7 @@ pub(crate) struct MilestoneInfoResponse {
 }
 
 pub(crate) fn register(bus: ResHandle<Bus>, users: WsUsers) {
-    bus.add_listener::<(), LatestMilestoneChanged, _>(move |latest_milestone: &LatestMilestoneChanged| {
+    bus.add_listener::<Dashboard, LatestMilestoneChanged, _>(move |latest_milestone: &LatestMilestoneChanged| {
         let event = WsEvent::new(
             WsTopic::MilestoneInfo,
             WsEventInner::MilestoneInfo(MilestoneInfoResponse {

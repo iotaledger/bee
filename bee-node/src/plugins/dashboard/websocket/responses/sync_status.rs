@@ -8,6 +8,7 @@ use crate::plugins::dashboard::{
         topics::WsTopic,
         WsUsers,
     },
+    Dashboard,
 };
 
 use bee_common::event::Bus;
@@ -25,7 +26,7 @@ pub(crate) struct SyncStatusResponse {
 }
 
 pub(crate) fn register<B: Backend>(bus: ResHandle<Bus>, users: WsUsers, tangle: ResHandle<MsTangle<B>>) {
-    bus.add_listener::<(), LatestMilestoneChanged, _>(move |latest_milestone: &LatestMilestoneChanged| {
+    bus.add_listener::<Dashboard, LatestMilestoneChanged, _>(move |latest_milestone: &LatestMilestoneChanged| {
         let event = WsEvent::new(
             WsTopic::SyncStatus,
             WsEventInner::SyncStatus(SyncStatusResponse {

@@ -8,6 +8,7 @@ use crate::plugins::dashboard::{
         topics::WsTopic,
         WsUsers,
     },
+    Dashboard,
 };
 
 use bee_common::event::Bus;
@@ -54,5 +55,7 @@ impl From<&MpsMetricsUpdated> for MpsMetricsUpdatedDto {
 }
 
 pub(crate) fn register(bus: ResHandle<Bus>, users: WsUsers) {
-    bus.add_listener::<(), MpsMetricsUpdated, _>(move |metrics| block_on(broadcast(metrics.into(), users.clone())));
+    bus.add_listener::<Dashboard, MpsMetricsUpdated, _>(move |metrics| {
+        block_on(broadcast(metrics.into(), users.clone()))
+    });
 }

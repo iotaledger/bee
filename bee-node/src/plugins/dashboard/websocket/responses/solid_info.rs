@@ -8,6 +8,7 @@ use crate::plugins::dashboard::{
         topics::WsTopic,
         WsUsers,
     },
+    Dashboard,
 };
 
 use bee_common::event::Bus;
@@ -23,7 +24,7 @@ pub(crate) struct SolidInfoResponse {
 }
 
 pub(crate) fn register(bus: ResHandle<Bus>, users: WsUsers) {
-    bus.add_listener::<(), MessageSolidified, _>(move |message_solidified: &MessageSolidified| {
+    bus.add_listener::<Dashboard, MessageSolidified, _>(move |message_solidified: &MessageSolidified| {
         let event = WsEvent::new(
             WsTopic::SolidInfo,
             WsEventInner::SolidInfo(SolidInfoResponse {
