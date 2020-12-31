@@ -15,8 +15,8 @@ impl TryFrom<u8> for WsCommand {
 
     fn try_from(val: u8) -> Result<Self, Self::Error> {
         match val {
-            0x0 => Ok(WsCommand::Register),
-            0x1 => Ok(WsCommand::Unregister),
+            0 => Ok(WsCommand::Register),
+            1 => Ok(WsCommand::Unregister),
             _ => Err(val),
         }
     }
