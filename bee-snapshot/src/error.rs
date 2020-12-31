@@ -1,6 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::kind::Kind;
+
 use bee_message::Error as MessageError;
 
 use thiserror::Error;
@@ -11,8 +13,10 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("Invalid variant read")]
     InvalidVariant,
-    #[error("Invalid version read: {0}, {1}")]
+    #[error("Invalid snapshot version: node supports {0}, read {1}")]
     InvalidVersion(u8, u8),
+    #[error("Invalid snapshot kind: expected {0:?}, read {1:?}")]
+    InvalidKind(Kind, Kind),
     #[error("")]
     NoDownloadSourceAvailable,
     #[error("")]
