@@ -9,7 +9,7 @@ use commands::WsCommand;
 use topics::WsTopic;
 
 use futures::{FutureExt, StreamExt};
-use log::{error, info};
+use log::{debug, error, info};
 use tokio::sync::{mpsc, RwLock};
 use warp::ws::{Message, WebSocket};
 
@@ -38,9 +38,9 @@ pub(crate) type WsUsers = Arc<RwLock<HashMap<usize, WsUser>>>;
 
 pub(crate) async fn user_connected(ws: WebSocket, users: WsUsers) {
     // Use a counter to assign a new unique ID for this user.
-    let my_id = NEXT_USER_ID.fetch_add(1, Ordering::Relaxed);
+    let user_id = NEXT_USER_ID.fetch_add(1, Ordering::Relaxed);
 
-    info!("new user: {}", my_id);
+    debug!("New ws user: {}.", user_id);
 
     // Split the socket into a sender and receive of messages.
     let (ws_tx, mut ws_rx) = ws.split();
@@ -49,7 +49,6 @@ pub(crate) async fn user_connected(ws: WebSocket, users: WsUsers) {
     // to the websocket...
     let (tx, rx) = mpsc::unbounded_channel();
     tokio::task::spawn(rx.forward(ws_tx).map(|result| {
-        info!("forwarded {:?}", result);
         if let Err(e) = result {
             error!("websocket send error: {}", e);
         }
@@ -57,7 +56,7 @@ pub(crate) async fn user_connected(ws: WebSocket, users: WsUsers) {
 
     // Save the sender in our list of connected users.
     users.write().await.insert(
-        my_id,
+        user_id,
         WsUser {
             tx,
             topics: {
@@ -77,26 +76,26 @@ pub(crate) async fn user_connected(ws: WebSocket, users: WsUsers) {
         let msg = match result {
             Ok(msg) => msg,
             Err(e) => {
-                error!("websocket error(uid={}): {}", my_id, e);
+                error!("websocket error(uid={}): {}", user_id, e);
                 break;
             }
         };
-        user_message(my_id, msg, &users).await;
+        user_message(user_id, msg, &users).await;
     }
 
     // ws_rx stream will keep processing as long as the user stays
     // connected. Once they disconnect, then...
-    user_disconnected(my_id, &users).await;
+    user_disconnected(user_id, &users).await;
 }
 
-async fn user_message(my_id: usize, msg: Message, users: &WsUsers) {
+async fn user_message(user_id: usize, msg: Message, users: &WsUsers) {
     if msg.is_binary() {
         let bytes = msg.as_bytes();
         if bytes.len() >= 2 {
             if let (Ok(command), Ok(topic)) = (bytes[0].try_into(), bytes[1].try_into()) {
                 // unwrap is safe since the user is still present in WsUsers
                 let mut locked_users = users.write().await;
-                let user = locked_users.get_mut(&my_id).unwrap();
+                let user = locked_users.get_mut(&user_id).unwrap();
                 match command {
                     WsCommand::Register => {
                         let _ = user.topics.insert(topic);
@@ -112,8 +111,8 @@ async fn user_message(my_id: usize, msg: Message, users: &WsUsers) {
     }
 }
 
-async fn user_disconnected(my_id: usize, users: &WsUsers) {
-    info!("user disconnected: {}", my_id);
+async fn user_disconnected(user_id: usize, users: &WsUsers) {
+    debug!("User {} disconnected.", user_id);
     // Stream closed up, so remove from the user list
-    users.write().await.remove(&my_id);
+    users.write().await.remove(&user_id);
 }
