@@ -93,11 +93,6 @@ async fn serve_index() -> Result<impl Reply, Rejection> {
     serve_asset("index.html")
 }
 
-async fn serve_ws(path: Tail) -> Result<impl Reply, Rejection> {
-    println!("ws [{}]", path.as_str());
-    Ok(Response::new("hello".into()))
-}
-
 async fn serve_full_path(path: FullPath) -> Result<impl Reply, Rejection> {
     serve_asset(&path.as_str()[1..])
 }
