@@ -29,4 +29,6 @@ pub enum Error {
         "Only a delta snapshot file exists, without a full snapshot file. Remove the delta snapshot file and restart"
     )]
     OnlyDeltaFileExists,
+    #[error("Storage operation failed: {0}")]
+    StorageBackend(Box<dyn std::error::Error>),
 }

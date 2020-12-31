@@ -1,8 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_storage::storage;
+use crate::info::SnapshotInfo;
 
-pub trait Backend: storage::Backend {}
+use bee_storage::{access::Fetch, storage};
 
-impl<T> Backend for T where T: storage::Backend {}
+pub trait Backend: storage::Backend + Fetch<(), SnapshotInfo> {}
+
+impl<T> Backend for T where T: storage::Backend + Fetch<(), SnapshotInfo> {}
