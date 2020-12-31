@@ -40,6 +40,7 @@ where
 }
 
 fn import_snapshot<N: Node>(
+    node: &mut N,
     _storage: &N::Backend,
     kind: Kind,
     path: &Path,
@@ -74,6 +75,15 @@ fn import_snapshot<N: Node>(
         snapshot.milestone_diffs_len()
     );
 
+    node.register_resource(SnapshotInfo::new(
+        snapshot.header().network_id(),
+        snapshot.header().sep_index(),
+        snapshot.header().sep_index(),
+        snapshot.header().sep_index(),
+        snapshot.header().timestamp(),
+    ));
+    node.register_resource(snapshot.solid_entry_points().clone());
+
     Ok(snapshot)
 }
 
@@ -93,21 +103,12 @@ async fn import_snapshots<N: Node>(
         download_snapshot_file(config.delta_path(), config.download_urls()).await?;
     }
 
-    let full_snapshot = import_snapshot::<N>(storage, Kind::Full, config.full_path(), network_id)?;
+    let _full_snapshot = import_snapshot::<N>(node, storage, Kind::Full, config.full_path(), network_id)?;
 
     // Load delta file only if both full and delta files already existed or if they have just been downloaded.
     if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
-        let _delta_snapshot = import_snapshot::<N>(storage, Kind::Delta, config.delta_path(), network_id)?;
+        let _delta_snapshot = import_snapshot::<N>(node, storage, Kind::Delta, config.delta_path(), network_id)?;
     }
-
-    node.register_resource(SnapshotInfo::new(
-        full_snapshot.header().network_id(),
-        full_snapshot.header().sep_index(),
-        full_snapshot.header().sep_index(),
-        full_snapshot.header().sep_index(),
-        full_snapshot.header().timestamp(),
-    ));
-    node.register_resource(full_snapshot.solid_entry_points().clone());
 
     Ok(())
 }
