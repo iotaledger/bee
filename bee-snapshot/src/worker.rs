@@ -88,7 +88,13 @@ async fn import_snapshots<N: Node>(node: &mut N, network_id: u64, config: &Snaps
         }
     }
 
-    node.register_resource(full_snapshot.header().clone());
+    node.register_resource(SnapshotInfo::new(
+        full_snapshot.header().network_id(),
+        full_snapshot.header().sep_index(),
+        full_snapshot.header().sep_index(),
+        full_snapshot.header().sep_index(),
+        full_snapshot.header().timestamp(),
+    ));
     node.register_resource(full_snapshot.solid_entry_points().clone());
 
     Ok(())

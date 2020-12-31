@@ -5,7 +5,7 @@ use crate::{tangle::MsTangle, MilestoneIndex};
 
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
-use bee_snapshot::{SnapshotHeader, SnapshotWorker, SolidEntryPoints};
+use bee_snapshot::{SnapshotInfo, SnapshotWorker, SolidEntryPoints};
 
 use async_trait::async_trait;
 use log::{error, warn};
@@ -34,19 +34,19 @@ impl<N: Node> Worker<N> for TangleWorker {
         let tangle = MsTangle::<N::Backend>::new(storage);
         node.register_resource(tangle);
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let snapshot_header = node.resource::<SnapshotHeader>();
+        let snapshot_info = node.resource::<SnapshotInfo>();
         let seps = node.resource::<SolidEntryPoints>();
 
-        tangle.update_latest_solid_milestone_index(snapshot_header.sep_index().into());
-        tangle.update_latest_milestone_index(snapshot_header.sep_index().into());
-        tangle.update_snapshot_index(snapshot_header.sep_index().into());
-        tangle.update_pruning_index(snapshot_header.sep_index().into());
+        tangle.update_latest_solid_milestone_index(snapshot_info.entry_point_index().into());
+        tangle.update_latest_milestone_index(snapshot_info.entry_point_index().into());
+        tangle.update_snapshot_index(snapshot_info.snapshot_index().into());
+        tangle.update_pruning_index(snapshot_info.pruning_index().into());
         // TODO
         // tangle.add_milestone(config.sep_index().into(), *config.sep_id());
 
         // TODO oh no :(
         for message_id in seps.deref().deref().deref() {
-            tangle.add_solid_entry_point(*message_id, MilestoneIndex(snapshot_header.sep_index()));
+            tangle.add_solid_entry_point(*message_id, MilestoneIndex(snapshot_info.entry_point_index()));
         }
         tangle.add_solid_entry_point(MessageId::null(), MilestoneIndex(0));
 

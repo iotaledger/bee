@@ -22,6 +22,7 @@ pub mod worker;
 
 pub use error::Error;
 pub use header::SnapshotHeader;
+pub use info::SnapshotInfo;
 pub use snapshot::Snapshot;
 pub use solid_entry_points::SolidEntryPoints;
 pub use worker::SnapshotWorker;
