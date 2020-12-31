@@ -18,13 +18,7 @@ use bee_protocol::tangle::MsTangle;
 use asset::Asset;
 use async_trait::async_trait;
 use log::{debug, error, info};
-use warp::{
-    http::header::HeaderValue,
-    path::{FullPath, Tail},
-    reply::Response,
-    ws::Message,
-    Filter, Rejection, Reply,
-};
+use warp::{http::header::HeaderValue, path::FullPath, reply::Response, ws::Message, Filter, Rejection, Reply};
 
 use std::{
     convert::Infallible,

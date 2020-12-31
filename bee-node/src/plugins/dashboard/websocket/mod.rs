@@ -9,7 +9,7 @@ use commands::WsCommand;
 use topics::WsTopic;
 
 use futures::{FutureExt, StreamExt};
-use log::{debug, error, info};
+use log::{debug, error};
 use tokio::sync::{mpsc, RwLock};
 use warp::ws::{Message, WebSocket};
 
@@ -92,10 +92,22 @@ async fn user_message(user_id: usize, msg: Message, users: &WsUsers) {
     if msg.is_binary() {
         let bytes = msg.as_bytes();
         if bytes.len() >= 2 {
-            if let (Ok(command), Ok(topic)) = (bytes[0].try_into(), bytes[1].try_into()) {
-                // unwrap is safe since the user is still present in WsUsers
-                let mut locked_users = users.write().await;
-                let user = locked_users.get_mut(&user_id).unwrap();
+            let command = match bytes[0].try_into() {
+                Ok(command) => command,
+                Err(e) => {
+                    error!("Unknown websocket command: {}.", e);
+                    return;
+                }
+            };
+            let topic = match bytes[1].try_into() {
+                Ok(topic) => topic,
+                Err(e) => {
+                    error!("Unknown websocket topic: {}.", e);
+                    return;
+                }
+            };
+
+            if let Some(user) = users.write().await.get_mut(&user_id) {
                 match command {
                     WsCommand::Register => {
                         let _ = user.topics.insert(topic);
@@ -104,8 +116,6 @@ async fn user_message(user_id: usize, msg: Message, users: &WsUsers) {
                         let _ = user.topics.remove(&topic);
                     }
                 }
-            } else {
-                error!("unknown command/topic");
             }
         }
     }

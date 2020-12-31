@@ -11,12 +11,13 @@ pub(crate) enum WsCommand {
 }
 
 impl TryFrom<u8> for WsCommand {
-    type Error = String;
+    type Error = u8;
+
     fn try_from(val: u8) -> Result<Self, Self::Error> {
         match val {
             0x0 => Ok(WsCommand::Register),
             0x1 => Ok(WsCommand::Unregister),
-            _ => Err("unknown command".to_string()),
+            _ => Err(val),
         }
     }
 }

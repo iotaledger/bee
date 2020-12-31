@@ -27,7 +27,7 @@ pub(crate) enum WsTopic {
 }
 
 impl TryFrom<u8> for WsTopic {
-    type Error = String;
+    type Error = u8;
 
     fn try_from(val: u8) -> Result<Self, Self::Error> {
         match val {
@@ -47,7 +47,7 @@ impl TryFrom<u8> for WsTopic {
             0x13 => Ok(WsTopic::DatabaseCleanupEvent),
             0x14 => Ok(WsTopic::SpamMetrics),
             0x15 => Ok(WsTopic::AverageSpamMetrics),
-            _ => Err(format!("Unknown websocket topic: {}.", val)),
+            _ => Err(val),
         }
     }
 }
