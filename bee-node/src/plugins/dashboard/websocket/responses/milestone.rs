@@ -1,21 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugins::dashboard::{
-    broadcast,
-    websocket::{
-        responses::{WsEvent, WsEventInner},
-        topics::WsTopic,
-        WsUsers,
-    },
-    Dashboard,
+use crate::plugins::dashboard::websocket::{
+    responses::{WsEvent, WsEventInner},
+    topics::WsTopic,
 };
 
-use bee_common::event::Bus;
-use bee_common_pt2::node::ResHandle;
 use bee_protocol::event::LatestMilestoneChanged;
 
-use futures::executor::block_on;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
@@ -25,15 +17,12 @@ pub(crate) struct MilestoneResponse {
     index: u32,
 }
 
-pub(crate) fn register(bus: ResHandle<Bus>, users: WsUsers) {
-    bus.add_listener::<Dashboard, LatestMilestoneChanged, _>(move |latest_milestone: &LatestMilestoneChanged| {
-        let event = WsEvent::new(
-            WsTopic::Milestone,
-            WsEventInner::Milestone(MilestoneResponse {
-                message_id: latest_milestone.milestone.message_id().to_string(),
-                index: *latest_milestone.index,
-            }),
-        );
-        block_on(broadcast(event, users.clone()))
-    });
+pub(crate) fn forward(latest_milestone: LatestMilestoneChanged) -> WsEvent {
+    WsEvent::new(
+        WsTopic::Milestone,
+        WsEventInner::Milestone(MilestoneResponse {
+            message_id: latest_milestone.milestone.message_id().to_string(),
+            index: *latest_milestone.index,
+        }),
+    )
 }

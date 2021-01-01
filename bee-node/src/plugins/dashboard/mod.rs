@@ -12,21 +12,57 @@ use websocket::{
     user_connected, WsUsers,
 };
 
+use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
-use bee_protocol::tangle::MsTangle;
+use bee_protocol::{
+    event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated},
+    tangle::MsTangle,
+};
 
 use asset::Asset;
 use async_trait::async_trait;
-use log::{debug, error, info};
+use futures::stream::StreamExt;
+use log::{debug, error, info, warn};
+use tokio::sync::mpsc;
 use warp::{http::header::HeaderValue, path::FullPath, reply::Response, ws::Message, Filter, Rejection, Reply};
 
 use std::{
+    any::Any,
     convert::Infallible,
     net::{IpAddr, Ipv4Addr, SocketAddr},
 };
 
 #[derive(Default)]
 pub struct Dashboard {}
+
+fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, f: F)
+where
+    N: Node,
+    E: Any + Clone + Send + Sync,
+    F: 'static + Fn(E) -> WsEvent + Send + Sync,
+{
+    let bus = node.bus();
+    let users = users.clone();
+    let (tx, rx) = mpsc::unbounded_channel();
+
+    node.spawn::<Dashboard, _, _>(|shutdown| async move {
+        debug!("Ws {} topic handler running.", topic);
+
+        let mut receiver = ShutdownStream::new(shutdown, rx);
+
+        while let Some(event) = receiver.next().await {
+            broadcast(f(event), &users).await;
+        }
+
+        debug!("Ws {} topic handler stopped.", topic);
+    });
+
+    bus.add_listener::<Dashboard, E, _>(move |event: &E| {
+        if tx.send((*event).clone()).is_err() {
+            warn!("Sending event to ws {} topic handler failed.", topic);
+        }
+    });
+}
 
 #[async_trait]
 impl<N: Node> Worker<N> for Dashboard {
@@ -35,20 +71,30 @@ impl<N: Node> Worker<N> for Dashboard {
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let bus = node.bus();
+
+        // Keep track of all connected users, key is usize, value
+        // is a websocket sender.
+        let users = WsUsers::default();
+
+        // Register event handlers
+        topic_handler(node, "SyncStatus", &users, move |event: LatestMilestoneChanged| {
+            sync_status::forward(event, &tangle)
+        });
+        topic_handler(node, "MpsMetricsUpdated", &users, move |event: MpsMetricsUpdated| {
+            mps_metrics_updated::forward(event)
+        });
+        topic_handler(node, "Milestone", &users, move |event: LatestMilestoneChanged| {
+            milestone::forward(event)
+        });
+        topic_handler(node, "SolidInfo", &users, move |event: MessageSolidified| {
+            solid_info::forward(event)
+        });
+        topic_handler(node, "MilestoneInfo", &users, move |event: LatestMilestoneChanged| {
+            milestone_info::forward(event)
+        });
+
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
-
-            // Keep track of all connected users, key is usize, value
-            // is a websocket sender.
-            let users = WsUsers::default();
-
-            // Register event handlers
-            sync_status::register(bus.clone(), users.clone(), tangle.clone());
-            mps_metrics_updated::register(bus.clone(), users.clone());
-            milestone::register(bus.clone(), users.clone());
-            solid_info::register(bus.clone(), users.clone());
-            milestone_info::register(bus.clone(), users.clone());
 
             // Turn our "state" into a new Filter...
             let users = warp::any().map(move || users.clone());
@@ -105,10 +151,10 @@ fn serve_asset(path: &str) -> Result<impl Reply, Rejection> {
     Ok(res)
 }
 
-pub(crate) async fn broadcast(event: WsEvent, users: WsUsers) {
+pub(crate) async fn broadcast(event: WsEvent, users: &WsUsers) {
     match serde_json::to_string(&event) {
         Ok(event_as_string) => {
-            for (_uid, user) in users.read().await.iter() {
+            for (_, user) in users.read().await.iter() {
                 if user.topics.contains(&event.kind) {
                     if let Err(_disconnected) = user.tx.send(Ok(Message::text(event_as_string.clone()))) {
                         // The tx is disconnected, our `user_disconnected` code
