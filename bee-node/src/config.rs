@@ -23,6 +23,7 @@ use thiserror::Error;
 
 use std::{convert::TryInto, fs, path::Path};
 
+const DEFAULT_ALIAS: &str = "bee";
 const DEFAULT_NETWORK_ID: &str = "alphanet1";
 
 #[derive(Debug, Error)]
@@ -35,6 +36,7 @@ pub enum Error {
 
 #[derive(Default, Deserialize)]
 pub struct NodeConfigBuilder<B: Backend> {
+    pub(crate) alias: Option<String>,
     pub(crate) network_id: Option<String>,
     pub(crate) logger: Option<LoggerConfigBuilder>,
     pub(crate) network: Option<NetworkConfigBuilder>,
@@ -63,6 +65,7 @@ impl<B: Backend> NodeConfigBuilder<B> {
         hasher.finalize_variable(|res| network_id.1 = u64::from_le_bytes(res[0..8].try_into().unwrap()));
 
         NodeConfig {
+            alias: self.alias.unwrap_or_else(|| DEFAULT_ALIAS.to_owned()),
             network_id,
             logger: self.logger.unwrap_or_default().finish(),
             network: self.network.unwrap_or_default().finish(),
@@ -78,6 +81,7 @@ impl<B: Backend> NodeConfigBuilder<B> {
 }
 
 pub struct NodeConfig<B: Backend> {
+    pub alias: String,
     pub network_id: (String, u64),
     pub logger: LoggerConfig,
     pub network: NetworkConfig,
@@ -93,6 +97,7 @@ pub struct NodeConfig<B: Backend> {
 impl<B: Backend> Clone for NodeConfig<B> {
     fn clone(&self) -> Self {
         Self {
+            alias: self.alias.clone(),
             network_id: self.network_id.clone(),
             logger: self.logger.clone(),
             network: self.network.clone(),

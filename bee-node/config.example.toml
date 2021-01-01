@@ -1,5 +1,6 @@
 # Duplicate this file to config.toml to use it
 
+alias       = "bee"
 network_id  = "alphanet1"
 
 [logger]
