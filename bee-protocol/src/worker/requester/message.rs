@@ -59,6 +59,10 @@ async fn process_request(
         return;
     }
 
+    if peer_manager.is_empty() {
+        return;
+    }
+
     if process_request_unchecked(message_id, index, network, peer_manager, metrics, counter).await {
         requested_messages.insert(message_id, (index, Instant::now()));
     }
@@ -73,10 +77,6 @@ async fn process_request_unchecked(
     metrics: &ProtocolMetrics,
     counter: &mut usize,
 ) -> bool {
-    if peer_manager.is_empty() {
-        return false;
-    }
-
     let guard = peer_manager.peers_keys.read().await;
 
     for _ in 0..guard.len() {
@@ -129,6 +129,10 @@ async fn retry_requests(
     metrics: &ProtocolMetrics,
     counter: &mut usize,
 ) {
+    if peer_manager.is_empty() {
+        return;
+    }
+
     let mut retry_counts: usize = 0;
 
     for mut message in requested_messages.iter_mut() {
@@ -137,7 +141,6 @@ async fn retry_requests(
         if (now - *instant).as_secs() > RETRY_INTERVAL_SEC
             && process_request_unchecked(*message_id, *index, network, peer_manager, metrics, counter).await
         {
-            // TODO should we actually update ?
             *instant = now;
             retry_counts += 1;
         }

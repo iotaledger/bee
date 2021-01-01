@@ -60,9 +60,11 @@ async fn process_request(
         return;
     }
 
-    process_request_unchecked(index, peer_id, network, peer_manager, metrics, counter).await;
+    if peer_manager.is_empty() {
+        return;
+    }
 
-    if index.0 != 0 {
+    if process_request_unchecked(index, peer_id, network, peer_manager, metrics, counter).await && index.0 != 0 {
         requested_milestones.insert(index, Instant::now());
     }
 }
@@ -76,10 +78,6 @@ async fn process_request_unchecked(
     metrics: &ProtocolMetrics,
     counter: &mut usize,
 ) -> bool {
-    if peer_manager.is_empty() {
-        return false;
-    }
-
     match peer_id {
         Some(peer_id) => {
             Sender::<MilestoneRequest>::send(network, peer_manager, metrics, &peer_id, MilestoneRequest::new(*index));
@@ -120,6 +118,10 @@ async fn retry_requests(
     requested_milestones: &RequestedMilestones,
     counter: &mut usize,
 ) {
+    if peer_manager.is_empty() {
+        return;
+    }
+
     let mut retry_counts: usize = 0;
 
     for mut milestone in requested_milestones.iter_mut() {
