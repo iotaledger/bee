@@ -7,7 +7,6 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_network::{Command::SendMessage, NetworkController, PeerId};
 
 use log::warn;
@@ -22,7 +21,7 @@ impl Sender<MilestoneRequest> {
     pub(crate) fn send(
         network: &NetworkController,
         peer_manager: &PeerManager,
-        metrics: &ResHandle<ProtocolMetrics>,
+        metrics: &ProtocolMetrics,
         id: &PeerId,
         packet: MilestoneRequest,
     ) {
@@ -47,7 +46,7 @@ impl Sender<MessagePacket> {
     pub(crate) fn send(
         network: &NetworkController,
         peer_manager: &PeerManager,
-        metrics: &ResHandle<ProtocolMetrics>,
+        metrics: &ProtocolMetrics,
         id: &PeerId,
         packet: MessagePacket,
     ) {
@@ -72,7 +71,7 @@ impl Sender<MessageRequest> {
     pub(crate) fn send(
         network: &NetworkController,
         peer_manager: &PeerManager,
-        metrics: &ResHandle<ProtocolMetrics>,
+        metrics: &ProtocolMetrics,
         id: &PeerId,
         packet: MessageRequest,
     ) {
@@ -97,7 +96,7 @@ impl Sender<Heartbeat> {
     pub(crate) fn send(
         network: &NetworkController,
         peer_manager: &PeerManager,
-        metrics: &ResHandle<ProtocolMetrics>,
+        metrics: &ProtocolMetrics,
         id: &PeerId,
         packet: Heartbeat,
     ) {

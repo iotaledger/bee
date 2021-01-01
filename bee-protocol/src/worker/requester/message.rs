@@ -10,10 +10,7 @@ use crate::{
 };
 
 use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{
-    node::{Node, ResHandle},
-    worker::Worker,
-};
+use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
 use bee_network::NetworkController;
 
@@ -53,9 +50,9 @@ async fn process_request(
     message_id: MessageId,
     index: MilestoneIndex,
     network: &NetworkController,
-    peer_manager: &ResHandle<PeerManager>,
-    metrics: &ResHandle<ProtocolMetrics>,
-    requested_messages: &ResHandle<RequestedMessages>,
+    peer_manager: &PeerManager,
+    metrics: &ProtocolMetrics,
+    requested_messages: &RequestedMessages,
     counter: &mut usize,
 ) {
     if requested_messages.contains_key(&message_id) {
@@ -72,8 +69,8 @@ async fn process_request_unchecked(
     message_id: MessageId,
     index: MilestoneIndex,
     network: &NetworkController,
-    peer_manager: &ResHandle<PeerManager>,
-    metrics: &ResHandle<ProtocolMetrics>,
+    peer_manager: &PeerManager,
+    metrics: &ProtocolMetrics,
     counter: &mut usize,
 ) -> bool {
     if peer_manager.is_empty() {
@@ -127,9 +124,9 @@ async fn process_request_unchecked(
 
 async fn retry_requests(
     network: &NetworkController,
-    requested_messages: &ResHandle<RequestedMessages>,
-    peer_manager: &ResHandle<PeerManager>,
-    metrics: &ResHandle<ProtocolMetrics>,
+    requested_messages: &RequestedMessages,
+    peer_manager: &PeerManager,
+    metrics: &ProtocolMetrics,
     counter: &mut usize,
 ) {
     let mut retry_counts: usize = 0;
