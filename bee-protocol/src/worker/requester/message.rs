@@ -19,7 +19,7 @@ use bee_network::NetworkController;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
-use futures::{select, StreamExt};
+use futures::StreamExt;
 use log::{debug, info, trace};
 use tokio::{sync::mpsc, time::interval};
 
@@ -172,31 +172,47 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
         let metrics = node.resource::<ProtocolMetrics>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Running.");
+            info!("Requester running.");
 
             let mut receiver = ShutdownStream::new(shutdown, rx);
-
             let mut counter: usize = 0;
-            let mut timeouts = interval(Duration::from_secs(RETRY_INTERVAL_SEC)).fuse();
 
-            loop {
-                select! {
-                    _ = timeouts.next() => retry_requests(&network, &requested_messages, &peer_manager, &metrics, &mut counter).await,
-                    entry = receiver.next() => match entry {
-                        Some(MessageRequesterWorkerEvent(message_id, index)) => {
-                            trace!("Requesting message {}.", message_id);
-                            process_request(message_id, index, &network, &peer_manager, &metrics, &requested_messages, &mut counter).await
-                        },
-                        None => break,
-                    },
-                }
+            while let Some(MessageRequesterWorkerEvent(message_id, index)) = receiver.next().await {
+                trace!("Requesting message {}.", message_id);
+
+                process_request(
+                    message_id,
+                    index,
+                    &network,
+                    &peer_manager,
+                    &metrics,
+                    &requested_messages,
+                    &mut counter,
+                )
+                .await
             }
 
-            info!("Stopped.");
+            info!("Requester stopped.");
+        });
+
+        let requested_messages = node.resource::<RequestedMessages>();
+        let network = node.resource::<NetworkController>();
+        let peer_manager = node.resource::<PeerManager>();
+        let metrics = node.resource::<ProtocolMetrics>();
+
+        node.spawn::<Self, _, _>(|shutdown| async move {
+            info!("Retryer running.");
+
+            let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_secs(RETRY_INTERVAL_SEC)));
+            let mut counter: usize = 0;
+
+            while ticker.next().await.is_some() {
+                retry_requests(&network, &requested_messages, &peer_manager, &metrics, &mut counter).await;
+            }
+
+            info!("Retryer stopped.");
         });
 
         Ok(Self { tx })
     }
-
-    // TODO stop + remove_resource
 }

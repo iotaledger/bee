@@ -19,7 +19,7 @@ use bee_network::{NetworkController, PeerId};
 
 use async_trait::async_trait;
 use dashmap::DashMap;
-use futures::{select, StreamExt};
+use futures::StreamExt;
 use log::{debug, info};
 use tokio::{sync::mpsc, time::interval};
 
@@ -171,23 +171,40 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, rx);
-
             let mut counter: usize = 0;
-            let mut timeouts = interval(Duration::from_secs(RETRY_INTERVAL_SEC)).fuse();
 
-            loop {
-                select! {
-                    _ = timeouts.next() => retry_requests(&network, &peer_manager, &metrics, &requested_milestones, &mut counter).await,
-                    entry = receiver.next() => match entry {
-                        Some(MilestoneRequesterWorkerEvent(index, peer_id)) => {
-                            if !tangle.contains_milestone(index) {
-                                debug!("Requesting milestone {}.", *index);
-                                process_request(index, peer_id, &network, &peer_manager, &metrics, &requested_milestones, &mut counter).await;
-                            }
-                        },
-                        None => break,
-                    },
+            while let Some(MilestoneRequesterWorkerEvent(index, peer_id)) = receiver.next().await {
+                if !tangle.contains_milestone(index) {
+                    debug!("Requesting milestone {}.", *index);
+                    process_request(
+                        index,
+                        peer_id,
+                        &network,
+                        &peer_manager,
+                        &metrics,
+                        &requested_milestones,
+                        &mut counter,
+                    )
+                    .await;
                 }
+            }
+
+            info!("Stopped.");
+        });
+
+        let network = node.resource::<NetworkController>();
+        let requested_milestones = node.resource::<RequestedMilestones>();
+        let peer_manager = node.resource::<PeerManager>();
+        let metrics = node.resource::<ProtocolMetrics>();
+
+        node.spawn::<Self, _, _>(|shutdown| async move {
+            info!("Running.");
+
+            let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_secs(RETRY_INTERVAL_SEC)));
+            let mut counter: usize = 0;
+
+            while ticker.next().await.is_some() {
+                retry_requests(&network, &peer_manager, &metrics, &requested_milestones, &mut counter).await;
             }
 
             info!("Stopped.");
@@ -195,6 +212,4 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
 
         Ok(Self { tx })
     }
-
-    // TODO stop + remove_resource
 }
