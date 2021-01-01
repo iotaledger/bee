@@ -167,7 +167,7 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
         let metrics = node.resource::<ProtocolMetrics>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Running.");
+            info!("Requester running.");
 
             let mut receiver = ShutdownStream::new(shutdown, rx);
             let mut counter: usize = 0;
@@ -188,7 +188,7 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
                 }
             }
 
-            info!("Stopped.");
+            info!("Requester stopped.");
         });
 
         let network = node.resource::<NetworkController>();
@@ -197,7 +197,7 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
         let metrics = node.resource::<ProtocolMetrics>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Running.");
+            info!("Retryer running.");
 
             let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_secs(RETRY_INTERVAL_SEC)));
             let mut counter: usize = 0;
@@ -206,7 +206,7 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
                 retry_requests(&network, &peer_manager, &metrics, &requested_milestones, &mut counter).await;
             }
 
-            info!("Stopped.");
+            info!("Retryer stopped.");
         });
 
         Ok(Self { tx })
