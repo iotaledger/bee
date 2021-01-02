@@ -149,7 +149,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
                             latency_num += 1;
                             latency_sum += (Instant::now() - instant).as_millis() as u64;
-                            metrics.message_average_latency_set(latency_sum / latency_num);
+                            metrics.messages_average_latency_set(latency_sum / latency_num);
 
                             let parent1 = message.parent1();
                             let parent2 = message.parent2();

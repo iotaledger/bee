@@ -20,13 +20,12 @@ pub struct ProtocolMetrics {
     invalid_messages: AtomicU64,
     new_messages: AtomicU64,
     known_messages: AtomicU64,
+    messages_average_latency: AtomicU64,
 
     value_bundles: AtomicU64,
     non_value_bundles: AtomicU64,
     confirmed_bundles: AtomicU64,
     conflicting_bundles: AtomicU64,
-
-    message_average_latency: AtomicU64,
 }
 
 impl ProtocolMetrics {
@@ -132,6 +131,14 @@ impl ProtocolMetrics {
         self.known_messages.fetch_add(1, Ordering::SeqCst)
     }
 
+    pub fn messages_average_latency(&self) -> u64 {
+        self.messages_average_latency.load(Ordering::Relaxed)
+    }
+
+    pub(crate) fn messages_average_latency_set(&self, val: u64) {
+        self.messages_average_latency.store(val, Ordering::Relaxed)
+    }
+
     pub fn value_bundles(&self) -> u64 {
         self.value_bundles.load(Ordering::Relaxed)
     }
@@ -167,14 +174,6 @@ impl ProtocolMetrics {
     pub(crate) fn conflicting_bundles_inc(&self) -> u64 {
         self.conflicting_bundles.fetch_add(1, Ordering::SeqCst)
     }
-
-    pub fn message_average_latency(&self) -> u64 {
-        self.message_average_latency.load(Ordering::Relaxed)
-    }
-
-    pub(crate) fn message_average_latency_set(&self, val: u64) {
-        self.message_average_latency.store(val, Ordering::Relaxed)
-    }
 }
 
 #[cfg(test)]
@@ -198,11 +197,11 @@ mod tests {
         assert_eq!(metrics.invalid_messages(), 0);
         assert_eq!(metrics.new_messages(), 0);
         assert_eq!(metrics.known_messages(), 0);
+        assert_eq!(metrics.messages_average_latency(), 0);
         assert_eq!(metrics.value_bundles(), 0);
         assert_eq!(metrics.non_value_bundles(), 0);
         assert_eq!(metrics.confirmed_bundles(), 0);
         assert_eq!(metrics.conflicting_bundles(), 0);
-        assert_eq!(metrics.message_average_latency(), 0);
 
         metrics.invalid_packets_inc();
         metrics.milestone_requests_received_inc();
@@ -216,11 +215,11 @@ mod tests {
         metrics.invalid_messages_inc();
         metrics.new_messages_inc();
         metrics.known_messages_inc();
+        metrics.messages_average_latency_set(42);
         metrics.value_bundles_inc();
         metrics.non_value_bundles_inc();
         metrics.confirmed_bundles_inc();
         metrics.conflicting_bundles_inc();
-        metrics.message_average_latency_set(42);
 
         assert_eq!(metrics.invalid_packets(), 1);
         assert_eq!(metrics.milestone_requests_received(), 1);
@@ -234,10 +233,10 @@ mod tests {
         assert_eq!(metrics.invalid_messages(), 1);
         assert_eq!(metrics.new_messages(), 1);
         assert_eq!(metrics.known_messages(), 1);
+        assert_eq!(metrics.messages_average_latency(), 42);
         assert_eq!(metrics.value_bundles(), 1);
         assert_eq!(metrics.non_value_bundles(), 1);
         assert_eq!(metrics.confirmed_bundles(), 1);
         assert_eq!(metrics.conflicting_bundles(), 1);
-        assert_eq!(metrics.message_average_latency(), 42);
     }
 }
