@@ -25,6 +25,8 @@ pub struct ProtocolMetrics {
     non_value_bundles: AtomicU64,
     confirmed_bundles: AtomicU64,
     conflicting_bundles: AtomicU64,
+
+    message_average_latency: AtomicU64,
 }
 
 impl ProtocolMetrics {
@@ -165,6 +167,14 @@ impl ProtocolMetrics {
     pub(crate) fn conflicting_bundles_inc(&self) -> u64 {
         self.conflicting_bundles.fetch_add(1, Ordering::SeqCst)
     }
+
+    pub fn message_average_latency(&self) -> u64 {
+        self.message_average_latency.load(Ordering::Relaxed)
+    }
+
+    pub(crate) fn message_average_latency_set(&self, val: u64) {
+        self.message_average_latency.store(val, Ordering::Relaxed)
+    }
 }
 
 #[cfg(test)]
@@ -192,6 +202,7 @@ mod tests {
         assert_eq!(metrics.non_value_bundles(), 0);
         assert_eq!(metrics.confirmed_bundles(), 0);
         assert_eq!(metrics.conflicting_bundles(), 0);
+        assert_eq!(metrics.message_average_latency(), 0);
 
         metrics.invalid_packets_inc();
         metrics.milestone_requests_received_inc();
@@ -209,6 +220,7 @@ mod tests {
         metrics.non_value_bundles_inc();
         metrics.confirmed_bundles_inc();
         metrics.conflicting_bundles_inc();
+        metrics.message_average_latency_set(42);
 
         assert_eq!(metrics.invalid_packets(), 1);
         assert_eq!(metrics.milestone_requests_received(), 1);
@@ -226,5 +238,6 @@ mod tests {
         assert_eq!(metrics.non_value_bundles(), 1);
         assert_eq!(metrics.confirmed_bundles(), 1);
         assert_eq!(metrics.conflicting_bundles(), 1);
+        assert_eq!(metrics.message_average_latency(), 42);
     }
 }

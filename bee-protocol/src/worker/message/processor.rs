@@ -27,7 +27,7 @@ use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info, trace, warn};
 use tokio::sync::mpsc;
 
-use std::{any::TypeId, convert::Infallible};
+use std::{any::TypeId, convert::Infallible, time::Instant};
 
 pub(crate) struct ProcessorWorkerEvent {
     pub(crate) pow_score: f64,
@@ -80,6 +80,8 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
+            let mut latency_num: u64 = 0;
+            let mut latency_sum: u64 = 0;
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(ProcessorWorkerEvent {
@@ -142,8 +144,13 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                     metrics.new_messages_inc();
 
                     match requested_messages.remove(&message_id) {
-                        Some((_, (index, _))) => {
+                        Some((_, (index, instant))) => {
                             // Message was requested.
+
+                            latency_num += 1;
+                            latency_sum += (Instant::now() - instant).as_millis() as u64;
+                            metrics.message_average_latency_set(latency_sum / latency_num);
+
                             let parent1 = message.parent1();
                             let parent2 = message.parent2();
 
