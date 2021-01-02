@@ -18,10 +18,7 @@ use crate::{
 };
 
 use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
-use bee_common_pt2::{
-    node::{Node, ResHandle},
-    worker::Worker,
-};
+use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, Message, MessageId};
 use bee_network::PeerId;
 
@@ -231,7 +228,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
 
 fn invalid_message(
     error: String,
-    metrics: &ResHandle<ProtocolMetrics>,
+    metrics: &ProtocolMetrics,
     notifier: Option<Sender<Result<MessageId, MessageSubmitterError>>>,
 ) {
     trace!("{}", error);

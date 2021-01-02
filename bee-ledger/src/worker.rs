@@ -11,10 +11,7 @@ use crate::{
 };
 
 use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
-use bee_common_pt2::{
-    node::{Node, ResHandle},
-    worker::Worker,
-};
+use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, MessageId};
 use bee_protocol::{event::LatestSolidMilestoneChanged, tangle::MsTangle, MilestoneIndex, TangleWorker};
 
@@ -29,10 +26,10 @@ pub(crate) struct LedgerWorker {}
 
 async fn confirm<N: Node>(
     tangle: &MsTangle<N::Backend>,
-    storage: &ResHandle<N::Backend>,
+    storage: &N::Backend,
     message_id: MessageId,
     index: &mut MilestoneIndex,
-    bus: &ResHandle<Bus<'static>>,
+    bus: &Bus<'static>,
 ) -> Result<(), Error>
 where
     N::Backend: Backend,

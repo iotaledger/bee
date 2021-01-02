@@ -10,7 +10,6 @@ use crate::{
     ProtocolMetrics, Sender,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_message::MessageId;
 use bee_network::{NetworkController, PeerId};
 use bee_storage::storage::Backend;
@@ -67,9 +66,9 @@ pub(crate) async fn request_message<B: Backend>(
 // Heartbeat
 
 pub fn send_heartbeat(
-    peer_manager: &ResHandle<PeerManager>,
+    peer_manager: &PeerManager,
     network: &NetworkController,
-    metrics: &ResHandle<ProtocolMetrics>,
+    metrics: &ProtocolMetrics,
     to: PeerId,
     latest_solid_milestone_index: MilestoneIndex,
     pruning_milestone_index: MilestoneIndex,
@@ -91,9 +90,9 @@ pub fn send_heartbeat(
 }
 
 pub fn broadcast_heartbeat(
-    peer_manager: &ResHandle<PeerManager>,
+    peer_manager: &PeerManager,
     network: &NetworkController,
-    metrics: &ResHandle<ProtocolMetrics>,
+    metrics: &ProtocolMetrics,
     latest_solid_milestone_index: MilestoneIndex,
     pruning_milestone_index: MilestoneIndex,
     latest_milestone_index: MilestoneIndex,

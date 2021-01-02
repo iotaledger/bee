@@ -8,7 +8,7 @@ use crate::{
     storage::{self, Backend},
 };
 
-use bee_common_pt2::node::{Node, ResHandle};
+use bee_common_pt2::node::Node;
 use bee_message::{
     payload::{
         transaction::{Input, OutputId},
@@ -28,7 +28,7 @@ use std::{
 #[inline]
 async fn on_message<N: Node>(
     tangle: &MsTangle<N::Backend>,
-    storage: &ResHandle<N::Backend>,
+    storage: &N::Backend,
     message_id: &MessageId,
     message: &Message,
     metadata: &mut WhiteFlagMetadata,
@@ -121,7 +121,7 @@ where
 // TODO make it a tangle method
 pub(crate) async fn visit_dfs<N: Node>(
     tangle: &MsTangle<N::Backend>,
-    storage: &ResHandle<N::Backend>,
+    storage: &N::Backend,
     root: MessageId,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error>

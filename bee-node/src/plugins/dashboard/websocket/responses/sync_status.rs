@@ -6,7 +6,6 @@ use crate::plugins::dashboard::websocket::{
     topics::WsTopic,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_protocol::{event::LatestMilestoneChanged, tangle::MsTangle};
 use bee_storage::storage::Backend;
 
@@ -18,10 +17,7 @@ pub(crate) struct SyncStatusResponse {
     lsmi: u32, // Shouldn't it be smi (solid milestone index) instead?
 }
 
-pub(crate) fn forward<B: Backend>(
-    latest_milestone: LatestMilestoneChanged,
-    tangle: &ResHandle<MsTangle<B>>,
-) -> WsEvent {
+pub(crate) fn forward<B: Backend>(latest_milestone: LatestMilestoneChanged, tangle: &MsTangle<B>) -> WsEvent {
     WsEvent::new(
         WsTopic::SyncStatus,
         WsEventInner::SyncStatus(SyncStatusResponse {
