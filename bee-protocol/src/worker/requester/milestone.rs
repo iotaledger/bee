@@ -27,7 +27,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-const RETRY_INTERVAL_SEC: u64 = 5;
+const RETRY_INTERVAL_MS: u64 = 5000;
 
 // TODO pub ?
 #[derive(Default)]
@@ -124,13 +124,12 @@ async fn retry_requests(
 
     let mut retry_counts: usize = 0;
 
-    for mut milestone in requested_milestones.iter_mut() {
-        let (index, instant) = milestone.pair_mut();
-        let now = Instant::now();
-        if (now - *instant).as_secs() > RETRY_INTERVAL_SEC
+    for milestone in requested_milestones.iter() {
+        let (index, instant) = milestone.pair();
+
+        if (Instant::now() - *instant).as_millis() as u64 > RETRY_INTERVAL_MS
             && process_request_unchecked(*index, None, network, peer_manager, metrics, counter).await
         {
-            *instant = now;
             retry_counts += 1;
         };
     }
@@ -199,7 +198,7 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Retryer running.");
 
-            let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_secs(RETRY_INTERVAL_SEC)));
+            let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_millis(RETRY_INTERVAL_MS)));
             let mut counter: usize = 0;
 
             while ticker.next().await.is_some() {

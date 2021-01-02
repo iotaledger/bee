@@ -27,7 +27,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-const RETRY_INTERVAL_SEC: u64 = 5;
+const RETRY_INTERVAL_MS: u64 = 5000;
 
 #[derive(Default)]
 pub(crate) struct RequestedMessages(DashMap<MessageId, (MilestoneIndex, Instant)>);
@@ -135,13 +135,12 @@ async fn retry_requests(
 
     let mut retry_counts: usize = 0;
 
-    for mut message in requested_messages.iter_mut() {
-        let (message_id, (index, instant)) = message.pair_mut();
-        let now = Instant::now();
-        if (now - *instant).as_secs() > RETRY_INTERVAL_SEC
+    for message in requested_messages.iter() {
+        let (message_id, (index, instant)) = message.pair();
+
+        if (Instant::now() - *instant).as_millis() as u64 > RETRY_INTERVAL_MS
             && process_request_unchecked(*message_id, *index, network, peer_manager, metrics, counter).await
         {
-            *instant = now;
             retry_counts += 1;
         }
     }
@@ -203,7 +202,7 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Retryer running.");
 
-            let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_secs(RETRY_INTERVAL_SEC)));
+            let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_millis(RETRY_INTERVAL_MS)));
             let mut counter: usize = 0;
 
             while ticker.next().await.is_some() {
