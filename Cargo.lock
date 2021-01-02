@@ -325,7 +325,7 @@ dependencies = [
  "bee-storage",
  "bee-ternary",
  "chrono",
- "dashmap",
+ "dashmap 4.0.1",
  "fern",
  "futures 0.3.8",
  "hex",
@@ -340,7 +340,7 @@ version = "0.1.1-alpha"
 source = "git+https://github.com/iotaledger/bee.git?branch=dev#3c67aeff3a485700fd494f9d749ac0a26cadb39a"
 dependencies = [
  "chrono",
- "dashmap",
+ "dashmap 3.11.10",
  "fern",
  "futures 0.3.8",
  "log",
@@ -410,7 +410,7 @@ dependencies = [
  "async-trait",
  "bee-common 0.1.1-alpha",
  "bee-common 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "dashmap",
+ "dashmap 4.0.1",
  "env_logger",
  "futures 0.3.8",
  "lazy_static",
@@ -500,7 +500,7 @@ dependencies = [
  "bee-ternary",
  "bitflags",
  "blake2",
- "dashmap",
+ "dashmap 4.0.1",
  "futures 0.3.8",
  "futures-util",
  "hex",
@@ -552,7 +552,7 @@ dependencies = [
  "bee-storage",
  "bytemuck",
  "chrono",
- "dashmap",
+ "dashmap 4.0.1",
  "futures 0.3.8",
  "log",
  "reqwest",
@@ -602,7 +602,7 @@ dependencies = [
  "bee-message",
  "bee-test",
  "criterion",
- "dashmap",
+ "dashmap 4.0.1",
  "log",
  "lru",
  "pollster",
@@ -1183,6 +1183,16 @@ checksum = "0f260e2fc850179ef410018660006951c1b55b79e8087e87111a2c388994b9b5"
 dependencies = [
  "ahash 0.3.8",
  "cfg-if 0.1.10",
+ "num_cpus",
+]
+
+[[package]]
+name = "dashmap"
+version = "4.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b937cd1fbd1f194ac842196bd2529f21618088ee6d8bff6a46ece611451c96b"
+dependencies = [
+ "cfg-if 1.0.0",
  "num_cpus",
 ]
 
@@ -3537,9 +3547,9 @@ checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 
 [[package]]
 name = "smallvec"
-version = "1.5.1"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae524f056d7d770e174287294f562e95044c68e88dec909a00d2094805db9d75"
+checksum = "1a55ca5f3b68e41c979bf8c46a6f1da892ca4db8f94023ce0bd32407573b1ac0"
 
 [[package]]
 name = "snow"
@@ -3700,9 +3710,9 @@ checksum = "1e81da0851ada1f3e9d4312c704aa4f8806f0f9d69faaf8df2f3464b4a9437c2"
 
 [[package]]
 name = "syn"
-version = "1.0.56"
+version = "1.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9802ddde94170d186eeee5005b798d9c159fa970403f1be19976d0cfb939b72"
+checksum = "4211ce9909eb971f111059df92c45640aad50a619cf55cd76476be803c4c68e6"
 dependencies = [
  "proc-macro2",
  "quote",

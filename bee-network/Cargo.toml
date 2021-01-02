@@ -15,7 +15,7 @@ bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-common-pt2 = { path = "../bee-common/bee-common", package = "bee-common" }
 
 async-trait = "0.1"
-dashmap = "3.11"
+dashmap = "4.0"
 futures = "0.3"
 lazy_static = "1.4"
 libp2p = { version = "0.29", default-features = false, features = ["dns", "mplex", "noise", "tcp-tokio", "yamux"]}

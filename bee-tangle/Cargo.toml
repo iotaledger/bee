@@ -15,7 +15,7 @@ bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-message = { path = "../bee-message" }
 
 async-trait = "0.1"
-dashmap = "3.10"
+dashmap = "4.0"
 log = "0.4"
 lru = "0.6"
 
