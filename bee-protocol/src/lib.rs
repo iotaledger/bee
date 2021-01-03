@@ -22,7 +22,6 @@ pub use worker::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitter
 
 use crate::{
     config::ProtocolConfig,
-    event::LatestSolidMilestoneChanged,
     peer::{Peer, PeerManager},
     sender::Sender,
     tangle::MsTangle,
@@ -30,17 +29,15 @@ use crate::{
         BroadcasterWorker, HasherWorker, HeartbeaterWorker, IndexationPayloadWorker, KickstartWorker,
         MessageRequesterWorker, MessageResponderWorker, MessageValidatorWorker, MetricsWorker,
         MilestoneConeUpdaterWorker, MilestonePayloadWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
-        MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, MpsWorker, PeerManagerWorker, PeerWorker,
-        ProcessorWorker, PropagatorWorker, RequestedMilestones, StatusWorker, TipPoolCleanerWorker,
-        TransactionPayloadWorker,
+        MilestoneSolidifierWorker, MpsWorker, PeerManagerWorker, PeerWorker, ProcessorWorker, PropagatorWorker,
+        RequestedMilestones, StatusWorker, TipPoolCleanerWorker, TransactionPayloadWorker,
     },
 };
 
 use bee_common_pt2::node::{Node, NodeBuilder};
-use bee_network::{Multiaddr, NetworkController, PeerId};
+use bee_network::{Multiaddr, PeerId};
 
 use futures::channel::oneshot;
-use log::{debug, error};
 use tokio::{sync::mpsc, task::spawn};
 
 use std::sync::Arc;
@@ -66,51 +63,12 @@ pub fn init<N: Node>(config: ProtocolConfig, network_id: u64, node_builder: N::B
         .with_worker::<PropagatorWorker>()
         .with_worker::<MpsWorker>()
         .with_worker_cfg::<KickstartWorker>((ms_send, config.workers.ms_sync_count))
-        .with_worker_cfg::<MilestoneSolidifierWorker>(ms_recv)
+        .with_worker_cfg::<MilestoneSolidifierWorker>((ms_recv, config.workers.ms_sync_count))
         .with_worker::<MilestoneConeUpdaterWorker>()
         .with_worker::<TipPoolCleanerWorker>()
         .with_worker_cfg::<StatusWorker>(config.workers.status_interval)
         .with_worker::<HeartbeaterWorker>()
         .with_worker::<MessageSubmitterWorker>()
-}
-
-pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
-    let milestone_solidifier = node.worker::<MilestoneSolidifierWorker>().unwrap().tx.clone();
-    let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
-
-    let tangle = node.resource::<MsTangle<N::Backend>>().into_weak();
-    let network = node.resource::<NetworkController>(); // TODO: Use a weak handle?
-    let requested_milestones = node.resource::<RequestedMilestones>();
-    let peer_manager = node.resource::<PeerManager>();
-    let metrics = node.resource::<ProtocolMetrics>();
-
-    node.bus()
-        .add_listener::<(), _, _>(move |latest_solid_milestone: &LatestSolidMilestoneChanged| {
-            if let Some(tangle) = tangle.upgrade() {
-                debug!("New solid milestone {}.", *latest_solid_milestone.index);
-                tangle.update_latest_solid_milestone_index(latest_solid_milestone.index);
-
-                let ms_sync_count = config.workers.ms_sync_count;
-                let next_ms = latest_solid_milestone.index + MilestoneIndex(ms_sync_count);
-
-                if tangle.contains_milestone(next_ms) {
-                    if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(next_ms)) {
-                        error!("Sending solidification event failed: {}", e);
-                    }
-                } else {
-                    helper::request_milestone(&tangle, &milestone_requester, &*requested_milestones, next_ms, None);
-                }
-
-                helper::broadcast_heartbeat(
-                    &peer_manager,
-                    &network,
-                    &metrics,
-                    latest_solid_milestone.index,
-                    tangle.get_pruning_index(),
-                    tangle.get_latest_milestone_index(),
-                );
-            }
-        });
 }
 
 pub async fn register<N: Node>(

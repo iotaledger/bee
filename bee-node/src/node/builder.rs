@@ -15,7 +15,6 @@ use bee_common_pt2::{
 };
 use bee_network::{self, NetworkController, PeerId};
 use bee_peering::{ManualPeerManager, PeerManager};
-use bee_protocol::{events as protocol_events, init};
 
 use anymap::Map;
 use async_trait::async_trait;
@@ -173,7 +172,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         // let mut this = bee_ledger::init::<BeeNode<B>>(snapshot.header().ledger_index(), this);
 
         info!("Initializing protocol layer...");
-        let this = init::<BeeNode<B>>(config.protocol.clone(), network_id, this);
+        let this = bee_protocol::init::<BeeNode<B>>(config.protocol.clone(), network_id, this);
 
         let mut this = this.with_worker::<VersionChecker>();
         this = this.with_worker_cfg::<Mqtt>(config.mqtt);
@@ -187,7 +186,6 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             this,
         )
         .await;
-        // TODO: Read config from file
 
         let mut node = BeeNode {
             workers: Map::new(),
@@ -211,10 +209,6 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let network = node.resource::<NetworkController>();
         let manual_peering_config = config.peering.manual.clone();
         ManualPeerManager::new(manual_peering_config, &network).await;
-
-        // TODO we should probably remove this
-        info!("Registering events...");
-        protocol_events(&node, config.protocol.clone());
 
         info!("Initialized.");
 
