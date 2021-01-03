@@ -9,8 +9,8 @@ use crate::{
     peer::PeerManager,
     tangle::{MessageMetadata, MsTangle},
     worker::{
-        message_submitter::MessageSubmitterError, BroadcasterWorker, BroadcasterWorkerEvent, IndexationPayloadWorker,
-        IndexationPayloadWorkerEvent, MessageRequesterWorker, MetricsWorker, MilestonePayloadWorker,
+        BroadcasterWorker, BroadcasterWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent,
+        MessageRequesterWorker, MessageSubmitterError, MetricsWorker, MilestonePayloadWorker,
         MilestonePayloadWorkerEvent, PeerManagerWorker, PropagatorWorker, PropagatorWorkerEvent, RequestedMessages,
         TangleWorker, TransactionPayloadWorker, TransactionPayloadWorkerEvent,
     },

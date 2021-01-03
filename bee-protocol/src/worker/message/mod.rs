@@ -5,6 +5,7 @@ mod hash_cache;
 mod hasher;
 mod payload;
 mod processor;
+mod submitter;
 
 pub(crate) use hash_cache::HashCache;
 pub(crate) use hasher::{HasherWorker, HasherWorkerEvent};
@@ -13,6 +14,7 @@ pub(crate) use payload::{
     TransactionPayloadWorker, TransactionPayloadWorkerEvent,
 };
 pub(crate) use processor::{ProcessorWorker, ProcessorWorkerEvent};
+pub use submitter::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 
 // #[cfg(test)]
 // mod tests {

@@ -7,8 +7,7 @@ use crate::{
     packet::Message as MessagePacket,
     peer::PeerManager,
     worker::{
-        message::{HashCache, ProcessorWorker, ProcessorWorkerEvent},
-        message_submitter::MessageSubmitterError,
+        message::{HashCache, MessageSubmitterError, ProcessorWorker, ProcessorWorkerEvent},
         MetricsWorker, PeerManagerWorker,
     },
     ProtocolMetrics,

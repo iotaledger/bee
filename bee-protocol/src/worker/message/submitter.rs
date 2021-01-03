@@ -57,15 +57,14 @@ impl<N: Node> Worker<N> for MessageSubmitterWorker {
 
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
-            while let Some(event) = receiver.next().await {
-                let event: MessageSubmitterWorkerEvent = event;
+            while let Some(MessageSubmitterWorkerEvent { message, notifier }) = receiver.next().await {
                 let event = HasherWorkerEvent {
                     from: None,
-                    message_packet: Message::new(&event.message),
-                    notifier: Some(event.notifier),
+                    message_packet: Message::new(&message),
+                    notifier: Some(notifier),
                 };
                 if let Err(e) = hasher.send(event) {
-                    error!("Sending HasherWorkerEvent failed: {}", e);
+                    error!("Sending HasherWorkerEvent failed: {}.", e);
                 }
             }
 
