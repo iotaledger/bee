@@ -22,7 +22,7 @@ pub use worker::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitter
 
 use crate::{
     config::ProtocolConfig,
-    event::{LatestMilestoneChanged, LatestSolidMilestoneChanged},
+    event::LatestSolidMilestoneChanged,
     peer::{Peer, PeerManager},
     sender::Sender,
     tangle::MsTangle,
@@ -40,7 +40,7 @@ use bee_common_pt2::node::{Node, NodeBuilder};
 use bee_network::{Multiaddr, NetworkController, PeerId};
 
 use futures::channel::oneshot;
-use log::{debug, error, info};
+use log::{debug, error};
 use tokio::{sync::mpsc, task::spawn};
 
 use std::sync::Arc;
@@ -75,40 +75,6 @@ pub fn init<N: Node>(config: ProtocolConfig, network_id: u64, node_builder: N::B
 }
 
 pub fn events<N: Node>(node: &N, config: ProtocolConfig) {
-    let tangle = node.resource::<MsTangle<N::Backend>>().into_weak();
-    let network = node.resource::<NetworkController>(); // TODO: Use a weak handle?
-    let peer_manager = node.resource::<PeerManager>();
-    let metrics = node.resource::<ProtocolMetrics>();
-
-    node.bus()
-        .add_listener::<(), _, _>(move |latest_milestone: &LatestMilestoneChanged| {
-            info!(
-                "New milestone {} {}.",
-                *latest_milestone.index, latest_milestone.milestone.message_id
-            );
-            if let Some(tangle) = tangle.upgrade() {
-                tangle.update_latest_milestone_index(latest_milestone.index);
-
-                helper::broadcast_heartbeat(
-                    &peer_manager,
-                    &network,
-                    &metrics,
-                    tangle.get_latest_solid_milestone_index(),
-                    tangle.get_pruning_index(),
-                    latest_milestone.index,
-                );
-            }
-        });
-
-    // node.bus().add_listener(|latest_solid_milestone: &LatestSolidMilestoneChanged| {
-    //     // TODO block_on ?
-    //     // TODO uncomment on Chrysalis Pt1.
-    //     block_on(Protocol::broadcast_heartbeat(
-    //         tangle.get_latest_solid_milestone_index(),
-    //         tangle.get_pruning_index(),
-    //     ));
-    // });
-
     let milestone_solidifier = node.worker::<MilestoneSolidifierWorker>().unwrap().tx.clone();
     let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
 

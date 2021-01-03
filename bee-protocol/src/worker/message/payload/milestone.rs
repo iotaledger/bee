@@ -4,17 +4,22 @@
 use crate::{
     config::ProtocolConfig,
     event::{LatestMilestoneChanged, LatestSolidMilestoneChanged},
+    helper,
     milestone::{key_manager::KeyManager, Milestone, MilestoneIndex},
+    peer::PeerManager,
     tangle::MsTangle,
     worker::{
-        MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent, MilestoneRequesterWorker,
-        MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, RequestedMilestones, TangleWorker,
+        MetricsWorker, MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent, MilestoneRequesterWorker,
+        MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, PeerManagerWorker, RequestedMilestones,
+        TangleWorker,
     },
+    ProtocolMetrics,
 };
 
 use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, MessageId};
+use bee_network::NetworkController;
 
 use async_trait::async_trait;
 use crypto::ed25519::{verify, PublicKey, Signature};
@@ -142,6 +147,8 @@ where
             TypeId::of::<MilestoneConeUpdaterWorker>(),
             TypeId::of::<TangleWorker>(),
             TypeId::of::<MilestoneRequesterWorker>(),
+            TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<MetricsWorker>(),
         ]
         .leak()
     }
@@ -153,11 +160,13 @@ where
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
+        let peer_manager = node.resource::<PeerManager>();
+        let network = node.resource::<NetworkController>();
+        let metrics = node.resource::<ProtocolMetrics>();
         let key_manager = KeyManager::new(
             config.coordinator.public_key_count,
             config.coordinator.public_key_ranges.into_boxed_slice(),
         );
-
         let bus = node.bus();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
@@ -191,6 +200,17 @@ where
                             }
 
                             if index > tangle.get_latest_milestone_index() {
+                                info!("New milestone {} {}.", *index, milestone.message_id);
+                                tangle.update_latest_milestone_index(index);
+
+                                helper::broadcast_heartbeat(
+                                    &peer_manager,
+                                    &network,
+                                    &metrics,
+                                    tangle.get_latest_solid_milestone_index(),
+                                    tangle.get_pruning_index(),
+                                    index,
+                                );
                                 bus.dispatch(LatestMilestoneChanged {
                                     index,
                                     milestone: milestone.clone(),
