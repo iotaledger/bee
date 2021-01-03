@@ -17,7 +17,7 @@ reconnect_millis  = 60000
 
 [peering]
 # hex representation of an Ed25519 keypair
-local_keypair = ""
+identity_private_key  = ""
 [peering.manual]
 unknown_peers_limit = 4
 # known peers

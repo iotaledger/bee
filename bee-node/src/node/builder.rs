@@ -140,9 +140,10 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
     }
 
     async fn finish(mut self) -> Result<BeeNode<B>, Error> {
-        let generated_new_local_keypair = self.config.peering.local_keypair.2;
-        if generated_new_local_keypair {
-            return Err(Error::InvalidOrNoKeypair(self.config.peering.local_keypair.1));
+        if self.config.peering.identity_private_key.2 {
+            return Err(Error::InvalidOrNoIdentityPrivateKey(
+                self.config.peering.identity_private_key.1,
+            ));
         }
 
         info!(
@@ -154,7 +155,7 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         let network_config = config.network.clone();
         let network_id = config.network_id.1;
-        let local_keys = config.peering.local_keypair.0.clone();
+        let local_keys = config.peering.identity_private_key.0.clone();
 
         let this = self
             .with_resource(config.clone()) // TODO: Remove clone

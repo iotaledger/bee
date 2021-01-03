@@ -9,7 +9,7 @@ use serde::Deserialize;
 
 #[derive(Default, Deserialize)]
 pub struct PeeringConfigBuilder {
-    local_keypair: Option<String>,
+    identity_private_key: Option<String>,
     manual: ManualPeeringConfigBuilder,
 }
 
@@ -18,45 +18,45 @@ impl PeeringConfigBuilder {
         Self::default()
     }
 
-    pub fn local_keypair(mut self, local_keypair: String) -> Self {
-        self.local_keypair.replace(local_keypair);
+    pub fn identity_private_key(mut self, identity_private_key: String) -> Self {
+        self.identity_private_key.replace(identity_private_key);
         self
     }
 
     // TODO better error handling
     pub fn finish(self) -> PeeringConfig {
-        let (keypair, kp_string, new) = if let Some(kp_string) = self.local_keypair {
-            if kp_string.len() == 128 {
+        let (identity, identity_string, new) = if let Some(identity_string) = self.identity_private_key {
+            if identity_string.len() == 128 {
                 let mut decoded = [0u8; 64];
-                hex::decode_to_slice(&kp_string[..], &mut decoded).expect("error decoding local keypair");
-                let keypair = Keypair::decode(&mut decoded).expect("error decoding local keypair");
-                (keypair, kp_string, false)
-            } else if kp_string.is_empty() {
-                generate_random_local_keypair()
+                hex::decode_to_slice(&identity_string[..], &mut decoded).expect("error decoding identity");
+                let identity = Keypair::decode(&mut decoded).expect("error decoding identity");
+                (identity, identity_string, false)
+            } else if identity_string.is_empty() {
+                generate_random_identity()
             } else {
-                panic!("invalid keypair string length");
+                panic!("invalid identity string length");
             }
         } else {
-            generate_random_local_keypair()
+            generate_random_identity()
         };
 
         PeeringConfig {
-            local_keypair: (keypair, kp_string, new),
+            identity_private_key: (identity, identity_string, new),
             manual: self.manual.finish(),
         }
     }
 }
 
-fn generate_random_local_keypair() -> (Keypair, String, bool) {
-    let keypair = Keypair::generate();
-    let encoded = keypair.encode();
-    let kp_text = hex::encode(encoded);
-    (keypair, kp_text, true)
+fn generate_random_identity() -> (Keypair, String, bool) {
+    let identity = Keypair::generate();
+    let encoded = identity.encode();
+    let identity_string = hex::encode(encoded);
+    (identity, identity_string, true)
 }
 
 #[derive(Clone)]
 pub struct PeeringConfig {
-    pub local_keypair: (Keypair, String, bool),
+    pub identity_private_key: (Keypair, String, bool),
     pub manual: ManualPeeringConfig,
 }
 

@@ -37,9 +37,9 @@ impl Packable for Spent {
     where
         Self: Sized,
     {
-        let target = TransactionId::unpack(reader)?;
-        let index = MilestoneIndex::unpack(reader)?;
-
-        Ok(Self { target, index })
+        Ok(Self {
+            target: TransactionId::unpack(reader)?,
+            index: MilestoneIndex::unpack(reader)?,
+        })
     }
 }

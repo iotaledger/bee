@@ -54,9 +54,9 @@ impl Packable for Output {
     where
         Self: Sized,
     {
-        let message_id = MessageId::unpack(reader)?;
-        let inner = transaction::Output::unpack(reader)?;
-
-        Ok(Self { message_id, inner })
+        Ok(Self {
+            message_id: MessageId::unpack(reader)?,
+            inner: transaction::Output::unpack(reader)?,
+        })
     }
 }

@@ -75,6 +75,8 @@ fn import_snapshot<N: Node>(
         snapshot.milestone_diffs_len()
     );
 
+    // TODO truncate SEPs
+
     node.register_resource(SnapshotInfo::new(
         snapshot.header().network_id(),
         snapshot.header().sep_index(),
