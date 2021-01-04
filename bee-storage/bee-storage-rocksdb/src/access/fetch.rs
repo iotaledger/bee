@@ -189,7 +189,7 @@ impl Fetch<(), LedgerIndex> for Storage {
             .cf_handle(CF_LEDGER_INDEX)
             .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, [])? {
+        if let Some(res) = self.inner.get_cf(&cf, [0x00u8])? {
             // Unpacking from storage is fine.
             Ok(Some(LedgerIndex::unpack(&mut res.as_slice()).unwrap()))
         } else {
@@ -229,7 +229,7 @@ impl Fetch<(), SnapshotInfo> for Storage {
             .cf_handle(CF_SNAPSHOT_INFO)
             .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, [])? {
+        if let Some(res) = self.inner.get_cf(&cf, [0x00u8])? {
             // Unpacking from storage is fine.
             Ok(Some(SnapshotInfo::unpack(&mut res.as_slice()).unwrap()))
         } else {

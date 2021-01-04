@@ -4,7 +4,7 @@
 use bee_ledger::model::LedgerIndex;
 use bee_protocol::MilestoneIndex;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     storage::Backend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
@@ -70,6 +70,10 @@ async fn access() {
     }
 
     assert_eq!(count, 1);
+
+    Truncate::<(), LedgerIndex>::truncate(&storage).await.unwrap();
+
+    assert!(!Exist::<(), LedgerIndex>::exist(&storage, &()).await.unwrap());
 
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 }

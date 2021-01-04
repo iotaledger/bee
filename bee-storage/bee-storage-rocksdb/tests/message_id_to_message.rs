@@ -4,7 +4,7 @@
 use bee_common::packable::Packable;
 use bee_message::{Message, MessageId};
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     storage::Backend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
@@ -84,6 +84,12 @@ async fn access() {
     }
 
     assert_eq!(count, messages.len());
+
+    Truncate::<MessageId, Message>::truncate(&storage).await.unwrap();
+
+    let mut stream = AsStream::<MessageId, Message>::stream(&storage).await.unwrap();
+
+    assert!(stream.next().await.is_none());
 
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 }
