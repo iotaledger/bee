@@ -52,18 +52,19 @@ impl<S: Stream> ShutdownStream<stream::Fuse<S>> {
             stream: stream.fuse(),
         }
     }
+
+    /// Consume and split the `ShutdownStream` into its shutdown receiver and stream.
+    pub fn split(self) -> (future::Fuse<oneshot::Receiver<()>>, futures::stream::Fuse<S>) {
+        (self.shutdown, self.stream)
+    }
 }
 
 impl<S: Stream + FusedStream> ShutdownStream<S> {
-    /// Create a new `ShutdownStream` from a shutdown receiver and a fused stream.
+    /// Create a new `ShutdownStream` from a fused shutdown receiver and a fused stream.
     ///
-    /// This method receives the fused stream to be wrapped and a `oneshot::Receiver` for the shutdown.
-    /// The shutdown receiver is fused to avoid polling already completed futures.
-    pub fn from_fused(shutdown: oneshot::Receiver<()>, stream: S) -> Self {
-        Self {
-            shutdown: shutdown.fuse(),
-            stream,
-        }
+    /// This method receives the fused stream to be wrapped and a fused `oneshot::Receiver` for the shutdown.
+    pub fn from_fused(shutdown: future::Fuse<oneshot::Receiver<()>>, stream: S) -> Self {
+        Self { shutdown, stream }
     }
 }
 
