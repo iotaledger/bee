@@ -15,7 +15,7 @@ use std::{convert::Infallible, time::Duration};
 
 const METRICS_INTERVAL_S: u64 = 60;
 
-pub(crate) struct MetricsWorker {}
+pub struct MetricsWorker {}
 
 #[async_trait]
 impl<N: Node> Worker<N> for MetricsWorker {

@@ -18,7 +18,9 @@ mod worker;
 
 pub use metrics::ProtocolMetrics;
 pub use milestone::{Milestone, MilestoneIndex};
-pub use worker::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent, TangleWorker};
+pub use worker::{
+    MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent, MetricsWorker, TangleWorker,
+};
 
 use crate::{
     config::ProtocolConfig,
@@ -27,10 +29,10 @@ use crate::{
     tangle::MsTangle,
     worker::{
         BroadcasterWorker, HasherWorker, HeartbeaterWorker, IndexationPayloadWorker, MessageRequesterWorker,
-        MessageResponderWorker, MessageValidatorWorker, MetricsWorker, MilestoneConeUpdaterWorker,
-        MilestonePayloadWorker, MilestoneRequesterWorker, MilestoneResponderWorker, MilestoneSolidifierWorker,
-        MpsWorker, PeerManagerWorker, PeerWorker, ProcessorWorker, PropagatorWorker, RequestedMilestones, StatusWorker,
-        TipPoolCleanerWorker, TransactionPayloadWorker,
+        MessageResponderWorker, MessageValidatorWorker, MilestoneConeUpdaterWorker, MilestonePayloadWorker,
+        MilestoneRequesterWorker, MilestoneResponderWorker, MilestoneSolidifierWorker, MpsWorker, PeerManagerWorker,
+        PeerWorker, ProcessorWorker, PropagatorWorker, RequestedMilestones, StatusWorker, TipPoolCleanerWorker,
+        TransactionPayloadWorker,
     },
 };
 

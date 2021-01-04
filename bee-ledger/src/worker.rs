@@ -13,7 +13,9 @@ use crate::{
 use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, MessageId};
-use bee_protocol::{event::LatestSolidMilestoneChanged, tangle::MsTangle, MilestoneIndex, TangleWorker};
+use bee_protocol::{
+    event::LatestSolidMilestoneChanged, tangle::MsTangle, MetricsWorker, MilestoneIndex, ProtocolMetrics, TangleWorker,
+};
 
 use async_trait::async_trait;
 use blake2::Blake2b;
@@ -47,7 +49,6 @@ where
 
     let mut metadata = WhiteFlagMetadata::new(
         MilestoneIndex(milestone.essence().index()),
-        // TODO useful ?
         milestone.essence().timestamp(),
     );
 
@@ -111,13 +112,14 @@ where
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>()].leak()
+        vec![TypeId::of::<TangleWorker>(), TypeId::of::<MetricsWorker>()].leak()
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = flume::unbounded();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
+        let _metrics = node.resource::<ProtocolMetrics>();
         let storage = node.storage();
         let bus = node.bus();
 
