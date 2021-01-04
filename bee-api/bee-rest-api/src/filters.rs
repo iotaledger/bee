@@ -3,11 +3,9 @@
 
 use crate::{config::RestApiConfig, filters::CustomRejection::BadRequest, handlers, storage::Backend, NetworkId};
 
-use bee_common::packable::Packable;
 use bee_common_pt2::node::ResHandle;
 use bee_protocol::{config::ProtocolConfig, tangle::MsTangle, MessageSubmitterWorkerEvent};
 
-use bech32::FromBase32;
 use tokio::sync::mpsc;
 use warp::{reject, Filter, Rejection};
 
@@ -326,18 +324,9 @@ mod custom_path_param {
 
     pub(super) fn bech32_address() -> impl Filter<Extract = (Address,), Error = Rejection> + Copy {
         warp::path::param().and_then(|value: String| async move {
-            match bech32::decode(&value) {
-                Ok((hrp, data)) => {
-                    if hrp.eq("iot") || hrp.eq("toi") {
-                        let bytes = Vec::<u8>::from_base32(&data)
-                            .map_err(|_| reject::custom(BadRequest("invalid IOTA address".to_string())))?;
-                        Ok(Address::unpack(&mut bytes.as_slice())
-                            .map_err(|_| reject::custom(BadRequest("invalid IOTA address".to_string())))?)
-                    } else {
-                        Err(reject::custom(BadRequest("not an IOTA address".to_string())))
-                    }
-                }
-                Err(_) => Err(reject::custom(BadRequest("not a bech32 address".to_string()))),
+            match Address::try_from_bech32(&value) {
+                Ok(addr) => Ok(addr),
+                Err(_) => Err(reject::custom(BadRequest("invalid address".to_string()))),
             }
         })
     }
