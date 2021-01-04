@@ -38,7 +38,7 @@ type FusedShutdown = future::Fuse<Shutdown>;
 ///
 /// This type wraps a shutdown receiver and a stream to produce a new stream that ends when the
 /// shutdown receiver is triggered or when the stream ends.
-pub struct ShutdownStream<S: Stream> {
+pub struct ShutdownStream<S> {
     shutdown: FusedShutdown,
     stream: stream::Fuse<S>,
 }
