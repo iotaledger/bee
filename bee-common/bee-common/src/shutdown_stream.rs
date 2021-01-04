@@ -40,10 +40,10 @@ type FusedShutdown = future::Fuse<Shutdown>;
 /// shutdown receiver is triggered or when the stream ends.
 pub struct ShutdownStream<S> {
     shutdown: FusedShutdown,
-    stream: stream::Fuse<S>,
+    stream: S,
 }
 
-impl<S: Stream> ShutdownStream<S> {
+impl<S: Stream> ShutdownStream<stream::Fuse<S>> {
     /// Create a new `ShutdownStream` from a shutdown receiver and an unfused stream.
     ///
     /// This method receives the stream to be wrapped and a `oneshot::Receiver` for the shutdown.
