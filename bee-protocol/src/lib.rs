@@ -26,11 +26,11 @@ use crate::{
     sender::Sender,
     tangle::MsTangle,
     worker::{
-        BroadcasterWorker, HasherWorker, HeartbeaterWorker, IndexationPayloadWorker, KickstartWorker,
-        MessageRequesterWorker, MessageResponderWorker, MessageValidatorWorker, MetricsWorker,
-        MilestoneConeUpdaterWorker, MilestonePayloadWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
-        MilestoneSolidifierWorker, MpsWorker, PeerManagerWorker, PeerWorker, ProcessorWorker, PropagatorWorker,
-        RequestedMilestones, StatusWorker, TipPoolCleanerWorker, TransactionPayloadWorker,
+        BroadcasterWorker, HasherWorker, HeartbeaterWorker, IndexationPayloadWorker, MessageRequesterWorker,
+        MessageResponderWorker, MessageValidatorWorker, MetricsWorker, MilestoneConeUpdaterWorker,
+        MilestonePayloadWorker, MilestoneRequesterWorker, MilestoneResponderWorker, MilestoneSolidifierWorker,
+        MpsWorker, PeerManagerWorker, PeerWorker, ProcessorWorker, PropagatorWorker, RequestedMilestones, StatusWorker,
+        TipPoolCleanerWorker, TransactionPayloadWorker,
     },
 };
 
@@ -43,8 +43,6 @@ use tokio::{sync::mpsc, task::spawn};
 use std::sync::Arc;
 
 pub fn init<N: Node>(config: ProtocolConfig, network_id: u64, node_builder: N::Builder) -> N::Builder {
-    let (ms_send, ms_recv) = oneshot::channel();
-
     node_builder
         .with_worker::<TangleWorker>()
         .with_worker::<MetricsWorker>()
@@ -62,8 +60,7 @@ pub fn init<N: Node>(config: ProtocolConfig, network_id: u64, node_builder: N::B
         .with_worker::<MessageValidatorWorker>()
         .with_worker::<PropagatorWorker>()
         .with_worker::<MpsWorker>()
-        .with_worker_cfg::<KickstartWorker>((ms_send, config.workers.ms_sync_count))
-        .with_worker_cfg::<MilestoneSolidifierWorker>((ms_recv, config.workers.ms_sync_count))
+        .with_worker_cfg::<MilestoneSolidifierWorker>(config.workers.ms_sync_count)
         .with_worker::<MilestoneConeUpdaterWorker>()
         .with_worker::<TipPoolCleanerWorker>()
         .with_worker_cfg::<StatusWorker>(config.workers.status_interval)
