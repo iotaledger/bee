@@ -145,7 +145,7 @@ checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
 name = "bee-common"
-version = "0.1.1-alpha"
+version = "0.2.0-alpha"
 dependencies = [
  "async-std",
  "chrono",

@@ -9,10 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Packable` implementation for `Vec<T: Packable>`
-- Add `filters` option to the logger.
-- Added event bus
-
 ### Changed
 
 ### Deprecated
@@ -22,6 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security -->
+
+## 0.2.0-alpha - 2021-01-04
+
+### Added
+
+- Impl `Packable` for `Vec<T: Packable>`;
+- `target_filters` option to the logger;
+- Event bus;
+- `ShutdownStream::split`;
+
+### Changed
+
+- `ShutdownStream::from_fused` takes a `future::Fuse<oneshot::Receiver<()>>` instead of a `oneshot::Receiver<()>`;
 
 ## 0.1.1-alpha - 2020-11-12
 

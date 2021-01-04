@@ -62,7 +62,7 @@ where
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         (self.len() as u64).pack(writer)?;
-        self.iter().map(|x| x.pack(writer)).collect()
+        self.iter().try_for_each(|x| x.pack(writer))
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
