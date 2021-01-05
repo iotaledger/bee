@@ -18,3 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security -->
+
+## 0.1.0-alpha - 2021-01-06
+
+### Added
+
+- `StorageBackend` trait;
+- `BatchBuilder`, `Batch`, `Delete`, `Exist`, `Fetch`, `Insert`, `AsStream` and `Truncate` traits;
