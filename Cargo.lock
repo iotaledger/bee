@@ -404,6 +404,7 @@ dependencies = [
  "async-trait",
  "bee-common 0.1.1-alpha",
  "bee-common 0.2.0-alpha",
+ "bee-storage",
  "dashmap 4.0.1",
  "env_logger",
  "futures 0.3.8",

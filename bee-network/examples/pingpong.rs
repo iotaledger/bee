@@ -19,13 +19,14 @@ mod common;
 
 use common::*;
 
-use bee_common::{
-    node::{Node, NodeBuilder},
-    shutdown_stream::ShutdownStream,
+use bee_common::shutdown_stream::ShutdownStream;
+use bee_common_pt2::{
+    node::{Node, NodeBuilder, ResHandle},
     worker::Worker,
 };
 use bee_network::{Command::*, Event, Keypair, Multiaddr, NetworkConfig, NetworkController, NetworkListener, PeerId};
 
+use async_trait::async_trait;
 use futures::{
     channel::oneshot,
     sink::SinkExt,
@@ -52,22 +53,18 @@ async fn main() {
 
     logger::init(log::LevelFilter::Trace);
 
-    let node = ExampleNode::build(config)
-        .finish()
-        .await
-        .unwrap_or_else(|e| error!("Error creating node. Cause: {:?}", e));
+    let node = ExampleNodeBuilder::new(config.clone()).unwrap().finish().await.unwrap();
 
-    let mut network_controller = node.network_controller.clone();
-    let config = node.config.clone();
+    // let mut network_controller = node.network_controller.clone();
 
-    info!("[EXAMPLE] Dialing unkown peers (by address)...");
-    for peer_address in &config.peers {
-        if let Err(e) = network_controller.send(DialAddress {
-            address: peer_address.clone(),
-        }) {
-            warn!("Dialing peer (by address) failed. Error: {:?}", e);
-        }
-    }
+    // info!("[EXAMPLE] Dialing unkown peers (by address)...");
+    // for peer_address in &config.peers {
+    //     if let Err(e) = network_controller.send(DialAddress {
+    //         address: peer_address.clone(),
+    //     }) {
+    //         warn!("Dialing peer (by address) failed. Error: {:?}", e);
+    //     }
+    // }
 
     info!("[EXAMPLE] ...finished.");
 
@@ -75,8 +72,7 @@ async fn main() {
 }
 
 struct ExampleNode {
-    config: Config,
-    network_controller: NetworkController,
+    config: ExampleConfig,
     network_listener: NetworkListener,
     connected_peers: HashSet<PeerId>,
 }
@@ -85,7 +81,6 @@ impl ExampleNode {
     async fn run(self) {
         let ExampleNode {
             config,
-            mut network_controller,
             network_listener,
             mut connected_peers,
         } = self;
@@ -98,7 +93,7 @@ impl ExampleNode {
         while let Some(event) = network_events.next().await {
             info!("Received {:?}.", event);
 
-            process_event(event, &config.message, &mut network_controller, &mut connected_peers).await;
+            // process_event(event, &config.message, &mut network_controller, &mut connected_peers).await;
         }
 
         info!("[EXAMPLE] Stopping node...");
@@ -110,12 +105,14 @@ impl ExampleNode {
     }
 }
 
+#[async_trait]
 impl Node for ExampleNode {
     type Builder = ExampleNodeBuilder;
     type Backend = DummyBackend;
+    type Error = Infallible;
 
-    async fn stop(mut self) -> Result<(), shutdown::Error> {
-        //
+    async fn stop(mut self) -> Result<(), Self::Error> {
+        todo!("stop")
     }
 
     fn spawn<W, G, F>(&mut self, g: G)
@@ -124,14 +121,14 @@ impl Node for ExampleNode {
         G: FnOnce(oneshot::Receiver<()>) -> F,
         F: Future<Output = ()> + Send + 'static,
     {
-        //
+        todo!("spawn")
     }
 
     fn worker<W>(&self) -> Option<&W>
     where
         W: Worker<Self> + Send + Sync,
     {
-        //
+        todo!("worker")
     }
 
     fn register_resource<R: Any + Send + Sync>(&mut self, res: R) {
@@ -149,25 +146,26 @@ impl Node for ExampleNode {
 }
 
 struct ExampleNodeBuilder {
-    config: Config,
+    config: ExampleConfig,
 }
 
+#[async_trait(?Send)]
 impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
     type Error = Infallible;
-    type Config = Config;
+    type Config = ExampleConfig;
 
-    fn new(config: Self::Config) -> Self {
-        Self { config }
+    fn new(config: Self::Config) -> Result<Self, Self::Error> {
+        Ok(Self { config })
     }
 
-    fn with_worker<W: Worker<N> + 'static>(self) -> Self
+    fn with_worker<W: Worker<ExampleNode> + 'static>(self) -> Self
     where
         W::Config: Default,
     {
         self
     }
 
-    fn with_worker_cfg<W: Worker<N> + 'static>(self, config: W::Config) -> Self {
+    fn with_worker_cfg<W: Worker<ExampleNode> + 'static>(self, config: W::Config) -> Self {
         self
     }
 
@@ -176,8 +174,6 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
     }
 
     async fn finish(self) -> Result<ExampleNode, Self::Error> {
-        let ExampleNodeBuilder { config } = self;
-
         let network_config = NetworkConfig::build()
             .bind_address(&self.config.bind_address.to_string())
             .reconnect_millis(RECONNECT_MILLIS)
@@ -187,15 +183,14 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
 
         let local_keys = Keypair::generate();
         let network_id = 1;
-        // let mut node_builder =
+        let message = self.config.message.clone();
 
-        let (network_controller, network_listener) =
-            bee_network::init(network_config, local_keys, network_id, node_builder).await;
+        let (this, network_listener) =
+            bee_network::init::<ExampleNode>(network_config, local_keys, network_id, self).await;
 
         info!("[EXAMPLE] Node initialized.");
         Ok(ExampleNode {
-            config,
-            network_controller,
+            config: this.config,
             network_listener,
             connected_peers: HashSet::new(),
         })
@@ -203,19 +198,16 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
 }
 
 #[inline]
-async fn process_event(event: Event, message: &str, network: &mut Network, peers: &mut HashSet<PeerId>) {
+async fn process_event(event: Event, message: &str, network: &mut NetworkController, peers: &mut HashSet<PeerId>) {
     match event {
         Event::PeerConnected { id, address, .. } => {
             info!("[EXAMPLE] Connected peer '{}' with address '{}'.", id, address);
 
             info!("[EXAMPLE] Sending message: \"{}\"", message);
-            if let Err(e) = network
-                .send(SendMessage {
-                    message: Utf8Message::new(message).as_bytes(),
-                    to: id.clone(),
-                })
-                .await
-            {
+            if let Err(e) = network.send(SendMessage {
+                message: Utf8Message::new(message).as_bytes(),
+                to: id.clone(),
+            }) {
                 warn!("Sending message to peer failed. Error: {:?}", e);
             }
 
@@ -249,7 +241,7 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
     receiver
 }
 
-fn spam_endpoint(mut network: Network, peer_id: PeerId) {
+fn spam_endpoint(mut network: NetworkController, peer_id: PeerId) {
     info!("[EXAMPLE] Now sending spam messages to {}", peer_id);
 
     tokio::spawn(async move {
@@ -258,13 +250,10 @@ fn spam_endpoint(mut network: Network, peer_id: PeerId) {
 
             let message = Utf8Message::new(&i.to_string());
 
-            if let Err(e) = network
-                .send(SendMessage {
-                    message: message.as_bytes(),
-                    to: peer_id.clone(),
-                })
-                .await
-            {
+            if let Err(e) = network.send(SendMessage {
+                message: message.as_bytes(),
+                to: peer_id.clone(),
+            }) {
                 warn!("Sending message to peer failed. Error: {:?}", e);
             }
         }

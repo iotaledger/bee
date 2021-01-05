@@ -29,7 +29,7 @@ use std::{
     sync::{atomic::Ordering, Arc},
 };
 
-pub(crate) async fn spawn_connection_handler(
+pub(crate) async fn upgrade_connection(
     peer_id: PeerId,
     peer_info: PeerInfo,
     muxer: StreamMuxerBox,
@@ -69,7 +69,7 @@ pub(crate) async fn spawn_connection_handler(
         }
     };
 
-    spawn_substream_task(
+    spawn_substream_io_task(
         peer_id.clone(),
         substream,
         message_receiver,
@@ -88,7 +88,7 @@ pub(crate) async fn spawn_connection_handler(
     Ok(())
 }
 
-fn spawn_substream_task(
+fn spawn_substream_io_task(
     peer_id: PeerId,
     mut substream: GossipSubstream,
     message_receiver: DataReceiver,
