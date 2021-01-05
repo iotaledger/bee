@@ -1,8 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// #![warn(missing_docs)]
-#![recursion_limit = "512"]
+#![warn(missing_docs)]
 
 mod config;
 mod conns;
