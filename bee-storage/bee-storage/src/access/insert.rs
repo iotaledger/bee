@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::storage::StorageBackend;
+use crate::backend::StorageBackend;
 
 /// Insert<K, V> trait will extend the StorageBackend with Insert operation for the key: K value: V pair
 /// therefore it should be explicitly implemented for the corresponding StorageBackend.

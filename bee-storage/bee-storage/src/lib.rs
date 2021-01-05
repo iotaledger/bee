@@ -21,4 +21,4 @@
 pub mod access;
 /// Storage module which form the backend layer of the backend which holds the contract of starting and shutting down
 // the backend.
-pub mod storage;
+pub mod backend;
