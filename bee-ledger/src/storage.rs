@@ -8,6 +8,7 @@ use crate::{
 };
 
 use bee_message::payload::transaction::OutputId;
+use bee_protocol::MilestoneIndex;
 use bee_storage::{
     access::{Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
     storage,
@@ -65,10 +66,10 @@ impl<T> Backend for T where
 {
 }
 
-pub(crate) async fn apply_metadata<B: Backend>(storage: &B, metadata: &WhiteFlagMetadata) -> Result<(), Error> {
+pub(crate) async fn apply_diff<B: Backend>(storage: &B, metadata: &WhiteFlagMetadata) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &LedgerIndex::new(metadata.index))
+    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &metadata.index.into())
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     for (output_id, spent) in metadata.spent_outputs.iter() {
@@ -86,6 +87,35 @@ pub(crate) async fn apply_metadata<B: Backend>(storage: &B, metadata: &WhiteFlag
     }
 
     // TODO store diff
+
+    storage
+        .batch_commit(batch, true)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+#[allow(dead_code)]
+pub(crate) async fn rollback_diff<B: Backend>(storage: &B, metadata: &WhiteFlagMetadata) -> Result<(), Error> {
+    let mut batch = B::batch_begin();
+
+    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &(MilestoneIndex(*metadata.index - 1)).into())
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+
+    for (output_id, _spent) in metadata.spent_outputs.iter() {
+        Batch::<OutputId, Spent>::batch_delete(storage, &mut batch, output_id)
+            .map_err(|e| Error::Storage(Box::new(e)))?;
+        Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &(*output_id).into(), &())
+            .map_err(|e| Error::Storage(Box::new(e)))?;
+    }
+
+    for (output_id, _) in metadata.created_outputs.iter() {
+        Batch::<OutputId, Output>::batch_delete(storage, &mut batch, output_id)
+            .map_err(|e| Error::Storage(Box::new(e)))?;
+        Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &(*output_id).into())
+            .map_err(|e| Error::Storage(Box::new(e)))?;
+    }
+
+    // TODO delete diff
 
     storage
         .batch_commit(batch, true)
