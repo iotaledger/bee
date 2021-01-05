@@ -435,7 +435,7 @@ impl<B: Backend> MsTangle<B> {
 //     vertex::{MessageRef, Vertex},
 // };
 
-// use bee_bundle::{MessageId, Message};
+// use bee_message::{MessageId, Message};
 
 // use std::{
 //     collections::MessageIdSet,
@@ -889,7 +889,7 @@ impl<B: Backend> MsTangle<B> {
 //     task::spawn,
 // };
 
-// use bee_bundle::MessageId;
+// use bee_message::MessageId;
 
 // use std::{
 //     ptr,

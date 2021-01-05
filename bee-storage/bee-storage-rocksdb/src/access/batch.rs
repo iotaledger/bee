@@ -359,7 +359,7 @@ impl Batch<(), LedgerIndex> for Storage {
         // Packing to bytes can't fail.
         index.pack(&mut batch.value_buf).unwrap();
 
-        batch.inner.put_cf(&cf, [], &batch.value_buf);
+        batch.inner.put_cf(&cf, [0x00u8], &batch.value_buf);
 
         Ok(())
     }
@@ -370,7 +370,7 @@ impl Batch<(), LedgerIndex> for Storage {
             .cf_handle(CF_LEDGER_INDEX)
             .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
 
-        batch.inner.delete_cf(&cf, []);
+        batch.inner.delete_cf(&cf, [0x00u8]);
 
         Ok(())
     }
@@ -432,7 +432,7 @@ impl Batch<(), SnapshotInfo> for Storage {
         // Packing to bytes can't fail.
         info.pack(&mut batch.value_buf).unwrap();
 
-        batch.inner.put_cf(&cf, [], &batch.value_buf);
+        batch.inner.put_cf(&cf, [0x00u8], &batch.value_buf);
 
         Ok(())
     }
@@ -443,7 +443,7 @@ impl Batch<(), SnapshotInfo> for Storage {
             .cf_handle(CF_SNAPSHOT_INFO)
             .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
 
-        batch.inner.delete_cf(&cf, []);
+        batch.inner.delete_cf(&cf, [0x00u8]);
 
         Ok(())
     }

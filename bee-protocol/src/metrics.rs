@@ -22,10 +22,10 @@ pub struct ProtocolMetrics {
     known_messages: AtomicU64,
     messages_average_latency: AtomicU64,
 
-    value_bundles: AtomicU64,
-    non_value_bundles: AtomicU64,
-    confirmed_bundles: AtomicU64,
-    conflicting_bundles: AtomicU64,
+    referenced_messages: AtomicU64,
+    excluded_no_transaction_messages: AtomicU64,
+    excluded_conflicting_messages: AtomicU64,
+    included_messages: AtomicU64,
 }
 
 impl ProtocolMetrics {
@@ -139,40 +139,36 @@ impl ProtocolMetrics {
         self.messages_average_latency.store(val, Ordering::Relaxed)
     }
 
-    pub fn value_bundles(&self) -> u64 {
-        self.value_bundles.load(Ordering::Relaxed)
+    pub fn referenced_messages(&self) -> u64 {
+        self.referenced_messages.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
-    pub(crate) fn value_bundles_inc(&self) -> u64 {
-        self.value_bundles.fetch_add(1, Ordering::SeqCst)
+    pub fn referenced_messages_inc(&self, value: u64) -> u64 {
+        self.referenced_messages.fetch_add(value, Ordering::SeqCst)
     }
 
-    pub fn non_value_bundles(&self) -> u64 {
-        self.non_value_bundles.load(Ordering::Relaxed)
+    pub fn excluded_no_transaction_messages(&self) -> u64 {
+        self.excluded_no_transaction_messages.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
-    pub(crate) fn non_value_bundles_inc(&self) -> u64 {
-        self.non_value_bundles.fetch_add(1, Ordering::SeqCst)
+    pub fn excluded_no_transaction_messages_inc(&self, value: u64) -> u64 {
+        self.excluded_no_transaction_messages.fetch_add(value, Ordering::SeqCst)
     }
 
-    pub fn confirmed_bundles(&self) -> u64 {
-        self.confirmed_bundles.load(Ordering::Relaxed)
+    pub fn excluded_conflicting_messages(&self) -> u64 {
+        self.excluded_conflicting_messages.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
-    pub(crate) fn confirmed_bundles_inc(&self) -> u64 {
-        self.confirmed_bundles.fetch_add(1, Ordering::SeqCst)
+    pub fn excluded_conflicting_messages_inc(&self, value: u64) -> u64 {
+        self.excluded_conflicting_messages.fetch_add(value, Ordering::SeqCst)
     }
 
-    pub fn conflicting_bundles(&self) -> u64 {
-        self.conflicting_bundles.load(Ordering::Relaxed)
+    pub fn included_messages(&self) -> u64 {
+        self.included_messages.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
-    pub(crate) fn conflicting_bundles_inc(&self) -> u64 {
-        self.conflicting_bundles.fetch_add(1, Ordering::SeqCst)
+    pub fn included_messages_inc(&self, value: u64) -> u64 {
+        self.included_messages.fetch_add(value, Ordering::SeqCst)
     }
 }
 
@@ -198,10 +194,10 @@ mod tests {
         assert_eq!(metrics.new_messages(), 0);
         assert_eq!(metrics.known_messages(), 0);
         assert_eq!(metrics.messages_average_latency(), 0);
-        assert_eq!(metrics.value_bundles(), 0);
-        assert_eq!(metrics.non_value_bundles(), 0);
-        assert_eq!(metrics.confirmed_bundles(), 0);
-        assert_eq!(metrics.conflicting_bundles(), 0);
+        assert_eq!(metrics.referenced_messages(), 0);
+        assert_eq!(metrics.excluded_no_transaction_messages(), 0);
+        assert_eq!(metrics.excluded_conflicting_messages(), 0);
+        assert_eq!(metrics.included_messages(), 0);
 
         metrics.invalid_packets_inc();
         metrics.milestone_requests_received_inc();
@@ -216,10 +212,10 @@ mod tests {
         metrics.new_messages_inc();
         metrics.known_messages_inc();
         metrics.messages_average_latency_set(42);
-        metrics.value_bundles_inc();
-        metrics.non_value_bundles_inc();
-        metrics.confirmed_bundles_inc();
-        metrics.conflicting_bundles_inc();
+        metrics.referenced_messages_inc(1);
+        metrics.excluded_no_transaction_messages_inc(1);
+        metrics.excluded_conflicting_messages_inc(1);
+        metrics.included_messages_inc(1);
 
         assert_eq!(metrics.invalid_packets(), 1);
         assert_eq!(metrics.milestone_requests_received(), 1);
@@ -234,9 +230,9 @@ mod tests {
         assert_eq!(metrics.new_messages(), 1);
         assert_eq!(metrics.known_messages(), 1);
         assert_eq!(metrics.messages_average_latency(), 42);
-        assert_eq!(metrics.value_bundles(), 1);
-        assert_eq!(metrics.non_value_bundles(), 1);
-        assert_eq!(metrics.confirmed_bundles(), 1);
-        assert_eq!(metrics.conflicting_bundles(), 1);
+        assert_eq!(metrics.referenced_messages(), 1);
+        assert_eq!(metrics.excluded_no_transaction_messages(), 1);
+        assert_eq!(metrics.excluded_conflicting_messages(), 1);
+        assert_eq!(metrics.included_messages(), 1);
     }
 }

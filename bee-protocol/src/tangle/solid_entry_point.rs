@@ -6,7 +6,7 @@ use bee_message::MessageId;
 
 use std::ops::Deref;
 
-#[derive(Clone, Copy, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SolidEntryPoint(MessageId);
 
 impl From<MessageId> for SolidEntryPoint {

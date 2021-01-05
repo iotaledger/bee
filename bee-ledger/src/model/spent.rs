@@ -17,6 +17,14 @@ impl Spent {
     pub fn new(target: TransactionId, index: MilestoneIndex) -> Self {
         Self { target, index }
     }
+
+    pub fn target(&self) -> &TransactionId {
+        &self.target
+    }
+
+    pub fn index(&self) -> MilestoneIndex {
+        self.index
+    }
 }
 
 impl Packable for Spent {

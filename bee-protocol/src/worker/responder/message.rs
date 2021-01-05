@@ -5,7 +5,7 @@ use crate::{
     packet::{Message as MessagePacket, MessageRequest},
     peer::PeerManager,
     tangle::MsTangle,
-    worker::{MetricsWorker, PeerManagerWorker, TangleWorker},
+    worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
     ProtocolMetrics, Sender,
 };
 
@@ -38,7 +38,7 @@ impl<N: Node> Worker<N> for MessageResponderWorker {
         vec![
             TypeId::of::<TangleWorker>(),
             TypeId::of::<MetricsWorker>(),
-            TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<PeerManagerResWorker>(),
         ]
         .leak()
     }

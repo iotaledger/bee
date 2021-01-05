@@ -7,6 +7,7 @@ pub mod exist;
 pub mod fetch;
 pub mod insert;
 pub mod stream;
+pub mod truncate;
 
 pub use batch::{Batch, BatchBuilder};
 pub use delete::Delete;
@@ -14,3 +15,4 @@ pub use exist::Exist;
 pub use fetch::Fetch;
 pub use insert::Insert;
 pub use stream::AsStream;
+pub use truncate::Truncate;

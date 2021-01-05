@@ -7,3 +7,4 @@ pub mod exist;
 pub mod fetch;
 pub mod insert;
 pub mod stream;
+pub mod truncate;

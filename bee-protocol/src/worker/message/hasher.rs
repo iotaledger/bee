@@ -8,7 +8,7 @@ use crate::{
     peer::PeerManager,
     worker::{
         message::{HashCache, MessageSubmitterError, ProcessorWorker, ProcessorWorkerEvent},
-        MetricsWorker, PeerManagerWorker,
+        MetricsWorker, PeerManagerResWorker,
     },
     ProtocolMetrics,
 };
@@ -108,7 +108,7 @@ impl<N: Node> Worker<N> for HasherWorker {
         vec![
             TypeId::of::<ProcessorWorker>(),
             TypeId::of::<MetricsWorker>(),
-            TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<PeerManagerResWorker>(),
         ]
         .leak()
     }
@@ -211,7 +211,7 @@ impl Stream for BatchStream {
                         metrics.known_messages_inc();
                         if let Some(peer_id) = event.from {
                             if let Some(peer) = peer_manager.get(&peer_id) {
-                                peer.metrics().known_messages_inc();
+                                peer.value().0.metrics().known_messages_inc();
                             }
                         }
                         continue;

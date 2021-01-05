@@ -14,16 +14,15 @@ pub(crate) struct WhiteFlagMetadata {
     /// Index of the confirming milestone.
     pub(crate) index: MilestoneIndex,
     /// Timestamp of the confirming milestone.
-    #[allow(dead_code)]
     pub(crate) timestamp: u64,
     /// The number of messages which were referenced by the confirming milestone.
-    pub(crate) num_messages_referenced: usize,
+    pub(crate) num_referenced_messages: usize,
     /// The number of messages which were excluded because they did not include a value transaction.
-    pub(crate) num_messages_excluded_no_transaction: usize,
+    pub(crate) num_excluded_no_transaction_messages: usize,
     /// The number of messages which were excluded as they were conflicting with the ledger state.
-    pub(crate) num_messages_excluded_conflicting: usize,
+    pub(crate) num_excluded_conflicting_messages: usize,
     // The messages which mutate the ledger in the order in which they were applied.
-    pub(crate) messages_included: Vec<MessageId>,
+    pub(crate) included_messages: Vec<MessageId>,
     pub(crate) spent_outputs: HashMap<OutputId, Spent>,
     pub(crate) created_outputs: HashMap<OutputId, Output>,
 }

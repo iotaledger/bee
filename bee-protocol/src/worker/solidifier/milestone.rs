@@ -9,7 +9,7 @@ use crate::{
     tangle::MsTangle,
     worker::{
         MessageRequesterWorker, MessageRequesterWorkerEvent, MetricsWorker, MilestoneRequesterWorker,
-        PeerManagerWorker, RequestedMessages, RequestedMilestones, TangleWorker,
+        PeerManagerResWorker, RequestedMessages, RequestedMilestones, TangleWorker,
     },
     ProtocolMetrics,
 };
@@ -21,11 +21,13 @@ use bee_storage::storage::Backend;
 use bee_tangle::traversal;
 
 use async_trait::async_trait;
-use futures::{channel::oneshot, StreamExt};
+use futures::{stream::FusedStream, StreamExt};
 use log::{debug, info, warn};
-use tokio::sync::mpsc;
+use tokio::{sync::mpsc, time::interval};
 
-use std::{any::TypeId, convert::Infallible};
+use std::{any::TypeId, convert::Infallible, time::Duration};
+
+const KICKSTART_INTERVAL_SEC: u64 = 1;
 
 pub(crate) struct MilestoneSolidifierWorkerEvent(pub MilestoneIndex);
 
@@ -77,15 +79,16 @@ fn save_index(target_index: MilestoneIndex, queue: &mut Vec<MilestoneIndex>) {
 
 #[async_trait]
 impl<N: Node> Worker<N> for MilestoneSolidifierWorker {
-    type Config = (oneshot::Receiver<MilestoneIndex>, u32);
+    type Config = u32;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
         vec![
             TypeId::of::<MessageRequesterWorker>(),
+            TypeId::of::<MilestoneRequesterWorker>(),
             TypeId::of::<TangleWorker>(),
             TypeId::of::<MilestoneRequesterWorker>(),
-            TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<MetricsWorker>(),
         ]
         .leak()
@@ -94,33 +97,57 @@ impl<N: Node> Worker<N> for MilestoneSolidifierWorker {
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
+        let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
-        let ms_sync_count = config.1;
+        let requested_milestones = node.resource::<RequestedMilestones>();
+        let peer_manager = node.resource::<PeerManager>();
+        let ms_sync_count = config;
         let milestone_solidifier = tx.clone();
+        let mut next_ms = tangle.get_latest_solid_milestone_index() + MilestoneIndex(1);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, interval(Duration::from_secs(KICKSTART_INTERVAL_SEC)));
 
-            let mut queue = vec![];
-            let mut next_index = if let Ok(idx) = config.0.await {
-                idx
-            } else {
+            while receiver.next().await.is_some() {
+                let latest_ms = tangle.get_latest_milestone_index();
+                next_ms = tangle.get_latest_solid_milestone_index() + MilestoneIndex(1);
+
+                if !peer_manager.is_empty() && *next_ms + ms_sync_count < *latest_ms {
+                    for index in *next_ms..(*next_ms + ms_sync_count) {
+                        helper::request_milestone(
+                            &tangle,
+                            &milestone_requester,
+                            &*requested_milestones,
+                            MilestoneIndex(index),
+                            None,
+                        );
+                    }
+
+                    break;
+                }
+            }
+
+            if receiver.is_terminated() {
                 return;
-            };
+            }
+
+            let (shutdown, _) = receiver.split();
+            let mut receiver = ShutdownStream::from_fused(shutdown, rx.fuse());
+            let mut queue = vec![];
 
             while let Some(MilestoneSolidifierWorkerEvent(index)) = receiver.next().await {
                 save_index(index, &mut queue);
                 while let Some(index) = queue.pop() {
-                    if index == next_index {
+                    if index == next_ms {
                         trigger_solidification_unchecked(
                             &tangle,
                             &message_requester,
                             &*requested_messages,
                             index,
-                            &mut next_index,
+                            &mut next_ms,
                         )
                         .await;
                     } else {

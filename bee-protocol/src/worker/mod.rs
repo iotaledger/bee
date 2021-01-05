@@ -25,10 +25,10 @@ pub(crate) use message::{
 };
 pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 pub(crate) use message_validator::{MessageValidatorWorker, MessageValidatorWorkerEvent};
-pub(crate) use metrics::MetricsWorker;
+pub use metrics::MetricsWorker;
 pub(crate) use milestone_cone_updater::{MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent};
 pub(crate) use mps::MpsWorker;
-pub(crate) use peer::{PeerManagerWorker, PeerWorker};
+pub(crate) use peer::{PeerManagerResWorker, PeerManagerWorker, PeerWorker};
 pub(crate) use propagator::{PropagatorWorker, PropagatorWorkerEvent};
 pub(crate) use requester::{
     MessageRequesterWorker, MessageRequesterWorkerEvent, MilestoneRequesterWorker, MilestoneRequesterWorkerEvent,
@@ -37,7 +37,7 @@ pub(crate) use requester::{
 pub(crate) use responder::{
     MessageResponderWorker, MessageResponderWorkerEvent, MilestoneResponderWorker, MilestoneResponderWorkerEvent,
 };
-pub(crate) use solidifier::{KickstartWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
+pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
 pub(crate) use status::StatusWorker;
 pub use tangle::TangleWorker;
 pub(crate) use tip_pool_cleaner::TipPoolCleanerWorker;

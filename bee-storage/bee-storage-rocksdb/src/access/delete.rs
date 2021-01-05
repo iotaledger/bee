@@ -148,7 +148,7 @@ impl Delete<(), LedgerIndex> for Storage {
             .cf_handle(CF_LEDGER_INDEX)
             .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
 
-        self.inner.delete_cf(&cf, [])?;
+        self.inner.delete_cf(&cf, [0x00u8])?;
 
         Ok(())
     }
@@ -176,7 +176,7 @@ impl Delete<(), SnapshotInfo> for Storage {
             .cf_handle(CF_SNAPSHOT_INFO)
             .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
 
-        self.inner.delete_cf(&cf, [])?;
+        self.inner.delete_cf(&cf, [0x00u8])?;
 
         Ok(())
     }

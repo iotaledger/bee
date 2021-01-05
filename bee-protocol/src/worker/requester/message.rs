@@ -5,7 +5,7 @@ use crate::{
     milestone::MilestoneIndex,
     packet::MessageRequest,
     peer::PeerManager,
-    worker::{MetricsWorker, PeerManagerWorker},
+    worker::{MetricsWorker, PeerManagerResWorker},
     ProtocolMetrics, Sender,
 };
 
@@ -85,7 +85,7 @@ async fn process_request_unchecked(
         *counter += 1;
 
         if let Some(peer) = peer_manager.get(peer_id) {
-            if peer.has_data(index) {
+            if peer.value().0.has_data(index) {
                 Sender::<MessageRequest>::send(
                     network,
                     peer_manager,
@@ -106,7 +106,7 @@ async fn process_request_unchecked(
         *counter += 1;
 
         if let Some(peer) = peer_manager.get(peer_id) {
-            if peer.maybe_has_data(index) {
+            if peer.value().0.maybe_has_data(index) {
                 Sender::<MessageRequest>::send(
                     network,
                     peer_manager,
@@ -156,7 +156,7 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<PeerManagerWorker>(), TypeId::of::<MetricsWorker>()].leak()
+        vec![TypeId::of::<PeerManagerResWorker>(), TypeId::of::<MetricsWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {

@@ -43,11 +43,10 @@ impl<N: Node> Worker<N> for MessageValidatorWorker {
             while let Some(MessageValidatorWorkerEvent(id)) = receiver.next().await {
                 if let Some(message) = tangle.get(&id).await {
                     tangle.insert_tip(id, *message.parent1(), *message.parent2()).await;
-                    // if let Ok(bundle) = builder.validate() {
+                    // TODO validate
                     //     tangle.update_metadata(&hash, |metadata| {
                     //         metadata.flags_mut().set_valid(true);
                     //     });
-                    // }
                 }
             }
 

@@ -11,7 +11,7 @@ use crate::{
     worker::{
         BroadcasterWorker, BroadcasterWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent,
         MessageRequesterWorker, MessageSubmitterError, MetricsWorker, MilestonePayloadWorker,
-        MilestonePayloadWorkerEvent, PeerManagerWorker, PropagatorWorker, PropagatorWorkerEvent, RequestedMessages,
+        MilestonePayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent, RequestedMessages,
         TangleWorker, TransactionPayloadWorker, TransactionPayloadWorkerEvent,
     },
     ProtocolMetrics,
@@ -52,7 +52,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
             TypeId::of::<BroadcasterWorker>(),
             TypeId::of::<MessageRequesterWorker>(),
             TypeId::of::<MetricsWorker>(),
-            TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<TransactionPayloadWorker>(),
             TypeId::of::<MilestonePayloadWorker>(),
             TypeId::of::<IndexationPayloadWorker>(),
@@ -215,7 +215,7 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                     if let Some(peer_id) = from {
                         peer_manager
                             .get(&peer_id)
-                            .map(|peer| peer.metrics().known_messages_inc());
+                            .map(|peer| peer.value().0.metrics().known_messages_inc());
                     }
                 }
 

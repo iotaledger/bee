@@ -3,7 +3,7 @@
 
 use bee_message::{payload::indexation::HashedIndex, MessageId};
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     storage::Backend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
@@ -98,6 +98,16 @@ async fn access() {
     }
 
     assert_eq!(count, message_ids.len());
+
+    Truncate::<(HashedIndex, MessageId), ()>::truncate(&storage)
+        .await
+        .unwrap();
+
+    let mut stream = AsStream::<(HashedIndex, MessageId), ()>::stream(&storage)
+        .await
+        .unwrap();
+
+    assert!(stream.next().await.is_none());
 
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 }

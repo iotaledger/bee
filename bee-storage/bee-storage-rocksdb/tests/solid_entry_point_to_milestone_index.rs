@@ -3,7 +3,7 @@
 
 use bee_protocol::{tangle::SolidEntryPoint, MilestoneIndex};
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     storage::Backend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
@@ -90,6 +90,16 @@ async fn access() {
     }
 
     assert_eq!(count, seps.len());
+
+    Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(&storage)
+        .await
+        .unwrap();
+
+    let mut stream = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&storage)
+        .await
+        .unwrap();
+
+    assert!(stream.next().await.is_none());
 
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 }

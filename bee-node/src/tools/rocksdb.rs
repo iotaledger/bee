@@ -9,7 +9,11 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_protocol::tangle::MessageMetadata;
+use bee_protocol::{
+    tangle::{MessageMetadata, SolidEntryPoint},
+    Milestone, MilestoneIndex,
+};
+use bee_snapshot::SnapshotInfo;
 use bee_storage::{access::AsStream, storage::Backend};
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::*};
 
@@ -126,6 +130,38 @@ pub fn exec(tool: &Rocksdb) {
                 RocksdbCommand::Fetch { key: _key } => {}
                 RocksdbCommand::Stream => {
                     let mut stream = AsStream::<(), LedgerIndex>::stream(&storage).await.unwrap();
+
+                    while let Some((key, value)) = stream.next().await {
+                        println!("Key: {:?}\nValue: {:?})\n", key, value);
+                    }
+                }
+            },
+            CF_MILESTONE_INDEX_TO_MILESTONE => match &tool.command {
+                RocksdbCommand::Fetch { key: _key } => {}
+                RocksdbCommand::Stream => {
+                    let mut stream = AsStream::<MilestoneIndex, Milestone>::stream(&storage).await.unwrap();
+
+                    while let Some((key, value)) = stream.next().await {
+                        println!("Key: {:?}\nValue: {:?})\n", key, value);
+                    }
+                }
+            },
+            CF_SNAPSHOT_INFO => match &tool.command {
+                RocksdbCommand::Fetch { key: _key } => {}
+                RocksdbCommand::Stream => {
+                    let mut stream = AsStream::<(), SnapshotInfo>::stream(&storage).await.unwrap();
+
+                    while let Some((key, value)) = stream.next().await {
+                        println!("Key: {:?}\nValue: {:?})\n", key, value);
+                    }
+                }
+            },
+            CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX => match &tool.command {
+                RocksdbCommand::Fetch { key: _key } => {}
+                RocksdbCommand::Stream => {
+                    let mut stream = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&storage)
+                        .await
+                        .unwrap();
 
                     while let Some((key, value)) = stream.next().await {
                         println!("Key: {:?}\nValue: {:?})\n", key, value);

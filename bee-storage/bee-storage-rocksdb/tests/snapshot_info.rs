@@ -3,7 +3,7 @@
 
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     storage::Backend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
@@ -74,6 +74,10 @@ async fn access() {
     }
 
     assert_eq!(count, 1);
+
+    Truncate::<(), SnapshotInfo>::truncate(&storage).await.unwrap();
+
+    assert!(!Exist::<(), SnapshotInfo>::exist(&storage, &()).await.unwrap());
 
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 }

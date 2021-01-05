@@ -182,10 +182,11 @@ impl PeerWorker {
                         .has_data(MilestoneIndex(*tangle.get_latest_solid_milestone_index() + 1))
                 {
                     warn!(
-                        "The peer {} can't help syncing: {} is needed but {} is pruned.",
+                        "The peer {} can't help syncing because the required index {} is not in its database [{};{}].",
                         self.peer.address(),
                         *tangle.get_latest_solid_milestone_index() + 1,
-                        packet.pruned_index
+                        packet.pruned_index,
+                        packet.latest_solid_milestone_index
                     );
                     // TODO drop if autopeered.
                 }
