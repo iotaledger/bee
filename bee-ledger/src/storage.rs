@@ -68,21 +68,24 @@ impl<T> Backend for T where
 pub(crate) async fn apply_metadata<B: Backend>(storage: &B, metadata: &WhiteFlagMetadata) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    storage
-        .batch_insert(&mut batch, &(), &LedgerIndex::new(metadata.index))
+    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &LedgerIndex::new(metadata.index))
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     for (output_id, spent) in metadata.spent_outputs.iter() {
-        storage
-            .batch_insert(&mut batch, output_id, spent)
+        Batch::<OutputId, Spent>::batch_insert(storage, &mut batch, output_id, spent)
+            .map_err(|e| Error::Storage(Box::new(e)))?;
+        Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &(*output_id).into())
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
     for (output_id, output) in metadata.created_outputs.iter() {
-        storage
-            .batch_insert(&mut batch, output_id, output)
+        Batch::<OutputId, Output>::batch_insert(storage, &mut batch, output_id, output)
+            .map_err(|e| Error::Storage(Box::new(e)))?;
+        Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &(*output_id).into(), &())
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
+
+    // TODO store diff
 
     storage
         .batch_commit(batch, true)
@@ -111,7 +114,7 @@ pub(crate) async fn fetch_output<B: Backend>(storage: &B, output_id: &OutputId) 
 }
 
 pub(crate) async fn is_output_unspent<B: Backend>(storage: &B, output_id: &OutputId) -> Result<bool, Error> {
-    Exist::<Unspent, ()>::exist(storage, &Unspent::new(*output_id))
+    Exist::<Unspent, ()>::exist(storage, &(*output_id).into())
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }
