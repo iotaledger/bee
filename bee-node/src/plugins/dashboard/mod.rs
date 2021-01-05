@@ -114,7 +114,8 @@ impl<N: Node> Worker<N> for Dashboard {
             info!("Dashboard available at http://localhost:{}.", config.port());
 
             let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(
-                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), config.port()),
+                // TODO the whole address needs to be a config
+                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), config.port()),
                 async {
                     shutdown.await.ok();
                 },
