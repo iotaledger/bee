@@ -79,7 +79,7 @@ where
         ));
     }
 
-    storage::apply_metadata(&*storage, &metadata).await?;
+    storage::apply_diff(&*storage, &metadata).await?;
 
     *index = MilestoneIndex(milestone.essence().index());
 
