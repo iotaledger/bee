@@ -3,7 +3,7 @@
 
 use crate::{
     error::Error,
-    event::MilestoneConfirmed,
+    event::{MilestoneConfirmed, NewOutput, NewSpent},
     merkle_hasher::MerkleHasher,
     metadata::WhiteFlagMetadata,
     storage::{self, Backend},
@@ -22,7 +22,7 @@ use blake2::Blake2b;
 use futures::stream::StreamExt;
 use log::{error, info, warn};
 
-use std::{any::TypeId, convert::Infallible, ops::Deref};
+use std::{any::TypeId, convert::Infallible};
 
 pub(crate) struct LedgerWorker {}
 
@@ -79,12 +79,12 @@ where
         ));
     }
 
-    storage::apply_metadata(storage.deref(), &metadata).await?;
+    storage::apply_metadata(&*storage, &metadata).await?;
 
     *index = MilestoneIndex(milestone.essence().index());
 
     info!(
-        "Confirmed milestone {}: referenced {}, zero value {}, conflicting {}, included {}.",
+        "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}.",
         milestone.essence().index(),
         metadata.num_referenced_messages,
         metadata.num_excluded_no_transaction_messages,
@@ -104,7 +104,17 @@ where
         excluded_no_transaction_messages: metadata.num_excluded_no_transaction_messages,
         excluded_conflicting_messages: metadata.num_excluded_conflicting_messages,
         included_messages: metadata.included_messages.len(),
+        spent_outputs: metadata.spent_outputs.len(),
+        created_outputs: metadata.created_outputs.len(),
     });
+
+    for (_, spent) in metadata.spent_outputs {
+        bus.dispatch(NewSpent(spent));
+    }
+
+    for (_, output) in metadata.created_outputs {
+        bus.dispatch(NewOutput(output));
+    }
 
     Ok(())
 }
