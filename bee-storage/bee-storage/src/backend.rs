@@ -8,7 +8,7 @@ use std::error::Error;
 
 #[async_trait]
 /// Trait to be implemented on storage backend, which determine how to start and shutdown the storage.
-pub trait StorageBackend: Sized + Send + Sync + 'static {
+pub trait StorageBackend: Send + Sized + Sync + 'static {
     /// ConfigBuilder to help constract/build the associated Config
     type ConfigBuilder: Default + DeserializeOwned + Into<Self::Config>;
     /// Config holds the backend options.

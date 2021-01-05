@@ -5,7 +5,5 @@ use crate::backend::StorageBackend;
 
 #[async_trait::async_trait]
 pub trait Truncate<K, V>: StorageBackend {
-    async fn truncate(&self) -> Result<(), Self::Error>
-    where
-        Self: Sized;
+    async fn truncate(&self) -> Result<(), Self::Error>;
 }

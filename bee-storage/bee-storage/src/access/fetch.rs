@@ -8,7 +8,5 @@ use crate::backend::StorageBackend;
 #[async_trait::async_trait]
 pub trait Fetch<K, V>: StorageBackend {
     /// Execute Fetch query
-    async fn fetch(&self, key: &K) -> Result<Option<V>, Self::Error>
-    where
-        Self: Sized;
+    async fn fetch(&self, key: &K) -> Result<Option<V>, Self::Error>;
 }

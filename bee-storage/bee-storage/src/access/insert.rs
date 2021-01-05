@@ -8,7 +8,5 @@ use crate::backend::StorageBackend;
 #[async_trait::async_trait]
 pub trait Insert<K, V>: StorageBackend {
     /// Execute Insert query
-    async fn insert(&self, key: &K, value: &V) -> Result<(), Self::Error>
-    where
-        Self: Sized;
+    async fn insert(&self, key: &K, value: &V) -> Result<(), Self::Error>;
 }

@@ -8,7 +8,5 @@ use crate::backend::StorageBackend;
 #[async_trait::async_trait]
 pub trait Exist<K, V>: StorageBackend {
     /// Execute Exist query
-    async fn exist(&self, key: &K) -> Result<bool, Self::Error>
-    where
-        Self: Sized;
+    async fn exist(&self, key: &K) -> Result<bool, Self::Error>;
 }

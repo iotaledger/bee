@@ -8,7 +8,5 @@ use crate::backend::StorageBackend;
 #[async_trait::async_trait]
 pub trait Delete<K, V>: StorageBackend {
     /// Execute Delete query
-    async fn delete(&self, key: &K) -> Result<(), Self::Error>
-    where
-        Self: Sized;
+    async fn delete(&self, key: &K) -> Result<(), Self::Error>;
 }

@@ -13,7 +13,5 @@ pub trait AsStream<'a, K, V>: StorageBackend {
     type Stream: Stream;
     /// This method returns the Stream object for the provided <K, V> collection in order to later execute async next()
     /// calls
-    async fn stream(&'a self) -> Result<Self::Stream, Self::Error>
-    where
-        Self: Sized;
+    async fn stream(&'a self) -> Result<Self::Stream, Self::Error>;
 }
