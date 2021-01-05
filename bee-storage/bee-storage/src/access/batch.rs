@@ -4,7 +4,7 @@
 use crate::backend::StorageBackend;
 
 #[async_trait::async_trait]
-/// BatchBuilder trait will extend the StorageBackend with Batch builder functionality,
+/// BatchBuilder trait extends the StorageBackend with Batch builder functionality,
 /// therefore it should be explicitly implemented for the corresponding StorageBackend.
 pub trait BatchBuilder: StorageBackend {
     /// Batch type acts like memory buffer which queue all the write operations.
@@ -21,7 +21,7 @@ pub trait BatchBuilder: StorageBackend {
     async fn batch_commit(&self, batch: Self::Batch, durability: bool) -> Result<(), Self::Error>;
 }
 
-/// Batch<K, V> trait will extend the StorageBackend with Batch operations for the key: K value: V pair
+/// Batch<K, V> trait extends the StorageBackend with Batch operations for the key: K value: V pair
 /// therefore it should be explicitly implemented for the corresponding StorageBackend.
 pub trait Batch<K, V>: BatchBuilder {
     /// Add Insert batch operation for the provided key value pair into the Batch memory buffer.

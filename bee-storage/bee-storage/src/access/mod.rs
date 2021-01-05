@@ -1,18 +1,19 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-/// Batch module which holds the contract for batch access operation for all backends
+/// Holds the contract for batch access operation.
 pub mod batch;
-/// Delete module which holds the contract for delete access operation for all backends
+/// Holds the contract for delete access operation.
 pub mod delete;
-/// Exist module which holds the contract for exist access operation for all backends
+/// Holds the contract for exist access operation.
 pub mod exist;
-/// Fetch module which holds the contract for fetch access operation for all backends
+/// Holds the contract for fetch access operation.
 pub mod fetch;
-/// Insert module which holds the contract for insert access operation for all backends
+/// Holds the contract for insert access operation.
 pub mod insert;
-/// Stream module which holds the contract for stream-like access operations for all backends
+/// Holds the contract for stream access operations.
 pub mod stream;
+/// Holds the contract for truncate access operations.
 pub mod truncate;
 
 pub use batch::{Batch, BatchBuilder};

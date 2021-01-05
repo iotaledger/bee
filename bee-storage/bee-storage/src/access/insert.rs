@@ -3,10 +3,10 @@
 
 use crate::backend::StorageBackend;
 
-/// Insert<K, V> trait will extend the StorageBackend with Insert operation for the key: K value: V pair
-/// therefore it should be explicitly implemented for the corresponding StorageBackend.
+/// `Insert<K, V>` trait extends the `StorageBackend` with `insert` operation for the (key: K, value: V) pair;
+/// therefore, it should be explicitly implemented for the corresponding `StorageBackend`.
 #[async_trait::async_trait]
 pub trait Insert<K, V>: StorageBackend {
-    /// Execute Insert query
+    /// Inserts the (K, V) pair in the storage.
     async fn insert(&self, key: &K, value: &V) -> Result<(), Self::Error>;
 }
