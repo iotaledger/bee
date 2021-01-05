@@ -453,6 +453,7 @@ dependencies = [
  "tokio",
  "toml",
  "warp",
+ "warp-reverse-proxy",
 ]
 
 [[package]]
@@ -4117,6 +4118,20 @@ dependencies = [
  "tracing",
  "tracing-futures",
  "urlencoding",
+]
+
+[[package]]
+name = "warp-reverse-proxy"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4ef86ce4aff5d48bcec007915c719313e8657fa863fada1be40d90971ff2979"
+dependencies = [
+ "hyper",
+ "lazy_static",
+ "reqwest",
+ "thiserror",
+ "unicase",
+ "warp",
 ]
 
 [[package]]

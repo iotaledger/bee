@@ -43,6 +43,7 @@ thiserror = "1.0"
 tokio = { version = "0.2", features = ["signal", "macros"] }
 toml = "0.5"
 warp = "0.2"
+warp-reverse-proxy = "0.2.0"
 
 [lib]
 name = "bee_node"

@@ -168,18 +168,18 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         info!("Initializing protocol layer...");
         let this = bee_protocol::init::<BeeNode<B>>(config.protocol.clone(), network_id, events, this);
 
-        let mut this = this.with_worker::<VersionChecker>();
-        this = this.with_worker_cfg::<Mqtt>(config.mqtt);
-        this = this.with_worker_cfg::<Dashboard>(config.dashboard);
-
         info!("Initializing REST API...");
-        let mut this = bee_rest_api::init::<BeeNode<B>>(
+        let this = bee_rest_api::init::<BeeNode<B>>(
             config.rest_api.clone(),
             config.protocol.clone(),
             config.network_id.clone(),
             this,
         )
         .await;
+
+        let mut this = this.with_worker::<VersionChecker>();
+        this = this.with_worker_cfg::<Mqtt>(config.mqtt);
+        this = this.with_worker_cfg::<Dashboard>((config.dashboard, config.rest_api.clone()));
 
         let mut node = BeeNode {
             workers: Map::new(),

@@ -18,6 +18,7 @@ use bee_protocol::{
     event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated},
     tangle::MsTangle,
 };
+use bee_rest_api::config::RestApiConfig;
 
 use asset::Asset;
 use async_trait::async_trait;
@@ -25,6 +26,7 @@ use futures::stream::StreamExt;
 use log::{debug, error, info, warn};
 use tokio::sync::mpsc;
 use warp::{http::header::HeaderValue, path::FullPath, reply::Response, ws::Message, Filter, Rejection, Reply};
+use warp_reverse_proxy::reverse_proxy_filter;
 
 use std::{
     any::Any,
@@ -66,10 +68,13 @@ where
 
 #[async_trait]
 impl<N: Node> Worker<N> for Dashboard {
-    type Config = DashboardConfig;
+    type Config = (DashboardConfig, RestApiConfig);
     type Error = Infallible;
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+        let dashboard_cfg = config.0;
+        let rest_api_cfg = config.1;
+
         let tangle = node.resource::<MsTangle<N::Backend>>();
 
         // Keep track of all connected users, key is usize, value
@@ -109,13 +114,20 @@ impl<N: Node> Worker<N> for Dashboard {
                     .map(|ws: warp::ws::Ws, users| {
                         // This will call our function if the handshake succeeds.
                         ws.on_upgrade(move |socket| user_connected(socket, users))
-                    }));
+                    }))
+                .or(warp::path!("api" / ..).and(
+                    reverse_proxy_filter(
+                        "".to_string(),
+                        "http://".to_owned() + &rest_api_cfg.binding_socket_addr().to_string() + "/",
+                    )
+                    .map(|res| res),
+                ));
 
-            info!("Dashboard available at http://localhost:{}.", config.port());
+            info!("Dashboard available at http://localhost:{}.", dashboard_cfg.port());
 
             let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(
                 // TODO the whole address needs to be a config
-                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), config.port()),
+                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), dashboard_cfg.port()),
                 async {
                     shutdown.await.ok();
                 },
