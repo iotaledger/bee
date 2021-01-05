@@ -188,6 +188,7 @@ pub struct PeerInfo {
 macro_rules! impl_is_relation {
     ($is:tt) => {
         impl PeerInfo {
+            #[allow(dead_code)]
             pub fn $is(&self) -> bool {
                 self.relation.$is()
             }

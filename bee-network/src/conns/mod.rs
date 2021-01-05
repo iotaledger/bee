@@ -188,17 +188,22 @@ async fn process_read(
     Ok(())
 }
 
+/// Describes direction of an established connection.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Origin {
+    /// The connection is inbound (server).
     Inbound,
+    /// The connection is outbound (client).
     Outbound,
 }
 
 impl Origin {
+    /// Returns whether the connection is inbound.
     pub fn is_inbound(&self) -> bool {
         *self == Origin::Inbound
     }
 
+    /// Returns whether the connection is outbound.
     pub fn is_outbound(&self) -> bool {
         *self == Origin::Outbound
     }

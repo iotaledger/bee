@@ -1,8 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Networking layer for the Bee framework.
+
 #![warn(missing_docs)]
-// #![deny(warnings)]
+#![deny(warnings)]
 
 mod config;
 mod conns;
@@ -23,18 +25,19 @@ pub use libp2p::{
 // Exports
 pub use config::{NetworkConfig, NetworkConfigBuilder};
 pub use conns::Origin;
-pub use interaction::{
-    commands::{self, Command},
-    events::{self, Event},
-};
+pub use interaction::{commands::Command, events::Event};
 pub use network::NetworkController;
 pub use peers::PeerRelation;
 
+/// A type that receives any event published by the networking layer.
 pub type NetworkListener = UnboundedReceiver<Event>;
 
 use config::DEFAULT_RECONNECT_INTERVAL_SECS;
 use conns::{ConnectionManager, ConnectionManagerConfig};
-use interaction::events::InternalEvent;
+use interaction::{
+    commands,
+    events::{self, InternalEvent},
+};
 use peers::{BannedAddrList, BannedPeerList, PeerList, PeerManager, PeerManagerConfig};
 
 use bee_common_pt2::node::{Node, NodeBuilder};
@@ -49,6 +52,7 @@ pub(crate) static RECONNECT_INTERVAL_SECS: AtomicU64 = AtomicU64::new(DEFAULT_RE
 pub(crate) static NETWORK_ID: AtomicU64 = AtomicU64::new(0);
 pub(crate) static MAX_UNKNOWN_PEERS: AtomicUsize = AtomicUsize::new(0);
 
+/// Initializes the networking layer.
 pub async fn init<N: Node>(
     config: NetworkConfig,
     local_keys: Keypair,
@@ -105,30 +109,25 @@ pub async fn init<N: Node>(
     (node_builder, event_receiver)
 }
 
+/// A trait specifically there to create shorter peer ids for better readability in logs and user interfaces.
 pub trait ShortId
 where
     Self: ToString,
 {
-    const ORIGINAL_LENGTH: usize;
-    const LEADING_LENGTH: usize;
-    const TRAILING_LENGTH: usize;
+    /// The length of the shortened peer id.
+    const SHORT_LENGTH: usize;
 
+    /// Creates a shorter - more readable - id from the original.
     fn short(&self) -> String;
 }
 
 impl ShortId for PeerId {
-    const ORIGINAL_LENGTH: usize = 52;
-    const LEADING_LENGTH: usize = 0;
-    const TRAILING_LENGTH: usize = 6;
+    const SHORT_LENGTH: usize = 6;
 
     fn short(&self) -> String {
+        const FULL_LENGTH: usize = 52;
+
         let s = self.to_string();
-        s[(Self::ORIGINAL_LENGTH - Self::TRAILING_LENGTH)..].to_string()
-        // format!(
-        //     // "{}~{}",
-        //     // &s[..Self::LEADING_LENGTH],
-        //     "{}",
-        //     &s[(Self::ORIGINAL_LENGTH - Self::TRAILING_LENGTH)..]
-        // )
+        s[(FULL_LENGTH - Self::SHORT_LENGTH)..].to_string()
     }
 }
