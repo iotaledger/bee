@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{Multiaddr, ShortId, KNOWN_PEER_LIMIT, UNKNOWN_PEER_LIMIT};
+use crate::{Multiaddr, ShortId, MAX_UNKNOWN_PEERS};
 
 use super::{errors::Error, DataSender, PeerRelation};
 
@@ -33,27 +33,19 @@ impl PeerList {
 
         // Prevent inserting more peers than preconfigured.
         match info.relation {
-            PeerRelation::Known => {
-                if self.count_if(|info, _| info.is_known()).await >= KNOWN_PEER_LIMIT.load(Ordering::Relaxed) {
-                    return Err((
-                        id,
-                        info,
-                        Error::KnownPeerLimitReached(KNOWN_PEER_LIMIT.load(Ordering::Relaxed)),
-                    ));
-                }
-            }
             PeerRelation::Unknown => {
-                if self.count_if(|info, _| info.is_unknown()).await >= UNKNOWN_PEER_LIMIT.load(Ordering::Relaxed) {
+                if self.count_if(|info, _| info.is_unknown()).await >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed) {
                     return Err((
                         id,
                         info,
-                        Error::UnknownPeerLimitReached(UNKNOWN_PEER_LIMIT.load(Ordering::Relaxed)),
+                        Error::UnknownPeerLimitReached(MAX_UNKNOWN_PEERS.load(Ordering::Relaxed)),
                     ));
                 }
             }
             PeerRelation::Discovered => {
                 todo!("PeerRelation::Discovered case");
             }
+            _ => (),
         }
 
         // Since we already checked that such an `id` is not yet present, the returned value is always `None`.

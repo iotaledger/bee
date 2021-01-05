@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![warn(missing_docs)]
-#![deny(warnings)]
+// #![deny(warnings)]
 
 mod config;
 mod conns;
@@ -32,7 +32,7 @@ pub use peers::PeerRelation;
 
 pub type NetworkListener = UnboundedReceiver<Event>;
 
-use config::{DEFAULT_KNOWN_PEER_LIMIT, DEFAULT_MSG_BUFFER_SIZE, DEFAULT_RECONNECT_MILLIS, DEFAULT_UNKNOWN_PEER_LIMIT};
+use config::DEFAULT_RECONNECT_INTERVAL_SECS;
 use conns::{ConnectionManager, ConnectionManagerConfig};
 use interaction::events::InternalEvent;
 use peers::{BannedAddrList, BannedPeerList, PeerList, PeerManager, PeerManagerConfig};
@@ -45,23 +45,20 @@ use tokio::sync::mpsc::UnboundedReceiver;
 
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
-pub(crate) static MSG_BUFFER_SIZE: AtomicUsize = AtomicUsize::new(DEFAULT_MSG_BUFFER_SIZE);
-pub(crate) static RECONNECT_MILLIS: AtomicU64 = AtomicU64::new(DEFAULT_RECONNECT_MILLIS);
-pub(crate) static KNOWN_PEER_LIMIT: AtomicUsize = AtomicUsize::new(DEFAULT_KNOWN_PEER_LIMIT);
-pub(crate) static UNKNOWN_PEER_LIMIT: AtomicUsize = AtomicUsize::new(DEFAULT_UNKNOWN_PEER_LIMIT);
+pub(crate) static RECONNECT_INTERVAL_SECS: AtomicU64 = AtomicU64::new(DEFAULT_RECONNECT_INTERVAL_SECS);
 pub(crate) static NETWORK_ID: AtomicU64 = AtomicU64::new(0);
+pub(crate) static MAX_UNKNOWN_PEERS: AtomicUsize = AtomicUsize::new(0);
 
 pub async fn init<N: Node>(
     config: NetworkConfig,
     local_keys: Keypair,
     network_id: u64,
+    max_unknown_peers: usize,
     mut node_builder: N::Builder,
 ) -> (N::Builder, NetworkListener) {
-    MSG_BUFFER_SIZE.swap(config.msg_buffer_size, Ordering::Relaxed);
-    RECONNECT_MILLIS.swap(config.reconnect_millis, Ordering::Relaxed);
-    KNOWN_PEER_LIMIT.swap(config.known_peer_limit, Ordering::Relaxed);
-    UNKNOWN_PEER_LIMIT.swap(config.unknown_peer_limit, Ordering::Relaxed);
+    RECONNECT_INTERVAL_SECS.swap(config.reconnect_interval_secs, Ordering::Relaxed);
     NETWORK_ID.swap(network_id, Ordering::Relaxed);
+    MAX_UNKNOWN_PEERS.swap(max_unknown_peers, Ordering::Relaxed);
 
     let local_keys = identity::Keypair::Ed25519(local_keys);
     let local_id = PeerId::from_public_key(local_keys.public());
@@ -98,7 +95,6 @@ pub async fn init<N: Node>(
         panic!("Fatal error: {}", e);
     });
 
-    // let listen_address = conn_manager_config.listen_address.clone();
     let network_controller = NetworkController::new(config, command_sender, local_id);
 
     node_builder = node_builder

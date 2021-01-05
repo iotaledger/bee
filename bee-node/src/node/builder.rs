@@ -154,6 +154,8 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         let network_config = config.network.clone();
         let network_id = config.network_id.1;
+
+        let max_unknown_peers = config.peering.manual.unknown_peers_limit;
         let local_keys = config.peering.identity_private_key.0.clone();
 
         let this = self
@@ -161,7 +163,8 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             .with_resource(PeerList::default());
 
         info!("Initializing network layer...");
-        let (this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
+        let (this, events) =
+            bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, max_unknown_peers, this).await;
 
         let this = this.with_resource(ShutdownStream::new(ctrl_c_listener(), events));
 
