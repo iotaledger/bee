@@ -111,8 +111,7 @@ where
     tangle.update_metadata(message_id, |message_metadata| {
         message_metadata.flags_mut().set_conflicting(conflicting);
         message_metadata.set_milestone_index(metadata.index);
-        // TODO pass actual ms timestamp
-        message_metadata.confirm();
+        message_metadata.confirm(metadata.timestamp);
     });
 
     Ok(())

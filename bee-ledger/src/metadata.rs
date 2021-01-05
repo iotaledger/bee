@@ -14,7 +14,6 @@ pub(crate) struct WhiteFlagMetadata {
     /// Index of the confirming milestone.
     pub(crate) index: MilestoneIndex,
     /// Timestamp of the confirming milestone.
-    #[allow(dead_code)]
     pub(crate) timestamp: u64,
     /// The number of messages which were referenced by the confirming milestone.
     pub(crate) num_referenced_messages: usize,
