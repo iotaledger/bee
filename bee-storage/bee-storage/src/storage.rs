@@ -12,7 +12,7 @@ pub trait StorageBackend: Sized + Send + Sync + 'static {
     /// ConfigBuilder to help constract/build the associated Config
     type ConfigBuilder: Default + DeserializeOwned + Into<Self::Config>;
     /// Config holds the backend options.
-    type Config: Clone + Send;
+    type Config: Clone + Send + Sync;
     /// Error type which will be returned when executing an access operation
     type Error: std::error::Error + Send;
 
