@@ -1,10 +1,10 @@
 [workspace]
 members = [
-	"bee-storage/bee-storage",
 	"bee-common/bee-common",
 	"bee-common/bee-common-derive",
 	"bee-crypto",
 	"bee-signing",
+	"bee-storage/bee-storage",
 	"bee-ternary",
 	"bee-test",
 ]

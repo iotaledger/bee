@@ -1,12 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::storage::Backend;
+use crate::storage::StorageBackend;
 
 #[async_trait::async_trait]
-/// BatchBuilder trait will extend the Backend with Batch builder functionality,
-/// therefore it should be explicitly implemented for the corresponding Backend.
-pub trait BatchBuilder: Backend + Sized {
+/// BatchBuilder trait will extend the StorageBackend with Batch builder functionality,
+/// therefore it should be explicitly implemented for the corresponding StorageBackend.
+pub trait BatchBuilder: StorageBackend + Sized {
     /// Batch type acts like memory buffer which queue all the write operations.
     type Batch: Default + Send + Sized;
 
@@ -21,9 +21,9 @@ pub trait BatchBuilder: Backend + Sized {
     async fn batch_commit(&self, batch: Self::Batch, durability: bool) -> Result<(), Self::Error>;
 }
 
-/// Batch<K, V> trait will extend the Backend with Batch operations for the key: K value: V pair
-/// therefore it should be explicitly implemented for the corresponding Backend.
-pub trait Batch<K, V>: Backend + BatchBuilder + Sized {
+/// Batch<K, V> trait will extend the StorageBackend with Batch operations for the key: K value: V pair
+/// therefore it should be explicitly implemented for the corresponding StorageBackend.
+pub trait Batch<K, V>: StorageBackend + BatchBuilder + Sized {
     /// Add Insert batch operation for the provided key value pair into the Batch memory buffer.
     fn batch_insert(&self, batch: &mut Self::Batch, key: &K, value: &V) -> Result<(), Self::Error>;
     /// Add Delete batch operation for the provided key value pair into the Batch memory buffer.
