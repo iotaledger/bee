@@ -401,6 +401,7 @@ dependencies = [
 name = "bee-network"
 version = "0.1.0-alpha"
 dependencies = [
+ "anymap",
  "async-trait",
  "bee-common 0.1.1-alpha",
  "bee-common 0.2.0-alpha",
