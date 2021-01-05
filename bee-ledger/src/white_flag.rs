@@ -38,7 +38,7 @@ where
 {
     let mut conflicting = false;
 
-    metadata.num_messages_referenced += 1;
+    metadata.num_referenced_messages += 1;
 
     if let Some(Payload::Transaction(transaction)) = message.payload() {
         let transaction_id = transaction.id();
@@ -86,7 +86,7 @@ where
         // Verify that all outputs consume all inputs and have valid signatures. Also verify that the amounts match.
 
         if conflicting {
-            metadata.num_messages_excluded_conflicting += 1;
+            metadata.num_excluded_conflicting_messages += 1;
         } else {
             // Go through all deposits and generate unspent outputs.
             for (index, output) in essence.outputs().iter().enumerate() {
@@ -102,10 +102,10 @@ where
                     .spent_outputs
                     .insert(*output_id, Spent::new(transaction_id, metadata.index));
             }
-            metadata.messages_included.push(*message_id);
+            metadata.included_messages.push(*message_id);
         }
     } else {
-        metadata.num_messages_excluded_no_transaction += 1;
+        metadata.num_excluded_no_transaction_messages += 1;
     }
 
     tangle.update_metadata(message_id, |message_metadata| {

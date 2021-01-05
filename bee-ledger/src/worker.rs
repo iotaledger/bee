@@ -29,9 +29,10 @@ pub(crate) struct LedgerWorker {}
 async fn confirm<N: Node>(
     tangle: &MsTangle<N::Backend>,
     storage: &N::Backend,
+    bus: &Bus<'static>,
+    metrics: &ProtocolMetrics,
     message_id: MessageId,
     index: &mut MilestoneIndex,
-    bus: &Bus<'static>,
 ) -> Result<(), Error>
 where
     N::Backend: Backend,
@@ -56,7 +57,7 @@ where
         return Err(e);
     };
 
-    let merkle_proof = MerkleHasher::<Blake2b>::new().digest(&metadata.messages_included);
+    let merkle_proof = MerkleHasher::<Blake2b>::new().digest(&metadata.included_messages);
 
     if !merkle_proof.eq(&milestone.essence().merkle_proof()) {
         return Err(Error::MerkleProofMismatch(
@@ -65,16 +66,16 @@ where
         ));
     }
 
-    if metadata.num_messages_referenced
-        != metadata.num_messages_excluded_no_transaction
-            + metadata.num_messages_excluded_conflicting
-            + metadata.messages_included.len()
+    if metadata.num_referenced_messages
+        != metadata.num_excluded_no_transaction_messages
+            + metadata.num_excluded_conflicting_messages
+            + metadata.included_messages.len()
     {
         return Err(Error::InvalidMessagesCount(
-            metadata.num_messages_referenced,
-            metadata.num_messages_excluded_no_transaction,
-            metadata.num_messages_excluded_conflicting,
-            metadata.messages_included.len(),
+            metadata.num_referenced_messages,
+            metadata.num_excluded_no_transaction_messages,
+            metadata.num_excluded_conflicting_messages,
+            metadata.included_messages.len(),
         ));
     }
 
@@ -85,19 +86,24 @@ where
     info!(
         "Confirmed milestone {}: referenced {}, zero value {}, conflicting {}, included {}.",
         milestone.essence().index(),
-        metadata.num_messages_referenced,
-        metadata.num_messages_excluded_no_transaction,
-        metadata.num_messages_excluded_conflicting,
-        metadata.messages_included.len()
+        metadata.num_referenced_messages,
+        metadata.num_excluded_no_transaction_messages,
+        metadata.num_excluded_conflicting_messages,
+        metadata.included_messages.len()
     );
+
+    metrics.referenced_messages_inc(metadata.num_referenced_messages as u64);
+    metrics.excluded_no_transaction_messages_inc(metadata.num_excluded_no_transaction_messages as u64);
+    metrics.excluded_conflicting_messages_inc(metadata.num_excluded_conflicting_messages as u64);
+    metrics.included_messages_inc(metadata.included_messages.len() as u64);
 
     bus.dispatch(MilestoneConfirmed {
         index: milestone.essence().index().into(),
         timestamp: milestone.essence().timestamp(),
-        messages_referenced: metadata.num_messages_referenced,
-        messages_excluded_no_transaction: metadata.num_messages_excluded_no_transaction,
-        messages_excluded_conflicting: metadata.num_messages_excluded_conflicting,
-        messages_included: metadata.messages_included.len(),
+        referenced_messages: metadata.num_referenced_messages,
+        excluded_no_transaction_messages: metadata.num_excluded_no_transaction_messages,
+        excluded_conflicting_messages: metadata.num_excluded_conflicting_messages,
+        included_messages: metadata.included_messages.len(),
     });
 
     Ok(())
@@ -119,8 +125,8 @@ where
         let (tx, rx) = flume::unbounded();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let _metrics = node.resource::<ProtocolMetrics>();
         let storage = node.storage();
+        let metrics = node.resource::<ProtocolMetrics>();
         let bus = node.bus();
 
         bus.add_listener::<(), LatestSolidMilestoneChanged, _>(move |event| {
@@ -141,7 +147,7 @@ where
             let mut index = config;
 
             while let Some(message_id) = receiver.next().await {
-                if let Err(e) = confirm::<N>(&tangle, &storage, message_id, &mut index, &bus).await {
+                if let Err(e) = confirm::<N>(&tangle, &storage, &bus, &metrics, message_id, &mut index).await {
                     error!("Confirmation error on {}: {}.", message_id, e);
                     panic!("Aborting due to unexpected ledger error.");
                 }
