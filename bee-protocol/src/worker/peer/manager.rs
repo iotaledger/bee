@@ -43,7 +43,6 @@ impl<N: Node> Worker<N> for PeerManagerWorker {
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        node.register_resource(PeerManager::new());
         let peer_manager = node.resource::<PeerManager>();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
