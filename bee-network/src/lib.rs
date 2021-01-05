@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![warn(missing_docs)]
+#![deny(warnings)]
 
 mod config;
 mod conns;
