@@ -10,7 +10,7 @@ use crate::{
     tangle::MsTangle,
     worker::{
         MetricsWorker, MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent, MilestoneRequesterWorker,
-        MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, PeerManagerWorker, RequestedMilestones,
+        MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, PeerManagerResWorker, RequestedMilestones,
         TangleWorker,
     },
     ProtocolMetrics,
@@ -147,7 +147,7 @@ where
             TypeId::of::<MilestoneConeUpdaterWorker>(),
             TypeId::of::<TangleWorker>(),
             TypeId::of::<MilestoneRequesterWorker>(),
-            TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<MetricsWorker>(),
         ]
         .leak()

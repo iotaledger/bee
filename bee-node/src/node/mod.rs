@@ -9,23 +9,16 @@ pub use error::Error;
 
 use crate::{config::NodeConfig, storage::Backend};
 
-use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
+use bee_common::event::Bus;
 use bee_common_pt2::{
     node::{Node, ResHandle},
     worker::Worker,
 };
-use bee_network::{self, Event, Multiaddr, NetworkListener, PeerId, ShortId};
-use bee_protocol::{register, unregister};
 
 use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
-use futures::{
-    channel::oneshot,
-    future::Future,
-    stream::{Fuse, StreamExt},
-};
-use log::{info, trace, warn};
-use tokio::sync::mpsc;
+use futures::{channel::oneshot, future::Future};
+use log::{info, warn};
 
 use std::{
     any::{type_name, Any, TypeId},
@@ -34,11 +27,6 @@ use std::{
     ops::Deref,
     pin::Pin,
 };
-
-type NetworkEventStream = ShutdownStream<Fuse<NetworkListener>>;
-
-// TODO design proper type `PeerList`
-type PeerList = HashMap<PeerId, (mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)>;
 
 type WorkerStop<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> + Send;
 
@@ -78,25 +66,12 @@ impl<B: Backend> BeeNode<B> {
     pub async fn run(mut self) -> Result<(), Error> {
         info!("Running.");
 
-        let mut network_events_stream = self.remove_resource::<NetworkEventStream>().unwrap();
-
-        let mut runtime = NodeRuntime {
-            peers: PeerList::default(),
-            node: &self,
-        };
-
-        while let Some(event) = network_events_stream.next().await {
-            trace!("Received event {:?}.", event);
-
-            runtime.process_event(event).await;
+        // Unwrapping is fine because the builder added this resource.
+        if let Err(e) = self.remove_resource::<oneshot::Receiver<()>>().unwrap().await {
+            warn!("Awaiting shutdown failed: {:?}", e);
         }
 
         info!("Stopping...");
-
-        for (_, (_, shutdown)) in runtime.peers.into_iter() {
-            // TODO: Should we handle this error?
-            let _ = shutdown.send(());
-        }
 
         self.stop().await.expect("Failed to properly stop node");
 
@@ -168,60 +143,5 @@ impl<B: Backend> Node for BeeNode<B> {
         W: Worker<Self> + Send + Sync,
     {
         self.workers.get::<W>()
-    }
-}
-
-struct NodeRuntime<'a, B: Backend> {
-    peers: PeerList,
-    node: &'a BeeNode<B>,
-}
-
-impl<'a, B: Backend> NodeRuntime<'a, B> {
-    #[inline]
-    async fn process_event(&mut self, event: Event) {
-        match event {
-            Event::PeerAdded { id } => self.peer_added_handler(id).await,
-            Event::PeerRemoved { id } => self.peer_removed_handler(id).await,
-            Event::PeerConnected { id, address } => self.peer_connected_handler(id, address).await,
-            Event::PeerDisconnected { id } => self.peer_disconnected_handler(id).await,
-            Event::MessageReceived { message, from } => self.peer_message_received_handler(message, from).await,
-            _ => (), // Ignore all other events for now
-        }
-    }
-
-    #[inline]
-    async fn peer_added_handler(&mut self, id: PeerId) {
-        info!("Added peer: {}", id.short());
-    }
-
-    #[inline]
-    async fn peer_removed_handler(&mut self, id: PeerId) {
-        info!("Removed peer: {}", id.short());
-    }
-
-    #[inline]
-    async fn peer_connected_handler(&mut self, id: PeerId, address: Multiaddr) {
-        let (receiver_tx, receiver_shutdown_tx) = register(self.node, id.clone(), address).await;
-
-        self.peers.insert(id, (receiver_tx, receiver_shutdown_tx));
-    }
-
-    #[inline]
-    async fn peer_disconnected_handler(&mut self, id: PeerId) {
-        if let Some((_, shutdown)) = self.peers.remove(&id) {
-            if let Err(e) = shutdown.send(()) {
-                warn!("Sending shutdown to {} failed: {:?}.", id.short(), e);
-            }
-            unregister(self.node, id).await;
-        }
-    }
-
-    #[inline]
-    async fn peer_message_received_handler(&mut self, message: Vec<u8>, from: PeerId) {
-        if let Some(peer) = self.peers.get_mut(&from) {
-            if let Err(e) = peer.0.send(message) {
-                warn!("Sending PeerWorkerEvent::Message to {} failed: {}.", from.short(), e);
-            }
-        }
     }
 }

@@ -6,7 +6,7 @@ use crate::{
     packet::MilestoneRequest,
     peer::PeerManager,
     tangle::MsTangle,
-    worker::{MetricsWorker, PeerManagerWorker, TangleWorker},
+    worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
     ProtocolMetrics, Sender,
 };
 
@@ -93,7 +93,7 @@ async fn process_request_unchecked(
 
                 if let Some(peer) = peer_manager.get(peer_id) {
                     // TODO also request if has_data ?
-                    if peer.maybe_has_data(index) {
+                    if peer.value().0.maybe_has_data(index) {
                         Sender::<MilestoneRequest>::send(
                             network,
                             peer_manager,
@@ -147,7 +147,7 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
     fn dependencies() -> &'static [TypeId] {
         vec![
             TypeId::of::<TangleWorker>(),
-            TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<MetricsWorker>(),
         ]
         .leak()
