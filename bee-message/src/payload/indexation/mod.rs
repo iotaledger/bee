@@ -46,9 +46,8 @@ impl Indexation {
     // TODO use crypto.rs
     pub fn hash(&self) -> HashedIndex {
         let mut hasher = VarBlake2b::new(HASHED_INDEX_LENGTH).unwrap();
-        let bytes = self.pack_new();
 
-        hasher.update(&bytes);
+        hasher.update(self.index.as_bytes());
 
         let mut hash = [0u8; HASHED_INDEX_LENGTH];
         hasher.finalize_variable(|res| hash.copy_from_slice(res));

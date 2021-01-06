@@ -11,23 +11,16 @@ use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
 use bee_storage::access::Fetch;
 
-use blake2::Blake2s;
 use serde::Serialize;
 use warp::{reject, Rejection, Reply};
 
-use std::{convert::TryInto, ops::Deref};
+use std::ops::Deref;
 
 pub(crate) async fn messages_find<B: StorageBackend>(
     index: String,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    let hashed_index = {
-        use digest::Digest;
-        let mut hasher = Blake2s::new();
-        hasher.update(index.as_bytes());
-        // `Blake2s` output is `HASHED_INDEX_LENGTH` bytes long.
-        HashedIndex::new(hasher.finalize_reset().as_slice().try_into().unwrap())
-    };
+    let hashed_index = Indexation::new(index.clone(), &[]).unwrap().hash();
 
     let mut fetched = match Fetch::<HashedIndex, Vec<MessageId>>::fetch(storage.deref(), &hashed_index)
         .await
