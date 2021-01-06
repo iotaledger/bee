@@ -3,7 +3,7 @@
 
 use crate::{error::Error, storage::*};
 
-use bee_ledger::model::{LedgerIndex, Output, Spent, Unspent};
+use bee_ledger::model::{Diff, LedgerIndex, Output, Spent, Unspent};
 use bee_message::{
     payload::{
         indexation::{HashedIndex, HASHED_INDEX_LENGTH},
@@ -200,6 +200,24 @@ impl Truncate<SolidEntryPoint, MilestoneIndex> for Storage {
 
         self.inner
             .delete_range_cf(cf, [0x00u8; MESSAGE_ID_LENGTH], [0xffu8; MESSAGE_ID_LENGTH])?;
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl Truncate<MilestoneIndex, Diff> for Storage {
+    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_DIFF))?;
+
+        self.inner.delete_range_cf(
+            cf,
+            [0x00u8; std::mem::size_of::<MilestoneIndex>()],
+            [0xffu8; std::mem::size_of::<MilestoneIndex>()],
+        )?;
 
         Ok(())
     }

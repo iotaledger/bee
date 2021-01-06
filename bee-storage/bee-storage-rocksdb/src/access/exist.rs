@@ -4,7 +4,7 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{LedgerIndex, Output, Spent, Unspent};
+use bee_ledger::model::{Diff, LedgerIndex, Output, Spent, Unspent};
 use bee_message::{
     payload::{
         indexation::HashedIndex,
@@ -205,5 +205,20 @@ impl Exist<SolidEntryPoint, MilestoneIndex> for Storage {
             .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
 
         Ok(self.inner.get_cf(&cf, sep.pack_new())?.is_some())
+    }
+}
+
+#[async_trait::async_trait]
+impl Exist<MilestoneIndex, Diff> for Storage {
+    async fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as Backend>::Error>
+    where
+        Self: Sized,
+    {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_DIFF))?;
+
+        Ok(self.inner.get_cf(&cf, index.pack_new())?.is_some())
     }
 }

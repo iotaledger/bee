@@ -4,7 +4,7 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{LedgerIndex, Output, Spent, Unspent};
+use bee_ledger::model::{Diff, LedgerIndex, Output, Spent, Unspent};
 use bee_message::{
     payload::{
         indexation::{HashedIndex, HASHED_INDEX_LENGTH},
@@ -243,6 +243,17 @@ impl<'a> StorageStream<'a, SolidEntryPoint, MilestoneIndex> {
     }
 }
 
+impl<'a> StorageStream<'a, MilestoneIndex, Diff> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneIndex, Diff) {
+        (
+            // Unpacking from storage is fine.
+            MilestoneIndex::unpack(&mut key).unwrap(),
+            // Unpacking from storage is fine.
+            Diff::unpack(&mut value).unwrap(),
+        )
+    }
+}
+
 impl_stream!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_stream!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_stream!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
@@ -255,3 +266,4 @@ impl_stream!((), LedgerIndex, CF_LEDGER_INDEX);
 impl_stream!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
 impl_stream!((), SnapshotInfo, CF_SNAPSHOT_INFO);
 impl_stream!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
+impl_stream!(MilestoneIndex, Diff, CF_MILESTONE_INDEX_TO_DIFF);
