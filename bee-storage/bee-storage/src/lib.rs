@@ -15,6 +15,7 @@
 //! application/user space.
 
 #![deny(missing_docs)]
+#![deny(warnings)]
 
 /// Access module which form the access layer of the backend which holds the contract of unified database access
 /// operations across all the backends and bee types.
