@@ -4,7 +4,7 @@
 use crate::{
     error::Error,
     metadata::WhiteFlagMetadata,
-    model::{LedgerIndex, Output, Spent, Unspent},
+    model::{Diff, LedgerIndex, Output, Spent, Unspent},
 };
 
 use bee_message::payload::transaction::OutputId;
@@ -23,6 +23,7 @@ pub trait Backend:
     + Batch<OutputId, Spent>
     + Batch<Unspent, ()>
     + Batch<(), LedgerIndex>
+    + Batch<MilestoneIndex, Diff>
     + Delete<OutputId, Output>
     + Delete<OutputId, Spent>
     + Delete<Unspent, ()>
@@ -48,6 +49,7 @@ impl<T> Backend for T where
         + Batch<OutputId, Spent>
         + Batch<Unspent, ()>
         + Batch<(), LedgerIndex>
+        + Batch<MilestoneIndex, Diff>
         + Delete<OutputId, Output>
         + Delete<OutputId, Spent>
         + Delete<Unspent, ()>
@@ -69,6 +71,9 @@ impl<T> Backend for T where
 pub(crate) async fn apply_diff<B: Backend>(storage: &B, metadata: &WhiteFlagMetadata) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
+    let mut spent_outputs = Vec::with_capacity(metadata.spent_outputs.len());
+    let mut created_outputs = Vec::with_capacity(metadata.created_outputs.len());
+
     Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &metadata.index.into())
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
@@ -77,6 +82,7 @@ pub(crate) async fn apply_diff<B: Backend>(storage: &B, metadata: &WhiteFlagMeta
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &(*output_id).into())
             .map_err(|e| Error::Storage(Box::new(e)))?;
+        spent_outputs.push(*output_id);
     }
 
     for (output_id, output) in metadata.created_outputs.iter() {
@@ -84,9 +90,16 @@ pub(crate) async fn apply_diff<B: Backend>(storage: &B, metadata: &WhiteFlagMeta
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &(*output_id).into(), &())
             .map_err(|e| Error::Storage(Box::new(e)))?;
+        created_outputs.push(*output_id);
     }
 
-    // TODO store diff
+    Batch::<MilestoneIndex, Diff>::batch_insert(
+        storage,
+        &mut batch,
+        &metadata.index,
+        &Diff::new(spent_outputs, created_outputs),
+    )
+    .map_err(|e| Error::Storage(Box::new(e)))?;
 
     storage
         .batch_commit(batch, true)
@@ -115,7 +128,8 @@ pub(crate) async fn rollback_diff<B: Backend>(storage: &B, metadata: &WhiteFlagM
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
-    // TODO delete diff
+    Batch::<MilestoneIndex, Diff>::batch_delete(storage, &mut batch, &metadata.index)
+        .map_err(|e| Error::Storage(Box::new(e)))?;
 
     storage
         .batch_commit(batch, true)
