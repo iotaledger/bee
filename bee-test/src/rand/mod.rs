@@ -13,3 +13,4 @@ pub mod snapshot;
 pub mod solid_entry_point;
 pub mod string;
 pub mod transaction;
+pub mod diff;
