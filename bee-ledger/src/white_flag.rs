@@ -40,72 +40,75 @@ where
 
     metadata.num_referenced_messages += 1;
 
-    if let Some(Payload::Transaction(transaction)) = message.payload() {
-        let transaction_id = transaction.id();
-        let essence = transaction.essence();
+    let transaction = match message.payload() {
+        Some(Payload::Transaction(transaction)) => transaction,
+        _ => {
+            metadata.num_excluded_no_transaction_messages += 1;
+            return Ok(());
+        }
+    };
 
-        let mut outputs = HashMap::with_capacity(essence.inputs().len());
+    let transaction_id = transaction.id();
+    let essence = transaction.essence();
+    let mut outputs = HashMap::with_capacity(essence.inputs().len());
 
-        // TODO check transaction syntax here ?
+    // TODO check transaction syntax here ?
 
-        for input in essence.inputs() {
-            if let Input::UTXO(utxo_input) = input {
-                let output_id = utxo_input.output_id();
+    for input in essence.inputs() {
+        if let Input::UTXO(utxo_input) = input {
+            let output_id = utxo_input.output_id();
 
-                // Check if this input was already spent during the confirmation.
-                if metadata.spent_outputs.contains_key(output_id) {
+            // Check if this input was already spent during the confirmation.
+            if metadata.spent_outputs.contains_key(output_id) {
+                conflicting = true;
+                break;
+            }
+
+            // Check if this input was newly created during the confirmation.
+            if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
+                outputs.insert(output_id, output);
+                continue;
+            }
+
+            // Check current ledger for this input.
+            if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
+                // Check if this output is already spent.
+                if !storage::is_output_unspent(storage.deref(), output_id).await? {
                     conflicting = true;
                     break;
                 }
-
-                // Check if this input was newly created during the confirmation.
-                if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
-                    outputs.insert(output_id, output);
-                    continue;
-                }
-
-                // Check current ledger for this input.
-                if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
-                    // Check if this output is already spent.
-                    if !storage::is_output_unspent(storage.deref(), output_id).await? {
-                        conflicting = true;
-                        break;
-                    }
-                    outputs.insert(output_id, output);
-                } else {
-                    // TODO conflicting ?
-                    conflicting = true;
-                    break;
-                }
+                outputs.insert(output_id, output);
             } else {
-                return Err(Error::UnsupportedInputType);
-            };
-        }
-
-        // TODO semantic validation
-        // Verify that all outputs consume all inputs and have valid signatures. Also verify that the amounts match.
-
-        if conflicting {
-            metadata.num_excluded_conflicting_messages += 1;
+                // TODO conflicting ?
+                conflicting = true;
+                break;
+            }
         } else {
-            // Go through all deposits and generate unspent outputs.
-            for (index, output) in essence.outputs().iter().enumerate() {
-                metadata.created_outputs.insert(
-                    // Can't fail because we know the index is valid.
-                    OutputId::new(transaction_id, index as u16).unwrap(),
-                    Output::new(*message_id, output.clone()),
-                );
-            }
-            for (output_id, _) in outputs {
-                metadata.created_outputs.remove(output_id);
-                metadata
-                    .spent_outputs
-                    .insert(*output_id, Spent::new(transaction_id, metadata.index));
-            }
-            metadata.included_messages.push(*message_id);
-        }
+            return Err(Error::UnsupportedInputType);
+        };
+    }
+
+    // TODO semantic validation
+    // Verify that all outputs consume all inputs and have valid signatures. Also verify that the amounts match.
+
+    if conflicting {
+        metadata.num_excluded_conflicting_messages += 1;
     } else {
-        metadata.num_excluded_no_transaction_messages += 1;
+        // Go through all deposits and generate unspent outputs.
+        for (index, output) in essence.outputs().iter().enumerate() {
+            metadata.created_outputs.insert(
+                // Can't fail because we know the index is valid.
+                OutputId::new(transaction_id, index as u16).unwrap(),
+                Output::new(*message_id, output.clone()),
+            );
+        }
+        for (output_id, _) in outputs {
+            metadata.created_outputs.remove(output_id);
+            metadata
+                .spent_outputs
+                .insert(*output_id, Spent::new(transaction_id, metadata.index));
+        }
+        metadata.included_messages.push(*message_id);
     }
 
     tangle.update_metadata(message_id, |message_metadata| {
