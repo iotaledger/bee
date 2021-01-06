@@ -8,7 +8,7 @@ use crate::{
     tangle::MsTangle,
     worker::{
         milestone_cone_updater::{MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent},
-        MessageValidatorWorker, MessageValidatorWorkerEvent, TangleWorker,
+        TangleWorker,
     },
 };
 
@@ -18,7 +18,7 @@ use bee_message::MessageId;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use log::{error, info, warn};
+use log::{error, info};
 use tokio::sync::mpsc;
 
 use std::{
@@ -43,17 +43,11 @@ where
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![
-            TypeId::of::<MessageValidatorWorker>(),
-            TypeId::of::<MilestoneConeUpdaterWorker>(),
-            TypeId::of::<TangleWorker>(),
-        ]
-        .leak()
+        vec![TypeId::of::<MilestoneConeUpdaterWorker>(), TypeId::of::<TangleWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
-        let message_validator = node.worker::<MessageValidatorWorker>().unwrap().tx.clone();
         let milestone_cone_updater = node.worker::<MilestoneConeUpdaterWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
@@ -90,21 +84,23 @@ where
 
                             let mut index = None;
 
-                            tangle.update_metadata(&hash, |metadata| {
-                                // OTRSI/YTRSI values need to be set before the solid flag, to ensure that the
-                                // MilestoneConeUpdater is aware of all values.
-                                metadata.set_otrsi(best_otrsi);
-                                metadata.set_ytrsi(best_ytrsi);
-                                metadata.solidify();
+                            tangle
+                                .update_metadata(&hash, |metadata| {
+                                    // OTRSI/YTRSI values need to be set before the solid flag, to ensure that the
+                                    // MilestoneConeUpdater is aware of all values.
+                                    metadata.set_otrsi(best_otrsi);
+                                    metadata.set_ytrsi(best_ytrsi);
+                                    metadata.solidify();
 
-                                // This is possibly not sufficient as there is no guarantee a milestone has been
-                                // validated before being solidified, we then also need
-                                // to check when a milestone gets validated if it's
-                                // already solid.
-                                if metadata.flags().is_milestone() {
-                                    index = Some(metadata.milestone_index());
-                                }
-                            }).await;
+                                    // This is possibly not sufficient as there is no guarantee a milestone has been
+                                    // validated before being solidified, we then also need
+                                    // to check when a milestone gets validated if it's
+                                    // already solid.
+                                    if metadata.flags().is_milestone() {
+                                        index = Some(metadata.milestone_index());
+                                    }
+                                })
+                                .await;
 
                             for child in tangle.get_children(&hash).await {
                                 children.push(child);
@@ -112,9 +108,7 @@ where
 
                             bus.dispatch(MessageSolidified(*hash));
 
-                            if let Err(e) = message_validator.send(MessageValidatorWorkerEvent(*hash)) {
-                                warn!("Failed to send hash to message validator: {:?}.", e);
-                            }
+                            tangle.insert_tip(*hash, *message.parent1(), *message.parent2()).await;
 
                             if let Some(index) = index {
                                 // TODO we need to get the milestone from the tangle to dispatch it.

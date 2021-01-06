@@ -29,10 +29,9 @@ use crate::{
     sender::Sender,
     worker::{
         BroadcasterWorker, HasherWorker, HeartbeaterWorker, IndexationPayloadWorker, MessageRequesterWorker,
-        MessageResponderWorker, MessageValidatorWorker, MilestoneConeUpdaterWorker, MilestonePayloadWorker,
-        MilestoneRequesterWorker, MilestoneResponderWorker, MilestoneSolidifierWorker, MpsWorker, PeerManagerResWorker,
-        PeerManagerWorker, ProcessorWorker, PropagatorWorker, StatusWorker, TipPoolCleanerWorker,
-        TransactionPayloadWorker,
+        MessageResponderWorker, MilestoneConeUpdaterWorker, MilestonePayloadWorker, MilestoneRequesterWorker,
+        MilestoneResponderWorker, MilestoneSolidifierWorker, MpsWorker, PeerManagerResWorker, PeerManagerWorker,
+        ProcessorWorker, PropagatorWorker, StatusWorker, TipPoolCleanerWorker, TransactionPayloadWorker,
     },
 };
 
@@ -63,7 +62,6 @@ where
         .with_worker_cfg::<MilestonePayloadWorker>(config.clone())
         .with_worker::<IndexationPayloadWorker>()
         .with_worker::<BroadcasterWorker>()
-        .with_worker::<MessageValidatorWorker>()
         .with_worker::<PropagatorWorker>()
         .with_worker::<MpsWorker>()
         .with_worker_cfg::<MilestoneSolidifierWorker>(config.workers.ms_sync_count)
