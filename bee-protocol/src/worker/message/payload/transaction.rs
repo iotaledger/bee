@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    storage::Backend,
     tangle::MsTangle,
     worker::{IndexationPayloadWorker, IndexationPayloadWorkerEvent, TangleWorker},
-    storage::Backend,
 };
 
 use bee_common::shutdown_stream::ShutdownStream;
@@ -50,8 +50,8 @@ where
 
             while let Some(TransactionPayloadWorkerEvent(message_id)) = receiver.next().await {
                 if let Some(message) = tangle.get(&message_id).await {
-                    match message.payload() {
-                        Some(Payload::Indexation(_)) => {
+                    if let Some(Payload::Transaction(transaction)) = message.payload() {
+                        if let Some(Payload::Indexation(_)) = transaction.essence().payload() {
                             if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
                                 warn!(
                                     "Sending message id {} to indexation payload worker failed: {:?}.",
@@ -59,7 +59,6 @@ where
                                 );
                             }
                         }
-                        _ => continue,
                     }
                 }
             }
