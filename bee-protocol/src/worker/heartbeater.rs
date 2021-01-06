@@ -4,7 +4,7 @@
 use crate::{
     helper,
     peer::PeerManager,
-    storage::Backend,
+    storage::StorageBackend,
     tangle::MsTangle,
     worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
     ProtocolMetrics,
@@ -31,7 +31,7 @@ pub(crate) struct HeartbeaterWorker {}
 #[async_trait]
 impl<N: Node> Worker<N> for HeartbeaterWorker
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = ();
     type Error = Infallible;

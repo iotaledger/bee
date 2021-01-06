@@ -3,8 +3,8 @@
 
 use crate::info::SnapshotInfo;
 
-use bee_storage::{access::Fetch, storage};
+use bee_storage::{access::Fetch, backend};
 
-pub trait Backend: storage::Backend + Fetch<(), SnapshotInfo> {}
+pub trait StorageBackend: backend::StorageBackend + Fetch<(), SnapshotInfo> {}
 
-impl<T> Backend for T where T: storage::Backend + Fetch<(), SnapshotInfo> {}
+impl<T> StorageBackend for T where T: backend::StorageBackend + Fetch<(), SnapshotInfo> {}

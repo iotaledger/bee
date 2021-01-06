@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{filters::CustomRejection::NotFound, storage::Backend};
+use crate::{filters::CustomRejection::NotFound, storage::StorageBackend};
 
 use bee_common::packable::Packable;
 use bee_common_pt2::node::ResHandle;
@@ -10,7 +10,7 @@ use bee_protocol::tangle::MsTangle;
 
 use warp::{http::Response, reject, Rejection, Reply};
 
-pub async fn message_raw<B: Backend>(
+pub async fn message_raw<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {

@@ -4,7 +4,7 @@
 use crate::{
     filters::CustomRejection::{BadRequest, NotFound, ServiceUnavailable},
     handlers::{BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
     types::OutputDto,
 };
 
@@ -18,7 +18,10 @@ use warp::{reject, Rejection, Reply};
 
 use std::{convert::TryInto, ops::Deref};
 
-pub(crate) async fn output<B: Backend>(output_id: OutputId, storage: ResHandle<B>) -> Result<impl Reply, Rejection> {
+pub(crate) async fn output<B: StorageBackend>(
+    output_id: OutputId,
+    storage: ResHandle<B>,
+) -> Result<impl Reply, Rejection> {
     let output = Fetch::<OutputId, bee_ledger::model::Output>::fetch(storage.deref(), &output_id)
         .await
         .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?;

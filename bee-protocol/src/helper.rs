@@ -8,7 +8,7 @@ use crate::{
     tangle::MsTangle,
     worker::{MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages, RequestedMilestones},
     ProtocolMetrics, Sender,
-    storage::Backend,
+    storage::StorageBackend,
 };
 
 use bee_message::MessageId;
@@ -21,7 +21,7 @@ use tokio::sync::mpsc;
 
 // MilestoneRequest
 
-pub(crate) async fn request_milestone<B: Backend>(
+pub(crate) async fn request_milestone<B: StorageBackend>(
     tangle: &MsTangle<B>,
     milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
     requested_milestones: &RequestedMilestones,
@@ -35,7 +35,7 @@ pub(crate) async fn request_milestone<B: Backend>(
     }
 }
 
-pub(crate) async fn request_latest_milestone<B: Backend>(
+pub(crate) async fn request_latest_milestone<B: StorageBackend>(
     tangle: &MsTangle<B>,
     milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
     requested_milestones: &RequestedMilestones,
@@ -46,7 +46,7 @@ pub(crate) async fn request_latest_milestone<B: Backend>(
 
 // MessageRequest
 
-pub(crate) async fn request_message<B: Backend>(
+pub(crate) async fn request_message<B: StorageBackend>(
     tangle: &MsTangle<B>,
     message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
     requested_messages: &RequestedMessages,

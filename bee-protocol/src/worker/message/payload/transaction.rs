@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    storage::Backend,
+    storage::StorageBackend,
     tangle::MsTangle,
     worker::{IndexationPayloadWorker, IndexationPayloadWorkerEvent, TangleWorker},
 };
@@ -29,7 +29,7 @@ pub(crate) struct TransactionPayloadWorker {
 impl<N> Worker<N> for TransactionPayloadWorker
 where
     N: Node,
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = ();
     type Error = Infallible;

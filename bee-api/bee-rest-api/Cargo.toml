@@ -18,7 +18,7 @@ bee-message = { path = "../../bee-message" }
 bee-pow = { path = "../../bee-pow" }
 bee-protocol = { path = "../../bee-protocol" }
 bee-tangle = { path = "../../bee-tangle" }
-bee-storage = { path = "../../bee-storage/bee-storage" }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 async-trait = "0.1"
 bech32 = "0.7"

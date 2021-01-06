@@ -5,7 +5,7 @@ use crate::{
     config::NodeConfig,
     node::{BeeNode, Error},
     plugins::{self, Dashboard, Mqtt, VersionChecker},
-    storage::Backend,
+    storage::StorageBackend,
 };
 
 use bee_common::event::Bus;
@@ -48,7 +48,7 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
     receiver
 }
 
-pub struct BeeNodeBuilder<B: Backend> {
+pub struct BeeNodeBuilder<B: StorageBackend> {
     deps: HashMap<TypeId, &'static [TypeId]>,
     worker_starts: HashMap<TypeId, Box<WorkerStart<BeeNode<B>>>>,
     worker_stops: HashMap<TypeId, Box<WorkerStop<BeeNode<B>>>>,
@@ -56,7 +56,7 @@ pub struct BeeNodeBuilder<B: Backend> {
     config: NodeConfig<B>,
 }
 
-impl<B: Backend> BeeNodeBuilder<B> {
+impl<B: StorageBackend> BeeNodeBuilder<B> {
     pub fn config(&self) -> &NodeConfig<B> {
         &self.config
     }
@@ -74,7 +74,7 @@ impl<B: Backend> BeeNodeBuilder<B> {
 }
 
 #[async_trait(?Send)]
-impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
+impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
     type Error = Error;
     type Config = NodeConfig<B>;
 

@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::RestApiConfig, filters::CustomRejection::BadRequest, handlers, storage::Backend, NetworkId};
+use crate::{config::RestApiConfig, filters::CustomRejection::BadRequest, handlers, storage::StorageBackend, NetworkId};
 
 use bee_common_pt2::node::ResHandle;
 use bee_protocol::{config::ProtocolConfig, tangle::MsTangle, MessageSubmitterWorkerEvent};
@@ -20,7 +20,7 @@ pub(crate) enum CustomRejection {
 
 impl reject::Reject for CustomRejection {}
 
-pub fn all<B: Backend>(
+pub fn all<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
     storage: ResHandle<B>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
@@ -56,7 +56,7 @@ pub fn all<B: Backend>(
     .or(milestone(tangle)))
 }
 
-fn health<B: Backend>(
+fn health<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -66,7 +66,7 @@ fn health<B: Backend>(
         .and_then(handlers::health::health)
 }
 
-fn info<B: Backend>(
+fn info<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
     network_id: NetworkId,
     rest_api_config: RestApiConfig,
@@ -84,7 +84,7 @@ fn info<B: Backend>(
         .and_then(handlers::info::info)
 }
 
-fn tips<B: Backend>(
+fn tips<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -96,7 +96,7 @@ fn tips<B: Backend>(
         .and_then(handlers::tips::tips)
 }
 
-fn submit_message<B: Backend>(
+fn submit_message<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
@@ -116,7 +116,7 @@ fn submit_message<B: Backend>(
         .and_then(handlers::submit_message::submit_message)
 }
 
-fn submit_message_raw<B: Backend>(
+fn submit_message_raw<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -131,7 +131,7 @@ fn submit_message_raw<B: Backend>(
         .and_then(handlers::submit_message_raw::submit_message_raw)
 }
 
-fn message_indexation<B: Backend>(
+fn message_indexation<B: StorageBackend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -149,7 +149,7 @@ fn message_indexation<B: Backend>(
         .and_then(handlers::messages_find::messages_find)
 }
 
-fn message<B: Backend>(
+fn message<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -162,7 +162,7 @@ fn message<B: Backend>(
         .and_then(handlers::message::message)
 }
 
-fn message_metadata<B: Backend>(
+fn message_metadata<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -176,7 +176,7 @@ fn message_metadata<B: Backend>(
         .and_then(handlers::message_metadata::message_metadata)
 }
 
-fn message_raw<B: Backend>(
+fn message_raw<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -190,7 +190,7 @@ fn message_raw<B: Backend>(
         .and_then(handlers::message_raw::message_raw)
 }
 
-fn message_children<B: Backend>(
+fn message_children<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -204,7 +204,7 @@ fn message_children<B: Backend>(
         .and_then(handlers::message_children::message_children)
 }
 
-fn output<B: Backend>(
+fn output<B: StorageBackend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -217,7 +217,7 @@ fn output<B: Backend>(
         .and_then(handlers::output::output)
 }
 
-fn balance_bech32<B: Backend>(
+fn balance_bech32<B: StorageBackend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -230,7 +230,7 @@ fn balance_bech32<B: Backend>(
         .and_then(handlers::balance_bech32::balance_bech32)
 }
 
-fn balance_ed25519<B: Backend>(
+fn balance_ed25519<B: StorageBackend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -244,7 +244,7 @@ fn balance_ed25519<B: Backend>(
         .and_then(handlers::balance_ed25519::balance_ed25519)
 }
 
-fn outputs_bech32<B: Backend>(
+fn outputs_bech32<B: StorageBackend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -258,7 +258,7 @@ fn outputs_bech32<B: Backend>(
         .and_then(handlers::outputs_bech32::outputs_bech32)
 }
 
-fn outputs_ed25519<B: Backend>(
+fn outputs_ed25519<B: StorageBackend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -272,7 +272,7 @@ fn outputs_ed25519<B: Backend>(
         .and_then(handlers::outputs_ed25519::outputs_ed25519)
 }
 
-fn milestone<B: Backend>(
+fn milestone<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -359,13 +359,13 @@ fn with_protocol_config(
     warp::any().map(move || config.clone())
 }
 
-fn with_tangle<B: Backend>(
+fn with_tangle<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = (ResHandle<MsTangle<B>>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || tangle.clone())
 }
 
-fn with_storage<B: Backend>(
+fn with_storage<B: StorageBackend>(
     storage: ResHandle<B>,
 ) -> impl Filter<Extract = (ResHandle<B>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || storage.clone())

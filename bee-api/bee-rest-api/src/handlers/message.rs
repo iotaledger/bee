@@ -4,7 +4,7 @@
 use crate::{
     filters::CustomRejection::{BadRequest, NotFound},
     handlers::{BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
     types::*,
 };
 
@@ -17,7 +17,7 @@ use warp::{reject, Rejection, Reply};
 
 use std::convert::TryFrom;
 
-pub(crate) async fn message<B: Backend>(
+pub(crate) async fn message<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {

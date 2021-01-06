@@ -3,13 +3,13 @@
 
 use crate::{
     peer::{Peer, PeerManager},
+    storage::StorageBackend,
     tangle::MsTangle,
     worker::{
         HasherWorker, MessageResponderWorker, MetricsWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
         PeerWorker, RequestedMilestones, TangleWorker,
     },
     ProtocolMetrics,
-    storage::Backend,
 };
 
 use bee_common::shutdown_stream::ShutdownStream;
@@ -28,7 +28,7 @@ pub(crate) struct PeerManagerWorker {}
 #[async_trait]
 impl<N: Node> Worker<N> for PeerManagerWorker
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = NetworkListener;
     type Error = Infallible;

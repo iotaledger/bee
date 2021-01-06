@@ -4,7 +4,7 @@
 use crate::{
     filters::CustomRejection::ServiceUnavailable,
     handlers::{BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
 };
 
 use bee_common_pt2::node::ResHandle;
@@ -16,7 +16,7 @@ use warp::{reject, Rejection, Reply};
 
 use std::ops::Deref;
 
-pub(crate) async fn outputs_ed25519<B: Backend>(
+pub(crate) async fn outputs_ed25519<B: StorageBackend>(
     addr: Ed25519Address,
     storage: ResHandle<B>,
 ) -> Result<impl Reply, Rejection> {

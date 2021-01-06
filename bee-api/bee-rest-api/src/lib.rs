@@ -12,7 +12,7 @@ use crate::{
     config::RestApiConfig,
     filters::CustomRejection,
     handlers::{DefaultErrorResponse, ErrorBody},
-    storage::Backend,
+    storage::StorageBackend,
 };
 
 use bee_common_pt2::{
@@ -36,7 +36,7 @@ pub async fn init<N: Node>(
     node_builder: N::Builder,
 ) -> N::Builder
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     node_builder.with_worker_cfg::<ApiWorker>((rest_api_config, protocol_config, network_id))
 }
@@ -45,7 +45,7 @@ pub struct ApiWorker;
 #[async_trait]
 impl<N: Node> Worker<N> for ApiWorker
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = (RestApiConfig, ProtocolConfig, NetworkId);
     type Error = WorkerError;

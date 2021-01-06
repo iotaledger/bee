@@ -4,7 +4,7 @@
 use crate::{
     event::{LatestSolidMilestoneChanged, MessageSolidified},
     milestone::Milestone,
-    storage::Backend,
+    storage::StorageBackend,
     tangle::MsTangle,
     worker::{
         milestone_cone_updater::{MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent},
@@ -37,7 +37,7 @@ pub(crate) struct PropagatorWorker {
 #[async_trait]
 impl<N: Node> Worker<N> for PropagatorWorker
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = ();
     type Error = Infallible;

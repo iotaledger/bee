@@ -1,12 +1,22 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::storage::Backend as LedgerBackend;
-use bee_rest_api::storage::Backend as RestApiBackend;
-use bee_snapshot::storage::Backend as SnapshotBackend;
-use bee_protocol::storage::Backend as ProtocolBackend;
-use bee_storage::storage;
+use bee_ledger::storage::StorageBackend as LedgerStorageBackend;
+use bee_protocol::storage::StorageBackend as ProtocolStorageBackend;
+use bee_rest_api::storage::StorageBackend as RestApiStorageBackend;
+use bee_snapshot::storage::StorageBackend as SnapshotStorageBackend;
+use bee_storage::backend;
 
-pub trait Backend: storage::Backend + LedgerBackend + RestApiBackend + SnapshotBackend + ProtocolBackend {}
+pub trait StorageBackend:
+    backend::StorageBackend + LedgerStorageBackend + RestApiStorageBackend + SnapshotStorageBackend + ProtocolStorageBackend
+{
+}
 
-impl<T> Backend for T where T: storage::Backend + LedgerBackend + RestApiBackend + SnapshotBackend + ProtocolBackend {}
+impl<T> StorageBackend for T where
+    T: backend::StorageBackend
+        + LedgerStorageBackend
+        + RestApiStorageBackend
+        + SnapshotStorageBackend
+        + ProtocolStorageBackend
+{
+}

@@ -4,7 +4,7 @@
 use crate::{
     config::RestApiConfig,
     handlers::{health::is_healthy, BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
     NetworkId,
 };
 
@@ -16,7 +16,7 @@ use warp::Reply;
 
 use std::convert::Infallible;
 
-pub(crate) async fn info<B: Backend>(
+pub(crate) async fn info<B: StorageBackend>(
     tangle: ResHandle<MsTangle<B>>,
     network_id: NetworkId,
     rest_api_config: RestApiConfig,

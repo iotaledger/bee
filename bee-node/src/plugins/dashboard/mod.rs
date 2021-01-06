@@ -6,7 +6,7 @@ pub mod config;
 mod asset;
 mod websocket;
 
-use crate::storage::Backend;
+use crate::storage::StorageBackend;
 
 use config::DashboardConfig;
 use websocket::{
@@ -42,7 +42,7 @@ pub struct Dashboard {}
 fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, f: F)
 where
     N: Node,
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
     E: Any + Clone + Send + Sync,
     F: 'static + Fn(E) -> WsEvent + Send + Sync,
 {
@@ -72,7 +72,7 @@ where
 #[async_trait]
 impl<N: Node> Worker<N> for Dashboard
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = (DashboardConfig, RestApiConfig);
     type Error = Infallible;

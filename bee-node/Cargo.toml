@@ -21,7 +21,7 @@ bee-network = { path = "../bee-network" }
 bee-peering = { path = "../bee-peering" }
 bee-protocol = { path = "../bee-protocol" }
 bee-snapshot = { path = "../bee-snapshot" }
-bee-storage = { path = "../bee-storage/bee-storage" }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage-rocksdb = { path = "../bee-storage/bee-storage-rocksdb" }
 
 anymap = "0.12"

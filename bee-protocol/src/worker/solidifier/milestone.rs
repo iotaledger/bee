@@ -6,7 +6,7 @@ use crate::{
     helper,
     milestone::MilestoneIndex,
     peer::PeerManager,
-    storage::Backend,
+    storage::StorageBackend,
     tangle::MsTangle,
     worker::{
         MessageRequesterWorker, MessageRequesterWorkerEvent, MetricsWorker, MilestoneRequesterWorker,
@@ -23,7 +23,7 @@ use bee_tangle::traversal;
 use async_trait::async_trait;
 use futures::{stream::FusedStream, StreamExt};
 use log::{debug, info, warn};
-use tokio::{sync::mpsc, time::interval, task::spawn};
+use tokio::{sync::mpsc, task::spawn, time::interval};
 
 use std::{any::TypeId, convert::Infallible, time::Duration};
 
@@ -35,7 +35,7 @@ pub(crate) struct MilestoneSolidifierWorker {
     pub(crate) tx: mpsc::UnboundedSender<MilestoneSolidifierWorkerEvent>,
 }
 
-async fn trigger_solidification_unchecked<B: Backend>(
+async fn trigger_solidification_unchecked<B: StorageBackend>(
     tangle: &MsTangle<B>,
     message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
     requested_messages: &RequestedMessages,
@@ -80,7 +80,7 @@ fn save_index(target_index: MilestoneIndex, queue: &mut Vec<MilestoneIndex>) {
 #[async_trait]
 impl<N: Node> Worker<N> for MilestoneSolidifierWorker
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = u32;
     type Error = Infallible;
@@ -126,7 +126,8 @@ where
                             &*requested_milestones,
                             MilestoneIndex(index),
                             None,
-                        ).await;
+                        )
+                        .await;
                     }
 
                     break;
@@ -194,7 +195,8 @@ where
                             warn!("Sending solidification event failed: {}", e);
                         }
                     } else {
-                        helper::request_milestone(&tangle, &milestone_requester, &*requested_milestones, next_ms, None).await;
+                        helper::request_milestone(&tangle, &milestone_requester, &*requested_milestones, next_ms, None)
+                            .await;
                     }
 
                     helper::broadcast_heartbeat(

@@ -5,7 +5,7 @@ use bee_ledger::model::LedgerIndex;
 use bee_protocol::MilestoneIndex;
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
-    storage::Backend,
+    backend::StorageBackend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
 

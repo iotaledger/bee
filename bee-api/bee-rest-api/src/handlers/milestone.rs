@@ -4,7 +4,7 @@
 use crate::{
     filters::CustomRejection::NotFound,
     handlers::{BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
 };
 
 use bee_common_pt2::node::ResHandle;
@@ -13,7 +13,7 @@ use bee_protocol::{tangle::MsTangle, MilestoneIndex};
 use serde::Serialize;
 use warp::{reject, Rejection, Reply};
 
-pub(crate) async fn milestone<B: Backend>(
+pub(crate) async fn milestone<B: StorageBackend>(
     milestone_index: MilestoneIndex,
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {

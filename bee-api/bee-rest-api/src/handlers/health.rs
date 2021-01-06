@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::storage::Backend;
+use crate::storage::StorageBackend;
 
 use bee_common_pt2::node::ResHandle;
 use bee_protocol::tangle::MsTangle;
@@ -13,7 +13,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-pub(crate) async fn health<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> Result<impl Reply, Infallible> {
+pub(crate) async fn health<B: StorageBackend>(tangle: ResHandle<MsTangle<B>>) -> Result<impl Reply, Infallible> {
     if is_healthy(tangle).await {
         Ok(StatusCode::OK)
     } else {
@@ -21,7 +21,7 @@ pub(crate) async fn health<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> Result
     }
 }
 
-pub(crate) async fn is_healthy<B: Backend>(tangle: ResHandle<MsTangle<B>>) -> bool {
+pub(crate) async fn is_healthy<B: StorageBackend>(tangle: ResHandle<MsTangle<B>>) -> bool {
     if !tangle.is_synced() {
         return false;
     }

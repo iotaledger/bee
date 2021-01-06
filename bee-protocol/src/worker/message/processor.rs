@@ -7,7 +7,7 @@ use crate::{
     helper,
     packet::Message as MessagePacket,
     peer::PeerManager,
-    storage::Backend,
+    storage::StorageBackend,
     tangle::{MessageMetadata, MsTangle},
     worker::{
         BroadcasterWorker, BroadcasterWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent,
@@ -44,7 +44,7 @@ pub(crate) struct ProcessorWorker {
 #[async_trait]
 impl<N: Node> Worker<N> for ProcessorWorker
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = (ProtocolConfig, u64);
     type Error = Infallible;

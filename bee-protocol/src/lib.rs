@@ -19,7 +19,7 @@ mod worker;
 
 pub use metrics::ProtocolMetrics;
 pub use milestone::{Milestone, MilestoneIndex};
-pub use storage::Backend;
+pub use storage::StorageBackend;
 pub use worker::{
     MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent, MetricsWorker, TangleWorker,
 };
@@ -45,7 +45,7 @@ pub fn init<N: Node>(
     node_builder: N::Builder,
 ) -> N::Builder
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     node_builder
         .with_worker::<TangleWorker>()

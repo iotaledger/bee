@@ -3,7 +3,7 @@
 
 use crate::{
     config::SnapshotConfig, download::download_snapshot_file, error::Error, info::SnapshotInfo, kind::Kind,
-    snapshot::Snapshot, storage::Backend,
+    snapshot::Snapshot, storage::StorageBackend,
 };
 
 use bee_common_pt2::{node::Node, worker::Worker};
@@ -20,7 +20,7 @@ pub struct SnapshotWorker {}
 #[async_trait]
 impl<N: Node> Worker<N> for SnapshotWorker
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = (u64, SnapshotConfig);
     type Error = Error;

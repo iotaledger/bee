@@ -12,7 +12,7 @@ use bee_peering::{PeeringConfig, PeeringConfigBuilder};
 use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_snapshot::config::{SnapshotConfig, SnapshotConfigBuilder};
-use bee_storage::storage::Backend;
+use bee_storage::backend::StorageBackend;
 
 use blake2::{
     digest::{Update, VariableOutput},
@@ -35,7 +35,7 @@ pub enum Error {
 }
 
 #[derive(Default, Deserialize)]
-pub struct NodeConfigBuilder<B: Backend> {
+pub struct NodeConfigBuilder<B: StorageBackend> {
     pub(crate) alias: Option<String>,
     pub(crate) network_id: Option<String>,
     pub(crate) logger: Option<LoggerConfigBuilder>,
@@ -49,7 +49,7 @@ pub struct NodeConfigBuilder<B: Backend> {
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
 }
 
-impl<B: Backend> NodeConfigBuilder<B> {
+impl<B: StorageBackend> NodeConfigBuilder<B> {
     /// Creates a node config builder from a local config file.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
         match fs::read_to_string(path) {
@@ -80,7 +80,7 @@ impl<B: Backend> NodeConfigBuilder<B> {
     }
 }
 
-pub struct NodeConfig<B: Backend> {
+pub struct NodeConfig<B: StorageBackend> {
     pub alias: String,
     pub network_id: (String, u64),
     pub logger: LoggerConfig,
@@ -94,7 +94,7 @@ pub struct NodeConfig<B: Backend> {
     pub dashboard: DashboardConfig,
 }
 
-impl<B: Backend> Clone for NodeConfig<B> {
+impl<B: StorageBackend> Clone for NodeConfig<B> {
     fn clone(&self) -> Self {
         Self {
             alias: self.alias.clone(),

@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{storage::Backend, tangle::MsTangle, worker::TangleWorker, Milestone, MilestoneIndex};
+use crate::{storage::StorageBackend, tangle::MsTangle, worker::TangleWorker, Milestone, MilestoneIndex};
 
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
@@ -29,7 +29,7 @@ pub(crate) struct MilestoneConeUpdaterWorker {
 #[async_trait]
 impl<N: Node> Worker<N> for MilestoneConeUpdaterWorker
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = ();
     type Error = Infallible;
@@ -68,7 +68,7 @@ async fn update_messages_referenced_by_milestone<N: Node>(
     message_id: MessageId,
     milestone_index: MilestoneIndex,
 ) where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     let mut to_visit = vec![message_id];
     let mut visited = HashSet::new();
@@ -111,7 +111,7 @@ async fn update_messages_referenced_by_milestone<N: Node>(
 
 async fn update_future_cone<N: Node>(tangle: &MsTangle<N::Backend>, child: MessageId)
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     let mut children = vec![child];
     while let Some(hash) = children.pop() {

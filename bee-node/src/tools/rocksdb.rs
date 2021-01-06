@@ -14,7 +14,7 @@ use bee_protocol::{
     Milestone, MilestoneIndex,
 };
 use bee_snapshot::SnapshotInfo;
-use bee_storage::{access::AsStream, storage::Backend};
+use bee_storage::{access::AsStream, backend::StorageBackend};
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::*};
 
 use futures::{executor, stream::StreamExt};

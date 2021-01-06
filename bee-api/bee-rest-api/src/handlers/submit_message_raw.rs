@@ -4,7 +4,7 @@
 use crate::{
     filters::CustomRejection::BadRequest,
     handlers::{submit_message::forward_to_message_submitter, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
 };
 
 use bee_common::packable::Packable;
@@ -17,7 +17,7 @@ use warp::{http::StatusCode, reject, Buf, Rejection, Reply};
 
 use crate::handlers::submit_message::SubmitMessageResponse;
 
-pub(crate) async fn submit_message_raw<B: Backend>(
+pub(crate) async fn submit_message_raw<B: StorageBackend>(
     buf: warp::hyper::body::Bytes,
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,

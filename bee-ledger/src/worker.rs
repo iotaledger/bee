@@ -6,7 +6,7 @@ use crate::{
     event::{MilestoneConfirmed, NewOutput, NewSpent},
     merkle_hasher::MerkleHasher,
     metadata::WhiteFlagMetadata,
-    storage::{self, Backend},
+    storage::{self, StorageBackend},
     white_flag::visit_dfs,
 };
 
@@ -35,7 +35,7 @@ async fn confirm<N: Node>(
     index: &mut MilestoneIndex,
 ) -> Result<(), Error>
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     let message = tangle.get(&message_id).await.ok_or(Error::MilestoneMessageNotFound)?;
 
@@ -122,7 +122,7 @@ where
 #[async_trait]
 impl<N: Node> Worker<N> for LedgerWorker
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = MilestoneIndex;
     type Error = Infallible;

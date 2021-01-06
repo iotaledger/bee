@@ -7,7 +7,7 @@ mod error;
 pub use builder::BeeNodeBuilder;
 pub use error::Error;
 
-use crate::{config::NodeConfig, storage::Backend};
+use crate::{config::NodeConfig, storage::StorageBackend};
 
 use bee_common::event::Bus;
 use bee_common_pt2::{
@@ -47,7 +47,7 @@ pub struct BeeNode<B> {
     phantom: PhantomData<B>,
 }
 
-impl<B: Backend> BeeNode<B> {
+impl<B: StorageBackend> BeeNode<B> {
     fn add_worker<W: Worker<Self> + Send + Sync>(&mut self, worker: W) {
         self.workers.insert(worker);
     }
@@ -82,7 +82,7 @@ impl<B: Backend> BeeNode<B> {
 }
 
 #[async_trait]
-impl<B: Backend> Node for BeeNode<B> {
+impl<B: StorageBackend> Node for BeeNode<B> {
     type Builder = BeeNodeBuilder<B>;
     type Backend = B;
     type Error = Error;

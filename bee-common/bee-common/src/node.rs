@@ -4,7 +4,7 @@
 use crate::worker::Worker;
 
 use bee_common::event::Bus;
-use bee_storage::storage::Backend;
+use bee_storage::backend::StorageBackend;
 
 use async_trait::async_trait;
 use futures::{channel::oneshot, future::Future};
@@ -24,7 +24,7 @@ use std::{
 #[async_trait]
 pub trait Node: Send + Sized + 'static {
     type Builder: NodeBuilder<Self>;
-    type Backend: Backend;
+    type Backend: StorageBackend;
     type Error: std::error::Error;
 
     async fn stop(mut self) -> Result<(), Self::Error>;

@@ -54,7 +54,7 @@ macro_rules! impl_stream {
         impl<'a> AsStream<'a, $key, $value> for Storage {
             type Stream = StorageStream<'a, $key, $value>;
 
-            async fn stream(&'a self) -> Result<Self::Stream, <Self as Backend>::Error> {
+            async fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
                 let cf = self.inner.cf_handle($cf).ok_or(Error::UnknownCf($cf))?;
 
                 Ok(StorageStream::new(

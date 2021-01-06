@@ -5,7 +5,7 @@ use crate::{
     error::Error,
     metadata::WhiteFlagMetadata,
     model::{Output, Spent},
-    storage::{self, Backend},
+    storage::{self, StorageBackend},
 };
 
 use bee_common_pt2::node::Node;
@@ -34,7 +34,7 @@ async fn on_message<N: Node>(
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error>
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     let mut conflicting = false;
 
@@ -111,11 +111,13 @@ where
         metadata.included_messages.push(*message_id);
     }
 
-    tangle.update_metadata(message_id, |message_metadata| {
-        message_metadata.flags_mut().set_conflicting(conflicting);
-        message_metadata.set_milestone_index(metadata.index);
-        message_metadata.confirm(metadata.timestamp);
-    }).await;
+    tangle
+        .update_metadata(message_id, |message_metadata| {
+            message_metadata.flags_mut().set_conflicting(conflicting);
+            message_metadata.set_milestone_index(metadata.index);
+            message_metadata.confirm(metadata.timestamp);
+        })
+        .await;
 
     Ok(())
 }
@@ -128,7 +130,7 @@ pub(crate) async fn visit_dfs<N: Node>(
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error>
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     let mut messages_ids = vec![root];
     let mut visited = HashSet::new();

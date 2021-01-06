@@ -5,7 +5,7 @@ use crate::{
     config::RestApiConfig,
     filters::CustomRejection::{BadRequest, ServiceUnavailable},
     handlers::{BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
     types::*,
     NetworkId,
 };
@@ -24,7 +24,7 @@ use warp::{http::StatusCode, reject, Rejection, Reply};
 
 use std::convert::TryFrom;
 
-pub(crate) async fn submit_message<B: Backend>(
+pub(crate) async fn submit_message<B: StorageBackend>(
     value: JsonValue,
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
@@ -198,7 +198,7 @@ pub(crate) async fn submit_message<B: Backend>(
     ))
 }
 
-pub(crate) async fn forward_to_message_submitter<B: Backend>(
+pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
     message: Message,
     tangle: ResHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,

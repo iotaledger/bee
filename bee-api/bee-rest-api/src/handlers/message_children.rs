@@ -3,7 +3,7 @@
 
 use crate::{
     handlers::{BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
 };
 
 use bee_common_pt2::node::ResHandle;
@@ -15,7 +15,7 @@ use warp::{Rejection, Reply};
 
 use std::iter::FromIterator;
 
-pub async fn message_children<B: Backend>(
+pub async fn message_children<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {

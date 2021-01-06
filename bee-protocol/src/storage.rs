@@ -6,10 +6,10 @@ use crate::{tangle::MessageMetadata, Milestone, MilestoneIndex};
 use bee_message::{payload::indexation::HashedIndex, Message, MessageId};
 use bee_storage::{
     access::{Fetch, Insert},
-    storage,
+    backend,
 };
 
-pub trait Backend: storage::Backend
+pub trait StorageBackend: backend::StorageBackend
     + Insert<MessageId, Message>
     + Insert<MessageId, MessageMetadata>
     //+ Insert<MessageId, Vec<MessageId>>
@@ -21,8 +21,8 @@ pub trait Backend: storage::Backend
     + Fetch<MessageId, Vec<MessageId>>
     + Fetch<MilestoneIndex, Milestone> {}
 
-impl<T> Backend for T where
-    T: storage::Backend
+impl<T> StorageBackend for T where
+    T: backend::StorageBackend
         + Insert<MessageId, Message>
         + Insert<MessageId, MessageMetadata>
         + Insert<(MessageId, MessageId), ()>

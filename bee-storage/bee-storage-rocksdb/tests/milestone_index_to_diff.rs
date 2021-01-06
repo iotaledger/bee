@@ -6,7 +6,7 @@ use bee_ledger::model::Diff;
 use bee_protocol::MilestoneIndex;
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
-    storage::Backend,
+    backend::StorageBackend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
 use bee_test::rand::{diff::rand_diff, milestone::rand_milestone_index};

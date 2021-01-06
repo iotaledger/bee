@@ -15,7 +15,7 @@ pub use solid_entry_point::SolidEntryPoint;
 
 use crate::{
     milestone::{Milestone, MilestoneIndex},
-    storage::Backend,
+    storage::StorageBackend,
 };
 
 use bee_common_pt2::node::ResHandle;
@@ -38,7 +38,7 @@ pub struct StorageHooks<B> {
 }
 
 #[async_trait]
-impl<B: Backend> Hooks<MessageMetadata> for StorageHooks<B> {
+impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
     type Error = B::Error;
 
     async fn get(&self, msg: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
@@ -73,7 +73,7 @@ impl<B: Backend> Hooks<MessageMetadata> for StorageHooks<B> {
     }
 }
 
-impl<B: Backend> StorageHooks<B> {
+impl<B: StorageBackend> StorageHooks<B> {
     async fn get_milestone(&self, idx: &MilestoneIndex) -> Result<Option<Milestone>, B::Error> {
         trace!("Attempted to fetch milestone {:?}", idx);
         Ok(self.storage.fetch(idx).await?)
@@ -107,7 +107,7 @@ impl<B> Deref for MsTangle<B> {
     }
 }
 
-impl<B: Backend> MsTangle<B> {
+impl<B: StorageBackend> MsTangle<B> {
     pub fn new(storage: ResHandle<B>) -> Self {
         Self {
             inner: Tangle::new(StorageHooks { storage }),

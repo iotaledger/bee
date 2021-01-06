@@ -4,7 +4,7 @@
 use bee_protocol::{tangle::SolidEntryPoint, MilestoneIndex};
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
-    storage::Backend,
+    backend::StorageBackend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
 use bee_test::rand::{milestone::rand_milestone_index, solid_entry_point::rand_solid_entry_point};

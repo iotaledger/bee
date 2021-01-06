@@ -3,7 +3,7 @@
 
 use crate::{
     packet::Message,
-    storage::Backend,
+    storage::StorageBackend,
     worker::{HasherWorker, HasherWorkerEvent},
 };
 
@@ -42,7 +42,7 @@ pub struct MessageSubmitterWorker {
 #[async_trait]
 impl<N: Node> Worker<N> for MessageSubmitterWorker
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = ();
     type Error = WorkerError;

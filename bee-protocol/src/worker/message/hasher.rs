@@ -6,7 +6,7 @@
 use crate::{
     packet::Message as MessagePacket,
     peer::PeerManager,
-    storage::Backend,
+    storage::StorageBackend,
     worker::{
         message::{HashCache, MessageSubmitterError, ProcessorWorker, ProcessorWorkerEvent},
         MetricsWorker, PeerManagerResWorker,
@@ -103,7 +103,7 @@ fn send_hashes(
 #[async_trait]
 impl<N: Node> Worker<N> for HasherWorker
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = usize;
     type Error = Infallible;

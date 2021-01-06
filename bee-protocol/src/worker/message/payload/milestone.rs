@@ -7,7 +7,7 @@ use crate::{
     helper,
     milestone::{key_manager::KeyManager, Milestone, MilestoneIndex},
     peer::PeerManager,
-    storage::Backend,
+    storage::StorageBackend,
     tangle::MsTangle,
     worker::{
         MetricsWorker, MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent, MilestoneRequesterWorker,
@@ -60,7 +60,7 @@ async fn validate<N: Node>(
     message_id: MessageId,
 ) -> Result<(MilestoneIndex, Milestone), Error>
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     let message = tangle.get(&message_id).await.ok_or(Error::UnknownMessage)?;
 
@@ -137,7 +137,7 @@ where
 #[async_trait]
 impl<N: Node> Worker<N> for MilestonePayloadWorker
 where
-    N::Backend: Backend,
+    N::Backend: StorageBackend,
 {
     type Config = ProtocolConfig;
     type Error = Infallible;
@@ -218,9 +218,9 @@ where
                             }
 
                             if requested_milestones.remove(&index).is_some() {
-                                tangle.update_metadata(&milestone.message_id, |meta| {
-                                    meta.flags_mut().set_requested(true)
-                                }).await;
+                                tangle
+                                    .update_metadata(&milestone.message_id, |meta| meta.flags_mut().set_requested(true))
+                                    .await;
 
                                 if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
                                     error!("Sending solidification event failed: {}", e);

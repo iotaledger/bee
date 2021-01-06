@@ -31,7 +31,7 @@ use bee_common_pt2::node::{Node, NodeBuilder};
 
 pub async fn init<N: Node>(config: &config::SnapshotConfig, network_id: u64, node_builder: N::Builder) -> N::Builder
 where
-    N::Backend: storage::Backend,
+    N::Backend: storage::StorageBackend,
 {
     node_builder.with_worker_cfg::<worker::SnapshotWorker>((network_id, config.clone()))
 }

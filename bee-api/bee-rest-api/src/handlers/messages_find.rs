@@ -4,7 +4,7 @@
 use crate::{
     filters::CustomRejection::ServiceUnavailable,
     handlers::{BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
 };
 
 use bee_common_pt2::node::ResHandle;
@@ -17,7 +17,10 @@ use warp::{reject, Rejection, Reply};
 
 use std::{convert::TryInto, ops::Deref};
 
-pub(crate) async fn messages_find<B: Backend>(index: String, storage: ResHandle<B>) -> Result<impl Reply, Rejection> {
+pub(crate) async fn messages_find<B: StorageBackend>(
+    index: String,
+    storage: ResHandle<B>,
+) -> Result<impl Reply, Rejection> {
     let hashed_index = {
         use digest::Digest;
         let mut hasher = Blake2s::new();

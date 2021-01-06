@@ -6,7 +6,7 @@ use crate::{
     milestone::MilestoneIndex,
     packet::{tlv_from_bytes, Header, Heartbeat, Message, MessageRequest, MilestoneRequest, Packet, TlvError},
     peer::{Peer, PeerManager},
-    storage::Backend,
+    storage::StorageBackend,
     tangle::MsTangle,
     worker::{
         peer::packet_handler::PacketHandler, HasherWorkerEvent, MessageResponderWorkerEvent,
@@ -67,7 +67,7 @@ impl PeerWorker {
         }
     }
 
-    pub(crate) async fn run<B: Backend>(
+    pub(crate) async fn run<B: StorageBackend>(
         mut self,
         tangle: ResHandle<MsTangle<B>>,
         requested_milestones: ResHandle<RequestedMilestones>,
@@ -94,7 +94,8 @@ impl PeerWorker {
             &*requested_milestones,
             // TODO should be copy ?
             Some(self.peer.id().clone()),
-        ).await;
+        )
+        .await;
 
         // TODO is this needed ?
         let tangle = tangle.into_weak();
@@ -114,7 +115,7 @@ impl PeerWorker {
         self.peer_manager.remove(&self.peer.id()).await;
     }
 
-    fn process_packet<B: Backend>(&mut self, tangle: &MsTangle<B>, header: &Header, bytes: &[u8]) -> Result<(), Error> {
+    fn process_packet<B: StorageBackend>(&mut self, tangle: &MsTangle<B>, header: &Header, bytes: &[u8]) -> Result<(), Error> {
         match header.packet_type {
             MilestoneRequest::ID => {
                 trace!("[{}] Reading MilestoneRequest...", self.peer.address());

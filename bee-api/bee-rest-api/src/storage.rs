@@ -9,27 +9,27 @@ use bee_message::{
 };
 use bee_storage::{
     access::{Exist, Fetch},
-    storage,
+    backend,
 };
 
-pub trait Backend:
-    storage::Backend
+pub trait StorageBackend:
+    backend::StorageBackend
     + Exist<OutputId, Spent>
     + Fetch<HashedIndex, Vec<MessageId>>
     + Fetch<OutputId, Output>
     + Fetch<OutputId, Spent>
     + Fetch<Ed25519Address, Vec<OutputId>>
-    + bee_protocol::storage::Backend
+    + bee_protocol::storage::StorageBackend
 {
 }
 
-impl<T> Backend for T where
-    T: storage::Backend
+impl<T> StorageBackend for T where
+    T: backend::StorageBackend
         + Exist<OutputId, Spent>
         + Fetch<HashedIndex, Vec<MessageId>>
         + Fetch<OutputId, Output>
         + Fetch<OutputId, Spent>
         + Fetch<Ed25519Address, Vec<OutputId>>
-        + bee_protocol::storage::Backend
+        + bee_protocol::storage::StorageBackend
 {
 }
