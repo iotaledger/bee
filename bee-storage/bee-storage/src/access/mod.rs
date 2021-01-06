@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// Holds the contract for batch access operation.
-pub mod batch;
+mod batch;
 /// Holds the contract for delete access operation.
-pub mod delete;
+mod delete;
 /// Holds the contract for exist access operation.
-pub mod exist;
+mod exist;
 /// Holds the contract for fetch access operation.
-pub mod fetch;
+mod fetch;
 /// Holds the contract for insert access operation.
-pub mod insert;
+mod insert;
 /// Holds the contract for stream access operations.
-pub mod stream;
+mod stream;
 /// Holds the contract for truncate access operations.
-pub mod truncate;
+mod truncate;
 
 pub use batch::{Batch, BatchBuilder};
 pub use delete::Delete;
