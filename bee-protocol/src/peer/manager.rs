@@ -6,13 +6,15 @@ use crate::peer::Peer;
 use bee_network::PeerId;
 
 use dashmap::{mapref::one::Ref, DashMap};
+use futures::channel::oneshot;
 use log::debug;
-use tokio::sync::RwLock;
+use tokio::sync::{mpsc, RwLock};
 
 use std::sync::Arc;
 
 pub struct PeerManager {
-    peers: DashMap<PeerId, Arc<Peer>>,
+    // TODO private
+    pub(crate) peers: DashMap<PeerId, (Arc<Peer>, mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)>,
     // This is needed to ensure message distribution fairness as iterating over a HashMap is random.
     // TODO private
     pub(crate) peers_keys: RwLock<Vec<PeerId>>,
@@ -30,26 +32,38 @@ impl PeerManager {
         self.peers.is_empty()
     }
 
-    pub(crate) fn get(&self, id: &PeerId) -> Option<Ref<PeerId, Arc<Peer>>> {
+    // TODO find a way to only return a ref to the peer.
+    pub(crate) fn get(
+        &self,
+        id: &PeerId,
+    ) -> Option<Ref<PeerId, (Arc<Peer>, mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)>> {
         // TODO this exposes Dashmap internals to avoid cloning the Arc, to revisit.
         self.peers.get(id)
     }
 
-    pub(crate) async fn add(&self, peer: Arc<Peer>) {
+    pub(crate) async fn add(
+        &self,
+        peer: Arc<Peer>,
+        sender: mpsc::UnboundedSender<Vec<u8>>,
+        shutdown: oneshot::Sender<()>,
+    ) {
         debug!("Added peer {}.", peer.id());
         self.peers_keys.write().await.push(peer.id().clone());
-        self.peers.insert(peer.id().clone(), peer);
+        self.peers.insert(peer.id().clone(), (peer, sender, shutdown));
     }
 
-    pub(crate) async fn remove(&self, id: &PeerId) {
+    pub(crate) async fn remove(
+        &self,
+        id: &PeerId,
+    ) -> Option<(PeerId, (Arc<Peer>, mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>))> {
         debug!("Removed peer {}.", id);
         self.peers_keys.write().await.retain(|peer_id| peer_id != id);
-        self.peers.remove(id);
+        self.peers.remove(id)
     }
 
     pub(crate) fn for_each_peer<F: Fn(&PeerId, &Peer)>(&self, f: F) {
         for entry in self.peers.iter() {
-            f(entry.key(), entry.value());
+            f(entry.key(), &*entry.value().0);
         }
     }
 

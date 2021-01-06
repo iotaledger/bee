@@ -9,7 +9,7 @@ use crate::{
     tangle::MsTangle,
     worker::{
         MessageRequesterWorker, MessageRequesterWorkerEvent, MetricsWorker, MilestoneRequesterWorker,
-        PeerManagerWorker, RequestedMessages, RequestedMilestones, TangleWorker,
+        PeerManagerResWorker, RequestedMessages, RequestedMilestones, TangleWorker,
     },
     ProtocolMetrics,
 };
@@ -88,7 +88,7 @@ impl<N: Node> Worker<N> for MilestoneSolidifierWorker {
             TypeId::of::<MilestoneRequesterWorker>(),
             TypeId::of::<TangleWorker>(),
             TypeId::of::<MilestoneRequesterWorker>(),
-            TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<MetricsWorker>(),
         ]
         .leak()

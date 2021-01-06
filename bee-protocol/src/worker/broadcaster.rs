@@ -4,7 +4,7 @@
 use crate::{
     packet::Message,
     peer::PeerManager,
-    worker::{MetricsWorker, PeerManagerWorker},
+    worker::{MetricsWorker, PeerManagerResWorker},
     ProtocolMetrics, Sender,
 };
 
@@ -34,7 +34,7 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<MetricsWorker>(), TypeId::of::<PeerManagerWorker>()].leak()
+        vec![TypeId::of::<MetricsWorker>(), TypeId::of::<PeerManagerResWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {

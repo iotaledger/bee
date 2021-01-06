@@ -5,7 +5,7 @@ use crate::{
     helper,
     peer::PeerManager,
     tangle::MsTangle,
-    worker::{MetricsWorker, PeerManagerWorker, TangleWorker},
+    worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
     ProtocolMetrics,
 };
 
@@ -35,7 +35,7 @@ impl<N: Node> Worker<N> for HeartbeaterWorker {
     fn dependencies() -> &'static [TypeId] {
         vec![
             TypeId::of::<TangleWorker>(),
-            TypeId::of::<PeerManagerWorker>(),
+            TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<MetricsWorker>(),
         ]
         .leak()

@@ -8,19 +8,18 @@ use crate::{
     storage::Backend,
 };
 
-use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
+use bee_common::event::Bus;
 use bee_common_pt2::{
     node::{Node, NodeBuilder},
     worker::Worker,
 };
-use bee_network::{self, NetworkController, PeerId};
+use bee_network::{self, NetworkController};
 use bee_peering::{ManualPeerManager, PeerManager};
 
 use anymap::Map;
 use async_trait::async_trait;
 use futures::{channel::oneshot, future::Future};
 use log::{debug, info};
-use tokio::sync::mpsc;
 
 use std::{
     any::{type_name, Any, TypeId},
@@ -28,9 +27,6 @@ use std::{
     marker::PhantomData,
     pin::Pin,
 };
-
-// TODO design proper type `PeerList`
-type PeerList = HashMap<PeerId, (mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)>;
 
 type WorkerStart<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + 'a>>;
 type WorkerStop<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> + Send;
@@ -158,15 +154,13 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let max_unknown_peers = config.peering.manual.unknown_peers_limit;
         let local_keys = config.peering.identity_private_key.0.clone();
 
-        let this = self
-            .with_resource(config.clone()) // TODO: Remove clone
-            .with_resource(PeerList::default());
+        let this = self.with_resource(config.clone()); // TODO: Remove clone
 
         info!("Initializing network layer...");
         let (this, events) =
             bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, max_unknown_peers, this).await;
 
-        let this = this.with_resource(ShutdownStream::new(ctrl_c_listener(), events));
+        let this = this.with_resource(ctrl_c_listener());
 
         info!("Initializing snapshot handler...");
         let this = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, network_id, this).await;
@@ -175,20 +169,20 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         // let mut this = bee_ledger::init::<BeeNode<B>>(snapshot.header().ledger_index(), this);
 
         info!("Initializing protocol layer...");
-        let this = bee_protocol::init::<BeeNode<B>>(config.protocol.clone(), network_id, this);
-
-        let mut this = this.with_worker::<VersionChecker>();
-        this = this.with_worker_cfg::<Mqtt>(config.mqtt);
-        this = this.with_worker_cfg::<Dashboard>(config.dashboard);
+        let this = bee_protocol::init::<BeeNode<B>>(config.protocol.clone(), network_id, events, this);
 
         info!("Initializing REST API...");
-        let mut this = bee_rest_api::init::<BeeNode<B>>(
+        let this = bee_rest_api::init::<BeeNode<B>>(
             config.rest_api.clone(),
             config.protocol.clone(),
             config.network_id.clone(),
             this,
         )
         .await;
+
+        let mut this = this.with_worker::<VersionChecker>();
+        this = this.with_worker_cfg::<Mqtt>(config.mqtt);
+        this = this.with_worker_cfg::<Dashboard>((config.dashboard, config.rest_api.clone()));
 
         let mut node = BeeNode {
             workers: Map::new(),
