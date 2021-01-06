@@ -1,10 +1,9 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::tangle::MsTangle;
+use crate::{storage::Backend, tangle::MsTangle};
 
 use bee_message::MessageId;
-use bee_storage::storage::Backend;
 
 use log::debug;
 use rand::seq::IteratorRandom;
@@ -158,8 +157,8 @@ impl UrtsTipPool {
         }
 
         let lsmi = *tangle.get_latest_solid_milestone_index();
-        let otrsi = *tangle.otrsi(&hash).unwrap();
-        let ytrsi = *tangle.ytrsi(&hash).unwrap();
+        let otrsi = *tangle.otrsi(&hash).await.unwrap();
+        let ytrsi = *tangle.ytrsi(&hash).await.unwrap();
 
         if (lsmi - ytrsi) > YTRSI_DELTA {
             return Score::Lazy;

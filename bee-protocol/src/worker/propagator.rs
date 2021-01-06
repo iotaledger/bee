@@ -4,6 +4,7 @@
 use crate::{
     event::{LatestSolidMilestoneChanged, MessageSolidified},
     milestone::Milestone,
+    storage::Backend,
     tangle::MsTangle,
     worker::{
         milestone_cone_updater::{MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent},
@@ -34,7 +35,10 @@ pub(crate) struct PropagatorWorker {
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for PropagatorWorker {
+impl<N: Node> Worker<N> for PropagatorWorker
+where
+    N::Backend: Backend,
+{
     type Config = ();
     type Error = Infallible;
 
@@ -64,17 +68,19 @@ impl<N: Node> Worker<N> for PropagatorWorker {
                 let mut children = vec![hash];
 
                 while let Some(ref hash) = children.pop() {
-                    if tangle.is_solid_message(hash) {
+                    if tangle.is_solid_message(hash).await {
                         continue;
                     }
 
                     if let Some(message) = tangle.get(&hash).await {
-                        if tangle.is_solid_message(message.parent1()) && tangle.is_solid_message(message.parent2()) {
+                        if tangle.is_solid_message(message.parent1()).await
+                            && tangle.is_solid_message(message.parent2()).await
+                        {
                             // get OTRSI/YTRSI from parents
-                            let parent1_otsri = tangle.otrsi(message.parent1());
-                            let parent2_otsri = tangle.otrsi(message.parent2());
-                            let parent1_ytrsi = tangle.ytrsi(message.parent1());
-                            let parent2_ytrsi = tangle.ytrsi(message.parent2());
+                            let parent1_otsri = tangle.otrsi(message.parent1()).await;
+                            let parent2_otsri = tangle.otrsi(message.parent2()).await;
+                            let parent1_ytrsi = tangle.ytrsi(message.parent1()).await;
+                            let parent2_ytrsi = tangle.ytrsi(message.parent2()).await;
 
                             // get best OTRSI/YTRSI from parents
                             // unwrap() is safe because parents are solid which implies that OTRSI/YTRSI values are
@@ -98,9 +104,9 @@ impl<N: Node> Worker<N> for PropagatorWorker {
                                 if metadata.flags().is_milestone() {
                                     index = Some(metadata.milestone_index());
                                 }
-                            });
+                            }).await;
 
-                            for child in tangle.get_children(&hash) {
+                            for child in tangle.get_children(&hash).await {
                                 children.push(child);
                             }
 

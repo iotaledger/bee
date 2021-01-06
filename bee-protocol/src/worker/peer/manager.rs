@@ -9,6 +9,7 @@ use crate::{
         PeerWorker, RequestedMilestones, TangleWorker,
     },
     ProtocolMetrics,
+    storage::Backend,
 };
 
 use bee_common::shutdown_stream::ShutdownStream;
@@ -25,7 +26,10 @@ use std::{any::TypeId, convert::Infallible, sync::Arc};
 pub(crate) struct PeerManagerWorker {}
 
 #[async_trait]
-impl<N: Node> Worker<N> for PeerManagerWorker {
+impl<N: Node> Worker<N> for PeerManagerWorker
+where
+    N::Backend: Backend,
+{
     type Config = NetworkListener;
     type Error = Infallible;
 

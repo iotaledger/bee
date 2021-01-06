@@ -19,6 +19,7 @@ pub trait Backend:
     + Fetch<OutputId, Output>
     + Fetch<OutputId, Spent>
     + Fetch<Ed25519Address, Vec<OutputId>>
+    + bee_protocol::storage::Backend
 {
 }
 
@@ -29,5 +30,6 @@ impl<T> Backend for T where
         + Fetch<OutputId, Output>
         + Fetch<OutputId, Spent>
         + Fetch<Ed25519Address, Vec<OutputId>>
+        + bee_protocol::storage::Backend
 {
 }

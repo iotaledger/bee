@@ -6,6 +6,7 @@ use crate::{
     milestone::MilestoneIndex,
     packet::{tlv_from_bytes, Header, Heartbeat, Message, MessageRequest, MilestoneRequest, Packet, TlvError},
     peer::{Peer, PeerManager},
+    storage::Backend,
     tangle::MsTangle,
     worker::{
         peer::packet_handler::PacketHandler, HasherWorkerEvent, MessageResponderWorkerEvent,
@@ -15,7 +16,6 @@ use crate::{
 };
 
 use bee_common_pt2::node::ResHandle;
-use bee_storage::storage::Backend;
 
 use futures::{channel::oneshot, future::FutureExt};
 use log::{error, info, trace, warn};
@@ -94,7 +94,7 @@ impl PeerWorker {
             &*requested_milestones,
             // TODO should be copy ?
             Some(self.peer.id().clone()),
-        );
+        ).await;
 
         // TODO is this needed ?
         let tangle = tangle.into_weak();

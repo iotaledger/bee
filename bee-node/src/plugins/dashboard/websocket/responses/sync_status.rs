@@ -1,13 +1,15 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugins::dashboard::websocket::{
-    responses::{WsEvent, WsEventInner},
-    topics::WsTopic,
+use crate::{
+    plugins::dashboard::websocket::{
+        responses::{WsEvent, WsEventInner},
+        topics::WsTopic,
+    },
+    storage::Backend,
 };
 
 use bee_protocol::{event::LatestMilestoneChanged, tangle::MsTangle};
-use bee_storage::storage::Backend;
 
 use serde::Serialize;
 

@@ -17,8 +17,8 @@ pub(crate) async fn milestone<B: Backend>(
     milestone_index: MilestoneIndex,
     tangle: ResHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get_milestone_message_id(milestone_index) {
-        Some(message_id) => match tangle.get_metadata(&message_id) {
+    match tangle.get_milestone_message_id(milestone_index).await {
+        Some(message_id) => match tangle.get_metadata(&message_id).await {
             Some(metadata) => Ok(warp::reply::json(&SuccessBody::new(MilestoneResponse {
                 milestone_index: *milestone_index,
                 message_id: message_id.to_string(),

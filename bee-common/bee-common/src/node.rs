@@ -112,7 +112,10 @@ impl<R> ResHandle<R> {
                     .values()
                     .fold(String::new(), |s, loc| format!("{}\n- {}", s, loc));
                 warn!(
-                    "Attempted to gain ownership resource `{}` but it is still being used in the following places: {}",
+                    "Attempted to gain ownership resource `{}` but it is still being used. This is not, by itself, a \
+                    problem but may indicate that a node task or event listener is not being stopped at the \
+                    appropriate time during the shutdown process. Using arcane magic, we determined that the resource \
+                    is still being used in the following places: {}",
                     type_name::<R>(),
                     usages,
                 );

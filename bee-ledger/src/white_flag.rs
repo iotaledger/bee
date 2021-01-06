@@ -115,7 +115,7 @@ where
         message_metadata.flags_mut().set_conflicting(conflicting);
         message_metadata.set_milestone_index(metadata.index);
         message_metadata.confirm(metadata.timestamp);
-    });
+    }).await;
 
     Ok(())
 }
@@ -136,7 +136,7 @@ where
     // TODO Tangle get message AND meta at the same time
 
     while let Some(message_id) = messages_ids.last() {
-        let meta = match tangle.get_metadata(message_id) {
+        let meta = match tangle.get_metadata(message_id).await {
             Some(meta) => meta,
             None => {
                 if !tangle.is_solid_entry_point(message_id) {

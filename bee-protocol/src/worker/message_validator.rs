@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{tangle::MsTangle, worker::TangleWorker};
+use crate::{storage::Backend, tangle::MsTangle, worker::TangleWorker};
 
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
@@ -22,7 +22,10 @@ pub(crate) struct MessageValidatorWorker {
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for MessageValidatorWorker {
+impl<N: Node> Worker<N> for MessageValidatorWorker
+where
+    N::Backend: Backend,
+{
     type Config = ();
     type Error = Infallible;
 

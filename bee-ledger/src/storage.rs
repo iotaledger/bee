@@ -39,6 +39,7 @@ pub trait Backend:
     + Insert<OutputId, Spent>
     + Insert<Unspent, ()>
     + Insert<(), LedgerIndex>
+    + bee_protocol::storage::Backend
 {
 }
 
@@ -65,6 +66,7 @@ impl<T> Backend for T where
         + Insert<OutputId, Spent>
         + Insert<Unspent, ()>
         + Insert<(), LedgerIndex>
+        + bee_protocol::storage::Backend
 {
 }
 

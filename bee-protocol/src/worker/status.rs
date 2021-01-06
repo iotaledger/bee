@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    storage::Backend,
     tangle::MsTangle,
     worker::{MessageRequesterWorker, RequestedMessages, TangleWorker},
 };
@@ -20,7 +21,10 @@ use std::{any::TypeId, convert::Infallible, time::Duration};
 pub(crate) struct StatusWorker;
 
 #[async_trait]
-impl<N: Node> Worker<N> for StatusWorker {
+impl<N: Node> Worker<N> for StatusWorker
+where
+    N::Backend: Backend,
+{
     type Config = u64;
     type Error = Infallible;
 

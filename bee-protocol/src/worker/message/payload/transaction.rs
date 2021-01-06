@@ -4,6 +4,7 @@
 use crate::{
     tangle::MsTangle,
     worker::{IndexationPayloadWorker, IndexationPayloadWorkerEvent, TangleWorker},
+    storage::Backend,
 };
 
 use bee_common::shutdown_stream::ShutdownStream;
@@ -28,6 +29,7 @@ pub(crate) struct TransactionPayloadWorker {
 impl<N> Worker<N> for TransactionPayloadWorker
 where
     N: Node,
+    N::Backend: Backend,
 {
     type Config = ();
     type Error = Infallible;
