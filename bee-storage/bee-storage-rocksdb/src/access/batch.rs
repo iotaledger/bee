@@ -4,7 +4,7 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{LedgerIndex, Output, Spent, Unspent};
+use bee_ledger::model::{Diff, LedgerIndex, Output, Spent, Unspent};
 use bee_message::{
     payload::{
         indexation::HashedIndex,
@@ -482,6 +482,46 @@ impl Batch<SolidEntryPoint, MilestoneIndex> for Storage {
         batch.key_buf.clear();
         // Packing to bytes can't fail.
         sep.pack(&mut batch.key_buf).unwrap();
+
+        batch.inner.delete_cf(&cf, &batch.key_buf);
+
+        Ok(())
+    }
+}
+
+impl Batch<MilestoneIndex, Diff> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        index: &MilestoneIndex,
+        diff: &Diff,
+    ) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_DIFF))?;
+
+        batch.key_buf.clear();
+        // Packing to bytes can't fail.
+        index.pack(&mut batch.key_buf).unwrap();
+        batch.value_buf.clear();
+        // Packing to bytes can't fail.
+        diff.pack(&mut batch.value_buf).unwrap();
+
+        batch.inner.put_cf(&cf, &batch.key_buf, &batch.value_buf);
+
+        Ok(())
+    }
+
+    fn batch_delete(&self, batch: &mut Self::Batch, index: &MilestoneIndex) -> Result<(), <Self as Backend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_DIFF))?;
+
+        batch.key_buf.clear();
+        // Packing to bytes can't fail.
+        index.pack(&mut batch.key_buf).unwrap();
 
         batch.inner.delete_cf(&cf, &batch.key_buf);
 

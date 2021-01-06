@@ -618,6 +618,7 @@ name = "bee-test"
 version = "0.1.0-alpha"
 dependencies = [
  "bee-crypto",
+ "bee-ledger",
  "bee-message",
  "bee-pow",
  "bee-protocol",

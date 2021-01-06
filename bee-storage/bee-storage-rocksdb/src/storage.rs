@@ -28,6 +28,7 @@ pub const CF_LEDGER_INDEX: &str = "ledger_index";
 pub const CF_MILESTONE_INDEX_TO_MILESTONE: &str = "milestone_index_to_milestone";
 pub const CF_SNAPSHOT_INFO: &str = "snapshot_info";
 pub const CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX: &str = "solid_entry_point_to_milestone_index";
+pub const CF_MILESTONE_INDEX_TO_DIFF: &str = "milestone_index_to_diff";
 
 pub struct Storage {
     pub(crate) config: StorageConfig,
@@ -71,6 +72,8 @@ impl Storage {
         let cf_solid_entry_point_to_milestone_index =
             ColumnFamilyDescriptor::new(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX, Options::default());
 
+        let cf_milestone_index_to_diff = ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_DIFF, Options::default());
+
         let mut opts = Options::default();
 
         opts.create_if_missing(config.create_if_missing);
@@ -107,6 +110,7 @@ impl Storage {
             cf_milestone_index_to_milestone,
             cf_snapshot_info,
             cf_solid_entry_point_to_milestone_index,
+            cf_milestone_index_to_diff,
         ];
 
         Ok(DB::open_cf_descriptors(&opts, config.path, column_familes)?)
