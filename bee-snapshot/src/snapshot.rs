@@ -30,8 +30,8 @@ impl Snapshot {
         &self.solid_entry_points
     }
 
-    pub fn outputs_len(&self) -> usize {
-        self.outputs.len()
+    pub fn outputs(&self) -> &[Output] {
+        &self.outputs
     }
 
     pub fn milestone_diffs_len(&self) -> usize {

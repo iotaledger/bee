@@ -7,7 +7,8 @@ use crate::{
 };
 
 use bee_common_pt2::{node::Node, worker::Worker};
-use bee_ledger::model::LedgerIndex;
+use bee_ledger::model::{LedgerIndex, Unspent};
+use bee_message::payload::transaction::{Address, Ed25519Address, Output, OutputId};
 use bee_storage::access::{Fetch, Insert, Truncate};
 use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 
@@ -15,7 +16,7 @@ use async_trait::async_trait;
 use chrono::{offset::TimeZone, Utc};
 use log::info;
 
-use std::path::Path;
+use std::{convert::From, path::Path};
 
 pub struct SnapshotWorker {}
 
@@ -76,7 +77,7 @@ where
         *snapshot.header().ledger_index(),
         snapshot.solid_entry_points().len(),
         match snapshot.header().kind() {
-            Kind::Full=> format!(", {} outputs", snapshot.outputs_len()),
+            Kind::Full=> format!(", {} outputs", snapshot.outputs().len()),
             Kind::Delta=> "".to_owned()
         },
         snapshot.milestone_diffs_len()
@@ -94,6 +95,25 @@ where
         Insert::<SolidEntryPoint, MilestoneIndex>::insert(storage, &sep, &snapshot.header().sep_index())
             .await
             .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+    }
+
+    if snapshot.header().kind() == Kind::Full {
+        for output in snapshot.outputs().iter() {
+            // TODO This is temporarily weird because snapshot format doesn't match ledger format
+            let l_output = bee_ledger::model::Output::new(*output.message_id(), Output::from(output.output().clone()));
+            // TODO group them 3 in a function
+            Insert::<OutputId, bee_ledger::model::Output>::insert(storage, output.output_id(), &l_output)
+                .await
+                .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+            Insert::<Unspent, ()>::insert(storage, &(*output.output_id()).into(), &())
+                .await
+                .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+            if let Address::Ed25519(address) = output.output().address() {
+                Insert::<(Ed25519Address, OutputId), ()>::insert(storage, &(address.clone(), *output.output_id()), &())
+                    .await
+                    .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+            }
+        }
     }
 
     node.register_resource(SnapshotInfo::new(
