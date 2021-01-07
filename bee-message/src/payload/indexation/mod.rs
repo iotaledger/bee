@@ -19,6 +19,8 @@ use blake2::{
 
 use std::ops::Range;
 
+pub(crate) const PAYLOAD_INDEXATION_TYPE: u32 = 2;
+
 const INDEX_LENGTH_RANGE: Range<usize> = 1..65;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
