@@ -17,6 +17,10 @@ use blake2::{
     VarBlake2b,
 };
 
+use std::ops::Range;
+
+const INDEX_LENGTH_RANGE: Range<usize> = 1..65;
+
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Indexation {
     index: String,
@@ -25,8 +29,8 @@ pub struct Indexation {
 
 impl Indexation {
     pub fn new(index: String, data: &[u8]) -> Result<Self, Error> {
-        if index.is_empty() {
-            return Err(Error::EmptyIndex);
+        if !INDEX_LENGTH_RANGE.contains(&index.len()) {
+            return Err(Error::InvalidIndexLength(index.len()));
         }
 
         Ok(Self {
@@ -85,9 +89,6 @@ impl Packable for Indexation {
         let mut data_bytes = vec![0u8; data_len];
         reader.read_exact(&mut data_bytes)?;
 
-        Ok(Self {
-            index: String::from_utf8(index_bytes)?,
-            data: data_bytes.into_boxed_slice(),
-        })
+        Self::new(String::from_utf8(index_bytes)?, &data_bytes)
     }
 }
