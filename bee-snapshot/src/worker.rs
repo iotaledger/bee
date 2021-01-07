@@ -7,6 +7,7 @@ use crate::{
 };
 
 use bee_common_pt2::{node::Node, worker::Worker};
+use bee_ledger::model::LedgerIndex;
 use bee_storage::access::{Fetch, Insert, Truncate};
 use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 
@@ -80,6 +81,10 @@ where
         },
         snapshot.milestone_diffs_len()
     );
+
+    Insert::<(), LedgerIndex>::insert(storage, &(), &LedgerIndex::new(snapshot.header().ledger_index()))
+        .await
+        .map_err(|e| Error::StorageBackend(Box::new(e)))?;
 
     Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage)
         .await
