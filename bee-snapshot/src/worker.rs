@@ -71,8 +71,8 @@ where
         kind_str,
         Utc.timestamp(snapshot.header().timestamp() as i64, 0)
             .format("%d-%m-%Y %H:%M:%S"),
-        snapshot.header().sep_index(),
-        snapshot.header().ledger_index(),
+        *snapshot.header().sep_index(),
+        *snapshot.header().ledger_index(),
         snapshot.solid_entry_points().len(),
         match snapshot.header().kind() {
             Kind::Full=> format!(", {} outputs", snapshot.outputs_len()),
@@ -89,7 +89,7 @@ where
         Insert::<SolidEntryPoint, MilestoneIndex>::insert(
             storage,
             &SolidEntryPoint::new(*sep),
-            &MilestoneIndex(snapshot.header().sep_index()),
+            &snapshot.header().sep_index(),
         )
         .await
         .map_err(|e| Error::StorageBackend(Box::new(e)))?;

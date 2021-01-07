@@ -4,9 +4,10 @@
 use crate::{output::Output, spent::Spent, Error};
 
 use bee_common::packable::{Packable, Read, Write};
+use bee_tangle::milestone::MilestoneIndex;
 
 pub(crate) struct MilestoneDiff {
-    index: u32,
+    index: MilestoneIndex,
     created: Box<[Output]>,
     consumed: Box<[Spent]>,
 }
@@ -37,7 +38,7 @@ impl Packable for MilestoneDiff {
     where
         Self: Sized,
     {
-        let index = u32::unpack(reader)?;
+        let index = MilestoneIndex::unpack(reader)?;
         let created_count = u64::unpack(reader)? as usize;
         let mut created = Vec::with_capacity(created_count);
         for _ in 0..created_count {

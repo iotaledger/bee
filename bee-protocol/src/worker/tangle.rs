@@ -50,7 +50,7 @@ where
 
         // TODO oh no :(
         for message_id in seps.deref().deref().deref() {
-            tangle.add_solid_entry_point(*message_id, MilestoneIndex(snapshot_info.entry_point_index()));
+            tangle.add_solid_entry_point(*message_id, snapshot_info.entry_point_index());
         }
         tangle.add_solid_entry_point(MessageId::null(), MilestoneIndex(0));
 

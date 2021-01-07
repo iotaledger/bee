@@ -4,6 +4,7 @@
 use crate::kind::Kind;
 
 use bee_message::Error as MessageError;
+use bee_tangle::milestone::MilestoneIndex;
 
 use thiserror::Error;
 
@@ -26,7 +27,7 @@ pub enum Error {
     #[error("Network Id mismatch: configuration {0} != snapshot {1}")]
     NetworkIdMismatch(u64, u64),
     #[error("")]
-    LedgerSepIndexesInconsistency(u32, u32),
+    LedgerSepIndexesInconsistency(MilestoneIndex, MilestoneIndex),
     #[error("")]
     InvalidMilestoneDiffsCount(usize, usize),
     #[error(

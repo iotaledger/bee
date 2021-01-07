@@ -8,6 +8,7 @@ use crate::{
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::MessageId;
+use bee_tangle::milestone::MilestoneIndex;
 
 use log::{error, info};
 
@@ -134,9 +135,9 @@ impl Packable for Snapshot {
                         header.sep_index(),
                     ));
                 }
-                if (header.ledger_index() - header.sep_index()) as usize != milestone_diff_count {
+                if (*(header.ledger_index() - header.sep_index())) as usize != milestone_diff_count {
                     return Err(Error::InvalidMilestoneDiffsCount(
-                        (header.ledger_index() - header.sep_index()) as usize,
+                        (*(header.ledger_index() - header.sep_index())) as usize,
                         milestone_diff_count,
                     ));
                 }
@@ -148,9 +149,9 @@ impl Packable for Snapshot {
                         header.sep_index(),
                     ));
                 }
-                if (header.sep_index() - header.ledger_index()) as usize != milestone_diff_count {
+                if (*(header.sep_index() - header.ledger_index())) as usize != milestone_diff_count {
                     return Err(Error::InvalidMilestoneDiffsCount(
-                        (header.sep_index() - header.ledger_index()) as usize,
+                        (*(header.sep_index() - header.ledger_index())) as usize,
                         milestone_diff_count,
                     ));
                 }
@@ -184,16 +185,16 @@ impl Packable for Snapshot {
 }
 
 #[allow(dead_code)] // TODO: When pruning is enabled
-pub(crate) fn snapshot(path: &Path, index: u32) -> Result<(), Error> {
-    info!("Creating snapshot at index {}...", index);
+pub(crate) fn snapshot(path: &Path, index: MilestoneIndex) -> Result<(), Error> {
+    info!("Creating snapshot at index {}...", *index);
 
     let ls = Snapshot {
         header: SnapshotHeader {
             kind: Kind::Full,
             timestamp: 0,
             network_id: 0,
-            sep_index: 0,
-            ledger_index: 0,
+            sep_index: MilestoneIndex(0),
+            ledger_index: MilestoneIndex(0),
         },
         solid_entry_points: SolidEntryPoints::new(Box::new([])),
         outputs: Box::new([]),
@@ -207,7 +208,7 @@ pub(crate) fn snapshot(path: &Path, index: u32) -> Result<(), Error> {
         error!("Failed to write snapshot to file {}: {:?}.", path.to_str().unwrap(), e);
     }
 
-    info!("Created snapshot at index {}.", index);
+    info!("Created snapshot at index {}.", *index);
 
     Ok(())
 }

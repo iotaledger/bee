@@ -7,7 +7,7 @@ use bee_message::MessageId;
 use serde::Deserialize;
 use thiserror::Error;
 
-use std::ops::{Add, Deref};
+use std::ops::{Add, Deref, Sub};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -83,6 +83,14 @@ impl Add for MilestoneIndex {
 
     fn add(self, other: Self) -> Self {
         Self(*self + *other)
+    }
+}
+
+impl Sub for MilestoneIndex {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self(*self - *other)
     }
 }
 
