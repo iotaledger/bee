@@ -9,6 +9,7 @@ use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 use log::{error, info};
 
 use std::{
+    collections::HashMap,
     fs::OpenOptions,
     io::{BufReader, BufWriter},
     path::Path,
@@ -18,7 +19,7 @@ pub struct Snapshot {
     pub(crate) header: SnapshotHeader,
     pub(crate) solid_entry_points: Box<[SolidEntryPoint]>,
     pub(crate) outputs: Box<[Output]>,
-    pub(crate) milestone_diffs: Box<[MilestoneDiff]>,
+    pub(crate) milestone_diffs: HashMap<MilestoneIndex, MilestoneDiff>,
 }
 
 impl Snapshot {
@@ -34,7 +35,7 @@ impl Snapshot {
         &self.outputs
     }
 
-    pub fn milestone_diffs(&self) -> &[MilestoneDiff] {
+    pub fn milestone_diffs(&self) -> &HashMap<MilestoneIndex, MilestoneDiff> {
         &self.milestone_diffs
     }
 
@@ -68,16 +69,17 @@ impl Packable for Snapshot {
     fn packed_len(&self) -> usize {
         let mut len = self.header.packed_len();
         len += (self.solid_entry_points.len() as u64).packed_len();
-        for s in self.solid_entry_points.iter() {
-            len += s.packed_len();
+        for sep in self.solid_entry_points.iter() {
+            len += sep.packed_len();
         }
         len += (self.outputs.len() as u64).packed_len();
-        for o in self.outputs.iter() {
-            len += o.packed_len();
+        for output in self.outputs.iter() {
+            len += output.packed_len();
         }
         len += (self.milestone_diffs.len() as u64).packed_len();
-        for m in self.milestone_diffs.iter() {
-            len += m.packed_len();
+        for (index, diff) in self.milestone_diffs.iter() {
+            len += index.packed_len();
+            len += diff.packed_len();
         }
 
         len
@@ -93,16 +95,17 @@ impl Packable for Snapshot {
         }
         (self.milestone_diffs.len() as u64).pack(writer)?;
 
-        for s in self.solid_entry_points.iter() {
-            s.pack(writer)?;
+        for sep in self.solid_entry_points.iter() {
+            sep.pack(writer)?;
         }
         if self.header.kind() == Kind::Full {
-            for o in self.outputs.iter() {
-                o.pack(writer)?;
+            for output in self.outputs.iter() {
+                output.pack(writer)?;
             }
         }
-        for m in self.milestone_diffs.iter() {
-            m.pack(writer)?;
+        for (index, diff) in self.milestone_diffs.iter() {
+            index.pack(writer)?;
+            diff.pack(writer)?;
         }
 
         Ok(())
@@ -166,16 +169,16 @@ impl Packable for Snapshot {
             }
         }
 
-        let mut milestone_diffs = Vec::with_capacity(milestone_diff_count);
+        let mut milestone_diffs = HashMap::with_capacity(milestone_diff_count);
         for _ in 0..milestone_diff_count {
-            milestone_diffs.push(MilestoneDiff::unpack(reader)?);
+            milestone_diffs.insert(MilestoneIndex::unpack(reader)?, MilestoneDiff::unpack(reader)?);
         }
 
         Ok(Self {
             header,
             solid_entry_points: solid_entry_points.into_boxed_slice(),
             outputs: outputs.into_boxed_slice(),
-            milestone_diffs: milestone_diffs.into_boxed_slice(),
+            milestone_diffs,
         })
     }
 }
@@ -194,7 +197,7 @@ pub(crate) fn snapshot(path: &Path, index: MilestoneIndex) -> Result<(), Error> 
         },
         solid_entry_points: Box::new([]),
         outputs: Box::new([]),
-        milestone_diffs: Box::new([]),
+        milestone_diffs: HashMap::new(),
     };
 
     // let file = path.to_string() + "_tmp";

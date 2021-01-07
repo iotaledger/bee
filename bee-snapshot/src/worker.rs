@@ -116,21 +116,21 @@ where
         }
     }
 
-    for diff in snapshot.milestone_diffs() {
+    for (index, _diff) in snapshot.milestone_diffs() {
         // Unwrap is fine because we just inserted the ledger index.
         let ledger_index = Fetch::<(), LedgerIndex>::fetch(storage, &())
             .await
             .map_err(|e| Error::StorageBackend(Box::new(e)))?
             .unwrap();
 
-        match diff.index() {
-            MilestoneIndex(index) if index == **ledger_index + 1 => {
+        match index {
+            MilestoneIndex(index) if *index == **ledger_index + 1 => {
                 // TODO apply
             }
-            MilestoneIndex(index) if index == **ledger_index => {
+            MilestoneIndex(index) if *index == **ledger_index => {
                 // TODO rollback
             }
-            _ => return Err(Error::UnexpectedDiffIndex(diff.index())),
+            _ => return Err(Error::UnexpectedDiffIndex(*index)),
         }
     }
 
