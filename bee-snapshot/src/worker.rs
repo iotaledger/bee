@@ -86,13 +86,9 @@ where
         .map_err(|e| Error::StorageBackend(Box::new(e)))?;
 
     for sep in snapshot.solid_entry_points.iter() {
-        Insert::<SolidEntryPoint, MilestoneIndex>::insert(
-            storage,
-            &SolidEntryPoint::new(*sep),
-            &snapshot.header().sep_index(),
-        )
-        .await
-        .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+        Insert::<SolidEntryPoint, MilestoneIndex>::insert(storage, &sep, &snapshot.header().sep_index())
+            .await
+            .map_err(|e| Error::StorageBackend(Box::new(e)))?;
     }
 
     node.register_resource(SnapshotInfo::new(
@@ -102,7 +98,6 @@ where
         snapshot.header().sep_index(),
         snapshot.header().timestamp(),
     ));
-    node.register_resource(snapshot.solid_entry_points().clone());
 
     Ok(snapshot)
 }

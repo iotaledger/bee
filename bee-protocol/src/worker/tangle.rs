@@ -5,17 +5,21 @@ use crate::storage::StorageBackend;
 
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
-use bee_snapshot::{SnapshotInfo, SnapshotWorker, SolidEntryPoints};
-use bee_tangle::{milestone::MilestoneIndex, MsTangle};
+use bee_snapshot::{SnapshotInfo, SnapshotWorker};
+use bee_storage::access::AsStream;
+use bee_tangle::{
+    solid_entry_point::SolidEntryPoint,
+    {milestone::MilestoneIndex, MsTangle},
+};
 
 use async_trait::async_trait;
+use futures::StreamExt;
 use log::{error, warn};
 use tokio::time::interval;
 
 use std::{
     any::TypeId,
     convert::Infallible,
-    ops::Deref,
     time::{Duration, Instant},
 };
 
@@ -34,12 +38,11 @@ where
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let storage = node.storage();
-        let tangle = MsTangle::<N::Backend>::new(storage);
+        let tangle = MsTangle::<N::Backend>::new(node.storage());
         node.register_resource(tangle);
+        let storage = node.storage();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let snapshot_info = node.resource::<SnapshotInfo>();
-        let seps = node.resource::<SolidEntryPoints>();
 
         tangle.update_latest_solid_milestone_index(snapshot_info.entry_point_index().into());
         tangle.update_latest_milestone_index(snapshot_info.entry_point_index().into());
@@ -48,9 +51,13 @@ where
         // TODO
         // tangle.add_milestone(config.sep_index().into(), *config.sep_id());
 
-        // TODO oh no :(
-        for message_id in seps.deref().deref().deref() {
-            tangle.add_solid_entry_point(*message_id, snapshot_info.entry_point_index());
+        // TODO unwrap
+        let mut sep_stream = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&*storage)
+            .await
+            .unwrap();
+
+        while let Some((sep, index)) = sep_stream.next().await {
+            tangle.add_solid_entry_point(*sep, index);
         }
         tangle.add_solid_entry_point(MessageId::null(), MilestoneIndex(0));
 

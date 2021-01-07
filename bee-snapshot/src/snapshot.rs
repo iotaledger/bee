@@ -1,14 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    header::SnapshotHeader, kind::Kind, milestone_diff::MilestoneDiff, output::Output,
-    solid_entry_points::SolidEntryPoints, Error,
-};
+use crate::{header::SnapshotHeader, kind::Kind, milestone_diff::MilestoneDiff, output::Output, Error};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::MessageId;
-use bee_tangle::milestone::MilestoneIndex;
+use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 
 use log::{error, info};
 
@@ -20,7 +16,7 @@ use std::{
 
 pub struct Snapshot {
     pub(crate) header: SnapshotHeader,
-    pub(crate) solid_entry_points: SolidEntryPoints,
+    pub(crate) solid_entry_points: Box<[SolidEntryPoint]>,
     pub(crate) outputs: Box<[Output]>,
     pub(crate) milestone_diffs: Box<[MilestoneDiff]>,
 }
@@ -30,7 +26,7 @@ impl Snapshot {
         &self.header
     }
 
-    pub fn solid_entry_points(&self) -> &SolidEntryPoints {
+    pub fn solid_entry_points(&self) -> &[SolidEntryPoint] {
         &self.solid_entry_points
     }
 
@@ -160,7 +156,7 @@ impl Packable for Snapshot {
 
         let mut solid_entry_points = Vec::with_capacity(sep_count);
         for _ in 0..sep_count {
-            solid_entry_points.push(MessageId::unpack(reader)?);
+            solid_entry_points.push(SolidEntryPoint::unpack(reader)?);
         }
 
         let mut outputs = Vec::with_capacity(output_count);
@@ -177,7 +173,7 @@ impl Packable for Snapshot {
 
         Ok(Self {
             header,
-            solid_entry_points: SolidEntryPoints::new(solid_entry_points.into_boxed_slice()),
+            solid_entry_points: solid_entry_points.into_boxed_slice(),
             outputs: outputs.into_boxed_slice(),
             milestone_diffs: milestone_diffs.into_boxed_slice(),
         })
@@ -196,7 +192,7 @@ pub(crate) fn snapshot(path: &Path, index: MilestoneIndex) -> Result<(), Error> 
             sep_index: MilestoneIndex(0),
             ledger_index: MilestoneIndex(0),
         },
-        solid_entry_points: SolidEntryPoints::new(Box::new([])),
+        solid_entry_points: Box::new([]),
         outputs: Box::new([]),
         milestone_diffs: Box::new([]),
     };

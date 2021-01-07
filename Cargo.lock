@@ -341,7 +341,7 @@ dependencies = [
 [[package]]
 name = "bee-common"
 version = "0.2.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#58b3cc87280188e4004b5d0d6b8186c5815259e1"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e9f1d804bae76c35f7e38282413d886c582e09aa"
 dependencies = [
  "chrono",
  "dashmap 3.11.10",
@@ -355,7 +355,7 @@ dependencies = [
 [[package]]
 name = "bee-crypto"
 version = "0.2.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#58b3cc87280188e4004b5d0d6b8186c5815259e1"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e9f1d804bae76c35f7e38282413d886c582e09aa"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -573,7 +573,7 @@ dependencies = [
 [[package]]
 name = "bee-storage"
 version = "0.1.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#58b3cc87280188e4004b5d0d6b8186c5815259e1"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e9f1d804bae76c35f7e38282413d886c582e09aa"
 dependencies = [
  "async-trait",
  "futures 0.3.8",
@@ -630,7 +630,7 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.3.4-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#58b3cc87280188e4004b5d0d6b8186c5815259e1"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e9f1d804bae76c35f7e38282413d886c582e09aa"
 dependencies = [
  "autocfg 1.0.1",
  "num-traits",

@@ -15,7 +15,6 @@ pub mod info;
 pub mod milestone_diff;
 pub mod output;
 pub mod snapshot;
-pub mod solid_entry_points;
 pub mod spent;
 pub mod storage;
 pub mod worker;
@@ -24,7 +23,6 @@ pub use error::Error;
 pub use header::SnapshotHeader;
 pub use info::SnapshotInfo;
 pub use snapshot::Snapshot;
-pub use solid_entry_points::SolidEntryPoints;
 pub use worker::SnapshotWorker;
 
 use bee_common_pt2::node::{Node, NodeBuilder};
