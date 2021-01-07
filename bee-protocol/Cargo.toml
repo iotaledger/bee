@@ -22,7 +22,6 @@ bee-tangle = { path = "../bee-tangle" }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 async-trait = "0.1"
-bitflags = "1.2"
 blake2 = "0.9"
 dashmap = "4.0"
 futures = "0.3"

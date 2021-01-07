@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod bytes;
+pub mod diff;
 pub mod input;
 pub mod integer;
 pub mod message;
@@ -13,4 +14,3 @@ pub mod snapshot;
 pub mod solid_entry_point;
 pub mod string;
 pub mod transaction;
-pub mod diff;

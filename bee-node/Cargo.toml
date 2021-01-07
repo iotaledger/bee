@@ -23,6 +23,7 @@ bee-protocol = { path = "../bee-protocol" }
 bee-snapshot = { path = "../bee-snapshot" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage-rocksdb = { path = "../bee-storage/bee-storage-rocksdb" }
+bee-tangle = { path = "../bee-tangle" }
 
 anymap = "0.12"
 async-trait = "0.1"

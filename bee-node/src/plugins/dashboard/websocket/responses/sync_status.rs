@@ -9,7 +9,8 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_protocol::{event::LatestMilestoneChanged, tangle::MsTangle};
+use bee_protocol::event::LatestMilestoneChanged;
+use bee_tangle::MsTangle;
 
 use serde::Serialize;
 

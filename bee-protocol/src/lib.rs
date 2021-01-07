@@ -8,7 +8,6 @@ pub mod config;
 pub mod event;
 pub mod milestone;
 pub mod storage;
-pub mod tangle;
 
 mod helper;
 mod metrics;
@@ -18,7 +17,6 @@ mod sender;
 mod worker;
 
 pub use metrics::ProtocolMetrics;
-pub use milestone::{Milestone, MilestoneIndex};
 pub use storage::StorageBackend;
 pub use worker::{
     MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent, MetricsWorker, TangleWorker,

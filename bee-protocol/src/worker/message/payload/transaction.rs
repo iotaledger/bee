@@ -3,13 +3,13 @@
 
 use crate::{
     storage::StorageBackend,
-    tangle::MsTangle,
     worker::{IndexationPayloadWorker, IndexationPayloadWorkerEvent, TangleWorker},
 };
 
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, MessageId};
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;

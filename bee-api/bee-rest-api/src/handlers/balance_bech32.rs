@@ -1,7 +1,9 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{filters::CustomRejection::BadRequest, handlers::balance_ed25519::balance_ed25519, storage::StorageBackend};
+use crate::{
+    filters::CustomRejection::BadRequest, handlers::balance_ed25519::balance_ed25519, storage::StorageBackend,
+};
 
 use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;

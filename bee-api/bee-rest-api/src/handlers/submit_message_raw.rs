@@ -10,7 +10,8 @@ use crate::{
 use bee_common::packable::Packable;
 use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
-use bee_protocol::{tangle::MsTangle, MessageSubmitterWorkerEvent};
+use bee_protocol::MessageSubmitterWorkerEvent;
+use bee_tangle::MsTangle;
 
 use tokio::sync::mpsc;
 use warp::{http::StatusCode, reject, Buf, Rejection, Reply};

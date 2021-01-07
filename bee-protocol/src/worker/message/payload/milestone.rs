@@ -5,10 +5,9 @@ use crate::{
     config::ProtocolConfig,
     event::{LatestMilestoneChanged, LatestSolidMilestoneChanged},
     helper,
-    milestone::{key_manager::KeyManager, Milestone, MilestoneIndex},
+    milestone::key_manager::KeyManager,
     peer::PeerManager,
     storage::StorageBackend,
-    tangle::MsTangle,
     worker::{
         MetricsWorker, MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent, MilestoneRequesterWorker,
         MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, PeerManagerResWorker, RequestedMilestones,
@@ -21,6 +20,10 @@ use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, MessageId};
 use bee_network::NetworkController;
+use bee_tangle::{
+    milestone::{Milestone, MilestoneIndex},
+    MsTangle,
+};
 
 use async_trait::async_trait;
 use crypto::ed25519::{verify, PublicKey, Signature};
@@ -124,10 +127,7 @@ where
 
             Ok((
                 MilestoneIndex(milestone.essence().index()),
-                Milestone {
-                    message_id,
-                    timestamp: milestone.essence().timestamp(),
-                },
+                Milestone::new(message_id, milestone.essence().timestamp()),
             ))
         }
         _ => Err(Error::NoMilestonePayload),
@@ -200,7 +200,7 @@ where
                             }
 
                             if index > tangle.get_latest_milestone_index() {
-                                info!("New milestone {} {}.", *index, milestone.message_id);
+                                info!("New milestone {} {}.", *index, milestone.message_id());
                                 tangle.update_latest_milestone_index(index);
 
                                 helper::broadcast_heartbeat(
@@ -219,7 +219,9 @@ where
 
                             if requested_milestones.remove(&index).is_some() {
                                 tangle
-                                    .update_metadata(&milestone.message_id, |meta| meta.flags_mut().set_requested(true))
+                                    .update_metadata(milestone.message_id(), |meta| {
+                                        meta.flags_mut().set_requested(true)
+                                    })
                                     .await;
 
                                 if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {

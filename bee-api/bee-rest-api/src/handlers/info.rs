@@ -9,7 +9,8 @@ use crate::{
 };
 
 use bee_common_pt2::node::ResHandle;
-use bee_protocol::{config::ProtocolConfig, tangle::MsTangle};
+use bee_protocol::config::ProtocolConfig;
+use bee_tangle::MsTangle;
 
 use serde::Serialize;
 use warp::Reply;

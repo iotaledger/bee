@@ -3,9 +3,7 @@
 
 use crate::{
     event::{LatestSolidMilestoneChanged, MessageSolidified},
-    milestone::Milestone,
     storage::StorageBackend,
-    tangle::MsTangle,
     worker::{
         milestone_cone_updater::{MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent},
         TangleWorker,
@@ -15,6 +13,7 @@ use crate::{
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
+use bee_tangle::{milestone::Milestone, MsTangle};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -116,21 +115,14 @@ where
                                 // timestamp is obviously wrong in thr meantime.
                                 bus.dispatch(LatestSolidMilestoneChanged {
                                     index,
-                                    milestone: Milestone {
-                                        message_id: *hash,
-                                        timestamp: 0,
-                                    },
+                                    milestone: Milestone::new(*hash, 0),
                                 });
                                 // TODO we need to get the milestone from the tangle to dispatch it.
                                 // At the time of writing, the tangle only contains an index <-> id mapping.
                                 // timestamp is obviously wrong in thr meantime.
-                                if let Err(e) = milestone_cone_updater.send(MilestoneConeUpdaterWorkerEvent(
-                                    index,
-                                    Milestone {
-                                        message_id: *hash,
-                                        timestamp: 0,
-                                    },
-                                )) {
+                                if let Err(e) = milestone_cone_updater
+                                    .send(MilestoneConeUpdaterWorkerEvent(index, Milestone::new(*hash, 0)))
+                                {
                                     error!("Sending hash to `MilestoneConeUpdater` failed: {:?}.", e);
                                 }
                             }

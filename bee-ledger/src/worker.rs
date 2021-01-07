@@ -13,9 +13,8 @@ use crate::{
 use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, MessageId};
-use bee_protocol::{
-    event::LatestSolidMilestoneChanged, tangle::MsTangle, MetricsWorker, MilestoneIndex, ProtocolMetrics, TangleWorker,
-};
+use bee_protocol::{event::LatestSolidMilestoneChanged, MetricsWorker, ProtocolMetrics, TangleWorker};
+use bee_tangle::{milestone::MilestoneIndex, MsTangle};
 
 use async_trait::async_trait;
 use blake2::Blake2b;

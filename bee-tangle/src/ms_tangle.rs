@@ -1,26 +1,17 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod metadata;
-mod urts;
-
-pub mod flags;
-pub mod solid_entry_point;
-
-use urts::UrtsTipPool;
-
-pub use flags::Flags;
-pub use metadata::MessageMetadata;
-pub use solid_entry_point::SolidEntryPoint;
-
 use crate::{
+    metadata::MessageMetadata,
     milestone::{Milestone, MilestoneIndex},
     storage::StorageBackend,
+    tangle::{Hooks, Tangle},
+    urts::UrtsTipPool,
+    MessageRef,
 };
 
 use bee_common_pt2::node::ResHandle;
 use bee_message::{Message, MessageId};
-use bee_tangle::{Hooks, MessageRef, Tangle};
 
 use async_trait::async_trait;
 use dashmap::DashMap;
@@ -145,10 +136,12 @@ impl<B: StorageBackend> MsTangle<B> {
 
     pub async fn add_milestone(&self, idx: MilestoneIndex, milestone: Milestone) {
         // TODO: only insert if vacant
-        self.inner.update_metadata(&milestone.message_id(), |metadata| {
-            metadata.flags_mut().set_milestone(true);
-            metadata.set_milestone_index(idx);
-        }).await;
+        self.inner
+            .update_metadata(&milestone.message_id(), |metadata| {
+                metadata.flags_mut().set_milestone(true);
+                metadata.set_milestone_index(idx);
+            })
+            .await;
         self.inner
             .hooks()
             .insert_milestone(idx, &milestone)
@@ -318,7 +311,7 @@ impl<B: StorageBackend> MsTangle<B> {
         self.tip_pool.lock().await.reduce_tips();
     }
 
-    pub(crate) async fn non_lazy_tips_num(&self) -> usize {
+    pub async fn non_lazy_tips_num(&self) -> usize {
         self.tip_pool.lock().await.non_lazy_tips().len()
     }
 }

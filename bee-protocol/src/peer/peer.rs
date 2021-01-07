@@ -1,9 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{milestone::MilestoneIndex, peer::PeerMetrics};
+use crate::peer::PeerMetrics;
 
 use bee_network::{Multiaddr, PeerId};
+use bee_tangle::milestone::MilestoneIndex;
 
 use std::{
     sync::atomic::{AtomicU32, AtomicU64, AtomicU8, Ordering},

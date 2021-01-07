@@ -3,7 +3,7 @@
 
 use crate::model::{Output, Spent};
 
-use bee_protocol::MilestoneIndex;
+use bee_tangle::milestone::MilestoneIndex;
 
 pub struct MilestoneConfirmed {
     pub index: MilestoneIndex,

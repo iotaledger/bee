@@ -16,7 +16,7 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_protocol::tangle::MsTangle;
+use bee_tangle::MsTangle;
 
 use std::{
     collections::{HashMap, HashSet},

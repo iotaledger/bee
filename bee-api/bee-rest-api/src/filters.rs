@@ -1,10 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::RestApiConfig, filters::CustomRejection::BadRequest, handlers, storage::StorageBackend, NetworkId};
+use crate::{
+    config::RestApiConfig, filters::CustomRejection::BadRequest, handlers, storage::StorageBackend, NetworkId,
+};
 
 use bee_common_pt2::node::ResHandle;
-use bee_protocol::{config::ProtocolConfig, tangle::MsTangle, MessageSubmitterWorkerEvent};
+use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorkerEvent};
+use bee_tangle::MsTangle;
 
 use tokio::sync::mpsc;
 use warp::{reject, Filter, Rejection};
@@ -293,7 +296,7 @@ mod custom_path_param {
         prelude::Ed25519Address,
         MessageId,
     };
-    use bee_protocol::MilestoneIndex;
+    use bee_tangle::milestone::MilestoneIndex;
 
     pub(super) fn output_id() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Copy {
         warp::path::param().and_then(|value: String| async move {

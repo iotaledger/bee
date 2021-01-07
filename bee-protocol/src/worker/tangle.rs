@@ -1,11 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{storage::StorageBackend, tangle::MsTangle, MilestoneIndex};
+use crate::storage::StorageBackend;
 
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
 use bee_snapshot::{SnapshotInfo, SnapshotWorker, SolidEntryPoints};
+use bee_tangle::{milestone::MilestoneIndex, MsTangle};
 
 use async_trait::async_trait;
 use log::{error, warn};

@@ -4,10 +4,8 @@
 use crate::{
     event::LatestSolidMilestoneChanged,
     helper,
-    milestone::MilestoneIndex,
     peer::PeerManager,
     storage::StorageBackend,
-    tangle::MsTangle,
     worker::{
         MessageRequesterWorker, MessageRequesterWorkerEvent, MetricsWorker, MilestoneRequesterWorker,
         PeerManagerResWorker, RequestedMessages, RequestedMilestones, TangleWorker,
@@ -18,7 +16,7 @@ use crate::{
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_network::NetworkController;
-use bee_tangle::traversal;
+use bee_tangle::{milestone::MilestoneIndex, traversal, MsTangle};
 
 use async_trait::async_trait;
 use futures::{stream::FusedStream, StreamExt};
