@@ -4,8 +4,10 @@
 use bee_common::packable::{Packable, Read, Write};
 use bee_tangle::milestone::MilestoneIndex;
 
+use std::ops::Deref;
+
 #[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct LedgerIndex(MilestoneIndex);
+pub struct LedgerIndex(pub MilestoneIndex);
 
 impl From<MilestoneIndex> for LedgerIndex {
     fn from(index: MilestoneIndex) -> Self {
@@ -16,6 +18,14 @@ impl From<MilestoneIndex> for LedgerIndex {
 impl LedgerIndex {
     pub fn new(index: MilestoneIndex) -> Self {
         index.into()
+    }
+}
+
+impl Deref for LedgerIndex {
+    type Target = MilestoneIndex;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

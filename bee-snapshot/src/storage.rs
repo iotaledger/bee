@@ -14,6 +14,7 @@ use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 pub trait StorageBackend:
     backend::StorageBackend
     + Fetch<(), SnapshotInfo>
+    + Fetch<(), LedgerIndex>
     + Insert<SolidEntryPoint, MilestoneIndex>
     + Insert<(), LedgerIndex>
     + Insert<OutputId, Output>
@@ -26,6 +27,7 @@ pub trait StorageBackend:
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Fetch<(), SnapshotInfo>
+        + Fetch<(), LedgerIndex>
         + Insert<SolidEntryPoint, MilestoneIndex>
         + Insert<(), LedgerIndex>
         + Insert<OutputId, Output>

@@ -6,10 +6,24 @@ use crate::{output::Output, spent::Spent, Error};
 use bee_common::packable::{Packable, Read, Write};
 use bee_tangle::milestone::MilestoneIndex;
 
-pub(crate) struct MilestoneDiff {
+pub struct MilestoneDiff {
     index: MilestoneIndex,
     created: Box<[Output]>,
     consumed: Box<[Spent]>,
+}
+
+impl MilestoneDiff {
+    pub fn index(&self) -> MilestoneIndex {
+        self.index
+    }
+
+    pub fn created(&self) -> &[Output] {
+        &self.created
+    }
+
+    pub fn consumed(&self) -> &[Spent] {
+        &self.consumed
+    }
 }
 
 impl Packable for MilestoneDiff {

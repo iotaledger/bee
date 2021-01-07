@@ -34,8 +34,8 @@ impl Snapshot {
         &self.outputs
     }
 
-    pub fn milestone_diffs_len(&self) -> usize {
-        self.milestone_diffs.len()
+    pub fn milestone_diffs(&self) -> &[MilestoneDiff] {
+        &self.milestone_diffs
     }
 
     pub fn from_file(path: &Path) -> Result<Snapshot, Error> {
