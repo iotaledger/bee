@@ -5,7 +5,6 @@ use crate::{
     helper,
     peer::PeerManager,
     storage::StorageBackend,
-    tangle::MsTangle,
     worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
     ProtocolMetrics,
 };
@@ -13,6 +12,7 @@ use crate::{
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_network::NetworkController;
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;

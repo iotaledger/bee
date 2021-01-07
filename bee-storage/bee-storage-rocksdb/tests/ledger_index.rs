@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_ledger::model::LedgerIndex;
-use bee_protocol::MilestoneIndex;
+use bee_tangle::milestone::MilestoneIndex;
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend::StorageBackend,

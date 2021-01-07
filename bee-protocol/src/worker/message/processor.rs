@@ -8,7 +8,6 @@ use crate::{
     packet::Message as MessagePacket,
     peer::PeerManager,
     storage::StorageBackend,
-    tangle::{MessageMetadata, MsTangle},
     worker::{
         BroadcasterWorker, BroadcasterWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent,
         MessageRequesterWorker, MessageSubmitterError, MetricsWorker, MilestonePayloadWorker,
@@ -22,6 +21,7 @@ use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, Message, MessageId};
 use bee_network::PeerId;
+use bee_tangle::{metadata::MessageMetadata, MsTangle};
 
 use async_trait::async_trait;
 use futures::{channel::oneshot::Sender, stream::StreamExt};

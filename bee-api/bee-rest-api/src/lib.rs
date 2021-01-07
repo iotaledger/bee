@@ -19,7 +19,8 @@ use bee_common_pt2::{
     node::{Node, NodeBuilder},
     worker::{Error as WorkerError, Worker},
 };
-use bee_protocol::{config::ProtocolConfig, tangle::MsTangle, MessageSubmitterWorker, TangleWorker};
+use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorker, TangleWorker};
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use log::{error, info};

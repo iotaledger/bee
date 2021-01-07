@@ -1,11 +1,15 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{storage::StorageBackend, tangle::MsTangle, worker::TangleWorker, Milestone, MilestoneIndex};
+use crate::{storage::StorageBackend, worker::TangleWorker};
 
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
+use bee_tangle::{
+    milestone::{Milestone, MilestoneIndex},
+    MsTangle,
+};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -51,7 +55,7 @@ where
             while let Some(MilestoneConeUpdaterWorkerEvent(index, milestone)) = receiver.next().await {
                 // When a new milestone gets solid, OTRSI and YTRSI of all messages that belong to the given cone
                 // must be updated. Furthermore, updated values will be propagated to the future.
-                update_messages_referenced_by_milestone::<N>(&tangle, milestone.message_id, index).await;
+                update_messages_referenced_by_milestone::<N>(&tangle, *milestone.message_id(), index).await;
                 // Update tip pool after all values got updated.
                 tangle.update_tip_scores().await;
             }

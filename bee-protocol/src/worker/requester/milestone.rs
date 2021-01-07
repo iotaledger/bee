@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    milestone::MilestoneIndex,
     packet::MilestoneRequest,
     peer::PeerManager,
     storage::StorageBackend,
-    tangle::MsTangle,
     worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
     ProtocolMetrics, Sender,
 };
@@ -14,6 +12,7 @@ use crate::{
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_network::{NetworkController, PeerId};
+use bee_tangle::{milestone::MilestoneIndex, MsTangle};
 
 use async_trait::async_trait;
 use dashmap::DashMap;

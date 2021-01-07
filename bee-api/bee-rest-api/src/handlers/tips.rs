@@ -8,7 +8,7 @@ use crate::{
 };
 
 use bee_common_pt2::node::ResHandle;
-use bee_protocol::tangle::MsTangle;
+use bee_tangle::MsTangle;
 
 use serde::Serialize;
 use warp::{reject, Rejection, Reply};

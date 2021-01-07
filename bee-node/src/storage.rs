@@ -6,17 +6,24 @@ use bee_protocol::storage::StorageBackend as ProtocolStorageBackend;
 use bee_rest_api::storage::StorageBackend as RestApiStorageBackend;
 use bee_snapshot::storage::StorageBackend as SnapshotStorageBackend;
 use bee_storage::backend;
+use bee_tangle::storage::StorageBackend as TangleStorageBackend;
 
 pub trait StorageBackend:
-    backend::StorageBackend + LedgerStorageBackend + RestApiStorageBackend + SnapshotStorageBackend + ProtocolStorageBackend
+    backend::StorageBackend
+    + LedgerStorageBackend
+    + ProtocolStorageBackend
+    + RestApiStorageBackend
+    + SnapshotStorageBackend
+    + TangleStorageBackend
 {
 }
 
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + LedgerStorageBackend
+        + ProtocolStorageBackend
         + RestApiStorageBackend
         + SnapshotStorageBackend
-        + ProtocolStorageBackend
+        + TangleStorageBackend
 {
 }

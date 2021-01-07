@@ -3,11 +3,9 @@
 
 use crate::{
     helper,
-    milestone::MilestoneIndex,
     packet::{tlv_from_bytes, Header, Heartbeat, Message, MessageRequest, MilestoneRequest, Packet, TlvError},
     peer::{Peer, PeerManager},
     storage::StorageBackend,
-    tangle::MsTangle,
     worker::{
         peer::packet_handler::PacketHandler, HasherWorkerEvent, MessageResponderWorkerEvent,
         MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent, RequestedMilestones,
@@ -16,6 +14,7 @@ use crate::{
 };
 
 use bee_common_pt2::node::ResHandle;
+use bee_tangle::{milestone::MilestoneIndex, MsTangle};
 
 use futures::{channel::oneshot, future::FutureExt};
 use log::{error, info, trace, warn};
@@ -115,7 +114,12 @@ impl PeerWorker {
         self.peer_manager.remove(&self.peer.id()).await;
     }
 
-    fn process_packet<B: StorageBackend>(&mut self, tangle: &MsTangle<B>, header: &Header, bytes: &[u8]) -> Result<(), Error> {
+    fn process_packet<B: StorageBackend>(
+        &mut self,
+        tangle: &MsTangle<B>,
+        header: &Header,
+        bytes: &[u8],
+    ) -> Result<(), Error> {
         match header.packet_type {
             MilestoneRequest::ID => {
                 trace!("[{}] Reading MilestoneRequest...", self.peer.address());

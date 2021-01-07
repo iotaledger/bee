@@ -2,17 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    milestone::MilestoneIndex,
     packet::Heartbeat,
     peer::PeerManager,
-    tangle::MsTangle,
+    storage::StorageBackend,
     worker::{MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages, RequestedMilestones},
     ProtocolMetrics, Sender,
-    storage::StorageBackend,
 };
 
 use bee_message::MessageId;
 use bee_network::{NetworkController, PeerId};
+use bee_tangle::{milestone::MilestoneIndex, MsTangle};
 
 use log::warn;
 use tokio::sync::mpsc;

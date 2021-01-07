@@ -8,11 +8,11 @@ use crate::{
 };
 
 use bee_message::payload::transaction::OutputId;
-use bee_protocol::MilestoneIndex;
 use bee_storage::{
     access::{Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
     backend,
 };
+use bee_tangle::milestone::MilestoneIndex;
 
 // TODO check all requirements
 
@@ -39,7 +39,7 @@ pub trait StorageBackend:
     + Insert<OutputId, Spent>
     + Insert<Unspent, ()>
     + Insert<(), LedgerIndex>
-    + bee_protocol::storage::StorageBackend
+    + bee_tangle::storage::StorageBackend
 {
 }
 
@@ -66,7 +66,7 @@ impl<T> StorageBackend for T where
         + Insert<OutputId, Spent>
         + Insert<Unspent, ()>
         + Insert<(), LedgerIndex>
-        + bee_protocol::storage::StorageBackend
+        + bee_tangle::storage::StorageBackend
 {
 }
 
@@ -153,7 +153,10 @@ pub(crate) async fn insert_ledger_index<B: StorageBackend>(storage: &B, index: &
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) async fn fetch_output<B: StorageBackend>(storage: &B, output_id: &OutputId) -> Result<Option<Output>, Error> {
+pub(crate) async fn fetch_output<B: StorageBackend>(
+    storage: &B,
+    output_id: &OutputId,
+) -> Result<Option<Output>, Error> {
     Fetch::<OutputId, Output>::fetch(storage, output_id)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))

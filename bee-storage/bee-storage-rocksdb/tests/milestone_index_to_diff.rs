@@ -3,7 +3,7 @@
 
 use bee_common::packable::Packable;
 use bee_ledger::model::Diff;
-use bee_protocol::MilestoneIndex;
+use bee_tangle::milestone::MilestoneIndex;
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend::StorageBackend,

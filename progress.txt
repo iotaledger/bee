@@ -1,0 +1,50 @@
+.
+├── CHANGELOG.md
+├── Cargo.toml
+├── LICENSE
+├── README.md
+├── src
+│   ├── error.rs
+│   ├── lib.rs
+│   ├── message.rs
+│   ├── message_id.rs
+│   ├── payload
+│   │   ├── indexation
+│   │   │   ├── hash.rs
+│   │   │   └── mod.rs
+│   │   ├── milestone.rs
+│   │   ├── mod.rs
+│   │   └── transaction
+│   │       ├── constants.rs
+│   │       ├── essence.rs
+│   │       ├── input
+│   │       │   ├── mod.rs
+│   │       │   └── utxo.rs
+│   │       ├── mod.rs
+│   │       ├── output
+│   │       │   ├── address
+│   │       │   │   ├── ed25519.rs
+│   │       │   │   ├── mod.rs
+│   │       │   │   └── wots.rs
+│   │       │   ├── mod.rs
+│   │       │   ├── output_id.rs
+│   │       │   └── signature_locked_single.rs
+│   │       ├── transaction_id.rs
+│   │       └── unlock
+│   │           ├── mod.rs
+│   │           ├── reference.rs
+│   │           └── signature
+│   │               ├── ed25519.rs
+│   │               ├── mod.rs
+│   │               └── wots.rs
+│   ├── prelude.rs
+│   ├── serde.rs
+│   └── vertex.rs
+└── tests
+    ├── ed25519_address.rs
+    ├── indexation.rs
+    ├── message.rs
+    ├── message_id.rs
+    ├── output_id.rs
+    ├── transaction_id.rs
+    └── utxo_input.rs

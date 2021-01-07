@@ -17,7 +17,7 @@ use storage::StorageBackend;
 use worker::LedgerWorker;
 
 use bee_common_pt2::node::{Node, NodeBuilder};
-use bee_protocol::MilestoneIndex;
+use bee_tangle::milestone::MilestoneIndex;
 
 pub fn init<N: Node>(index: u32, node_builder: N::Builder) -> N::Builder
 where

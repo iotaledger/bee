@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_protocol::MilestoneIndex;
+use bee_tangle::milestone::MilestoneIndex;
 
 #[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct LedgerIndex(MilestoneIndex);

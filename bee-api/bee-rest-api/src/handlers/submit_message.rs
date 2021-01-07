@@ -13,7 +13,8 @@ use crate::{
 use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
 use bee_pow::providers::{ConstantBuilder, MinerBuilder, ProviderBuilder};
-use bee_protocol::{config::ProtocolConfig, tangle::MsTangle, MessageSubmitterError, MessageSubmitterWorkerEvent};
+use bee_protocol::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
+use bee_tangle::MsTangle;
 
 use futures::channel::oneshot;
 use log::error;

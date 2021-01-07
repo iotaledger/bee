@@ -3,7 +3,7 @@
 
 use crate::rand::{integer::rand_integer, milestone::rand_milestone_index, option::rand_option};
 
-use bee_protocol::tangle::{flags::Flags, MessageMetadata};
+use bee_tangle::{flags::Flags, metadata::MessageMetadata};
 
 pub fn rand_metadata() -> MessageMetadata {
     MessageMetadata::new(

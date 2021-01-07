@@ -13,16 +13,14 @@ use crate::{
 use bee_common::{event::Bus, shutdown_stream::ShutdownStream};
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, MessageId};
-use bee_protocol::{
-    event::LatestSolidMilestoneChanged, tangle::MsTangle, MetricsWorker, MilestoneIndex, ProtocolMetrics, TangleWorker,
-};
+use bee_tangle::{milestone::MilestoneIndex, MsTangle};
 
 use async_trait::async_trait;
 use blake2::Blake2b;
 use futures::stream::StreamExt;
-use log::{error, info, warn};
+use log::{error, info};
 
-use std::{any::TypeId, convert::Infallible};
+use std::convert::Infallible;
 
 pub(crate) struct LedgerWorker {}
 
@@ -30,7 +28,6 @@ async fn confirm<N: Node>(
     tangle: &MsTangle<N::Backend>,
     storage: &N::Backend,
     bus: &Bus<'static>,
-    metrics: &ProtocolMetrics,
     message_id: MessageId,
     index: &mut MilestoneIndex,
 ) -> Result<(), Error>
@@ -92,11 +89,6 @@ where
         metadata.included_messages.len()
     );
 
-    metrics.referenced_messages_inc(metadata.num_referenced_messages as u64);
-    metrics.excluded_no_transaction_messages_inc(metadata.num_excluded_no_transaction_messages as u64);
-    metrics.excluded_conflicting_messages_inc(metadata.num_excluded_conflicting_messages as u64);
-    metrics.included_messages_inc(metadata.included_messages.len() as u64);
-
     bus.dispatch(MilestoneConfirmed {
         index: milestone.essence().index().into(),
         timestamp: milestone.essence().timestamp(),
@@ -127,28 +119,23 @@ where
     type Config = MilestoneIndex;
     type Error = Infallible;
 
-    fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>(), TypeId::of::<MetricsWorker>()].leak()
-    }
-
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = flume::unbounded();
+        let (_tx, rx) = flume::unbounded();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
-        let metrics = node.resource::<ProtocolMetrics>();
         let bus = node.bus();
 
-        bus.add_listener::<(), LatestSolidMilestoneChanged, _>(move |event| {
-            if let Err(e) = tx.send(*event.milestone.message_id()) {
-                warn!(
-                    "Sending solid milestone {} {} to confirmation failed: {:?}.",
-                    *event.index,
-                    event.milestone.message_id(),
-                    e
-                )
-            }
-        });
+        // bus.add_listener::<Self, LatestSolidMilestoneChanged, _>(move |event| {
+        //     if let Err(e) = tx.send(*event.milestone.message_id()) {
+        //         warn!(
+        //             "Sending solid milestone {} {} to confirmation failed: {:?}.",
+        //             *event.index,
+        //             event.milestone.message_id(),
+        //             e
+        //         )
+        //     }
+        // });
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -157,7 +144,7 @@ where
             let mut index = config;
 
             while let Some(message_id) = receiver.next().await {
-                if let Err(e) = confirm::<N>(&tangle, &storage, &bus, &metrics, message_id, &mut index).await {
+                if let Err(e) = confirm::<N>(&tangle, &storage, &bus, message_id, &mut index).await {
                     error!("Confirmation error on {}: {}.", message_id, e);
                     panic!("Aborting due to unexpected ledger error.");
                 }

@@ -6,7 +6,7 @@ use crate::{filters::CustomRejection::NotFound, storage::StorageBackend};
 use bee_common::packable::Packable;
 use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
-use bee_protocol::tangle::MsTangle;
+use bee_tangle::MsTangle;
 
 use warp::{http::Response, reject, Rejection, Reply};
 

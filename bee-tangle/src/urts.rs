@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{storage::StorageBackend, tangle::MsTangle};
+use crate::{ms_tangle::MsTangle, storage::StorageBackend};
 
 use bee_message::MessageId;
 

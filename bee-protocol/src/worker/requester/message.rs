@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    milestone::MilestoneIndex,
     packet::MessageRequest,
     peer::PeerManager,
     worker::{MetricsWorker, PeerManagerResWorker},
@@ -13,6 +12,7 @@ use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
 use bee_network::NetworkController;
+use bee_tangle::milestone::MilestoneIndex;
 
 use async_trait::async_trait;
 use dashmap::DashMap;

@@ -16,11 +16,9 @@ use websocket::{
 
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
-use bee_protocol::{
-    event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated},
-    tangle::MsTangle,
-};
+use bee_protocol::event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated};
 use bee_rest_api::config::RestApiConfig;
+use bee_tangle::MsTangle;
 
 use asset::Asset;
 use async_trait::async_trait;

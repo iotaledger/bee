@@ -12,12 +12,13 @@ use bee_message::{
     },
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
-use bee_protocol::{
-    tangle::{MessageMetadata, SolidEntryPoint},
-    Milestone, MilestoneIndex,
-};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::AsStream;
+use bee_tangle::{
+    metadata::MessageMetadata,
+    milestone::{Milestone, MilestoneIndex},
+    solid_entry_point::SolidEntryPoint,
+};
 
 use futures::{
     stream::Stream,

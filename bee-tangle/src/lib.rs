@@ -3,13 +3,22 @@
 
 //! A crate that contains foundational building blocks for the IOTA Tangle.
 
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
+
+pub mod flags;
+pub mod metadata;
+pub mod milestone;
+pub mod ms_tangle;
+pub mod solid_entry_point;
+pub mod storage;
+pub mod traversal;
+pub mod urts;
+// pub mod worker;
 
 mod tangle;
 mod vertex;
 
-pub mod traversal;
-
+pub use ms_tangle::MsTangle;
 pub use tangle::{Hooks, Tangle};
 
 use bee_message::Message;
@@ -27,3 +36,10 @@ impl Deref for MessageRef {
         &*self.0
     }
 }
+
+// pub fn init<N: Node>(node_builder: N::Builder) -> N::Builder
+// where
+//     N::Backend: StorageBackend,
+// {
+//     node_builder.with_worker::<TangleWorker>()
+// }
