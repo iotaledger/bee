@@ -61,7 +61,7 @@ impl ManualPeeringConfigBuilder {
 
 #[derive(Clone)]
 pub struct ManualPeeringConfig {
-    pub(crate) unknown_peers_limit: usize,
+    pub unknown_peers_limit: usize,
     pub(crate) peers: Vec<(Multiaddr, Option<String>)>,
 }
 

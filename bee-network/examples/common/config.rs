@@ -10,13 +10,26 @@ use std::str::FromStr;
 const DEFAULT_BIND_ADDRESS: &str = "/ip4/127.0.0.1/tcp/1337";
 const DEFAULT_MESSAGE: &str = "hello world";
 
-pub struct ConfigBuilder {
+#[derive(Clone)]
+pub struct ExampleConfig {
+    pub bind_address: Multiaddr,
+    pub peers: Vec<Multiaddr>,
+    pub message: String,
+}
+
+impl ExampleConfig {
+    pub fn build() -> ExampleConfigBuilder {
+        ExampleConfigBuilder::new()
+    }
+}
+
+pub struct ExampleConfigBuilder {
     bind_address: Option<Multiaddr>,
     peers: Vec<String>,
     message: Option<String>,
 }
 
-impl ConfigBuilder {
+impl ExampleConfigBuilder {
     pub fn new() -> Self {
         Self {
             bind_address: None,
@@ -41,32 +54,19 @@ impl ConfigBuilder {
         self
     }
 
-    pub fn finish(self) -> Config {
+    pub fn finish(self) -> ExampleConfig {
         let peers = self
             .peers
             .iter()
             .map(|s| Multiaddr::from_str(s).expect("error parsing Multiaddr"))
             .collect();
 
-        Config {
+        ExampleConfig {
             bind_address: self
                 .bind_address
                 .unwrap_or_else(|| Multiaddr::from_str(DEFAULT_BIND_ADDRESS).unwrap()),
             peers,
             message: self.message.unwrap_or_else(|| DEFAULT_MESSAGE.into()),
         }
-    }
-}
-
-#[derive(Clone)]
-pub struct Config {
-    pub bind_address: Multiaddr,
-    pub peers: Vec<Multiaddr>,
-    pub message: String,
-}
-
-impl Config {
-    pub fn build() -> ConfigBuilder {
-        ConfigBuilder::new()
     }
 }

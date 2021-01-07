@@ -1,8 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// #![warn(missing_docs)]
-#![recursion_limit = "512"]
+//! Networking layer for the Bee framework.
+
+#![warn(missing_docs)]
+#![deny(warnings)]
 
 mod config;
 mod conns;
@@ -23,18 +25,19 @@ pub use libp2p::{
 // Exports
 pub use config::{NetworkConfig, NetworkConfigBuilder};
 pub use conns::Origin;
-pub use interaction::{
-    commands::{self, Command},
-    events::{self, Event},
-};
+pub use interaction::{commands::Command, events::Event};
 pub use network::NetworkController;
 pub use peers::PeerRelation;
 
+/// A type that receives any event published by the networking layer.
 pub type NetworkListener = UnboundedReceiver<Event>;
 
-use config::{DEFAULT_KNOWN_PEER_LIMIT, DEFAULT_MSG_BUFFER_SIZE, DEFAULT_RECONNECT_MILLIS, DEFAULT_UNKNOWN_PEER_LIMIT};
+use config::DEFAULT_RECONNECT_INTERVAL_SECS;
 use conns::{ConnectionManager, ConnectionManagerConfig};
-use interaction::events::InternalEvent;
+use interaction::{
+    commands,
+    events::{self, InternalEvent},
+};
 use peers::{BannedAddrList, BannedPeerList, PeerList, PeerManager, PeerManagerConfig};
 
 use bee_common_pt2::node::{Node, NodeBuilder};
@@ -45,23 +48,21 @@ use tokio::sync::mpsc::UnboundedReceiver;
 
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
-pub(crate) static MSG_BUFFER_SIZE: AtomicUsize = AtomicUsize::new(DEFAULT_MSG_BUFFER_SIZE);
-pub(crate) static RECONNECT_MILLIS: AtomicU64 = AtomicU64::new(DEFAULT_RECONNECT_MILLIS);
-pub(crate) static KNOWN_PEER_LIMIT: AtomicUsize = AtomicUsize::new(DEFAULT_KNOWN_PEER_LIMIT);
-pub(crate) static UNKNOWN_PEER_LIMIT: AtomicUsize = AtomicUsize::new(DEFAULT_UNKNOWN_PEER_LIMIT);
+pub(crate) static RECONNECT_INTERVAL_SECS: AtomicU64 = AtomicU64::new(DEFAULT_RECONNECT_INTERVAL_SECS);
 pub(crate) static NETWORK_ID: AtomicU64 = AtomicU64::new(0);
+pub(crate) static MAX_UNKNOWN_PEERS: AtomicUsize = AtomicUsize::new(0);
 
+/// Initializes the networking layer.
 pub async fn init<N: Node>(
     config: NetworkConfig,
     local_keys: Keypair,
     network_id: u64,
+    max_unknown_peers: usize,
     mut node_builder: N::Builder,
 ) -> (N::Builder, NetworkListener) {
-    MSG_BUFFER_SIZE.swap(config.msg_buffer_size, Ordering::Relaxed);
-    RECONNECT_MILLIS.swap(config.reconnect_millis, Ordering::Relaxed);
-    KNOWN_PEER_LIMIT.swap(config.known_peer_limit, Ordering::Relaxed);
-    UNKNOWN_PEER_LIMIT.swap(config.unknown_peer_limit, Ordering::Relaxed);
+    RECONNECT_INTERVAL_SECS.swap(config.reconnect_interval_secs, Ordering::Relaxed);
     NETWORK_ID.swap(network_id, Ordering::Relaxed);
+    MAX_UNKNOWN_PEERS.swap(max_unknown_peers, Ordering::Relaxed);
 
     let local_keys = identity::Keypair::Ed25519(local_keys);
     let local_id = PeerId::from_public_key(local_keys.public());
@@ -98,7 +99,6 @@ pub async fn init<N: Node>(
         panic!("Fatal error: {}", e);
     });
 
-    // let listen_address = conn_manager_config.listen_address.clone();
     let network_controller = NetworkController::new(config, command_sender, local_id);
 
     node_builder = node_builder
@@ -109,30 +109,25 @@ pub async fn init<N: Node>(
     (node_builder, event_receiver)
 }
 
+/// A trait specifically there to create shorter peer ids for better readability in logs and user interfaces.
 pub trait ShortId
 where
     Self: ToString,
 {
-    const ORIGINAL_LENGTH: usize;
-    const LEADING_LENGTH: usize;
-    const TRAILING_LENGTH: usize;
+    /// The length of the shortened peer id.
+    const SHORT_LENGTH: usize;
 
+    /// Creates a shorter - more readable - id from the original.
     fn short(&self) -> String;
 }
 
 impl ShortId for PeerId {
-    const ORIGINAL_LENGTH: usize = 52;
-    const LEADING_LENGTH: usize = 0;
-    const TRAILING_LENGTH: usize = 6;
+    const SHORT_LENGTH: usize = 6;
 
     fn short(&self) -> String {
+        const FULL_LENGTH: usize = 52;
+
         let s = self.to_string();
-        s[(Self::ORIGINAL_LENGTH - Self::TRAILING_LENGTH)..].to_string()
-        // format!(
-        //     // "{}~{}",
-        //     // &s[..Self::LEADING_LENGTH],
-        //     "{}",
-        //     &s[(Self::ORIGINAL_LENGTH - Self::TRAILING_LENGTH)..]
-        // )
+        s[(FULL_LENGTH - Self::SHORT_LENGTH)..].to_string()
     }
 }

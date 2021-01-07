@@ -3,12 +3,14 @@
 
 pub use utf8msg::Utf8Message;
 
-pub mod args;
-pub mod config;
 pub mod logger;
-// pub mod shutdown;
 
-pub use args::Args;
-pub use config::Config;
-
+mod args;
+mod backend;
+mod config;
 mod utf8msg;
+
+pub use args::*;
+pub use backend::*;
+pub use config::*;
+pub use utf8msg::*;

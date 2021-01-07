@@ -3,7 +3,7 @@ name = "bee-network"
 version = "0.1.0-alpha"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = ""
+description = "Networking layer for the Bee framework"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
@@ -26,7 +26,11 @@ tokio = { version = "0.2", features = ["dns", "time", "tcp", "io-util", "stream"
 url = "2.1"
 
 [dev-dependencies]
+bee-storage = { path = "../bee-storage/bee-storage" }
+
+anymap = "0.12"
 env_logger = "0.7"
 pretty_env_logger = "0.4"
+serde = { version = "1.0", features = ["derive" ] }
 structopt = "0.3"
 tokio = { version = "0.2", features = ["full"] }
