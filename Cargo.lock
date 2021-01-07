@@ -607,7 +607,6 @@ version = "0.1.0-alpha"
 dependencies = [
  "async-rwlock",
  "async-trait",
- "bee-crypto",
  "bee-message",
  "bee-test",
  "criterion",

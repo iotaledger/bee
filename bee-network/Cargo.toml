@@ -26,7 +26,7 @@ tokio = { version = "0.2", features = ["dns", "time", "tcp", "io-util", "stream"
 url = "2.1"
 
 [dev-dependencies]
-bee-storage = { path = "../bee-storage/bee-storage" }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 anymap = "0.12"
 env_logger = "0.7"
