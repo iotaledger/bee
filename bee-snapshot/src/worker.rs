@@ -7,7 +7,8 @@ use crate::{
 };
 
 use bee_common_pt2::{node::Node, worker::Worker};
-use bee_storage::access::Fetch;
+use bee_storage::access::{Fetch, Insert, Truncate};
+use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 
 use async_trait::async_trait;
 use chrono::{offset::TimeZone, Utc};
@@ -18,8 +19,9 @@ use std::path::Path;
 pub struct SnapshotWorker {}
 
 #[async_trait]
-impl<N: Node> Worker<N> for SnapshotWorker
+impl<N> Worker<N> for SnapshotWorker
 where
+    N: Node,
     N::Backend: StorageBackend,
 {
     type Config = (u64, SnapshotConfig);
@@ -39,13 +41,17 @@ where
     }
 }
 
-fn import_snapshot<N: Node>(
+async fn import_snapshot<N>(
     node: &mut N,
-    _storage: &N::Backend,
+    storage: &N::Backend,
     kind: Kind,
     path: &Path,
     network_id: u64,
-) -> Result<Snapshot, Error> {
+) -> Result<Snapshot, Error>
+where
+    N: Node,
+    N::Backend: StorageBackend,
+{
     let kind_str = format!("{:?}", kind).to_lowercase();
 
     info!("Importing {} snapshot file {}...", kind_str, &path.to_string_lossy());
@@ -75,7 +81,19 @@ fn import_snapshot<N: Node>(
         snapshot.milestone_diffs_len()
     );
 
-    // TODO truncate SEPs
+    Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage)
+        .await
+        .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+
+    for sep in snapshot.solid_entry_points.iter() {
+        Insert::<SolidEntryPoint, MilestoneIndex>::insert(
+            storage,
+            &SolidEntryPoint::new(*sep),
+            &MilestoneIndex(snapshot.header().sep_index()),
+        )
+        .await
+        .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+    }
 
     node.register_resource(SnapshotInfo::new(
         snapshot.header().network_id(),
@@ -89,12 +107,16 @@ fn import_snapshot<N: Node>(
     Ok(snapshot)
 }
 
-async fn import_snapshots<N: Node>(
+async fn import_snapshots<N>(
     node: &mut N,
     storage: &N::Backend,
     network_id: u64,
     config: &SnapshotConfig,
-) -> Result<(), Error> {
+) -> Result<(), Error>
+where
+    N: Node,
+    N::Backend: StorageBackend,
+{
     let full_exists = config.full_path().exists();
     let delta_exists = config.delta_path().exists();
 
@@ -105,11 +127,11 @@ async fn import_snapshots<N: Node>(
         download_snapshot_file(config.delta_path(), config.download_urls()).await?;
     }
 
-    let _full_snapshot = import_snapshot::<N>(node, storage, Kind::Full, config.full_path(), network_id)?;
+    let _full_snapshot = import_snapshot::<N>(node, storage, Kind::Full, config.full_path(), network_id).await?;
 
     // Load delta file only if both full and delta files already existed or if they have just been downloaded.
     if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
-        let _delta_snapshot = import_snapshot::<N>(node, storage, Kind::Delta, config.delta_path(), network_id)?;
+        let _delta_snapshot = import_snapshot::<N>(node, storage, Kind::Delta, config.delta_path(), network_id).await?;
     }
 
     Ok(())

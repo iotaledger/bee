@@ -3,8 +3,24 @@
 
 use crate::info::SnapshotInfo;
 
-use bee_storage::{access::Fetch, backend};
+use bee_storage::{
+    access::{Fetch, Insert, Truncate},
+    backend,
+};
+use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 
-pub trait StorageBackend: backend::StorageBackend + Fetch<(), SnapshotInfo> {}
+pub trait StorageBackend:
+    backend::StorageBackend
+    + Fetch<(), SnapshotInfo>
+    + Insert<SolidEntryPoint, MilestoneIndex>
+    + Truncate<SolidEntryPoint, MilestoneIndex>
+{
+}
 
-impl<T> StorageBackend for T where T: backend::StorageBackend + Fetch<(), SnapshotInfo> {}
+impl<T> StorageBackend for T where
+    T: backend::StorageBackend
+        + Fetch<(), SnapshotInfo>
+        + Insert<SolidEntryPoint, MilestoneIndex>
+        + Truncate<SolidEntryPoint, MilestoneIndex>
+{
+}
