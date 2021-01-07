@@ -14,6 +14,7 @@ homepage = "https://www.iota.org"
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-common-pt2 = { path = "../bee-common/bee-common", package = "bee-common" }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-ledger = { path = "../bee-ledger" }
 bee-message = { path = "../bee-message" }
 bee-network = { path = "../bee-network" }
 bee-snapshot = { path = "../bee-snapshot" }
