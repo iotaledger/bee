@@ -10,7 +10,7 @@ use futures::stream::Stream;
 #[async_trait::async_trait]
 pub trait AsStream<'a, K, V>: StorageBackend {
     /// Type to iterate through the <K, V> collection.
-    type Stream: Stream<Item = (K, V)>;
+    type Stream: Stream<Item = (K, V)> + Unpin;
 
     /// Returns a `Stream` object for the provided <K, V> collection.
     async fn stream(&'a self) -> Result<Self::Stream, Self::Error>;
