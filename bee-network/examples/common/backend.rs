@@ -1,4 +1,4 @@
-use bee_storage::storage::Backend;
+use bee_storage::backend::StorageBackend;
 
 use std::{convert::Infallible, error::Error};
 
@@ -19,7 +19,7 @@ impl Into<DummyConfig> for DummyConfigBuilder {
 }
 
 #[async_trait]
-impl Backend for DummyBackend {
+impl StorageBackend for DummyBackend {
     type ConfigBuilder = DummyConfigBuilder;
     type Config = DummyConfig;
     type Error = Infallible;
