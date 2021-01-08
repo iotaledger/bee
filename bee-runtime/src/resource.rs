@@ -1,6 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Types that allow access to and management of node resources.
+
 use log::warn;
 
 use std::{
@@ -16,12 +18,14 @@ use std::{
 
 static RES_ID: AtomicUsize = AtomicUsize::new(0);
 
+/// An owning handle to a node resource.
 pub struct ResHandle<R> {
     id: Option<usize>,
     inner: Arc<(R, Mutex<HashMap<usize, &'static Location<'static>>>)>,
 }
 
 impl<R> ResHandle<R> {
+    /// Wrap the given resource into a [`ResHandle`], providing shared immutable access to it.
     pub fn new(res: R) -> Self {
         Self {
             id: None,
@@ -29,12 +33,14 @@ impl<R> ResHandle<R> {
         }
     }
 
+    /// Turn this owned resource handle into a weak non-owning handle.
     pub fn into_weak(self) -> WeakHandle<R> {
         let inner = Arc::downgrade(&self.inner);
         drop(self);
         WeakHandle { inner }
     }
 
+    /// Attempt to gain ownership over the resource, returning `None` if the resource is still in use.
     pub fn try_unwrap(self) -> Option<R>
     where
         R: Any,
@@ -92,11 +98,13 @@ impl<R> Drop for ResHandle<R> {
     }
 }
 
+/// An non-owning handle to a node resource.
 pub struct WeakHandle<R> {
     inner: Weak<(R, Mutex<HashMap<usize, &'static Location<'static>>>)>,
 }
 
 impl<R> WeakHandle<R> {
+    /// Attempt to turn this owned resource handle into a weak non-owning handle, if it still exists.
     #[track_caller]
     pub fn upgrade(&self) -> Option<ResHandle<R>> {
         let new_id = RES_ID.fetch_add(1, Ordering::Relaxed);

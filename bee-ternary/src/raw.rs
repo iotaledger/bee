@@ -88,6 +88,7 @@ pub trait RawEncodingBuf {
     fn as_slice_mut(&mut self) -> &mut Self::Slice;
 
     /// Convert this encoding into another encoding.
+    /// TODO: Rename this `reencode`
     fn into_encoding<T: RawEncodingBuf>(this: TritBuf<Self>) -> TritBuf<T>
     where
         Self: Sized,

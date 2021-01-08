@@ -28,3 +28,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Worker` trait
 - `ResHandle` resource handle
 - `Bus` event bus
+- `ShutdownStream` stream
