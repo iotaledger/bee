@@ -20,10 +20,15 @@ use async_trait::async_trait;
 use blake2::Blake2b;
 use futures::stream::StreamExt;
 use log::{error, info};
+use tokio::sync::mpsc;
 
 use std::convert::Infallible;
 
-pub(crate) struct LedgerWorker {}
+pub struct LedgerWorkerEvent(pub MessageId);
+
+pub struct LedgerWorker {
+    pub tx: mpsc::UnboundedSender<LedgerWorkerEvent>,
+}
 
 async fn confirm<N: Node>(
     tangle: &MsTangle<N::Backend>,
@@ -127,7 +132,7 @@ where
     type Error = Infallible;
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (_tx, rx) = flume::unbounded();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
@@ -147,12 +152,12 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
+            let mut receiver = ShutdownStream::new(shutdown, rx);
             // Unwrap is fine because we just inserted the ledger index.
             // TODO unwrap
             let mut index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
 
-            while let Some(message_id) = receiver.next().await {
+            while let Some(LedgerWorkerEvent(message_id)) = receiver.next().await {
                 if let Err(e) = confirm::<N>(&tangle, &storage, &bus, message_id, &mut index).await {
                     error!("Confirmation error on {}: {}.", message_id, e);
                     panic!("Aborting due to unexpected ledger error.");
@@ -162,6 +167,6 @@ where
             info!("Stopped.");
         });
 
-        Ok(Self {})
+        Ok(Self { tx })
     }
 }

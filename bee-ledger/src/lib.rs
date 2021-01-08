@@ -13,8 +13,8 @@ mod metadata;
 mod white_flag;
 mod worker;
 
-use storage::StorageBackend;
-use worker::LedgerWorker;
+pub use storage::StorageBackend;
+pub use worker::{LedgerWorker, LedgerWorkerEvent};
 
 use bee_common_pt2::node::{Node, NodeBuilder};
 

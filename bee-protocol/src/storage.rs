@@ -1,6 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_ledger::storage::StorageBackend as LedgerStorageBackend;
 use bee_message::{payload::indexation::HashedIndex, Message, MessageId};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::{
@@ -26,6 +27,7 @@ pub trait StorageBackend:
     + Fetch<MilestoneIndex, Milestone>
     + Fetch<(), SnapshotInfo>
     + for<'a> AsStream<'a, SolidEntryPoint, MilestoneIndex>
+    + LedgerStorageBackend
 {
 }
 
@@ -43,5 +45,6 @@ impl<T> StorageBackend for T where
         + Fetch<MilestoneIndex, Milestone>
         + Fetch<(), SnapshotInfo>
         + for<'a> AsStream<'a, SolidEntryPoint, MilestoneIndex>
+        + LedgerStorageBackend
 {
 }

@@ -15,6 +15,7 @@ use crate::{
 
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
+use bee_ledger::{LedgerWorker, LedgerWorkerEvent};
 use bee_network::NetworkController;
 use bee_tangle::{milestone::MilestoneIndex, traversal, MsTangle};
 
@@ -91,6 +92,7 @@ where
             TypeId::of::<MilestoneRequesterWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<MetricsWorker>(),
+            TypeId::of::<LedgerWorker>(),
         ]
         .leak()
     }
@@ -99,6 +101,7 @@ where
         let (tx, rx) = mpsc::unbounded_channel();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
+        let ledger_worker = node.worker::<LedgerWorker>().unwrap().tx.clone();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
         let requested_milestones = node.resource::<RequestedMilestones>();
@@ -174,6 +177,7 @@ where
                 // This is really dumb. Clone everything to keep it alive for the task below, needed for a .await
                 let milestone_solidifier = milestone_solidifier.clone();
                 let milestone_requester = milestone_requester.clone();
+                let ledger_worker = ledger_worker.clone();
                 let tangle = tangle.clone();
                 let network = network.clone();
                 let requested_milestones = requested_milestones.clone();
@@ -187,6 +191,12 @@ where
 
                     tangle.update_latest_solid_milestone_index(latest_solid_milestone.index);
                     let next_ms = latest_solid_milestone.index + MilestoneIndex(ms_sync_count);
+
+                    if let Err(e) =
+                        ledger_worker.send(LedgerWorkerEvent(*latest_solid_milestone.milestone.message_id()))
+                    {
+                        warn!("Sending message_id to ledger worker failed: {}.", e);
+                    }
 
                     if tangle.contains_milestone(next_ms).await {
                         if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(next_ms)) {
