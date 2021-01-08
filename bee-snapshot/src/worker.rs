@@ -141,13 +141,13 @@ async fn import_snapshot<B: StorageBackend>(
         }
 
         match index {
-            MilestoneIndex(index) if *index == **ledger_index + 1 => {
+            MilestoneIndex(index) if *index == *ledger_index + 1 => {
                 // TODO unwrap until we merge both crates
                 apply_diff(storage, MilestoneIndex(*index), &spent_outputs, &created_outputs)
                     .await
                     .unwrap();
             }
-            MilestoneIndex(index) if *index == **ledger_index => {
+            MilestoneIndex(index) if *index == *ledger_index => {
                 // TODO unwrap until we merge both crates
                 rollback_diff(storage, MilestoneIndex(*index), &spent_outputs, &created_outputs)
                     .await

@@ -165,8 +165,8 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         info!("Initializing snapshot handler...");
         let this = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, network_id, this).await;
 
-        // info!("Initializing ledger...");
-        // let mut this = bee_ledger::init::<BeeNode<B>>(snapshot.header().ledger_index(), this);
+        info!("Initializing ledger...");
+        let this = bee_ledger::init::<BeeNode<B>>(this);
 
         info!("Initializing protocol layer...");
         let this = bee_protocol::init::<BeeNode<B>>(config.protocol.clone(), network_id, events, this);

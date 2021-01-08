@@ -22,7 +22,7 @@ impl LedgerIndex {
 }
 
 impl Deref for LedgerIndex {
-    type Target = MilestoneIndex;
+    type Target = <MilestoneIndex as Deref>::Target;
 
     fn deref(&self) -> &Self::Target {
         &self.0

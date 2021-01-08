@@ -6,6 +6,7 @@ use crate::{
     event::{MilestoneConfirmed, NewOutput, NewSpent},
     merkle_hasher::MerkleHasher,
     metadata::WhiteFlagMetadata,
+    model::LedgerIndex,
     storage::{self, StorageBackend},
     white_flag::visit_dfs,
 };
@@ -29,7 +30,7 @@ async fn confirm<N: Node>(
     storage: &N::Backend,
     bus: &Bus<'static>,
     message_id: MessageId,
-    index: &mut MilestoneIndex,
+    index: &mut LedgerIndex,
 ) -> Result<(), Error>
 where
     N::Backend: StorageBackend,
@@ -41,8 +42,8 @@ where
         _ => return Err(Error::NoMilestonePayload),
     };
 
-    if milestone.essence().index() != index.0 + 1 {
-        return Err(Error::NonContiguousMilestone(milestone.essence().index(), index.0));
+    if milestone.essence().index() != **index + 1 {
+        return Err(Error::NonContiguousMilestone(milestone.essence().index(), **index));
     }
 
     let mut metadata = WhiteFlagMetadata::new(
@@ -84,7 +85,7 @@ where
     )
     .await?;
 
-    *index = MilestoneIndex(milestone.essence().index());
+    *index = LedgerIndex(MilestoneIndex(milestone.essence().index()));
 
     info!(
         "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}.",
@@ -122,10 +123,10 @@ impl<N: Node> Worker<N> for LedgerWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = MilestoneIndex;
+    type Config = ();
     type Error = Infallible;
 
-    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+    async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (_tx, rx) = flume::unbounded();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
@@ -147,7 +148,9 @@ where
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
-            let mut index = config;
+            // Unwrap is fine because we just inserted the ledger index.
+            // TODO unwrap
+            let mut index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
 
             while let Some(message_id) = receiver.next().await {
                 if let Err(e) = confirm::<N>(&tangle, &storage, &bus, message_id, &mut index).await {
