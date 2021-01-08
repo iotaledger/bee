@@ -56,7 +56,7 @@ type ResourceRegister<N> = dyn for<'a> FnOnce(&'a mut N);
 #[tokio::main]
 async fn main() {
     let args = Args::from_args();
-    let config = args.into_config();
+    let config: ExampleConfig = args.into();
 
     logger::init(log::LevelFilter::Trace);
 

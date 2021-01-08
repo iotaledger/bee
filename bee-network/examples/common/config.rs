@@ -1,5 +1,6 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+use super::args::Args;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
@@ -20,6 +21,24 @@ pub struct ExampleConfig {
 impl ExampleConfig {
     pub fn build() -> ExampleConfigBuilder {
         ExampleConfigBuilder::new()
+    }
+}
+
+impl From<Args> for ExampleConfig {
+    fn from(args: Args) -> Self {
+        let Args {
+            bind_address,
+            mut peer_addresses,
+            message,
+        } = args;
+
+        let mut config = Self::build().with_bind_address(bind_address).with_message(message);
+
+        for peer_address in peer_addresses.drain(..) {
+            config = config.with_peer_address(peer_address);
+        }
+
+        config.finish()
     }
 }
 
