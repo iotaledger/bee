@@ -78,6 +78,7 @@ async fn main() {
     node.run().await;
 }
 
+#[allow(clippy::type_complexity)]
 struct ExampleNode {
     config: ExampleConfig,
     network_listener: NetworkListener,
