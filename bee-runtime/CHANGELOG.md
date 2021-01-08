@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Node` trait
+- `Node` and `NodeBuilder` traits
 - `Worker` trait
 - `ResHandle` resource handle
 - `Bus` event bus
