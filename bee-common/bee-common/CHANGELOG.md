@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Removed `event::Bus` in favour of its inclusion in `bee-runtime`
+
 ### Fixed
 
 ### Security -->
