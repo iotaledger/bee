@@ -44,6 +44,7 @@ pub struct PeerManagerConfig {
 }
 
 impl PeerManagerConfig {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         local_keys: identity::Keypair,
         peers: PeerList,
