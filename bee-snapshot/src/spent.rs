@@ -11,6 +11,16 @@ pub struct Spent {
     transaction_id: TransactionId,
 }
 
+impl Spent {
+    pub fn output(&self) -> &Output {
+        &self.output
+    }
+
+    pub fn transaction_id(&self) -> &TransactionId {
+        &self.transaction_id
+    }
+}
+
 impl Packable for Spent {
     type Error = Error;
 

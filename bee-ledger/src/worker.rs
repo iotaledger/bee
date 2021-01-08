@@ -76,7 +76,13 @@ where
         ));
     }
 
-    storage::apply_diff(&*storage, &metadata).await?;
+    storage::apply_diff(
+        &*storage,
+        metadata.index,
+        &metadata.spent_outputs,
+        &metadata.created_outputs,
+    )
+    .await?;
 
     *index = MilestoneIndex(milestone.essence().index());
 

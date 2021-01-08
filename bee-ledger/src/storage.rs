@@ -3,7 +3,6 @@
 
 use crate::{
     error::Error,
-    metadata::WhiteFlagMetadata,
     model::{Diff, LedgerIndex, Output, Spent, Unspent},
 };
 
@@ -13,6 +12,8 @@ use bee_storage::{
     backend,
 };
 use bee_tangle::milestone::MilestoneIndex;
+
+use std::collections::HashMap;
 
 // TODO check all requirements
 
@@ -70,36 +71,42 @@ impl<T> StorageBackend for T where
 {
 }
 
-pub(crate) async fn apply_diff<B: StorageBackend>(storage: &B, metadata: &WhiteFlagMetadata) -> Result<(), Error> {
+pub async fn apply_diff<B: StorageBackend>(
+    storage: &B,
+    index: MilestoneIndex,
+    spent_outputs: &HashMap<OutputId, Spent>,
+    created_outputs: &HashMap<OutputId, Output>,
+) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    let mut spent_outputs = Vec::with_capacity(metadata.spent_outputs.len());
-    let mut created_outputs = Vec::with_capacity(metadata.created_outputs.len());
+    let mut spent_output_ids = Vec::with_capacity(spent_outputs.len());
+    let mut created_outputs_ids = Vec::with_capacity(created_outputs.len());
 
-    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &metadata.index.into())
+    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &index.into())
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    for (output_id, spent) in metadata.spent_outputs.iter() {
+    for (output_id, spent) in spent_outputs.iter() {
         Batch::<OutputId, Spent>::batch_insert(storage, &mut batch, output_id, spent)
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &(*output_id).into())
             .map_err(|e| Error::Storage(Box::new(e)))?;
-        spent_outputs.push(*output_id);
+        spent_output_ids.push(*output_id);
     }
 
-    for (output_id, output) in metadata.created_outputs.iter() {
+    for (output_id, output) in created_outputs.iter() {
         Batch::<OutputId, Output>::batch_insert(storage, &mut batch, output_id, output)
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &(*output_id).into(), &())
             .map_err(|e| Error::Storage(Box::new(e)))?;
-        created_outputs.push(*output_id);
+        created_outputs_ids.push(*output_id);
+        // TODO address mapping
     }
 
     Batch::<MilestoneIndex, Diff>::batch_insert(
         storage,
         &mut batch,
-        &metadata.index,
-        &Diff::new(spent_outputs, created_outputs),
+        &index,
+        &Diff::new(spent_output_ids, created_outputs_ids),
     )
     .map_err(|e| Error::Storage(Box::new(e)))?;
 
@@ -109,28 +116,32 @@ pub(crate) async fn apply_diff<B: StorageBackend>(storage: &B, metadata: &WhiteF
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-#[allow(dead_code)]
-pub(crate) async fn rollback_diff<B: StorageBackend>(storage: &B, metadata: &WhiteFlagMetadata) -> Result<(), Error> {
+pub async fn rollback_diff<B: StorageBackend>(
+    storage: &B,
+    index: MilestoneIndex,
+    spent_outputs: &HashMap<OutputId, Spent>,
+    created_outputs: &HashMap<OutputId, Output>,
+) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &(MilestoneIndex(*metadata.index - 1)).into())
+    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &((index - MilestoneIndex(1)).into()))
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    for (output_id, _spent) in metadata.spent_outputs.iter() {
+    for (output_id, _spent) in spent_outputs.iter() {
         Batch::<OutputId, Spent>::batch_delete(storage, &mut batch, output_id)
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &(*output_id).into(), &())
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
-    for (output_id, _) in metadata.created_outputs.iter() {
+    for (output_id, _) in created_outputs.iter() {
         Batch::<OutputId, Output>::batch_delete(storage, &mut batch, output_id)
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &(*output_id).into())
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
-    Batch::<MilestoneIndex, Diff>::batch_delete(storage, &mut batch, &metadata.index)
+    Batch::<MilestoneIndex, Diff>::batch_delete(storage, &mut batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     storage

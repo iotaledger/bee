@@ -3,7 +3,10 @@
 
 use crate::info::SnapshotInfo;
 
-use bee_ledger::model::{LedgerIndex, Output, Unspent};
+use bee_ledger::{
+    model::{LedgerIndex, Output, Unspent},
+    storage,
+};
 use bee_message::payload::transaction::{Ed25519Address, OutputId};
 use bee_storage::{
     access::{Fetch, Insert, Truncate},
@@ -21,6 +24,7 @@ pub trait StorageBackend:
     + Insert<Unspent, ()>
     + Insert<(Ed25519Address, OutputId), ()>
     + Truncate<SolidEntryPoint, MilestoneIndex>
+    + storage::StorageBackend
 {
 }
 
@@ -34,5 +38,6 @@ impl<T> StorageBackend for T where
         + Insert<Unspent, ()>
         + Insert<(Ed25519Address, OutputId), ()>
         + Truncate<SolidEntryPoint, MilestoneIndex>
+        + storage::StorageBackend
 {
 }

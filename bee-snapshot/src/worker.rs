@@ -7,7 +7,10 @@ use crate::{
 };
 
 use bee_common_pt2::{node::Node, worker::Worker};
-use bee_ledger::model::{LedgerIndex, Unspent};
+use bee_ledger::{
+    model::{LedgerIndex, Unspent},
+    storage::{apply_diff, rollback_diff},
+};
 use bee_message::payload::transaction::{Address, Ed25519Address, Output, OutputId};
 use bee_storage::access::{Fetch, Insert, Truncate};
 use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
@@ -16,7 +19,7 @@ use async_trait::async_trait;
 use chrono::{offset::TimeZone, Utc};
 use log::info;
 
-use std::{convert::From, path::Path};
+use std::{collections::HashMap, convert::From, path::Path};
 
 pub struct SnapshotWorker {}
 
@@ -116,19 +119,44 @@ where
         }
     }
 
-    for (index, _diff) in snapshot.milestone_diffs() {
+    for (index, diff) in snapshot.milestone_diffs() {
         // Unwrap is fine because we just inserted the ledger index.
         let ledger_index = Fetch::<(), LedgerIndex>::fetch(storage, &())
             .await
             .map_err(|e| Error::StorageBackend(Box::new(e)))?
             .unwrap();
 
+        let mut spent_outputs = HashMap::with_capacity(diff.consumed().len());
+        let mut created_outputs = HashMap::with_capacity(diff.created().len());
+
+        // TODO harmonise ledger/snapshot diff names and order
+
+        for output in diff.created() {
+            created_outputs.insert(
+                *output.output_id(),
+                bee_ledger::model::Output::new(*output.message_id(), Output::from(output.output().clone())),
+            );
+        }
+
+        for spent in diff.consumed() {
+            spent_outputs.insert(
+                *spent.output().output_id(),
+                bee_ledger::model::Spent::new(*spent.transaction_id(), *index),
+            );
+        }
+
         match index {
             MilestoneIndex(index) if *index == **ledger_index + 1 => {
-                // TODO apply
+                // TODO unwrap until we merge both crates
+                apply_diff(storage, MilestoneIndex(*index), &spent_outputs, &created_outputs)
+                    .await
+                    .unwrap();
             }
             MilestoneIndex(index) if *index == **ledger_index => {
-                // TODO rollback
+                // TODO unwrap until we merge both crates
+                rollback_diff(storage, MilestoneIndex(*index), &spent_outputs, &created_outputs)
+                    .await
+                    .unwrap();
             }
             _ => return Err(Error::UnexpectedDiffIndex(*index)),
         }

@@ -9,7 +9,6 @@ use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 use log::{error, info};
 
 use std::{
-    collections::HashMap,
     fs::OpenOptions,
     io::{BufReader, BufWriter},
     path::Path,
@@ -19,7 +18,7 @@ pub struct Snapshot {
     pub(crate) header: SnapshotHeader,
     pub(crate) solid_entry_points: Box<[SolidEntryPoint]>,
     pub(crate) outputs: Box<[Output]>,
-    pub(crate) milestone_diffs: HashMap<MilestoneIndex, MilestoneDiff>,
+    pub(crate) milestone_diffs: Vec<(MilestoneIndex, MilestoneDiff)>,
 }
 
 impl Snapshot {
@@ -35,7 +34,7 @@ impl Snapshot {
         &self.outputs
     }
 
-    pub fn milestone_diffs(&self) -> &HashMap<MilestoneIndex, MilestoneDiff> {
+    pub fn milestone_diffs(&self) -> &Vec<(MilestoneIndex, MilestoneDiff)> {
         &self.milestone_diffs
     }
 
@@ -169,9 +168,9 @@ impl Packable for Snapshot {
             }
         }
 
-        let mut milestone_diffs = HashMap::with_capacity(milestone_diff_count);
+        let mut milestone_diffs = Vec::with_capacity(milestone_diff_count);
         for _ in 0..milestone_diff_count {
-            milestone_diffs.insert(MilestoneIndex::unpack(reader)?, MilestoneDiff::unpack(reader)?);
+            milestone_diffs.push((MilestoneIndex::unpack(reader)?, MilestoneDiff::unpack(reader)?));
         }
 
         Ok(Self {
@@ -197,7 +196,7 @@ pub(crate) fn snapshot(path: &Path, index: MilestoneIndex) -> Result<(), Error> 
         },
         solid_entry_points: Box::new([]),
         outputs: Box::new([]),
-        milestone_diffs: HashMap::new(),
+        milestone_diffs: Vec::new(),
     };
 
     // let file = path.to_string() + "_tmp";
