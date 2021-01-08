@@ -16,16 +16,16 @@ use std::{
     },
 };
 
-static RES_ID: AtomicUsize = AtomicUsize::new(0);
+static RESOURCE_ID: AtomicUsize = AtomicUsize::new(0);
 
 /// An owning handle to a node resource.
-pub struct ResHandle<R> {
+pub struct ResourceHandle<R> {
     id: Option<usize>,
     inner: Arc<(R, Mutex<HashMap<usize, &'static Location<'static>>>)>,
 }
 
-impl<R> ResHandle<R> {
-    /// Wrap the given resource into a [`ResHandle`], providing shared immutable access to it.
+impl<R> ResourceHandle<R> {
+    /// Wrap the given resource into a [`ResourceHandle`], providing shared immutable access to it.
     pub fn new(res: R) -> Self {
         Self {
             id: None,
@@ -70,10 +70,10 @@ impl<R> ResHandle<R> {
     }
 }
 
-impl<R> Clone for ResHandle<R> {
+impl<R> Clone for ResourceHandle<R> {
     #[track_caller]
     fn clone(&self) -> Self {
-        let new_id = RES_ID.fetch_add(1, Ordering::Relaxed);
+        let new_id = RESOURCE_ID.fetch_add(1, Ordering::Relaxed);
         self.inner.1.lock().unwrap().insert(new_id, Location::caller());
         Self {
             id: Some(new_id),
@@ -82,7 +82,7 @@ impl<R> Clone for ResHandle<R> {
     }
 }
 
-impl<R> Deref for ResHandle<R> {
+impl<R> Deref for ResourceHandle<R> {
     type Target = R;
 
     fn deref(&self) -> &Self::Target {
@@ -90,7 +90,7 @@ impl<R> Deref for ResHandle<R> {
     }
 }
 
-impl<R> Drop for ResHandle<R> {
+impl<R> Drop for ResourceHandle<R> {
     fn drop(&mut self) {
         if let Some(id) = self.id {
             self.inner.1.lock().unwrap().remove(&id);
@@ -106,11 +106,11 @@ pub struct WeakHandle<R> {
 impl<R> WeakHandle<R> {
     /// Attempt to turn this owned resource handle into a weak non-owning handle, if it still exists.
     #[track_caller]
-    pub fn upgrade(&self) -> Option<ResHandle<R>> {
-        let new_id = RES_ID.fetch_add(1, Ordering::Relaxed);
+    pub fn upgrade(&self) -> Option<ResourceHandle<R>> {
+        let new_id = RESOURCE_ID.fetch_add(1, Ordering::Relaxed);
         let inner = self.inner.upgrade()?;
         inner.1.lock().unwrap().insert(new_id, Location::caller());
-        Some(ResHandle {
+        Some(ResourceHandle {
             id: Some(new_id),
             inner,
         })

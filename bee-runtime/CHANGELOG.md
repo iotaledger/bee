@@ -26,6 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `Node` and `NodeBuilder` traits
 - `Worker` trait
-- `ResHandle` resource handle
+- `ResourceHandle` resource handle
 - `Bus` event bus
 - `ShutdownStream` stream

@@ -3,7 +3,7 @@
 
 //! Traits used to represent bee nodes and allow for their instantiation.
 
-use crate::{event::Bus, resource::ResHandle, worker::Worker};
+use crate::{event::Bus, resource::ResourceHandle, worker::Worker};
 
 use bee_storage::backend::StorageBackend;
 
@@ -47,17 +47,17 @@ pub trait Node: Send + Sized + 'static {
 
     /// Obtain an owning handle to a node resource.
     #[track_caller]
-    fn resource<R: Any + Send + Sync>(&self) -> ResHandle<R>;
+    fn resource<R: Any + Send + Sync>(&self) -> ResourceHandle<R>;
 
     /// Obtain an owning handle to the node's storage backend.
     #[track_caller]
-    fn storage(&self) -> ResHandle<Self::Backend> {
+    fn storage(&self) -> ResourceHandle<Self::Backend> {
         self.resource()
     }
 
     /// Obtain an owning handle to the node's event bus.
     #[track_caller]
-    fn bus(&self) -> ResHandle<Bus<'static>> {
+    fn bus(&self) -> ResourceHandle<Bus<'static>> {
         self.resource()
     }
 }
