@@ -8,9 +8,9 @@ use crate::{
 };
 
 use bee_common::packable::Packable;
-use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
 use bee_protocol::MessageSubmitterWorkerEvent;
+use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use tokio::sync::mpsc;
@@ -20,7 +20,7 @@ use crate::handlers::submit_message::SubmitMessageResponse;
 
 pub(crate) async fn submit_message_raw<B: StorageBackend>(
     buf: warp::hyper::body::Bytes,
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<impl Reply, Rejection> {
     let message = Message::unpack(&mut buf.bytes()).map_err(|e| reject::custom(BadRequest(e.to_string())))?;

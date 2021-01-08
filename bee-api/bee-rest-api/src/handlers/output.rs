@@ -8,9 +8,9 @@ use crate::{
     types::OutputDto,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_ledger::model::Spent;
 use bee_message::prelude::*;
+use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
 use serde::Serialize;
@@ -20,7 +20,7 @@ use std::{convert::TryInto, ops::Deref};
 
 pub(crate) async fn output<B: StorageBackend>(
     output_id: OutputId,
-    storage: ResHandle<B>,
+    storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
     let output = Fetch::<OutputId, bee_ledger::model::Output>::fetch(storage.deref(), &output_id)
         .await

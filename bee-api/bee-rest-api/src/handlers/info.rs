@@ -8,8 +8,8 @@ use crate::{
     NetworkId,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_protocol::config::ProtocolConfig;
+use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use serde::Serialize;
@@ -18,7 +18,7 @@ use warp::Reply;
 use std::convert::Infallible;
 
 pub(crate) async fn info<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
     network_id: NetworkId,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,

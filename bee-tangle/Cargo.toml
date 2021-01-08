@@ -12,8 +12,8 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-common-pt2 = { path = "../bee-common/bee-common", package = "bee-common" }
 bee-message = { path = "../bee-message" }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 async-rwlock = "1.3"

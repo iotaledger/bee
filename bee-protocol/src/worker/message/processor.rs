@@ -17,10 +17,10 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_common::packable::Packable;
 use bee_message::{payload::Payload, Message, MessageId};
 use bee_network::PeerId;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::MessageMetadata, MsTangle};
 
 use async_trait::async_trait;

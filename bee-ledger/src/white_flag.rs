@@ -8,7 +8,6 @@ use crate::{
     storage::{self, StorageBackend},
 };
 
-use bee_common_pt2::node::Node;
 use bee_message::{
     payload::{
         transaction::{Input, OutputId},
@@ -16,6 +15,7 @@ use bee_message::{
     },
     Message, MessageId,
 };
+use bee_runtime::node::Node;
 use bee_tangle::MsTangle;
 
 use std::{

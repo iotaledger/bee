@@ -5,14 +5,14 @@ use crate::{
     filters::CustomRejection::BadRequest, handlers::balance_ed25519::balance_ed25519, storage::StorageBackend,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
+use bee_runtime::resource::ResourceHandle;
 
 use warp::{reject, Rejection, Reply};
 
 pub(crate) async fn balance_bech32<B: StorageBackend>(
     addr: Address,
-    storage: ResHandle<B>,
+    storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
     match addr {
         Address::Ed25519(a) => balance_ed25519(a, storage).await,

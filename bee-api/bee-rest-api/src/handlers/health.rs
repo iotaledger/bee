@@ -3,7 +3,7 @@
 
 use crate::storage::StorageBackend;
 
-use bee_common_pt2::node::ResHandle;
+use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use warp::{http::StatusCode, Reply};
@@ -13,7 +13,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-pub(crate) async fn health<B: StorageBackend>(tangle: ResHandle<MsTangle<B>>) -> Result<impl Reply, Infallible> {
+pub(crate) async fn health<B: StorageBackend>(tangle: ResourceHandle<MsTangle<B>>) -> Result<impl Reply, Infallible> {
     if is_healthy(tangle).await {
         Ok(StatusCode::OK)
     } else {
@@ -21,7 +21,7 @@ pub(crate) async fn health<B: StorageBackend>(tangle: ResHandle<MsTangle<B>>) ->
     }
 }
 
-pub(crate) async fn is_healthy<B: StorageBackend>(tangle: ResHandle<MsTangle<B>>) -> bool {
+pub(crate) async fn is_healthy<B: StorageBackend>(tangle: ResourceHandle<MsTangle<B>>) -> bool {
     if !tangle.is_synced() {
         return false;
     }

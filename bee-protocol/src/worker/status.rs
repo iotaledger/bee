@@ -6,8 +6,7 @@ use crate::{
     worker::{MessageRequesterWorker, RequestedMessages, TangleWorker},
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
 use async_trait::async_trait;

@@ -14,18 +14,14 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{
-    b1t6,
-    node::{Node, ResHandle},
-    worker::Worker,
-};
+use bee_common_pt2::b1t6;
 use bee_crypto::ternary::{
     sponge::{BatchHasher, CurlPRounds, BATCH_SIZE},
     HASH_LENGTH,
 };
 use bee_message::{MessageId, MESSAGE_ID_LENGTH};
 use bee_network::PeerId;
+use bee_runtime::{node::Node, resource::ResourceHandle, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_ternary::{Btrit, T5B1Buf, TritBuf};
 
 use async_trait::async_trait;
@@ -141,8 +137,8 @@ where
 
 #[pin_project(project = BatchStreamProj)]
 pub(crate) struct BatchStream {
-    metrics: ResHandle<ProtocolMetrics>,
-    peer_manager: ResHandle<PeerManager>,
+    metrics: ResourceHandle<ProtocolMetrics>,
+    peer_manager: ResourceHandle<PeerManager>,
     #[pin]
     receiver: ShutdownStream<Fuse<mpsc::UnboundedReceiver<HasherWorkerEvent>>>,
     cache: HashCache,
@@ -154,8 +150,8 @@ pub(crate) struct BatchStream {
 impl BatchStream {
     pub(crate) fn new(
         cache_size: usize,
-        metrics: ResHandle<ProtocolMetrics>,
-        peer_manager: ResHandle<PeerManager>,
+        metrics: ResourceHandle<ProtocolMetrics>,
+        peer_manager: ResourceHandle<PeerManager>,
         receiver: ShutdownStream<Fuse<mpsc::UnboundedReceiver<HasherWorkerEvent>>>,
     ) -> Self {
         assert!(BATCH_SIZE_THRESHOLD <= BATCH_SIZE);

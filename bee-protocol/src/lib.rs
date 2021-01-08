@@ -33,8 +33,8 @@ use crate::{
     },
 };
 
-use bee_common_pt2::node::{Node, NodeBuilder};
 use bee_network::NetworkListener;
+use bee_runtime::node::{Node, NodeBuilder};
 
 pub fn init<N: Node>(
     config: ProtocolConfig,

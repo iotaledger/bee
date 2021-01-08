@@ -7,8 +7,8 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
+use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use serde::Serialize;
@@ -16,7 +16,7 @@ use warp::{reject, Rejection, Reply};
 
 pub(crate) async fn message_metadata<B: StorageBackend>(
     message_id: MessageId,
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     if !tangle.is_synced() {
         return Err(reject::custom(ServiceUnavailable("node is not synced".to_string())));

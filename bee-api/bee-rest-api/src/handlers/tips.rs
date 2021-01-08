@@ -7,13 +7,13 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_common_pt2::node::ResHandle;
+use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use serde::Serialize;
 use warp::{reject, Rejection, Reply};
 
-pub(crate) async fn tips<B: StorageBackend>(tangle: ResHandle<MsTangle<B>>) -> Result<impl Reply, Rejection> {
+pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<MsTangle<B>>) -> Result<impl Reply, Rejection> {
     match tangle.get_messages_to_approve().await {
         Some(tips) => Ok(warp::reply::json(&SuccessBody::new(TipsResponse {
             tip_1_message_id: tips.0.to_string(),

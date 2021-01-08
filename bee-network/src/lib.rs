@@ -40,7 +40,7 @@ use interaction::{
 };
 use peers::{BannedAddrList, BannedPeerList, PeerList, PeerManager, PeerManagerConfig};
 
-use bee_common_pt2::node::{Node, NodeBuilder};
+use bee_runtime::node::{Node, NodeBuilder};
 
 use libp2p::identity;
 use log::info;

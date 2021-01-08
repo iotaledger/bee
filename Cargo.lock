@@ -341,12 +341,10 @@ dependencies = [
 [[package]]
 name = "bee-common"
 version = "0.2.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#e9f1d804bae76c35f7e38282413d886c582e09aa"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
 dependencies = [
  "chrono",
- "dashmap 3.11.10",
  "fern",
- "futures 0.3.9",
  "log",
  "serde",
  "thiserror",
@@ -355,7 +353,7 @@ dependencies = [
 [[package]]
 name = "bee-crypto"
 version = "0.2.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#e9f1d804bae76c35f7e38282413d886c582e09aa"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -369,10 +367,10 @@ name = "bee-ledger"
 version = "0.1.0-alpha"
 dependencies = [
  "async-trait",
- "bee-common 0.1.1-alpha",
  "bee-common 0.2.0-alpha",
  "bee-crypto",
  "bee-message",
+ "bee-runtime",
  "bee-storage",
  "bee-tangle",
  "bee-ternary",
@@ -411,8 +409,8 @@ version = "0.1.0-alpha"
 dependencies = [
  "anymap",
  "async-trait",
- "bee-common 0.1.1-alpha",
  "bee-common 0.2.0-alpha",
+ "bee-runtime",
  "bee-storage",
  "dashmap 4.0.1",
  "env_logger",
@@ -434,7 +432,6 @@ version = "0.1.0-alpha"
 dependencies = [
  "anymap",
  "async-trait",
- "bee-common 0.1.1-alpha",
  "bee-common 0.2.0-alpha",
  "bee-crypto",
  "bee-ledger",
@@ -443,6 +440,7 @@ dependencies = [
  "bee-peering",
  "bee-protocol",
  "bee-rest-api",
+ "bee-runtime",
  "bee-snapshot",
  "bee-storage",
  "bee-storage-rocksdb",
@@ -501,6 +499,7 @@ dependencies = [
  "bee-ledger",
  "bee-message",
  "bee-network",
+ "bee-runtime",
  "bee-snapshot",
  "bee-storage",
  "bee-tangle",
@@ -527,12 +526,12 @@ version = "0.1.0-alpha"
 dependencies = [
  "async-trait",
  "bech32",
- "bee-common 0.1.1-alpha",
  "bee-common 0.2.0-alpha",
  "bee-ledger",
  "bee-message",
  "bee-pow",
  "bee-protocol",
+ "bee-runtime",
  "bee-storage",
  "bee-tangle",
  "blake2",
@@ -548,14 +547,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-runtime"
+version = "0.1.0-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
+dependencies = [
+ "async-trait",
+ "bee-storage",
+ "dashmap 3.11.10",
+ "futures 0.3.9",
+ "log",
+]
+
+[[package]]
 name = "bee-snapshot"
 version = "0.1.0-alpha"
 dependencies = [
  "async-trait",
- "bee-common 0.1.1-alpha",
  "bee-common 0.2.0-alpha",
  "bee-ledger",
  "bee-message",
+ "bee-runtime",
  "bee-storage",
  "bee-tangle",
  "bytemuck",
@@ -572,7 +583,7 @@ dependencies = [
 [[package]]
 name = "bee-storage"
 version = "0.1.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#e9f1d804bae76c35f7e38282413d886c582e09aa"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
 dependencies = [
  "async-trait",
  "futures 0.3.9",
@@ -609,9 +620,9 @@ version = "0.1.0-alpha"
 dependencies = [
  "async-rwlock",
  "async-trait",
- "bee-common 0.1.1-alpha",
  "bee-common 0.2.0-alpha",
  "bee-message",
+ "bee-runtime",
  "bee-storage",
  "bee-test",
  "bitflags",
@@ -629,7 +640,7 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.3.4-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#e9f1d804bae76c35f7e38282413d886c582e09aa"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
 dependencies = [
  "autocfg 1.0.1",
  "num-traits",

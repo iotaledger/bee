@@ -9,11 +9,7 @@ pub use error::Error;
 
 use crate::{config::NodeConfig, storage::StorageBackend};
 
-use bee_common::event::Bus;
-use bee_common_pt2::{
-    node::{Node, ResHandle},
-    worker::Worker,
-};
+use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
 
 use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
@@ -109,17 +105,17 @@ impl<B: StorageBackend> Node for BeeNode<B> {
     }
 
     fn register_resource<R: Any + Send + Sync>(&mut self, res: R) {
-        self.resources.insert(ResHandle::new(res));
+        self.resources.insert(ResourceHandle::new(res));
     }
 
     fn remove_resource<R: Any + Send + Sync>(&mut self) -> Option<R> {
-        self.resources.remove::<ResHandle<R>>()?.try_unwrap()
+        self.resources.remove::<ResourceHandle<R>>()?.try_unwrap()
     }
 
     #[track_caller]
-    fn resource<R: Any + Send + Sync>(&self) -> ResHandle<R> {
+    fn resource<R: Any + Send + Sync>(&self) -> ResourceHandle<R> {
         self.resources
-            .get::<ResHandle<R>>()
+            .get::<ResourceHandle<R>>()
             .unwrap_or_else(|| panic!("Unable to fetch node resource {}", type_name::<R>()))
             .clone()
     }

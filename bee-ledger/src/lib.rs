@@ -16,7 +16,7 @@ mod worker;
 pub use storage::StorageBackend;
 pub use worker::{LedgerWorker, LedgerWorkerEvent};
 
-use bee_common_pt2::node::{Node, NodeBuilder};
+use bee_runtime::node::{Node, NodeBuilder};
 
 pub const IOTA_SUPPLY: u64 = 2_779_530_283_277_761;
 

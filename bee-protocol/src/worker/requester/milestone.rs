@@ -9,9 +9,8 @@ use crate::{
     ProtocolMetrics, Sender,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
 use bee_network::{NetworkController, PeerId};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{milestone::MilestoneIndex, MsTangle};
 
 use async_trait::async_trait;

@@ -16,10 +16,10 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_common::packable::Packable;
 use bee_message::{payload::Payload, MessageId};
 use bee_network::NetworkController;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{
     milestone::{Milestone, MilestoneIndex},
     MsTangle,

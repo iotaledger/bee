@@ -10,8 +10,7 @@ use crate::{
 
 use super::{errors::Error, Origin};
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
 use futures::prelude::*;

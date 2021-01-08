@@ -3,9 +3,9 @@
 
 use crate::storage::StorageBackend;
 
-use bee_common_pt2::{node::Node, worker::Worker};
 use bee_ledger::model::LedgerIndex;
 use bee_message::MessageId;
+use bee_runtime::{node::Node, worker::Worker};
 use bee_snapshot::{SnapshotInfo, SnapshotWorker};
 use bee_storage::access::{AsStream, Fetch};
 use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MsTangle};

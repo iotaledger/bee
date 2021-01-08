@@ -19,12 +19,13 @@ mod common;
 
 use common::*;
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{
-    node::{Node, NodeBuilder, ResHandle},
+use bee_network::{Command::*, Event, Keypair, Multiaddr, NetworkConfig, NetworkController, NetworkListener, PeerId};
+use bee_runtime::{
+    node::{Node, NodeBuilder},
+    resource::ResourceHandle,
+    shutdown_stream::ShutdownStream,
     worker::Worker,
 };
-use bee_network::{Command::*, Event, Keypair, Multiaddr, NetworkConfig, NetworkController, NetworkListener, PeerId};
 
 use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
@@ -162,17 +163,17 @@ impl Node for ExampleNode {
     }
 
     fn register_resource<R: Any + Send + Sync>(&mut self, res: R) {
-        self.resources.insert(ResHandle::new(res));
+        self.resources.insert(ResourceHandle::new(res));
     }
 
     fn remove_resource<R: Any + Send + Sync>(&mut self) -> Option<R> {
-        self.resources.remove::<ResHandle<R>>()?.try_unwrap()
+        self.resources.remove::<ResourceHandle<R>>()?.try_unwrap()
     }
 
     #[track_caller]
-    fn resource<R: Any + Send + Sync>(&self) -> ResHandle<R> {
+    fn resource<R: Any + Send + Sync>(&self) -> ResourceHandle<R> {
         self.resources
-            .get::<ResHandle<R>>()
+            .get::<ResourceHandle<R>>()
             .unwrap_or_else(|| panic!("Unable to fetch node resource {}", type_name::<R>()))
             .clone()
     }

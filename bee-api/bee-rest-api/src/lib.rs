@@ -15,11 +15,11 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_common_pt2::{
+use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorker, TangleWorker};
+use bee_runtime::{
     node::{Node, NodeBuilder},
     worker::{Error as WorkerError, Worker},
 };
-use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorker, TangleWorker};
 use bee_tangle::MsTangle;
 
 use async_trait::async_trait;

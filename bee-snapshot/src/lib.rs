@@ -25,7 +25,7 @@ pub use info::SnapshotInfo;
 pub use snapshot::Snapshot;
 pub use worker::SnapshotWorker;
 
-use bee_common_pt2::node::{Node, NodeBuilder};
+use bee_runtime::node::{Node, NodeBuilder};
 
 pub async fn init<N: Node>(config: &config::SnapshotConfig, network_id: u64, node_builder: N::Builder) -> N::Builder
 where

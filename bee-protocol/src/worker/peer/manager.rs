@@ -11,9 +11,8 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
 use bee_network::{Event, NetworkListener, ShortId};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
 use async_trait::async_trait;

@@ -12,7 +12,7 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-common-pt2 = { path = "../bee-common/bee-common", package = "bee-common" }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 async-trait = "0.1"
 dashmap = "4.0"

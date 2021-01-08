@@ -6,12 +6,12 @@ use crate::{
     snapshot::Snapshot, storage::StorageBackend,
 };
 
-use bee_common_pt2::{node::Node, worker::Worker};
 use bee_ledger::{
     model::{LedgerIndex, Unspent},
     storage::{apply_diff, check_ledger_state, rollback_diff},
 };
 use bee_message::payload::transaction::{Address, Ed25519Address, Output, OutputId};
+use bee_runtime::{node::Node, worker::Worker};
 use bee_storage::access::{Fetch, Insert, Truncate};
 use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 

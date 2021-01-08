@@ -11,15 +11,15 @@ keywords = ["iota", "tangle", "bee", "framework", "node"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-rest-api = { path = "../bee-api/bee-rest-api" }
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-common-pt2 = { path = "../bee-common/bee-common", package = "bee-common" }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-ledger = { path = "../bee-ledger" }
 bee-message = { path = "../bee-message" }
 bee-network = { path = "../bee-network" }
 bee-peering = { path = "../bee-peering" }
 bee-protocol = { path = "../bee-protocol" }
+bee-rest-api = { path = "../bee-api/bee-rest-api" }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-snapshot = { path = "../bee-snapshot" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage-rocksdb = { path = "../bee-storage/bee-storage-rocksdb" }

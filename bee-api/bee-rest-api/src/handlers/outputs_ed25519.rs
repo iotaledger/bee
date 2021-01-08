@@ -7,8 +7,8 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
+use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
 use serde::Serialize;
@@ -18,7 +18,7 @@ use std::ops::Deref;
 
 pub(crate) async fn outputs_ed25519<B: StorageBackend>(
     addr: Ed25519Address,
-    storage: ResHandle<B>,
+    storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
     let mut fetched = match Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage.deref(), &addr)
         .await

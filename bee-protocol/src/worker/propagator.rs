@@ -10,9 +10,8 @@ use crate::{
     },
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{milestone::Milestone, MsTangle};
 
 use async_trait::async_trait;

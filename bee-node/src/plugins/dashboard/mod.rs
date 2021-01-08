@@ -14,10 +14,9 @@ use websocket::{
     user_connected, WsUsers,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
 use bee_protocol::event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated};
 use bee_rest_api::config::RestApiConfig;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
 use asset::Asset;

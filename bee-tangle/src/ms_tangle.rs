@@ -10,8 +10,8 @@ use crate::{
     MessageRef,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_message::{Message, MessageId};
+use bee_runtime::resource::ResourceHandle;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
@@ -25,7 +25,7 @@ use std::{
 
 pub struct StorageHooks<B> {
     #[allow(dead_code)]
-    storage: ResHandle<B>,
+    storage: ResourceHandle<B>,
 }
 
 #[async_trait]
@@ -99,7 +99,7 @@ impl<B> Deref for MsTangle<B> {
 }
 
 impl<B: StorageBackend> MsTangle<B> {
-    pub fn new(storage: ResHandle<B>) -> Self {
+    pub fn new(storage: ResourceHandle<B>) -> Self {
         Self {
             inner: Tangle::new(StorageHooks { storage }),
             milestones: Default::default(),

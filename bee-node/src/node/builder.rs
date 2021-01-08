@@ -8,13 +8,13 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_common::event::Bus;
-use bee_common_pt2::{
+use bee_network::{self, NetworkController};
+use bee_peering::{ManualPeerManager, PeerManager};
+use bee_runtime::{
+    event::Bus,
     node::{Node, NodeBuilder},
     worker::Worker,
 };
-use bee_network::{self, NetworkController};
-use bee_peering::{ManualPeerManager, PeerManager};
 
 use anymap::Map;
 use async_trait::async_trait;

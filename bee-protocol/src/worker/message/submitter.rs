@@ -7,12 +7,12 @@ use crate::{
     worker::{HasherWorker, HasherWorkerEvent},
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{
+use bee_message::MessageId;
+use bee_runtime::{
     node::Node,
+    shutdown_stream::ShutdownStream,
     worker::{Error as WorkerError, Worker},
 };
-use bee_message::MessageId;
 
 use async_trait::async_trait;
 use futures::{channel::oneshot::Sender, stream::StreamExt};

@@ -13,7 +13,7 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common_pt2::node::ResHandle;
+use bee_runtime::resource::ResourceHandle;
 use bee_tangle::{milestone::MilestoneIndex, MsTangle};
 
 use futures::{channel::oneshot, future::FutureExt};
@@ -37,8 +37,8 @@ impl From<TlvError> for Error {
 
 pub struct PeerWorker {
     peer: Arc<Peer>,
-    metrics: ResHandle<ProtocolMetrics>,
-    peer_manager: ResHandle<PeerManager>,
+    metrics: ResourceHandle<ProtocolMetrics>,
+    peer_manager: ResourceHandle<PeerManager>,
     hasher: mpsc::UnboundedSender<HasherWorkerEvent>,
     message_responder: mpsc::UnboundedSender<MessageResponderWorkerEvent>,
     milestone_responder: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
@@ -48,8 +48,8 @@ pub struct PeerWorker {
 impl PeerWorker {
     pub(crate) fn new(
         peer: Arc<Peer>,
-        metrics: ResHandle<ProtocolMetrics>,
-        peer_manager: ResHandle<PeerManager>,
+        metrics: ResourceHandle<ProtocolMetrics>,
+        peer_manager: ResourceHandle<PeerManager>,
         hasher: mpsc::UnboundedSender<HasherWorkerEvent>,
         message_responder: mpsc::UnboundedSender<MessageResponderWorkerEvent>,
         milestone_responder: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
@@ -68,8 +68,8 @@ impl PeerWorker {
 
     pub(crate) async fn run<B: StorageBackend>(
         mut self,
-        tangle: ResHandle<MsTangle<B>>,
-        requested_milestones: ResHandle<RequestedMilestones>,
+        tangle: ResourceHandle<MsTangle<B>>,
+        requested_milestones: ResourceHandle<RequestedMilestones>,
         receiver: mpsc::UnboundedReceiver<Vec<u8>>,
         shutdown: oneshot::Receiver<()>,
     ) {

@@ -5,8 +5,8 @@ use crate::{
     config::RestApiConfig, filters::CustomRejection::BadRequest, handlers, storage::StorageBackend, NetworkId,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorkerEvent};
+use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use tokio::sync::mpsc;
@@ -24,8 +24,8 @@ pub(crate) enum CustomRejection {
 impl reject::Reject for CustomRejection {}
 
 pub fn all<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
-    storage: ResHandle<B>,
+    tangle: ResourceHandle<MsTangle<B>>,
+    storage: ResourceHandle<B>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
     rest_api_config: RestApiConfig,
@@ -60,7 +60,7 @@ pub fn all<B: StorageBackend>(
 }
 
 fn health<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("health"))
@@ -70,7 +70,7 @@ fn health<B: StorageBackend>(
 }
 
 fn info<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
     network_id: NetworkId,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
@@ -88,7 +88,7 @@ fn info<B: StorageBackend>(
 }
 
 fn tips<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -100,7 +100,7 @@ fn tips<B: StorageBackend>(
 }
 
 fn submit_message<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
     rest_api_config: RestApiConfig,
@@ -120,7 +120,7 @@ fn submit_message<B: StorageBackend>(
 }
 
 fn submit_message_raw<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::post()
@@ -135,7 +135,7 @@ fn submit_message_raw<B: StorageBackend>(
 }
 
 fn message_indexation<B: StorageBackend>(
-    storage: ResHandle<B>,
+    storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -153,7 +153,7 @@ fn message_indexation<B: StorageBackend>(
 }
 
 fn message<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -166,7 +166,7 @@ fn message<B: StorageBackend>(
 }
 
 fn message_metadata<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -180,7 +180,7 @@ fn message_metadata<B: StorageBackend>(
 }
 
 fn message_raw<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -194,7 +194,7 @@ fn message_raw<B: StorageBackend>(
 }
 
 fn message_children<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -208,7 +208,7 @@ fn message_children<B: StorageBackend>(
 }
 
 fn output<B: StorageBackend>(
-    storage: ResHandle<B>,
+    storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -221,7 +221,7 @@ fn output<B: StorageBackend>(
 }
 
 fn balance_bech32<B: StorageBackend>(
-    storage: ResHandle<B>,
+    storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -234,7 +234,7 @@ fn balance_bech32<B: StorageBackend>(
 }
 
 fn balance_ed25519<B: StorageBackend>(
-    storage: ResHandle<B>,
+    storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -248,7 +248,7 @@ fn balance_ed25519<B: StorageBackend>(
 }
 
 fn outputs_bech32<B: StorageBackend>(
-    storage: ResHandle<B>,
+    storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -262,7 +262,7 @@ fn outputs_bech32<B: StorageBackend>(
 }
 
 fn outputs_ed25519<B: StorageBackend>(
-    storage: ResHandle<B>,
+    storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -276,7 +276,7 @@ fn outputs_ed25519<B: StorageBackend>(
 }
 
 fn milestone<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("api"))
@@ -363,14 +363,14 @@ fn with_protocol_config(
 }
 
 fn with_tangle<B: StorageBackend>(
-    tangle: ResHandle<MsTangle<B>>,
-) -> impl Filter<Extract = (ResHandle<MsTangle<B>>,), Error = std::convert::Infallible> + Clone {
+    tangle: ResourceHandle<MsTangle<B>>,
+) -> impl Filter<Extract = (ResourceHandle<MsTangle<B>>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || tangle.clone())
 }
 
 fn with_storage<B: StorageBackend>(
-    storage: ResHandle<B>,
-) -> impl Filter<Extract = (ResHandle<B>,), Error = std::convert::Infallible> + Clone {
+    storage: ResourceHandle<B>,
+) -> impl Filter<Extract = (ResourceHandle<B>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || storage.clone())
 }
 
