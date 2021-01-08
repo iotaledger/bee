@@ -17,7 +17,6 @@ use bee_message::{payload::Payload, MessageId};
 use bee_tangle::{milestone::MilestoneIndex, MsTangle};
 
 use async_trait::async_trait;
-use blake2::Blake2b;
 use futures::stream::StreamExt;
 use log::{error, info};
 use tokio::sync::mpsc;
@@ -60,7 +59,7 @@ where
         return Err(e);
     };
 
-    let merkle_proof = MerkleHasher::<Blake2b>::new().digest(&metadata.included_messages);
+    let merkle_proof = MerkleHasher::new().digest(&metadata.included_messages);
 
     if !merkle_proof.eq(&milestone.essence().merkle_proof()) {
         return Err(Error::MerkleProofMismatch(
