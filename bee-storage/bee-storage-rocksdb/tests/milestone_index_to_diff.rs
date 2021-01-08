@@ -3,12 +3,12 @@
 
 use bee_common::packable::Packable;
 use bee_ledger::model::Diff;
-use bee_tangle::milestone::MilestoneIndex;
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend::StorageBackend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
+use bee_tangle::milestone::MilestoneIndex;
 use bee_test::rand::{diff::rand_diff, milestone::rand_milestone_index};
 
 use futures::stream::StreamExt;

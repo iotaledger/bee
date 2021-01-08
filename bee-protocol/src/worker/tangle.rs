@@ -7,10 +7,7 @@ use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
 use bee_snapshot::{SnapshotInfo, SnapshotWorker};
 use bee_storage::access::{AsStream, Fetch};
-use bee_tangle::{
-    solid_entry_point::SolidEntryPoint,
-    {milestone::MilestoneIndex, MsTangle},
-};
+use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MsTangle};
 
 use async_trait::async_trait;
 use futures::StreamExt;

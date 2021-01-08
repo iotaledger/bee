@@ -3,8 +3,10 @@
 
 use bee_message::MessageId;
 
-use blake2::digest::{Update, VariableOutput};
-use blake2::VarBlake2b;
+use blake2::{
+    digest::{Update, VariableOutput},
+    VarBlake2b,
+};
 
 /// Leaf domain separation prefix.
 const LEAF_HASH_PREFIX: u8 = 0x00;
