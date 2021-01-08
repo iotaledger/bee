@@ -48,7 +48,7 @@ pub trait Node: Send + Sized + 'static {
 
 #[async_trait(?Send)]
 pub trait NodeBuilder<N: Node>: Sized {
-    type Error;
+    type Error: std::error::Error;
     type Config;
 
     fn new(config: Self::Config) -> Result<Self, Self::Error>;

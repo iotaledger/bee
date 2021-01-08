@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Removed `event::Bus` in favour of its inclusion in `bee-runtime`
+- Removed `shutdown_stream::ShutdownStream` in favour of its inclusion in `bee-runtime`
+- Removed `shutdown::Shutdown`
 
 ### Fixed
 

@@ -9,11 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Node` trait
-- `Worker` trait
-- `ResHandle` resource handle
-- `Bus` event bus
-
 ### Changed
 
 ### Deprecated
@@ -23,3 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security -->
+
+
+## 0.1.0-alpha - 2021-01-08
+
+### Added
+
+- `Node` trait
+- `Worker` trait
+- `ResHandle` resource handle
+- `Bus` event bus

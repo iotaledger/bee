@@ -158,7 +158,6 @@ checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 name = "bee-common"
 version = "0.2.0-alpha"
 dependencies = [
- "async-std",
  "chrono",
  "fern",
  "log",
@@ -188,11 +187,11 @@ dependencies = [
 
 [[package]]
 name = "bee-runtime"
-version = "0.0.0-alpha"
+version = "0.1.0-alpha"
 dependencies = [
  "async-std",
  "async-trait",
- "bee-storage 0.1.0-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-storage",
  "dashmap",
  "futures",
  "log",
@@ -214,16 +213,6 @@ dependencies = [
 [[package]]
 name = "bee-storage"
 version = "0.1.0-alpha"
-dependencies = [
- "async-trait",
- "futures",
- "serde",
-]
-
-[[package]]
-name = "bee-storage"
-version = "0.1.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#e9f1d804bae76c35f7e38282413d886c582e09aa"
 dependencies = [
  "async-trait",
  "futures",
