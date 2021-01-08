@@ -36,6 +36,8 @@ pub enum Error {
     OnlyDeltaFileExists,
     #[error("Unexpected milestine diff index: {0:?}.")]
     UnexpectedDiffIndex(MilestoneIndex),
+    #[error("Invalid ledger state.")]
+    InvalidLedgerState,
     #[error("Storage operation failed: {0}")]
     StorageBackend(Box<dyn std::error::Error>),
 }

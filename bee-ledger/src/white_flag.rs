@@ -23,8 +23,6 @@ use std::{
     ops::Deref,
 };
 
-// const IOTA_SUPPLY: u64 = 2_779_530_283_277_761;
-
 #[inline]
 async fn on_message<N: Node>(
     tangle: &MsTangle<N::Backend>,

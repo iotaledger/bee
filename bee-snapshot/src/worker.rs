@@ -9,7 +9,7 @@ use crate::{
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_ledger::{
     model::{LedgerIndex, Unspent},
-    storage::{apply_diff, rollback_diff},
+    storage::{apply_diff, check_ledger_state, rollback_diff},
 };
 use bee_message::payload::transaction::{Address, Ed25519Address, Output, OutputId};
 use bee_storage::access::{Fetch, Insert, Truncate};
@@ -160,6 +160,11 @@ where
             }
             _ => return Err(Error::UnexpectedDiffIndex(*index)),
         }
+    }
+
+    // TODO unwrap
+    if !check_ledger_state(storage).await.unwrap() {
+        return Err(Error::InvalidLedgerState);
     }
 
     node.register_resource(SnapshotInfo::new(

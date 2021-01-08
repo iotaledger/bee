@@ -19,6 +19,8 @@ use worker::LedgerWorker;
 use bee_common_pt2::node::{Node, NodeBuilder};
 use bee_tangle::milestone::MilestoneIndex;
 
+pub const IOTA_SUPPLY: u64 = 2_779_530_283_277_761;
+
 pub fn init<N: Node>(index: u32, node_builder: N::Builder) -> N::Builder
 where
     N::Backend: StorageBackend,
