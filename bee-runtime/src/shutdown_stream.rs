@@ -75,7 +75,7 @@ impl<S: Stream<Item = T> + FusedStream + Unpin, T> Stream for ShutdownStream<S> 
     /// guarantees that checking for shutdown always happens first.
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
         if !self.shutdown.is_terminated() {
-            if let Poll::Ready(_) = self.shutdown.poll_unpin(cx) {
+            if self.shutdown.poll_unpin(cx).is_ready() {
                 return Poll::Ready(None);
             }
 

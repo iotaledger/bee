@@ -158,11 +158,8 @@ checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 name = "bee-common"
 version = "0.2.0-alpha"
 dependencies = [
- "async-std",
  "chrono",
- "dashmap",
  "fern",
- "futures",
  "log",
  "serde",
  "thiserror",
@@ -186,6 +183,18 @@ dependencies = [
  "lazy_static",
  "thiserror",
  "tiny-keccak",
+]
+
+[[package]]
+name = "bee-runtime"
+version = "0.1.0-alpha"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "bee-storage",
+ "dashmap",
+ "futures",
+ "log",
 ]
 
 [[package]]

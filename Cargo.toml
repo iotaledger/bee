@@ -3,6 +3,7 @@ members = [
 	"bee-common/bee-common",
 	"bee-common/bee-common-derive",
 	"bee-crypto",
+	"bee-runtime",
 	"bee-signing",
 	"bee-storage/bee-storage",
 	"bee-ternary",
