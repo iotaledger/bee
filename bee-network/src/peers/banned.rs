@@ -49,3 +49,36 @@ where
         self.0.len()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn inserted_items_are_unique() {
+        let item_list = BannedList(Arc::new(DashSet::new()));
+
+        item_list.insert(0);
+        item_list.insert(1);
+        item_list.insert(1);
+
+        assert!(item_list.contains(&0));
+        assert!(item_list.contains(&1));
+        assert_eq!(2, item_list.count());
+
+        assert!(!item_list.contains(&2));
+    }
+
+    #[test]
+    fn inserts_and_removals_update_count() {
+        let item_list = BannedList(Arc::new(DashSet::new()));
+
+        item_list.insert(0);
+        assert!(item_list.contains(&0));
+        assert_eq!(1, item_list.count());
+
+        item_list.remove(&0);
+        assert!(!item_list.contains(&0));
+        assert_eq!(0, item_list.count());
+    }
+}
