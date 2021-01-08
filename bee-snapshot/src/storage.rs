@@ -23,6 +23,7 @@ pub trait StorageBackend:
     + Insert<OutputId, Output>
     + Insert<Unspent, ()>
     + Insert<(Ed25519Address, OutputId), ()>
+    + Insert<(), SnapshotInfo>
     + Truncate<SolidEntryPoint, MilestoneIndex>
     + storage::StorageBackend
 {
@@ -37,6 +38,7 @@ impl<T> StorageBackend for T where
         + Insert<OutputId, Output>
         + Insert<Unspent, ()>
         + Insert<(Ed25519Address, OutputId), ()>
+        + Insert<(), SnapshotInfo>
         + Truncate<SolidEntryPoint, MilestoneIndex>
         + storage::StorageBackend
 {

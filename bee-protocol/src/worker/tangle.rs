@@ -6,7 +6,7 @@ use crate::storage::StorageBackend;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::MessageId;
 use bee_snapshot::{SnapshotInfo, SnapshotWorker};
-use bee_storage::access::AsStream;
+use bee_storage::access::{AsStream, Fetch};
 use bee_tangle::{
     solid_entry_point::SolidEntryPoint,
     {milestone::MilestoneIndex, MsTangle},
@@ -42,7 +42,8 @@ where
         node.register_resource(tangle);
         let storage = node.storage();
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let snapshot_info = node.resource::<SnapshotInfo>();
+        // TODO unwrap
+        let snapshot_info = Fetch::<(), SnapshotInfo>::fetch(&*storage, &()).await.unwrap().unwrap();
 
         tangle.update_latest_solid_milestone_index(snapshot_info.entry_point_index().into());
         tangle.update_latest_milestone_index(snapshot_info.entry_point_index().into());

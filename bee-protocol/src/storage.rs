@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{payload::indexation::HashedIndex, Message, MessageId};
+use bee_snapshot::info::SnapshotInfo;
 use bee_storage::{
     access::{AsStream, Fetch, Insert},
     backend,
@@ -23,6 +24,7 @@ pub trait StorageBackend:
     + Fetch<MessageId, MessageMetadata>
     + Fetch<MessageId, Vec<MessageId>>
     + Fetch<MilestoneIndex, Milestone>
+    + Fetch<(), SnapshotInfo>
     + for<'a> AsStream<'a, SolidEntryPoint, MilestoneIndex>
 {
 }
@@ -39,6 +41,7 @@ impl<T> StorageBackend for T where
         + Fetch<MessageId, Vec<MessageId>>
         + Fetch<MessageId, Vec<MessageId>>
         + Fetch<MilestoneIndex, Milestone>
+        + Fetch<(), SnapshotInfo>
         + for<'a> AsStream<'a, SolidEntryPoint, MilestoneIndex>
 {
 }

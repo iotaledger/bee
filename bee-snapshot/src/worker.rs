@@ -38,7 +38,7 @@ where
 
         match Fetch::<(), SnapshotInfo>::fetch(&*storage, &()).await {
             Ok(Some(_info)) => {}
-            Ok(None) => import_snapshots(node, &*storage, network_id, &config).await?,
+            Ok(None) => import_snapshots(&*storage, network_id, &config).await?,
             Err(e) => return Err(Error::StorageBackend(Box::new(e))),
         }
 
@@ -46,17 +46,12 @@ where
     }
 }
 
-async fn import_snapshot<N>(
-    node: &mut N,
-    storage: &N::Backend,
+async fn import_snapshot<B: StorageBackend>(
+    storage: &B,
     kind: Kind,
     path: &Path,
     network_id: u64,
-) -> Result<Snapshot, Error>
-where
-    N: Node,
-    N::Backend: StorageBackend,
-{
+) -> Result<Snapshot, Error> {
     let kind_str = format!("{:?}", kind).to_lowercase();
 
     info!("Importing {} snapshot file {}...", kind_str, &path.to_string_lossy());
@@ -167,27 +162,28 @@ where
         return Err(Error::InvalidLedgerState);
     }
 
-    node.register_resource(SnapshotInfo::new(
-        snapshot.header().network_id(),
-        snapshot.header().sep_index(),
-        snapshot.header().sep_index(),
-        snapshot.header().sep_index(),
-        snapshot.header().timestamp(),
-    ));
+    Insert::<(), SnapshotInfo>::insert(
+        storage,
+        &(),
+        &SnapshotInfo::new(
+            snapshot.header().network_id(),
+            snapshot.header().sep_index(),
+            snapshot.header().sep_index(),
+            snapshot.header().sep_index(),
+            snapshot.header().timestamp(),
+        ),
+    )
+    .await
+    .map_err(|e| Error::StorageBackend(Box::new(e)))?;
 
     Ok(snapshot)
 }
 
-async fn import_snapshots<N>(
-    node: &mut N,
-    storage: &N::Backend,
+async fn import_snapshots<B: StorageBackend>(
+    storage: &B,
     network_id: u64,
     config: &SnapshotConfig,
-) -> Result<(), Error>
-where
-    N: Node,
-    N::Backend: StorageBackend,
-{
+) -> Result<(), Error> {
     let full_exists = config.full_path().exists();
     let delta_exists = config.delta_path().exists();
 
@@ -198,11 +194,11 @@ where
         download_snapshot_file(config.delta_path(), config.download_urls()).await?;
     }
 
-    let _full_snapshot = import_snapshot::<N>(node, storage, Kind::Full, config.full_path(), network_id).await?;
+    let _full_snapshot = import_snapshot(storage, Kind::Full, config.full_path(), network_id).await?;
 
     // Load delta file only if both full and delta files already existed or if they have just been downloaded.
     if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
-        let _delta_snapshot = import_snapshot::<N>(node, storage, Kind::Delta, config.delta_path(), network_id).await?;
+        let _delta_snapshot = import_snapshot(storage, Kind::Delta, config.delta_path(), network_id).await?;
     }
 
     Ok(())
