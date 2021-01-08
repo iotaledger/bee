@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::shutdown_stream::ShutdownStream;
+use bee_runtime::shutdown_stream::ShutdownStream;
 
 use async_std::task;
 use futures::{

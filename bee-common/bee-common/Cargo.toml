@@ -12,12 +12,7 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 chrono = "0.4"
-dashmap = "3.11"
 fern = { version = "0.6", features = ["colored"] }
-futures = "0.3"
 log = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive" ] }
 thiserror = "1.0"
-
-[dev-dependencies]
-async-std = { version = "1.6", features = [ "attributes" ] }
