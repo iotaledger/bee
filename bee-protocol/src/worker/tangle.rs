@@ -4,6 +4,7 @@
 use crate::storage::StorageBackend;
 
 use bee_common_pt2::{node::Node, worker::Worker};
+use bee_ledger::model::LedgerIndex;
 use bee_message::MessageId;
 use bee_snapshot::{SnapshotInfo, SnapshotWorker};
 use bee_storage::access::{AsStream, Fetch};
@@ -41,8 +42,11 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
         // TODO unwrap
         let snapshot_info = Fetch::<(), SnapshotInfo>::fetch(&*storage, &()).await.unwrap().unwrap();
+        // TODO unwrap
+        let ledger_index = Fetch::<(), LedgerIndex>::fetch(&*storage, &()).await.unwrap().unwrap();
 
-        tangle.update_latest_solid_milestone_index(snapshot_info.entry_point_index().into());
+        tangle.update_latest_solid_milestone_index((*ledger_index).into());
+        // TODO look from storage
         tangle.update_latest_milestone_index(snapshot_info.entry_point_index().into());
         tangle.update_snapshot_index(snapshot_info.snapshot_index().into());
         tangle.update_pruning_index(snapshot_info.pruning_index().into());
