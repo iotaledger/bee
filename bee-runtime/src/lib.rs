@@ -3,6 +3,8 @@
 
 //! Runtime components and utilities for the bee node framework
 
+#![warn(missing_docs)]
+
 pub mod event;
 pub mod node;
 pub mod resource;
