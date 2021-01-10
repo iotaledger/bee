@@ -9,7 +9,7 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use async_trait::async_trait;
 use futures::StreamExt;
 use log::info;
-use tokio::time::{delay_for, interval};
+use tokio::time::interval;
 
 use std::{convert::Infallible, time::Duration};
 
@@ -37,8 +37,6 @@ impl<N: Node> Worker<N> for MetricsWorker {
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
-
-            delay_for(Duration::from_secs(METRICS_INTERVAL_SEC)).await;
 
             let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_secs(METRICS_INTERVAL_SEC)));
 
