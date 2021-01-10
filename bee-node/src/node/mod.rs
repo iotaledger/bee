@@ -115,19 +115,14 @@ impl<B: StorageBackend> Node for BeeNode<B> {
 
     #[track_caller]
     fn resource<R: Any + Send + Sync>(&self) -> ResourceHandle<R> {
-        #[track_caller]
-        fn do_panic<R: Any, T>() -> T {
-            panic!(
+        match self.resources.get::<ResourceHandle<R>>() {
+            Some(res) => res.clone(),
+            None => panic!(
                 "Unable to fetch node resource {} from {}.",
                 type_name::<R>(),
                 Location::caller()
-            )
+            ),
         }
-
-        self.resources
-            .get::<ResourceHandle<R>>()
-            .unwrap_or_else(do_panic::<R, _>)
-            .clone()
     }
 
     fn spawn<W, G, F>(&mut self, g: G)
