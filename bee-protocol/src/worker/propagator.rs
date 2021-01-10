@@ -16,7 +16,7 @@ use bee_tangle::{milestone::Milestone, MsTangle};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use log::{error, info};
+use log::{debug, error, info};
 use tokio::sync::mpsc;
 
 use std::{
@@ -139,12 +139,16 @@ where
                 propagate(message_id, &tangle, &*bus, &milestone_cone_updater).await;
             }
 
-            let (_, receiver) = receiver.split();
-            let mut receiver = receiver.into_inner();
+            let (_, mut receiver) = receiver.split();
+            let receiver = receiver.get_mut();
+            let mut count = 0;
 
             while let Ok(PropagatorWorkerEvent(message_id)) = receiver.try_recv() {
                 propagate(message_id, &tangle, &*bus, &milestone_cone_updater).await;
+                count += 1;
             }
+
+            debug!("Drained {} messages.", count);
 
             info!("Stopped.");
         });
