@@ -7,6 +7,8 @@
 ### Debian
 
 ```sh
+apt-get update
+apt-get upgrade
 apt-get install git npm build-essential cmake pkg-config librocksdb-dev llvm clang libclang-dev
 ```
 
