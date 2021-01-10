@@ -21,7 +21,6 @@ use std::{
     collections::HashMap,
     marker::PhantomData,
     ops::Deref,
-    panic::Location,
     pin::Pin,
 };
 
@@ -117,11 +116,7 @@ impl<B: StorageBackend> Node for BeeNode<B> {
     fn resource<R: Any + Send + Sync>(&self) -> ResourceHandle<R> {
         match self.resources.get::<ResourceHandle<R>>() {
             Some(res) => res.clone(),
-            None => panic!(
-                "Unable to fetch node resource {} from {}.",
-                type_name::<R>(),
-                Location::caller()
-            ),
+            None => panic!("Unable to fetch node resource {}.", type_name::<R>(),),
         }
     }
 
