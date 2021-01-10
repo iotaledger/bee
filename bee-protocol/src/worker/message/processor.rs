@@ -74,7 +74,6 @@ where
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
 
-        let _storage = node.storage();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
         let metrics = node.resource::<ProtocolMetrics>();
