@@ -14,9 +14,19 @@ apt-get install git npm build-essential cmake pkg-config librocksdb-dev llvm cla
 
 ### Rust
 
+Minimum required version 1.47.
+
+#### Installation
+
 ```sh
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source $HOME/.cargo/env
+```
+
+#### Update
+
+```sh
+rustup update
 ```
 
 ## Compilation
