@@ -58,7 +58,8 @@ async fn trigger_solidification_unchecked<B: StorageBackend>(
                 |_, _, _| {},
                 |_, _, _| {},
                 |missing_id| missing.push(*missing_id),
-            );
+            )
+            .await;
 
             for missing_id in missing {
                 helper::request_message(tangle, message_requester, requested_messages, missing_id, target_index).await;

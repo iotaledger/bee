@@ -80,7 +80,7 @@ pub fn visit_children_follow_parent1<Metadata, Match, Apply, H: Hooks<Metadata>>
 /// either the *parent1* or the *parent2* edge. The walk continues as long as the visited vertices match a certain
 /// condition. For each visited vertex customized logic can be applied depending on the availability of the
 /// vertex. Each traversed vertex provides read access to its associated data and metadata.
-pub fn visit_parents_depth_first<Metadata, Match, Apply, ElseApply, MissingApply, H: Hooks<Metadata>>(
+pub async fn visit_parents_depth_first<Metadata, Match, Apply, ElseApply, MissingApply, H: Hooks<Metadata>>(
     tangle: &Tangle<Metadata, H>,
     root: MessageId,
     matches: Match,
@@ -101,9 +101,9 @@ pub fn visit_parents_depth_first<Metadata, Match, Apply, ElseApply, MissingApply
 
     while let Some(message_id) = parents.pop() {
         if !visited.contains(&message_id) {
-            match tangle.vertices.get(&message_id) {
+            match tangle.get_vertex(&message_id).await {
                 Some(vtx) => {
-                    let vtx = vtx.value();
+                    let vtx = &*vtx;
 
                     if matches(&message_id, vtx.message(), vtx.metadata()) {
                         apply(&message_id, vtx.message(), vtx.metadata());

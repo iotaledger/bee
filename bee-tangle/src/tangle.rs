@@ -233,6 +233,13 @@ where
         self.get_inner(message_id).map(|v| v.metadata().clone())
     }
 
+    /// Get the metadata of a vertex associated with the given `message_id`.
+    pub(crate) async fn get_vertex(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex<T>> + '_> {
+        self.pull_message(message_id).await;
+
+        self.get_inner(message_id)
+    }
+
     /// Updates the metadata of a particular vertex.
     pub async fn set_metadata(&self, message_id: &MessageId, metadata: T) {
         self.pull_message(message_id).await;
