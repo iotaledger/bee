@@ -188,7 +188,7 @@ impl TransactionEssenceBuilder {
 
         // Outputs validation
 
-        let mut total = 0;
+        let mut total: u64 = 0;
 
         for output in self.outputs.iter() {
             match output {
@@ -206,14 +206,15 @@ impl TransactionEssenceBuilder {
                         return Err(Error::DuplicateError);
                     }
 
-                    total += u.amount();
+                    total = total
+                        .checked_add(u.amount())
+                        .ok_or(Error::InvalidAccumulatedOutput((total + u.amount()) as u128))?;
                 }
             }
-        }
-
-        // Accumulated output balance must not exceed the total supply of tokens.
-        if total > IOTA_SUPPLY {
-            return Err(Error::InvalidAccumulatedOutput(total));
+            // Accumulated output balance must not exceed the total supply of tokens.
+            if total > IOTA_SUPPLY {
+                return Err(Error::InvalidAccumulatedOutput(total as u128));
+            }
         }
 
         self.inputs.sort();
