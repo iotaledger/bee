@@ -235,7 +235,6 @@ impl<N: Node> Worker<N> for ConnectionManager {
     }
 }
 
-#[inline]
 fn log_inbound_connection_success(peer_id: &PeerId, peer_info: &PeerInfo) {
     if let Some(alias) = peer_info.alias.as_ref() {
         info!("Established (inbound) connection with {}:{}.", alias, peer_id.short(),)

@@ -282,7 +282,6 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
     }
 }
 
-#[inline]
 async fn process_event(event: Event, message: &str, network: &NetworkController, _peers: &mut HashSet<PeerId>) {
     match event {
         Event::PeerConnected { id, address, .. } => {

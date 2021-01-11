@@ -326,7 +326,6 @@ async fn process_command(
     Ok(())
 }
 
-#[inline]
 async fn process_internal_event(
     internal_event: InternalEvent,
     local_keys: &identity::Keypair,
@@ -551,12 +550,10 @@ async fn dial_address(
     Ok(())
 }
 
-#[inline]
 async fn send_message(message: Vec<u8>, to: &PeerId, peers: &PeerList) -> Result<(), Error> {
     peers.send_message(message, to).await
 }
 
-#[inline]
 async fn recv_message(message: Vec<u8>, from: PeerId, event_sender: &EventSender) -> Result<(), Error> {
     event_sender
         .send(Event::MessageReceived { message, from })

@@ -83,7 +83,6 @@ pub async fn dial_peer(
     Ok(())
 }
 
-#[inline]
 fn log_dialing_peer(peer_id: &PeerId, peer_info: &PeerInfo) {
     if let Some(alias) = peer_info.alias.as_ref() {
         info!("Dialing {}:{}...", alias, peer_id.short());
@@ -167,7 +166,6 @@ pub async fn dial_address(
     Ok(())
 }
 
-#[inline]
 fn log_outbound_connection_success(peer_id: &PeerId, peer_info: &PeerInfo) {
     if let Some(alias) = peer_info.alias.as_ref() {
         info!("Established (outbound) connection with {}:{}.", alias, peer_id.short(),)
