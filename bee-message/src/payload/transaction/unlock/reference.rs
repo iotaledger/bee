@@ -17,7 +17,7 @@ impl TryFrom<u16> for ReferenceUnlock {
 
     fn try_from(index: u16) -> Result<Self, Self::Error> {
         if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
-            return Err(Self::Error::InvalidInputOutputIndex);
+            return Err(Self::Error::InvalidInputOutputIndex(index));
         }
 
         Ok(Self(index))

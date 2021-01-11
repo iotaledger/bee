@@ -56,7 +56,7 @@ impl FromStr for OutputId {
 impl OutputId {
     pub fn new(transaction_id: TransactionId, index: u16) -> Result<Self, Error> {
         if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
-            return Err(Error::InvalidInputOutputIndex);
+            return Err(Error::InvalidInputOutputIndex(index));
         }
 
         Ok(Self { transaction_id, index })

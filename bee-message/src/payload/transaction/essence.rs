@@ -162,7 +162,7 @@ impl TransactionEssenceBuilder {
         // Inputs validation
 
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.inputs.len()) {
-            return Err(Error::InvalidInputOutputCount);
+            return Err(Error::InvalidInputOutputCount(self.inputs.len()));
         }
 
         for i in self.inputs.iter() {
@@ -170,7 +170,7 @@ impl TransactionEssenceBuilder {
                 Input::UTXO(u) => {
                     // Transaction Output Index must be 0 ≤ x < 127
                     if !INPUT_OUTPUT_INDEX_RANGE.contains(&u.output_id().index()) {
-                        return Err(Error::InvalidInputOutputIndex);
+                        return Err(Error::InvalidInputOutputIndex(u.output_id().index()));
                     }
 
                     // Every combination of Transaction ID + Transaction Output Index must be unique in the inputs set.
@@ -184,7 +184,7 @@ impl TransactionEssenceBuilder {
         // Outputs validation
 
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.outputs.len()) {
-            return Err(Error::InvalidInputOutputCount);
+            return Err(Error::InvalidInputOutputCount(self.outputs.len()));
         }
 
         let mut total = 0;

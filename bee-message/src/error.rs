@@ -6,8 +6,8 @@ use core::fmt;
 #[derive(Debug)]
 pub enum Error {
     AmountError,
-    InvalidInputOutputCount,
-    InvalidInputOutputIndex,
+    InvalidInputOutputCount(usize),
+    InvalidInputOutputIndex(u16),
     InvalidInputType,
     InvalidOutputType,
     InvalidPayloadType,
@@ -38,8 +38,8 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::AmountError => write!(f, "Invalid amount provided."),
-            Error::InvalidInputOutputCount => write!(f, "Invalid count number provided."),
-            Error::InvalidInputOutputIndex => write!(f, "Invalid input or output index."),
+            Error::InvalidInputOutputCount(count) => write!(f, "Invalid input or output count {}.", count),
+            Error::InvalidInputOutputIndex(index) => write!(f, "Invalid input or output index {}.", index),
             Error::InvalidInputType => write!(f, "Invalid input type."),
             Error::InvalidOutputType => write!(f, "Invalid output type."),
             Error::InvalidPayloadType => write!(f, "Invalid payload type."),
