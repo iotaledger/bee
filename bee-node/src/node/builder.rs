@@ -88,7 +88,9 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         }
         .with_resource(Bus::<TypeId>::default())
         // TODO block ? Make new async ?
-        .with_resource(futures::executor::block_on(B::start(config.storage)).map_err(Error::StorageBackend)?))
+        .with_resource(
+            futures::executor::block_on(B::start(config.storage)).map_err(|e| Error::StorageBackend(Box::new(e)))?,
+        ))
     }
 
     fn with_worker<W: Worker<BeeNode<B>> + 'static>(self) -> Self
