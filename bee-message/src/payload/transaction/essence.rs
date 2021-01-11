@@ -111,10 +111,7 @@ impl Packable for TransactionEssence {
             if payload_len != payload.packed_len() {
                 return Err(Self::Error::InvalidAnnouncedLength(payload_len, payload.packed_len()));
             }
-            match payload {
-                Payload::Indexation(_) => builder = builder.with_payload(payload),
-                _ => return Err(Self::Error::InvalidTransactionPayload),
-            }
+            builder = builder.with_payload(payload);
         }
 
         Ok(builder.finish()?)
@@ -225,9 +222,9 @@ impl TransactionEssenceBuilder {
             return Err(Error::InvalidAccumulatedOutput(total));
         }
 
-        // Payload Length must be 0 (to indicate that there's no payload) or be valid for the specified payload type.
-        // Payload Type must be one of the supported payload types if Payload Length is not 0.
-        // TODO check payload type
+        if !matches!(self.payload, None | Some(Payload::Indexation(_))) {
+            return Err(Error::InvalidTransactionPayload);
+        }
 
         self.inputs.sort();
         self.outputs.sort();
