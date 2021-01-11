@@ -3,7 +3,7 @@
 
 use crate::{
     peer::{Peer, PeerManager},
-    tangle::MsTangle,
+    storage::StorageBackend,
     worker::{
         HasherWorker, MessageResponderWorker, MetricsWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
         PeerWorker, RequestedMilestones, TangleWorker,
@@ -11,9 +11,9 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
 use bee_network::{Event, NetworkListener, ShortId};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::{channel::oneshot, StreamExt};
@@ -25,7 +25,10 @@ use std::{any::TypeId, convert::Infallible, sync::Arc};
 pub(crate) struct PeerManagerWorker {}
 
 #[async_trait]
-impl<N: Node> Worker<N> for PeerManagerWorker {
+impl<N: Node> Worker<N> for PeerManagerWorker
+where
+    N::Backend: StorageBackend,
+{
     type Config = NetworkListener;
     type Error = Infallible;
 

@@ -24,9 +24,9 @@ pub fn exec(tool: &SnapshotInfo) {
             .format("%d-%m-%Y %H:%M:%S")
     );
     println!("Network ID:\t\t{}", snapshot.header().network_id());
-    println!("SEP index:\t\t{}", snapshot.header().sep_index());
-    println!("Ledger index:\t\t{}", snapshot.header().ledger_index());
+    println!("SEP index:\t\t{}", *snapshot.header().sep_index());
+    println!("Ledger index:\t\t{}", *snapshot.header().ledger_index());
     println!("SEP count:\t\t{}", snapshot.solid_entry_points().len());
-    println!("Outputs count:\t\t{}", snapshot.outputs_len());
-    println!("Milestone diffs count:\t{}", snapshot.milestone_diffs_len());
+    println!("Outputs count:\t\t{}", snapshot.outputs().len());
+    println!("Milestone diffs count:\t{}", snapshot.milestone_diffs().len());
 }

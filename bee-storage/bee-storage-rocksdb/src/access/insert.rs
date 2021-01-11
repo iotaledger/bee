@@ -12,16 +12,17 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_protocol::{
-    tangle::{MessageMetadata, SolidEntryPoint},
-    Milestone, MilestoneIndex,
-};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Insert;
+use bee_tangle::{
+    metadata::MessageMetadata,
+    milestone::{Milestone, MilestoneIndex},
+    solid_entry_point::SolidEntryPoint,
+};
 
 #[async_trait::async_trait]
 impl Insert<MessageId, Message> for Storage {
-    async fn insert(&self, message_id: &MessageId, message: &Message) -> Result<(), <Self as Backend>::Error> {
+    async fn insert(&self, message_id: &MessageId, message: &Message) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
@@ -35,7 +36,11 @@ impl Insert<MessageId, Message> for Storage {
 
 #[async_trait::async_trait]
 impl Insert<MessageId, MessageMetadata> for Storage {
-    async fn insert(&self, message_id: &MessageId, metadata: &MessageMetadata) -> Result<(), <Self as Backend>::Error> {
+    async fn insert(
+        &self,
+        message_id: &MessageId,
+        metadata: &MessageMetadata,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
@@ -49,7 +54,11 @@ impl Insert<MessageId, MessageMetadata> for Storage {
 
 #[async_trait::async_trait]
 impl Insert<(MessageId, MessageId), ()> for Storage {
-    async fn insert(&self, (parent, child): &(MessageId, MessageId), (): &()) -> Result<(), <Self as Backend>::Error> {
+    async fn insert(
+        &self,
+        (parent, child): &(MessageId, MessageId),
+        (): &(),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)
@@ -70,7 +79,7 @@ impl Insert<(HashedIndex, MessageId), ()> for Storage {
         &self,
         (index, message_id): &(HashedIndex, MessageId),
         (): &(),
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_INDEX_TO_MESSAGE_ID)
@@ -87,7 +96,7 @@ impl Insert<(HashedIndex, MessageId), ()> for Storage {
 
 #[async_trait::async_trait]
 impl Insert<OutputId, Output> for Storage {
-    async fn insert(&self, output_id: &OutputId, output: &Output) -> Result<(), <Self as Backend>::Error> {
+    async fn insert(&self, output_id: &OutputId, output: &Output) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
@@ -101,7 +110,7 @@ impl Insert<OutputId, Output> for Storage {
 
 #[async_trait::async_trait]
 impl Insert<OutputId, Spent> for Storage {
-    async fn insert(&self, output_id: &OutputId, spent: &Spent) -> Result<(), <Self as Backend>::Error> {
+    async fn insert(&self, output_id: &OutputId, spent: &Spent) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_SPENT)
@@ -115,7 +124,7 @@ impl Insert<OutputId, Spent> for Storage {
 
 #[async_trait::async_trait]
 impl Insert<Unspent, ()> for Storage {
-    async fn insert(&self, unspent: &Unspent, (): &()) -> Result<(), <Self as Backend>::Error> {
+    async fn insert(&self, unspent: &Unspent, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_UNSPENT)
@@ -133,7 +142,7 @@ impl Insert<(Ed25519Address, OutputId), ()> for Storage {
         &self,
         (address, output_id): &(Ed25519Address, OutputId),
         (): &(),
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)
@@ -150,7 +159,7 @@ impl Insert<(Ed25519Address, OutputId), ()> for Storage {
 
 #[async_trait::async_trait]
 impl Insert<(), LedgerIndex> for Storage {
-    async fn insert(&self, (): &(), index: &LedgerIndex) -> Result<(), <Self as Backend>::Error> {
+    async fn insert(&self, (): &(), index: &LedgerIndex) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_LEDGER_INDEX)
@@ -164,7 +173,11 @@ impl Insert<(), LedgerIndex> for Storage {
 
 #[async_trait::async_trait]
 impl Insert<MilestoneIndex, Milestone> for Storage {
-    async fn insert(&self, index: &MilestoneIndex, milestone: &Milestone) -> Result<(), <Self as Backend>::Error> {
+    async fn insert(
+        &self,
+        index: &MilestoneIndex,
+        milestone: &Milestone,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
@@ -178,7 +191,7 @@ impl Insert<MilestoneIndex, Milestone> for Storage {
 
 #[async_trait::async_trait]
 impl Insert<(), SnapshotInfo> for Storage {
-    async fn insert(&self, (): &(), info: &SnapshotInfo) -> Result<(), <Self as Backend>::Error> {
+    async fn insert(&self, (): &(), info: &SnapshotInfo) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_SNAPSHOT_INFO)
@@ -192,7 +205,11 @@ impl Insert<(), SnapshotInfo> for Storage {
 
 #[async_trait::async_trait]
 impl Insert<SolidEntryPoint, MilestoneIndex> for Storage {
-    async fn insert(&self, sep: &SolidEntryPoint, index: &MilestoneIndex) -> Result<(), <Self as Backend>::Error> {
+    async fn insert(
+        &self,
+        sep: &SolidEntryPoint,
+        index: &MilestoneIndex,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
@@ -206,7 +223,7 @@ impl Insert<SolidEntryPoint, MilestoneIndex> for Storage {
 
 #[async_trait::async_trait]
 impl Insert<MilestoneIndex, Diff> for Storage {
-    async fn insert(&self, index: &MilestoneIndex, diff: &Diff) -> Result<(), <Self as Backend>::Error> {
+    async fn insert(&self, index: &MilestoneIndex, diff: &Diff) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)

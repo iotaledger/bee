@@ -4,6 +4,7 @@
 use crate::{kind::Kind, Error};
 
 use bee_common::packable::{Packable, Read, Write};
+use bee_tangle::milestone::MilestoneIndex;
 
 const SNAPSHOT_VERSION: u8 = 1;
 
@@ -12,8 +13,8 @@ pub struct SnapshotHeader {
     pub(crate) kind: Kind,
     pub(crate) timestamp: u64,
     pub(crate) network_id: u64,
-    pub(crate) sep_index: u32,
-    pub(crate) ledger_index: u32,
+    pub(crate) sep_index: MilestoneIndex,
+    pub(crate) ledger_index: MilestoneIndex,
 }
 
 impl SnapshotHeader {
@@ -29,11 +30,11 @@ impl SnapshotHeader {
         self.network_id
     }
 
-    pub fn sep_index(&self) -> u32 {
+    pub fn sep_index(&self) -> MilestoneIndex {
         self.sep_index
     }
 
-    pub fn ledger_index(&self) -> u32 {
+    pub fn ledger_index(&self) -> MilestoneIndex {
         self.ledger_index
     }
 }
@@ -74,8 +75,8 @@ impl Packable for SnapshotHeader {
         let kind = Kind::unpack(reader)?;
         let timestamp = u64::unpack(reader)?;
         let network_id = u64::unpack(reader)?;
-        let sep_index = u32::unpack(reader)?;
-        let ledger_index = u32::unpack(reader)?;
+        let sep_index = MilestoneIndex::unpack(reader)?;
+        let ledger_index = MilestoneIndex::unpack(reader)?;
 
         Ok(Self {
             kind,

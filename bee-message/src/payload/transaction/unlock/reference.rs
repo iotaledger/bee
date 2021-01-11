@@ -17,7 +17,7 @@ impl TryFrom<u16> for ReferenceUnlock {
 
     fn try_from(index: u16) -> Result<Self, Self::Error> {
         if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
-            return Err(Self::Error::InvalidIndex);
+            return Err(Self::Error::InvalidInputOutputIndex(index));
         }
 
         Ok(Self(index))
@@ -51,6 +51,6 @@ impl Packable for ReferenceUnlock {
     where
         Self: Sized,
     {
-        Ok(Self::new(u16::unpack(reader)?).map_err(|_| Self::Error::InvalidSyntax)?)
+        Ok(Self::new(u16::unpack(reader)?)?)
     }
 }

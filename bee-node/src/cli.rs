@@ -4,7 +4,7 @@
 use crate::{config::NodeConfigBuilder, tools::Tool};
 
 use bee_common::logger::{LoggerConfigBuilder, LOGGER_STDOUT_NAME};
-use bee_storage::storage::Backend;
+use bee_storage::backend::StorageBackend;
 
 use log::LevelFilter;
 use structopt::StructOpt;
@@ -53,7 +53,7 @@ impl CliArgs {
     }
 }
 
-impl<B: Backend> NodeConfigBuilder<B> {
+impl<B: StorageBackend> NodeConfigBuilder<B> {
     pub fn with_cli_args(mut self, args: CliArgs) -> Self {
         if let Some(log_level) = args.log_level {
             if self.logger.is_none() {

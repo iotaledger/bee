@@ -11,8 +11,7 @@ pub use mps::Mps;
 pub use mqtt::Mqtt;
 pub use version_checker::VersionChecker;
 
-use bee_common::event::Bus;
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_runtime::{event::Bus, node::Node, worker::Worker};
 
 use async_trait::async_trait;
 

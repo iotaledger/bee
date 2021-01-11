@@ -3,7 +3,7 @@
 
 use crate::rand::message::rand_message_id;
 
-use bee_protocol::tangle::SolidEntryPoint;
+use bee_tangle::solid_entry_point::SolidEntryPoint;
 
 pub fn rand_solid_entry_point() -> SolidEntryPoint {
     rand_message_id().into()

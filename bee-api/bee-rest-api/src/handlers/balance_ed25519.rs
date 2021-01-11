@@ -4,12 +4,12 @@
 use crate::{
     filters::CustomRejection::{NotFound, ServiceUnavailable},
     handlers::{BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_ledger::model::Spent;
 use bee_message::prelude::*;
+use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::{Exist, Fetch};
 
 use serde::Serialize;
@@ -17,9 +17,9 @@ use warp::{reject, Rejection, Reply};
 
 use std::ops::Deref;
 
-pub(crate) async fn balance_ed25519<B: Backend>(
+pub(crate) async fn balance_ed25519<B: StorageBackend>(
     addr: Ed25519Address,
-    storage: ResHandle<B>,
+    storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
     match Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage.deref(), &addr)
         .await
@@ -40,7 +40,7 @@ pub(crate) async fn balance_ed25519<B: Backend>(
                         .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
                     {
                         match output.inner() {
-                            Output::SignatureLockedSingle(o) => balance += o.amount().get() as u64,
+                            Output::SignatureLockedSingle(o) => balance += o.amount() as u64,
                             _ => {
                                 return Err(reject::custom(ServiceUnavailable(
                                     "output type not supported".to_string(),

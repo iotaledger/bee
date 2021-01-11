@@ -71,7 +71,7 @@ pub async fn dial_peer(
 
     log_outbound_connection_success(&peer_id, &peer_info);
 
-    super::spawn_connection_handler(
+    super::upgrade_connection(
         peer_id,
         peer_info,
         muxer,
@@ -155,7 +155,7 @@ pub async fn dial_address(
 
     log_outbound_connection_success(&peer_id, &peer_info);
 
-    super::spawn_connection_handler(
+    super::upgrade_connection(
         peer_id,
         peer_info,
         muxer,

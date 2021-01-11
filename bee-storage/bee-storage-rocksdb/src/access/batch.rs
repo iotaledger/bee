@@ -12,12 +12,13 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_protocol::{
-    tangle::{MessageMetadata, SolidEntryPoint},
-    Milestone, MilestoneIndex,
-};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::{Batch, BatchBuilder};
+use bee_tangle::{
+    metadata::MessageMetadata,
+    milestone::{Milestone, MilestoneIndex},
+    solid_entry_point::SolidEntryPoint,
+};
 
 use rocksdb::{WriteBatch, WriteOptions};
 
@@ -32,7 +33,7 @@ pub struct StorageBatch {
 impl BatchBuilder for Storage {
     type Batch = StorageBatch;
 
-    async fn batch_commit(&self, batch: Self::Batch, durability: bool) -> Result<(), <Self as Backend>::Error> {
+    async fn batch_commit(&self, batch: Self::Batch, durability: bool) -> Result<(), <Self as StorageBackend>::Error> {
         let mut write_options = WriteOptions::default();
         write_options.set_sync(false);
         write_options.disable_wal(!durability);
@@ -48,7 +49,7 @@ impl Batch<MessageId, Message> for Storage {
         batch: &mut Self::Batch,
         message_id: &MessageId,
         message: &Message,
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
@@ -63,7 +64,11 @@ impl Batch<MessageId, Message> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, message_id: &MessageId) -> Result<(), <Self as Backend>::Error> {
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        message_id: &MessageId,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
@@ -81,7 +86,7 @@ impl Batch<MessageId, MessageMetadata> for Storage {
         batch: &mut Self::Batch,
         message_id: &MessageId,
         metadata: &MessageMetadata,
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
@@ -96,7 +101,11 @@ impl Batch<MessageId, MessageMetadata> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, message_id: &MessageId) -> Result<(), <Self as Backend>::Error> {
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        message_id: &MessageId,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
@@ -114,7 +123,7 @@ impl Batch<(MessageId, MessageId), ()> for Storage {
         batch: &mut Self::Batch,
         (parent, child): &(MessageId, MessageId),
         (): &(),
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)
@@ -133,7 +142,7 @@ impl Batch<(MessageId, MessageId), ()> for Storage {
         &self,
         batch: &mut Self::Batch,
         (parent, child): &(MessageId, MessageId),
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)
@@ -155,7 +164,7 @@ impl Batch<(HashedIndex, MessageId), ()> for Storage {
         batch: &mut Self::Batch,
         (index, message_id): &(HashedIndex, MessageId),
         (): &(),
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_INDEX_TO_MESSAGE_ID)
@@ -174,7 +183,7 @@ impl Batch<(HashedIndex, MessageId), ()> for Storage {
         &self,
         batch: &mut Self::Batch,
         (index, message_id): &(HashedIndex, MessageId),
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_INDEX_TO_MESSAGE_ID)
@@ -196,7 +205,7 @@ impl Batch<OutputId, Output> for Storage {
         batch: &mut Self::Batch,
         output_id: &OutputId,
         output: &Output,
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
@@ -214,7 +223,11 @@ impl Batch<OutputId, Output> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, output_id: &OutputId) -> Result<(), <Self as Backend>::Error> {
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        output_id: &OutputId,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
@@ -236,7 +249,7 @@ impl Batch<OutputId, Spent> for Storage {
         batch: &mut Self::Batch,
         output_id: &OutputId,
         spent: &Spent,
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_SPENT)
@@ -254,7 +267,11 @@ impl Batch<OutputId, Spent> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, output_id: &OutputId) -> Result<(), <Self as Backend>::Error> {
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        output_id: &OutputId,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_SPENT)
@@ -308,7 +325,7 @@ impl Batch<(Ed25519Address, OutputId), ()> for Storage {
         batch: &mut Self::Batch,
         (address, output_id): &(Ed25519Address, OutputId),
         (): &(),
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)
@@ -327,7 +344,7 @@ impl Batch<(Ed25519Address, OutputId), ()> for Storage {
         &self,
         batch: &mut Self::Batch,
         (address, output_id): &(Ed25519Address, OutputId),
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)
@@ -349,7 +366,7 @@ impl Batch<(), LedgerIndex> for Storage {
         batch: &mut Self::Batch,
         (): &(),
         index: &LedgerIndex,
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_LEDGER_INDEX)
@@ -364,7 +381,7 @@ impl Batch<(), LedgerIndex> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, (): &()) -> Result<(), <Self as Backend>::Error> {
+    fn batch_delete(&self, batch: &mut Self::Batch, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_LEDGER_INDEX)
@@ -382,7 +399,7 @@ impl Batch<MilestoneIndex, Milestone> for Storage {
         batch: &mut Self::Batch,
         index: &MilestoneIndex,
         milestone: &Milestone,
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
@@ -400,7 +417,11 @@ impl Batch<MilestoneIndex, Milestone> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, index: &MilestoneIndex) -> Result<(), <Self as Backend>::Error> {
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        index: &MilestoneIndex,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
@@ -422,7 +443,7 @@ impl Batch<(), SnapshotInfo> for Storage {
         batch: &mut Self::Batch,
         (): &(),
         info: &SnapshotInfo,
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_SNAPSHOT_INFO)
@@ -437,7 +458,7 @@ impl Batch<(), SnapshotInfo> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, (): &()) -> Result<(), <Self as Backend>::Error> {
+    fn batch_delete(&self, batch: &mut Self::Batch, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_SNAPSHOT_INFO)
@@ -495,7 +516,7 @@ impl Batch<MilestoneIndex, Diff> for Storage {
         batch: &mut Self::Batch,
         index: &MilestoneIndex,
         diff: &Diff,
-    ) -> Result<(), <Self as Backend>::Error> {
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)
@@ -513,7 +534,11 @@ impl Batch<MilestoneIndex, Diff> for Storage {
         Ok(())
     }
 
-    fn batch_delete(&self, batch: &mut Self::Batch, index: &MilestoneIndex) -> Result<(), <Self as Backend>::Error> {
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        index: &MilestoneIndex,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)

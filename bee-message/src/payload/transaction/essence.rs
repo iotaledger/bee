@@ -4,7 +4,7 @@
 use crate::{
     payload::{
         transaction::{
-            constants::{INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE},
+            constants::{INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE, IOTA_SUPPLY},
             input::Input,
             output::Output,
         },
@@ -103,25 +103,18 @@ impl Packable for TransactionEssence {
             outputs.push(Output::unpack(reader)?);
         }
 
+        let mut builder = Self::builder().with_inputs(inputs).with_outputs(outputs);
+
         let payload_len = u32::unpack(reader)? as usize;
-        let payload = if payload_len > 0 {
+        if payload_len > 0 {
             let payload = Payload::unpack(reader)?;
             if payload_len != payload.packed_len() {
                 return Err(Self::Error::InvalidAnnouncedLength(payload_len, payload.packed_len()));
             }
+            builder = builder.with_payload(payload);
+        }
 
-            Some(payload)
-        } else {
-            None
-        };
-
-        // TODO check payload type
-
-        Ok(Self {
-            inputs: inputs.into_boxed_slice(),
-            outputs: outputs.into_boxed_slice(),
-            payload,
-        })
+        builder.finish()
     }
 }
 
@@ -137,8 +130,18 @@ impl TransactionEssenceBuilder {
         Self::default()
     }
 
+    pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
+        self.inputs = inputs;
+        self
+    }
+
     pub fn add_input(mut self, input: Input) -> Self {
         self.inputs.push(input);
+        self
+    }
+
+    pub fn with_outputs(mut self, outputs: Vec<Output>) -> Self {
+        self.outputs = outputs;
         self
     }
 
@@ -153,45 +156,44 @@ impl TransactionEssenceBuilder {
     }
 
     pub fn finish(mut self) -> Result<TransactionEssence, Error> {
-        // Inputs validation
-
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.inputs.len()) {
-            return Err(Error::CountError);
+            return Err(Error::InvalidInputOutputCount(self.inputs.len()));
         }
 
-        for i in self.inputs.iter() {
-            // Input Type value must be 0, denoting an UTXO Input.
-            match i {
+        if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.outputs.len()) {
+            return Err(Error::InvalidInputOutputCount(self.outputs.len()));
+        }
+
+        if !matches!(self.payload, None | Some(Payload::Indexation(_))) {
+            return Err(Error::InvalidTransactionPayload);
+        }
+
+        // Inputs validation
+
+        for input in self.inputs.iter() {
+            match input {
                 Input::UTXO(u) => {
                     // Transaction Output Index must be 0 ≤ x < 127
                     if !INPUT_OUTPUT_INDEX_RANGE.contains(&u.output_id().index()) {
-                        return Err(Error::CountError);
+                        return Err(Error::InvalidInputOutputIndex(u.output_id().index()));
                     }
 
                     // Every combination of Transaction ID + Transaction Output Index must be unique in the inputs set.
-                    if self.inputs.iter().filter(|j| *j == i).count() > 1 {
+                    if self.inputs.iter().filter(|i| *i == input).count() > 1 {
                         return Err(Error::DuplicateError);
                     }
                 }
             }
         }
 
-        // Output validation
-
-        if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.outputs.len()) {
-            return Err(Error::CountError);
-        }
+        // Outputs validation
 
         let mut total = 0;
-        for i in self.outputs.iter() {
-            // Output Type must be 0, denoting a SignatureLockedSingle.
-            match i {
+
+        for output in self.outputs.iter() {
+            match output {
                 Output::SignatureLockedSingle(u) => {
-                    // Address Type must either be 0 or 1, denoting a WOTS- or Ed25519 address.
-
-                    // If Address is of type WOTS address, its bytes must be valid T5B1 bytes.
-
-                    // The Address must be unique in the set of SigLockedSingleDeposits
+                    // The Address must be unique in the set of SigLockedSingleDeposits.
                     if self
                         .outputs
                         .iter()
@@ -204,25 +206,15 @@ impl TransactionEssenceBuilder {
                         return Err(Error::DuplicateError);
                     }
 
-                    // Amount must be > 0
-                    let amount = u.amount().get();
-                    if amount == 0 {
-                        return Err(Error::AmountError);
-                    }
-
-                    total += amount;
+                    total += u.amount();
                 }
             }
         }
 
-        // Accumulated output balance must not exceed the total supply of tokens 2'779'530'283'277'761
-        if total > 2779530283277761 {
-            return Err(Error::AmountError);
+        // Accumulated output balance must not exceed the total supply of tokens.
+        if total > IOTA_SUPPLY {
+            return Err(Error::InvalidAccumulatedOutput(total));
         }
-
-        // Payload Length must be 0 (to indicate that there's no payload) or be valid for the specified payload type.
-        // Payload Type must be one of the supported payload types if Payload Length is not 0.
-        // TODO check payload type
 
         self.inputs.sort();
         self.outputs.sort();

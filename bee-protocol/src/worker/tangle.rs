@@ -1,27 +1,33 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{tangle::MsTangle, MilestoneIndex};
+use crate::storage::StorageBackend;
 
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_ledger::model::LedgerIndex;
 use bee_message::MessageId;
-use bee_snapshot::{SnapshotInfo, SnapshotWorker, SolidEntryPoints};
+use bee_runtime::{node::Node, worker::Worker};
+use bee_snapshot::{SnapshotInfo, SnapshotWorker};
+use bee_storage::access::{AsStream, Fetch};
+use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MsTangle};
 
 use async_trait::async_trait;
+use futures::StreamExt;
 use log::{error, warn};
 use tokio::time::interval;
 
 use std::{
     any::TypeId,
     convert::Infallible,
-    ops::Deref,
     time::{Duration, Instant},
 };
 
 pub struct TangleWorker;
 
 #[async_trait]
-impl<N: Node> Worker<N> for TangleWorker {
+impl<N: Node> Worker<N> for TangleWorker
+where
+    N::Backend: StorageBackend,
+{
     type Config = ();
     type Error = Infallible;
 
@@ -30,23 +36,30 @@ impl<N: Node> Worker<N> for TangleWorker {
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let storage = node.storage();
-        let tangle = MsTangle::<N::Backend>::new(storage);
+        let tangle = MsTangle::<N::Backend>::new(node.storage());
         node.register_resource(tangle);
+        let storage = node.storage();
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let snapshot_info = node.resource::<SnapshotInfo>();
-        let seps = node.resource::<SolidEntryPoints>();
+        // TODO unwrap
+        let snapshot_info = Fetch::<(), SnapshotInfo>::fetch(&*storage, &()).await.unwrap().unwrap();
+        // TODO unwrap
+        let ledger_index = Fetch::<(), LedgerIndex>::fetch(&*storage, &()).await.unwrap().unwrap();
 
-        tangle.update_latest_solid_milestone_index(snapshot_info.entry_point_index().into());
+        tangle.update_latest_solid_milestone_index((*ledger_index).into());
+        // TODO look from storage
         tangle.update_latest_milestone_index(snapshot_info.entry_point_index().into());
         tangle.update_snapshot_index(snapshot_info.snapshot_index().into());
         tangle.update_pruning_index(snapshot_info.pruning_index().into());
         // TODO
         // tangle.add_milestone(config.sep_index().into(), *config.sep_id());
 
-        // TODO oh no :(
-        for message_id in seps.deref().deref().deref() {
-            tangle.add_solid_entry_point(*message_id, MilestoneIndex(snapshot_info.entry_point_index()));
+        // TODO unwrap
+        let mut sep_stream = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&*storage)
+            .await
+            .unwrap();
+
+        while let Some((sep, index)) = sep_stream.next().await {
+            tangle.add_solid_entry_point(*sep, index);
         }
         tangle.add_solid_entry_point(MessageId::null(), MilestoneIndex(0));
 

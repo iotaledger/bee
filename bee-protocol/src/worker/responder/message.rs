@@ -4,14 +4,15 @@
 use crate::{
     packet::{Message as MessagePacket, MessageRequest},
     peer::PeerManager,
-    tangle::MsTangle,
+    storage::StorageBackend,
     worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
     ProtocolMetrics, Sender,
 };
 
-use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_common::packable::Packable;
 use bee_network::{NetworkController, PeerId};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -30,7 +31,10 @@ pub(crate) struct MessageResponderWorker {
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for MessageResponderWorker {
+impl<N: Node> Worker<N> for MessageResponderWorker
+where
+    N::Backend: StorageBackend,
+{
     type Config = ();
     type Error = Infallible;
 

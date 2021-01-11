@@ -31,6 +31,8 @@ use serde::{Deserialize, Serialize};
 use alloc::{boxed::Box, vec::Vec};
 use core::{cmp::Ordering, slice::Iter};
 
+pub(crate) const PAYLOAD_TRANSACTION_TYPE: u32 = 0;
+
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Transaction {
     essence: TransactionEssence,
@@ -45,8 +47,7 @@ impl Transaction {
     pub fn id(&self) -> TransactionId {
         let mut hasher = VarBlake2b::new(TRANSACTION_ID_LENGTH).unwrap();
 
-        // TODO temporary until we know if we want to put IDs in or out of the enum types.
-        hasher.update(0u32.to_le_bytes());
+        hasher.update(PAYLOAD_TRANSACTION_TYPE.to_le_bytes());
         hasher.update(self.pack_new());
 
         let mut bytes = [0u8; TRANSACTION_ID_LENGTH];
@@ -105,10 +106,10 @@ impl Packable for Transaction {
             unlock_blocks.push(UnlockBlock::unpack(reader)?);
         }
 
-        Ok(Self {
-            essence,
-            unlock_blocks: unlock_blocks.into_boxed_slice(),
-        })
+        Self::builder()
+            .with_essence(essence)
+            .with_unlock_blocks(unlock_blocks)
+            .finish()
     }
 }
 
@@ -147,6 +148,12 @@ impl TransactionBuilder {
         self
     }
 
+    pub fn with_unlock_blocks(mut self, unlock_blocks: Vec<UnlockBlock>) -> Self {
+        self.unlock_blocks = unlock_blocks;
+
+        self
+    }
+
     pub fn add_unlock_block(mut self, unlock_block: UnlockBlock) -> Self {
         self.unlock_blocks.push(unlock_block);
 
@@ -163,7 +170,7 @@ impl TransactionBuilder {
         // Unlock Blocks validation
         // Unlock Blocks Count must match the amount of inputs. Must be 0 < x < 127.
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.unlock_blocks.len()) {
-            return Err(Error::CountError);
+            return Err(Error::InvalidInputOutputCount(self.unlock_blocks.len()));
         }
 
         // for (i, block) in self.unlock_blocks.iter().enumerate() {

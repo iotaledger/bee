@@ -5,9 +5,9 @@ use crate::{
     config::ProtocolConfig,
     event::{LatestMilestoneChanged, LatestSolidMilestoneChanged},
     helper,
-    milestone::{key_manager::KeyManager, Milestone, MilestoneIndex},
+    milestone::key_manager::KeyManager,
     peer::PeerManager,
-    tangle::MsTangle,
+    storage::StorageBackend,
     worker::{
         MetricsWorker, MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent, MilestoneRequesterWorker,
         MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, PeerManagerResWorker, RequestedMilestones,
@@ -16,10 +16,14 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_common::packable::Packable;
 use bee_message::{payload::Payload, MessageId};
 use bee_network::NetworkController;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{
+    milestone::{Milestone, MilestoneIndex},
+    MsTangle,
+};
 
 use async_trait::async_trait;
 use crypto::ed25519::{verify, PublicKey, Signature};
@@ -59,7 +63,7 @@ async fn validate<N: Node>(
     message_id: MessageId,
 ) -> Result<(MilestoneIndex, Milestone), Error>
 where
-    N: Node,
+    N::Backend: StorageBackend,
 {
     let message = tangle.get(&message_id).await.ok_or(Error::UnknownMessage)?;
 
@@ -123,10 +127,7 @@ where
 
             Ok((
                 MilestoneIndex(milestone.essence().index()),
-                Milestone {
-                    message_id,
-                    timestamp: milestone.essence().timestamp(),
-                },
+                Milestone::new(message_id, milestone.essence().timestamp()),
             ))
         }
         _ => Err(Error::NoMilestonePayload),
@@ -134,9 +135,9 @@ where
 }
 
 #[async_trait]
-impl<N> Worker<N> for MilestonePayloadWorker
+impl<N: Node> Worker<N> for MilestonePayloadWorker
 where
-    N: Node,
+    N::Backend: StorageBackend,
 {
     type Config = ProtocolConfig;
     type Error = Infallible;
@@ -175,14 +176,13 @@ where
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(MilestonePayloadWorkerEvent(message_id)) = receiver.next().await {
-                if let Some(meta) = tangle.get_metadata(&message_id) {
+                if let Some(meta) = tangle.get_metadata(&message_id).await {
                     if meta.flags().is_milestone() {
                         continue;
                     }
                     match validate::<N>(&tangle, &key_manager, message_id).await {
                         Ok((index, milestone)) => {
-                            tangle.add_milestone(index, milestone.clone());
-
+                            tangle.add_milestone(index, milestone.clone()).await;
                             // This is possibly not sufficient as there is no guarantee a milestone has been
                             // solidified before being validated, we then also need
                             // to check when a milestone gets solidified if it's
@@ -200,7 +200,7 @@ where
                             }
 
                             if index > tangle.get_latest_milestone_index() {
-                                info!("New milestone {} {}.", *index, milestone.message_id);
+                                info!("New milestone {} {}.", *index, milestone.message_id());
                                 tangle.update_latest_milestone_index(index);
 
                                 helper::broadcast_heartbeat(
@@ -218,9 +218,11 @@ where
                             }
 
                             if requested_milestones.remove(&index).is_some() {
-                                tangle.update_metadata(&milestone.message_id, |meta| {
-                                    meta.flags_mut().set_requested(true)
-                                });
+                                tangle
+                                    .update_metadata(milestone.message_id(), |meta| {
+                                        meta.flags_mut().set_requested(true)
+                                    })
+                                    .await;
 
                                 if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
                                     error!("Sending solidification event failed: {}", e);

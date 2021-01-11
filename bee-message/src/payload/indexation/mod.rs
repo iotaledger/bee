@@ -17,6 +17,12 @@ use blake2::{
     VarBlake2b,
 };
 
+use std::ops::Range;
+
+pub(crate) const PAYLOAD_INDEXATION_TYPE: u32 = 2;
+
+const INDEX_LENGTH_RANGE: Range<usize> = 1..65;
+
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Indexation {
     index: String,
@@ -25,8 +31,8 @@ pub struct Indexation {
 
 impl Indexation {
     pub fn new(index: String, data: &[u8]) -> Result<Self, Error> {
-        if index.is_empty() {
-            return Err(Error::EmptyIndex);
+        if !INDEX_LENGTH_RANGE.contains(&index.len()) {
+            return Err(Error::InvalidIndexLength(index.len()));
         }
 
         Ok(Self {
@@ -46,9 +52,8 @@ impl Indexation {
     // TODO use crypto.rs
     pub fn hash(&self) -> HashedIndex {
         let mut hasher = VarBlake2b::new(HASHED_INDEX_LENGTH).unwrap();
-        let bytes = self.pack_new();
 
-        hasher.update(&bytes);
+        hasher.update(self.index.as_bytes());
 
         let mut hash = [0u8; HASHED_INDEX_LENGTH];
         hasher.finalize_variable(|res| hash.copy_from_slice(res));
@@ -86,9 +91,6 @@ impl Packable for Indexation {
         let mut data_bytes = vec![0u8; data_len];
         reader.read_exact(&mut data_bytes)?;
 
-        Ok(Self {
-            index: String::from_utf8(index_bytes)?,
-            data: data_bytes.into_boxed_slice(),
-        })
+        Self::new(String::from_utf8(index_bytes)?, &data_bytes)
     }
 }

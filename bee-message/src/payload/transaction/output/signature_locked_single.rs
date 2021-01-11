@@ -1,30 +1,35 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::transaction::Address, Error};
+use crate::{
+    payload::transaction::{constants::IOTA_SUPPLY, Address},
+    Error,
+};
 
 use bee_common::packable::{Packable, Read, Write};
 
 use serde::{Deserialize, Serialize};
 
-use core::num::NonZeroU64;
-
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
 pub struct SignatureLockedSingleOutput {
     address: Address,
-    amount: NonZeroU64,
+    amount: u64,
 }
 
 impl SignatureLockedSingleOutput {
-    pub fn new(address: Address, amount: NonZeroU64) -> Self {
-        Self { address, amount }
+    pub fn new(address: Address, amount: u64) -> Result<Self, Error> {
+        if amount == 0 || amount > IOTA_SUPPLY {
+            return Err(Error::InvalidAmount(amount));
+        }
+
+        Ok(Self { address, amount })
     }
 
     pub fn address(&self) -> &Address {
         &self.address
     }
 
-    pub fn amount(&self) -> NonZeroU64 {
+    pub fn amount(&self) -> u64 {
         self.amount
     }
 }
@@ -38,7 +43,7 @@ impl Packable for SignatureLockedSingleOutput {
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.address.pack(writer)?;
-        u64::from(self.amount).pack(writer)?;
+        self.amount.pack(writer)?;
 
         Ok(())
     }
@@ -47,10 +52,6 @@ impl Packable for SignatureLockedSingleOutput {
     where
         Self: Sized,
     {
-        let address = Address::unpack(reader)?;
-        // TODO unwrap
-        let amount = NonZeroU64::new(u64::unpack(reader)?).unwrap();
-
-        Ok(Self { address, amount })
+        Self::new(Address::unpack(reader)?, u64::unpack(reader)?)
     }
 }

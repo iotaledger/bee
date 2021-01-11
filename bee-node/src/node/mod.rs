@@ -7,13 +7,9 @@ mod error;
 pub use builder::BeeNodeBuilder;
 pub use error::Error;
 
-use crate::{config::NodeConfig, storage::Backend};
+use crate::{config::NodeConfig, storage::StorageBackend};
 
-use bee_common::event::Bus;
-use bee_common_pt2::{
-    node::{Node, ResHandle},
-    worker::Worker,
-};
+use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Worker};
 
 use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
@@ -47,7 +43,7 @@ pub struct BeeNode<B> {
     phantom: PhantomData<B>,
 }
 
-impl<B: Backend> BeeNode<B> {
+impl<B: StorageBackend> BeeNode<B> {
     fn add_worker<W: Worker<Self> + Send + Sync>(&mut self, worker: W) {
         self.workers.insert(worker);
     }
@@ -82,7 +78,7 @@ impl<B: Backend> BeeNode<B> {
 }
 
 #[async_trait]
-impl<B: Backend> Node for BeeNode<B> {
+impl<B: StorageBackend> Node for BeeNode<B> {
     type Builder = BeeNodeBuilder<B>;
     type Backend = B;
     type Error = Error;
@@ -109,19 +105,19 @@ impl<B: Backend> Node for BeeNode<B> {
     }
 
     fn register_resource<R: Any + Send + Sync>(&mut self, res: R) {
-        self.resources.insert(ResHandle::new(res));
+        self.resources.insert(ResourceHandle::new(res));
     }
 
     fn remove_resource<R: Any + Send + Sync>(&mut self) -> Option<R> {
-        self.resources.remove::<ResHandle<R>>()?.try_unwrap()
+        self.resources.remove::<ResourceHandle<R>>()?.try_unwrap()
     }
 
     #[track_caller]
-    fn resource<R: Any + Send + Sync>(&self) -> ResHandle<R> {
-        self.resources
-            .get::<ResHandle<R>>()
-            .unwrap_or_else(|| panic!("Unable to fetch node resource {}", type_name::<R>()))
-            .clone()
+    fn resource<R: Any + Send + Sync>(&self) -> ResourceHandle<R> {
+        match self.resources.get::<ResourceHandle<R>>() {
+            Some(res) => res.clone(),
+            None => panic!("Unable to fetch node resource {}.", type_name::<R>(),),
+        }
     }
 
     fn spawn<W, G, F>(&mut self, g: G)

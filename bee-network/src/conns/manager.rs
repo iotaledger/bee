@@ -8,10 +8,9 @@ use crate::{
     Multiaddr, PeerId, ShortId,
 };
 
-use super::{errors::Error, spawn_connection_handler, Origin};
+use super::{errors::Error, Origin};
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
 use futures::prelude::*;
@@ -183,7 +182,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
 
                     log_inbound_connection_success(&peer_id, &peer_info);
 
-                    if let Err(e) = spawn_connection_handler(
+                    if let Err(e) = super::upgrade_connection(
                         peer_id,
                         peer_info,
                         muxer,
@@ -192,7 +191,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                     )
                     .await
                     {
-                        error!("Error spawning connection handler. Error: {}", e);
+                        error!("Error occurred during upgrading the connection. Cause: {}", e);
                         NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                         continue;
                     }

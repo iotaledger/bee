@@ -2,17 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    milestone::MilestoneIndex,
     packet::MilestoneRequest,
     peer::PeerManager,
-    tangle::MsTangle,
+    storage::StorageBackend,
     worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
     ProtocolMetrics, Sender,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
 use bee_network::{NetworkController, PeerId};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{milestone::MilestoneIndex, MsTangle};
 
 use async_trait::async_trait;
 use dashmap::DashMap;
@@ -140,7 +139,10 @@ async fn retry_requests(
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for MilestoneRequesterWorker {
+impl<N: Node> Worker<N> for MilestoneRequesterWorker
+where
+    N::Backend: StorageBackend,
+{
     type Config = ();
     type Error = Infallible;
 
@@ -172,7 +174,7 @@ impl<N: Node> Worker<N> for MilestoneRequesterWorker {
             let mut counter: usize = 0;
 
             while let Some(MilestoneRequesterWorkerEvent(index, peer_id)) = receiver.next().await {
-                if !tangle.contains_milestone(index) {
+                if !tangle.contains_milestone(index).await {
                     debug!("Requesting milestone {}.", *index);
                     process_request(
                         index,

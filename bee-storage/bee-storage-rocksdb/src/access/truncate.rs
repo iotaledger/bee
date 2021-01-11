@@ -11,16 +11,17 @@ use bee_message::{
     },
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
-use bee_protocol::{
-    tangle::{MessageMetadata, SolidEntryPoint},
-    Milestone, MilestoneIndex,
-};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Truncate;
+use bee_tangle::{
+    metadata::MessageMetadata,
+    milestone::{Milestone, MilestoneIndex},
+    solid_entry_point::SolidEntryPoint,
+};
 
 #[async_trait::async_trait]
 impl Truncate<MessageId, Message> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
@@ -35,7 +36,7 @@ impl Truncate<MessageId, Message> for Storage {
 
 #[async_trait::async_trait]
 impl Truncate<MessageId, MessageMetadata> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
@@ -50,7 +51,7 @@ impl Truncate<MessageId, MessageMetadata> for Storage {
 
 #[async_trait::async_trait]
 impl Truncate<(MessageId, MessageId), ()> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)
@@ -65,7 +66,7 @@ impl Truncate<(MessageId, MessageId), ()> for Storage {
 
 #[async_trait::async_trait]
 impl Truncate<(HashedIndex, MessageId), ()> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_INDEX_TO_MESSAGE_ID)
@@ -83,7 +84,7 @@ impl Truncate<(HashedIndex, MessageId), ()> for Storage {
 
 #[async_trait::async_trait]
 impl Truncate<OutputId, Output> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
@@ -98,7 +99,7 @@ impl Truncate<OutputId, Output> for Storage {
 
 #[async_trait::async_trait]
 impl Truncate<OutputId, Spent> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_SPENT)
@@ -113,7 +114,7 @@ impl Truncate<OutputId, Spent> for Storage {
 
 #[async_trait::async_trait]
 impl Truncate<Unspent, ()> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_UNSPENT)
@@ -128,7 +129,7 @@ impl Truncate<Unspent, ()> for Storage {
 
 #[async_trait::async_trait]
 impl Truncate<(Ed25519Address, OutputId), ()> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)
@@ -146,7 +147,7 @@ impl Truncate<(Ed25519Address, OutputId), ()> for Storage {
 
 #[async_trait::async_trait]
 impl Truncate<(), LedgerIndex> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_LEDGER_INDEX)
@@ -160,7 +161,7 @@ impl Truncate<(), LedgerIndex> for Storage {
 
 #[async_trait::async_trait]
 impl Truncate<MilestoneIndex, Milestone> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
@@ -178,7 +179,7 @@ impl Truncate<MilestoneIndex, Milestone> for Storage {
 
 #[async_trait::async_trait]
 impl Truncate<(), SnapshotInfo> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_SNAPSHOT_INFO)
@@ -192,7 +193,7 @@ impl Truncate<(), SnapshotInfo> for Storage {
 
 #[async_trait::async_trait]
 impl Truncate<SolidEntryPoint, MilestoneIndex> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
@@ -207,7 +208,7 @@ impl Truncate<SolidEntryPoint, MilestoneIndex> for Storage {
 
 #[async_trait::async_trait]
 impl Truncate<MilestoneIndex, Diff> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as Backend>::Error> {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)

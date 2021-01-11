@@ -17,7 +17,8 @@ bee-message = { path = "../bee-message" }
 bee-pow = { path = "../bee-pow" }
 bee-protocol = { path = "../bee-protocol" }
 bee-snapshot = { path = "../bee-snapshot" }
-bee-storage = { path = "../bee-storage/bee-storage" }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-tangle = { path = "../bee-tangle" }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 futures = "0.3"

@@ -6,19 +6,18 @@ pub mod config;
 mod asset;
 mod websocket;
 
+use crate::storage::StorageBackend;
+
 use config::DashboardConfig;
 use websocket::{
     responses::{milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, WsEvent},
     user_connected, WsUsers,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
-use bee_protocol::{
-    event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated},
-    tangle::MsTangle,
-};
+use bee_protocol::event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated};
 use bee_rest_api::config::RestApiConfig;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::MsTangle;
 
 use asset::Asset;
 use async_trait::async_trait;
@@ -40,6 +39,7 @@ pub struct Dashboard {}
 fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, f: F)
 where
     N: Node,
+    N::Backend: StorageBackend,
     E: Any + Clone + Send + Sync,
     F: 'static + Fn(E) -> WsEvent + Send + Sync,
 {
@@ -67,7 +67,10 @@ where
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for Dashboard {
+impl<N: Node> Worker<N> for Dashboard
+where
+    N::Backend: StorageBackend,
+{
     type Config = (DashboardConfig, RestApiConfig);
     type Error = Infallible;
 

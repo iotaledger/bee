@@ -12,7 +12,7 @@ use bee_peering::{PeeringConfig, PeeringConfigBuilder};
 use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_snapshot::config::{SnapshotConfig, SnapshotConfigBuilder};
-use bee_storage::storage::Backend;
+use bee_storage::backend::StorageBackend;
 
 use blake2::{
     digest::{Update, VariableOutput},
@@ -21,7 +21,12 @@ use blake2::{
 use serde::Deserialize;
 use thiserror::Error;
 
-use std::{convert::TryInto, fs, path::Path};
+use std::{
+    convert::TryInto,
+    fs,
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 const DEFAULT_ALIAS: &str = "bee";
 const DEFAULT_NETWORK_ID: &str = "alphanet1";
@@ -35,7 +40,7 @@ pub enum Error {
 }
 
 #[derive(Default, Deserialize)]
-pub struct NodeConfigBuilder<B: Backend> {
+pub struct NodeConfigBuilder<B: StorageBackend> {
     pub(crate) alias: Option<String>,
     pub(crate) network_id: Option<String>,
     pub(crate) logger: Option<LoggerConfigBuilder>,
@@ -49,7 +54,7 @@ pub struct NodeConfigBuilder<B: Backend> {
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
 }
 
-impl<B: Backend> NodeConfigBuilder<B> {
+impl<B: StorageBackend> NodeConfigBuilder<B> {
     /// Creates a node config builder from a local config file.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
         match fs::read_to_string(path) {
@@ -67,6 +72,10 @@ impl<B: Backend> NodeConfigBuilder<B> {
         NodeConfig {
             alias: self.alias.unwrap_or_else(|| DEFAULT_ALIAS.to_owned()),
             network_id,
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("Clock may have gone backwards")
+                .as_secs() as u64,
             logger: self.logger.unwrap_or_default().finish(),
             network: self.network.unwrap_or_default().finish(),
             peering: self.peering.unwrap_or_default().finish(),
@@ -80,9 +89,10 @@ impl<B: Backend> NodeConfigBuilder<B> {
     }
 }
 
-pub struct NodeConfig<B: Backend> {
+pub struct NodeConfig<B: StorageBackend> {
     pub alias: String,
     pub network_id: (String, u64),
+    pub timestamp: u64,
     pub logger: LoggerConfig,
     pub network: NetworkConfig,
     pub peering: PeeringConfig,
@@ -94,11 +104,12 @@ pub struct NodeConfig<B: Backend> {
     pub dashboard: DashboardConfig,
 }
 
-impl<B: Backend> Clone for NodeConfig<B> {
+impl<B: StorageBackend> Clone for NodeConfig<B> {
     fn clone(&self) -> Self {
         Self {
             alias: self.alias.clone(),
             network_id: self.network_id.clone(),
+            timestamp: self.timestamp.clone(),
             logger: self.logger.clone(),
             network: self.network.clone(),
             peering: self.peering.clone(),

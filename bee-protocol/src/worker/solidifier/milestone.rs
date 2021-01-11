@@ -4,9 +4,8 @@
 use crate::{
     event::LatestSolidMilestoneChanged,
     helper,
-    milestone::MilestoneIndex,
     peer::PeerManager,
-    tangle::MsTangle,
+    storage::StorageBackend,
     worker::{
         MessageRequesterWorker, MessageRequesterWorkerEvent, MetricsWorker, MilestoneRequesterWorker,
         PeerManagerResWorker, RequestedMessages, RequestedMilestones, TangleWorker,
@@ -14,16 +13,15 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_ledger::{LedgerWorker, LedgerWorkerEvent};
 use bee_network::NetworkController;
-use bee_storage::storage::Backend;
-use bee_tangle::traversal;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{milestone::MilestoneIndex, traversal, MsTangle};
 
 use async_trait::async_trait;
 use futures::{stream::FusedStream, StreamExt};
 use log::{debug, info, warn};
-use tokio::{sync::mpsc, time::interval};
+use tokio::{sync::mpsc, task::spawn, time::interval};
 
 use std::{any::TypeId, convert::Infallible, time::Duration};
 
@@ -35,15 +33,15 @@ pub(crate) struct MilestoneSolidifierWorker {
     pub(crate) tx: mpsc::UnboundedSender<MilestoneSolidifierWorkerEvent>,
 }
 
-async fn trigger_solidification_unchecked<B: Backend>(
+async fn trigger_solidification_unchecked<B: StorageBackend>(
     tangle: &MsTangle<B>,
     message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
     requested_messages: &RequestedMessages,
     target_index: MilestoneIndex,
     next_index: &mut MilestoneIndex,
 ) {
-    if let Some(target_id) = tangle.get_milestone_message_id(target_index) {
-        if !tangle.is_solid_message(&target_id) {
+    if let Some(target_id) = tangle.get_milestone_message_id(target_index).await {
+        if !tangle.is_solid_message(&target_id).await {
             debug!("Triggering solidification for milestone {}.", *target_index);
 
             // TODO: This wouldn't be necessary if the traversal code wasn't closure-driven
@@ -60,7 +58,8 @@ async fn trigger_solidification_unchecked<B: Backend>(
                 |_, _, _| {},
                 |_, _, _| {},
                 |missing_id| missing.push(*missing_id),
-            );
+            )
+            .await;
 
             for missing_id in missing {
                 helper::request_message(tangle, message_requester, requested_messages, missing_id, target_index).await;
@@ -78,7 +77,10 @@ fn save_index(target_index: MilestoneIndex, queue: &mut Vec<MilestoneIndex>) {
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for MilestoneSolidifierWorker {
+impl<N: Node> Worker<N> for MilestoneSolidifierWorker
+where
+    N::Backend: StorageBackend,
+{
     type Config = u32;
     type Error = Infallible;
 
@@ -90,6 +92,7 @@ impl<N: Node> Worker<N> for MilestoneSolidifierWorker {
             TypeId::of::<MilestoneRequesterWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<MetricsWorker>(),
+            TypeId::of::<LedgerWorker>(),
         ]
         .leak()
     }
@@ -98,6 +101,7 @@ impl<N: Node> Worker<N> for MilestoneSolidifierWorker {
         let (tx, rx) = mpsc::unbounded_channel();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
+        let ledger_worker = node.worker::<LedgerWorker>().unwrap().tx.clone();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
         let requested_milestones = node.resource::<RequestedMilestones>();
@@ -123,7 +127,8 @@ impl<N: Node> Worker<N> for MilestoneSolidifierWorker {
                             &*requested_milestones,
                             MilestoneIndex(index),
                             None,
-                        );
+                        )
+                        .await;
                     }
 
                     break;
@@ -169,27 +174,48 @@ impl<N: Node> Worker<N> for MilestoneSolidifierWorker {
 
         node.bus()
             .add_listener::<Self, _, _>(move |latest_solid_milestone: &LatestSolidMilestoneChanged| {
-                debug!("New solid milestone {}.", *latest_solid_milestone.index);
-                tangle.update_latest_solid_milestone_index(latest_solid_milestone.index);
+                // This is really dumb. Clone everything to keep it alive for the task below, needed for a .await
+                let milestone_solidifier = milestone_solidifier.clone();
+                let milestone_requester = milestone_requester.clone();
+                let ledger_worker = ledger_worker.clone();
+                let tangle = tangle.clone();
+                let network = network.clone();
+                let requested_milestones = requested_milestones.clone();
+                let peer_manager = peer_manager.clone();
+                let metrics = metrics.clone();
+                let latest_solid_milestone = latest_solid_milestone.clone();
 
-                let next_ms = latest_solid_milestone.index + MilestoneIndex(ms_sync_count);
+                // TODO: Don't spawn a task here
+                spawn(async move {
+                    debug!("New solid milestone {}.", *latest_solid_milestone.index);
 
-                if tangle.contains_milestone(next_ms) {
-                    if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(next_ms)) {
-                        warn!("Sending solidification event failed: {}", e);
+                    tangle.update_latest_solid_milestone_index(latest_solid_milestone.index);
+                    let next_ms = latest_solid_milestone.index + MilestoneIndex(ms_sync_count);
+
+                    if let Err(e) =
+                        ledger_worker.send(LedgerWorkerEvent(*latest_solid_milestone.milestone.message_id()))
+                    {
+                        warn!("Sending message_id to ledger worker failed: {}.", e);
                     }
-                } else {
-                    helper::request_milestone(&tangle, &milestone_requester, &*requested_milestones, next_ms, None);
-                }
 
-                helper::broadcast_heartbeat(
-                    &peer_manager,
-                    &network,
-                    &metrics,
-                    latest_solid_milestone.index,
-                    tangle.get_pruning_index(),
-                    tangle.get_latest_milestone_index(),
-                );
+                    if tangle.contains_milestone(next_ms).await {
+                        if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(next_ms)) {
+                            warn!("Sending solidification event failed: {}", e);
+                        }
+                    } else {
+                        helper::request_milestone(&tangle, &milestone_requester, &*requested_milestones, next_ms, None)
+                            .await;
+                    }
+
+                    helper::broadcast_heartbeat(
+                        &peer_manager,
+                        &network,
+                        &metrics,
+                        latest_solid_milestone.index,
+                        tangle.get_pruning_index(),
+                        tangle.get_latest_milestone_index(),
+                    );
+                });
             });
 
         Ok(Self { tx })

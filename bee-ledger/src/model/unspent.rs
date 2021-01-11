@@ -6,12 +6,22 @@ use crate::error::Error;
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::payload::transaction::OutputId;
 
+use std::ops::Deref;
+
 #[derive(Debug)]
 pub struct Unspent(OutputId);
 
 impl From<OutputId> for Unspent {
     fn from(id: OutputId) -> Self {
         Unspent(id)
+    }
+}
+
+impl Deref for Unspent {
+    type Target = OutputId;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

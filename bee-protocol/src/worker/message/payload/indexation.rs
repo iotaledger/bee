@@ -1,15 +1,19 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{tangle::MsTangle, worker::TangleWorker};
+use crate::{storage::StorageBackend, worker::TangleWorker};
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
-use bee_message::{payload::Payload, MessageId};
+use bee_message::{
+    payload::{indexation::HashedIndex, Payload},
+    MessageId,
+};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_storage::access::Insert;
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use log::info;
+use log::{info, warn};
 use tokio::sync::mpsc;
 
 use std::{any::TypeId, convert::Infallible};
@@ -25,6 +29,7 @@ pub(crate) struct IndexationPayloadWorker {
 impl<N> Worker<N> for IndexationPayloadWorker
 where
     N: Node,
+    N::Backend: StorageBackend,
 {
     type Config = ();
     type Error = Infallible;
@@ -36,6 +41,7 @@ where
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
         let tangle = node.resource::<MsTangle<N::Backend>>();
+        let storage = node.storage();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -52,8 +58,13 @@ where
                         },
                         _ => continue,
                     };
-                    let _hash = indexation.hash();
-                    // TODO store
+                    let hash = indexation.hash();
+
+                    if let Err(e) =
+                        Insert::<(HashedIndex, MessageId), ()>::insert(&*storage, &(hash, message_id), &()).await
+                    {
+                        warn!("Inserting indexation payload failed: {:?}.", e);
+                    }
                 }
             }
 

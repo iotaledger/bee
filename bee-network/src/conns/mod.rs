@@ -13,7 +13,7 @@ use crate::{
     interaction::events::{InternalEvent, InternalEventSender},
     peers::{self, DataReceiver, PeerInfo},
     protocols::gossip::{GossipProtocol, GossipSubstream},
-    PeerId, ShortId, MSG_BUFFER_SIZE,
+    PeerId, ShortId,
 };
 
 use futures::{prelude::*, select, AsyncRead, AsyncWrite};
@@ -24,12 +24,11 @@ use libp2p::core::{
 use log::*;
 use tokio::task::JoinHandle;
 
-use std::{
-    fmt,
-    sync::{atomic::Ordering, Arc},
-};
+use std::{fmt, sync::Arc};
 
-pub(crate) async fn spawn_connection_handler(
+const MSG_BUFFER_SIZE: usize = 10000;
+
+pub(crate) async fn upgrade_connection(
     peer_id: PeerId,
     peer_info: PeerInfo,
     muxer: StreamMuxerBox,
@@ -69,7 +68,7 @@ pub(crate) async fn spawn_connection_handler(
         }
     };
 
-    spawn_substream_task(
+    spawn_substream_io_task(
         peer_id.clone(),
         substream,
         message_receiver,
@@ -88,7 +87,7 @@ pub(crate) async fn spawn_connection_handler(
     Ok(())
 }
 
-fn spawn_substream_task(
+fn spawn_substream_io_task(
     peer_id: PeerId,
     mut substream: GossipSubstream,
     message_receiver: DataReceiver,
@@ -96,7 +95,7 @@ fn spawn_substream_task(
 ) -> JoinHandle<()> {
     tokio::spawn(async move {
         let mut fused_message_receiver = message_receiver.fuse();
-        let mut buffer = vec![0u8; MSG_BUFFER_SIZE.load(Ordering::Relaxed)];
+        let mut buffer = vec![0u8; MSG_BUFFER_SIZE];
 
         loop {
             select! {
@@ -189,17 +188,22 @@ async fn process_read(
     Ok(())
 }
 
+/// Describes direction of an established connection.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Origin {
+    /// The connection is inbound (server).
     Inbound,
+    /// The connection is outbound (client).
     Outbound,
 }
 
 impl Origin {
+    /// Returns whether the connection is inbound.
     pub fn is_inbound(&self) -> bool {
         *self == Origin::Inbound
     }
 
+    /// Returns whether the connection is outbound.
     pub fn is_outbound(&self) -> bool {
         *self == Origin::Outbound
     }

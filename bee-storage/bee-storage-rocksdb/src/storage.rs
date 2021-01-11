@@ -6,7 +6,7 @@ use super::{
     error::Error,
 };
 
-pub use bee_storage::storage::Backend;
+pub use bee_storage::backend::StorageBackend;
 
 use bee_message::{
     payload::{indexation::HASHED_INDEX_LENGTH, transaction::ED25519_ADDRESS_LENGTH},
@@ -118,7 +118,7 @@ impl Storage {
 }
 
 #[async_trait]
-impl Backend for Storage {
+impl StorageBackend for Storage {
     type ConfigBuilder = RocksDBConfigBuilder;
     type Config = RocksDBConfig;
     type Error = Error;

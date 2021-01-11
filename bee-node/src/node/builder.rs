@@ -5,16 +5,16 @@ use crate::{
     config::NodeConfig,
     node::{BeeNode, Error},
     plugins::{self, Dashboard, Mqtt, VersionChecker},
-    storage::Backend,
+    storage::StorageBackend,
 };
 
-use bee_common::event::Bus;
-use bee_common_pt2::{
+use bee_network::{self, NetworkController};
+use bee_peering::{ManualPeerManager, PeerManager};
+use bee_runtime::{
+    event::Bus,
     node::{Node, NodeBuilder},
     worker::Worker,
 };
-use bee_network::{self, NetworkController};
-use bee_peering::{ManualPeerManager, PeerManager};
 
 use anymap::Map;
 use async_trait::async_trait;
@@ -48,7 +48,7 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
     receiver
 }
 
-pub struct BeeNodeBuilder<B: Backend> {
+pub struct BeeNodeBuilder<B: StorageBackend> {
     deps: HashMap<TypeId, &'static [TypeId]>,
     worker_starts: HashMap<TypeId, Box<WorkerStart<BeeNode<B>>>>,
     worker_stops: HashMap<TypeId, Box<WorkerStop<BeeNode<B>>>>,
@@ -56,7 +56,7 @@ pub struct BeeNodeBuilder<B: Backend> {
     config: NodeConfig<B>,
 }
 
-impl<B: Backend> BeeNodeBuilder<B> {
+impl<B: StorageBackend> BeeNodeBuilder<B> {
     pub fn config(&self) -> &NodeConfig<B> {
         &self.config
     }
@@ -74,7 +74,7 @@ impl<B: Backend> BeeNodeBuilder<B> {
 }
 
 #[async_trait(?Send)]
-impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
+impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
     type Error = Error;
     type Config = NodeConfig<B>;
 
@@ -150,20 +150,23 @@ impl<B: Backend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         let network_config = config.network.clone();
         let network_id = config.network_id.1;
+
+        let max_unknown_peers = config.peering.manual.unknown_peers_limit;
         let local_keys = config.peering.identity_private_key.0.clone();
 
         let this = self.with_resource(config.clone()); // TODO: Remove clone
 
         info!("Initializing network layer...");
-        let (this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
+        let (this, events) =
+            bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, max_unknown_peers, this).await;
 
         let this = this.with_resource(ctrl_c_listener());
 
         info!("Initializing snapshot handler...");
         let this = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, network_id, this).await;
 
-        // info!("Initializing ledger...");
-        // let mut this = bee_ledger::init::<BeeNode<B>>(snapshot.header().ledger_index(), this);
+        info!("Initializing ledger...");
+        let this = bee_ledger::init::<BeeNode<B>>(this);
 
         info!("Initializing protocol layer...");
         let this = bee_protocol::init::<BeeNode<B>>(config.protocol.clone(), network_id, events, this);

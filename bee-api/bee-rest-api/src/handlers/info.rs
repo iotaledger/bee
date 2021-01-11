@@ -4,20 +4,21 @@
 use crate::{
     config::RestApiConfig,
     handlers::{health::is_healthy, BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
     NetworkId,
 };
 
-use bee_common_pt2::node::ResHandle;
-use bee_protocol::{config::ProtocolConfig, tangle::MsTangle};
+use bee_protocol::config::ProtocolConfig;
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::MsTangle;
 
 use serde::Serialize;
 use warp::Reply;
 
 use std::convert::Infallible;
 
-pub(crate) async fn info<B: Backend>(
-    tangle: ResHandle<MsTangle<B>>,
+pub(crate) async fn info<B: StorageBackend>(
+    tangle: ResourceHandle<MsTangle<B>>,
     network_id: NetworkId,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,

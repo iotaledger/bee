@@ -4,22 +4,22 @@
 use crate::{
     filters::CustomRejection::{BadRequest, NotFound},
     handlers::{BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
     types::*,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
-use bee_protocol::tangle::MsTangle;
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::MsTangle;
 
 use serde::Serialize;
 use warp::{reject, Rejection, Reply};
 
 use std::convert::TryFrom;
 
-pub(crate) async fn message<B: Backend>(
+pub(crate) async fn message<B: StorageBackend>(
     message_id: MessageId,
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     match tangle.get(&message_id).await {
         Some(message) => Ok(warp::reply::json(&SuccessBody::new(MessageResponse(

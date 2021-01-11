@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    tangle::MsTangle,
+    storage::StorageBackend,
     worker::{IndexationPayloadWorker, IndexationPayloadWorkerEvent, TangleWorker},
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
 use bee_message::{payload::Payload, MessageId};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -28,6 +28,7 @@ pub(crate) struct TransactionPayloadWorker {
 impl<N> Worker<N> for TransactionPayloadWorker
 where
     N: Node,
+    N::Backend: StorageBackend,
 {
     type Config = ();
     type Error = Infallible;
@@ -48,8 +49,8 @@ where
 
             while let Some(TransactionPayloadWorkerEvent(message_id)) = receiver.next().await {
                 if let Some(message) = tangle.get(&message_id).await {
-                    match message.payload() {
-                        Some(Payload::Indexation(_)) => {
+                    if let Some(Payload::Transaction(transaction)) = message.payload() {
+                        if let Some(Payload::Indexation(_)) = transaction.essence().payload() {
                             if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
                                 warn!(
                                     "Sending message id {} to indexation payload worker failed: {:?}.",
@@ -57,7 +58,6 @@ where
                                 );
                             }
                         }
-                        _ => continue,
                     }
                 }
             }

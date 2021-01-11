@@ -12,12 +12,13 @@ use bee_message::{
     },
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
-use bee_protocol::{
-    tangle::{MessageMetadata, SolidEntryPoint},
-    Milestone, MilestoneIndex,
-};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::AsStream;
+use bee_tangle::{
+    metadata::MessageMetadata,
+    milestone::{Milestone, MilestoneIndex},
+    solid_entry_point::SolidEntryPoint,
+};
 
 use futures::{
     stream::Stream,
@@ -54,7 +55,7 @@ macro_rules! impl_stream {
         impl<'a> AsStream<'a, $key, $value> for Storage {
             type Stream = StorageStream<'a, $key, $value>;
 
-            async fn stream(&'a self) -> Result<Self::Stream, <Self as Backend>::Error> {
+            async fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
                 let cf = self.inner.cf_handle($cf).ok_or(Error::UnknownCf($cf))?;
 
                 Ok(StorageStream::new(

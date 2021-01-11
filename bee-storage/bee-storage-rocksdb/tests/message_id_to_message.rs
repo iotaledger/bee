@@ -5,7 +5,7 @@ use bee_common::packable::Packable;
 use bee_message::{Message, MessageId};
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
-    storage::Backend,
+    backend::StorageBackend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
 use bee_test::rand::message::{rand_message, rand_message_id};

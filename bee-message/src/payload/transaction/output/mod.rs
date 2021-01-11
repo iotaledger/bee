@@ -54,7 +54,7 @@ impl Packable for Output {
     {
         Ok(match u8::unpack(reader)? {
             0 => Self::SignatureLockedSingle(SignatureLockedSingleOutput::unpack(reader)?),
-            _ => return Err(Self::Error::InvalidVariant),
+            _ => return Err(Self::Error::InvalidOutputType),
         })
     }
 }

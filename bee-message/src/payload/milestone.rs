@@ -9,6 +9,8 @@ use serde::{Deserialize, Serialize};
 
 use alloc::{boxed::Box, vec::Vec};
 
+pub(crate) const PAYLOAD_MILESTONE_TYPE: u32 = 1;
+
 pub const MILESTONE_MERKLE_PROOF_LENGTH: usize = 32;
 pub const MILESTONE_PUBLIC_KEY_LENGTH: usize = 32;
 pub const MILESTONE_SIGNATURE_LENGTH: usize = 64;

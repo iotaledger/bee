@@ -50,7 +50,7 @@ impl Packable for Input {
     {
         Ok(match u8::unpack(reader)? {
             0 => Self::UTXO(UTXOInput::unpack(reader)?),
-            _ => return Err(Self::Error::InvalidVariant),
+            _ => return Err(Self::Error::InvalidInputType),
         })
     }
 }

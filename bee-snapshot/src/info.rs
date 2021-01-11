@@ -4,22 +4,23 @@
 use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
+use bee_tangle::milestone::MilestoneIndex;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SnapshotInfo {
     pub(crate) network_id: u64,
-    pub(crate) snapshot_index: u32,
-    pub(crate) entry_point_index: u32,
-    pub(crate) pruning_index: u32,
+    pub(crate) snapshot_index: MilestoneIndex,
+    pub(crate) entry_point_index: MilestoneIndex,
+    pub(crate) pruning_index: MilestoneIndex,
     pub(crate) timestamp: u64,
 }
 
 impl SnapshotInfo {
     pub fn new(
         network_id: u64,
-        snapshot_index: u32,
-        entry_point_index: u32,
-        pruning_index: u32,
+        snapshot_index: MilestoneIndex,
+        entry_point_index: MilestoneIndex,
+        pruning_index: MilestoneIndex,
         timestamp: u64,
     ) -> Self {
         Self {
@@ -35,15 +36,15 @@ impl SnapshotInfo {
         self.network_id
     }
 
-    pub fn snapshot_index(&self) -> u32 {
+    pub fn snapshot_index(&self) -> MilestoneIndex {
         self.snapshot_index
     }
 
-    pub fn entry_point_index(&self) -> u32 {
+    pub fn entry_point_index(&self) -> MilestoneIndex {
         self.entry_point_index
     }
 
-    pub fn pruning_index(&self) -> u32 {
+    pub fn pruning_index(&self) -> MilestoneIndex {
         self.pruning_index
     }
 
@@ -78,9 +79,9 @@ impl Packable for SnapshotInfo {
         Self: Sized,
     {
         let network_id = u64::unpack(reader)?;
-        let snapshot_index = u32::unpack(reader)?;
-        let entry_point_index = u32::unpack(reader)?;
-        let pruning_index = u32::unpack(reader)?;
+        let snapshot_index = MilestoneIndex::unpack(reader)?;
+        let entry_point_index = MilestoneIndex::unpack(reader)?;
+        let pruning_index = MilestoneIndex::unpack(reader)?;
         let timestamp = u64::unpack(reader)?;
 
         Ok(Self {
