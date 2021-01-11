@@ -22,4 +22,7 @@ pub trait StorageBackend: Send + Sized + Sync + 'static {
 
     /// Shutdowns the backend.
     async fn shutdown(self) -> Result<(), Box<dyn Error>>;
+
+    /// Size of the database in bytes.
+    async fn size(&self) -> Result<usize, Box<dyn Error>>;
 }
