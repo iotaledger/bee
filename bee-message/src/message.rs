@@ -12,7 +12,7 @@ use blake2::{
 };
 use serde::{Deserialize, Serialize};
 
-const MESSAGE_LENGTH_MAX: usize = 32000;
+pub const MESSAGE_LENGTH_MAX: usize = 32000;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Message {

@@ -27,7 +27,7 @@ pub enum Error {
     InvalidType(u8, u8),
     InvalidAnnouncedLength(usize, usize),
     InvalidHex,
-    InvalidIndexLength(usize),
+    InvalidIndexationLength(usize),
     InvalidMessageLength(usize),
     InvalidTransactionPayload,
 }
@@ -61,7 +61,7 @@ impl fmt::Display for Error {
                 write!(f, "Invalid announced length: {}, {}.", expected, actual)
             }
             Error::InvalidHex => write!(f, "Invalid hexadecimal conversion."),
-            Error::InvalidIndexLength(length) => write!(f, "Invalid index length {}.", length),
+            Error::InvalidIndexationLength(length) => write!(f, "Invalid indexation index or data length {}.", length),
             Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
             Error::InvalidTransactionPayload => write!(f, "Invalid transaction payload type."),
         }
