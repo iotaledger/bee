@@ -12,7 +12,7 @@ use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use log::{info, warn};
+use log::{debug, info, warn};
 use tokio::sync::mpsc;
 
 use std::{any::TypeId, convert::Infallible};
@@ -22,6 +22,25 @@ pub(crate) struct TransactionPayloadWorkerEvent(pub(crate) MessageId);
 
 pub(crate) struct TransactionPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<TransactionPayloadWorkerEvent>,
+}
+
+async fn process<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    message_id: MessageId,
+    indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
+) {
+    if let Some(message) = tangle.get(&message_id).await {
+        if let Some(Payload::Transaction(transaction)) = message.payload() {
+            if let Some(Payload::Indexation(_)) = transaction.essence().payload() {
+                if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
+                    warn!(
+                        "Sending message id {} to indexation payload worker failed: {:?}.",
+                        message_id, e
+                    );
+                }
+            }
+        }
+    }
 }
 
 #[async_trait]
@@ -48,19 +67,19 @@ where
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(TransactionPayloadWorkerEvent(message_id)) = receiver.next().await {
-                if let Some(message) = tangle.get(&message_id).await {
-                    if let Some(Payload::Transaction(transaction)) = message.payload() {
-                        if let Some(Payload::Indexation(_)) = transaction.essence().payload() {
-                            if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
-                                warn!(
-                                    "Sending message id {} to indexation payload worker failed: {:?}.",
-                                    message_id, e
-                                );
-                            }
-                        }
-                    }
-                }
+                process(&tangle, message_id, &indexation_payload_worker).await;
             }
+
+            let (_, mut receiver) = receiver.split();
+            let receiver = receiver.get_mut();
+            let mut count = 0;
+
+            while let Ok(TransactionPayloadWorkerEvent(message_id)) = receiver.try_recv() {
+                process(&tangle, message_id, &indexation_payload_worker).await;
+                count += 1;
+            }
+
+            debug!("Drained {} message ids.", count);
 
             info!("Stopped.");
         });
