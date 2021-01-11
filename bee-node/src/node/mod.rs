@@ -99,7 +99,7 @@ impl<B: StorageBackend> Node for BeeNode<B> {
             .unwrap()
             .shutdown()
             .await
-            .map_err(Error::StorageBackend)?;
+            .map_err(|e| Error::StorageBackend(Box::new(e)))?;
 
         Ok(())
     }

@@ -5,7 +5,7 @@ mod hash;
 
 pub use hash::{HashedIndex, HASHED_INDEX_LENGTH};
 
-use crate::Error;
+use crate::{Error, MESSAGE_LENGTH_MAX};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -32,7 +32,11 @@ pub struct Indexation {
 impl Indexation {
     pub fn new(index: String, data: &[u8]) -> Result<Self, Error> {
         if !INDEX_LENGTH_RANGE.contains(&index.len()) {
-            return Err(Error::InvalidIndexLength(index.len()));
+            return Err(Error::InvalidIndexationLength(index.len()));
+        }
+
+        if data.len() > MESSAGE_LENGTH_MAX {
+            return Err(Error::InvalidIndexationLength(data.len()));
         }
 
         Ok(Self {
@@ -84,13 +88,26 @@ impl Packable for Indexation {
         Self: Sized,
     {
         let index_len = u16::unpack(reader)? as usize;
-        let mut index_bytes = vec![0u8; index_len];
+
+        if !INDEX_LENGTH_RANGE.contains(&index_len) {
+            return Err(Error::InvalidIndexationLength(index_len));
+        }
+
+        let mut index_bytes = Vec::with_capacity(index_len);
         reader.read_exact(&mut index_bytes)?;
 
         let data_len = u32::unpack(reader)? as usize;
-        let mut data_bytes = vec![0u8; data_len];
+
+        if data_len > MESSAGE_LENGTH_MAX {
+            return Err(Error::InvalidIndexationLength(data_len));
+        }
+
+        let mut data_bytes = Vec::with_capacity(data_len);
         reader.read_exact(&mut data_bytes)?;
 
-        Self::new(String::from_utf8(index_bytes)?, &data_bytes)
+        Ok(Self {
+            index: String::from_utf8(index_bytes)?,
+            data: data_bytes.into_boxed_slice(),
+        })
     }
 }

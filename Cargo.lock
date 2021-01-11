@@ -89,9 +89,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.37"
+version = "1.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee67c11feeac938fae061b232e38e0b6d94f97a9df10e6271319325ac4c56a86"
+checksum = "afddf7f520a80dbf76e6f50a35bca42a2331ef227a28b3b6dc5c2e2338d114b1"
 
 [[package]]
 name = "anymap"
@@ -240,7 +240,7 @@ dependencies = [
  "memchr",
  "num_cpus",
  "once_cell",
- "pin-project-lite 0.2.3",
+ "pin-project-lite 0.2.4",
  "pin-utils",
  "slab",
  "wasm-bindgen-futures",
@@ -335,7 +335,7 @@ dependencies = [
 [[package]]
 name = "bee-common"
 version = "0.2.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e7fa8ed3fda3beed2cadaff37c75343c732fab48"
 dependencies = [
  "chrono",
  "fern",
@@ -347,7 +347,7 @@ dependencies = [
 [[package]]
 name = "bee-crypto"
 version = "0.2.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e7fa8ed3fda3beed2cadaff37c75343c732fab48"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -543,7 +543,7 @@ dependencies = [
 [[package]]
 name = "bee-runtime"
 version = "0.1.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e7fa8ed3fda3beed2cadaff37c75343c732fab48"
 dependencies = [
  "async-trait",
  "bee-storage",
@@ -576,8 +576,8 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "0.1.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
+version = "0.2.0-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e7fa8ed3fda3beed2cadaff37c75343c732fab48"
 dependencies = [
  "async-trait",
  "futures 0.3.9",
@@ -634,7 +634,7 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.3.4-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e7fa8ed3fda3beed2cadaff37c75343c732fab48"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -852,9 +852,9 @@ checksum = "0e4cec68f03f32e44924783795810fa50a7035d8c8ebe78580ad7e6c703fba38"
 
 [[package]]
 name = "bytes"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad1f8e949d755f9d79112b5bb46938e0ef9d3804a0b16dfab13aafcaa5f0fa72"
+checksum = "b700ce4376041dcd0a327fd0097c41095743c4c8af8887265942faf1100bd040"
 
 [[package]]
 name = "cache-padded"
@@ -1516,7 +1516,7 @@ dependencies = [
  "futures-io",
  "memchr",
  "parking",
- "pin-project-lite 0.2.3",
+ "pin-project-lite 0.2.4",
  "waker-fn",
 ]
 
@@ -1597,7 +1597,7 @@ dependencies = [
  "futures-sink",
  "futures-task",
  "memchr",
- "pin-project-lite 0.2.3",
+ "pin-project-lite 0.2.4",
  "pin-utils",
  "proc-macro-hack",
  "proc-macro-nested",
@@ -1812,7 +1812,7 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7245cd7449cc792608c3c8a9eaf69bd4eabbabf802713748fd739c98b82f0747"
 dependencies = [
- "bytes 1.0.0",
+ "bytes 1.0.1",
  "fnv",
  "itoa",
 ]
@@ -2270,9 +2270,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.11"
+version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fabed175da42fed1fa0746b0ea71f412aa9d35e76e95e59b192c64b9dc2bf8b"
+checksum = "fcf3805d4480bb5b86070dcfeb9e2cb2ebc148adb753c5cca5f884d1d65a42b2"
 dependencies = [
  "cfg-if 0.1.10",
  "serde",
@@ -2724,9 +2724,9 @@ checksum = "c917123afa01924fc84bb20c4c03f004d9c38e5127e3c039bbf7f4b9c76a2f6b"
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba36e0a6cc5a4c645073f4984f1ed55d09f5857d4de7c14550baa81a39ef5a17"
+checksum = "439697af366c49a6d0a010c56a0d97685bc140ce0d377b13a2ea2aa42d64a827"
 
 [[package]]
 name = "pin-utils"
@@ -2993,9 +2993,9 @@ checksum = "41cc0f7e4d5d4544e8861606a285bb08d3e70712ccc7d2b84d7c0ccfaf4b05ce"
 
 [[package]]
 name = "redox_syscall"
-version = "0.2.2"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3d82a0e6791428b9525c116cc671feac3ce1e73b26c5724a6bf26ae130ebf18"
+checksum = "05ec8ca9416c5ea37062b502703cd7fcb207736bc294f6e0cf367ac6fc234570"
 dependencies = [
  "bitflags",
 ]
@@ -3007,7 +3007,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "528532f3d801c87aec9def2add9ca802fe569e44a544afe633765267840abe64"
 dependencies = [
  "getrandom 0.2.1",
- "redox_syscall 0.2.2",
+ "redox_syscall 0.2.4",
 ]
 
 [[package]]
@@ -3069,7 +3069,7 @@ dependencies = [
  "mime_guess",
  "native-tls",
  "percent-encoding",
- "pin-project-lite 0.2.3",
+ "pin-project-lite 0.2.4",
  "serde",
  "serde_urlencoded 0.7.0",
  "tokio",
@@ -3749,7 +3749,7 @@ checksum = "9f47026cdc4080c07e49b37087de021820269d996f581aac150ef9e5583eefe3"
 dependencies = [
  "cfg-if 1.0.0",
  "log",
- "pin-project-lite 0.2.3",
+ "pin-project-lite 0.2.4",
  "tracing-core",
 ]
 
