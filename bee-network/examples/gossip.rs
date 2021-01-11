@@ -278,19 +278,29 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
         let local_keys = Keypair::generate();
         let network_id = 1;
 
-        let (this, network_listener) =
-            bee_network::init::<ExampleNode>(network_config, local_keys, network_id, 0, self).await;
+        let (mut this, network_listener) =
+            bee_network::init::<ExampleNode>(network_config, local_keys, network_id, 1, self).await;
 
-        info!("[EXAMPLE] Node initialized.");
-
-        Ok(ExampleNode {
+        let mut node = ExampleNode {
             config: this.config,
             network_listener,
             connected_peers: HashSet::new(),
             resources: Map::new(),
             tasks: HashMap::new(),
             workers: Map::new(),
-        })
+        };
+
+        for f in this.resource_registers {
+            f(&mut node);
+        }
+
+        for (_, f) in this.worker_starts.drain() {
+            f(&mut node).await
+        }
+
+        info!("[EXAMPLE] Node initialized.");
+
+        Ok(node)
     }
 }
 
