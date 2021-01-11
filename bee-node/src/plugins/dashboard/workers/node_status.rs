@@ -7,7 +7,7 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use bee_tangle::MsTangle;
 
 use futures::StreamExt;
-use log::info;
+use log::debug;
 use serde::Serialize;
 use std::time::Instant;
 use tokio::time::interval;
@@ -32,7 +32,7 @@ where
     let tangle = node.resource::<MsTangle<N::Backend>>();
 
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
-        info!("Ws `node_status_worker` running.");
+        debug!("Ws `node_status_worker` running.");
 
         let mut ticker = ShutdownStream::new(
             shutdown,
@@ -98,7 +98,7 @@ where
             });
         }
 
-        info!("Ws `node_status_worker` stopped.");
+        debug!("Ws `node_status_worker` stopped.");
     });
 }
 

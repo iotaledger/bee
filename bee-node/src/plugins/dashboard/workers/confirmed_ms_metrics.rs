@@ -8,7 +8,7 @@ use bee_protocol::event::MpsMetricsUpdated;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 
 use futures::StreamExt;
-use log::{error, info, warn};
+use log::{debug, error, warn};
 use tokio::sync::mpsc;
 
 pub(crate) fn confirmed_ms_metrics_worker<N>(node: &mut N)
@@ -21,7 +21,7 @@ where
 
     let bus_clone = bus.clone();
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
-        info!("Ws `confirmed_ms_metrics_worker` running.");
+        debug!("Ws `confirmed_ms_metrics_worker` running.");
 
         let mut receiver = ShutdownStream::new(shutdown, rx);
 
@@ -55,7 +55,7 @@ where
             }
         }
 
-        info!("Ws `confirmed_ms_metrics_worker` stopped.");
+        debug!("Ws `confirmed_ms_metrics_worker` stopped.");
     });
 
     {

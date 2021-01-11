@@ -6,7 +6,7 @@ use crate::{plugins::Dashboard, storage::StorageBackend};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 
 use futures::StreamExt;
-use log::info;
+use log::debug;
 use tokio::time::interval;
 
 use std::time::Duration;
@@ -22,7 +22,7 @@ where
     let storage = node.storage();
 
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
-        info!("Ws `db_size_metrics_worker` running.");
+        debug!("Ws `db_size_metrics_worker` running.");
 
         let mut ticker = ShutdownStream::new(
             shutdown,
@@ -41,7 +41,7 @@ where
             });
         }
 
-        info!("Ws `db_size_metrics_worker` stopped.");
+        debug!("Ws `db_size_metrics_worker` stopped.");
     });
 }
 

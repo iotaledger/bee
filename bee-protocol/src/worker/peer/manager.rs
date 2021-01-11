@@ -6,7 +6,7 @@ use crate::{
     storage::StorageBackend,
     worker::{
         HasherWorker, MessageResponderWorker, MetricsWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
-        PeerWorker, RequestedMilestones, TangleWorker,
+        PeerManagerResWorker, PeerWorker, RequestedMilestones, TangleWorker,
     },
     ProtocolMetrics,
 };
@@ -41,6 +41,7 @@ where
             TypeId::of::<MessageResponderWorker>(),
             TypeId::of::<MilestoneResponderWorker>(),
             TypeId::of::<MilestoneRequesterWorker>(),
+            TypeId::of::<PeerManagerResWorker>(),
         ]
         .leak()
     }
