@@ -3,7 +3,7 @@
 
 use crate::{
     config::ProtocolConfig,
-    event::MessageProcessed,
+    event::{MessageProcessed, NewVertex},
     helper,
     packet::Message as MessagePacket,
     peer::PeerManager,
@@ -132,6 +132,19 @@ impl<N: Node> Worker<N> for ProcessorWorker {
                 // store message
                 if let Some(message) = tangle.insert(message, message_id, metadata).await {
                     bus.dispatch(MessageProcessed(message_id));
+
+                    // TODO: boolean values are false at this point in time? trigger event from another location?
+                    bus.dispatch(NewVertex {
+                        id: message_id.to_string(),
+                        parent1_id: message.parent1().to_string(),
+                        parent2_id: message.parent2().to_string(),
+                        is_solid: false,
+                        is_referenced: false,
+                        is_conflicting: false,
+                        is_milestone: false,
+                        is_tip: false,
+                        is_selected: false,
+                    });
 
                     // TODO this was temporarily moved from the tangle.
                     // Reason is that since the tangle is not a worker, it can't have access to the propagator tx.

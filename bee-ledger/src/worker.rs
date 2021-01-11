@@ -98,12 +98,14 @@ where
     metrics.included_messages_inc(metadata.included_messages.len() as u64);
 
     bus.dispatch(MilestoneConfirmed {
+        id: message_id,
         index: milestone.essence().index().into(),
         timestamp: milestone.essence().timestamp(),
         referenced_messages: metadata.num_referenced_messages,
         excluded_no_transaction_messages: metadata.num_excluded_no_transaction_messages,
         excluded_conflicting_messages: metadata.num_excluded_conflicting_messages,
-        included_messages: metadata.included_messages.len(),
+        included_messages: metadata.included_messages,
+        excluded_messages: metadata.excluded_messages,
         spent_outputs: metadata.spent_outputs.len(),
         created_outputs: metadata.created_outputs.len(),
     });

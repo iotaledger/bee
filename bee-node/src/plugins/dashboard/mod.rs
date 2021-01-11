@@ -5,17 +5,19 @@ pub mod config;
 
 mod asset;
 mod websocket;
+mod workers;
 
+use crate::plugins::dashboard::workers::db_size_metrics::{init_db_size_metrics_worker, DatabaseSizeMetrics};
 use config::DashboardConfig;
 use websocket::{
-    responses::{milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, WsEvent},
+    responses::{milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, vertex, WsEvent},
     user_connected, WsUsers,
 };
 
 use bee_common::shutdown_stream::ShutdownStream;
 use bee_common_pt2::{node::Node, worker::Worker};
 use bee_protocol::{
-    event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated},
+    event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex},
     tangle::MsTangle,
 };
 use bee_rest_api::config::RestApiConfig;
@@ -28,6 +30,12 @@ use tokio::sync::mpsc;
 use warp::{http::header::HeaderValue, path::FullPath, reply::Response, ws::Message, Filter, Rejection, Reply};
 use warp_reverse_proxy::reverse_proxy_filter;
 
+use crate::plugins::dashboard::{
+    websocket::responses::{confirmed_info, confirmed_milestone_metrics, database_size_metrics, tip_info},
+    workers::confirmed_ms_metrics::{init_confirmed_ms_metrics_worker, ConfirmedMilestoneMetrics},
+};
+use bee_ledger::event::MilestoneConfirmed;
+use bee_protocol::event::{LatestSolidMilestoneChanged, TipAdded, TipRemoved};
 use std::{
     any::Any,
     convert::Infallible,
@@ -82,9 +90,18 @@ impl<N: Node> Worker<N> for Dashboard {
         let users = WsUsers::default();
 
         // Register event handlers
-        topic_handler(node, "SyncStatus", &users, move |event: LatestMilestoneChanged| {
-            sync_status::forward(event, &tangle)
-        });
+        {
+            let tangle = tangle.clone();
+            topic_handler(node, "SyncStatus", &users, move |event: LatestMilestoneChanged| {
+                sync_status::forward_latest_milestone_changed(event, &tangle)
+            });
+        }
+        {
+            let tangle = tangle.clone();
+            topic_handler(node, "SyncStatus", &users, move |event: LatestSolidMilestoneChanged| {
+                sync_status::forward_solid_milestone_changed(event, &tangle)
+            });
+        }
         topic_handler(node, "MpsMetricsUpdated", &users, move |event: MpsMetricsUpdated| {
             mps_metrics_updated::forward(event)
         });
@@ -97,6 +114,34 @@ impl<N: Node> Worker<N> for Dashboard {
         topic_handler(node, "MilestoneInfo", &users, move |event: LatestMilestoneChanged| {
             milestone_info::forward(event)
         });
+        topic_handler(node, "Vertex", &users, move |event: NewVertex| vertex::forward(event));
+        topic_handler(node, "MilestoneConfirmed", &users, move |event: MilestoneConfirmed| {
+            confirmed_info::forward(event)
+        });
+        topic_handler(
+            node,
+            "ConfirmedMilestoneMetrics",
+            &users,
+            move |event: ConfirmedMilestoneMetrics| confirmed_milestone_metrics::forward(event),
+        );
+        topic_handler(
+            node,
+            "DatabaseSizeMetrics",
+            &users,
+            move |event: DatabaseSizeMetrics| database_size_metrics::forward(event),
+        );
+
+        topic_handler(node, "TipInfo", &users, move |event: TipAdded| {
+            tip_info::forward_tip_added(event)
+        });
+
+        topic_handler(node, "TipInfo", &users, move |event: TipRemoved| {
+            tip_info::forward_tip_removed(event)
+        });
+
+        // init sub-workers
+        init_confirmed_ms_metrics_worker(node);
+        init_db_size_metrics_worker(node, tangle.clone());
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
