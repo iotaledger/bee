@@ -4,7 +4,6 @@
 use crate::{plugins::Dashboard, storage::StorageBackend};
 
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
-use bee_tangle::MsTangle;
 
 use futures::StreamExt;
 use log::info;
