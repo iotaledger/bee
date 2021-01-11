@@ -196,7 +196,7 @@ pub async fn check_ledger_state<B: StorageBackend>(storage: &B) -> Result<bool, 
 
         match output.inner() {
             bee_message::payload::transaction::Output::SignatureLockedSingle(output) => {
-                total += output.amount().get();
+                total += output.amount();
             }
             // TODO
             _ => panic!("unsupported output"),

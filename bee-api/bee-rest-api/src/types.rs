@@ -6,10 +6,7 @@ use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
 
 use serde::{Deserialize, Serialize};
 
-use std::{
-    convert::{TryFrom, TryInto},
-    num::NonZeroU64,
-};
+use std::convert::{TryFrom, TryInto};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
@@ -360,7 +357,7 @@ impl TryFrom<&Output> for OutputDto {
             Output::SignatureLockedSingle(s) => Ok(OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
                 kind: 0,
                 address: s.address().try_into()?,
-                amount: s.amount().get(),
+                amount: s.amount(),
             })),
             _ => Err("output type not supported".to_string()),
         }
@@ -372,10 +369,11 @@ impl TryFrom<&OutputDto> for Output {
     type Error = String;
     fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
         match value {
-            OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(
-                (&s.address).try_into()?,
-                NonZeroU64::new(s.amount).ok_or("invalid amount: expected a non-zero u64-string")?,
-            ))),
+            OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(
+                SignatureLockedSingleOutput::new((&s.address).try_into()?, s.amount)
+                    // TODO unwrap
+                    .unwrap(),
+            )),
         }
     }
 }

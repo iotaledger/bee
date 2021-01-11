@@ -40,7 +40,7 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
                         .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
                     {
                         match output.inner() {
-                            Output::SignatureLockedSingle(o) => balance += o.amount().get() as u64,
+                            Output::SignatureLockedSingle(o) => balance += o.amount() as u64,
                             _ => {
                                 return Err(reject::custom(ServiceUnavailable(
                                     "output type not supported".to_string(),

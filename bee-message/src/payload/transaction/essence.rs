@@ -193,8 +193,6 @@ impl TransactionEssenceBuilder {
         for i in self.outputs.iter() {
             match i {
                 Output::SignatureLockedSingle(u) => {
-                    // Address Type must either be 0 or 1, denoting a WOTS- or Ed25519 address.
-
                     // If Address is of type WOTS address, its bytes must be valid T5B1 bytes.
 
                     // The Address must be unique in the set of SigLockedSingleDeposits
@@ -210,13 +208,7 @@ impl TransactionEssenceBuilder {
                         return Err(Error::DuplicateError);
                     }
 
-                    // Amount must be > 0
-                    let amount = u.amount().get();
-                    if amount == 0 {
-                        return Err(Error::AmountError);
-                    }
-
-                    total += amount;
+                    total += u.amount();
                 }
             }
         }
