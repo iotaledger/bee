@@ -7,6 +7,7 @@ use core::fmt;
 pub enum Error {
     AmountError,
     InvalidInputOutputCount,
+    InvalidInputOutputIndex,
     InvalidInputType,
     InvalidOutputType,
     InvalidPayloadType,
@@ -16,8 +17,6 @@ pub enum Error {
     NoInput,
     NoOutput,
     DuplicateError,
-    // TODO add index
-    InvalidIndex,
     InvalidAddress,
     InvalidSignature,
     OrderError,
@@ -26,7 +25,6 @@ pub enum Error {
     Utf8String(alloc::string::FromUtf8Error),
     InvalidType(u8, u8),
     InvalidAnnouncedLength(usize, usize),
-    InvalidSyntax,
     InvalidHex,
     InvalidIndexLength(usize),
     InvalidMessageLength(usize),
@@ -40,6 +38,7 @@ impl fmt::Display for Error {
         match self {
             Error::AmountError => write!(f, "Invalid amount provided."),
             Error::InvalidInputOutputCount => write!(f, "Invalid count number provided."),
+            Error::InvalidInputOutputIndex => write!(f, "Invalid input or output index."),
             Error::InvalidInputType => write!(f, "Invalid input type."),
             Error::InvalidOutputType => write!(f, "Invalid output type."),
             Error::InvalidPayloadType => write!(f, "Invalid payload type."),
@@ -49,7 +48,6 @@ impl fmt::Display for Error {
             Error::NoInput => write!(f, "No input provided."),
             Error::NoOutput => write!(f, "No output provided."),
             Error::DuplicateError => write!(f, "The object in the set must be unique."),
-            Error::InvalidIndex => write!(f, "Invalid index provided."),
             Error::InvalidAddress => write!(f, "Invalid address provided."),
             Error::InvalidSignature => write!(f, "Invalid signature provided."),
             Error::OrderError => write!(f, "The vector is not sorted by lexicographical order."),
@@ -60,7 +58,6 @@ impl fmt::Display for Error {
             Error::InvalidAnnouncedLength(expected, actual) => {
                 write!(f, "Invalid announced length: {}, {}.", expected, actual)
             }
-            Error::InvalidSyntax => write!(f, "Syntax validation failed."),
             Error::InvalidHex => write!(f, "Invalid hexadecimal conversion."),
             Error::InvalidIndexLength(length) => write!(f, "Invalid index length {}.", length),
             Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),

@@ -170,7 +170,7 @@ impl TransactionEssenceBuilder {
                 Input::UTXO(u) => {
                     // Transaction Output Index must be 0 ≤ x < 127
                     if !INPUT_OUTPUT_INDEX_RANGE.contains(&u.output_id().index()) {
-                        return Err(Error::InvalidInputOutputCount);
+                        return Err(Error::InvalidInputOutputIndex);
                     }
 
                     // Every combination of Transaction ID + Transaction Output Index must be unique in the inputs set.

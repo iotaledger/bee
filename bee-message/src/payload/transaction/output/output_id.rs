@@ -56,7 +56,7 @@ impl FromStr for OutputId {
 impl OutputId {
     pub fn new(transaction_id: TransactionId, index: u16) -> Result<Self, Error> {
         if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
-            return Err(Error::InvalidIndex);
+            return Err(Error::InvalidInputOutputIndex);
         }
 
         Ok(Self { transaction_id, index })
@@ -108,6 +108,6 @@ impl Packable for OutputId {
         let transaction_id = TransactionId::unpack(reader)?;
         let index = u16::unpack(reader)?;
 
-        Ok(Self::new(transaction_id, index).map_err(|_| Self::Error::InvalidSyntax)?)
+        Ok(Self::new(transaction_id, index)?)
     }
 }
