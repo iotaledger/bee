@@ -106,10 +106,10 @@ impl Packable for Transaction {
             unlock_blocks.push(UnlockBlock::unpack(reader)?);
         }
 
-        Ok(Self {
-            essence,
-            unlock_blocks: unlock_blocks.into_boxed_slice(),
-        })
+        Ok(Self::builder()
+            .with_essence(essence)
+            .with_unlock_blocks(unlock_blocks)
+            .finish()?)
     }
 }
 
@@ -144,6 +144,12 @@ impl TransactionBuilder {
 
     pub fn with_essence(mut self, essence: TransactionEssence) -> Self {
         self.essence = Some(essence);
+
+        self
+    }
+
+    pub fn with_unlock_blocks(mut self, unlock_blocks: Vec<UnlockBlock>) -> Self {
+        self.unlock_blocks = unlock_blocks;
 
         self
     }
