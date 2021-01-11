@@ -12,6 +12,13 @@ apt-get upgrade
 apt-get install git npm build-essential cmake pkg-config librocksdb-dev llvm clang libclang-dev
 ```
 
+### MacOS
+
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install cmake npm
+```
+
 ### Rust
 
 Minimum required version 1.47.
