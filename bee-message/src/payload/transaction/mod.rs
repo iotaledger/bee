@@ -101,6 +101,11 @@ impl Packable for Transaction {
         let essence = TransactionEssence::unpack(reader)?;
 
         let unlock_blocks_len = u16::unpack(reader)? as usize;
+
+        if !INPUT_OUTPUT_COUNT_RANGE.contains(&unlock_blocks_len) {
+            return Err(Error::InvalidInputOutputCount(unlock_blocks_len));
+        }
+
         let mut unlock_blocks = Vec::with_capacity(unlock_blocks_len);
         for _ in 0..unlock_blocks_len {
             unlock_blocks.push(UnlockBlock::unpack(reader)?);

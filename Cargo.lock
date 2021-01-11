@@ -335,7 +335,7 @@ dependencies = [
 [[package]]
 name = "bee-common"
 version = "0.2.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e7fa8ed3fda3beed2cadaff37c75343c732fab48"
 dependencies = [
  "chrono",
  "fern",
@@ -347,7 +347,7 @@ dependencies = [
 [[package]]
 name = "bee-crypto"
 version = "0.2.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e7fa8ed3fda3beed2cadaff37c75343c732fab48"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -544,7 +544,7 @@ dependencies = [
 [[package]]
 name = "bee-runtime"
 version = "0.1.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e7fa8ed3fda3beed2cadaff37c75343c732fab48"
 dependencies = [
  "async-trait",
  "bee-storage",
@@ -577,8 +577,8 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "0.1.0-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
+version = "0.2.0-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e7fa8ed3fda3beed2cadaff37c75343c732fab48"
 dependencies = [
  "async-trait",
  "futures 0.3.9",
@@ -635,7 +635,7 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.3.4-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#df5155106de20ca1df40ebadba3fe15e1435c5e9"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e7fa8ed3fda3beed2cadaff37c75343c732fab48"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -853,9 +853,9 @@ checksum = "0e4cec68f03f32e44924783795810fa50a7035d8c8ebe78580ad7e6c703fba38"
 
 [[package]]
 name = "bytes"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad1f8e949d755f9d79112b5bb46938e0ef9d3804a0b16dfab13aafcaa5f0fa72"
+checksum = "b700ce4376041dcd0a327fd0097c41095743c4c8af8887265942faf1100bd040"
 
 [[package]]
 name = "cache-padded"
@@ -1819,7 +1819,7 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7245cd7449cc792608c3c8a9eaf69bd4eabbabf802713748fd739c98b82f0747"
 dependencies = [
- "bytes 1.0.0",
+ "bytes 1.0.1",
  "fnv",
  "itoa",
 ]

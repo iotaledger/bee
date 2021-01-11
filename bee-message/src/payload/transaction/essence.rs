@@ -92,12 +92,22 @@ impl Packable for TransactionEssence {
         }
 
         let inputs_len = u16::unpack(reader)? as usize;
+
+        if !INPUT_OUTPUT_COUNT_RANGE.contains(&inputs_len) {
+            return Err(Error::InvalidInputOutputCount(inputs_len));
+        }
+
         let mut inputs = Vec::with_capacity(inputs_len);
         for _ in 0..inputs_len {
             inputs.push(Input::unpack(reader)?);
         }
 
         let outputs_len = u16::unpack(reader)? as usize;
+
+        if !INPUT_OUTPUT_COUNT_RANGE.contains(&outputs_len) {
+            return Err(Error::InvalidInputOutputCount(outputs_len));
+        }
+
         let mut outputs = Vec::with_capacity(outputs_len);
         for _ in 0..outputs_len {
             outputs.push(Output::unpack(reader)?);

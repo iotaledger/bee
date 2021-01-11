@@ -60,7 +60,8 @@ impl Packable for WotsSignature {
         Self: Sized,
     {
         let bytes_len = u32::unpack(reader)? as usize;
-        let mut bytes = vec![0u8; bytes_len];
+        // TODO unchecked length but WOTS will disappear soon, we didn't want to create a specific error variant for it.
+        let mut bytes = Vec::with_capacity(bytes_len);
         reader.read_exact(&mut bytes)?;
 
         Ok(Self(bytes))

@@ -63,7 +63,7 @@ impl Packable for Milestone {
         let signatures_len = u8::unpack(reader)? as usize;
         let mut signatures = Vec::with_capacity(signatures_len);
         for _ in 0..signatures_len {
-            let mut signature = vec![0u8; MILESTONE_SIGNATURE_LENGTH];
+            let mut signature = Vec::with_capacity(MILESTONE_SIGNATURE_LENGTH);
             reader.read_exact(&mut signature)?;
             signatures.push(signature.into_boxed_slice());
         }
