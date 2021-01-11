@@ -3,21 +3,25 @@
 
 use crate::{
     error::Error,
-    metadata::WhiteFlagMetadata,
     model::{Diff, LedgerIndex, Output, Spent, Unspent},
+    IOTA_SUPPLY,
 };
 
 use bee_message::payload::transaction::OutputId;
-use bee_protocol::MilestoneIndex;
 use bee_storage::{
-    access::{Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
-    storage,
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
+    backend,
 };
+use bee_tangle::milestone::MilestoneIndex;
+
+use futures::StreamExt;
+
+use std::collections::HashMap;
 
 // TODO check all requirements
 
-pub trait Backend:
-    storage::Backend
+pub trait StorageBackend:
+    backend::StorageBackend
     + BatchBuilder
     + Batch<OutputId, Output>
     + Batch<OutputId, Spent>
@@ -39,11 +43,13 @@ pub trait Backend:
     + Insert<OutputId, Spent>
     + Insert<Unspent, ()>
     + Insert<(), LedgerIndex>
+    + for<'a> AsStream<'a, Unspent, ()>
+    + bee_tangle::storage::StorageBackend
 {
 }
 
-impl<T> Backend for T where
-    T: storage::Backend
+impl<T> StorageBackend for T where
+    T: backend::StorageBackend
         + BatchBuilder
         + Batch<OutputId, Output>
         + Batch<OutputId, Spent>
@@ -65,39 +71,47 @@ impl<T> Backend for T where
         + Insert<OutputId, Spent>
         + Insert<Unspent, ()>
         + Insert<(), LedgerIndex>
+        + for<'a> AsStream<'a, Unspent, ()>
+        + bee_tangle::storage::StorageBackend
 {
 }
 
-pub(crate) async fn apply_diff<B: Backend>(storage: &B, metadata: &WhiteFlagMetadata) -> Result<(), Error> {
+pub async fn apply_diff<B: StorageBackend>(
+    storage: &B,
+    index: MilestoneIndex,
+    spent_outputs: &HashMap<OutputId, Spent>,
+    created_outputs: &HashMap<OutputId, Output>,
+) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    let mut spent_outputs = Vec::with_capacity(metadata.spent_outputs.len());
-    let mut created_outputs = Vec::with_capacity(metadata.created_outputs.len());
+    let mut spent_output_ids = Vec::with_capacity(spent_outputs.len());
+    let mut created_outputs_ids = Vec::with_capacity(created_outputs.len());
 
-    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &metadata.index.into())
+    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &index.into())
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    for (output_id, spent) in metadata.spent_outputs.iter() {
+    for (output_id, spent) in spent_outputs.iter() {
         Batch::<OutputId, Spent>::batch_insert(storage, &mut batch, output_id, spent)
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &(*output_id).into())
             .map_err(|e| Error::Storage(Box::new(e)))?;
-        spent_outputs.push(*output_id);
+        spent_output_ids.push(*output_id);
     }
 
-    for (output_id, output) in metadata.created_outputs.iter() {
+    for (output_id, output) in created_outputs.iter() {
         Batch::<OutputId, Output>::batch_insert(storage, &mut batch, output_id, output)
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &(*output_id).into(), &())
             .map_err(|e| Error::Storage(Box::new(e)))?;
-        created_outputs.push(*output_id);
+        created_outputs_ids.push(*output_id);
+        // TODO address mapping
     }
 
     Batch::<MilestoneIndex, Diff>::batch_insert(
         storage,
         &mut batch,
-        &metadata.index,
-        &Diff::new(spent_outputs, created_outputs),
+        &index,
+        &Diff::new(spent_output_ids, created_outputs_ids),
     )
     .map_err(|e| Error::Storage(Box::new(e)))?;
 
@@ -107,28 +121,32 @@ pub(crate) async fn apply_diff<B: Backend>(storage: &B, metadata: &WhiteFlagMeta
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-#[allow(dead_code)]
-pub(crate) async fn rollback_diff<B: Backend>(storage: &B, metadata: &WhiteFlagMetadata) -> Result<(), Error> {
+pub async fn rollback_diff<B: StorageBackend>(
+    storage: &B,
+    index: MilestoneIndex,
+    spent_outputs: &HashMap<OutputId, Spent>,
+    created_outputs: &HashMap<OutputId, Output>,
+) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &(MilestoneIndex(*metadata.index - 1)).into())
+    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &((index - MilestoneIndex(1)).into()))
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    for (output_id, _spent) in metadata.spent_outputs.iter() {
+    for (output_id, _spent) in spent_outputs.iter() {
         Batch::<OutputId, Spent>::batch_delete(storage, &mut batch, output_id)
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &(*output_id).into(), &())
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
-    for (output_id, _) in metadata.created_outputs.iter() {
+    for (output_id, _) in created_outputs.iter() {
         Batch::<OutputId, Output>::batch_delete(storage, &mut batch, output_id)
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &(*output_id).into())
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
-    Batch::<MilestoneIndex, Diff>::batch_delete(storage, &mut batch, &metadata.index)
+    Batch::<MilestoneIndex, Diff>::batch_delete(storage, &mut batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     storage
@@ -138,27 +156,52 @@ pub(crate) async fn rollback_diff<B: Backend>(storage: &B, metadata: &WhiteFlagM
 }
 
 #[allow(dead_code)]
-pub(crate) async fn fetch_ledger_index<B: Backend>(storage: &B) -> Result<Option<LedgerIndex>, Error> {
+pub(crate) async fn fetch_ledger_index<B: StorageBackend>(storage: &B) -> Result<Option<LedgerIndex>, Error> {
     Fetch::<(), LedgerIndex>::fetch(storage, &())
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 #[allow(dead_code)]
-pub(crate) async fn insert_ledger_index<B: Backend>(storage: &B, index: &LedgerIndex) -> Result<(), Error> {
+pub(crate) async fn insert_ledger_index<B: StorageBackend>(storage: &B, index: &LedgerIndex) -> Result<(), Error> {
     Insert::<(), LedgerIndex>::insert(storage, &(), index)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) async fn fetch_output<B: Backend>(storage: &B, output_id: &OutputId) -> Result<Option<Output>, Error> {
+pub(crate) async fn fetch_output<B: StorageBackend>(
+    storage: &B,
+    output_id: &OutputId,
+) -> Result<Option<Output>, Error> {
     Fetch::<OutputId, Output>::fetch(storage, output_id)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) async fn is_output_unspent<B: Backend>(storage: &B, output_id: &OutputId) -> Result<bool, Error> {
+pub(crate) async fn is_output_unspent<B: StorageBackend>(storage: &B, output_id: &OutputId) -> Result<bool, Error> {
     Exist::<Unspent, ()>::exist(storage, &(*output_id).into())
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub async fn check_ledger_state<B: StorageBackend>(storage: &B) -> Result<bool, Error> {
+    let mut total: u64 = 0;
+    let mut stream = AsStream::<Unspent, ()>::stream(storage)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+
+    while let Some((unspent, _)) = stream.next().await {
+        // Unwrap: an unspent output has to be in database.
+        let output = fetch_output(storage, &*unspent).await?.unwrap();
+
+        match output.inner() {
+            bee_message::payload::transaction::Output::SignatureLockedSingle(output) => {
+                total += output.amount();
+            }
+            // TODO
+            _ => panic!("unsupported output"),
+        }
+    }
+
+    Ok(total == IOTA_SUPPLY)
 }

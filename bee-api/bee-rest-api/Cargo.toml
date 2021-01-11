@@ -12,13 +12,13 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-common-pt2 = { path = "../../bee-common/bee-common", package = "bee-common" }
 bee-ledger = { path = "../../bee-ledger" }
 bee-message = { path = "../../bee-message" }
 bee-pow = { path = "../../bee-pow" }
 bee-protocol = { path = "../../bee-protocol" }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-tangle = { path = "../../bee-tangle" }
-bee-storage = { path = "../../bee-storage/bee-storage" }
 
 async-trait = "0.1"
 bech32 = "0.7"

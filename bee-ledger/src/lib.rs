@@ -13,15 +13,17 @@ mod metadata;
 mod white_flag;
 mod worker;
 
-use storage::Backend;
-use worker::LedgerWorker;
+pub use storage::StorageBackend;
+pub use worker::{LedgerWorker, LedgerWorkerEvent};
 
-use bee_common_pt2::node::{Node, NodeBuilder};
-use bee_protocol::MilestoneIndex;
+use bee_runtime::node::{Node, NodeBuilder};
 
-pub fn init<N: Node>(index: u32, node_builder: N::Builder) -> N::Builder
+pub const IOTA_SUPPLY: u64 = 2_779_530_283_277_761;
+
+pub fn init<N>(node_builder: N::Builder) -> N::Builder
 where
-    N::Backend: Backend,
+    N: Node,
+    N::Backend: StorageBackend,
 {
-    node_builder.with_worker_cfg::<LedgerWorker>(MilestoneIndex(index))
+    node_builder.with_worker::<LedgerWorker>()
 }

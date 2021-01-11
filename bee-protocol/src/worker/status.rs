@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    tangle::MsTangle,
+    storage::StorageBackend,
     worker::{MessageRequesterWorker, RequestedMessages, TangleWorker},
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::StreamExt;
@@ -20,7 +20,10 @@ use std::{any::TypeId, convert::Infallible, time::Duration};
 pub(crate) struct StatusWorker;
 
 #[async_trait]
-impl<N: Node> Worker<N> for StatusWorker {
+impl<N: Node> Worker<N> for StatusWorker
+where
+    N::Backend: StorageBackend,
+{
     type Config = u64;
     type Error = Infallible;
 

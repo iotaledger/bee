@@ -12,18 +12,19 @@ use bee_message::{
     },
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
-use bee_protocol::{
-    tangle::{MessageMetadata, SolidEntryPoint},
-    Milestone, MilestoneIndex,
-};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Fetch;
+use bee_tangle::{
+    metadata::MessageMetadata,
+    milestone::{Milestone, MilestoneIndex},
+    solid_entry_point::SolidEntryPoint,
+};
 
 use std::convert::TryInto;
 
 #[async_trait::async_trait]
 impl Fetch<MessageId, Message> for Storage {
-    async fn fetch(&self, message_id: &MessageId) -> Result<Option<Message>, <Self as Backend>::Error> {
+    async fn fetch(&self, message_id: &MessageId) -> Result<Option<Message>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
@@ -40,7 +41,7 @@ impl Fetch<MessageId, Message> for Storage {
 
 #[async_trait::async_trait]
 impl Fetch<MessageId, MessageMetadata> for Storage {
-    async fn fetch(&self, message_id: &MessageId) -> Result<Option<MessageMetadata>, <Self as Backend>::Error> {
+    async fn fetch(&self, message_id: &MessageId) -> Result<Option<MessageMetadata>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
@@ -57,7 +58,7 @@ impl Fetch<MessageId, MessageMetadata> for Storage {
 
 #[async_trait::async_trait]
 impl Fetch<MessageId, Vec<MessageId>> for Storage {
-    async fn fetch(&self, parent: &MessageId) -> Result<Option<Vec<MessageId>>, <Self as Backend>::Error> {
+    async fn fetch(&self, parent: &MessageId) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)
@@ -80,7 +81,7 @@ impl Fetch<MessageId, Vec<MessageId>> for Storage {
 
 #[async_trait::async_trait]
 impl Fetch<HashedIndex, Vec<MessageId>> for Storage {
-    async fn fetch(&self, index: &HashedIndex) -> Result<Option<Vec<MessageId>>, <Self as Backend>::Error> {
+    async fn fetch(&self, index: &HashedIndex) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_INDEX_TO_MESSAGE_ID)
@@ -103,7 +104,7 @@ impl Fetch<HashedIndex, Vec<MessageId>> for Storage {
 
 #[async_trait::async_trait]
 impl Fetch<OutputId, Output> for Storage {
-    async fn fetch(&self, output_id: &OutputId) -> Result<Option<Output>, <Self as Backend>::Error> {
+    async fn fetch(&self, output_id: &OutputId) -> Result<Option<Output>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
@@ -120,7 +121,7 @@ impl Fetch<OutputId, Output> for Storage {
 
 #[async_trait::async_trait]
 impl Fetch<OutputId, Spent> for Storage {
-    async fn fetch(&self, output_id: &OutputId) -> Result<Option<Spent>, <Self as Backend>::Error> {
+    async fn fetch(&self, output_id: &OutputId) -> Result<Option<Spent>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_SPENT)
@@ -137,7 +138,7 @@ impl Fetch<OutputId, Spent> for Storage {
 
 #[async_trait::async_trait]
 impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
-    async fn fetch(&self, address: &Ed25519Address) -> Result<Option<Vec<OutputId>>, <Self as Backend>::Error> {
+    async fn fetch(&self, address: &Ed25519Address) -> Result<Option<Vec<OutputId>>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)
@@ -159,7 +160,7 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
 
 #[async_trait::async_trait]
 impl Fetch<(), LedgerIndex> for Storage {
-    async fn fetch(&self, (): &()) -> Result<Option<LedgerIndex>, <Self as Backend>::Error> {
+    async fn fetch(&self, (): &()) -> Result<Option<LedgerIndex>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_LEDGER_INDEX)
@@ -176,7 +177,7 @@ impl Fetch<(), LedgerIndex> for Storage {
 
 #[async_trait::async_trait]
 impl Fetch<MilestoneIndex, Milestone> for Storage {
-    async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Milestone>, <Self as Backend>::Error> {
+    async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Milestone>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
@@ -193,7 +194,7 @@ impl Fetch<MilestoneIndex, Milestone> for Storage {
 
 #[async_trait::async_trait]
 impl Fetch<(), SnapshotInfo> for Storage {
-    async fn fetch(&self, (): &()) -> Result<Option<SnapshotInfo>, <Self as Backend>::Error> {
+    async fn fetch(&self, (): &()) -> Result<Option<SnapshotInfo>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_SNAPSHOT_INFO)
@@ -210,7 +211,7 @@ impl Fetch<(), SnapshotInfo> for Storage {
 
 #[async_trait::async_trait]
 impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
-    async fn fetch(&self, sep: &SolidEntryPoint) -> Result<Option<MilestoneIndex>, <Self as Backend>::Error> {
+    async fn fetch(&self, sep: &SolidEntryPoint) -> Result<Option<MilestoneIndex>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
@@ -227,7 +228,7 @@ impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
 
 #[async_trait::async_trait]
 impl Fetch<MilestoneIndex, Diff> for Storage {
-    async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Diff>, <Self as Backend>::Error> {
+    async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Diff>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)

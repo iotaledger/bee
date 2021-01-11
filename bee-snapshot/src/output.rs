@@ -5,14 +5,28 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
-    payload::transaction::{SignatureLockedSingleOutput, UTXOInput},
+    payload::transaction::{OutputId, SignatureLockedSingleOutput},
     MessageId,
 };
 
-pub(crate) struct Output {
+pub struct Output {
     message_id: MessageId,
-    output_id: UTXOInput,
+    output_id: OutputId,
     output: SignatureLockedSingleOutput,
+}
+
+impl Output {
+    pub(crate) fn message_id(&self) -> &MessageId {
+        &self.message_id
+    }
+
+    pub(crate) fn output_id(&self) -> &OutputId {
+        &self.output_id
+    }
+
+    pub(crate) fn output(&self) -> &SignatureLockedSingleOutput {
+        &self.output
+    }
 }
 
 impl Packable for Output {
@@ -36,7 +50,7 @@ impl Packable for Output {
     {
         Ok(Self {
             message_id: MessageId::unpack(reader)?,
-            output_id: UTXOInput::unpack(reader)?,
+            output_id: OutputId::unpack(reader)?,
             output: SignatureLockedSingleOutput::unpack(reader)?,
         })
     }

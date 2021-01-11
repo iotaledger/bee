@@ -1,13 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    header::SnapshotHeader, kind::Kind, milestone_diff::MilestoneDiff, output::Output,
-    solid_entry_points::SolidEntryPoints, Error,
-};
+use crate::{header::SnapshotHeader, kind::Kind, milestone_diff::MilestoneDiff, output::Output, Error};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::MessageId;
+use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 
 use log::{error, info};
 
@@ -19,9 +16,9 @@ use std::{
 
 pub struct Snapshot {
     pub(crate) header: SnapshotHeader,
-    pub(crate) solid_entry_points: SolidEntryPoints,
+    pub(crate) solid_entry_points: Box<[SolidEntryPoint]>,
     pub(crate) outputs: Box<[Output]>,
-    pub(crate) milestone_diffs: Box<[MilestoneDiff]>,
+    pub(crate) milestone_diffs: Vec<(MilestoneIndex, MilestoneDiff)>,
 }
 
 impl Snapshot {
@@ -29,16 +26,16 @@ impl Snapshot {
         &self.header
     }
 
-    pub fn solid_entry_points(&self) -> &SolidEntryPoints {
+    pub fn solid_entry_points(&self) -> &[SolidEntryPoint] {
         &self.solid_entry_points
     }
 
-    pub fn outputs_len(&self) -> usize {
-        self.outputs.len()
+    pub fn outputs(&self) -> &[Output] {
+        &self.outputs
     }
 
-    pub fn milestone_diffs_len(&self) -> usize {
-        self.milestone_diffs.len()
+    pub fn milestone_diffs(&self) -> &Vec<(MilestoneIndex, MilestoneDiff)> {
+        &self.milestone_diffs
     }
 
     pub fn from_file(path: &Path) -> Result<Snapshot, Error> {
@@ -71,16 +68,17 @@ impl Packable for Snapshot {
     fn packed_len(&self) -> usize {
         let mut len = self.header.packed_len();
         len += (self.solid_entry_points.len() as u64).packed_len();
-        for s in self.solid_entry_points.iter() {
-            len += s.packed_len();
+        for sep in self.solid_entry_points.iter() {
+            len += sep.packed_len();
         }
         len += (self.outputs.len() as u64).packed_len();
-        for o in self.outputs.iter() {
-            len += o.packed_len();
+        for output in self.outputs.iter() {
+            len += output.packed_len();
         }
         len += (self.milestone_diffs.len() as u64).packed_len();
-        for m in self.milestone_diffs.iter() {
-            len += m.packed_len();
+        for (index, diff) in self.milestone_diffs.iter() {
+            len += index.packed_len();
+            len += diff.packed_len();
         }
 
         len
@@ -96,16 +94,17 @@ impl Packable for Snapshot {
         }
         (self.milestone_diffs.len() as u64).pack(writer)?;
 
-        for s in self.solid_entry_points.iter() {
-            s.pack(writer)?;
+        for sep in self.solid_entry_points.iter() {
+            sep.pack(writer)?;
         }
         if self.header.kind() == Kind::Full {
-            for o in self.outputs.iter() {
-                o.pack(writer)?;
+            for output in self.outputs.iter() {
+                output.pack(writer)?;
             }
         }
-        for m in self.milestone_diffs.iter() {
-            m.pack(writer)?;
+        for (index, diff) in self.milestone_diffs.iter() {
+            index.pack(writer)?;
+            diff.pack(writer)?;
         }
 
         Ok(())
@@ -134,9 +133,9 @@ impl Packable for Snapshot {
                         header.sep_index(),
                     ));
                 }
-                if (header.ledger_index() - header.sep_index()) as usize != milestone_diff_count {
+                if (*(header.ledger_index() - header.sep_index())) as usize != milestone_diff_count {
                     return Err(Error::InvalidMilestoneDiffsCount(
-                        (header.ledger_index() - header.sep_index()) as usize,
+                        (*(header.ledger_index() - header.sep_index())) as usize,
                         milestone_diff_count,
                     ));
                 }
@@ -148,9 +147,9 @@ impl Packable for Snapshot {
                         header.sep_index(),
                     ));
                 }
-                if (header.sep_index() - header.ledger_index()) as usize != milestone_diff_count {
+                if (*(header.sep_index() - header.ledger_index())) as usize != milestone_diff_count {
                     return Err(Error::InvalidMilestoneDiffsCount(
-                        (header.sep_index() - header.ledger_index()) as usize,
+                        (*(header.sep_index() - header.ledger_index())) as usize,
                         milestone_diff_count,
                     ));
                 }
@@ -159,7 +158,7 @@ impl Packable for Snapshot {
 
         let mut solid_entry_points = Vec::with_capacity(sep_count);
         for _ in 0..sep_count {
-            solid_entry_points.push(MessageId::unpack(reader)?);
+            solid_entry_points.push(SolidEntryPoint::unpack(reader)?);
         }
 
         let mut outputs = Vec::with_capacity(output_count);
@@ -171,33 +170,33 @@ impl Packable for Snapshot {
 
         let mut milestone_diffs = Vec::with_capacity(milestone_diff_count);
         for _ in 0..milestone_diff_count {
-            milestone_diffs.push(MilestoneDiff::unpack(reader)?);
+            milestone_diffs.push((MilestoneIndex::unpack(reader)?, MilestoneDiff::unpack(reader)?));
         }
 
         Ok(Self {
             header,
-            solid_entry_points: SolidEntryPoints::new(solid_entry_points.into_boxed_slice()),
+            solid_entry_points: solid_entry_points.into_boxed_slice(),
             outputs: outputs.into_boxed_slice(),
-            milestone_diffs: milestone_diffs.into_boxed_slice(),
+            milestone_diffs,
         })
     }
 }
 
 #[allow(dead_code)] // TODO: When pruning is enabled
-pub(crate) fn snapshot(path: &Path, index: u32) -> Result<(), Error> {
-    info!("Creating snapshot at index {}...", index);
+pub(crate) fn snapshot(path: &Path, index: MilestoneIndex) -> Result<(), Error> {
+    info!("Creating snapshot at index {}...", *index);
 
     let ls = Snapshot {
         header: SnapshotHeader {
             kind: Kind::Full,
             timestamp: 0,
             network_id: 0,
-            sep_index: 0,
-            ledger_index: 0,
+            sep_index: MilestoneIndex(0),
+            ledger_index: MilestoneIndex(0),
         },
-        solid_entry_points: SolidEntryPoints::new(Box::new([])),
+        solid_entry_points: Box::new([]),
         outputs: Box::new([]),
-        milestone_diffs: Box::new([]),
+        milestone_diffs: Vec::new(),
     };
 
     // let file = path.to_string() + "_tmp";
@@ -207,7 +206,7 @@ pub(crate) fn snapshot(path: &Path, index: u32) -> Result<(), Error> {
         error!("Failed to write snapshot to file {}: {:?}.", path.to_str().unwrap(), e);
     }
 
-    info!("Created snapshot at index {}.", index);
+    info!("Created snapshot at index {}.", *index);
 
     Ok(())
 }

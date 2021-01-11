@@ -5,7 +5,7 @@
 
 use crate::peer::PeerManager;
 
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_runtime::{node::Node, worker::Worker};
 
 use async_trait::async_trait;
 

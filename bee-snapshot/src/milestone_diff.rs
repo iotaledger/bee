@@ -5,10 +5,19 @@ use crate::{output::Output, spent::Spent, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-pub(crate) struct MilestoneDiff {
-    index: u32,
+pub struct MilestoneDiff {
     created: Box<[Output]>,
     consumed: Box<[Spent]>,
+}
+
+impl MilestoneDiff {
+    pub fn created(&self) -> &[Output] {
+        &self.created
+    }
+
+    pub fn consumed(&self) -> &[Spent] {
+        &self.consumed
+    }
 }
 
 impl Packable for MilestoneDiff {
@@ -16,11 +25,10 @@ impl Packable for MilestoneDiff {
 
     fn packed_len(&self) -> usize {
         // TODO finish
-        self.index.packed_len() + 0u64.packed_len() + 0u64.packed_len()
+        0u64.packed_len() + 0u64.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.index.pack(writer)?;
         (self.created.len() as u64).pack(writer)?;
         for output in self.created.iter() {
             output.pack(writer)?;
@@ -37,7 +45,6 @@ impl Packable for MilestoneDiff {
     where
         Self: Sized,
     {
-        let index = u32::unpack(reader)?;
         let created_count = u64::unpack(reader)? as usize;
         let mut created = Vec::with_capacity(created_count);
         for _ in 0..created_count {
@@ -50,7 +57,6 @@ impl Packable for MilestoneDiff {
         }
 
         Ok(Self {
-            index,
             created: created.into_boxed_slice(),
             consumed: consumed.into_boxed_slice(),
         })

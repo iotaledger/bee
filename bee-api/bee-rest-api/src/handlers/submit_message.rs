@@ -5,15 +5,16 @@ use crate::{
     config::RestApiConfig,
     filters::CustomRejection::{BadRequest, ServiceUnavailable},
     handlers::{BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
     types::*,
     NetworkId,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
 use bee_pow::providers::{ConstantBuilder, MinerBuilder, ProviderBuilder};
-use bee_protocol::{config::ProtocolConfig, tangle::MsTangle, MessageSubmitterError, MessageSubmitterWorkerEvent};
+use bee_protocol::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::MsTangle;
 
 use futures::channel::oneshot;
 use log::error;
@@ -24,9 +25,9 @@ use warp::{http::StatusCode, reject, Rejection, Reply};
 
 use std::convert::TryFrom;
 
-pub(crate) async fn submit_message<B: Backend>(
+pub(crate) async fn submit_message<B: StorageBackend>(
     value: JsonValue,
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
     rest_api_config: RestApiConfig,
@@ -198,9 +199,9 @@ pub(crate) async fn submit_message<B: Backend>(
     ))
 }
 
-pub(crate) async fn forward_to_message_submitter<B: Backend>(
+pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
     message: Message,
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<MessageId, Rejection> {
     let (message_id, message_bytes) = message.id();

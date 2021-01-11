@@ -3,9 +3,10 @@
 
 use bee_message::MessageId;
 
-use std::marker::PhantomData;
-
-use digest::{Digest, Output};
+use blake2::{
+    digest::{Update, VariableOutput},
+    VarBlake2b,
+};
 
 /// Leaf domain separation prefix.
 const LEAF_HASH_PREFIX: u8 = 0x00;
@@ -22,44 +23,50 @@ fn largest_power_of_two(n: u32) -> usize {
 
 /// A Merkle hasher based on a digest function.
 #[derive(Default)]
-pub(crate) struct MerkleHasher<D: Default + Digest> {
-    /// Type marker for the digest function.
-    marker: PhantomData<D>,
-}
+pub(crate) struct MerkleHasher {}
 
-impl<D: Default + Digest> MerkleHasher<D> {
+impl MerkleHasher {
     /// Creates a new Merkle hasher.
     pub(crate) fn new() -> Self {
         Self::default()
     }
 
     /// Returns the digest of the empty hash.
-    fn empty(&mut self) -> Output<D> {
-        D::digest(&[])
+    fn empty(&mut self) -> [u8; 32] {
+        let mut hasher = VarBlake2b::new(32).unwrap();
+        let mut hash = [0u8; 32];
+
+        hasher.update(&[]);
+        hasher.finalize_variable(|res| hash.copy_from_slice(res));
+        hash
     }
 
     /// Returns the digest of a Merkle leaf.
-    fn leaf(&mut self, message_id: MessageId) -> Output<D> {
-        let mut hasher = D::default();
+    fn leaf(&mut self, message_id: MessageId) -> [u8; 32] {
+        let mut hasher = VarBlake2b::new(32).unwrap();
+        let mut hash = [0u8; 32];
 
         hasher.update([LEAF_HASH_PREFIX]);
         hasher.update(message_id);
-        hasher.finalize()
+        hasher.finalize_variable(|res| hash.copy_from_slice(res));
+        hash
     }
 
     /// Returns the digest of a Merkle node.
-    fn node(&mut self, message_ids: &[MessageId]) -> Output<D> {
-        let mut hasher = D::default();
+    fn node(&mut self, message_ids: &[MessageId]) -> [u8; 32] {
         let (left, right) = message_ids.split_at(largest_power_of_two(message_ids.len() as u32 - 1));
+        let mut hasher = VarBlake2b::new(32).unwrap();
+        let mut hash = [0u8; 32];
 
         hasher.update([NODE_HASH_PREFIX]);
         hasher.update(self.digest_inner(left));
         hasher.update(self.digest_inner(right));
-        hasher.finalize()
+        hasher.finalize_variable(|res| hash.copy_from_slice(res));
+        hash
     }
 
-    /// Returns the digest of a list of hashes as an `Output<D>`.
-    fn digest_inner(&mut self, message_ids: &[MessageId]) -> Output<D> {
+    /// Returns the digest of a list of hashes as a `[u8; 32]`.
+    fn digest_inner(&mut self, message_ids: &[MessageId]) -> [u8; 32] {
         match message_ids.len() {
             0 => self.empty(),
             1 => self.leaf(message_ids[0]),

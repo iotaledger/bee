@@ -3,23 +3,23 @@
 
 use crate::{
     handlers::{BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
-use bee_protocol::tangle::MsTangle;
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::MsTangle;
 
 use serde::Serialize;
 use warp::{Rejection, Reply};
 
 use std::iter::FromIterator;
 
-pub async fn message_children<B: Backend>(
+pub async fn message_children<B: StorageBackend>(
     message_id: MessageId,
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    let mut children = Vec::from_iter(tangle.get_children(&message_id));
+    let mut children = Vec::from_iter(tangle.get_children(&message_id).await);
     let count = children.len();
     let max_results = 1000;
     children.truncate(max_results);

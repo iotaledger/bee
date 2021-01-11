@@ -12,11 +12,10 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-common-pt2 = { path = "../bee-common/bee-common", package = "bee-common" }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-message = { path = "../bee-message" }
-bee-protocol = { path = "../bee-protocol" }
-bee-storage = { path = "../bee-storage/bee-storage" }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-tangle = { path = "../bee-tangle" }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
@@ -24,7 +23,6 @@ async-trait = "0.1"
 blake2 = "0.9"
 bytemuck = "1.2"
 digest = "0.9"
-flume = "0.9"
 futures = "0.3"
 hex = "0.4"
 log = "0.4"

@@ -12,7 +12,7 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-storage = { path = "../../bee-storage/bee-storage" }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 async-trait = "0.1"

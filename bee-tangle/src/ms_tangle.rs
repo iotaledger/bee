@@ -1,27 +1,21 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod metadata;
-mod urts;
+use crate::{
+    metadata::MessageMetadata,
+    milestone::{Milestone, MilestoneIndex},
+    storage::StorageBackend,
+    tangle::{Hooks, Tangle},
+    urts::UrtsTipPool,
+    MessageRef,
+};
 
-pub mod flags;
-pub mod solid_entry_point;
-
-use urts::UrtsTipPool;
-
-pub use flags::Flags;
-pub use metadata::MessageMetadata;
-pub use solid_entry_point::SolidEntryPoint;
-
-use crate::milestone::{Milestone, MilestoneIndex};
-
-use bee_common_pt2::node::ResHandle;
 use bee_message::{Message, MessageId};
-use bee_storage::storage::Backend;
-use bee_tangle::{Hooks, MessageRef, Tangle};
+use bee_runtime::resource::ResourceHandle;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
+use log::{info, trace};
 use tokio::sync::Mutex;
 
 use std::{
@@ -31,20 +25,54 @@ use std::{
 
 pub struct StorageHooks<B> {
     #[allow(dead_code)]
-    storage: ResHandle<B>,
+    storage: ResourceHandle<B>,
 }
 
 #[async_trait]
-impl<B: Backend> Hooks<MessageMetadata> for StorageHooks<B> {
-    type Error = ();
+impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
+    type Error = B::Error;
 
-    async fn get(&self, _hash: &MessageId) -> Result<(Message, MessageMetadata), Self::Error> {
-        // println!("Attempted to fetch {:?} from storage", hash);
-        Err(())
+    async fn get(&self, msg: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
+        trace!("Attempted to fetch message {:?}", msg);
+        Ok(self.storage.fetch(msg).await?.zip(self.storage.fetch(msg).await?))
     }
 
-    async fn insert(&self, _hash: MessageId, _tx: Message, _metadata: MessageMetadata) -> Result<(), Self::Error> {
-        // println!("Attempted to insert {:?} into storage", hash);
+    async fn insert(&self, msg: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
+        trace!("Attempted to insert message {:?}", msg);
+        self.storage.insert(&msg, &tx).await?;
+        self.storage.insert(&msg, &metadata).await?;
+        Ok(())
+    }
+
+    async fn fetch_approvers(&self, msg: &MessageId) -> Result<Option<Vec<MessageId>>, Self::Error> {
+        trace!("Attempted to fetch approvers for message {:?}", msg);
+        self.storage.fetch(msg).await
+    }
+
+    async fn insert_approver(&self, msg: MessageId, approver: MessageId) -> Result<(), Self::Error> {
+        trace!("Attempted to insert approver for message {:?}", msg);
+        self.storage.insert(&(msg, approver), &()).await
+    }
+
+    async fn update_approvers(&self, msg: MessageId, approvers: &Vec<MessageId>) -> Result<(), Self::Error> {
+        trace!("Attempted to update approvers for message {:?}", msg);
+        // self.storage.insert(&msg, approvers).await
+        for approver in approvers {
+            self.storage.insert(&(msg, *approver), &()).await?;
+        }
+        Ok(())
+    }
+}
+
+impl<B: StorageBackend> StorageHooks<B> {
+    async fn get_milestone(&self, idx: &MilestoneIndex) -> Result<Option<Milestone>, B::Error> {
+        trace!("Attempted to fetch milestone {:?}", idx);
+        Ok(self.storage.fetch(idx).await?)
+    }
+
+    async fn insert_milestone(&self, idx: MilestoneIndex, milestone: &Milestone) -> Result<(), B::Error> {
+        trace!("Attempted to insert milestone {:?}", idx);
+        self.storage.insert(&idx, milestone).await?;
         Ok(())
     }
 }
@@ -70,8 +98,8 @@ impl<B> Deref for MsTangle<B> {
     }
 }
 
-impl<B: Backend> MsTangle<B> {
-    pub fn new(storage: ResHandle<B>) -> Self {
+impl<B: StorageBackend> MsTangle<B> {
+    pub fn new(storage: ResourceHandle<B>) -> Self {
         Self {
             inner: Tangle::new(StorageHooks { storage }),
             milestones: Default::default(),
@@ -106,35 +134,56 @@ impl<B: Backend> MsTangle<B> {
         self.inner.insert(hash, message, metadata).await
     }
 
-    pub fn add_milestone(&self, index: MilestoneIndex, milestone: Milestone) {
+    pub async fn add_milestone(&self, idx: MilestoneIndex, milestone: Milestone) {
         // TODO: only insert if vacant
-        self.inner.update_metadata(&milestone.message_id(), |metadata| {
-            metadata.flags_mut().set_milestone(true);
-            metadata.set_milestone_index(index);
-        });
+        self.inner
+            .update_metadata(&milestone.message_id(), |metadata| {
+                metadata.flags_mut().set_milestone(true);
+                metadata.set_milestone_index(idx);
+            })
+            .await;
+        self.inner
+            .hooks()
+            .insert_milestone(idx, &milestone)
+            .await
+            .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
         // TODO can there be a race condition between 2 ops ?
-        self.milestones.insert(index, milestone);
+        self.milestones.insert(idx, milestone);
     }
 
     pub fn remove_milestone(&self, index: MilestoneIndex) {
         self.milestones.remove(&index);
     }
 
+    async fn pull_milestone(&self, idx: MilestoneIndex) -> Option<impl Deref<Target = Milestone> + '_> {
+        if let Some(milestone) = self.inner.hooks().get_milestone(&idx).await.unwrap_or_else(|e| {
+            info!("Failed to insert message {:?}", e);
+            None
+        }) {
+            Some(self.milestones.entry(idx).or_insert(milestone))
+        } else {
+            None
+        }
+    }
+
     // TODO: use combinator instead of match
     pub async fn get_milestone(&self, index: MilestoneIndex) -> Option<MessageRef> {
-        match self.get_milestone_message_id(index) {
+        match self.get_milestone_message_id(index).await {
             None => None,
             Some(ref hash) => self.get(hash).await,
         }
     }
 
     // TODO: use combinator instead of match
-    pub fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
-        self.milestones.get(&index).map(|milestone| *milestone.message_id())
+    pub async fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
+        match self.milestones.get(&index) {
+            Some(m) => Some(*m.message_id()),
+            None => Some(*self.pull_milestone(index).await?.message_id()),
+        }
     }
 
-    pub fn contains_milestone(&self, index: MilestoneIndex) -> bool {
-        self.milestones.contains_key(&index)
+    pub async fn contains_milestone(&self, idx: MilestoneIndex) -> bool {
+        self.milestones.contains_key(&idx) || self.pull_milestone(idx).await.is_some()
     }
 
     pub fn get_latest_milestone_index(&self) -> MilestoneIndex {
@@ -210,31 +259,32 @@ impl<B: Backend> MsTangle<B> {
     }
 
     /// Returns whether the message associated with `hash` is deemed `solid`.
-    pub fn is_solid_message(&self, hash: &MessageId) -> bool {
+    pub async fn is_solid_message(&self, hash: &MessageId) -> bool {
         if self.is_solid_entry_point(hash) {
             true
         } else {
             self.inner
                 .get_metadata(hash)
+                .await
                 .map(|metadata| metadata.flags().is_solid())
                 .unwrap_or(false)
         }
     }
 
-    pub fn otrsi(&self, hash: &MessageId) -> Option<MilestoneIndex> {
+    pub async fn otrsi(&self, hash: &MessageId) -> Option<MilestoneIndex> {
         match self.solid_entry_points.get(hash) {
             Some(sep) => Some(*sep.value()),
-            None => match self.get_metadata(hash) {
+            None => match self.get_metadata(hash).await {
                 Some(metadata) => metadata.otrsi(),
                 None => None,
             },
         }
     }
 
-    pub fn ytrsi(&self, hash: &MessageId) -> Option<MilestoneIndex> {
+    pub async fn ytrsi(&self, hash: &MessageId) -> Option<MilestoneIndex> {
         match self.solid_entry_points.get(hash) {
             Some(sep) => Some(*sep.value()),
-            None => match self.get_metadata(hash) {
+            None => match self.get_metadata(hash).await {
                 Some(metadata) => metadata.ytrsi(),
                 None => None,
             },
@@ -261,7 +311,7 @@ impl<B: Backend> MsTangle<B> {
         self.tip_pool.lock().await.reduce_tips();
     }
 
-    pub(crate) async fn non_lazy_tips_num(&self) -> usize {
+    pub async fn non_lazy_tips_num(&self) -> usize {
         self.tip_pool.lock().await.non_lazy_tips().len()
     }
 }

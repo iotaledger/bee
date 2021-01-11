@@ -6,9 +6,19 @@ use crate::{output::Output, Error};
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::payload::transaction::TransactionId;
 
-pub(crate) struct Spent {
+pub struct Spent {
     output: Output,
     transaction_id: TransactionId,
+}
+
+impl Spent {
+    pub fn output(&self) -> &Output {
+        &self.output
+    }
+
+    pub fn transaction_id(&self) -> &TransactionId {
+        &self.transaction_id
+    }
 }
 
 impl Packable for Spent {

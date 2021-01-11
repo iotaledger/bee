@@ -4,19 +4,19 @@
 use crate::{
     filters::CustomRejection::{NotFound, ServiceUnavailable},
     handlers::{BodyInner, SuccessBody},
-    storage::Backend,
+    storage::StorageBackend,
 };
 
-use bee_common_pt2::node::ResHandle;
 use bee_message::prelude::*;
-use bee_protocol::tangle::MsTangle;
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::MsTangle;
 
 use serde::Serialize;
 use warp::{reject, Rejection, Reply};
 
-pub(crate) async fn message_metadata<B: Backend>(
+pub(crate) async fn message_metadata<B: StorageBackend>(
     message_id: MessageId,
-    tangle: ResHandle<MsTangle<B>>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     if !tangle.is_synced() {
         return Err(reject::custom(ServiceUnavailable("node is not synced".to_string())));
@@ -24,7 +24,7 @@ pub(crate) async fn message_metadata<B: Backend>(
     match tangle.get(&message_id).await {
         Some(message) => {
             // existing message <=> existing metadata, therefore unwrap() is safe
-            let metadata = tangle.get_metadata(&message_id).unwrap();
+            let metadata = tangle.get_metadata(&message_id).await.unwrap();
 
             // TODO: access constants from URTS
             let ytrsi_delta = 8;

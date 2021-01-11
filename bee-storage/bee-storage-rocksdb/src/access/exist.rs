@@ -12,16 +12,17 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_protocol::{
-    tangle::{MessageMetadata, SolidEntryPoint},
-    Milestone, MilestoneIndex,
-};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Exist;
+use bee_tangle::{
+    metadata::MessageMetadata,
+    milestone::{Milestone, MilestoneIndex},
+    solid_entry_point::SolidEntryPoint,
+};
 
 #[async_trait::async_trait]
 impl Exist<MessageId, Message> for Storage {
-    async fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
@@ -33,7 +34,7 @@ impl Exist<MessageId, Message> for Storage {
 
 #[async_trait::async_trait]
 impl Exist<MessageId, MessageMetadata> for Storage {
-    async fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
@@ -45,7 +46,7 @@ impl Exist<MessageId, MessageMetadata> for Storage {
 
 #[async_trait::async_trait]
 impl Exist<(MessageId, MessageId), ()> for Storage {
-    async fn exist(&self, (parent, child): &(MessageId, MessageId)) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(&self, (parent, child): &(MessageId, MessageId)) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)
@@ -60,7 +61,10 @@ impl Exist<(MessageId, MessageId), ()> for Storage {
 
 #[async_trait::async_trait]
 impl Exist<(HashedIndex, MessageId), ()> for Storage {
-    async fn exist(&self, (index, message_id): &(HashedIndex, MessageId)) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(
+        &self,
+        (index, message_id): &(HashedIndex, MessageId),
+    ) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_INDEX_TO_MESSAGE_ID)
@@ -75,7 +79,7 @@ impl Exist<(HashedIndex, MessageId), ()> for Storage {
 
 #[async_trait::async_trait]
 impl Exist<OutputId, Output> for Storage {
-    async fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
@@ -87,7 +91,7 @@ impl Exist<OutputId, Output> for Storage {
 
 #[async_trait::async_trait]
 impl Exist<OutputId, Spent> for Storage {
-    async fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_SPENT)
@@ -99,7 +103,7 @@ impl Exist<OutputId, Spent> for Storage {
 
 #[async_trait::async_trait]
 impl Exist<Unspent, ()> for Storage {
-    async fn exist(&self, unspent: &Unspent) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(&self, unspent: &Unspent) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_UNSPENT)
@@ -111,7 +115,10 @@ impl Exist<Unspent, ()> for Storage {
 
 #[async_trait::async_trait]
 impl Exist<(Ed25519Address, OutputId), ()> for Storage {
-    async fn exist(&self, (address, output_id): &(Ed25519Address, OutputId)) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(
+        &self,
+        (address, output_id): &(Ed25519Address, OutputId),
+    ) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)
@@ -126,7 +133,7 @@ impl Exist<(Ed25519Address, OutputId), ()> for Storage {
 
 #[async_trait::async_trait]
 impl Exist<(), LedgerIndex> for Storage {
-    async fn exist(&self, (): &()) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(&self, (): &()) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_LEDGER_INDEX)
@@ -138,7 +145,7 @@ impl Exist<(), LedgerIndex> for Storage {
 
 #[async_trait::async_trait]
 impl Exist<MilestoneIndex, Milestone> for Storage {
-    async fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
@@ -150,7 +157,7 @@ impl Exist<MilestoneIndex, Milestone> for Storage {
 
 #[async_trait::async_trait]
 impl Exist<(), SnapshotInfo> for Storage {
-    async fn exist(&self, (): &()) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(&self, (): &()) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_SNAPSHOT_INFO)
@@ -162,7 +169,7 @@ impl Exist<(), SnapshotInfo> for Storage {
 
 #[async_trait::async_trait]
 impl Exist<SolidEntryPoint, MilestoneIndex> for Storage {
-    async fn exist(&self, sep: &SolidEntryPoint) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(&self, sep: &SolidEntryPoint) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
@@ -174,7 +181,7 @@ impl Exist<SolidEntryPoint, MilestoneIndex> for Storage {
 
 #[async_trait::async_trait]
 impl Exist<MilestoneIndex, Diff> for Storage {
-    async fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as Backend>::Error> {
+    async fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)

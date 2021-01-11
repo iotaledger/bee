@@ -4,7 +4,7 @@
 use crate::model::{Output, Spent};
 
 use bee_message::{payload::transaction::OutputId, MessageId};
-use bee_protocol::MilestoneIndex;
+use bee_tangle::milestone::MilestoneIndex;
 
 use std::collections::HashMap;
 

@@ -3,12 +3,12 @@
 
 use bee_common::packable::Packable;
 use bee_message::MessageId;
-use bee_protocol::tangle::MessageMetadata;
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
-    storage::Backend,
+    backend::StorageBackend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
+use bee_tangle::metadata::MessageMetadata;
 use bee_test::rand::{message::rand_message_id, metadata::rand_metadata};
 
 use futures::stream::StreamExt;

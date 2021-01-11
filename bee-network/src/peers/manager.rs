@@ -8,13 +8,12 @@ use crate::{
         events::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
     },
     peers::{PeerRelation, PeerState},
-    ShortId, RECONNECT_MILLIS,
+    ShortId, RECONNECT_INTERVAL_SECS,
 };
 
 use super::{errors::Error, BannedAddrList, BannedPeerList, PeerInfo, PeerList};
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
 use futures::StreamExt;
@@ -150,10 +149,13 @@ impl<N: Node> Worker<N> for PeerManager {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Reconnector started.");
 
-            let start = Instant::now() + Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed));
+            let start = Instant::now() + Duration::from_secs(RECONNECT_INTERVAL_SECS.load(Ordering::Relaxed));
             let mut connected_check = ShutdownStream::new(
                 shutdown,
-                time::interval_at(start, Duration::from_millis(RECONNECT_MILLIS.load(Ordering::Relaxed))),
+                time::interval_at(
+                    start,
+                    Duration::from_secs(RECONNECT_INTERVAL_SECS.load(Ordering::Relaxed)),
+                ),
             );
 
             while connected_check.next().await.is_some() {

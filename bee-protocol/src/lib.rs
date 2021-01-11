@@ -7,7 +7,7 @@
 pub mod config;
 pub mod event;
 pub mod milestone;
-pub mod tangle;
+pub mod storage;
 
 mod helper;
 mod metrics;
@@ -17,7 +17,7 @@ mod sender;
 mod worker;
 
 pub use metrics::ProtocolMetrics;
-pub use milestone::{Milestone, MilestoneIndex};
+pub use storage::StorageBackend;
 pub use worker::{
     MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent, MetricsWorker, TangleWorker,
 };
@@ -27,22 +27,24 @@ use crate::{
     sender::Sender,
     worker::{
         BroadcasterWorker, HasherWorker, HeartbeaterWorker, IndexationPayloadWorker, MessageRequesterWorker,
-        MessageResponderWorker, MessageValidatorWorker, MilestoneConeUpdaterWorker, MilestonePayloadWorker,
-        MilestoneRequesterWorker, MilestoneResponderWorker, MilestoneSolidifierWorker, MpsWorker, PeerManagerResWorker,
-        PeerManagerWorker, ProcessorWorker, PropagatorWorker, StatusWorker, TipPoolCleanerWorker,
-        TransactionPayloadWorker,
+        MessageResponderWorker, MilestoneConeUpdaterWorker, MilestonePayloadWorker, MilestoneRequesterWorker,
+        MilestoneResponderWorker, MilestoneSolidifierWorker, MpsWorker, PeerManagerResWorker, PeerManagerWorker,
+        ProcessorWorker, PropagatorWorker, StatusWorker, TipPoolCleanerWorker, TransactionPayloadWorker,
     },
 };
 
-use bee_common_pt2::node::{Node, NodeBuilder};
 use bee_network::NetworkListener;
+use bee_runtime::node::{Node, NodeBuilder};
 
 pub fn init<N: Node>(
     config: ProtocolConfig,
     network_id: u64,
     events: NetworkListener,
     node_builder: N::Builder,
-) -> N::Builder {
+) -> N::Builder
+where
+    N::Backend: StorageBackend,
+{
     node_builder
         .with_worker::<TangleWorker>()
         .with_worker::<MetricsWorker>()
@@ -58,7 +60,6 @@ pub fn init<N: Node>(
         .with_worker_cfg::<MilestonePayloadWorker>(config.clone())
         .with_worker::<IndexationPayloadWorker>()
         .with_worker::<BroadcasterWorker>()
-        .with_worker::<MessageValidatorWorker>()
         .with_worker::<PropagatorWorker>()
         .with_worker::<MpsWorker>()
         .with_worker_cfg::<MilestoneSolidifierWorker>(config.workers.ms_sync_count)

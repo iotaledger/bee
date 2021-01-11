@@ -17,6 +17,7 @@ pub enum Error {
     CommandSendFailure,
 }
 
+/// A controller for the networking layer, that allows to issue various commands, e.g. sending a message to a peer.
 #[derive(Clone, Debug)]
 pub struct NetworkController {
     config: Arc<NetworkConfig>,
@@ -33,6 +34,7 @@ impl NetworkController {
         }
     }
 
+    /// Sends a command.
     /// NOTE: Although synchronous, this method never actually blocks.
     pub fn send(&self, command: Command) -> Result<(), Error> {
         Ok(self
@@ -41,10 +43,12 @@ impl NetworkController {
             .map_err(|_| Error::CommandSendFailure)?)
     }
 
+    /// Returns the network config.
     pub fn config(&self) -> &NetworkConfig {
         &self.config
     }
 
+    /// Returns the own peer id.
     pub fn own_id(&self) -> &PeerId {
         &self.own_id
     }

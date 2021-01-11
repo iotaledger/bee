@@ -4,14 +4,14 @@
 use crate::{
     helper,
     peer::PeerManager,
-    tangle::MsTangle,
+    storage::StorageBackend,
     worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
     ProtocolMetrics,
 };
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::{node::Node, worker::Worker};
 use bee_network::NetworkController;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -28,7 +28,10 @@ const CHECK_HEARTBEATS_INTERVAL_SEC: u64 = 5;
 pub(crate) struct HeartbeaterWorker {}
 
 #[async_trait]
-impl<N: Node> Worker<N> for HeartbeaterWorker {
+impl<N: Node> Worker<N> for HeartbeaterWorker
+where
+    N::Backend: StorageBackend,
+{
     type Config = ();
     type Error = Infallible;
 

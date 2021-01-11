@@ -4,7 +4,6 @@
 mod broadcaster;
 mod heartbeater;
 mod message;
-mod message_validator;
 mod metrics;
 mod milestone_cone_updater;
 mod mps;
@@ -24,7 +23,6 @@ pub(crate) use message::{
     MilestonePayloadWorkerEvent, ProcessorWorker, TransactionPayloadWorker, TransactionPayloadWorkerEvent,
 };
 pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
-pub(crate) use message_validator::{MessageValidatorWorker, MessageValidatorWorkerEvent};
 pub use metrics::MetricsWorker;
 pub(crate) use milestone_cone_updater::{MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent};
 pub(crate) use mps::MpsWorker;

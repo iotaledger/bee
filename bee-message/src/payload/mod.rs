@@ -5,9 +5,9 @@ pub mod indexation;
 pub mod milestone;
 pub mod transaction;
 
-use indexation::Indexation;
-use milestone::Milestone;
-use transaction::Transaction;
+use indexation::{Indexation, PAYLOAD_INDEXATION_TYPE};
+use milestone::{Milestone, PAYLOAD_MILESTONE_TYPE};
+use transaction::{Transaction, PAYLOAD_TRANSACTION_TYPE};
 
 use crate::Error;
 
@@ -16,10 +16,6 @@ use bee_common::packable::{Packable, Read, Write};
 use serde::{Deserialize, Serialize};
 
 use alloc::boxed::Box;
-
-const PAYLOAD_TRANSACTION_TYPE: u32 = 0;
-const PAYLOAD_MILESTONE_TYPE: u32 = 1;
-const PAYLOAD_INDEXATION_TYPE: u32 = 2;
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -86,7 +82,7 @@ impl Packable for Payload {
             PAYLOAD_TRANSACTION_TYPE => Self::Transaction(Box::new(Transaction::unpack(reader)?)),
             PAYLOAD_MILESTONE_TYPE => Self::Milestone(Box::new(Milestone::unpack(reader)?)),
             PAYLOAD_INDEXATION_TYPE => Self::Indexation(Box::new(Indexation::unpack(reader)?)),
-            _ => return Err(Self::Error::InvalidVariant),
+            _ => return Err(Self::Error::InvalidPayloadType),
         })
     }
 }

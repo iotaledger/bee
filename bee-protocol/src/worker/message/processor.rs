@@ -7,7 +7,7 @@ use crate::{
     helper,
     packet::Message as MessagePacket,
     peer::PeerManager,
-    tangle::{MessageMetadata, MsTangle},
+    storage::StorageBackend,
     worker::{
         BroadcasterWorker, BroadcasterWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent,
         MessageRequesterWorker, MessageSubmitterError, MetricsWorker, MilestonePayloadWorker,
@@ -17,10 +17,11 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::{packable::Packable, shutdown_stream::ShutdownStream};
-use bee_common_pt2::{node::Node, worker::Worker};
+use bee_common::packable::Packable;
 use bee_message::{payload::Payload, Message, MessageId};
 use bee_network::PeerId;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{metadata::MessageMetadata, MsTangle};
 
 use async_trait::async_trait;
 use futures::{channel::oneshot::Sender, stream::StreamExt};
@@ -41,7 +42,10 @@ pub(crate) struct ProcessorWorker {
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for ProcessorWorker {
+impl<N: Node> Worker<N> for ProcessorWorker
+where
+    N::Backend: StorageBackend,
+{
     type Config = (ProtocolConfig, u64);
     type Error = Infallible;
 
@@ -70,7 +74,6 @@ impl<N: Node> Worker<N> for ProcessorWorker {
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
 
-        let _storage = node.storage();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
         let metrics = node.resource::<ProtocolMetrics>();

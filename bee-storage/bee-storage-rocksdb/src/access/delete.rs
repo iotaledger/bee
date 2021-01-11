@@ -12,16 +12,17 @@ use bee_message::{
     },
     Message, MessageId,
 };
-use bee_protocol::{
-    tangle::{MessageMetadata, SolidEntryPoint},
-    Milestone, MilestoneIndex,
-};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Delete;
+use bee_tangle::{
+    metadata::MessageMetadata,
+    milestone::{Milestone, MilestoneIndex},
+    solid_entry_point::SolidEntryPoint,
+};
 
 #[async_trait::async_trait]
 impl Delete<MessageId, Message> for Storage {
-    async fn delete(&self, message_id: &MessageId) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
@@ -35,7 +36,7 @@ impl Delete<MessageId, Message> for Storage {
 
 #[async_trait::async_trait]
 impl Delete<MessageId, MessageMetadata> for Storage {
-    async fn delete(&self, message_id: &MessageId) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
@@ -49,7 +50,7 @@ impl Delete<MessageId, MessageMetadata> for Storage {
 
 #[async_trait::async_trait]
 impl Delete<(MessageId, MessageId), ()> for Storage {
-    async fn delete(&self, (parent, child): &(MessageId, MessageId)) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(&self, (parent, child): &(MessageId, MessageId)) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)
@@ -66,7 +67,10 @@ impl Delete<(MessageId, MessageId), ()> for Storage {
 
 #[async_trait::async_trait]
 impl Delete<(HashedIndex, MessageId), ()> for Storage {
-    async fn delete(&self, (index, message_id): &(HashedIndex, MessageId)) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(
+        &self,
+        (index, message_id): &(HashedIndex, MessageId),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_INDEX_TO_MESSAGE_ID)
@@ -83,7 +87,7 @@ impl Delete<(HashedIndex, MessageId), ()> for Storage {
 
 #[async_trait::async_trait]
 impl Delete<OutputId, Output> for Storage {
-    async fn delete(&self, output_id: &OutputId) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(&self, output_id: &OutputId) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
@@ -97,7 +101,7 @@ impl Delete<OutputId, Output> for Storage {
 
 #[async_trait::async_trait]
 impl Delete<OutputId, Spent> for Storage {
-    async fn delete(&self, output_id: &OutputId) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(&self, output_id: &OutputId) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_SPENT)
@@ -111,7 +115,7 @@ impl Delete<OutputId, Spent> for Storage {
 
 #[async_trait::async_trait]
 impl Delete<Unspent, ()> for Storage {
-    async fn delete(&self, unspent: &Unspent) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(&self, unspent: &Unspent) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_UNSPENT)
@@ -125,7 +129,10 @@ impl Delete<Unspent, ()> for Storage {
 
 #[async_trait::async_trait]
 impl Delete<(Ed25519Address, OutputId), ()> for Storage {
-    async fn delete(&self, (address, output_id): &(Ed25519Address, OutputId)) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(
+        &self,
+        (address, output_id): &(Ed25519Address, OutputId),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)
@@ -142,7 +149,7 @@ impl Delete<(Ed25519Address, OutputId), ()> for Storage {
 
 #[async_trait::async_trait]
 impl Delete<(), LedgerIndex> for Storage {
-    async fn delete(&self, (): &()) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(&self, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_LEDGER_INDEX)
@@ -156,7 +163,7 @@ impl Delete<(), LedgerIndex> for Storage {
 
 #[async_trait::async_trait]
 impl Delete<MilestoneIndex, Milestone> for Storage {
-    async fn delete(&self, index: &MilestoneIndex) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(&self, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
@@ -170,7 +177,7 @@ impl Delete<MilestoneIndex, Milestone> for Storage {
 
 #[async_trait::async_trait]
 impl Delete<(), SnapshotInfo> for Storage {
-    async fn delete(&self, (): &()) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(&self, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_SNAPSHOT_INFO)
@@ -184,7 +191,7 @@ impl Delete<(), SnapshotInfo> for Storage {
 
 #[async_trait::async_trait]
 impl Delete<SolidEntryPoint, MilestoneIndex> for Storage {
-    async fn delete(&self, sep: &SolidEntryPoint) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(&self, sep: &SolidEntryPoint) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
@@ -198,7 +205,7 @@ impl Delete<SolidEntryPoint, MilestoneIndex> for Storage {
 
 #[async_trait::async_trait]
 impl Delete<MilestoneIndex, Diff> for Storage {
-    async fn delete(&self, index: &MilestoneIndex) -> Result<(), <Self as Backend>::Error> {
+    async fn delete(&self, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)
