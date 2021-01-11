@@ -9,14 +9,18 @@ mod workers;
 
 use crate::{
     plugins::dashboard::{
-        websocket::responses::{confirmed_info, confirmed_milestone_metrics, database_size_metrics, tip_info},
+        websocket::responses::{
+            confirmed_info, confirmed_milestone_metrics, database_size_metrics, node_status, tip_info,
+        },
         workers::{
             confirmed_ms_metrics::{confirmed_ms_metrics_worker, ConfirmedMilestoneMetrics},
             db_size_metrics::{db_size_metrics_worker, DatabaseSizeMetrics},
+            node_status::{node_status_worker, NodeStatus},
         },
     },
     storage::StorageBackend,
 };
+
 use config::DashboardConfig;
 use websocket::{
     responses::{milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, vertex, WsEvent},
@@ -147,9 +151,14 @@ where
             tip_info::forward_tip_removed(event)
         });
 
+        topic_handler(node, "NodeStatus", &users, move |event: NodeStatus| {
+            node_status::forward(event)
+        });
+
         // run sub-workers
         confirmed_ms_metrics_worker(node);
         db_size_metrics_worker(node);
+        node_status_worker(node);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

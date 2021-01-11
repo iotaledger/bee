@@ -3,4 +3,4 @@
 
 pub(crate) mod confirmed_ms_metrics;
 pub(crate) mod db_size_metrics;
-pub(crate) mod status_worker;
+pub(crate) mod node_status;

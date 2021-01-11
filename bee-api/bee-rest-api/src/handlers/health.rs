@@ -21,7 +21,7 @@ pub(crate) async fn health<B: StorageBackend>(tangle: ResourceHandle<MsTangle<B>
     }
 }
 
-pub(crate) async fn is_healthy<B: StorageBackend>(tangle: ResourceHandle<MsTangle<B>>) -> bool {
+pub async fn is_healthy<B: StorageBackend>(tangle: ResourceHandle<MsTangle<B>>) -> bool {
     if !tangle.is_synced() {
         return false;
     }

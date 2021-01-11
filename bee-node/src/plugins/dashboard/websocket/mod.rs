@@ -61,11 +61,17 @@ pub(crate) async fn user_connected(ws: WebSocket, users: WsUsers) {
             tx,
             topics: {
                 let mut t = HashSet::new();
-                t.insert(WsTopic::SyncStatus);
-                t.insert(WsTopic::MPSMetrics);
+                t.insert(WsTopic::ConfirmedInfo);
+                t.insert(WsTopic::ConfirmedMilestoneMetrics);
+                t.insert(WsTopic::DatabaseSizeMetrics);
                 t.insert(WsTopic::Milestone);
-                t.insert(WsTopic::SolidInfo);
                 t.insert(WsTopic::MilestoneInfo);
+                t.insert(WsTopic::MPSMetrics);
+                t.insert(WsTopic::NodeStatus);
+                t.insert(WsTopic::SolidInfo);
+                t.insert(WsTopic::SyncStatus);
+                t.insert(WsTopic::TipInfo);
+                t.insert(WsTopic::Vertex);
                 t
             },
         },

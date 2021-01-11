@@ -12,7 +12,7 @@ use crate::plugins::dashboard::websocket::{
 
 use crate::plugins::dashboard::websocket::responses::{
     confirmed_info::ConfirmedInfoResponse, confirmed_milestone_metrics::ConfirmedMilestoneMetricsResponse,
-    database_size_metrics::DatabaseSizeMetricsResponse, tip_info::TipInfoResponse,
+    database_size_metrics::DatabaseSizeMetricsResponse, node_status::NodeStatusResponse, tip_info::TipInfoResponse,
 };
 use serde::Serialize;
 
@@ -22,6 +22,7 @@ pub(crate) mod database_size_metrics;
 pub(crate) mod milestone;
 pub(crate) mod milestone_info;
 pub(crate) mod mps_metrics_updated;
+pub(crate) mod node_status;
 pub(crate) mod solid_info;
 pub(crate) mod sync_status;
 pub(crate) mod tip_info;
@@ -54,4 +55,5 @@ pub(crate) enum WsEventInner {
     Vertex(VertexResponse),
     DatabaseSizeMetrics(DatabaseSizeMetricsResponse),
     TipInfo(TipInfoResponse),
+    NodeStatus(NodeStatusResponse),
 }

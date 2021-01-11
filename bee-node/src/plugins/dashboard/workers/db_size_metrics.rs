@@ -12,7 +12,7 @@ use tokio::time::interval;
 
 use std::time::Duration;
 
-const DB_SIZE_WORKER_INTERVAL_SEC: u64 = 60;
+const DB_SIZE_METRICS_WORKER_INTERVAL_SEC: u64 = 1;
 
 pub(crate) fn db_size_metrics_worker<N>(node: &mut N)
 where
@@ -25,12 +25,16 @@ where
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
         info!("Ws `db_size_metrics_worker` running.");
 
-        let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_secs(DB_SIZE_WORKER_INTERVAL_SEC)));
+        let mut ticker = ShutdownStream::new(
+            shutdown,
+            interval(Duration::from_secs(DB_SIZE_METRICS_WORKER_INTERVAL_SEC)),
+        );
 
         while ticker.next().await.is_some() {
             // TODO: replace with storage access once available
             let lsmi = *tangle.get_latest_solid_milestone_index();
-            let estimated_total_count = (lsmi - *tangle.get_snapshot_index()) * 12 * DB_SIZE_WORKER_INTERVAL_SEC as u32;
+            let estimated_total_count =
+                (lsmi - *tangle.get_snapshot_index()) * 12 * DB_SIZE_METRICS_WORKER_INTERVAL_SEC as u32;
             bus.dispatch(DatabaseSizeMetrics {
                 total: estimated_total_count as u64,
                 ts: (estimated_total_count as f64 * 0.05) as u64,
