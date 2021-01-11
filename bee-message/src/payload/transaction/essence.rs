@@ -114,7 +114,7 @@ impl Packable for TransactionEssence {
             builder = builder.with_payload(payload);
         }
 
-        Ok(builder.finish()?)
+        builder.finish()
     }
 }
 
@@ -170,8 +170,8 @@ impl TransactionEssenceBuilder {
 
         // Inputs validation
 
-        for i in self.inputs.iter() {
-            match i {
+        for input in self.inputs.iter() {
+            match input {
                 Input::UTXO(u) => {
                     // Transaction Output Index must be 0 ≤ x < 127
                     if !INPUT_OUTPUT_INDEX_RANGE.contains(&u.output_id().index()) {
@@ -179,7 +179,7 @@ impl TransactionEssenceBuilder {
                     }
 
                     // Every combination of Transaction ID + Transaction Output Index must be unique in the inputs set.
-                    if self.inputs.iter().filter(|j| *j == i).count() > 1 {
+                    if self.inputs.iter().filter(|i| *i == input).count() > 1 {
                         return Err(Error::DuplicateError);
                     }
                 }
@@ -190,12 +190,10 @@ impl TransactionEssenceBuilder {
 
         let mut total = 0;
 
-        for i in self.outputs.iter() {
-            match i {
+        for output in self.outputs.iter() {
+            match output {
                 Output::SignatureLockedSingle(u) => {
-                    // If Address is of type WOTS address, its bytes must be valid T5B1 bytes.
-
-                    // The Address must be unique in the set of SigLockedSingleDeposits
+                    // The Address must be unique in the set of SigLockedSingleDeposits.
                     if self
                         .outputs
                         .iter()

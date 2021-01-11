@@ -106,10 +106,10 @@ impl Packable for Transaction {
             unlock_blocks.push(UnlockBlock::unpack(reader)?);
         }
 
-        Ok(Self::builder()
+        Self::builder()
             .with_essence(essence)
             .with_unlock_blocks(unlock_blocks)
-            .finish()?)
+            .finish()
     }
 }
 
