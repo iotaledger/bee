@@ -93,7 +93,7 @@ impl Packable for Indexation {
             return Err(Error::InvalidIndexationLength(index_len));
         }
 
-        let mut index_bytes = Vec::with_capacity(index_len);
+        let mut index_bytes = vec![0u8; index_len];
         reader.read_exact(&mut index_bytes)?;
 
         let data_len = u32::unpack(reader)? as usize;
@@ -102,7 +102,7 @@ impl Packable for Indexation {
             return Err(Error::InvalidIndexationLength(data_len));
         }
 
-        let mut data_bytes = Vec::with_capacity(data_len);
+        let mut data_bytes = vec![0u8; data_len];
         reader.read_exact(&mut data_bytes)?;
 
         Ok(Self {
