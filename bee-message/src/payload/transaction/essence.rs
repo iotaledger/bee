@@ -103,25 +103,20 @@ impl Packable for TransactionEssence {
             outputs.push(Output::unpack(reader)?);
         }
 
+        let mut builder = Self::builder().with_inputs(inputs).with_outputs(outputs);
+
         let payload_len = u32::unpack(reader)? as usize;
-        let payload = if payload_len > 0 {
+        if payload_len > 0 {
             let payload = Payload::unpack(reader)?;
             if payload_len != payload.packed_len() {
                 return Err(Self::Error::InvalidAnnouncedLength(payload_len, payload.packed_len()));
             }
 
-            Some(payload)
-        } else {
-            None
-        };
+            // TODO check payload type
+            builder = builder.with_payload(payload);
+        }
 
-        // TODO check payload type
-
-        Ok(Self {
-            inputs: inputs.into_boxed_slice(),
-            outputs: outputs.into_boxed_slice(),
-            payload,
-        })
+        Ok(builder.finish()?)
     }
 }
 
@@ -137,8 +132,18 @@ impl TransactionEssenceBuilder {
         Self::default()
     }
 
+    pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
+        self.inputs = inputs;
+        self
+    }
+
     pub fn add_input(mut self, input: Input) -> Self {
         self.inputs.push(input);
+        self
+    }
+
+    pub fn with_outputs(mut self, outputs: Vec<Output>) -> Self {
+        self.outputs = outputs;
         self
     }
 
