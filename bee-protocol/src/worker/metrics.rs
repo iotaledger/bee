@@ -28,9 +28,9 @@ impl<N: Node> Worker<N> for MetricsWorker {
 
         node.bus().add_listener::<Self, MilestoneConfirmed, _>(move |event| {
             metrics.referenced_messages_inc(event.referenced_messages as u64);
-            metrics.excluded_no_transaction_messages_inc(event.excluded_no_transaction_messages as u64);
-            metrics.excluded_conflicting_messages_inc(event.excluded_conflicting_messages as u64);
-            metrics.included_messages_inc(event.included_messages as u64);
+            metrics.excluded_no_transaction_messages_inc(event.excluded_no_transaction_messages.len() as u64);
+            metrics.excluded_conflicting_messages_inc(event.excluded_conflicting_messages.len() as u64);
+            metrics.included_messages_inc(event.included_messages.len() as u64);
         });
 
         let metrics = node.resource::<ProtocolMetrics>();

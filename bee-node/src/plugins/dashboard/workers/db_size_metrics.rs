@@ -1,28 +1,26 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugins::Dashboard;
+use crate::{plugins::Dashboard, storage::StorageBackend};
 
-use bee_common_pt2::node::ResHandle;
-
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::node::Node;
-use bee_protocol::tangle::MsTangle;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
+use bee_tangle::MsTangle;
 
 use futures::StreamExt;
 use log::info;
 use tokio::time::interval;
 
-use bee_storage::storage::Backend;
 use std::time::Duration;
 
 const DB_SIZE_WORKER_INTERVAL_SEC: u64 = 60;
 
-pub(crate) fn init_db_size_metrics_worker<N, B: Backend>(node: &mut N, tangle: ResHandle<MsTangle<B>>)
+pub(crate) fn db_size_metrics_worker<N>(node: &mut N)
 where
     N: Node,
+    N::Backend: StorageBackend,
 {
     let bus = node.bus();
+    let tangle = node.resource::<MsTangle<N::Backend>>();
 
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
         info!("Ws `db_size_metrics_worker` running.");

@@ -9,7 +9,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_protocol::event::LatestMilestoneChanged;
+use bee_protocol::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
 use bee_tangle::MsTangle;
 
 use serde::Serialize;
@@ -20,7 +20,10 @@ pub(crate) struct SyncStatusResponse {
     lsmi: u32, // Shouldn't it be `smi` (solid milestone index) instead?
 }
 
-pub(crate) fn forward_latest_milestone_changed<B: StorageBackend>(latest_milestone: LatestMilestoneChanged, tangle: &MsTangle<B>) -> WsEvent {
+pub(crate) fn forward_latest_milestone_changed<B: StorageBackend>(
+    latest_milestone: LatestMilestoneChanged,
+    tangle: &MsTangle<B>,
+) -> WsEvent {
     WsEvent::new(
         WsTopic::SyncStatus,
         WsEventInner::SyncStatus(SyncStatusResponse {
@@ -30,7 +33,7 @@ pub(crate) fn forward_latest_milestone_changed<B: StorageBackend>(latest_milesto
     )
 }
 
-pub(crate) fn forward_solid_milestone_changed<B: Backend>(
+pub(crate) fn forward_solid_milestone_changed<B: StorageBackend>(
     latest_solid_milestone: LatestSolidMilestoneChanged,
     tangle: &MsTangle<B>,
 ) -> WsEvent {

@@ -7,16 +7,27 @@ mod asset;
 mod websocket;
 mod workers;
 
-use crate::storage::StorageBackend;
-
-use crate::plugins::dashboard::workers::db_size_metrics::{init_db_size_metrics_worker, DatabaseSizeMetrics};
+use crate::{
+    plugins::dashboard::{
+        websocket::responses::{confirmed_info, confirmed_milestone_metrics, database_size_metrics, tip_info},
+        workers::{
+            confirmed_ms_metrics::{confirmed_ms_metrics_worker, ConfirmedMilestoneMetrics},
+            db_size_metrics::{db_size_metrics_worker, DatabaseSizeMetrics},
+        },
+    },
+    storage::StorageBackend,
+};
 use config::DashboardConfig;
 use websocket::{
     responses::{milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, vertex, WsEvent},
     user_connected, WsUsers,
 };
 
-use bee_protocol::event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated};
+use bee_ledger::event::MilestoneConfirmed;
+use bee_protocol::event::{
+    LatestMilestoneChanged, LatestSolidMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded,
+    TipRemoved,
+};
 use bee_rest_api::config::RestApiConfig;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
@@ -29,12 +40,6 @@ use tokio::sync::mpsc;
 use warp::{http::header::HeaderValue, path::FullPath, reply::Response, ws::Message, Filter, Rejection, Reply};
 use warp_reverse_proxy::reverse_proxy_filter;
 
-use crate::plugins::dashboard::{
-    websocket::responses::{confirmed_info, confirmed_milestone_metrics, database_size_metrics, tip_info},
-    workers::confirmed_ms_metrics::{init_confirmed_ms_metrics_worker, ConfirmedMilestoneMetrics},
-};
-use bee_ledger::event::MilestoneConfirmed;
-use bee_protocol::event::{LatestSolidMilestoneChanged, TipAdded, TipRemoved};
 use std::{
     any::Any,
     convert::Infallible,
@@ -142,9 +147,9 @@ where
             tip_info::forward_tip_removed(event)
         });
 
-        // init sub-workers
-        init_confirmed_ms_metrics_worker(node);
-        init_db_size_metrics_worker(node, tangle.clone());
+        // run sub-workers
+        confirmed_ms_metrics_worker(node);
+        db_size_metrics_worker(node);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

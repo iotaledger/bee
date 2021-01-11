@@ -7,6 +7,7 @@ use crate::plugins::dashboard::websocket::{
 };
 
 use bee_ledger::event::MilestoneConfirmed;
+use bee_message::MessageId;
 
 use serde::Serialize;
 
@@ -30,7 +31,14 @@ impl From<MilestoneConfirmed> for ConfirmedInfoResponse {
     fn from(val: MilestoneConfirmed) -> Self {
         Self {
             id: val.id.to_string(),
-            excluded_ids: val.excluded_messages.iter().map(|id| id.to_string()).collect(),
+            excluded_ids: val
+                .excluded_no_transaction_messages
+                .into_iter()
+                .chain(val.excluded_conflicting_messages.into_iter())
+                .collect::<Vec<MessageId>>()
+                .iter()
+                .map(|id| id.to_string())
+                .collect(),
         }
     }
 }

@@ -1,20 +1,20 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugins::Dashboard;
+use crate::{plugins::Dashboard, storage::StorageBackend};
 
-use bee_common::shutdown_stream::ShutdownStream;
-use bee_common_pt2::node::Node;
 use bee_ledger::event::MilestoneConfirmed;
 use bee_protocol::event::MpsMetricsUpdated;
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 
 use futures::StreamExt;
-use log::{error, info, warn};
+use log::{info, warn};
 use tokio::sync::mpsc;
 
-pub(crate) fn init_status_worker<N>(node: &mut N)
+pub(crate) fn status_worker<N>(node: &mut N)
 where
     N: Node,
+    N::Backend: StorageBackend,
 {
     let bus = node.bus();
     let (tx, rx) = mpsc::unbounded_channel();
