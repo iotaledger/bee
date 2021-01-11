@@ -86,8 +86,8 @@ where
     // Global Tangle Lock. Remove this as and when it is deemed correct to do so.
     gtl: RwLock<()>,
 
-    pub(crate) vertices: DashMap<MessageId, Vertex<T>>,
-    pub(crate) children: DashMap<MessageId, HashSet<MessageId>>,
+    vertices: DashMap<MessageId, Vertex<T>>,
+    children: DashMap<MessageId, (HashSet<MessageId>, bool)>,
 
     pub(crate) cache_counter: AtomicU64,
     pub(crate) cache_queue: Mutex<LruCache<MessageId, u64>>,
@@ -181,8 +181,11 @@ where
 
     #[inline]
     async fn add_child_inner(&self, parent: MessageId, child: MessageId) {
-        let mut children = self.children.entry(parent).or_default();
-        children.insert(child);
+        let mut children = self
+            .children
+            .entry(parent)
+            .or_insert_with(|| (HashSet::default(), false));
+        children.0.insert(child);
         self.hooks
             .insert_approver(parent, child)
             .await
@@ -283,8 +286,25 @@ where
     }
 
     async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = HashSet<MessageId>> + '_> {
-        match self.children.get(message_id) {
-            Some(children) => Some(children),
+        struct Children<'a> {
+            children: dashmap::mapref::one::Ref<'a, MessageId, (HashSet<MessageId>, bool)>,
+        }
+
+        impl<'a> Deref for Children<'a> {
+            type Target = HashSet<MessageId>;
+
+            fn deref(&self) -> &Self::Target {
+                &self.children.deref().0
+            }
+        }
+
+        let children = match self
+            .children
+            .get(message_id)
+            // Skip approver lists that are not exhaustive
+            .filter(|children| children.1)
+        {
+            Some(children) => children,
             None => {
                 let _gtl_guard = self.gtl.write().await;
 
@@ -295,23 +315,24 @@ where
                         info!("Failed to update approvers for message message {:?}", e);
                         None
                     })
-                    .map(|approvers| self.children.insert(*message_id, approvers.into_iter().collect()));
-                Some(
-                    self.children
-                        .get(message_id)
-                        .expect("Approver list inserted and immediately evicted"),
-                )
+                    .map(|approvers| {
+                        self.children
+                            .insert(*message_id, (approvers.into_iter().collect(), true))
+                    });
+
+                self.children
+                    .get(message_id)
+                    .expect("Approver list inserted and immediately evicted")
             }
-        }
+        };
+
+        Some(Children { children })
     }
 
-    /// Returns the children of a vertex.
-    pub async fn get_children(&self, message_id: &MessageId) -> HashSet<MessageId> {
+    /// Returns the children of a vertex, if we know about them.
+    pub async fn get_children(&self, message_id: &MessageId) -> Option<HashSet<MessageId>> {
         // Effectively atomic
-        self.children_inner(message_id)
-            .await
-            .map(|approvers| approvers.clone())
-            .unwrap_or_default()
+        self.children_inner(message_id).await.map(|approvers| approvers.clone())
     }
 
     /// Returns the number of children of a vertex.

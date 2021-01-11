@@ -102,8 +102,10 @@ async fn update_messages_referenced_by_milestone<N: Node>(
                 })
                 .await;
 
-            for child in tangle.get_children(&hash).await {
-                update_future_cone::<N>(tangle, child).await;
+            if let Some(children) = tangle.get_children(&hash).await {
+                for child in children {
+                    update_future_cone::<N>(tangle, child).await;
+                }
             }
 
             to_visit.push(*message.parent1());
@@ -160,8 +162,10 @@ where
                 .await;
 
             // propagate to children
-            for child in tangle.get_children(&hash).await {
-                children.push(child);
+            if let Some(msg_children) = tangle.get_children(&hash).await {
+                for child in msg_children {
+                    children.push(child);
+                }
             }
         }
     }

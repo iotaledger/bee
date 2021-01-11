@@ -79,8 +79,10 @@ async fn propagate<B: StorageBackend>(
                     })
                     .await;
 
-                for child in tangle.get_children(&message_id).await {
-                    children.push(child);
+                if let Some(msg_children) = tangle.get_children(&message_id).await {
+                    for child in msg_children {
+                        children.push(child);
+                    }
                 }
 
                 bus.dispatch(MessageSolidified(*message_id));
