@@ -162,16 +162,15 @@ impl TransactionEssenceBuilder {
         // Inputs validation
 
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.inputs.len()) {
-            return Err(Error::CountError);
+            return Err(Error::InvalidInputOutputCount);
         }
 
         for i in self.inputs.iter() {
-            // Input Type value must be 0, denoting an UTXO Input.
             match i {
                 Input::UTXO(u) => {
                     // Transaction Output Index must be 0 ≤ x < 127
                     if !INPUT_OUTPUT_INDEX_RANGE.contains(&u.output_id().index()) {
-                        return Err(Error::CountError);
+                        return Err(Error::InvalidInputOutputCount);
                     }
 
                     // Every combination of Transaction ID + Transaction Output Index must be unique in the inputs set.
@@ -182,15 +181,15 @@ impl TransactionEssenceBuilder {
             }
         }
 
-        // Output validation
+        // Outputs validation
 
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.outputs.len()) {
-            return Err(Error::CountError);
+            return Err(Error::InvalidInputOutputCount);
         }
 
         let mut total = 0;
+
         for i in self.outputs.iter() {
-            // Output Type must be 0, denoting a SignatureLockedSingle.
             match i {
                 Output::SignatureLockedSingle(u) => {
                     // Address Type must either be 0 or 1, denoting a WOTS- or Ed25519 address.

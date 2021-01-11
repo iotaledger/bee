@@ -82,7 +82,7 @@ impl Packable for Payload {
             PAYLOAD_TRANSACTION_TYPE => Self::Transaction(Box::new(Transaction::unpack(reader)?)),
             PAYLOAD_MILESTONE_TYPE => Self::Milestone(Box::new(Milestone::unpack(reader)?)),
             PAYLOAD_INDEXATION_TYPE => Self::Indexation(Box::new(Indexation::unpack(reader)?)),
-            _ => return Err(Self::Error::InvalidVariant),
+            _ => return Err(Self::Error::InvalidPayloadType),
         })
     }
 }

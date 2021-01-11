@@ -100,7 +100,7 @@ impl Packable for Address {
         Ok(match u8::unpack(reader)? {
             0 => Self::Wots(WotsAddress::unpack(reader)?),
             1 => Self::Ed25519(Ed25519Address::unpack(reader)?),
-            _ => return Err(Self::Error::InvalidVariant),
+            _ => return Err(Self::Error::InvalidAddressType),
         })
     }
 }

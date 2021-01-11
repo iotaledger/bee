@@ -65,7 +65,7 @@ impl Packable for SignatureUnlock {
         Ok(match u8::unpack(reader)? {
             0 => Self::Wots(WotsSignature::unpack(reader)?),
             1 => Self::Ed25519(Ed25519Signature::unpack(reader)?),
-            _ => return Err(Self::Error::InvalidVariant),
+            _ => return Err(Self::Error::InvalidSignatureType),
         })
     }
 }

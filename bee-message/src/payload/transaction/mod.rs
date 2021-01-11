@@ -170,7 +170,7 @@ impl TransactionBuilder {
         // Unlock Blocks validation
         // Unlock Blocks Count must match the amount of inputs. Must be 0 < x < 127.
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.unlock_blocks.len()) {
-            return Err(Error::CountError);
+            return Err(Error::InvalidInputOutputCount);
         }
 
         // for (i, block) in self.unlock_blocks.iter().enumerate() {
