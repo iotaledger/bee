@@ -4,7 +4,7 @@
 use crate::{
     payload::{
         transaction::{
-            constants::{INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE},
+            constants::{INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE, IOTA_SUPPLY},
             input::Input,
             output::Output,
         },
@@ -220,9 +220,9 @@ impl TransactionEssenceBuilder {
             }
         }
 
-        // Accumulated output balance must not exceed the total supply of tokens 2'779'530'283'277'761
-        if total > 2779530283277761 {
-            return Err(Error::AmountError);
+        // Accumulated output balance must not exceed the total supply of tokens.
+        if total > IOTA_SUPPLY {
+            return Err(Error::InvalidAccumulatedOutput(total));
         }
 
         // Payload Length must be 0 (to indicate that there's no payload) or be valid for the specified payload type.
