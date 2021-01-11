@@ -67,18 +67,9 @@ pub async fn dial_peer(
         });
     }
 
-    let peer_id = id;
+    log_outbound_connection_success(&id, &peer_info);
 
-    log_outbound_connection_success(&peer_id, &peer_info);
-
-    super::upgrade_connection(
-        peer_id,
-        peer_info,
-        muxer,
-        Origin::Outbound,
-        internal_event_sender.clone(),
-    )
-    .await?;
+    super::upgrade_connection(id, peer_info, muxer, Origin::Outbound, internal_event_sender.clone()).await?;
 
     Ok(())
 }
