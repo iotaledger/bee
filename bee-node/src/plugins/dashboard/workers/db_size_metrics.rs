@@ -20,7 +20,7 @@ where
     N::Backend: StorageBackend,
 {
     let bus = node.bus();
-    let tangle = node.resource::<MsTangle<N::Backend>>();
+    let storage = node.storage();
 
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
         info!("Ws `db_size_metrics_worker` running.");
@@ -30,14 +30,15 @@ where
             interval(Duration::from_secs(DB_SIZE_METRICS_WORKER_INTERVAL_SEC)),
         );
 
+        use bee_storage::backend::StorageBackend;
         while ticker.next().await.is_some() {
             // TODO: replace with storage access once available
-            let lsmi = *tangle.get_latest_solid_milestone_index();
-            let estimated_total_count =
-                (lsmi - *tangle.get_snapshot_index()) * 12 * DB_SIZE_METRICS_WORKER_INTERVAL_SEC as u32;
+            // Storage should be
+            let size = storage.size().await.unwrap().unwrap() as u64;
             bus.dispatch(DatabaseSizeMetrics {
-                total: estimated_total_count as u64,
-                ts: (estimated_total_count as f64 * 0.05) as u64,
+                total: size,
+                // replace with appropriate storage function
+                ts: size,
             });
         }
 
