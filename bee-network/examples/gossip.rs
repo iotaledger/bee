@@ -18,6 +18,7 @@
 mod common;
 
 use common::*;
+use config::*;
 
 use bee_network::{Command::*, Event, Keypair, Multiaddr, NetworkConfig, NetworkController, NetworkListener, PeerId};
 use bee_runtime::{
@@ -354,4 +355,108 @@ fn spam_endpoint(network: NetworkController, peer_id: PeerId) {
             }
         }
     });
+}
+
+mod config {
+    use super::*;
+
+    use std::{
+        net::{IpAddr, Ipv4Addr, SocketAddr},
+        str::FromStr,
+    };
+
+    #[derive(Debug, StructOpt)]
+    #[structopt(name = "gossip", about = "bee-network example")]
+    pub struct Args {
+        #[structopt(short = "b", long = "bind")]
+        pub bind_address: String,
+
+        #[structopt(short = "p", long = "peers")]
+        pub peer_addresses: Vec<String>,
+
+        #[structopt(short = "m", long = "msg")]
+        pub message: String,
+    }
+
+    const DEFAULT_BIND_ADDRESS: &str = "/ip4/127.0.0.1/tcp/1337";
+    const DEFAULT_MESSAGE: &str = "hello world";
+
+    #[derive(Clone)]
+    pub struct ExampleConfig {
+        pub bind_address: Multiaddr,
+        pub peers: Vec<Multiaddr>,
+        pub message: String,
+    }
+
+    impl ExampleConfig {
+        pub fn build() -> ExampleConfigBuilder {
+            ExampleConfigBuilder::new()
+        }
+    }
+
+    impl From<Args> for ExampleConfig {
+        fn from(args: Args) -> Self {
+            let Args {
+                bind_address,
+                mut peer_addresses,
+                message,
+            } = args;
+
+            let mut config = Self::build().with_bind_address(bind_address).with_message(message);
+
+            for peer_address in peer_addresses.drain(..) {
+                config = config.with_peer_address(peer_address);
+            }
+
+            config.finish()
+        }
+    }
+
+    pub struct ExampleConfigBuilder {
+        bind_address: Option<Multiaddr>,
+        peers: Vec<String>,
+        message: Option<String>,
+    }
+
+    impl ExampleConfigBuilder {
+        pub fn new() -> Self {
+            Self {
+                bind_address: None,
+                peers: vec![],
+                message: None,
+            }
+        }
+
+        pub fn with_bind_address(mut self, bind_address: String) -> Self {
+            self.bind_address
+                .replace(Multiaddr::from_str(&bind_address).expect("create Multiaddr instance"));
+            self
+        }
+
+        pub fn with_peer_address(mut self, peer_address: String) -> Self {
+            self.peers.push(peer_address);
+            self
+        }
+
+        pub fn with_message(mut self, message: String) -> Self {
+            self.message.replace(message);
+            self
+        }
+
+        pub fn finish(self) -> ExampleConfig {
+            let peers = self
+                .peers
+                .iter()
+                .map(|s| Multiaddr::from_str(s).expect("error parsing Multiaddr"))
+                .collect();
+
+            ExampleConfig {
+                bind_address: self
+                    .bind_address
+                    .unwrap_or_else(|| Multiaddr::from_str(DEFAULT_BIND_ADDRESS).unwrap()),
+                peers,
+                message: self.message.unwrap_or_else(|| DEFAULT_MESSAGE.into()),
+            }
+        }
+    }
 }
