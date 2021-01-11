@@ -27,6 +27,7 @@ pub enum Error {
     InvalidHex,
     InvalidIndexLength(usize),
     InvalidMessageLength(usize),
+    InvalidTransactionPayload,
 }
 
 impl std::error::Error for Error {}
@@ -57,6 +58,7 @@ impl fmt::Display for Error {
             Error::InvalidHex => write!(f, "Invalid hexadecimal conversion."),
             Error::InvalidIndexLength(length) => write!(f, "Invalid index length {}.", length),
             Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
+            Error::InvalidTransactionPayload => write!(f, "Invalid transaction payload type."),
         }
     }
 }

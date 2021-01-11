@@ -111,9 +111,10 @@ impl Packable for TransactionEssence {
             if payload_len != payload.packed_len() {
                 return Err(Self::Error::InvalidAnnouncedLength(payload_len, payload.packed_len()));
             }
-
-            // TODO check payload type
-            builder = builder.with_payload(payload);
+            match payload {
+                Payload::Indexation(_) => builder = builder.with_payload(payload),
+                _ => return Err(Self::Error::InvalidTransactionPayload),
+            }
         }
 
         Ok(builder.finish()?)
