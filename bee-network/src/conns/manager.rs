@@ -116,7 +116,6 @@ impl<N: Node> Worker<N> for ConnectionManager {
             let mut incoming = ShutdownStream::new(shutdown, peer_listener);
 
             while let Some(Ok(listener_event)) = incoming.next().await {
-                //
                 if let Some((upgrade, peer_address)) = listener_event.into_upgrade() {
                     // TODO: try again to move this block into its own function (beware: lifetime issues ahead!!!)
 
@@ -199,29 +198,6 @@ impl<N: Node> Worker<N> for ConnectionManager {
 
             info!("Listener stopped.")
         });
-
-        // loop {
-        //     select! {
-        //         _ = fused_shutdown_listener => {
-        //             trace!("Connection Manager received shutdown signal.");
-        //             break;
-        //         },
-        //         listener_event = fused_incoming_streams.next() => {
-        //             if let Some(listener_event) = listener_event {
-        //                 if let Ok(listener_event) = listener_event {
-        //                 } else {
-        //                     error!("Listener event stream failure.");
-        //                     NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
-        //                     continue;
-        //                 }
-        //             } else {
-        //                 error!("Fatal: Listener event stream stopped.");
-        //                 NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
-        //                 break;
-        //             }
-        //         },
-        //     }
-        // }
 
         trace!("Connection Manager started.");
 
