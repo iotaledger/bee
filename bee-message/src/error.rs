@@ -14,7 +14,7 @@ pub enum Error {
     InvalidAddressType,
     InvalidSignatureType,
     InvalidUnlockType,
-    InvalidAccumulatedOutput(u64),
+    InvalidAccumulatedOutput(u128),
     NoInput,
     NoOutput,
     DuplicateError,
