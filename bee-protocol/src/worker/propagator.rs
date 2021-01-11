@@ -148,7 +148,7 @@ where
                 count += 1;
             }
 
-            debug!("Drained {} messages.", count);
+            debug!("Drained {} message ids.", count);
 
             info!("Stopped.");
         });

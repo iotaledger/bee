@@ -13,7 +13,7 @@ use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use log::{info, warn};
+use log::{debug, info, warn};
 use tokio::sync::mpsc;
 
 use std::{any::TypeId, convert::Infallible};
@@ -23,6 +23,24 @@ pub(crate) struct IndexationPayloadWorkerEvent(pub(crate) MessageId);
 
 pub(crate) struct IndexationPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
+}
+
+async fn process<B: StorageBackend>(tangle: &MsTangle<B>, storage: &B, message_id: MessageId) {
+    if let Some(message) = tangle.get(&message_id).await {
+        let indexation = match message.payload() {
+            Some(Payload::Indexation(indexation)) => indexation,
+            Some(Payload::Transaction(transaction)) => match transaction.essence().payload() {
+                Some(Payload::Indexation(indexation)) => indexation,
+                _ => return,
+            },
+            _ => return,
+        };
+        let hash = indexation.hash();
+
+        if let Err(e) = Insert::<(HashedIndex, MessageId), ()>::insert(&*storage, &(hash, message_id), &()).await {
+            warn!("Inserting indexation payload failed: {:?}.", e);
+        }
+    }
 }
 
 #[async_trait]
@@ -49,24 +67,19 @@ where
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(IndexationPayloadWorkerEvent(message_id)) = receiver.next().await {
-                if let Some(message) = tangle.get(&message_id).await {
-                    let indexation = match message.payload() {
-                        Some(Payload::Indexation(indexation)) => indexation,
-                        Some(Payload::Transaction(transaction)) => match transaction.essence().payload() {
-                            Some(Payload::Indexation(indexation)) => indexation,
-                            _ => continue,
-                        },
-                        _ => continue,
-                    };
-                    let hash = indexation.hash();
-
-                    if let Err(e) =
-                        Insert::<(HashedIndex, MessageId), ()>::insert(&*storage, &(hash, message_id), &()).await
-                    {
-                        warn!("Inserting indexation payload failed: {:?}.", e);
-                    }
-                }
+                process(&tangle, &storage, message_id).await;
             }
+
+            let (_, mut receiver) = receiver.split();
+            let receiver = receiver.get_mut();
+            let mut count = 0;
+
+            while let Ok(IndexationPayloadWorkerEvent(message_id)) = receiver.try_recv() {
+                process(&tangle, &storage, message_id).await;
+                count += 1;
+            }
+
+            debug!("Drained {} message ids.", count);
 
             info!("Stopped.");
         });
