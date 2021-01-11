@@ -118,12 +118,7 @@ impl ExampleNode {
             process_event(event, &config.message, &network_controller, &mut connected_peers).await;
         }
 
-        info!("[EXAMPLE] Stopping node...");
-        // if let Err(e) = shutdown.execute().await {
-        //     warn!("Sending shutdown signal failed. Error: {:?}", e);
-        // }
-
-        info!("[EXAMPLE] Stopped.");
+        info!("[EXAMPLE] Node stopped.");
     }
 
     fn add_worker<W: Worker<Self> + Send + Sync>(&mut self, worker: W) {
@@ -144,23 +139,6 @@ impl Node for ExampleNode {
     type Error = Infallible;
 
     async fn stop(mut self) -> Result<(), Self::Error> {
-        // for worker_id in self.worker_order.clone().into_iter().rev() {
-        //     for (shutdown, task_fut) in self.tasks.remove(&worker_id).unwrap_or_default() {
-        //         let _ = shutdown.send(());
-        //         // TODO: Should we handle this error?
-        //         let _ = task_fut.await; //.map_err(|e| shutdown::Error::from(worker::Error(Box::new(e))))?;
-        //     }
-        //     self.worker_stops.remove(&worker_id).unwrap()(&mut self).await;
-        //     self.resource::<Bus>().remove_listeners_by_id(worker_id);
-        // }
-
-        // // Unwrapping is fine since the node register the backend itself.
-        // self.remove_resource::<B>()
-        //     .unwrap()
-        //     .shutdown()
-        //     .await
-        //     .map_err(Error::StorageBackend)?;
-
         Ok(())
     }
 
