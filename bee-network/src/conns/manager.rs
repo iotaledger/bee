@@ -196,7 +196,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                 }
             }
 
-            info!("Listener stopped.")
+            info!("Listener stopped.");
         });
 
         trace!("Connection Manager started.");
