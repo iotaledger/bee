@@ -103,7 +103,7 @@ fn spawn_substream_io_task(
                     trace!("Outgoing message channel event.");
                     if let Some(message) = message {
                         if let Err(e) = send_message(&mut substream, &message).await {
-                            error!("{:?}", e);
+                            error!("Failed to send message. Cause: {:?}", e);
                             continue;
                         }
                     } else {
@@ -118,7 +118,7 @@ fn spawn_substream_io_task(
                         Ok(num_read) => {
                             if let Err(e) = process_read(peer_id.clone(), num_read, &mut internal_event_sender, &buffer).await
                             {
-                                error!("{:?}", e);
+                                error!("Failed to read message: Cause: {:?}", e);
                             }
                         }
                         Err(e) => {
@@ -130,7 +130,7 @@ fn spawn_substream_io_task(
                                 })
                                 .map_err(|_| Error::InternalEventSendFailure("ConnectionDropped"))
                             {
-                                error!("{:?}", e);
+                                error!("Internal error. Cause: {:?}", e);
                             }
 
 
