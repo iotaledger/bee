@@ -121,9 +121,8 @@ impl<N: Node> Worker<N> for ConnectionManager {
                     // TODO: try again to move this block into its own function (beware: lifetime issues ahead!!!)
 
                     // Prevent accepting from banned addresses.
-                    let peer_address_str = peer_address.to_string();
-                    if banned_addrs.contains(&peer_address_str) {
-                        trace!("Ignoring peer. Cause: {} is banned.", peer_address_str);
+                    if banned_addrs.contains(&peer_address) {
+                        trace!("Ignoring peer. Cause: {} is banned.", peer_address);
                         NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                         continue;
                     }

@@ -46,7 +46,7 @@ pub async fn dial_peer(
         .map_err(|_| Error::DialedUnlistedPeer(peer_id.short()))?;
 
     // Prevent dialing banned addresses.
-    if banned_addrs.contains(&peer_info.address.to_string()) {
+    if banned_addrs.contains(&peer_info.address) {
         return Err(Error::DialedBannedAddress(peer_info.address));
     }
 
@@ -96,7 +96,7 @@ pub async fn dial_address(
     }
 
     // Prevent dialing banned addresses.
-    if banned_addrs.contains(&address.to_string()) {
+    if banned_addrs.contains(&address) {
         return Err(Error::DialedBannedAddress(address.clone()));
     }
 

@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::PeerId;
+use crate::{Multiaddr, PeerId};
 
 use dashmap::DashSet;
 
@@ -11,7 +11,7 @@ const DEFAULT_BANNED_PEER_CAPACITY: usize = 64;
 const DEFAULT_BANNED_ADDR_CAPACITY: usize = 32;
 
 pub type BannedPeerList = BannedList<PeerId>;
-pub type BannedAddrList = BannedList<String>;
+pub type BannedAddrList = BannedList<Multiaddr>;
 
 #[derive(Clone, Default)]
 pub struct BannedList<T: Hash + Eq>(Arc<DashSet<T>>);
@@ -22,7 +22,7 @@ impl BannedList<PeerId> {
     }
 }
 
-impl BannedList<String> {
+impl BannedList<Multiaddr> {
     pub fn new() -> Self {
         Self(Arc::new(DashSet::with_capacity(DEFAULT_BANNED_ADDR_CAPACITY)))
     }
@@ -32,8 +32,15 @@ impl<T> BannedList<T>
 where
     T: Hash + Eq,
 {
-    pub fn insert(&self, value: T) -> bool {
-        self.0.insert(value)
+    // NOTE: Instead of consuming the value when the insert fails, we return ownership,
+    // so the caller can pass it to a handler dealing with that situation.
+    pub fn insert(&self, value: T) -> Option<T> {
+        if !self.contains(&value) {
+            self.0.insert(value);
+            None
+        } else {
+            Some(value)
+        }
     }
 
     pub fn contains(&self, value: &T) -> bool {
