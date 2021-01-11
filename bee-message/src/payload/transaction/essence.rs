@@ -156,11 +156,19 @@ impl TransactionEssenceBuilder {
     }
 
     pub fn finish(mut self) -> Result<TransactionEssence, Error> {
-        // Inputs validation
-
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.inputs.len()) {
             return Err(Error::InvalidInputOutputCount(self.inputs.len()));
         }
+
+        if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.outputs.len()) {
+            return Err(Error::InvalidInputOutputCount(self.outputs.len()));
+        }
+
+        if !matches!(self.payload, None | Some(Payload::Indexation(_))) {
+            return Err(Error::InvalidTransactionPayload);
+        }
+
+        // Inputs validation
 
         for i in self.inputs.iter() {
             match i {
@@ -179,10 +187,6 @@ impl TransactionEssenceBuilder {
         }
 
         // Outputs validation
-
-        if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.outputs.len()) {
-            return Err(Error::InvalidInputOutputCount(self.outputs.len()));
-        }
 
         let mut total = 0;
 
@@ -220,10 +224,6 @@ impl TransactionEssenceBuilder {
         // Accumulated output balance must not exceed the total supply of tokens.
         if total > IOTA_SUPPLY {
             return Err(Error::InvalidAccumulatedOutput(total));
-        }
-
-        if !matches!(self.payload, None | Some(Payload::Indexation(_))) {
-            return Err(Error::InvalidTransactionPayload);
         }
 
         self.inputs.sort();
