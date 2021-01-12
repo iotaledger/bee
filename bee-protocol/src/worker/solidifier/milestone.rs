@@ -171,7 +171,7 @@ where
                     requested = requested + MilestoneIndex(1);
                 }
 
-                //TODO handle else
+                // TODO handle else
                 if let Some(id) = tangle.get_milestone_message_id(index).await {
                     if tangle.is_solid_message(&id).await {
                         debug!("New solid milestone {}.", *index);

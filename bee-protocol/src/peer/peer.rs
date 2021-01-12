@@ -125,10 +125,12 @@ impl Peer {
     }
 
     pub(crate) fn has_data(&self, index: MilestoneIndex) -> bool {
-        index > self.pruned_index() && index <= self.latest_solid_milestone_index()
+        // +1 to allow for a little delay before a Heartbeat comes from a peer.
+        index > self.pruned_index() && index <= self.latest_solid_milestone_index() + MilestoneIndex(1)
     }
 
     pub(crate) fn maybe_has_data(&self, index: MilestoneIndex) -> bool {
-        index > self.pruned_index() && index <= self.latest_milestone_index()
+        // +1 to allow for a little delay before a Heartbeat comes from a peer.
+        index > self.pruned_index() && index <= self.latest_milestone_index() + MilestoneIndex(1)
     }
 }
