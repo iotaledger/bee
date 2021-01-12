@@ -61,8 +61,9 @@ async fn heavy_solidification<B: StorageBackend>(
     .await;
 
     debug!(
-        "Heavy solidification of milestone {}: {} messages requested.",
+        "Heavy solidification of milestone {} {}: {} messages requested.",
         *target_index,
+        *target_id,
         missing.len()
     );
 
