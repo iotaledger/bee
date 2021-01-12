@@ -17,10 +17,10 @@ pub(crate) struct WhiteFlagMetadata {
     pub(crate) timestamp: u64,
     /// The number of messages which were referenced by the confirming milestone.
     pub(crate) num_referenced_messages: usize,
-    /// The number of messages which were excluded because they did not include a value transaction.
-    pub(crate) num_excluded_no_transaction_messages: usize,
-    /// The number of messages which were excluded as they were conflicting with the ledger state.
-    pub(crate) num_excluded_conflicting_messages: usize,
+    /// The messages which were excluded because they did not include a value transaction.
+    pub(crate) excluded_no_transaction_messages: Vec<MessageId>,
+    /// The messages which were excluded as they were conflicting with the ledger state.
+    pub(crate) excluded_conflicting_messages: Vec<MessageId>,
     // The messages which mutate the ledger in the order in which they were applied.
     pub(crate) included_messages: Vec<MessageId>,
     pub(crate) spent_outputs: HashMap<OutputId, Spent>,

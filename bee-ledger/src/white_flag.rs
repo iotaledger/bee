@@ -84,7 +84,7 @@ where
             // Verify that all outputs consume all inputs and have valid signatures. Also verify that the amounts match.
 
             if conflicting {
-                metadata.num_excluded_conflicting_messages += 1;
+                metadata.excluded_conflicting_messages.push(*message_id);
             } else {
                 // Go through all deposits and generate unspent outputs.
                 for (index, output) in essence.outputs().iter().enumerate() {
@@ -104,7 +104,7 @@ where
             }
         }
         _ => {
-            metadata.num_excluded_no_transaction_messages += 1;
+            metadata.excluded_no_transaction_messages.push(*message_id);
         }
     };
 

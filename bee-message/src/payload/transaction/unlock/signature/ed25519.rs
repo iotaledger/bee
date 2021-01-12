@@ -54,7 +54,7 @@ impl Packable for Ed25519Signature {
         let mut public_key_bytes = [0u8; ED25519_PUBLIC_KEY_LENGTH];
         reader.read_exact(&mut public_key_bytes)?;
 
-        let mut signature_bytes = Vec::with_capacity(ED25519_SIGNATURE_LENGTH);
+        let mut signature_bytes = vec![0u8; ED25519_SIGNATURE_LENGTH];
         reader.read_exact(&mut signature_bytes)?;
 
         Ok(Self {

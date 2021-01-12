@@ -13,6 +13,7 @@ use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_snapshot::config::{SnapshotConfig, SnapshotConfigBuilder};
 use bee_storage::backend::StorageBackend;
+use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
 
 use blake2::{
     digest::{Update, VariableOutput},
@@ -21,12 +22,7 @@ use blake2::{
 use serde::Deserialize;
 use thiserror::Error;
 
-use std::{
-    convert::TryInto,
-    fs,
-    path::Path,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::{convert::TryInto, fs, path::Path};
 
 const DEFAULT_ALIAS: &str = "bee";
 const DEFAULT_NETWORK_ID: &str = "alphanet1";
@@ -50,6 +46,7 @@ pub struct NodeConfigBuilder<B: StorageBackend> {
     pub(crate) rest_api: Option<RestApiConfigBuilder>,
     pub(crate) snapshot: Option<SnapshotConfigBuilder>,
     pub(crate) storage: Option<B::ConfigBuilder>,
+    pub(crate) tangle: Option<TangleConfigBuilder>,
     pub(crate) mqtt: Option<MqttConfigBuilder>,
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
 }
@@ -72,10 +69,6 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
         NodeConfig {
             alias: self.alias.unwrap_or_else(|| DEFAULT_ALIAS.to_owned()),
             network_id,
-            timestamp: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("Clock may have gone backwards")
-                .as_secs() as u64,
             logger: self.logger.unwrap_or_default().finish(),
             network: self.network.unwrap_or_default().finish(),
             peering: self.peering.unwrap_or_default().finish(),
@@ -83,6 +76,7 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
             rest_api: self.rest_api.unwrap_or_default().finish(),
             snapshot: self.snapshot.unwrap_or_default().finish(),
             storage: self.storage.unwrap_or_default().into(),
+            tangle: self.tangle.unwrap_or_default().finish(),
             mqtt: self.mqtt.unwrap_or_default().finish(),
             dashboard: self.dashboard.unwrap_or_default().finish(),
         }
@@ -92,7 +86,6 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
 pub struct NodeConfig<B: StorageBackend> {
     pub alias: String,
     pub network_id: (String, u64),
-    pub timestamp: u64,
     pub logger: LoggerConfig,
     pub network: NetworkConfig,
     pub peering: PeeringConfig,
@@ -100,6 +93,7 @@ pub struct NodeConfig<B: StorageBackend> {
     pub rest_api: RestApiConfig,
     pub snapshot: SnapshotConfig,
     pub storage: B::Config,
+    pub tangle: TangleConfig,
     pub mqtt: MqttConfig,
     pub dashboard: DashboardConfig,
 }
@@ -109,7 +103,6 @@ impl<B: StorageBackend> Clone for NodeConfig<B> {
         Self {
             alias: self.alias.clone(),
             network_id: self.network_id.clone(),
-            timestamp: self.timestamp.clone(),
             logger: self.logger.clone(),
             network: self.network.clone(),
             peering: self.peering.clone(),
@@ -117,6 +110,7 @@ impl<B: StorageBackend> Clone for NodeConfig<B> {
             rest_api: self.rest_api.clone(),
             snapshot: self.snapshot.clone(),
             storage: self.storage.clone(),
+            tangle: self.tangle.clone(),
             mqtt: self.mqtt.clone(),
             dashboard: self.dashboard.clone(),
         }

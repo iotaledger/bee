@@ -66,6 +66,8 @@ delay   = 60480
 [storage]
 path = "./storage/alphanet"
 
+[tangle]
+
 [mqtt]
 address = "tcp://localhost:1883"
 

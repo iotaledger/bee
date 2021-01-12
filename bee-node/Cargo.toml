@@ -28,6 +28,7 @@ bee-tangle = { path = "../bee-tangle" }
 anymap = "0.12"
 async-trait = "0.1"
 blake2 = "0.9"
+cap = "0.1.0"
 chrono = "0.4"
 futures = "0.3"
 hex = "0.4"

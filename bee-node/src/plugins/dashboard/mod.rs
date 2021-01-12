@@ -5,16 +5,33 @@ pub mod config;
 
 mod asset;
 mod websocket;
+mod workers;
 
-use crate::storage::StorageBackend;
+use crate::{
+    plugins::dashboard::{
+        websocket::responses::{
+            confirmed_info, confirmed_milestone_metrics, database_size_metrics, node_status, tip_info,
+        },
+        workers::{
+            confirmed_ms_metrics::{confirmed_ms_metrics_worker, ConfirmedMilestoneMetrics},
+            db_size_metrics::{db_size_metrics_worker, DatabaseSizeMetrics},
+            node_status::{node_status_worker, NodeStatus},
+        },
+    },
+    storage::StorageBackend,
+};
 
 use config::DashboardConfig;
 use websocket::{
-    responses::{milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, WsEvent},
+    responses::{milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, vertex, WsEvent},
     user_connected, WsUsers,
 };
 
-use bee_protocol::event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated};
+use bee_ledger::event::MilestoneConfirmed;
+use bee_protocol::event::{
+    LatestMilestoneChanged, LatestSolidMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded,
+    TipRemoved,
+};
 use bee_rest_api::config::RestApiConfig;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
@@ -85,9 +102,18 @@ where
         let users = WsUsers::default();
 
         // Register event handlers
-        topic_handler(node, "SyncStatus", &users, move |event: LatestMilestoneChanged| {
-            sync_status::forward(event, &tangle)
-        });
+        {
+            let tangle = tangle.clone();
+            topic_handler(node, "SyncStatus", &users, move |event: LatestMilestoneChanged| {
+                sync_status::forward_latest_milestone_changed(event, &tangle)
+            });
+        }
+        {
+            let tangle = tangle.clone();
+            topic_handler(node, "SyncStatus", &users, move |event: LatestSolidMilestoneChanged| {
+                sync_status::forward_solid_milestone_changed(event, &tangle)
+            });
+        }
         topic_handler(node, "MpsMetricsUpdated", &users, move |event: MpsMetricsUpdated| {
             mps_metrics_updated::forward(event)
         });
@@ -100,6 +126,39 @@ where
         topic_handler(node, "MilestoneInfo", &users, move |event: LatestMilestoneChanged| {
             milestone_info::forward(event)
         });
+        topic_handler(node, "Vertex", &users, move |event: NewVertex| vertex::forward(event));
+        topic_handler(node, "MilestoneConfirmed", &users, move |event: MilestoneConfirmed| {
+            confirmed_info::forward(event)
+        });
+        topic_handler(
+            node,
+            "ConfirmedMilestoneMetrics",
+            &users,
+            move |event: ConfirmedMilestoneMetrics| confirmed_milestone_metrics::forward(event),
+        );
+        topic_handler(
+            node,
+            "DatabaseSizeMetrics",
+            &users,
+            move |event: DatabaseSizeMetrics| database_size_metrics::forward(event),
+        );
+
+        topic_handler(node, "TipInfo", &users, move |event: TipAdded| {
+            tip_info::forward_tip_added(event)
+        });
+
+        topic_handler(node, "TipInfo", &users, move |event: TipRemoved| {
+            tip_info::forward_tip_removed(event)
+        });
+
+        topic_handler(node, "NodeStatus", &users, move |event: NodeStatus| {
+            node_status::forward(event)
+        });
+
+        // run sub-workers
+        confirmed_ms_metrics_worker(node);
+        db_size_metrics_worker(node);
+        node_status_worker(node);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

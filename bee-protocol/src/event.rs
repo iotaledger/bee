@@ -30,3 +30,22 @@ pub struct MpsMetricsUpdated {
     pub invalid: u64,
     pub outgoing: u64,
 }
+
+#[derive(Clone)]
+pub struct NewVertex {
+    pub id: String,
+    pub parent1_id: String,
+    pub parent2_id: String,
+    pub is_solid: bool,
+    pub is_referenced: bool,
+    pub is_conflicting: bool,
+    pub is_milestone: bool,
+    pub is_tip: bool,
+    pub is_selected: bool,
+}
+
+#[derive(Clone)]
+pub struct TipAdded(pub MessageId);
+
+#[derive(Clone)]
+pub struct TipRemoved(pub MessageId);

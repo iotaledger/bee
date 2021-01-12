@@ -68,14 +68,14 @@ where
     }
 
     if metadata.num_referenced_messages
-        != metadata.num_excluded_no_transaction_messages
-            + metadata.num_excluded_conflicting_messages
+        != metadata.excluded_no_transaction_messages.len()
+            + metadata.excluded_conflicting_messages.len()
             + metadata.included_messages.len()
     {
         return Err(Error::InvalidMessagesCount(
             metadata.num_referenced_messages,
-            metadata.num_excluded_no_transaction_messages,
-            metadata.num_excluded_conflicting_messages,
+            metadata.excluded_no_transaction_messages.len(),
+            metadata.excluded_conflicting_messages.len(),
             metadata.included_messages.len(),
         ));
     }
@@ -94,18 +94,19 @@ where
         "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}.",
         milestone.essence().index(),
         metadata.num_referenced_messages,
-        metadata.num_excluded_no_transaction_messages,
-        metadata.num_excluded_conflicting_messages,
+        metadata.excluded_no_transaction_messages.len(),
+        metadata.excluded_conflicting_messages.len(),
         metadata.included_messages.len()
     );
 
     bus.dispatch(MilestoneConfirmed {
+        id: message_id,
         index: milestone.essence().index().into(),
         timestamp: milestone.essence().timestamp(),
         referenced_messages: metadata.num_referenced_messages,
-        excluded_no_transaction_messages: metadata.num_excluded_no_transaction_messages,
-        excluded_conflicting_messages: metadata.num_excluded_conflicting_messages,
-        included_messages: metadata.included_messages.len(),
+        excluded_no_transaction_messages: metadata.excluded_no_transaction_messages,
+        excluded_conflicting_messages: metadata.excluded_conflicting_messages,
+        included_messages: metadata.included_messages,
         spent_outputs: metadata.spent_outputs.len(),
         created_outputs: metadata.created_outputs.len(),
     });
