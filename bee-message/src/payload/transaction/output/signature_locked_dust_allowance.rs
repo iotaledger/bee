@@ -10,15 +10,16 @@ use bee_common::packable::{Packable, Read, Write};
 
 use serde::{Deserialize, Serialize};
 
-pub(crate) const SIGNATURE_LOCKED_SINGLE_TYPE: u8 = 0;
+pub(crate) const SIGNATURE_LOCKED_DUST_ALLOWANCE_TYPE: u8 = 1;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
-pub struct SignatureLockedSingleOutput {
+pub struct SignatureLockedDustAllowanceOutput {
     address: Address,
     amount: u64,
 }
 
-impl SignatureLockedSingleOutput {
+// TODO specific dust validation rules
+impl SignatureLockedDustAllowanceOutput {
     pub fn new(address: Address, amount: u64) -> Result<Self, Error> {
         if amount == 0 || amount > IOTA_SUPPLY {
             return Err(Error::InvalidAmount(amount));
@@ -36,7 +37,7 @@ impl SignatureLockedSingleOutput {
     }
 }
 
-impl Packable for SignatureLockedSingleOutput {
+impl Packable for SignatureLockedDustAllowanceOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
