@@ -3,9 +3,9 @@
 
 use crate::{Multiaddr, PeerId};
 
-use dashmap::DashSet;
+use tokio::sync::RwLock;
 
-use std::{hash::Hash, sync::Arc};
+use std::{collections::HashSet, hash::Hash, sync::Arc};
 
 const DEFAULT_BANNED_PEER_CAPACITY: usize = 64;
 const DEFAULT_BANNED_ADDR_CAPACITY: usize = 32;
@@ -14,17 +14,21 @@ pub type BannedPeerList = BannedList<PeerId>;
 pub type BannedAddrList = BannedList<Multiaddr>;
 
 #[derive(Clone, Default)]
-pub struct BannedList<T: Hash + Eq>(Arc<DashSet<T>>);
+pub struct BannedList<T: Hash + Eq>(Arc<RwLock<HashSet<T>>>);
 
 impl BannedList<PeerId> {
     pub fn new() -> Self {
-        Self(Arc::new(DashSet::with_capacity(DEFAULT_BANNED_PEER_CAPACITY)))
+        Self(Arc::new(RwLock::new(HashSet::with_capacity(
+            DEFAULT_BANNED_PEER_CAPACITY,
+        ))))
     }
 }
 
 impl BannedList<Multiaddr> {
     pub fn new() -> Self {
-        Self(Arc::new(DashSet::with_capacity(DEFAULT_BANNED_ADDR_CAPACITY)))
+        Self(Arc::new(RwLock::new(HashSet::with_capacity(
+            DEFAULT_BANNED_ADDR_CAPACITY,
+        ))))
     }
 }
 
@@ -34,26 +38,26 @@ where
 {
     // NOTE: Instead of consuming the value when the insert fails, we return ownership,
     // so the caller can pass it to a handler dealing with that situation.
-    pub fn insert(&self, value: T) -> Option<T> {
-        if !self.contains(&value) {
-            self.0.insert(value);
+    pub async fn insert(&self, value: T) -> Option<T> {
+        if !self.contains(&value).await {
+            self.0.write().await.insert(value);
             None
         } else {
             Some(value)
         }
     }
 
-    pub fn contains(&self, value: &T) -> bool {
-        self.0.contains(value)
+    pub async fn contains(&self, value: &T) -> bool {
+        self.0.read().await.contains(value)
     }
 
-    pub fn remove(&self, value: &T) -> bool {
-        self.0.remove(value).is_some()
+    pub async fn remove(&self, value: &T) -> bool {
+        self.0.write().await.remove(value)
     }
 
-    #[cfg(test)]
-    pub fn count(&self) -> usize {
-        self.0.len()
+    #[allow(dead_code)]
+    pub async fn len(&self) -> usize {
+        self.0.read().await.len()
     }
 }
 
@@ -61,31 +65,31 @@ where
 mod tests {
     use super::*;
 
-    #[test]
-    fn inserted_items_are_unique() {
-        let item_list = BannedList(Arc::new(DashSet::new()));
+    #[tokio::test]
+    async fn inserted_items_are_unique() {
+        let item_list: BannedList<i32> = BannedList(Arc::new(RwLock::new(HashSet::new())));
 
-        item_list.insert(0);
-        item_list.insert(1);
-        item_list.insert(1);
+        item_list.insert(0).await;
+        item_list.insert(1).await;
+        item_list.insert(1).await;
 
-        assert!(item_list.contains(&0));
-        assert!(item_list.contains(&1));
-        assert_eq!(2, item_list.count());
+        assert!(item_list.contains(&0).await);
+        assert!(item_list.contains(&1).await);
+        assert_eq!(2, item_list.len().await);
 
-        assert!(!item_list.contains(&2));
+        assert!(!item_list.contains(&2).await);
     }
 
-    #[test]
-    fn inserts_and_removals_update_count() {
-        let item_list = BannedList(Arc::new(DashSet::new()));
+    #[tokio::test]
+    async fn inserts_and_removals_update_count() {
+        let item_list: BannedList<i32> = BannedList(Arc::new(RwLock::new(HashSet::new())));
 
-        item_list.insert(0);
-        assert!(item_list.contains(&0));
-        assert_eq!(1, item_list.count());
+        item_list.insert(0).await;
+        assert!(item_list.contains(&0).await);
+        assert_eq!(1, item_list.len().await);
 
-        item_list.remove(&0);
-        assert!(!item_list.contains(&0));
-        assert_eq!(0, item_list.count());
+        item_list.remove(&0).await;
+        assert!(!item_list.contains(&0).await);
+        assert_eq!(0, item_list.len().await);
     }
 }

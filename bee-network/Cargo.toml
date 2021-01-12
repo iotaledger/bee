@@ -15,7 +15,6 @@ bee-common = { version = "0.2.0-alpha", path = "../bee-common/bee-common" }
 bee-runtime = { version = "0.1.0-alpha", path = "../bee-runtime" }
 
 async-trait = "0.1"
-dashmap = "4.0"
 futures = "0.3"
 lazy_static = "1.4"
 libp2p = { version = "0.29", default-features = false, features = ["dns", "mplex", "noise", "tcp-tokio", "yamux"]}

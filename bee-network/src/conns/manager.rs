@@ -120,7 +120,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                     // TODO: try again to move this block into its own function (beware: lifetime issues ahead!!!)
 
                     // Prevent accepting from banned addresses.
-                    if banned_addrs.contains(&peer_address) {
+                    if banned_addrs.contains(&peer_address).await {
                         trace!("Ignoring peer. Cause: {} is banned.", peer_address);
                         NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                         continue;
@@ -143,7 +143,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                     }
 
                     // Prevent accepting banned peers.
-                    if banned_peers.contains(&peer_id) {
+                    if banned_peers.contains(&peer_id).await {
                         trace!("Ignoring peer. Cause: {} is banned.", peer_id);
                         NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                         continue;

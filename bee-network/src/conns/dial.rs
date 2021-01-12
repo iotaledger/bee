@@ -33,7 +33,7 @@ pub async fn dial_peer(
     }
 
     // Prevent dialing banned peers.
-    if banned_peers.contains(peer_id) {
+    if banned_peers.contains(peer_id).await {
         return Err(Error::DialedBannedPeer(peer_id.short()));
     }
 
@@ -44,7 +44,7 @@ pub async fn dial_peer(
         .map_err(|_| Error::DialedUnlistedPeer(peer_id.short()))?;
 
     // Prevent dialing banned addresses.
-    if banned_addrs.contains(&peer_info.address) {
+    if banned_addrs.contains(&peer_info.address).await {
         return Err(Error::DialedBannedAddress(peer_info.address));
     }
 
@@ -94,7 +94,7 @@ pub async fn dial_address(
     }
 
     // Prevent dialing banned addresses.
-    if banned_addrs.contains(&address) {
+    if banned_addrs.contains(&address).await {
         return Err(Error::DialedBannedAddress(address.clone()));
     }
 
@@ -113,7 +113,7 @@ pub async fn dial_address(
     }
 
     // Prevent dialing banned peers.
-    if banned_peers.contains(&peer_id) {
+    if banned_peers.contains(&peer_id).await {
         return Err(Error::DialedBannedPeer(peer_id.short()));
     }
 

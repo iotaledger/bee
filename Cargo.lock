@@ -319,7 +319,6 @@ dependencies = [
  "bee-common",
  "bee-runtime",
  "bee-storage",
- "dashmap 4.0.1",
  "env_logger",
  "futures",
  "lazy_static",
@@ -340,7 +339,7 @@ dependencies = [
  "async-std",
  "async-trait",
  "bee-storage",
- "dashmap 3.11.10",
+ "dashmap",
  "futures",
  "log",
 ]
@@ -834,16 +833,6 @@ checksum = "0f260e2fc850179ef410018660006951c1b55b79e8087e87111a2c388994b9b5"
 dependencies = [
  "ahash",
  "cfg-if 0.1.10",
- "num_cpus",
-]
-
-[[package]]
-name = "dashmap"
-version = "4.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b937cd1fbd1f194ac842196bd2529f21618088ee6d8bff6a46ece611451c96b"
-dependencies = [
- "cfg-if 1.0.0",
  "num_cpus",
 ]
 

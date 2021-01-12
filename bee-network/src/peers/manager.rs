@@ -292,7 +292,7 @@ async fn process_command(
         }
         Command::BanAddress { address } => {
             // Note: The `insert` returning something means that it was already inserted before.
-            if let Some(address) = banned_addrs.insert(address.clone()) {
+            if let Some(address) = banned_addrs.insert(address.clone()).await {
                 return Err(Error::AddressAlreadyBanned(address));
             } else {
                 event_sender
@@ -301,7 +301,7 @@ async fn process_command(
             }
         }
         Command::BanPeer { id } => {
-            if let Some(id) = banned_peers.insert(id.clone()) {
+            if let Some(id) = banned_peers.insert(id.clone()).await {
                 return Err(Error::PeerAlreadyBanned(id.short()));
             } else {
                 event_sender
@@ -310,12 +310,12 @@ async fn process_command(
             }
         }
         Command::UnbanAddress { address } => {
-            if !banned_addrs.remove(&address) {
+            if !banned_addrs.remove(&address).await {
                 return Err(Error::AddressAlreadyUnbanned(address));
             }
         }
         Command::UnbanPeer { id } => {
-            if !banned_peers.remove(&id) {
+            if !banned_peers.remove(&id).await {
                 return Err(Error::PeerAlreadyUnbanned(id.short()));
             }
         }
