@@ -8,7 +8,7 @@ use bee_message::{Message, MessageId};
 use std::sync::Arc;
 
 #[derive(Clone)]
-pub(crate) struct Vertex<T>
+pub struct Vertex<T>
 where
     T: Clone,
 {

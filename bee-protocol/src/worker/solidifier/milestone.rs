@@ -20,7 +20,7 @@ use bee_network::NetworkController;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{
     milestone::{Milestone, MilestoneIndex},
-    MsTangle,
+    traversal, MsTangle,
 };
 
 use async_trait::async_trait;
@@ -36,35 +36,49 @@ pub(crate) struct MilestoneSolidifierWorker {
     pub(crate) tx: mpsc::UnboundedSender<MilestoneSolidifierWorkerEvent>,
 }
 
-async fn trigger_solidification<B: StorageBackend>(
+async fn heavy_solidification<B: StorageBackend>(
     tangle: &MsTangle<B>,
     message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
     requested_messages: &RequestedMessages,
     target_index: MilestoneIndex,
     target_id: MessageId,
 ) {
-    debug!("Triggering solidification for milestone {}.", *target_index);
-    //
-    // // TODO: This wouldn't be necessary if the traversal code wasn't closure-driven
-    // let mut missing = Vec::new();
-    //
-    // traversal::visit_parents_depth_first(
-    //     &**tangle,
-    //     target_id,
-    //     |id, _, metadata| {
-    //         (!metadata.flags().is_requested() || *id == target_id)
-    //             && !metadata.flags().is_solid()
-    //             && !requested_messages.contains_key(&id)
-    //     },
-    //     |_, _, _| {},
-    //     |_, _, _| {},
-    //     |missing_id| missing.push(*missing_id),
-    // )
-    // .await;
-    //
-    // for missing_id in missing {
-    //     helper::request_message(tangle, message_requester, requested_messages, missing_id, target_index).await;
-    // }
+    // TODO: This wouldn't be necessary if the traversal code wasn't closure-driven
+    let mut missing = Vec::new();
+
+    traversal::visit_parents_depth_first(
+        &**tangle,
+        target_id,
+        |id, _, metadata| {
+            (!metadata.flags().is_requested() || *id == target_id)
+                && !metadata.flags().is_solid()
+                && !requested_messages.contains_key(&id)
+        },
+        |_, _, _| {},
+        |_, _, _| {},
+        |missing_id| missing.push(*missing_id),
+    )
+    .await;
+
+    debug!(
+        "Heavy solidification of milestone {}: {} messages requested.",
+        *target_index,
+        missing.len()
+    );
+
+    for missing_id in missing {
+        helper::request_message(tangle, message_requester, requested_messages, missing_id, target_index).await;
+    }
+}
+
+async fn light_solidification<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
+    requested_messages: &RequestedMessages,
+    target_index: MilestoneIndex,
+    target_id: MessageId,
+) {
+    debug!("Light solidification of milestone {}.", *target_index);
 
     if let Some(message) = tangle.get(&target_id).await {
         helper::request_message(
@@ -134,8 +148,22 @@ where
                 let lmi = tangle.get_latest_milestone_index();
 
                 while requested < lmi && *(requested - lsmi) <= ms_sync_count {
-                    helper::request_milestone(&tangle, &milestone_requester, &*requested_milestones, requested, None)
+                    if let Some(id) = tangle.get_milestone_message_id(requested).await {
+                        if let Some(vtx) = tangle.get_vertex(&id).await {
+                            if !vtx.metadata().flags().is_requested() {
+                                heavy_solidification(&tangle, &message_requester, &requested_messages, index, id).await;
+                            }
+                        }
+                    } else {
+                        helper::request_milestone(
+                            &tangle,
+                            &milestone_requester,
+                            &*requested_milestones,
+                            requested,
+                            None,
+                        )
                         .await;
+                    }
                     requested = requested + MilestoneIndex(1);
                 }
 
@@ -174,7 +202,7 @@ where
                     } else if tangle.is_synced_threshold(2)
                         || index > lsmi && index <= lsmi + MilestoneIndex(ms_sync_count)
                     {
-                        trigger_solidification(&tangle, &message_requester, &requested_messages, index, id).await;
+                        light_solidification(&tangle, &message_requester, &requested_messages, index, id).await;
                     }
                 }
             }

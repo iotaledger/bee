@@ -237,7 +237,7 @@ where
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
-    pub(crate) async fn get_vertex(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex<T>> + '_> {
+    pub async fn get_vertex(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex<T>> + '_> {
         self.pull_message(message_id).await;
 
         self.get_inner(message_id)
