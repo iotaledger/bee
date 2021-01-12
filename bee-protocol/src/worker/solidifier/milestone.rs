@@ -20,7 +20,7 @@ use bee_network::NetworkController;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{
     milestone::{Milestone, MilestoneIndex},
-    traversal, MsTangle,
+    MsTangle,
 };
 
 use async_trait::async_trait;
@@ -44,26 +44,45 @@ async fn trigger_solidification<B: StorageBackend>(
     target_id: MessageId,
 ) {
     debug!("Triggering solidification for milestone {}.", *target_index);
+    //
+    // // TODO: This wouldn't be necessary if the traversal code wasn't closure-driven
+    // let mut missing = Vec::new();
+    //
+    // traversal::visit_parents_depth_first(
+    //     &**tangle,
+    //     target_id,
+    //     |id, _, metadata| {
+    //         (!metadata.flags().is_requested() || *id == target_id)
+    //             && !metadata.flags().is_solid()
+    //             && !requested_messages.contains_key(&id)
+    //     },
+    //     |_, _, _| {},
+    //     |_, _, _| {},
+    //     |missing_id| missing.push(*missing_id),
+    // )
+    // .await;
+    //
+    // for missing_id in missing {
+    //     helper::request_message(tangle, message_requester, requested_messages, missing_id, target_index).await;
+    // }
 
-    // TODO: This wouldn't be necessary if the traversal code wasn't closure-driven
-    let mut missing = Vec::new();
-
-    traversal::visit_parents_depth_first(
-        &**tangle,
-        target_id,
-        |id, _, metadata| {
-            (!metadata.flags().is_requested() || *id == target_id)
-                && !metadata.flags().is_solid()
-                && !requested_messages.contains_key(&id)
-        },
-        |_, _, _| {},
-        |_, _, _| {},
-        |missing_id| missing.push(*missing_id),
-    )
-    .await;
-
-    for missing_id in missing {
-        helper::request_message(tangle, message_requester, requested_messages, missing_id, target_index).await;
+    if let Some(message) = tangle.get(&target_id).await {
+        helper::request_message(
+            tangle,
+            message_requester,
+            requested_messages,
+            *message.parent1(),
+            target_index,
+        )
+        .await;
+        helper::request_message(
+            tangle,
+            message_requester,
+            requested_messages,
+            *message.parent2(),
+            target_index,
+        )
+        .await;
     }
 }
 
