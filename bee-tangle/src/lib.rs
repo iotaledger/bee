@@ -5,6 +5,7 @@
 
 // #![warn(missing_docs)]
 
+pub mod config;
 pub mod flags;
 pub mod metadata;
 pub mod milestone;

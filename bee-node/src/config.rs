@@ -13,6 +13,7 @@ use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_snapshot::config::{SnapshotConfig, SnapshotConfigBuilder};
 use bee_storage::backend::StorageBackend;
+use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
 
 use blake2::{
     digest::{Update, VariableOutput},
@@ -50,6 +51,7 @@ pub struct NodeConfigBuilder<B: StorageBackend> {
     pub(crate) rest_api: Option<RestApiConfigBuilder>,
     pub(crate) snapshot: Option<SnapshotConfigBuilder>,
     pub(crate) storage: Option<B::ConfigBuilder>,
+    pub(crate) tangle: Option<TangleConfigBuilder>,
     pub(crate) mqtt: Option<MqttConfigBuilder>,
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
 }
@@ -83,6 +85,7 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
             rest_api: self.rest_api.unwrap_or_default().finish(),
             snapshot: self.snapshot.unwrap_or_default().finish(),
             storage: self.storage.unwrap_or_default().into(),
+            tangle: self.tangle.unwrap_or_default().finish(),
             mqtt: self.mqtt.unwrap_or_default().finish(),
             dashboard: self.dashboard.unwrap_or_default().finish(),
         }
@@ -100,6 +103,7 @@ pub struct NodeConfig<B: StorageBackend> {
     pub rest_api: RestApiConfig,
     pub snapshot: SnapshotConfig,
     pub storage: B::Config,
+    pub tangle: TangleConfig,
     pub mqtt: MqttConfig,
     pub dashboard: DashboardConfig,
 }
@@ -117,6 +121,7 @@ impl<B: StorageBackend> Clone for NodeConfig<B> {
             rest_api: self.rest_api.clone(),
             snapshot: self.snapshot.clone(),
             storage: self.storage.clone(),
+            tangle: self.tangle.clone(),
             mqtt: self.mqtt.clone(),
             dashboard: self.dashboard.clone(),
         }
