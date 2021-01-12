@@ -7,8 +7,9 @@ use crate::{
     peer::PeerManager,
     storage::StorageBackend,
     worker::{
-        MessageRequesterWorker, MessageRequesterWorkerEvent, MetricsWorker, MilestoneRequesterWorker,
-        PeerManagerResWorker, RequestedMessages, RequestedMilestones, TangleWorker,
+        MessageRequesterWorker, MessageRequesterWorkerEvent, MetricsWorker, MilestoneConeUpdaterWorker,
+        MilestoneConeUpdaterWorkerEvent, MilestoneRequesterWorker, PeerManagerResWorker, RequestedMessages,
+        RequestedMilestones, TangleWorker,
     },
     ProtocolMetrics,
 };
@@ -17,16 +18,17 @@ use bee_ledger::{LedgerWorker, LedgerWorkerEvent};
 use bee_message::MessageId;
 use bee_network::NetworkController;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{milestone::MilestoneIndex, traversal, MsTangle};
+use bee_tangle::{
+    milestone::{Milestone, MilestoneIndex},
+    traversal, MsTangle,
+};
 
 use async_trait::async_trait;
-use futures::{stream::FusedStream, StreamExt};
+use futures::StreamExt;
 use log::{debug, info, warn};
-use tokio::{sync::mpsc, task::spawn, time::interval};
+use tokio::sync::mpsc;
 
-use std::{any::TypeId, convert::Infallible, time::Duration};
-
-const KICKSTART_INTERVAL_SEC: u64 = 1;
+use std::{any::TypeId, convert::Infallible};
 
 pub(crate) struct MilestoneSolidifierWorkerEvent(pub MilestoneIndex);
 
@@ -65,39 +67,6 @@ async fn trigger_solidification<B: StorageBackend>(
     }
 }
 
-fn save_index(target_index: MilestoneIndex, queue: &mut Vec<MilestoneIndex>) {
-    debug!("Storing milestone {}.", *target_index);
-    if let Err(pos) = queue.binary_search_by(|index| target_index.cmp(index)) {
-        queue.insert(pos, target_index);
-    }
-}
-
-// bus.dispatch(LatestSolidMilestoneChanged {
-//     index,
-//     milestone: milestone.clone(),
-// });
-// if let Err(e) = milestone_cone_updater
-//     .send(MilestoneConeUpdaterWorkerEvent(index, milestone.clone()))
-// {
-//     error!("Sending message id to milestone validation failed: {:?}.", e);
-// }
-
-// // TODO we need to get the milestone from the tangle to dispatch it.
-// // At the time of writing, the tangle only contains an index <-> id mapping.
-// // timestamp is obviously wrong in thr meantime.
-// bus.dispatch(LatestSolidMilestoneChanged {
-//     index,
-//     milestone: Milestone::new(*message_id, 0),
-// });
-// // TODO we need to get the milestone from the tangle to dispatch it.
-// // At the time of writing, the tangle only contains an index <-> id mapping.
-// // timestamp is obviously wrong in thr meantime.
-// if let Err(e) = milestone_cone_updater
-//     .send(MilestoneConeUpdaterWorkerEvent(index, Milestone::new(*message_id, 0)))
-// {
-//     error!("Sending message_id to `MilestoneConeUpdater` failed: {:?}.", e);
-// }
-
 #[async_trait]
 impl<N: Node> Worker<N> for MilestoneSolidifierWorker
 where
@@ -111,10 +80,10 @@ where
             TypeId::of::<MessageRequesterWorker>(),
             TypeId::of::<MilestoneRequesterWorker>(),
             TypeId::of::<TangleWorker>(),
-            // TypeId::of::<MilestoneRequesterWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<LedgerWorker>(),
+            TypeId::of::<MilestoneConeUpdaterWorker>(),
         ]
         .leak()
     }
@@ -124,16 +93,16 @@ where
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
         let ledger_worker = node.worker::<LedgerWorker>().unwrap().tx.clone();
+        let milestone_cone_updater = node.worker::<MilestoneConeUpdaterWorker>().unwrap().tx.clone();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let metrics = node.resource::<ProtocolMetrics>();
         let peer_manager = node.resource::<PeerManager>();
         let network = node.resource::<NetworkController>();
+        let bus = node.bus();
         let ms_sync_count = config;
-        // let milestone_solidifier = tx.clone();
-        // let mut next_ms = tangle.get_latest_solid_milestone_index() + MilestoneIndex(1);
-        //
+
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
@@ -162,6 +131,13 @@ where
                             warn!("Sending message_id to ledger worker failed: {}.", e);
                         }
 
+                        if let Err(e) = milestone_cone_updater
+                            // TODO get MS
+                            .send(MilestoneConeUpdaterWorkerEvent(index, Milestone::new(id, 0)))
+                        {
+                            warn!("Sending message_id to `MilestoneConeUpdater` failed: {:?}.", e);
+                        }
+
                         helper::broadcast_heartbeat(
                             &peer_manager,
                             &network,
@@ -170,6 +146,12 @@ where
                             tangle.get_pruning_index(),
                             tangle.get_latest_milestone_index(),
                         );
+
+                        bus.dispatch(LatestSolidMilestoneChanged {
+                            index,
+                            // TODO get MS
+                            milestone: Milestone::new(id, 0),
+                        });
                     } else if tangle.is_synced_threshold(2)
                         || index > lsmi && index <= lsmi + MilestoneIndex(ms_sync_count)
                     {
@@ -180,39 +162,6 @@ where
 
             info!("Stopped.");
         });
-
-        //     while receiver.next().await.is_some() {
-        //         let latest_ms = tangle.get_latest_milestone_index();
-        //         next_ms = tangle.get_latest_solid_milestone_index() + MilestoneIndex(1);
-        //
-        //         if !peer_manager.is_empty() && *next_ms + ms_sync_count < *latest_ms {
-        //             for index in *next_ms..(*next_ms + ms_sync_count) {
-        //
-        //             }
-        //
-        //             break;
-        //         }
-        //     }
-        //
-        //     while let Some(MilestoneSolidifierWorkerEvent(index)) = receiver.next().await {
-        //         save_index(index, &mut queue);
-        //         while let Some(index) = queue.pop() {
-        //             if index == next_ms {
-        //                 trigger_solidification_unchecked(
-        //                     &tangle,
-        //                     &message_requester,
-        //                     &*requested_messages,
-        //                     index,
-        //                     &mut next_ms,
-        //                 )
-        //                 .await;
-        //             } else {
-        //                 queue.push(index);
-        //                 break;
-        //             }
-        //         }
-        //     }
-        //
 
         Ok(Self { tx })
     }
