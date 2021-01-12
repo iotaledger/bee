@@ -3,15 +3,14 @@
 
 use crate::{
     config::ProtocolConfig,
-    event::{LatestMilestoneChanged, LatestSolidMilestoneChanged},
+    event::LatestMilestoneChanged,
     helper,
     milestone::key_manager::KeyManager,
     peer::PeerManager,
     storage::StorageBackend,
     worker::{
-        MetricsWorker, MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent, MilestoneRequesterWorker,
-        MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, PeerManagerResWorker, RequestedMilestones,
-        TangleWorker,
+        MetricsWorker, MilestoneRequesterWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
+        PeerManagerResWorker, RequestedMilestones, TangleWorker,
     },
     ProtocolMetrics,
 };
@@ -145,7 +144,6 @@ where
     fn dependencies() -> &'static [TypeId] {
         vec![
             TypeId::of::<MilestoneSolidifierWorker>(),
-            TypeId::of::<MilestoneConeUpdaterWorker>(),
             TypeId::of::<TangleWorker>(),
             TypeId::of::<MilestoneRequesterWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
@@ -157,7 +155,6 @@ where
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
         let milestone_solidifier = node.worker::<MilestoneSolidifierWorker>().unwrap().tx.clone();
-        let milestone_cone_updater = node.worker::<MilestoneConeUpdaterWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
@@ -183,22 +180,6 @@ where
                     match validate::<N>(&tangle, &key_manager, message_id).await {
                         Ok((index, milestone)) => {
                             tangle.add_milestone(index, milestone.clone()).await;
-                            // This is possibly not sufficient as there is no guarantee a milestone has been
-                            // solidified before being validated, we then also need
-                            // to check when a milestone gets solidified if it's
-                            // already vadidated.
-                            if meta.flags().is_solid() {
-                                bus.dispatch(LatestSolidMilestoneChanged {
-                                    index,
-                                    milestone: milestone.clone(),
-                                });
-                                if let Err(e) = milestone_cone_updater
-                                    .send(MilestoneConeUpdaterWorkerEvent(index, milestone.clone()))
-                                {
-                                    error!("Sending message id to milestone validation failed: {:?}.", e);
-                                }
-                            }
-
                             if index > tangle.get_latest_milestone_index() {
                                 info!("New milestone {} {}.", *index, milestone.message_id());
                                 tangle.update_latest_milestone_index(index);
@@ -211,6 +192,7 @@ where
                                     tangle.get_pruning_index(),
                                     index,
                                 );
+
                                 bus.dispatch(LatestMilestoneChanged {
                                     index,
                                     milestone: milestone.clone(),
@@ -223,10 +205,10 @@ where
                                         meta.flags_mut().set_requested(true)
                                     })
                                     .await;
+                            }
 
-                                if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
-                                    error!("Sending solidification event failed: {}", e);
-                                }
+                            if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
+                                error!("Sending solidification event failed: {}.", e);
                             }
                         }
                         Err(e) => debug!("Invalid milestone message: {:?}.", e),

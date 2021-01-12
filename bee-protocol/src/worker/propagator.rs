@@ -2,17 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    event::{LatestSolidMilestoneChanged, MessageSolidified},
+    event::MessageSolidified,
     storage::StorageBackend,
-    worker::{
-        milestone_cone_updater::{MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent},
-        TangleWorker,
-    },
+    worker::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, TangleWorker},
 };
 
 use bee_message::MessageId;
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{milestone::Milestone, MsTangle};
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -36,7 +33,7 @@ async fn propagate<B: StorageBackend>(
     message_id: MessageId,
     tangle: &MsTangle<B>,
     bus: &Bus<'static>,
-    milestone_cone_updater: &mpsc::UnboundedSender<MilestoneConeUpdaterWorkerEvent>,
+    milestone_solidifier: &mpsc::UnboundedSender<MilestoneSolidifierWorkerEvent>,
 ) {
     let mut children = vec![message_id];
 
@@ -59,8 +56,6 @@ async fn propagate<B: StorageBackend>(
                 let best_otrsi = max(parent1_otsri.unwrap(), parent2_otsri.unwrap());
                 let best_ytrsi = min(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
 
-                let mut index = None;
-
                 tangle
                     .update_metadata(&message_id, |metadata| {
                         // OTRSI/YTRSI values need to be set before the solid flag, to ensure that the
@@ -69,12 +64,12 @@ async fn propagate<B: StorageBackend>(
                         metadata.set_ytrsi(best_ytrsi);
                         metadata.solidify();
 
-                        // This is possibly not sufficient as there is no guarantee a milestone has been
-                        // validated before being solidified, we then also need
-                        // to check when a milestone gets validated if it's
-                        // already solid.
                         if metadata.flags().is_milestone() {
-                            index = Some(metadata.milestone_index());
+                            if let Err(e) =
+                                milestone_solidifier.send(MilestoneSolidifierWorkerEvent(metadata.milestone_index()))
+                            {
+                                error!("Sending solidification event failed: {}.", e);
+                            }
                         }
                     })
                     .await;
@@ -90,24 +85,6 @@ async fn propagate<B: StorageBackend>(
                 tangle
                     .insert_tip(*message_id, *message.parent1(), *message.parent2())
                     .await;
-
-                if let Some(index) = index {
-                    // TODO we need to get the milestone from the tangle to dispatch it.
-                    // At the time of writing, the tangle only contains an index <-> id mapping.
-                    // timestamp is obviously wrong in thr meantime.
-                    bus.dispatch(LatestSolidMilestoneChanged {
-                        index,
-                        milestone: Milestone::new(*message_id, 0),
-                    });
-                    // TODO we need to get the milestone from the tangle to dispatch it.
-                    // At the time of writing, the tangle only contains an index <-> id mapping.
-                    // timestamp is obviously wrong in thr meantime.
-                    if let Err(e) = milestone_cone_updater
-                        .send(MilestoneConeUpdaterWorkerEvent(index, Milestone::new(*message_id, 0)))
-                    {
-                        error!("Sending message_id to `MilestoneConeUpdater` failed: {:?}.", e);
-                    }
-                }
             }
         }
     }
@@ -122,12 +99,12 @@ where
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<MilestoneConeUpdaterWorker>(), TypeId::of::<TangleWorker>()].leak()
+        vec![TypeId::of::<TangleWorker>(), TypeId::of::<MilestoneSolidifierWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
-        let milestone_cone_updater = node.worker::<MilestoneConeUpdaterWorker>().unwrap().tx.clone();
+        let milestone_solidifier = node.worker::<MilestoneSolidifierWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let bus = node.bus();
@@ -138,7 +115,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(PropagatorWorkerEvent(message_id)) = receiver.next().await {
-                propagate(message_id, &tangle, &*bus, &milestone_cone_updater).await;
+                propagate(message_id, &tangle, &*bus, &milestone_solidifier).await;
             }
 
             let (_, mut receiver) = receiver.split();
@@ -146,7 +123,7 @@ where
             let mut count = 0;
 
             while let Ok(PropagatorWorkerEvent(message_id)) = receiver.try_recv() {
-                propagate(message_id, &tangle, &*bus, &milestone_cone_updater).await;
+                propagate(message_id, &tangle, &*bus, &milestone_solidifier).await;
                 count += 1;
             }
 
