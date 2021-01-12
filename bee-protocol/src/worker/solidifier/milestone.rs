@@ -151,7 +151,8 @@ where
                     if let Some(id) = tangle.get_milestone_message_id(requested).await {
                         if let Some(vtx) = tangle.get_vertex(&id).await {
                             if !vtx.metadata().flags().is_requested() {
-                                heavy_solidification(&tangle, &message_requester, &requested_messages, index, id).await;
+                                heavy_solidification(&tangle, &message_requester, &requested_messages, requested, id)
+                                    .await;
                             }
                         }
                     } else {
