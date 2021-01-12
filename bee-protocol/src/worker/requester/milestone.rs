@@ -26,7 +26,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-const RETRY_INTERVAL_MS: u64 = 5000;
+const RETRY_INTERVAL_MS: u64 = 2500;
 
 // TODO pub ?
 #[derive(Default)]
