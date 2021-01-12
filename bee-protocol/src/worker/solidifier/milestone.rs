@@ -203,9 +203,9 @@ where
                             // TODO get MS
                             milestone: Milestone::new(id, 0),
                         });
-                    } else if tangle.is_synced_threshold(2)
-                        || index > lsmi && index <= lsmi + MilestoneIndex(ms_sync_count)
-                    {
+                    } else if tangle.is_synced_threshold(2) {
+                        heavy_solidification(&tangle, &message_requester, &requested_messages, index, id).await;
+                    } else if index > lsmi && index <= lsmi + MilestoneIndex(ms_sync_count) {
                         light_solidification(&tangle, &message_requester, &requested_messages, index, id).await;
                     }
                 }
