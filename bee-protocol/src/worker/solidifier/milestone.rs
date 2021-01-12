@@ -63,7 +63,7 @@ async fn heavy_solidification<B: StorageBackend>(
     debug!(
         "Heavy solidification of milestone {} {}: {} messages requested.",
         *target_index,
-        *target_id,
+        target_id,
         missing.len()
     );
 
@@ -150,11 +150,13 @@ where
 
                 while requested < lmi && *(requested - lsmi) <= ms_sync_count {
                     if let Some(id) = tangle.get_milestone_message_id(requested).await {
-                        if let Some(vtx) = tangle.get_vertex(&id).await {
-                            if !vtx.metadata().flags().is_requested() {
-                                heavy_solidification(&tangle, &message_requester, &requested_messages, requested, id)
-                                    .await;
-                            }
+                        if tangle
+                            .get_metadata(&id)
+                            .await
+                            .map(|m| !m.flags().is_requested())
+                            .unwrap_or(false)
+                        {
+                            heavy_solidification(&tangle, &message_requester, &requested_messages, requested, id).await;
                         }
                     } else {
                         helper::request_milestone(
