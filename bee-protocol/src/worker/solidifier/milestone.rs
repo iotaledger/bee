@@ -148,7 +148,7 @@ where
                 let lsmi = tangle.get_latest_solid_milestone_index();
                 let lmi = tangle.get_latest_milestone_index();
 
-                while requested < lmi && *(requested - lsmi) <= ms_sync_count {
+                while requested <= lmi && *(requested - lsmi) <= ms_sync_count {
                     if let Some(id) = tangle.get_milestone_message_id(requested).await {
                         if tangle
                             .get_metadata(&id)
@@ -157,6 +157,8 @@ where
                             .unwrap_or(false)
                         {
                             heavy_solidification(&tangle, &message_requester, &requested_messages, requested, id).await;
+                        } else {
+                            light_solidification(&tangle, &message_requester, &requested_messages, requested, id).await;
                         }
                     } else {
                         helper::request_milestone(
