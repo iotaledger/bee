@@ -28,10 +28,8 @@ pub async fn dial_peer(
     }
 
     // Prevent duplicate connections.
-    if let Ok(connected) = peers.is(peer_id, |_, state| state.is_connected()).await {
-        if connected {
-            return Err(Error::DuplicateConnection(peer_id.short()));
-        }
+    if let Ok(true) = peers.is(peer_id, |_, state| state.is_connected()).await {
+        return Err(Error::DuplicateConnection(peer_id.short()));
     }
 
     // Prevent dialing banned peers.
@@ -110,10 +108,8 @@ pub async fn dial_address(
         .map_err(|_| Error::DialingFailed(address.clone()))?;
 
     // Prevent duplicate connections.
-    if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()).await {
-        if connected {
-            return Err(Error::DuplicateConnection(peer_id.short()));
-        }
+    if let Ok(true) = peers.is(&peer_id, |_, state| state.is_connected()).await {
+        return Err(Error::DuplicateConnection(peer_id.short()));
     }
 
     // Prevent dialing banned peers.

@@ -136,12 +136,10 @@ impl<N: Node> Worker<N> for ConnectionManager {
                     };
 
                     // Prevent accepting duplicate connections.
-                    if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()).await {
-                        if connected {
-                            trace!("Already connected to {}", peer_id);
-                            NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
-                            continue;
-                        }
+                    if let Ok(true) = peers.is(&peer_id, |_, state| state.is_connected()).await {
+                        trace!("Already connected to {}", peer_id);
+                        NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
+                        continue;
                     }
 
                     // Prevent accepting banned peers.
