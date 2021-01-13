@@ -46,8 +46,7 @@ where
         let ledger_index = Fetch::<(), LedgerIndex>::fetch(&*storage, &()).await.unwrap().unwrap();
 
         tangle.update_latest_solid_milestone_index((*ledger_index).into());
-        // TODO look from storage
-        tangle.update_latest_milestone_index(snapshot_info.entry_point_index().into());
+        tangle.update_latest_milestone_index((*ledger_index).into());
         tangle.update_snapshot_index(snapshot_info.snapshot_index().into());
         tangle.update_pruning_index(snapshot_info.pruning_index().into());
         // TODO

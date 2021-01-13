@@ -19,7 +19,7 @@ use bee_runtime::{
 use anymap::Map;
 use async_trait::async_trait;
 use futures::{channel::oneshot, future::Future};
-use log::{debug, info};
+use log::{debug, info, warn};
 
 use std::{
     any::{type_name, Any, TypeId},
@@ -39,6 +39,8 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
         if let Err(e) = tokio::signal::ctrl_c().await {
             panic!("Failed to intercept CTRL-C: {:?}.", e);
         }
+
+        warn!("Gracefully shutting down the node, this may take some time.");
 
         if let Err(e) = sender.send(()) {
             panic!("Failed to send the shutdown signal: {:?}.", e);

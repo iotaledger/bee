@@ -207,9 +207,7 @@ impl TransactionEssenceBuilder {
                     if self
                         .outputs
                         .iter()
-                        .filter(|j| match *j {
-                            Output::SignatureLockedSingle(s) => s.address() == u.address(),
-                        })
+                        .filter(|j| matches!(j, Output::SignatureLockedSingle(s) if s.address() == u.address()))
                         .count()
                         > 1
                     {
@@ -220,6 +218,8 @@ impl TransactionEssenceBuilder {
                         .checked_add(u.amount())
                         .ok_or(Error::InvalidAccumulatedOutput((total + u.amount()) as u128))?;
                 }
+                // TODO handle dust
+                _ => {}
             }
             // Accumulated output balance must not exceed the total supply of tokens.
             if total > IOTA_SUPPLY {
