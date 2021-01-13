@@ -39,7 +39,7 @@ use bee_tangle::MsTangle;
 use asset::Asset;
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 use tokio::sync::mpsc;
 use warp::{http::header::HeaderValue, path::FullPath, reply::Response, ws::Message, Filter, Rejection, Reply};
 use warp_reverse_proxy::reverse_proxy_filter;
@@ -77,9 +77,10 @@ where
     });
 
     bus.add_listener::<Dashboard, E, _>(move |event: &E| {
-        if tx.send((*event).clone()).is_err() {
-            warn!("Sending event to ws {} topic handler failed.", topic);
-        }
+        // The lifetime of the listeners is tied to the lifetime of the Dashboard worker so they are removed together.
+        // However, topic handlers are shutdown as soon as the signal is received, causing this send to potentially
+        // fail and spam the output. The return is then ignored as not being essential.
+        let _ = tx.send((*event).clone());
     });
 }
 
