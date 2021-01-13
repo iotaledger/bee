@@ -4,15 +4,19 @@
 use crate::info::SnapshotInfo;
 
 use bee_ledger::{
-    model::{LedgerIndex, Output, Unspent},
+    model::{Output, Unspent},
     storage,
 };
-use bee_message::payload::transaction::{Ed25519Address, OutputId};
+use bee_message::{
+    ledger_index::LedgerIndex,
+    milestone::MilestoneIndex,
+    payload::transaction::{Ed25519Address, OutputId},
+    solid_entry_point::SolidEntryPoint,
+};
 use bee_storage::{
     access::{Fetch, Insert, Truncate},
     backend,
 };
-use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 
 pub trait StorageBackend:
     backend::StorageBackend

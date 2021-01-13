@@ -4,7 +4,7 @@
 use crate::{header::SnapshotHeader, kind::Kind, milestone_diff::MilestoneDiff, output::Output, Error};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
+use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 
 use log::{error, info};
 

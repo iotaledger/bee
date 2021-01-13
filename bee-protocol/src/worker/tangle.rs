@@ -3,12 +3,13 @@
 
 use crate::storage::StorageBackend;
 
-use bee_ledger::model::LedgerIndex;
-use bee_message::MessageId;
+use bee_message::{
+    ledger_index::LedgerIndex, milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MessageId,
+};
 use bee_runtime::{node::Node, worker::Worker};
 use bee_snapshot::{SnapshotInfo, SnapshotWorker};
 use bee_storage::access::{AsStream, Fetch};
-use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MsTangle};
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::StreamExt;

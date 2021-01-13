@@ -4,21 +4,20 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Diff, LedgerIndex, Output, Spent, Unspent};
+use bee_ledger::model::{Diff, Output, Spent, Unspent};
 use bee_message::{
+    ledger_index::LedgerIndex,
+    milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::HashedIndex,
         transaction::{Ed25519Address, OutputId},
     },
+    solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Insert;
-use bee_tangle::{
-    metadata::MessageMetadata,
-    milestone::{Milestone, MilestoneIndex},
-    solid_entry_point::SolidEntryPoint,
-};
+use bee_tangle::metadata::MessageMetadata;
 
 #[async_trait::async_trait]
 impl Insert<MessageId, Message> for Storage {

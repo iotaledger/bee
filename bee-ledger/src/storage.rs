@@ -3,16 +3,15 @@
 
 use crate::{
     error::Error,
-    model::{Diff, LedgerIndex, Output, Spent, Unspent},
+    model::{Diff, Output, Spent, Unspent},
     IOTA_SUPPLY,
 };
 
-use bee_message::payload::transaction::OutputId;
+use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, payload::transaction::OutputId};
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
     backend,
 };
-use bee_tangle::milestone::MilestoneIndex;
 
 use futures::StreamExt;
 

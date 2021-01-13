@@ -4,8 +4,7 @@
 use crate::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::payload::transaction::TransactionId;
-use bee_tangle::milestone::MilestoneIndex;
+use bee_message::{milestone::MilestoneIndex, payload::transaction::TransactionId};
 
 #[derive(Debug)]
 pub struct Spent {

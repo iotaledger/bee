@@ -13,8 +13,9 @@ use crate::{
     ProtocolMetrics,
 };
 
+use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::{milestone::MilestoneIndex, MsTangle};
+use bee_tangle::MsTangle;
 
 use futures::{channel::oneshot, future::FutureExt};
 use log::{error, info, trace, warn};

@@ -16,7 +16,6 @@ bee-ledger = { path = "../bee-ledger" }
 bee-message = { path = "../bee-message" }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-tangle = { path = "../bee-tangle" }
 
 async-trait = "0.1"
 bytemuck = "1.2"

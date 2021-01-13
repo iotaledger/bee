@@ -15,13 +15,13 @@ use crate::{
 };
 
 use bee_ledger::{LedgerWorker, LedgerWorkerEvent};
-use bee_message::MessageId;
+use bee_message::{
+    milestone::{Milestone, MilestoneIndex},
+    MessageId,
+};
 use bee_network::NetworkController;
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{
-    milestone::{Milestone, MilestoneIndex},
-    traversal, MsTangle,
-};
+use bee_tangle::{traversal, MsTangle};
 
 use async_trait::async_trait;
 use futures::StreamExt;

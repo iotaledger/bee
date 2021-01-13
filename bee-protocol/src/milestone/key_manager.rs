@@ -3,7 +3,7 @@
 
 use crate::milestone::key_range::KeyRange;
 
-use bee_tangle::milestone::MilestoneIndex;
+use bee_message::milestone::MilestoneIndex;
 
 use std::collections::HashSet;
 

@@ -3,21 +3,20 @@
 
 use crate::{error::Error, storage::*};
 
-use bee_ledger::model::{Diff, LedgerIndex, Output, Spent, Unspent};
+use bee_ledger::model::{Diff, Output, Spent, Unspent};
 use bee_message::{
+    ledger_index::LedgerIndex,
+    milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::{HashedIndex, HASHED_INDEX_LENGTH},
         transaction::{Ed25519Address, OutputId, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH},
     },
+    solid_entry_point::SolidEntryPoint,
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Truncate;
-use bee_tangle::{
-    metadata::MessageMetadata,
-    milestone::{Milestone, MilestoneIndex},
-    solid_entry_point::SolidEntryPoint,
-};
+use bee_tangle::metadata::MessageMetadata;
 
 #[async_trait::async_trait]
 impl Truncate<MessageId, Message> for Storage {

@@ -6,14 +6,13 @@ use crate::{
     event::{MilestoneConfirmed, NewOutput, NewSpent},
     merkle_hasher::MerkleHasher,
     metadata::WhiteFlagMetadata,
-    model::LedgerIndex,
     storage::{self, StorageBackend},
     white_flag::visit_dfs,
 };
 
-use bee_message::{payload::Payload, MessageId};
+use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, payload::Payload, MessageId};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{milestone::MilestoneIndex, MsTangle};
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;

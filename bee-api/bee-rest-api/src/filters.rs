@@ -292,11 +292,11 @@ mod custom_path_param {
 
     use super::*;
     use bee_message::{
+        milestone::MilestoneIndex,
         payload::transaction::{Address, OutputId},
         prelude::Ed25519Address,
         MessageId,
     };
-    use bee_tangle::milestone::MilestoneIndex;
 
     pub(super) fn output_id() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Copy {
         warp::path::param().and_then(|value: String| async move {

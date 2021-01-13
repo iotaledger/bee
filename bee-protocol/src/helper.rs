@@ -9,9 +9,9 @@ use crate::{
     ProtocolMetrics, Sender,
 };
 
-use bee_message::MessageId;
+use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_network::{NetworkController, PeerId};
-use bee_tangle::{milestone::MilestoneIndex, MsTangle};
+use bee_tangle::MsTangle;
 
 use log::warn;
 use tokio::sync::mpsc;

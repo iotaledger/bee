@@ -3,8 +3,7 @@
 
 use crate::kind::Kind;
 
-use bee_message::Error as MessageError;
-use bee_tangle::milestone::MilestoneIndex;
+use bee_message::{milestone::MilestoneIndex, Error as MessageError};
 
 use thiserror::Error;
 

@@ -3,14 +3,16 @@
 
 use crate::{
     metadata::MessageMetadata,
-    milestone::{Milestone, MilestoneIndex},
     storage::StorageBackend,
     tangle::{Hooks, Tangle},
     urts::UrtsTipPool,
     MessageRef,
 };
 
-use bee_message::{Message, MessageId};
+use bee_message::{
+    milestone::{Milestone, MilestoneIndex},
+    Message, MessageId,
+};
 use bee_runtime::resource::ResourceHandle;
 
 use async_trait::async_trait;

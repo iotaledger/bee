@@ -2,17 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_ledger::storage::StorageBackend as LedgerStorageBackend;
-use bee_message::{payload::indexation::HashedIndex, Message, MessageId};
+use bee_message::{
+    milestone::{Milestone, MilestoneIndex},
+    payload::indexation::HashedIndex,
+    solid_entry_point::SolidEntryPoint,
+    Message, MessageId,
+};
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::{
     access::{AsStream, Fetch, Insert},
     backend,
 };
-use bee_tangle::{
-    metadata::MessageMetadata,
-    milestone::{Milestone, MilestoneIndex},
-    solid_entry_point::SolidEntryPoint,
-};
+use bee_tangle::metadata::MessageMetadata;
 
 pub trait StorageBackend:
     backend::StorageBackend

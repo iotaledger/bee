@@ -3,8 +3,7 @@
 
 use crate::model::{Output, Spent};
 
-use bee_message::MessageId;
-use bee_tangle::milestone::MilestoneIndex;
+use bee_message::{milestone::MilestoneIndex, MessageId};
 
 #[derive(Clone)]
 pub struct MilestoneConfirmed {
