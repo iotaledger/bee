@@ -58,7 +58,7 @@ impl Address {
     }
     pub fn to_bech32_testnet(&self) -> String {
         match self {
-            Address::Ed25519(address) => address.to_bech32(),
+            Address::Ed25519(address) => address.to_bech32_testnet(),
         }
     }
 }
