@@ -4,7 +4,7 @@
 use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_tangle::milestone::MilestoneIndex;
+use bee_message::milestone::MilestoneIndex;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SnapshotInfo {

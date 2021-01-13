@@ -54,3 +54,6 @@ path = "src/lib.rs"
 [[bin]]
 name = "bee"
 path = "src/main.rs"
+
+[features]
+dashboard = []

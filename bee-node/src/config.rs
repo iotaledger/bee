@@ -1,10 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugins::{
-    dashboard::config::{DashboardConfig, DashboardConfigBuilder},
-    mqtt::config::{MqttConfig, MqttConfigBuilder},
-};
+#[cfg(feature = "dashboard")]
+use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder};
+
+use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
 
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
 use bee_network::{NetworkConfig, NetworkConfigBuilder};
@@ -48,6 +48,7 @@ pub struct NodeConfigBuilder<B: StorageBackend> {
     pub(crate) storage: Option<B::ConfigBuilder>,
     pub(crate) tangle: Option<TangleConfigBuilder>,
     pub(crate) mqtt: Option<MqttConfigBuilder>,
+    #[cfg(feature = "dashboard")]
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
 }
 
@@ -78,6 +79,7 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
             storage: self.storage.unwrap_or_default().into(),
             tangle: self.tangle.unwrap_or_default().finish(),
             mqtt: self.mqtt.unwrap_or_default().finish(),
+            #[cfg(feature = "dashboard")]
             dashboard: self.dashboard.unwrap_or_default().finish(),
         }
     }
@@ -95,6 +97,7 @@ pub struct NodeConfig<B: StorageBackend> {
     pub storage: B::Config,
     pub tangle: TangleConfig,
     pub mqtt: MqttConfig,
+    #[cfg(feature = "dashboard")]
     pub dashboard: DashboardConfig,
 }
 
@@ -112,6 +115,7 @@ impl<B: StorageBackend> Clone for NodeConfig<B> {
             storage: self.storage.clone(),
             tangle: self.tangle.clone(),
             mqtt: self.mqtt.clone(),
+            #[cfg(feature = "dashboard")]
             dashboard: self.dashboard.clone(),
         }
     }

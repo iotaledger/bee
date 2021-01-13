@@ -41,11 +41,21 @@ rustup update
 ```sh
 git clone https://github.com/iotaledger/bee.git --branch chrysalis-pt-2
 cd bee/bee-node
+```
+
+With dashboard
+
+```sh
 git submodule update --init
 cd src/plugins/dashboard/frontend
 npm install
 npm run build-bee
 cd -
+cargo build --release --features dashboard
+```
+
+Without dashboard
+```sh
 cargo build --release
 ```
 

@@ -15,13 +15,13 @@ use crate::{
 };
 
 use bee_ledger::{LedgerWorker, LedgerWorkerEvent};
-use bee_message::MessageId;
-use bee_network::NetworkController;
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{
+use bee_message::{
     milestone::{Milestone, MilestoneIndex},
-    traversal, MsTangle,
+    MessageId,
 };
+use bee_network::NetworkController;
+use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::{traversal, MsTangle};
 
 use async_trait::async_trait;
 use futures::StreamExt;
@@ -101,6 +101,48 @@ async fn light_solidification<B: StorageBackend>(
     }
 }
 
+fn solidify<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    ledger_worker: &mpsc::UnboundedSender<LedgerWorkerEvent>,
+    milestone_cone_updater: &mpsc::UnboundedSender<MilestoneConeUpdaterWorkerEvent>,
+    peer_manager: &PeerManager,
+    metrics: &ProtocolMetrics,
+    network: &NetworkController,
+    bus: &Bus<'static>,
+    id: MessageId,
+    index: MilestoneIndex,
+) {
+    debug!("New solid milestone {}.", *index);
+
+    tangle.update_latest_solid_milestone_index(index);
+
+    if let Err(e) = ledger_worker.send(LedgerWorkerEvent(id)) {
+        warn!("Sending message_id to ledger worker failed: {}.", e);
+    }
+
+    if let Err(e) = milestone_cone_updater
+        // TODO get MS
+        .send(MilestoneConeUpdaterWorkerEvent(index, Milestone::new(id, 0)))
+    {
+        warn!("Sending message_id to `MilestoneConeUpdater` failed: {:?}.", e);
+    }
+
+    helper::broadcast_heartbeat(
+        &peer_manager,
+        &network,
+        &metrics,
+        index,
+        tangle.get_pruning_index(),
+        tangle.get_latest_milestone_index(),
+    );
+
+    bus.dispatch(LatestSolidMilestoneChanged {
+        index,
+        // TODO get MS
+        milestone: Milestone::new(id, 0),
+    });
+}
+
 #[async_trait]
 impl<N: Node> Worker<N> for MilestoneSolidifierWorker
 where
@@ -176,35 +218,17 @@ where
                 // TODO handle else
                 if let Some(id) = tangle.get_milestone_message_id(index).await {
                     if tangle.is_solid_message(&id).await {
-                        debug!("New solid milestone {}.", *index);
-
-                        tangle.update_latest_solid_milestone_index(index);
-
-                        if let Err(e) = ledger_worker.send(LedgerWorkerEvent(id)) {
-                            warn!("Sending message_id to ledger worker failed: {}.", e);
-                        }
-
-                        if let Err(e) = milestone_cone_updater
-                            // TODO get MS
-                            .send(MilestoneConeUpdaterWorkerEvent(index, Milestone::new(id, 0)))
-                        {
-                            warn!("Sending message_id to `MilestoneConeUpdater` failed: {:?}.", e);
-                        }
-
-                        helper::broadcast_heartbeat(
+                        solidify(
+                            &tangle,
+                            &ledger_worker,
+                            &milestone_cone_updater,
                             &peer_manager,
-                            &network,
                             &metrics,
+                            &network,
+                            &bus,
+                            id,
                             index,
-                            tangle.get_pruning_index(),
-                            tangle.get_latest_milestone_index(),
                         );
-
-                        bus.dispatch(LatestSolidMilestoneChanged {
-                            index,
-                            // TODO get MS
-                            milestone: Milestone::new(id, 0),
-                        });
                     } else if tangle.is_synced_threshold(2) {
                         heavy_solidification(&tangle, &message_requester, &requested_messages, index, id).await;
                     } else if index > lsmi && index <= lsmi + MilestoneIndex(ms_sync_count) {

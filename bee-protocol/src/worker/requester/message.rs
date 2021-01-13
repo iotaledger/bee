@@ -8,10 +8,9 @@ use crate::{
     ProtocolMetrics, Sender,
 };
 
-use bee_message::MessageId;
+use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_network::NetworkController;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::milestone::MilestoneIndex;
 
 use async_trait::async_trait;
 use dashmap::DashMap;

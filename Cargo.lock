@@ -395,6 +395,7 @@ dependencies = [
  "hex",
  "num_cpus",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -563,7 +564,6 @@ dependencies = [
  "bee-message",
  "bee-runtime",
  "bee-storage",
- "bee-tangle",
  "bytemuck",
  "chrono",
  "dashmap 4.0.1",

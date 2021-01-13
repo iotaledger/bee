@@ -1,9 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{flags::Flags, milestone::MilestoneIndex};
+use crate::flags::Flags;
 
 use bee_common::packable::{OptionError, Packable, Read, Write};
+use bee_message::milestone::MilestoneIndex;
 
 use std::time::{SystemTime, UNIX_EPOCH};
 

@@ -8,9 +8,7 @@
 pub mod config;
 pub mod flags;
 pub mod metadata;
-pub mod milestone;
 pub mod ms_tangle;
-pub mod solid_entry_point;
 pub mod storage;
 pub mod traversal;
 pub mod urts;

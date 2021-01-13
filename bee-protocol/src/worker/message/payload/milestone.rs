@@ -16,13 +16,14 @@ use crate::{
 };
 
 use bee_common::packable::Packable;
-use bee_message::{payload::Payload, MessageId};
+use bee_message::{
+    milestone::{Milestone, MilestoneIndex},
+    payload::Payload,
+    MessageId,
+};
 use bee_network::NetworkController;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{
-    milestone::{Milestone, MilestoneIndex},
-    MsTangle,
-};
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use crypto::ed25519::{verify, PublicKey, Signature};

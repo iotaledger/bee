@@ -7,8 +7,9 @@ use crate::{
     storage::StorageBackend,
 };
 
+use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::{milestone::MilestoneIndex, MsTangle};
+use bee_tangle::MsTangle;
 
 use serde::Serialize;
 use warp::{reject, Rejection, Reply};

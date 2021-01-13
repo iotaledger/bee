@@ -1,10 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[cfg(feature = "dashboard")]
+use crate::plugins::Dashboard;
+
 use crate::{
     config::NodeConfig,
     node::{BeeNode, Error},
-    plugins::{self, Dashboard, Mqtt, VersionChecker},
+    plugins::{self, Mqtt, VersionChecker},
     storage::StorageBackend,
 };
 
@@ -186,7 +189,10 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         let mut this = this.with_worker::<VersionChecker>();
         this = this.with_worker_cfg::<Mqtt>(config.mqtt);
-        this = this.with_worker_cfg::<Dashboard>((config.dashboard, config.rest_api.clone()));
+        #[cfg(feature = "dashboard")]
+        {
+            this = this.with_worker_cfg::<Dashboard>((config.dashboard, config.rest_api.clone()));
+        }
 
         let mut node = BeeNode {
             workers: Map::new(),

@@ -4,7 +4,7 @@
 use crate::{kind::Kind, Error};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_tangle::milestone::MilestoneIndex;
+use bee_message::milestone::MilestoneIndex;
 
 const SNAPSHOT_VERSION: u8 = 1;
 

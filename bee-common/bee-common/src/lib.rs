@@ -5,4 +5,3 @@
 //! applications built on-top.
 
 pub mod b1t6;
-pub mod wait_priority_queue;

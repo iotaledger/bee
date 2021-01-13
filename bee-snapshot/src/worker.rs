@@ -7,13 +7,17 @@ use crate::{
 };
 
 use bee_ledger::{
-    model::{LedgerIndex, Unspent},
+    model::Unspent,
     storage::{apply_diff, check_ledger_state, rollback_diff},
 };
-use bee_message::payload::transaction::{Address, Ed25519Address, Output, OutputId};
+use bee_message::{
+    ledger_index::LedgerIndex,
+    milestone::MilestoneIndex,
+    payload::transaction::{Address, Ed25519Address, Output, OutputId},
+    solid_entry_point::SolidEntryPoint,
+};
 use bee_runtime::{node::Node, worker::Worker};
 use bee_storage::access::{Fetch, Insert, Truncate};
-use bee_tangle::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 
 use async_trait::async_trait;
 use chrono::{offset::TimeZone, Utc};

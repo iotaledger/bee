@@ -3,7 +3,7 @@
 
 use crate::manual::{ManualPeeringConfig, ManualPeeringConfigBuilder};
 
-use bee_network::Keypair;
+use bee_network::{Keypair, PeerId, PublicKey};
 
 use serde::Deserialize;
 
@@ -40,8 +40,11 @@ impl PeeringConfigBuilder {
             generate_random_identity()
         };
 
+        let peer_id = PeerId::from_public_key(PublicKey::Ed25519(identity.public()));
+
         PeeringConfig {
             identity_private_key: (identity, identity_string, new),
+            peer_id,
             manual: self.manual.finish(),
         }
     }
@@ -57,6 +60,7 @@ fn generate_random_identity() -> (Keypair, String, bool) {
 #[derive(Clone)]
 pub struct PeeringConfig {
     pub identity_private_key: (Keypair, String, bool),
+    pub peer_id: PeerId,
     pub manual: ManualPeeringConfig,
 }
 

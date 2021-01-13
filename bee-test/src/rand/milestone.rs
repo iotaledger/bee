@@ -3,7 +3,7 @@
 
 use crate::rand::{integer::rand_integer, message::rand_message_id};
 
-use bee_tangle::milestone::{Milestone, MilestoneIndex};
+use bee_message::milestone::{Milestone, MilestoneIndex};
 
 pub fn rand_milestone_index() -> MilestoneIndex {
     MilestoneIndex::from(rand_integer::<u32>())

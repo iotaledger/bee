@@ -3,12 +3,12 @@
 
 use crate::{storage::StorageBackend, worker::TangleWorker};
 
-use bee_message::MessageId;
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{
+use bee_message::{
     milestone::{Milestone, MilestoneIndex},
-    MsTangle,
+    MessageId,
 };
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
