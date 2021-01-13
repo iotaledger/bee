@@ -11,9 +11,9 @@ use crate::Error;
 use bech32::FromBase32;
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 use alloc::string::String;
+use core::ops::Deref;
+use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
@@ -41,7 +41,7 @@ impl Address {
     pub fn try_from_bech32(addr: &str) -> Result<Self, Error> {
         match bech32::decode(&addr) {
             Ok((hrp, data)) => {
-                if hrp.eq("iot") {
+                if hrp.eq("iota") || hrp.eq("atoi") {
                     let bytes = Vec::<u8>::from_base32(&data).map_err(|_| Error::InvalidAddress)?;
                     Ok(Self::unpack(&mut bytes.as_slice()).map_err(|_| Error::InvalidAddress)?)
                 } else {
@@ -52,6 +52,11 @@ impl Address {
         }
     }
     pub fn to_bech32(&self) -> String {
+        match self {
+            Address::Ed25519(address) => address.to_bech32(),
+        }
+    }
+    pub fn to_bech32_testnet(&self) -> String {
         match self {
             Address::Ed25519(address) => address.to_bech32(),
         }
@@ -74,7 +79,6 @@ impl Packable for Address {
                 address.pack(writer)?;
             }
         }
-
         Ok(())
     }
 
@@ -83,5 +87,35 @@ impl Packable for Address {
             ED25519_ADDRESS_TYPE => Self::Ed25519(Ed25519Address::unpack(reader)?),
             _ => return Err(Self::Error::InvalidAddressType),
         })
+    }
+}
+
+/// Bech32 encoded address struct
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+pub struct Bech32Address(pub String);
+
+impl Deref for Bech32Address {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl core::fmt::Display for Bech32Address {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl From<String> for Bech32Address {
+    fn from(address: String) -> Self {
+        Bech32Address(address)
+    }
+}
+
+impl From<&str> for Bech32Address {
+    fn from(address: &str) -> Self {
+        Bech32Address(address.to_string())
     }
 }

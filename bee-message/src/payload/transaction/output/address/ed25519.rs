@@ -61,7 +61,13 @@ impl Ed25519Address {
     pub fn to_bech32(&self) -> String {
         let mut serialized = vec![1u8];
         serialized.extend_from_slice(&self.0);
-        bech32::encode("iot", serialized.to_base32()).expect("Valid Ed25519 address required.")
+        bech32::encode("iota", serialized.to_base32()).expect("Valid Ed25519 address required.")
+    }
+
+    pub fn to_bech32_testnet(&self) -> String {
+        let mut serialized = vec![1u8];
+        serialized.extend_from_slice(&self.0);
+        bech32::encode("atoi", serialized.to_base32()).expect("Valid Ed25519 address required.")
     }
 }
 
