@@ -268,6 +268,7 @@ fn outputs_ed25519<B: StorageBackend>(
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
+        .and(warp::path("ed25519"))
         .and(custom_path_param::ed25519_address())
         .and(warp::path("outputs"))
         .and(warp::path::end())
