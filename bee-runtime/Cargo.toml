@@ -19,4 +19,4 @@ futures = "0.3"
 log = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
-async-std = { version = "1.6", features = [ "attributes" ] }
+tokio = { version = "0.2", features = ["rt-core", "time", "macros"] }
