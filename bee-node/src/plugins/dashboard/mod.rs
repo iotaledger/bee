@@ -183,7 +183,8 @@ where
                         "http://".to_owned() + &rest_api_cfg.binding_socket_addr().to_string() + "/",
                     )
                     .map(|res| res),
-                ));
+                ))
+                .or(warp::path!("explorer" / ..).and_then(serve_index));
 
             info!("Dashboard available at http://localhost:{}.", dashboard_cfg.port());
 
