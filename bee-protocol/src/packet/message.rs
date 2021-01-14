@@ -5,10 +5,12 @@
 
 use crate::packet::Packet;
 
+use bee_message::MESSAGE_LENGTH_MAX;
+
 use std::ops::Range;
 
 const VARIABLE_MIN_SIZE: usize = 77;
-const VARIABLE_MAX_SIZE: usize = 32000;
+const VARIABLE_MAX_SIZE: usize = MESSAGE_LENGTH_MAX;
 
 /// A packet to send a message.
 #[derive(Clone, Default)]
