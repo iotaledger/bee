@@ -67,11 +67,11 @@ async fn main() {
 
     info!("[EXAMPLE] Dialing unkown peers (by address)...");
     for peer_address in &config.peers {
-        if let Err(e) = network_controller.send(DialAddress {
-            address: peer_address.clone(),
-        }) {
-            warn!("Dialing peer (by address) failed. Error: {:?}", e);
-        }
+        network_controller
+            .send(DialAddress {
+                address: peer_address.clone(),
+            })
+            .expect("sending command failed");
     }
 
     info!("[EXAMPLE] ...finished.");
@@ -309,7 +309,13 @@ async fn process_event(event: Event, message: &str, network: &NetworkController,
             info!("[EXAMPLE] Received message \"{}\"", message);
         }
 
-        _ => warn!("Unsupported event {:?}.", event),
+        Event::CommandFailed { command } => {
+            if let DialAddress { address } = command {
+                tokio::time::delay_for(Duration::from_secs(5)).await;
+                network.send(DialAddress { address }).expect("sending command failed");
+            }
+        }
+        _ => warn!("Ignoring event {:?}.", event),
     }
 }
 
