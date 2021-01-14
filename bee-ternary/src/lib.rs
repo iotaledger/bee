@@ -68,6 +68,8 @@ pub mod t3b1;
 pub mod t4b1;
 /// The [`T5B1`] and [`T5B1Buf`] encodings.
 pub mod t5b1;
+/// Utility functions for encoding and decodining T6B1 encoding.
+pub mod t6b1;
 /// Types and traits used to represent trits, both balanced and unbalanced.
 pub mod trit;
 /// Types and traits used to represent trytes and buffers of trytes.
@@ -757,6 +759,11 @@ impl<T: RawEncodingBuf> TritBuf<T> {
     /// Pop a trit from the back of this [`TritBuf`], returning it if successful.
     pub fn pop(&mut self) -> Option<<T::Slice as RawEncoding>::Trit> {
         self.0.pop()
+    }
+
+    /// Append a trit slice to the end of this [`TritBuf`].
+    pub fn append<U: RawEncoding<Trit = <T::Slice as RawEncoding>::Trit> + ?Sized>(&mut self, trits: &Trits<U>) {
+        trits.iter().for_each(|t| self.push(t));
     }
 
     /// Extracts a trit slice containing the data within this buffer.
