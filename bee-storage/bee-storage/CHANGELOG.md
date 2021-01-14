@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- AsStream::Stream: Send + Sync + Unpin bounds
-
 ### Changed
 
 ### Deprecated
@@ -20,6 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security -->
+
+## 0.2.0-alpha - 2021-01-11
+
+### Added
+
+- `AsStream::Stream: Send + Sync + Unpin` bounds;
+- `StorageBackend::size()` method;
+
+### Changed
+
+- `StorageBackend` methods return `Result<_, Self::Error>` instead of `Result<_, Box<dyn std::error::Error>>`;
 
 ## 0.1.0-alpha - 2021-01-06
 

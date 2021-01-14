@@ -11,7 +11,7 @@ keywords = ["iota", "tangle", "bee", "framework", "runtime"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-storage = { version = "0.1.0-alpha", path = "../bee-storage/bee-storage" }
+bee-storage = { version = "0.2.0-alpha", path = "../bee-storage/bee-storage" }
 
 async-trait = "0.1"
 dashmap = "3.11"
@@ -19,4 +19,4 @@ futures = "0.3"
 log = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
-async-std = { version = "1.6", features = [ "attributes" ] }
+tokio = { version = "0.2", features = ["rt-core", "time", "macros"] }
