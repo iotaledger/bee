@@ -200,7 +200,11 @@ mod tests {
         // Create a new packet handler
         let (sender_shutdown, receiver_shutdown) = oneshot::channel::<()>();
         let (sender, receiver) = mpsc::unbounded_channel::<Vec<u8>>();
-        let mut msg_handler = PacketHandler::new(receiver, receiver_shutdown.fuse(), "127.0.0.1:8080".parse().unwrap());
+        let mut msg_handler = PacketHandler::new(
+            receiver,
+            receiver_shutdown.fuse(),
+            "/ip4/0.0.0.0/tcp/8080".parse().unwrap(),
+        );
         // Create the task that does the checks of the test.
         let handle = spawn(async move {
             // The packets are expected to be filled with zeroes except for the packet length
@@ -290,7 +294,11 @@ mod tests {
         let (sender_shutdown, receiver_shutdown) = oneshot::channel::<()>();
         let (sender, receiver) = mpsc::unbounded_channel::<Vec<u8>>();
 
-        let mut msg_handler = PacketHandler::new(receiver, receiver_shutdown.fuse(), "127.0.0.1:8080".parse().unwrap());
+        let mut msg_handler = PacketHandler::new(
+            receiver,
+            receiver_shutdown.fuse(),
+            "/ip4/0.0.0.0/tcp/8080".parse().unwrap(),
+        );
 
         let handle = spawn(async move {
             let expected_bytes = vec![0u8; msg_len];

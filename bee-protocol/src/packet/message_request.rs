@@ -68,9 +68,9 @@ mod tests {
 
     #[test]
     fn size_range() {
-        assert_eq!(MessageRequest::size_range().contains(&31), false);
-        assert_eq!(MessageRequest::size_range().contains(&32), true);
-        assert_eq!(MessageRequest::size_range().contains(&33), false);
+        assert_eq!(MessageRequest::size_range().contains(&(CONSTANT_SIZE - 1)), false);
+        assert_eq!(MessageRequest::size_range().contains(&CONSTANT_SIZE), true);
+        assert_eq!(MessageRequest::size_range().contains(&(CONSTANT_SIZE + 1)), false);
     }
 
     #[test]

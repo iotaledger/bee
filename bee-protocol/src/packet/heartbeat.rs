@@ -120,9 +120,9 @@ mod tests {
 
     #[test]
     fn size_range() {
-        assert_eq!(Heartbeat::size_range().contains(&13), false);
-        assert_eq!(Heartbeat::size_range().contains(&14), true);
-        assert_eq!(Heartbeat::size_range().contains(&15), false);
+        assert_eq!(Heartbeat::size_range().contains(&(CONSTANT_SIZE - 1)), false);
+        assert_eq!(Heartbeat::size_range().contains(&CONSTANT_SIZE), true);
+        assert_eq!(Heartbeat::size_range().contains(&(CONSTANT_SIZE + 1)), false);
     }
 
     #[test]

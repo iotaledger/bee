@@ -61,9 +61,9 @@ mod tests {
 
     #[test]
     fn size_range() {
-        assert_eq!(MilestoneRequest::size_range().contains(&3), false);
-        assert_eq!(MilestoneRequest::size_range().contains(&4), true);
-        assert_eq!(MilestoneRequest::size_range().contains(&5), false);
+        assert_eq!(MilestoneRequest::size_range().contains(&(CONSTANT_SIZE - 1)), false);
+        assert_eq!(MilestoneRequest::size_range().contains(&CONSTANT_SIZE), true);
+        assert_eq!(MilestoneRequest::size_range().contains(&(CONSTANT_SIZE + 1)), false);
     }
 
     #[test]

@@ -87,13 +87,13 @@ mod tests {
 
     #[test]
     fn size_range() {
-        assert_eq!(Message::size_range().contains(&76), false);
-        assert_eq!(Message::size_range().contains(&77), true);
-        assert_eq!(Message::size_range().contains(&78), true);
+        assert_eq!(Message::size_range().contains(&(VARIABLE_MIN_SIZE - 1)), false);
+        assert_eq!(Message::size_range().contains(&VARIABLE_MIN_SIZE), true);
+        assert_eq!(Message::size_range().contains(&(VARIABLE_MIN_SIZE + 1)), true);
 
-        assert_eq!(Message::size_range().contains(&31999), true);
-        assert_eq!(Message::size_range().contains(&32000), true);
-        assert_eq!(Message::size_range().contains(&32001), false);
+        assert_eq!(Message::size_range().contains(&(VARIABLE_MAX_SIZE - 1)), true);
+        assert_eq!(Message::size_range().contains(&VARIABLE_MAX_SIZE), true);
+        assert_eq!(Message::size_range().contains(&(VARIABLE_MAX_SIZE + 1)), false);
     }
 
     #[test]
