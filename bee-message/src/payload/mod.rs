@@ -5,9 +5,9 @@ pub mod indexation;
 pub mod milestone;
 pub mod transaction;
 
-use indexation::{Indexation, PAYLOAD_INDEXATION_TYPE};
-use milestone::{Milestone, PAYLOAD_MILESTONE_TYPE};
-use transaction::{Transaction, PAYLOAD_TRANSACTION_TYPE};
+use indexation::{Indexation, INDEXATION_PAYLOAD_TYPE};
+use milestone::{Milestone, MILESTONE_PAYLOAD_TYPE};
+use transaction::{Transaction, TRANSACTION_PAYLOAD_TYPE};
 
 use crate::Error;
 
@@ -49,24 +49,24 @@ impl Packable for Payload {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::Transaction(payload) => PAYLOAD_TRANSACTION_TYPE.packed_len() + payload.packed_len(),
-            Self::Milestone(payload) => PAYLOAD_MILESTONE_TYPE.packed_len() + payload.packed_len(),
-            Self::Indexation(payload) => PAYLOAD_INDEXATION_TYPE.packed_len() + payload.packed_len(),
+            Self::Transaction(payload) => TRANSACTION_PAYLOAD_TYPE.packed_len() + payload.packed_len(),
+            Self::Milestone(payload) => MILESTONE_PAYLOAD_TYPE.packed_len() + payload.packed_len(),
+            Self::Indexation(payload) => INDEXATION_PAYLOAD_TYPE.packed_len() + payload.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::Transaction(payload) => {
-                PAYLOAD_TRANSACTION_TYPE.pack(writer)?;
+                TRANSACTION_PAYLOAD_TYPE.pack(writer)?;
                 payload.pack(writer)?;
             }
             Self::Milestone(payload) => {
-                PAYLOAD_MILESTONE_TYPE.pack(writer)?;
+                MILESTONE_PAYLOAD_TYPE.pack(writer)?;
                 payload.pack(writer)?;
             }
             Self::Indexation(payload) => {
-                PAYLOAD_INDEXATION_TYPE.pack(writer)?;
+                INDEXATION_PAYLOAD_TYPE.pack(writer)?;
                 payload.pack(writer)?;
             }
         }
@@ -79,9 +79,9 @@ impl Packable for Payload {
         Self: Sized,
     {
         Ok(match u32::unpack(reader)? {
-            PAYLOAD_TRANSACTION_TYPE => Self::Transaction(Box::new(Transaction::unpack(reader)?)),
-            PAYLOAD_MILESTONE_TYPE => Self::Milestone(Box::new(Milestone::unpack(reader)?)),
-            PAYLOAD_INDEXATION_TYPE => Self::Indexation(Box::new(Indexation::unpack(reader)?)),
+            TRANSACTION_PAYLOAD_TYPE => Self::Transaction(Box::new(Transaction::unpack(reader)?)),
+            MILESTONE_PAYLOAD_TYPE => Self::Milestone(Box::new(Milestone::unpack(reader)?)),
+            INDEXATION_PAYLOAD_TYPE => Self::Indexation(Box::new(Indexation::unpack(reader)?)),
             _ => return Err(Self::Error::InvalidPayloadType),
         })
     }

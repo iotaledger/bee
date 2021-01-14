@@ -5,13 +5,17 @@ mod ed25519;
 mod wots;
 
 pub use ed25519::Ed25519Signature;
+use ed25519::ED25519_SIGNATURE_TYPE;
 pub use wots::WotsSignature;
+use wots::WOTS_SIGNATURE_TYPE;
 
 use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
 use serde::{Deserialize, Serialize};
+
+pub(crate) const SIGNATURE_UNLOCK_TYPE: u8 = 0;
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -38,19 +42,19 @@ impl Packable for SignatureUnlock {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::Wots(signature) => 0u8.packed_len() + signature.packed_len(),
-            Self::Ed25519(signature) => 1u8.packed_len() + signature.packed_len(),
+            Self::Wots(signature) => WOTS_SIGNATURE_TYPE.packed_len() + signature.packed_len(),
+            Self::Ed25519(signature) => ED25519_SIGNATURE_TYPE.packed_len() + signature.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::Wots(signature) => {
-                0u8.pack(writer)?;
+                WOTS_SIGNATURE_TYPE.pack(writer)?;
                 signature.pack(writer)?;
             }
             Self::Ed25519(signature) => {
-                1u8.pack(writer)?;
+                ED25519_SIGNATURE_TYPE.pack(writer)?;
                 signature.pack(writer)?;
             }
         }
@@ -63,8 +67,8 @@ impl Packable for SignatureUnlock {
         Self: Sized,
     {
         Ok(match u8::unpack(reader)? {
-            0 => Self::Wots(WotsSignature::unpack(reader)?),
-            1 => Self::Ed25519(Ed25519Signature::unpack(reader)?),
+            WOTS_SIGNATURE_TYPE => Self::Wots(WotsSignature::unpack(reader)?),
+            ED25519_SIGNATURE_TYPE => Self::Ed25519(Ed25519Signature::unpack(reader)?),
             _ => return Err(Self::Error::InvalidSignatureType),
         })
     }

@@ -10,6 +10,7 @@ use bech32::{self, ToBase32};
 use alloc::{string::String, vec};
 use core::{convert::TryInto, str::FromStr};
 
+pub(crate) const ED25519_ADDRESS_TYPE: u8 = 1;
 pub const ED25519_ADDRESS_LENGTH: usize = 32;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]

@@ -4,6 +4,7 @@
 mod utxo;
 
 pub use utxo::UTXOInput;
+use utxo::UTXO_INPUT_TYPE;
 
 use crate::Error;
 
@@ -29,14 +30,14 @@ impl Packable for Input {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::UTXO(input) => 0u8.packed_len() + input.packed_len(),
+            Self::UTXO(input) => UTXO_INPUT_TYPE.packed_len() + input.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::UTXO(input) => {
-                0u8.pack(writer)?;
+                UTXO_INPUT_TYPE.pack(writer)?;
                 input.pack(writer)?;
             }
         }
@@ -49,7 +50,7 @@ impl Packable for Input {
         Self: Sized,
     {
         Ok(match u8::unpack(reader)? {
-            0 => Self::UTXO(UTXOInput::unpack(reader)?),
+            UTXO_INPUT_TYPE => Self::UTXO(UTXOInput::unpack(reader)?),
             _ => return Err(Self::Error::InvalidInputType),
         })
     }
