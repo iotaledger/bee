@@ -4,8 +4,10 @@
 mod ed25519;
 mod wots;
 
+use ed25519::ED25519_ADDRESS_TYPE;
 pub use ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
 pub use wots::WotsAddress;
+use wots::WOTS_ADDRESS_TYPE;
 
 use crate::Error;
 
@@ -73,19 +75,19 @@ impl Packable for Address {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::Wots(address) => 0u8.packed_len() + address.packed_len(),
-            Self::Ed25519(address) => 1u8.packed_len() + address.packed_len(),
+            Self::Wots(address) => WOTS_ADDRESS_TYPE.packed_len() + address.packed_len(),
+            Self::Ed25519(address) => ED25519_ADDRESS_TYPE.packed_len() + address.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::Wots(address) => {
-                0u8.pack(writer)?;
+                WOTS_ADDRESS_TYPE.pack(writer)?;
                 address.pack(writer)?;
             }
             Self::Ed25519(address) => {
-                1u8.pack(writer)?;
+                ED25519_ADDRESS_TYPE.pack(writer)?;
                 address.pack(writer)?;
             }
         }
@@ -98,8 +100,8 @@ impl Packable for Address {
         Self: Sized,
     {
         Ok(match u8::unpack(reader)? {
-            0 => Self::Wots(WotsAddress::unpack(reader)?),
-            1 => Self::Ed25519(Ed25519Address::unpack(reader)?),
+            WOTS_ADDRESS_TYPE => Self::Wots(WotsAddress::unpack(reader)?),
+            ED25519_ADDRESS_TYPE => Self::Ed25519(Ed25519Address::unpack(reader)?),
             _ => return Err(Self::Error::InvalidAddressType),
         })
     }

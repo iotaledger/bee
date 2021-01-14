@@ -12,6 +12,8 @@ use serde::{Deserialize, Serialize};
 use alloc::vec::Vec;
 use core::convert::{TryFrom, TryInto};
 
+pub(crate) const WOTS_SIGNATURE_TYPE: u8 = 0;
+
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct WotsSignature(Vec<u8>);
 

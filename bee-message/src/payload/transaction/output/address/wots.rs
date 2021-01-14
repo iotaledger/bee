@@ -12,6 +12,8 @@ use serde::{Deserialize, Serialize};
 use alloc::{boxed::Box, string::String};
 use core::convert::{TryFrom, TryInto};
 
+pub(crate) const WOTS_ADDRESS_TYPE: u8 = 0;
+
 // TODO length is 243, change to array when std::array::LengthAtMost32 disappears.
 #[derive(Clone, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
 pub struct WotsAddress(Box<[u8]>);
