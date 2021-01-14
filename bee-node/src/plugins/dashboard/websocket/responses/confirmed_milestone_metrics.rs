@@ -16,7 +16,7 @@ pub(crate) struct ConfirmedMilestoneMetricsResponse {
     ms_index: u32,
     mps: u64,
     cmps: u64,
-    referenced_rate: u64,
+    referenced_rate: f64,
     time_since_last_ms: u64,
 }
 
