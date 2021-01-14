@@ -192,12 +192,13 @@ where
 
                 while requested <= lmi && *(requested - lsmi) <= ms_sync_count {
                     if let Some(id) = tangle.get_milestone_message_id(requested).await {
-                        if tangle
+                        let heavy = tangle
                             .get_metadata(&id)
                             .await
                             .map(|m| !m.flags().is_requested())
-                            .unwrap_or(false)
-                        {
+                            .unwrap_or(false);
+
+                        if heavy {
                             heavy_solidification(&tangle, &message_requester, &requested_messages, requested, id).await;
                         } else {
                             light_solidification(&tangle, &message_requester, &requested_messages, requested, id).await;
