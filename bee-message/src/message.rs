@@ -113,6 +113,15 @@ impl Packable for Message {
 
         let nonce = u64::unpack(reader)?;
 
+        // Computed instead of calling `packed_len` on Self because `payload_len` is already known and it may be
+        // expensive to call `payload.packed_len()` twice.
+        let message_len =
+            network_id.packed_len() + parent1.packed_len() + parent2.packed_len() + payload_len + nonce.packed_len();
+
+        if message_len > MESSAGE_LENGTH_MAX {
+            return Err(Error::InvalidMessageLength(message_len));
+        }
+
         Ok(Self {
             network_id,
             parent1,
@@ -196,20 +205,18 @@ impl<P: Provider> MessageBuilder<P> {
 
         let message_bytes = message.pack_new();
 
-        if message_bytes.len() >= MESSAGE_LENGTH_MAX {
+        if message_bytes.len() > MESSAGE_LENGTH_MAX {
             return Err(Error::InvalidMessageLength(message_bytes.len()));
         }
 
         let (nonce_provider, target_score) = self.nonce_provider.unwrap_or((P::Builder::new().finish(), 4000f64));
 
-        let nonce = nonce_provider
+        message.nonce = nonce_provider
             .nonce(
                 &message_bytes[..message_bytes.len() - std::mem::size_of::<u64>()],
                 target_score,
             )
             .unwrap_or(0);
-
-        message.nonce = nonce;
 
         Ok(message)
     }
