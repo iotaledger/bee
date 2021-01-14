@@ -2,12 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod ed25519;
-mod wots;
 
 use ed25519::ED25519_ADDRESS_TYPE;
 pub use ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
-pub use wots::WotsAddress;
-use wots::WOTS_ADDRESS_TYPE;
 
 use crate::Error;
 
@@ -22,14 +19,7 @@ use alloc::string::String;
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
 #[serde(tag = "type", content = "data")]
 pub enum Address {
-    Wots(WotsAddress),
     Ed25519(Ed25519Address),
-}
-
-impl From<WotsAddress> for Address {
-    fn from(address: WotsAddress) -> Self {
-        Self::Wots(address)
-    }
 }
 
 impl From<Ed25519Address> for Address {
@@ -42,7 +32,6 @@ impl AsRef<[u8]> for Address {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         match self {
-            Self::Wots(address) => address.as_ref(),
             Self::Ed25519(address) => address.as_ref(),
         }
     }
@@ -64,7 +53,6 @@ impl Address {
     }
     pub fn to_bech32(&self) -> String {
         match self {
-            Address::Wots(address) => address.to_bech32(),
             Address::Ed25519(address) => address.to_bech32(),
         }
     }
@@ -75,17 +63,12 @@ impl Packable for Address {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::Wots(address) => WOTS_ADDRESS_TYPE.packed_len() + address.packed_len(),
             Self::Ed25519(address) => ED25519_ADDRESS_TYPE.packed_len() + address.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
-            Self::Wots(address) => {
-                WOTS_ADDRESS_TYPE.pack(writer)?;
-                address.pack(writer)?;
-            }
             Self::Ed25519(address) => {
                 ED25519_ADDRESS_TYPE.pack(writer)?;
                 address.pack(writer)?;
@@ -100,7 +83,6 @@ impl Packable for Address {
         Self: Sized,
     {
         Ok(match u8::unpack(reader)? {
-            WOTS_ADDRESS_TYPE => Self::Wots(WotsAddress::unpack(reader)?),
             ED25519_ADDRESS_TYPE => Self::Ed25519(Ed25519Address::unpack(reader)?),
             _ => return Err(Self::Error::InvalidAddressType),
         })

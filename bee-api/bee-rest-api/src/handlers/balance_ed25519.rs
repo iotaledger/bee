@@ -65,7 +65,7 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
 /// Response of GET /api/v1/addresses/{address}
 #[derive(Clone, Debug, Serialize)]
 pub struct BalanceForAddressResponse {
-    // The type of the address (0=WOTS, 1=Ed25519).
+    // The type of the address (1=Ed25519).
     #[serde(rename = "addressType")]
     pub address_type: u8,
     // hex encoded address

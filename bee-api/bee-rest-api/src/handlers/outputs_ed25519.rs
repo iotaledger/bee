@@ -44,7 +44,7 @@ pub(crate) async fn outputs_ed25519<B: StorageBackend>(
 /// Response of GET /api/v1/addresses/{address}/outputs
 #[derive(Clone, Debug, Serialize)]
 pub struct OutputsForAddressResponse {
-    // The type of the address (0=WOTS, 1=Ed25519).
+    // The type of the address (1=Ed25519).
     #[serde(rename = "addressType")]
     pub address_type: u8,
     pub address: String,

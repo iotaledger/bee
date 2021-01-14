@@ -7,7 +7,7 @@ mod signature;
 pub use reference::ReferenceUnlock;
 use reference::REFERENCE_UNLOCK_TYPE;
 use signature::SIGNATURE_UNLOCK_TYPE;
-pub use signature::{Ed25519Signature, SignatureUnlock, WotsSignature};
+pub use signature::{Ed25519Signature, SignatureUnlock};
 
 use crate::Error;
 
