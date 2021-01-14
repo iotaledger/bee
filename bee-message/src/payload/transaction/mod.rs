@@ -14,11 +14,10 @@ pub use constants::{INPUT_OUTPUT_COUNT_MAX, INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTP
 pub use essence::{TransactionEssence, TransactionEssenceBuilder};
 pub use input::{Input, UTXOInput};
 pub use output::{
-    Address, Ed25519Address, Output, OutputId, SignatureLockedSingleOutput, WotsAddress, ED25519_ADDRESS_LENGTH,
-    OUTPUT_ID_LENGTH,
+    Address, Ed25519Address, Output, OutputId, SignatureLockedSingleOutput, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH,
 };
 pub use transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
-pub use unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock, WotsSignature};
+pub use unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -179,7 +178,7 @@ impl TransactionBuilder {
         }
 
         // for (i, block) in self.unlock_blocks.iter().enumerate() {
-        //     // Signature Unlock Blocks must define either an Ed25519- or WOTS Signature
+        //     // Signature Unlock Blocks must define an Ed25519-Signature
         //     match block {
         //         UnlockBlock::Reference(r) => {
         //             // Reference Unlock Blocks must specify a previous Unlock Block which is not of type Reference

@@ -24,8 +24,7 @@
 │   │       ├── output
 │   │       │   ├── address
 │   │       │   │   ├── ed25519.rs
-│   │       │   │   ├── mod.rs
-│   │       │   │   └── wots.rs
+│   │       │   │   └── mod.rs
 │   │       │   ├── mod.rs
 │   │       │   ├── output_id.rs
 │   │       │   └── signature_locked_single.rs
@@ -35,8 +34,7 @@
 │   │           ├── reference.rs
 │   │           └── signature
 │   │               ├── ed25519.rs
-│   │               ├── mod.rs
-│   │               └── wots.rs
+│   │               └── mod.rs
 │   ├── prelude.rs
 │   ├── serde.rs
 │   └── vertex.rs

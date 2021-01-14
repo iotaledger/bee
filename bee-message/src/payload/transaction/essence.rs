@@ -201,25 +201,22 @@ impl TransactionEssenceBuilder {
         let mut total: u64 = 0;
 
         for output in self.outputs.iter() {
-            match output {
-                Output::SignatureLockedSingle(u) => {
-                    // The Address must be unique in the set of SigLockedSingleDeposits.
-                    if self
-                        .outputs
-                        .iter()
-                        .filter(|j| matches!(j, Output::SignatureLockedSingle(s) if s.address() == u.address()))
-                        .count()
-                        > 1
-                    {
-                        return Err(Error::DuplicateError);
-                    }
-
-                    total = total
-                        .checked_add(u.amount())
-                        .ok_or(Error::InvalidAccumulatedOutput((total + u.amount()) as u128))?;
+            if let Output::SignatureLockedSingle(u) = output {
+                // The Address must be unique in the set of SigLockedSingleDeposits.
+                if self
+                    .outputs
+                    .iter()
+                    .filter(|j| matches!(j, Output::SignatureLockedSingle(s) if s.address() == u.address()))
+                    .count()
+                    > 1
+                {
+                    return Err(Error::DuplicateError);
                 }
+
+                total = total
+                    .checked_add(u.amount())
+                    .ok_or_else(|| Error::InvalidAccumulatedOutput((total + u.amount()) as u128))?;
                 // TODO handle dust
-                _ => {}
             }
             // Accumulated output balance must not exceed the total supply of tokens.
             if total > IOTA_SUPPLY {
