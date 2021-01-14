@@ -28,6 +28,7 @@ use websocket::{
 };
 
 use bee_ledger::event::MilestoneConfirmed;
+use bee_peering::PeeringConfig;
 use bee_protocol::event::{
     LatestMilestoneChanged, LatestSolidMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded,
     TipRemoved,
@@ -89,12 +90,14 @@ impl<N: Node> Worker<N> for Dashboard
 where
     N::Backend: StorageBackend,
 {
-    type Config = (DashboardConfig, RestApiConfig);
+    type Config = (DashboardConfig, RestApiConfig, PeeringConfig);
     type Error = Infallible;
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let dashboard_cfg = config.0;
+        // TODO: load them differently if possible
         let rest_api_cfg = config.1;
+        let peering_config = config.2;
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
 
@@ -159,7 +162,7 @@ where
         // run sub-workers
         confirmed_ms_metrics_worker(node);
         db_size_metrics_worker(node);
-        node_status_worker(node);
+        node_status_worker(node, peering_config);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

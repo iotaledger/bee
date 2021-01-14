@@ -3,6 +3,7 @@
 
 use crate::{plugins::Dashboard, storage::StorageBackend};
 
+use bee_peering::PeeringConfig;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use bee_tangle::MsTangle;
 
@@ -23,7 +24,7 @@ pub static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_va
 
 const NODE_STATUS_METRICS_WORKER_INTERVAL_SEC: u64 = 1;
 
-pub(crate) fn node_status_worker<N>(node: &mut N)
+pub(crate) fn node_status_worker<N>(node: &mut N, peering_config: PeeringConfig)
 where
     N: Node,
     N::Backend: StorageBackend,
@@ -50,7 +51,7 @@ where
                 version: String::from(env!("CARGO_PKG_VERSION")),
                 latest_version: String::from(env!("CARGO_PKG_VERSION")),
                 uptime: uptime.elapsed().as_millis() as u64,
-                autopeering_id: "".to_string(),
+                autopeering_id: peering_config.peer_id.to_string(),
                 node_alias: "".to_string(),
                 connected_peers_count: 0,
                 current_requested_ms: 0,
