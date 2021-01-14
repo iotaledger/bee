@@ -24,12 +24,12 @@ pub(crate) const INDEXATION_PAYLOAD_TYPE: u32 = 2;
 const INDEX_LENGTH_RANGE: Range<usize> = 1..65;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct Indexation {
+pub struct IndexationPayload {
     index: String,
     data: Box<[u8]>,
 }
 
-impl Indexation {
+impl IndexationPayload {
     pub fn new(index: String, data: &[u8]) -> Result<Self, Error> {
         if !INDEX_LENGTH_RANGE.contains(&index.len()) {
             return Err(Error::InvalidIndexationLength(index.len()));
@@ -66,7 +66,7 @@ impl Indexation {
     }
 }
 
-impl Packable for Indexation {
+impl Packable for IndexationPayload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

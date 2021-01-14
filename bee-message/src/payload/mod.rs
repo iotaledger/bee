@@ -5,9 +5,9 @@ pub mod indexation;
 pub mod milestone;
 pub mod transaction;
 
-use indexation::{Indexation, INDEXATION_PAYLOAD_TYPE};
-use milestone::{Milestone, MILESTONE_PAYLOAD_TYPE};
-use transaction::{Transaction, TRANSACTION_PAYLOAD_TYPE};
+use indexation::{IndexationPayload, INDEXATION_PAYLOAD_TYPE};
+use milestone::{MilestonePayload, MILESTONE_PAYLOAD_TYPE};
+use transaction::{TransactionPayload, TRANSACTION_PAYLOAD_TYPE};
 
 use crate::Error;
 
@@ -21,25 +21,25 @@ use alloc::boxed::Box;
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum Payload {
-    Transaction(Box<Transaction>),
-    Milestone(Box<Milestone>),
-    Indexation(Box<Indexation>),
+    Transaction(Box<TransactionPayload>),
+    Milestone(Box<MilestonePayload>),
+    Indexation(Box<IndexationPayload>),
 }
 
-impl From<Transaction> for Payload {
-    fn from(payload: Transaction) -> Self {
+impl From<TransactionPayload> for Payload {
+    fn from(payload: TransactionPayload) -> Self {
         Self::Transaction(Box::new(payload))
     }
 }
 
-impl From<Milestone> for Payload {
-    fn from(payload: Milestone) -> Self {
+impl From<MilestonePayload> for Payload {
+    fn from(payload: MilestonePayload) -> Self {
         Self::Milestone(Box::new(payload))
     }
 }
 
-impl From<Indexation> for Payload {
-    fn from(payload: Indexation) -> Self {
+impl From<IndexationPayload> for Payload {
+    fn from(payload: IndexationPayload) -> Self {
         Self::Indexation(Box::new(payload))
     }
 }
@@ -79,9 +79,9 @@ impl Packable for Payload {
         Self: Sized,
     {
         Ok(match u32::unpack(reader)? {
-            TRANSACTION_PAYLOAD_TYPE => Self::Transaction(Box::new(Transaction::unpack(reader)?)),
-            MILESTONE_PAYLOAD_TYPE => Self::Milestone(Box::new(Milestone::unpack(reader)?)),
-            INDEXATION_PAYLOAD_TYPE => Self::Indexation(Box::new(Indexation::unpack(reader)?)),
+            TRANSACTION_PAYLOAD_TYPE => Self::Transaction(Box::new(TransactionPayload::unpack(reader)?)),
+            MILESTONE_PAYLOAD_TYPE => Self::Milestone(Box::new(MilestonePayload::unpack(reader)?)),
+            INDEXATION_PAYLOAD_TYPE => Self::Indexation(Box::new(IndexationPayload::unpack(reader)?)),
             _ => return Err(Self::Error::InvalidPayloadType),
         })
     }

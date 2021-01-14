@@ -20,15 +20,15 @@ use serde::{Deserialize, Serialize};
 use alloc::{boxed::Box, vec::Vec};
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct TransactionEssence {
+pub struct TransactionPayloadEssence {
     inputs: Box<[Input]>,
     outputs: Box<[Output]>,
     payload: Option<Payload>,
 }
 
-impl TransactionEssence {
-    pub fn builder() -> TransactionEssenceBuilder {
-        TransactionEssenceBuilder::new()
+impl TransactionPayloadEssence {
+    pub fn builder() -> TransactionPayloadEssenceBuilder {
+        TransactionPayloadEssenceBuilder::new()
     }
 
     pub fn inputs(&self) -> &[Input] {
@@ -44,7 +44,7 @@ impl TransactionEssence {
     }
 }
 
-impl Packable for TransactionEssence {
+impl Packable for TransactionPayloadEssence {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -129,13 +129,13 @@ impl Packable for TransactionEssence {
 }
 
 #[derive(Debug, Default)]
-pub struct TransactionEssenceBuilder {
+pub struct TransactionPayloadEssenceBuilder {
     pub(crate) inputs: Vec<Input>,
     pub(crate) outputs: Vec<Output>,
     pub(crate) payload: Option<Payload>,
 }
 
-impl TransactionEssenceBuilder {
+impl TransactionPayloadEssenceBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -165,7 +165,7 @@ impl TransactionEssenceBuilder {
         self
     }
 
-    pub fn finish(mut self) -> Result<TransactionEssence, Error> {
+    pub fn finish(mut self) -> Result<TransactionPayloadEssence, Error> {
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.inputs.len()) {
             return Err(Error::InvalidInputOutputCount(self.inputs.len()));
         }
@@ -227,7 +227,7 @@ impl TransactionEssenceBuilder {
         self.inputs.sort();
         self.outputs.sort();
 
-        Ok(TransactionEssence {
+        Ok(TransactionPayloadEssence {
             inputs: self.inputs.into_boxed_slice(),
             outputs: self.outputs.into_boxed_slice(),
             payload: self.payload,

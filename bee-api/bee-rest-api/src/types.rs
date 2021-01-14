@@ -231,9 +231,9 @@ impl TryFrom<&PayloadDto> for Payload {
 }
 
 // &Box<Transaction> -> TransactionDto
-impl TryFrom<&Box<Transaction>> for TransactionDto {
+impl TryFrom<&Box<TransactionPayload>> for TransactionDto {
     type Error = String;
-    fn try_from(value: &Box<Transaction>) -> Result<Self, Self::Error> {
+    fn try_from(value: &Box<TransactionPayload>) -> Result<Self, Self::Error> {
         Ok(TransactionDto {
             kind: 0,
             essence: value.essence().try_into()?,
@@ -247,10 +247,10 @@ impl TryFrom<&Box<Transaction>> for TransactionDto {
 }
 
 // &TransactionDto -> Box<Transaction>
-impl TryFrom<&TransactionDto> for Box<Transaction> {
+impl TryFrom<&TransactionDto> for Box<TransactionPayload> {
     type Error = String;
     fn try_from(value: &TransactionDto) -> Result<Self, Self::Error> {
-        let mut builder = Transaction::builder().with_essence((&value.essence).try_into()?);
+        let mut builder = TransactionPayload::builder().with_essence((&value.essence).try_into()?);
         for b in &value.unlock_blocks {
             builder = builder.add_unlock_block(b.try_into()?);
         }
@@ -263,9 +263,9 @@ impl TryFrom<&TransactionDto> for Box<Transaction> {
 }
 
 // &TransactionEssence -> TransactionEssenceDto
-impl TryFrom<&TransactionEssence> for TransactionEssenceDto {
+impl TryFrom<&TransactionPayloadEssence> for TransactionEssenceDto {
     type Error = String;
-    fn try_from(value: &TransactionEssence) -> Result<Self, Self::Error> {
+    fn try_from(value: &TransactionPayloadEssence) -> Result<Self, Self::Error> {
         Ok(TransactionEssenceDto {
             kind: 0, // TODO: should this be removed?
             inputs: value
@@ -290,10 +290,10 @@ impl TryFrom<&TransactionEssence> for TransactionEssenceDto {
 }
 
 // &TransactionEssenceDto -> TransactionEssence
-impl TryFrom<&TransactionEssenceDto> for TransactionEssence {
+impl TryFrom<&TransactionEssenceDto> for TransactionPayloadEssence {
     type Error = String;
     fn try_from(value: &TransactionEssenceDto) -> Result<Self, Self::Error> {
-        let mut builder = TransactionEssence::builder();
+        let mut builder = TransactionPayloadEssence::builder();
 
         for i in &value.inputs {
             builder = builder.add_input(i.try_into()?);
@@ -476,8 +476,8 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
 }
 
 // Box<Milestone> -> MilestoneDto
-impl From<&Box<Milestone>> for MilestoneDto {
-    fn from(value: &Box<Milestone>) -> Self {
+impl From<&Box<MilestonePayload>> for MilestoneDto {
+    fn from(value: &Box<MilestonePayload>) -> Self {
         MilestoneDto {
             kind: 1,
             index: value.essence().index(),
@@ -492,7 +492,7 @@ impl From<&Box<Milestone>> for MilestoneDto {
 }
 
 // MilestoneDto -> Box<Milestone>
-impl TryFrom<&MilestoneDto> for Box<Milestone> {
+impl TryFrom<&MilestoneDto> for Box<MilestonePayload> {
     type Error = String;
     fn try_from(value: &MilestoneDto) -> Result<Self, Self::Error> {
         let essence = {
@@ -534,7 +534,7 @@ impl TryFrom<&MilestoneDto> for Box<Milestone> {
                 };
                 public_keys.push(key);
             }
-            MilestoneEssence::new(
+            MilestonePayloadEssence::new(
                 index,
                 timestamp,
                 parent_1_message_id,
@@ -556,12 +556,12 @@ impl TryFrom<&MilestoneDto> for Box<Milestone> {
                     .into_boxed_slice(),
             )
         }
-        Ok(Box::new(Milestone::new(essence, signatures)))
+        Ok(Box::new(MilestonePayload::new(essence, signatures)))
     }
 }
 
-impl From<&Box<Indexation>> for IndexationDto {
-    fn from(value: &Box<Indexation>) -> Self {
+impl From<&Box<IndexationPayload>> for IndexationDto {
+    fn from(value: &Box<IndexationPayload>) -> Self {
         IndexationDto {
             kind: 2,
             index: value.index().to_owned(),
@@ -571,11 +571,11 @@ impl From<&Box<Indexation>> for IndexationDto {
 }
 
 // IndexationDto -> Box<Indexation>
-impl TryFrom<&IndexationDto> for Box<Indexation> {
+impl TryFrom<&IndexationDto> for Box<IndexationPayload> {
     type Error = String;
     fn try_from(value: &IndexationDto) -> Result<Self, Self::Error> {
         Ok(Box::new(
-            Indexation::new(
+            IndexationPayload::new(
                 value.index.clone(),
                 &hex::decode(value.data.clone())
                     .map_err(|_| "invalid data in indexation payload: expected a hex-string")?,

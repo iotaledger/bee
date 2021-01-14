@@ -16,18 +16,18 @@ pub const MILESTONE_PUBLIC_KEY_LENGTH: usize = 32;
 pub const MILESTONE_SIGNATURE_LENGTH: usize = 64;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct Milestone {
-    essence: MilestoneEssence,
+pub struct MilestonePayload {
+    essence: MilestonePayloadEssence,
     // TODO length is 64, change to array when std::array::LengthAtMost32 disappears.
     signatures: Vec<Box<[u8]>>,
 }
 
-impl Milestone {
-    pub fn new(essence: MilestoneEssence, signatures: Vec<Box<[u8]>>) -> Self {
+impl MilestonePayload {
+    pub fn new(essence: MilestonePayloadEssence, signatures: Vec<Box<[u8]>>) -> Self {
         Self { essence, signatures }
     }
 
-    pub fn essence(&self) -> &MilestoneEssence {
+    pub fn essence(&self) -> &MilestonePayloadEssence {
         &self.essence
     }
 
@@ -36,7 +36,7 @@ impl Milestone {
     }
 }
 
-impl Packable for Milestone {
+impl Packable for MilestonePayload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -58,7 +58,7 @@ impl Packable for Milestone {
     where
         Self: Sized,
     {
-        let essence = MilestoneEssence::unpack(reader)?;
+        let essence = MilestonePayloadEssence::unpack(reader)?;
 
         let signatures_len = u8::unpack(reader)? as usize;
         let mut signatures = Vec::with_capacity(signatures_len);
@@ -73,7 +73,7 @@ impl Packable for Milestone {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct MilestoneEssence {
+pub struct MilestonePayloadEssence {
     index: u32,
     timestamp: u64,
     parent1: MessageId,
@@ -82,7 +82,7 @@ pub struct MilestoneEssence {
     public_keys: Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>,
 }
 
-impl MilestoneEssence {
+impl MilestonePayloadEssence {
     pub fn new(
         index: u32,
         timestamp: u64,
@@ -126,7 +126,7 @@ impl MilestoneEssence {
     }
 }
 
-impl Packable for MilestoneEssence {
+impl Packable for MilestonePayloadEssence {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

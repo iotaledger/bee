@@ -11,7 +11,7 @@ mod unlock;
 use crate::Error;
 
 pub use constants::{INPUT_OUTPUT_COUNT_MAX, INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE};
-pub use essence::{TransactionEssence, TransactionEssenceBuilder};
+pub use essence::{TransactionPayloadEssence, TransactionPayloadEssenceBuilder};
 pub use input::{Input, UTXOInput};
 pub use output::{
     Address, Ed25519Address, Output, OutputId, SignatureLockedSingleOutput, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH,
@@ -33,14 +33,14 @@ use core::{cmp::Ordering, slice::Iter};
 pub(crate) const TRANSACTION_PAYLOAD_TYPE: u32 = 0;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct Transaction {
-    essence: TransactionEssence,
+pub struct TransactionPayload {
+    essence: TransactionPayloadEssence,
     unlock_blocks: Box<[UnlockBlock]>,
 }
 
-impl Transaction {
-    pub fn builder() -> TransactionBuilder {
-        TransactionBuilder::default()
+impl TransactionPayload {
+    pub fn builder() -> TransactionPayloadBuilder {
+        TransactionPayloadBuilder::default()
     }
 
     pub fn id(&self) -> TransactionId {
@@ -55,7 +55,7 @@ impl Transaction {
         TransactionId::new(bytes)
     }
 
-    pub fn essence(&self) -> &TransactionEssence {
+    pub fn essence(&self) -> &TransactionPayloadEssence {
         &self.essence
     }
 
@@ -73,7 +73,7 @@ impl Transaction {
     }
 }
 
-impl Packable for Transaction {
+impl Packable for TransactionPayload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -97,7 +97,7 @@ impl Packable for Transaction {
     where
         Self: Sized,
     {
-        let essence = TransactionEssence::unpack(reader)?;
+        let essence = TransactionPayloadEssence::unpack(reader)?;
 
         let unlock_blocks_len = u16::unpack(reader)? as usize;
 
@@ -136,17 +136,17 @@ fn is_sorted<T: Ord>(iterator: Iter<T>) -> bool {
 }
 
 #[derive(Debug, Default)]
-pub struct TransactionBuilder {
-    essence: Option<TransactionEssence>,
+pub struct TransactionPayloadBuilder {
+    essence: Option<TransactionPayloadEssence>,
     unlock_blocks: Vec<UnlockBlock>,
 }
 
-impl TransactionBuilder {
+impl TransactionPayloadBuilder {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn with_essence(mut self, essence: TransactionEssence) -> Self {
+    pub fn with_essence(mut self, essence: TransactionPayloadEssence) -> Self {
         self.essence = Some(essence);
 
         self
@@ -164,7 +164,7 @@ impl TransactionBuilder {
         self
     }
 
-    pub fn finish(self) -> Result<Transaction, Error> {
+    pub fn finish(self) -> Result<TransactionPayload, Error> {
         // TODO
         // inputs.sort();
         // outputs.sort();
@@ -224,7 +224,7 @@ impl TransactionBuilder {
         //     }
         // }
 
-        Ok(Transaction {
+        Ok(TransactionPayload {
             essence,
             unlock_blocks: self.unlock_blocks.into_boxed_slice(),
         })

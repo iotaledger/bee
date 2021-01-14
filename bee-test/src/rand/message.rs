@@ -8,7 +8,7 @@ use crate::rand::{
 };
 
 use bee_message::{
-    payload::{indexation::Indexation, Payload},
+    payload::{indexation::IndexationPayload, Payload},
     Message, MessageBuilder, MessageId,
 };
 use bee_pow::providers::{Constant, ConstantBuilder, ProviderBuilder};
@@ -17,8 +17,8 @@ pub fn rand_message_id() -> MessageId {
     MessageId::new(rand_bytes_32())
 }
 
-pub fn rand_indexation() -> Indexation {
-    Indexation::new(rand_string(32), &rand_bytes(64)).unwrap()
+pub fn rand_indexation() -> IndexationPayload {
+    IndexationPayload::new(rand_string(32), &rand_bytes(64)).unwrap()
 }
 
 pub fn rand_payload() -> Payload {

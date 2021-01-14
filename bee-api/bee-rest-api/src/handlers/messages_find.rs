@@ -20,7 +20,7 @@ pub(crate) async fn messages_find<B: StorageBackend>(
     index: String,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    let hashed_index = Indexation::new(index.clone(), &[]).unwrap().hash();
+    let hashed_index = IndexationPayload::new(index.clone(), &[]).unwrap().hash();
 
     let mut fetched = match Fetch::<HashedIndex, Vec<MessageId>>::fetch(storage.deref(), &hashed_index)
         .await

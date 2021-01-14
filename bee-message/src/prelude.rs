@@ -3,16 +3,16 @@
 
 pub use crate::{
     payload::{
-        indexation::{HashedIndex, Indexation, HASHED_INDEX_LENGTH},
+        indexation::{HashedIndex, IndexationPayload, HASHED_INDEX_LENGTH},
         milestone::{
-            Milestone, MilestoneEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH,
+            MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH,
             MILESTONE_SIGNATURE_LENGTH,
         },
         transaction::{
             Address, Ed25519Address, Ed25519Signature, Input, Output, OutputId, ReferenceUnlock,
-            SignatureLockedSingleOutput, SignatureUnlock, Transaction, TransactionBuilder, TransactionEssence,
-            TransactionEssenceBuilder, TransactionId, UTXOInput, UnlockBlock, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH,
-            TRANSACTION_ID_LENGTH,
+            SignatureLockedSingleOutput, SignatureUnlock, TransactionId, TransactionPayload, TransactionPayloadBuilder,
+            TransactionPayloadEssence, TransactionPayloadEssenceBuilder, UTXOInput, UnlockBlock,
+            ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH, TRANSACTION_ID_LENGTH,
         },
         Payload,
     },
