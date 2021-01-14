@@ -50,11 +50,11 @@ impl Packable for TransactionEssence {
     fn packed_len(&self) -> usize {
         0u8.packed_len()
             + 0u16.packed_len()
-            + self.inputs.iter().map(|input| input.packed_len()).sum::<usize>()
+            + self.inputs.iter().map(Packable::packed_len).sum::<usize>()
             + 0u16.packed_len()
-            + self.outputs.iter().map(|output| output.packed_len()).sum::<usize>()
+            + self.outputs.iter().map(Packable::packed_len).sum::<usize>()
             + 0u32.packed_len()
-            + self.payload.iter().map(|payload| payload.packed_len()).sum::<usize>()
+            + self.payload.iter().map(Packable::packed_len).sum::<usize>()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {

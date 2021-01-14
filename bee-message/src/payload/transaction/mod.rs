@@ -80,7 +80,7 @@ impl Packable for Transaction {
     fn packed_len(&self) -> usize {
         self.essence.packed_len()
             + 0u16.packed_len()
-            + self.unlock_blocks.iter().map(|block| block.packed_len()).sum::<usize>()
+            + self.unlock_blocks.iter().map(Packable::packed_len).sum::<usize>()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {

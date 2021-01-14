@@ -41,7 +41,7 @@ impl Packable for SignatureLockedDustAllowanceOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.address.packed_len() + u64::from(self.amount).packed_len()
+        self.address.packed_len() + self.amount.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
