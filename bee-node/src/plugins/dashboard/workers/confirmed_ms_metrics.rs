@@ -30,6 +30,7 @@ where
         let mut prev_new_message_count = 0;
 
         while let Some(event) = receiver.next().await {
+            let event: MilestoneConfirmed = event;
 
             if prev_event.is_some() {
 
