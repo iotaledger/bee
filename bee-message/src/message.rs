@@ -69,11 +69,7 @@ impl Packable for Message {
             + self.parent1.packed_len()
             + self.parent2.packed_len()
             + 0u32.packed_len()
-            + if let Some(ref payload) = self.payload {
-                payload.packed_len()
-            } else {
-                0
-            }
+            + self.payload.as_ref().map_or(0, Packable::packed_len)
             + 0u64.packed_len()
     }
 
