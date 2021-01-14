@@ -26,8 +26,6 @@ use tokio::task::JoinHandle;
 
 use std::{fmt, sync::Arc};
 
-const MSG_BUFFER_SIZE: usize = 10000;
-
 pub(crate) async fn upgrade_connection(
     peer_id: PeerId,
     peer_info: PeerInfo,
@@ -94,8 +92,11 @@ fn spawn_substream_io_task(
     mut internal_event_sender: InternalEventSender,
 ) -> JoinHandle<()> {
     tokio::spawn(async move {
+        // Allocate enough memory to store incoming messages from that peer. Messages have a size limit of 32kb.
+        const MESSAGE_BUFFER_SIZE: usize = 32768;
+
         let mut fused_message_receiver = message_receiver.fuse();
-        let mut buffer = vec![0u8; MSG_BUFFER_SIZE];
+        let mut message_buffer = vec![0u8; MESSAGE_BUFFER_SIZE];
 
         loop {
             select! {
@@ -112,11 +113,11 @@ fn spawn_substream_io_task(
                     }
 
                 }
-                recv_result = recv_message(&mut substream, &mut buffer).fuse() => {
+                recv_result = recv_message(&mut substream, &mut message_buffer).fuse() => {
                     trace!("Incoming substream event.");
                     match recv_result {
                         Ok(num_read) => {
-                            if let Err(e) = process_read(peer_id.clone(), num_read, &mut internal_event_sender, &buffer).await
+                            if let Err(e) = process_read(peer_id.clone(), num_read, &mut internal_event_sender, &message_buffer).await
                             {
                                 error!("Failed to read message: Cause: {:?}", e);
                             }
