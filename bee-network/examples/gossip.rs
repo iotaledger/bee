@@ -27,6 +27,7 @@ use bee_runtime::{
     shutdown_stream::ShutdownStream,
     worker::Worker,
 };
+use bee_test::backend::DummyBackend;
 
 use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;

@@ -3,12 +3,13 @@
 
 use bee_storage::backend::StorageBackend;
 
-use std::{convert::Infallible, error::Error};
+use std::convert::Infallible;
 
 use async_trait::async_trait;
 use serde::Deserialize;
 
 pub struct DummyBackend;
+
 #[derive(Clone)]
 pub struct DummyConfig;
 
