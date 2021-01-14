@@ -289,13 +289,13 @@ async fn process_event(event: Event, message: &str, network: &NetworkController,
 
             info!("[EXAMPLE] Sending message: \"{}\"", message);
             if let Err(e) = network.send(SendMessage {
-                message: Utf8Message::new(message).as_bytes(),
+                message: message.as_bytes().to_vec(),
                 to: id.clone(),
             }) {
                 warn!("Sending message to peer failed. Error: {:?}", e);
             }
 
-            spam_endpoint(network.clone(), id);
+            simulate_gossip(network.clone(), id);
         }
 
         Event::PeerDisconnected { id } => {
@@ -305,7 +305,7 @@ async fn process_event(event: Event, message: &str, network: &NetworkController,
         Event::MessageReceived { message, from } => {
             info!("[EXAMPLE] Received message from {} (length: {}).", from, message.len());
 
-            let message = Utf8Message::from_bytes(&message);
+            let message = String::from_utf8(message).unwrap();
             info!("[EXAMPLE] Received message \"{}\"", message);
         }
 
@@ -325,17 +325,17 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
     receiver
 }
 
-fn spam_endpoint(network: NetworkController, peer_id: PeerId) {
-    info!("[EXAMPLE] Now sending spam messages to {}", peer_id);
+fn simulate_gossip(network: NetworkController, peer_id: PeerId) {
+    info!("[EXAMPLE] Now sending gossip to {}", peer_id);
 
     tokio::spawn(async move {
         for i in 0u64.. {
             tokio::time::delay_for(Duration::from_secs(5)).await;
 
-            let message = Utf8Message::new(&i.to_string());
+            let message = i.to_string();
 
             if let Err(e) = network.send(SendMessage {
-                message: message.as_bytes(),
+                message: message.as_bytes().to_vec(),
                 to: peer_id.clone(),
             }) {
                 warn!("Sending message to peer failed. Error: {:?}", e);

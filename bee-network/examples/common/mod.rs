@@ -4,7 +4,5 @@
 pub mod logger;
 
 mod backend;
-mod utf8msg;
 
 pub use backend::*;
-pub use utf8msg::*;
