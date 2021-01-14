@@ -177,9 +177,7 @@ async fn process_read(
     internal_event_sender: &mut InternalEventSender,
     buffer: &[u8],
 ) -> Result<(), Error> {
-    // Allocate a properly sized message buffer
-    let mut message = vec![0u8; num_read];
-    message.copy_from_slice(&buffer[0..num_read]);
+    let message = buffer[..num_read].to_vec();
 
     internal_event_sender
         .send(InternalEvent::MessageReceived { message, from: peer_id })
