@@ -93,6 +93,12 @@ impl LoggerConfigBuilder {
         self
     }
 
+    /// Adds an output builder to the logger builder.
+    pub fn with_output(mut self, output: LoggerOutputConfigBuilder) -> Self {
+        self.outputs.get_or_insert_with(|| Vec::new()).push(output);
+        self
+    }
+
     /// Sets the level of an output of a logger.
     pub fn level<'a>(&mut self, name: impl Into<Cow<'a, str>>, level: LevelFilter) {
         let name = name.into();
