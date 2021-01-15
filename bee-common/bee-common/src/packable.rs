@@ -160,5 +160,7 @@ impl_packable_for_num!(i32);
 impl_packable_for_num!(u32);
 impl_packable_for_num!(i64);
 impl_packable_for_num!(u64);
+#[cfg(has_i128)]
 impl_packable_for_num!(i128);
+#[cfg(has_u128)]
 impl_packable_for_num!(u128);

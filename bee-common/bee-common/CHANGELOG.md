@@ -9,22 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-LoggerConfigBuilder::with_output
-
 ### Changed
 
 ### Deprecated
 
 ### Removed
 
-- Removed `event::Bus` in favour of its inclusion in `bee-runtime`
-- Removed `shutdown_stream::ShutdownStream` in favour of its inclusion in `bee-runtime`
-- Removed `shutdown::Shutdown`
-- Removed `worker::Worker`
-
 ### Fixed
 
 ### Security -->
+
+## 0.3.0-alpha - 2021-01-15
+
+### Added
+
+- `LoggerConfigBuilder::with_output`;
+
+### Changed
+
+- Only implement `Packable` for `u128`/`i128` if the platform has the types;
+
+### Removed
+
+- `event::Bus` in favour of its inclusion in `bee-runtime`;
+- `shutdown_stream::ShutdownStream` in favour of its inclusion in `bee-runtime`;
+- `worker::Worker` in favour of its inclusion in `bee-runtime`;
+- `shutdown::Shutdown`;
 
 ## 0.2.0-alpha - 2021-01-04
 
