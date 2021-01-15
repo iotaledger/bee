@@ -40,7 +40,7 @@ where
     let message = tangle.get(&message_id).await.ok_or(Error::MilestoneMessageNotFound)?;
 
     let milestone = match message.payload() {
-        Some(Payload::Milestone(milestone)) => milestone,
+        Some(Payload::Milestone(milestone)) => milestone.clone(),
         _ => return Err(Error::NoMilestonePayload),
     };
 
@@ -52,6 +52,8 @@ where
         MilestoneIndex(milestone.essence().index()),
         milestone.essence().timestamp(),
     );
+
+    drop(message);
 
     if let Err(e) = visit_dfs::<N>(tangle, storage, message_id, &mut metadata).await {
         return Err(e);
