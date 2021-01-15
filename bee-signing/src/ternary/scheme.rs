@@ -73,7 +73,7 @@ pub trait PrivateKeyGenerator {
 }
 
 /// A ternary private key.
-pub trait PrivateKey: Zeroize + Drop {
+pub trait PrivateKey: Zeroize {
     /// Matching public key type.
     type PublicKey: PublicKey;
     /// Generated signatures type.
