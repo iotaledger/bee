@@ -65,7 +65,7 @@ where
                 trace!("Received event {:?}.", event);
 
                 match event {
-                    Event::PeerAdded { id } => {
+                    Event::PeerAdded { id, info: _ } => {
                         info!("Added peer: {}", id.short());
                     }
                     Event::PeerRemoved { id } => {

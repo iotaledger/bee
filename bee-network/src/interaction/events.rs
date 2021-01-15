@@ -27,6 +27,8 @@ pub enum Event {
     PeerAdded {
         /// The peer's id.
         id: PeerId,
+        /// The peer's info.
+        info: PeerInfo,
     },
     /// A peer was removed.
     PeerRemoved {

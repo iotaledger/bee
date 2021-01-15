@@ -160,7 +160,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                     } else {
                         let peer_info = PeerInfo {
                             address: peer_address,
-                            alias: None,
+                            alias: peer_id.short(),
                             relation: PeerRelation::Unknown,
                         };
 
@@ -180,7 +180,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                         }
                     };
 
-                    log_inbound_connection_success(&peer_id, &peer_info);
+                    log_inbound_connection_success(&peer_info);
 
                     if let Err(e) = super::upgrade_connection(
                         peer_id,
@@ -236,10 +236,6 @@ impl<N: Node> Worker<N> for ConnectionManager {
 }
 
 #[inline]
-fn log_inbound_connection_success(peer_id: &PeerId, peer_info: &PeerInfo) {
-    if let Some(alias) = peer_info.alias.as_ref() {
-        info!("Established (inbound) connection with {}:{}.", alias, peer_id.short(),)
-    } else {
-        info!("Established (inbound) connection with {}.", peer_id.short(),);
-    }
+fn log_inbound_connection_success(peer_info: &PeerInfo) {
+    info!("Established (inbound) connection with {}.", peer_info.alias);
 }

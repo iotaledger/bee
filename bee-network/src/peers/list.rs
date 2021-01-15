@@ -181,7 +181,7 @@ impl PeerList {
 #[derive(Clone, Debug)]
 pub struct PeerInfo {
     pub address: Multiaddr,
-    pub alias: Option<String>,
+    pub alias: String,
     pub relation: PeerRelation,
 }
 
