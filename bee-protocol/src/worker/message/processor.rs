@@ -9,16 +9,15 @@ use crate::{
     peer::PeerManager,
     storage::StorageBackend,
     worker::{
-        BroadcasterWorker, BroadcasterWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent,
-        MessageRequesterWorker, MessageSubmitterError, MetricsWorker, MilestonePayloadWorker,
-        MilestonePayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent, RequestedMessages,
-        TangleWorker, TransactionPayloadWorker, TransactionPayloadWorkerEvent,
+        BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker, MessageSubmitterError, MetricsWorker,
+        PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,
+        RequestedMessages, TangleWorker,
     },
     ProtocolMetrics,
 };
 
 use bee_common::packable::Packable;
-use bee_message::{payload::Payload, Message, MessageId};
+use bee_message::{Message, MessageId};
 use bee_network::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::MessageMetadata, MsTangle};
@@ -57,9 +56,7 @@ where
             TypeId::of::<MessageRequesterWorker>(),
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
-            TypeId::of::<TransactionPayloadWorker>(),
-            TypeId::of::<MilestonePayloadWorker>(),
-            TypeId::of::<IndexationPayloadWorker>(),
+            TypeId::of::<PayloadWorker>(),
         ]
         .leak()
     }
@@ -67,12 +64,10 @@ where
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
-        let transaction_payload_worker = node.worker::<TransactionPayloadWorker>().unwrap().tx.clone();
-        let milestone_payload_worker = node.worker::<MilestonePayloadWorker>().unwrap().tx.clone();
-        let indexation_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();
         let propagator = node.worker::<PropagatorWorker>().unwrap().tx.clone();
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
+        let payload_worker = node.worker::<PayloadWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
@@ -194,37 +189,8 @@ where
                         }
                     };
 
-                    match message.payload() {
-                        Some(Payload::Transaction(_)) => {
-                            if let Err(e) = transaction_payload_worker.send(TransactionPayloadWorkerEvent(message_id)) {
-                                warn!(
-                                    "Sending message id {} to transaction payload worker failed: {:?}.",
-                                    message_id, e
-                                );
-                            }
-                        }
-                        Some(Payload::Milestone(_)) => {
-                            if let Err(e) = milestone_payload_worker.send(MilestonePayloadWorkerEvent(message_id)) {
-                                warn!(
-                                    "Sending message id {} to milestone payload worker failed: {:?}.",
-                                    message_id, e
-                                );
-                            }
-                        }
-                        Some(Payload::Indexation(_)) => {
-                            if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
-                                warn!(
-                                    "Sending message id {} to indexation payload worker failed: {:?}.",
-                                    message_id, e
-                                );
-                            }
-                        }
-                        Some(_) => {
-                            // TODO
-                        }
-                        None => {
-                            // TODO
-                        }
+                    if let Err(e) = payload_worker.send(PayloadWorkerEvent(message_id)) {
+                        warn!("Sending message id {} to payload worker failed: {:?}.", message_id, e);
                     }
                 } else {
                     metrics.known_messages_inc();

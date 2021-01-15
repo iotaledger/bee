@@ -28,8 +28,9 @@ use crate::{
     worker::{
         BroadcasterWorker, HasherWorker, HeartbeaterWorker, IndexationPayloadWorker, MessageRequesterWorker,
         MessageResponderWorker, MilestoneConeUpdaterWorker, MilestonePayloadWorker, MilestoneRequesterWorker,
-        MilestoneResponderWorker, MilestoneSolidifierWorker, MpsWorker, PeerManagerResWorker, PeerManagerWorker,
-        ProcessorWorker, PropagatorWorker, StatusWorker, TipPoolCleanerWorker, TransactionPayloadWorker,
+        MilestoneResponderWorker, MilestoneSolidifierWorker, MpsWorker, PayloadWorker, PeerManagerResWorker,
+        PeerManagerWorker, ProcessorWorker, PropagatorWorker, StatusWorker, TipPoolCleanerWorker,
+        TransactionPayloadWorker,
     },
 };
 
@@ -56,9 +57,11 @@ where
         .with_worker::<MilestoneResponderWorker>()
         .with_worker::<MessageRequesterWorker>()
         .with_worker::<MilestoneRequesterWorker>()
+        .with_worker::<PayloadWorker>()
         .with_worker::<TransactionPayloadWorker>()
         .with_worker_cfg::<MilestonePayloadWorker>(config.clone())
         .with_worker::<IndexationPayloadWorker>()
+        .with_worker::<PayloadWorker>()
         .with_worker::<BroadcasterWorker>()
         .with_worker::<PropagatorWorker>()
         .with_worker::<MpsWorker>()
