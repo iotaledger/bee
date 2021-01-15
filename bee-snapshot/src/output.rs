@@ -44,10 +44,7 @@ impl Packable for Output {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self {
             message_id: MessageId::unpack(reader)?,
             output_id: OutputId::unpack(reader)?,

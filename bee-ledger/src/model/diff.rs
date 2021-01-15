@@ -49,10 +49,7 @@ impl Packable for Diff {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let spent_outputs_len = u32::unpack(reader)? as usize;
         let mut spent_outputs = Vec::with_capacity(spent_outputs_len);
         for _ in 0..spent_outputs_len {

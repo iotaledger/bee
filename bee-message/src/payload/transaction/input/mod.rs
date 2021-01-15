@@ -45,10 +45,7 @@ impl Packable for Input {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
             UTXO_INPUT_TYPE => Self::UTXO(UTXOInput::unpack(reader)?),
             _ => return Err(Self::Error::InvalidInputType),

@@ -111,10 +111,7 @@ impl Packable for Snapshot {
     }
 
     // TODO stream ?
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let header = SnapshotHeader::unpack(reader)?;
 
         let sep_count = u64::unpack(reader)? as usize;

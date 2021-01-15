@@ -74,10 +74,7 @@ impl Packable for Payload {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u32::unpack(reader)? {
             TRANSACTION_PAYLOAD_TYPE => Self::Transaction(Box::new(TransactionPayload::unpack(reader)?)),
             MILESTONE_PAYLOAD_TYPE => Self::Milestone(Box::new(MilestonePayload::unpack(reader)?)),

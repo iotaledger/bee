@@ -54,10 +54,7 @@ impl Packable for MilestonePayload {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let essence = MilestonePayloadEssence::unpack(reader)?;
 
         let signatures_len = u8::unpack(reader)? as usize;
@@ -158,10 +155,7 @@ impl Packable for MilestonePayloadEssence {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let index = u32::unpack(reader)?;
 
         let timestamp = u64::unpack(reader)?;

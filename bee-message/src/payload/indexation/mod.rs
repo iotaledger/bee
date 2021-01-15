@@ -83,10 +83,7 @@ impl Packable for IndexationPayload {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let index_len = u16::unpack(reader)? as usize;
 
         if !INDEX_LENGTH_RANGE.contains(&index_len) {

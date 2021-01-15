@@ -45,10 +45,7 @@ impl Packable for SolidEntryPoint {
         self.0.pack(writer)
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self(MessageId::unpack(reader)?))
     }
 }

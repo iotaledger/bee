@@ -78,10 +78,7 @@ impl Packable for Flags {
         self.bits().pack(writer)
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         // Flags are only expected to be unpacked from a trusted storage source.
         Ok(unsafe { Self::from_bits_unchecked(u8::unpack(reader)?) })
     }

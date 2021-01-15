@@ -60,10 +60,7 @@ impl Packable for UnlockBlock {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
             SIGNATURE_UNLOCK_TYPE => Self::Signature(SignatureUnlock::unpack(reader)?),
             REFERENCE_UNLOCK_TYPE => Self::Reference(ReferenceUnlock::unpack(reader)?),

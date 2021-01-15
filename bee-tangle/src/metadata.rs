@@ -167,10 +167,7 @@ impl Packable for MessageMetadata {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let flags = Flags::unpack(reader)?;
         let milestone_index = MilestoneIndex::unpack(reader)?;
         let arrival_timestamp = u64::unpack(reader)?;

@@ -50,10 +50,7 @@ impl Packable for Milestone {
         self.timestamp.pack(writer).map_err(Error::IO)
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self {
             message_id: MessageId::unpack(reader).map_err(Error::MessageId)?,
             timestamp: u64::unpack(reader)?,
@@ -112,10 +109,7 @@ impl Packable for MilestoneIndex {
         self.0.pack(writer)
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self(u32::unpack(reader)?))
     }
 }

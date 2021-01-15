@@ -35,10 +35,7 @@ impl Packable for Spent {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self {
             output: Output::unpack(reader)?,
             transaction_id: TransactionId::unpack(reader)?,

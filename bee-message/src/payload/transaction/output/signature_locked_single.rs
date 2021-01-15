@@ -50,10 +50,7 @@ impl Packable for SignatureLockedSingleOutput {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Self::new(Address::unpack(reader)?, u64::unpack(reader)?)
     }
 }

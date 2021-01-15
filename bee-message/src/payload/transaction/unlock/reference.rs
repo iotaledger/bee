@@ -49,10 +49,7 @@ impl Packable for ReferenceUnlock {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self::new(u16::unpack(reader)?)?)
     }
 }

@@ -41,10 +41,7 @@ impl Packable for MilestoneDiff {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let created_count = u64::unpack(reader)? as usize;
         let mut created = Vec::with_capacity(created_count);
         for _ in 0..created_count {

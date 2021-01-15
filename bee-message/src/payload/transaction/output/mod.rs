@@ -67,10 +67,7 @@ impl Packable for Output {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
             SIGNATURE_LOCKED_SINGLE_TYPE => Self::SignatureLockedSingle(SignatureLockedSingleOutput::unpack(reader)?),
             SIGNATURE_LOCKED_DUST_ALLOWANCE_TYPE => {

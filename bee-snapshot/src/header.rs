@@ -62,10 +62,7 @@ impl Packable for SnapshotHeader {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let version = u8::unpack(reader)?;
 
         if version != SNAPSHOT_VERSION {

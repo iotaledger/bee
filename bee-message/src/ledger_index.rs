@@ -43,10 +43,7 @@ impl Packable for LedgerIndex {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self(MilestoneIndex::unpack(reader)?))
     }
 }

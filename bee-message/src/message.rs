@@ -91,10 +91,7 @@ impl Packable for Message {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
-    where
-        Self: Sized,
-    {
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let network_id = u64::unpack(reader)?;
 
         let parent1 = MessageId::unpack(reader)?;
