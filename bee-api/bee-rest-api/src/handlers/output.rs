@@ -13,7 +13,7 @@ use bee_message::prelude::*;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use warp::{reject, Rejection, Reply};
 
 use std::{convert::TryInto, ops::Deref};
@@ -41,7 +41,7 @@ pub(crate) async fn output<B: StorageBackend>(
 }
 
 /// Response of GET /api/v1/outputs/{output_id}
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OutputResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,

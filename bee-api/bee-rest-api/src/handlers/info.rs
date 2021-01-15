@@ -12,7 +12,7 @@ use bee_protocol::config::ProtocolConfig;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use warp::Reply;
 
 use std::convert::Infallible;
@@ -43,7 +43,7 @@ pub(crate) async fn info<B: StorageBackend>(
 }
 
 /// Response of GET /api/v1/info
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InfoResponse {
     pub name: String,
     pub version: String,
