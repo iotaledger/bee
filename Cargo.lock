@@ -387,7 +387,6 @@ dependencies = [
  "bech32",
  "bee-common 0.2.0-alpha",
  "bee-pow",
- "bee-ternary",
  "bee-test",
  "blake2",
  "bytemuck",
@@ -598,7 +597,6 @@ dependencies = [
  "bee-snapshot",
  "bee-storage",
  "bee-tangle",
- "bee-ternary",
  "bee-test",
  "futures 0.3.9",
  "num_cpus",
@@ -639,7 +637,6 @@ source = "git+https://github.com/iotaledger/bee.git?branch=dev#e7fa8ed3fda3beed2
 dependencies = [
  "autocfg",
  "num-traits",
- "serde",
 ]
 
 [[package]]
