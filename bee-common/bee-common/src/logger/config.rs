@@ -95,7 +95,7 @@ impl LoggerConfigBuilder {
 
     /// Adds an output builder to the logger builder.
     pub fn with_output(mut self, output: LoggerOutputConfigBuilder) -> Self {
-        self.outputs.get_or_insert_with(|| Vec::new()).push(output);
+        self.outputs.get_or_insert_with(Vec::new).push(output);
         self
     }
 
