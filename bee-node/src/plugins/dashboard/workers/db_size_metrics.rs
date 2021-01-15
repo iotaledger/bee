@@ -11,7 +11,7 @@ use tokio::time::interval;
 
 use std::time::Duration;
 
-const DB_SIZE_METRICS_WORKER_INTERVAL_SEC: u64 = 1;
+const DB_SIZE_METRICS_WORKER_INTERVAL_SEC: u64 = 60;
 
 pub(crate) fn db_size_metrics_worker<N>(node: &mut N)
 where
@@ -31,13 +31,9 @@ where
 
         use bee_storage::backend::StorageBackend;
         while ticker.next().await.is_some() {
-            // TODO: replace with storage access once available
-            // Storage should be
-            let size = storage.size().await.unwrap().unwrap() as u64;
             bus.dispatch(DatabaseSizeMetrics {
-                total: size,
-                // replace with appropriate storage function
-                ts: size,
+                total: storage.size().await.unwrap().unwrap() as u64,
+                ts: 0, // replace with appropriate storage function
             });
         }
 
