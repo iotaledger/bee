@@ -65,6 +65,12 @@ impl Packable for Milestone {
 #[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, Deserialize)]
 pub struct MilestoneIndex(pub u32);
 
+impl std::fmt::Display for MilestoneIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl Deref for MilestoneIndex {
     type Target = u32;
 
