@@ -144,7 +144,7 @@ where
     ///
     /// This function also takes care of cleaning the buffers of the struct and resetting the
     /// batched CurlP hasher so it can be called at any time.
-    pub fn hash_batched<'a>(&'a mut self) -> impl Iterator<Item = TritBuf> + 'a {
+    pub fn hash_batched(&mut self) -> impl Iterator<Item = TritBuf> + '_ {
         let total = self.trit_inputs.len();
         // Reset batched CurlP hasher.
         self.bct_curlp.reset();
@@ -169,7 +169,7 @@ where
     /// In particular this function does not use the `bct_inputs` and `bct_hashes` buffers, takes
     /// care of cleaning the `trit_inputs` buffer and resets the regular CurlP hasher so it can be
     /// called at any time.
-    pub fn hash_unbatched<'a>(&'a mut self) -> impl Iterator<Item = TritBuf> + 'a {
+    pub fn hash_unbatched(&mut self) -> impl Iterator<Item = TritBuf> + '_ {
         self.curlp.reset();
         UnbatchedHashes {
             curl: &mut self.curlp,
