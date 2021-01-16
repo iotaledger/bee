@@ -61,7 +61,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, rx);
 
             while let Some(MessageResponderWorkerEvent { peer_id, request }) = receiver.next().await {
-                if let Some(message) = tangle.get(&request.message_id.into()).await {
+                if let Some(message) = tangle.get(&request.message_id.into()).await.map(|m| (*m).clone()) {
                     Sender::<MessagePacket>::send(
                         &network,
                         &peer_manager,

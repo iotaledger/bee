@@ -21,7 +21,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
     if !tangle.is_synced() {
         return Err(reject::custom(ServiceUnavailable("node is not synced".to_string())));
     }
-    match tangle.get(&message_id).await {
+    match tangle.get(&message_id).await.map(|m| (*m).clone()) {
         Some(message) => {
             // existing message <=> existing metadata, therefore unwrap() is safe
             let metadata = tangle.get_metadata(&message_id).await.unwrap();
