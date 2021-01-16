@@ -16,6 +16,7 @@ use log::debug;
 use serde::Serialize;
 use std::time::Instant;
 use tokio::time::interval;
+use tokio_stream::wrappers::IntervalStream;
 
 use std::time::Duration;
 
@@ -42,7 +43,7 @@ where
 
         let mut ticker = ShutdownStream::new(
             shutdown,
-            interval(Duration::from_secs(NODE_STATUS_METRICS_WORKER_INTERVAL_SEC)),
+            IntervalStream::new(interval(Duration::from_secs(NODE_STATUS_METRICS_WORKER_INTERVAL_SEC))),
         );
         let uptime = Instant::now();
         let version = if BEE_GIT_COMMIT.is_empty() {

@@ -44,6 +44,7 @@ use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::{debug, error, info};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::{http::header::HeaderValue, path::FullPath, reply::Response, ws::Message, Filter, Rejection, Reply};
 use warp_reverse_proxy::reverse_proxy_filter;
 
@@ -70,7 +71,7 @@ where
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
         debug!("Ws {} topic handler running.", topic);
 
-        let mut receiver = ShutdownStream::new(shutdown, rx);
+        let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
         while let Some(event) = receiver.next().await {
             broadcast(f(event), &users).await;

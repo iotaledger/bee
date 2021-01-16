@@ -25,7 +25,10 @@ impl<N: Node> Worker<N> for VersionChecker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(Duration::from_secs(CHECK_INTERVAL_SEC))));
+            let mut ticker = ShutdownStream::new(
+                shutdown,
+                IntervalStream::new(interval(Duration::from_secs(CHECK_INTERVAL_SEC))),
+            );
 
             while ticker.next().await.is_some() {
                 // TODO
