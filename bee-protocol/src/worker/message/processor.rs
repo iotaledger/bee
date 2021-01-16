@@ -131,7 +131,9 @@ where
                 let parent2 = *message.parent2();
 
                 // store message
-                if tangle.insert(message, message_id, metadata).await.is_none() {
+                let inserted = tangle.insert(message, message_id, metadata).await.is_some();
+
+                if !inserted {
                     metrics.known_messages_inc();
                     if let Some(ref peer_id) = from {
                         peer_manager
