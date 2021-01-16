@@ -42,50 +42,55 @@ async fn propagate<B: StorageBackend>(
             continue;
         }
 
-        if let Some(message) = tangle.get(&message_id).await {
-            if tangle.is_solid_message(message.parent1()).await && tangle.is_solid_message(message.parent2()).await {
-                // get OTRSI/YTRSI from parents
-                let parent1_otsri = tangle.otrsi(message.parent1()).await;
-                let parent2_otsri = tangle.otrsi(message.parent2()).await;
-                let parent1_ytrsi = tangle.ytrsi(message.parent1()).await;
-                let parent2_ytrsi = tangle.ytrsi(message.parent2()).await;
-
-                // get best OTRSI/YTRSI from parents
-                // unwrap() is safe because parents are solid which implies that OTRSI/YTRSI values are
-                // available.
-                let best_otrsi = max(parent1_otsri.unwrap(), parent2_otsri.unwrap());
-                let best_ytrsi = min(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
-
-                tangle
-                    .update_metadata(&message_id, |metadata| {
-                        // OTRSI/YTRSI values need to be set before the solid flag, to ensure that the
-                        // MilestoneConeUpdater is aware of all values.
-                        metadata.set_otrsi(best_otrsi);
-                        metadata.set_ytrsi(best_ytrsi);
-                        metadata.solidify();
-
-                        if metadata.flags().is_milestone() {
-                            if let Err(e) =
-                                milestone_solidifier.send(MilestoneSolidifierWorkerEvent(metadata.milestone_index()))
-                            {
-                                error!("Sending solidification event failed: {}.", e);
-                            }
-                        }
-                    })
-                    .await;
-
-                if let Some(msg_children) = tangle.get_children(&message_id).await {
-                    for child in msg_children {
-                        children.push(child);
-                    }
-                }
-
-                bus.dispatch(MessageSolidified(*message_id));
-
-                tangle
-                    .insert_tip(*message_id, *message.parent1(), *message.parent2())
-                    .await;
+        // TODO Copying parents to avoid double locking, will be refactored.
+        if let Some((parent1, parent2)) = tangle
+            .get(&message_id)
+            .await
+            .map(|message| (*message.parent1(), *message.parent2()))
+        {
+            if !tangle.is_solid_message(&parent1).await || !tangle.is_solid_message(&parent2).await {
+                continue;
             }
+
+            // get OTRSI/YTRSI from parents
+            let parent1_otsri = tangle.otrsi(&parent1).await;
+            let parent2_otsri = tangle.otrsi(&parent2).await;
+            let parent1_ytrsi = tangle.ytrsi(&parent1).await;
+            let parent2_ytrsi = tangle.ytrsi(&parent2).await;
+
+            // get best OTRSI/YTRSI from parents
+            // unwrap() is safe because parents are solid which implies that OTRSI/YTRSI values are
+            // available.
+            let best_otrsi = max(parent1_otsri.unwrap(), parent2_otsri.unwrap());
+            let best_ytrsi = min(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
+
+            tangle
+                .update_metadata(&message_id, |metadata| {
+                    // OTRSI/YTRSI values need to be set before the solid flag, to ensure that the
+                    // MilestoneConeUpdater is aware of all values.
+                    metadata.set_otrsi(best_otrsi);
+                    metadata.set_ytrsi(best_ytrsi);
+                    metadata.solidify();
+
+                    if metadata.flags().is_milestone() {
+                        if let Err(e) =
+                            milestone_solidifier.send(MilestoneSolidifierWorkerEvent(metadata.milestone_index()))
+                        {
+                            error!("Sending solidification event failed: {}.", e);
+                        }
+                    }
+                })
+                .await;
+
+            if let Some(msg_children) = tangle.get_children(&message_id).await {
+                for child in msg_children {
+                    children.push(child);
+                }
+            }
+
+            bus.dispatch(MessageSolidified(*message_id));
+
+            tangle.insert_tip(*message_id, parent1, parent2).await;
         }
     }
 }
