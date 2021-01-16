@@ -71,16 +71,25 @@ async fn propagate<B: StorageBackend>(
                     metadata.set_otrsi(best_otrsi);
                     metadata.set_ytrsi(best_ytrsi);
                     metadata.solidify();
-
-                    if metadata.flags().is_milestone() {
-                        if let Err(e) =
-                            milestone_solidifier.send(MilestoneSolidifierWorkerEvent(metadata.milestone_index()))
-                        {
-                            error!("Sending solidification event failed: {}.", e);
-                        }
-                    }
                 })
                 .await;
+
+            let index = match tangle.get_metadata(&message_id).await {
+                Some(meta) => {
+                    if meta.flags().is_milestone() {
+                        Some(meta.milestone_index())
+                    } else {
+                        None
+                    }
+                }
+                None => None,
+            };
+
+            if let Some(index) = index {
+                if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
+                    error!("Sending solidification event failed: {}.", e);
+                }
+            }
 
             if let Some(msg_children) = tangle.get_children(&message_id).await {
                 for child in msg_children {
