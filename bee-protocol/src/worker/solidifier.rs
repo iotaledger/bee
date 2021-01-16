@@ -81,23 +81,9 @@ async fn light_solidification<B: StorageBackend>(
 ) {
     debug!("Light solidification of milestone {}.", *target_index);
 
-    if let Some(message) = tangle.get(&target_id).await {
-        helper::request_message(
-            tangle,
-            message_requester,
-            requested_messages,
-            *message.parent1(),
-            target_index,
-        )
-        .await;
-        helper::request_message(
-            tangle,
-            message_requester,
-            requested_messages,
-            *message.parent2(),
-            target_index,
-        )
-        .await;
+    if let Some((parent1, parent2)) = tangle.get(&target_id).await.map(|m| (*m.parent1(), *m.parent2())) {
+        helper::request_message(tangle, message_requester, requested_messages, parent1, target_index).await;
+        helper::request_message(tangle, message_requester, requested_messages, parent2, target_index).await;
     }
 }
 
