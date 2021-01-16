@@ -15,7 +15,7 @@ bee-common-derive = { version = "0.1.1-alpha", path = "../bee-common/bee-common-
 bee-crypto = { version = "0.2.0-alpha", path = "../bee-crypto" }
 bee-ternary = { version = "0.3.4-alpha", path = "../bee-ternary" }
 
-rand = "0.7"
+rand = "0.8"
 sha3 = "0.9"
 thiserror = "1.0"
 zeroize = "1.1"

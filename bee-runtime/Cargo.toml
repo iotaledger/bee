@@ -14,9 +14,9 @@ homepage = "https://www.iota.org"
 bee-storage = { version = "0.2.0-alpha", path = "../bee-storage/bee-storage" }
 
 async-trait = "0.1"
-dashmap = "3.11"
+dashmap = "4.0"
 futures = "0.3"
 log = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
-tokio = { version = "0.2", features = ["rt-core", "time", "macros"] }
+tokio = { version = "1.0", features = ["rt", "macros", "time"] }

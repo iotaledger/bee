@@ -7,7 +7,7 @@ use futures::{
     channel::{mpsc, oneshot},
     SinkExt, StreamExt,
 };
-use tokio::{spawn, time::delay_for};
+use tokio::{task::spawn, time::sleep};
 
 use std::time::Duration;
 
@@ -23,7 +23,7 @@ async fn no_shutdown() {
 
         while let Some(item) = shutdown_stream.next().await {
             acc += item;
-            delay_for(Duration::from_millis(5)).await;
+            sleep(Duration::from_millis(5)).await;
         }
 
         acc
@@ -31,10 +31,10 @@ async fn no_shutdown() {
 
     for i in 0..=100 {
         assert!(sender.send(i).await.is_ok());
-        delay_for(Duration::from_millis(5)).await;
+        sleep(Duration::from_millis(5)).await;
     }
 
-    delay_for(Duration::from_millis(5)).await;
+    sleep(Duration::from_millis(5)).await;
 
     sender.disconnect();
 
@@ -53,7 +53,7 @@ async fn early_shutdown() {
 
         while let Some(item) = shutdown_stream.next().await {
             acc += item;
-            delay_for(Duration::from_millis(1)).await;
+            sleep(Duration::from_millis(1)).await;
         }
 
         acc
@@ -82,7 +82,7 @@ async fn early_shutdown_split_from_fused() {
 
         while let Some(item) = shutdown_stream.next().await {
             acc += item;
-            delay_for(Duration::from_millis(1)).await;
+            sleep(Duration::from_millis(1)).await;
         }
 
         acc
