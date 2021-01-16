@@ -178,42 +178,40 @@ where
                     if meta.flags().is_milestone() {
                         continue;
                     }
-                    match validate::<N>(&tangle, &key_manager, message_id).await {
-                        Ok((index, milestone)) => {
-                            tangle.add_milestone(index, milestone.clone()).await;
-                            if index > tangle.get_latest_milestone_index() {
-                                info!("New milestone {} {}.", *index, milestone.message_id());
-                                tangle.update_latest_milestone_index(index);
+                }
+                match validate::<N>(&tangle, &key_manager, message_id).await {
+                    Ok((index, milestone)) => {
+                        tangle.add_milestone(index, milestone.clone()).await;
+                        if index > tangle.get_latest_milestone_index() {
+                            info!("New milestone {} {}.", *index, milestone.message_id());
+                            tangle.update_latest_milestone_index(index);
 
-                                helper::broadcast_heartbeat(
-                                    &peer_manager,
-                                    &network,
-                                    &metrics,
-                                    tangle.get_latest_solid_milestone_index(),
-                                    tangle.get_pruning_index(),
-                                    index,
-                                );
+                            helper::broadcast_heartbeat(
+                                &peer_manager,
+                                &network,
+                                &metrics,
+                                tangle.get_latest_solid_milestone_index(),
+                                tangle.get_pruning_index(),
+                                index,
+                            );
 
-                                bus.dispatch(LatestMilestoneChanged {
-                                    index,
-                                    milestone: milestone.clone(),
-                                });
-                            }
-
-                            if requested_milestones.remove(&index).is_some() {
-                                tangle
-                                    .update_metadata(milestone.message_id(), |meta| {
-                                        meta.flags_mut().set_requested(true)
-                                    })
-                                    .await;
-                            }
-
-                            if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
-                                error!("Sending solidification event failed: {}.", e);
-                            }
+                            bus.dispatch(LatestMilestoneChanged {
+                                index,
+                                milestone: milestone.clone(),
+                            });
                         }
-                        Err(e) => debug!("Invalid milestone message: {:?}.", e),
+
+                        if requested_milestones.remove(&index).is_some() {
+                            tangle
+                                .update_metadata(milestone.message_id(), |meta| meta.flags_mut().set_requested(true))
+                                .await;
+                        }
+
+                        if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
+                            error!("Sending solidification event failed: {}.", e);
+                        }
                     }
+                    Err(e) => debug!("Invalid milestone message: {:?}.", e),
                 }
             }
 
