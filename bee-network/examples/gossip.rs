@@ -56,7 +56,7 @@ type WorkerStart<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output
 type WorkerStop<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> + Send;
 type ResourceRegister<N> = dyn for<'a> FnOnce(&'a mut N);
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() {
     let args = Args::from_args();
     let config = args.into_config();
@@ -343,7 +343,6 @@ fn simulate_gossip(network: NetworkController, peer_id: PeerId, shutdown_rx: one
     info!("[EXAMPLE] Simulating gossip with {}", peer_id);
 
     tokio::spawn(async move {
-        let mut i = 0;
         let mut shutdown_stream = ShutdownStream::new(shutdown_rx, tokio::time::interval(Duration::from_secs(5)));
 
         while let Some(_) = shutdown_stream.next().await {

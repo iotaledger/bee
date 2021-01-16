@@ -36,6 +36,7 @@ use futures::{
 use log::{info, trace, warn};
 use pin_project::pin_project;
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible, pin::Pin};
 
@@ -119,7 +120,12 @@ where
         let peer_manager = node.resource::<PeerManager>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            let mut receiver = BatchStream::new(config, metrics, peer_manager, ShutdownStream::new(shutdown, rx));
+            let mut receiver = BatchStream::new(
+                config,
+                metrics,
+                peer_manager,
+                ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx)),
+            );
 
             info!("Running.");
 
@@ -139,7 +145,7 @@ pub(crate) struct BatchStream {
     metrics: ResourceHandle<ProtocolMetrics>,
     peer_manager: ResourceHandle<PeerManager>,
     #[pin]
-    receiver: ShutdownStream<Fuse<mpsc::UnboundedReceiver<HasherWorkerEvent>>>,
+    receiver: ShutdownStream<Fuse<UnboundedReceiverStream<HasherWorkerEvent>>>,
     cache: HashCache,
     hasher: BatchHasher<T5B1Buf>,
     events: Vec<HasherWorkerEvent>,
@@ -151,7 +157,7 @@ impl BatchStream {
         cache_size: usize,
         metrics: ResourceHandle<ProtocolMetrics>,
         peer_manager: ResourceHandle<PeerManager>,
-        receiver: ShutdownStream<Fuse<mpsc::UnboundedReceiver<HasherWorkerEvent>>>,
+        receiver: ShutdownStream<Fuse<UnboundedReceiverStream<HasherWorkerEvent>>>,
     ) -> Self {
         assert!(BATCH_SIZE_THRESHOLD <= BATCH_SIZE);
         Self {

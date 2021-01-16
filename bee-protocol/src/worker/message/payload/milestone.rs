@@ -28,6 +28,7 @@ use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::{debug, error, info};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible};
 
@@ -128,7 +129,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(MilestonePayloadWorkerEvent(message_id)) = receiver.next().await {
                 if let Some(meta) = tangle.get_metadata(&message_id).await {

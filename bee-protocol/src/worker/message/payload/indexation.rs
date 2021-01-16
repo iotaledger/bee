@@ -13,8 +13,9 @@ use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use log::{debug, info, warn};
+use log::{info, warn};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible};
 
@@ -64,22 +65,22 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(IndexationPayloadWorkerEvent(message_id)) = receiver.next().await {
                 process(&tangle, &storage, message_id).await;
             }
 
-            let (_, mut receiver) = receiver.split();
-            let receiver = receiver.get_mut();
-            let mut count = 0;
-
-            while let Ok(IndexationPayloadWorkerEvent(message_id)) = receiver.try_recv() {
-                process(&tangle, &storage, message_id).await;
-                count += 1;
-            }
-
-            debug!("Drained {} message ids.", count);
+            // let (_, mut receiver) = receiver.split();
+            // let receiver = receiver.get_mut();
+            // let mut count: usize = 0;
+            //
+            // while let Poll::Ready(Some(IndexationPayloadWorkerEvent(message_id))) = receiver.poll_recv() {
+            //     process(&tangle, &storage, message_id).await;
+            //     count += 1;
+            // }
+            //
+            // debug!("Drained {} message ids.", count);
 
             info!("Stopped.");
         });

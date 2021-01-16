@@ -13,8 +13,9 @@ use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
-use log::{debug, error, info};
+use log::{error, info};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{
     any::TypeId,
@@ -126,22 +127,22 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(PropagatorWorkerEvent(message_id)) = receiver.next().await {
                 propagate(message_id, &tangle, &*bus, &milestone_solidifier).await;
             }
 
-            let (_, mut receiver) = receiver.split();
-            let receiver = receiver.get_mut();
-            let mut count = 0;
-
-            while let Ok(PropagatorWorkerEvent(message_id)) = receiver.try_recv() {
-                propagate(message_id, &tangle, &*bus, &milestone_solidifier).await;
-                count += 1;
-            }
-
-            debug!("Drained {} message ids.", count);
+            // let (_, mut receiver) = receiver.split();
+            // let receiver = receiver.get_mut();
+            // let mut count: usize = 0;
+            //
+            // while let Ok(PropagatorWorkerEvent(message_id)) = receiver.try_recv() {
+            //     propagate(message_id, &tangle, &*bus, &milestone_solidifier).await;
+            //     count += 1;
+            // }
+            //
+            // debug!("Drained {} message ids.", count);
 
             info!("Stopped.");
         });

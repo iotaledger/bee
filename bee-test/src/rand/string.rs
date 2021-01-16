@@ -4,5 +4,5 @@
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
 pub fn rand_string(len: usize) -> String {
-    thread_rng().sample_iter(&Alphanumeric).take(len).collect()
+    String::from_utf8(thread_rng().sample_iter(&Alphanumeric).take(len).collect()).unwrap()
 }

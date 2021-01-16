@@ -18,6 +18,7 @@ use async_trait::async_trait;
 use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, fmt};
 
@@ -59,7 +60,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(MessageSubmitterWorkerEvent { message, notifier }) = receiver.next().await {
                 let event = HasherWorkerEvent {

@@ -15,6 +15,7 @@ use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::info;
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible};
 
@@ -46,7 +47,7 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(BroadcasterWorkerEvent { source, message }) = receiver.next().await {
                 // TODO bring it back

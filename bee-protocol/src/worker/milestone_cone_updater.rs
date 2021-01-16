@@ -14,6 +14,7 @@ use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::info;
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{
     any::TypeId,
@@ -49,7 +50,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(MilestoneConeUpdaterWorkerEvent(index, milestone)) = receiver.next().await {
                 // When a new milestone gets solid, OTRSI and YTRSI of all messages that belong to the given cone

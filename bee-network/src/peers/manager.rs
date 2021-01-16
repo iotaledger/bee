@@ -20,6 +20,7 @@ use futures::StreamExt;
 use libp2p::{identity, Multiaddr, PeerId};
 use log::*;
 use tokio::time::{self, Duration, Instant};
+use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
 use std::{
     convert::Infallible,
@@ -94,7 +95,7 @@ impl<N: Node> Worker<N> for PeerManager {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Command processor started.");
 
-            let mut commands = ShutdownStream::new(shutdown, command_receiver);
+            let mut commands = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(command_receiver));
 
             while let Some(command) = commands.next().await {
                 if let Err(e) = process_command(
@@ -123,7 +124,8 @@ impl<N: Node> Worker<N> for PeerManager {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Event processor started.");
 
-            let mut internal_events = ShutdownStream::new(shutdown, internal_event_receiver);
+            let mut internal_events =
+                ShutdownStream::new(shutdown, UnboundedReceiverStream::new(internal_event_receiver));
 
             while let Some(internal_event) = internal_events.next().await {
                 if let Err(e) = process_internal_event(
@@ -152,10 +154,10 @@ impl<N: Node> Worker<N> for PeerManager {
             let start = Instant::now() + Duration::from_secs(RECONNECT_INTERVAL_SECS.load(Ordering::Relaxed));
             let mut connected_check = ShutdownStream::new(
                 shutdown,
-                time::interval_at(
+                IntervalStream::new(time::interval_at(
                     start,
                     Duration::from_secs(RECONNECT_INTERVAL_SECS.load(Ordering::Relaxed)),
-                ),
+                )),
             );
 
             while connected_check.next().await.is_some() {
