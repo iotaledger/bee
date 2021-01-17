@@ -399,7 +399,7 @@ where
             let len = self.len().await;
             let mut cache = self.cache_queue.lock().await;
 
-            if len < cache.len() {
+            if len < cache.cap() {
                 break;
             }
 
