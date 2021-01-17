@@ -401,29 +401,34 @@ where
     }
 
     async fn perform_eviction(&self) {
-        let len = self.len().await;
-        let mut cache = self.cache_queue.lock().await;
-        assert_eq!(cache.len(), len);
+        loop {
+            let len = self.len().await;
+            let mut cache = self.cache_queue.lock().await;
 
-        let remove = if cache.len() == cache.cap() {
-            let (message_id, _) = cache.pop_lru().expect("Cache capacity is zero");
-            Some(message_id)
-        } else {
-            None
-        };
+            if len < cache.len() > 0 {
+                break;
+            }
 
-        drop(cache);
+            let remove = if cache.len() == cache.cap() {
+                let (message_id, _) = cache.pop_lru().expect("Cache capacity is zero");
+                Some(message_id)
+            } else {
+                None
+            };
 
-        if let Some(message_id) = remove {
-            self.vertices
-                .write()
-                .await
-                .remove(&message_id)
-                .expect("Expected vertex entry to exist");
-            self.children
-                .write()
-                .await
-                .remove(&message_id);
+            drop(cache);
+
+            if let Some(message_id) = remove {
+                self.vertices
+                    .write()
+                    .await
+                    .remove(&message_id)
+                    .expect("Expected vertex entry to exist");
+                self.children
+                    .write()
+                    .await
+                    .remove(&message_id);
+            }
         }
     }
 }
