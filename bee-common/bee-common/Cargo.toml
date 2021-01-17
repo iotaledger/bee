@@ -1,6 +1,6 @@
 [package]
 name = "bee-common"
-version = "0.2.0-alpha"
+version = "0.3.0-alpha"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "Common utilities used across the bee framework"
@@ -16,3 +16,6 @@ fern = { version = "0.6", features = ["colored"] }
 log = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive" ] }
 thiserror = "1.0"
+
+[build-dependencies]
+autocfg = "1.0"
