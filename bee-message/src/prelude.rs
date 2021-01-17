@@ -10,9 +10,9 @@ pub use crate::{
         },
         transaction::{
             Address, Ed25519Address, Ed25519Signature, Input, Output, OutputId, ReferenceUnlock,
-            SignatureLockedSingleOutput, SignatureUnlock, TransactionId, TransactionPayload, TransactionPayloadBuilder,
-            TransactionPayloadEssence, TransactionPayloadEssenceBuilder, UTXOInput, UnlockBlock,
-            ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH, TRANSACTION_ID_LENGTH,
+            SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, SignatureUnlock, TransactionId,
+            TransactionPayload, TransactionPayloadBuilder, TransactionPayloadEssence, TransactionPayloadEssenceBuilder,
+            UTXOInput, UnlockBlock, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH, TRANSACTION_ID_LENGTH,
         },
         Payload,
     },
