@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use crate::{
+    milestone::{MilestoneIndex, MilestoneKeyRange},
     payload::{
         indexation::{HashedIndex, IndexationPayload, HASHED_INDEX_LENGTH},
         milestone::{

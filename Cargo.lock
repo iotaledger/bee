@@ -391,6 +391,7 @@ dependencies = [
  "bytemuck",
  "digest 0.9.0",
  "hex",
+ "iota-crypto",
  "num_cpus",
  "serde",
  "thiserror",

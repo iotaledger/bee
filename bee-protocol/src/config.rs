@@ -1,9 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::milestone::key_range::KeyRange;
-
-use bee_message::milestone::MilestoneIndex;
+use bee_message::milestone::{MilestoneIndex, MilestoneKeyRange};
 
 use serde::Deserialize;
 
@@ -29,7 +27,7 @@ const DEFAULT_MS_SYNC_COUNT: u32 = 1;
 #[derive(Default, Deserialize)]
 struct ProtocolCoordinatorConfigBuilder {
     public_key_count: Option<usize>,
-    public_key_ranges: Option<Vec<KeyRange>>,
+    public_key_ranges: Option<Vec<MilestoneKeyRange>>,
 }
 
 #[derive(Default, Deserialize)]
@@ -57,7 +55,7 @@ impl ProtocolConfigBuilder {
         self
     }
 
-    pub fn coo_public_key_ranges(mut self, coo_public_key_ranges: Vec<KeyRange>) -> Self {
+    pub fn coo_public_key_ranges(mut self, coo_public_key_ranges: Vec<MilestoneKeyRange>) -> Self {
         self.coordinator.public_key_ranges.replace(coo_public_key_ranges);
         self
     }
@@ -93,7 +91,7 @@ impl ProtocolConfigBuilder {
                 public_key_ranges: self.coordinator.public_key_ranges.unwrap_or_else(|| {
                     DEFAULT_COO_PUBLIC_KEY_RANGES
                         .iter()
-                        .map(|(public_key, start, end)| KeyRange::new(public_key.to_string(), *start, *end))
+                        .map(|(public_key, start, end)| MilestoneKeyRange::new(public_key.to_string(), *start, *end))
                         .collect()
                 }),
             },
@@ -113,7 +111,7 @@ impl ProtocolConfigBuilder {
 #[derive(Clone)]
 pub struct ProtocolCoordinatorConfig {
     pub(crate) public_key_count: usize,
-    pub(crate) public_key_ranges: Vec<KeyRange>,
+    pub(crate) public_key_ranges: Vec<MilestoneKeyRange>,
 }
 
 #[derive(Clone)]

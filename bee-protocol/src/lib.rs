@@ -6,10 +6,10 @@
 
 pub mod config;
 pub mod event;
-pub mod milestone;
 pub mod storage;
 
 mod helper;
+mod key_manager;
 mod metrics;
 mod packet;
 mod peer;

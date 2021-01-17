@@ -1,14 +1,17 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod index;
+mod key_range;
+
+pub use index::MilestoneIndex;
+pub use key_range::MilestoneKeyRange;
+
 use crate::MessageId;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::Deserialize;
 use thiserror::Error;
-
-use std::ops::{Add, Deref, Sub};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -55,61 +58,5 @@ impl Packable for Milestone {
             message_id: MessageId::unpack(reader).map_err(Error::MessageId)?,
             timestamp: u64::unpack(reader)?,
         })
-    }
-}
-
-/// A wrapper around a `u32` that represents a milestone index.
-#[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, Deserialize)]
-pub struct MilestoneIndex(pub u32);
-
-impl std::fmt::Display for MilestoneIndex {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl Deref for MilestoneIndex {
-    type Target = u32;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<u32> for MilestoneIndex {
-    fn from(v: u32) -> Self {
-        Self(v)
-    }
-}
-
-impl Add for MilestoneIndex {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        Self(*self + *other)
-    }
-}
-
-impl Sub for MilestoneIndex {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self {
-        Self(*self - *other)
-    }
-}
-
-impl Packable for MilestoneIndex {
-    type Error = std::io::Error;
-
-    fn packed_len(&self) -> usize {
-        self.0.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)
-    }
-
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(u32::unpack(reader)?))
     }
 }

@@ -1,20 +1,18 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::milestone::key_range::KeyRange;
-
-use bee_message::milestone::MilestoneIndex;
+use bee_message::milestone::{MilestoneIndex, MilestoneKeyRange};
 
 use std::collections::HashSet;
 
 #[derive(Clone)]
 pub(crate) struct KeyManager {
     min_threshold: usize,
-    key_ranges: Box<[KeyRange]>,
+    key_ranges: Box<[MilestoneKeyRange]>,
 }
 
 impl KeyManager {
-    pub(crate) fn new(min_threshold: usize, mut key_ranges: Box<[KeyRange]>) -> Self {
+    pub(crate) fn new(min_threshold: usize, mut key_ranges: Box<[MilestoneKeyRange]>) -> Self {
         key_ranges.sort();
 
         Self {
@@ -50,10 +48,10 @@ impl KeyManager {
 #[test]
 fn key_manager_is_sorted() {
     let krs = vec![
-        KeyRange::new("kr1".to_string(), 42.into(), 1000.into()),
-        KeyRange::new("kr2".to_string(), 21.into(), 1000.into()),
-        KeyRange::new("kr3".to_string(), 84.into(), 1000.into()),
-        KeyRange::new("kr4".to_string(), 0.into(), 1000.into()),
+        MilestoneKeyRange::new("kr1".to_string(), 42.into(), 1000.into()),
+        MilestoneKeyRange::new("kr2".to_string(), 21.into(), 1000.into()),
+        MilestoneKeyRange::new("kr3".to_string(), 84.into(), 1000.into()),
+        MilestoneKeyRange::new("kr4".to_string(), 0.into(), 1000.into()),
     ];
 
     let km = KeyManager::new(0, krs.into_boxed_slice());
