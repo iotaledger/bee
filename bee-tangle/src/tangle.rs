@@ -5,15 +5,14 @@ use crate::{vertex::Vertex, MessageRef};
 
 use bee_message::{Message, MessageId};
 
-use async_rwlock::RwLock;
 use async_trait::async_trait;
-//use dashmap::{mapref::entry::Entry, DashMap};
-use tokio::sync::{RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard, Mutex};
+// use dashmap::{mapref::entry::Entry, DashMap};
 use log::info;
 use lru::LruCache;
+use tokio::sync::{Mutex, RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard};
 
 use std::{
-    collections::{HashSet, HashMap, hash_map::Entry},
+    collections::{hash_map::Entry, HashMap, HashSet},
     fmt::Debug,
     marker::PhantomData,
     ops::Deref,
@@ -83,7 +82,6 @@ where
 {
     // Global Tangle Lock. Remove this as and when it is deemed correct to do so.
     // gtl: RwLock<()>,
-
     vertices: TRwLock<HashMap<MessageId, Vertex<T>>>,
     children: TRwLock<HashMap<MessageId, (HashSet<MessageId>, bool)>>,
 
@@ -111,7 +109,6 @@ where
     pub fn new(hooks: H) -> Self {
         Self {
             // gtl: RwLock::new(()),
-
             vertices: TRwLock::new(HashMap::new()),
             children: TRwLock::new(HashMap::new()),
 
@@ -179,10 +176,7 @@ where
 
     #[inline]
     async fn add_child_inner(&self, parent: MessageId, child: MessageId) {
-        let mut children_map = self
-            .children
-            .write()
-            .await;
+        let mut children_map = self.children.write().await;
         let children = children_map
             .entry(parent)
             .or_insert_with(|| (HashSet::default(), false));
@@ -199,7 +193,7 @@ where
     }
 
     async fn get_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex<T>> + '_> {
-       let res = TRwLockReadGuard::try_map(self.vertices.read().await, |m| m.get(message_id)).ok();
+        let res = TRwLockReadGuard::try_map(self.vertices.read().await, |m| m.get(message_id)).ok();
 
         if res.is_some() {
             let mut cache_queue = self.cache_queue.lock().await;
@@ -315,10 +309,7 @@ where
             }
         }
 
-        let children_map = self
-            .children
-            .read()
-            .await;
+        let children_map = self.children.read().await;
         let children = children_map
             .get(message_id)
             // Skip approver lists that are not exhaustive
@@ -334,7 +325,7 @@ where
                     Err(e) => {
                         info!("Failed to update approvers for message message {:?}", e);
                         Vec::new()
-                    },
+                    }
                     Ok(None) => Vec::new(),
                     Ok(Some(approvers)) => approvers,
                 };
@@ -354,7 +345,10 @@ where
             }
         };
 
-        Some(/*Children { children }*/Wrapper { children, phantom: PhantomData })
+        Some(/* Children { children } */ Wrapper {
+            children,
+            phantom: PhantomData,
+        })
     }
 
     /// Returns the children of a vertex, if we know about them.
@@ -405,7 +399,7 @@ where
             let len = self.len().await;
             let mut cache = self.cache_queue.lock().await;
 
-            if len < cache.len() > 0 {
+            if len < cache.len() {
                 break;
             }
 
@@ -424,10 +418,7 @@ where
                     .await
                     .remove(&message_id)
                     .expect("Expected vertex entry to exist");
-                self.children
-                    .write()
-                    .await
-                    .remove(&message_id);
+                self.children.write().await.remove(&message_id);
             }
         }
     }
