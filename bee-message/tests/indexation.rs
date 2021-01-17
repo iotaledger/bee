@@ -7,7 +7,7 @@ use bee_message::prelude::*;
 #[test]
 fn index_length_0_new() {
     assert!(matches!(
-        Indexation::new("".to_string(), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
+        IndexationPayload::new("".to_string(), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
         Err(Error::InvalidIndexationLength(0))
     ));
 }
@@ -15,19 +15,19 @@ fn index_length_0_new() {
 #[test]
 fn index_length_0_unpack() {
     assert!(matches!(
-        Indexation::unpack(&mut vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00].as_slice()),
+        IndexationPayload::unpack(&mut vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00].as_slice()),
         Err(Error::InvalidIndexationLength(0))
     ));
 }
 
 #[test]
 fn index_length_32_new() {
-    assert!(Indexation::new(".".repeat(32), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).is_ok());
+    assert!(IndexationPayload::new(".".repeat(32), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).is_ok());
 }
 
 #[test]
 fn index_length_32_unpack() {
-    assert!(Indexation::unpack(
+    assert!(IndexationPayload::unpack(
         &mut vec![
             0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -41,7 +41,7 @@ fn index_length_32_unpack() {
 #[test]
 fn index_length_65_new() {
     assert!(matches!(
-        Indexation::new(".".repeat(65), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
+        IndexationPayload::new(".".repeat(65), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
         Err(Error::InvalidIndexationLength(65))
     ));
 }
@@ -49,7 +49,7 @@ fn index_length_65_new() {
 #[test]
 fn index_length_65_unpack() {
     assert!(matches!(
-        Indexation::unpack(
+        IndexationPayload::unpack(
             &mut vec![
                 0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -65,7 +65,7 @@ fn index_length_65_unpack() {
 
 #[test]
 fn packed_len() {
-    let indexation = Indexation::new(
+    let indexation = IndexationPayload::new(
         "indexation".to_string(),
         &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2],
     )
@@ -75,13 +75,13 @@ fn packed_len() {
 
 #[test]
 fn pack_unpack() {
-    let indexation_1 = Indexation::new(
+    let indexation_1 = IndexationPayload::new(
         "indexation".to_string(),
         &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2],
     )
     .unwrap();
     let bytes = indexation_1.pack_new();
-    let indexation_2 = Indexation::unpack(&mut bytes.as_slice()).unwrap();
+    let indexation_2 = IndexationPayload::unpack(&mut bytes.as_slice()).unwrap();
 
     assert_eq!(indexation_1.packed_len(), bytes.len());
     assert_eq!(indexation_1.index(), indexation_2.index());
@@ -91,7 +91,7 @@ fn pack_unpack() {
 
 // #[test]
 // fn unpack_invalid_index_len() {
-//     let indexation = Indexation::new(
+//     let indexation = IndexationPayload::new(
 //         "indexation".to_string(),
 //         &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2],
 //     )
@@ -100,14 +100,14 @@ fn pack_unpack() {
 //     bytes[0..2].copy_from_slice(&1000u16.to_le_bytes());
 //
 //     assert!(matches!(
-//         Indexation::unpack(&mut bytes.as_slice()),
+//         IndexationPayload::unpack(&mut bytes.as_slice()),
 //         Err(Error::Io { .. })
 //     ));
 // }
 //
 // #[test]
 // fn unpack_invalid_data_len() {
-//     let indexation = Indexation::new(
+//     let indexation = IndexationPayload::new(
 //         "indexation".to_string(),
 //         &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2],
 //     )
@@ -116,14 +116,14 @@ fn pack_unpack() {
 //     bytes[14..18].copy_from_slice(&1000u32.to_le_bytes());
 //
 //     assert!(matches!(
-//         Indexation::unpack(&mut bytes.as_slice()),
+//         IndexationPayload::unpack(&mut bytes.as_slice()),
 //         Err(Error::Io { .. })
 //     ));
 // }
 
 #[test]
 fn unpack_non_utf8_index() {
-    let indexation = Indexation::new(
+    let indexation = IndexationPayload::new(
         unsafe { String::from_utf8_unchecked(vec![0, 159, 146, 150]) },
         &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2],
     )
@@ -131,7 +131,7 @@ fn unpack_non_utf8_index() {
     let bytes = indexation.pack_new();
 
     assert!(matches!(
-        Indexation::unpack(&mut bytes.as_slice()),
+        IndexationPayload::unpack(&mut bytes.as_slice()),
         Err(Error::Utf8String(std::string::FromUtf8Error { .. }))
     ));
 }
