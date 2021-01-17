@@ -122,7 +122,7 @@ where
 
                 // TODO should be passed by the hasher worker ?
                 let (message_id, _) = message.id();
-                let requested = requested_messages.contains_key(&message_id);
+                let requested = requested_messages.contains(&message_id).await;
 
                 let mut metadata = MessageMetadata::arrived();
                 metadata.flags_mut().set_requested(requested);
@@ -138,7 +138,8 @@ where
                     if let Some(ref peer_id) = from {
                         peer_manager
                             .get(&peer_id)
-                            .map(|peer| peer.value().0.metrics().known_messages_inc());
+                            .await
+                            .map(|peer| (*peer).0.metrics().known_messages_inc());
                     }
                     continue;
                 }
@@ -164,8 +165,8 @@ where
 
                 metrics.new_messages_inc();
 
-                match requested_messages.remove(&message_id) {
-                    Some((_, (index, instant))) => {
+                match requested_messages.remove(&message_id).await {
+                    Some((index, instant)) => {
                         // Message was requested.
 
                         latency_num += 1;

@@ -173,8 +173,8 @@ impl Stream for BatchStream {
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
         // We need to do this because `receiver` needs to be pinned to be polled.
         let BatchStreamProj {
-            metrics,
-            peer_manager,
+            metrics: _metrics,
+            peer_manager: _peer_manager,
             mut receiver,
             cache,
             hasher,
@@ -208,12 +208,13 @@ impl Stream for BatchStream {
                     // If the message was already received, we skip it and poll again.
                     if !cache.insert(&event.message_packet.bytes) {
                         trace!("Message already received.");
-                        metrics.known_messages_inc();
-                        if let Some(peer_id) = event.from {
-                            if let Some(peer) = peer_manager.get(&peer_id) {
-                                peer.value().0.metrics().known_messages_inc();
-                            }
-                        }
+                        // TODO put it back
+                        // metrics.known_messages_inc();
+                        // if let Some(peer_id) = event.from {
+                        //     if let Some(peer) = peer_manager.get(&peer_id).await {
+                        //         peer.value().0.metrics().known_messages_inc();
+                        //     }
+                        // }
                         continue;
                     }
 

@@ -15,15 +15,17 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
-use dashmap::DashMap;
 use futures::StreamExt;
 use log::{debug, info};
-use tokio::{sync::mpsc, time::interval};
+use tokio::{
+    sync::{mpsc, RwLock},
+    time::interval,
+};
 
 use std::{
     any::TypeId,
+    collections::HashMap,
     convert::Infallible,
-    ops::Deref,
     time::{Duration, Instant},
 };
 
@@ -31,13 +33,23 @@ const RETRY_INTERVAL_MS: u64 = 2500;
 
 // TODO pub ?
 #[derive(Default)]
-pub struct RequestedMilestones(DashMap<MilestoneIndex, Instant>);
+pub struct RequestedMilestones(RwLock<HashMap<MilestoneIndex, Instant>>);
 
-impl Deref for RequestedMilestones {
-    type Target = DashMap<MilestoneIndex, Instant>;
+impl RequestedMilestones {
+    pub async fn contains(&self, index: &MilestoneIndex) -> bool {
+        self.0.read().await.contains_key(index)
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
+    pub async fn insert(&self, index: MilestoneIndex) {
+        self.0.write().await.insert(index, Instant::now());
+    }
+
+    // pub async fn len(&self) -> usize {
+    //     self.0.read().await.len()
+    // }
+
+    pub async fn remove(&self, index: &MilestoneIndex) -> Option<Instant> {
+        self.0.write().await.remove(index)
     }
 }
 
@@ -56,16 +68,16 @@ async fn process_request(
     requested_milestones: &RequestedMilestones,
     counter: &mut usize,
 ) {
-    if requested_milestones.contains_key(&index) {
+    if requested_milestones.contains(&index).await {
         return;
     }
 
-    if peer_manager.is_empty() {
+    if peer_manager.is_empty().await {
         return;
     }
 
     if process_request_unchecked(index, peer_id, network, peer_manager, metrics, counter).await && index.0 != 0 {
-        requested_milestones.insert(index, Instant::now());
+        requested_milestones.insert(index).await;
     }
 }
 
@@ -80,7 +92,8 @@ async fn process_request_unchecked(
 ) -> bool {
     match peer_id {
         Some(peer_id) => {
-            Sender::<MilestoneRequest>::send(network, peer_manager, metrics, &peer_id, MilestoneRequest::new(*index));
+            Sender::<MilestoneRequest>::send(network, peer_manager, metrics, &peer_id, MilestoneRequest::new(*index))
+                .await;
             true
         }
         None => {
@@ -91,16 +104,17 @@ async fn process_request_unchecked(
 
                 *counter += 1;
 
-                if let Some(peer) = peer_manager.get(peer_id) {
+                if let Some(peer) = peer_manager.get(peer_id).await {
                     // TODO also request if has_data ?
-                    if peer.value().0.maybe_has_data(index) {
+                    if (*peer).0.maybe_has_data(index) {
                         Sender::<MilestoneRequest>::send(
                             network,
                             peer_manager,
                             metrics,
                             &peer_id,
                             MilestoneRequest::new(*index),
-                        );
+                        )
+                        .await;
                         return true;
                     }
                 }
@@ -118,15 +132,14 @@ async fn retry_requests(
     requested_milestones: &RequestedMilestones,
     counter: &mut usize,
 ) {
-    if peer_manager.is_empty() {
+    if peer_manager.is_empty().await {
         return;
     }
 
     let mut retry_counts: usize = 0;
 
-    for milestone in requested_milestones.iter() {
-        let (index, instant) = milestone.pair();
-
+    // TODO this needs abstraction
+    for (index, instant) in requested_milestones.0.read().await.iter() {
         if (Instant::now() - *instant).as_millis() as u64 > RETRY_INTERVAL_MS
             && process_request_unchecked(*index, None, network, peer_manager, metrics, counter).await
         {

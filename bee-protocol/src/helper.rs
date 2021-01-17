@@ -27,7 +27,7 @@ pub(crate) async fn request_milestone<B: StorageBackend>(
     index: MilestoneIndex,
     to: Option<PeerId>,
 ) {
-    if !requested_milestones.contains_key(&index) && !tangle.contains_milestone(index).await {
+    if !requested_milestones.contains(&index).await && !tangle.contains_milestone(index).await {
         if let Err(e) = milestone_requester.send(MilestoneRequesterWorkerEvent(index, to)) {
             warn!("Requesting milestone failed: {}.", e);
         }
@@ -54,7 +54,7 @@ pub(crate) async fn request_message<B: StorageBackend>(
 ) {
     if !tangle.contains(&message_id).await
         && !tangle.is_solid_entry_point(&message_id)
-        && !requested_messages.contains_key(&message_id)
+        && !requested_messages.contains(&message_id).await
     {
         if let Err(e) = message_requester.send(MessageRequesterWorkerEvent(message_id, index)) {
             warn!("Requesting message failed: {}.", e);
@@ -64,7 +64,7 @@ pub(crate) async fn request_message<B: StorageBackend>(
 
 // Heartbeat
 
-pub fn send_heartbeat(
+pub async fn send_heartbeat(
     peer_manager: &PeerManager,
     network: &NetworkController,
     metrics: &ProtocolMetrics,
@@ -85,10 +85,11 @@ pub fn send_heartbeat(
             peer_manager.connected_peers(),
             peer_manager.synced_peers(),
         ),
-    );
+    )
+    .await;
 }
 
-pub fn broadcast_heartbeat(
+pub async fn broadcast_heartbeat(
     peer_manager: &PeerManager,
     network: &NetworkController,
     metrics: &ProtocolMetrics,
@@ -96,7 +97,9 @@ pub fn broadcast_heartbeat(
     pruning_milestone_index: MilestoneIndex,
     latest_milestone_index: MilestoneIndex,
 ) {
-    peer_manager.for_each_peer(|peer_id, _| {
+    // TODO bring it back
+    //    peer_manager.for_each_peer(|peer_id, _| async {
+    for (peer_id, _) in peer_manager.peers.read().await.iter() {
         send_heartbeat(
             peer_manager,
             network,
@@ -106,5 +109,6 @@ pub fn broadcast_heartbeat(
             pruning_milestone_index,
             latest_milestone_index,
         )
-    });
+        .await
+    }
 }

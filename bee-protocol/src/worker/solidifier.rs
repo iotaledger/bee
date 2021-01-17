@@ -49,10 +49,10 @@ async fn heavy_solidification<B: StorageBackend>(
     traversal::visit_parents_depth_first(
         &**tangle,
         target_id,
-        |id, _, metadata| {
-            (!metadata.flags().is_requested() || *id == target_id)
+        |id, _, metadata| async move {
+            (!metadata.flags().is_requested() || id == target_id)
                 && !metadata.flags().is_solid()
-                && !requested_messages.contains_key(&id)
+                && !requested_messages.contains(&id).await
         },
         |_, _, _| {},
         |_, _, _| {},
@@ -87,7 +87,7 @@ async fn light_solidification<B: StorageBackend>(
     }
 }
 
-fn solidify<B: StorageBackend>(
+async fn solidify<B: StorageBackend>(
     tangle: &MsTangle<B>,
     ledger_worker: &mpsc::UnboundedSender<LedgerWorkerEvent>,
     milestone_cone_updater: &mpsc::UnboundedSender<MilestoneConeUpdaterWorkerEvent>,
@@ -120,7 +120,8 @@ fn solidify<B: StorageBackend>(
         index,
         tangle.get_pruning_index(),
         tangle.get_latest_milestone_index(),
-    );
+    )
+    .await;
 
     bus.dispatch(LatestSolidMilestoneChanged {
         index,
@@ -215,7 +216,8 @@ where
                             &bus,
                             id,
                             index,
-                        );
+                        )
+                        .await;
                     } else if tangle.is_synced_threshold(2) {
                         heavy_solidification(&tangle, &message_requester, &requested_messages, index, id).await;
                     } else if index > lsmi && index <= lsmi + MilestoneIndex(ms_sync_count) {

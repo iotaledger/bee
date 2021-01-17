@@ -193,7 +193,8 @@ where
                                 tangle.get_latest_solid_milestone_index(),
                                 tangle.get_pruning_index(),
                                 index,
-                            );
+                            )
+                            .await;
 
                             bus.dispatch(LatestMilestoneChanged {
                                 index,
@@ -201,7 +202,7 @@ where
                             });
                         }
 
-                        if requested_milestones.remove(&index).is_some() {
+                        if requested_milestones.remove(&index).await.is_some() {
                             tangle
                                 .update_metadata(milestone.message_id(), |meta| meta.flags_mut().set_requested(true))
                                 .await;

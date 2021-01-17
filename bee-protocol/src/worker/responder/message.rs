@@ -68,7 +68,8 @@ where
                         &metrics,
                         &peer_id,
                         MessagePacket::new(&message.pack_new()),
-                    );
+                    )
+                    .await;
                 }
             }
 

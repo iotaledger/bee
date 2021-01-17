@@ -5,16 +5,15 @@ use crate::peer::Peer;
 
 use bee_network::PeerId;
 
-use dashmap::{mapref::one::Ref, DashMap};
 use futures::channel::oneshot;
 use log::debug;
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::{mpsc, RwLock, RwLockReadGuard};
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 pub struct PeerManager {
     // TODO private
-    pub(crate) peers: DashMap<PeerId, (Arc<Peer>, mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)>,
+    pub(crate) peers: RwLock<HashMap<PeerId, (Arc<Peer>, mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)>>,
     // This is needed to ensure message distribution fairness as iterating over a HashMap is random.
     // TODO private
     pub(crate) peers_keys: RwLock<Vec<PeerId>>,
@@ -28,17 +27,17 @@ impl PeerManager {
         }
     }
 
-    pub(crate) fn is_empty(&self) -> bool {
-        self.peers.is_empty()
+    pub(crate) async fn is_empty(&self) -> bool {
+        self.peers.read().await.is_empty()
     }
 
     // TODO find a way to only return a ref to the peer.
-    pub(crate) fn get(
+    pub(crate) async fn get(
         &self,
         id: &PeerId,
-    ) -> Option<Ref<PeerId, (Arc<Peer>, mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)>> {
-        // TODO this exposes Dashmap internals to avoid cloning the Arc, to revisit.
-        self.peers.get(id)
+    ) -> Option<impl std::ops::Deref<Target = (Arc<Peer>, mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)> + '_>
+    {
+        RwLockReadGuard::try_map(self.peers.read().await, |map| map.get(id)).ok()
     }
 
     pub(crate) async fn add(
@@ -49,23 +48,27 @@ impl PeerManager {
     ) {
         debug!("Added peer {}.", peer.id());
         self.peers_keys.write().await.push(peer.id().clone());
-        self.peers.insert(peer.id().clone(), (peer, sender, shutdown));
+        self.peers
+            .write()
+            .await
+            .insert(peer.id().clone(), (peer, sender, shutdown));
     }
 
     pub(crate) async fn remove(
         &self,
         id: &PeerId,
-    ) -> Option<(PeerId, (Arc<Peer>, mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>))> {
+    ) -> Option<(Arc<Peer>, mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)> {
         debug!("Removed peer {}.", id);
         self.peers_keys.write().await.retain(|peer_id| peer_id != id);
-        self.peers.remove(id)
+        self.peers.write().await.remove(id)
     }
 
-    pub(crate) fn for_each_peer<F: Fn(&PeerId, &Peer)>(&self, f: F) {
-        for entry in self.peers.iter() {
-            f(entry.key(), &*entry.value().0);
-        }
-    }
+    // TODO bring it back
+    // pub(crate) async fn for_each_peer<F: Fn(&PeerId, &Peer)>(&self, f: F) {
+    //     for (id, (peer, _, _)) in self.peers.read().await.iter() {
+    //         f(id, peer);
+    //     }
+    // }
 
     pub(crate) fn connected_peers(&self) -> u8 {
         // TODO impl

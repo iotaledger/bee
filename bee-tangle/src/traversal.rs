@@ -12,7 +12,7 @@ use crate::{
 
 use bee_message::MessageId;
 
-use std::collections::HashSet;
+use std::{collections::HashSet, future::Future};
 
 /// A Tangle walker that - given a starting vertex - visits all of its ancestors that are connected through
 /// the *parent1* edge. The walk continues as long as the visited vertices match a certain condition. For each
@@ -78,7 +78,7 @@ pub async fn visit_children_follow_parent1<Metadata, Match, Apply, H: Hooks<Meta
 /// either the *parent1* or the *parent2* edge. The walk continues as long as the visited vertices match a certain
 /// condition. For each visited vertex customized logic can be applied depending on the availability of the
 /// vertex. Each traversed vertex provides read access to its associated data and metadata.
-pub async fn visit_parents_depth_first<Metadata, Match, Apply, ElseApply, MissingApply, H: Hooks<Metadata>>(
+pub async fn visit_parents_depth_first<Fut, Metadata, Match, Apply, ElseApply, MissingApply, H: Hooks<Metadata>>(
     tangle: &Tangle<Metadata, H>,
     root: MessageId,
     matches: Match,
@@ -86,8 +86,9 @@ pub async fn visit_parents_depth_first<Metadata, Match, Apply, ElseApply, Missin
     mut else_apply: ElseApply,
     mut missing_apply: MissingApply,
 ) where
+    Fut: Future<Output = bool>,
     Metadata: Clone + Copy,
-    Match: Fn(&MessageId, &MessageRef, &Metadata) -> bool,
+    Match: Fn(MessageId, MessageRef, Metadata) -> Fut,
     Apply: FnMut(&MessageId, &MessageRef, &Metadata),
     ElseApply: FnMut(&MessageId, &MessageRef, &Metadata),
     MissingApply: FnMut(&MessageId),
@@ -103,7 +104,7 @@ pub async fn visit_parents_depth_first<Metadata, Match, Apply, ElseApply, Missin
                 Some(vtx) => {
                     let vtx = &*vtx;
 
-                    if matches(&message_id, vtx.message(), vtx.metadata()) {
+                    if matches(message_id, vtx.message().clone(), *vtx.metadata()).await {
                         apply(&message_id, vtx.message(), vtx.metadata());
 
                         parents.push(*vtx.parent1());
