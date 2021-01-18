@@ -54,7 +54,7 @@
 
 use std::slice;
 
-/// Utility functions for encoding and decodining B1T6 encoding.
+/// Utility functions for encoding and decoding B1T6 encoding.
 pub mod b1t6;
 /// Conversions between to and from standard types.
 pub mod convert;

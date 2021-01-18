@@ -104,7 +104,7 @@ dependencies = [
 
 [[package]]
 name = "bee-ternary"
-version = "0.3.4-alpha"
+version = "0.4.0-alpha"
 dependencies = [
  "autocfg",
  "num-traits",

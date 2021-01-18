@@ -39,6 +39,7 @@ where
         let (t1, t2) = encode_group(*byte);
         [t1, t2]
             .iter()
+            // Unwrap is safe, `encode_group` is valid for all inputs
             .for_each(|b| trits.append(Tryte::try_from(*b).unwrap().as_trits()));
     }
 
