@@ -4,13 +4,13 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Diff, Output, Spent, Unspent};
+use bee_ledger::model::{Balance, Diff, Output, Spent, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::HashedIndex,
-        transaction::{Ed25519Address, OutputId},
+        transaction::{Address, Ed25519Address, OutputId},
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId,
@@ -229,6 +229,20 @@ impl Insert<MilestoneIndex, Diff> for Storage {
             .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_DIFF))?;
 
         self.inner.put_cf(&cf, index.pack_new(), diff.pack_new())?;
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl Insert<Address, Balance> for Storage {
+    async fn insert(&self, address: &Address, balance: &Balance) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_ADDRESS_TO_BALANCE)
+            .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
+
+        self.inner.put_cf(&cf, address.pack_new(), balance.pack_new())?;
 
         Ok(())
     }

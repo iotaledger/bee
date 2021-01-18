@@ -5,7 +5,9 @@ mod diff;
 mod output;
 mod spent;
 mod unspent;
+mod balance;
 
+pub use balance::Balance;
 pub use diff::Diff;
 pub use output::Output;
 pub use spent::Spent;
