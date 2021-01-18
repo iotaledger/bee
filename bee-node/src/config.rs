@@ -25,6 +25,7 @@ use thiserror::Error;
 use std::{convert::TryInto, fs, path::Path};
 
 const DEFAULT_ALIAS: &str = "bee";
+const DEFAULT_BECH32_HRP: &str = "atoi";
 const DEFAULT_NETWORK_ID: &str = "testnet2";
 
 #[derive(Debug, Error)]
@@ -38,6 +39,7 @@ pub enum Error {
 #[derive(Default, Deserialize)]
 pub struct NodeConfigBuilder<B: StorageBackend> {
     pub(crate) alias: Option<String>,
+    pub(crate) bech32_hrp: Option<String>,
     pub(crate) network_id: Option<String>,
     pub(crate) logger: Option<LoggerConfigBuilder>,
     pub(crate) network: Option<NetworkConfigBuilder>,
@@ -69,6 +71,7 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
 
         NodeConfig {
             alias: self.alias.unwrap_or_else(|| DEFAULT_ALIAS.to_owned()),
+            bech32_hrp: self.bech32_hrp.unwrap_or_else(|| DEFAULT_BECH32_HRP.to_owned()),
             network_id,
             logger: self.logger.unwrap_or_default().finish(),
             network: self.network.unwrap_or_default().finish(),
@@ -87,6 +90,7 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
 
 pub struct NodeConfig<B: StorageBackend> {
     pub alias: String,
+    pub bech32_hrp: String,
     pub network_id: (String, u64),
     pub logger: LoggerConfig,
     pub network: NetworkConfig,
@@ -105,6 +109,7 @@ impl<B: StorageBackend> Clone for NodeConfig<B> {
     fn clone(&self) -> Self {
         Self {
             alias: self.alias.clone(),
+            bech32_hrp: self.bech32_hrp.clone(),
             network_id: self.network_id.clone(),
             logger: self.logger.clone(),
             network: self.network.clone(),

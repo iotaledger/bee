@@ -149,8 +149,8 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         }
 
         info!(
-            "Joining network {}({}).",
-            self.config.network_id.0, self.config.network_id.1
+            "Joining network \"{}\"({}). Bech32 hrp \"{}\".",
+            self.config.network_id.0, self.config.network_id.1, self.config.bech32_hrp
         );
 
         let config = self.config.clone();

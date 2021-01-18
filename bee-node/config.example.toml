@@ -1,6 +1,7 @@
 # Duplicate this file to config.toml to use it
 
 alias       = "bee"
+bech32_hrp  = "atoi"
 network_id  = "testnet2"
 
 [logger]
