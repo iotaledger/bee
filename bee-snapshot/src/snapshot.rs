@@ -26,7 +26,7 @@ pub struct Snapshot {
     pub(crate) solid_entry_points: Box<[SolidEntryPoint]>,
     pub(crate) outputs: HashMap<OutputId, Output>,
     // A vector and not a hashmap because we need to keep the order intact.
-    pub(crate) milestone_diffs: Vec<(MilestoneIndex, MilestoneDiff)>,
+    pub(crate) milestone_diffs: Vec<MilestoneDiff>,
 }
 
 impl Snapshot {
@@ -42,7 +42,7 @@ impl Snapshot {
         &self.outputs
     }
 
-    pub fn milestone_diffs(&self) -> &Vec<(MilestoneIndex, MilestoneDiff)> {
+    pub fn milestone_diffs(&self) -> &Vec<MilestoneDiff> {
         &self.milestone_diffs
     }
 
@@ -85,8 +85,7 @@ impl Packable for Snapshot {
             len += output.packed_len();
         }
         len += (self.milestone_diffs.len() as u64).packed_len();
-        for (index, diff) in self.milestone_diffs.iter() {
-            len += index.packed_len();
+        for diff in self.milestone_diffs.iter() {
             len += diff.packed_len();
         }
 
@@ -113,8 +112,7 @@ impl Packable for Snapshot {
                 output.inner().pack(writer)?;
             }
         }
-        for (index, diff) in self.milestone_diffs.iter() {
-            index.pack(writer)?;
+        for diff in self.milestone_diffs.iter() {
             diff.pack(writer)?;
         }
 
@@ -181,7 +179,7 @@ impl Packable for Snapshot {
 
         let mut milestone_diffs = Vec::with_capacity(milestone_diff_count);
         for _ in 0..milestone_diff_count {
-            milestone_diffs.push((MilestoneIndex::unpack(reader)?, MilestoneDiff::unpack(reader)?));
+            milestone_diffs.push(MilestoneDiff::unpack(reader)?);
         }
 
         Ok(Self {

@@ -3,6 +3,7 @@
 
 use crate::kind::Kind;
 
+use bee_ledger::model::Error as LedgerError;
 use bee_message::{milestone::MilestoneIndex, Error as MessageError};
 
 use thiserror::Error;
@@ -23,6 +24,8 @@ pub enum Error {
     InvalidFilePath(String),
     #[error("{0}")]
     Message(#[from] MessageError),
+    #[error("{0}")]
+    Ledger(#[from] LedgerError),
     #[error("Network Id mismatch: configuration {0} != snapshot {1}")]
     NetworkIdMismatch(u64, u64),
     #[error("")]
