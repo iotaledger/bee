@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- T6B1 bytes-as-trits encoding and decoding support
-
 ### Changed
 
 ### Deprecated
@@ -20,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security -->
+
+## 0.3.5-alpha - 2021-01-18
+
+### Added
+
+- T6B1 bytes-as-trits encoding and decoding support
 
 ## 0.3.4-alpha - 2020-11-13
 
