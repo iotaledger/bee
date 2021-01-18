@@ -100,20 +100,32 @@ async fn import_snapshot<B: StorageBackend>(
     }
 
     if snapshot.header().kind() == Kind::Full {
-        for output in snapshot.outputs().iter() {
-            // TODO This is temporarily weird because snapshot format doesn't match ledger format
-            let l_output = bee_ledger::model::Output::new(*output.message_id(), Output::from(output.output().clone()));
+        // TODO unify this with ledger crate
+        for (output_id, output) in snapshot.outputs().iter() {
             // TODO group them 3 in a function
-            Insert::<OutputId, bee_ledger::model::Output>::insert(storage, output.output_id(), &l_output)
+            Insert::<OutputId, bee_ledger::model::Output>::insert(storage, output_id, &output)
                 .await
                 .map_err(|e| Error::StorageBackend(Box::new(e)))?;
-            Insert::<Unspent, ()>::insert(storage, &(*output.output_id()).into(), &())
+            Insert::<Unspent, ()>::insert(storage, &((*output_id).into()), &())
                 .await
                 .map_err(|e| Error::StorageBackend(Box::new(e)))?;
-            if let Address::Ed25519(address) = output.output().address() {
-                Insert::<(Ed25519Address, OutputId), ()>::insert(storage, &(address.clone(), *output.output_id()), &())
-                    .await
-                    .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+            match output.inner() {
+                Output::SignatureLockedSingle(output) => {
+                    if let Address::Ed25519(address) = output.address() {
+                        Insert::<(Ed25519Address, OutputId), ()>::insert(storage, &(address.clone(), *output_id), &())
+                            .await
+                            .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+                    }
+                }
+                Output::SignatureLockedDustAllowance(output) => {
+                    if let Address::Ed25519(address) = output.address() {
+                        Insert::<(Ed25519Address, OutputId), ()>::insert(storage, &(address.clone(), *output_id), &())
+                            .await
+                            .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+                    }
+                }
+                // TODO
+                _ => panic!("Unhandled output type"),
             }
         }
     }
