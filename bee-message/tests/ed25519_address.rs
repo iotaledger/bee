@@ -22,7 +22,7 @@ fn generate_bech32_string() {
     let vec = hex::decode(ED25519_ADDRESS).unwrap();
     bytes.copy_from_slice(&vec);
     let address = Ed25519Address::new(bytes);
-    let bech32_string = address.to_bech32();
+    let bech32_string = address.to_bech32("iota");
     assert_eq!(
         bech32_string,
         "iota1q9f0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryj0w6qwt"
@@ -35,7 +35,7 @@ fn generate_bech32_testnet_string() {
     let vec = hex::decode(ED25519_ADDRESS).unwrap();
     bytes.copy_from_slice(&vec);
     let address = Ed25519Address::new(bytes);
-    let bech32_string = address.to_bech32_testnet();
+    let bech32_string = address.to_bech32("atoi");
     assert_eq!(
         bech32_string,
         "atoi1q9f0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryjgqtp5x"
@@ -47,7 +47,7 @@ fn bech32_string_to_address() {
     let mut bytes = [0; 32];
     let vec = hex::decode(ED25519_ADDRESS).unwrap();
     bytes.copy_from_slice(&vec);
-    let address = Address::try_from_bech32(&Ed25519Address::new(bytes).to_bech32()).unwrap();
+    let address = Address::try_from_bech32(&Ed25519Address::new(bytes).to_bech32("iota")).unwrap();
     if let Address::Ed25519(ed) = address {
         assert_eq!(
             ed.to_string(),
@@ -56,7 +56,7 @@ fn bech32_string_to_address() {
     } else {
         panic!("Expecting an Ed25519 address");
     }
-    let address = Address::try_from_bech32(&Ed25519Address::new(bytes).to_bech32_testnet()).unwrap();
+    let address = Address::try_from_bech32(&Ed25519Address::new(bytes).to_bech32("atoi")).unwrap();
     if let Address::Ed25519(ed) = address {
         assert_eq!(
             ed.to_string(),

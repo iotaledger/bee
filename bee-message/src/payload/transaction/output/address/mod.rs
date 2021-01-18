@@ -51,14 +51,9 @@ impl Address {
             Err(_) => Err(Error::InvalidAddress),
         }
     }
-    pub fn to_bech32(&self) -> String {
+    pub fn to_bech32(&self, hrp: &str) -> String {
         match self {
-            Address::Ed25519(address) => address.to_bech32(),
-        }
-    }
-    pub fn to_bech32_testnet(&self) -> String {
-        match self {
-            Address::Ed25519(address) => address.to_bech32_testnet(),
+            Address::Ed25519(address) => address.to_bech32(hrp),
         }
     }
 }
