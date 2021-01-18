@@ -224,7 +224,7 @@ impl Delete<Address, Balance> for Storage {
             .cf_handle(CF_ADDRESS_TO_BALANCE)
             .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
 
-        self.inner.delete_cf(&cf, address.as_ref())?;
+        self.inner.delete_cf(&cf, address.pack_new())?;
 
         Ok(())
     }

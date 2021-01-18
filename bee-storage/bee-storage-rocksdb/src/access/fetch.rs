@@ -250,7 +250,7 @@ impl Fetch<Address, Balance> for Storage {
             .cf_handle(CF_ADDRESS_TO_BALANCE)
             .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, address.as_ref())? {
+        if let Some(res) = self.inner.get_cf(&cf, address.pack_new())? {
             // Unpacking from storage is fine.
             Ok(Some(Balance::unpack(&mut res.as_slice()).unwrap()))
         } else {

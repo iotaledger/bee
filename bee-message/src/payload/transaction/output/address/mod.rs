@@ -16,7 +16,7 @@ use core::ops::Deref;
 use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd, Hash)]
 #[serde(tag = "type", content = "data")]
 pub enum Address {
     Ed25519(Ed25519Address),
@@ -25,15 +25,6 @@ pub enum Address {
 impl From<Ed25519Address> for Address {
     fn from(address: Ed25519Address) -> Self {
         Self::Ed25519(address)
-    }
-}
-
-impl AsRef<[u8]> for Address {
-    #[inline]
-    fn as_ref(&self) -> &[u8] {
-        match self {
-            Self::Ed25519(address) => address.as_ref(),
-        }
     }
 }
 

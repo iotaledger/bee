@@ -565,7 +565,7 @@ impl Batch<Address, Balance> for Storage {
             .cf_handle(CF_ADDRESS_TO_BALANCE)
             .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
 
-        batch.inner.put_cf(&cf, address.as_ref(), balance.pack_new());
+        batch.inner.put_cf(&cf, address.pack_new(), balance.pack_new());
 
         Ok(())
     }
@@ -576,7 +576,7 @@ impl Batch<Address, Balance> for Storage {
             .cf_handle(CF_ADDRESS_TO_BALANCE)
             .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
 
-        batch.inner.delete_cf(&cf, address.as_ref());
+        batch.inner.delete_cf(&cf, address.pack_new());
 
         Ok(())
     }
