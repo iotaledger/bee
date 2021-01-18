@@ -19,7 +19,10 @@ mod common;
 
 use common::*;
 
-use bee_network::{Command::*, Event, Keypair, Multiaddr, NetworkConfig, NetworkController, NetworkListener, PeerId};
+use bee_network::{
+    Command::*, Event, Keypair, Multiaddr, NetworkConfig, NetworkController, NetworkListener, PeerId, PeerInfo,
+    PeerRelation,
+};
 use bee_runtime::{
     node::{Node, NodeBuilder},
     resource::ResourceHandle,
@@ -295,6 +298,9 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
 #[inline]
 async fn process_event(event: Event, message: &str, network: &NetworkController, _peers: &mut HashSet<PeerId>) {
     match event {
+        Event::PeerAdded { id, info } => {
+            info!("[EXAMPLE] Added peer '{}' ({:?}).", id, info);
+        }
         Event::PeerConnected { id, address, .. } => {
             info!("[EXAMPLE] Connected peer '{}' with address '{}'.", id, address);
 

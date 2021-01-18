@@ -67,7 +67,9 @@ impl PeerList {
         // Prevent inserting more peers than preconfigured.
         match info.relation {
             PeerRelation::Unknown => {
-                if self.count_if(|info, _| info.is_unknown()).await >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed) {
+                if self.count_if(|info, _| info.relation.is_unknown()).await
+                    >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed)
+                {
                     return Err(Error::UnknownPeerLimitReached(
                         MAX_UNKNOWN_PEERS.load(Ordering::Relaxed),
                     ));
@@ -185,27 +187,16 @@ impl PeerList {
     }
 }
 
+/// Additional information about a peer.
 #[derive(Clone, Debug)]
 pub struct PeerInfo {
+    /// The peer's address.
     pub address: Multiaddr,
+    /// The peer's alias.
     pub alias: String,
+    /// The type of relation we have with this peer.
     pub relation: PeerRelation,
 }
-
-macro_rules! impl_is_relation {
-    ($is:tt) => {
-        impl PeerInfo {
-            #[allow(dead_code)]
-            pub fn $is(&self) -> bool {
-                self.relation.$is()
-            }
-        }
-    };
-}
-
-impl_is_relation!(is_known);
-impl_is_relation!(is_unknown);
-impl_is_relation!(is_discovered);
 
 #[derive(Clone)]
 pub enum PeerState {

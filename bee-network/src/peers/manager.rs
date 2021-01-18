@@ -162,7 +162,7 @@ impl<N: Node> Worker<N> for PeerManager {
                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
                 // of those.
                 for peer_id in peers
-                    .iter_if(|info, state| info.is_known() && state.is_disconnected())
+                    .iter_if(|info, state| info.relation.is_known() && state.is_disconnected())
                     .await
                 {
                     if let Err(e) = internal_event_sender
@@ -381,7 +381,7 @@ async fn process_internal_event(
             peers.update_state(&peer_id, PeerState::Disconnected).await?;
 
             // TODO: maybe allow some fixed timespan for a connection recovery from either end before removing.
-            peers.remove_if(&peer_id, |info, _| info.is_unknown()).await;
+            peers.remove_if(&peer_id, |info, _| info.relation.is_unknown()).await;
 
             event_sender
                 .send(Event::PeerDisconnected { id: peer_id })
