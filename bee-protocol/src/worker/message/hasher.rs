@@ -14,7 +14,6 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common_pt2::b1t6;
 use bee_crypto::ternary::{
     sponge::{BatchHasher, CurlPRounds, BATCH_SIZE},
     HASH_LENGTH,
@@ -22,7 +21,7 @@ use bee_crypto::ternary::{
 use bee_message::{MessageId, MESSAGE_ID_LENGTH};
 use bee_network::PeerId;
 use bee_runtime::{node::Node, resource::ResourceHandle, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_ternary::{Btrit, T5B1Buf, TritBuf};
+use bee_ternary::{b1t6, Btrit, T1B1Buf, T5B1Buf, TritBuf};
 
 use async_trait::async_trait;
 use blake2::{
@@ -227,9 +226,11 @@ impl Stream for BatchStream {
                     blake2b.update(&event.message_packet.bytes[..event.message_packet.bytes.len() - 8]);
                     let mut pow_input = TritBuf::with_capacity(243);
                     blake2b.finalize_variable_reset(|pow_digest| {
-                        b1t6::encode(&pow_digest).iter().for_each(|t| pow_input.push(t))
+                        b1t6::encode::<T1B1Buf>(&pow_digest)
+                            .iter()
+                            .for_each(|t| pow_input.push(t))
                     });
-                    b1t6::encode(&event.message_packet.bytes[event.message_packet.bytes.len() - 8..])
+                    b1t6::encode::<T1B1Buf>(&event.message_packet.bytes[event.message_packet.bytes.len() - 8..])
                         .iter()
                         .for_each(|t| pow_input.push(t));
                     // Pad to 243 trits.

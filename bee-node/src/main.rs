@@ -41,6 +41,6 @@ async fn main() {
             }
             Err(e) => error!("Failed to build node: {}", e),
         },
-        Err(e) => error!("Failed to build node builder: {}", e),
+        Err(e) => panic!("Failed to build node builder: {}", e),
     }
 }
