@@ -7,3 +7,4 @@ mod serde;
 mod slice;
 mod trit;
 mod tryte;
+mod b1t6;
