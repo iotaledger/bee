@@ -54,6 +54,8 @@
 
 use std::slice;
 
+/// Utility functions for encoding and decodining B1T6 encoding.
+pub mod b1t6;
 /// Conversions between to and from standard types.
 pub mod convert;
 /// Types and traits that allow the implementation of new encoding formats.
@@ -68,8 +70,6 @@ pub mod t3b1;
 pub mod t4b1;
 /// The [`T5B1`] and [`T5B1Buf`] encodings.
 pub mod t5b1;
-/// Utility functions for encoding and decoding B1T6 encoding.
-pub mod b1t6;
 /// Types and traits used to represent trits, both balanced and unbalanced.
 pub mod trit;
 /// Types and traits used to represent trytes and buffers of trytes.

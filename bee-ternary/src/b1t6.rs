@@ -8,17 +8,24 @@ use std::convert::TryFrom;
 const TRITS_PER_BYTE: usize = 2;
 const TRITS_PER_TRYTE: usize = 3;
 
+/// An error that may be emitted when decoding a B1T6 trit slice.
+#[derive(Debug)]
+pub enum DecodeError {
+    /// Two trits had an invalid B1T6 representation.
+    InvalidTrytes([Tryte; 2]),
+}
+
 /// Decode a series of trits into bytes.
-pub fn decode(src: &Trits) -> Vec<u8> {
+pub fn decode(src: &Trits) -> Result<Vec<u8>, DecodeError> {
     assert!(src.len() % TRITS_PER_BYTE == 0);
     src.iter_trytes()
         .zip(src[TRITS_PER_TRYTE..].iter_trytes())
-        .map(|(a, b)| decode_group(a as i8, b as i8).unwrap() as u8)
+        .map(|(a, b)| decode_group(a, b).ok_or(DecodeError::InvalidTrytes([a, b])))
         .collect()
 }
 
-fn decode_group(t1: i8, t2: i8) -> Option<i8> {
-    i8::try_from(t1 as isize + t2 as isize * 27).ok()
+fn decode_group(t1: Tryte, t2: Tryte) -> Option<u8> {
+    Some(i8::try_from(t1 as isize + t2 as isize * 27).ok()? as u8)
 }
 
 /// Encode a series of bytes into trits.
