@@ -24,8 +24,9 @@ use std::{
 };
 
 // TODO
-// The address type of the referenced UTXO must match the signature type contained in the corresponding Signature Unlock Block.
-// The Signature Unlock Blocks are valid, i.e. the signatures prove ownership over the addresses of the referenced UTXOs.
+// The address type of the referenced UTXO must match the signature type contained in the corresponding Signature Unlock
+// Block. The Signature Unlock Blocks are valid, i.e. the signatures prove ownership over the addresses of the
+// referenced UTXOs.
 
 fn validate_transaction(
     transaction: &TransactionPayload,

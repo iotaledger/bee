@@ -3,7 +3,7 @@
 
 use crate::{
     error::Error,
-    model::{Diff, Output, Spent, Unspent},
+    model::{Output, OutputDiff, Spent, Unspent},
     IOTA_SUPPLY,
 };
 
@@ -26,7 +26,7 @@ pub trait StorageBackend:
     + Batch<OutputId, Spent>
     + Batch<Unspent, ()>
     + Batch<(), LedgerIndex>
-    + Batch<MilestoneIndex, Diff>
+    + Batch<MilestoneIndex, OutputDiff>
     + Delete<OutputId, Output>
     + Delete<OutputId, Spent>
     + Delete<Unspent, ()>
@@ -54,7 +54,7 @@ impl<T> StorageBackend for T where
         + Batch<OutputId, Spent>
         + Batch<Unspent, ()>
         + Batch<(), LedgerIndex>
-        + Batch<MilestoneIndex, Diff>
+        + Batch<MilestoneIndex, OutputDiff>
         + Delete<OutputId, Output>
         + Delete<OutputId, Spent>
         + Delete<Unspent, ()>
@@ -106,11 +106,11 @@ pub async fn apply_diff<B: StorageBackend>(
         // TODO address mapping
     }
 
-    Batch::<MilestoneIndex, Diff>::batch_insert(
+    Batch::<MilestoneIndex, OutputDiff>::batch_insert(
         storage,
         &mut batch,
         &index,
-        &Diff::new(spent_output_ids, created_outputs_ids),
+        &OutputDiff::new(spent_output_ids, created_outputs_ids),
     )
     .map_err(|e| Error::Storage(Box::new(e)))?;
 
@@ -145,7 +145,7 @@ pub async fn rollback_diff<B: StorageBackend>(
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
-    Batch::<MilestoneIndex, Diff>::batch_delete(storage, &mut batch, &index)
+    Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, &mut batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     storage

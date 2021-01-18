@@ -4,7 +4,7 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Balance, Diff, Output, Spent};
+use bee_ledger::model::{Balance, Output, OutputDiff, Spent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
@@ -226,16 +226,16 @@ impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Fetch<MilestoneIndex, Diff> for Storage {
-    async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Diff>, <Self as StorageBackend>::Error> {
+impl Fetch<MilestoneIndex, OutputDiff> for Storage {
+    async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<OutputDiff>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_DIFF))?;
+            .cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
 
         if let Some(res) = self.inner.get_cf(&cf, index.pack_new())? {
             // Unpacking from storage is fine.
-            Ok(Some(Diff::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(OutputDiff::unpack(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }

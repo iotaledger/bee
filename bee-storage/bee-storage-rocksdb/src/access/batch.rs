@@ -4,7 +4,7 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Balance, Diff, Output, Spent, Unspent};
+use bee_ledger::model::{Balance, Output, OutputDiff, Spent, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
@@ -509,17 +509,17 @@ impl Batch<SolidEntryPoint, MilestoneIndex> for Storage {
     }
 }
 
-impl Batch<MilestoneIndex, Diff> for Storage {
+impl Batch<MilestoneIndex, OutputDiff> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
         index: &MilestoneIndex,
-        diff: &Diff,
+        diff: &OutputDiff,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_DIFF))?;
+            .cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -540,8 +540,8 @@ impl Batch<MilestoneIndex, Diff> for Storage {
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_DIFF))?;
+            .cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.

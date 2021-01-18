@@ -7,12 +7,12 @@ use bee_common::packable::{Packable, Read, Write};
 use bee_message::payload::transaction::OutputId;
 
 #[derive(Debug)]
-pub struct Diff {
+pub struct OutputDiff {
     spent_outputs: Vec<OutputId>,
     created_outputs: Vec<OutputId>,
 }
 
-impl Diff {
+impl OutputDiff {
     pub fn new(spent_outputs: Vec<OutputId>, created_outputs: Vec<OutputId>) -> Self {
         Self {
             spent_outputs,
@@ -29,7 +29,7 @@ impl Diff {
     }
 }
 
-impl Packable for Diff {
+impl Packable for OutputDiff {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
