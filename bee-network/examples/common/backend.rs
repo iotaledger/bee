@@ -24,11 +24,15 @@ impl StorageBackend for DummyBackend {
     type Config = DummyConfig;
     type Error = Infallible;
 
-    async fn start(_: Self::Config) -> Result<Self, Box<dyn Error>> {
+    async fn start(_: Self::Config) -> Result<Self, Self::Error> {
         Ok(DummyBackend)
     }
 
-    async fn shutdown(self) -> Result<(), Box<dyn Error>> {
+    async fn shutdown(self) -> Result<(), Self::Error> {
         Ok(())
+    }
+
+    async fn size(&self) -> Result<Option<usize>, Self::Error> {
+        Ok(None)
     }
 }

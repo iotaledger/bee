@@ -9,8 +9,8 @@
 //! terminals and connect those instances by specifying commandline arguments.
 //!
 //! ```bash
-//! cargo r --example gossip -- --bind /ip4/127.0.0.1/tcp/1337 --peers /ip4/127.0.0.1/tcp/1338 --msg hello
-//! cargo r --example gossip -- --bind /ip4/127.0.0.1/tcp/1338 --peers /ip4/127.0.0.1/tcp/1337 --msg world
+//! cargo r --example gossip -- --bind /ip4/127.0.0.1/tcp/1337 --peers /ip4/127.0.0.1/tcp/1338
+//! cargo r --example gossip -- --bind /ip4/127.0.0.1/tcp/1338 --peers /ip4/127.0.0.1/tcp/1337
 //! ```
 
 #![allow(dead_code, unused_imports)]
@@ -19,7 +19,10 @@ mod common;
 
 use common::*;
 
-use bee_network::{Command::*, Event, Keypair, Multiaddr, NetworkConfig, NetworkController, NetworkListener, PeerId};
+use bee_network::{
+    Command::*, Event, Keypair, Multiaddr, NetworkConfig, NetworkController, NetworkListener, PeerId, PeerInfo,
+    PeerRelation,
+};
 use bee_runtime::{
     node::{Node, NodeBuilder},
     resource::ResourceHandle,
@@ -58,7 +61,7 @@ async fn main() {
     let args = Args::from_args();
     let config = args.into_config();
 
-    logger::init(log::LevelFilter::Trace);
+    logger::init(log::LevelFilter::Info);
 
     let node = ExampleNodeBuilder::new(config.clone()).unwrap().finish().await.unwrap();
 
@@ -81,7 +84,7 @@ async fn main() {
 struct ExampleNode {
     config: ExampleConfig,
     network_listener: NetworkListener,
-    connected_peers: HashSet<PeerId>,
+    connected_peers: HashMap<PeerId, oneshot::Sender<()>>,
     workers: Map<dyn AnyMapAny + Send + Sync>,
     tasks: HashMap<
         TypeId,
@@ -99,7 +102,6 @@ impl ExampleNode {
         let network_controller = self.resource::<NetworkController>();
 
         let ExampleNode {
-            config,
             network_listener,
             mut connected_peers,
             ..
@@ -113,13 +115,14 @@ impl ExampleNode {
         while let Some(event) = network_events.next().await {
             info!("Received {:?}.", event);
 
-            process_event(event, &config.message, &network_controller, &mut connected_peers).await;
+            process_event(event, &network_controller, &mut connected_peers).await;
         }
 
         info!("[EXAMPLE] Stopping node...");
-        // if let Err(e) = shutdown.execute().await {
-        //     warn!("Sending shutdown signal failed. Error: {:?}", e);
-        // }
+
+        for (_, shutdown_tx) in connected_peers {
+            shutdown_tx.send(()).expect("Sending shutdown signal failed");
+        }
 
         info!("[EXAMPLE] Stopped.");
     }
@@ -142,23 +145,6 @@ impl Node for ExampleNode {
     type Error = Infallible;
 
     async fn stop(mut self) -> Result<(), Self::Error> {
-        // for worker_id in self.worker_order.clone().into_iter().rev() {
-        //     for (shutdown, task_fut) in self.tasks.remove(&worker_id).unwrap_or_default() {
-        //         let _ = shutdown.send(());
-        //         // TODO: Should we handle this error?
-        //         let _ = task_fut.await; //.map_err(|e| shutdown::Error::from(worker::Error(Box::new(e))))?;
-        //     }
-        //     self.worker_stops.remove(&worker_id).unwrap()(&mut self).await;
-        //     self.resource::<Bus>().remove_listeners_by_id(worker_id);
-        // }
-
-        // // Unwrapping is fine since the node register the backend itself.
-        // self.remove_resource::<B>()
-        //     .unwrap()
-        //     .shutdown()
-        //     .await
-        //     .map_err(Error::StorageBackend)?;
-
         Ok(())
     }
 
@@ -276,40 +262,56 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
         let local_keys = Keypair::generate();
         let network_id = 1;
 
-        let (this, network_listener) =
-            bee_network::init::<ExampleNode>(network_config, local_keys, network_id, 0, self).await;
+        let (mut this, network_listener) =
+            bee_network::init::<ExampleNode>(network_config, local_keys, network_id, 1, self).await;
 
         info!("[EXAMPLE] Node initialized.");
 
-        Ok(ExampleNode {
+        let mut node = ExampleNode {
             config: this.config,
             network_listener,
-            connected_peers: HashSet::new(),
+            connected_peers: HashMap::new(),
             resources: Map::new(),
             tasks: HashMap::new(),
             workers: Map::new(),
-        })
+        };
+
+        for f in this.resource_registers {
+            f(&mut node);
+        }
+
+        for (_, f) in this.worker_starts.drain() {
+            f(&mut node).await
+        }
+
+        Ok(node)
     }
 }
 
 #[inline]
-async fn process_event(event: Event, message: &str, network: &NetworkController, _peers: &mut HashSet<PeerId>) {
+async fn process_event(
+    event: Event,
+    network: &NetworkController,
+    connected_peers: &mut HashMap<PeerId, oneshot::Sender<()>>,
+) {
     match event {
+        Event::PeerAdded { id, info } => {
+            info!("[EXAMPLE] Added peer '{}' ({:?}).", id, info);
+        }
         Event::PeerConnected { id, address, .. } => {
             info!("[EXAMPLE] Connected peer '{}' with address '{}'.", id, address);
 
-            info!("[EXAMPLE] Sending message: \"{}\"", message);
-            if let Err(e) = network.send(SendMessage {
-                message: Utf8Message::new(message).as_bytes(),
-                to: id.clone(),
-            }) {
-                warn!("Sending message to peer failed. Error: {:?}", e);
-            }
+            let (tx, rx) = oneshot::channel::<()>();
 
-            spam_endpoint(network.clone(), id);
+            connected_peers.insert(id.clone(), tx);
+
+            simulate_gossip(network.clone(), id, rx);
         }
 
         Event::PeerDisconnected { id } => {
+            // Removing the peer will trigger the shutdown signal, which stops the gossip task
+            connected_peers.remove(&id);
+
             info!("[EXAMPLE] Disconnected peer {}.", id);
         }
 
@@ -320,7 +322,8 @@ async fn process_event(event: Event, message: &str, network: &NetworkController,
             info!("[EXAMPLE] Received message \"{}\"", message);
         }
 
-        _ => warn!("Unsupported event {:?}.", event),
+        // Ignore all other events
+        _ => (),
     }
 }
 
@@ -336,21 +339,27 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
     receiver
 }
 
-fn spam_endpoint(network: NetworkController, peer_id: PeerId) {
-    info!("[EXAMPLE] Now sending spam messages to {}", peer_id);
+fn simulate_gossip(network: NetworkController, peer_id: PeerId, shutdown_rx: oneshot::Receiver<()>) {
+    info!("[EXAMPLE] Simulating gossip with {}", peer_id);
 
     tokio::spawn(async move {
-        for i in 0u64.. {
-            tokio::time::delay_for(Duration::from_secs(5)).await;
+        let mut i = 0;
+        let mut shutdown_stream = ShutdownStream::new(shutdown_rx, tokio::time::interval(Duration::from_secs(5)));
 
+        while let Some(_) = shutdown_stream.next().await {
             let message = Utf8Message::new(&i.to_string());
 
+            info!("[EXAMPLE] Sending message: \"{}\"", message);
             if let Err(e) = network.send(SendMessage {
                 message: message.as_bytes(),
                 to: peer_id.clone(),
             }) {
                 warn!("Sending message to peer failed. Error: {:?}", e);
             }
+
+            i += 1;
         }
+
+        info!("[EXAMPLE] Stopping gossip with {}", peer_id);
     });
 }

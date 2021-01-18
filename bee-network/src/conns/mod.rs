@@ -26,7 +26,7 @@ use tokio::task::JoinHandle;
 
 use std::{fmt, sync::Arc};
 
-const MSG_BUFFER_SIZE: usize = 10000;
+const MSG_BUFFER_SIZE: usize = 32768;
 
 pub(crate) async fn upgrade_connection(
     peer_id: PeerId,
@@ -107,7 +107,7 @@ fn spawn_substream_io_task(
                             continue;
                         }
                     } else {
-                        trace!("Dropping connection");
+                        trace!("Dropping connection.");
                         break;
                     }
 
@@ -116,23 +116,13 @@ fn spawn_substream_io_task(
                     trace!("Incoming substream event.");
                     match recv_result {
                         Ok(num_read) => {
-                            if let Err(e) = process_read(peer_id.clone(), num_read, &mut internal_event_sender, &buffer).await
+                            if let Err(e) = process_read(&peer_id, num_read, &mut internal_event_sender, &buffer).await
                             {
                                 error!("{:?}", e);
                             }
                         }
                         Err(e) => {
                             debug!("{:?}", e);
-
-                            if let Err(e) = internal_event_sender
-                                .send(InternalEvent::ConnectionDropped {
-                                    peer_id: peer_id.clone(),
-                                })
-                                .map_err(|_| Error::InternalEventSendFailure("ConnectionDropped"))
-                            {
-                                error!("{:?}", e);
-                            }
-
 
                             trace!("Remote dropped connection.");
                             break;
@@ -141,6 +131,14 @@ fn spawn_substream_io_task(
                 }
             }
         }
+
+        if let Err(e) = internal_event_sender
+            .send(InternalEvent::ConnectionDropped { peer_id })
+            .map_err(|_| Error::InternalEventSendFailure("ConnectionDropped"))
+        {
+            error!("{:?}", e);
+        }
+
         trace!("Shutting down connection handler task.");
     })
 }
@@ -172,7 +170,7 @@ where
 }
 
 async fn process_read(
-    peer_id: PeerId,
+    peer_id: &PeerId,
     num_read: usize,
     internal_event_sender: &mut InternalEventSender,
     buffer: &[u8],
@@ -182,7 +180,10 @@ async fn process_read(
     message.copy_from_slice(&buffer[0..num_read]);
 
     internal_event_sender
-        .send(InternalEvent::MessageReceived { message, from: peer_id })
+        .send(InternalEvent::MessageReceived {
+            message,
+            from: peer_id.clone(),
+        })
         .map_err(|_| Error::InternalEventSendFailure("MessageReceived"))?;
 
     Ok(())

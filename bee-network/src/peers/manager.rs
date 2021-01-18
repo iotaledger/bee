@@ -162,7 +162,7 @@ impl<N: Node> Worker<N> for PeerManager {
                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
                 // of those.
                 for peer_id in peers
-                    .iter_if(|info, state| info.is_known() && state.is_disconnected())
+                    .iter_if(|info, state| info.relation.is_known() && state.is_disconnected())
                     .await
                 {
                     if let Err(e) = internal_event_sender
@@ -201,6 +201,8 @@ async fn process_command(
             alias,
             relation,
         } => {
+            let alias = alias.unwrap_or(id.short());
+
             // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
             if relation == PeerRelation::Known {
                 add_peer(id.clone(), address, alias, relation, peers, event_sender).await?;
@@ -344,9 +346,28 @@ async fn process_internal_event(
             message_sender,
             ..
         } => {
-            peers
-                .update_state(&peer_id, PeerState::Connected(message_sender))
-                .await?;
+            match peer_info.relation {
+                PeerRelation::Known => {
+                    peers
+                        .update_state(&peer_id, PeerState::Connected(message_sender))
+                        .await?
+                }
+                PeerRelation::Unknown => {
+                    peers
+                        .insert(peer_id.clone(), peer_info.clone(), PeerState::Connected(message_sender))
+                        .await
+                        .map_err(|(_, _, e)| e)?;
+
+                    event_sender
+                        .send(Event::PeerAdded {
+                            id: peer_id.clone(),
+                            info: peer_info.clone(),
+                        })
+                        .map_err(|_| Error::EventSendFailure("PeerAdded"))?;
+                }
+                // Ignore 'PeerRelation::Discovered' case until autopeering has landed.
+                _ => (),
+            }
 
             event_sender
                 .send(Event::PeerConnected {
@@ -360,7 +381,7 @@ async fn process_internal_event(
             peers.update_state(&peer_id, PeerState::Disconnected).await?;
 
             // TODO: maybe allow some fixed timespan for a connection recovery from either end before removing.
-            peers.remove_if(&peer_id, |info, _| info.is_unknown()).await;
+            peers.remove_if(&peer_id, |info, _| info.relation.is_unknown()).await;
 
             event_sender
                 .send(Event::PeerDisconnected { id: peer_id })
@@ -400,7 +421,7 @@ async fn process_internal_event(
 async fn add_peer(
     id: PeerId,
     address: Multiaddr,
-    alias: Option<String>,
+    alias: String,
     relation: PeerRelation,
     peers: &PeerList,
     event_sender: &EventSender,
@@ -412,14 +433,15 @@ async fn add_peer(
     };
 
     // If the insert fails for some reason, we get the peer info back.
-    if let Err((id, info, e)) = peers.insert(id.clone(), info, PeerState::Disconnected).await {
+    if let Err((id, info, e)) = peers.insert(id.clone(), info.clone(), PeerState::Disconnected).await {
         // Inform the user that the command failed.
         event_sender
             .send(Event::CommandFailed {
                 command: Command::AddPeer {
                     id,
                     address: info.address,
-                    alias: info.alias,
+                    // NOTE: the returned failed command now has the default alias, if none was specified originally.
+                    alias: Some(info.alias),
                     relation: info.relation,
                 },
             })
@@ -430,7 +452,7 @@ async fn add_peer(
 
     // Inform the user that the command succeeded.
     event_sender
-        .send(Event::PeerAdded { id })
+        .send(Event::PeerAdded { id, info })
         .map_err(|_| Error::EventSendFailure("PeerAdded"))?;
 
     Ok(())

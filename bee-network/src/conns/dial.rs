@@ -5,7 +5,7 @@ use super::{errors::Error, manager::LISTEN_ADDRESSES, Origin};
 
 use crate::{
     interaction::events::InternalEventSender,
-    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerRelation, PeerState},
+    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerRelation},
     transport::build_transport,
     Multiaddr, PeerId, ShortId,
 };
@@ -50,7 +50,7 @@ pub async fn dial_peer(
         return Err(Error::DialedBannedAddress(peer_info.address));
     }
 
-    log_dialing_peer(peer_id, &peer_info);
+    log_dialing_peer(&peer_info);
 
     let (id, muxer) = build_transport(local_keys)
         .map_err(|_| Error::CreatingTransportFailed)?
@@ -69,7 +69,7 @@ pub async fn dial_peer(
 
     let peer_id = id;
 
-    log_outbound_connection_success(&peer_id, &peer_info);
+    log_outbound_connection_success(&peer_info);
 
     super::upgrade_connection(
         peer_id,
@@ -84,12 +84,8 @@ pub async fn dial_peer(
 }
 
 #[inline]
-fn log_dialing_peer(peer_id: &PeerId, peer_info: &PeerInfo) {
-    if let Some(alias) = peer_info.alias.as_ref() {
-        info!("Dialing {}:{}...", alias, peer_id.short());
-    } else {
-        info!("Dialing {}...", peer_id.short());
-    }
+fn log_dialing_peer(peer_info: &PeerInfo) {
+    info!("Dialing {}...", peer_info.alias);
 }
 
 pub async fn dial_address(
@@ -139,21 +135,21 @@ pub async fn dial_address(
         // We also allow for a certain number of unknown peers.
         let peer_info = PeerInfo {
             address: address.clone(),
-            alias: None,
+            alias: peer_id.short(),
             relation: PeerRelation::Unknown,
         };
 
         peers
-            .insert(peer_id.clone(), peer_info.clone(), PeerState::Disconnected)
+            .accepts(&peer_id, &peer_info)
             .await
-            .map_err(|_| Error::DialedRejectedPeer(peer_id.short()))?;
+            .map_err(|_| Error::DialedRejectedPeer(peer_info.alias.clone()))?;
 
-        info!("Allowing connection to unknown peer {}", peer_id.short(),);
+        info!("Unknown peer {} accepted.", peer_info.alias);
 
         peer_info
     };
 
-    log_outbound_connection_success(&peer_id, &peer_info);
+    log_outbound_connection_success(&peer_info);
 
     super::upgrade_connection(
         peer_id,
@@ -168,10 +164,6 @@ pub async fn dial_address(
 }
 
 #[inline]
-fn log_outbound_connection_success(peer_id: &PeerId, peer_info: &PeerInfo) {
-    if let Some(alias) = peer_info.alias.as_ref() {
-        info!("Established (outbound) connection with {}:{}.", alias, peer_id.short(),)
-    } else {
-        info!("Established (outbound) connection with {}.", peer_id.short(),);
-    }
+fn log_outbound_connection_success(peer_info: &PeerInfo) {
+    info!("Established (outbound) connection with {}.", peer_info.alias);
 }

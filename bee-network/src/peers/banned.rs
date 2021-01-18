@@ -43,9 +43,4 @@ where
     pub fn remove(&self, value: &T) -> bool {
         self.0.remove(value).is_some()
     }
-
-    #[cfg(test)]
-    pub fn count(&self) -> usize {
-        self.0.len()
-    }
 }
