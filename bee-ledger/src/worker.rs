@@ -40,7 +40,7 @@ where
     let message = tangle.get(&message_id).await.ok_or(Error::MilestoneMessageNotFound)?;
 
     let milestone = match message.payload() {
-        Some(Payload::Milestone(milestone)) => milestone,
+        Some(Payload::Milestone(milestone)) => milestone.clone(),
         _ => return Err(Error::NoMilestonePayload),
     };
 
@@ -52,6 +52,8 @@ where
         MilestoneIndex(milestone.essence().index()),
         milestone.essence().timestamp(),
     );
+
+    drop(message);
 
     if let Err(e) = visit_dfs::<N>(tangle, storage, message_id, &mut metadata).await {
         return Err(e);
@@ -88,6 +90,36 @@ where
     .await?;
 
     *index = LedgerIndex(MilestoneIndex(milestone.essence().index()));
+
+    for message_id in metadata.excluded_no_transaction_messages.iter() {
+        tangle
+            .update_metadata(message_id, |message_metadata| {
+                message_metadata.flags_mut().set_conflicting(false);
+                message_metadata.set_milestone_index(metadata.index);
+                message_metadata.confirm(metadata.timestamp);
+            })
+            .await;
+    }
+
+    for message_id in metadata.excluded_conflicting_messages.iter() {
+        tangle
+            .update_metadata(message_id, |message_metadata| {
+                message_metadata.flags_mut().set_conflicting(true);
+                message_metadata.set_milestone_index(metadata.index);
+                message_metadata.confirm(metadata.timestamp);
+            })
+            .await;
+    }
+
+    for message_id in metadata.included_messages.iter() {
+        tangle
+            .update_metadata(message_id, |message_metadata| {
+                message_metadata.flags_mut().set_conflicting(false);
+                message_metadata.set_milestone_index(metadata.index);
+                message_metadata.confirm(metadata.timestamp);
+            })
+            .await;
+    }
 
     info!(
         "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}.",

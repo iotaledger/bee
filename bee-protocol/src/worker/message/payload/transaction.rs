@@ -29,7 +29,7 @@ async fn process<B: StorageBackend>(
     message_id: MessageId,
     indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
 ) {
-    if let Some(message) = tangle.get(&message_id).await {
+    if let Some(message) = tangle.get(&message_id).await.map(|m| (*m).clone()) {
         if let Some(Payload::Transaction(transaction)) = message.payload() {
             if let Some(Payload::Indexation(_)) = transaction.essence().payload() {
                 if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {

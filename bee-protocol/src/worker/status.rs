@@ -58,7 +58,7 @@ where
                         latest_solid_milestone_index,
                         latest_milestone_index,
                         progress,
-                        requested_messages.len(),
+                        requested_messages.len().await,
                     )
                 };
 

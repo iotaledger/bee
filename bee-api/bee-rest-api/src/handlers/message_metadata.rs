@@ -21,7 +21,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
     if !tangle.is_synced() {
         return Err(reject::custom(ServiceUnavailable("node is not synced".to_string())));
     }
-    match tangle.get(&message_id).await {
+    match tangle.get(&message_id).await.map(|m| (*m).clone()) {
         Some(message) => {
             // existing message <=> existing metadata, therefore unwrap() is safe
             let metadata = tangle.get_metadata(&message_id).await.unwrap();
@@ -31,10 +31,18 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
             let otrsi_delta = 13;
             let below_max_depth = 15;
 
-            let (is_solid, referenced_by_milestone_index, ledger_inclusion_state, should_promote, should_reattach) = {
+            let (
+                is_solid,
+                referenced_by_milestone_index,
+                ledger_inclusion_state,
+                conflict_reason,
+                should_promote,
+                should_reattach,
+            ) = {
                 let is_solid;
                 let referenced_by_milestone_index;
                 let ledger_inclusion_state;
+                let conflict_reason;
                 let should_promote;
                 let should_reattach;
 
@@ -44,8 +52,11 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     referenced_by_milestone_index = Some(*milestone);
                     ledger_inclusion_state = Some(if let Some(Payload::Transaction(_)) = message.payload() {
                         if metadata.flags().is_conflicting() {
+                            // use conflict reason 0 as default for now, till the actual conflict reason is available
+                            conflict_reason = Some(0);
                             LedgerInclusionStateDto::Conflicting
                         } else {
+                            conflict_reason = None;
                             // maybe not checked by the ledger yet, but still
                             // returning "included". should
                             // `metadata.flags().is_conflicting` return an Option
@@ -53,6 +64,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                             LedgerInclusionStateDto::Included
                         }
                     } else {
+                        conflict_reason = None;
                         LedgerInclusionStateDto::NoTransaction
                     });
                     should_reattach = None;
@@ -62,6 +74,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     is_solid = true;
                     referenced_by_milestone_index = None;
                     ledger_inclusion_state = None;
+                    conflict_reason = None;
 
                     let lsmi = *tangle.get_latest_solid_milestone_index();
                     // unwrap() of OTRSI/YTRSI is safe since message is solid
@@ -80,6 +93,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     is_solid = false;
                     referenced_by_milestone_index = None;
                     ledger_inclusion_state = None;
+                    conflict_reason = None;
                     should_reattach = Some(true);
                     should_promote = Some(false);
                 }
@@ -88,6 +102,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     is_solid,
                     referenced_by_milestone_index,
                     ledger_inclusion_state,
+                    conflict_reason,
                     should_reattach,
                     should_promote,
                 )
@@ -100,6 +115,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                 is_solid,
                 referenced_by_milestone_index,
                 ledger_inclusion_state,
+                conflict_reason,
                 should_promote,
                 should_reattach,
             })))
@@ -125,6 +141,9 @@ pub struct MessageMetadataResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "ledgerInclusionState")]
     pub ledger_inclusion_state: Option<LedgerInclusionStateDto>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "conflictReason")]
+    pub conflict_reason: Option<u8>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "shouldPromote")]
     pub should_promote: Option<bool>,

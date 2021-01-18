@@ -25,7 +25,6 @@ use std::{
 
 #[inline]
 async fn on_message<N: Node>(
-    tangle: &MsTangle<N::Backend>,
     storage: &N::Backend,
     message_id: &MessageId,
     message: &Message,
@@ -108,14 +107,6 @@ where
         }
     };
 
-    tangle
-        .update_metadata(message_id, |message_metadata| {
-            message_metadata.flags_mut().set_conflicting(conflicting);
-            message_metadata.set_milestone_index(metadata.index);
-            message_metadata.confirm(metadata.timestamp);
-        })
-        .await;
-
     Ok(())
 }
 
@@ -160,7 +151,7 @@ where
                 let parent2 = message.parent2();
 
                 if visited.contains(parent1) && visited.contains(parent2) {
-                    on_message::<N>(tangle, storage, message_id, &message, metadata).await?;
+                    on_message::<N>(storage, message_id, &message, metadata).await?;
                     visited.insert(*message_id);
                     messages_ids.pop();
                 } else if !visited.contains(parent1) {

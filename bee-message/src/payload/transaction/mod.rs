@@ -14,7 +14,8 @@ pub use constants::{INPUT_OUTPUT_COUNT_MAX, INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTP
 pub use essence::{TransactionPayloadEssence, TransactionPayloadEssenceBuilder};
 pub use input::{Input, UTXOInput};
 pub use output::{
-    Address, Ed25519Address, Output, OutputId, SignatureLockedSingleOutput, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH,
+    Address, Bech32Address, Ed25519Address, Output, OutputId, SignatureLockedDustAllowanceOutput,
+    SignatureLockedSingleOutput, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH,
 };
 pub use transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
 pub use unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock};

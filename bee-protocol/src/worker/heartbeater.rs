@@ -65,7 +65,8 @@ where
                     tangle.get_latest_solid_milestone_index(),
                     tangle.get_pruning_index(),
                     tangle.get_latest_milestone_index(),
-                );
+                )
+                .await;
             }
 
             info!("Stopped.");

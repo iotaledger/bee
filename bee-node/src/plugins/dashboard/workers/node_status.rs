@@ -1,7 +1,11 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{plugins::Dashboard, storage::StorageBackend};
+use crate::{
+    constants::{BEE_GIT_COMMIT, BEE_VERSION},
+    plugins::Dashboard,
+    storage::StorageBackend,
+};
 
 use bee_peering::PeeringConfig;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
@@ -40,6 +44,11 @@ where
             interval(Duration::from_secs(NODE_STATUS_METRICS_WORKER_INTERVAL_SEC)),
         );
         let uptime = Instant::now();
+        let version = if BEE_GIT_COMMIT.is_empty() {
+            BEE_VERSION.to_owned()
+        } else {
+            BEE_VERSION.to_owned() + "-" + &BEE_GIT_COMMIT[0..7]
+        };
 
         while ticker.next().await.is_some() {
             bus.dispatch(NodeStatus {
@@ -48,7 +57,7 @@ where
                 is_healthy: is_healthy(tangle.clone()).await, /* TODO: move is_healthy() from bee-rest-api to
                                                                * bee-tangle eventually */
                 is_synced: tangle.is_synced(),
-                version: String::from(env!("CARGO_PKG_VERSION")),
+                version: version.clone(),
                 latest_version: String::from(env!("CARGO_PKG_VERSION")),
                 uptime: uptime.elapsed().as_millis() as u64,
                 autopeering_id: peering_config.peer_id.to_string(),

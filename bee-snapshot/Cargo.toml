@@ -20,7 +20,6 @@ bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 async-trait = "0.1"
 bytemuck = "1.2"
 chrono = "0.4"
-dashmap = "4.0"
 futures = "0.3"
 log = "0.4"
 reqwest = { version = "0.10", features = ["stream"] }

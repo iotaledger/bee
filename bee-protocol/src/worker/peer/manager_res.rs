@@ -26,7 +26,7 @@ impl<N: Node> Worker<N> for PeerManagerResWorker {
 
     async fn stop(self, node: &mut N) -> Result<(), Self::Error> {
         if let Some(peer_manager) = node.remove_resource::<PeerManager>() {
-            for (_, (_, _, shutdown)) in peer_manager.peers {
+            for (_, (_, _, shutdown)) in peer_manager.peers.into_inner() {
                 // TODO: Should we handle this error?
                 let _ = shutdown.send(());
             }

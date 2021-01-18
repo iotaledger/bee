@@ -1,14 +1,21 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{header::SnapshotHeader, kind::Kind, milestone_diff::MilestoneDiff, output::Output, Error};
+use crate::{header::SnapshotHeader, kind::Kind, milestone_diff::MilestoneDiff, Error};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
+use bee_ledger::model::Output;
+use bee_message::{
+    milestone::MilestoneIndex,
+    payload::transaction::{self, OutputId},
+    solid_entry_point::SolidEntryPoint,
+    MessageId,
+};
 
 use log::{error, info};
 
 use std::{
+    collections::HashMap,
     fs::OpenOptions,
     io::{BufReader, BufWriter},
     path::Path,
@@ -17,7 +24,8 @@ use std::{
 pub struct Snapshot {
     pub(crate) header: SnapshotHeader,
     pub(crate) solid_entry_points: Box<[SolidEntryPoint]>,
-    pub(crate) outputs: Box<[Output]>,
+    pub(crate) outputs: HashMap<OutputId, Output>,
+    // A vector and not a hashmap because we need to keep the order intact.
     pub(crate) milestone_diffs: Vec<(MilestoneIndex, MilestoneDiff)>,
 }
 
@@ -30,7 +38,7 @@ impl Snapshot {
         &self.solid_entry_points
     }
 
-    pub fn outputs(&self) -> &[Output] {
+    pub fn outputs(&self) -> &HashMap<OutputId, Output> {
         &self.outputs
     }
 
@@ -72,7 +80,8 @@ impl Packable for Snapshot {
             len += sep.packed_len();
         }
         len += (self.outputs.len() as u64).packed_len();
-        for output in self.outputs.iter() {
+        for (output_id, output) in self.outputs.iter() {
+            len += output_id.packed_len();
             len += output.packed_len();
         }
         len += (self.milestone_diffs.len() as u64).packed_len();
@@ -98,8 +107,10 @@ impl Packable for Snapshot {
             sep.pack(writer)?;
         }
         if self.header.kind() == Kind::Full {
-            for output in self.outputs.iter() {
-                output.pack(writer)?;
+            for (output_id, output) in self.outputs.iter() {
+                output.message_id().pack(writer)?;
+                output_id.pack(writer)?;
+                output.inner().pack(writer)?;
             }
         }
         for (index, diff) in self.milestone_diffs.iter() {
@@ -158,10 +169,13 @@ impl Packable for Snapshot {
             solid_entry_points.push(SolidEntryPoint::unpack(reader)?);
         }
 
-        let mut outputs = Vec::with_capacity(output_count);
+        let mut outputs = HashMap::with_capacity(output_count);
         if header.kind() == Kind::Full {
             for _ in 0..output_count {
-                outputs.push(Output::unpack(reader)?);
+                let message_id = MessageId::unpack(reader)?;
+                let output_id = OutputId::unpack(reader)?;
+                let output = transaction::Output::unpack(reader)?;
+                outputs.insert(output_id, Output::new(message_id, output));
             }
         }
 
@@ -173,7 +187,7 @@ impl Packable for Snapshot {
         Ok(Self {
             header,
             solid_entry_points: solid_entry_points.into_boxed_slice(),
-            outputs: outputs.into_boxed_slice(),
+            outputs,
             milestone_diffs,
         })
     }
@@ -192,7 +206,7 @@ pub(crate) fn snapshot(path: &Path, index: MilestoneIndex) -> Result<(), Error> 
             ledger_index: MilestoneIndex(0),
         },
         solid_entry_points: Box::new([]),
-        outputs: Box::new([]),
+        outputs: HashMap::new(),
         milestone_diffs: Vec::new(),
     };
 

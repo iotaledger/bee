@@ -20,7 +20,7 @@ pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use message::{
     HasherWorker, HasherWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker,
-    MilestonePayloadWorkerEvent, ProcessorWorker, TransactionPayloadWorker, TransactionPayloadWorkerEvent,
+    PayloadWorker, PayloadWorkerEvent, ProcessorWorker, TransactionPayloadWorker,
 };
 pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 pub use metrics::MetricsWorker;
