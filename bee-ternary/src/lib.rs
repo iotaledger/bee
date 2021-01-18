@@ -54,6 +54,8 @@
 
 use std::slice;
 
+/// Utility functions for encoding and decoding B1T6 encoding.
+pub mod b1t6;
 /// Conversions between to and from standard types.
 pub mod convert;
 /// Types and traits that allow the implementation of new encoding formats.
@@ -757,6 +759,11 @@ impl<T: RawEncodingBuf> TritBuf<T> {
     /// Pop a trit from the back of this [`TritBuf`], returning it if successful.
     pub fn pop(&mut self) -> Option<<T::Slice as RawEncoding>::Trit> {
         self.0.pop()
+    }
+
+    /// Append a trit slice to the end of this [`TritBuf`].
+    pub fn append<U: RawEncoding<Trit = <T::Slice as RawEncoding>::Trit> + ?Sized>(&mut self, trits: &Trits<U>) {
+        trits.iter().for_each(|t| self.push(t));
     }
 
     /// Extracts a trit slice containing the data within this buffer.

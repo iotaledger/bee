@@ -105,7 +105,7 @@ dependencies = [
 
 [[package]]
 name = "bee-ternary"
-version = "0.3.4-alpha"
+version = "0.4.0-alpha"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -117,6 +117,7 @@ name = "bee-test"
 version = "0.1.0-alpha"
 dependencies = [
  "bee-ternary",
+ "hex",
  "rand",
  "serde",
  "serde_json",
@@ -546,6 +547,12 @@ checksum = "5aca5565f760fb5b220e499d72710ed156fdb74e631659e99377d9ebfbd13ae8"
 dependencies = [
  "libc",
 ]
+
+[[package]]
+name = "hex"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
 
 [[package]]
 name = "itertools"
