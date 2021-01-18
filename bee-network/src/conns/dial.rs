@@ -5,7 +5,7 @@ use super::{errors::Error, manager::LISTEN_ADDRESSES, Origin};
 
 use crate::{
     interaction::events::InternalEventSender,
-    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerRelation, PeerState},
+    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerRelation},
     transport::build_transport,
     Multiaddr, PeerId, ShortId,
 };
@@ -140,11 +140,11 @@ pub async fn dial_address(
         };
 
         peers
-            .insert(peer_id.clone(), peer_info.clone(), PeerState::Disconnected)
+            .accepts(&peer_id, &peer_info)
             .await
-            .map_err(|_| Error::DialedRejectedPeer(peer_id.short()))?;
+            .map_err(|_| Error::DialedRejectedPeer(peer_info.alias.clone()))?;
 
-        info!("Allowing connection to unknown peer {}", peer_id.short(),);
+        info!("Unknown peer {} accepted.", peer_info.alias);
 
         peer_info
     };

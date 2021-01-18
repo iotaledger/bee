@@ -346,9 +346,28 @@ async fn process_internal_event(
             message_sender,
             ..
         } => {
-            peers
-                .update_state(&peer_id, PeerState::Connected(message_sender))
-                .await?;
+            match peer_info.relation {
+                PeerRelation::Known => {
+                    peers
+                        .update_state(&peer_id, PeerState::Connected(message_sender))
+                        .await?
+                }
+                PeerRelation::Unknown => {
+                    peers
+                        .insert(peer_id.clone(), peer_info.clone(), PeerState::Connected(message_sender))
+                        .await
+                        .map_err(|(_, _, e)| e)?;
+
+                    event_sender
+                        .send(Event::PeerAdded {
+                            id: peer_id.clone(),
+                            info: peer_info.clone(),
+                        })
+                        .map_err(|_| Error::EventSendFailure("PeerAdded"))?;
+                }
+                // Ignore 'PeerRelation::Discovered' case until autopeering has landed.
+                _ => (),
+            }
 
             event_sender
                 .send(Event::PeerConnected {

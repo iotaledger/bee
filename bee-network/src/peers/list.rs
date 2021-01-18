@@ -26,32 +26,13 @@ impl PeerList {
 
     // If the insertion fails for some reason, we give it back to the caller.
     pub async fn insert(&self, id: PeerId, info: PeerInfo, state: PeerState) -> Result<(), (PeerId, PeerInfo, Error)> {
-        if self.0.read().await.contains_key(&id) {
-            let short = id.short();
-            return Err((id, info, Error::PeerAlreadyAdded(short)));
+        if let Err(e) = self.accepts(&id, &info).await {
+            Err((id, info, e))
+        } else {
+            // Since we already checked that such an `id` is not yet present, the returned value is always `None`.
+            let _ = self.0.write().await.insert(id, (info, state));
+            Ok(())
         }
-
-        // Prevent inserting more peers than preconfigured.
-        match info.relation {
-            PeerRelation::Unknown => {
-                if self.count_if(|info, _| info.is_unknown()).await >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed) {
-                    return Err((
-                        id,
-                        info,
-                        Error::UnknownPeerLimitReached(MAX_UNKNOWN_PEERS.load(Ordering::Relaxed)),
-                    ));
-                }
-            }
-            PeerRelation::Discovered => {
-                todo!("PeerRelation::Discovered case");
-            }
-            _ => (),
-        }
-
-        // Since we already checked that such an `id` is not yet present, the returned value is always `None`.
-        let _ = self.0.write().await.insert(id, (info, state));
-
-        Ok(())
     }
 
     pub async fn update_relation(&self, id: &PeerId, relation: PeerRelation) -> Result<(), Error> {
@@ -75,6 +56,32 @@ impl PeerList {
     #[allow(dead_code)]
     pub async fn contains(&self, id: &PeerId) -> bool {
         self.0.read().await.contains_key(id)
+    }
+
+    pub async fn accepts(&self, id: &PeerId, info: &PeerInfo) -> Result<(), Error> {
+        if self.0.read().await.contains_key(id) {
+            let alias = info.alias.clone();
+            return Err(Error::PeerAlreadyAdded(alias));
+        }
+
+        // Prevent inserting more peers than preconfigured.
+        match info.relation {
+            PeerRelation::Unknown => {
+                if self.count_if(|info, _| info.is_unknown()).await >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed) {
+                    return Err(Error::UnknownPeerLimitReached(
+                        MAX_UNKNOWN_PEERS.load(Ordering::Relaxed),
+                    ));
+                }
+            }
+            // TODO: Handle 'PeerRelation::Discovered' case once autopeering has landed.
+            _ => (),
+        }
+        if self.0.read().await.contains_key(id) {
+            let alias = info.alias.clone();
+            return Err(Error::PeerAlreadyAdded(alias));
+        }
+
+        Ok(())
     }
 
     pub async fn remove(&self, id: &PeerId) -> Result<PeerInfo, Error> {
