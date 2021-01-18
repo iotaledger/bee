@@ -178,20 +178,6 @@ async fn import_snapshot<B: StorageBackend>(
         return Err(Error::InvalidLedgerState);
     }
 
-    Insert::<(), SnapshotInfo>::insert(
-        storage,
-        &(),
-        &SnapshotInfo::new(
-            snapshot.header().network_id(),
-            snapshot.header().sep_index(),
-            snapshot.header().sep_index(),
-            snapshot.header().sep_index(),
-            snapshot.header().timestamp(),
-        ),
-    )
-    .await
-    .map_err(|e| Error::StorageBackend(Box::new(e)))?;
-
     Ok(snapshot)
 }
 
@@ -210,12 +196,26 @@ async fn import_snapshots<B: StorageBackend>(
         download_snapshot_file(config.delta_path(), config.download_urls()).await?;
     }
 
-    let _full_snapshot = import_snapshot(storage, Kind::Full, config.full_path(), network_id).await?;
+    let mut snapshot = import_snapshot(storage, Kind::Full, config.full_path(), network_id).await?;
 
     // Load delta file only if both full and delta files already existed or if they have just been downloaded.
     if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
-        let _delta_snapshot = import_snapshot(storage, Kind::Delta, config.delta_path(), network_id).await?;
+        snapshot = import_snapshot(storage, Kind::Delta, config.delta_path(), network_id).await?;
     }
+
+    Insert::<(), SnapshotInfo>::insert(
+        storage,
+        &(),
+        &SnapshotInfo::new(
+            snapshot.header().network_id(),
+            snapshot.header().sep_index(),
+            snapshot.header().sep_index(),
+            snapshot.header().sep_index(),
+            snapshot.header().timestamp(),
+        ),
+    )
+    .await
+    .map_err(|e| Error::StorageBackend(Box::new(e)))?;
 
     Ok(())
 }
