@@ -76,7 +76,7 @@ impl Packable for Address {
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
             ED25519_ADDRESS_TYPE => Self::Ed25519(Ed25519Address::unpack(reader)?),
-            _ => return Err(Self::Error::InvalidAddressType),
+            t => return Err(Self::Error::InvalidAddressType(t)),
         })
     }
 }

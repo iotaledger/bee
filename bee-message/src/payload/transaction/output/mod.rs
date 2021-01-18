@@ -73,7 +73,7 @@ impl Packable for Output {
             SIGNATURE_LOCKED_DUST_ALLOWANCE_TYPE => {
                 Self::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput::unpack(reader)?)
             }
-            _ => return Err(Self::Error::InvalidOutputType),
+            t => return Err(Self::Error::InvalidOutputType(t)),
         })
     }
 }
