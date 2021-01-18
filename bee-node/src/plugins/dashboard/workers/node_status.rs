@@ -1,9 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{plugins::Dashboard, storage::StorageBackend};
+use crate::{config::NodeConfig, plugins::Dashboard, storage::StorageBackend};
 
-use bee_peering::PeeringConfig;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use bee_tangle::MsTangle;
 
@@ -24,13 +23,15 @@ pub static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_va
 
 const NODE_STATUS_METRICS_WORKER_INTERVAL_SEC: u64 = 1;
 
-pub(crate) fn node_status_worker<N>(node: &mut N, peering_config: PeeringConfig)
+pub(crate) fn node_status_worker<N>(node: &mut N)
 where
     N: Node,
     N::Backend: StorageBackend,
 {
-    let bus = node.bus();
     let tangle = node.resource::<MsTangle<N::Backend>>();
+    let node_config = node.resource::<NodeConfig<N::Backend>>();
+    let peering_config = node_config.peering.clone();
+    let bus = node.bus();
 
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
         debug!("Ws `node_status_worker` running.");
@@ -52,7 +53,8 @@ where
                 latest_version: String::from(env!("CARGO_PKG_VERSION")),
                 uptime: uptime.elapsed().as_millis() as u64,
                 autopeering_id: peering_config.peer_id.to_string(),
-                node_alias: "".to_string(),
+                node_alias: node_config.alias.clone(),
+                bech32_hrp: "iota".to_string(),
                 connected_peers_count: 0,
                 current_requested_ms: 0,
                 request_queue_queued: 0,
@@ -114,6 +116,7 @@ pub struct NodeStatus {
     pub uptime: u64,
     pub autopeering_id: String,
     pub node_alias: String,
+    pub bech32_hrp: String,
     pub connected_peers_count: usize,
     pub current_requested_ms: usize,
     pub request_queue_queued: usize,

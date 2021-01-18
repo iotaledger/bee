@@ -191,8 +191,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         this = this.with_worker_cfg::<Mqtt>(config.mqtt);
         #[cfg(feature = "dashboard")]
         {
-            this =
-                this.with_worker_cfg::<Dashboard>((config.dashboard, config.rest_api.clone(), config.peering.clone()));
+            this = this.with_worker_cfg::<Dashboard>(config.dashboard);
         }
 
         let mut node = BeeNode {
