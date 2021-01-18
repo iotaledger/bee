@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! Traits used to represent bee nodes and allow for their instantiation.
