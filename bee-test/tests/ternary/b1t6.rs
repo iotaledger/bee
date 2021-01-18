@@ -10,7 +10,7 @@ fn decode() {
     let bytes = vec![1u8];
     let str = encode::<T1B1Buf>(&bytes)
         .iter_trytes()
-        .map(|trit| char::from(trit))
+        .map(char::from)
         .collect::<String>();
 
     assert_eq!(str, "A9");
@@ -18,7 +18,7 @@ fn decode() {
     let bytes = vec![127u8];
     let str = encode::<T1B1Buf>(&bytes)
         .iter_trytes()
-        .map(|trit| char::from(trit))
+        .map(char::from)
         .collect::<String>();
 
     assert_eq!(str, "SE");
@@ -26,7 +26,7 @@ fn decode() {
     let bytes = vec![128u8];
     let str = encode::<T1B1Buf>(&bytes)
         .iter_trytes()
-        .map(|trit| char::from(trit))
+        .map(char::from)
         .collect::<String>();
 
     assert_eq!(str, "GV");
@@ -34,7 +34,7 @@ fn decode() {
     let bytes = vec![255u8];
     let str = encode::<T1B1Buf>(&bytes)
         .iter_trytes()
-        .map(|trit| char::from(trit))
+        .map(char::from)
         .collect::<String>();
 
     assert_eq!(str, "Z9");
@@ -42,7 +42,7 @@ fn decode() {
     let bytes = vec![0u8, 1u8];
     let str = encode::<T1B1Buf>(&bytes)
         .iter_trytes()
-        .map(|trit| char::from(trit))
+        .map(char::from)
         .collect::<String>();
 
     assert_eq!(str, "99A9");
@@ -54,7 +54,7 @@ fn decode() {
     ];
     let str = encode::<T1B1Buf>(&bytes)
         .iter_trytes()
-        .map(|trit| char::from(trit))
+        .map(char::from)
         .collect::<String>();
 
     assert_eq!(
@@ -65,7 +65,7 @@ fn decode() {
     let bytes = hex::decode("0001027e7f8081fdfeff").unwrap();
     let str = encode::<T1B1Buf>(&bytes)
         .iter_trytes()
-        .map(|trit| char::from(trit))
+        .map(char::from)
         .collect::<String>();
 
     assert_eq!(str, "99A9B9RESEGVHVX9Y9Z9");
@@ -73,7 +73,7 @@ fn decode() {
     let bytes = hex::decode("9ba06c78552776a596dfe360cc2b5bf644c0f9d343a10e2e71debecd30730d03").unwrap();
     let str = encode::<T1B1Buf>(&bytes)
         .iter_trytes()
-        .map(|trit| char::from(trit))
+        .map(char::from)
         .collect::<String>();
 
     assert_eq!(str, "GWLW9DLDDCLAJDQXBWUZYZODBYPBJCQ9NCQYT9IYMBMWNASBEDTZOYCYUBGDM9C9");
