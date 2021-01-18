@@ -13,9 +13,6 @@ pub struct Args {
 
     #[structopt(short = "p", long = "peers")]
     peer_addresses: Vec<String>,
-
-    #[structopt(short = "m", long = "msg")]
-    message: String,
 }
 
 impl Args {
@@ -23,12 +20,9 @@ impl Args {
         let Args {
             bind_address,
             mut peer_addresses,
-            message,
         } = self;
 
-        let mut config = ExampleConfig::build()
-            .with_bind_address(bind_address)
-            .with_message(message);
+        let mut config = ExampleConfig::build().with_bind_address(bind_address);
 
         for peer_address in peer_addresses.drain(..) {
             config = config.with_peer_address(peer_address);

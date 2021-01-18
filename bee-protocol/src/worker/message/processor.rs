@@ -9,16 +9,15 @@ use crate::{
     peer::PeerManager,
     storage::StorageBackend,
     worker::{
-        BroadcasterWorker, BroadcasterWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent,
-        MessageRequesterWorker, MessageSubmitterError, MetricsWorker, MilestonePayloadWorker,
-        MilestonePayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent, RequestedMessages,
-        TangleWorker, TransactionPayloadWorker, TransactionPayloadWorkerEvent,
+        BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker, MessageSubmitterError, MetricsWorker,
+        PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,
+        RequestedMessages, TangleWorker,
     },
     ProtocolMetrics,
 };
 
 use bee_common::packable::Packable;
-use bee_message::{payload::Payload, Message, MessageId};
+use bee_message::{Message, MessageId};
 use bee_network::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::MessageMetadata, MsTangle};
@@ -57,9 +56,7 @@ where
             TypeId::of::<MessageRequesterWorker>(),
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
-            TypeId::of::<TransactionPayloadWorker>(),
-            TypeId::of::<MilestonePayloadWorker>(),
-            TypeId::of::<IndexationPayloadWorker>(),
+            TypeId::of::<PayloadWorker>(),
         ]
         .leak()
     }
@@ -67,12 +64,10 @@ where
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
-        let transaction_payload_worker = node.worker::<TransactionPayloadWorker>().unwrap().tx.clone();
-        let milestone_payload_worker = node.worker::<MilestonePayloadWorker>().unwrap().tx.clone();
-        let indexation_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();
         let propagator = node.worker::<PropagatorWorker>().unwrap().tx.clone();
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
+        let payload_worker = node.worker::<PayloadWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
@@ -127,112 +122,78 @@ where
 
                 // TODO should be passed by the hasher worker ?
                 let (message_id, _) = message.id();
-                let requested = requested_messages.contains_key(&message_id);
+                let requested = requested_messages.contains(&message_id).await;
 
                 let mut metadata = MessageMetadata::arrived();
                 metadata.flags_mut().set_requested(requested);
 
+                let parent1 = *message.parent1();
+                let parent2 = *message.parent2();
+
                 // store message
-                if let Some(message) = tangle.insert(message, message_id, metadata).await {
-                    bus.dispatch(MessageProcessed(message_id));
+                let inserted = tangle.insert(message, message_id, metadata).await.is_some();
 
-                    // TODO: boolean values are false at this point in time? trigger event from another location?
-                    bus.dispatch(NewVertex {
-                        id: message_id.to_string(),
-                        parent1_id: message.parent1().to_string(),
-                        parent2_id: message.parent2().to_string(),
-                        is_solid: false,
-                        is_referenced: false,
-                        is_conflicting: false,
-                        is_milestone: false,
-                        is_tip: false,
-                        is_selected: false,
-                    });
-
-                    // TODO this was temporarily moved from the tangle.
-                    // Reason is that since the tangle is not a worker, it can't have access to the propagator tx.
-                    // When the tangle is made a worker, this should be put back on.
-
-                    if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
-                        error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
-                    }
-
-                    metrics.new_messages_inc();
-
-                    match requested_messages.remove(&message_id) {
-                        Some((_, (index, instant))) => {
-                            // Message was requested.
-
-                            latency_num += 1;
-                            latency_sum += (Instant::now() - instant).as_millis() as u64;
-                            metrics.messages_average_latency_set(latency_sum / latency_num);
-
-                            let parent1 = message.parent1();
-                            let parent2 = message.parent2();
-
-                            helper::request_message(&tangle, &message_requester, &*requested_messages, *parent1, index)
-                                .await;
-                            if parent1 != parent2 {
-                                helper::request_message(
-                                    &tangle,
-                                    &message_requester,
-                                    &*requested_messages,
-                                    *parent2,
-                                    index,
-                                )
-                                .await;
-                            }
-                        }
-                        None => {
-                            // Message was not requested.
-                            if let Err(e) = broadcaster.send(BroadcasterWorkerEvent {
-                                source: from,
-                                message: message_packet,
-                            }) {
-                                warn!("Broadcasting message failed: {}.", e);
-                            }
-                        }
-                    };
-
-                    match message.payload() {
-                        Some(Payload::Transaction(_)) => {
-                            if let Err(e) = transaction_payload_worker.send(TransactionPayloadWorkerEvent(message_id)) {
-                                warn!(
-                                    "Sending message id {} to transaction payload worker failed: {:?}.",
-                                    message_id, e
-                                );
-                            }
-                        }
-                        Some(Payload::Milestone(_)) => {
-                            if let Err(e) = milestone_payload_worker.send(MilestonePayloadWorkerEvent(message_id)) {
-                                warn!(
-                                    "Sending message id {} to milestone payload worker failed: {:?}.",
-                                    message_id, e
-                                );
-                            }
-                        }
-                        Some(Payload::Indexation(_)) => {
-                            if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
-                                warn!(
-                                    "Sending message id {} to indexation payload worker failed: {:?}.",
-                                    message_id, e
-                                );
-                            }
-                        }
-                        Some(_) => {
-                            // TODO
-                        }
-                        None => {
-                            // TODO
-                        }
-                    }
-                } else {
+                if !inserted {
                     metrics.known_messages_inc();
-                    if let Some(peer_id) = from {
+                    if let Some(ref peer_id) = from {
                         peer_manager
                             .get(&peer_id)
-                            .map(|peer| peer.value().0.metrics().known_messages_inc());
+                            .await
+                            .map(|peer| (*peer).0.metrics().known_messages_inc());
                     }
+                    continue;
+                }
+
+                bus.dispatch(MessageProcessed(message_id));
+
+                // TODO: boolean values are false at this point in time? trigger event from another location?
+                bus.dispatch(NewVertex {
+                    id: message_id.to_string(),
+                    parent1_id: parent1.to_string(),
+                    parent2_id: parent2.to_string(),
+                    is_solid: false,
+                    is_referenced: false,
+                    is_conflicting: false,
+                    is_milestone: false,
+                    is_tip: false,
+                    is_selected: false,
+                });
+
+                if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
+                    error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
+                }
+
+                metrics.new_messages_inc();
+
+                match requested_messages.remove(&message_id).await {
+                    Some((index, instant)) => {
+                        // Message was requested.
+
+                        latency_num += 1;
+                        latency_sum += (Instant::now() - instant).as_millis() as u64;
+                        metrics.messages_average_latency_set(latency_sum / latency_num);
+
+                        helper::request_message(&tangle, &message_requester, &*requested_messages, parent1, index)
+                            .await;
+                        if parent1 != parent2 {
+                            helper::request_message(&tangle, &message_requester, &*requested_messages, parent2, index)
+                                .await;
+                        }
+                    }
+                    None => {
+                        // Message was not requested.
+                        if let Err(e) = broadcaster.send(BroadcasterWorkerEvent {
+                            source: from,
+                            message: message_packet,
+                        }) {
+                            warn!("Broadcasting message failed: {}.", e);
+                        }
+                    }
+                };
+
+                if let Err(e) = payload_worker.send(PayloadWorkerEvent(message_id)) {
+                    warn!("Sending message id {} to payload worker failed: {:?}.", message_id, e);
+                } else {
                 }
 
                 if let Some(notifier) = notifier {

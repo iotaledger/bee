@@ -65,7 +65,7 @@ where
                 trace!("Received event {:?}.", event);
 
                 match event {
-                    Event::PeerAdded { id } => {
+                    Event::PeerAdded { id, info: _ } => {
                         info!("Added peer: {}", id.short());
                     }
                     Event::PeerRemoved { id } => {
@@ -100,15 +100,15 @@ where
                         peer_manager.add(peer, receiver_tx, shutdown_tx).await;
                     }
                     Event::PeerDisconnected { id } => {
-                        if let Some((_, (_, _, shutdown))) = peer_manager.remove(&id).await {
+                        if let Some((_, _, shutdown)) = peer_manager.remove(&id).await {
                             if let Err(e) = shutdown.send(()) {
                                 warn!("Sending shutdown to {} failed: {:?}.", id.short(), e);
                             }
                         }
                     }
                     Event::MessageReceived { message, from } => {
-                        if let Some(peer) = peer_manager.get(&from) {
-                            if let Err(e) = peer.value().1.send(message) {
+                        if let Some(peer) = peer_manager.get(&from).await {
+                            if let Err(e) = (*peer).1.send(message) {
                                 warn!("Sending PeerWorkerEvent::Message to {} failed: {}.", from.short(), e);
                             }
                         }

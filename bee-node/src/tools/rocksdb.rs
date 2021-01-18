@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::model::{Diff, Output, Spent, Unspent};
+use bee_ledger::model::{Output, OutputDiff, Spent, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
@@ -168,10 +168,10 @@ pub fn exec(tool: &Rocksdb) {
                     }
                 }
             },
-            CF_MILESTONE_INDEX_TO_DIFF => match &tool.command {
+            CF_MILESTONE_INDEX_TO_OUTPUT_DIFF => match &tool.command {
                 RocksdbCommand::Fetch { key: _key } => {}
                 RocksdbCommand::Stream => {
-                    let mut stream = AsStream::<MilestoneIndex, Diff>::stream(&storage).await.unwrap();
+                    let mut stream = AsStream::<MilestoneIndex, OutputDiff>::stream(&storage).await.unwrap();
 
                     while let Some((key, value)) = stream.next().await {
                         println!("Key: {:?}\nValue: {:?})\n", key, value);

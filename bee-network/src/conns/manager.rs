@@ -3,7 +3,7 @@
 
 use crate::{
     interaction::events::InternalEventSender,
-    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerManager, PeerRelation, PeerState},
+    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerManager, PeerRelation},
     transport::build_transport,
     Multiaddr, PeerId, ShortId,
 };
@@ -158,32 +158,29 @@ impl<N: Node> Worker<N> for ConnectionManager {
                         // then we allow the connection.
                         peer_info
                     } else {
+                        // We also allow for a certain number of unknown peers.
                         let peer_info = PeerInfo {
                             address: peer_address,
-                            alias: None,
+                            alias: peer_id.short(),
                             relation: PeerRelation::Unknown,
                         };
 
-                        if peers
-                            .insert(peer_id.clone(), peer_info.clone(), PeerState::Disconnected)
-                            .await
-                            .is_err()
-                        {
-                            trace!("Ignoring peer. Cause: Denied by peerlist.");
+                        if let Err(e) = peers.accepts(&peer_id, &peer_info).await {
+                            trace!("Unknown peer rejected. Cause: {}.", e);
                             NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                             continue;
                         } else {
                             // We also allow for a certain number of unknown peers.
-                            info!("Allowing connection to unknown peer {}.", peer_id.short(),);
+                            info!("Unknown peer {} accepted.", peer_info.alias);
 
                             peer_info
                         }
                     };
 
-                    log_inbound_connection_success(&peer_id, &peer_info);
+                    log_inbound_connection_success(&peer_info);
 
                     if let Err(e) = super::upgrade_connection(
-                        peer_id,
+                        peer_id.clone(),
                         peer_info,
                         muxer,
                         Origin::Inbound,
@@ -236,10 +233,6 @@ impl<N: Node> Worker<N> for ConnectionManager {
 }
 
 #[inline]
-fn log_inbound_connection_success(peer_id: &PeerId, peer_info: &PeerInfo) {
-    if let Some(alias) = peer_info.alias.as_ref() {
-        info!("Established (inbound) connection with {}:{}.", alias, peer_id.short(),)
-    } else {
-        info!("Established (inbound) connection with {}.", peer_id.short(),);
-    }
+fn log_inbound_connection_success(peer_info: &PeerInfo) {
+    info!("Established (inbound) connection with {}.", peer_info.alias);
 }

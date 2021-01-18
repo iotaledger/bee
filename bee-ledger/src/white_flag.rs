@@ -10,7 +10,7 @@ use crate::{
 
 use bee_message::{
     payload::{
-        transaction::{Input, OutputId},
+        transaction::{self, Input, OutputId, TransactionPayload},
         Payload,
     },
     Message, MessageId,
@@ -23,9 +23,47 @@ use std::{
     ops::Deref,
 };
 
+// TODO
+// The address type of the referenced UTXO must match the signature type contained in the corresponding Signature Unlock
+// Block. The Signature Unlock Blocks are valid, i.e. the signatures prove ownership over the addresses of the
+// referenced UTXOs.
+
+fn validate_transaction(
+    transaction: &TransactionPayload,
+    consumed_outputs: &HashMap<OutputId, Output>,
+) -> Result<(), Error> {
+    let mut consumed_amount = 0;
+    let mut created_amount = 0;
+
+    for (_index, (_, consumed_output)) in consumed_outputs.iter().enumerate() {
+        match consumed_output.inner() {
+            transaction::Output::SignatureLockedSingle(consumed_output) => {
+                consumed_amount += consumed_output.amount();
+            }
+            transaction::Output::SignatureLockedDustAllowance(consumed_output) => {
+                consumed_amount += consumed_output.amount();
+            }
+            _ => return Err(Error::UnsupportedOutputType),
+        };
+    }
+
+    for created_output in transaction.essence().outputs() {
+        created_amount += match created_output {
+            transaction::Output::SignatureLockedSingle(created_output) => created_output.amount(),
+            transaction::Output::SignatureLockedDustAllowance(created_output) => created_output.amount(),
+            _ => return Err(Error::UnsupportedOutputType),
+        };
+    }
+
+    if consumed_amount != created_amount {
+        return Err(Error::AmountMismatch(consumed_amount, created_amount));
+    }
+
+    Ok(())
+}
+
 #[inline]
 async fn on_message<N: Node>(
-    tangle: &MsTangle<N::Backend>,
     storage: &N::Backend,
     message_id: &MessageId,
     message: &Message,
@@ -44,8 +82,6 @@ where
             let essence = transaction.essence();
             let mut outputs = HashMap::with_capacity(essence.inputs().len());
 
-            // TODO check transaction syntax here ?
-
             for input in essence.inputs() {
                 if let Input::UTXO(utxo_input) = input {
                     let output_id = utxo_input.output_id();
@@ -58,7 +94,7 @@ where
 
                     // Check if this input was newly created during the confirmation.
                     if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
-                        outputs.insert(output_id, output);
+                        outputs.insert(*output_id, output);
                         continue;
                     }
 
@@ -69,7 +105,8 @@ where
                             conflicting = true;
                             break;
                         }
-                        outputs.insert(output_id, output);
+                        outputs.insert(*output_id, output);
+                        continue;
                     } else {
                         // TODO conflicting ?
                         conflicting = true;
@@ -80,8 +117,9 @@ where
                 };
             }
 
-            // TODO semantic validation
-            // Verify that all outputs consume all inputs and have valid signatures. Also verify that the amounts match.
+            if let Err(_) = validate_transaction(&transaction, &outputs) {
+                conflicting = true;
+            }
 
             if conflicting {
                 metadata.excluded_conflicting_messages.push(*message_id);
@@ -95,10 +133,10 @@ where
                     );
                 }
                 for (output_id, _) in outputs {
-                    metadata.created_outputs.remove(output_id);
+                    metadata.created_outputs.remove(&output_id);
                     metadata
                         .spent_outputs
-                        .insert(*output_id, Spent::new(transaction_id, metadata.index));
+                        .insert(output_id, Spent::new(transaction_id, metadata.index));
                 }
                 metadata.included_messages.push(*message_id);
             }
@@ -107,14 +145,6 @@ where
             metadata.excluded_no_transaction_messages.push(*message_id);
         }
     };
-
-    tangle
-        .update_metadata(message_id, |message_metadata| {
-            message_metadata.flags_mut().set_conflicting(conflicting);
-            message_metadata.set_milestone_index(metadata.index);
-            message_metadata.confirm(metadata.timestamp);
-        })
-        .await;
 
     Ok(())
 }
@@ -160,7 +190,7 @@ where
                 let parent2 = message.parent2();
 
                 if visited.contains(parent1) && visited.contains(parent2) {
-                    on_message::<N>(tangle, storage, message_id, &message, metadata).await?;
+                    on_message::<N>(storage, message_id, &message, metadata).await?;
                     visited.insert(*message_id);
                     messages_ids.pop();
                 } else if !visited.contains(parent1) {

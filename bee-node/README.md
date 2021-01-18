@@ -19,16 +19,29 @@ apt-get install git npm build-essential cmake pkg-config librocksdb-dev llvm cla
 brew install cmake npm
 ```
 
+### Windows
+
+Open Powershell and execute the following commands:
+```sh
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+choco install git --params '/NoAutoCrlf' nodejs-lts cmake --installargs 'ADD_CMAKE_TO_PATH=System' llvm
+```
+Restart Powershell
+
 ### Rust
 
 Minimum required version 1.47.
 
-#### Installation
+#### Installation (Debian, MacOS)
 
 ```sh
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source $HOME/.cargo/env
 ```
+
+#### Installation (Windows)
+
+Install Rust from [here](https://www.rust-lang.org/learn/get-started).
 
 #### Update
 
@@ -50,7 +63,7 @@ git submodule update --init
 cd src/plugins/dashboard/frontend
 npm install
 npm run build-bee
-cd -
+cd ../../../../
 cargo build --release --features dashboard
 ```
 

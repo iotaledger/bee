@@ -4,13 +4,13 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Diff, Output, Spent, Unspent};
+use bee_ledger::model::{Balance, Output, OutputDiff, Spent, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::HashedIndex,
-        transaction::{Ed25519Address, OutputId},
+        transaction::{Address, Ed25519Address, OutputId},
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId,
@@ -509,17 +509,17 @@ impl Batch<SolidEntryPoint, MilestoneIndex> for Storage {
     }
 }
 
-impl Batch<MilestoneIndex, Diff> for Storage {
+impl Batch<MilestoneIndex, OutputDiff> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
         index: &MilestoneIndex,
-        diff: &Diff,
+        diff: &OutputDiff,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_DIFF))?;
+            .cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -540,14 +540,43 @@ impl Batch<MilestoneIndex, Diff> for Storage {
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_DIFF))?;
+            .cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
         index.pack(&mut batch.key_buf).unwrap();
 
         batch.inner.delete_cf(&cf, &batch.key_buf);
+
+        Ok(())
+    }
+}
+
+impl Batch<Address, Balance> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        address: &Address,
+        balance: &Balance,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_ADDRESS_TO_BALANCE)
+            .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
+
+        batch.inner.put_cf(&cf, address.pack_new(), balance.pack_new());
+
+        Ok(())
+    }
+
+    fn batch_delete(&self, batch: &mut Self::Batch, address: &Address) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_ADDRESS_TO_BALANCE)
+            .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
+
+        batch.inner.delete_cf(&cf, address.pack_new());
 
         Ok(())
     }

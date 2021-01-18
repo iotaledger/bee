@@ -4,13 +4,13 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Diff, Output, Spent, Unspent};
+use bee_ledger::model::{Balance, Output, OutputDiff, Spent, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::{HashedIndex, HASHED_INDEX_LENGTH},
-        transaction::{Ed25519Address, OutputId},
+        transaction::{Address, Ed25519Address, OutputId},
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId, MESSAGE_ID_LENGTH,
@@ -240,13 +240,24 @@ impl<'a> StorageStream<'a, SolidEntryPoint, MilestoneIndex> {
     }
 }
 
-impl<'a> StorageStream<'a, MilestoneIndex, Diff> {
-    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneIndex, Diff) {
+impl<'a> StorageStream<'a, MilestoneIndex, OutputDiff> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneIndex, OutputDiff) {
         (
             // Unpacking from storage is fine.
             MilestoneIndex::unpack(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            Diff::unpack(&mut value).unwrap(),
+            OutputDiff::unpack(&mut value).unwrap(),
+        )
+    }
+}
+
+impl<'a> StorageStream<'a, Address, Balance> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (Address, Balance) {
+        (
+            // Unpacking from storage is fine.
+            Address::unpack(&mut key).unwrap(),
+            // Unpacking from storage is fine.
+            Balance::unpack(&mut value).unwrap(),
         )
     }
 }
@@ -263,4 +274,5 @@ impl_stream!((), LedgerIndex, CF_LEDGER_INDEX);
 impl_stream!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
 impl_stream!((), SnapshotInfo, CF_SNAPSHOT_INFO);
 impl_stream!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
-impl_stream!(MilestoneIndex, Diff, CF_MILESTONE_INDEX_TO_DIFF);
+impl_stream!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
+impl_stream!(Address, Balance, CF_ADDRESS_TO_BALANCE);

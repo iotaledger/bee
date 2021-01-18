@@ -13,28 +13,40 @@ use bee_network::NetworkController;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
-use dashmap::DashMap;
 use futures::StreamExt;
 use log::{debug, info, trace};
-use tokio::{sync::mpsc, time::interval};
+use tokio::{
+    sync::{mpsc, RwLock},
+    time::interval,
+};
 
 use std::{
     any::TypeId,
+    collections::HashMap,
     convert::Infallible,
-    ops::Deref,
     time::{Duration, Instant},
 };
 
 const RETRY_INTERVAL_MS: u64 = 2500;
 
 #[derive(Default)]
-pub(crate) struct RequestedMessages(DashMap<MessageId, (MilestoneIndex, Instant)>);
+pub(crate) struct RequestedMessages(RwLock<HashMap<MessageId, (MilestoneIndex, Instant)>>);
 
-impl Deref for RequestedMessages {
-    type Target = DashMap<MessageId, (MilestoneIndex, Instant)>;
+impl RequestedMessages {
+    pub async fn contains(&self, message_id: &MessageId) -> bool {
+        self.0.read().await.contains_key(message_id)
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
+    pub async fn insert(&self, message_id: MessageId, index: MilestoneIndex) {
+        self.0.write().await.insert(message_id, (index, Instant::now()));
+    }
+
+    pub async fn len(&self) -> usize {
+        self.0.read().await.len()
+    }
+
+    pub async fn remove(&self, message_id: &MessageId) -> Option<(MilestoneIndex, Instant)> {
+        self.0.write().await.remove(message_id)
     }
 }
 
@@ -53,16 +65,16 @@ async fn process_request(
     requested_messages: &RequestedMessages,
     counter: &mut usize,
 ) {
-    if requested_messages.contains_key(&message_id) {
+    if requested_messages.contains(&message_id).await {
         return;
     }
 
-    if peer_manager.is_empty() {
+    if peer_manager.is_empty().await {
         return;
     }
 
     if process_request_unchecked(message_id, index, network, peer_manager, metrics, counter).await {
-        requested_messages.insert(message_id, (index, Instant::now()));
+        requested_messages.insert(message_id, index).await;
     }
 }
 
@@ -82,15 +94,16 @@ async fn process_request_unchecked(
 
         *counter += 1;
 
-        if let Some(peer) = peer_manager.get(peer_id) {
-            if peer.value().0.has_data(index) {
+        if let Some(peer) = peer_manager.get(peer_id).await {
+            if (*peer).0.has_data(index) {
                 Sender::<MessageRequest>::send(
                     network,
                     peer_manager,
                     metrics,
                     peer_id,
                     MessageRequest::new(message_id.as_ref()),
-                );
+                )
+                .await;
                 return true;
             }
         }
@@ -103,15 +116,16 @@ async fn process_request_unchecked(
 
         *counter += 1;
 
-        if let Some(peer) = peer_manager.get(peer_id) {
-            if peer.value().0.maybe_has_data(index) {
+        if let Some(peer) = peer_manager.get(peer_id).await {
+            if (*peer).0.maybe_has_data(index) {
                 Sender::<MessageRequest>::send(
                     network,
                     peer_manager,
                     metrics,
                     peer_id,
                     MessageRequest::new(message_id.as_ref()),
-                );
+                )
+                .await;
                 requested = true;
             }
         }
@@ -127,15 +141,14 @@ async fn retry_requests(
     metrics: &ProtocolMetrics,
     counter: &mut usize,
 ) {
-    if peer_manager.is_empty() {
+    if peer_manager.is_empty().await {
         return;
     }
 
     let mut retry_counts: usize = 0;
 
-    for message in requested_messages.iter() {
-        let (message_id, (index, instant)) = message.pair();
-
+    // TODO this needs abstraction
+    for (message_id, (index, instant)) in requested_messages.0.read().await.iter() {
         if (Instant::now() - *instant).as_millis() as u64 > RETRY_INTERVAL_MS
             && process_request_unchecked(*message_id, *index, network, peer_manager, metrics, counter).await
         {

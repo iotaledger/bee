@@ -5,7 +5,7 @@ use crate::{
     config::ProtocolConfig,
     event::LatestMilestoneChanged,
     helper,
-    milestone::key_manager::KeyManager,
+    key_manager::KeyManager,
     peer::PeerManager,
     storage::StorageBackend,
     worker::{
@@ -15,10 +15,9 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::packable::Packable;
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
-    payload::Payload,
+    payload::{milestone::MilestoneValidationError, Payload},
     MessageId,
 };
 use bee_network::NetworkController;
@@ -26,15 +25,11 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
-use crypto::ed25519::{verify, PublicKey, Signature};
 use futures::stream::StreamExt;
 use log::{debug, error, info};
 use tokio::sync::mpsc;
 
-use std::{
-    any::TypeId,
-    convert::{Infallible, TryInto},
-};
+use std::{any::TypeId, convert::Infallible};
 
 #[derive(Debug)]
 pub(crate) enum Error {
@@ -42,12 +37,7 @@ pub(crate) enum Error {
     NoMilestonePayload,
     Parent1Mismatch(MessageId, MessageId),
     Parent2Mismatch(MessageId, MessageId),
-    InvalidMinThreshold(usize),
-    TooFewSignatures(usize, usize),
-    SignaturesPublicKeysCountMismatch(usize, usize),
-    InsufficientApplicablePublicKeys(usize, usize),
-    UnapplicablePublicKey(String),
-    InvalidSignature(usize, String),
+    InvalidMilestone(MilestoneValidationError),
 }
 
 #[derive(Debug)]
@@ -81,49 +71,16 @@ where
                     *milestone.essence().parent2(),
                 ));
             }
-            if key_manager.min_threshold() == 0 {
-                return Err(Error::InvalidMinThreshold(0));
-            }
-            if milestone.signatures().is_empty() || milestone.signatures().len() < key_manager.min_threshold() {
-                return Err(Error::TooFewSignatures(
+
+            milestone
+                .validate(
+                    &key_manager
+                        .get_public_keys(milestone.essence().index().into())
+                        .into_iter()
+                        .collect::<Vec<String>>(),
                     key_manager.min_threshold(),
-                    milestone.signatures().len(),
-                ));
-            }
-            if milestone.signatures().len() != milestone.essence().public_keys().len() {
-                return Err(Error::SignaturesPublicKeysCountMismatch(
-                    milestone.signatures().len(),
-                    milestone.essence().public_keys().len(),
-                ));
-            }
-
-            let public_keys = key_manager.get_public_keys(milestone.essence().index().into());
-
-            if public_keys.len() < key_manager.min_threshold() {
-                return Err(Error::InsufficientApplicablePublicKeys(
-                    key_manager.min_threshold(),
-                    public_keys.len(),
-                ));
-            }
-
-            let essence_bytes = milestone.essence().pack_new();
-
-            for (index, public_key) in milestone.essence().public_keys().iter().enumerate() {
-                // TODO use concrete ED25 types ?
-                if !public_keys.contains(&hex::encode(public_key)) {
-                    return Err(Error::UnapplicablePublicKey(hex::encode(public_key)));
-                }
-
-                // TODO unwrap
-                let ed25519_public_key = PublicKey::from_compressed_bytes(*public_key).unwrap();
-                // TODO unwrap
-                let ed25519_signature =
-                    Signature::from_bytes(milestone.signatures()[index].as_ref().try_into().unwrap());
-
-                if !verify(&ed25519_public_key, &ed25519_signature, &essence_bytes) {
-                    return Err(Error::InvalidSignature(index, hex::encode(public_key)));
-                }
-            }
+                )
+                .map_err(|e| Error::InvalidMilestone(e))?;
 
             Ok((
                 MilestoneIndex(milestone.essence().index()),
@@ -178,42 +135,41 @@ where
                     if meta.flags().is_milestone() {
                         continue;
                     }
-                    match validate::<N>(&tangle, &key_manager, message_id).await {
-                        Ok((index, milestone)) => {
-                            tangle.add_milestone(index, milestone.clone()).await;
-                            if index > tangle.get_latest_milestone_index() {
-                                info!("New milestone {} {}.", *index, milestone.message_id());
-                                tangle.update_latest_milestone_index(index);
+                }
+                match validate::<N>(&tangle, &key_manager, message_id).await {
+                    Ok((index, milestone)) => {
+                        tangle.add_milestone(index, milestone.clone()).await;
+                        if index > tangle.get_latest_milestone_index() {
+                            info!("New milestone {} {}.", *index, milestone.message_id());
+                            tangle.update_latest_milestone_index(index);
 
-                                helper::broadcast_heartbeat(
-                                    &peer_manager,
-                                    &network,
-                                    &metrics,
-                                    tangle.get_latest_solid_milestone_index(),
-                                    tangle.get_pruning_index(),
-                                    index,
-                                );
+                            helper::broadcast_heartbeat(
+                                &peer_manager,
+                                &network,
+                                &metrics,
+                                tangle.get_latest_solid_milestone_index(),
+                                tangle.get_pruning_index(),
+                                index,
+                            )
+                            .await;
 
-                                bus.dispatch(LatestMilestoneChanged {
-                                    index,
-                                    milestone: milestone.clone(),
-                                });
-                            }
-
-                            if requested_milestones.remove(&index).is_some() {
-                                tangle
-                                    .update_metadata(milestone.message_id(), |meta| {
-                                        meta.flags_mut().set_requested(true)
-                                    })
-                                    .await;
-                            }
-
-                            if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
-                                error!("Sending solidification event failed: {}.", e);
-                            }
+                            bus.dispatch(LatestMilestoneChanged {
+                                index,
+                                milestone: milestone.clone(),
+                            });
                         }
-                        Err(e) => debug!("Invalid milestone message: {:?}.", e),
+
+                        if requested_milestones.remove(&index).await.is_some() {
+                            tangle
+                                .update_metadata(milestone.message_id(), |meta| meta.flags_mut().set_requested(true))
+                                .await;
+                        }
+
+                        if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
+                            error!("Sending solidification event failed: {}.", e);
+                        }
                     }
+                    Err(e) => debug!("Invalid milestone message: {:?}.", e),
                 }
             }
 
