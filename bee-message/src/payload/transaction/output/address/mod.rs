@@ -40,13 +40,9 @@ impl AsRef<[u8]> for Address {
 impl Address {
     pub fn try_from_bech32(addr: &str) -> Result<Self, Error> {
         match bech32::decode(&addr) {
-            Ok((hrp, data)) => {
-                if hrp.eq("iota") || hrp.eq("atoi") {
-                    let bytes = Vec::<u8>::from_base32(&data).map_err(|_| Error::InvalidAddress)?;
-                    Ok(Self::unpack(&mut bytes.as_slice()).map_err(|_| Error::InvalidAddress)?)
-                } else {
-                    Err(Error::InvalidAddress)
-                }
+            Ok((_hrp, data)) => {
+                let bytes = Vec::<u8>::from_base32(&data).map_err(|_| Error::InvalidAddress)?;
+                Ok(Self::unpack(&mut bytes.as_slice()).map_err(|_| Error::InvalidAddress)?)
             }
             Err(_) => Err(Error::InvalidAddress),
         }
