@@ -15,6 +15,10 @@ pub enum Error {
     MissingMessage(MessageId),
     #[error("")]
     UnsupportedInputType,
+    #[error("")]
+    UnsupportedOutputType,
+    #[error("")]
+    UnsupportedAddressType,
     #[error("Message was not found")]
     MilestoneMessageNotFound,
     #[error("Message payload was not a milestone")]
@@ -25,6 +29,8 @@ pub enum Error {
     MerkleProofMismatch(String, String),
     #[error("Invalid messages count: referenced ({0}) != no transaction ({1}) + conflicting ({2}) + included ({3})")]
     InvalidMessagesCount(usize, usize, usize, usize),
+    #[error("")]
+    AmountMismatch(u64, u64),
     #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
 }
