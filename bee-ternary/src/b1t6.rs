@@ -8,7 +8,7 @@ use std::convert::TryFrom;
 const TRITS_PER_BYTE: usize = 2;
 const TRITS_PER_TRYTE: usize = 3;
 
-/// Encode a series of trits into bytes.
+/// Decode a series of trits into bytes.
 pub fn decode(src: &Trits) -> Vec<u8> {
     assert!(src.len() % TRITS_PER_BYTE == 0);
     src.iter_trytes()
@@ -21,7 +21,7 @@ fn decode_group(t1: i8, t2: i8) -> Option<i8> {
     i8::try_from(t1 as isize + t2 as isize * 27).ok()
 }
 
-/// Decode a series of bytes into trits.
+/// Encode a series of bytes into trits.
 pub fn encode<T: RawEncodingBuf>(bytes: &[u8]) -> TritBuf<T>
 where
     T::Slice: RawEncoding<Trit = Btrit>,

@@ -68,7 +68,7 @@ pub mod t3b1;
 pub mod t4b1;
 /// The [`T5B1`] and [`T5B1Buf`] encodings.
 pub mod t5b1;
-/// Utility functions for encoding and decodining T6B1 encoding.
+/// Utility functions for encoding and decodining B1T6 encoding.
 pub mod b1t6;
 /// Types and traits used to represent trits, both balanced and unbalanced.
 pub mod trit;

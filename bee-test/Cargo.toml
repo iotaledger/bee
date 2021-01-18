@@ -16,6 +16,6 @@ bee-ternary = { version = "0.3.4-alpha", features = [ "serde1" ], path = "../bee
 rand = "0.7"
 
 [dev-dependencies]
+hex = "0.4"
 serde = "1.0"
 serde_json = "1.0"
-hex = "0.4"
