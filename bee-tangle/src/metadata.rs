@@ -20,6 +20,7 @@ pub struct MessageMetadata {
                                          * avoid conflicts; */
     otrsi: Option<MilestoneIndex>,
     ytrsi: Option<MilestoneIndex>,
+    conflict: u8,
 }
 
 impl MessageMetadata {
@@ -33,6 +34,7 @@ impl MessageMetadata {
         cone_index: Option<MilestoneIndex>,
         otrsi: Option<MilestoneIndex>,
         ytrsi: Option<MilestoneIndex>,
+        conflict: u8,
     ) -> Self {
         Self {
             flags,
@@ -43,6 +45,7 @@ impl MessageMetadata {
             cone_index,
             otrsi,
             ytrsi,
+            conflict,
         }
     }
 
@@ -120,6 +123,14 @@ impl MessageMetadata {
         self.flags.set_confirmed(true);
         self.confirmation_timestamp = timestamp;
     }
+
+    pub fn conflict(&self) -> u8 {
+        self.conflict
+    }
+
+    pub fn set_conflict(&mut self, conflict: u8) {
+        self.conflict = conflict;
+    }
 }
 
 #[derive(Debug)]
@@ -152,6 +163,7 @@ impl Packable for MessageMetadata {
             + self.cone_index.packed_len()
             + self.otrsi.packed_len()
             + self.ytrsi.packed_len()
+            + self.conflict.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -163,29 +175,22 @@ impl Packable for MessageMetadata {
         self.cone_index.pack(writer)?;
         self.otrsi.pack(writer)?;
         self.ytrsi.pack(writer)?;
+        self.conflict.pack(writer)?;
 
         Ok(())
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let flags = Flags::unpack(reader)?;
-        let milestone_index = MilestoneIndex::unpack(reader)?;
-        let arrival_timestamp = u64::unpack(reader)?;
-        let solidification_timestamp = u64::unpack(reader)?;
-        let confirmation_timestamp = u64::unpack(reader)?;
-        let cone_index = Option::<MilestoneIndex>::unpack(reader)?;
-        let otrsi = Option::<MilestoneIndex>::unpack(reader)?;
-        let ytrsi = Option::<MilestoneIndex>::unpack(reader)?;
-
         Ok(Self {
-            flags,
-            milestone_index,
-            arrival_timestamp,
-            solidification_timestamp,
-            confirmation_timestamp,
-            cone_index,
-            otrsi,
-            ytrsi,
+            flags: Flags::unpack(reader)?,
+            milestone_index: MilestoneIndex::unpack(reader)?,
+            arrival_timestamp: u64::unpack(reader)?,
+            solidification_timestamp: u64::unpack(reader)?,
+            confirmation_timestamp: u64::unpack(reader)?,
+            cone_index: Option::<MilestoneIndex>::unpack(reader)?,
+            otrsi: Option::<MilestoneIndex>::unpack(reader)?,
+            ytrsi: Option::<MilestoneIndex>::unpack(reader)?,
+            conflict: u8::unpack(reader)?,
         })
     }
 }
