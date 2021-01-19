@@ -4,7 +4,7 @@
 use crate::{
     config::RestApiConfig,
     constants::{BEE_GIT_COMMIT, BEE_VERSION},
-    handlers::{health::is_healthy, BodyInner, SuccessBody},
+    handlers::{BodyInner, SuccessBody},
     storage::StorageBackend,
     NetworkId,
 };
@@ -34,7 +34,7 @@ pub(crate) async fn info<B: StorageBackend>(
             };
             version
         },
-        is_healthy: is_healthy(tangle.clone()).await,
+        is_healthy: tangle.is_healthy().await,
         network_id: network_id.0,
         latest_milestone_index: *tangle.get_latest_milestone_index(),
         solid_milestone_index: *tangle.get_latest_solid_milestone_index(),

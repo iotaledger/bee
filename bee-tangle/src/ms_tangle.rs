@@ -23,6 +23,7 @@ use tokio::sync::Mutex;
 use std::{
     ops::Deref,
     sync::atomic::{AtomicU32, Ordering},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 pub struct StorageHooks<B> {
@@ -315,6 +316,33 @@ impl<B: StorageBackend> MsTangle<B> {
 
     pub async fn non_lazy_tips_num(&self) -> usize {
         self.tip_pool.lock().await.non_lazy_tips().len()
+    }
+
+    pub async fn is_healthy(&self) -> bool {
+        if !self.is_synced() {
+            return false;
+        }
+
+        // TODO: check if number of peers != 0 else return false
+
+        match self.get_milestone_message_id(self.get_latest_milestone_index()).await {
+            Some(message_id) => match self.get_metadata(&message_id).await {
+                Some(metadata) => {
+                    let current_time = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .expect("Clock may have gone backwards")
+                        .as_millis() as u64;
+                    let latest_milestone_arrival_timestamp = metadata.arrival_timestamp();
+                    if current_time - latest_milestone_arrival_timestamp > 5 * 60 * 60000 {
+                        return false;
+                    }
+                }
+                None => return false,
+            },
+            None => return false,
+        }
+
+        true
     }
 }
 

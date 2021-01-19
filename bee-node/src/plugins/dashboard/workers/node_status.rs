@@ -17,7 +17,6 @@ use serde::Serialize;
 use std::time::Instant;
 use tokio::time::interval;
 
-use bee_rest_api::handlers::health::is_healthy;
 use std::time::Duration;
 
 use cap::Cap;
@@ -56,11 +55,10 @@ where
             bus.dispatch(NodeStatus {
                 snapshot_index: *tangle.get_snapshot_index(),
                 pruning_index: *tangle.get_pruning_index(),
-                is_healthy: is_healthy(tangle.clone()).await, /* TODO: move is_healthy() from bee-rest-api to
-                                                               * bee-tangle eventually */
+                is_healthy: tangle.is_healthy().await,
                 is_synced: tangle.is_synced(),
                 version: version.clone(),
-                latest_version: String::from(env!("CARGO_PKG_VERSION")),
+                latest_version: version.clone(),
                 uptime: uptime.elapsed().as_millis() as u64,
                 autopeering_id: peering_config.peer_id.to_string(),
                 node_alias: node_config.alias.clone(),
