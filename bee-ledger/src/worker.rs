@@ -8,7 +8,7 @@ use crate::{
     merkle_hasher::MerkleHasher,
     metadata::WhiteFlagMetadata,
     storage::{self, StorageBackend},
-    white_flag::visit_dfs,
+    white_flag,
 };
 
 use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, payload::Payload, MessageId};
@@ -54,11 +54,17 @@ where
         milestone.essence().timestamp(),
     );
 
+    let (parent1, parent2) = (*message.parent1(), *message.parent2());
+
     drop(message);
 
-    if let Err(e) = visit_dfs::<N>(tangle, storage, message_id, &mut metadata).await {
+    if let Err(e) = white_flag::traversal::<N>(tangle, storage, vec![parent1, parent2], &mut metadata).await {
         return Err(e);
     };
+
+    // Account for the milestone itself.
+    metadata.num_referenced_messages += 1;
+    metadata.excluded_no_transaction_messages.push(message_id);
 
     let merkle_proof = MerkleHasher::new().digest(&metadata.included_messages);
 

@@ -158,18 +158,18 @@ where
     Ok(())
 }
 
-// TODO make it a tangle method
-pub(crate) async fn visit_dfs<N: Node>(
+// TODO make it a tangle method ?
+pub(crate) async fn traversal<N: Node>(
     tangle: &MsTangle<N::Backend>,
     storage: &N::Backend,
-    root: MessageId,
+    mut messages_ids: Vec<MessageId>,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error>
 where
     N::Backend: StorageBackend,
 {
-    let mut messages_ids = vec![root];
     let mut visited = HashSet::new();
+    messages_ids = messages_ids.into_iter().rev().collect();
 
     // TODO Tangle get message AND meta at the same time
 
