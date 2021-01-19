@@ -58,9 +58,7 @@ where
 
     drop(message);
 
-    if let Err(e) = white_flag::traversal::<N>(tangle, storage, vec![parent1, parent2], &mut metadata).await {
-        return Err(e);
-    };
+    white_flag::traversal::<N>(tangle, storage, vec![parent1, parent2], &mut metadata).await?;
 
     // Account for the milestone itself.
     metadata.num_referenced_messages += 1;
