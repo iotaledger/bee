@@ -3,6 +3,7 @@
 
 use crate::{
     config::RestApiConfig,
+    constants::{BEE_GIT_COMMIT, BEE_VERSION},
     handlers::{health::is_healthy, BodyInner, SuccessBody},
     storage::StorageBackend,
     NetworkId,
@@ -25,7 +26,14 @@ pub(crate) async fn info<B: StorageBackend>(
 ) -> Result<impl Reply, Infallible> {
     Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
         name: String::from("Bee"),
-        version: String::from(env!("CARGO_PKG_VERSION")),
+        version: {
+            let version = if BEE_GIT_COMMIT.is_empty() {
+                BEE_VERSION.to_owned()
+            } else {
+                BEE_VERSION.to_owned() + "-" + &BEE_GIT_COMMIT[0..7]
+            };
+            version
+        },
         is_healthy: is_healthy(tangle.clone()).await,
         network_id: network_id.0,
         latest_milestone_index: *tangle.get_latest_milestone_index(),
