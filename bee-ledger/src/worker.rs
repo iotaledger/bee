@@ -58,7 +58,7 @@ where
 
     drop(message);
 
-    if let Err(e) = white_flag::traversal::<N>(tangle, storage, vec![parent1, parent2], &mut metadata).await {
+    if let Err(e) = white_flag::traversal::<N>(tangle, storage, vec![parent2, parent1], &mut metadata).await {
         return Err(e);
     };
 
