@@ -3,6 +3,7 @@
 
 //#![warn(missing_docs)]
 
+pub mod conflict;
 pub mod error;
 pub mod event;
 pub mod model;
@@ -13,6 +14,7 @@ mod metadata;
 mod white_flag;
 mod worker;
 
+pub use conflict::ConflictReason;
 pub use storage::StorageBackend;
 pub use worker::{LedgerWorker, LedgerWorkerEvent};
 
