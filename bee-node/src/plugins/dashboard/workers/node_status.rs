@@ -64,7 +64,7 @@ where
                 uptime: uptime.elapsed().as_millis() as u64,
                 autopeering_id: peering_config.peer_id.to_string(),
                 node_alias: node_config.alias.clone(),
-                bech32_hrp: "iota".to_string(),
+                bech32_hrp: node_config.bech32_hrp.clone(),
                 connected_peers_count: 0,
                 current_requested_ms: 0,
                 request_queue_queued: 0,
