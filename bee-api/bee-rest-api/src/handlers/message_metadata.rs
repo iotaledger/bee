@@ -52,10 +52,8 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     is_solid = true;
                     referenced_by_milestone_index = Some(*milestone);
                     ledger_inclusion_state = Some(if let Some(Payload::Transaction(_)) = message.payload() {
-                        // TODO
                         if metadata.conflict() != ConflictReason::None as u8 {
-                            // use conflict reason 0 as default for now, till the actual conflict reason is available
-                            conflict_reason = Some(0);
+                            conflict_reason = Some(metadata.conflict());
                             LedgerInclusionStateDto::Conflicting
                         } else {
                             conflict_reason = None;
