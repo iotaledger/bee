@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    conflict::ConflictReason,
     error::Error,
     event::{MilestoneConfirmed, NewOutput, NewSpent},
     merkle_hasher::MerkleHasher,
@@ -94,17 +95,17 @@ where
     for message_id in metadata.excluded_no_transaction_messages.iter() {
         tangle
             .update_metadata(message_id, |message_metadata| {
-                message_metadata.flags_mut().set_conflicting(false);
+                message_metadata.set_conflict(ConflictReason::None as u8);
                 message_metadata.set_milestone_index(metadata.index);
                 message_metadata.confirm(metadata.timestamp);
             })
             .await;
     }
 
-    for message_id in metadata.excluded_conflicting_messages.iter() {
+    for (message_id, conflict) in metadata.excluded_conflicting_messages.iter() {
         tangle
             .update_metadata(message_id, |message_metadata| {
-                message_metadata.flags_mut().set_conflicting(true);
+                message_metadata.set_conflict(*conflict as u8);
                 message_metadata.set_milestone_index(metadata.index);
                 message_metadata.confirm(metadata.timestamp);
             })
@@ -114,7 +115,7 @@ where
     for message_id in metadata.included_messages.iter() {
         tangle
             .update_metadata(message_id, |message_metadata| {
-                message_metadata.flags_mut().set_conflicting(false);
+                message_metadata.set_conflict(ConflictReason::None as u8);
                 message_metadata.set_milestone_index(metadata.index);
                 message_metadata.confirm(metadata.timestamp);
             })

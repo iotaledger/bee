@@ -12,8 +12,7 @@ bitflags! {
         const REQUESTED = 0b0000_0010;
         const MILESTONE = 0b0000_0100;
         const CONFIRMED = 0b0000_1000;
-        const CONFLICTING = 0b0001_0000;
-        const VALID = 0b0010_0000;
+        const VALID = 0b0001_0000;
     }
 }
 
@@ -48,14 +47,6 @@ impl Flags {
 
     pub fn set_confirmed(&mut self, is_confirmed: bool) {
         self.set(Flags::CONFIRMED, is_confirmed);
-    }
-
-    pub fn is_conflicting(&self) -> bool {
-        self.contains(Flags::CONFLICTING)
-    }
-
-    pub fn set_conflicting(&mut self, is_conflicting: bool) {
-        self.set(Flags::CONFLICTING, is_conflicting);
     }
 
     pub fn is_valid(&self) -> bool {

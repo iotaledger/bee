@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    conflict::ConflictReason,
     error::Error,
     metadata::WhiteFlagMetadata,
     model::{Output, Spent},
@@ -31,7 +32,7 @@ use std::{
 fn validate_transaction(
     transaction: &TransactionPayload,
     consumed_outputs: &HashMap<OutputId, Output>,
-) -> Result<(), Error> {
+) -> Result<ConflictReason, Error> {
     let mut consumed_amount = 0;
     let mut created_amount = 0;
 
@@ -43,6 +44,7 @@ fn validate_transaction(
             transaction::Output::SignatureLockedDustAllowance(consumed_output) => {
                 consumed_amount += consumed_output.amount();
             }
+            // TODO conflict or error ?
             _ => return Err(Error::UnsupportedOutputType),
         };
     }
@@ -51,15 +53,17 @@ fn validate_transaction(
         created_amount += match created_output {
             transaction::Output::SignatureLockedSingle(created_output) => created_output.amount(),
             transaction::Output::SignatureLockedDustAllowance(created_output) => created_output.amount(),
+            // TODO conflict or error ?
             _ => return Err(Error::UnsupportedOutputType),
         };
     }
 
     if consumed_amount != created_amount {
+        // TODO conflict or error ?
         return Err(Error::AmountMismatch(consumed_amount, created_amount));
     }
 
-    Ok(())
+    Ok(ConflictReason::None)
 }
 
 #[inline]
@@ -72,7 +76,7 @@ async fn on_message<N: Node>(
 where
     N::Backend: StorageBackend,
 {
-    let mut conflicting = false;
+    let mut conflict = ConflictReason::None;
 
     metadata.num_referenced_messages += 1;
 
@@ -88,7 +92,7 @@ where
 
                     // Check if this input was already spent during the confirmation.
                     if metadata.spent_outputs.contains_key(output_id) {
-                        conflicting = true;
+                        conflict = ConflictReason::InputUTXOAlreadySpentInThisMilestone;
                         break;
                     }
 
@@ -102,43 +106,48 @@ where
                     if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
                         // Check if this output is already spent.
                         if !storage::is_output_unspent(storage.deref(), output_id).await? {
-                            conflicting = true;
+                            conflict = ConflictReason::InputUTXOAlreadySpent;
                             break;
                         }
                         outputs.insert(*output_id, output);
                         continue;
                     } else {
-                        // TODO conflicting ?
-                        conflicting = true;
+                        conflict = ConflictReason::InputUTXONotFound;
                         break;
                     }
                 } else {
+                    // TODO conflict or error ?
                     return Err(Error::UnsupportedInputType);
                 };
             }
 
-            if let Err(_) = validate_transaction(&transaction, &outputs) {
-                conflicting = true;
+            if conflict != ConflictReason::None {
+                metadata.excluded_conflicting_messages.push((*message_id, conflict));
+                return Ok(());
             }
 
-            if conflicting {
-                metadata.excluded_conflicting_messages.push(*message_id);
-            } else {
-                // Go through all deposits and generate unspent outputs.
-                for (index, output) in essence.outputs().iter().enumerate() {
-                    metadata.created_outputs.insert(
-                        // Can't fail because we know the index is valid.
-                        OutputId::new(transaction_id, index as u16).unwrap(),
-                        Output::new(*message_id, output.clone()),
-                    );
+            match validate_transaction(&transaction, &outputs) {
+                Ok(ConflictReason::None) => {
+                    // Go through all deposits and generate unspent outputs.
+                    for (index, output) in essence.outputs().iter().enumerate() {
+                        metadata.created_outputs.insert(
+                            // Can't fail because we know the index is valid.
+                            OutputId::new(transaction_id, index as u16).unwrap(),
+                            Output::new(*message_id, output.clone()),
+                        );
+                    }
+                    for (output_id, _) in outputs {
+                        metadata.created_outputs.remove(&output_id);
+                        metadata
+                            .spent_outputs
+                            .insert(output_id, Spent::new(transaction_id, metadata.index));
+                    }
+                    metadata.included_messages.push(*message_id);
                 }
-                for (output_id, _) in outputs {
-                    metadata.created_outputs.remove(&output_id);
-                    metadata
-                        .spent_outputs
-                        .insert(output_id, Spent::new(transaction_id, metadata.index));
+                Ok(conflict) => {
+                    metadata.excluded_conflicting_messages.push((*message_id, conflict));
                 }
-                metadata.included_messages.push(*message_id);
+                Err(e) => return Err(e),
             }
         }
         _ => {

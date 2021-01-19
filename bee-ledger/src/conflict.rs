@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum ConflictReason {
     /// The message has no conflict.
     None,
