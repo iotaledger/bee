@@ -76,84 +76,76 @@ async fn on_message<N: Node>(
 where
     N::Backend: StorageBackend,
 {
-    let mut conflict = ConflictReason::None;
-
     metadata.num_referenced_messages += 1;
 
-    match message.payload() {
-        Some(Payload::Transaction(transaction)) => {
-            let transaction_id = transaction.id();
-            let essence = transaction.essence();
-            let mut outputs = HashMap::with_capacity(essence.inputs().len());
-
-            for input in essence.inputs() {
-                if let Input::UTXO(utxo_input) = input {
-                    let output_id = utxo_input.output_id();
-
-                    // Check if this input was already spent during the confirmation.
-                    if metadata.spent_outputs.contains_key(output_id) {
-                        conflict = ConflictReason::InputUTXOAlreadySpentInThisMilestone;
-                        break;
-                    }
-
-                    // Check if this input was newly created during the confirmation.
-                    if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
-                        outputs.insert(*output_id, output);
-                        continue;
-                    }
-
-                    // Check current ledger for this input.
-                    if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
-                        // Check if this output is already spent.
-                        if !storage::is_output_unspent(storage.deref(), output_id).await? {
-                            conflict = ConflictReason::InputUTXOAlreadySpent;
-                            break;
-                        }
-                        outputs.insert(*output_id, output);
-                        continue;
-                    } else {
-                        conflict = ConflictReason::InputUTXONotFound;
-                        break;
-                    }
-                } else {
-                    // TODO conflict or error ?
-                    return Err(Error::UnsupportedInputType);
-                };
-            }
-
-            if conflict != ConflictReason::None {
-                metadata.excluded_conflicting_messages.push((*message_id, conflict));
-                return Ok(());
-            }
-
-            match validate_transaction(&transaction, &outputs) {
-                Ok(ConflictReason::None) => {
-                    // Go through all deposits and generate unspent outputs.
-                    for (index, output) in essence.outputs().iter().enumerate() {
-                        metadata.created_outputs.insert(
-                            // Can't fail because we know the index is valid.
-                            OutputId::new(transaction_id, index as u16).unwrap(),
-                            Output::new(*message_id, output.clone()),
-                        );
-                    }
-                    for (output_id, _) in outputs {
-                        metadata.created_outputs.remove(&output_id);
-                        metadata
-                            .spent_outputs
-                            .insert(output_id, Spent::new(transaction_id, metadata.index));
-                    }
-                    metadata.included_messages.push(*message_id);
-                }
-                Ok(conflict) => {
-                    metadata.excluded_conflicting_messages.push((*message_id, conflict));
-                }
-                Err(e) => return Err(e),
-            }
-        }
-        _ => {
-            metadata.excluded_no_transaction_messages.push(*message_id);
-        }
+    let transaction = if let Some(Payload::Transaction(transaction)) = message.payload() {
+        transaction
+    } else {
+        metadata.excluded_no_transaction_messages.push(*message_id);
+        return Ok(());
     };
+
+    let transaction_id = transaction.id();
+    let essence = transaction.essence();
+    let mut outputs = HashMap::with_capacity(essence.inputs().len());
+    let mut conflict = ConflictReason::None;
+
+    for input in essence.inputs() {
+        if let Input::UTXO(utxo_input) = input {
+            let output_id = utxo_input.output_id();
+
+            if metadata.spent_outputs.contains_key(output_id) {
+                conflict = ConflictReason::InputUTXOAlreadySpentInThisMilestone;
+                break;
+            }
+
+            if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
+                outputs.insert(*output_id, output);
+                continue;
+            }
+
+            if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
+                if !storage::is_output_unspent(storage.deref(), output_id).await? {
+                    conflict = ConflictReason::InputUTXOAlreadySpent;
+                    break;
+                }
+                outputs.insert(*output_id, output);
+                continue;
+            } else {
+                conflict = ConflictReason::InputUTXONotFound;
+                break;
+            }
+        } else {
+            return Err(Error::UnsupportedInputType);
+        };
+    }
+
+    if conflict != ConflictReason::None {
+        metadata.excluded_conflicting_messages.push((*message_id, conflict));
+        return Ok(());
+    }
+
+    match validate_transaction(&transaction, &outputs) {
+        Ok(ConflictReason::None) => {
+            for (index, output) in essence.outputs().iter().enumerate() {
+                metadata.created_outputs.insert(
+                    OutputId::new(transaction_id, index as u16).unwrap(),
+                    Output::new(*message_id, output.clone()),
+                );
+            }
+            for (output_id, _) in outputs {
+                metadata.created_outputs.remove(&output_id);
+                metadata
+                    .spent_outputs
+                    .insert(output_id, Spent::new(transaction_id, metadata.index));
+            }
+            metadata.included_messages.push(*message_id);
+        }
+        Ok(conflict) => {
+            metadata.excluded_conflicting_messages.push((*message_id, conflict));
+        }
+        Err(e) => return Err(e),
+    }
 
     Ok(())
 }
