@@ -360,7 +360,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "toml",
- "warp 0.3.0 (git+https://github.com/seanmonstar/warp)",
+ "warp 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "warp-reverse-proxy",
 ]
 
