@@ -83,11 +83,11 @@ where
         ));
     }
 
-    storage::apply_diff(
+    storage::apply_outputs_diff(
         &*storage,
         metadata.index,
-        &metadata.spent_outputs,
         &metadata.created_outputs,
+        &metadata.spent_outputs,
     )
     .await?;
 

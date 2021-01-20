@@ -24,17 +24,17 @@ use std::{
     ops::Deref,
 };
 
-// TODO
-// The address type of the referenced UTXO must match the signature type contained in the corresponding Signature Unlock
-// Block. The Signature Unlock Blocks are valid, i.e. the signatures prove ownership over the addresses of the
-// referenced UTXOs.
-
 fn validate_transaction(
     transaction: &TransactionPayload,
     consumed_outputs: &HashMap<OutputId, Output>,
 ) -> Result<ConflictReason, Error> {
     let mut consumed_amount = 0;
     let mut created_amount = 0;
+
+    // TODO
+    // The address type of the referenced UTXO must match the signature type contained in the corresponding Signature Unlock
+    // Block. The Signature Unlock Blocks are valid, i.e. the signatures prove ownership over the addresses of the
+    // referenced UTXOs.
 
     for (_index, (_, consumed_output)) in consumed_outputs.iter().enumerate() {
         match consumed_output.inner() {
@@ -44,7 +44,6 @@ fn validate_transaction(
             transaction::Output::SignatureLockedDustAllowance(consumed_output) => {
                 consumed_amount += consumed_output.amount();
             }
-            // TODO conflict or error ?
             _ => return Err(Error::UnsupportedOutputType),
         };
     }
@@ -53,14 +52,12 @@ fn validate_transaction(
         created_amount += match created_output {
             transaction::Output::SignatureLockedSingle(created_output) => created_output.amount(),
             transaction::Output::SignatureLockedDustAllowance(created_output) => created_output.amount(),
-            // TODO conflict or error ?
             _ => return Err(Error::UnsupportedOutputType),
         };
     }
 
     if consumed_amount != created_amount {
-        // TODO conflict or error ?
-        return Err(Error::AmountMismatch(consumed_amount, created_amount));
+        return Ok(ConflictReason::InputOutputSumMismatch);
     }
 
     Ok(ConflictReason::None)
@@ -87,7 +84,7 @@ where
 
     let transaction_id = transaction.id();
     let essence = transaction.essence();
-    let mut outputs = HashMap::with_capacity(essence.inputs().len());
+    let mut spent_outputs = HashMap::with_capacity(essence.inputs().len());
     let mut conflict = ConflictReason::None;
 
     for input in essence.inputs() {
@@ -100,7 +97,7 @@ where
             }
 
             if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
-                outputs.insert(*output_id, output);
+                spent_outputs.insert(*output_id, output);
                 continue;
             }
 
@@ -109,7 +106,7 @@ where
                     conflict = ConflictReason::InputUTXOAlreadySpent;
                     break;
                 }
-                outputs.insert(*output_id, output);
+                spent_outputs.insert(*output_id, output);
                 continue;
             } else {
                 conflict = ConflictReason::InputUTXONotFound;
@@ -125,16 +122,17 @@ where
         return Ok(());
     }
 
-    match validate_transaction(&transaction, &outputs) {
+    match validate_transaction(&transaction, &spent_outputs) {
         Ok(ConflictReason::None) => {
             for (index, output) in essence.outputs().iter().enumerate() {
                 metadata.created_outputs.insert(
+                    // Unwrap is fine, the index is known to be valid.
                     OutputId::new(transaction_id, index as u16).unwrap(),
                     Output::new(*message_id, output.clone()),
                 );
             }
-            for (output_id, _) in outputs {
-                metadata.created_outputs.remove(&output_id);
+            // TODO output ?
+            for (output_id, _) in spent_outputs {
                 metadata
                     .spent_outputs
                     .insert(output_id, Spent::new(transaction_id, metadata.index));

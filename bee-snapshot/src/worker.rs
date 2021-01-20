@@ -8,7 +8,7 @@ use crate::{
 
 use bee_ledger::{
     model::Unspent,
-    storage::{apply_diff, check_ledger_state, rollback_diff},
+    storage::{apply_outputs_diff, check_ledger_state, rollback_outputs_diff},
 };
 use bee_message::{
     ledger_index::LedgerIndex,
@@ -141,13 +141,13 @@ async fn import_snapshot<B: StorageBackend>(
         match index {
             MilestoneIndex(index) if index == *ledger_index + 1 => {
                 // TODO unwrap until we merge both crates
-                apply_diff(storage, MilestoneIndex(index), diff.consumed(), diff.created())
+                apply_outputs_diff(storage, MilestoneIndex(index), diff.created(), diff.consumed())
                     .await
                     .unwrap();
             }
             MilestoneIndex(index) if index == *ledger_index => {
                 // TODO unwrap until we merge both crates
-                rollback_diff(storage, MilestoneIndex(index), diff.consumed(), diff.created())
+                rollback_outputs_diff(storage, MilestoneIndex(index), diff.created(), diff.consumed())
                     .await
                     .unwrap();
             }

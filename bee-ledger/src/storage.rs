@@ -7,7 +7,11 @@ use crate::{
     IOTA_SUPPLY,
 };
 
-use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, payload::transaction::OutputId};
+use bee_message::{
+    ledger_index::LedgerIndex,
+    milestone::MilestoneIndex,
+    payload::transaction::{self, Address, Ed25519Address, OutputId},
+};
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
     backend,
@@ -27,6 +31,7 @@ pub trait StorageBackend:
     + Batch<Unspent, ()>
     + Batch<(), LedgerIndex>
     + Batch<MilestoneIndex, OutputDiff>
+    + Batch<(Ed25519Address, OutputId), ()>
     + Delete<OutputId, Output>
     + Delete<OutputId, Spent>
     + Delete<Unspent, ()>
@@ -55,6 +60,7 @@ impl<T> StorageBackend for T where
         + Batch<Unspent, ()>
         + Batch<(), LedgerIndex>
         + Batch<MilestoneIndex, OutputDiff>
+        + Batch<(Ed25519Address, OutputId), ()>
         + Delete<OutputId, Output>
         + Delete<OutputId, Spent>
         + Delete<Unspent, ()>
@@ -75,42 +81,90 @@ impl<T> StorageBackend for T where
 {
 }
 
-pub async fn apply_diff<B: StorageBackend>(
+pub async fn apply_address_output_relation<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    address: &Address,
+    output_id: &OutputId,
+) -> Result<(), Error> {
+    match address {
+        Address::Ed25519(address) => {
+            Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, batch, &(address.clone(), *output_id), &())
+                .map_err(|e| Error::Storage(Box::new(e)))?;
+        }
+        _ => return Err(Error::UnsupportedAddressType),
+    }
+
+    Ok(())
+}
+
+pub async fn apply_created_output<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    output_id: &OutputId,
+    output: &Output,
+) -> Result<(), Error> {
+    Batch::<OutputId, Output>::batch_insert(storage, batch, output_id, output)
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+    Batch::<Unspent, ()>::batch_insert(storage, batch, &(*output_id).into(), &())
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+
+    match output.inner() {
+        transaction::Output::SignatureLockedSingle(output) => {
+            apply_address_output_relation(storage, batch, output.address(), output_id).await?
+        }
+        transaction::Output::SignatureLockedDustAllowance(output) => {
+            apply_address_output_relation(storage, batch, output.address(), output_id).await?
+        }
+        _ => return Err(Error::UnsupportedOutputType),
+    }
+
+    Ok(())
+}
+
+pub async fn apply_consumed_output<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    output_id: &OutputId,
+    output: &Spent,
+) -> Result<(), Error> {
+    Batch::<OutputId, Spent>::batch_insert(storage, batch, output_id, output)
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+    Batch::<Unspent, ()>::batch_delete(storage, batch, &(*output_id).into())
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+
+    Ok(())
+}
+
+pub async fn apply_outputs_diff<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
-    spent_outputs: &HashMap<OutputId, Spent>,
     created_outputs: &HashMap<OutputId, Output>,
+    consumed_outputs: &HashMap<OutputId, Spent>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    let mut spent_output_ids = Vec::with_capacity(spent_outputs.len());
-    let mut created_outputs_ids = Vec::with_capacity(created_outputs.len());
+    let mut created_output_ids = Vec::with_capacity(created_outputs.len());
+    let mut consumed_output_ids = Vec::with_capacity(consumed_outputs.len());
 
     Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &index.into())
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    for (output_id, spent) in spent_outputs.iter() {
-        Batch::<OutputId, Spent>::batch_insert(storage, &mut batch, output_id, spent)
-            .map_err(|e| Error::Storage(Box::new(e)))?;
-        Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &(*output_id).into())
-            .map_err(|e| Error::Storage(Box::new(e)))?;
-        spent_output_ids.push(*output_id);
+    for (output_id, output) in created_outputs.iter() {
+        apply_created_output(storage, &mut batch, output_id, output).await?;
+        created_output_ids.push(*output_id);
     }
 
-    for (output_id, output) in created_outputs.iter() {
-        Batch::<OutputId, Output>::batch_insert(storage, &mut batch, output_id, output)
-            .map_err(|e| Error::Storage(Box::new(e)))?;
-        Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &(*output_id).into(), &())
-            .map_err(|e| Error::Storage(Box::new(e)))?;
-        created_outputs_ids.push(*output_id);
-        // TODO address mapping
+    for (output_id, output) in consumed_outputs.iter() {
+        apply_consumed_output(storage, &mut batch, output_id, output).await?;
+        consumed_output_ids.push(*output_id);
     }
 
     Batch::<MilestoneIndex, OutputDiff>::batch_insert(
         storage,
         &mut batch,
         &index,
-        &OutputDiff::new(spent_output_ids, created_outputs_ids),
+        &OutputDiff::new(created_output_ids, consumed_output_ids),
     )
     .map_err(|e| Error::Storage(Box::new(e)))?;
 
@@ -120,28 +174,28 @@ pub async fn apply_diff<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub async fn rollback_diff<B: StorageBackend>(
+pub async fn rollback_outputs_diff<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
-    spent_outputs: &HashMap<OutputId, Spent>,
     created_outputs: &HashMap<OutputId, Output>,
+    consumed_outputs: &HashMap<OutputId, Spent>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
     Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &((index - MilestoneIndex(1)).into()))
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    for (output_id, _spent) in spent_outputs.iter() {
-        Batch::<OutputId, Spent>::batch_delete(storage, &mut batch, output_id)
-            .map_err(|e| Error::Storage(Box::new(e)))?;
-        Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &(*output_id).into(), &())
-            .map_err(|e| Error::Storage(Box::new(e)))?;
-    }
-
     for (output_id, _) in created_outputs.iter() {
         Batch::<OutputId, Output>::batch_delete(storage, &mut batch, output_id)
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &(*output_id).into())
+            .map_err(|e| Error::Storage(Box::new(e)))?;
+    }
+
+    for (output_id, _spent) in consumed_outputs.iter() {
+        Batch::<OutputId, Spent>::batch_delete(storage, &mut batch, output_id)
+            .map_err(|e| Error::Storage(Box::new(e)))?;
+        Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &(*output_id).into(), &())
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
