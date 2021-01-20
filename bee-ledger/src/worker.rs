@@ -49,10 +49,7 @@ where
         return Err(Error::NonContiguousMilestone(milestone.essence().index(), **index));
     }
 
-    let mut metadata = WhiteFlagMetadata::new(
-        MilestoneIndex(milestone.essence().index()),
-        milestone.essence().timestamp(),
-    );
+    let mut metadata = WhiteFlagMetadata::new(MilestoneIndex(milestone.essence().index()));
 
     let (parent1, parent2) = (*message.parent1(), *message.parent2());
 
@@ -101,7 +98,7 @@ where
             .update_metadata(message_id, |message_metadata| {
                 message_metadata.set_conflict(ConflictReason::None as u8);
                 message_metadata.set_milestone_index(metadata.index);
-                message_metadata.confirm(metadata.timestamp);
+                message_metadata.confirm(milestone.essence().timestamp());
             })
             .await;
     }
@@ -111,7 +108,7 @@ where
             .update_metadata(message_id, |message_metadata| {
                 message_metadata.set_conflict(*conflict as u8);
                 message_metadata.set_milestone_index(metadata.index);
-                message_metadata.confirm(metadata.timestamp);
+                message_metadata.confirm(milestone.essence().timestamp());
             })
             .await;
     }
@@ -121,7 +118,7 @@ where
             .update_metadata(message_id, |message_metadata| {
                 message_metadata.set_conflict(ConflictReason::None as u8);
                 message_metadata.set_milestone_index(metadata.index);
-                message_metadata.confirm(metadata.timestamp);
+                message_metadata.confirm(milestone.essence().timestamp());
             })
             .await;
     }

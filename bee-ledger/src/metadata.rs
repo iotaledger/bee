@@ -15,8 +15,6 @@ use std::collections::HashMap;
 pub(crate) struct WhiteFlagMetadata {
     /// Index of the confirming milestone.
     pub(crate) index: MilestoneIndex,
-    /// Timestamp of the confirming milestone.
-    pub(crate) timestamp: u64,
     /// The number of messages which were referenced by the confirming milestone.
     pub(crate) num_referenced_messages: usize,
     /// The messages which were excluded because they did not include a transaction.
@@ -31,10 +29,9 @@ pub(crate) struct WhiteFlagMetadata {
 
 impl WhiteFlagMetadata {
     /// Creates a new white flag metadata.
-    pub(crate) fn new(index: MilestoneIndex, timestamp: u64) -> WhiteFlagMetadata {
+    pub(crate) fn new(index: MilestoneIndex) -> WhiteFlagMetadata {
         WhiteFlagMetadata {
             index,
-            timestamp,
             ..Self::default()
         }
     }
