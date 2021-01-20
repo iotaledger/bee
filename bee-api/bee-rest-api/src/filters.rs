@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    config::RestApiConfig, filters::CustomRejection::BadRequest, handlers, storage::StorageBackend, NetworkId,
+    config::RestApiConfig, filters::CustomRejection::BadRequest, handlers, storage::StorageBackend, Bech32Hrp,
+    NetworkId,
 };
 
 use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorkerEvent};
@@ -28,12 +29,14 @@ pub fn all<B: StorageBackend>(
     storage: ResourceHandle<B>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
+    bech32_hrp: Bech32Hrp,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     health(tangle.clone()).or(info(
         tangle.clone(),
         network_id.clone(),
+        bech32_hrp,
         rest_api_config.clone(),
         protocol_config.clone(),
     )
@@ -72,6 +75,7 @@ fn health<B: StorageBackend>(
 fn info<B: StorageBackend>(
     tangle: ResourceHandle<MsTangle<B>>,
     network_id: NetworkId,
+    bech32_hrp: Bech32Hrp,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -82,6 +86,7 @@ fn info<B: StorageBackend>(
         .and(warp::path::end())
         .and(with_tangle(tangle))
         .and(with_network_id(network_id))
+        .and(with_bech32_hrp(bech32_hrp))
         .and(with_rest_api_config(rest_api_config))
         .and(with_protocol_config(protocol_config))
         .and_then(handlers::info::info)
@@ -349,6 +354,12 @@ fn with_network_id(
     network_id: NetworkId,
 ) -> impl Filter<Extract = (NetworkId,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || network_id.clone())
+}
+
+fn with_bech32_hrp(
+    bech32_hrp: Bech32Hrp,
+) -> impl Filter<Extract = (Bech32Hrp,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || bech32_hrp.clone())
 }
 
 fn with_rest_api_config(

@@ -6,7 +6,7 @@ use crate::{
     constants::{BEE_GIT_COMMIT, BEE_VERSION},
     handlers::{BodyInner, SuccessBody},
     storage::StorageBackend,
-    NetworkId,
+    Bech32Hrp, NetworkId,
 };
 
 use bee_protocol::config::ProtocolConfig;
@@ -21,6 +21,7 @@ use std::convert::Infallible;
 pub(crate) async fn info<B: StorageBackend>(
     tangle: ResourceHandle<MsTangle<B>>,
     network_id: NetworkId,
+    bech32_hrp: Bech32Hrp,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Infallible> {
@@ -36,6 +37,7 @@ pub(crate) async fn info<B: StorageBackend>(
         },
         is_healthy: tangle.is_healthy().await,
         network_id: network_id.0,
+        bech32_hrp,
         latest_milestone_index: *tangle.get_latest_milestone_index(),
         solid_milestone_index: *tangle.get_latest_solid_milestone_index(),
         pruning_index: *tangle.get_pruning_index(),
@@ -59,6 +61,8 @@ pub struct InfoResponse {
     pub is_healthy: bool,
     #[serde(rename = "networkId")]
     pub network_id: String,
+    #[serde(rename = "bech32HRP")]
+    pub bech32_hrp: String,
     #[serde(rename = "latestMilestoneIndex")]
     pub latest_milestone_index: u32,
     #[serde(rename = "solidMilestoneIndex")]
