@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module contains logic to convert an integer encoded by 242 trits to the same integer encoded by 384 bits (or 48
