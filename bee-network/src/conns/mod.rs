@@ -117,21 +117,18 @@ fn spawn_gossip_in_task(
                         error!("{:?}", e);
                     }
                 }
-                Err(e) => {
-                    debug!("{:?}", e);
-
+                Err(_) => {
                     trace!("Remote dropped connection.");
                     break;
                 }
             }
         }
 
-        if let Err(e) = internal_event_sender
+        // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
+        internal_event_sender
             .send(InternalEvent::ConnectionDropped { peer_id })
-            .map_err(|_| Error::InternalEventSendFailure("ConnectionDropped"))
-        {
-            error!("{:?}", e);
-        }
+            .map_err(|_| ())
+            .unwrap()
     });
 }
 
@@ -148,11 +145,9 @@ fn spawn_gossip_out_task(
             if let Err(e) = send_message(&mut writer, &message).await {
                 error!("{:?}", e);
                 continue;
-            } else {
-                trace!("Dropping connection.");
-                break;
             }
         }
+        trace!("Dropping connection.");
 
         // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
         internal_event_sender
