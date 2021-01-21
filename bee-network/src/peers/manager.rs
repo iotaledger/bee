@@ -22,13 +22,7 @@ use log::*;
 use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
-use std::{
-    convert::Infallible,
-    sync::atomic::{AtomicUsize, Ordering},
-};
-
-pub static NUM_COMMAND_PROCESSING_ERRORS: AtomicUsize = AtomicUsize::new(0);
-pub static NUM_EVENT_PROCESSING_ERRORS: AtomicUsize = AtomicUsize::new(0);
+use std::{convert::Infallible, sync::atomic::Ordering};
 
 #[derive(Default)]
 pub struct PeerManager {}
@@ -110,7 +104,6 @@ impl<N: Node> Worker<N> for PeerManager {
                 .await
                 {
                     error!("Error processing command. Cause: {}", e);
-                    NUM_COMMAND_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                     continue;
                 }
             }
@@ -140,7 +133,6 @@ impl<N: Node> Worker<N> for PeerManager {
                 .await
                 {
                     error!("Error processing internal event. Cause: {}", e);
-                    NUM_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                     continue;
                 }
             }
@@ -290,9 +282,9 @@ async fn process_command(
                 }
             });
         }
-        Command::SendMessage { message, to } => {
-            send_message(message, &to, peers).await?;
-        }
+        // Command::SendMessage { message, to } => {
+        //     send_message(message, &to, peers).await?;
+        // }
         Command::BanAddress { address } => {
             if !banned_addrs.insert(address.to_string()) {
                 return Err(Error::AddressAlreadyBanned(address));
@@ -329,7 +321,6 @@ async fn process_command(
     Ok(())
 }
 
-#[inline]
 async fn process_internal_event(
     internal_event: InternalEvent,
     local_keys: &identity::Keypair,
@@ -345,18 +336,15 @@ async fn process_internal_event(
         InternalEvent::ConnectionEstablished {
             peer_id,
             peer_info,
-            message_sender,
+            gossip_in,
+            gossip_out,
             ..
         } => {
             match peer_info.relation {
-                PeerRelation::Known => {
-                    peers
-                        .update_state(&peer_id, PeerState::Connected(message_sender))
-                        .await?
-                }
+                PeerRelation::Known => peers.update_state(&peer_id, PeerState::Connected).await?,
                 PeerRelation::Unknown => {
                     peers
-                        .insert(peer_id.clone(), peer_info.clone(), PeerState::Connected(message_sender))
+                        .insert(peer_id.clone(), peer_info.clone(), PeerState::Connected)
                         .await
                         .map_err(|(_, _, e)| e)?;
 
@@ -375,12 +363,17 @@ async fn process_internal_event(
                 .send(Event::PeerConnected {
                     id: peer_id,
                     address: peer_info.address,
+                    gossip_in,
+                    gossip_out,
                 })
                 .map_err(|_| Error::EventSendFailure("PeerConnected"))?;
         }
 
         InternalEvent::ConnectionDropped { peer_id } => {
-            peers.update_state(&peer_id, PeerState::Disconnected).await?;
+            if let Err(Error::UnlistedPeer(_)) = peers.update_state(&peer_id, PeerState::Disconnected).await {
+                // NOTE: the peer has been removed already
+                return Ok(());
+            }
 
             // TODO: maybe allow some fixed timespan for a connection recovery from either end before removing.
             peers.remove_if(&peer_id, |info, _| info.relation.is_unknown()).await;
@@ -390,7 +383,6 @@ async fn process_internal_event(
                 .map_err(|_| Error::EventSendFailure("PeerDisconnected"))?;
         }
 
-        InternalEvent::MessageReceived { message, from } => recv_message(message, from, &event_sender).await?,
         InternalEvent::ReconnectScheduled { peer_id } => {
             let local_keys = local_keys.clone();
             let peers = peers.clone();
@@ -572,16 +564,4 @@ async fn dial_address(
     }
 
     Ok(())
-}
-
-#[inline]
-async fn send_message(message: Vec<u8>, to: &PeerId, peers: &PeerList) -> Result<(), Error> {
-    peers.send_message(message, to).await
-}
-
-#[inline]
-async fn recv_message(message: Vec<u8>, from: PeerId, event_sender: &EventSender) -> Result<(), Error> {
-    event_sender
-        .send(Event::MessageReceived { message, from })
-        .map_err(|_| Error::EventSendFailure("MessageReceived"))
 }

@@ -9,7 +9,6 @@ use crate::{
 };
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
-use bee_network::NetworkController;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
@@ -60,7 +59,6 @@ pub(crate) struct MessageRequesterWorker {
 async fn process_request(
     message_id: MessageId,
     index: MilestoneIndex,
-    network: &NetworkController,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
     requested_messages: &RequestedMessages,
@@ -74,7 +72,7 @@ async fn process_request(
         return;
     }
 
-    if process_request_unchecked(message_id, index, network, peer_manager, metrics, counter).await {
+    if process_request_unchecked(message_id, index, peer_manager, metrics, counter).await {
         requested_messages.insert(message_id, index).await;
     }
 }
@@ -83,7 +81,6 @@ async fn process_request(
 async fn process_request_unchecked(
     message_id: MessageId,
     index: MilestoneIndex,
-    network: &NetworkController,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
     counter: &mut usize,
@@ -98,7 +95,6 @@ async fn process_request_unchecked(
         if let Some(peer) = peer_manager.get(peer_id).await {
             if (*peer).0.has_data(index) {
                 Sender::<MessageRequest>::send(
-                    network,
                     peer_manager,
                     metrics,
                     peer_id,
@@ -120,7 +116,6 @@ async fn process_request_unchecked(
         if let Some(peer) = peer_manager.get(peer_id).await {
             if (*peer).0.maybe_has_data(index) {
                 Sender::<MessageRequest>::send(
-                    network,
                     peer_manager,
                     metrics,
                     peer_id,
@@ -136,7 +131,6 @@ async fn process_request_unchecked(
 }
 
 async fn retry_requests(
-    network: &NetworkController,
     requested_messages: &RequestedMessages,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
@@ -151,7 +145,7 @@ async fn retry_requests(
     // TODO this needs abstraction
     for (message_id, (index, instant)) in requested_messages.0.read().await.iter() {
         if (Instant::now() - *instant).as_millis() as u64 > RETRY_INTERVAL_MS
-            && process_request_unchecked(*message_id, *index, network, peer_manager, metrics, counter).await
+            && process_request_unchecked(*message_id, *index, peer_manager, metrics, counter).await
         {
             retry_counts += 1;
         }
@@ -178,7 +172,6 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
         node.register_resource(requested_messages);
 
         let requested_messages = node.resource::<RequestedMessages>();
-        let network = node.resource::<NetworkController>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<ProtocolMetrics>();
 
@@ -194,7 +187,6 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
                 process_request(
                     message_id,
                     index,
-                    &network,
                     &peer_manager,
                     &metrics,
                     &requested_messages,
@@ -207,7 +199,6 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
         });
 
         let requested_messages = node.resource::<RequestedMessages>();
-        let network = node.resource::<NetworkController>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<ProtocolMetrics>();
 
@@ -221,7 +212,7 @@ impl<N: Node> Worker<N> for MessageRequesterWorker {
             let mut counter: usize = 0;
 
             while ticker.next().await.is_some() {
-                retry_requests(&network, &requested_messages, &peer_manager, &metrics, &mut counter).await;
+                retry_requests(&requested_messages, &peer_manager, &metrics, &mut counter).await;
             }
 
             info!("Retryer stopped.");

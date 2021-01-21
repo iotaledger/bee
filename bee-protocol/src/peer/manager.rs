@@ -7,13 +7,13 @@ use bee_network::PeerId;
 
 use futures::channel::oneshot;
 use log::debug;
-use tokio::sync::{mpsc, RwLock, RwLockReadGuard};
+use tokio::sync::{RwLock, RwLockReadGuard};
 
 use std::{collections::HashMap, sync::Arc};
 
 pub struct PeerManager {
     // TODO private
-    pub(crate) peers: RwLock<HashMap<PeerId, (Arc<Peer>, mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)>>,
+    pub(crate) peers: RwLock<HashMap<PeerId, (Arc<Peer>, oneshot::Sender<()>)>>,
     // This is needed to ensure message distribution fairness as iterating over a HashMap is random.
     // TODO private
     pub(crate) peers_keys: RwLock<Vec<PeerId>>,
@@ -35,29 +35,17 @@ impl PeerManager {
     pub(crate) async fn get(
         &self,
         id: &PeerId,
-    ) -> Option<impl std::ops::Deref<Target = (Arc<Peer>, mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)> + '_>
-    {
+    ) -> Option<impl std::ops::Deref<Target = (Arc<Peer>, oneshot::Sender<()>)> + '_> {
         RwLockReadGuard::try_map(self.peers.read().await, |map| map.get(id)).ok()
     }
 
-    pub(crate) async fn add(
-        &self,
-        peer: Arc<Peer>,
-        sender: mpsc::UnboundedSender<Vec<u8>>,
-        shutdown: oneshot::Sender<()>,
-    ) {
+    pub(crate) async fn add(&self, peer: Arc<Peer>, shutdown: oneshot::Sender<()>) {
         debug!("Added peer {}.", peer.id());
         self.peers_keys.write().await.push(peer.id().clone());
-        self.peers
-            .write()
-            .await
-            .insert(peer.id().clone(), (peer, sender, shutdown));
+        self.peers.write().await.insert(peer.id().clone(), (peer, shutdown));
     }
 
-    pub(crate) async fn remove(
-        &self,
-        id: &PeerId,
-    ) -> Option<(Arc<Peer>, mpsc::UnboundedSender<Vec<u8>>, oneshot::Sender<()>)> {
+    pub(crate) async fn remove(&self, id: &PeerId) -> Option<(Arc<Peer>, oneshot::Sender<()>)> {
         debug!("Removed peer {}.", id);
         self.peers_keys.write().await.retain(|peer_id| peer_id != id);
         self.peers.write().await.remove(id)

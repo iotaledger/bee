@@ -10,7 +10,7 @@ use crate::{
 };
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
-use bee_network::{NetworkController, PeerId};
+use bee_network::PeerId;
 use bee_tangle::MsTangle;
 
 use log::warn;
@@ -66,7 +66,6 @@ pub(crate) async fn request_message<B: StorageBackend>(
 
 pub async fn send_heartbeat(
     peer_manager: &PeerManager,
-    network: &NetworkController,
     metrics: &ProtocolMetrics,
     to: PeerId,
     latest_solid_milestone_index: MilestoneIndex,
@@ -74,7 +73,6 @@ pub async fn send_heartbeat(
     latest_milestone_index: MilestoneIndex,
 ) {
     Sender::<Heartbeat>::send(
-        network,
         peer_manager,
         metrics,
         &to,
@@ -91,7 +89,6 @@ pub async fn send_heartbeat(
 
 pub async fn broadcast_heartbeat(
     peer_manager: &PeerManager,
-    network: &NetworkController,
     metrics: &ProtocolMetrics,
     latest_solid_milestone_index: MilestoneIndex,
     pruning_milestone_index: MilestoneIndex,
@@ -102,7 +99,6 @@ pub async fn broadcast_heartbeat(
     for (peer_id, _) in peer_manager.peers.read().await.iter() {
         send_heartbeat(
             peer_manager,
-            network,
             metrics,
             peer_id.clone(),
             latest_solid_milestone_index,

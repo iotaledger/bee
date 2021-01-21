@@ -27,7 +27,7 @@ pub use config::{NetworkConfig, NetworkConfigBuilder};
 pub use conns::Origin;
 pub use interaction::{commands::Command, events::Event};
 pub use network::NetworkController;
-pub use peers::{PeerInfo, PeerRelation};
+pub use peers::{MessageReceiver, MessageSender, PeerInfo, PeerRelation};
 
 /// A type that receives any event published by the networking layer.
 pub type NetworkListener = UnboundedReceiver<Event>;

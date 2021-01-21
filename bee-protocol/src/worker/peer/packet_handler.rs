@@ -12,10 +12,9 @@ use futures::{
     stream::StreamExt,
 };
 use log::trace;
-use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-type EventRecv = mpsc::UnboundedReceiver<Vec<u8>>;
+type EventRecv = UnboundedReceiverStream<Vec<u8>>;
 type ShutdownRecv = future::Fuse<oneshot::Receiver<()>>;
 
 /// The read state of the packet handler.
@@ -97,7 +96,7 @@ impl PacketHandler {
 // This type takes care of actually receiving the events and appending them to an inner buffer so
 // they can be used seamlessly by the `PacketHandler`.
 struct EventHandler {
-    receiver: UnboundedReceiverStream<Vec<u8>>,
+    receiver: EventRecv,
     buffer: Vec<u8>,
     offset: usize,
 }
@@ -106,7 +105,7 @@ impl EventHandler {
     /// Create a new event handler from an event receiver.
     fn new(receiver: EventRecv) -> Self {
         Self {
-            receiver: UnboundedReceiverStream::new(receiver),
+            receiver,
             buffer: vec![],
             offset: 0,
         }
@@ -154,11 +153,7 @@ impl EventHandler {
     ///
     /// This method returns `None` if a shutdown signal is received, otherwise it returns the
     /// requested bytes.
-    async fn fetch_bytes_or_shutdown<'a>(
-        &'a mut self,
-        mut shutdown: &'a mut ShutdownRecv,
-        len: usize,
-    ) -> Option<&'a [u8]> {
+    async fn fetch_bytes_or_shutdown(&mut self, mut shutdown: &mut ShutdownRecv, len: usize) -> Option<&'_ [u8]> {
         select! {
             // Always select `shutdown` first, otherwise you can end with an infinite loop.
             _ = shutdown => None,

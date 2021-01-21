@@ -20,7 +20,6 @@ use bee_message::{
     payload::{milestone::MilestoneValidationError, Payload},
     MessageId,
 };
-use bee_network::NetworkController;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
@@ -118,7 +117,6 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let peer_manager = node.resource::<PeerManager>();
-        let network = node.resource::<NetworkController>();
         let metrics = node.resource::<ProtocolMetrics>();
         let key_manager = KeyManager::new(
             config.coordinator.public_key_count,
@@ -146,7 +144,6 @@ where
 
                             helper::broadcast_heartbeat(
                                 &peer_manager,
-                                &network,
                                 &metrics,
                                 tangle.get_latest_solid_milestone_index(),
                                 tangle.get_pruning_index(),

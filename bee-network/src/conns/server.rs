@@ -170,7 +170,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                             continue;
                         } else {
                             // We also allow for a certain number of unknown peers.
-                            info!("Unknown peer {} accepted.", peer_info.alias);
+                            info!("Unknown peer '{}' accepted.", peer_info.alias);
 
                             peer_info
                         }
@@ -230,8 +230,6 @@ impl<N: Node> Worker<N> for ConnectionManager {
         Ok(())
     }
 }
-
-#[inline]
 fn log_inbound_connection_success(peer_info: &PeerInfo) {
-    info!("Established (inbound) connection with {}.", peer_info.alias);
+    info!("Established (inbound) connection with '{}'.", peer_info.alias);
 }

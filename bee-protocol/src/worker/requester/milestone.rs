@@ -10,7 +10,7 @@ use crate::{
 };
 
 use bee_message::milestone::MilestoneIndex;
-use bee_network::{NetworkController, PeerId};
+use bee_network::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
@@ -63,7 +63,6 @@ pub(crate) struct MilestoneRequesterWorker {
 async fn process_request(
     index: MilestoneIndex,
     peer_id: Option<PeerId>,
-    network: &NetworkController,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
     requested_milestones: &RequestedMilestones,
@@ -77,7 +76,7 @@ async fn process_request(
         return;
     }
 
-    if process_request_unchecked(index, peer_id, network, peer_manager, metrics, counter).await && index.0 != 0 {
+    if process_request_unchecked(index, peer_id, peer_manager, metrics, counter).await && index.0 != 0 {
         requested_milestones.insert(index).await;
     }
 }
@@ -86,15 +85,13 @@ async fn process_request(
 async fn process_request_unchecked(
     index: MilestoneIndex,
     peer_id: Option<PeerId>,
-    network: &NetworkController,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
     counter: &mut usize,
 ) -> bool {
     match peer_id {
         Some(peer_id) => {
-            Sender::<MilestoneRequest>::send(network, peer_manager, metrics, &peer_id, MilestoneRequest::new(*index))
-                .await;
+            Sender::<MilestoneRequest>::send(peer_manager, metrics, &peer_id, MilestoneRequest::new(*index)).await;
             true
         }
         None => {
@@ -109,7 +106,6 @@ async fn process_request_unchecked(
                     // TODO also request if has_data ?
                     if (*peer).0.maybe_has_data(index) {
                         Sender::<MilestoneRequest>::send(
-                            network,
                             peer_manager,
                             metrics,
                             &peer_id,
@@ -127,7 +123,6 @@ async fn process_request_unchecked(
 }
 
 async fn retry_requests(
-    network: &NetworkController,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
     requested_milestones: &RequestedMilestones,
@@ -142,7 +137,7 @@ async fn retry_requests(
     // TODO this needs abstraction
     for (index, instant) in requested_milestones.0.read().await.iter() {
         if (Instant::now() - *instant).as_millis() as u64 > RETRY_INTERVAL_MS
-            && process_request_unchecked(*index, None, network, peer_manager, metrics, counter).await
+            && process_request_unchecked(*index, None, peer_manager, metrics, counter).await
         {
             retry_counts += 1;
         };
@@ -177,7 +172,6 @@ where
         node.register_resource(requested_milestones);
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let network = node.resource::<NetworkController>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<ProtocolMetrics>();
@@ -194,7 +188,6 @@ where
                     process_request(
                         index,
                         peer_id,
-                        &network,
                         &peer_manager,
                         &metrics,
                         &requested_milestones,
@@ -207,7 +200,6 @@ where
             info!("Requester stopped.");
         });
 
-        let network = node.resource::<NetworkController>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<ProtocolMetrics>();
@@ -222,7 +214,7 @@ where
             let mut counter: usize = 0;
 
             while ticker.next().await.is_some() {
-                retry_requests(&network, &peer_manager, &metrics, &requested_milestones, &mut counter).await;
+                retry_requests(&peer_manager, &metrics, &requested_milestones, &mut counter).await;
             }
 
             info!("Retryer stopped.");
