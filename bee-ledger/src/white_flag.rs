@@ -151,7 +151,7 @@ where
         return Ok(());
     }
 
-    for (address, entry) in balance_diff {
+    for (address, entry) in balance_diff.iter() {
         // TODO conditionnally fetch ?
         let (mut dust_allowance, mut dust_output) = match storage::fetch_balance(storage.deref(), &address).await? {
             Some(balance) => (balance.dust_allowance as i64, balance.dust_output as i64),
@@ -173,7 +173,8 @@ where
         }
     }
 
-    // TODO add balance to metadata
+    metadata.balance_diff.merge(balance_diff);
+
     // TODO store balances with diff
 
     for (index, output) in essence.outputs().iter().enumerate() {

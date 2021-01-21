@@ -3,7 +3,10 @@
 
 use bee_message::payload::transaction::Address;
 
-use std::collections::{hash_map::IntoIter, HashMap};
+use std::collections::{
+    hash_map::{IntoIter, Iter},
+    HashMap,
+};
 
 #[derive(Debug, Default)]
 pub struct BalanceDiffEntry {
@@ -28,6 +31,15 @@ pub struct BalanceDiff(HashMap<Address, BalanceDiffEntry>);
 impl BalanceDiff {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn merge(&mut self, other: Self) {
+        for (address, entry) in other.0 {
+            let e = self.0.entry(address).or_default();
+            e.balance = e.balance.saturating_add(entry.balance);
+            e.dust_allowance = e.dust_allowance.saturating_add(entry.dust_allowance);
+            e.dust_output = e.dust_output.saturating_add(entry.dust_output);
+        }
     }
 
     pub fn get(&self, address: &Address) -> Option<&BalanceDiffEntry> {
@@ -62,6 +74,10 @@ impl BalanceDiff {
     pub fn dust_output_dec(&mut self, address: Address) {
         let entry = self.0.entry(address).or_default();
         entry.dust_output = entry.dust_output.saturating_sub(1);
+    }
+
+    pub fn iter(&self) -> Iter<'_, Address, BalanceDiffEntry> {
+        self.0.iter()
     }
 }
 
