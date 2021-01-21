@@ -329,7 +329,6 @@ async fn process_command(
     Ok(())
 }
 
-#[inline]
 async fn process_internal_event(
     internal_event: InternalEvent,
     local_keys: &identity::Keypair,

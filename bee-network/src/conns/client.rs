@@ -83,7 +83,6 @@ pub async fn dial_peer(
     Ok(())
 }
 
-#[inline]
 fn log_dialing_peer(peer_info: &PeerInfo) {
     info!("Dialing {}...", peer_info.alias);
 }
@@ -144,7 +143,7 @@ pub async fn dial_address(
             .await
             .map_err(|_| Error::DialedRejectedPeer(peer_info.alias.clone()))?;
 
-        info!("Unknown peer {} accepted.", peer_info.alias);
+        info!("Unknown peer '{}' accepted.", peer_info.alias);
 
         peer_info
     };
@@ -163,7 +162,6 @@ pub async fn dial_address(
     Ok(())
 }
 
-#[inline]
 fn log_outbound_connection_success(peer_info: &PeerInfo) {
-    info!("Established (outbound) connection with {}.", peer_info.alias);
+    info!("Established (outbound) connection with '{}'.", peer_info.alias);
 }
