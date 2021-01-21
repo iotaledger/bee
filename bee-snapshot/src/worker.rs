@@ -95,7 +95,6 @@ async fn import_snapshot<B: StorageBackend>(
     }
 
     if snapshot.header().kind() == Kind::Full {
-        // TODO unify this with ledger crate
         for (output_id, output) in snapshot.outputs().iter() {
             // TODO handle unwrap
             create_output(storage, output_id, output).await.unwrap();
