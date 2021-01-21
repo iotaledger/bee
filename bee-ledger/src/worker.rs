@@ -88,6 +88,7 @@ where
         metadata.index,
         &metadata.created_outputs,
         &metadata.spent_outputs,
+        Some(&metadata.balance_diff),
     )
     .await?;
 

@@ -141,7 +141,7 @@ async fn import_snapshot<B: StorageBackend>(
         match index {
             MilestoneIndex(index) if index == *ledger_index + 1 => {
                 // TODO unwrap until we merge both crates
-                apply_outputs_diff(storage, MilestoneIndex(index), diff.created(), diff.consumed())
+                apply_outputs_diff(storage, MilestoneIndex(index), diff.created(), diff.consumed(), None)
                     .await
                     .unwrap();
             }
