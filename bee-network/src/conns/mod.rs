@@ -66,10 +66,6 @@ pub(crate) async fn upgrade_connection(
         }
     };
 
-    // NOTE: we now have a (sub-)stream we can read from or write to.
-    // We put it in a mutex, because we want to share it between two Tokio tasks, one responsible
-    // for writing to and one responsible for reading from it. Both such operations require
-    // mutable access to the substream.
     let (reader, writer) = substream.split();
 
     let (incoming_gossip_sender, incoming_gossip_receiver) = peers::channel();
@@ -165,62 +161,6 @@ fn spawn_gossip_out_task(
             .unwrap();
     });
 }
-
-// fn spawn_substream_io_task(
-//     peer_id: PeerId,
-//     mut substream: GossipSubstream,
-//     message_receiver: DataReceiver,
-//     mut internal_event_sender: InternalEventSender,
-// ) -> JoinHandle<()> {
-//     tokio::spawn(async move {
-//         let mut fused_message_receiver = message_receiver.fuse();
-//         let mut buffer = vec![0u8; MSG_BUFFER_SIZE];
-
-//         loop {
-//             select! {
-//                 message = fused_message_receiver.next() => {
-//                     trace!("Outgoing message channel event.");
-//                     if let Some(message) = message {
-//                         if let Err(e) = send_message(&mut substream, &message).await {
-//                             error!("{:?}", e);
-//                             continue;
-//                         }
-//                     } else {
-//                         trace!("Dropping connection.");
-//                         break;
-//                     }
-
-//                 }
-//                 recv_result = recv_message(&mut substream, &mut buffer).fuse() => {
-//                     trace!("Incoming substream event.");
-//                     match recv_result {
-//                         Ok(num_read) => {
-//                             if let Err(e) = process_read(&peer_id, num_read, &mut internal_event_sender,
-// &buffer).await                             {
-//                                 error!("{:?}", e);
-//                             }
-//                         }
-//                         Err(e) => {
-//                             debug!("{:?}", e);
-
-//                             trace!("Remote dropped connection.");
-//                             break;
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-
-//         if let Err(e) = internal_event_sender
-//             .send(InternalEvent::ConnectionDropped { peer_id })
-//             .map_err(|_| Error::InternalEventSendFailure("ConnectionDropped"))
-//         {
-//             error!("{:?}", e);
-//         }
-
-//         trace!("Shutting down connection handler task.");
-//     })
-// }
 
 async fn send_message<S>(stream: &mut S, message: &[u8]) -> Result<(), Error>
 where
