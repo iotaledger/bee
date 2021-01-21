@@ -4,7 +4,6 @@
 use crate::{
     error::Error,
     model::{Balance, BalanceDiff, Output, OutputDiff, Spent, Unspent},
-    IOTA_SUPPLY,
 };
 
 use bee_message::{
@@ -16,8 +15,6 @@ use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
     backend,
 };
-
-use futures::StreamExt;
 
 use std::collections::HashMap;
 
@@ -50,6 +47,7 @@ pub trait StorageBackend:
     + Insert<Unspent, ()>
     + Insert<(), LedgerIndex>
     + for<'a> AsStream<'a, Unspent, ()>
+    + for<'a> AsStream<'a, Address, Balance>
     + bee_tangle::storage::StorageBackend
 {
 }
@@ -81,6 +79,7 @@ impl<T> StorageBackend for T where
         + Insert<Unspent, ()>
         + Insert<(), LedgerIndex>
         + for<'a> AsStream<'a, Unspent, ()>
+        + for<'a> AsStream<'a, Address, Balance>
         + bee_tangle::storage::StorageBackend
 {
 }
@@ -267,26 +266,4 @@ pub(crate) async fn is_output_unspent<B: StorageBackend>(storage: &B, output_id:
     Exist::<Unspent, ()>::exist(storage, &(*output_id).into())
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
-}
-
-pub async fn check_ledger_state<B: StorageBackend>(storage: &B) -> Result<bool, Error> {
-    let mut total: u64 = 0;
-    let mut stream = AsStream::<Unspent, ()>::stream(storage)
-        .await
-        .map_err(|e| Error::Storage(Box::new(e)))?;
-
-    while let Some((unspent, _)) = stream.next().await {
-        // Unwrap: an unspent output has to be in database.
-        let output = fetch_output(storage, &*unspent).await?.unwrap();
-
-        match output.inner() {
-            bee_message::payload::transaction::Output::SignatureLockedSingle(output) => {
-                total += output.amount();
-            }
-            // TODO
-            _ => panic!("unsupported output"),
-        }
-    }
-
-    Ok(total == IOTA_SUPPLY)
 }

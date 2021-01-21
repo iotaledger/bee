@@ -8,7 +8,8 @@ use crate::{
 
 use bee_ledger::{
     model::Unspent,
-    storage::{apply_outputs_diff, check_ledger_state, rollback_outputs_diff},
+    state::check_ledger_state,
+    storage::{apply_outputs_diff, rollback_outputs_diff},
 };
 use bee_message::{
     ledger_index::LedgerIndex,

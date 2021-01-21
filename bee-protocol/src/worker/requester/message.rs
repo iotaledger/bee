@@ -15,7 +15,10 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use async_trait::async_trait;
 use futures::StreamExt;
 use log::{debug, info, trace};
-use tokio::{sync::{RwLock, mpsc}, time::interval};
+use tokio::{
+    sync::{mpsc, RwLock},
+    time::interval,
+};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
 use std::{

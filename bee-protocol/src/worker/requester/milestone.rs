@@ -17,7 +17,10 @@ use bee_tangle::MsTangle;
 use async_trait::async_trait;
 use futures::StreamExt;
 use log::{debug, info};
-use tokio::{sync::{RwLock, mpsc}, time::interval};
+use tokio::{
+    sync::{mpsc, RwLock},
+    time::interval,
+};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
 use std::{
