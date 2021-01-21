@@ -19,6 +19,7 @@ use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::{error, info};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::convert::Infallible;
 
@@ -88,6 +89,7 @@ where
         metadata.index,
         &metadata.created_outputs,
         &metadata.spent_outputs,
+        Some(&metadata.balance_diff),
     )
     .await?;
 
@@ -184,7 +186,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
             // Unwrap is fine because we just inserted the ledger index.
             // TODO unwrap
             let mut index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();

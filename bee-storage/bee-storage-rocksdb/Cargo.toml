@@ -31,4 +31,4 @@ thiserror = "1.0"
 [dev-dependencies]
 bee-test = { path = "../../bee-test" }
 
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "1.0", features = [] }

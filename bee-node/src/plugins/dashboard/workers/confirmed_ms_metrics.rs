@@ -10,6 +10,7 @@ use bee_protocol::ProtocolMetrics;
 use futures::StreamExt;
 use log::{debug, error, warn};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 pub(crate) fn confirmed_ms_metrics_worker<N>(node: &mut N)
 where
@@ -24,7 +25,7 @@ where
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
         debug!("Ws `confirmed_ms_metrics_worker` running.");
 
-        let mut receiver = ShutdownStream::new(shutdown, rx);
+        let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
         let mut prev_event: Option<MilestoneConfirmed> = None;
         let mut prev_new_message_count = 0;

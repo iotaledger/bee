@@ -12,9 +12,9 @@ use futures::{
     stream::StreamExt,
 };
 use log::trace;
-use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
-type EventRecv = mpsc::UnboundedReceiver<Vec<u8>>;
+type EventRecv = UnboundedReceiverStream<Vec<u8>>;
 type ShutdownRecv = future::Fuse<oneshot::Receiver<()>>;
 
 /// The read state of the packet handler.
@@ -167,7 +167,7 @@ mod tests {
     use super::*;
     use futures::{channel::oneshot, future::FutureExt};
     use std::time::Duration;
-    use tokio::{spawn, time::delay_for};
+    use tokio::{spawn, time::sleep};
 
     /// Generate a vector of events filled with packets of a desired length.
     fn gen_events(event_len: usize, msg_size: usize, n_msg: usize) -> Vec<Vec<u8>> {
@@ -228,10 +228,10 @@ mod tests {
         // Send all the events to the packet handler.
         for event in events {
             sender.send(event).unwrap();
-            delay_for(Duration::from_millis(1)).await;
+            sleep(Duration::from_millis(1)).await;
         }
         // Sleep to be sure the handler had time to produce all the packets.
-        delay_for(Duration::from_millis(1)).await;
+        sleep(Duration::from_millis(1)).await;
         // Send a shutdown signal.
         sender_shutdown.send(()).unwrap();
         // Await for the task with the checks to be completed.
@@ -319,11 +319,11 @@ mod tests {
 
         for event in events {
             sender.send(event).unwrap();
-            delay_for(Duration::from_millis(1)).await;
+            sleep(Duration::from_millis(1)).await;
         }
 
         sender_shutdown.send(()).unwrap();
-        delay_for(Duration::from_millis(1)).await;
+        sleep(Duration::from_millis(1)).await;
         // Send the last event after the shutdown signal
         sender.send(last_event).unwrap();
 

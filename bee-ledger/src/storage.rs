@@ -3,8 +3,7 @@
 
 use crate::{
     error::Error,
-    model::{Output, OutputDiff, Spent, Unspent},
-    IOTA_SUPPLY,
+    model::{Balance, BalanceDiff, Output, OutputDiff, Spent, Unspent},
 };
 
 use bee_message::{
@@ -16,8 +15,6 @@ use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
     backend,
 };
-
-use futures::StreamExt;
 
 use std::collections::HashMap;
 
@@ -32,6 +29,7 @@ pub trait StorageBackend:
     + Batch<(), LedgerIndex>
     + Batch<MilestoneIndex, OutputDiff>
     + Batch<(Ed25519Address, OutputId), ()>
+    + Batch<Address, Balance>
     + Delete<OutputId, Output>
     + Delete<OutputId, Spent>
     + Delete<Unspent, ()>
@@ -43,11 +41,13 @@ pub trait StorageBackend:
     + Fetch<OutputId, Output>
     + Fetch<OutputId, Spent>
     + Fetch<(), LedgerIndex>
+    + Fetch<Address, Balance>
     + Insert<OutputId, Output>
     + Insert<OutputId, Spent>
     + Insert<Unspent, ()>
     + Insert<(), LedgerIndex>
     + for<'a> AsStream<'a, Unspent, ()>
+    + for<'a> AsStream<'a, Address, Balance>
     + bee_tangle::storage::StorageBackend
 {
 }
@@ -61,6 +61,7 @@ impl<T> StorageBackend for T where
         + Batch<(), LedgerIndex>
         + Batch<MilestoneIndex, OutputDiff>
         + Batch<(Ed25519Address, OutputId), ()>
+        + Batch<Address, Balance>
         + Delete<OutputId, Output>
         + Delete<OutputId, Spent>
         + Delete<Unspent, ()>
@@ -72,16 +73,18 @@ impl<T> StorageBackend for T where
         + Fetch<OutputId, Output>
         + Fetch<OutputId, Spent>
         + Fetch<(), LedgerIndex>
+        + Fetch<Address, Balance>
         + Insert<OutputId, Output>
         + Insert<OutputId, Spent>
         + Insert<Unspent, ()>
         + Insert<(), LedgerIndex>
         + for<'a> AsStream<'a, Unspent, ()>
+        + for<'a> AsStream<'a, Address, Balance>
         + bee_tangle::storage::StorageBackend
 {
 }
 
-pub async fn apply_address_output_relation<B: StorageBackend>(
+pub fn apply_address_output_relation<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     address: &Address,
@@ -98,7 +101,7 @@ pub async fn apply_address_output_relation<B: StorageBackend>(
     Ok(())
 }
 
-pub async fn apply_created_output<B: StorageBackend>(
+pub fn apply_created_output<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
@@ -111,10 +114,10 @@ pub async fn apply_created_output<B: StorageBackend>(
 
     match output.inner() {
         transaction::Output::SignatureLockedSingle(output) => {
-            apply_address_output_relation(storage, batch, output.address(), output_id).await?
+            apply_address_output_relation(storage, batch, output.address(), output_id)?
         }
         transaction::Output::SignatureLockedDustAllowance(output) => {
-            apply_address_output_relation(storage, batch, output.address(), output_id).await?
+            apply_address_output_relation(storage, batch, output.address(), output_id)?
         }
         _ => return Err(Error::UnsupportedOutputType),
     }
@@ -122,7 +125,7 @@ pub async fn apply_created_output<B: StorageBackend>(
     Ok(())
 }
 
-pub async fn apply_consumed_output<B: StorageBackend>(
+pub fn apply_consumed_output<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
@@ -141,6 +144,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, Output>,
     consumed_outputs: &HashMap<OutputId, Spent>,
+    balances: Option<&BalanceDiff>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
@@ -151,13 +155,34 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     for (output_id, output) in created_outputs.iter() {
-        apply_created_output(storage, &mut batch, output_id, output).await?;
+        apply_created_output(storage, &mut batch, output_id, output)?;
         created_output_ids.push(*output_id);
     }
 
     for (output_id, output) in consumed_outputs.iter() {
-        apply_consumed_output(storage, &mut batch, output_id, output).await?;
+        apply_consumed_output(storage, &mut batch, output_id, output)?;
         consumed_output_ids.push(*output_id);
+    }
+
+    if let Some(balances) = balances {
+        for (address, entry) in balances.iter() {
+            let (balance, dust_allowance, dust_output) = fetch_balance(storage, address)
+                .await?
+                .map(|b| (b.balance as i64, b.dust_allowance as i64, b.dust_output as i64))
+                .unwrap_or_default();
+
+            Batch::<Address, Balance>::batch_insert(
+                storage,
+                &mut batch,
+                address,
+                &Balance::new(
+                    (balance + entry.balance) as u64,
+                    (dust_allowance + entry.dust_allowance) as u64,
+                    (dust_output + entry.dust_output) as u64,
+                ),
+            )
+            .map_err(|e| Error::Storage(Box::new(e)))?;
+        }
     }
 
     Batch::<MilestoneIndex, OutputDiff>::batch_insert(
@@ -215,6 +240,12 @@ pub(crate) async fn fetch_ledger_index<B: StorageBackend>(storage: &B) -> Result
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
+pub(crate) async fn fetch_balance<B: StorageBackend>(storage: &B, address: &Address) -> Result<Option<Balance>, Error> {
+    Fetch::<Address, Balance>::fetch(storage, address)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
 #[allow(dead_code)]
 pub(crate) async fn insert_ledger_index<B: StorageBackend>(storage: &B, index: &LedgerIndex) -> Result<(), Error> {
     Insert::<(), LedgerIndex>::insert(storage, &(), index)
@@ -235,26 +266,4 @@ pub(crate) async fn is_output_unspent<B: StorageBackend>(storage: &B, output_id:
     Exist::<Unspent, ()>::exist(storage, &(*output_id).into())
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
-}
-
-pub async fn check_ledger_state<B: StorageBackend>(storage: &B) -> Result<bool, Error> {
-    let mut total: u64 = 0;
-    let mut stream = AsStream::<Unspent, ()>::stream(storage)
-        .await
-        .map_err(|e| Error::Storage(Box::new(e)))?;
-
-    while let Some((unspent, _)) = stream.next().await {
-        // Unwrap: an unspent output has to be in database.
-        let output = fetch_output(storage, &*unspent).await?.unwrap();
-
-        match output.inner() {
-            bee_message::payload::transaction::Output::SignatureLockedSingle(output) => {
-                total += output.amount();
-            }
-            // TODO
-            _ => panic!("unsupported output"),
-        }
-    }
-
-    Ok(total == IOTA_SUPPLY)
 }

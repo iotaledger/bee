@@ -26,6 +26,7 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use log::{debug, info, warn};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible};
 
@@ -165,7 +166,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             let mut requested = tangle.get_latest_solid_milestone_index() + MilestoneIndex(1);
 

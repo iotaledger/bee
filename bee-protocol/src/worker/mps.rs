@@ -9,6 +9,7 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use log::info;
 use tokio::time::interval;
+use tokio_stream::wrappers::IntervalStream;
 
 use std::{any::TypeId, convert::Infallible, time::Duration};
 
@@ -33,7 +34,10 @@ impl<N: Node> Worker<N> for MpsWorker {
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_secs(MPS_INTERVAL_SEC)));
+            let mut ticker = ShutdownStream::new(
+                shutdown,
+                IntervalStream::new(interval(Duration::from_secs(MPS_INTERVAL_SEC))),
+            );
 
             let mut total_incoming = 0u64;
             let mut total_new = 0u64;

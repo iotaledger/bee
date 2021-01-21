@@ -183,6 +183,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             config.rest_api.clone(),
             config.protocol.clone(),
             config.network_id.clone(),
+            config.bech32_hrp.clone(),
             this,
         )
         .await;

@@ -21,6 +21,7 @@ use tokio::{
     sync::{mpsc, RwLock},
     time::interval,
 };
+use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
 use std::{
     any::TypeId,
@@ -178,7 +179,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Requester running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
             let mut counter: usize = 0;
 
             while let Some(MilestoneRequesterWorkerEvent(index, peer_id)) = receiver.next().await {
@@ -206,7 +207,10 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Retryer running.");
 
-            let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_millis(RETRY_INTERVAL_MS)));
+            let mut ticker = ShutdownStream::new(
+                shutdown,
+                IntervalStream::new(interval(Duration::from_millis(RETRY_INTERVAL_MS))),
+            );
             let mut counter: usize = 0;
 
             while ticker.next().await.is_some() {

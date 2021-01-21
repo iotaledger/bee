@@ -5,8 +5,7 @@ use bee_crypto::ternary::{
     sponge::{CurlP81, Sponge},
     HASH_LENGTH,
 };
-use bee_ternary::b1t6;
-use bee_ternary::{Btrit, T1B1Buf, TritBuf, Trits, T1B1};
+use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf, Trits, T1B1};
 
 use blake2::{
     digest::{Update, VariableOutput},

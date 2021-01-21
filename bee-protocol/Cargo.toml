@@ -30,13 +30,13 @@ hex = "0.4"
 iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", branch = "dev", features = ["ed25519"] }
 log = "0.4"
 pin-project = "1.0"
-rand = "0.7"
+rand = "0.8"
 serde = { version = "1.0", features = ["derive" ] }
 spin = "0.7"
 thiserror = "1.0"
-tokio = { version = "0.2", features = ["sync", "time"] }
+tokio = { version = "1.0", features = [] }
+tokio-stream = "0.1"
 twox-hash = "1.5"
 
 [dev-dependencies]
-rand = "0.7"
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "1.0", features = ["macros"] }
