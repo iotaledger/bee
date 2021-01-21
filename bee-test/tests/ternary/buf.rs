@@ -11,7 +11,7 @@ use std::convert::{TryFrom, TryInto};
 fn create_generic<T: raw::RawEncodingBuf>() {
     assert!(TritBuf::<T>::new().len() == 0);
     fuzz(100, || {
-        let len = thread_rng().gen_range(0, 100);
+        let len = thread_rng().gen_range(0..100);
         assert!(TritBuf::<T>::zeros(len).len() == len);
     });
     fuzz(100, || {
@@ -27,7 +27,7 @@ fn create_generic<T: raw::RawEncodingBuf>() {
 fn create_unbalanced<T: raw::RawEncodingBuf>() {
     assert!(TritBuf::<T>::new().len() == 0);
     fuzz(100, || {
-        let len = thread_rng().gen_range(0, 100);
+        let len = thread_rng().gen_range(0..100);
         assert!(TritBuf::<T>::zeros(len).len() == len);
     });
     fuzz(100, || {
