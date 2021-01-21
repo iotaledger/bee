@@ -22,13 +22,7 @@ use log::*;
 use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
-use std::{
-    convert::Infallible,
-    sync::atomic::{AtomicUsize, Ordering},
-};
-
-pub static NUM_COMMAND_PROCESSING_ERRORS: AtomicUsize = AtomicUsize::new(0);
-pub static NUM_EVENT_PROCESSING_ERRORS: AtomicUsize = AtomicUsize::new(0);
+use std::{convert::Infallible, sync::atomic::Ordering};
 
 #[derive(Default)]
 pub struct PeerManager {}
@@ -110,7 +104,6 @@ impl<N: Node> Worker<N> for PeerManager {
                 .await
                 {
                     error!("Error processing command. Cause: {}", e);
-                    NUM_COMMAND_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                     continue;
                 }
             }
@@ -140,7 +133,6 @@ impl<N: Node> Worker<N> for PeerManager {
                 .await
                 {
                     error!("Error processing internal event. Cause: {}", e);
-                    NUM_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
                     continue;
                 }
             }
@@ -378,7 +370,10 @@ async fn process_internal_event(
         }
 
         InternalEvent::ConnectionDropped { peer_id } => {
-            peers.update_state(&peer_id, PeerState::Disconnected).await?;
+            if let Err(Error::UnlistedPeer(_)) = peers.update_state(&peer_id, PeerState::Disconnected).await {
+                // NOTE: the peer has been removed already
+                return Ok(());
+            }
 
             // TODO: maybe allow some fixed timespan for a connection recovery from either end before removing.
             peers.remove_if(&peer_id, |info, _| info.relation.is_unknown()).await;
