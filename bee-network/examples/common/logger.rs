@@ -1,8 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use env_logger::fmt::Color;
 use log::{debug, error, info, log_enabled, trace, warn};
+use pretty_env_logger::env_logger::fmt::Color;
 
 use std::io::Write;
 

@@ -41,6 +41,7 @@ use futures::{
 use log::*;
 use structopt::StructOpt;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
 use std::{
     any::{type_name, Any, TypeId},
@@ -110,7 +111,7 @@ impl ExampleNode {
         info!("[EXAMPLE] Node running.");
 
         let sigterm_listener = ctrl_c_listener();
-        let mut network_events = ShutdownStream::new(sigterm_listener, network_listener);
+        let mut network_events = ShutdownStream::new(sigterm_listener, UnboundedReceiverStream::new(network_listener));
 
         while let Some(event) = network_events.next().await {
             info!("Received {:?}.", event);
@@ -343,7 +344,11 @@ fn simulate_gossip(network: NetworkController, peer_id: PeerId, shutdown_rx: one
     info!("[EXAMPLE] Simulating gossip with {}", peer_id);
 
     tokio::spawn(async move {
-        let mut shutdown_stream = ShutdownStream::new(shutdown_rx, tokio::time::interval(Duration::from_secs(5)));
+        let mut i = 0;
+        let mut shutdown_stream = ShutdownStream::new(
+            shutdown_rx,
+            IntervalStream::new(tokio::time::interval(Duration::from_secs(5))),
+        );
 
         while let Some(_) = shutdown_stream.next().await {
             let message = Utf8Message::new(&i.to_string());
