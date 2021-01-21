@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{errors::Error, manager::LISTEN_ADDRESSES, Origin};
+use super::{errors::Error, server::LISTEN_ADDRESSES, Origin};
 
 use crate::{
     interaction::events::InternalEventSender,

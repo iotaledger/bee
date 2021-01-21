@@ -1,32 +1,33 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod dial;
+mod client;
 mod errors;
-mod manager;
+mod server;
 
-pub use dial::*;
+pub use client::*;
 pub use errors::Error;
-pub use manager::*;
+pub use server::*;
 
 use crate::{
     interaction::events::{InternalEvent, InternalEventSender},
-    peers::{self, DataReceiver, PeerInfo},
+    peers::{self, DataReceiver, DataSender, PeerInfo},
     protocols::gossip::{GossipProtocol, GossipSubstream},
     PeerId, ShortId,
 };
 
-use futures::{prelude::*, select, AsyncRead, AsyncWrite};
+use futures::{
+    io::{ReadHalf, WriteHalf},
+    prelude::*,
+    AsyncRead, AsyncWrite,
+};
 use libp2p::core::{
     muxing::{event_from_ref_and_wrap, outbound_from_ref_and_wrap, StreamMuxerBox},
     upgrade,
 };
 use log::*;
-use tokio::task::JoinHandle;
 
 use std::{fmt, sync::Arc};
-
-const MSG_BUFFER_SIZE: usize = 32768;
 
 pub(crate) async fn upgrade_connection(
     peer_id: PeerId,
@@ -36,14 +37,11 @@ pub(crate) async fn upgrade_connection(
     internal_event_sender: InternalEventSender,
 ) -> Result<(), Error> {
     let muxer = Arc::new(muxer);
-    let (message_sender, message_receiver) = peers::channel();
-
-    let internal_event_sender_clone = internal_event_sender.clone();
 
     let substream = match origin {
         Origin::Outbound => {
             let outbound = outbound_from_ref_and_wrap(muxer)
-                .fuse()
+                // .fuse()
                 .await
                 .map_err(|_| Error::CreatingOutboundSubstreamFailed(peer_id.short()))?;
 
@@ -68,11 +66,26 @@ pub(crate) async fn upgrade_connection(
         }
     };
 
-    spawn_substream_io_task(
+    // NOTE: we now have a (sub-)stream we can read from or write to.
+    // We put it in a mutex, because we want to share it between two Tokio tasks, one responsible
+    // for writing to and one responsible for reading from it. Both such operations require
+    // mutable access to the substream.
+    let (reader, writer) = substream.split();
+
+    let (incoming_gossip_sender, incoming_gossip_receiver) = peers::channel();
+    let (outgoing_gossip_sender, outgoing_gossip_receiver) = peers::channel();
+
+    spawn_gossip_in_task(
         peer_id.clone(),
-        substream,
-        message_receiver,
-        internal_event_sender_clone,
+        reader,
+        incoming_gossip_sender,
+        internal_event_sender.clone(),
+    );
+    spawn_gossip_out_task(
+        peer_id.clone(),
+        writer,
+        outgoing_gossip_receiver,
+        internal_event_sender.clone(),
     );
 
     internal_event_sender
@@ -80,54 +93,39 @@ pub(crate) async fn upgrade_connection(
             peer_id,
             peer_info,
             origin,
-            message_sender,
+            gossip_in: incoming_gossip_receiver,
+            gossip_out: outgoing_gossip_sender,
         })
         .map_err(|_| Error::InternalEventSendFailure("ConnectionEstablished"))?;
 
     Ok(())
 }
 
-fn spawn_substream_io_task(
+fn spawn_gossip_in_task(
     peer_id: PeerId,
-    mut substream: GossipSubstream,
-    message_receiver: DataReceiver,
-    mut internal_event_sender: InternalEventSender,
-) -> JoinHandle<()> {
+    mut reader: ReadHalf<GossipSubstream>,
+    incoming_gossip_sender: DataSender,
+    internal_event_sender: InternalEventSender,
+) {
     tokio::spawn(async move {
-        let mut fused_message_receiver = message_receiver.fuse();
+        const MSG_BUFFER_SIZE: usize = 32768;
         let mut buffer = vec![0u8; MSG_BUFFER_SIZE];
 
         loop {
-            select! {
-                message = fused_message_receiver.next() => {
-                    trace!("Outgoing message channel event.");
-                    if let Some(message) = message {
-                        if let Err(e) = send_message(&mut substream, &message).await {
-                            error!("{:?}", e);
-                            continue;
-                        }
-                    } else {
-                        trace!("Dropping connection.");
-                        break;
+            match recv_message(&mut reader, &mut buffer).await {
+                Ok(num_read) => {
+                    if let Err(e) = incoming_gossip_sender
+                        .send(buffer[..num_read].to_vec())
+                        .map_err(|_| Error::ForwardIncomingMessageFailure("MessageReceived"))
+                    {
+                        error!("{:?}", e);
                     }
-
                 }
-                recv_result = recv_message(&mut substream, &mut buffer).fuse() => {
-                    trace!("Incoming substream event.");
-                    match recv_result {
-                        Ok(num_read) => {
-                            if let Err(e) = process_read(&peer_id, num_read, &mut internal_event_sender, &buffer).await
-                            {
-                                error!("{:?}", e);
-                            }
-                        }
-                        Err(e) => {
-                            debug!("{:?}", e);
+                Err(e) => {
+                    debug!("{:?}", e);
 
-                            trace!("Remote dropped connection.");
-                            break;
-                        }
-                    }
+                    trace!("Remote dropped connection.");
+                    break;
                 }
             }
         }
@@ -138,10 +136,91 @@ fn spawn_substream_io_task(
         {
             error!("{:?}", e);
         }
-
-        trace!("Shutting down connection handler task.");
-    })
+    });
 }
+
+fn spawn_gossip_out_task(
+    peer_id: PeerId,
+    mut writer: WriteHalf<GossipSubstream>,
+    outgoing_gossip_receiver: DataReceiver,
+    internal_event_sender: InternalEventSender,
+) {
+    tokio::spawn(async move {
+        let mut outgoing_gossip_receiver = outgoing_gossip_receiver.fuse();
+
+        while let Some(message) = outgoing_gossip_receiver.next().await {
+            if let Err(e) = send_message(&mut writer, &message).await {
+                error!("{:?}", e);
+                continue;
+            } else {
+                trace!("Dropping connection.");
+                break;
+            }
+        }
+
+        // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
+        internal_event_sender
+            .send(InternalEvent::ConnectionDropped { peer_id })
+            .map_err(|_| ())
+            .unwrap();
+    });
+}
+
+// fn spawn_substream_io_task(
+//     peer_id: PeerId,
+//     mut substream: GossipSubstream,
+//     message_receiver: DataReceiver,
+//     mut internal_event_sender: InternalEventSender,
+// ) -> JoinHandle<()> {
+//     tokio::spawn(async move {
+//         let mut fused_message_receiver = message_receiver.fuse();
+//         let mut buffer = vec![0u8; MSG_BUFFER_SIZE];
+
+//         loop {
+//             select! {
+//                 message = fused_message_receiver.next() => {
+//                     trace!("Outgoing message channel event.");
+//                     if let Some(message) = message {
+//                         if let Err(e) = send_message(&mut substream, &message).await {
+//                             error!("{:?}", e);
+//                             continue;
+//                         }
+//                     } else {
+//                         trace!("Dropping connection.");
+//                         break;
+//                     }
+
+//                 }
+//                 recv_result = recv_message(&mut substream, &mut buffer).fuse() => {
+//                     trace!("Incoming substream event.");
+//                     match recv_result {
+//                         Ok(num_read) => {
+//                             if let Err(e) = process_read(&peer_id, num_read, &mut internal_event_sender,
+// &buffer).await                             {
+//                                 error!("{:?}", e);
+//                             }
+//                         }
+//                         Err(e) => {
+//                             debug!("{:?}", e);
+
+//                             trace!("Remote dropped connection.");
+//                             break;
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+
+//         if let Err(e) = internal_event_sender
+//             .send(InternalEvent::ConnectionDropped { peer_id })
+//             .map_err(|_| Error::InternalEventSendFailure("ConnectionDropped"))
+//         {
+//             error!("{:?}", e);
+//         }
+
+//         trace!("Shutting down connection handler task.");
+//     })
+// }
 
 async fn send_message<S>(stream: &mut S, message: &[u8]) -> Result<(), Error>
 where
@@ -167,26 +246,6 @@ where
 
     trace!("Read {} bytes from stream.", num_read);
     Ok(num_read)
-}
-
-async fn process_read(
-    peer_id: &PeerId,
-    num_read: usize,
-    internal_event_sender: &mut InternalEventSender,
-    buffer: &[u8],
-) -> Result<(), Error> {
-    // Allocate a properly sized message buffer
-    let mut message = vec![0u8; num_read];
-    message.copy_from_slice(&buffer[0..num_read]);
-
-    internal_event_sender
-        .send(InternalEvent::MessageReceived {
-            message,
-            from: peer_id.clone(),
-        })
-        .map_err(|_| Error::InternalEventSendFailure("MessageReceived"))?;
-
-    Ok(())
 }
 
 /// Describes direction of an established connection.
