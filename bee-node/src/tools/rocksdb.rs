@@ -1,13 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::model::{Output, OutputDiff, Spent, Unspent};
+use bee_ledger::model::{Balance, Output, OutputDiff, Spent, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::HashedIndex,
-        transaction::{Ed25519Address, OutputId},
+        transaction::{Address, Ed25519Address, OutputId},
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId,
@@ -172,6 +172,16 @@ pub fn exec(tool: &Rocksdb) {
                 RocksdbCommand::Fetch { key: _key } => {}
                 RocksdbCommand::Stream => {
                     let mut stream = AsStream::<MilestoneIndex, OutputDiff>::stream(&storage).await.unwrap();
+
+                    while let Some((key, value)) = stream.next().await {
+                        println!("Key: {:?}\nValue: {:?})\n", key, value);
+                    }
+                }
+            },
+            CF_ADDRESS_TO_BALANCE => match &tool.command {
+                RocksdbCommand::Fetch { key: _key } => {}
+                RocksdbCommand::Stream => {
+                    let mut stream = AsStream::<Address, Balance>::stream(&storage).await.unwrap();
 
                     while let Some((key, value)) = stream.next().await {
                         println!("Key: {:?}\nValue: {:?})\n", key, value);
