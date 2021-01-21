@@ -14,7 +14,7 @@ use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use tokio::sync::mpsc;
-use warp::{http::StatusCode, reject, Buf, Rejection, Reply};
+use warp::{http::StatusCode, reject, Rejection, Reply};
 
 use crate::handlers::submit_message::SubmitMessageResponse;
 
@@ -23,7 +23,8 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
     tangle: ResourceHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<impl Reply, Rejection> {
-    let message = Message::unpack(&mut buf.bytes()).map_err(|e| reject::custom(BadRequest(e.to_string())))?;
+    let bytes = (*buf).to_vec();
+    let message = Message::unpack(&mut bytes.as_slice()).map_err(|e| reject::custom(BadRequest(e.to_string())))?;
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
     Ok(warp::reply::with_status(
         warp::reply::json(&SuccessBody::new(SubmitMessageResponse {

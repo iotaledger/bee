@@ -26,6 +26,7 @@ use async_trait::async_trait;
 use futures::{channel::oneshot::Sender, stream::StreamExt};
 use log::{error, info, trace, warn};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible, time::Instant};
 
@@ -80,7 +81,7 @@ where
 
             let mut latency_num: u64 = 0;
             let mut latency_sum: u64 = 0;
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(ProcessorWorkerEvent {
                 pow_score,

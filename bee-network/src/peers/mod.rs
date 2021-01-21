@@ -12,12 +12,14 @@ pub use list::*;
 pub use manager::*;
 
 use tokio::sync::mpsc;
+use tokio_stream::wrappers;
 
 pub type DataSender = mpsc::UnboundedSender<Vec<u8>>;
-pub type DataReceiver = mpsc::UnboundedReceiver<Vec<u8>>;
+pub type DataReceiver = wrappers::UnboundedReceiverStream<Vec<u8>>;
 
 pub fn channel() -> (DataSender, DataReceiver) {
-    mpsc::unbounded_channel()
+    let (sender, receiver) = mpsc::unbounded_channel();
+    (sender, wrappers::UnboundedReceiverStream::new(receiver))
 }
 
 /// Describes the relation with a peer.

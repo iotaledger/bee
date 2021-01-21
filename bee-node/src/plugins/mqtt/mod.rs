@@ -17,6 +17,7 @@ use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::{debug, error, warn};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::Any, convert::Infallible};
 
@@ -38,7 +39,7 @@ where
     node.spawn::<Mqtt, _, _>(|shutdown| async move {
         debug!("Mqtt {} topic handler running.", topic);
 
-        let mut receiver = ShutdownStream::new(shutdown, rx);
+        let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
         while let Some(event) = receiver.next().await {
             let (topic, payload) = f(&event);

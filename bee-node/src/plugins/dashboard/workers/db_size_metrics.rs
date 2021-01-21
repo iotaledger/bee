@@ -8,6 +8,7 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use futures::StreamExt;
 use log::debug;
 use tokio::time::interval;
+use tokio_stream::wrappers::IntervalStream;
 
 use std::time::Duration;
 
@@ -26,7 +27,7 @@ where
 
         let mut ticker = ShutdownStream::new(
             shutdown,
-            interval(Duration::from_secs(DB_SIZE_METRICS_WORKER_INTERVAL_SEC)),
+            IntervalStream::new(interval(Duration::from_secs(DB_SIZE_METRICS_WORKER_INTERVAL_SEC))),
         );
 
         use bee_storage::backend::StorageBackend;
