@@ -84,7 +84,7 @@ impl<T> StorageBackend for T where
 {
 }
 
-pub fn apply_address_output_relation<B: StorageBackend>(
+pub fn create_address_output_relation_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     address: &Address,
@@ -101,7 +101,7 @@ pub fn apply_address_output_relation<B: StorageBackend>(
     Ok(())
 }
 
-pub fn apply_created_output<B: StorageBackend>(
+pub fn create_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
@@ -114,10 +114,10 @@ pub fn apply_created_output<B: StorageBackend>(
 
     match output.inner() {
         transaction::Output::SignatureLockedSingle(output) => {
-            apply_address_output_relation(storage, batch, output.address(), output_id)?
+            create_address_output_relation_batch(storage, batch, output.address(), output_id)?
         }
         transaction::Output::SignatureLockedDustAllowance(output) => {
-            apply_address_output_relation(storage, batch, output.address(), output_id)?
+            create_address_output_relation_batch(storage, batch, output.address(), output_id)?
         }
         _ => return Err(Error::UnsupportedOutputType),
     }
@@ -125,7 +125,18 @@ pub fn apply_created_output<B: StorageBackend>(
     Ok(())
 }
 
-pub fn apply_consumed_output<B: StorageBackend>(
+pub async fn create_output<B: StorageBackend>(storage: &B, output_id: &OutputId, output: &Output) -> Result<(), Error> {
+    let mut batch = B::batch_begin();
+
+    create_output_batch(storage, &mut batch, output_id, output)?;
+
+    storage
+        .batch_commit(batch, true)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub fn consume_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
@@ -155,12 +166,12 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     for (output_id, output) in created_outputs.iter() {
-        apply_created_output(storage, &mut batch, output_id, output)?;
+        create_output_batch(storage, &mut batch, output_id, output)?;
         created_output_ids.push(*output_id);
     }
 
     for (output_id, output) in consumed_outputs.iter() {
-        apply_consumed_output(storage, &mut batch, output_id, output)?;
+        consume_output_batch(storage, &mut batch, output_id, output)?;
         consumed_output_ids.push(*output_id);
     }
 

@@ -7,16 +7,10 @@ use crate::{
 };
 
 use bee_ledger::{
-    model::Unspent,
     state::check_ledger_state,
-    storage::{apply_outputs_diff, rollback_outputs_diff},
+    storage::{apply_outputs_diff, create_output, rollback_outputs_diff},
 };
-use bee_message::{
-    ledger_index::LedgerIndex,
-    milestone::MilestoneIndex,
-    payload::transaction::{Address, Ed25519Address, Output, OutputId},
-    solid_entry_point::SolidEntryPoint,
-};
+use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 use bee_runtime::{node::Node, worker::Worker};
 use bee_storage::access::{Fetch, Insert, Truncate};
 
@@ -103,31 +97,8 @@ async fn import_snapshot<B: StorageBackend>(
     if snapshot.header().kind() == Kind::Full {
         // TODO unify this with ledger crate
         for (output_id, output) in snapshot.outputs().iter() {
-            // TODO group them 3 in a function
-            Insert::<OutputId, bee_ledger::model::Output>::insert(storage, output_id, &output)
-                .await
-                .map_err(|e| Error::StorageBackend(Box::new(e)))?;
-            Insert::<Unspent, ()>::insert(storage, &((*output_id).into()), &())
-                .await
-                .map_err(|e| Error::StorageBackend(Box::new(e)))?;
-            match output.inner() {
-                Output::SignatureLockedSingle(output) => {
-                    if let Address::Ed25519(address) = output.address() {
-                        Insert::<(Ed25519Address, OutputId), ()>::insert(storage, &(address.clone(), *output_id), &())
-                            .await
-                            .map_err(|e| Error::StorageBackend(Box::new(e)))?;
-                    }
-                }
-                Output::SignatureLockedDustAllowance(output) => {
-                    if let Address::Ed25519(address) = output.address() {
-                        Insert::<(Ed25519Address, OutputId), ()>::insert(storage, &(address.clone(), *output_id), &())
-                            .await
-                            .map_err(|e| Error::StorageBackend(Box::new(e)))?;
-                    }
-                }
-                // TODO
-                _ => panic!("Unhandled output type"),
-            }
+            // TODO handle unwrap
+            create_output(storage, output_id, output).await.unwrap();
         }
     }
 
