@@ -3,7 +3,7 @@
 
 use crate::{
     error::Error,
-    model::{Output, OutputDiff, Spent, Unspent},
+    model::{Balance, Output, OutputDiff, Spent, Unspent},
     IOTA_SUPPLY,
 };
 
@@ -43,6 +43,7 @@ pub trait StorageBackend:
     + Fetch<OutputId, Output>
     + Fetch<OutputId, Spent>
     + Fetch<(), LedgerIndex>
+    + Fetch<Address, Balance>
     + Insert<OutputId, Output>
     + Insert<OutputId, Spent>
     + Insert<Unspent, ()>
@@ -72,6 +73,7 @@ impl<T> StorageBackend for T where
         + Fetch<OutputId, Output>
         + Fetch<OutputId, Spent>
         + Fetch<(), LedgerIndex>
+        + Fetch<Address, Balance>
         + Insert<OutputId, Output>
         + Insert<OutputId, Spent>
         + Insert<Unspent, ()>
@@ -211,6 +213,12 @@ pub async fn rollback_outputs_diff<B: StorageBackend>(
 #[allow(dead_code)]
 pub(crate) async fn fetch_ledger_index<B: StorageBackend>(storage: &B) -> Result<Option<LedgerIndex>, Error> {
     Fetch::<(), LedgerIndex>::fetch(storage, &())
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub(crate) async fn fetch_balance<B: StorageBackend>(storage: &B, address: &Address) -> Result<Option<Balance>, Error> {
+    Fetch::<Address, Balance>::fetch(storage, address)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }

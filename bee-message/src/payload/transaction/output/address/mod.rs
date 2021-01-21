@@ -16,7 +16,7 @@ use core::ops::Deref;
 use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd, Hash)]
 #[serde(tag = "type", content = "data")]
 pub enum Address {
     Ed25519(Ed25519Address),

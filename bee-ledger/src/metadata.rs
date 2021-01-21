@@ -3,7 +3,7 @@
 
 use crate::{
     conflict::ConflictReason,
-    model::{Output, Spent},
+    model::{BalanceDiff, Output, Spent},
 };
 
 use bee_message::{milestone::MilestoneIndex, payload::transaction::OutputId, MessageId};
@@ -25,6 +25,7 @@ pub(crate) struct WhiteFlagMetadata {
     pub(crate) included_messages: Vec<MessageId>,
     pub(crate) spent_outputs: HashMap<OutputId, Spent>,
     pub(crate) created_outputs: HashMap<OutputId, Output>,
+    pub(crate) balance_diff: BalanceDiff,
 }
 
 impl WhiteFlagMetadata {

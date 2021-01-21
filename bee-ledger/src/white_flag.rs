@@ -3,9 +3,10 @@
 
 use crate::{
     conflict::ConflictReason,
+    dust::{DUST_ALLOWANCE_DIVISOR, DUST_ALLOWANCE_MINIMUM},
     error::Error,
     metadata::WhiteFlagMetadata,
-    model::{Output, Spent},
+    model::{BalanceDiff, Output, Spent},
     storage::{self, StorageBackend},
 };
 
@@ -27,36 +28,55 @@ use std::{
 fn validate_transaction(
     transaction: &TransactionPayload,
     consumed_outputs: &HashMap<OutputId, Output>,
+    balance_diff: &mut BalanceDiff,
 ) -> Result<ConflictReason, Error> {
-    let mut consumed_amount = 0;
-    let mut created_amount = 0;
+    let mut created_amount: u64 = 0;
+    let mut consumed_amount: u64 = 0;
 
     // TODO
     // The address type of the referenced UTXO must match the signature type contained in the corresponding Signature Unlock
     // Block. The Signature Unlock Blocks are valid, i.e. the signatures prove ownership over the addresses of the
     // referenced UTXOs.
+    // TODO saturating ? Overflowing ? Checked ?
+    // TODO also check against tota supply
+
+    for created_output in transaction.essence().outputs() {
+        match created_output {
+            transaction::Output::SignatureLockedSingle(created_output) => {
+                created_amount = created_amount.saturating_add(created_output.amount());
+                balance_diff.balance_add(*created_output.address(), created_output.amount());
+                if created_output.amount() < DUST_ALLOWANCE_MINIMUM {
+                    balance_diff.dust_output_inc(*created_output.address());
+                }
+            }
+            transaction::Output::SignatureLockedDustAllowance(created_output) => {
+                created_amount = created_amount.saturating_add(created_output.amount());
+                balance_diff.balance_add(*created_output.address(), created_output.amount());
+                balance_diff.dust_allowance_add(*created_output.address(), created_output.amount());
+            }
+            _ => return Err(Error::UnsupportedOutputType),
+        }
+    }
 
     for (_index, (_, consumed_output)) in consumed_outputs.iter().enumerate() {
         match consumed_output.inner() {
             transaction::Output::SignatureLockedSingle(consumed_output) => {
-                consumed_amount += consumed_output.amount();
+                consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
+                balance_diff.balance_sub(*consumed_output.address(), consumed_output.amount());
+                if consumed_output.amount() < DUST_ALLOWANCE_MINIMUM {
+                    balance_diff.dust_output_dec(*consumed_output.address());
+                }
             }
             transaction::Output::SignatureLockedDustAllowance(consumed_output) => {
-                consumed_amount += consumed_output.amount();
+                consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
+                balance_diff.balance_sub(*consumed_output.address(), consumed_output.amount());
+                balance_diff.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
             }
             _ => return Err(Error::UnsupportedOutputType),
-        };
+        }
     }
 
-    for created_output in transaction.essence().outputs() {
-        created_amount += match created_output {
-            transaction::Output::SignatureLockedSingle(created_output) => created_output.amount(),
-            transaction::Output::SignatureLockedDustAllowance(created_output) => created_output.amount(),
-            _ => return Err(Error::UnsupportedOutputType),
-        };
-    }
-
-    if consumed_amount != created_amount {
+    if created_amount != consumed_amount {
         return Ok(ConflictReason::InputOutputSumMismatch);
     }
 
@@ -122,28 +142,56 @@ where
         return Ok(());
     }
 
-    match validate_transaction(&transaction, &spent_outputs) {
-        Ok(ConflictReason::None) => {
-            for (index, output) in essence.outputs().iter().enumerate() {
-                metadata.created_outputs.insert(
-                    // Unwrap is fine, the index is known to be valid.
-                    OutputId::new(transaction_id, index as u16).unwrap(),
-                    Output::new(*message_id, output.clone()),
-                );
-            }
-            // TODO output ?
-            for (output_id, _) in spent_outputs {
-                metadata
-                    .spent_outputs
-                    .insert(output_id, Spent::new(transaction_id, metadata.index));
-            }
-            metadata.included_messages.push(*message_id);
-        }
-        Ok(conflict) => {
-            metadata.excluded_conflicting_messages.push((*message_id, conflict));
-        }
-        Err(e) => return Err(e),
+    let mut balance_diff = BalanceDiff::new();
+
+    conflict = validate_transaction(&transaction, &spent_outputs, &mut balance_diff)?;
+
+    if conflict != ConflictReason::None {
+        metadata.excluded_conflicting_messages.push((*message_id, conflict));
+        return Ok(());
     }
+
+    for (address, entry) in balance_diff {
+        // TODO conditionnally fetch ?
+        let (mut dust_allowance, mut dust_output) = match storage::fetch_balance(storage.deref(), &address).await? {
+            Some(balance) => (balance.dust_allowance as i64, balance.dust_output as i64),
+            None => (0, 0),
+        };
+
+        if let Some(entry) = metadata.balance_diff.get(&address) {
+            dust_allowance += entry.dust_allowance;
+            dust_output += entry.dust_output;
+        }
+
+        if (dust_output as i64 + entry.dust_output) as u64
+            > ((dust_allowance as i64 + entry.dust_allowance) as u64 / DUST_ALLOWANCE_DIVISOR)
+        {
+            metadata
+                .excluded_conflicting_messages
+                .push((*message_id, ConflictReason::InvalidDustAllowance));
+            return Ok(());
+        }
+    }
+
+    // TODO add balance to metadata
+    // TODO store balances with diff
+
+    for (index, output) in essence.outputs().iter().enumerate() {
+        metadata.created_outputs.insert(
+            // Unwrap is fine, the index is known to be valid.
+            OutputId::new(transaction_id, index as u16).unwrap(),
+            Output::new(*message_id, output.clone()),
+        );
+    }
+
+    // TODO output ?
+    for (output_id, _) in spent_outputs {
+        metadata
+            .spent_outputs
+            .insert(output_id, Spent::new(transaction_id, metadata.index));
+    }
+
+    metadata.included_messages.push(*message_id);
 
     Ok(())
 }

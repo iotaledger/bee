@@ -13,7 +13,7 @@ use core::{convert::TryInto, str::FromStr};
 pub(crate) const ED25519_ADDRESS_TYPE: u8 = 1;
 pub const ED25519_ADDRESS_LENGTH: usize = 32;
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Ed25519Address([u8; ED25519_ADDRESS_LENGTH]);
 
 string_serde_impl!(Ed25519Address);
