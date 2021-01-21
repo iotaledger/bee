@@ -360,7 +360,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "toml",
- "warp 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "warp",
  "warp-reverse-proxy",
 ]
 
@@ -440,7 +440,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "warp 0.3.0 (git+https://github.com/seanmonstar/warp)",
+ "warp",
 ]
 
 [[package]]
@@ -3723,35 +3723,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "warp"
-version = "0.3.0"
-source = "git+https://github.com/seanmonstar/warp#f5f421a7e2607ddf79badfd0638fa4da242cde5d"
-dependencies = [
- "bytes",
- "futures",
- "headers",
- "http",
- "hyper",
- "log",
- "mime",
- "mime_guess",
- "multipart",
- "percent-encoding",
- "pin-project 1.0.4",
- "scoped-tls",
- "serde",
- "serde_json",
- "serde_urlencoded",
- "tokio",
- "tokio-stream",
- "tokio-tungstenite",
- "tokio-util",
- "tower-service",
- "tracing",
- "tracing-futures",
-]
-
-[[package]]
 name = "warp-reverse-proxy"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3762,7 +3733,7 @@ dependencies = [
  "reqwest",
  "thiserror",
  "unicase",
- "warp 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "warp",
 ]
 
 [[package]]
