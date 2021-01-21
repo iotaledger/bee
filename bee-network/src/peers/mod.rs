@@ -13,10 +13,13 @@ pub use manager::*;
 
 use tokio::sync::mpsc;
 
-pub type DataSender = mpsc::UnboundedSender<Vec<u8>>;
-pub type DataReceiver = mpsc::UnboundedReceiver<Vec<u8>>;
+/// A shorthand for an unbounded channel sender.
+pub type MessageSender = mpsc::UnboundedSender<Vec<u8>>;
 
-pub fn channel() -> (DataSender, DataReceiver) {
+/// A shorthand for an unbounded channel receiver.
+pub type MessageReceiver = mpsc::UnboundedReceiver<Vec<u8>>;
+
+pub fn channel() -> (MessageSender, MessageReceiver) {
     mpsc::unbounded_channel()
 }
 

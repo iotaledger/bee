@@ -11,7 +11,7 @@ pub use server::*;
 
 use crate::{
     interaction::events::{InternalEvent, InternalEventSender},
-    peers::{self, DataReceiver, DataSender, PeerInfo},
+    peers::{self, MessageReceiver, MessageSender, PeerInfo},
     protocols::gossip::{GossipProtocol, GossipSubstream},
     PeerId, ShortId,
 };
@@ -100,7 +100,7 @@ pub(crate) async fn upgrade_connection(
 fn spawn_gossip_in_task(
     peer_id: PeerId,
     mut reader: ReadHalf<GossipSubstream>,
-    incoming_gossip_sender: DataSender,
+    incoming_gossip_sender: MessageSender,
     internal_event_sender: InternalEventSender,
 ) {
     tokio::spawn(async move {
@@ -138,7 +138,7 @@ fn spawn_gossip_in_task(
 fn spawn_gossip_out_task(
     peer_id: PeerId,
     mut writer: WriteHalf<GossipSubstream>,
-    outgoing_gossip_receiver: DataReceiver,
+    outgoing_gossip_receiver: MessageReceiver,
     internal_event_sender: InternalEventSender,
 ) {
     tokio::spawn(async move {

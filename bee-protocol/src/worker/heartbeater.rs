@@ -9,7 +9,6 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_network::NetworkController;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
@@ -46,7 +45,6 @@ where
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let network = node.resource::<NetworkController>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<ProtocolMetrics>();
 
@@ -60,7 +58,6 @@ where
                 // TODO real impl
                 helper::broadcast_heartbeat(
                     &peer_manager,
-                    &network,
                     &metrics,
                     tangle.get_latest_solid_milestone_index(),
                     tangle.get_pruning_index(),

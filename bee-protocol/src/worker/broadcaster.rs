@@ -8,7 +8,7 @@ use crate::{
     ProtocolMetrics, Sender,
 };
 
-use bee_network::{NetworkController, PeerId};
+use bee_network::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
@@ -39,7 +39,6 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
-        let network = node.resource::<NetworkController>();
         let metrics = node.resource::<ProtocolMetrics>();
         let peer_manager = node.resource::<PeerManager>();
 
@@ -56,7 +55,7 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
                         Some(ref source) => source != peer_id,
                         None => true,
                     } {
-                        Sender::<Message>::send(&network, &peer_manager, &metrics, peer_id, message.clone()).await;
+                        Sender::<Message>::send(&peer_manager, &metrics, peer_id, message.clone()).await;
                     }
                 }
             }

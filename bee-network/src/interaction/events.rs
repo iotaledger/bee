@@ -3,7 +3,7 @@
 
 use crate::{
     conns::Origin,
-    peers::{DataReceiver, DataSender, PeerInfo},
+    peers::{MessageReceiver, MessageSender, PeerInfo},
     Multiaddr, PeerId,
 };
 
@@ -42,9 +42,9 @@ pub enum Event {
         /// The peer's address.
         address: Multiaddr,
         /// The peer's message recv channel.
-        gossip_in: DataReceiver,
+        gossip_in: MessageReceiver,
         /// The peer's message send channel.
-        gossip_out: DataSender,
+        gossip_out: MessageSender,
     },
     /// A peer was disconnected.
     PeerDisconnected {
@@ -74,8 +74,8 @@ pub enum InternalEvent {
         peer_id: PeerId,
         peer_info: PeerInfo,
         origin: Origin,
-        gossip_in: DataReceiver,
-        gossip_out: DataSender,
+        gossip_in: MessageReceiver,
+        gossip_out: MessageSender,
     },
     ConnectionDropped {
         peer_id: PeerId,

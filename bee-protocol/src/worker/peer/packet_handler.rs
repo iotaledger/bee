@@ -153,11 +153,7 @@ impl EventHandler {
     ///
     /// This method returns `None` if a shutdown signal is received, otherwise it returns the
     /// requested bytes.
-    async fn fetch_bytes_or_shutdown<'a>(
-        &'a mut self,
-        mut shutdown: &'a mut ShutdownRecv,
-        len: usize,
-    ) -> Option<&'a [u8]> {
+    async fn fetch_bytes_or_shutdown(&mut self, mut shutdown: &mut ShutdownRecv, len: usize) -> Option<&'_ [u8]> {
         select! {
             // Always select `shutdown` first, otherwise you can end with an infinite loop.
             _ = shutdown => None,

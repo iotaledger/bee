@@ -19,7 +19,6 @@ use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     MessageId,
 };
-use bee_network::NetworkController;
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{traversal, MsTangle};
 
@@ -93,7 +92,6 @@ async fn solidify<B: StorageBackend>(
     milestone_cone_updater: &mpsc::UnboundedSender<MilestoneConeUpdaterWorkerEvent>,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
-    network: &NetworkController,
     bus: &Bus<'static>,
     id: MessageId,
     index: MilestoneIndex,
@@ -115,7 +113,6 @@ async fn solidify<B: StorageBackend>(
 
     helper::broadcast_heartbeat(
         &peer_manager,
-        &network,
         &metrics,
         index,
         tangle.get_pruning_index(),
@@ -162,7 +159,6 @@ where
         let requested_milestones = node.resource::<RequestedMilestones>();
         let metrics = node.resource::<ProtocolMetrics>();
         let peer_manager = node.resource::<PeerManager>();
-        let network = node.resource::<NetworkController>();
         let bus = node.bus();
         let ms_sync_count = config;
 
@@ -212,7 +208,6 @@ where
                             &milestone_cone_updater,
                             &peer_manager,
                             &metrics,
-                            &network,
                             &bus,
                             id,
                             index,
