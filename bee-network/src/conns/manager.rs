@@ -53,7 +53,7 @@ pub struct ConnectionManagerConfig {
 }
 
 impl ConnectionManagerConfig {
-    pub fn new(
+    pub async fn new(
         local_keys: identity::Keypair,
         // TODO: allow multiple bind addresses
         bind_address: Multiaddr,
@@ -69,13 +69,12 @@ impl ConnectionManagerConfig {
             .listen_on(bind_address.clone())
             .map_err(|_| Error::BindingAddressFailed(bind_address))?;
 
-        let listen_address =
-            if let Some(Some(Ok(ListenerEvent::NewAddress(listen_address)))) = peer_listener.next().now_or_never() {
-                trace!("listening address = {}", listen_address);
-                listen_address
-            } else {
-                return Err(Error::NotListeningError);
-            };
+        let listen_address = if let Some(Ok(ListenerEvent::NewAddress(listen_address))) = peer_listener.next().await {
+            trace!("listening address = {}", listen_address);
+            listen_address
+        } else {
+            return Err(Error::NotListeningError);
+        };
 
         trace!("Accepting connections on {}.", listen_address);
 

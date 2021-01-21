@@ -95,6 +95,7 @@ pub async fn init<N: Node>(
         banned_peers,
         internal_event_sender,
     )
+    .await
     .unwrap_or_else(|e| {
         panic!("Fatal error: {}", e);
     });
