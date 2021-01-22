@@ -83,6 +83,19 @@ where
             let mut latency_sum: u64 = 0;
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
+            use std::sync::atomic::{AtomicU64, Ordering};
+            static ITER_TOTAL: AtomicU64 = AtomicU64::new(0);
+            static TIME_UNPACK: AtomicU64 = AtomicU64::new(0);
+            static TIME_NETWORKID: AtomicU64 = AtomicU64::new(0);
+            static TIME_POWSCORE: AtomicU64 = AtomicU64::new(0);
+            static TIME_REQUEST: AtomicU64 = AtomicU64::new(0);
+            static TIME_INSERT: AtomicU64 = AtomicU64::new(0);
+            static TIME_METRICS: AtomicU64 = AtomicU64::new(0);
+            static TIME_BUS: AtomicU64 = AtomicU64::new(0);
+            static TIME_PROPAGATE: AtomicU64 = AtomicU64::new(0);
+            static TIME_REMOVEREQ: AtomicU64 = AtomicU64::new(0);
+            static TIME_SEND: AtomicU64 = AtomicU64::new(0);
+
             while let Some(ProcessorWorkerEvent {
                 pow_score,
                 from,
@@ -90,9 +103,18 @@ where
                 notifier,
             }) = receiver.next().await
             {
+                fn start() -> Instant { Instant::now() }
+                fn end(i: Instant, total: &AtomicU64, s: &str) {
+                    let total = total.fetch_add(i.elapsed().as_micros() as u64, Ordering::Relaxed);
+                    if ITER_TOTAL.load(Ordering::Relaxed) == 1000 {
+                        println!("Avg time for {}: {}", s, total as f32 / 1000.0);
+                    }
+                }
+
                 let now = std::time::Instant::now();
                 trace!("Processing received message...");
 
+                let s = start();
                 let message = match Message::unpack(&mut &message_packet.bytes[..]) {
                     Ok(message) => message,
                     Err(e) => {
@@ -100,7 +122,9 @@ where
                         continue;
                     }
                 };
+                end(s, &TIME_UNPACK, "unpack");
 
+                let s = start();
                 if message.network_id() != config.1 {
                     invalid_message(
                         format!("Incompatible network ID {} != {}.", message.network_id(), config.1),
@@ -109,7 +133,9 @@ where
                     );
                     continue;
                 }
+                end(s, &TIME_NETWORKID, "network id");
 
+                let s = start();
                 if pow_score < config.0.minimum_pow_score {
                     invalid_message(
                         format!(
@@ -121,7 +147,9 @@ where
                     );
                     continue;
                 }
+                end(s, &TIME_POWSCORE, "pow score");
 
+                let s = start();
                 // TODO should be passed by the hasher worker ?
                 let (message_id, _) = message.id();
                 let requested = requested_messages.contains(&message_id).await;
@@ -131,10 +159,14 @@ where
 
                 let parent1 = *message.parent1();
                 let parent2 = *message.parent2();
+                end(s, &TIME_REQUEST, "requested message");
 
                 // store message
+                let s = start();
                 let inserted = tangle.insert(message, message_id, metadata).await.is_some();
+                end(s, &TIME_INSERT, "insert");
 
+                let s = start();
                 if !inserted {
                     metrics.known_messages_inc();
                     if let Some(ref peer_id) = from {
@@ -144,8 +176,12 @@ where
                             .map(|peer| (*peer).0.metrics().known_messages_inc());
                     }
                     continue;
+                } else {
+                    metrics.new_messages_inc();
                 }
+                end(s, &TIME_METRICS, "metrics");
 
+                let s = start();
                 bus.dispatch(MessageProcessed(message_id));
 
                 // TODO: boolean values are false at this point in time? trigger event from another location?
@@ -160,13 +196,15 @@ where
                     is_tip: false,
                     is_selected: false,
                 });
+                end(s, &TIME_BUS, "bus");
 
+                let s = start();
                 if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
                     error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
                 }
+                end(s, &TIME_PROPAGATE, "propagate");
 
-                metrics.new_messages_inc();
-
+                let s = start();
                 match requested_messages.remove(&message_id).await {
                     Some((index, instant)) => {
                         // Message was requested.
@@ -192,7 +230,9 @@ where
                         }
                     }
                 };
+                end(s, &TIME_REMOVEREQ, "propagate");
 
+                let s = start();
                 if let Err(e) = payload_worker.send(PayloadWorkerEvent(message_id)) {
                     warn!("Sending message id {} to payload worker failed: {:?}.", message_id, e);
                 } else {
@@ -203,14 +243,12 @@ where
                         error!("Failed to send message id: {:?}.", e);
                     }
                 }
+                end(s, &TIME_SEND, "send");
 
-
-                use std::sync::atomic::{AtomicU64, Ordering};
-                static ITER_TOTAL: AtomicU64 = AtomicU64::new(0);
                 static TIME_TOTAL: AtomicU64 = AtomicU64::new(0);
                 let time = TIME_TOTAL.fetch_add(now.elapsed().as_micros() as u64, Ordering::Relaxed);
                 let iter = ITER_TOTAL.fetch_add(1, Ordering::Relaxed);
-                if iter > 1000 {
+                if iter == 1000 {
                     println!("---- Processor body timings ----");
                     println!("Iterations = {}", iter);
                     println!("Time = {}us", time);
