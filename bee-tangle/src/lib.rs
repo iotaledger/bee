@@ -16,6 +16,7 @@ pub mod urts;
 
 mod tangle;
 mod vertex;
+mod shashmap;
 
 pub use ms_tangle::MsTangle;
 pub use tangle::{Hooks, Tangle};

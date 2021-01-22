@@ -24,7 +24,7 @@ pub async fn visit_parents_follow_parent1<Metadata, Match, Apply, H: Hooks<Metad
     mut matches: Match,
     mut apply: Apply,
 ) where
-    Metadata: Clone + Copy,
+    Metadata: Clone + Copy + Send + Sync + 'static,
     Match: FnMut(&MessageRef, &Metadata) -> bool,
     Apply: FnMut(&MessageId, &MessageRef, &Metadata),
 {
@@ -48,7 +48,7 @@ pub async fn visit_children_follow_parent1<Metadata, Match, Apply, H: Hooks<Meta
     mut matches: Match,
     mut apply: Apply,
 ) where
-    Metadata: Clone + Copy,
+    Metadata: Clone + Copy + Send + Sync + 'static,
     Match: FnMut(&MessageRef, &Metadata) -> bool,
     Apply: FnMut(&MessageId, &MessageRef, &Metadata),
 {
@@ -87,7 +87,7 @@ pub async fn visit_parents_depth_first<Fut, Metadata, Match, Apply, ElseApply, M
     mut missing_apply: MissingApply,
 ) where
     Fut: Future<Output = bool>,
-    Metadata: Clone + Copy,
+    Metadata: Clone + Copy + Send + Sync + 'static,
     Match: Fn(MessageId, MessageRef, Metadata) -> Fut,
     Apply: FnMut(&MessageId, &MessageRef, &Metadata),
     ElseApply: FnMut(&MessageId, &MessageRef, &Metadata),
@@ -134,7 +134,7 @@ pub async fn visit_children_depth_first<Metadata, Match, Apply, ElseApply, H: Ho
     mut apply: Apply,
     mut else_apply: ElseApply,
 ) where
-    Metadata: Clone + Copy,
+    Metadata: Clone + Copy + Send + Sync + 'static,
     Match: Fn(&MessageRef, &Metadata) -> bool,
     Apply: FnMut(&MessageId, &MessageRef, &Metadata),
     ElseApply: FnMut(&MessageId),
