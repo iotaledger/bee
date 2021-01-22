@@ -39,6 +39,7 @@ thiserror = "1.0"
 tokio = { version = "1.0", features = [] }
 tokio-stream = "0.1"
 twox-hash = "1.5"
+fxhash = "0.2"
 
 [dev-dependencies]
 tokio = { version = "1.0", features = ["macros"] }

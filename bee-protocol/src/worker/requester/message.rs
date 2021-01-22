@@ -19,6 +19,7 @@ use tokio::{
     time::interval,
 };
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
+use fxhash::FxBuildHasher;
 
 use std::{
     any::TypeId,
@@ -30,7 +31,7 @@ use std::{
 const RETRY_INTERVAL_MS: u64 = 2500;
 
 #[derive(Default)]
-pub(crate) struct RequestedMessages(RwLock<HashMap<MessageId, (MilestoneIndex, Instant)>>);
+pub(crate) struct RequestedMessages(RwLock<HashMap<MessageId, (MilestoneIndex, Instant), FxBuildHasher>>);
 
 impl RequestedMessages {
     pub async fn contains(&self, message_id: &MessageId) -> bool {

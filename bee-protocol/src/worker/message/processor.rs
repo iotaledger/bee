@@ -234,7 +234,7 @@ where
                         }
                     }
                 };
-                end(s, &TIME_REMOVEREQ, "propagate");
+                end(s, &TIME_REMOVEREQ, "remove req");
 
                 let s = start();
                 if let Err(e) = payload_worker.send(PayloadWorkerEvent(message_id)) {
