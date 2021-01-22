@@ -42,8 +42,11 @@ impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
 
     async fn insert(&self, msg: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
         trace!("Attempted to insert message {:?}", msg);
-        self.storage.insert(&msg, &tx).await?;
-        self.storage.insert(&msg, &metadata).await?;
+        let storage = self.storage.clone();
+        tokio::task::spawn(async move {
+            storage.insert(&msg, &tx).await;
+            storage.insert(&msg, &metadata).await;
+        });
         Ok(())
     }
 
@@ -54,7 +57,11 @@ impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
 
     async fn insert_approver(&self, msg: MessageId, approver: MessageId) -> Result<(), Self::Error> {
         trace!("Attempted to insert approver for message {:?}", msg);
-        self.storage.insert(&(msg, approver), &()).await
+        let storage = self.storage.clone();
+        tokio::task::spawn(async move {
+            storage.insert(&(msg, approver), &()).await;
+        });
+        Ok(())
     }
 
     async fn update_approvers(&self, msg: MessageId, approvers: &Vec<MessageId>) -> Result<(), Self::Error> {

@@ -83,6 +83,8 @@ static TANGLE_MUTATIONS: spin::Mutex<Option<std::collections::HashMap<std::panic
 
 #[track_caller]
 pub fn register_mut() {
+    return;
+
     let loc = std::panic::Location::caller();
     *TANGLE_MUTATIONS
         .lock()
