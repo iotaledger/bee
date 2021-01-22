@@ -171,15 +171,15 @@ where
         if self.vertices.insert(message_id, vtx).await.is_none() {
             // Insert cache queue entry to track eviction priority
             let idx = self.generate_cache_index();
-            self.cache_queue
-                .write()
-                .await
-                .put(message_id, idx);
+            // self.cache_queue
+            //     .write()
+            //     .await
+            //     .put(message_id, idx);
 
             self.add_children_inner(&parents, message_id).await;
         }
 
-        self.perform_eviction().await;
+        // self.perform_eviction().await;
 
         Some(tx)
     }
