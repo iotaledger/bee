@@ -90,6 +90,7 @@ where
                 notifier,
             }) = receiver.next().await
             {
+                let now = std::time::Instant::now();
                 trace!("Processing received message...");
 
                 let message = match Message::unpack(&mut &message_packet.bytes[..]) {
@@ -201,6 +202,22 @@ where
                     if let Err(e) = notifier.send(Ok(message_id)) {
                         error!("Failed to send message id: {:?}.", e);
                     }
+                }
+
+
+                use std::sync::atomic::{AtomicU64, Ordering};
+                static ITER_TOTAL: AtomicU64 = AtomicU64::new(0);
+                static TIME_TOTAL: AtomicU64 = AtomicU64::new(0);
+                let time = TIME_TOTAL.fetch_add(now.elapsed().as_micros() as u64, Ordering::Relaxed);
+                let iter = ITER_TOTAL.fetch_add(1, Ordering::Relaxed);
+                if iter > 1000 {
+                    println!("---- Processor body timings ----");
+                    println!("Iterations = {}", iter);
+                    println!("Time = {}us", time);
+                    println!("Theoretical MPS: {}", iter as f32 / (time as f32 / 1000_000.0));
+
+                    ITER_TOTAL.store(0, Ordering::Relaxed);
+                    TIME_TOTAL.store(0, Ordering::Relaxed);
                 }
             }
 
