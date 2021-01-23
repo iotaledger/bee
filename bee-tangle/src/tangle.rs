@@ -231,6 +231,11 @@ where
     pub async fn get_metadata(&self, message_id: &MessageId) -> Option<T> {
         self.pull_message(message_id).await;
 
+        self.get_metadata_maybe(message_id).await
+    }
+
+    /// Get the metadata of a vertex associated with the given `message_id`, if it's in the cahce.
+    pub async fn get_metadata_maybe(&self, message_id: &MessageId) -> Option<T> {
         self.get_inner(message_id).await.map(|v| v.metadata().clone())
     }
 

@@ -274,6 +274,18 @@ impl<B: StorageBackend> MsTangle<B> {
         }
     }
 
+    pub async fn is_solid_message_maybe(&self, hash: &MessageId) -> bool {
+        if self.is_solid_entry_point(hash) {
+            true
+        } else {
+            self.inner
+                .get_metadata_maybe(hash)
+                .await
+                .map(|metadata| metadata.flags().is_solid())
+                .unwrap_or(false)
+        }
+    }
+
     pub async fn otrsi(&self, hash: &MessageId) -> Option<MilestoneIndex> {
         match self.solid_entry_points.get(hash) {
             Some(sep) => Some(*sep.value()),

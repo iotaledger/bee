@@ -48,7 +48,7 @@ async fn propagate<B: StorageBackend>(
             .await
             .map(|message| (*message.parent1(), *message.parent2()))
         {
-            if !tangle.is_solid_message(&parent1).await || !tangle.is_solid_message(&parent2).await {
+            if !tangle.is_solid_message_maybe(&parent1).await || !tangle.is_solid_message_maybe(&parent2).await {
                 continue;
             }
 
