@@ -144,10 +144,16 @@ async fn retry_requests(
     let mut retry_counts: usize = 0;
 
     // TODO this needs abstraction
+    let now = Instant::now();
+    let mut to_req = Vec::with_capacity(1024);
     for (message_id, (index, instant)) in requested_messages.0.read().await.iter() {
-        if (Instant::now() - *instant).as_millis() as u64 > RETRY_INTERVAL_MS
-            && process_request_unchecked(*message_id, *index, peer_manager, metrics, counter).await
-        {
+        if (now - *instant).as_millis() as u64 > RETRY_INTERVAL_MS {
+            to_req.push((*message_id, *index));
+        }
+    }
+
+    for (message_id, index) in to_req {
+        if process_request_unchecked(message_id, index, peer_manager, metrics, counter).await {
             retry_counts += 1;
         }
     }
