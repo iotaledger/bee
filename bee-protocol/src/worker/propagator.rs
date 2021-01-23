@@ -44,11 +44,18 @@ async fn propagate<B: StorageBackend>(
         let tangle = tangle.clone();
         let bus = bus.clone();
         async move {
-            while let Ok((message_id, parent1, parent2)) = rx.recv().await {
-                info!("Milestone {} propagated!", message_id);
-
+            while let Ok((message_id, parent1, parent2, index)) = rx.recv().await {
                 bus.dispatch(MessageSolidified(message_id));
                 tangle.insert_tip(message_id, parent1, parent2).await;
+
+                let s = start();
+                if let Some(index) = index {
+                    info!("Milestone {} propagated!", index);
+                    if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
+                        error!("Sending solidification event failed: {}.", e);
+                    }
+                }
+                end(s, &TIME_MILESTONE, "milestone solidified event");
             }
         }
     });
@@ -146,14 +153,6 @@ async fn propagate<B: StorageBackend>(
             end(s, &TIME_METADATA, "metadata update");
 
             let s = start();
-            if let Some(index) = index {
-                if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
-                    error!("Sending solidification event failed: {}.", e);
-                }
-            }
-            end(s, &TIME_MILESTONE, "milestone solidified event");
-
-            let s = start();
             if let Some(msg_children) = tangle.get_children(&message_id).await {
                 for child in msg_children {
                     children.push(child);
@@ -161,7 +160,7 @@ async fn propagate<B: StorageBackend>(
             }
             end(s, &TIME_CHILDREN, "fetch children");
 
-            tx.send((*message_id, parent1, parent2)).await;
+            tx.send((*message_id, parent1, parent2, index)).await;
         } else {
             end(s, &TIME_GET, "get message");
         }
