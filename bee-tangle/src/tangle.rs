@@ -378,7 +378,7 @@ where
 
         let children = self.children
             .get_cloned(message_id)
-            .await
+            .await;
             // Skip approver lists that are not exhaustive
             //.filter(|children| children.1);
 
