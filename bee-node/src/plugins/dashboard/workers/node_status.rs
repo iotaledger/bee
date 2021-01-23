@@ -37,7 +37,6 @@ where
     N: Node,
     N::Backend: StorageBackend,
 {
-    let bus = node.bus();
     let tangle = node.resource::<MsTangle<N::Backend>>();
     let node_config = node.resource::<NodeConfig<N::Backend>>();
     let peering_config = node_config.peering.clone();
