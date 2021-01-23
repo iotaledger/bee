@@ -9,7 +9,7 @@ use log::error;
 
 const CONFIG_PATH: &str = "./config.toml";
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 8)]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() {
     let cli = CliArgs::new();
 
