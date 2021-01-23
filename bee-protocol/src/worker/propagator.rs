@@ -38,7 +38,24 @@ async fn propagate<B: StorageBackend>(
 ) {
     let mut children = vec![message_id];
 
+    use std::{sync::atomic::{AtomicU64, Ordering}, time::Instant};
+    static TIME_TOTAL: AtomicU64 = AtomicU64::new(0);
+
+    static ITER_TOTAL: AtomicU64 = AtomicU64::new(0);
+    const SAMPLE_ITERS: u64 = 2500;
+
+    fn start() -> Instant { Instant::now() }
+    fn end(i: Instant, total: &AtomicU64, s: &str) {
+        let t = total.fetch_add(i.elapsed().as_micros() as u64, Ordering::Relaxed);
+        if ITER_TOTAL.load(Ordering::Relaxed) == SAMPLE_ITERS {
+            println!("Avg time for {}: {} ({}% of total)", s, t as f32 / 1000.0, 100.0 * t as f32 / TIME_TOTAL.load(Ordering::Relaxed) as f32);
+            total.store(0, Ordering::Relaxed);
+        }
+    }
+
     while let Some(ref message_id) = children.pop() {
+        let now = std::time::Instant::now();
+
         if tangle.is_solid_message(message_id).await {
             continue;
         }
@@ -128,6 +145,18 @@ async fn propagate<B: StorageBackend>(
             bus.dispatch(MessageSolidified(*message_id));
 
             tangle.insert_tip(*message_id, parent1, parent2).await;
+        }
+
+        let time = TIME_TOTAL.fetch_add(now.elapsed().as_micros() as u64, Ordering::Relaxed);
+        let iter = ITER_TOTAL.fetch_add(1, Ordering::Relaxed);
+        if iter == SAMPLE_ITERS {
+            println!("---- Propagator body timings ----");
+            println!("Iterations = {}", iter);
+            println!("Time = {}us", time);
+            println!("Theoretical MPS: {}", iter as f32 / (time as f32 / 1000_000.0));
+
+            ITER_TOTAL.store(0, Ordering::Relaxed);
+            TIME_TOTAL.store(0, Ordering::Relaxed);
         }
     }
 }

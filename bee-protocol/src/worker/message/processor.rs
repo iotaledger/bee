@@ -99,8 +99,17 @@ where
             static TIME_SEND: AtomicU64 = AtomicU64::new(0);
             const SAMPLE_ITERS: u64 = 2500;
 
+            fn start() -> Instant { Instant::now() }
+            fn end(i: Instant, total: &AtomicU64, s: &str) {
+                let t = total.fetch_add(i.elapsed().as_micros() as u64, Ordering::Relaxed);
+                if ITER_TOTAL.load(Ordering::Relaxed) == SAMPLE_ITERS {
+                    //println!("Avg time for {}: {} ({}% of total)", s, t as f32 / 1000.0, 100.0 * t as f32 / TIME_TOTAL.load(Ordering::Relaxed) as f32);
+                    total.store(0, Ordering::Relaxed);
+                }
+            }
+
             let (tx, rx) = async_channel::unbounded();
-            const TASKS: usize = 4;
+            const TASKS: usize = 16;
 
             for _ in 0..TASKS {
                 let rx = rx.clone();
@@ -121,15 +130,6 @@ where
                         message_packet,
                         notifier,
                     }) = rx.recv().await {
-                        fn start() -> Instant { Instant::now() }
-                        fn end(i: Instant, total: &AtomicU64, s: &str) {
-                            let t = total.fetch_add(i.elapsed().as_micros() as u64, Ordering::Relaxed);
-                            if ITER_TOTAL.load(Ordering::Relaxed) == SAMPLE_ITERS {
-                                println!("Avg time for {}: {} ({}% of total)", s, t as f32 / 1000.0, 100.0 * t as f32 / TIME_TOTAL.load(Ordering::Relaxed) as f32);
-                                total.store(0, Ordering::Relaxed);
-                            }
-                        }
-
                         let now = std::time::Instant::now();
                         trace!("Processing received message...");
 
@@ -267,10 +267,10 @@ where
                         let time = TIME_TOTAL.fetch_add(now.elapsed().as_micros() as u64, Ordering::Relaxed);
                         let iter = ITER_TOTAL.fetch_add(1, Ordering::Relaxed);
                         if iter == SAMPLE_ITERS {
-                            println!("---- Processor body timings ----");
-                            println!("Iterations = {}", iter);
-                            println!("Time = {}us", time);
-                            println!("Theoretical MPS: {}", iter as f32 * TASKS as f32 / (time as f32 / 1000_000.0));
+                            // println!("---- Processor body timings ----");
+                            // println!("Iterations = {}", iter);
+                            // println!("Time = {}us", time);
+                            // println!("Theoretical MPS: {}", iter as f32 * TASKS as f32 / (time as f32 / 1000_000.0));
 
                             ITER_TOTAL.store(0, Ordering::Relaxed);
                             TIME_TOTAL.store(0, Ordering::Relaxed);
