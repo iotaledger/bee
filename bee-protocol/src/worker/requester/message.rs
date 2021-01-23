@@ -158,7 +158,7 @@ async fn retry_requests<B: StorageBackend>(
 
     for (message_id, index) in to_req {
         if tangle.contains(&message_id).await { // Stale!
-            requested_messages.remove(&message_id);
+            requested_messages.remove(&message_id).await;
         } else if process_request_unchecked(message_id, index, peer_manager, metrics, counter).await {
             retry_counts += 1;
         }
