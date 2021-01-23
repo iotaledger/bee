@@ -27,6 +27,7 @@ async-trait = "0.1"
 blake2 = "0.9"
 futures = "0.3"
 futures-util = "0.3"
+fxhash = "0.2"
 hex = "0.4"
 iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", branch = "dev", features = ["ed25519"] }
 log = "0.4"

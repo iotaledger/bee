@@ -16,6 +16,7 @@ use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
 use futures::StreamExt;
+use fxhash::FxBuildHasher;
 use log::{debug, info};
 use tokio::{
     sync::{mpsc, RwLock},
@@ -34,7 +35,7 @@ const RETRY_INTERVAL_MS: u64 = 2500;
 
 // TODO pub ?
 #[derive(Default)]
-pub struct RequestedMilestones(RwLock<HashMap<MilestoneIndex, Instant>>);
+pub struct RequestedMilestones(RwLock<HashMap<MilestoneIndex, Instant, FxBuildHasher>>);
 
 impl RequestedMilestones {
     pub async fn contains(&self, index: &MilestoneIndex) -> bool {
@@ -122,25 +123,34 @@ async fn process_request_unchecked(
     }
 }
 
-async fn retry_requests(
+async fn retry_requests<B: StorageBackend>(
+    requested_milestones: &RequestedMilestones,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
-    requested_milestones: &RequestedMilestones,
+    tangle: &MsTangle<B>,
     counter: &mut usize,
 ) {
     if peer_manager.is_empty().await {
         return;
     }
 
+    let now = Instant::now();
     let mut retry_counts: usize = 0;
+    let mut to_retry = Vec::with_capacity(1024);
 
     // TODO this needs abstraction
     for (index, instant) in requested_milestones.0.read().await.iter() {
-        if (Instant::now() - *instant).as_millis() as u64 > RETRY_INTERVAL_MS
-            && process_request_unchecked(*index, None, peer_manager, metrics, counter).await
-        {
-            retry_counts += 1;
+        if (now - *instant).as_millis() as u64 > RETRY_INTERVAL_MS {
+            to_retry.push(*index);
         };
+    }
+
+    for index in to_retry {
+        if tangle.contains_milestone(index).await {
+            requested_milestones.remove(&index).await;
+        } else if process_request_unchecked(index, None, peer_manager, metrics, counter).await {
+            retry_counts += 1;
+        }
     }
 
     if retry_counts > 0 {
@@ -203,6 +213,7 @@ where
         let requested_milestones = node.resource::<RequestedMilestones>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<ProtocolMetrics>();
+        let tangle = node.resource::<MsTangle<N::Backend>>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Retryer running.");
@@ -214,7 +225,7 @@ where
             let mut counter: usize = 0;
 
             while ticker.next().await.is_some() {
-                retry_requests(&peer_manager, &metrics, &requested_milestones, &mut counter).await;
+                retry_requests(&requested_milestones, &peer_manager, &metrics, &tangle, &mut counter).await;
             }
 
             info!("Retryer stopped.");
