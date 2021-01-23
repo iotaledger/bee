@@ -97,7 +97,7 @@ where
             static TIME_PROPAGATE: AtomicU64 = AtomicU64::new(0);
             static TIME_REMOVEREQ: AtomicU64 = AtomicU64::new(0);
             static TIME_SEND: AtomicU64 = AtomicU64::new(0);
-            const SAMPLE_ITERS: u64 = 250;
+            const SAMPLE_ITERS: u64 = 2500;
 
             while let Some(ProcessorWorkerEvent {
                 pow_score,
