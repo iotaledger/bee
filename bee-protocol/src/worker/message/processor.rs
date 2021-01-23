@@ -270,7 +270,7 @@ where
                             println!("---- Processor body timings ----");
                             println!("Iterations = {}", iter);
                             println!("Time = {}us", time);
-                            println!("Theoretical MPS: {}", iter as f32 / (time as f32 / 1000_000.0));
+                            println!("Theoretical MPS: {}", iter as f32 * TASKS as f32 / (time as f32 / 1000_000.0));
 
                             ITER_TOTAL.store(0, Ordering::Relaxed);
                             TIME_TOTAL.store(0, Ordering::Relaxed);
