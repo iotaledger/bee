@@ -39,7 +39,8 @@ impl RequestedMessages {
     }
 
     pub async fn insert(&self, message_id: MessageId, index: MilestoneIndex) {
-        self.0.write().await.insert(message_id, (index, Instant::now()));
+        let now = Instant::now();
+        self.0.write().await.insert(message_id, (index, now));
     }
 
     pub async fn len(&self) -> usize {
