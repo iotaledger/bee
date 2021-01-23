@@ -109,7 +109,7 @@ where
             }
 
             let (tx, rx) = async_channel::unbounded();
-            const TASKS: usize = 16;
+            const TASKS: usize = 1;
 
             for _ in 0..TASKS {
                 let rx = rx.clone();
