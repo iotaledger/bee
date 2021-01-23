@@ -106,27 +106,22 @@ async fn propagate<B: StorageBackend>(
             let best_otrsi = max(parent1_otsri.unwrap(), parent2_otsri.unwrap());
             let best_ytrsi = min(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
 
-            tangle
+            let index = tangle
                 .update_metadata(&message_id, |metadata| {
                     // OTRSI/YTRSI values need to be set before the solid flag, to ensure that the
                     // MilestoneConeUpdater is aware of all values.
                     metadata.set_otrsi(best_otrsi);
                     metadata.set_ytrsi(best_ytrsi);
                     metadata.solidify();
-                })
-                .await
-                .expect("Failed to fetch metadata for message that should exist");
 
-            let index = match tangle.get_metadata(&message_id).await {
-                Some(meta) => {
-                    if meta.flags().is_milestone() {
-                        Some(meta.milestone_index())
+                    if metadata.flags().is_milestone {
+                        Some(metadata.milestone_index())
                     } else {
                         None
                     }
-                }
-                None => None,
-            };
+                })
+                .await
+                .expect("Failed to fetch metadata for message that should exist");
 
             if let Some(index) = index {
                 if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {

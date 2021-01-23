@@ -444,12 +444,14 @@ where
         } else {
             // let _gtl_guard = self.gtl.write().await;
 
-            if let Ok(Some((tx, metadata))) = self.hooks.get(message_id).await {
-                self.insert_inner(*message_id, tx, metadata).await;
-                true
-            } else {
-                false
-            }
+            // if let Ok(Some((tx, metadata))) = self.hooks.get(message_id).await {
+            //     self.insert_inner(*message_id, tx, metadata).await;
+            //     true
+            // } else {
+            //     false
+            // }
+
+            false
         }
     }
 
