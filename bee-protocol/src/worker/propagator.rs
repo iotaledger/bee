@@ -62,10 +62,12 @@ async fn propagate<B: StorageBackend>(
             // Faster than the above
             let p1m = tangle.get_metadata(&parent1).await;
             let p2m = tangle.get_metadata(&parent2).await;
-            let parent1_otsri = tangle.get_solid_entry_point_index(&parent1).or_else(|| p1m?.otrsi());
-            let parent2_otsri = tangle.get_solid_entry_point_index(&parent2).or_else(|| p2m?.otrsi());
-            let parent1_ytrsi = tangle.get_solid_entry_point_index(&parent1).or_else(|| p1m?.ytrsi());
-            let parent2_ytrsi = tangle.get_solid_entry_point_index(&parent2).or_else(|| p2m?.ytrsi());
+            let p1sepi = tangle.get_solid_entry_point_index(&parent1);
+            let p2sepi = tangle.get_solid_entry_point_index(&parent2);
+            let parent1_otsri = p1sepi.or_else(|| p1m?.otrsi());
+            let parent2_otsri = p2sepi.or_else(|| p2m?.otrsi());
+            let parent1_ytrsi = p1sepi.or_else(|| p1m?.ytrsi());
+            let parent2_ytrsi = p2sepi.or_else(|| p2m?.ytrsi());
 
             // get best OTRSI/YTRSI from parents
             // unwrap() is safe because parents are solid which implies that OTRSI/YTRSI values are
