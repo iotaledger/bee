@@ -36,9 +36,9 @@ rand = "0.8"
 serde = { version = "1.0", features = ["derive" ] }
 spin = "0.7"
 thiserror = "1.0"
-tokio = { version = "1.0", features = [] }
+tokio = { version = "1.1", features = [] }
 tokio-stream = "0.1"
 twox-hash = "1.5"
 
 [dev-dependencies]
-tokio = { version = "1.0", features = ["macros"] }
+tokio = { version = "1.1", features = ["macros"] }

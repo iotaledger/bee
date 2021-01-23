@@ -25,7 +25,7 @@ lru = "0.6"
 rand = "0.8"
 serde = { version = "1.0", features = ["derive" ] }
 thiserror = "1.0"
-tokio = { version = "1.0", features = ["sync"] }
+tokio = { version = "1.1", features = ["sync"] }
 
 [dev-dependencies]
 bee-test = { path = "../bee-test" }

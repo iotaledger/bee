@@ -42,7 +42,7 @@ serde_json = "1.0"
 serde_repr = "0.1"
 structopt = { version = "0.3", default-features = false }
 thiserror = "1.0"
-tokio = { version = "1.0", features = ["signal", "rt", "macros", "rt-multi-thread"] }
+tokio = { version = "1.1", features = ["signal", "rt", "macros", "rt-multi-thread"] }
 tokio-stream = "0.1"
 toml = "0.5"
 warp = "0.3"
