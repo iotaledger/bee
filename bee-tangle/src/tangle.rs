@@ -231,19 +231,19 @@ where
     async fn get_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex<T>> + '_> {
         let res = self.vertices.get(message_id).await;
 
-        if res.is_some() {
-            let idx = self.generate_cache_index();
-            // let mut cache_queue = self.cache_queue.write().await;
-            // // Update message_id priority
-            // let entry = cache_queue.get_mut(message_id);
-            // let entry = if entry.is_none() {
-            //     cache_queue.put(*message_id, 0);
-            //     cache_queue.get_mut(message_id)
-            // } else {
-            //     entry
-            // };
-            // *entry.unwrap() = idx;
-        }
+        // if res.is_some() {
+        //     let idx = self.generate_cache_index();
+        //     let mut cache_queue = self.cache_queue.write().await;
+        //     // Update message_id priority
+        //     let entry = cache_queue.get_mut(message_id);
+        //     let entry = if entry.is_none() {
+        //         cache_queue.put(*message_id, 0);
+        //         cache_queue.get_mut(message_id)
+        //     } else {
+        //         entry
+        //     };
+        //     *entry.unwrap() = idx;
+        // }
 
         res
     }
@@ -262,6 +262,11 @@ where
     /// Returns whether the message is stored in the Tangle.
     pub async fn contains(&self, message_id: &MessageId) -> bool {
         self.contains_inner(message_id).await || self.pull_message(message_id).await
+    }
+
+    /// Returns whether the message is stored in the Tangle, if it's in the cache.
+    pub async fn contains_maybe(&self, message_id: &MessageId) -> bool {
+        self.contains_inner(message_id).await
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
