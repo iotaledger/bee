@@ -91,24 +91,24 @@ async fn process_request_unchecked(
 ) -> bool {
     let guard = peer_manager.peers_keys.read().await;
 
-    for _ in 0..guard.len() {
-        let peer_id = &guard[*counter % guard.len()];
+    // for _ in 0..guard.len() {
+    //     let peer_id = &guard[*counter % guard.len()];
 
-        *counter += 1;
+    //     *counter += 1;
 
-        if let Some(peer) = peer_manager.get(peer_id).await {
-            if (*peer).0.has_data(index) {
-                Sender::<MessageRequest>::send(
-                    peer_manager,
-                    metrics,
-                    peer_id,
-                    MessageRequest::new(message_id.as_ref()),
-                )
-                .await;
-                return true;
-            }
-        }
-    }
+    //     if let Some(peer) = peer_manager.get(peer_id).await {
+    //         if (*peer).0.has_data(index) {
+    //             Sender::<MessageRequest>::send(
+    //                 peer_manager,
+    //                 metrics,
+    //                 peer_id,
+    //                 MessageRequest::new(message_id.as_ref()),
+    //             )
+    //             .await;
+    //             return true;
+    //         }
+    //     }
+    // }
 
     let mut requested = false;
 
