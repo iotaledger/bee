@@ -233,16 +233,16 @@ where
 
         if res.is_some() {
             let idx = self.generate_cache_index();
-            let mut cache_queue = self.cache_queue.write().await;
-            // Update message_id priority
-            let entry = cache_queue.get_mut(message_id);
-            let entry = if entry.is_none() {
-                cache_queue.put(*message_id, 0);
-                cache_queue.get_mut(message_id)
-            } else {
-                entry
-            };
-            *entry.unwrap() = idx;
+            // let mut cache_queue = self.cache_queue.write().await;
+            // // Update message_id priority
+            // let entry = cache_queue.get_mut(message_id);
+            // let entry = if entry.is_none() {
+            //     cache_queue.put(*message_id, 0);
+            //     cache_queue.get_mut(message_id)
+            // } else {
+            //     entry
+            // };
+            // *entry.unwrap() = idx;
         }
 
         res
