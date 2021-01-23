@@ -11,8 +11,8 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
-use futures::stream::StreamExt;
-use log::info;
+use futures::{future::FutureExt, stream::StreamExt};
+use log::{debug, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -53,12 +53,21 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(MilestoneConeUpdaterWorkerEvent(index, milestone)) = receiver.next().await {
-                // When a new milestone gets solid, OTRSI and YTRSI of all messages that belong to the given cone
-                // must be updated. Furthermore, updated values will be propagated to the future.
-                update_messages_referenced_by_milestone::<N>(&tangle, *milestone.message_id(), index).await;
-                // Update tip pool after all values got updated.
-                tangle.update_tip_scores().await;
+                process(&tangle, index, milestone).await;
             }
+
+            // Before the worker completely stops, the receiver needs to be drained for milestone cones to be updated.
+            // Otherwise, information would be lost and not easily recoverable.
+
+            let (_, mut receiver) = receiver.split();
+            let mut count: usize = 0;
+
+            while let Some(Some(MilestoneConeUpdaterWorkerEvent(index, milestone))) = receiver.next().now_or_never() {
+                process(&tangle, index, milestone).await;
+                count += 1;
+            }
+
+            debug!("Drained {} milestones.", count);
 
             info!("Stopped.");
         });
@@ -67,13 +76,19 @@ where
     }
 }
 
-async fn update_messages_referenced_by_milestone<N: Node>(
-    tangle: &MsTangle<N::Backend>,
+async fn process<B: StorageBackend>(tangle: &MsTangle<B>, index: MilestoneIndex, milestone: Milestone) {
+    // When a new milestone gets solid, OTRSI and YTRSI of all messages that belong to the given cone
+    // must be updated. Furthermore, updated values will be propagated to the future.
+    update_messages_referenced_by_milestone(tangle, *milestone.message_id(), index).await;
+    // Update tip pool after all values got updated.
+    tangle.update_tip_scores().await;
+}
+
+async fn update_messages_referenced_by_milestone<B: StorageBackend>(
+    tangle: &MsTangle<B>,
     message_id: MessageId,
     milestone_index: MilestoneIndex,
-) where
-    N::Backend: StorageBackend,
-{
+) {
     let mut to_visit = vec![message_id];
     let mut visited = HashSet::new();
 
@@ -105,7 +120,7 @@ async fn update_messages_referenced_by_milestone<N: Node>(
 
             if let Some(children) = tangle.get_children(&message_id).await {
                 for child in children {
-                    update_future_cone::<N>(tangle, child).await;
+                    update_future_cone(tangle, child).await;
                 }
             }
 
@@ -115,10 +130,7 @@ async fn update_messages_referenced_by_milestone<N: Node>(
     }
 }
 
-async fn update_future_cone<N: Node>(tangle: &MsTangle<N::Backend>, child: MessageId)
-where
-    N::Backend: StorageBackend,
-{
+async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, child: MessageId) {
     let mut children = vec![child];
 
     while let Some(message_id) = children.pop() {
