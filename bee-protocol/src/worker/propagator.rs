@@ -114,7 +114,7 @@ async fn propagate<B: StorageBackend>(
                     metadata.set_ytrsi(best_ytrsi);
                     metadata.solidify();
 
-                    if metadata.flags().is_milestone {
+                    if metadata.flags().is_milestone() {
                         Some(metadata.milestone_index())
                     } else {
                         None
