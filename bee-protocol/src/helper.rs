@@ -53,7 +53,7 @@ pub(crate) async fn request_message<B: StorageBackend>(
     index: MilestoneIndex,
 ) {
     if !tangle.contains_maybe(&message_id).await
-        && !tangle.is_solid_entry_point_maybe(&message_id)
+        && !tangle.is_solid_entry_point(&message_id)
         && !requested_messages.contains(&message_id).await
     {
         if let Err(e) = message_requester.send(MessageRequesterWorkerEvent(message_id, index)) {
