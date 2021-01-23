@@ -47,8 +47,7 @@ where
     };
 
     if milestone.essence().index() != **index + 1 {
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO: Don't ignore this error!
-        //return Err(Error::NonContiguousMilestone(milestone.essence().index(), **index));
+        return Err(Error::NonContiguousMilestone(milestone.essence().index(), **index));
     }
 
     let mut metadata = WhiteFlagMetadata::new(MilestoneIndex(milestone.essence().index()));
