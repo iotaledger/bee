@@ -31,6 +31,12 @@ pub struct StorageHooks<B> {
     storage: ResourceHandle<B>,
 }
 
+impl<B> Clone for StorageHooks<B> {
+    fn clone(&self) -> Self {
+        Self { storage: self.storage.clone() }
+    }
+}
+
 #[async_trait]
 impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
     type Error = B::Error;
@@ -152,13 +158,15 @@ impl<B: StorageBackend> MsTangle<B> {
                 metadata.set_milestone_index(idx);
             })
             .await;
-        self.inner
-            .hooks()
-            .insert_milestone(idx, &milestone)
-            .await
-            .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
         // TODO can there be a race condition between 2 ops ?
-        self.milestones.insert(idx, milestone);
+        self.milestones.insert(idx, milestone.clone());
+        let storage = self.inner.hooks().clone();
+        tokio::task::spawn(async move {
+            storage
+                .insert_milestone(idx, &milestone)
+                .await
+                .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
+        });
     }
 
     pub fn remove_milestone(&self, index: MilestoneIndex) {
@@ -166,7 +174,9 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 
     async fn pull_milestone(&self, idx: MilestoneIndex) -> Option<impl Deref<Target = Milestone> + '_> {
-        if let Some(milestone) = self.inner.hooks().get_milestone(&idx).await.unwrap_or_else(|e| {
+        if true {
+            None
+        } else if let Some(milestone) = self.inner.hooks().get_milestone(&idx).await.unwrap_or_else(|e| {
             info!("Failed to insert message {:?}", e);
             None
         }) {
