@@ -12,8 +12,8 @@ use bee_storage::access::Insert;
 use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
-use futures::stream::StreamExt;
-use log::{info, warn};
+use futures::{future::FutureExt, stream::StreamExt};
+use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -36,10 +36,11 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, storage: &B, message_i
             },
             _ => return,
         };
+
         let hash = indexation.hash();
 
         if let Err(e) = Insert::<(HashedIndex, MessageId), ()>::insert(&*storage, &(hash, message_id), &()).await {
-            warn!("Inserting indexation payload failed: {:?}.", e);
+            error!("Inserting indexation payload failed: {:?}.", e);
         }
     }
 }
@@ -71,16 +72,18 @@ where
                 process(&tangle, &storage, message_id).await;
             }
 
-            // let (_, mut receiver) = receiver.split();
-            // let receiver = receiver.get_mut();
-            // let mut count: usize = 0;
-            //
-            // while let Poll::Ready(Some(IndexationPayloadWorkerEvent(message_id))) = receiver.poll_recv() {
-            //     process(&tangle, &storage, message_id).await;
-            //     count += 1;
-            // }
-            //
-            // debug!("Drained {} message ids.", count);
+            // Before the worker completely stops, the receiver needs to be drained for indexation payloads to be
+            // analysed. Otherwise, information would be lost and not easily recoverable.
+
+            let (_, mut receiver) = receiver.split();
+            let mut count: usize = 0;
+
+            while let Some(Some(IndexationPayloadWorkerEvent(message_id))) = receiver.next().now_or_never() {
+                process(&tangle, &storage, message_id).await;
+                count += 1;
+            }
+
+            debug!("Drained {} messages.", count);
 
             info!("Stopped.");
         });
