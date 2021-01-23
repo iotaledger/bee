@@ -54,7 +54,7 @@ pub(crate) async fn request_message<B: StorageBackend>(
 ) {
     if !tangle.contains_maybe(&message_id).await
         && !tangle.is_solid_entry_point(&message_id)
-        && !requested_messages.contains(&message_id).await
+        //&& !requested_messages.contains(&message_id).await
     {
         if let Err(e) = message_requester.send(MessageRequesterWorkerEvent(message_id, index)) {
             warn!("Requesting message failed: {}.", e);
