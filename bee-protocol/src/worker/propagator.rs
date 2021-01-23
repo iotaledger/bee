@@ -7,8 +7,8 @@ use crate::{
     worker::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, TangleWorker},
 };
 
-use bee_message::MessageId;
-use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
@@ -33,8 +33,7 @@ pub(crate) struct PropagatorWorker {
 async fn propagate<B: StorageBackend>(
     message_id: MessageId,
     tangle: &MsTangle<B>,
-    bus: &Bus<'static>,
-    milestone_solidifier: &mpsc::UnboundedSender<MilestoneSolidifierWorkerEvent>,
+    tip_tx: &async_channel::Sender<(MessageId, MessageId, MessageId, Option<MilestoneIndex>)>,
 ) {
     let mut children = vec![message_id];
 
@@ -86,21 +85,13 @@ async fn propagate<B: StorageBackend>(
                 None => None,
             };
 
-            if let Some(index) = index {
-                if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
-                    error!("Sending solidification event failed: {}.", e);
-                }
-            }
-
             if let Some(msg_children) = tangle.get_children(&message_id).await {
                 for child in msg_children {
                     children.push(child);
                 }
             }
 
-            bus.dispatch(MessageSolidified(*message_id));
-
-            tangle.insert_tip(*message_id, parent1, parent2).await;
+            let _ = tip_tx.send((*message_id, parent1, parent2, index)).await;
         }
     }
 }
@@ -127,10 +118,29 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
+            let (tip_tx, tip_rx) = async_channel::unbounded();
+
+            tokio::task::spawn({
+                let tangle = tangle.clone();
+
+                async move {
+                    while let Ok((message_id, parent1, parent2, index)) = tip_rx.recv().await {
+                        bus.dispatch(MessageSolidified(message_id));
+                        tangle.insert_tip(message_id, parent1, parent2).await;
+
+                        if let Some(index) = index {
+                            if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
+                                error!("Sending solidification event failed: {}.", e);
+                            }
+                        }
+                    }
+                }
+            });
+
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(PropagatorWorkerEvent(message_id)) = receiver.next().await {
-                propagate(message_id, &tangle, &*bus, &milestone_solidifier).await;
+                propagate(message_id, &tangle, &tip_tx).await;
             }
 
             // Before the worker completely stops, the receiver needs to be drained for statuses to be propagated.
@@ -140,7 +150,7 @@ where
             let mut count: usize = 0;
 
             while let Some(Some(PropagatorWorkerEvent(message_id))) = receiver.next().now_or_never() {
-                propagate(message_id, &tangle, &*bus, &milestone_solidifier).await;
+                propagate(message_id, &tangle, &tip_tx).await;
                 count += 1;
             }
 
