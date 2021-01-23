@@ -203,16 +203,16 @@ where
                             break;
                         }
                     } else {
-                        error!("Requested milestone {} message id not present in the tangle.", index)
+                        break;
                     }
                     target = target + MilestoneIndex(1);
                 }
             }
 
-            // TODO FIRST TRIGGER
-
             info!("Stopped.");
         });
+
+        let _ = tx.send(MilestoneSolidifierWorkerEvent(MilestoneIndex(0)));
 
         Ok(Self { tx })
     }
