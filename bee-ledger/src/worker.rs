@@ -194,7 +194,7 @@ where
             while let Some(LedgerWorkerEvent(message_id)) = receiver.next().await {
                 if let Err(e) = confirm::<N>(&tangle, &storage, &bus, message_id, &mut index).await {
                     error!("Confirmation error on {}: {}.", message_id, e);
-                    panic!("Aborting due to unexpected ledger error.");
+                    //panic!("Aborting due to unexpected ledger error.");
                 }
             }
 
