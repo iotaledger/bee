@@ -30,7 +30,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-const RETRY_INTERVAL_MS: u64 = 2500;
+const RETRY_INTERVAL_MS: u64 = 500;//2500;
 
 #[derive(Default)]
 pub(crate) struct RequestedMessages(RwLock<HashMap<MessageId, (MilestoneIndex, Instant), FxBuildHasher>>);
