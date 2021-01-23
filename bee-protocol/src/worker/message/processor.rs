@@ -123,10 +123,8 @@ where
 
                 // TODO should be passed by the hasher worker ?
                 let (message_id, _) = message.id();
-                let requested = requested_messages.contains(&message_id).await;
 
-                let mut metadata = MessageMetadata::arrived();
-                metadata.flags_mut().set_requested(requested);
+                let metadata = MessageMetadata::arrived();
 
                 let parent1 = *message.parent1();
                 let parent2 = *message.parent2();

@@ -125,11 +125,7 @@ async fn process<B: StorageBackend>(
                 });
             }
 
-            if requested_milestones.remove(&index).await.is_some() {
-                tangle
-                    .update_metadata(milestone.message_id(), |meta| meta.flags_mut().set_requested(true))
-                    .await;
-            }
+            requested_milestones.remove(&index).await;
 
             if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
                 error!("Sending solidification event failed: {}.", e);

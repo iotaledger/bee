@@ -49,11 +49,7 @@ async fn heavy_solidification<B: StorageBackend>(
     traversal::visit_parents_depth_first(
         &**tangle,
         target_id,
-        |id, _, metadata| async move {
-            (!metadata.flags().is_requested() || id == target_id)
-                && !metadata.flags().is_solid()
-                && !requested_messages.contains(&id).await
-        },
+        |id, _, metadata| async move { !metadata.flags().is_solid() && !requested_messages.contains(&id).await },
         |_, _, _| {},
         |_, _, _| {},
         |missing_id| missing.push(*missing_id),
@@ -176,17 +172,7 @@ where
 
                 while requested <= lmi && *(requested - lsmi) <= ms_sync_count {
                     if let Some(id) = tangle.get_milestone_message_id(requested).await {
-                        let heavy = tangle
-                            .get_metadata(&id)
-                            .await
-                            .map(|m| !m.flags().is_requested())
-                            .unwrap_or(false);
-
-                        if heavy {
-                            heavy_solidification(&tangle, &message_requester, &requested_messages, requested, id).await;
-                        } else {
-                            light_solidification(&tangle, &message_requester, &requested_messages, requested, id).await;
-                        }
+                        light_solidification(&tangle, &message_requester, &requested_messages, requested, id).await;
                     } else {
                         helper::request_milestone(
                             &tangle,
