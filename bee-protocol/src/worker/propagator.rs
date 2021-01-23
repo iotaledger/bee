@@ -8,7 +8,7 @@ use crate::{
 };
 
 use bee_message::MessageId;
-use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
@@ -32,11 +32,25 @@ pub(crate) struct PropagatorWorker {
 
 async fn propagate<B: StorageBackend>(
     message_id: MessageId,
-    tangle: &MsTangle<B>,
-    bus: &Bus<'static>,
+    tangle: &ResourceHandle<MsTangle<B>>,
+    bus: &ResourceHandle<Bus<'static>>,
     milestone_solidifier: &mpsc::UnboundedSender<MilestoneSolidifierWorkerEvent>,
 ) {
     let mut children = vec![message_id];
+
+    let (tx, rx) = async_channel::unbounded();
+
+    tokio::task::spawn({
+        let tangle = tangle.clone();
+        let bus = bus.clone();
+        async move {
+            while let Ok((message_id, parent1, parent2)) = rx.recv().await {
+                bus.dispatch(MessageSolidified(message_id));
+
+                tangle.insert_tip(message_id, parent1, parent2).await;
+            }
+        }
+    });
 
     use std::{sync::atomic::{AtomicU64, Ordering}, time::Instant};
     static TIME_TOTAL: AtomicU64 = AtomicU64::new(0);
@@ -126,9 +140,7 @@ async fn propagate<B: StorageBackend>(
                 }
             }
 
-            bus.dispatch(MessageSolidified(*message_id));
-
-            tangle.insert_tip(*message_id, parent1, parent2).await;
+            tx.send((*message_id, parent1, parent2)).await;
         }
 
         let time = TIME_TOTAL.fetch_add(now.elapsed().as_micros() as u64, Ordering::Relaxed);
@@ -170,7 +182,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(PropagatorWorkerEvent(message_id)) = receiver.next().await {
-                propagate(message_id, &tangle, &*bus, &milestone_solidifier).await;
+                propagate(message_id, &tangle, &bus, &milestone_solidifier).await;
             }
 
             // let (_, mut receiver) = receiver.split();
