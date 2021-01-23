@@ -12,8 +12,8 @@ use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worke
 use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
-use futures::stream::StreamExt;
-use log::{error, info};
+use futures::{future::FutureExt, stream::StreamExt};
+use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -133,16 +133,18 @@ where
                 propagate(message_id, &tangle, &*bus, &milestone_solidifier).await;
             }
 
-            // let (_, mut receiver) = receiver.split();
-            // let receiver = receiver.get_mut();
-            // let mut count: usize = 0;
-            //
-            // while let Ok(PropagatorWorkerEvent(message_id)) = receiver.try_recv() {
-            //     propagate(message_id, &tangle, &*bus, &milestone_solidifier).await;
-            //     count += 1;
-            // }
-            //
-            // debug!("Drained {} message ids.", count);
+            // Before the worker completely stops, the receiver needs to be drained for statuses to be propagated.
+            // Otherwise, information would be lost and not easily recoverable.
+
+            let (_, mut receiver) = receiver.split();
+            let mut count: usize = 0;
+
+            while let Some(Some(PropagatorWorkerEvent(message_id))) = receiver.next().now_or_never() {
+                propagate(message_id, &tangle, &*bus, &milestone_solidifier).await;
+                count += 1;
+            }
+
+            debug!("Drained {} messages.", count);
 
             info!("Stopped.");
         });
