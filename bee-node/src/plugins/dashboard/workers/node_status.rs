@@ -4,7 +4,11 @@
 use crate::{
     config::NodeConfig,
     constants::{BEE_GIT_COMMIT, BEE_VERSION},
-    plugins::Dashboard,
+    plugins::dashboard::{
+        broadcast,
+        websocket::{responses::node_status, WsUsers},
+        Dashboard,
+    },
     storage::StorageBackend,
 };
 
@@ -28,7 +32,7 @@ pub static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_va
 
 const NODE_STATUS_METRICS_WORKER_INTERVAL_SEC: u64 = 1;
 
-pub(crate) fn node_status_worker<N>(node: &mut N)
+pub(crate) fn node_status_worker<N>(node: &mut N, users: &WsUsers)
 where
     N: Node,
     N::Backend: StorageBackend,
@@ -37,9 +41,10 @@ where
     let tangle = node.resource::<MsTangle<N::Backend>>();
     let node_config = node.resource::<NodeConfig<N::Backend>>();
     let peering_config = node_config.peering.clone();
+    let users = users.clone();
 
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
-        debug!("Ws `node_status_worker` running.");
+        debug!("Ws NodeStatus topic handler running.");
 
         let mut ticker = ShutdownStream::new(
             shutdown,
@@ -53,7 +58,7 @@ where
         };
 
         while ticker.next().await.is_some() {
-            bus.dispatch(NodeStatus {
+            let status = NodeStatus {
                 snapshot_index: *tangle.get_snapshot_index(),
                 pruning_index: *tangle.get_pruning_index(),
                 is_healthy: tangle.is_healthy().await,
@@ -107,10 +112,11 @@ where
                     messages: Messages { size: 0 },
                     incoming_message_work_units: IncomingMessageWorkUnits { size: 0 },
                 },
-            });
+            };
+            broadcast(node_status::forward(status), &users).await;
         }
 
-        debug!("Ws `node_status_worker` stopped.");
+        debug!("Ws NodeStatus topic handler stopped.");
     });
 }
 

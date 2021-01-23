@@ -10,22 +10,20 @@ mod workers;
 use crate::{
     config::NodeConfig,
     plugins::dashboard::{
-        websocket::responses::{
-            confirmed_info, confirmed_milestone_metrics, database_size_metrics, node_status, tip_info,
+        config::DashboardConfig,
+        websocket::{
+            responses::{
+                confirmed_info, milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, tip_info,
+                vertex, WsEvent,
+            },
+            user_connected, WsUsers,
         },
         workers::{
-            confirmed_ms_metrics::{confirmed_ms_metrics_worker, ConfirmedMilestoneMetrics},
-            db_size_metrics::{db_size_metrics_worker, DatabaseSizeMetrics},
-            node_status::{node_status_worker, NodeStatus},
+            confirmed_ms_metrics::confirmed_ms_metrics_worker, db_size_metrics::db_size_metrics_worker,
+            node_status::node_status_worker,
         },
     },
     storage::StorageBackend,
-};
-
-use config::DashboardConfig;
-use websocket::{
-    responses::{milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, vertex, WsEvent},
-    user_connected, WsUsers,
 };
 
 use bee_ledger::event::MilestoneConfirmed;
@@ -140,35 +138,17 @@ where
         topic_handler(node, "MilestoneConfirmed", &users, move |event: MilestoneConfirmed| {
             confirmed_info::forward(event)
         });
-        topic_handler(
-            node,
-            "ConfirmedMilestoneMetrics",
-            &users,
-            move |event: ConfirmedMilestoneMetrics| confirmed_milestone_metrics::forward(event),
-        );
-        topic_handler(
-            node,
-            "DatabaseSizeMetrics",
-            &users,
-            move |event: DatabaseSizeMetrics| database_size_metrics::forward(event),
-        );
-
         topic_handler(node, "TipInfo", &users, move |event: TipAdded| {
             tip_info::forward_tip_added(event)
         });
-
         topic_handler(node, "TipInfo", &users, move |event: TipRemoved| {
             tip_info::forward_tip_removed(event)
         });
 
-        topic_handler(node, "NodeStatus", &users, move |event: NodeStatus| {
-            node_status::forward(event)
-        });
-
         // run sub-workers
-        confirmed_ms_metrics_worker(node);
-        db_size_metrics_worker(node);
-        node_status_worker(node);
+        confirmed_ms_metrics_worker(node, &users);
+        db_size_metrics_worker(node, &users);
+        node_status_worker(node, &users);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
