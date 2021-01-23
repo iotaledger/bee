@@ -197,8 +197,8 @@ where
                     // panic!("Aborting due to unexpected ledger error.");
 
                     // This is dumb, stops the world exploding
-                    while let Some(_) = receiver.next().await {}
-                    break;
+                    // while let Some(_) = receiver.next().await {}
+                    // break;
                 }
             }
 
