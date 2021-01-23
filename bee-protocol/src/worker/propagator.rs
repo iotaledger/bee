@@ -45,7 +45,7 @@ async fn propagate<B: StorageBackend>(
         let bus = bus.clone();
         async move {
             while let Ok((message_id, parent1, parent2)) = rx.recv().await {
-                info!("Milestone {} propagated!");
+                info!("Milestone {} propagated!", message_id);
 
                 bus.dispatch(MessageSolidified(message_id));
                 tangle.insert_tip(message_id, parent1, parent2).await;
