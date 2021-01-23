@@ -43,6 +43,7 @@ async fn propagate<B: StorageBackend>(
     tokio::task::spawn({
         let tangle = tangle.clone();
         let bus = bus.clone();
+        let milestone_solidifier = milestone_solidifier.clone();
         async move {
             while let Ok((message_id, parent1, parent2, index)) = rx.recv().await {
                 bus.dispatch(MessageSolidified(message_id));
