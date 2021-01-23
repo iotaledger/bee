@@ -56,6 +56,13 @@ async fn propagate<B: StorageBackend>(
     static TIME_TOTAL: AtomicU64 = AtomicU64::new(0);
 
     static ITER_TOTAL: AtomicU64 = AtomicU64::new(0);
+    static TIME_ISSOLID: AtomicU64 = AtomicU64::new(0);
+    static TIME_GET: AtomicU64 = AtomicU64::new(0);
+    static TIME_PARENTSOLID: AtomicU64 = AtomicU64::new(0);
+    static TIME_PARENTSTATS: AtomicU64 = AtomicU64::new(0);
+    static TIME_METADATA: AtomicU64 = AtomicU64::new(0);
+    static TIME_MILESTONE: AtomicU64 = AtomicU64::new(0);
+    static TIME_CHILDREN: AtomicU64 = AtomicU64::new(0);
     const SAMPLE_ITERS: u64 = 2500;
 
     fn start() -> Instant { Instant::now() }
@@ -70,20 +77,30 @@ async fn propagate<B: StorageBackend>(
     while let Some(ref message_id) = children.pop() {
         let now = std::time::Instant::now();
 
+        let s = start();
         if tangle.is_solid_message_maybe(message_id).await {
+            end(s, &TIME_ISSOLID, "is solid");
             continue;
         }
+        end(s, &TIME_ISSOLID, "is solid");
 
         // TODO Copying parents to avoid double locking, will be refactored.
+        let s = start();
         if let Some((parent1, parent2)) = tangle
             .get(&message_id)
             .await
             .map(|message| (*message.parent1(), *message.parent2()))
         {
+            end(s, &TIME_GET, "get message");
+
+            let s = start();
             if !tangle.is_solid_message_maybe(&parent1).await || !tangle.is_solid_message_maybe(&parent2).await {
+                end(s, &TIME_PARENTSOLID, "parent solidity");
                 continue;
             }
+            end(s, &TIME_PARENTSOLID, "parent solidity");
 
+            let s = start();
             // get OTRSI/YTRSI from parents
             let parent1_otsri = tangle.otrsi(&parent1).await;
             let parent2_otsri = tangle.otrsi(&parent2).await;
@@ -100,12 +117,15 @@ async fn propagate<B: StorageBackend>(
             // let parent1_ytrsi = p1sepi.or_else(|| p1m?.ytrsi());
             // let parent2_ytrsi = p2sepi.or_else(|| p2m?.ytrsi());
 
+            end(s, &TIME_PARENTSTATS, "parent otsri/ytrsi");
+
             // get best OTRSI/YTRSI from parents
             // unwrap() is safe because parents are solid which implies that OTRSI/YTRSI values are
             // available.
             let best_otrsi = max(parent1_otsri.unwrap(), parent2_otsri.unwrap());
             let best_ytrsi = min(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
 
+            let s = start();
             let index = tangle
                 .update_metadata(&message_id, |metadata| {
                     // OTRSI/YTRSI values need to be set before the solid flag, to ensure that the
@@ -122,20 +142,27 @@ async fn propagate<B: StorageBackend>(
                 })
                 .await
                 .expect("Failed to fetch metadata for message that should exist");
+            end(s, &TIME_METADATA, "metadata update");
 
+            let s = start();
             if let Some(index) = index {
                 if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
                     error!("Sending solidification event failed: {}.", e);
                 }
             }
+            end(s, &TIME_MILESTONE, "milestone solidified event");
 
+            let s = start();
             if let Some(msg_children) = tangle.get_children(&message_id).await {
                 for child in msg_children {
                     children.push(child);
                 }
             }
+            end(s, &TIME_CHILDREN, "fetch children");
 
             tx.send((*message_id, parent1, parent2)).await;
+        } else {
+            end(s, &TIME_GET, "get message");
         }
 
         let time = TIME_TOTAL.fetch_add(now.elapsed().as_micros() as u64, Ordering::Relaxed);
