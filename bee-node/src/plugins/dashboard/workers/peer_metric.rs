@@ -40,6 +40,7 @@ where
 
         while ticker.next().await.is_some() {
             for peer in peer_manager.get_all().await {
+                println!("peers are present");
                 let peer_metric_dto = PeerMetric {
                     identity: peer.id().to_string(),
                     alias: peer.alias().to_string(),
@@ -59,19 +60,19 @@ where
                         address: peer.address().to_string(),
                         port: 0,
                         domain: String::from(""),
-                        number_of_all_transactions: 0,
-                        number_of_new_transactions: 0,
-                        number_of_known_transactions: 0,
-                        number_of_received_transaction_req: 0,
-                        number_of_received_milestone_req: 0,
-                        number_of_received_heartbeats: 0,
-                        number_of_sent_transactions: 0,
-                        number_of_sent_transactions_req: 0,
-                        number_of_sent_milestone_req: 0,
-                        number_of_sent_heartbeats: 0,
-                        number_of_dropped_sent_packets: 0,
-                        connection_type: String::from(""),
-                        autopeering_id: String::from(""),
+                        numberOfAllTransactions: 0,
+                        numberOfNewTransactions: 0,
+                        numberOfKnownTransactions: 0,
+                        numberOfReceivedTransactionReq: 0,
+                        numberOfReceivedMilestoneReq: 0,
+                        numberOfReceivedHeartbeats: 0,
+                        numberOfSentTransactions: 0,
+                        numberOfSentTransactionsReq: 0,
+                        numberOfSentMilestoneReq: 0,
+                        numberOfSentHeartbeats: 0,
+                        numberOfDroppedSentPackets: 0,
+                        connectionType: String::from(""),
+                        autopeeringId: String::from(""),
                         connected: false,
                     },
                     connected: false,
@@ -113,33 +114,20 @@ pub struct PeerHeartbeat {
 #[derive(Clone, Debug, Serialize)]
 pub struct PeerInfo {
     pub address: String,
-    pub port: usize,
+    pub port: size,
     pub domain: String,
-    #[serde(rename = "numberOfAllTransactions")]
-    pub number_of_all_transactions: usize,
-    #[serde(rename = "numberOfNewTransactions")]
-    pub number_of_new_transactions: usize,
-    #[serde(rename = "numberOfKnownTransactions")]
-    pub number_of_known_transactions: usize,
-    #[serde(rename = "numberOfReceivedTransactionReq")]
-    pub number_of_received_transaction_req: usize,
-    #[serde(rename = "numberOfReceivedMilestoneReq")]
-    pub number_of_received_milestone_req: usize,
-    #[serde(rename = "numberOfReceivedHeartbeats")]
-    pub number_of_received_heartbeats: usize,
-    #[serde(rename = "numberOfSentTransactions")]
-    pub number_of_sent_transactions: usize,
-    #[serde(rename = "numberOfSentTransactionsReq")]
-    pub number_of_sent_transactions_req: usize,
-    #[serde(rename = "numberOfSentMilestoneReq")]
-    pub number_of_sent_milestone_req: usize,
-    #[serde(rename = "numberOfSentHeartbeats")]
-    pub number_of_sent_heartbeats: usize,
-    #[serde(rename = "numberOfDroppedSentPackets")]
-    pub number_of_dropped_sent_packets: usize,
-    #[serde(rename = "connectionType")]
-    pub connection_type: String,
-    #[serde(rename = "autopeeringId")]
-    pub autopeering_id: String,
+    pub numberOfAllTransactions: usize,
+    pub numberOfNewTransactions: usize,
+    pub numberOfKnownTransactions: usize,
+    pub numberOfReceivedTransactionReq: usize,
+    pub numberOfReceivedMilestoneReq: usize,
+    pub numberOfReceivedHeartbeats: usize,
+    pub numberOfSentTransactions: usize,
+    pub numberOfSentTransactionsReq: usize,
+    pub numberOfSentMilestoneReq: usize,
+    pub numberOfSentHeartbeats: usize,
+    pub numberOfDroppedSentPackets: usize,
+    pub connectionType: String,
+    pub autopeeringId: String,
     pub connected: bool,
 }
