@@ -2,10 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    plugins::dashboard::{broadcast, websocket::WsUsers, Dashboard},
+    plugins::dashboard::{
+        broadcast,
+        websocket::{responses::peer_metric, WsUsers},
+        Dashboard,
+    },
     storage::StorageBackend,
 };
 
+use bee_protocol::PeerManager;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 
 use futures::StreamExt;
@@ -14,9 +19,6 @@ use serde::Serialize;
 
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
-
-use crate::plugins::dashboard::websocket::responses::peer_metric;
-use bee_protocol::PeerManager;
 
 use std::{sync::atomic::Ordering, time::Duration};
 

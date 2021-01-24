@@ -20,7 +20,7 @@ use crate::{
         },
         workers::{
             confirmed_ms_metrics::confirmed_ms_metrics_worker, db_size_metrics::db_size_metrics_worker,
-            node_status::node_status_worker,
+            node_status::node_status_worker, peer_metric::peer_metric_worker,
         },
     },
     storage::StorageBackend,
@@ -46,7 +46,6 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::{http::header::HeaderValue, path::FullPath, reply::Response, ws::Message, Filter, Rejection, Reply};
 use warp_reverse_proxy::reverse_proxy_filter;
 
-use crate::plugins::dashboard::workers::peer_metric::peer_metric_worker;
 use std::{
     any::{Any, TypeId},
     convert::Infallible,

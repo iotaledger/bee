@@ -1,12 +1,14 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugins::dashboard::websocket::{
-    responses::{WsEvent, WsEventInner},
-    topics::WsTopic,
+use crate::plugins::dashboard::{
+    websocket::{
+        responses::{WsEvent, WsEventInner},
+        topics::WsTopic,
+    },
+    workers::peer_metric::PeerMetrics,
 };
 
-use crate::plugins::dashboard::workers::peer_metric::PeerMetrics;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
