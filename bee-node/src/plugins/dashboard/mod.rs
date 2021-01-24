@@ -55,13 +55,14 @@ use std::{
 #[derive(Default)]
 pub struct Dashboard {}
 
-fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, f: F)
+fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, require_node_synced: bool, f: F)
 where
     N: Node,
     N::Backend: StorageBackend,
     E: Any + Clone + Send + Sync,
     F: 'static + Fn(E) -> WsEvent + Send + Sync,
 {
+    let tangle = node.resource::<MsTangle<N::Backend>>();
     let bus = node.bus();
     let users = users.clone();
     let (tx, rx) = mpsc::unbounded_channel();
@@ -72,7 +73,13 @@ where
         let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
         while let Some(event) = receiver.next().await {
-            broadcast(f(event), &users).await;
+            if require_node_synced {
+                if tangle.is_synced() {
+                    broadcast(f(event), &users).await;
+                }
+            } else {
+                broadcast(f(event), &users).await;
+            }
         }
 
         debug!("Ws {} topic handler stopped.", topic);
@@ -117,36 +124,62 @@ where
         // Register event handlers
         {
             let tangle = tangle.clone();
-            topic_handler(node, "SyncStatus", &users, move |event: LatestMilestoneChanged| {
-                sync_status::forward_latest_milestone_changed(event, &tangle)
-            });
+            topic_handler(
+                node,
+                "SyncStatus",
+                &users,
+                false,
+                move |event: LatestMilestoneChanged| sync_status::forward_latest_milestone_changed(event, &tangle),
+            );
         }
         {
             let tangle = tangle.clone();
-            topic_handler(node, "SyncStatus", &users, move |event: LatestSolidMilestoneChanged| {
-                sync_status::forward_solid_milestone_changed(event, &tangle)
-            });
+            topic_handler(
+                node,
+                "SyncStatus",
+                &users,
+                false,
+                move |event: LatestSolidMilestoneChanged| sync_status::forward_solid_milestone_changed(event, &tangle),
+            );
         }
-        topic_handler(node, "MpsMetricsUpdated", &users, move |event: MpsMetricsUpdated| {
-            mps_metrics_updated::forward(event)
-        });
-        topic_handler(node, "Milestone", &users, move |event: LatestMilestoneChanged| {
-            milestone::forward(event)
-        });
-        topic_handler(node, "SolidInfo", &users, move |event: MessageSolidified| {
+        topic_handler(
+            node,
+            "MpsMetricsUpdated",
+            &users,
+            false,
+            move |event: MpsMetricsUpdated| mps_metrics_updated::forward(event),
+        );
+        topic_handler(
+            node,
+            "Milestone",
+            &users,
+            false,
+            move |event: LatestMilestoneChanged| milestone::forward(event),
+        );
+        topic_handler(node, "SolidInfo", &users, true, move |event: MessageSolidified| {
             solid_info::forward(event)
         });
-        topic_handler(node, "MilestoneInfo", &users, move |event: LatestMilestoneChanged| {
-            milestone_info::forward(event)
+        topic_handler(
+            node,
+            "MilestoneInfo",
+            &users,
+            false,
+            move |event: LatestMilestoneChanged| milestone_info::forward(event),
+        );
+        topic_handler(node, "Vertex", &users, true, move |event: NewVertex| {
+            vertex::forward(event)
         });
-        topic_handler(node, "Vertex", &users, move |event: NewVertex| vertex::forward(event));
-        topic_handler(node, "MilestoneConfirmed", &users, move |event: MilestoneConfirmed| {
-            confirmed_info::forward(event)
-        });
-        topic_handler(node, "TipInfo", &users, move |event: TipAdded| {
+        topic_handler(
+            node,
+            "MilestoneConfirmed",
+            &users,
+            false,
+            move |event: MilestoneConfirmed| confirmed_info::forward(event),
+        );
+        topic_handler(node, "TipInfo", &users, true, move |event: TipAdded| {
             tip_info::forward_tip_added(event)
         });
-        topic_handler(node, "TipInfo", &users, move |event: TipRemoved| {
+        topic_handler(node, "TipInfo", &users, true, move |event: TipRemoved| {
             tip_info::forward_tip_removed(event)
         });
 
