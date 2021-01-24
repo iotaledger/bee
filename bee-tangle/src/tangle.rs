@@ -81,8 +81,6 @@ pub struct Tangle<T, H = NullHooks<T>>
 where
     T: Clone,
 {
-    // Global Tangle Lock. Remove this as and when it is deemed correct to do so.
-    // gtl: RwLock<()>,
     vertices: TRwLock<HashMap<MessageId, Vertex<T>, FxBuildHasher>>,
     children: TRwLock<HashMap<MessageId, (HashSet<MessageId, FxBuildHasher>, bool), FxBuildHasher>>,
 
@@ -110,7 +108,6 @@ where
     /// Creates a new Tangle.
     pub fn new(hooks: H) -> Self {
         Self {
-            // gtl: RwLock::new(()),
             vertices: TRwLock::new(HashMap::default()),
             children: TRwLock::new(HashMap::default()),
 
@@ -143,8 +140,7 @@ where
                 let parent2 = *message.parent2();
                 let vtx = Vertex::new(message, metadata);
                 let tx = vtx.message().clone();
-                self.add_child_inner(parent1, message_id).await;
-                self.add_child_inner(parent2, message_id).await;
+                self.add_childen_inner(&[parent1, parent2], message_id).await;
                 entry.insert(vtx);
 
                 // Insert cache queue entry to track eviction priority
@@ -167,8 +163,6 @@ where
         if self.contains_inner(&message_id).await {
             None
         } else {
-            // let _gtl_guard = self.gtl.write().await;
-
             // Insert into backend using hooks
             self.hooks
                 .insert(message_id, message.clone(), metadata.clone())
@@ -180,21 +174,22 @@ where
     }
 
     #[inline]
-    async fn add_child_inner(&self, parent: MessageId, child: MessageId) {
+    async fn add_childen_inner(&self, parents: &[MessageId], child: MessageId) {
         let mut children_map = self.children.write().await;
-        let children = children_map
-            .entry(parent)
-            .or_insert_with(|| (HashSet::default(), false));
-        children.0.insert(child);
+        for &parent in parents {
+            children_map
+                .entry(parent)
+                .or_insert_with(|| (HashSet::default(), false))
+                .0
+                .insert(child);
+        }
         drop(children_map);
-        self.hooks
-            .insert_approver(parent, child)
-            .await
-            .unwrap_or_else(|e| info!("Failed to update approvers for message {:?}", e));
-        // self.hooks
-        // .update_approvers(parent, &children.iter().copied().collect::<Vec<_>>())
-        // .await
-        // .unwrap_or_else(|e| info!("Failed to update approvers for message message {:?}", e));
+        for &parent in parents {
+            self.hooks
+                .insert_approver(parent, child)
+                .await
+                .unwrap_or_else(|e| info!("Failed to update approvers for message {:?}", e));
+        }
     }
 
     async fn get_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex<T>> + '_> {
@@ -254,13 +249,16 @@ where
     /// Updates the metadata of a particular vertex.
     pub async fn set_metadata(&self, message_id: &MessageId, metadata: T) {
         self.pull_message(message_id).await;
-        if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
-            // let _gtl_guard = self.gtl.write().await;
-
+        let to_write = if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
             let message = (&**vtx.message()).clone();
             let meta = vtx.metadata().clone();
             *vtx.metadata_mut() = metadata;
-            drop(vtx);
+            Some((message, meta))
+        } else {
+            None
+        };
+
+        if let Some((message, meta)) = to_write {
             self.hooks
                 .insert(*message_id, message, meta)
                 .await
@@ -274,18 +272,21 @@ where
         Update: FnMut(&mut T) -> R,
     {
         self.pull_message(message_id).await;
-        if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
-            // let _gtl_guard = self.gtl.write().await;
-
+        let r = if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
             let message = (&**vtx.message()).clone();
             let metadata = vtx.metadata().clone();
             let r = update(vtx.metadata_mut());
-            drop(vtx);
+
+            Some((r, message, metadata))
+        } else {
+            None
+        };
+
+        if let Some((r, message, metadata)) = r {
             self.hooks
                 .insert(*message_id, message, metadata)
                 .await
                 .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
-
             Some(r)
         } else {
             None
@@ -339,7 +340,6 @@ where
             Some(children) => children.0.clone(),
             None => {
                 drop(children_map);
-                // let _gtl_guard = self.gtl.write().await;
 
                 let to_insert = match self.hooks.fetch_approvers(message_id).await {
                     Err(e) => {
@@ -383,8 +383,6 @@ where
 
     #[cfg(test)]
     pub async fn clear(&mut self) {
-        // let _gtl_guard = self.gtl.write().await;
-
         self.vertices.write().await.clear();
         self.children.write().await.clear();
     }
@@ -395,8 +393,6 @@ where
         if self.vertices.read().await.contains_key(message_id) {
             true
         } else {
-            // let _gtl_guard = self.gtl.write().await;
-
             if let Ok(Some((tx, metadata))) = self.hooks.get(message_id).await {
                 self.insert_inner(*message_id, tx, metadata).await;
                 true
