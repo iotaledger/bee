@@ -140,7 +140,7 @@ where
                 let parent2 = *message.parent2();
                 let vtx = Vertex::new(message, metadata);
                 let tx = vtx.message().clone();
-                self.add_childen_inner(&[parent1, parent2], message_id).await;
+                self.add_children_inner(&[parent1, parent2], message_id).await;
                 entry.insert(vtx);
 
                 // Insert cache queue entry to track eviction priority
@@ -174,7 +174,7 @@ where
     }
 
     #[inline]
-    async fn add_childen_inner(&self, parents: &[MessageId], child: MessageId) {
+    async fn add_children_inner(&self, parents: &[MessageId], child: MessageId) {
         let mut children_map = self.children.write().await;
         for &parent in parents {
             children_map
