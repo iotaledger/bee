@@ -104,20 +104,20 @@ where
 
     let transaction_id = transaction.id();
     let essence = transaction.essence();
-    let mut spent_outputs = HashMap::with_capacity(essence.inputs().len());
+    let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
     let mut conflict = ConflictReason::None;
 
     for input in essence.inputs() {
         if let Input::UTXO(utxo_input) = input {
             let output_id = utxo_input.output_id();
 
-            if metadata.spent_outputs.contains_key(output_id) {
+            if metadata.consumed_outputs.contains_key(output_id) {
                 conflict = ConflictReason::InputUTXOAlreadySpentInThisMilestone;
                 break;
             }
 
             if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
-                spent_outputs.insert(*output_id, output);
+                consumed_outputs.insert(*output_id, output);
                 continue;
             }
 
@@ -126,7 +126,7 @@ where
                     conflict = ConflictReason::InputUTXOAlreadySpent;
                     break;
                 }
-                spent_outputs.insert(*output_id, output);
+                consumed_outputs.insert(*output_id, output);
                 continue;
             } else {
                 conflict = ConflictReason::InputUTXONotFound;
@@ -144,7 +144,7 @@ where
 
     let mut balance_diff = BalanceDiff::new();
 
-    conflict = validate_transaction(&transaction, &spent_outputs, &mut balance_diff)?;
+    conflict = validate_transaction(&transaction, &consumed_outputs, &mut balance_diff)?;
 
     if conflict != ConflictReason::None {
         metadata.excluded_conflicting_messages.push((*message_id, conflict));
@@ -184,9 +184,9 @@ where
     }
 
     // TODO output ?
-    for (output_id, _) in spent_outputs {
+    for (output_id, _) in consumed_outputs {
         metadata
-            .spent_outputs
+            .consumed_outputs
             .insert(output_id, Spent::new(transaction_id, metadata.index));
     }
 

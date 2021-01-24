@@ -98,11 +98,14 @@ async fn process<B: StorageBackend>(
     key_manager: &KeyManager,
     bus: &Bus<'static>,
 ) {
+    metrics.milestone_payload_inc(1);
+
     if let Some(meta) = tangle.get_metadata(&message_id).await {
         if meta.flags().is_milestone() {
             return;
         }
     }
+
     match validate(&tangle, &key_manager, message_id).await {
         Ok((index, milestone)) => {
             tangle.add_milestone(index, milestone.clone()).await;
