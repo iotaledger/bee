@@ -88,12 +88,13 @@ where
     pub(crate) cache_counter: AtomicU64,
     pub(crate) cache_queue: Mutex<LruCache<MessageId, u64>>,
 
-    pub(crate) hooks: H,
+    pub(crate) _hooks: H,
+    pub(crate) hooks: NullHooks<T>,
 }
 
 impl<T, H: Hooks<T>> Default for Tangle<T, H>
 where
-    T: Clone,
+    T: Clone + Send + Sync,
     H: Default,
 {
     fn default() -> Self {
@@ -103,7 +104,7 @@ where
 
 impl<T, H: Hooks<T>> Tangle<T, H>
 where
-    T: Clone,
+    T: Clone + Send + Sync,
 {
     /// Creates a new Tangle.
     pub fn new(hooks: H) -> Self {
@@ -115,7 +116,8 @@ where
             cache_counter: AtomicU64::new(0),
             cache_queue: Mutex::new(LruCache::new(CACHE_LEN + 1)),
 
-            hooks,
+            _hooks: hooks,
+            hooks: NullHooks::default(),
         }
     }
 
@@ -129,7 +131,7 @@ where
 
     /// Return a reference to the storage hooks used by this tangle.
     pub fn hooks(&self) -> &H {
-        &self.hooks
+        &self._hooks
     }
 
     async fn insert_inner(&self, message_id: MessageId, message: Message, metadata: T) -> Option<MessageRef> {
