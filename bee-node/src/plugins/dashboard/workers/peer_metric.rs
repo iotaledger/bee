@@ -19,6 +19,9 @@ use crate::plugins::dashboard::websocket::responses::peer_metric;
 use bee_protocol::PeerManager;
 
 use std::time::Duration;
+use std::{
+    sync::{atomic::Ordering},
+};
 
 const NODE_STATUS_METRICS_WORKER_INTERVAL_SEC: u64 = 1;
 
