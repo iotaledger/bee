@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    conns,
+    conns::{self, ConnectionManager},
     interaction::{
         commands::{Command, CommandReceiver},
         events::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
@@ -22,7 +22,7 @@ use log::*;
 use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
-use std::{convert::Infallible, sync::atomic::Ordering};
+use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
 
 #[derive(Default)]
 pub struct PeerManager {}
@@ -66,6 +66,10 @@ impl PeerManagerConfig {
 impl<N: Node> Worker<N> for PeerManager {
     type Config = PeerManagerConfig;
     type Error = Infallible;
+
+    fn dependencies() -> &'static [TypeId] {
+        vec![TypeId::of::<ConnectionManager>()].leak()
+    }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let PeerManagerConfig {

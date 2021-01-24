@@ -125,10 +125,7 @@ fn spawn_gossip_in_task(
         }
 
         // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
-        internal_event_sender
-            .send(InternalEvent::ConnectionDropped { peer_id })
-            .map_err(|_| ())
-            .unwrap()
+        let _ = internal_event_sender.send(InternalEvent::ConnectionDropped { peer_id });
     });
 }
 
@@ -150,10 +147,7 @@ fn spawn_gossip_out_task(
         trace!("Dropping connection.");
 
         // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
-        internal_event_sender
-            .send(InternalEvent::ConnectionDropped { peer_id })
-            .map_err(|_| ())
-            .unwrap();
+        let _ = internal_event_sender.send(InternalEvent::ConnectionDropped { peer_id });
     });
 }
 
