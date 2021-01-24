@@ -18,8 +18,8 @@ pub struct MilestoneConfirmed {
     pub excluded_no_transaction_messages: Vec<MessageId>,
     pub excluded_conflicting_messages: Vec<(MessageId, ConflictReason)>,
     pub included_messages: Vec<MessageId>,
-    pub spent_outputs: usize,
     pub created_outputs: usize,
+    pub consumed_outputs: usize,
 }
 
 pub struct NewSpent(pub Spent);

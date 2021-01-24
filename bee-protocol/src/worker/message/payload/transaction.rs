@@ -3,7 +3,8 @@
 
 use crate::{
     storage::StorageBackend,
-    worker::{IndexationPayloadWorker, IndexationPayloadWorkerEvent, TangleWorker},
+    worker::{IndexationPayloadWorker, IndexationPayloadWorkerEvent, MetricsWorker, TangleWorker},
+    ProtocolMetrics,
 };
 
 use bee_message::{payload::Payload, MessageId};
@@ -27,18 +28,24 @@ pub(crate) struct TransactionPayloadWorker {
 
 async fn process<B: StorageBackend>(
     tangle: &MsTangle<B>,
-    message_id: MessageId,
+    metrics: &ProtocolMetrics,
     indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
+    message_id: MessageId,
 ) {
     if let Some(message) = tangle.get(&message_id).await.map(|m| (*m).clone()) {
-        if let Some(Payload::Transaction(transaction)) = message.payload() {
-            if let Some(Payload::Indexation(_)) = transaction.essence().payload() {
-                if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
-                    error!(
-                        "Sending message id {} to indexation payload worker failed: {:?}.",
-                        message_id, e
-                    );
-                }
+        let transaction = match message.payload() {
+            Some(Payload::Transaction(transaction)) => transaction,
+            _ => return,
+        };
+
+        metrics.transaction_payload_inc(1);
+
+        if let Some(Payload::Indexation(_)) = transaction.essence().payload() {
+            if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
+                error!(
+                    "Sending message id {} to indexation payload worker failed: {:?}.",
+                    message_id, e
+                );
             }
         }
     }
@@ -54,13 +61,19 @@ where
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>(), TypeId::of::<IndexationPayloadWorker>()].leak()
+        vec![
+            TypeId::of::<TangleWorker>(),
+            TypeId::of::<IndexationPayloadWorker>(),
+            TypeId::of::<MetricsWorker>(),
+        ]
+        .leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let indexation_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();
+        let metrics = node.resource::<ProtocolMetrics>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -68,7 +81,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(TransactionPayloadWorkerEvent(message_id)) = receiver.next().await {
-                process(&tangle, message_id, &indexation_payload_worker).await;
+                process(&tangle, &metrics, &indexation_payload_worker, message_id).await;
             }
 
             // Before the worker completely stops, the receiver needs to be drained for transaction payloads to be
@@ -78,7 +91,7 @@ where
             let mut count: usize = 0;
 
             while let Some(Some(TransactionPayloadWorkerEvent(message_id))) = receiver.next().now_or_never() {
-                process(&tangle, message_id, &indexation_payload_worker).await;
+                process(&tangle, &metrics, &indexation_payload_worker, message_id).await;
                 count += 1;
             }
 

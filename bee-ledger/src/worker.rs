@@ -88,7 +88,7 @@ where
         &*storage,
         metadata.index,
         &metadata.created_outputs,
-        &metadata.spent_outputs,
+        &metadata.consumed_outputs,
         Some(&metadata.balance_diff),
     )
     .await?;
@@ -142,16 +142,16 @@ where
         excluded_no_transaction_messages: metadata.excluded_no_transaction_messages,
         excluded_conflicting_messages: metadata.excluded_conflicting_messages,
         included_messages: metadata.included_messages,
-        spent_outputs: metadata.spent_outputs.len(),
         created_outputs: metadata.created_outputs.len(),
+        consumed_outputs: metadata.consumed_outputs.len(),
     });
-
-    for (_, spent) in metadata.spent_outputs {
-        bus.dispatch(NewSpent(spent));
-    }
 
     for (_, output) in metadata.created_outputs {
         bus.dispatch(NewOutput(output));
+    }
+
+    for (_, spent) in metadata.consumed_outputs {
+        bus.dispatch(NewSpent(spent));
     }
 
     Ok(())

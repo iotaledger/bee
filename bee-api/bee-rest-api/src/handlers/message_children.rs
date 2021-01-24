@@ -10,7 +10,7 @@ use bee_message::prelude::*;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use warp::{Rejection, Reply};
 
 use std::iter::FromIterator;
@@ -32,7 +32,7 @@ pub async fn message_children<B: StorageBackend>(
 }
 
 /// Response of GET /api/v1/messages/{message_id}/children
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageChildrenResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,

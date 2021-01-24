@@ -154,15 +154,15 @@ async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, child: Mess
             }
 
             // unwrap() is safe since None values are filtered above
-            let best_otrsi = max(parent1_otsri.unwrap(), parent2_otsri.unwrap());
-            let best_ytrsi = min(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
+            let new_otrsi = min(parent1_otsri.unwrap(), parent2_otsri.unwrap());
+            let new_ytrsi = max(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
 
             // in case the messages already inherited the best OTRSI/YTRSI values, continue
             let current_otrsi = tangle.otrsi(&message_id).await;
             let current_ytrsi = tangle.ytrsi(&message_id).await;
 
             if let (Some(otrsi), Some(ytrsi)) = (current_otrsi, current_ytrsi) {
-                if otrsi == best_otrsi && ytrsi == best_ytrsi {
+                if otrsi == new_otrsi && ytrsi == new_ytrsi {
                     continue;
                 }
             }
@@ -170,8 +170,8 @@ async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, child: Mess
             // update outdated OTRSI/YTRSI values
             tangle
                 .update_metadata(&message_id, |metadata| {
-                    metadata.set_otrsi(best_otrsi);
-                    metadata.set_ytrsi(best_ytrsi);
+                    metadata.set_otrsi(new_otrsi);
+                    metadata.set_ytrsi(new_ytrsi);
                 })
                 .await;
 

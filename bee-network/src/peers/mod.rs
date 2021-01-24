@@ -26,7 +26,7 @@ pub fn channel() -> (MessageSender, MessageReceiver) {
 }
 
 /// Describes the relation with a peer.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PeerRelation {
     /// Represents a known peer.
     Known,

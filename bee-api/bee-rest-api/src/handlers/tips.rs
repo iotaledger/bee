@@ -10,7 +10,7 @@ use crate::{
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use warp::{reject, Rejection, Reply};
 
 pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<MsTangle<B>>) -> Result<impl Reply, Rejection> {
@@ -24,7 +24,7 @@ pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<MsTangle<B>>)
 }
 
 /// Response of GET /api/v1/tips
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TipsResponse {
     #[serde(rename = "tip1MessageId")]
     pub tip_1_message_id: String,

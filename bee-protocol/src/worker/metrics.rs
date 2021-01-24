@@ -32,6 +32,8 @@ impl<N: Node> Worker<N> for MetricsWorker {
             metrics.excluded_no_transaction_messages_inc(event.excluded_no_transaction_messages.len() as u64);
             metrics.excluded_conflicting_messages_inc(event.excluded_conflicting_messages.len() as u64);
             metrics.included_messages_inc(event.included_messages.len() as u64);
+            metrics.created_outputs_inc(event.created_outputs as u64);
+            metrics.consumed_outputs_inc(event.consumed_outputs as u64);
         });
 
         let metrics = node.resource::<ProtocolMetrics>();

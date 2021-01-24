@@ -11,7 +11,7 @@ use bee_message::prelude::*;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use warp::{reject, Rejection, Reply};
 
 use std::ops::Deref;
@@ -42,7 +42,7 @@ pub(crate) async fn outputs_ed25519<B: StorageBackend>(
 }
 
 /// Response of GET /api/v1/addresses/{address}/outputs
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OutputsForAddressResponse {
     // The type of the address (1=Ed25519).
     #[serde(rename = "addressType")]

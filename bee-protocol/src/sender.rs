@@ -25,13 +25,15 @@ impl Sender<MilestoneRequest> {
         packet: MilestoneRequest,
     ) {
         if let Some(peer) = peer_manager.get(id).await {
-            match peer.0.send(tlv_into_bytes(packet)) {
-                Ok(_) => {
-                    (*peer).0.metrics().milestone_requests_sent_inc();
-                    metrics.milestone_requests_sent_inc();
-                }
-                Err(e) => {
-                    warn!("Sending MilestoneRequest to {} failed: {:?}.", id, e);
+            if let Some(ref sender) = peer.1 {
+                match sender.0.send(tlv_into_bytes(packet)) {
+                    Ok(_) => {
+                        (*peer).0.metrics().milestone_requests_sent_inc();
+                        metrics.milestone_requests_sent_inc();
+                    }
+                    Err(e) => {
+                        warn!("Sending MilestoneRequest to {} failed: {:?}.", id, e);
+                    }
                 }
             }
         }
@@ -46,13 +48,15 @@ impl Sender<MessagePacket> {
         packet: MessagePacket,
     ) {
         if let Some(peer) = peer_manager.get(id).await {
-            match peer.0.send(tlv_into_bytes(packet)) {
-                Ok(_) => {
-                    (*peer).0.metrics().messages_sent_inc();
-                    metrics.messages_sent_inc();
-                }
-                Err(e) => {
-                    warn!("Sending MessagePacket to {} failed: {:?}.", id, e);
+            if let Some(ref sender) = peer.1 {
+                match sender.0.send(tlv_into_bytes(packet)) {
+                    Ok(_) => {
+                        (*peer).0.metrics().messages_sent_inc();
+                        metrics.messages_sent_inc();
+                    }
+                    Err(e) => {
+                        warn!("Sending MessagePacket to {} failed: {:?}.", id, e);
+                    }
                 }
             }
         }
@@ -67,13 +71,15 @@ impl Sender<MessageRequest> {
         packet: MessageRequest,
     ) {
         if let Some(peer) = peer_manager.get(id).await {
-            match peer.0.send(tlv_into_bytes(packet)) {
-                Ok(_) => {
-                    (*peer).0.metrics().message_requests_sent_inc();
-                    metrics.message_requests_sent_inc();
-                }
-                Err(e) => {
-                    warn!("Sending MessageRequest to {} failed: {:?}.", id, e);
+            if let Some(ref sender) = peer.1 {
+                match sender.0.send(tlv_into_bytes(packet)) {
+                    Ok(_) => {
+                        (*peer).0.metrics().message_requests_sent_inc();
+                        metrics.message_requests_sent_inc();
+                    }
+                    Err(e) => {
+                        warn!("Sending MessageRequest to {} failed: {:?}.", id, e);
+                    }
                 }
             }
         }
@@ -83,14 +89,16 @@ impl Sender<MessageRequest> {
 impl Sender<Heartbeat> {
     pub(crate) async fn send(peer_manager: &PeerManager, metrics: &ProtocolMetrics, id: &PeerId, packet: Heartbeat) {
         if let Some(peer) = peer_manager.get(id).await {
-            match peer.0.send(tlv_into_bytes(packet)) {
-                Ok(_) => {
-                    (*peer).0.metrics().heartbeats_sent_inc();
-                    (*peer).0.set_heartbeat_sent_timestamp();
-                    metrics.heartbeats_sent_inc();
-                }
-                Err(e) => {
-                    warn!("Sending Heartbeat to {} failed: {:?}.", id, e);
+            if let Some(ref sender) = peer.1 {
+                match sender.0.send(tlv_into_bytes(packet)) {
+                    Ok(_) => {
+                        (*peer).0.metrics().heartbeats_sent_inc();
+                        (*peer).0.set_heartbeat_sent_timestamp();
+                        metrics.heartbeats_sent_inc();
+                    }
+                    Err(e) => {
+                        warn!("Sending Heartbeat to {} failed: {:?}.", id, e);
+                    }
                 }
             }
         }

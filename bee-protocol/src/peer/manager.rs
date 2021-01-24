@@ -3,7 +3,7 @@
 
 use crate::peer::Peer;
 
-use bee_network::PeerId;
+use bee_network::{MessageSender, PeerId};
 
 use futures::channel::oneshot;
 use log::debug;
@@ -13,7 +13,7 @@ use std::{collections::HashMap, sync::Arc};
 
 pub struct PeerManager {
     // TODO private
-    pub(crate) peers: RwLock<HashMap<PeerId, (Arc<Peer>, oneshot::Sender<()>)>>,
+    pub(crate) peers: RwLock<HashMap<PeerId, (Arc<Peer>, Option<(MessageSender, oneshot::Sender<()>)>)>>,
     // This is needed to ensure message distribution fairness as iterating over a HashMap is random.
     // TODO private
     pub(crate) peers_keys: RwLock<Vec<PeerId>>,
@@ -35,17 +35,29 @@ impl PeerManager {
     pub(crate) async fn get(
         &self,
         id: &PeerId,
-    ) -> Option<impl std::ops::Deref<Target = (Arc<Peer>, oneshot::Sender<()>)> + '_> {
+    ) -> Option<impl std::ops::Deref<Target = (Arc<Peer>, Option<(MessageSender, oneshot::Sender<()>)>)> + '_> {
         RwLockReadGuard::try_map(self.peers.read().await, |map| map.get(id)).ok()
     }
 
-    pub(crate) async fn add(&self, peer: Arc<Peer>, shutdown: oneshot::Sender<()>) {
+    // // TODO find a way to only return a ref to the peer.
+    // TODO implement
+    // pub(crate) async fn get_mut(
+    //     &self,
+    //     id: &PeerId,
+    // ) -> Option<impl std::ops::DerefMut<Target = (Arc<Peer>, Option<(MessageSender, oneshot::Sender<()>)>)> + '_> {
+    //     RwLockWriteGuard::try_map(self.peers.write().await, |map| map.get(id)).ok()
+    // }
+
+    pub(crate) async fn add(&self, peer: Arc<Peer>) {
         debug!("Added peer {}.", peer.id());
         self.peers_keys.write().await.push(peer.id().clone());
-        self.peers.write().await.insert(peer.id().clone(), (peer, shutdown));
+        self.peers.write().await.insert(peer.id().clone(), (peer, None));
     }
 
-    pub(crate) async fn remove(&self, id: &PeerId) -> Option<(Arc<Peer>, oneshot::Sender<()>)> {
+    pub(crate) async fn remove(
+        &self,
+        id: &PeerId,
+    ) -> Option<(Arc<Peer>, Option<(MessageSender, oneshot::Sender<()>)>)> {
         debug!("Removed peer {}.", id);
         self.peers_keys.write().await.retain(|peer_id| peer_id != id);
         self.peers.write().await.remove(id)
