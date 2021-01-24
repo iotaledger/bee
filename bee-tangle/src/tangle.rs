@@ -83,8 +83,8 @@ where
 {
     // Global Tangle Lock. Remove this as and when it is deemed correct to do so.
     // gtl: RwLock<()>,
-    vertices: TRwLock<HashMap<MessageId, Vertex<T>>>,
-    children: TRwLock<HashMap<MessageId, (HashSet<MessageId, FxBuildHasher>, bool)>>,
+    vertices: TRwLock<HashMap<MessageId, Vertex<T>, FxBuildHasher>>,
+    children: TRwLock<HashMap<MessageId, (HashSet<MessageId, FxBuildHasher>, bool), FxBuildHasher>>,
 
     pub(crate) cache_counter: AtomicU64,
     pub(crate) cache_queue: Mutex<LruCache<MessageId, u64>>,
@@ -111,8 +111,8 @@ where
     pub fn new(hooks: H) -> Self {
         Self {
             // gtl: RwLock::new(()),
-            vertices: TRwLock::new(HashMap::new()),
-            children: TRwLock::new(HashMap::new()),
+            vertices: TRwLock::new(HashMap::default()),
+            children: TRwLock::new(HashMap::default()),
 
             cache_counter: AtomicU64::new(0),
             cache_queue: Mutex::new(LruCache::new(CACHE_LEN + 1)),
@@ -139,11 +139,14 @@ where
         let r = match self.vertices.write().await.entry(message_id) {
             Entry::Occupied(_) => None,
             Entry::Vacant(entry) => {
-                self.add_child_inner(*message.parent1(), message_id).await;
-                self.add_child_inner(*message.parent2(), message_id).await;
+                let parent1 = *message.parent1();
+                let parent2 = *message.parent2();
                 let vtx = Vertex::new(message, metadata);
                 let tx = vtx.message().clone();
                 entry.insert(vtx);
+
+                self.add_child_inner(parent1, message_id).await;
+                self.add_child_inner(parent2, message_id).await;
 
                 // Insert cache queue entry to track eviction priority
                 // self.cache_queue
@@ -255,9 +258,12 @@ where
         if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
             // let _gtl_guard = self.gtl.write().await;
 
+            let message = (&**vtx.message()).clone();
+            let meta = vtx.metadata().clone();
             *vtx.metadata_mut() = metadata;
+            drop(vtx);
             self.hooks
-                .insert(*message_id, (&**vtx.message()).clone(), vtx.metadata().clone())
+                .insert(*message_id, message, meta)
                 .await
                 .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
         }
@@ -272,9 +278,12 @@ where
         if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
             // let _gtl_guard = self.gtl.write().await;
 
+            let message = (&**vtx.message()).clone();
+            let metadata = vtx.metadata().clone();
             let r = update(vtx.metadata_mut());
+            drop(vtx);
             self.hooks
-                .insert(*message_id, (&**vtx.message()).clone(), vtx.metadata().clone())
+                .insert(*message_id, message, metadata)
                 .await
                 .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
 
@@ -341,18 +350,14 @@ where
                     Ok(Some(approvers)) => approvers,
                 };
 
+                let to_insert: HashSet<_, _> = to_insert.into_iter().collect();
+                let to_insert2 = to_insert.clone();
                 self.children
                     .write()
                     .await
-                    .insert(*message_id, (to_insert.into_iter().collect(), true));
+                    .insert(*message_id, (to_insert2, true));
 
-                self.children
-                    .read()
-                    .await
-                    .get(message_id)
-                    .expect("Approver list inserted and immediately evicted")
-                    .0
-                    .clone()
+                to_insert
             }
         };
 
