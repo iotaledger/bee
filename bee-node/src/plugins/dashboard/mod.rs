@@ -32,7 +32,7 @@ use bee_protocol::{
         LatestMilestoneChanged, LatestSolidMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded,
         TipRemoved,
     },
-    TangleWorker,
+    MetricsWorker, TangleWorker,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
@@ -95,7 +95,7 @@ where
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>()].leak()
+        vec![TypeId::of::<TangleWorker>(), TypeId::of::<MetricsWorker>()].leak()
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
