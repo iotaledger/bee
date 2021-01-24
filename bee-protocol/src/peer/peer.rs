@@ -4,9 +4,7 @@
 use crate::peer::PeerMetrics;
 
 use bee_message::milestone::MilestoneIndex;
-use bee_network::{MessageSender, Multiaddr, PeerId};
-
-use tokio::sync::mpsc;
+use bee_network::{Multiaddr, PeerId, PeerInfo, PeerRelation};
 
 use std::{
     sync::atomic::{AtomicU32, AtomicU64, AtomicU8, Ordering},
@@ -15,7 +13,7 @@ use std::{
 
 pub struct Peer {
     id: PeerId,
-    address: Multiaddr,
+    info: PeerInfo,
     metrics: PeerMetrics,
     latest_solid_milestone_index: AtomicU32,
     pruned_index: AtomicU32,
@@ -24,14 +22,13 @@ pub struct Peer {
     synced_peers: AtomicU8,
     heartbeat_sent_timestamp: AtomicU64,
     heartbeat_received_timestamp: AtomicU64,
-    gossip_out: MessageSender,
 }
 
 impl Peer {
-    pub(crate) fn new(id: PeerId, address: Multiaddr, gossip_out: MessageSender) -> Self {
+    pub(crate) fn new(id: PeerId, info: PeerInfo) -> Self {
         Self {
             id,
-            address,
+            info,
             metrics: PeerMetrics::default(),
             latest_solid_milestone_index: AtomicU32::new(0),
             pruned_index: AtomicU32::new(0),
@@ -40,20 +37,26 @@ impl Peer {
             synced_peers: AtomicU8::new(0),
             heartbeat_sent_timestamp: AtomicU64::new(0),
             heartbeat_received_timestamp: AtomicU64::new(0),
-            gossip_out,
         }
     }
 
-    pub(crate) fn send(&self, message: Vec<u8>) -> Result<(), mpsc::error::SendError<Vec<u8>>> {
-        self.gossip_out.send(message)
-    }
-
-    pub(crate) fn id(&self) -> &PeerId {
+    pub fn id(&self) -> &PeerId {
         &self.id
     }
 
-    pub(crate) fn address(&self) -> &Multiaddr {
-        &self.address
+    #[allow(dead_code)]
+    pub fn address(&self) -> &Multiaddr {
+        &self.info.address
+    }
+
+    #[allow(dead_code)]
+    pub fn alias(&self) -> &String {
+        &self.info.alias
+    }
+
+    #[allow(dead_code)]
+    pub fn relation(&self) -> PeerRelation {
+        self.info.relation
     }
 
     pub(crate) fn metrics(&self) -> &PeerMetrics {

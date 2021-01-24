@@ -66,48 +66,56 @@ where
                 trace!("Received event {:?}.", event);
 
                 match event {
-                    Event::PeerAdded { id, info: _ } => {
-                        info!("Added peer: {}", id.short());
+                    Event::PeerAdded { id, info } => {
+                        // TODO check if not already added ?
+                        info!("Adding peer: {}", id.short());
+
+                        let peer = Arc::new(Peer::new(id, info));
+                        peer_manager.add(peer).await;
                     }
                     Event::PeerRemoved { id } => {
                         info!("Removed peer: {}", id.short());
+
+                        peer_manager.remove(&id).await;
                     }
                     Event::PeerConnected {
                         id,
-                        address,
-                        gossip_in,
-                        gossip_out,
+                        address: _,
+                        gossip_in: receiver,
+                        gossip_out: sender,
                     } => {
-                        // // TODO check if not already added ?
+                        // TODO write a get_mut peer manager method
+                        if let Some(peer) = peer_manager.peers.write().await.get_mut(&id) {
+                            let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
-                        let peer = Arc::new(Peer::new(id, address, gossip_out));
+                            peer.1 = Some((sender, shutdown_tx));
 
-                        let (shutdown_tx, shutdown_rx) = oneshot::channel();
-
-                        spawn(
-                            PeerWorker::new(
-                                peer.clone(),
-                                metrics.clone(),
-                                peer_manager.clone(),
-                                hasher.clone(),
-                                message_responder.clone(),
-                                milestone_responder.clone(),
-                                milestone_requester.clone(),
-                            )
-                            .run(
-                                tangle.clone(),
-                                requested_milestones.clone(),
-                                gossip_in,
-                                shutdown_rx,
-                            ),
-                        );
-
-                        peer_manager.add(peer, shutdown_tx).await;
+                            spawn(
+                                PeerWorker::new(
+                                    peer.0.clone(),
+                                    metrics.clone(),
+                                    peer_manager.clone(),
+                                    hasher.clone(),
+                                    message_responder.clone(),
+                                    milestone_responder.clone(),
+                                    milestone_requester.clone(),
+                                )
+                                .run(
+                                    tangle.clone(),
+                                    requested_milestones.clone(),
+                                    receiver,
+                                    shutdown_rx,
+                                ),
+                            );
+                        }
                     }
                     Event::PeerDisconnected { id } => {
-                        if let Some((_, shutdown)) = peer_manager.remove(&id).await {
-                            if let Err(e) = shutdown.send(()) {
-                                warn!("Sending shutdown to {} failed: {:?}.", id.short(), e);
+                        // TODO write a get_mut peer manager method
+                        if let Some(peer) = peer_manager.peers.write().await.get_mut(&id) {
+                            if let Some((_, shutdown)) = peer.1.take() {
+                                if let Err(e) = shutdown.send(()) {
+                                    warn!("Sending shutdown to {} failed: {:?}.", id.short(), e);
+                                }
                             }
                         }
                     }
