@@ -39,8 +39,10 @@ where
         );
 
         while ticker.next().await.is_some() {
+
+            let mut metrics = Vec::new();
+
             for peer in peer_manager.get_all().await {
-                println!("peers are present");
                 let peer_metric_dto = PeerMetric {
                     identity: peer.id().to_string(),
                     alias: peer.alias().to_string(),
@@ -78,14 +80,19 @@ where
                     connected: false,
                     ts: 0,
                 };
-
-                broadcast(peer_metric::forward(peer_metric_dto), &users).await;
+                metrics.push(peer_metric_dto);
             }
+
+            broadcast(peer_metric::forward(PeerMetrics(metrics)), &users).await;
+
         }
 
         debug!("Ws NodeStatus topic handler stopped.");
     });
 }
+
+#[derive(Clone, Debug, Serialize)]
+pub struct PeerMetrics(pub Vec<PeerMetric>);
 
 #[derive(Clone, Debug, Serialize)]
 pub struct PeerMetric {

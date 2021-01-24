@@ -6,24 +6,24 @@ use crate::plugins::dashboard::websocket::{
     topics::WsTopic,
 };
 
-use crate::plugins::dashboard::workers::peer_metric::PeerMetric;
+use crate::plugins::dashboard::workers::peer_metric::PeerMetrics;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
-pub(crate) struct PeerMetricResponse(pub PeerMetric);
+pub(crate) struct PeerMetricResponse(pub PeerMetrics);
 
-pub(crate) fn forward(event: PeerMetric) -> WsEvent {
+pub(crate) fn forward(event: PeerMetrics) -> WsEvent {
     event.into()
 }
 
-impl From<PeerMetric> for WsEvent {
-    fn from(val: PeerMetric) -> Self {
+impl From<PeerMetrics> for WsEvent {
+    fn from(val: PeerMetrics) -> Self {
         Self::new(WsTopic::PeerMetrics, WsEventInner::PeerMetric(val.into()))
     }
 }
 
-impl From<PeerMetric> for PeerMetricResponse {
-    fn from(val: PeerMetric) -> Self {
+impl From<PeerMetrics> for PeerMetricResponse {
+    fn from(val: PeerMetrics) -> Self {
         Self(val)
     }
 }
