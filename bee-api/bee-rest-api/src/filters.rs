@@ -6,7 +6,7 @@ use crate::{
     NetworkId,
 };
 
-use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorkerEvent};
+use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
@@ -32,6 +32,7 @@ pub fn all<B: StorageBackend>(
     bech32_hrp: Bech32Hrp,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
+    peer_manager: ResourceHandle<PeerManager>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     health(tangle.clone()).or(info(
         tangle.clone(),
@@ -59,7 +60,8 @@ pub fn all<B: StorageBackend>(
     .or(balance_ed25519(storage.clone()))
     .or(outputs_bech32(storage.clone()))
     .or(outputs_ed25519(storage))
-    .or(milestone(tangle)))
+    .or(milestone(tangle.clone()))
+    .or(peers(tangle, peer_manager)))
 }
 
 fn health<B: StorageBackend>(
@@ -294,6 +296,20 @@ fn milestone<B: StorageBackend>(
         .and_then(handlers::milestone::milestone)
 }
 
+fn peers<B: StorageBackend>(
+    tangle: ResourceHandle<MsTangle<B>>,
+    peer_manager: ResourceHandle<PeerManager>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("peers"))
+        .and(warp::path::end())
+        .and(with_tangle(tangle))
+        .and(with_peer_manager(peer_manager))
+        .and_then(handlers::peers::peers)
+}
+
 mod custom_path_param {
 
     use super::*;
@@ -391,4 +407,10 @@ fn with_message_submitter(
 ) -> impl Filter<Extract = (mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,), Error = std::convert::Infallible> + Clone
 {
     warp::any().map(move || message_submitter.clone())
+}
+
+fn with_peer_manager(
+    peer_manager: ResourceHandle<PeerManager>,
+) -> impl Filter<Extract = (ResourceHandle<PeerManager>,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || peer_manager.clone())
 }

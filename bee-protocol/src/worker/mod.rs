@@ -26,7 +26,8 @@ pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitte
 pub use metrics::MetricsWorker;
 pub(crate) use milestone_cone_updater::{MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent};
 pub(crate) use mps::MpsWorker;
-pub(crate) use peer::{PeerManagerResWorker, PeerManagerWorker, PeerWorker};
+pub use peer::PeerManagerResWorker;
+pub(crate) use peer::{PeerManagerWorker, PeerWorker};
 pub(crate) use propagator::{PropagatorWorker, PropagatorWorkerEvent};
 pub(crate) use requester::{
     MessageRequesterWorker, MessageRequesterWorkerEvent, MilestoneRequesterWorker, MilestoneRequesterWorkerEvent,

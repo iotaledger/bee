@@ -11,7 +11,7 @@ use async_trait::async_trait;
 
 use std::convert::Infallible;
 
-pub(crate) struct PeerManagerResWorker {}
+pub struct PeerManagerResWorker {}
 
 #[async_trait]
 impl<N: Node> Worker<N> for PeerManagerResWorker {

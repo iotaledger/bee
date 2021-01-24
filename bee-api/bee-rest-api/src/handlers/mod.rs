@@ -14,10 +14,10 @@ pub mod milestone;
 pub mod output;
 pub mod outputs_bech32;
 pub mod outputs_ed25519;
+pub mod peers;
 pub mod submit_message;
 pub mod submit_message_raw;
 pub mod tips;
-pub mod peers;
 
 use serde::Serialize;
 

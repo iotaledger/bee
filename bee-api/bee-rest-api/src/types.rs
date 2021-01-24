@@ -17,8 +17,7 @@ pub struct PeerDto {
     pub relation: String,
     pub connected: bool,
     #[serde(rename = "gossipMetrics")]
-    pub gossip_metrics: GossipMetricsDto
-
+    pub gossip_metrics: GossipMetricsDto,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

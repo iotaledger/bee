@@ -7,5 +7,5 @@ mod packet_handler;
 mod peer;
 
 pub(crate) use manager::PeerManagerWorker;
-pub(crate) use manager_res::PeerManagerResWorker;
+pub use manager_res::PeerManagerResWorker;
 pub(crate) use peer::PeerWorker;
