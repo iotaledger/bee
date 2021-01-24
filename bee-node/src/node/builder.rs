@@ -22,6 +22,7 @@ use bee_runtime::{
 use anymap::Map;
 use async_trait::async_trait;
 use futures::{channel::oneshot, future::Future};
+use fxhash::FxBuildHasher;
 use log::{debug, info, warn};
 
 use std::{
@@ -54,9 +55,10 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
 }
 
 pub struct BeeNodeBuilder<B: StorageBackend> {
-    deps: HashMap<TypeId, &'static [TypeId]>,
+    deps: HashMap<TypeId, &'static [TypeId], FxBuildHasher>,
     worker_starts: HashMap<TypeId, Box<WorkerStart<BeeNode<B>>>>,
     worker_stops: HashMap<TypeId, Box<WorkerStop<BeeNode<B>>>>,
+    worker_names: HashMap<TypeId, &'static str>,
     resource_registers: Vec<Box<ResourceRegister<BeeNode<B>>>>,
     config: NodeConfig<B>,
 }
@@ -88,6 +90,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             deps: HashMap::default(),
             worker_starts: HashMap::default(),
             worker_stops: HashMap::default(),
+            worker_names: HashMap::default(),
             resource_registers: Vec::default(),
             config: config.clone(),
         }
@@ -123,7 +126,6 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             TypeId::of::<W>(),
             Box::new(|node| {
                 Box::pin(async move {
-                    debug!("Stopping worker {}...", type_name::<W>());
                     match node.remove_worker::<W>().stop(node).await {
                         Ok(()) => {}
                         Err(e) => panic!("Worker `{}` failed to stop: {:?}.", type_name::<W>(), e),
@@ -131,6 +133,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
                 })
             }),
         );
+        self.worker_names.insert(TypeId::of::<W>(), type_name::<W>());
         self
     }
 
@@ -201,8 +204,20 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             resources: Map::new(),
             worker_stops: this.worker_stops,
             worker_order: TopologicalOrder::sort(this.deps),
+            worker_names: this.worker_names,
             phantom: PhantomData,
         };
+
+        if true {
+            let mut topological_order = "".to_owned();
+            for worker_id in node.worker_order.iter() {
+                // Unwrap is fine since worker_id is from the list of workers.
+                let worker_name = node.worker_names.get(worker_id).unwrap().to_string();
+                topological_order = format!("{} {}", topological_order, worker_name);
+            }
+
+            debug!("Workers topological order:{}", topological_order);
+        }
 
         for f in this.resource_registers {
             f(&mut node);
@@ -225,9 +240,9 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 }
 
 struct TopologicalOrder {
-    graph: HashMap<TypeId, &'static [TypeId]>,
-    non_visited: HashSet<TypeId>,
-    being_visited: HashSet<TypeId>,
+    graph: HashMap<TypeId, &'static [TypeId], FxBuildHasher>,
+    non_visited: HashSet<TypeId, FxBuildHasher>,
+    being_visited: HashSet<TypeId, FxBuildHasher>,
     order: Vec<TypeId>,
 }
 
@@ -250,13 +265,13 @@ impl TopologicalOrder {
         self.order.push(id);
     }
 
-    fn sort(graph: HashMap<TypeId, &'static [TypeId]>) -> Vec<TypeId> {
+    fn sort(graph: HashMap<TypeId, &'static [TypeId], FxBuildHasher>) -> Vec<TypeId> {
         let non_visited = graph.keys().copied().collect();
 
         let mut this = Self {
             graph,
             non_visited,
-            being_visited: HashSet::new(),
+            being_visited: HashSet::default(),
             order: vec![],
         };
 

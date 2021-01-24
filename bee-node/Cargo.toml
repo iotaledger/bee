@@ -31,6 +31,7 @@ blake2 = "0.9"
 cap = "0.1"
 chrono = "0.4"
 futures = "0.3"
+fxhash = "0.2"
 hex = "0.4"
 iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", branch = "dev", features = ["ed25519", "random", "blake2b"] }
 log = "0.4"
