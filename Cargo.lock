@@ -369,6 +369,7 @@ dependencies = [
  "cap",
  "chrono",
  "futures",
+ "fxhash",
  "hex",
  "iota-crypto",
  "log",

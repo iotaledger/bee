@@ -28,7 +28,6 @@ use std::sync::Arc;
 pub(crate) enum Error {
     UnsupportedPacketType(u8),
     TlvError(TlvError),
-    FailedSend,
 }
 
 impl From<TlvError> for Error {
@@ -128,12 +127,10 @@ impl PeerWorker {
 
                 let packet = tlv_from_bytes::<MilestoneRequest>(&header, bytes)?;
 
-                self.milestone_responder
-                    .send(MilestoneResponderWorkerEvent {
-                        peer_id: self.peer.id().clone(),
-                        request: packet,
-                    })
-                    .map_err(|_| Error::FailedSend)?;
+                let _ = self.milestone_responder.send(MilestoneResponderWorkerEvent {
+                    peer_id: self.peer.id().clone(),
+                    request: packet,
+                });
 
                 self.peer.metrics().milestone_requests_received_inc();
                 self.metrics.milestone_requests_received_inc();
@@ -143,13 +140,11 @@ impl PeerWorker {
 
                 let packet = tlv_from_bytes::<Message>(&header, bytes)?;
 
-                self.hasher
-                    .send(HasherWorkerEvent {
-                        from: Some(self.peer.id().clone()),
-                        message_packet: packet,
-                        notifier: None,
-                    })
-                    .map_err(|_| Error::FailedSend)?;
+                let _ = self.hasher.send(HasherWorkerEvent {
+                    from: Some(self.peer.id().clone()),
+                    message_packet: packet,
+                    notifier: None,
+                });
 
                 self.peer.metrics().messages_received_inc();
                 self.metrics.messages_received_inc();
@@ -159,12 +154,10 @@ impl PeerWorker {
 
                 let packet = tlv_from_bytes::<MessageRequest>(&header, bytes)?;
 
-                self.message_responder
-                    .send(MessageResponderWorkerEvent {
-                        peer_id: self.peer.id().clone(),
-                        request: packet,
-                    })
-                    .map_err(|_| Error::FailedSend)?;
+                let _ = self.message_responder.send(MessageResponderWorkerEvent {
+                    peer_id: self.peer.id().clone(),
+                    request: packet,
+                });
 
                 self.peer.metrics().message_requests_received_inc();
                 self.metrics.message_requests_received_inc();

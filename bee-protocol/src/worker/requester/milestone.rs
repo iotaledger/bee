@@ -141,7 +141,10 @@ async fn retry_requests<B: StorageBackend>(
 
     // TODO this needs abstraction
     for (index, instant) in requested_milestones.0.read().await.iter() {
-        if (now - *instant).as_millis() as u64 > RETRY_INTERVAL_MS {
+        if now
+            .checked_duration_since(*instant)
+            .map_or(false, |d| d.as_millis() as u64 > RETRY_INTERVAL_MS)
+        {
             to_retry.push(*index);
         };
     }

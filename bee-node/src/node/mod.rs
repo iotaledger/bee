@@ -14,7 +14,7 @@ use bee_runtime::{event::Bus, node::Node, resource::ResourceHandle, worker::Work
 use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
 use futures::{channel::oneshot, future::Future};
-use log::{info, warn};
+use log::{debug, info, warn};
 
 use std::{
     any::{type_name, Any, TypeId},
@@ -40,6 +40,7 @@ pub struct BeeNode<B> {
     resources: Map<dyn AnyMapAny + Send + Sync>,
     worker_stops: HashMap<TypeId, Box<WorkerStop<Self>>>,
     worker_order: Vec<TypeId>,
+    worker_names: HashMap<TypeId, &'static str>,
     phantom: PhantomData<B>,
 }
 
@@ -85,11 +86,14 @@ impl<B: StorageBackend> Node for BeeNode<B> {
 
     async fn stop(mut self) -> Result<(), Self::Error> {
         for worker_id in self.worker_order.clone().into_iter().rev() {
+            // Unwrap is fine since worker_id is from the list of workers.
+            debug!("Stopping worker {}...", self.worker_names.get(&worker_id).unwrap());
             for (shutdown, task_fut) in self.tasks.remove(&worker_id).unwrap_or_default() {
                 let _ = shutdown.send(());
                 // TODO: Should we handle this error?
-                let _ = task_fut.await; //.map_err(|e| shutdown::Error::from(worker::Error(Box::new(e))))?;
+                let _ = task_fut.await;
             }
+
             self.worker_stops.remove(&worker_id).unwrap()(&mut self).await;
             self.resource::<Bus>().remove_listeners_by_id(worker_id);
         }

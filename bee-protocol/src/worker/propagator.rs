@@ -53,10 +53,10 @@ async fn propagate<B: StorageBackend>(
             }
 
             // get OTRSI/YTRSI from parents
-            let p1m = tangle.get_metadata(&parent1).await;
-            let p2m = tangle.get_metadata(&parent2).await;
             let p1sepi = tangle.get_solid_entry_point_index(&parent1);
             let p2sepi = tangle.get_solid_entry_point_index(&parent2);
+            let p1m = tangle.get_metadata(&parent1).await;
+            let p2m = tangle.get_metadata(&parent2).await;
             let parent1_otsri = p1sepi.or_else(|| p1m?.otrsi());
             let parent2_otsri = p2sepi.or_else(|| p2m?.otrsi());
             let parent1_ytrsi = p1sepi.or_else(|| p1m?.ytrsi());
