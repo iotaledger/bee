@@ -114,7 +114,7 @@ pub struct PeerHeartbeat {
 #[derive(Clone, Debug, Serialize)]
 pub struct PeerInfo {
     pub address: String,
-    pub port: size,
+    pub port: usize,
     pub domain: String,
     pub numberOfAllTransactions: usize,
     pub numberOfNewTransactions: usize,
