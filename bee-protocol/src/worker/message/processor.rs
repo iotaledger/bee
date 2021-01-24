@@ -28,7 +28,7 @@ use log::{error, info, trace, warn};
 use tokio::{sync::mpsc, task};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, convert::Infallible, time::{Instant, Duration}};
+use std::{any::TypeId, convert::Infallible, time::Instant, collections::VecDeque};
 
 pub(crate) struct ProcessorWorkerEvent {
     pub(crate) pow_score: f64,
@@ -102,6 +102,8 @@ where
                 let config = config.clone();
 
                 task::spawn(async move {
+                    let mut to_request_throttled = VecDeque::new();
+
                     while let Ok(ProcessorWorkerEvent {
                         pow_score,
                         from,
@@ -183,7 +185,7 @@ where
 
                         metrics.new_messages_inc();
 
-                        match requested_messages.remove(&message_id).await {
+                        let mut to_request = match requested_messages.remove(&message_id).await {
                             Some((index, instant)) => {
                                 // Message was requested.
 
@@ -191,23 +193,10 @@ where
                                 latency_sum += (Instant::now() - instant).as_millis() as u64;
                                 metrics.messages_average_latency_set(latency_sum / latency_num);
 
-                                helper::request_message(
-                                    &tangle,
-                                    &message_requester,
-                                    &*requested_messages,
-                                    parent1,
-                                    index,
-                                )
-                                .await;
-                                if parent1 != parent2 {
-                                    helper::request_message(
-                                        &tangle,
-                                        &message_requester,
-                                        &*requested_messages,
-                                        parent2,
-                                        index,
-                                    )
-                                    .await;
+                                if parent1 == parent2 {
+                                    vec![(index, parent1)]
+                                } else {
+                                    vec![(index, parent1), (index, parent2)]
                                 }
                             }
                             None => {
@@ -218,8 +207,32 @@ where
                                 }) {
                                     warn!("Broadcasting message failed: {}.", e);
                                 }
+
+                                Vec::new()
                             }
                         };
+
+                        // Add old items to the request list
+                        if requested_messages.len().await < MAX_REQUESTED {
+                            if let Some(throttled) = to_request_throttled.pop_front() {
+                                to_request.push(throttled);
+                            }
+                        }
+
+                        for (index, message) in to_request {
+                            // Throttle the requested messages to prevent bottlenecks
+                            if requested_messages.len().await < MAX_REQUESTED {
+                                helper::request_message(
+                                    &tangle,
+                                    &message_requester,
+                                    &*requested_messages,
+                                    message,
+                                    index,
+                                ).await
+                            } else {
+                                to_request_throttled.push_back((index, message));
+                            }
+                        }
 
                         if let Err(e) = payload_worker.send(PayloadWorkerEvent(message_id)) {
                             warn!("Sending message id {} to payload worker failed: {:?}.", message_id, e);
@@ -230,13 +243,6 @@ where
                             if let Err(e) = notifier.send(Ok(message_id)) {
                                 error!("Failed to send message id: {:?}.", e);
                             }
-                        }
-
-                        // Exponential backoff if we're doing too much message requesting
-                        let mut timeout_ms = 0.25f32;
-                        while requested_messages.len().await > MAX_REQUESTED {
-                            tokio::time::sleep(Duration::from_millis(timeout_ms.ceil() as u64)).await;
-                            timeout_ms *= 1.5;
                         }
                     }
                 });
