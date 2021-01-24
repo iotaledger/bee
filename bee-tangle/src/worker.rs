@@ -4,13 +4,14 @@
 use crate::{storage::StorageBackend, MsTangle};
 
 use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MessageId};
-use bee_runtime::{node::Node, worker::Worker};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_snapshot::{SnapshotInfo, SnapshotWorker};
 use bee_storage::access::{Fetch, Insert};
 
 use async_trait::async_trait;
-use log::{error, warn};
+use log::{error, info, warn};
 use tokio::time::interval;
+use tokio_stream::{StreamExt, wrappers::IntervalStream};
 
 use std::{
     any::TypeId,
@@ -73,6 +74,23 @@ where
         tangle.update_pruning_index(snapshot_info.pruning_index().into());
         // TODO
         // tangle.add_milestone(config.sep_index().into(), *config.sep_id());
+        // Tangle statistics
+        node.spawn::<Self, _, _>(|shutdown| async move {
+            info!("Running.");
+
+            let mut ticker = ShutdownStream::new(
+                shutdown,
+                IntervalStream::new(interval(Duration::from_secs(60))),
+            );
+
+            while ticker.next().await.is_some() {
+                let len = tangle.len().await;
+                let cap = tangle.capacity().await;
+                info!("Tangle cache length: {} / {} => {}", len, cap, if len > cap { "OVERLOADED!" } else { "OK" });
+            }
+
+            info!("Stopped.");
+        });
 
         Ok(Self)
     }

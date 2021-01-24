@@ -20,7 +20,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-const CACHE_LEN: usize = 1_000_000;
+const CACHE_LEN: usize = 100_000;
 
 /// A trait used to provide hooks for a tangle. The tangle acts as an in-memory cache and will use hooks to extend its
 /// effective volume. When an entry doesn't exist in the tangle cache and needs fetching, or when an entry gets
@@ -293,10 +293,15 @@ where
         }
     }
 
-    /// Returns the number of messages in the Tangle.
+    /// Returns the number of messages in the Tangle cache.
     pub async fn len(&self) -> usize {
         // Does not take GTL because this is effectively atomic
         self.vertices.read().await.len()
+    }
+
+    /// Returns the maximum number of messages the Tangle cache can hold.
+    pub async fn capacity(&self) -> usize {
+        CACHE_LEN
     }
 
     /// Checks if the tangle is empty.

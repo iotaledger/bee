@@ -233,7 +233,7 @@ where
                         }
 
                         // Exponential backoff if we're doing too much message requesting
-                        let mut timeout_ms = 0.25;
+                        let mut timeout_ms = 0.25f32;
                         while requested_messages.len().await > MAX_REQUESTED {
                             tokio::time::sleep(Duration::from_millis(timeout_ms.ceil() as u64)).await;
                             timeout_ms *= 1.5;
