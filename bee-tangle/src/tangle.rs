@@ -331,9 +331,10 @@ where
         }
 
         let children_map = self.children.read().await;
-        let children = children_map.get(message_id);
-        // Skip approver lists that are not exhaustive
-        // .filter(|children| children.1);
+        let children = children_map
+            .get(message_id)
+            // Skip approver lists that are not exhaustive
+            .filter(|children| children.1);
 
         let children = match children {
             Some(children) => children.0.clone(),
