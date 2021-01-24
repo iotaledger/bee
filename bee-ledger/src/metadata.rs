@@ -23,8 +23,8 @@ pub(crate) struct WhiteFlagMetadata {
     pub(crate) excluded_conflicting_messages: Vec<(MessageId, ConflictReason)>,
     // The messages which mutate the ledger in the order in which they were applied.
     pub(crate) included_messages: Vec<MessageId>,
-    pub(crate) spent_outputs: HashMap<OutputId, Spent>,
     pub(crate) created_outputs: HashMap<OutputId, Output>,
+    pub(crate) consumed_outputs: HashMap<OutputId, Spent>,
     pub(crate) balance_diff: BalanceDiff,
 }
 
