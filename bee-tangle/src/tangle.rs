@@ -145,16 +145,16 @@ where
                 entry.insert(vtx);
 
                 // Insert cache queue entry to track eviction priority
-                self.cache_queue
-                    .lock()
-                    .await
-                    .put(message_id, self.generate_cache_index());
+                // self.cache_queue
+                //     .lock()
+                //     .await
+                //     .put(message_id, self.generate_cache_index());
 
                 Some(tx)
             }
         };
 
-        self.perform_eviction().await;
+        // self.perform_eviction().await;
 
         r
     }
@@ -197,18 +197,18 @@ where
     async fn get_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex<T>> + '_> {
         let res = TRwLockReadGuard::try_map(self.vertices.read().await, |m| m.get(message_id)).ok();
 
-        if res.is_some() {
-            let mut cache_queue = self.cache_queue.lock().await;
-            // Update message_id priority
-            let entry = cache_queue.get_mut(message_id);
-            let entry = if entry.is_none() {
-                cache_queue.put(*message_id, 0);
-                cache_queue.get_mut(message_id)
-            } else {
-                entry
-            };
-            *entry.unwrap() = self.generate_cache_index();
-        }
+        // if res.is_some() {
+        //     let mut cache_queue = self.cache_queue.lock().await;
+        //     // Update message_id priority
+        //     let entry = cache_queue.get_mut(message_id);
+        //     let entry = if entry.is_none() {
+        //         cache_queue.put(*message_id, 0);
+        //         cache_queue.get_mut(message_id)
+        //     } else {
+        //         entry
+        //     };
+        //     *entry.unwrap() = self.generate_cache_index();
+        // }
 
         res
     }
