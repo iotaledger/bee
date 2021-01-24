@@ -65,15 +65,15 @@ async fn propagate<B: StorageBackend>(
             // get best OTRSI/YTRSI from parents
             // unwrap() is safe because parents are solid which implies that OTRSI/YTRSI values are
             // available.
-            let best_otrsi = max(parent1_otsri.unwrap(), parent2_otsri.unwrap());
-            let best_ytrsi = min(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
+            let new_otrsi = min(parent1_otsri.unwrap(), parent2_otsri.unwrap());
+            let new_ytrsi = max(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
 
             let index = tangle
                 .update_metadata(&message_id, |metadata| {
                     // OTRSI/YTRSI values need to be set before the solid flag, to ensure that the
                     // MilestoneConeUpdater is aware of all values.
-                    metadata.set_otrsi(best_otrsi);
-                    metadata.set_ytrsi(best_ytrsi);
+                    metadata.set_otrsi(new_otrsi);
+                    metadata.set_ytrsi(new_ytrsi);
                     metadata.solidify();
 
                     if metadata.flags().is_milestone() {
