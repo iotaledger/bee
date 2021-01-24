@@ -27,16 +27,24 @@ impl PeerManager {
         }
     }
 
-    pub(crate) async fn is_empty(&self) -> bool {
+    pub async fn is_empty(&self) -> bool {
         self.peers.read().await.is_empty()
     }
 
     // TODO find a way to only return a ref to the peer.
-    pub(crate) async fn get(
+    pub async fn get(
         &self,
         id: &PeerId,
     ) -> Option<impl std::ops::Deref<Target = (Arc<Peer>, Option<(MessageSender, oneshot::Sender<()>)>)> + '_> {
         RwLockReadGuard::try_map(self.peers.read().await, |map| map.get(id)).ok()
+    }
+
+    pub async fn get_all(&self) -> Vec<Arc<Peer>> {
+        let mut ret = Vec::new();
+        for (_, (peer, _)) in self.peers.read().await.iter() {
+            ret.push(peer.clone());
+        }
+        ret
     }
 
     // // TODO find a way to only return a ref to the peer.
@@ -69,6 +77,13 @@ impl PeerManager {
     //         f(id, peer);
     //     }
     // }
+
+    pub async fn is_connected(&self, id: &PeerId) -> bool {
+        match self.peers.read().await.get(id) {
+            Some(_sender) => true,
+            None => false,
+        }
+    }
 
     pub(crate) fn connected_peers(&self) -> u8 {
         // TODO impl

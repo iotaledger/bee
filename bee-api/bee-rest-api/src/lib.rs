@@ -16,7 +16,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorker, TangleWorker};
+use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorker, PeerManager, PeerManagerResWorker, TangleWorker};
 use bee_runtime::{
     node::{Node, NodeBuilder},
     worker::{Error as WorkerError, Worker},
@@ -55,7 +55,12 @@ where
     type Error = WorkerError;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>(), TypeId::of::<MessageSubmitterWorker>()].leak()
+        vec![
+            TypeId::of::<TangleWorker>(),
+            TypeId::of::<MessageSubmitterWorker>(),
+            TypeId::of::<PeerManagerResWorker>(),
+        ]
+        .leak()
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
@@ -67,6 +72,7 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
         let message_submitter = node.worker::<MessageSubmitterWorker>().unwrap().tx.clone();
+        let peer_manager = node.resource::<PeerManager>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -79,6 +85,7 @@ where
                 bech32_hrp,
                 rest_api_config.clone(),
                 protocol_config,
+                peer_manager,
             )
             .recover(handle_rejection);
 

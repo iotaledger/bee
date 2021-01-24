@@ -20,7 +20,7 @@ use crate::{
         },
         workers::{
             confirmed_ms_metrics::confirmed_ms_metrics_worker, db_size_metrics::db_size_metrics_worker,
-            node_status::node_status_worker,
+            node_status::node_status_worker, peer_metric::peer_metric_worker,
         },
     },
     storage::StorageBackend,
@@ -32,7 +32,7 @@ use bee_protocol::{
         LatestMilestoneChanged, LatestSolidMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded,
         TipRemoved,
     },
-    TangleWorker,
+    MetricsWorker, PeerManagerResWorker, TangleWorker,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
@@ -95,7 +95,12 @@ where
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>()].leak()
+        vec![
+            TypeId::of::<TangleWorker>(),
+            TypeId::of::<MetricsWorker>(),
+            TypeId::of::<PeerManagerResWorker>(),
+        ]
+        .leak()
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
@@ -149,6 +154,7 @@ where
         confirmed_ms_metrics_worker(node, &users);
         db_size_metrics_worker(node, &users);
         node_status_worker(node, &users);
+        peer_metric_worker(node, &users);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

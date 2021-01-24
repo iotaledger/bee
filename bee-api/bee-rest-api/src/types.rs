@@ -9,6 +9,44 @@ use serde::{Deserialize, Serialize};
 use std::convert::{TryFrom, TryInto};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct PeerDto {
+    pub id: String,
+    pub alias: String,
+    #[serde(rename = "multiAddresses")]
+    pub multi_addresses: Vec<String>,
+    pub relation: String,
+    pub connected: bool,
+    #[serde(rename = "gossipMetrics")]
+    pub gossip_metrics: GossipMetricsDto,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct GossipMetricsDto {
+    #[serde(rename = "receivedMessages")]
+    pub received_messages: u64,
+    #[serde(rename = "newMessages")]
+    pub new_messages: u64,
+    #[serde(rename = "knownMessages")]
+    pub known_messages: u64,
+    #[serde(rename = "receivedMessageRequests")]
+    pub received_message_requests: u64,
+    #[serde(rename = "receivedMilestoneRequests")]
+    pub received_milestone_requests: u64,
+    #[serde(rename = "receivedHeartbeats")]
+    pub received_heartbeats: u64,
+    #[serde(rename = "sentMessages")]
+    pub sent_messages: u64,
+    #[serde(rename = "sentMessageRequests")]
+    pub sent_message_requests: u64,
+    #[serde(rename = "sentMilestoneRequests")]
+    pub sent_milestone_requests: u64,
+    #[serde(rename = "sentHeartbeats")]
+    pub sent_heartbeats: u64,
+    #[serde(rename = "droppedPackets")]
+    pub dropped_packets: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
     #[serde(rename = "networkId")]
     pub network_id: String,

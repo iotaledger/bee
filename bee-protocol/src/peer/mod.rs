@@ -5,6 +5,6 @@ mod manager;
 mod metrics;
 mod peer;
 
-pub(crate) use manager::PeerManager;
-pub(crate) use metrics::PeerMetrics;
-pub(crate) use peer::Peer;
+pub use manager::PeerManager;
+pub use metrics::PeerMetrics;
+pub use peer::Peer;

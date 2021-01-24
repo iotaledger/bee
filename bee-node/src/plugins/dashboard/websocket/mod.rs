@@ -74,6 +74,7 @@ pub(crate) async fn user_connected(ws: WebSocket, users: WsUsers) {
                 t.insert(WsTopic::SyncStatus);
                 t.insert(WsTopic::TipInfo);
                 t.insert(WsTopic::Vertex);
+                t.insert(WsTopic::PeerMetrics);
                 t
             },
         },
