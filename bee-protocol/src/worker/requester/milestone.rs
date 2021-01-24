@@ -43,7 +43,8 @@ impl RequestedMilestones {
     }
 
     pub async fn insert(&self, index: MilestoneIndex) {
-        self.0.write().await.insert(index, Instant::now());
+        let now = Instant::now();
+        self.0.write().await.insert(index, now);
     }
 
     // pub async fn len(&self) -> usize {
