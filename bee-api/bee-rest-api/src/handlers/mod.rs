@@ -17,6 +17,7 @@ pub mod outputs_ed25519;
 pub mod submit_message;
 pub mod submit_message_raw;
 pub mod tips;
+pub mod peers;
 
 use serde::Serialize;
 
