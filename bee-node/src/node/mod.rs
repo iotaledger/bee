@@ -88,7 +88,7 @@ impl<B: StorageBackend> Node for BeeNode<B> {
             for (shutdown, task_fut) in self.tasks.remove(&worker_id).unwrap_or_default() {
                 let _ = shutdown.send(());
                 // TODO: Should we handle this error?
-                let _ = task_fut.await; //.map_err(|e| shutdown::Error::from(worker::Error(Box::new(e))))?;
+                let _ = task_fut.await;
             }
             self.worker_stops.remove(&worker_id).unwrap()(&mut self).await;
             self.resource::<Bus>().remove_listeners_by_id(worker_id);
