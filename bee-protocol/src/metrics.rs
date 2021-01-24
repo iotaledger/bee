@@ -26,6 +26,9 @@ pub struct ProtocolMetrics {
     excluded_no_transaction_messages: AtomicU64,
     excluded_conflicting_messages: AtomicU64,
     included_messages: AtomicU64,
+
+    created_outputs: AtomicU64,
+    consumed_outputs: AtomicU64,
 }
 
 impl ProtocolMetrics {
@@ -170,6 +173,22 @@ impl ProtocolMetrics {
     pub fn included_messages_inc(&self, value: u64) -> u64 {
         self.included_messages.fetch_add(value, Ordering::SeqCst)
     }
+
+    pub fn created_outputs(&self) -> u64 {
+        self.created_outputs.load(Ordering::Relaxed)
+    }
+
+    pub fn created_outputs_inc(&self, value: u64) -> u64 {
+        self.created_outputs.fetch_add(value, Ordering::SeqCst)
+    }
+
+    pub fn consumed_outputs(&self) -> u64 {
+        self.consumed_outputs.load(Ordering::Relaxed)
+    }
+
+    pub fn consumed_outputs_inc(&self, value: u64) -> u64 {
+        self.consumed_outputs.fetch_add(value, Ordering::SeqCst)
+    }
 }
 
 #[cfg(test)]
@@ -198,6 +217,8 @@ mod tests {
         assert_eq!(metrics.excluded_no_transaction_messages(), 0);
         assert_eq!(metrics.excluded_conflicting_messages(), 0);
         assert_eq!(metrics.included_messages(), 0);
+        assert_eq!(metrics.created_outputs(), 0);
+        assert_eq!(metrics.consumed_outputs(), 0);
 
         metrics.invalid_packets_inc();
         metrics.milestone_requests_received_inc();
@@ -216,6 +237,8 @@ mod tests {
         metrics.excluded_no_transaction_messages_inc(1);
         metrics.excluded_conflicting_messages_inc(1);
         metrics.included_messages_inc(1);
+        metrics.created_outputs_inc(1);
+        metrics.consumed_outputs_inc(1);
 
         assert_eq!(metrics.invalid_packets(), 1);
         assert_eq!(metrics.milestone_requests_received(), 1);
@@ -234,5 +257,7 @@ mod tests {
         assert_eq!(metrics.excluded_no_transaction_messages(), 1);
         assert_eq!(metrics.excluded_conflicting_messages(), 1);
         assert_eq!(metrics.included_messages(), 1);
+        assert_eq!(metrics.created_outputs(), 1);
+        assert_eq!(metrics.consumed_outputs(), 1);
     }
 }
