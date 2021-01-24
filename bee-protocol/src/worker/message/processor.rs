@@ -28,7 +28,7 @@ use log::{error, info, trace, warn};
 use tokio::{sync::mpsc, task};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, convert::Infallible, time::Instant};
+use std::{any::TypeId, convert::Infallible, time::{Instant, Duration}};
 
 pub(crate) struct ProcessorWorkerEvent {
     pub(crate) pow_score: f64,
@@ -85,7 +85,10 @@ where
 
             let (tx, rx) = async_channel::unbounded();
 
-            for _ in 0..16 {
+            const PROCESSOR_TASKS: usize = 16;
+            const MAX_REQUESTED: usize = 2500;
+
+            for _ in 0..PROCESSOR_TASKS {
                 let rx = rx.clone();
                 let propagator = propagator.clone();
                 let broadcaster = broadcaster.clone();
@@ -227,6 +230,13 @@ where
                             if let Err(e) = notifier.send(Ok(message_id)) {
                                 error!("Failed to send message id: {:?}.", e);
                             }
+                        }
+
+                        // Exponential backoff if we're doing too much message requesting
+                        let mut timeout_ms = 0.25;
+                        while requested_messages.len().await > MAX_REQUESTED {
+                            tokio::time::sleep(Duration::from_millis(timeout_ms.ceil() as u64)).await;
+                            timeout_ms *= 1.5;
                         }
                     }
                 });
