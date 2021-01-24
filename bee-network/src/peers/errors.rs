@@ -11,12 +11,12 @@ pub enum Error {
     EventSendFailure(&'static str),
     #[error("Failed to send an internal event ({}).", .0)]
     InternalEventSendFailure(&'static str),
-    #[error("Failed to send a message to {}", .0)]
-    SendMessageFailure(String),
+    // #[error("Failed to send a message to {}", .0)]
+    // SendMessageFailure(String),
     #[error("Unlisted peer: {}", .0)]
     UnlistedPeer(String),
-    #[error("Disconnected peer: {}", .0)]
-    DisconnectedPeer(String),
+    // #[error("Disconnected peer: {}", .0)]
+    // DisconnectedPeer(String),
     #[error("Failed to connect to peer. Cause: {:?}", .0)]
     ConnectFailure(ConnError),
     #[error("Already banned that address: {}", .0)]

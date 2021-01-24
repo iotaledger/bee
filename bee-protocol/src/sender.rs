@@ -7,7 +7,7 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_network::{Command::SendMessage, NetworkController, PeerId};
+use bee_network::PeerId;
 
 use log::warn;
 
@@ -18,20 +18,16 @@ pub(crate) struct Sender<P: Packet> {
 }
 
 impl Sender<MilestoneRequest> {
-    pub(crate) fn send(
-        network: &NetworkController,
+    pub(crate) async fn send(
         peer_manager: &PeerManager,
         metrics: &ProtocolMetrics,
         id: &PeerId,
         packet: MilestoneRequest,
     ) {
-        if let Some(peer) = peer_manager.get(id) {
-            match network.send(SendMessage {
-                to: id.clone(),
-                message: tlv_into_bytes(packet),
-            }) {
+        if let Some(peer) = peer_manager.get(id).await {
+            match peer.0.send(tlv_into_bytes(packet)) {
                 Ok(_) => {
-                    peer.value().0.metrics().milestone_requests_sent_inc();
+                    (*peer).0.metrics().milestone_requests_sent_inc();
                     metrics.milestone_requests_sent_inc();
                 }
                 Err(e) => {
@@ -43,20 +39,16 @@ impl Sender<MilestoneRequest> {
 }
 
 impl Sender<MessagePacket> {
-    pub(crate) fn send(
-        network: &NetworkController,
+    pub(crate) async fn send(
         peer_manager: &PeerManager,
         metrics: &ProtocolMetrics,
         id: &PeerId,
         packet: MessagePacket,
     ) {
-        if let Some(peer) = peer_manager.get(id) {
-            match network.send(SendMessage {
-                to: id.clone(),
-                message: tlv_into_bytes(packet),
-            }) {
+        if let Some(peer) = peer_manager.get(id).await {
+            match peer.0.send(tlv_into_bytes(packet)) {
                 Ok(_) => {
-                    peer.value().0.metrics().messages_sent_inc();
+                    (*peer).0.metrics().messages_sent_inc();
                     metrics.messages_sent_inc();
                 }
                 Err(e) => {
@@ -68,20 +60,16 @@ impl Sender<MessagePacket> {
 }
 
 impl Sender<MessageRequest> {
-    pub(crate) fn send(
-        network: &NetworkController,
+    pub(crate) async fn send(
         peer_manager: &PeerManager,
         metrics: &ProtocolMetrics,
         id: &PeerId,
         packet: MessageRequest,
     ) {
-        if let Some(peer) = peer_manager.get(id) {
-            match network.send(SendMessage {
-                to: id.clone(),
-                message: tlv_into_bytes(packet),
-            }) {
+        if let Some(peer) = peer_manager.get(id).await {
+            match peer.0.send(tlv_into_bytes(packet)) {
                 Ok(_) => {
-                    peer.value().0.metrics().message_requests_sent_inc();
+                    (*peer).0.metrics().message_requests_sent_inc();
                     metrics.message_requests_sent_inc();
                 }
                 Err(e) => {
@@ -93,21 +81,12 @@ impl Sender<MessageRequest> {
 }
 
 impl Sender<Heartbeat> {
-    pub(crate) fn send(
-        network: &NetworkController,
-        peer_manager: &PeerManager,
-        metrics: &ProtocolMetrics,
-        id: &PeerId,
-        packet: Heartbeat,
-    ) {
-        if let Some(peer) = peer_manager.get(id) {
-            match network.send(SendMessage {
-                to: id.clone(),
-                message: tlv_into_bytes(packet),
-            }) {
+    pub(crate) async fn send(peer_manager: &PeerManager, metrics: &ProtocolMetrics, id: &PeerId, packet: Heartbeat) {
+        if let Some(peer) = peer_manager.get(id).await {
+            match peer.0.send(tlv_into_bytes(packet)) {
                 Ok(_) => {
-                    peer.value().0.metrics().heartbeats_sent_inc();
-                    peer.value().0.set_heartbeat_sent_timestamp();
+                    (*peer).0.metrics().heartbeats_sent_inc();
+                    (*peer).0.set_heartbeat_sent_timestamp();
                     metrics.heartbeats_sent_inc();
                 }
                 Err(e) => {

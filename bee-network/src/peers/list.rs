@@ -3,7 +3,7 @@
 
 use crate::{Multiaddr, ShortId, MAX_UNKNOWN_PEERS};
 
-use super::{errors::Error, DataSender, PeerRelation};
+use super::{errors::Error, PeerRelation};
 
 use libp2p::PeerId;
 use log::trace;
@@ -26,32 +26,13 @@ impl PeerList {
 
     // If the insertion fails for some reason, we give it back to the caller.
     pub async fn insert(&self, id: PeerId, info: PeerInfo, state: PeerState) -> Result<(), (PeerId, PeerInfo, Error)> {
-        if self.0.read().await.contains_key(&id) {
-            let short = id.short();
-            return Err((id, info, Error::PeerAlreadyAdded(short)));
+        if let Err(e) = self.accepts(&id, &info).await {
+            Err((id, info, e))
+        } else {
+            // Since we already checked that such an `id` is not yet present, the returned value is always `None`.
+            let _ = self.0.write().await.insert(id, (info, state));
+            Ok(())
         }
-
-        // Prevent inserting more peers than preconfigured.
-        match info.relation {
-            PeerRelation::Unknown => {
-                if self.count_if(|info, _| info.is_unknown()).await >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed) {
-                    return Err((
-                        id,
-                        info,
-                        Error::UnknownPeerLimitReached(MAX_UNKNOWN_PEERS.load(Ordering::Relaxed)),
-                    ));
-                }
-            }
-            PeerRelation::Discovered => {
-                todo!("PeerRelation::Discovered case");
-            }
-            _ => (),
-        }
-
-        // Since we already checked that such an `id` is not yet present, the returned value is always `None`.
-        let _ = self.0.write().await.insert(id, (info, state));
-
-        Ok(())
     }
 
     pub async fn update_relation(&self, id: &PeerId, relation: PeerRelation) -> Result<(), Error> {
@@ -77,6 +58,34 @@ impl PeerList {
         self.0.read().await.contains_key(id)
     }
 
+    pub async fn accepts(&self, id: &PeerId, info: &PeerInfo) -> Result<(), Error> {
+        if self.0.read().await.contains_key(id) {
+            let alias = info.alias.clone();
+            return Err(Error::PeerAlreadyAdded(alias));
+        }
+
+        // Prevent inserting more peers than preconfigured.
+        match info.relation {
+            PeerRelation::Unknown => {
+                if self.count_if(|info, _| info.relation.is_unknown()).await
+                    >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed)
+                {
+                    return Err(Error::UnknownPeerLimitReached(
+                        MAX_UNKNOWN_PEERS.load(Ordering::Relaxed),
+                    ));
+                }
+            }
+            // TODO: Handle 'PeerRelation::Discovered' case once autopeering has landed.
+            _ => (),
+        }
+        if self.0.read().await.contains_key(id) {
+            let alias = info.alias.clone();
+            return Err(Error::PeerAlreadyAdded(alias));
+        }
+
+        Ok(())
+    }
+
     pub async fn remove(&self, id: &PeerId) -> Result<PeerInfo, Error> {
         let (info, _) = self
             .0
@@ -86,22 +95,6 @@ impl PeerList {
             .ok_or_else(|| Error::UnlistedPeer(id.short()))?;
 
         Ok(info)
-    }
-
-    // TODO: batch messages before sending using 'send_all' (e.g. batch messages for like 50ms)
-    pub async fn send_message(&self, message: Vec<u8>, to: &PeerId) -> Result<(), Error> {
-        let mut this = self.0.write().await;
-        let (_, state) = this.get_mut(to).ok_or_else(|| Error::UnlistedPeer(to.short()))?;
-
-        if let PeerState::Connected(sender) = state {
-            sender
-                .send(message)
-                .map_err(|_| Error::SendMessageFailure(to.short()))?;
-
-            Ok(())
-        } else {
-            Err(Error::DisconnectedPeer(to.short()))
-        }
     }
 
     #[allow(dead_code)]
@@ -178,37 +171,26 @@ impl PeerList {
     }
 }
 
+/// Additional information about a peer.
 #[derive(Clone, Debug)]
 pub struct PeerInfo {
+    /// The peer's address.
     pub address: Multiaddr,
-    pub alias: Option<String>,
+    /// The peer's alias.
+    pub alias: String,
+    /// The type of relation we have with this peer.
     pub relation: PeerRelation,
 }
-
-macro_rules! impl_is_relation {
-    ($is:tt) => {
-        impl PeerInfo {
-            #[allow(dead_code)]
-            pub fn $is(&self) -> bool {
-                self.relation.$is()
-            }
-        }
-    };
-}
-
-impl_is_relation!(is_known);
-impl_is_relation!(is_unknown);
-impl_is_relation!(is_discovered);
 
 #[derive(Clone)]
 pub enum PeerState {
     Disconnected,
-    Connected(DataSender),
+    Connected,
 }
 
 impl PeerState {
     pub fn is_connected(&self) -> bool {
-        matches!(*self, PeerState::Connected(_))
+        matches!(*self, PeerState::Connected)
     }
 
     pub fn is_disconnected(&self) -> bool {

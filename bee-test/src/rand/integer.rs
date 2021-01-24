@@ -17,7 +17,7 @@ where
 
 pub fn rand_integer_range<T>(range: Range<T>) -> T
 where
-    T: SampleUniform,
+    T: SampleUniform + PartialOrd,
 {
-    rand::thread_rng().gen_range(range.start, range.end)
+    rand::thread_rng().gen_range(range)
 }

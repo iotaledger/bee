@@ -3,13 +3,13 @@
 
 use crate::{error::Error, storage::*};
 
-use bee_ledger::model::{Diff, Output, Spent, Unspent};
+use bee_ledger::model::{Balance, Output, OutputDiff, Spent, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::{HashedIndex, HASHED_INDEX_LENGTH},
-        transaction::{Ed25519Address, OutputId, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH},
+        transaction::{Address, Ed25519Address, OutputId, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH},
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId, MESSAGE_ID_LENGTH,
@@ -206,18 +206,33 @@ impl Truncate<SolidEntryPoint, MilestoneIndex> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Truncate<MilestoneIndex, Diff> for Storage {
+impl Truncate<MilestoneIndex, OutputDiff> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_MILESTONE_INDEX_TO_DIFF)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_DIFF))?;
+            .cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
 
         self.inner.delete_range_cf(
             cf,
             [0x00u8; std::mem::size_of::<MilestoneIndex>()],
             [0xffu8; std::mem::size_of::<MilestoneIndex>()],
         )?;
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl Truncate<Address, Balance> for Storage {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_ADDRESS_TO_BALANCE)
+            .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
+
+        // TODO check that this is fine
+        self.inner.delete_range_cf(cf, [0x00u8; 1], [0xffu8; 1])?;
 
         Ok(())
     }

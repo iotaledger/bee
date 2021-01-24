@@ -4,7 +4,9 @@
 use crate::peer::PeerMetrics;
 
 use bee_message::milestone::MilestoneIndex;
-use bee_network::{Multiaddr, PeerId};
+use bee_network::{MessageSender, Multiaddr, PeerId};
+
+use tokio::sync::mpsc;
 
 use std::{
     sync::atomic::{AtomicU32, AtomicU64, AtomicU8, Ordering},
@@ -22,10 +24,11 @@ pub struct Peer {
     synced_peers: AtomicU8,
     heartbeat_sent_timestamp: AtomicU64,
     heartbeat_received_timestamp: AtomicU64,
+    gossip_out: MessageSender,
 }
 
 impl Peer {
-    pub(crate) fn new(id: PeerId, address: Multiaddr) -> Self {
+    pub(crate) fn new(id: PeerId, address: Multiaddr, gossip_out: MessageSender) -> Self {
         Self {
             id,
             address,
@@ -37,7 +40,12 @@ impl Peer {
             synced_peers: AtomicU8::new(0),
             heartbeat_sent_timestamp: AtomicU64::new(0),
             heartbeat_received_timestamp: AtomicU64::new(0),
+            gossip_out,
         }
+    }
+
+    pub(crate) fn send(&self, message: Vec<u8>) -> Result<(), mpsc::error::SendError<Vec<u8>>> {
+        self.gossip_out.send(message)
     }
 
     pub(crate) fn id(&self) -> &PeerId {

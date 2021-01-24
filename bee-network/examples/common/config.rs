@@ -8,13 +8,11 @@ use bee_network::{Multiaddr, PeerId};
 use std::str::FromStr;
 
 const DEFAULT_BIND_ADDRESS: &str = "/ip4/127.0.0.1/tcp/1337";
-const DEFAULT_MESSAGE: &str = "hello world";
 
 #[derive(Clone)]
 pub struct ExampleConfig {
     pub bind_address: Multiaddr,
     pub peers: Vec<Multiaddr>,
-    pub message: String,
 }
 
 impl ExampleConfig {
@@ -26,7 +24,6 @@ impl ExampleConfig {
 pub struct ExampleConfigBuilder {
     bind_address: Option<Multiaddr>,
     peers: Vec<String>,
-    message: Option<String>,
 }
 
 impl ExampleConfigBuilder {
@@ -34,7 +31,6 @@ impl ExampleConfigBuilder {
         Self {
             bind_address: None,
             peers: vec![],
-            message: None,
         }
     }
 
@@ -46,11 +42,6 @@ impl ExampleConfigBuilder {
 
     pub fn with_peer_address(mut self, peer_address: String) -> Self {
         self.peers.push(peer_address);
-        self
-    }
-
-    pub fn with_message(mut self, message: String) -> Self {
-        self.message.replace(message);
         self
     }
 
@@ -66,7 +57,6 @@ impl ExampleConfigBuilder {
                 .bind_address
                 .unwrap_or_else(|| Multiaddr::from_str(DEFAULT_BIND_ADDRESS).unwrap()),
             peers,
-            message: self.message.unwrap_or_else(|| DEFAULT_MESSAGE.into()),
         }
     }
 }

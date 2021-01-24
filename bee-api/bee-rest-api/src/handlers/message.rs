@@ -21,9 +21,9 @@ pub(crate) async fn message<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get(&message_id).await {
+    match tangle.get(&message_id).await.map(|m| (*m).clone()) {
         Some(message) => Ok(warp::reply::json(&SuccessBody::new(MessageResponse(
-            MessageDto::try_from(&*message).map_err(|e| reject::custom(BadRequest(e)))?,
+            MessageDto::try_from(&message).map_err(|e| reject::custom(BadRequest(e)))?,
         )))),
         None => Err(reject::custom(NotFound("can not find message".to_string()))),
     }

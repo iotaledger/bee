@@ -1,20 +1,24 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{Error as MessageError, MessageId};
+use crate::model::Error as ModelError;
+
+use bee_message::MessageId;
 
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("I/O error {0}")]
-    Io(std::io::Error),
     #[error("")]
-    Message(MessageError),
+    Model(ModelError),
     #[error("Message {0} is missing in the past cone of the milestone")]
     MissingMessage(MessageId),
     #[error("")]
     UnsupportedInputType,
+    #[error("")]
+    UnsupportedOutputType,
+    #[error("")]
+    UnsupportedAddressType,
     #[error("Message was not found")]
     MilestoneMessageNotFound,
     #[error("Message payload was not a milestone")]
@@ -29,14 +33,8 @@ pub enum Error {
     Storage(Box<dyn std::error::Error + Send>),
 }
 
-impl From<std::io::Error> for Error {
-    fn from(error: std::io::Error) -> Self {
-        Error::Io(error)
-    }
-}
-
-impl From<MessageError> for Error {
-    fn from(error: MessageError) -> Self {
-        Error::Message(error)
+impl From<ModelError> for Error {
+    fn from(error: ModelError) -> Self {
+        Error::Model(error)
     }
 }

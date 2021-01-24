@@ -7,67 +7,10 @@ use bee_common::packable::{Packable, Read, Write};
 
 use serde::{Deserialize, Serialize};
 
-use alloc::{boxed::Box, vec::Vec};
-
-pub(crate) const MILESTONE_PAYLOAD_TYPE: u32 = 1;
+use alloc::vec::Vec;
 
 pub const MILESTONE_MERKLE_PROOF_LENGTH: usize = 32;
 pub const MILESTONE_PUBLIC_KEY_LENGTH: usize = 32;
-pub const MILESTONE_SIGNATURE_LENGTH: usize = 64;
-
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct MilestonePayload {
-    essence: MilestonePayloadEssence,
-    // TODO length is 64, change to array when std::array::LengthAtMost32 disappears.
-    signatures: Vec<Box<[u8]>>,
-}
-
-impl MilestonePayload {
-    pub fn new(essence: MilestonePayloadEssence, signatures: Vec<Box<[u8]>>) -> Self {
-        Self { essence, signatures }
-    }
-
-    pub fn essence(&self) -> &MilestonePayloadEssence {
-        &self.essence
-    }
-
-    pub fn signatures(&self) -> &Vec<Box<[u8]>> {
-        &self.signatures
-    }
-}
-
-impl Packable for MilestonePayload {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.essence.packed_len() + 0u8.packed_len() + self.signatures.len() * MILESTONE_SIGNATURE_LENGTH
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.essence.pack(writer)?;
-
-        (self.signatures.len() as u8).pack(writer)?;
-        for signature in &self.signatures {
-            writer.write_all(&signature)?;
-        }
-
-        Ok(())
-    }
-
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let essence = MilestonePayloadEssence::unpack(reader)?;
-
-        let signatures_len = u8::unpack(reader)? as usize;
-        let mut signatures = Vec::with_capacity(signatures_len);
-        for _ in 0..signatures_len {
-            let mut signature = vec![0u8; MILESTONE_SIGNATURE_LENGTH];
-            reader.read_exact(&mut signature)?;
-            signatures.push(signature.into_boxed_slice());
-        }
-
-        Ok(Self { essence, signatures })
-    }
-}
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct MilestonePayloadEssence {

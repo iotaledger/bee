@@ -9,11 +9,12 @@ pub fn rand_metadata() -> MessageMetadata {
     MessageMetadata::new(
         unsafe { Flags::from_bits_unchecked(rand_integer::<u8>()) },
         rand_milestone_index(),
-        rand_integer::<u64>(),
-        rand_integer::<u64>(),
-        rand_integer::<u64>(),
+        rand_integer(),
+        rand_integer(),
+        rand_integer(),
         rand_option(rand_milestone_index()),
         rand_option(rand_milestone_index()),
         rand_option(rand_milestone_index()),
+        rand_integer(),
     )
 }

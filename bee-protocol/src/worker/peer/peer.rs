@@ -20,6 +20,7 @@ use bee_tangle::MsTangle;
 use futures::{channel::oneshot, future::FutureExt};
 use log::{error, info, trace, warn};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::sync::Arc;
 
@@ -71,7 +72,7 @@ impl PeerWorker {
         mut self,
         tangle: ResourceHandle<MsTangle<B>>,
         requested_milestones: ResourceHandle<RequestedMilestones>,
-        receiver: mpsc::UnboundedReceiver<Vec<u8>>,
+        receiver: UnboundedReceiverStream<Vec<u8>>,
         shutdown: oneshot::Receiver<()>,
     ) {
         info!("[{}] Running.", self.peer.address());

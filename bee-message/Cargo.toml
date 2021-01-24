@@ -19,6 +19,7 @@ blake2 = "0.9"
 bytemuck = "1.2"
 digest = "0.9"
 hex = "0.4"
+iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", branch = "dev", features = ["ed25519"] }
 serde = "1.0"
 thiserror = "1.0"
 

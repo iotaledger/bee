@@ -34,7 +34,12 @@ impl From<MilestoneConfirmed> for ConfirmedInfoResponse {
             excluded_ids: val
                 .excluded_no_transaction_messages
                 .into_iter()
-                .chain(val.excluded_conflicting_messages.into_iter())
+                .chain(
+                    val.excluded_conflicting_messages
+                        .into_iter()
+                        .map(|v| v.0)
+                        .collect::<Vec<MessageId>>(),
+                )
                 .collect::<Vec<MessageId>>()
                 .iter()
                 .map(|id| id.to_string())

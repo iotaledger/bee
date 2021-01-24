@@ -6,7 +6,7 @@ mod output_id;
 mod signature_locked_dust_allowance;
 mod signature_locked_single;
 
-pub use address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH};
+pub use address::{Address, Bech32Address, Ed25519Address, ED25519_ADDRESS_LENGTH};
 pub use output_id::{OutputId, OUTPUT_ID_LENGTH};
 pub use signature_locked_dust_allowance::SignatureLockedDustAllowanceOutput;
 pub use signature_locked_single::SignatureLockedSingleOutput;
@@ -73,7 +73,7 @@ impl Packable for Output {
             SIGNATURE_LOCKED_DUST_ALLOWANCE_TYPE => {
                 Self::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput::unpack(reader)?)
             }
-            _ => return Err(Self::Error::InvalidOutputType),
+            t => return Err(Self::Error::InvalidOutputType(t)),
         })
     }
 }

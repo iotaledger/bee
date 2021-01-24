@@ -39,6 +39,8 @@ pub enum Error {
     SubstreamProtocolUpgradeFailed(String),
     #[error("Failed to send an internal event ({}).", .0)]
     InternalEventSendFailure(&'static str),
+    #[error("Failed to forward incoming gossip message ({}).", .0)]
+    ForwardIncomingMessageFailure(&'static str),
     #[error("Failed to write a message to a stream.")]
     MessageSendError,
     #[error("Failed to read a message from a stream.")]

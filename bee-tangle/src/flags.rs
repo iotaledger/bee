@@ -9,11 +9,9 @@ bitflags! {
     #[derive(Default)]
     pub struct Flags: u8 {
         const SOLID = 0b0000_0001;
-        const REQUESTED = 0b0000_0010;
-        const MILESTONE = 0b0000_0100;
-        const CONFIRMED = 0b0000_1000;
-        const CONFLICTING = 0b0001_0000;
-        const VALID = 0b0010_0000;
+        const MILESTONE = 0b0000_0010;
+        const CONFIRMED = 0b0000_0100;
+        const VALID = 0b0000_1000;
     }
 }
 
@@ -24,14 +22,6 @@ impl Flags {
 
     pub fn set_solid(&mut self, is_solid: bool) {
         self.set(Flags::SOLID, is_solid);
-    }
-
-    pub fn is_requested(&self) -> bool {
-        self.contains(Flags::REQUESTED)
-    }
-
-    pub fn set_requested(&mut self, is_requested: bool) {
-        self.set(Flags::REQUESTED, is_requested);
     }
 
     pub fn is_milestone(&self) -> bool {
@@ -48,14 +38,6 @@ impl Flags {
 
     pub fn set_confirmed(&mut self, is_confirmed: bool) {
         self.set(Flags::CONFIRMED, is_confirmed);
-    }
-
-    pub fn is_conflicting(&self) -> bool {
-        self.contains(Flags::CONFLICTING)
-    }
-
-    pub fn set_conflicting(&mut self, is_conflicting: bool) {
-        self.set(Flags::CONFLICTING, is_conflicting);
     }
 
     pub fn is_valid(&self) -> bool {

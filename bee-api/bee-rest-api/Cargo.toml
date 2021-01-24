@@ -30,5 +30,5 @@ log = "0.4"
 num_cpus = "1.13"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "0.2", features = ["fs", "stream", "sync", "time"] }
-warp = "0.2"
+tokio = { version = "1.1", features = [] }
+warp = "0.3"

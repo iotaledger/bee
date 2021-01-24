@@ -8,32 +8,32 @@ mod websocket;
 mod workers;
 
 use crate::{
+    config::NodeConfig,
     plugins::dashboard::{
-        websocket::responses::{
-            confirmed_info, confirmed_milestone_metrics, database_size_metrics, node_status, tip_info,
+        config::DashboardConfig,
+        websocket::{
+            responses::{
+                confirmed_info, milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, tip_info,
+                vertex, WsEvent,
+            },
+            user_connected, WsUsers,
         },
         workers::{
-            confirmed_ms_metrics::{confirmed_ms_metrics_worker, ConfirmedMilestoneMetrics},
-            db_size_metrics::{db_size_metrics_worker, DatabaseSizeMetrics},
-            node_status::{node_status_worker, NodeStatus},
+            confirmed_ms_metrics::confirmed_ms_metrics_worker, db_size_metrics::db_size_metrics_worker,
+            node_status::node_status_worker,
         },
     },
     storage::StorageBackend,
 };
 
-use config::DashboardConfig;
-use websocket::{
-    responses::{milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, vertex, WsEvent},
-    user_connected, WsUsers,
-};
-
 use bee_ledger::event::MilestoneConfirmed;
-use bee_peering::PeeringConfig;
-use bee_protocol::event::{
-    LatestMilestoneChanged, LatestSolidMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded,
-    TipRemoved,
+use bee_protocol::{
+    event::{
+        LatestMilestoneChanged, LatestSolidMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded,
+        TipRemoved,
+    },
+    TangleWorker,
 };
-use bee_rest_api::config::RestApiConfig;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
@@ -42,11 +42,12 @@ use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::{debug, error, info};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::{http::header::HeaderValue, path::FullPath, reply::Response, ws::Message, Filter, Rejection, Reply};
 use warp_reverse_proxy::reverse_proxy_filter;
 
 use std::{
-    any::Any,
+    any::{Any, TypeId},
     convert::Infallible,
     net::{IpAddr, Ipv4Addr, SocketAddr},
 };
@@ -68,7 +69,7 @@ where
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
         debug!("Ws {} topic handler running.", topic);
 
-        let mut receiver = ShutdownStream::new(shutdown, rx);
+        let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
         while let Some(event) = receiver.next().await {
             broadcast(f(event), &users).await;
@@ -90,14 +91,17 @@ impl<N: Node> Worker<N> for Dashboard
 where
     N::Backend: StorageBackend,
 {
-    type Config = (DashboardConfig, RestApiConfig, PeeringConfig);
+    type Config = DashboardConfig;
     type Error = Infallible;
 
+    fn dependencies() -> &'static [TypeId] {
+        vec![TypeId::of::<TangleWorker>()].leak()
+    }
+
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let dashboard_cfg = config.0;
         // TODO: load them differently if possible
-        let rest_api_cfg = config.1;
-        let peering_config = config.2;
+        let node_config = node.resource::<NodeConfig<N::Backend>>();
+        let rest_api_config = node_config.rest_api.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
 
@@ -134,35 +138,17 @@ where
         topic_handler(node, "MilestoneConfirmed", &users, move |event: MilestoneConfirmed| {
             confirmed_info::forward(event)
         });
-        topic_handler(
-            node,
-            "ConfirmedMilestoneMetrics",
-            &users,
-            move |event: ConfirmedMilestoneMetrics| confirmed_milestone_metrics::forward(event),
-        );
-        topic_handler(
-            node,
-            "DatabaseSizeMetrics",
-            &users,
-            move |event: DatabaseSizeMetrics| database_size_metrics::forward(event),
-        );
-
         topic_handler(node, "TipInfo", &users, move |event: TipAdded| {
             tip_info::forward_tip_added(event)
         });
-
         topic_handler(node, "TipInfo", &users, move |event: TipRemoved| {
             tip_info::forward_tip_removed(event)
         });
 
-        topic_handler(node, "NodeStatus", &users, move |event: NodeStatus| {
-            node_status::forward(event)
-        });
-
         // run sub-workers
-        confirmed_ms_metrics_worker(node);
-        db_size_metrics_worker(node);
-        node_status_worker(node, peering_config);
+        confirmed_ms_metrics_worker(node, &users);
+        db_size_metrics_worker(node, &users);
+        node_status_worker(node, &users);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -184,17 +170,17 @@ where
                 .or(warp::path!("api" / ..).and(
                     reverse_proxy_filter(
                         "".to_string(),
-                        "http://".to_owned() + &rest_api_cfg.binding_socket_addr().to_string() + "/",
+                        "http://".to_owned() + &rest_api_config.binding_socket_addr().to_string() + "/",
                     )
                     .map(|res| res),
                 ))
                 .or(warp::path!("explorer" / ..).and_then(serve_index));
 
-            info!("Dashboard available at http://localhost:{}.", dashboard_cfg.port());
+            info!("Dashboard available at http://localhost:{}.", config.port());
 
             let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(
                 // TODO the whole address needs to be a config
-                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), dashboard_cfg.port()),
+                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), config.port()),
                 async {
                     shutdown.await.ok();
                 },

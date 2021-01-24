@@ -9,7 +9,7 @@ use log::error;
 
 const CONFIG_PATH: &str = "./config.toml";
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() {
     let cli = CliArgs::new();
 
@@ -41,6 +41,6 @@ async fn main() {
             }
             Err(e) => error!("Failed to build node: {}", e),
         },
-        Err(e) => error!("Failed to build node builder: {}", e),
+        Err(e) => panic!("Failed to build node builder: {}", e),
     }
 }

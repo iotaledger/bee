@@ -18,7 +18,8 @@ use bee_tangle::MsTangle;
 use async_trait::async_trait;
 use futures::{channel::oneshot, StreamExt};
 use log::{info, trace, warn};
-use tokio::{sync::mpsc, task::spawn};
+use tokio::task::spawn;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible, sync::Arc};
 
@@ -59,24 +60,28 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, config);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(config));
 
             while let Some(event) = receiver.next().await {
                 trace!("Received event {:?}.", event);
 
                 match event {
-                    Event::PeerAdded { id } => {
+                    Event::PeerAdded { id, info: _ } => {
                         info!("Added peer: {}", id.short());
                     }
                     Event::PeerRemoved { id } => {
                         info!("Removed peer: {}", id.short());
                     }
-                    Event::PeerConnected { id, address } => {
+                    Event::PeerConnected {
+                        id,
+                        address,
+                        gossip_in,
+                        gossip_out,
+                    } => {
                         // // TODO check if not already added ?
 
-                        let peer = Arc::new(Peer::new(id, address));
+                        let peer = Arc::new(Peer::new(id, address, gossip_out));
 
-                        let (receiver_tx, receiver_rx) = mpsc::unbounded_channel();
                         let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
                         spawn(
@@ -92,24 +97,17 @@ where
                             .run(
                                 tangle.clone(),
                                 requested_milestones.clone(),
-                                receiver_rx,
+                                gossip_in,
                                 shutdown_rx,
                             ),
                         );
 
-                        peer_manager.add(peer, receiver_tx, shutdown_tx).await;
+                        peer_manager.add(peer, shutdown_tx).await;
                     }
                     Event::PeerDisconnected { id } => {
-                        if let Some((_, (_, _, shutdown))) = peer_manager.remove(&id).await {
+                        if let Some((_, shutdown)) = peer_manager.remove(&id).await {
                             if let Err(e) = shutdown.send(()) {
                                 warn!("Sending shutdown to {} failed: {:?}.", id.short(), e);
-                            }
-                        }
-                    }
-                    Event::MessageReceived { message, from } => {
-                        if let Some(peer) = peer_manager.get(&from) {
-                            if let Err(e) = peer.value().1.send(message) {
-                                warn!("Sending PeerWorkerEvent::Message to {} failed: {}.", from.short(), e);
                             }
                         }
                     }

@@ -19,16 +19,16 @@ use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     MessageId,
 };
-use bee_network::NetworkController;
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{traversal, MsTangle};
 
 use async_trait::async_trait;
 use futures::StreamExt;
-use log::{debug, info, warn};
+use log::{debug, error, info, warn};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, convert::Infallible};
+use std::{any::TypeId, cmp, convert::Infallible};
 
 pub(crate) struct MilestoneSolidifierWorkerEvent(pub MilestoneIndex);
 
@@ -49,11 +49,7 @@ async fn heavy_solidification<B: StorageBackend>(
     traversal::visit_parents_depth_first(
         &**tangle,
         target_id,
-        |id, _, metadata| {
-            (!metadata.flags().is_requested() || *id == target_id)
-                && !metadata.flags().is_solid()
-                && !requested_messages.contains_key(&id)
-        },
+        |id, _, metadata| async move { !metadata.flags().is_solid() && !requested_messages.contains(&id).await },
         |_, _, _| {},
         |_, _, _| {},
         |missing_id| missing.push(*missing_id),
@@ -72,42 +68,12 @@ async fn heavy_solidification<B: StorageBackend>(
     }
 }
 
-async fn light_solidification<B: StorageBackend>(
-    tangle: &MsTangle<B>,
-    message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
-    requested_messages: &RequestedMessages,
-    target_index: MilestoneIndex,
-    target_id: MessageId,
-) {
-    debug!("Light solidification of milestone {}.", *target_index);
-
-    if let Some(message) = tangle.get(&target_id).await {
-        helper::request_message(
-            tangle,
-            message_requester,
-            requested_messages,
-            *message.parent1(),
-            target_index,
-        )
-        .await;
-        helper::request_message(
-            tangle,
-            message_requester,
-            requested_messages,
-            *message.parent2(),
-            target_index,
-        )
-        .await;
-    }
-}
-
-fn solidify<B: StorageBackend>(
+async fn solidify<B: StorageBackend>(
     tangle: &MsTangle<B>,
     ledger_worker: &mpsc::UnboundedSender<LedgerWorkerEvent>,
     milestone_cone_updater: &mpsc::UnboundedSender<MilestoneConeUpdaterWorkerEvent>,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
-    network: &NetworkController,
     bus: &Bus<'static>,
     id: MessageId,
     index: MilestoneIndex,
@@ -129,12 +95,12 @@ fn solidify<B: StorageBackend>(
 
     helper::broadcast_heartbeat(
         &peer_manager,
-        &network,
         &metrics,
         index,
         tangle.get_pruning_index(),
         tangle.get_latest_milestone_index(),
-    );
+    )
+    .await;
 
     bus.dispatch(LatestSolidMilestoneChanged {
         index,
@@ -175,71 +141,78 @@ where
         let requested_milestones = node.resource::<RequestedMilestones>();
         let metrics = node.resource::<ProtocolMetrics>();
         let peer_manager = node.resource::<PeerManager>();
-        let network = node.resource::<NetworkController>();
         let bus = node.bus();
         let ms_sync_count = config;
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            let mut requested = tangle.get_latest_solid_milestone_index() + MilestoneIndex(1);
+            let mut next = tangle.get_latest_solid_milestone_index() + MilestoneIndex(1);
 
             while let Some(MilestoneSolidifierWorkerEvent(index)) = receiver.next().await {
                 let lsmi = tangle.get_latest_solid_milestone_index();
                 let lmi = tangle.get_latest_milestone_index();
 
-                while requested <= lmi && *(requested - lsmi) <= ms_sync_count {
-                    if let Some(id) = tangle.get_milestone_message_id(requested).await {
-                        let heavy = tangle
-                            .get_metadata(&id)
-                            .await
-                            .map(|m| !m.flags().is_requested())
-                            .unwrap_or(false);
-
-                        if heavy {
-                            heavy_solidification(&tangle, &message_requester, &requested_messages, requested, id).await;
-                        } else {
-                            light_solidification(&tangle, &message_requester, &requested_messages, requested, id).await;
-                        }
-                    } else {
-                        helper::request_milestone(
-                            &tangle,
-                            &milestone_requester,
-                            &*requested_milestones,
-                            requested,
-                            None,
-                        )
-                        .await;
-                    }
-                    requested = requested + MilestoneIndex(1);
+                // Request all milestones within a range.
+                while next <= cmp::min(lsmi + MilestoneIndex(ms_sync_count), lmi) {
+                    helper::request_milestone(&tangle, &milestone_requester, &*requested_milestones, next, None).await;
+                    next = next + MilestoneIndex(1);
                 }
 
-                // TODO handle else
-                if let Some(id) = tangle.get_milestone_message_id(index).await {
-                    if tangle.is_solid_message(&id).await {
-                        solidify(
-                            &tangle,
-                            &ledger_worker,
-                            &milestone_cone_updater,
-                            &peer_manager,
-                            &metrics,
-                            &network,
-                            &bus,
-                            id,
-                            index,
-                        );
-                    } else if tangle.is_synced_threshold(2) {
-                        heavy_solidification(&tangle, &message_requester, &requested_messages, index, id).await;
-                    } else if index > lsmi && index <= lsmi + MilestoneIndex(ms_sync_count) {
-                        light_solidification(&tangle, &message_requester, &requested_messages, index, id).await;
+                if index < next {
+                    if let Some(message_id) = tangle.get_milestone_message_id(index).await {
+                        if let Some(message) = tangle.get(&message_id).await {
+                            debug!("Light solidification of milestone {} {}.", index, message_id);
+                            helper::request_message(
+                                &tangle,
+                                &message_requester,
+                                &requested_messages,
+                                *message.parent2(),
+                                index,
+                            )
+                            .await;
+                        } else {
+                            error!("Requested milestone {} message not present in the tangle.", index)
+                        }
+                    } else {
+                        error!("Requested milestone {} message id not present in the tangle.", index)
                     }
+                }
+
+                let mut target = lsmi + MilestoneIndex(1);
+
+                while target <= lmi {
+                    if let Some(id) = tangle.get_milestone_message_id(target).await {
+                        if tangle.is_solid_message(&id).await {
+                            solidify(
+                                &tangle,
+                                &ledger_worker,
+                                &milestone_cone_updater,
+                                &peer_manager,
+                                &metrics,
+                                &bus,
+                                id,
+                                target,
+                            )
+                            .await;
+                        } else {
+                            // TODO Is this actually necessary ?
+                            heavy_solidification(&tangle, &message_requester, &requested_messages, target, id).await;
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                    target = target + MilestoneIndex(1);
                 }
             }
 
             info!("Stopped.");
         });
+
+        let _ = tx.send(MilestoneSolidifierWorkerEvent(MilestoneIndex(0)));
 
         Ok(Self { tx })
     }

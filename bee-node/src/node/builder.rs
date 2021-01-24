@@ -149,8 +149,8 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         }
 
         info!(
-            "Joining network {}({}).",
-            self.config.network_id.0, self.config.network_id.1
+            "Joining network \"{}\"({}). Bech32 hrp \"{}\".",
+            self.config.network_id.0, self.config.network_id.1, self.config.bech32_hrp
         );
 
         let config = self.config.clone();
@@ -183,6 +183,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             config.rest_api.clone(),
             config.protocol.clone(),
             config.network_id.clone(),
+            config.bech32_hrp.clone(),
             this,
         )
         .await;
@@ -191,8 +192,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         this = this.with_worker_cfg::<Mqtt>(config.mqtt);
         #[cfg(feature = "dashboard")]
         {
-            this =
-                this.with_worker_cfg::<Dashboard>((config.dashboard, config.rest_api.clone(), config.peering.clone()));
+            this = this.with_worker_cfg::<Dashboard>(config.dashboard);
         }
 
         let mut node = BeeNode {

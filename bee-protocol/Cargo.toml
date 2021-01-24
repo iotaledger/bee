@@ -12,7 +12,6 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-common_pt2 = { path = "../bee-common/bee-common", package = "bee-common" }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-ledger = { path = "../bee-ledger" }
 bee-message = { path = "../bee-message" }
@@ -23,22 +22,24 @@ bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-tangle = { path = "../bee-tangle" }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
+async-channel = "1.5"
 async-trait = "0.1"
 blake2 = "0.9"
-dashmap = "4.0"
 futures = "0.3"
 futures-util = "0.3"
+fxhash = "0.2"
 hex = "0.4"
 iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", branch = "dev", features = ["ed25519"] }
 log = "0.4"
+num_cpus = "1.13"
 pin-project = "1.0"
-rand = "0.7"
+rand = "0.8"
 serde = { version = "1.0", features = ["derive" ] }
 spin = "0.7"
 thiserror = "1.0"
-tokio = { version = "0.2", features = ["sync", "time"] }
+tokio = { version = "1.1", features = [] }
+tokio-stream = "0.1"
 twox-hash = "1.5"
 
 [dev-dependencies]
-rand = "0.7"
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "1.1", features = ["macros"] }

@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    conflict::ConflictReason,
     error::Error,
     event::{MilestoneConfirmed, NewOutput, NewSpent},
     merkle_hasher::MerkleHasher,
     metadata::WhiteFlagMetadata,
     storage::{self, StorageBackend},
-    white_flag::visit_dfs,
+    white_flag,
 };
 
 use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, payload::Payload, MessageId};
@@ -18,6 +19,7 @@ use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::{error, info};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::convert::Infallible;
 
@@ -40,7 +42,7 @@ where
     let message = tangle.get(&message_id).await.ok_or(Error::MilestoneMessageNotFound)?;
 
     let milestone = match message.payload() {
-        Some(Payload::Milestone(milestone)) => milestone,
+        Some(Payload::Milestone(milestone)) => milestone.clone(),
         _ => return Err(Error::NoMilestonePayload),
     };
 
@@ -48,14 +50,17 @@ where
         return Err(Error::NonContiguousMilestone(milestone.essence().index(), **index));
     }
 
-    let mut metadata = WhiteFlagMetadata::new(
-        MilestoneIndex(milestone.essence().index()),
-        milestone.essence().timestamp(),
-    );
+    let mut metadata = WhiteFlagMetadata::new(MilestoneIndex(milestone.essence().index()));
 
-    if let Err(e) = visit_dfs::<N>(tangle, storage, message_id, &mut metadata).await {
-        return Err(e);
-    };
+    let (parent1, parent2) = (*message.parent1(), *message.parent2());
+
+    drop(message);
+
+    white_flag::traversal::<N>(tangle, storage, vec![parent1, parent2], &mut metadata).await?;
+
+    // Account for the milestone itself.
+    metadata.num_referenced_messages += 1;
+    metadata.excluded_no_transaction_messages.push(message_id);
 
     let merkle_proof = MerkleHasher::new().digest(&metadata.included_messages);
 
@@ -79,15 +84,46 @@ where
         ));
     }
 
-    storage::apply_diff(
+    storage::apply_outputs_diff(
         &*storage,
         metadata.index,
-        &metadata.spent_outputs,
         &metadata.created_outputs,
+        &metadata.consumed_outputs,
+        Some(&metadata.balance_diff),
     )
     .await?;
 
     *index = LedgerIndex(MilestoneIndex(milestone.essence().index()));
+
+    for message_id in metadata.excluded_no_transaction_messages.iter() {
+        tangle
+            .update_metadata(message_id, |message_metadata| {
+                message_metadata.set_conflict(ConflictReason::None as u8);
+                message_metadata.set_milestone_index(metadata.index);
+                message_metadata.confirm(milestone.essence().timestamp());
+            })
+            .await;
+    }
+
+    for (message_id, conflict) in metadata.excluded_conflicting_messages.iter() {
+        tangle
+            .update_metadata(message_id, |message_metadata| {
+                message_metadata.set_conflict(*conflict as u8);
+                message_metadata.set_milestone_index(metadata.index);
+                message_metadata.confirm(milestone.essence().timestamp());
+            })
+            .await;
+    }
+
+    for message_id in metadata.included_messages.iter() {
+        tangle
+            .update_metadata(message_id, |message_metadata| {
+                message_metadata.set_conflict(ConflictReason::None as u8);
+                message_metadata.set_milestone_index(metadata.index);
+                message_metadata.confirm(milestone.essence().timestamp());
+            })
+            .await;
+    }
 
     info!(
         "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}.",
@@ -106,16 +142,16 @@ where
         excluded_no_transaction_messages: metadata.excluded_no_transaction_messages,
         excluded_conflicting_messages: metadata.excluded_conflicting_messages,
         included_messages: metadata.included_messages,
-        spent_outputs: metadata.spent_outputs.len(),
         created_outputs: metadata.created_outputs.len(),
+        consumed_outputs: metadata.consumed_outputs.len(),
     });
-
-    for (_, spent) in metadata.spent_outputs {
-        bus.dispatch(NewSpent(spent));
-    }
 
     for (_, output) in metadata.created_outputs {
         bus.dispatch(NewOutput(output));
+    }
+
+    for (_, spent) in metadata.consumed_outputs {
+        bus.dispatch(NewSpent(spent));
     }
 
     Ok(())
@@ -150,7 +186,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
             // Unwrap is fine because we just inserted the ledger index.
             // TODO unwrap
             let mut index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();

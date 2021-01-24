@@ -27,7 +27,7 @@ pub use config::{NetworkConfig, NetworkConfigBuilder};
 pub use conns::Origin;
 pub use interaction::{commands::Command, events::Event};
 pub use network::NetworkController;
-pub use peers::PeerRelation;
+pub use peers::{MessageReceiver, MessageSender, PeerInfo, PeerRelation};
 
 /// A type that receives any event published by the networking layer.
 pub type NetworkListener = UnboundedReceiver<Event>;
@@ -95,6 +95,7 @@ pub async fn init<N: Node>(
         banned_peers,
         internal_event_sender,
     )
+    .await
     .unwrap_or_else(|e| {
         panic!("Fatal error: {}", e);
     });

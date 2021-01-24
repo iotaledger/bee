@@ -1,7 +1,14 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{plugins::Dashboard, storage::StorageBackend};
+use crate::{
+    plugins::dashboard::{
+        broadcast,
+        websocket::{responses::confirmed_milestone_metrics, WsUsers},
+        Dashboard,
+    },
+    storage::StorageBackend,
+};
 
 use bee_ledger::event::MilestoneConfirmed;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
@@ -10,28 +17,27 @@ use bee_protocol::ProtocolMetrics;
 use futures::StreamExt;
 use log::{debug, error, warn};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
-pub(crate) fn confirmed_ms_metrics_worker<N>(node: &mut N)
+pub(crate) fn confirmed_ms_metrics_worker<N>(node: &mut N, users: &WsUsers)
 where
     N: Node,
     N::Backend: StorageBackend,
 {
     let metrics = node.resource::<ProtocolMetrics>();
     let bus = node.bus();
-    let (tx, rx) = mpsc::unbounded_channel();
+    let users = users.clone();
+    let (tx, rx) = mpsc::unbounded_channel::<MilestoneConfirmed>();
 
-    let bus_clone = bus.clone();
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
-        debug!("Ws `confirmed_ms_metrics_worker` running.");
+        debug!("Ws ConfirmedMilestoneMetrics topic handler running.");
 
-        let mut receiver = ShutdownStream::new(shutdown, rx);
+        let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
         let mut prev_event: Option<MilestoneConfirmed> = None;
         let mut prev_new_message_count = 0;
 
         while let Some(event) = receiver.next().await {
-            let event: MilestoneConfirmed = event;
-
             if prev_event.is_some() {
 
                 // unwrap is safe since of the condition above
@@ -48,13 +54,14 @@ where
 
                 // to avoid division by zero in case two milestones do have the same timestamp
                 if time_diff > 0 {
-                    bus_clone.dispatch(ConfirmedMilestoneMetrics {
+                    let metrics = ConfirmedMilestoneMetrics {
                         ms_index: *event.index,
                         mps: new_msg_diff / time_diff,
                         cmps: event.referenced_messages as u64 / time_diff,
                         referenced_rate,
                         time_since_last_ms: time_diff,
-                    });
+                    };
+                    broadcast(confirmed_milestone_metrics::forward(metrics), &users).await;
                 }  else {
                     error!("Can not calculate milestone confirmation metrics since the time difference between milestone {} and milestone {} is zero.", *event.index - 1, *event.index)
                 }
@@ -65,7 +72,7 @@ where
 
         }
 
-        debug!("Ws `confirmed_ms_metrics_worker` stopped.");
+        debug!("Ws ConfirmedMilestoneMetrics topic handler stopped.");
     });
 
     bus.add_listener::<Dashboard, _, _>(move |event: &MilestoneConfirmed| {

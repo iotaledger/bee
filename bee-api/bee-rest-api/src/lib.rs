@@ -1,6 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod constants;
 mod filters;
 
 pub mod config;
@@ -29,17 +30,19 @@ use warp::{http::StatusCode, Filter, Rejection, Reply};
 use std::{any::TypeId, convert::Infallible};
 
 pub(crate) type NetworkId = (String, u64);
+pub(crate) type Bech32Hrp = String;
 
 pub async fn init<N: Node>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
     network_id: NetworkId,
+    bech32_hrp: Bech32Hrp,
     node_builder: N::Builder,
 ) -> N::Builder
 where
     N::Backend: StorageBackend,
 {
-    node_builder.with_worker_cfg::<ApiWorker>((rest_api_config, protocol_config, network_id))
+    node_builder.with_worker_cfg::<ApiWorker>((rest_api_config, protocol_config, network_id, bech32_hrp))
 }
 
 pub struct ApiWorker;
@@ -48,7 +51,7 @@ impl<N: Node> Worker<N> for ApiWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = (RestApiConfig, ProtocolConfig, NetworkId);
+    type Config = (RestApiConfig, ProtocolConfig, NetworkId, Bech32Hrp);
     type Error = WorkerError;
 
     fn dependencies() -> &'static [TypeId] {
@@ -59,6 +62,7 @@ where
         let rest_api_config = config.0;
         let protocol_config = config.1;
         let network_id = config.2;
+        let bech32_hrp = config.3;
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
@@ -72,6 +76,7 @@ where
                 storage,
                 message_submitter,
                 network_id,
+                bech32_hrp,
                 rest_api_config.clone(),
                 protocol_config,
             )

@@ -5,7 +5,7 @@ use crate::{
     config::ProtocolConfig,
     event::LatestMilestoneChanged,
     helper,
-    milestone::key_manager::KeyManager,
+    key_manager::KeyManager,
     peer::PeerManager,
     storage::StorageBackend,
     worker::{
@@ -15,26 +15,21 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_common::packable::Packable;
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
-    payload::Payload,
+    payload::{milestone::MilestoneValidationError, Payload},
     MessageId,
 };
-use bee_network::NetworkController;
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
 use async_trait::async_trait;
-use crypto::ed25519::{verify, PublicKey, Signature};
-use futures::stream::StreamExt;
+use futures::{future::FutureExt, stream::StreamExt};
 use log::{debug, error, info};
 use tokio::sync::mpsc;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{
-    any::TypeId,
-    convert::{Infallible, TryInto},
-};
+use std::{any::TypeId, convert::Infallible};
 
 #[derive(Debug)]
 pub(crate) enum Error {
@@ -42,12 +37,7 @@ pub(crate) enum Error {
     NoMilestonePayload,
     Parent1Mismatch(MessageId, MessageId),
     Parent2Mismatch(MessageId, MessageId),
-    InvalidMinThreshold(usize),
-    TooFewSignatures(usize, usize),
-    SignaturesPublicKeysCountMismatch(usize, usize),
-    InsufficientApplicablePublicKeys(usize, usize),
-    UnapplicablePublicKey(String),
-    InvalidSignature(usize, String),
+    InvalidMilestone(MilestoneValidationError),
 }
 
 #[derive(Debug)]
@@ -57,14 +47,11 @@ pub(crate) struct MilestonePayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<MilestonePayloadWorkerEvent>,
 }
 
-async fn validate<N: Node>(
-    tangle: &MsTangle<N::Backend>,
+async fn validate<B: StorageBackend>(
+    tangle: &MsTangle<B>,
     key_manager: &KeyManager,
     message_id: MessageId,
-) -> Result<(MilestoneIndex, Milestone), Error>
-where
-    N::Backend: StorageBackend,
-{
+) -> Result<(MilestoneIndex, Milestone), Error> {
     let message = tangle.get(&message_id).await.ok_or(Error::UnknownMessage)?;
 
     match message.payload() {
@@ -81,49 +68,16 @@ where
                     *milestone.essence().parent2(),
                 ));
             }
-            if key_manager.min_threshold() == 0 {
-                return Err(Error::InvalidMinThreshold(0));
-            }
-            if milestone.signatures().is_empty() || milestone.signatures().len() < key_manager.min_threshold() {
-                return Err(Error::TooFewSignatures(
+
+            milestone
+                .validate(
+                    &key_manager
+                        .get_public_keys(milestone.essence().index().into())
+                        .into_iter()
+                        .collect::<Vec<String>>(),
                     key_manager.min_threshold(),
-                    milestone.signatures().len(),
-                ));
-            }
-            if milestone.signatures().len() != milestone.essence().public_keys().len() {
-                return Err(Error::SignaturesPublicKeysCountMismatch(
-                    milestone.signatures().len(),
-                    milestone.essence().public_keys().len(),
-                ));
-            }
-
-            let public_keys = key_manager.get_public_keys(milestone.essence().index().into());
-
-            if public_keys.len() < key_manager.min_threshold() {
-                return Err(Error::InsufficientApplicablePublicKeys(
-                    key_manager.min_threshold(),
-                    public_keys.len(),
-                ));
-            }
-
-            let essence_bytes = milestone.essence().pack_new();
-
-            for (index, public_key) in milestone.essence().public_keys().iter().enumerate() {
-                // TODO use concrete ED25 types ?
-                if !public_keys.contains(&hex::encode(public_key)) {
-                    return Err(Error::UnapplicablePublicKey(hex::encode(public_key)));
-                }
-
-                // TODO unwrap
-                let ed25519_public_key = PublicKey::from_compressed_bytes(*public_key).unwrap();
-                // TODO unwrap
-                let ed25519_signature =
-                    Signature::from_bytes(milestone.signatures()[index].as_ref().try_into().unwrap());
-
-                if !verify(&ed25519_public_key, &ed25519_signature, &essence_bytes) {
-                    return Err(Error::InvalidSignature(index, hex::encode(public_key)));
-                }
-            }
+                )
+                .map_err(|e| Error::InvalidMilestone(e))?;
 
             Ok((
                 MilestoneIndex(milestone.essence().index()),
@@ -131,6 +85,58 @@ where
             ))
         }
         _ => Err(Error::NoMilestonePayload),
+    }
+}
+
+async fn process<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    message_id: MessageId,
+    peer_manager: &PeerManager,
+    metrics: &ProtocolMetrics,
+    requested_milestones: &RequestedMilestones,
+    milestone_solidifier: &mpsc::UnboundedSender<MilestoneSolidifierWorkerEvent>,
+    key_manager: &KeyManager,
+    bus: &Bus<'static>,
+) {
+    metrics.milestone_payload_inc(1);
+
+    if let Some(meta) = tangle.get_metadata(&message_id).await {
+        if meta.flags().is_milestone() {
+            return;
+        }
+    }
+
+    match validate(&tangle, &key_manager, message_id).await {
+        Ok((index, milestone)) => {
+            tangle.add_milestone(index, milestone.clone()).await;
+            if index > tangle.get_latest_milestone_index() {
+                info!("New milestone {} {}.", *index, milestone.message_id());
+                tangle.update_latest_milestone_index(index);
+
+                helper::broadcast_heartbeat(
+                    &peer_manager,
+                    &metrics,
+                    tangle.get_latest_solid_milestone_index(),
+                    tangle.get_pruning_index(),
+                    index,
+                )
+                .await;
+
+                bus.dispatch(LatestMilestoneChanged {
+                    index,
+                    milestone: milestone.clone(),
+                });
+            } else {
+                debug!("New milestone {} {}.", *index, milestone.message_id());
+            }
+
+            requested_milestones.remove(&index).await;
+
+            if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
+                error!("Sending solidification event failed: {}.", e);
+            }
+        }
+        Err(e) => debug!("Invalid milestone message: {:?}.", e),
     }
 }
 
@@ -160,7 +166,6 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let peer_manager = node.resource::<PeerManager>();
-        let network = node.resource::<NetworkController>();
         let metrics = node.resource::<ProtocolMetrics>();
         let key_manager = KeyManager::new(
             config.coordinator.public_key_count,
@@ -171,51 +176,44 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, rx);
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(MilestonePayloadWorkerEvent(message_id)) = receiver.next().await {
-                if let Some(meta) = tangle.get_metadata(&message_id).await {
-                    if meta.flags().is_milestone() {
-                        continue;
-                    }
-                    match validate::<N>(&tangle, &key_manager, message_id).await {
-                        Ok((index, milestone)) => {
-                            tangle.add_milestone(index, milestone.clone()).await;
-                            if index > tangle.get_latest_milestone_index() {
-                                info!("New milestone {} {}.", *index, milestone.message_id());
-                                tangle.update_latest_milestone_index(index);
-
-                                helper::broadcast_heartbeat(
-                                    &peer_manager,
-                                    &network,
-                                    &metrics,
-                                    tangle.get_latest_solid_milestone_index(),
-                                    tangle.get_pruning_index(),
-                                    index,
-                                );
-
-                                bus.dispatch(LatestMilestoneChanged {
-                                    index,
-                                    milestone: milestone.clone(),
-                                });
-                            }
-
-                            if requested_milestones.remove(&index).is_some() {
-                                tangle
-                                    .update_metadata(milestone.message_id(), |meta| {
-                                        meta.flags_mut().set_requested(true)
-                                    })
-                                    .await;
-                            }
-
-                            if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
-                                error!("Sending solidification event failed: {}.", e);
-                            }
-                        }
-                        Err(e) => debug!("Invalid milestone message: {:?}.", e),
-                    }
-                }
+                process(
+                    &tangle,
+                    message_id,
+                    &peer_manager,
+                    &metrics,
+                    &requested_milestones,
+                    &milestone_solidifier,
+                    &key_manager,
+                    &bus,
+                )
+                .await;
             }
+
+            // Before the worker completely stops, the receiver needs to be drained for milestone payloads to be
+            // analysed. Otherwise, information would be lost and not easily recoverable.
+
+            let (_, mut receiver) = receiver.split();
+            let mut count: usize = 0;
+
+            while let Some(Some(MilestonePayloadWorkerEvent(message_id))) = receiver.next().now_or_never() {
+                process(
+                    &tangle,
+                    message_id,
+                    &peer_manager,
+                    &metrics,
+                    &requested_milestones,
+                    &milestone_solidifier,
+                    &key_manager,
+                    &bus,
+                )
+                .await;
+                count += 1;
+            }
+
+            debug!("Drained {} messages.", count);
 
             info!("Stopped.");
         });

@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::{NotFound, ServiceUnavailable},
+    filters::CustomRejection::NotFound,
     handlers::{BodyInner, SuccessBody},
     storage::StorageBackend,
 };
 
+use bee_ledger::conflict::ConflictReason;
 use bee_message::prelude::*;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
@@ -18,10 +19,8 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    if !tangle.is_synced() {
-        return Err(reject::custom(ServiceUnavailable("node is not synced".to_string())));
-    }
-    match tangle.get(&message_id).await {
+    // TODO: response only when the node is synced
+    match tangle.get(&message_id).await.map(|m| (*m).clone()) {
         Some(message) => {
             // existing message <=> existing metadata, therefore unwrap() is safe
             let metadata = tangle.get_metadata(&message_id).await.unwrap();
@@ -34,6 +33,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
             let (
                 is_solid,
                 referenced_by_milestone_index,
+                milestone_index,
                 ledger_inclusion_state,
                 conflict_reason,
                 should_promote,
@@ -41,6 +41,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
             ) = {
                 let is_solid;
                 let referenced_by_milestone_index;
+                let milestone_index;
                 let ledger_inclusion_state;
                 let conflict_reason;
                 let should_promote;
@@ -50,10 +51,16 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     // message is referenced by a milestone
                     is_solid = true;
                     referenced_by_milestone_index = Some(*milestone);
+
+                    if metadata.flags().is_milestone() {
+                        milestone_index = Some(*milestone);
+                    } else {
+                        milestone_index = None;
+                    }
+
                     ledger_inclusion_state = Some(if let Some(Payload::Transaction(_)) = message.payload() {
-                        if metadata.flags().is_conflicting() {
-                            // use conflict reason 0 as default for now, till the actual conflict reason is available
-                            conflict_reason = Some(0);
+                        if metadata.conflict() != ConflictReason::None as u8 {
+                            conflict_reason = Some(metadata.conflict());
                             LedgerInclusionStateDto::Conflicting
                         } else {
                             conflict_reason = None;
@@ -73,6 +80,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     // message is not referenced by a milestone but solid
                     is_solid = true;
                     referenced_by_milestone_index = None;
+                    milestone_index = None;
                     ledger_inclusion_state = None;
                     conflict_reason = None;
 
@@ -92,6 +100,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     // the message is not referenced by a milestone and not solid
                     is_solid = false;
                     referenced_by_milestone_index = None;
+                    milestone_index = None;
                     ledger_inclusion_state = None;
                     conflict_reason = None;
                     should_reattach = Some(true);
@@ -101,6 +110,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                 (
                     is_solid,
                     referenced_by_milestone_index,
+                    milestone_index,
                     ledger_inclusion_state,
                     conflict_reason,
                     should_reattach,
@@ -114,6 +124,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                 parent_2_message_id: message.parent2().to_string(),
                 is_solid,
                 referenced_by_milestone_index,
+                milestone_index,
                 ledger_inclusion_state,
                 conflict_reason,
                 should_promote,
@@ -139,6 +150,9 @@ pub struct MessageMetadataResponse {
     #[serde(rename = "referencedByMilestoneIndex")]
     pub referenced_by_milestone_index: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "milestoneIndex")]
+    pub milestone_index: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "ledgerInclusionState")]
     pub ledger_inclusion_state: Option<LedgerInclusionStateDto>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -153,10 +167,12 @@ pub struct MessageMetadataResponse {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(untagged)]
 pub enum LedgerInclusionStateDto {
+    #[serde(rename = "conflicting")]
     Conflicting,
+    #[serde(rename = "included")]
     Included,
+    #[serde(rename = "noTransaction")]
     NoTransaction,
 }
 

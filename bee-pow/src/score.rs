@@ -1,12 +1,11 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::b1t6;
 use bee_crypto::ternary::{
     sponge::{CurlP81, Sponge},
     HASH_LENGTH,
 };
-use bee_ternary::{Btrit, T1B1Buf, TritBuf, Trits, T1B1};
+use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf, Trits, T1B1};
 
 use blake2::{
     digest::{Update, VariableOutput},
@@ -24,8 +23,14 @@ pub fn pow_hash(bytes: &[u8]) -> TritBuf<T1B1Buf> {
     let mut pow_input = TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH);
 
     blake.update(&bytes[..length]);
-    blake.finalize_variable_reset(|pow_digest| b1t6::encode(&pow_digest).iter().for_each(|t| pow_input.push(t)));
-    b1t6::encode(&bytes[length..]).iter().for_each(|t| pow_input.push(t));
+    blake.finalize_variable_reset(|pow_digest| {
+        b1t6::encode::<T1B1Buf>(&pow_digest)
+            .iter()
+            .for_each(|t| pow_input.push(t))
+    });
+    b1t6::encode::<T1B1Buf>(&bytes[length..])
+        .iter()
+        .for_each(|t| pow_input.push(t));
     pow_input.push(Btrit::Zero);
     pow_input.push(Btrit::Zero);
     pow_input.push(Btrit::Zero);

@@ -48,13 +48,6 @@ pub enum Command {
         /// The peer's address.
         address: Multiaddr,
     },
-    /// Sends a message to a peer.
-    SendMessage {
-        /// The message to be sent.
-        message: Vec<u8>,
-        /// The receiver's id.
-        to: PeerId,
-    },
     /// Bans a peer.
     BanPeer {
         /// The peer's id.

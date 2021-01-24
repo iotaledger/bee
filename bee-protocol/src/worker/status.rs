@@ -13,6 +13,7 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use log::info;
 use tokio::time::interval;
+use tokio_stream::wrappers::IntervalStream;
 
 use std::{any::TypeId, convert::Infallible, time::Duration};
 
@@ -38,7 +39,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut ticker = ShutdownStream::new(shutdown, interval(Duration::from_secs(config)));
+            let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(Duration::from_secs(config))));
 
             while ticker.next().await.is_some() {
                 let snapshot_index = *tangle.get_snapshot_index();
@@ -58,7 +59,7 @@ where
                         latest_solid_milestone_index,
                         latest_milestone_index,
                         progress,
-                        requested_messages.len(),
+                        requested_messages.len().await,
                     )
                 };
 

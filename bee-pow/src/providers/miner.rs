@@ -3,12 +3,11 @@
 
 use crate::providers::{Provider, ProviderBuilder};
 
-use bee_common::b1t6;
 use bee_crypto::ternary::{
     sponge::{BatchHasher, CurlPRounds, BATCH_SIZE},
     HASH_LENGTH,
 };
-use bee_ternary::{Btrit, T1B1Buf, TritBuf};
+use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf};
 
 use blake2::{
     digest::{Update, VariableOutput},
@@ -83,7 +82,7 @@ impl Miner {
 
         while !done.load(Ordering::Relaxed) {
             for (i, buffer) in buffers.iter_mut().enumerate().take(BATCH_SIZE) {
-                let nonce_trits = b1t6::encode(&(nonce + i as u64).to_le_bytes());
+                let nonce_trits = b1t6::encode::<T1B1Buf>(&(nonce + i as u64).to_le_bytes());
                 buffer[pow_digest.len()..pow_digest.len() + nonce_trits.len()].copy_from(&nonce_trits);
                 hasher.add(buffer.clone());
             }
@@ -114,7 +113,7 @@ impl Provider for Miner {
         let mut pow_digest = TritBuf::<T1B1Buf>::new();
 
         blake.update(&bytes);
-        blake.finalize_variable_reset(|hash| b1t6::encode(&hash).iter().for_each(|t| pow_digest.push(t)));
+        blake.finalize_variable_reset(|hash| b1t6::encode::<T1B1Buf>(&hash).iter().for_each(|t| pow_digest.push(t)));
 
         let target_zeros =
             (((bytes.len() + std::mem::size_of::<u64>()) as f64 * target_score).ln() / LN_3).ceil() as usize;

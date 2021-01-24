@@ -27,10 +27,11 @@ futures = "0.3"
 hex = "0.4"
 log = "0.4"
 thiserror = "1.0"
-tokio = { version = "0.2", features = ["time", "io-util", "stream"] }
+tokio = { version = "1.1", features = ["sync"] }
+tokio-stream = "0.1"
 
 [dev-dependencies]
 bee-test = { path = "../bee-test" }
 
 hex = "0.4"
-rand = "0.7"
+rand = "0.8"

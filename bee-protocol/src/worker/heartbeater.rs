@@ -9,7 +9,6 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_network::NetworkController;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::MsTangle;
 
@@ -17,6 +16,7 @@ use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::info;
 use tokio::time::interval;
+use tokio_stream::wrappers::IntervalStream;
 
 use std::{any::TypeId, convert::Infallible, time::Duration};
 
@@ -46,26 +46,27 @@ where
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let network = node.resource::<NetworkController>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<ProtocolMetrics>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut ticker =
-                ShutdownStream::new(shutdown, interval(Duration::from_secs(CHECK_HEARTBEATS_INTERVAL_SEC)));
+            let mut ticker = ShutdownStream::new(
+                shutdown,
+                IntervalStream::new(interval(Duration::from_secs(CHECK_HEARTBEATS_INTERVAL_SEC))),
+            );
 
             while ticker.next().await.is_some() {
                 // TODO real impl
                 helper::broadcast_heartbeat(
                     &peer_manager,
-                    &network,
                     &metrics,
                     tangle.get_latest_solid_milestone_index(),
                     tangle.get_pruning_index(),
                     tangle.get_latest_milestone_index(),
-                );
+                )
+                .await;
             }
 
             info!("Stopped.");
