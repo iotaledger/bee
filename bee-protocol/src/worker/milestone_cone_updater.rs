@@ -77,18 +77,19 @@ where
 }
 
 async fn process<B: StorageBackend>(tangle: &MsTangle<B>, index: MilestoneIndex, milestone: Milestone) {
-    // When a new milestone gets solid, OTRSI and YTRSI of all messages that belong to the given cone
-    // must be updated. Furthermore, updated values will be propagated to the future.
-    update_messages_referenced_by_milestone(tangle, *milestone.message_id(), index).await;
+    // sets cone_index + updates OTRSI/YTRSI  for every message that belongs to the milestone cone
+    let confirmed_messages = update_past_cone(tangle, *milestone.message_id(), index).await;
+    // propagates the updated OTRSI/YTRSI values to the future cones
+    update_future_cones(tangle, confirmed_messages.into_iter().collect()).await;
     // Update tip pool after all values got updated.
     tangle.update_tip_scores().await;
 }
 
-async fn update_messages_referenced_by_milestone<B: StorageBackend>(
+async fn update_past_cone<B: StorageBackend>(
     tangle: &MsTangle<B>,
     message_id: MessageId,
     milestone_index: MilestoneIndex,
-) {
+) -> HashSet<MessageId> {
     let mut to_visit = vec![message_id];
     let mut visited = HashSet::new();
 
@@ -118,67 +119,78 @@ async fn update_messages_referenced_by_milestone<B: StorageBackend>(
                 })
                 .await;
 
-            if let Some(children) = tangle.get_children(&message_id).await {
-                for child in children {
-                    update_future_cone(tangle, child).await;
-                }
-            }
-
             to_visit.push(parent1);
             to_visit.push(parent2);
         }
     }
+
+    visited
 }
 
-async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, child: MessageId) {
-    let mut children = vec![child];
+async fn update_future_cones<B: StorageBackend>(tangle: &MsTangle<B>, mut confirmed_messages: Vec<MessageId>) {
+    let mut children_visited = HashSet::new();
 
-    while let Some(message_id) = children.pop() {
-        // maybe the check below is not necessary; all children from the most recent cone should be present
-        if let Some((parent1, parent2)) = tangle.get(&message_id).await.map(|m| (*m.parent1(), *m.parent2())) {
-            // skip in case the message already got processed by update_messages_referenced_by_milestone()
-            // unwrap() is safe since message is present and so is the metadata
-            if tangle.get_metadata(&message_id).await.unwrap().cone_index().is_some() {
-                continue;
-            }
+    while let Some(confirmed_message) = confirmed_messages.pop() {
+        if let Some(children) = tangle.get_children(&confirmed_message).await {
+            let mut children_to_visit: Vec<MessageId> = children.into_iter().collect();
 
-            // get best OTRSI/YTRSI values from parents
-            let parent1_otsri = tangle.otrsi(&parent1).await;
-            let parent2_otsri = tangle.otrsi(&parent2).await;
-            let parent1_ytrsi = tangle.ytrsi(&parent1).await;
-            let parent2_ytrsi = tangle.ytrsi(&parent2).await;
-
-            if parent1_otsri.is_none() || parent2_otsri.is_none() || parent1_ytrsi.is_none() || parent2_ytrsi.is_none()
-            {
-                continue;
-            }
-
-            // unwrap() is safe since None values are filtered above
-            let new_otrsi = min(parent1_otsri.unwrap(), parent2_otsri.unwrap());
-            let new_ytrsi = max(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
-
-            // in case the messages already inherited the best OTRSI/YTRSI values, continue
-            let current_otrsi = tangle.otrsi(&message_id).await;
-            let current_ytrsi = tangle.ytrsi(&message_id).await;
-
-            if let (Some(otrsi), Some(ytrsi)) = (current_otrsi, current_ytrsi) {
-                if otrsi == new_otrsi && ytrsi == new_ytrsi {
+            while let Some(message_id) = children_to_visit.pop() {
+                if children_visited.contains(&message_id) {
                     continue;
+                } else {
+                    children_visited.insert(message_id);
                 }
-            }
 
-            // update outdated OTRSI/YTRSI values
-            tangle
-                .update_metadata(&message_id, |metadata| {
-                    metadata.set_otrsi(new_otrsi);
-                    metadata.set_ytrsi(new_ytrsi);
-                })
-                .await;
+                // maybe the check below is not necessary; all children from the most recent cone should be present
+                if let Some((parent1, parent2)) = tangle.get(&message_id).await.map(|m| (*m.parent1(), *m.parent2())) {
+                    // skip in case the message already got processed by update_past_cone()
+                    // unwrap() is safe since message is present and so is the metadata
+                    if tangle.get_metadata(&message_id).await.unwrap().cone_index().is_some() {
+                        continue;
+                    }
 
-            // propagate to children
-            if let Some(msg_children) = tangle.get_children(&message_id).await {
-                for child in msg_children {
-                    children.push(child);
+                    // get the OTRSI/YTRSI values from parents
+                    let parent1_otsri = tangle.otrsi(&parent1).await;
+                    let parent2_otsri = tangle.otrsi(&parent2).await;
+                    let parent1_ytrsi = tangle.ytrsi(&parent1).await;
+                    let parent2_ytrsi = tangle.ytrsi(&parent2).await;
+
+                    if parent1_otsri.is_none()
+                        || parent2_otsri.is_none()
+                        || parent1_ytrsi.is_none()
+                        || parent2_ytrsi.is_none()
+                    {
+                        continue;
+                    }
+
+                    // unwrap() is safe since None values are filtered above
+                    let new_otrsi = min(parent1_otsri.unwrap(), parent2_otsri.unwrap());
+                    let new_ytrsi = max(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
+
+                    // in case the messages already inherited the best OTRSI/YTRSI values, continue
+                    let current_otrsi = tangle.otrsi(&message_id).await;
+                    let current_ytrsi = tangle.ytrsi(&message_id).await;
+
+                    if let (Some(otrsi), Some(ytrsi)) = (current_otrsi, current_ytrsi) {
+                        if otrsi == new_otrsi && ytrsi == new_ytrsi {
+                            continue;
+                        }
+                    }
+
+                    // update outdated OTRSI/YTRSI values
+                    tangle
+                        .update_metadata(&message_id, |metadata| {
+                            metadata.set_otrsi(new_otrsi);
+                            metadata.set_ytrsi(new_ytrsi);
+                        })
+                        .await;
+
+                    // propagate to children
+                    if let Some(msg_children) = tangle.get_children(&message_id).await {
+                        for child in msg_children {
+                            children_to_visit.push(child);
+                        }
+                    }
                 }
             }
         }
