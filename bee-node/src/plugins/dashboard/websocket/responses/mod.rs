@@ -3,17 +3,15 @@
 
 use crate::plugins::dashboard::websocket::{
     responses::{
-        milestone::MilestoneResponse, milestone_info::MilestoneInfoResponse,
-        mps_metrics_updated::MpsMetricsUpdatedResponse, solid_info::SolidInfoResponse, sync_status::SyncStatusResponse,
-        vertex::VertexResponse,
+        confirmed_info::ConfirmedInfoResponse, confirmed_milestone_metrics::ConfirmedMilestoneMetricsResponse,
+        database_size_metrics::DatabaseSizeMetricsResponse, milestone::MilestoneResponse,
+        milestone_info::MilestoneInfoResponse, mps_metrics_updated::MpsMetricsUpdatedResponse,
+        node_status::NodeStatusResponse, peer_metric::PeerMetricResponse, solid_info::SolidInfoResponse,
+        sync_status::SyncStatusResponse, tip_info::TipInfoResponse, vertex::VertexResponse,
     },
     topics::WsTopic,
 };
 
-use crate::plugins::dashboard::websocket::responses::{
-    confirmed_info::ConfirmedInfoResponse, confirmed_milestone_metrics::ConfirmedMilestoneMetricsResponse,
-    database_size_metrics::DatabaseSizeMetricsResponse, node_status::NodeStatusResponse, tip_info::TipInfoResponse,
-};
 use serde::Serialize;
 
 pub(crate) mod confirmed_info;
@@ -23,6 +21,7 @@ pub(crate) mod milestone;
 pub(crate) mod milestone_info;
 pub(crate) mod mps_metrics_updated;
 pub(crate) mod node_status;
+pub(crate) mod peer_metric;
 pub(crate) mod solid_info;
 pub(crate) mod sync_status;
 pub(crate) mod tip_info;
@@ -56,4 +55,5 @@ pub(crate) enum WsEventInner {
     DatabaseSizeMetrics(DatabaseSizeMetricsResponse),
     TipInfo(TipInfoResponse),
     NodeStatus(NodeStatusResponse),
+    PeerMetric(PeerMetricResponse),
 }

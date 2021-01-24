@@ -46,6 +46,7 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::{http::header::HeaderValue, path::FullPath, reply::Response, ws::Message, Filter, Rejection, Reply};
 use warp_reverse_proxy::reverse_proxy_filter;
 
+use crate::plugins::dashboard::workers::peer_metric::peer_metric_worker;
 use std::{
     any::{Any, TypeId},
     convert::Infallible,
@@ -149,6 +150,7 @@ where
         confirmed_ms_metrics_worker(node, &users);
         db_size_metrics_worker(node, &users);
         node_status_worker(node, &users);
+        peer_metric_worker(node, &users);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
