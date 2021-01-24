@@ -60,8 +60,8 @@ pub fn all<B: StorageBackend>(
     .or(balance_ed25519(storage.clone()))
     .or(outputs_bech32(storage.clone()))
     .or(outputs_ed25519(storage))
-    .or(milestone(tangle.clone()))
-    .or(peers(tangle, peer_manager)))
+    .or(milestone(tangle))
+    .or(peers(peer_manager)))
 }
 
 fn health<B: StorageBackend>(
@@ -296,8 +296,7 @@ fn milestone<B: StorageBackend>(
         .and_then(handlers::milestone::milestone)
 }
 
-fn peers<B: StorageBackend>(
-    tangle: ResourceHandle<MsTangle<B>>,
+fn peers(
     peer_manager: ResourceHandle<PeerManager>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -305,7 +304,6 @@ fn peers<B: StorageBackend>(
         .and(warp::path("v1"))
         .and(warp::path("peers"))
         .and(warp::path::end())
-        .and(with_tangle(tangle))
         .and(with_peer_manager(peer_manager))
         .and_then(handlers::peers::peers)
 }

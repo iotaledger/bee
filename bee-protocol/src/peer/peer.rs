@@ -59,7 +59,7 @@ impl Peer {
         self.info.relation
     }
 
-    pub(crate) fn metrics(&self) -> &PeerMetrics {
+    pub fn metrics(&self) -> &PeerMetrics {
         &self.metrics
     }
 

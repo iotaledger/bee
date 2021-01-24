@@ -23,27 +23,27 @@ pub struct PeerDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GossipMetricsDto {
     #[serde(rename = "receivedMessages")]
-    pub received_messages: usize,
+    pub received_messages: u64,
     #[serde(rename = "newMessages")]
-    pub new_messages: usize,
+    pub new_messages: u64,
     #[serde(rename = "knownMessages")]
-    pub known_messages: usize,
+    pub known_messages: u64,
     #[serde(rename = "receivedMessageRequests")]
-    pub received_message_requests: usize,
+    pub received_message_requests: u64,
     #[serde(rename = "receivedMilestoneRequests")]
-    pub received_milestone_requests: usize,
+    pub received_milestone_requests: u64,
     #[serde(rename = "receivedHeartbeats")]
-    pub received_heartbeats: usize,
+    pub received_heartbeats: u64,
     #[serde(rename = "sentMessages")]
-    pub sent_messages: usize,
+    pub sent_messages: u64,
     #[serde(rename = "sentMessageRequests")]
-    pub sent_message_requests: usize,
+    pub sent_message_requests: u64,
     #[serde(rename = "sentMilestoneRequests")]
-    pub sent_milestone_requests: usize,
+    pub sent_milestone_requests: u64,
     #[serde(rename = "sentHeartbeats")]
-    pub sent_heartbeats: usize,
+    pub sent_heartbeats: u64,
     #[serde(rename = "droppedPackets")]
-    pub dropped_packets: usize,
+    pub dropped_packets: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
