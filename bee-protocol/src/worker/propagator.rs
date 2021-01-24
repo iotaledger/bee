@@ -53,10 +53,14 @@ async fn propagate<B: StorageBackend>(
             }
 
             // get OTRSI/YTRSI from parents
-            let parent1_otsri = tangle.otrsi(&parent1).await;
-            let parent2_otsri = tangle.otrsi(&parent2).await;
-            let parent1_ytrsi = tangle.ytrsi(&parent1).await;
-            let parent2_ytrsi = tangle.ytrsi(&parent2).await;
+            let p1m = tangle.get_metadata(&parent1).await;
+            let p2m = tangle.get_metadata(&parent2).await;
+            let p1sepi = tangle.get_solid_entry_point_index(&parent1);
+            let p2sepi = tangle.get_solid_entry_point_index(&parent2);
+            let parent1_otsri = p1sepi.or_else(|| p1m?.otrsi());
+            let parent2_otsri = p2sepi.or_else(|| p2m?.otrsi());
+            let parent1_ytrsi = p1sepi.or_else(|| p1m?.ytrsi());
+            let parent2_ytrsi = p2sepi.or_else(|| p2m?.ytrsi());
 
             // get best OTRSI/YTRSI from parents
             // unwrap() is safe because parents are solid which implies that OTRSI/YTRSI values are
@@ -64,26 +68,22 @@ async fn propagate<B: StorageBackend>(
             let best_otrsi = max(parent1_otsri.unwrap(), parent2_otsri.unwrap());
             let best_ytrsi = min(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
 
-            tangle
+            let index = tangle
                 .update_metadata(&message_id, |metadata| {
                     // OTRSI/YTRSI values need to be set before the solid flag, to ensure that the
                     // MilestoneConeUpdater is aware of all values.
                     metadata.set_otrsi(best_otrsi);
                     metadata.set_ytrsi(best_ytrsi);
                     metadata.solidify();
-                })
-                .await;
 
-            let index = match tangle.get_metadata(&message_id).await {
-                Some(meta) => {
-                    if meta.flags().is_milestone() {
-                        Some(meta.milestone_index())
+                    if metadata.flags().is_milestone() {
+                        Some(metadata.milestone_index())
                     } else {
                         None
                     }
-                }
-                None => None,
-            };
+                })
+                .await
+                .expect("Failed to fetch metadata.");
 
             if let Some(msg_children) = tangle.get_children(&message_id).await {
                 for child in msg_children {

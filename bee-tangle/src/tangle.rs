@@ -261,19 +261,23 @@ where
     }
 
     /// Updates the metadata of a vertex.
-    pub async fn update_metadata<Update>(&self, message_id: &MessageId, mut update: Update)
+    pub async fn update_metadata<R, Update>(&self, message_id: &MessageId, mut update: Update) -> Option<R>
     where
-        Update: FnMut(&mut T),
+        Update: FnMut(&mut T) -> R,
     {
         self.pull_message(message_id).await;
         if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
             // let _gtl_guard = self.gtl.write().await;
 
-            update(vtx.metadata_mut());
+            let r = update(vtx.metadata_mut());
             self.hooks
                 .insert(*message_id, (&**vtx.message()).clone(), vtx.metadata().clone())
                 .await
                 .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
+
+            Some(r)
+        } else {
+            None
         }
     }
 
