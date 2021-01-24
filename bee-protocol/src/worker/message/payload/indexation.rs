@@ -1,7 +1,11 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{storage::StorageBackend, worker::TangleWorker};
+use crate::{
+    storage::StorageBackend,
+    worker::{MetricsWorker, TangleWorker},
+    ProtocolMetrics,
+};
 
 use bee_message::{
     payload::{indexation::HashedIndex, Payload},
@@ -26,7 +30,12 @@ pub(crate) struct IndexationPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
 }
 
-async fn process<B: StorageBackend>(tangle: &MsTangle<B>, storage: &B, message_id: MessageId) {
+async fn process<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    storage: &B,
+    metrics: &ProtocolMetrics,
+    message_id: MessageId,
+) {
     if let Some(message) = tangle.get(&message_id).await.map(|m| (*m).clone()) {
         let indexation = match message.payload() {
             Some(Payload::Indexation(indexation)) => indexation,
@@ -36,6 +45,8 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, storage: &B, message_i
             },
             _ => return,
         };
+
+        metrics.indexation_payload_inc(1);
 
         let hash = indexation.hash();
 
@@ -55,13 +66,14 @@ where
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>()].leak()
+        vec![TypeId::of::<TangleWorker>(), TypeId::of::<MetricsWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
+        let metrics = node.resource::<ProtocolMetrics>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -69,7 +81,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(IndexationPayloadWorkerEvent(message_id)) = receiver.next().await {
-                process(&tangle, &storage, message_id).await;
+                process(&tangle, &storage, &metrics, message_id).await;
             }
 
             // Before the worker completely stops, the receiver needs to be drained for indexation payloads to be
@@ -79,7 +91,7 @@ where
             let mut count: usize = 0;
 
             while let Some(Some(IndexationPayloadWorkerEvent(message_id))) = receiver.next().now_or_never() {
-                process(&tangle, &storage, message_id).await;
+                process(&tangle, &storage, &metrics, message_id).await;
                 count += 1;
             }
 

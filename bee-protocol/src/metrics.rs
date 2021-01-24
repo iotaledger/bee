@@ -29,6 +29,10 @@ pub struct ProtocolMetrics {
 
     created_outputs: AtomicU64,
     consumed_outputs: AtomicU64,
+
+    transaction_payload: AtomicU64,
+    milestone_payload: AtomicU64,
+    indexation_payload: AtomicU64,
 }
 
 impl ProtocolMetrics {
@@ -189,6 +193,30 @@ impl ProtocolMetrics {
     pub fn consumed_outputs_inc(&self, value: u64) -> u64 {
         self.consumed_outputs.fetch_add(value, Ordering::SeqCst)
     }
+
+    pub fn transaction_payload(&self) -> u64 {
+        self.transaction_payload.load(Ordering::Relaxed)
+    }
+
+    pub fn transaction_payload_inc(&self, value: u64) -> u64 {
+        self.transaction_payload.fetch_add(value, Ordering::SeqCst)
+    }
+
+    pub fn milestone_payload(&self) -> u64 {
+        self.milestone_payload.load(Ordering::Relaxed)
+    }
+
+    pub fn milestone_payload_inc(&self, value: u64) -> u64 {
+        self.milestone_payload.fetch_add(value, Ordering::SeqCst)
+    }
+
+    pub fn indexation_payload(&self) -> u64 {
+        self.indexation_payload.load(Ordering::Relaxed)
+    }
+
+    pub fn indexation_payload_inc(&self, value: u64) -> u64 {
+        self.indexation_payload.fetch_add(value, Ordering::SeqCst)
+    }
 }
 
 #[cfg(test)]
@@ -219,6 +247,9 @@ mod tests {
         assert_eq!(metrics.included_messages(), 0);
         assert_eq!(metrics.created_outputs(), 0);
         assert_eq!(metrics.consumed_outputs(), 0);
+        assert_eq!(metrics.transaction_payload(), 0);
+        assert_eq!(metrics.milestone_payload(), 0);
+        assert_eq!(metrics.indexation_payload(), 0);
 
         metrics.invalid_packets_inc();
         metrics.milestone_requests_received_inc();
@@ -239,6 +270,9 @@ mod tests {
         metrics.included_messages_inc(1);
         metrics.created_outputs_inc(1);
         metrics.consumed_outputs_inc(1);
+        metrics.transaction_payload_inc(1);
+        metrics.milestone_payload_inc(1);
+        metrics.indexation_payload_inc(1);
 
         assert_eq!(metrics.invalid_packets(), 1);
         assert_eq!(metrics.milestone_requests_received(), 1);
@@ -259,5 +293,8 @@ mod tests {
         assert_eq!(metrics.included_messages(), 1);
         assert_eq!(metrics.created_outputs(), 1);
         assert_eq!(metrics.consumed_outputs(), 1);
+        assert_eq!(metrics.transaction_payload(), 1);
+        assert_eq!(metrics.milestone_payload(), 1);
+        assert_eq!(metrics.indexation_payload(), 1);
     }
 }
