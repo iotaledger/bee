@@ -7,6 +7,7 @@ use bee_message::MessageId;
 
 use log::debug;
 use rand::seq::IteratorRandom;
+use fxhash::FxBuildHasher;
 
 use std::{
     collections::{hash_map::Entry, HashMap, HashSet},
@@ -40,7 +41,7 @@ const MAX_NUM_CHILDREN: u8 = 2;
 
 #[derive(Default)]
 struct TipMetadata {
-    children: HashSet<MessageId>,
+    children: HashSet<MessageId, FxBuildHasher>,
     time_first_child: Option<Instant>,
 }
 
@@ -52,12 +53,12 @@ impl TipMetadata {
 
 #[derive(Default)]
 pub(crate) struct UrtsTipPool {
-    tips: HashMap<MessageId, TipMetadata>,
-    non_lazy_tips: HashSet<MessageId>,
+    tips: HashMap<MessageId, TipMetadata, FxBuildHasher>,
+    non_lazy_tips: HashSet<MessageId, FxBuildHasher>,
 }
 
 impl UrtsTipPool {
-    pub(crate) fn non_lazy_tips(&self) -> &HashSet<MessageId> {
+    pub(crate) fn non_lazy_tips(&self) -> &HashSet<MessageId, FxBuildHasher> {
         &self.non_lazy_tips
     }
 

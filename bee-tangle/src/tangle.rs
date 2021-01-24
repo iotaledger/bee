@@ -10,6 +10,7 @@ use async_trait::async_trait;
 use log::info;
 use lru::LruCache;
 use tokio::sync::{Mutex, RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard};
+use fxhash::FxBuildHasher;
 
 use std::{
     collections::{hash_map::Entry, HashMap, HashSet},
@@ -83,7 +84,7 @@ where
     // Global Tangle Lock. Remove this as and when it is deemed correct to do so.
     // gtl: RwLock<()>,
     vertices: TRwLock<HashMap<MessageId, Vertex<T>>>,
-    children: TRwLock<HashMap<MessageId, (HashSet<MessageId>, bool)>>,
+    children: TRwLock<HashMap<MessageId, (HashSet<MessageId, FxBuildHasher>, bool)>>,
 
     pub(crate) cache_counter: AtomicU64,
     pub(crate) cache_queue: Mutex<LruCache<MessageId, u64>>,
@@ -294,7 +295,7 @@ where
         self.len().await == 0
     }
 
-    async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = HashSet<MessageId>> + '_> {
+    async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = HashSet<MessageId, FxBuildHasher>> + '_> {
         // struct Children<'a> {
         //     children: dashmap::mapref::one::Ref<'a, MessageId, (HashSet<MessageId>, bool)>,
         // }
@@ -308,12 +309,12 @@ where
         // }
 
         struct Wrapper<'a> {
-            children: HashSet<MessageId>,
+            children: HashSet<MessageId, FxBuildHasher>,
             phantom: PhantomData<&'a ()>,
         }
 
         impl<'a> Deref for Wrapper<'a> {
-            type Target = HashSet<MessageId>;
+            type Target = HashSet<MessageId, FxBuildHasher>;
 
             fn deref(&self) -> &Self::Target {
                 &self.children
@@ -362,7 +363,7 @@ where
     }
 
     /// Returns the children of a vertex, if we know about them.
-    pub async fn get_children(&self, message_id: &MessageId) -> Option<HashSet<MessageId>> {
+    pub async fn get_children(&self, message_id: &MessageId) -> Option<HashSet<MessageId, FxBuildHasher>> {
         // Effectively atomic
         self.children_inner(message_id).await.map(|approvers| approvers.clone())
     }
