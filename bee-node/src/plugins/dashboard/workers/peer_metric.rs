@@ -18,10 +18,7 @@ use tokio_stream::wrappers::IntervalStream;
 use crate::plugins::dashboard::websocket::responses::peer_metric;
 use bee_protocol::PeerManager;
 
-use std::time::Duration;
-use std::{
-    sync::{atomic::Ordering},
-};
+use std::{sync::atomic::Ordering, time::Duration};
 
 const NODE_STATUS_METRICS_WORKER_INTERVAL_SEC: u64 = 1;
 
@@ -42,7 +39,6 @@ where
         );
 
         while ticker.next().await.is_some() {
-
             let mut metrics = Vec::new();
 
             for peer in peer_manager.get_all().await {
@@ -65,19 +61,25 @@ where
                         address: peer.address().to_string(),
                         port: 0,
                         domain: String::from(""),
-                        numberOfAllTransactions: peer.metrics().messages_received.load(Ordering::Relaxed),
-                        numberOfNewTransactions: peer.metrics().new_messages.load(Ordering::Relaxed),
-                        numberOfKnownTransactions: peer.metrics().known_messages.load(Ordering::Relaxed),
-                        numberOfReceivedTransactionReq: peer.metrics().message_requests_received.load(Ordering::Relaxed),
-                        numberOfReceivedMilestoneReq: peer.metrics().milestone_requests_received.load(Ordering::Relaxed),
-                        numberOfReceivedHeartbeats: peer.metrics().heartbeats_received.load(Ordering::Relaxed),
-                        numberOfSentTransactions: peer.metrics().messages_sent.load(Ordering::Relaxed),
-                        numberOfSentTransactionsReq: peer.metrics().message_requests_sent.load(Ordering::Relaxed),
-                        numberOfSentMilestoneReq: peer.metrics().milestone_requests_sent.load(Ordering::Relaxed),
-                        numberOfSentHeartbeats: peer.metrics().heartbeats_sent.load(Ordering::Relaxed),
-                        numberOfDroppedSentPackets: peer.metrics().invalid_packets.load(Ordering::Relaxed),
-                        connectionType: String::from(""),
-                        autopeeringId: String::from(""),
+                        number_of_all_messages: peer.metrics().messages_received.load(Ordering::Relaxed),
+                        number_of_new_messages: peer.metrics().new_messages.load(Ordering::Relaxed),
+                        number_of_known_messages: peer.metrics().known_messages.load(Ordering::Relaxed),
+                        number_of_received_message_req: peer
+                            .metrics()
+                            .message_requests_received
+                            .load(Ordering::Relaxed),
+                        number_of_received_milestone_req: peer
+                            .metrics()
+                            .milestone_requests_received
+                            .load(Ordering::Relaxed),
+                        number_of_received_heartbeats: peer.metrics().heartbeats_received.load(Ordering::Relaxed),
+                        number_of_sent_messages: peer.metrics().messages_sent.load(Ordering::Relaxed),
+                        number_of_sent_messages_req: peer.metrics().message_requests_sent.load(Ordering::Relaxed),
+                        number_of_sent_milestone_req: peer.metrics().milestone_requests_sent.load(Ordering::Relaxed),
+                        number_of_sent_heartbeats: peer.metrics().heartbeats_sent.load(Ordering::Relaxed),
+                        number_of_dropped_sent_packets: peer.metrics().invalid_packets.load(Ordering::Relaxed),
+                        connection_type: String::from(""),
+                        autopeering_id: String::from(""),
                         connected: peer_manager.is_connected(peer.id()).await,
                     },
                     connected: peer_manager.is_connected(peer.id()).await,
@@ -87,7 +89,6 @@ where
             }
 
             broadcast(peer_metric::forward(PeerMetrics(metrics)), &users).await;
-
         }
 
         debug!("Ws NodeStatus topic handler stopped.");
@@ -126,18 +127,31 @@ pub struct PeerInfo {
     pub address: String,
     pub port: usize,
     pub domain: String,
-    pub numberOfAllTransactions: u64,
-    pub numberOfNewTransactions: u64,
-    pub numberOfKnownTransactions: u64,
-    pub numberOfReceivedTransactionReq: u64,
-    pub numberOfReceivedMilestoneReq: u64,
-    pub numberOfReceivedHeartbeats: u64,
-    pub numberOfSentTransactions: u64,
-    pub numberOfSentTransactionsReq: u64,
-    pub numberOfSentMilestoneReq: u64,
-    pub numberOfSentHeartbeats: u64,
-    pub numberOfDroppedSentPackets: u64,
-    pub connectionType: String,
-    pub autopeeringId: String,
+    #[serde(rename = "numberOfAllTransactions")]
+    pub number_of_all_messages: u64,
+    #[serde(rename = "numberOfNewTransactions")]
+    pub number_of_new_messages: u64,
+    #[serde(rename = "numberOfKnownTransactions")]
+    pub number_of_known_messages: u64,
+    #[serde(rename = "numberOfReceivedTransactionReq")]
+    pub number_of_received_message_req: u64,
+    #[serde(rename = "numberOfReceivedMilestoneReq")]
+    pub number_of_received_milestone_req: u64,
+    #[serde(rename = "numberOfReceivedHeartbeats")]
+    pub number_of_received_heartbeats: u64,
+    #[serde(rename = "numberOfSentTransactions")]
+    pub number_of_sent_messages: u64,
+    #[serde(rename = "numberOfSentTransactionsReq")]
+    pub number_of_sent_messages_req: u64,
+    #[serde(rename = "numberOfSentMilestoneReq")]
+    pub number_of_sent_milestone_req: u64,
+    #[serde(rename = "numberOfSentHeartbeats")]
+    pub number_of_sent_heartbeats: u64,
+    #[serde(rename = "numberOfDroppedSentPackets")]
+    pub number_of_dropped_sent_packets: u64,
+    #[serde(rename = "connectionType")]
+    pub connection_type: String,
+    #[serde(rename = "autopeeringId")]
+    pub autopeering_id: String,
     pub connected: bool,
 }
