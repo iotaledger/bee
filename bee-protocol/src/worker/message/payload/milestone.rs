@@ -123,6 +123,8 @@ async fn process<B: StorageBackend>(
                     index,
                     milestone: milestone.clone(),
                 });
+            } else {
+                debug!("New milestone {} {}.", *index, milestone.message_id());
             }
 
             requested_milestones.remove(&index).await;
