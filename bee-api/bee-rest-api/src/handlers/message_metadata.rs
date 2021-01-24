@@ -12,7 +12,7 @@ use bee_message::prelude::*;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use warp::{reject, Rejection, Reply};
 
 pub(crate) async fn message_metadata<B: StorageBackend>(
@@ -136,7 +136,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
 }
 
 /// Response of GET /api/v1/messages/{message_id}/metadata
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageMetadataResponse {
     #[serde(rename = "messageId")]
     pub message_id: String,
@@ -166,7 +166,7 @@ pub struct MessageMetadataResponse {
     pub should_reattach: Option<bool>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum LedgerInclusionStateDto {
     #[serde(rename = "conflicting")]
     Conflicting,

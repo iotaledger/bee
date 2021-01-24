@@ -12,7 +12,7 @@ use bee_message::prelude::*;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::{Exist, Fetch};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use warp::{reject, Rejection, Reply};
 
 use std::ops::Deref;
@@ -63,7 +63,7 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
 }
 
 /// Response of GET /api/v1/addresses/{address}
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BalanceForAddressResponse {
     // The type of the address (1=Ed25519).
     #[serde(rename = "addressType")]
