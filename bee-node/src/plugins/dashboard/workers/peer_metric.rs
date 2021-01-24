@@ -20,7 +20,7 @@ use serde::Serialize;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
-use std::{sync::atomic::Ordering, time::Duration};
+use std::time::Duration;
 
 const NODE_STATUS_METRICS_WORKER_INTERVAL_SEC: u64 = 1;
 
@@ -63,23 +63,17 @@ where
                         address: peer.address().to_string(),
                         port: 0,
                         domain: String::from(""),
-                        number_of_all_messages: peer.metrics().messages_received.load(Ordering::Relaxed),
-                        number_of_new_messages: peer.metrics().new_messages.load(Ordering::Relaxed),
-                        number_of_known_messages: peer.metrics().known_messages.load(Ordering::Relaxed),
-                        number_of_received_message_req: peer
-                            .metrics()
-                            .message_requests_received
-                            .load(Ordering::Relaxed),
-                        number_of_received_milestone_req: peer
-                            .metrics()
-                            .milestone_requests_received
-                            .load(Ordering::Relaxed),
-                        number_of_received_heartbeats: peer.metrics().heartbeats_received.load(Ordering::Relaxed),
-                        number_of_sent_messages: peer.metrics().messages_sent.load(Ordering::Relaxed),
-                        number_of_sent_messages_req: peer.metrics().message_requests_sent.load(Ordering::Relaxed),
-                        number_of_sent_milestone_req: peer.metrics().milestone_requests_sent.load(Ordering::Relaxed),
-                        number_of_sent_heartbeats: peer.metrics().heartbeats_sent.load(Ordering::Relaxed),
-                        number_of_dropped_sent_packets: peer.metrics().invalid_packets.load(Ordering::Relaxed),
+                        number_of_all_messages: peer.metrics().messages_received(),
+                        number_of_new_messages: peer.metrics().new_messages(),
+                        number_of_known_messages: peer.metrics().known_messages(),
+                        number_of_received_message_req: peer.metrics().message_requests_received(),
+                        number_of_received_milestone_req: peer.metrics().milestone_requests_received(),
+                        number_of_received_heartbeats: peer.metrics().heartbeats_received(),
+                        number_of_sent_messages: peer.metrics().messages_sent(),
+                        number_of_sent_messages_req: peer.metrics().message_requests_sent(),
+                        number_of_sent_milestone_req: peer.metrics().milestone_requests_sent(),
+                        number_of_sent_heartbeats: peer.metrics().heartbeats_sent(),
+                        number_of_dropped_sent_packets: peer.metrics().invalid_packets(),
                         connection_type: String::from(""),
                         autopeering_id: String::from(""),
                         connected: peer_manager.is_connected(peer.id()).await,

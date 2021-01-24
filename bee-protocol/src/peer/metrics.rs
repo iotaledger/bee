@@ -6,26 +6,26 @@ use std::sync::atomic::{AtomicU64, Ordering};
 #[derive(Default)]
 pub struct PeerMetrics {
     #[allow(dead_code)]
-    pub invalid_messages: AtomicU64,
+    invalid_messages: AtomicU64,
     #[allow(dead_code)]
-    pub new_messages: AtomicU64,
+    new_messages: AtomicU64,
     #[allow(dead_code)]
-    pub known_messages: AtomicU64,
+    known_messages: AtomicU64,
 
-    pub invalid_packets: AtomicU64,
+    invalid_packets: AtomicU64,
 
-    pub milestone_requests_received: AtomicU64,
-    pub messages_received: AtomicU64,
-    pub message_requests_received: AtomicU64,
-    pub heartbeats_received: AtomicU64,
+    milestone_requests_received: AtomicU64,
+    messages_received: AtomicU64,
+    message_requests_received: AtomicU64,
+    heartbeats_received: AtomicU64,
 
     #[allow(dead_code)]
-    pub milestone_requests_sent: AtomicU64,
-    pub messages_sent: AtomicU64,
+    milestone_requests_sent: AtomicU64,
+    messages_sent: AtomicU64,
     #[allow(dead_code)]
-    pub message_requests_sent: AtomicU64,
+    message_requests_sent: AtomicU64,
     #[allow(dead_code)]
-    pub heartbeats_sent: AtomicU64,
+    heartbeats_sent: AtomicU64,
 }
 
 impl PeerMetrics {

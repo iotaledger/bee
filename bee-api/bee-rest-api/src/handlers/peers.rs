@@ -6,21 +6,17 @@ use crate::{
     types::{GossipMetricsDto, PeerDto},
 };
 
-use bee_protocol::{Peer, PeerManager};
+use bee_protocol::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
 use serde::{Deserialize, Serialize};
 use warp::Reply;
 
-use std::{
-    convert::Infallible,
-    sync::{atomic::Ordering, Arc},
-};
+use std::convert::Infallible;
 
 pub(crate) async fn peers(peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Infallible> {
     let mut peer_dtos = Vec::new();
     for peer in peer_manager.get_all().await {
-        let peer: Arc<Peer> = peer;
         let peer_dto = PeerDto {
             id: peer.id().to_string(),
             alias: peer.alias().to_string(),
@@ -36,18 +32,18 @@ pub(crate) async fn peers(peer_manager: ResourceHandle<PeerManager>) -> Result<i
             },
             connected: peer_manager.is_connected(peer.id()).await,
             gossip_metrics: GossipMetricsDto {
-                received_messages: peer.metrics().messages_received.load(Ordering::Relaxed),
-                new_messages: peer.metrics().new_messages.load(Ordering::Relaxed),
-                known_messages: peer.metrics().known_messages.load(Ordering::Relaxed),
-                received_message_requests: peer.metrics().message_requests_received.load(Ordering::Relaxed),
-                received_milestone_requests: peer.metrics().milestone_requests_received.load(Ordering::Relaxed),
-                received_heartbeats: peer.metrics().heartbeats_received.load(Ordering::Relaxed),
-                sent_messages: peer.metrics().messages_sent.load(Ordering::Relaxed),
-                sent_message_requests: peer.metrics().message_requests_sent.load(Ordering::Relaxed),
-                sent_milestone_requests: peer.metrics().milestone_requests_sent.load(Ordering::Relaxed),
-                sent_heartbeats: peer.metrics().heartbeats_sent.load(Ordering::Relaxed),
-                dropped_packets: peer.metrics().invalid_packets.load(Ordering::Relaxed), /* TODO dropped_packets ==
-                                                                                          * invalid_packets? */
+                received_messages: peer.metrics().messages_received(),
+                new_messages: peer.metrics().new_messages(),
+                known_messages: peer.metrics().known_messages(),
+                received_message_requests: peer.metrics().message_requests_received(),
+                received_milestone_requests: peer.metrics().milestone_requests_received(),
+                received_heartbeats: peer.metrics().heartbeats_received(),
+                sent_messages: peer.metrics().messages_sent(),
+                sent_message_requests: peer.metrics().message_requests_sent(),
+                sent_milestone_requests: peer.metrics().milestone_requests_sent(),
+                sent_heartbeats: peer.metrics().heartbeats_sent(),
+                dropped_packets: peer.metrics().invalid_packets(), /* TODO dropped_packets ==
+                                                                    * invalid_packets? */
             },
         };
         peer_dtos.push(peer_dto);
