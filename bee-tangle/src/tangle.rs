@@ -143,10 +143,9 @@ where
                 let parent2 = *message.parent2();
                 let vtx = Vertex::new(message, metadata);
                 let tx = vtx.message().clone();
-                entry.insert(vtx);
-
                 self.add_child_inner(parent1, message_id).await;
                 self.add_child_inner(parent2, message_id).await;
+                entry.insert(vtx);
 
                 // Insert cache queue entry to track eviction priority
                 // self.cache_queue
