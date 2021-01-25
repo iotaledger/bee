@@ -7,10 +7,10 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_ledger::model::Spent;
+use bee_ledger::model::Balance;
 use bee_message::prelude::*;
 use bee_runtime::resource::ResourceHandle;
-use bee_storage::access::{Exist, Fetch};
+use bee_storage::access::Fetch;
 
 use serde::{Deserialize, Serialize};
 use warp::{reject, Rejection, Reply};
@@ -21,39 +21,16 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
     addr: Ed25519Address,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    match Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage.deref(), &addr)
+    match Fetch::<Address, Balance>::fetch(storage.deref(), &Address::Ed25519(addr))
         .await
         .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
     {
-        Some(ids) => {
-            let mut balance = 0;
-            for id in ids {
-                if let Some(output) = Fetch::<OutputId, bee_ledger::model::Output>::fetch(storage.deref(), &id)
-                    .await
-                    .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
-                {
-                    if !Exist::<OutputId, Spent>::exist(storage.deref(), &id)
-                        .await
-                        .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
-                    {
-                        match output.inner() {
-                            Output::SignatureLockedSingle(o) => balance += o.amount() as u64,
-                            _ => {
-                                return Err(reject::custom(ServiceUnavailable(
-                                    "output type not supported".to_string(),
-                                )))
-                            }
-                        }
-                    }
-                }
-            }
-            Ok(warp::reply::json(&SuccessBody::new(BalanceForAddressResponse {
-                address_type: 1,
-                address: addr.to_string(),
-                balance,
-            })))
-        }
-        None => Err(reject::custom(NotFound("can not find output ids".to_string()))),
+        Some(balance) => Ok(warp::reply::json(&SuccessBody::new(BalanceForAddressResponse {
+            address_type: 1,
+            address: addr.to_string(),
+            balance: balance.balance(),
+        }))),
+        None => Err(reject::custom(NotFound("balance not found".to_string()))),
     }
 }
 
