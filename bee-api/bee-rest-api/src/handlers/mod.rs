@@ -15,6 +15,7 @@ pub mod output;
 pub mod outputs_bech32;
 pub mod outputs_ed25519;
 pub mod peer;
+pub mod add_peer;
 pub mod peers;
 pub mod submit_message;
 pub mod submit_message_raw;
