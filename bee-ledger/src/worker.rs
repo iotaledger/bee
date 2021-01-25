@@ -242,6 +242,7 @@ where
             // Unwrap is fine because we just inserted the ledger index.
             // TODO unwrap
             let mut index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
+            tangle.update_latest_solid_milestone_index(MilestoneIndex(*index));
 
             while let Some(LedgerWorkerEvent(message_id)) = receiver.next().await {
                 if let Err(e) = confirm::<N>(&tangle, &storage, &bus, message_id, &mut index).await {

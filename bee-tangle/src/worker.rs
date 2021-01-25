@@ -3,12 +3,10 @@
 
 use crate::{storage::StorageBackend, MsTangle};
 
-use bee_message::{
-    ledger_index::LedgerIndex, milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MessageId,
-};
+use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MessageId};
 use bee_runtime::{node::Node, worker::Worker};
 use bee_snapshot::{SnapshotInfo, SnapshotWorker};
-use bee_storage::access::{Fetch, Insert, Truncate};
+use bee_storage::access::{Fetch, Insert};
 
 use async_trait::async_trait;
 use log::{error, warn};
@@ -42,7 +40,7 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
 
         let full_sep_rx = node.worker::<SnapshotWorker>().unwrap().full_sep_rx.clone();
-        let delta_sep_rx = node.worker::<SnapshotWorker>().unwrap().full_sep_rx.clone();
+        let delta_sep_rx = node.worker::<SnapshotWorker>().unwrap().delta_sep_rx.clone();
 
         // TODO batch ?
 
@@ -53,27 +51,24 @@ where
                 .unwrap();
         }
 
-        if !delta_sep_rx.is_empty() {
-            Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(&*storage)
+        // TODO
+        // Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(&*storage)
+        //     .await
+        //     .unwrap();
+        while let Ok((sep, index)) = delta_sep_rx.recv() {
+            tangle.add_solid_entry_point(*sep, index);
+            Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &sep, &index)
                 .await
                 .unwrap();
-            while let Ok((sep, index)) = delta_sep_rx.recv() {
-                tangle.add_solid_entry_point(*sep, index);
-                Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &sep, &index)
-                    .await
-                    .unwrap();
-            }
         }
 
         tangle.add_solid_entry_point(MessageId::null(), MilestoneIndex(0));
 
         // This needs to be done after the streams are emptied.
 
-        let ledger_index = Fetch::<(), LedgerIndex>::fetch(&*storage, &()).await.unwrap().unwrap();
         let snapshot_info = Fetch::<(), SnapshotInfo>::fetch(&*storage, &()).await.unwrap().unwrap();
 
-        tangle.update_latest_solid_milestone_index((*ledger_index).into());
-        tangle.update_latest_milestone_index((*ledger_index).into());
+        tangle.update_latest_milestone_index(snapshot_info.snapshot_index().into());
         tangle.update_snapshot_index(snapshot_info.snapshot_index().into());
         tangle.update_pruning_index(snapshot_info.pruning_index().into());
         // TODO
