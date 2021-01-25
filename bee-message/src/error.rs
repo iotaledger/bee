@@ -15,6 +15,7 @@ pub enum Error {
     InvalidSignatureType(u8),
     InvalidUnlockType(u8),
     InvalidAccumulatedOutput(u128),
+    InvalidUnlockBlockCount(usize, usize),
     NoInput,
     NoOutput,
     DuplicateError,
@@ -47,6 +48,9 @@ impl fmt::Display for Error {
             Error::InvalidSignatureType(t) => write!(f, "Invalid signature type: {}.", t),
             Error::InvalidUnlockType(t) => write!(f, "Invalid unlock type: {}.", t),
             Error::InvalidAccumulatedOutput(value) => write!(f, "Invalid accumulated output balance: {}.", value),
+            Error::InvalidUnlockBlockCount(input, block) => {
+                write!(f, "Invalid unlock block count: {} != {}.", input, block)
+            }
             Error::NoInput => write!(f, "No input provided."),
             Error::NoOutput => write!(f, "No output provided."),
             Error::DuplicateError => write!(f, "The object in the set must be unique."),
