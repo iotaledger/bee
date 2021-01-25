@@ -110,11 +110,10 @@ fn spawn_gossip_in_task(
         loop {
             match recv_message(&mut reader, &mut buffer).await {
                 Ok(num_read) => {
-                    if let Err(e) = incoming_gossip_sender
-                        .send(buffer[..num_read].to_vec())
-                        .map_err(|_| Error::ForwardIncomingMessageFailure("MessageReceived"))
-                    {
-                        error!("{:?}", e);
+                    if let Err(_) = incoming_gossip_sender.send(buffer[..num_read].to_vec()) {
+                        // Any reason sending to this channel fails is unrecoverable (OOM or receiver dropped),
+                        // hence, we will silently just end this task.
+                        break;
                     }
                 }
                 Err(_) => {
@@ -126,6 +125,8 @@ fn spawn_gossip_in_task(
 
         // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
         let _ = internal_event_sender.send(InternalEvent::ConnectionDropped { peer_id });
+
+        trace!("Stopping connection reader for {:?}", peer_id);
     });
 }
 
@@ -148,6 +149,8 @@ fn spawn_gossip_out_task(
 
         // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
         let _ = internal_event_sender.send(InternalEvent::ConnectionDropped { peer_id });
+
+        trace!("Stopping connection writer for {:?}", peer_id);
     });
 }
 
