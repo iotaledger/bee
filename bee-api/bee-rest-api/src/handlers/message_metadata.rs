@@ -166,7 +166,7 @@ pub struct MessageMetadataResponse {
     pub should_reattach: Option<bool>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum LedgerInclusionStateDto {
     #[serde(rename = "conflicting")]
     Conflicting,
