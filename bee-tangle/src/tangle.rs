@@ -134,7 +134,7 @@ where
 
     async fn insert_inner(&self, message_id: MessageId, message: Message, metadata: T) -> Option<MessageRef> {
         let r = match self.vertices.write().await.entry(message_id) {
-            Entry::Occupied(_) => {},
+            Entry::Occupied(_) => None,
             Entry::Vacant(entry) => {
                 let parent1 = *message.parent1();
                 let parent2 = *message.parent2();
