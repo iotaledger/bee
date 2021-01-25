@@ -68,15 +68,15 @@ where
                 match event {
                     Event::PeerAdded { id, info } => {
                         // TODO check if not already added ?
-                        info!("Adding peer: {}", id.short());
+                        info!("Added peer {}.", info.alias);
 
                         let peer = Arc::new(Peer::new(id, info));
                         peer_manager.add(peer).await;
                     }
                     Event::PeerRemoved { id } => {
-                        info!("Removed peer: {}", id.short());
-
-                        peer_manager.remove(&id).await;
+                        if let Some(peer) = peer_manager.remove(&id).await {
+                            info!("Removed peer {}.", peer.0.alias());
+                        }
                     }
                     Event::PeerConnected {
                         id,
@@ -107,6 +107,8 @@ where
                                     shutdown_rx,
                                 ),
                             );
+
+                            info!("Connected peer {}.", peer.0.alias());
                         }
                     }
                     Event::PeerDisconnected { id } => {
@@ -114,9 +116,10 @@ where
                         if let Some(peer) = peer_manager.peers.write().await.get_mut(&id) {
                             if let Some((_, shutdown)) = peer.1.take() {
                                 if let Err(e) = shutdown.send(()) {
-                                    warn!("Sending shutdown to {} failed: {:?}.", id.short(), e);
+                                    warn!("Sending shutdown to {} failed: {:?}.", peer.0.alias(), e);
                                 }
                             }
+                            info!("Disconnected peer {}.", peer.0.alias());
                         }
                     }
                     _ => (), // Ignore all other events for now

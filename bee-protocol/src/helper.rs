@@ -80,8 +80,8 @@ pub async fn send_heartbeat(
             *latest_solid_milestone_index,
             *pruning_milestone_index,
             *latest_milestone_index,
-            peer_manager.connected_peers(),
-            peer_manager.synced_peers(),
+            peer_manager.connected_peers().await,
+            peer_manager.synced_peers().await,
         ),
     )
     .await;
