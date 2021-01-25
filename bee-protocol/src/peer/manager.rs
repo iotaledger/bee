@@ -79,10 +79,7 @@ impl PeerManager {
     // }
 
     pub async fn is_connected(&self, id: &PeerId) -> bool {
-        match self.peers.read().await.get(id) {
-            Some(_sender) => true,
-            None => false,
-        }
+        self.peers.read().await.get(id).map(|p| p.1.is_some()).unwrap_or(false)
     }
 
     pub(crate) fn connected_peers(&self) -> u8 {
