@@ -25,10 +25,7 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
         .await
         .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
     {
-        Some(mut ids) => {
-            let max_results = 1000;
-            let count = ids.len();
-            ids.truncate(max_results);
+        Some(ids) => {
             let mut balance = 0;
             for id in ids {
                 if let Some(output) = Fetch::<OutputId, bee_ledger::model::Output>::fetch(storage.deref(), &id)
@@ -53,8 +50,6 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
             Ok(warp::reply::json(&SuccessBody::new(BalanceForAddressResponse {
                 address_type: 1,
                 address: addr.to_string(),
-                max_results,
-                count,
                 balance,
             })))
         }
@@ -70,9 +65,6 @@ pub struct BalanceForAddressResponse {
     pub address_type: u8,
     // hex encoded address
     pub address: String,
-    #[serde(rename = "maxResults")]
-    pub max_results: usize,
-    pub count: usize,
     pub balance: u64,
 }
 
