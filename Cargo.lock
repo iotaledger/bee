@@ -453,6 +453,7 @@ dependencies = [
  "bee-common",
  "bee-ledger",
  "bee-message",
+ "bee-network",
  "bee-pow",
  "bee-protocol",
  "bee-runtime",

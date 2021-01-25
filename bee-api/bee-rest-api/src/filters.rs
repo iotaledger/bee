@@ -6,6 +6,7 @@ use crate::{
     NetworkId,
 };
 
+use bee_network::PeerId;
 use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
@@ -61,7 +62,8 @@ pub fn all<B: StorageBackend>(
     .or(outputs_bech32(storage.clone()))
     .or(outputs_ed25519(storage))
     .or(milestone(tangle))
-    .or(peers(peer_manager)))
+    .or(peers(peer_manager.clone()))
+    .or(peer(peer_manager)))
 }
 
 fn health<B: StorageBackend>(
@@ -308,6 +310,19 @@ fn peers(
         .and_then(handlers::peers::peers)
 }
 
+fn peer(
+    peer_manager: ResourceHandle<PeerManager>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("peer"))
+        .and(custom_path_param::peer_id())
+        .and(warp::path::end())
+        .and(with_peer_manager(peer_manager))
+        .and_then(handlers::peer::peer)
+}
+
 mod custom_path_param {
 
     use super::*;
@@ -359,6 +374,15 @@ mod custom_path_param {
             match value.parse::<Ed25519Address>() {
                 Ok(addr) => Ok(addr),
                 Err(_) => Err(reject::custom(BadRequest("invalid Ed25519 address".to_string()))),
+            }
+        })
+    }
+
+    pub(super) fn peer_id() -> impl Filter<Extract = (PeerId,), Error = Rejection> + Copy {
+        warp::path::param().and_then(|value: String| async move {
+            match value.parse::<PeerId>() {
+                Ok(id) => Ok(id),
+                Err(_) => Err(reject::custom(BadRequest("invalid peer id".to_string()))),
             }
         })
     }
