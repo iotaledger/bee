@@ -135,6 +135,16 @@ impl Peer {
         self.heartbeat_received_timestamp.load(Ordering::Relaxed)
     }
 
+    // TODO reduce to one atomic value ?
+    pub fn is_synced(&self) -> bool {
+        self.is_synced_threshold(0)
+    }
+
+    // TODO reduce to one atomic value ?
+    pub fn is_synced_threshold(&self, threshold: u32) -> bool {
+        *self.latest_solid_milestone_index() >= (*self.latest_milestone_index()).saturating_sub(threshold)
+    }
+
     pub(crate) fn has_data(&self, index: MilestoneIndex) -> bool {
         // +1 to allow for a little delay before a Heartbeat comes from a peer.
         index > self.pruned_index() && index <= self.latest_solid_milestone_index() + MilestoneIndex(1)

@@ -82,13 +82,27 @@ impl PeerManager {
         self.peers.read().await.get(id).map(|p| p.1.is_some()).unwrap_or(false)
     }
 
-    pub(crate) fn connected_peers(&self) -> u8 {
-        // TODO impl
-        0
+    pub async fn connected_peers(&self) -> u8 {
+        let mut count = 0;
+
+        for (_, (_, ctx)) in self.peers.read().await.iter() {
+            if ctx.is_some() {
+                count += 1;
+            }
+        }
+
+        count
     }
 
-    pub(crate) fn synced_peers(&self) -> u8 {
-        // TODO impl
-        0
+    pub async fn synced_peers(&self) -> u8 {
+        let mut count = 0;
+
+        for (_, (peer, ctx)) in self.peers.read().await.iter() {
+            if ctx.is_some() && peer.is_synced_threshold(2) {
+                count += 1;
+            }
+        }
+
+        count
     }
 }
