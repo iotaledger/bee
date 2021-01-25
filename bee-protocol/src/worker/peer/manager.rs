@@ -116,7 +116,7 @@ where
                         if let Some(peer) = peer_manager.peers.write().await.get_mut(&id) {
                             if let Some((_, shutdown)) = peer.1.take() {
                                 if let Err(e) = shutdown.send(()) {
-                                    warn!("Sending shutdown to {} failed: {:?}.", id.short(), e);
+                                    warn!("Sending shutdown to {} failed: {:?}.", peer.0.alias(), e);
                                 }
                             }
                             info!("Disconnected peer {}.", peer.0.alias());
