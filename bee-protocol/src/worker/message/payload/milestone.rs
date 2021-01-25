@@ -108,6 +108,10 @@ async fn process<B: StorageBackend>(
 
     match validate(&tangle, &key_manager, message_id).await {
         Ok((index, milestone)) => {
+            // TODO check before validating
+            if index <= tangle.get_pruning_index() {
+                return;
+            }
             tangle.add_milestone(index, milestone.clone()).await;
             if index > tangle.get_latest_milestone_index() {
                 info!("New milestone {} {}.", *index, milestone.message_id());
