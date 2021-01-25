@@ -21,7 +21,7 @@ pub(crate) async fn peer(peer_id: PeerId, peer_manager: ResourceHandle<PeerManag
             let peer = &peer_entry.0;
             let peer_dto = PeerDto {
                 id: peer.id().to_string(),
-                alias: peer.alias().to_string(),
+                alias: Some(peer.alias().to_string()),
                 multi_addresses: vec![peer.address().to_string()],
                 relation: {
                     if peer.relation().is_known() {

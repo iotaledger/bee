@@ -1,6 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+pub mod add_peer;
 pub mod balance_bech32;
 pub mod balance_ed25519;
 pub mod health;
@@ -15,8 +16,8 @@ pub mod output;
 pub mod outputs_bech32;
 pub mod outputs_ed25519;
 pub mod peer;
-pub mod add_peer;
 pub mod peers;
+pub mod remove_peer;
 pub mod submit_message;
 pub mod submit_message_raw;
 pub mod tips;

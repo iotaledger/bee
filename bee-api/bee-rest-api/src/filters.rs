@@ -6,7 +6,7 @@ use crate::{
     NetworkId,
 };
 
-use bee_network::{PeerId, NetworkController};
+use bee_network::{NetworkController, PeerId};
 use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
@@ -64,7 +64,8 @@ pub fn all<B: StorageBackend>(
     .or(outputs_ed25519(storage))
     .or(milestone(tangle))
     .or(peers(peer_manager.clone()))
-    .or(add_peer(network_controller))
+    .or(peer_add(peer_manager.clone(), network_controller.clone()))
+    .or(peer_remove(network_controller))
     .or(peer(peer_manager)))
 }
 
@@ -325,7 +326,8 @@ fn peer(
         .and_then(handlers::peer::peer)
 }
 
-fn add_peer(
+fn peer_add(
+    peer_manager: ResourceHandle<PeerManager>,
     network_controller: ResourceHandle<NetworkController>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -334,8 +336,22 @@ fn add_peer(
         .and(warp::path("peer"))
         .and(warp::path::end())
         .and(warp::body::json())
+        .and(with_peer_manager(peer_manager))
         .and(with_network_controller(network_controller))
         .and_then(handlers::add_peer::add_peer)
+}
+
+fn peer_remove(
+    network_controller: ResourceHandle<NetworkController>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::delete()
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("peer"))
+        .and(custom_path_param::peer_id())
+        .and(warp::path::end())
+        .and(with_network_controller(network_controller))
+        .and_then(handlers::remove_peer::remove_peer)
 }
 
 mod custom_path_param {

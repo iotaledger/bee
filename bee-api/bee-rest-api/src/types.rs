@@ -11,7 +11,7 @@ use std::convert::{TryFrom, TryInto};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PeerDto {
     pub id: String,
-    pub alias: String,
+    pub alias: Option<String>,
     #[serde(rename = "multiAddresses")]
     pub multi_addresses: Vec<String>,
     pub relation: String,
@@ -20,7 +20,7 @@ pub struct PeerDto {
     pub gossip_metrics: GossipMetricsDto,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct GossipMetricsDto {
     #[serde(rename = "receivedMessages")]
     pub received_messages: u64,

@@ -19,7 +19,7 @@ pub(crate) async fn peers(peer_manager: ResourceHandle<PeerManager>) -> Result<i
     for peer in peer_manager.get_all().await {
         let peer_dto = PeerDto {
             id: peer.id().to_string(),
-            alias: peer.alias().to_string(),
+            alias: Some(peer.alias().to_string()),
             multi_addresses: vec![peer.address().to_string()],
             relation: {
                 if peer.relation().is_known() {
