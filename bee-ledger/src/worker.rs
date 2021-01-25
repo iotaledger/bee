@@ -15,7 +15,7 @@ use crate::{
 use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, payload::Payload, MessageId};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_snapshot::{milestone_diff::MilestoneDiff, SnapshotWorker};
-use bee_tangle::MsTangle;
+use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -168,7 +168,7 @@ where
     type Error = Error;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<SnapshotWorker>()].leak()
+        vec![TypeId::of::<SnapshotWorker>(), TypeId::of::<TangleWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
