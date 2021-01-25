@@ -134,7 +134,7 @@ where
 
     async fn insert_inner(&self, message_id: MessageId, message: Message, metadata: T) -> Option<MessageRef> {
         let r = match self.vertices.write().await.entry(message_id) {
-            Entry::Occupied(_) => None,
+            Entry::Occupied(_) => panic!("Race condition occurred, tried to insert vertex that is already inserted"),
             Entry::Vacant(entry) => {
                 let parent1 = *message.parent1();
                 let parent2 = *message.parent2();
@@ -246,25 +246,25 @@ where
         self.get_inner(message_id).await
     }
 
-    /// Updates the metadata of a particular vertex.
-    pub async fn set_metadata(&self, message_id: &MessageId, metadata: T) {
-        self.pull_message(message_id).await;
-        let to_write = if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
-            let message = (&**vtx.message()).clone();
-            let meta = vtx.metadata().clone();
-            *vtx.metadata_mut() = metadata;
-            Some((message, meta))
-        } else {
-            None
-        };
+    // /// Updates the metadata of a particular vertex.
+    // pub async fn set_metadata(&self, message_id: &MessageId, metadata: T) {
+    //     self.pull_message(message_id).await;
+    //     let to_write = if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
+    //         let message = (&**vtx.message()).clone();
+    //         let meta = vtx.metadata().clone();
+    //         *vtx.metadata_mut() = metadata;
+    //         Some((message, meta))
+    //     } else {
+    //         None
+    //     };
 
-        if let Some((message, meta)) = to_write {
-            self.hooks
-                .insert(*message_id, message, meta)
-                .await
-                .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
-        }
-    }
+    //     if let Some((message, meta)) = to_write {
+    //         self.hooks
+    //             .insert(*message_id, message, meta)
+    //             .await
+    //             .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
+    //     }
+    // }
 
     /// Updates the metadata of a vertex.
     pub async fn update_metadata<R, Update>(&self, message_id: &MessageId, mut update: Update) -> Option<R>
@@ -344,9 +344,10 @@ where
         let children = match children {
             Some(children) => children.0.clone(),
             None => {
+                let current_children = children.map(|c| c.0.clone());
                 drop(children_map);
 
-                let to_insert = match self.hooks.fetch_approvers(message_id).await {
+                let mut to_insert = match self.hooks.fetch_approvers(message_id).await {
                     Err(e) => {
                         info!("Failed to update approvers for message message {:?}", e);
                         Vec::new()
@@ -354,6 +355,10 @@ where
                     Ok(None) => Vec::new(),
                     Ok(Some(approvers)) => approvers,
                 };
+
+                if let Some(current_children) = current_children {
+                    to_insert.extend(current_children.into_iter());
+                }
 
                 let to_insert: HashSet<_, _> = to_insert.into_iter().collect();
                 let to_insert2 = to_insert.clone();
