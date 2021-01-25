@@ -10,9 +10,10 @@ use crate::{
     storage::{self, StorageBackend},
 };
 
+use bee_common::packable::Packable;
 use bee_message::{
     payload::{
-        transaction::{self, Input, OutputId, TransactionPayload},
+        transaction::{self, Input, OutputId, TransactionPayload, UnlockBlock},
         Payload,
     },
     Message, MessageId,
@@ -58,7 +59,9 @@ fn validate_transaction(
         }
     }
 
-    for (_index, (_, consumed_output)) in consumed_outputs.iter().enumerate() {
+    let essence_bytes = transaction.essence().pack_new();
+
+    for (index, (_, consumed_output)) in consumed_outputs.iter().enumerate() {
         match consumed_output.inner() {
             transaction::Output::SignatureLockedSingle(consumed_output) => {
                 consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
@@ -66,11 +69,23 @@ fn validate_transaction(
                 if consumed_output.amount() < DUST_ALLOWANCE_MINIMUM {
                     balance_diff.dust_output_dec(*consumed_output.address());
                 }
+                if !match transaction.unlock_block(index) {
+                    UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_bytes, signature),
+                    _ => false,
+                } {
+                    return Ok(ConflictReason::InvalidSignature);
+                }
             }
             transaction::Output::SignatureLockedDustAllowance(consumed_output) => {
                 consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
                 balance_diff.balance_sub(*consumed_output.address(), consumed_output.amount());
                 balance_diff.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
+                if !match transaction.unlock_block(index) {
+                    UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_bytes, signature),
+                    _ => false,
+                } {
+                    return Ok(ConflictReason::InvalidSignature);
+                }
             }
             _ => return Err(Error::UnsupportedOutputType),
         }

@@ -1,11 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use crate::{payload::transaction::Ed25519Signature, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
 use bech32::{self, ToBase32};
+use crypto::ed25519::{self, PublicKey, Signature};
 
 use alloc::{string::String, vec};
 use core::{convert::TryInto, str::FromStr};
@@ -39,7 +40,6 @@ impl FromStr for Ed25519Address {
 }
 
 impl AsRef<[u8]> for Ed25519Address {
-    #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
@@ -62,6 +62,15 @@ impl Ed25519Address {
         let mut serialized = vec![1u8];
         serialized.extend_from_slice(&self.0);
         bech32::encode(hrp, serialized.to_base32()).expect("Valid Ed25519 address required.")
+    }
+
+    pub fn verify(&self, msg: &[u8], signature: &Ed25519Signature) -> bool {
+        // TODO unwraps are temporary until we use crypto.rs types as internals.
+        ed25519::verify(
+            &PublicKey::from_compressed_bytes(self.0).unwrap(),
+            &Signature::from_bytes(signature.signature().try_into().unwrap()),
+            msg,
+        )
     }
 }
 
