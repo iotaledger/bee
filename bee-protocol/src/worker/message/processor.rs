@@ -221,7 +221,7 @@ where
 
                         for (index, message) in to_request {
                             // Throttle the requested messages to prevent bottlenecks
-                            if requested_messages.len().await < MAX_REQUESTED {
+                            if /*requested_messages.len().await < MAX_REQUESTED*/ true {
                                 helper::request_message(
                                     &tangle,
                                     &message_requester,
