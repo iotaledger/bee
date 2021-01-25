@@ -170,9 +170,11 @@ impl TransactionPayloadBuilder {
         let essence = self.essence.ok_or(Error::MissingField("essence"))?;
 
         // Unlock Blocks validation
-        // Unlock Blocks Count must match the amount of inputs. Must be 0 < x < 127.
-        if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.unlock_blocks.len()) {
-            return Err(Error::InvalidInputOutputCount(self.unlock_blocks.len()));
+        if essence.inputs().len() != self.unlock_blocks.len() {
+            return Err(Error::InvalidUnlockBlockCount(
+                essence.inputs().len(),
+                self.unlock_blocks.len(),
+            ));
         }
 
         // for (i, block) in self.unlock_blocks.iter().enumerate() {
