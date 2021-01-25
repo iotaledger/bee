@@ -8,7 +8,6 @@ use crate::{
     types::OutputDto,
 };
 
-use bee_ledger::model::Spent;
 use bee_message::prelude::*;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
@@ -22,10 +21,10 @@ pub(crate) async fn output<B: StorageBackend>(
     output_id: OutputId,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    let output = Fetch::<OutputId, bee_ledger::model::Output>::fetch(storage.deref(), &output_id)
+    let output = Fetch::<OutputId, CreatedOutput>::fetch(storage.deref(), &output_id)
         .await
         .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?;
-    let is_spent = Fetch::<OutputId, Spent>::fetch(storage.deref(), &output_id)
+    let is_spent = Fetch::<OutputId, ConsumedOutput>::fetch(storage.deref(), &output_id)
         .await
         .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?;
     match output {

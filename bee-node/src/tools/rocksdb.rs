@@ -1,13 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::model::{Balance, Output, OutputDiff, Spent, Unspent};
+use bee_ledger::model::{Balance, OutputDiff, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::HashedIndex,
-        transaction::{Address, Ed25519Address, OutputId},
+        transaction::{Address, ConsumedOutput, CreatedOutput, Ed25519Address, OutputId},
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId,
@@ -84,20 +84,20 @@ pub fn exec(tool: &Rocksdb) {
                     }
                 }
             },
-            CF_OUTPUT_ID_TO_OUTPUT => match &tool.command {
+            CF_OUTPUT_ID_TO_CREATED_OUTPUT => match &tool.command {
                 RocksdbCommand::Fetch { key: _key } => {}
                 RocksdbCommand::Stream => {
-                    let mut stream = AsStream::<OutputId, Output>::stream(&storage).await.unwrap();
+                    let mut stream = AsStream::<OutputId, CreatedOutput>::stream(&storage).await.unwrap();
 
                     while let Some((key, value)) = stream.next().await {
                         println!("Key: {:?}\nValue: {:?})\n", key, value);
                     }
                 }
             },
-            CF_OUTPUT_ID_TO_SPENT => match &tool.command {
+            CF_OUTPUT_ID_TO_CONSUMED_OUTPUT => match &tool.command {
                 RocksdbCommand::Fetch { key: _key } => {}
                 RocksdbCommand::Stream => {
-                    let mut stream = AsStream::<OutputId, Spent>::stream(&storage).await.unwrap();
+                    let mut stream = AsStream::<OutputId, ConsumedOutput>::stream(&storage).await.unwrap();
 
                     while let Some((key, value)) = stream.next().await {
                         println!("Key: {:?}\nValue: {:?})\n", key, value);

@@ -4,13 +4,13 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Balance, Output, OutputDiff, Spent, Unspent};
+use bee_ledger::model::{Balance, OutputDiff, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::HashedIndex,
-        transaction::{Address, Ed25519Address, OutputId},
+        transaction::{Address, ConsumedOutput, CreatedOutput, Ed25519Address, OutputId},
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId,
@@ -198,17 +198,17 @@ impl Batch<(HashedIndex, MessageId), ()> for Storage {
     }
 }
 
-impl Batch<OutputId, Output> for Storage {
+impl Batch<OutputId, CreatedOutput> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
         output_id: &OutputId,
-        output: &Output,
+        output: &CreatedOutput,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_OUTPUT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -229,8 +229,8 @@ impl Batch<OutputId, Output> for Storage {
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_OUTPUT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -242,24 +242,24 @@ impl Batch<OutputId, Output> for Storage {
     }
 }
 
-impl Batch<OutputId, Spent> for Storage {
+impl Batch<OutputId, ConsumedOutput> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
         output_id: &OutputId,
-        spent: &Spent,
+        output: &ConsumedOutput,
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_SPENT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_SPENT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
         output_id.pack(&mut batch.key_buf).unwrap();
         batch.value_buf.clear();
         // Packing to bytes can't fail.
-        spent.pack(&mut batch.value_buf).unwrap();
+        output.pack(&mut batch.value_buf).unwrap();
 
         batch.inner.put_cf(&cf, &batch.key_buf, &batch.value_buf);
 
@@ -273,8 +273,8 @@ impl Batch<OutputId, Spent> for Storage {
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_SPENT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_SPENT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.

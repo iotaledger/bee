@@ -2,25 +2,35 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    config::SnapshotConfig, download::download_snapshot_file, error::Error, info::SnapshotInfo, kind::Kind,
-    snapshot::Snapshot, storage::StorageBackend,
+    config::SnapshotConfig, download::download_snapshot_file, error::Error, header::SnapshotHeader, info::SnapshotInfo,
+    kind::Kind, milestone_diff::MilestoneDiff, storage::StorageBackend,
 };
 
-use bee_ledger::{
-    state::check_ledger_state,
-    storage::{apply_outputs_diff, create_output, rollback_outputs_diff},
+use bee_common::packable::Packable;
+use bee_message::{
+    ledger_index::LedgerIndex,
+    milestone::MilestoneIndex,
+    payload::transaction::{CreatedOutput, Output, OutputId},
+    solid_entry_point::SolidEntryPoint,
+    MessageId,
 };
-use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
-use bee_runtime::{node::Node, worker::Worker};
-use bee_storage::access::{Fetch, Insert, Truncate};
+use bee_runtime::{node::Node, resource::ResourceHandle, worker::Worker};
+use bee_storage::access::{Fetch, Insert};
 
 use async_trait::async_trait;
 use chrono::{offset::TimeZone, Utc};
 use log::info;
+use tokio::task;
 
-use std::path::Path;
+use std::{fs::OpenOptions, io::BufReader, path::Path};
 
-pub struct SnapshotWorker {}
+pub struct SnapshotWorker {
+    pub full_sep_rx: flume::Receiver<(SolidEntryPoint, MilestoneIndex)>,
+    pub delta_sep_rx: flume::Receiver<(SolidEntryPoint, MilestoneIndex)>,
+    pub output_rx: flume::Receiver<(OutputId, CreatedOutput)>,
+    pub full_diff_rx: flume::Receiver<MilestoneDiff>,
+    pub delta_diff_rx: flume::Receiver<MilestoneDiff>,
+}
 
 #[async_trait]
 impl<N> Worker<N> for SnapshotWorker
@@ -32,16 +42,44 @@ where
     type Error = Error;
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+        let (full_sep_tx, full_sep_rx) = flume::unbounded();
+        let (delta_sep_tx, delta_sep_rx) = flume::unbounded();
+        let (output_tx, output_rx) = flume::unbounded();
+        let (full_diff_tx, full_diff_rx) = flume::unbounded();
+        let (delta_diff_tx, delta_diff_rx) = flume::unbounded();
+
         let (network_id, config) = (config.0, config.1);
         let storage = node.storage();
 
         match Fetch::<(), SnapshotInfo>::fetch(&*storage, &()).await {
-            Ok(Some(_info)) => {}
-            Ok(None) => import_snapshots(&*storage, network_id, &config).await?,
+            Ok(None) => {
+                task::spawn(async move {
+                    import_snapshots(
+                        storage,
+                        network_id,
+                        config,
+                        full_sep_tx,
+                        delta_sep_tx,
+                        output_tx,
+                        full_diff_tx,
+                        delta_diff_tx,
+                    )
+                    .await
+                });
+            }
             Err(e) => return Err(Error::StorageBackend(Box::new(e))),
+            _ => {
+                // TODO log snapshot
+            }
         }
 
-        Ok(Self {})
+        Ok(Self {
+            full_sep_rx,
+            delta_sep_rx,
+            output_rx,
+            full_diff_rx,
+            delta_diff_rx,
+        })
     }
 }
 
@@ -50,94 +88,120 @@ async fn import_snapshot<B: StorageBackend>(
     kind: Kind,
     path: &Path,
     network_id: u64,
-) -> Result<Snapshot, Error> {
+    sep_tx: flume::Sender<(SolidEntryPoint, MilestoneIndex)>,
+    output_tx: Option<flume::Sender<(OutputId, CreatedOutput)>>,
+    diff_tx: flume::Sender<MilestoneDiff>,
+) -> Result<(), Error> {
     let kind_str = format!("{:?}", kind).to_lowercase();
 
     info!("Importing {} snapshot file {}...", kind_str, &path.to_string_lossy());
 
-    let snapshot = Snapshot::from_file(path)?;
+    let mut reader = BufReader::new(OpenOptions::new().read(true).open(path).map_err(Error::Io)?);
 
-    if snapshot.header().kind() != kind {
-        return Err(Error::InvalidKind(kind, snapshot.header().kind()));
+    let header = SnapshotHeader::unpack(&mut reader)?;
+
+    if header.kind() != kind {
+        return Err(Error::InvalidKind(kind, header.kind()));
     }
 
-    if snapshot.header().network_id() != network_id {
-        return Err(Error::NetworkIdMismatch(network_id, snapshot.header().network_id()));
+    if header.network_id() != network_id {
+        return Err(Error::NetworkIdMismatch(network_id, header.network_id()));
+    }
+
+    match header.kind() {
+        Kind::Full => {
+            if header.ledger_index() < header.sep_index() {
+                return Err(Error::LedgerSepIndexesInconsistency(
+                    header.ledger_index(),
+                    header.sep_index(),
+                ));
+            }
+            if (*(header.ledger_index() - header.sep_index())) as usize != header.milestone_diff_count() as usize {
+                return Err(Error::InvalidMilestoneDiffsCount(
+                    (*(header.ledger_index() - header.sep_index())) as usize,
+                    header.milestone_diff_count() as usize,
+                ));
+            }
+        }
+        Kind::Delta => {
+            if header.sep_index() < header.ledger_index() {
+                return Err(Error::LedgerSepIndexesInconsistency(
+                    header.ledger_index(),
+                    header.sep_index(),
+                ));
+            }
+            if (*(header.sep_index() - header.ledger_index())) as usize != header.milestone_diff_count() as usize {
+                return Err(Error::InvalidMilestoneDiffsCount(
+                    (*(header.sep_index() - header.ledger_index())) as usize,
+                    header.milestone_diff_count() as usize,
+                ));
+            }
+        }
+    }
+
+    Insert::<(), LedgerIndex>::insert(storage, &(), &LedgerIndex::new(header.ledger_index()))
+        .await
+        .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+
+    Insert::<(), SnapshotInfo>::insert(
+        &*storage,
+        &(),
+        &SnapshotInfo::new(
+            header.network_id(),
+            header.sep_index(),
+            header.sep_index(),
+            header.sep_index(),
+            header.timestamp(),
+        ),
+    )
+    .await
+    .map_err(|e| Error::StorageBackend(Box::new(e)))?;
+
+    for _ in 0..header.sep_count() {
+        let _ = sep_tx.send((SolidEntryPoint::unpack(&mut reader)?, header.sep_index()));
+    }
+
+    if header.kind() == Kind::Full {
+        let output_tx = output_tx.unwrap();
+        for _ in 0..header.output_count() {
+            let message_id = MessageId::unpack(&mut reader)?;
+            let output_id = OutputId::unpack(&mut reader)?;
+            let output = Output::unpack(&mut reader)?;
+            let _ = output_tx.send((output_id, CreatedOutput::new(message_id, output)));
+        }
+    }
+
+    for _ in 0..header.milestone_diff_count() {
+        let _ = diff_tx.send(MilestoneDiff::unpack(&mut reader)?);
     }
 
     info!(
         "Imported {} snapshot file from {} with sep index {}, ledger index {}, {} solid entry points{} and {} milestone diffs.",
         kind_str,
-        Utc.timestamp(snapshot.header().timestamp() as i64, 0)
+        Utc.timestamp(header.timestamp() as i64, 0)
             .format("%d-%m-%Y %H:%M:%S"),
-        *snapshot.header().sep_index(),
-        *snapshot.header().ledger_index(),
-        snapshot.solid_entry_points().len(),
-        match snapshot.header().kind() {
-            Kind::Full=> format!(", {} outputs", snapshot.outputs().len()),
+        *header.sep_index(),
+        *header.ledger_index(),
+        header.sep_count(),
+        match header.kind() {
+            Kind::Full=> format!(", {} outputs", header.output_count()),
             Kind::Delta=> "".to_owned()
         },
-        snapshot.milestone_diffs().len()
+        header.milestone_diff_count()
     );
 
-    Insert::<(), LedgerIndex>::insert(storage, &(), &LedgerIndex::new(snapshot.header().ledger_index()))
-        .await
-        .map_err(|e| Error::StorageBackend(Box::new(e)))?;
-
-    Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage)
-        .await
-        .map_err(|e| Error::StorageBackend(Box::new(e)))?;
-
-    for sep in snapshot.solid_entry_points.iter() {
-        Insert::<SolidEntryPoint, MilestoneIndex>::insert(storage, &sep, &snapshot.header().sep_index())
-            .await
-            .map_err(|e| Error::StorageBackend(Box::new(e)))?;
-    }
-
-    if snapshot.header().kind() == Kind::Full {
-        for (output_id, output) in snapshot.outputs().iter() {
-            // TODO handle unwrap
-            create_output(storage, output_id, output).await.unwrap();
-        }
-    }
-
-    for diff in snapshot.milestone_diffs() {
-        let index = diff.index();
-        // Unwrap is fine because we just inserted the ledger index.
-        let ledger_index = Fetch::<(), LedgerIndex>::fetch(storage, &())
-            .await
-            .map_err(|e| Error::StorageBackend(Box::new(e)))?
-            .unwrap();
-
-        match index {
-            MilestoneIndex(index) if index == *ledger_index + 1 => {
-                // TODO unwrap until we merge both crates
-                apply_outputs_diff(storage, MilestoneIndex(index), diff.created(), diff.consumed(), None)
-                    .await
-                    .unwrap();
-            }
-            MilestoneIndex(index) if index == *ledger_index => {
-                // TODO unwrap until we merge both crates
-                rollback_outputs_diff(storage, MilestoneIndex(index), diff.created(), diff.consumed())
-                    .await
-                    .unwrap();
-            }
-            _ => return Err(Error::UnexpectedDiffIndex(index)),
-        }
-    }
-
-    // TODO unwrap
-    if !check_ledger_state(storage).await.unwrap() {
-        return Err(Error::InvalidLedgerState);
-    }
-
-    Ok(snapshot)
+    Ok(())
 }
 
 async fn import_snapshots<B: StorageBackend>(
-    storage: &B,
+    storage: ResourceHandle<B>,
     network_id: u64,
-    config: &SnapshotConfig,
+    config: SnapshotConfig,
+    full_sep_tx: flume::Sender<(SolidEntryPoint, MilestoneIndex)>,
+    delta_sep_tx: flume::Sender<(SolidEntryPoint, MilestoneIndex)>,
+    output_tx: flume::Sender<(OutputId, CreatedOutput)>,
+    full_diff_tx: flume::Sender<MilestoneDiff>,
+    delta_diff_tx: flume::Sender<MilestoneDiff>,
 ) -> Result<(), Error> {
     let full_exists = config.full_path().exists();
     let delta_exists = config.delta_path().exists();
@@ -149,26 +213,30 @@ async fn import_snapshots<B: StorageBackend>(
         download_snapshot_file(config.delta_path(), config.download_urls()).await?;
     }
 
-    let mut snapshot = import_snapshot(storage, Kind::Full, config.full_path(), network_id).await?;
+    import_snapshot(
+        &*storage,
+        Kind::Full,
+        config.full_path(),
+        network_id,
+        full_sep_tx,
+        Some(output_tx),
+        full_diff_tx,
+    )
+    .await?;
 
     // Load delta file only if both full and delta files already existed or if they have just been downloaded.
     if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
-        snapshot = import_snapshot(storage, Kind::Delta, config.delta_path(), network_id).await?;
+        import_snapshot(
+            &*storage,
+            Kind::Delta,
+            config.delta_path(),
+            network_id,
+            delta_sep_tx,
+            None,
+            delta_diff_tx,
+        )
+        .await?;
     }
-
-    Insert::<(), SnapshotInfo>::insert(
-        storage,
-        &(),
-        &SnapshotInfo::new(
-            snapshot.header().network_id(),
-            snapshot.header().sep_index(),
-            snapshot.header().sep_index(),
-            snapshot.header().sep_index(),
-            snapshot.header().timestamp(),
-        ),
-    )
-    .await
-    .map_err(|e| Error::StorageBackend(Box::new(e)))?;
 
     Ok(())
 }

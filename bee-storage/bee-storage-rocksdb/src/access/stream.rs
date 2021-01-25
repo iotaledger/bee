@@ -4,13 +4,13 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Balance, Output, OutputDiff, Spent, Unspent};
+use bee_ledger::model::{Balance, OutputDiff, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::{HashedIndex, HASHED_INDEX_LENGTH},
-        transaction::{Address, Ed25519Address, OutputId},
+        transaction::{Address, ConsumedOutput, CreatedOutput, Ed25519Address, OutputId},
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId, MESSAGE_ID_LENGTH,
@@ -150,24 +150,24 @@ impl<'a> StorageStream<'a, (HashedIndex, MessageId), ()> {
     }
 }
 
-impl<'a> StorageStream<'a, OutputId, Output> {
-    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, Output) {
+impl<'a> StorageStream<'a, OutputId, CreatedOutput> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, CreatedOutput) {
         (
             // Unpacking from storage is fine.
             OutputId::unpack(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            Output::unpack(&mut value).unwrap(),
+            CreatedOutput::unpack(&mut value).unwrap(),
         )
     }
 }
 
-impl<'a> StorageStream<'a, OutputId, Spent> {
-    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, Spent) {
+impl<'a> StorageStream<'a, OutputId, ConsumedOutput> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, ConsumedOutput) {
         (
             // Unpacking from storage is fine.
             OutputId::unpack(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            Spent::unpack(&mut value).unwrap(),
+            ConsumedOutput::unpack(&mut value).unwrap(),
         )
     }
 }
@@ -266,8 +266,8 @@ impl_stream!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_stream!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_stream!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
 impl_stream!((HashedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
-impl_stream!(OutputId, Output, CF_OUTPUT_ID_TO_OUTPUT);
-impl_stream!(OutputId, Spent, CF_OUTPUT_ID_TO_SPENT);
+impl_stream!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
+impl_stream!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_stream!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
 impl_stream!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
 impl_stream!((), LedgerIndex, CF_LEDGER_INDEX);

@@ -1,12 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    conflict::ConflictReason,
-    model::{BalanceDiff, Output, Spent},
-};
+use crate::{conflict::ConflictReason, model::BalanceDiff};
 
-use bee_message::{milestone::MilestoneIndex, payload::transaction::OutputId, MessageId};
+use bee_message::{
+    milestone::MilestoneIndex,
+    payload::transaction::{ConsumedOutput, CreatedOutput, OutputId},
+    MessageId,
+};
 
 use std::collections::HashMap;
 
@@ -23,8 +24,8 @@ pub(crate) struct WhiteFlagMetadata {
     pub(crate) excluded_conflicting_messages: Vec<(MessageId, ConflictReason)>,
     // The messages which mutate the ledger in the order in which they were applied.
     pub(crate) included_messages: Vec<MessageId>,
-    pub(crate) created_outputs: HashMap<OutputId, Output>,
-    pub(crate) consumed_outputs: HashMap<OutputId, Spent>,
+    pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
+    pub(crate) consumed_outputs: HashMap<OutputId, ConsumedOutput>,
     pub(crate) balance_diff: BalanceDiff,
 }
 

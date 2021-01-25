@@ -4,13 +4,13 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Balance, Output, OutputDiff, Spent, Unspent};
+use bee_ledger::model::{Balance, OutputDiff, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::HashedIndex,
-        transaction::{Address, Ed25519Address, OutputId},
+        transaction::{Address, ConsumedOutput, CreatedOutput, Ed25519Address, OutputId},
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId,
@@ -94,12 +94,16 @@ impl Insert<(HashedIndex, MessageId), ()> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Insert<OutputId, Output> for Storage {
-    async fn insert(&self, output_id: &OutputId, output: &Output) -> Result<(), <Self as StorageBackend>::Error> {
+impl Insert<OutputId, CreatedOutput> for Storage {
+    async fn insert(
+        &self,
+        output_id: &OutputId,
+        output: &CreatedOutput,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_OUTPUT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
         self.inner.put_cf(&cf, output_id.pack_new(), output.pack_new())?;
 
@@ -108,14 +112,18 @@ impl Insert<OutputId, Output> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Insert<OutputId, Spent> for Storage {
-    async fn insert(&self, output_id: &OutputId, spent: &Spent) -> Result<(), <Self as StorageBackend>::Error> {
+impl Insert<OutputId, ConsumedOutput> for Storage {
+    async fn insert(
+        &self,
+        output_id: &OutputId,
+        output: &ConsumedOutput,
+    ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_SPENT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_SPENT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
-        self.inner.put_cf(&cf, output_id.pack_new(), spent.pack_new())?;
+        self.inner.put_cf(&cf, output_id.pack_new(), output.pack_new())?;
 
         Ok(())
     }

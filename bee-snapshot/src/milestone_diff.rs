@@ -6,10 +6,9 @@
 use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_ledger::model::{Output, Spent};
 use bee_message::{
     milestone::MilestoneIndex,
-    payload::transaction::{self, OutputId, TransactionId},
+    payload::transaction::{ConsumedOutput, CreatedOutput, Output, OutputId, TransactionId},
     MessageId,
 };
 
@@ -17,8 +16,8 @@ use std::collections::HashMap;
 
 pub struct MilestoneDiff {
     index: MilestoneIndex,
-    created: HashMap<OutputId, Output>,
-    consumed: HashMap<OutputId, Spent>,
+    created: HashMap<OutputId, CreatedOutput>,
+    consumed: HashMap<OutputId, ConsumedOutput>,
 }
 
 impl MilestoneDiff {
@@ -26,11 +25,11 @@ impl MilestoneDiff {
         self.index
     }
 
-    pub fn created(&self) -> &HashMap<OutputId, Output> {
+    pub fn created(&self) -> &HashMap<OutputId, CreatedOutput> {
         &self.created
     }
 
-    pub fn consumed(&self) -> &HashMap<OutputId, Spent> {
+    pub fn consumed(&self) -> &HashMap<OutputId, ConsumedOutput> {
         &self.consumed
     }
 }
@@ -71,8 +70,8 @@ impl Packable for MilestoneDiff {
         for _ in 0..created_count {
             let message_id = MessageId::unpack(reader)?;
             let output_id = OutputId::unpack(reader)?;
-            let output = transaction::Output::unpack(reader)?;
-            created.insert(output_id, Output::new(message_id, output));
+            let output = Output::unpack(reader)?;
+            created.insert(output_id, CreatedOutput::new(message_id, output));
         }
 
         let consumed_count = u64::unpack(reader)? as usize;
@@ -81,9 +80,9 @@ impl Packable for MilestoneDiff {
         for _ in 0..consumed_count {
             let _message_id = MessageId::unpack(reader)?;
             let output_id = OutputId::unpack(reader)?;
-            let _output = transaction::Output::unpack(reader)?;
+            let _output = Output::unpack(reader)?;
             let _target = TransactionId::unpack(reader)?;
-            consumed.insert(output_id, Spent::new(*output_id.transaction_id(), index));
+            consumed.insert(output_id, ConsumedOutput::new(*output_id.transaction_id(), index));
         }
 
         Ok(Self {

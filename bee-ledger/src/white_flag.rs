@@ -6,14 +6,14 @@ use crate::{
     dust::{DUST_ALLOWANCE_DIVISOR, DUST_ALLOWANCE_MINIMUM},
     error::Error,
     metadata::WhiteFlagMetadata,
-    model::{BalanceDiff, Output, Spent},
+    model::BalanceDiff,
     storage::{self, StorageBackend},
 };
 
 use bee_common::packable::Packable;
 use bee_message::{
     payload::{
-        transaction::{self, Input, OutputId, TransactionPayload, UnlockBlock},
+        transaction::{ConsumedOutput, CreatedOutput, Input, Output, OutputId, TransactionPayload, UnlockBlock},
         Payload,
     },
     Message, MessageId,
@@ -28,7 +28,7 @@ use std::{
 
 fn validate_transaction(
     transaction: &TransactionPayload,
-    consumed_outputs: &HashMap<OutputId, Output>,
+    consumed_outputs: &HashMap<OutputId, CreatedOutput>,
     balance_diff: &mut BalanceDiff,
 ) -> Result<ConflictReason, Error> {
     let mut created_amount: u64 = 0;
@@ -43,14 +43,14 @@ fn validate_transaction(
 
     for created_output in transaction.essence().outputs() {
         match created_output {
-            transaction::Output::SignatureLockedSingle(created_output) => {
+            Output::SignatureLockedSingle(created_output) => {
                 created_amount = created_amount.saturating_add(created_output.amount());
                 balance_diff.balance_add(*created_output.address(), created_output.amount());
                 if created_output.amount() < DUST_ALLOWANCE_MINIMUM {
                     balance_diff.dust_output_inc(*created_output.address());
                 }
             }
-            transaction::Output::SignatureLockedDustAllowance(created_output) => {
+            Output::SignatureLockedDustAllowance(created_output) => {
                 created_amount = created_amount.saturating_add(created_output.amount());
                 balance_diff.balance_add(*created_output.address(), created_output.amount());
                 balance_diff.dust_allowance_add(*created_output.address(), created_output.amount());
@@ -63,7 +63,7 @@ fn validate_transaction(
 
     for (index, (_, consumed_output)) in consumed_outputs.iter().enumerate() {
         match consumed_output.inner() {
-            transaction::Output::SignatureLockedSingle(consumed_output) => {
+            Output::SignatureLockedSingle(consumed_output) => {
                 consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
                 balance_diff.balance_sub(*consumed_output.address(), consumed_output.amount());
                 if consumed_output.amount() < DUST_ALLOWANCE_MINIMUM {
@@ -76,7 +76,7 @@ fn validate_transaction(
                     return Ok(ConflictReason::InvalidSignature);
                 }
             }
-            transaction::Output::SignatureLockedDustAllowance(consumed_output) => {
+            Output::SignatureLockedDustAllowance(consumed_output) => {
                 consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
                 balance_diff.balance_sub(*consumed_output.address(), consumed_output.amount());
                 balance_diff.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
@@ -194,7 +194,7 @@ where
         metadata.created_outputs.insert(
             // Unwrap is fine, the index is known to be valid.
             OutputId::new(transaction_id, index as u16).unwrap(),
-            Output::new(*message_id, output.clone()),
+            CreatedOutput::new(*message_id, output.clone()),
         );
     }
 
@@ -202,7 +202,7 @@ where
     for (output_id, _) in consumed_outputs {
         metadata
             .consumed_outputs
-            .insert(output_id, Spent::new(transaction_id, metadata.index));
+            .insert(output_id, ConsumedOutput::new(transaction_id, metadata.index));
     }
 
     metadata.included_messages.push(*message_id);

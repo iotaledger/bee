@@ -6,14 +6,14 @@ use crate::{
     storage::StorageBackend,
     worker::{
         HasherWorker, MessageResponderWorker, MetricsWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
-        PeerManagerResWorker, PeerWorker, RequestedMilestones, TangleWorker,
+        PeerManagerResWorker, PeerWorker, RequestedMilestones,
     },
     ProtocolMetrics,
 };
 
-use bee_network::{Event, NetworkListener, ShortId};
+use bee_network::{Event, NetworkListener};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::MsTangle;
+use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{channel::oneshot, StreamExt};
