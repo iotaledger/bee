@@ -1,16 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::model::{Output, Spent};
+use bee_ledger::model::{Balance, Output, Spent};
 use bee_message::{
-    payload::transaction::{Ed25519Address, OutputId},
+    payload::transaction::{Address, Ed25519Address, OutputId},
     prelude::HashedIndex,
     MessageId,
 };
-use bee_storage::{
-    access::{Exist, Fetch},
-    backend,
-};
+use bee_storage::{access::Fetch, backend};
 
 pub trait StorageBackend:
     backend::StorageBackend
@@ -19,6 +16,7 @@ pub trait StorageBackend:
     + Fetch<OutputId, Output>
     + Fetch<OutputId, Spent>
     + Fetch<Ed25519Address, Vec<OutputId>>
+    + Fetch<Address, Balance>
     + bee_protocol::storage::StorageBackend
 {
 }
