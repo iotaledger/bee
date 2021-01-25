@@ -20,6 +20,15 @@ impl Balance {
             dust_output,
         }
     }
+    pub fn balance(&self) -> u64 {
+        self.balance
+    }
+    pub fn dust_allowance(&self) -> u64 {
+        self.dust_allowance
+    }
+    pub fn dust_output(&self) -> u64 {
+        self.dust_output
+    }
 }
 
 impl Packable for Balance {
