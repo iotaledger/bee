@@ -16,7 +16,7 @@ use warp::{reject, Rejection, Reply};
 use crate::filters::CustomRejection::{BadRequest, NotFound};
 use bee_protocol::PeerManager;
 use warp::http::StatusCode;
-use crate::types::{RelationDto, HeartbeatDto, MetricsDto, peer_to_peer_dto};
+use crate::types::{ peer_to_peer_dto};
 
 pub(crate) async fn add_peer(
     value: JsonValue,

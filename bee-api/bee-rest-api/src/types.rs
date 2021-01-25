@@ -3,12 +3,13 @@
 
 use bee_message::prelude::*;
 use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
+use bee_runtime::resource::ResourceHandle;
+use bee_protocol::{PeerManager, Peer};
 
 use serde::{Deserialize, Serialize};
 
 use std::convert::{TryFrom, TryInto};
-use bee_runtime::resource::ResourceHandle;
-use bee_protocol::{PeerManager, Peer};
+use std::sync::Arc;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PeerDto {
@@ -40,15 +41,15 @@ pub enum RelationDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HeartbeatDto {
     #[serde(rename = "solidMilestoneIndex")]
-    pub solid_milestone_index: u64,
+    pub solid_milestone_index: u32,
     #[serde(rename = "prunedMilestoneIndex")]
-    pub pruned_milestone_index: u64,
+    pub pruned_milestone_index: u32,
     #[serde(rename = "latestMilestoneIndex")]
-    pub latest_milestone_index: u64,
+    pub latest_milestone_index: u32,
     #[serde(rename = "connectedNeighbors")]
-    pub connected_neighbors: u64,
+    pub connected_neighbors: u8,
     #[serde(rename = "syncedNeighbors")]
-    pub synced_neighbors: u64,
+    pub synced_neighbors: u8,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -78,7 +79,7 @@ pub struct MetricsDto {
 }
 
 // &Arc<Peer> -> PeerDto // TODO: `From` can not be used since we need to make of the `PeerManager` to accessed the connection status.
-pub fn peer_to_peer_dto(peer: &Arc<Peer>, peer_manager: ResourceHandle<PeerManager>) -> PeerDto {
+pub async fn peer_to_peer_dto(peer: &Arc<Peer>, peer_manager: &ResourceHandle<PeerManager>) -> PeerDto {
     PeerDto {
         id: peer.id().to_string(),
         alias: Some(peer.alias().to_string()),
@@ -95,9 +96,9 @@ pub fn peer_to_peer_dto(peer: &Arc<Peer>, peer_manager: ResourceHandle<PeerManag
         connected: peer_manager.is_connected(peer.id()).await,
         gossip: GossipDto {
             heartbeat: HeartbeatDto {
-                solid_milestone_index: peer.latest_solid_milestone_index(),
-                pruned_milestone_index: peer.pruned_index(),
-                latest_milestone_index: peer.latest_milestone_index(),
+                solid_milestone_index: *peer.latest_solid_milestone_index(),
+                pruned_milestone_index: *peer.pruned_index(),
+                latest_milestone_index: *peer.latest_milestone_index(),
                 connected_neighbors: peer.connected_peers(),
                 synced_neighbors: peer.synced_peers()
             },

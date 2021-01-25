@@ -67,7 +67,7 @@ impl Peer {
         self.latest_solid_milestone_index.store(*index, Ordering::Relaxed);
     }
 
-    pub(crate) fn latest_solid_milestone_index(&self) -> MilestoneIndex {
+    pub fn latest_solid_milestone_index(&self) -> MilestoneIndex {
         self.latest_solid_milestone_index.load(Ordering::Relaxed).into()
     }
 
@@ -75,7 +75,7 @@ impl Peer {
         self.pruned_index.store(*index, Ordering::Relaxed);
     }
 
-    pub(crate) fn pruned_index(&self) -> MilestoneIndex {
+    pub fn pruned_index(&self) -> MilestoneIndex {
         self.pruned_index.load(Ordering::Relaxed).into()
     }
 
@@ -83,7 +83,7 @@ impl Peer {
         self.latest_milestone_index.store(*index, Ordering::Relaxed);
     }
 
-    pub(crate) fn latest_milestone_index(&self) -> MilestoneIndex {
+    pub fn latest_milestone_index(&self) -> MilestoneIndex {
         self.latest_milestone_index.load(Ordering::Relaxed).into()
     }
 
@@ -92,7 +92,7 @@ impl Peer {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn connected_peers(&self) -> u8 {
+    pub fn connected_peers(&self) -> u8 {
         self.connected_peers.load(Ordering::Relaxed)
     }
 
@@ -101,7 +101,7 @@ impl Peer {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn synced_peers(&self) -> u8 {
+    pub fn synced_peers(&self) -> u8 {
         self.synced_peers.load(Ordering::Relaxed)
     }
 
