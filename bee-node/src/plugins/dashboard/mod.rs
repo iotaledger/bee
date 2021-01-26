@@ -180,7 +180,8 @@ where
                     )
                     .map(|res| res),
                 ))
-                .or(warp::path!("explorer" / ..).and_then(serve_index));
+                .or(warp::path!("explorer" / ..).and_then(serve_index))
+                .or(warp::path!("peers" / ..).and_then(serve_index));
 
             info!("Dashboard available at http://localhost:{}.", config.port());
 
