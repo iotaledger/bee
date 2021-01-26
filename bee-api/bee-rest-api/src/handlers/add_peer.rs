@@ -13,10 +13,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use warp::{reject, Rejection, Reply};
 
-use crate::filters::CustomRejection::{BadRequest, NotFound};
+use crate::{
+    filters::CustomRejection::{BadRequest, NotFound},
+    types::{peer_to_peer_dto, RelationDto},
+};
 use bee_protocol::PeerManager;
 use warp::http::StatusCode;
-use crate::types::{ peer_to_peer_dto};
 
 pub(crate) async fn add_peer(
     value: JsonValue,
@@ -45,7 +47,7 @@ pub(crate) async fn add_peer(
 
     match peer_manager.get(&peer_id).await {
         Some(peer_entry) => {
-            let peer_dto = peer_to_peer_dto(&peer_entry.0, peer_manager);
+            let peer_dto = peer_to_peer_dto(&peer_entry.0, &peer_manager).await;
             Ok(warp::reply::with_status(
                 warp::reply::json(&SuccessBody::new(AddPeerResponse(peer_dto))),
                 StatusCode::OK,
@@ -78,9 +80,9 @@ pub(crate) async fn add_peer(
                     id: peer_id.to_string(),
                     alias,
                     multi_addresses: vec![multi_address.to_string()],
-                    relation: "known".to_string(),
+                    relation: RelationDto::Known,
                     connected: false,
-                    gossip_metrics: GossipDto::default(),
+                    gossip: GossipDto::default(),
                 }))),
                 StatusCode::OK,
             ))

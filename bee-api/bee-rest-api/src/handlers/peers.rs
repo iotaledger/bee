@@ -3,7 +3,7 @@
 
 use crate::{
     handlers::{BodyInner, SuccessBody},
-    types::{PeerDto},
+    types::PeerDto,
 };
 
 use bee_protocol::PeerManager;
@@ -12,16 +12,15 @@ use bee_runtime::resource::ResourceHandle;
 use serde::{Deserialize, Serialize};
 use warp::Reply;
 
+use crate::types::peer_to_peer_dto;
 use std::convert::Infallible;
-use crate::types::{ peer_to_peer_dto};
 
 pub(crate) async fn peers(peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Infallible> {
-    let mut peer_dtos = Vec::new();
+    let mut peers_dtos = Vec::new();
     for peer in peer_manager.get_all().await {
-        let peer_dto = peer_to_peer_dto(&peer, &peer_manager).await;
-        peer_dtos.push(peer_dto);
+        peers_dtos.push(peer_to_peer_dto(&peer, &peer_manager).await);
     }
-    Ok(warp::reply::json(&SuccessBody::new(PeersResponse(peer_dtos))))
+    Ok(warp::reply::json(&SuccessBody::new(PeersResponse(peers_dtos))))
 }
 
 /// Response of GET /api/v1/info
