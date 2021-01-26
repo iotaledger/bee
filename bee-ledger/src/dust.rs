@@ -8,6 +8,7 @@ pub const DUST_ALLOWANCE_DIVISOR: u64 = 100_000;
 /// Maximum number of dust outputs for an address.
 pub const DUST_OUTPUTS_MAX: u64 = 100;
 
+// TODO import from bee-message
 /// Minimum deposit amount.
 pub const DUST_ALLOWANCE_MINIMUM: u64 = 1_000_000;
 
