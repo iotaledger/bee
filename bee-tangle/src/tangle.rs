@@ -33,7 +33,9 @@ pub trait Hooks<T> {
     /// Fetch a message from some external storage medium.
     async fn get(&self, message_id: &MessageId) -> Result<Option<(Message, T)>, Self::Error>;
     /// Insert a message into some external storage medium.
-    async fn insert(&self, message_id: MessageId, tx: Message, metadata: T) -> Result<(), Self::Error>;
+    async fn insert_message(&self, message_id: MessageId, tx: Message) -> Result<(), Self::Error>;
+    /// Insert a message into some external storage medium.
+    async fn insert_metadata(&self, message_id: MessageId, metadata: T) -> Result<(), Self::Error>;
     /// Fetch the approvers list for a given message.
     async fn fetch_approvers(&self, message_id: &MessageId) -> Result<Option<Vec<MessageId>>, Self::Error>;
     /// Insert a new approver for a given message.
@@ -59,7 +61,11 @@ impl<T: Send + Sync> Hooks<T> for NullHooks<T> {
         Ok(None)
     }
 
-    async fn insert(&self, _message_id: MessageId, _tx: Message, _metadata: T) -> Result<(), Self::Error> {
+    async fn insert_message(&self, _message_id: MessageId, _tx: Message) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
+    async fn insert_metadata(&self, _message_id: MessageId, _metadata: T) -> Result<(), Self::Error> {
         Ok(())
     }
 
@@ -165,9 +171,13 @@ where
         } else {
             // Insert into backend using hooks
             self.hooks
-                .insert(message_id, message.clone(), metadata.clone())
+                .insert_message(message_id, message.clone())
                 .await
                 .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
+            self.hooks
+                .insert_metadata(message_id, metadata.clone())
+                .await
+                .unwrap_or_else(|e| info!("Failed to insert metadata {:?}", e));
 
             self.insert_inner(message_id, message, metadata).await
         }
@@ -253,18 +263,17 @@ where
     {
         self.pull_message(message_id).await;
         let r = if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
-            let message = (&**vtx.message()).clone();
             let metadata = vtx.metadata().clone();
             let r = update(vtx.metadata_mut());
 
-            Some((r, message, metadata))
+            Some((r, metadata))
         } else {
             None
         };
 
-        if let Some((r, message, metadata)) = r {
+        if let Some((r, metadata)) = r {
             self.hooks
-                .insert(*message_id, message, metadata)
+                .insert_metadata(*message_id, metadata)
                 .await
                 .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
             Some(r)
