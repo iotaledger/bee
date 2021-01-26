@@ -1,11 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{Multiaddr, ShortId, MAX_UNKNOWN_PEERS};
+use crate::{Multiaddr, PeerId, MAX_UNKNOWN_PEERS};
 
 use super::{errors::Error, PeerRelation};
 
-use libp2p::PeerId;
 use log::trace;
 use tokio::sync::RwLock;
 
@@ -37,7 +36,7 @@ impl PeerList {
 
     pub async fn update_relation(&self, id: &PeerId, relation: PeerRelation) -> Result<(), Error> {
         let mut this = self.0.write().await;
-        let mut kv = this.get_mut(id).ok_or_else(|| Error::UnlistedPeer(id.short()))?;
+        let mut kv = this.get_mut(id).ok_or_else(|| Error::UnlistedPeer(id.clone()))?;
 
         kv.0.relation = relation;
 
@@ -46,7 +45,7 @@ impl PeerList {
 
     pub async fn update_state(&self, id: &PeerId, state: PeerState) -> Result<(), Error> {
         let mut this = self.0.write().await;
-        let mut kv = this.get_mut(id).ok_or_else(|| Error::UnlistedPeer(id.short()))?;
+        let mut kv = this.get_mut(id).ok_or_else(|| Error::UnlistedPeer(id.clone()))?;
 
         kv.1 = state;
 
@@ -60,8 +59,7 @@ impl PeerList {
 
     pub async fn accepts(&self, id: &PeerId, info: &PeerInfo) -> Result<(), Error> {
         if self.0.read().await.contains_key(id) {
-            let alias = info.alias.clone();
-            return Err(Error::PeerAlreadyAdded(alias));
+            return Err(Error::PeerAlreadyAdded(id.clone()));
         }
 
         // Prevent inserting more peers than preconfigured.
@@ -79,8 +77,7 @@ impl PeerList {
             _ => (),
         }
         if self.0.read().await.contains_key(id) {
-            let alias = info.alias.clone();
-            return Err(Error::PeerAlreadyAdded(alias));
+            return Err(Error::PeerAlreadyAdded(id.clone()));
         }
 
         Ok(())
@@ -92,7 +89,7 @@ impl PeerList {
             .write()
             .await
             .remove(id)
-            .ok_or_else(|| Error::UnlistedPeer(id.short()))?;
+            .ok_or_else(|| Error::UnlistedPeer(id.clone()))?;
 
         Ok(info)
     }
@@ -107,7 +104,7 @@ impl PeerList {
             .read()
             .await
             .get(id)
-            .ok_or_else(|| Error::UnlistedPeer(id.short()))
+            .ok_or_else(|| Error::UnlistedPeer(id.clone()))
             // .map(|kv| kv.value().0.clone())
             .map(|kv| kv.0.clone())
     }
@@ -117,7 +114,7 @@ impl PeerList {
             .read()
             .await
             .get(id)
-            .ok_or_else(|| Error::UnlistedPeer(id.short()))
+            .ok_or_else(|| Error::UnlistedPeer(id.clone()))
             // .map(|kv| predicate(&kv.value().0, &kv.value().1))
             .map(|kv| predicate(&kv.0, &kv.1))
     }

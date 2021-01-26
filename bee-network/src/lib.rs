@@ -16,11 +16,7 @@ mod transport;
 
 // Reexports
 #[doc(inline)]
-pub use libp2p::{
-    core::identity::{ed25519::Keypair, PublicKey},
-    multiaddr::Protocol,
-    Multiaddr, PeerId,
-};
+pub use libp2p::{core::identity::ed25519::Keypair, multiaddr::Protocol, Multiaddr};
 
 // Exports
 pub use config::{NetworkConfig, NetworkConfigBuilder};
@@ -42,11 +38,20 @@ use peers::{BannedAddrList, BannedPeerList, PeerList, PeerManager, PeerManagerCo
 
 use bee_runtime::node::{Node, NodeBuilder};
 
-use libp2p::identity;
+use libp2p::{identity, identity::PublicKey, multihash::Multihash};
 use log::info;
 use tokio::sync::mpsc::UnboundedReceiver;
 
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::{
+    fmt,
+    hash::Hash,
+    ops::Deref,
+    str::FromStr,
+    sync::{
+        atomic::{AtomicU64, AtomicUsize, Ordering},
+        Arc,
+    },
+};
 
 pub(crate) static RECONNECT_INTERVAL_SECS: AtomicU64 = AtomicU64::new(DEFAULT_RECONNECT_INTERVAL_SECS);
 pub(crate) static NETWORK_ID: AtomicU64 = AtomicU64::new(0);
@@ -65,7 +70,7 @@ pub async fn init<N: Node>(
     MAX_UNKNOWN_PEERS.swap(max_unknown_peers, Ordering::Relaxed);
 
     let local_keys = identity::Keypair::Ed25519(local_keys);
-    let local_id = PeerId::from_public_key(local_keys.public());
+    let local_id = libp2p::PeerId::from_public_key(local_keys.public()).into();
     info!("Own peer id: {}", local_id);
 
     let (command_sender, command_receiver) = commands::channel();
@@ -110,25 +115,89 @@ pub async fn init<N: Node>(
     (node_builder, event_receiver)
 }
 
-/// A trait specifically there to create shorter peer ids for better readability in logs and user interfaces.
-pub trait ShortId
-where
-    Self: ToString,
-{
-    /// The length of the shortened peer id.
-    const SHORT_LENGTH: usize;
+/// A libp2p `PeerId` wrapper, that buffers its base58 representation, so that it can be viewed without extra
+/// allocation.
+#[derive(Clone)]
+pub struct PeerId(libp2p::PeerId, Arc<String>);
 
-    /// Creates a shorter - more readable - id from the original.
-    fn short(&self) -> String;
+impl PeerId {
+    /// Builds a `PeerId` from an Ed25519 public key.
+    pub fn from_public_key(ed25519_pk: identity::ed25519::PublicKey) -> Self {
+        let peer_id = libp2p::PeerId::from_public_key(PublicKey::Ed25519(ed25519_pk));
+        let buffer = Arc::new(peer_id.to_base58());
+
+        Self(peer_id, buffer)
+    }
+
+    /// Tries to turn a `Multihash` into a `PeerId`.
+    pub fn from_multihash(multihash: Multihash) -> Result<Self, Multihash> {
+        let peer_id = libp2p::PeerId::from_multihash(multihash)?;
+        let buffer = Arc::new(peer_id.to_base58());
+
+        Ok(Self(peer_id, buffer))
+    }
+
+    /// Provides a shortened view (the last 6 characters) into the string representation of this `PeerId`.
+    pub fn short(&self) -> &str {
+        const SHORT_LENGTH: usize = 6;
+
+        let len = self.1.len();
+        debug_assert!(len <= 52);
+
+        &self.1[(len - SHORT_LENGTH)..]
+    }
+
+    /// Provides the full view (52 characters) into the string representation of this `PeerId`.
+    pub fn long(&self) -> &str {
+        &self.1
+    }
 }
 
-impl ShortId for PeerId {
-    const SHORT_LENGTH: usize = 6;
+impl From<libp2p::PeerId> for PeerId {
+    fn from(peer_id: libp2p::PeerId) -> Self {
+        let base58 = peer_id.to_base58();
+        Self(peer_id, Arc::new(base58))
+    }
+}
 
-    fn short(&self) -> String {
-        const FULL_LENGTH: usize = 52;
+impl Deref for PeerId {
+    type Target = libp2p::PeerId;
 
-        let s = self.to_string();
-        s[(FULL_LENGTH - Self::SHORT_LENGTH)..].to_string()
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl FromStr for PeerId {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(libp2p::PeerId::from_str(s).map_err(|_| "error parsing peer id")?.into())
+    }
+}
+
+impl Eq for PeerId {}
+
+impl PartialEq for PeerId {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq(other)
+    }
+}
+
+impl Hash for PeerId {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state)
+    }
+}
+
+impl fmt::Display for PeerId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.short())
+    }
+}
+
+impl fmt::Debug for PeerId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.long())
     }
 }

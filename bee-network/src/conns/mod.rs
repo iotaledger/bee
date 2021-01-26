@@ -13,7 +13,7 @@ use crate::{
     interaction::events::{InternalEvent, InternalEventSender},
     peers::{self, MessageReceiver, MessageSender, PeerInfo},
     protocols::gossip::{GossipProtocol, GossipSubstream},
-    PeerId, ShortId,
+    PeerId,
 };
 
 use futures::{
@@ -30,7 +30,7 @@ use log::*;
 use std::{fmt, sync::Arc};
 
 pub(crate) async fn upgrade_connection(
-    peer_id: PeerId,
+    peer_id: &PeerId,
     peer_info: PeerInfo,
     muxer: StreamMuxerBox,
     origin: Origin,
@@ -43,17 +43,17 @@ pub(crate) async fn upgrade_connection(
             let outbound = outbound_from_ref_and_wrap(muxer)
                 // .fuse()
                 .await
-                .map_err(|_| Error::CreatingOutboundSubstreamFailed(peer_id.short()))?;
+                .map_err(|_| Error::CreatingOutboundSubstreamFailed(peer_id.clone()))?;
 
             upgrade::apply_outbound(outbound, GossipProtocol, upgrade::Version::V1)
                 .await
-                .map_err(|_| Error::SubstreamProtocolUpgradeFailed(peer_id.short()))?
+                .map_err(|_| Error::SubstreamProtocolUpgradeFailed(peer_id.clone()))?
         }
         Origin::Inbound => {
             let inbound = loop {
                 if let Some(inbound) = event_from_ref_and_wrap(muxer.clone())
                     .await
-                    .map_err(|_| Error::CreatingInboundSubstreamFailed(peer_id.short()))?
+                    .map_err(|_| Error::CreatingInboundSubstreamFailed(peer_id.clone()))?
                     .into_inbound_substream()
                 {
                     break inbound;
@@ -62,7 +62,7 @@ pub(crate) async fn upgrade_connection(
 
             upgrade::apply_inbound(inbound, GossipProtocol)
                 .await
-                .map_err(|_| Error::SubstreamProtocolUpgradeFailed(peer_id.short()))?
+                .map_err(|_| Error::SubstreamProtocolUpgradeFailed(peer_id.clone()))?
         }
     };
 
@@ -86,7 +86,7 @@ pub(crate) async fn upgrade_connection(
 
     internal_event_sender
         .send(InternalEvent::ConnectionEstablished {
-            peer_id,
+            peer_id: peer_id.clone(),
             peer_info,
             origin,
             gossip_in: incoming_gossip_receiver,
@@ -120,10 +120,10 @@ fn spawn_gossip_in_task(
             }
         }
 
+        trace!("Exiting gossip-in processor for '{}'", peer_id.short());
+
         // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
         let _ = internal_event_sender.send(InternalEvent::ConnectionDropped { peer_id });
-
-        trace!("Exiting gossip-in processor for {}", peer_id.short());
     });
 }
 
@@ -144,10 +144,10 @@ fn spawn_gossip_out_task(
             }
         }
 
+        trace!("Exiting gossip-out processor for '{}'", peer_id.short());
+
         // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
         let _ = internal_event_sender.send(InternalEvent::ConnectionDropped { peer_id });
-
-        trace!("Exiting gossip-out processor for {}", peer_id.short());
     });
 }
 

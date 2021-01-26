@@ -67,7 +67,7 @@ pub(crate) async fn add_peer(
             };
 
             if let Err(e) = network_controller.send(AddPeer {
-                id: peer_id,
+                id: peer_id.clone(),
                 address: multi_address.clone(),
                 alias: alias.clone(),
                 relation: PeerRelation::Known,
@@ -77,7 +77,7 @@ pub(crate) async fn add_peer(
 
             Ok(warp::reply::with_status(
                 warp::reply::json(&SuccessBody::new(AddPeerResponse(PeerDto {
-                    id: peer_id.to_string(),
+                    id: peer_id.long().to_string(),
                     alias,
                     multi_addresses: vec![multi_address.to_string()],
                     relation: RelationDto::Known,

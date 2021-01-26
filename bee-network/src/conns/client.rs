@@ -7,7 +7,7 @@ use crate::{
     interaction::events::InternalEventSender,
     peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerRelation},
     transport::build_transport,
-    Multiaddr, PeerId, ShortId,
+    Multiaddr, PeerId,
 };
 
 use log::*;
@@ -23,27 +23,27 @@ pub async fn dial_peer(
     banned_peers: &BannedPeerList,
 ) -> Result<(), Error> {
     // Prevent dialing oneself.
-    if peer_id == &local_keys.public().into_peer_id() {
-        return Err(Error::DialedSelf(peer_id.short()));
+    if **peer_id == local_keys.public().into_peer_id() {
+        return Err(Error::DialedSelf(peer_id.clone()));
     }
 
     // Prevent duplicate connections.
     if let Ok(connected) = peers.is(peer_id, |_, state| state.is_connected()).await {
         if connected {
-            return Err(Error::DuplicateConnection(peer_id.short()));
+            return Err(Error::DuplicateConnection(peer_id.clone()));
         }
     }
 
     // Prevent dialing banned peers.
     if banned_peers.contains(peer_id) {
-        return Err(Error::DialedBannedPeer(peer_id.short()));
+        return Err(Error::DialedBannedPeer(peer_id.clone()));
     }
 
     // Prevent dialing unlisted/unregistered peers.
     let peer_info = peers
         .get_info(peer_id)
         .await
-        .map_err(|_| Error::DialedUnlistedPeer(peer_id.short()))?;
+        .map_err(|_| Error::DialedUnlistedPeer(peer_id.clone()))?;
 
     // Prevent dialing banned addresses.
     if banned_addrs.contains(&peer_info.address.to_string()) {
@@ -60,14 +60,12 @@ pub async fn dial_peer(
         .map_err(|_| Error::DialingFailed(peer_info.address.clone()))?;
 
     // Prevent connecting to dishonest peers or peers we have no up-to-date information about.
-    if &id != peer_id {
+    if id != **peer_id {
         return Err(Error::PeerIdMismatch {
-            expected: peer_id.to_string(),
-            received: id.to_string(),
+            expected: peer_id.clone(),
+            received: id.into(),
         });
     }
-
-    let peer_id = id;
 
     log_outbound_connection_success(&peer_info);
 
@@ -114,16 +112,18 @@ pub async fn dial_address(
         .await
         .map_err(|_| Error::DialingFailed(address.clone()))?;
 
+    let peer_id = peer_id.into();
+
     // Prevent duplicate connections.
     if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()).await {
         if connected {
-            return Err(Error::DuplicateConnection(peer_id.short()));
+            return Err(Error::DuplicateConnection(peer_id.clone()));
         }
     }
 
     // Prevent dialing banned peers.
     if banned_peers.contains(&peer_id) {
-        return Err(Error::DialedBannedPeer(peer_id.short()));
+        return Err(Error::DialedBannedPeer(peer_id.clone()));
     }
 
     let peer_info = if let Ok(peer_info) = peers.get_info(&peer_id).await {
@@ -134,14 +134,14 @@ pub async fn dial_address(
         // We also allow for a certain number of unknown peers.
         let peer_info = PeerInfo {
             address: address.clone(),
-            alias: peer_id.short(),
+            alias: peer_id.short().to_string(),
             relation: PeerRelation::Unknown,
         };
 
         peers
             .accepts(&peer_id, &peer_info)
             .await
-            .map_err(|_| Error::DialedRejectedPeer(peer_info.alias.clone()))?;
+            .map_err(|_| Error::DialedRejectedPeer(peer_id.clone()))?;
 
         info!("Unknown peer '{}' accepted.", peer_info.alias);
 
@@ -151,7 +151,7 @@ pub async fn dial_address(
     log_outbound_connection_success(&peer_info);
 
     super::upgrade_connection(
-        peer_id,
+        &peer_id,
         peer_info,
         muxer,
         Origin::Outbound,

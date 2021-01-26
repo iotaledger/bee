@@ -8,7 +8,7 @@ use crate::{
         events::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
     },
     peers::{PeerRelation, PeerState},
-    ShortId, RECONNECT_INTERVAL_SECS,
+    PeerId, RECONNECT_INTERVAL_SECS,
 };
 
 use super::{errors::Error, BannedAddrList, BannedPeerList, PeerInfo, PeerList};
@@ -17,7 +17,7 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
 use futures::StreamExt;
-use libp2p::{identity, Multiaddr, PeerId};
+use libp2p::{identity, Multiaddr};
 use log::*;
 use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
@@ -199,7 +199,7 @@ async fn process_command(
             alias,
             relation,
         } => {
-            let alias = alias.unwrap_or(id.short());
+            let alias = alias.unwrap_or(id.short().to_string());
 
             // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
             if relation == PeerRelation::Known {
@@ -300,7 +300,7 @@ async fn process_command(
         }
         Command::BanPeer { id } => {
             if !banned_peers.insert(id.clone()) {
-                return Err(Error::PeerAlreadyBanned(id.short()));
+                return Err(Error::PeerAlreadyBanned(id));
             } else {
                 event_sender
                     .send(Event::PeerBanned { id })
@@ -314,7 +314,7 @@ async fn process_command(
         }
         Command::UnbanPeer { id } => {
             if !banned_peers.remove(&id) {
-                return Err(Error::PeerAlreadyUnbanned(id.short()));
+                return Err(Error::PeerAlreadyUnbanned(id));
             }
         }
         Command::UpdateRelation { id, relation } => {

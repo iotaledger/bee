@@ -22,7 +22,7 @@ impl PeerManager for ManualPeerManager {
         for (mut address, alias) in config.peers {
             // NOTE: `unwrap`ing should be fine here since it comes from the config.
             if let Protocol::P2p(multihash) = address.pop().unwrap() {
-                let id = PeerId::from_multihash(multihash).expect("Invalid Multiaddr.");
+                let id = PeerId::from_multihash(multihash).expect("Invalid Multiaddr.").into();
 
                 add_peer(network, id, address, alias);
             } else {

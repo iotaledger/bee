@@ -5,7 +5,7 @@ use crate::{
     interaction::events::InternalEventSender,
     peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerRelation},
     transport::build_transport,
-    Multiaddr, PeerId, ShortId,
+    Multiaddr,
 };
 
 use super::{errors::Error, Origin};
@@ -31,7 +31,8 @@ use std::{
     },
 };
 
-type ListenerUpgrade = Pin<Box<(dyn Future<Output = Result<(PeerId, StreamMuxerBox), io::Error>> + Send + 'static)>>;
+type ListenerUpgrade =
+    Pin<Box<(dyn Future<Output = Result<(libp2p::PeerId, StreamMuxerBox), io::Error>> + Send + 'static)>>;
 type PeerListener = Pin<Box<dyn Stream<Item = Result<ListenerEvent<ListenerUpgrade, io::Error>, io::Error>> + Send>>;
 
 pub static NUM_LISTENER_EVENT_PROCESSING_ERRORS: AtomicUsize = AtomicUsize::new(0);
@@ -54,7 +55,6 @@ pub struct ConnectionManagerConfig {
 impl ConnectionManagerConfig {
     pub async fn new(
         local_keys: identity::Keypair,
-        // TODO: allow multiple bind addresses
         bind_address: Multiaddr,
         peers: PeerList,
         banned_addrs: BannedAddrList,
@@ -94,10 +94,6 @@ impl<N: Node> Worker<N> for ConnectionManager {
     type Config = ConnectionManagerConfig;
     type Error = Infallible;
 
-    // fn dependencies() -> &'static [TypeId] {
-    //     vec![TypeId::of::<PeerManager>()].leak()
-    // }
-
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let ConnectionManagerConfig {
             peers,
@@ -135,6 +131,8 @@ impl<N: Node> Worker<N> for ConnectionManager {
                         }
                     };
 
+                    let peer_id = peer_id.into();
+
                     // Prevent accepting duplicate connections.
                     if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()).await {
                         if connected {
@@ -159,7 +157,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                         // We also allow for a certain number of unknown peers.
                         let peer_info = PeerInfo {
                             address: peer_address,
-                            alias: peer_id.short(),
+                            alias: peer_id.short().to_string(),
                             relation: PeerRelation::Unknown,
                         };
 
@@ -178,7 +176,7 @@ impl<N: Node> Worker<N> for ConnectionManager {
                     log_inbound_connection_success(&peer_info);
 
                     if let Err(e) = super::upgrade_connection(
-                        peer_id.clone(),
+                        &peer_id,
                         peer_info,
                         muxer,
                         Origin::Inbound,
@@ -195,29 +193,6 @@ impl<N: Node> Worker<N> for ConnectionManager {
 
             info!("Listener stopped.")
         });
-
-        // loop {
-        //     select! {
-        //         _ = fused_shutdown_listener => {
-        //             trace!("Connection Manager received shutdown signal.");
-        //             break;
-        //         },
-        //         listener_event = fused_incoming_streams.next() => {
-        //             if let Some(listener_event) = listener_event {
-        //                 if let Ok(listener_event) = listener_event {
-        //                 } else {
-        //                     error!("Listener event stream failure.");
-        //                     NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
-        //                     continue;
-        //                 }
-        //             } else {
-        //                 error!("Fatal: Listener event stream stopped.");
-        //                 NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
-        //                 break;
-        //             }
-        //         },
-        //     }
-        // }
 
         trace!("Connection Manager started.");
 

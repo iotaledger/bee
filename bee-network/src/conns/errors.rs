@@ -1,11 +1,9 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Multiaddr;
+use crate::{Multiaddr, PeerId};
 
-use thiserror::Error as ErrorAttr;
-
-#[derive(Debug, ErrorAttr)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Building the underlying transport layer failed.")]
     CreatingTransportFailed,
@@ -16,27 +14,27 @@ pub enum Error {
     #[error("Tried to dial a banned address: {}.", .0)]
     DialedBannedAddress(Multiaddr),
     #[error("Tried to dial a banned peer: {}.", .0)]
-    DialedBannedPeer(String),
+    DialedBannedPeer(PeerId),
     #[error("Tried to dial self: {}.", .0)]
-    DialedSelf(String),
+    DialedSelf(PeerId),
     #[error("Tried to dial own listen address: {}.", .0)]
     DialedOwnAddress(Multiaddr),
     #[error("Tried to dial an unlisted peer: {}.", .0)]
-    DialedUnlistedPeer(String),
+    DialedUnlistedPeer(PeerId),
     #[error("Tried to dial a peer, that was rejected from the peerlist: {}.", .0)]
-    DialedRejectedPeer(String),
+    DialedRejectedPeer(PeerId),
     #[error("Failed dialing address: {}.", .0)]
     DialingFailed(Multiaddr),
     #[error("Already connected to peer: {}.", .0)]
-    DuplicateConnection(String),
+    DuplicateConnection(PeerId),
     #[error("Peer identifies with {}, but we expected: {}", .received, .expected)]
-    PeerIdMismatch { expected: String, received: String },
+    PeerIdMismatch { expected: PeerId, received: PeerId },
     #[error("Creating outbound substream with {} failed.", .0)]
-    CreatingOutboundSubstreamFailed(String),
+    CreatingOutboundSubstreamFailed(PeerId),
     #[error("Creating inbound substream with {} failed.", .0)]
-    CreatingInboundSubstreamFailed(String),
+    CreatingInboundSubstreamFailed(PeerId),
     #[error("Failed to upgrade a substream with {}.", .0)]
-    SubstreamProtocolUpgradeFailed(String),
+    SubstreamProtocolUpgradeFailed(PeerId),
     #[error("Failed to send an internal event ({}).", .0)]
     InternalEventSendFailure(&'static str),
     #[error("Failed to write a message to a stream.")]
