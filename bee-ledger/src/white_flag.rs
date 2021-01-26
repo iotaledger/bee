@@ -3,7 +3,7 @@
 
 use crate::{
     conflict::ConflictReason,
-    dust::{dust_outputs_max, DUST_ALLOWANCE_MINIMUM},
+    dust::{dust_outputs_max, DUST_THRESHOLD},
     error::Error,
     metadata::WhiteFlagMetadata,
     model::BalanceDiff,
@@ -41,7 +41,7 @@ fn validate_transaction(
             Output::SignatureLockedSingle(created_output) => {
                 created_amount = created_amount.saturating_add(created_output.amount());
                 balance_diff.balance_add(*created_output.address(), created_output.amount());
-                if created_output.amount() < DUST_ALLOWANCE_MINIMUM {
+                if created_output.amount() < DUST_THRESHOLD {
                     balance_diff.dust_output_inc(*created_output.address());
                 }
             }
@@ -61,7 +61,7 @@ fn validate_transaction(
             Output::SignatureLockedSingle(consumed_output) => {
                 consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
                 balance_diff.balance_sub(*consumed_output.address(), consumed_output.amount());
-                if consumed_output.amount() < DUST_ALLOWANCE_MINIMUM {
+                if consumed_output.amount() < DUST_THRESHOLD {
                     balance_diff.dust_output_dec(*consumed_output.address());
                 }
                 if !match transaction.unlock_block(index) {
