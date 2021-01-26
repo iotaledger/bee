@@ -182,7 +182,7 @@ where
         let full_diff_rx = node.worker::<SnapshotWorker>().unwrap().full_diff_rx.clone();
         let delta_diff_rx = node.worker::<SnapshotWorker>().unwrap().delta_diff_rx.clone();
 
-        while let Ok((output_id, output)) = output_rx.recv() {
+        while let Ok((output_id, output)) = output_rx.recv_async().await {
             // TODO handle unwrap
             create_output(&*storage, &output_id, &output).await.unwrap();
         }
@@ -191,7 +191,7 @@ where
             storage: &B,
             diff_rx: flume::Receiver<MilestoneDiff>,
         ) -> Result<(), Error> {
-            while let Ok(diff) = diff_rx.recv() {
+            while let Ok(diff) = diff_rx.recv_async().await {
                 let index = diff.index();
                 // Unwrap is fine because we just inserted the ledger index.
                 // TODO unwrap

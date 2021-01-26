@@ -169,7 +169,9 @@ async fn import_snapshot<B: StorageBackend>(
     .map_err(|e| Error::StorageBackend(Box::new(e)))?;
 
     for _ in 0..header.sep_count() {
-        let _ = sep_tx.send((SolidEntryPoint::unpack(&mut reader)?, header.sep_index()));
+        let _ = sep_tx
+            .send_async((SolidEntryPoint::unpack(&mut reader)?, header.sep_index()))
+            .await;
     }
 
     if header.kind() == Kind::Full {
@@ -178,12 +180,14 @@ async fn import_snapshot<B: StorageBackend>(
             let message_id = MessageId::unpack(&mut reader)?;
             let output_id = OutputId::unpack(&mut reader)?;
             let output = Output::unpack(&mut reader)?;
-            let _ = output_tx.send((output_id, CreatedOutput::new(message_id, output)));
+            let _ = output_tx
+                .send_async((output_id, CreatedOutput::new(message_id, output)))
+                .await;
         }
     }
 
     for _ in 0..header.milestone_diff_count() {
-        let _ = diff_tx.send(MilestoneDiff::unpack(&mut reader)?);
+        let _ = diff_tx.send_async(MilestoneDiff::unpack(&mut reader)?).await;
     }
 
     info!(

@@ -44,7 +44,7 @@ where
 
         // TODO batch ?
 
-        while let Ok((sep, index)) = full_sep_rx.recv() {
+        while let Ok((sep, index)) = full_sep_rx.recv_async().await {
             tangle.add_solid_entry_point(*sep, index);
             Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &sep, &index)
                 .await
@@ -55,7 +55,7 @@ where
         // Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(&*storage)
         //     .await
         //     .unwrap();
-        while let Ok((sep, index)) = delta_sep_rx.recv() {
+        while let Ok((sep, index)) = delta_sep_rx.recv_async().await {
             tangle.add_solid_entry_point(*sep, index);
             Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &sep, &index)
                 .await
