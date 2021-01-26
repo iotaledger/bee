@@ -7,29 +7,34 @@ use serde::Deserialize;
 
 use std::path::PathBuf;
 
-const DEFAULT_FETCH_EDGE_LIMIT: usize = 1000;
-const DEFAULT_FETCH_INDEX_LIMIT: usize = 1000;
-const DEFAULT_FETCH_OUTPUT_ID_LIMIT: usize = 1000;
+const DEFAULT_FETCH_EDGE_LIMIT: usize = 1_000;
+const DEFAULT_FETCH_INDEX_LIMIT: usize = 1_000;
+const DEFAULT_FETCH_OUTPUT_ID_LIMIT: usize = 1_000;
 const DEFAULT_ITERATION_BUDGET: usize = 100;
 
 const DEFAULT_PATH: &str = "./database";
 const DEFAULT_CREATE_IF_MISSING: bool = true;
 const DEFAULT_CREATE_MISSING_COLUMN_FAMILIES: bool = true;
-const DEFAULT_ENABLE_STATISTICS: bool = true;
-const DEFAULT_OPTIMIZE_FOR_POINT_LOOKUP: u64 = 0;
+const DEFAULT_ENABLE_STATISTICS: bool = false;
+const DEFAULT_OPTIMIZE_FOR_POINT_LOOKUP: u64 = 67_108_864; // 64 MiB
 const DEFAULT_OPTIMIZE_LEVEL_STYLE_COMPACTION: usize = 0;
 const DEFAULT_OPTIMIZE_UNIVERSAL_STYLE_COMPACTION: usize = 0;
 const DEFAULT_SET_ADVISE_RANDOM_ON_OPEN: bool = true;
 const DEFAULT_SET_ALLOW_CONCURRENT_MEMTABLE_WRITE: bool = true;
 const DEFAULT_SET_ALLOW_MMAP_READS: bool = false;
 const DEFAULT_SET_ALLOW_MMAP_WRITES: bool = false;
-const DEFAULT_SET_ATOMIC_FLUSH: bool = true;
+const DEFAULT_SET_ATOMIC_FLUSH: bool = false;
 const DEFAULT_SET_BYTES_PER_SYNC: u64 = 0;
 const DEFAULT_SET_COMPACTION_READAHEAD_SIZE: usize = 0;
-const DEFAULT_SET_COMPACTION_STYLE: CompactionStyle = CompactionStyle::Level;
+const DEFAULT_SET_COMPACTION_STYLE: CompactionStyle = CompactionStyle::Fifo;
 const DEFAULT_SET_MAX_WRITE_BUFFER_NUMBER: i32 = 2;
+const DEFAULT_SET_WRITE_BUFFER_SIZE: usize = 67_108_864; // 64 MiB
+const DEFAULT_SET_DB_WRITE_BUFFER_SIZE: usize = 67_108_864; // 64 MiB
 const DEFAULT_SET_DISABLE_AUTO_COMPACTIONS: bool = false;
 const DEFAULT_SET_COMPRESSION_TYPE: CompressionType = CompressionType::None;
+const DEFAULT_SET_UNORDERED_WRITE: bool = true;
+
+const DEFAULT_SET_HIGH_PRIORITY_BACKGROUND_THREADS: i32 = 2;
 
 #[derive(Default, Deserialize)]
 pub struct StorageConfigBuilder {
@@ -55,6 +60,27 @@ impl StorageConfigBuilder {
 }
 
 #[derive(Default, Deserialize)]
+pub struct RocksDBEnvConfigBuilder {
+    set_background_threads: Option<i32>,
+    set_high_priority_background_threads: Option<i32>,
+}
+
+impl RocksDBEnvConfigBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn finish(self) -> RocksDBEnvConfig {
+        RocksDBEnvConfig {
+            set_background_threads: self.set_background_threads.unwrap_or(num_cpus::get() as i32),
+            set_high_priority_background_threads: self
+                .set_high_priority_background_threads
+                .unwrap_or(DEFAULT_SET_HIGH_PRIORITY_BACKGROUND_THREADS),
+        }
+    }
+}
+
+#[derive(Default, Deserialize)]
 pub struct RocksDBConfigBuilder {
     storage: Option<StorageConfigBuilder>,
     path: Option<String>,
@@ -74,8 +100,12 @@ pub struct RocksDBConfigBuilder {
     set_compaction_readahead_size: Option<usize>,
     set_compaction_style: Option<CompactionStyle>,
     set_max_write_buffer_number: Option<i32>,
+    set_write_buffer_size: Option<usize>,
+    set_db_write_buffer_size: Option<usize>,
     set_disable_auto_compactions: Option<bool>,
     set_compression_type: Option<CompressionType>,
+    set_unordered_write: Option<bool>,
+    env: Option<RocksDBEnvConfigBuilder>,
 }
 
 impl RocksDBConfigBuilder {
@@ -130,10 +160,16 @@ impl From<RocksDBConfigBuilder> for RocksDBConfig {
             set_max_write_buffer_number: builder
                 .set_max_write_buffer_number
                 .unwrap_or(DEFAULT_SET_MAX_WRITE_BUFFER_NUMBER),
+            set_write_buffer_size: builder.set_write_buffer_size.unwrap_or(DEFAULT_SET_WRITE_BUFFER_SIZE),
+            set_db_write_buffer_size: builder
+                .set_db_write_buffer_size
+                .unwrap_or(DEFAULT_SET_DB_WRITE_BUFFER_SIZE),
             set_disable_auto_compactions: builder
                 .set_disable_auto_compactions
                 .unwrap_or(DEFAULT_SET_DISABLE_AUTO_COMPACTIONS),
             set_compression_type: builder.set_compression_type.unwrap_or(DEFAULT_SET_COMPRESSION_TYPE),
+            set_unordered_write: builder.set_unordered_write.unwrap_or(DEFAULT_SET_UNORDERED_WRITE),
+            env: builder.env.unwrap_or_default().finish(),
         }
     }
 }
@@ -144,6 +180,12 @@ pub struct StorageConfig {
     pub(crate) fetch_index_limit: usize,
     pub(crate) fetch_output_id_limit: usize,
     pub(crate) iteration_budget: usize,
+}
+
+#[derive(Clone)]
+pub struct RocksDBEnvConfig {
+    pub(crate) set_background_threads: i32,
+    pub(crate) set_high_priority_background_threads: i32,
 }
 
 #[derive(Clone)]
@@ -166,6 +208,10 @@ pub struct RocksDBConfig {
     pub(crate) set_compaction_readahead_size: usize,
     pub(crate) set_compaction_style: CompactionStyle,
     pub(crate) set_max_write_buffer_number: i32,
+    pub(crate) set_write_buffer_size: usize,
+    pub(crate) set_db_write_buffer_size: usize,
     pub(crate) set_disable_auto_compactions: bool,
     pub(crate) set_compression_type: CompressionType,
+    pub(crate) set_unordered_write: bool,
+    pub(crate) env: RocksDBEnvConfig,
 }
