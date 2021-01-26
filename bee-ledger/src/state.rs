@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    balance::Balance,
     error::Error,
-    model::{Balance, Unspent},
+    model::Unspent,
     storage::{self, StorageBackend},
 };
 
@@ -45,7 +46,7 @@ pub async fn check_ledger_balance_state<B: StorageBackend>(storage: &B) -> Resul
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     while let Some((_, entry)) = stream.next().await {
-        supply += entry.amount;
+        supply += entry.amount();
     }
 
     Ok(supply == IOTA_SUPPLY)

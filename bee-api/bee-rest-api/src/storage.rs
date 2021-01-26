@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::model::Balance;
+use bee_ledger::balance::Balance;
 use bee_message::{
     payload::transaction::{Address, ConsumedOutput, CreatedOutput, Ed25519Address, OutputId},
     prelude::HashedIndex,

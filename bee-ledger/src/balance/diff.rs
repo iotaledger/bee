@@ -9,13 +9,13 @@ use std::collections::{
 };
 
 #[derive(Debug, Default)]
-pub struct BalanceDiffEntry {
-    pub(crate) amount: i64,
-    pub(crate) dust_allowance: i64,
-    pub(crate) dust_output: i64,
+pub struct BalanceDiff {
+    amount: i64,
+    dust_allowance: i64,
+    dust_output: i64,
 }
 
-impl BalanceDiffEntry {
+impl BalanceDiff {
     pub fn new(amount: i64, dust_allowance: i64, dust_output: i64) -> Self {
         Self {
             amount,
@@ -23,12 +23,24 @@ impl BalanceDiffEntry {
             dust_output,
         }
     }
+
+    pub fn amount(&self) -> i64 {
+        self.amount
+    }
+
+    pub fn dust_allowance(&self) -> i64 {
+        self.dust_allowance
+    }
+
+    pub fn dust_output(&self) -> i64 {
+        self.dust_output
+    }
 }
 
 #[derive(Debug, Default)]
-pub struct BalanceDiff(HashMap<Address, BalanceDiffEntry>);
+pub struct BalanceDiffs(HashMap<Address, BalanceDiff>);
 
-impl BalanceDiff {
+impl BalanceDiffs {
     pub fn new() -> Self {
         Self::default()
     }
@@ -42,7 +54,7 @@ impl BalanceDiff {
         }
     }
 
-    pub fn get(&self, address: &Address) -> Option<&BalanceDiffEntry> {
+    pub fn get(&self, address: &Address) -> Option<&BalanceDiff> {
         self.0.get(address)
     }
 
@@ -76,14 +88,14 @@ impl BalanceDiff {
         entry.dust_output = entry.dust_output.saturating_sub(1);
     }
 
-    pub fn iter(&self) -> Iter<'_, Address, BalanceDiffEntry> {
+    pub fn iter(&self) -> Iter<'_, Address, BalanceDiff> {
         self.0.iter()
     }
 }
 
-impl IntoIterator for BalanceDiff {
-    type Item = (Address, BalanceDiffEntry);
-    type IntoIter = IntoIter<Address, BalanceDiffEntry>;
+impl IntoIterator for BalanceDiffs {
+    type Item = (Address, BalanceDiff);
+    type IntoIter = IntoIter<Address, BalanceDiff>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()

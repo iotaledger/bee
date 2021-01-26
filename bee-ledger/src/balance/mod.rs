@@ -1,15 +1,19 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod diff;
+
+pub use diff::{BalanceDiff, BalanceDiffs};
+
 use crate::model::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
 #[derive(Debug)]
 pub struct Balance {
-    pub(crate) amount: u64,
-    pub(crate) dust_allowance: u64,
-    pub(crate) dust_output: u64,
+    amount: u64,
+    dust_allowance: u64,
+    dust_output: u64,
 }
 
 impl Balance {

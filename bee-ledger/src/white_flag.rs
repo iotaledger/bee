@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    balance::BalanceDiffs,
     conflict::ConflictReason,
     dust::{dust_outputs_max, DUST_THRESHOLD},
     error::Error,
     metadata::WhiteFlagMetadata,
-    model::BalanceDiff,
     storage::{self, StorageBackend},
 };
 
@@ -29,7 +29,7 @@ use std::{
 fn validate_transaction(
     transaction: &TransactionPayload,
     consumed_outputs: &HashMap<OutputId, CreatedOutput>,
-    balance_diff: &mut BalanceDiff,
+    balance_diffs: &mut BalanceDiffs,
 ) -> Result<ConflictReason, Error> {
     let mut created_amount: u64 = 0;
     let mut consumed_amount: u64 = 0;
@@ -40,15 +40,15 @@ fn validate_transaction(
         match created_output {
             Output::SignatureLockedSingle(created_output) => {
                 created_amount = created_amount.saturating_add(created_output.amount());
-                balance_diff.amount_add(*created_output.address(), created_output.amount());
+                balance_diffs.amount_add(*created_output.address(), created_output.amount());
                 if created_output.amount() < DUST_THRESHOLD {
-                    balance_diff.dust_output_inc(*created_output.address());
+                    balance_diffs.dust_output_inc(*created_output.address());
                 }
             }
             Output::SignatureLockedDustAllowance(created_output) => {
                 created_amount = created_amount.saturating_add(created_output.amount());
-                balance_diff.amount_add(*created_output.address(), created_output.amount());
-                balance_diff.dust_allowance_add(*created_output.address(), created_output.amount());
+                balance_diffs.amount_add(*created_output.address(), created_output.amount());
+                balance_diffs.dust_allowance_add(*created_output.address(), created_output.amount());
             }
             _ => return Err(Error::UnsupportedOutputType),
         }
@@ -60,9 +60,9 @@ fn validate_transaction(
         match consumed_output.inner() {
             Output::SignatureLockedSingle(consumed_output) => {
                 consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
-                balance_diff.amount_sub(*consumed_output.address(), consumed_output.amount());
+                balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
                 if consumed_output.amount() < DUST_THRESHOLD {
-                    balance_diff.dust_output_dec(*consumed_output.address());
+                    balance_diffs.dust_output_dec(*consumed_output.address());
                 }
                 if !match transaction.unlock_block(index) {
                     UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_bytes, signature),
@@ -73,8 +73,8 @@ fn validate_transaction(
             }
             Output::SignatureLockedDustAllowance(consumed_output) => {
                 consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
-                balance_diff.amount_sub(*consumed_output.address(), consumed_output.amount());
-                balance_diff.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
+                balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
+                balance_diffs.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
                 if !match transaction.unlock_block(index) {
                     UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_bytes, signature),
                     _ => false,
@@ -149,29 +149,29 @@ async fn on_message<B: StorageBackend>(
         return Ok(());
     }
 
-    let mut balance_diff = BalanceDiff::new();
+    let mut balance_diffs = BalanceDiffs::new();
 
-    conflict = validate_transaction(&transaction, &consumed_outputs, &mut balance_diff)?;
+    conflict = validate_transaction(&transaction, &consumed_outputs, &mut balance_diffs)?;
 
     if conflict != ConflictReason::None {
         metadata.excluded_conflicting_messages.push((*message_id, conflict));
         return Ok(());
     }
 
-    for (address, entry) in balance_diff.iter() {
+    for (address, entry) in balance_diffs.iter() {
         // TODO conditionnally fetch ?
         let (mut dust_allowance, mut dust_output) = storage::fetch_balance(storage.deref(), &address)
             .await?
-            .map(|b| (b.dust_allowance as i64, b.dust_output as i64))
+            .map(|b| (b.dust_allowance() as i64, b.dust_output() as i64))
             .unwrap_or_default();
 
-        if let Some(entry) = metadata.balance_diff.get(&address) {
-            dust_allowance += entry.dust_allowance;
-            dust_output += entry.dust_output;
+        if let Some(entry) = metadata.balance_diffs.get(&address) {
+            dust_allowance += entry.dust_allowance();
+            dust_output += entry.dust_output();
         }
 
-        if (dust_output as i64 + entry.dust_output) as usize
-            > dust_outputs_max((dust_allowance as i64 + entry.dust_allowance) as u64)
+        if (dust_output as i64 + entry.dust_output()) as usize
+            > dust_outputs_max((dust_allowance as i64 + entry.dust_allowance()) as u64)
         {
             metadata
                 .excluded_conflicting_messages
@@ -180,7 +180,7 @@ async fn on_message<B: StorageBackend>(
         }
     }
 
-    metadata.balance_diff.merge(balance_diff);
+    metadata.balance_diffs.merge(balance_diffs);
 
     for (index, output) in essence.outputs().iter().enumerate() {
         metadata.created_outputs.insert(

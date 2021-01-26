@@ -91,7 +91,7 @@ where
         metadata.index,
         &metadata.created_outputs,
         &metadata.consumed_outputs,
-        Some(&metadata.balance_diff),
+        Some(&metadata.balance_diffs),
     )
     .await?;
 

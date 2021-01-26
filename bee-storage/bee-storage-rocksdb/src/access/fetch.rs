@@ -4,7 +4,7 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Balance, OutputDiff};
+use bee_ledger::{balance::Balance, model::OutputDiff};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},

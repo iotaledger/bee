@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{conflict::ConflictReason, model::BalanceDiff};
+use crate::{balance::BalanceDiffs, conflict::ConflictReason};
 
 use bee_message::{
     milestone::MilestoneIndex,
@@ -26,7 +26,7 @@ pub(crate) struct WhiteFlagMetadata {
     pub(crate) included_messages: Vec<MessageId>,
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
     pub(crate) consumed_outputs: HashMap<OutputId, ConsumedOutput>,
-    pub(crate) balance_diff: BalanceDiff,
+    pub(crate) balance_diffs: BalanceDiffs,
 }
 
 impl WhiteFlagMetadata {

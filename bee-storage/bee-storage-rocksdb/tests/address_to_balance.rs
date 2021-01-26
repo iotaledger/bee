@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_ledger::model::Balance;
+use bee_ledger::balance::Balance;
 use bee_message::payload::transaction::Address;
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},

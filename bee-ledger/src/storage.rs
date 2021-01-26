@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    balance::{Balance, BalanceDiffs},
     error::Error,
-    model::{Balance, BalanceDiff, OutputDiff, Unspent},
+    model::{OutputDiff, Unspent},
 };
 
 use bee_message::{
@@ -159,7 +160,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
-    balances: Option<&BalanceDiff>,
+    balances: Option<&BalanceDiffs>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
@@ -183,7 +184,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
         for (address, entry) in balances.iter() {
             let (amount, dust_allowance, dust_output) = fetch_balance(storage, address)
                 .await?
-                .map(|b| (b.amount as i64, b.dust_allowance as i64, b.dust_output as i64))
+                .map(|b| (b.amount() as i64, b.dust_allowance() as i64, b.dust_output() as i64))
                 .unwrap_or_default();
 
             Batch::<Address, Balance>::batch_insert(
@@ -191,9 +192,9 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
                 &mut batch,
                 address,
                 &Balance::new(
-                    (amount + entry.amount) as u64,
-                    (dust_allowance + entry.dust_allowance) as u64,
-                    (dust_output + entry.dust_output) as u64,
+                    (amount + entry.amount()) as u64,
+                    (dust_allowance + entry.dust_allowance()) as u64,
+                    (dust_output + entry.dust_output()) as u64,
                 ),
             )
             .map_err(|e| Error::Storage(Box::new(e)))?;
