@@ -32,10 +32,10 @@ use bee_protocol::{
         LatestMilestoneChanged, LatestSolidMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded,
         TipRemoved,
     },
-    MetricsWorker, PeerManagerResWorker, TangleWorker,
+    MetricsWorker, PeerManagerResWorker,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::MsTangle;
+use bee_tangle::{MsTangle, TangleWorker};
 
 use asset::Asset;
 use async_trait::async_trait;
@@ -180,7 +180,8 @@ where
                     )
                     .map(|res| res),
                 ))
-                .or(warp::path!("explorer" / ..).and_then(serve_index));
+                .or(warp::path!("explorer" / ..).and_then(serve_index))
+                .or(warp::path!("peers" / ..).and_then(serve_index));
 
             info!("Dashboard available at http://localhost:{}.", config.port());
 

@@ -3,7 +3,7 @@
 
 use crate::model::Error as ModelError;
 
-use bee_message::MessageId;
+use bee_message::{milestone::MilestoneIndex, MessageId};
 
 use thiserror::Error;
 
@@ -29,6 +29,10 @@ pub enum Error {
     MerkleProofMismatch(String, String),
     #[error("Invalid messages count: referenced ({0}) != no transaction ({1}) + conflicting ({2}) + included ({3})")]
     InvalidMessagesCount(usize, usize, usize, usize),
+    #[error("Unexpected milestine diff index: {0:?}.")]
+    UnexpectedDiffIndex(MilestoneIndex),
+    #[error("Invalid ledger state.")]
+    InvalidLedgerState,
     #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
 }

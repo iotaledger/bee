@@ -12,15 +12,17 @@ pub mod ms_tangle;
 pub mod storage;
 pub mod traversal;
 pub mod urts;
-// pub mod worker;
+pub mod worker;
 
 mod tangle;
 mod vertex;
 
 pub use ms_tangle::MsTangle;
 pub use tangle::{Hooks, Tangle};
+pub use worker::TangleWorker;
 
 use bee_message::Message;
+use bee_runtime::node::{Node, NodeBuilder};
 
 use std::{ops::Deref, sync::Arc};
 
@@ -36,9 +38,9 @@ impl Deref for MessageRef {
     }
 }
 
-// pub fn init<N: Node>(node_builder: N::Builder) -> N::Builder
-// where
-//     N::Backend: StorageBackend,
-// {
-//     node_builder.with_worker::<TangleWorker>()
-// }
+pub fn init<N: Node>(node_builder: N::Builder) -> N::Builder
+where
+    N::Backend: storage::StorageBackend,
+{
+    node_builder.with_worker::<TangleWorker>()
+}

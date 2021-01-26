@@ -4,12 +4,12 @@
 use crate::{
     event::MessageSolidified,
     storage::StorageBackend,
-    worker::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, TangleWorker},
+    worker::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent},
 };
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::MsTangle;
+use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};

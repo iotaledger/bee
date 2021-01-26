@@ -9,11 +9,11 @@ pub(crate) use indexation::{IndexationPayloadWorker, IndexationPayloadWorkerEven
 pub(crate) use milestone::{MilestonePayloadWorker, MilestonePayloadWorkerEvent};
 pub(crate) use transaction::{TransactionPayloadWorker, TransactionPayloadWorkerEvent};
 
-use crate::{storage::StorageBackend, worker::TangleWorker};
+use crate::storage::StorageBackend;
 
 use bee_message::{payload::Payload, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::MsTangle;
+use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};

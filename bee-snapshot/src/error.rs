@@ -3,7 +3,6 @@
 
 use crate::kind::Kind;
 
-use bee_ledger::model::Error as LedgerError;
 use bee_message::{milestone::MilestoneIndex, Error as MessageError};
 
 use thiserror::Error;
@@ -24,8 +23,6 @@ pub enum Error {
     InvalidFilePath(String),
     #[error("{0}")]
     Message(#[from] MessageError),
-    #[error("{0}")]
-    Ledger(#[from] LedgerError),
     #[error("Network Id mismatch: configuration {0} != snapshot {1}")]
     NetworkIdMismatch(u64, u64),
     #[error("")]
@@ -36,10 +33,6 @@ pub enum Error {
         "Only a delta snapshot file exists, without a full snapshot file. Remove the delta snapshot file and restart"
     )]
     OnlyDeltaFileExists,
-    #[error("Unexpected milestine diff index: {0:?}.")]
-    UnexpectedDiffIndex(MilestoneIndex),
-    #[error("Invalid ledger state.")]
-    InvalidLedgerState,
     #[error("Storage operation failed: {0}")]
-    StorageBackend(Box<dyn std::error::Error>),
+    StorageBackend(Box<dyn std::error::Error + Send + 'static>),
 }

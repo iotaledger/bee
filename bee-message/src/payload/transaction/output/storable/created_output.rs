@@ -1,29 +1,28 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::model::Error;
+use crate::{error::Error, payload::transaction::Output, MessageId};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::{payload::transaction, MessageId};
 
 use std::ops::Deref;
 
 #[derive(Clone, Debug)]
-pub struct Output {
+pub struct CreatedOutput {
     message_id: MessageId,
-    inner: transaction::Output,
+    inner: Output,
 }
 
-impl Deref for Output {
-    type Target = transaction::Output;
+impl Deref for CreatedOutput {
+    type Target = Output;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
 
-impl Output {
-    pub fn new(message_id: MessageId, inner: transaction::Output) -> Self {
+impl CreatedOutput {
+    pub fn new(message_id: MessageId, inner: Output) -> Self {
         Self { message_id, inner }
     }
 
@@ -31,12 +30,12 @@ impl Output {
         &self.message_id
     }
 
-    pub fn inner(&self) -> &transaction::Output {
+    pub fn inner(&self) -> &Output {
         &self.inner
     }
 }
 
-impl Packable for Output {
+impl Packable for CreatedOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -53,7 +52,7 @@ impl Packable for Output {
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self {
             message_id: MessageId::unpack(reader)?,
-            inner: transaction::Output::unpack(reader)?,
+            inner: Output::unpack(reader)?,
         })
     }
 }

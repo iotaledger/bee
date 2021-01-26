@@ -10,7 +10,7 @@ use crate::{
     storage::StorageBackend,
     worker::{
         MetricsWorker, MilestoneRequesterWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
-        PeerManagerResWorker, RequestedMilestones, TangleWorker,
+        PeerManagerResWorker, RequestedMilestones,
     },
     ProtocolMetrics,
 };
@@ -21,7 +21,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::MsTangle;
+use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};

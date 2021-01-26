@@ -4,13 +4,15 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Balance, Output, OutputDiff, Spent};
+use bee_ledger::model::{Balance, OutputDiff};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::{HashedIndex, HASHED_INDEX_LENGTH},
-        transaction::{Address, Ed25519Address, OutputId, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH},
+        transaction::{
+            Address, ConsumedOutput, CreatedOutput, Ed25519Address, OutputId, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH,
+        },
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId, MESSAGE_ID_LENGTH,
@@ -102,16 +104,16 @@ impl Fetch<HashedIndex, Vec<MessageId>> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Fetch<OutputId, Output> for Storage {
-    async fn fetch(&self, output_id: &OutputId) -> Result<Option<Output>, <Self as StorageBackend>::Error> {
+impl Fetch<OutputId, CreatedOutput> for Storage {
+    async fn fetch(&self, output_id: &OutputId) -> Result<Option<CreatedOutput>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_OUTPUT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
         if let Some(res) = self.inner.get_cf(&cf, output_id.pack_new())? {
             // Unpacking from storage is fine.
-            Ok(Some(Output::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(CreatedOutput::unpack(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }
@@ -119,16 +121,16 @@ impl Fetch<OutputId, Output> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Fetch<OutputId, Spent> for Storage {
-    async fn fetch(&self, output_id: &OutputId) -> Result<Option<Spent>, <Self as StorageBackend>::Error> {
+impl Fetch<OutputId, ConsumedOutput> for Storage {
+    async fn fetch(&self, output_id: &OutputId) -> Result<Option<ConsumedOutput>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_SPENT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_SPENT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
         if let Some(res) = self.inner.get_cf(&cf, output_id.pack_new())? {
             // Unpacking from storage is fine.
-            Ok(Some(Spent::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(ConsumedOutput::unpack(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }

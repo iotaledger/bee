@@ -1,11 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    storage::StorageBackend,
-    worker::{MetricsWorker, TangleWorker},
-    ProtocolMetrics,
-};
+use crate::{storage::StorageBackend, worker::MetricsWorker, ProtocolMetrics};
 
 use bee_message::{
     payload::{indexation::HashedIndex, Payload},
@@ -13,7 +9,7 @@ use bee_message::{
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_storage::access::Insert;
-use bee_tangle::MsTangle;
+use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};

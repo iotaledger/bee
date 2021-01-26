@@ -3,13 +3,15 @@
 
 use crate::{error::Error, storage::*};
 
-use bee_ledger::model::{Balance, Output, OutputDiff, Spent, Unspent};
+use bee_ledger::model::{Balance, OutputDiff, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::{HashedIndex, HASHED_INDEX_LENGTH},
-        transaction::{Address, Ed25519Address, OutputId, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH},
+        transaction::{
+            Address, ConsumedOutput, CreatedOutput, Ed25519Address, OutputId, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH,
+        },
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId, MESSAGE_ID_LENGTH,
@@ -82,12 +84,12 @@ impl Truncate<(HashedIndex, MessageId), ()> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Truncate<OutputId, Output> for Storage {
+impl Truncate<OutputId, CreatedOutput> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_OUTPUT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
         self.inner
             .delete_range_cf(cf, [0x00u8; OUTPUT_ID_LENGTH], [0xffu8; OUTPUT_ID_LENGTH])?;
@@ -97,12 +99,12 @@ impl Truncate<OutputId, Output> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Truncate<OutputId, Spent> for Storage {
+impl Truncate<OutputId, ConsumedOutput> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_SPENT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_SPENT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
         self.inner
             .delete_range_cf(cf, [0x00u8; OUTPUT_ID_LENGTH], [0xffu8; OUTPUT_ID_LENGTH])?;

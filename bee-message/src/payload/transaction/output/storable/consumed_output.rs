@@ -1,18 +1,17 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::model::Error;
+use crate::{error::Error, milestone::MilestoneIndex, payload::transaction::TransactionId};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::{milestone::MilestoneIndex, payload::transaction::TransactionId};
 
 #[derive(Debug)]
-pub struct Spent {
+pub struct ConsumedOutput {
     target: TransactionId,
     index: MilestoneIndex,
 }
 
-impl Spent {
+impl ConsumedOutput {
     pub fn new(target: TransactionId, index: MilestoneIndex) -> Self {
         Self { target, index }
     }
@@ -26,7 +25,7 @@ impl Spent {
     }
 }
 
-impl Packable for Spent {
+impl Packable for ConsumedOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {

@@ -16,12 +16,13 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorker, PeerManager, PeerManagerResWorker, TangleWorker};
+use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorker, PeerManager, PeerManagerResWorker};
 use bee_runtime::{
     node::{Node, NodeBuilder},
     worker::{Error as WorkerError, Worker},
 };
-use bee_tangle::MsTangle;
+use bee_tangle::{MsTangle, TangleWorker};
+use bee_network::NetworkController;
 
 use async_trait::async_trait;
 use log::{error, info};
@@ -73,6 +74,7 @@ where
         let storage = node.storage();
         let message_submitter = node.worker::<MessageSubmitterWorker>().unwrap().tx.clone();
         let peer_manager = node.resource::<PeerManager>();
+        let network_controller = node.resource::<NetworkController>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -86,6 +88,7 @@ where
                 rest_api_config.clone(),
                 protocol_config,
                 peer_manager,
+                network_controller,
             )
             .recover(handle_rejection);
 

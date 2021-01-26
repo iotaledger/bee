@@ -6,11 +6,13 @@ use crate::plugins::dashboard::websocket::{
         confirmed_info::ConfirmedInfoResponse, confirmed_milestone_metrics::ConfirmedMilestoneMetricsResponse,
         database_size_metrics::DatabaseSizeMetricsResponse, milestone::MilestoneResponse,
         milestone_info::MilestoneInfoResponse, mps_metrics_updated::MpsMetricsUpdatedResponse,
-        node_status::NodeStatusResponse, peer_metric::PeerMetricResponse, solid_info::SolidInfoResponse,
+        node_status::NodeStatusResponse, solid_info::SolidInfoResponse,
         sync_status::SyncStatusResponse, tip_info::TipInfoResponse, vertex::VertexResponse,
     },
     topics::WsTopic,
 };
+
+use bee_rest_api::handlers::peers::PeersResponse;
 
 use serde::Serialize;
 
@@ -55,5 +57,5 @@ pub(crate) enum WsEventInner {
     DatabaseSizeMetrics(DatabaseSizeMetricsResponse),
     TipInfo(TipInfoResponse),
     NodeStatus(NodeStatusResponse),
-    PeerMetric(PeerMetricResponse),
+    PeerMetric(PeersResponse),
 }

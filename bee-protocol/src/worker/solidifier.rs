@@ -9,7 +9,7 @@ use crate::{
     worker::{
         MessageRequesterWorker, MessageRequesterWorkerEvent, MetricsWorker, MilestoneConeUpdaterWorker,
         MilestoneConeUpdaterWorkerEvent, MilestoneRequesterWorker, PeerManagerResWorker, RequestedMessages,
-        RequestedMilestones, TangleWorker,
+        RequestedMilestones,
     },
     ProtocolMetrics,
 };
@@ -20,7 +20,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{traversal, MsTangle};
+use bee_tangle::{traversal, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::StreamExt;

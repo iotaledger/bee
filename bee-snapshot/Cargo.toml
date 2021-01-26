@@ -12,7 +12,6 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-ledger = { path = "../bee-ledger" }
 bee-message = { path = "../bee-message" }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
@@ -20,6 +19,7 @@ bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 async-trait = "0.1"
 bytemuck = "1.2"
 chrono = "0.4"
+flume = "0.10"
 futures = "0.3"
 log = "0.4"
 reqwest = { version = "0.11", features = ["stream"] }
