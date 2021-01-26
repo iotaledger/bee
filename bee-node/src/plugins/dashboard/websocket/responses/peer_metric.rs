@@ -8,8 +8,6 @@ use crate::plugins::dashboard::websocket::{
 
 use bee_rest_api::handlers::peers::PeersResponse;
 
-use serde::Serialize;
-
 pub(crate) fn forward(event: PeersResponse) -> WsEvent {
     event.into()
 }
