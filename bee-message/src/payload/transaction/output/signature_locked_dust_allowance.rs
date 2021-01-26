@@ -11,7 +11,7 @@ use bee_common::packable::{Packable, Read, Write};
 use serde::{Deserialize, Serialize};
 
 pub(crate) const SIGNATURE_LOCKED_DUST_ALLOWANCE_TYPE: u8 = 1;
-pub(crate) const DUST_ALLOWANCE_MINIMUM: u64 = 1_000_000;
+pub(crate) const DUST_ALLOWANCE_MINIMUM_AMOUNT: u64 = 1_000_000;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
 pub struct SignatureLockedDustAllowanceOutput {
@@ -19,11 +19,10 @@ pub struct SignatureLockedDustAllowanceOutput {
     amount: u64,
 }
 
-// TODO specific dust validation rules
 impl SignatureLockedDustAllowanceOutput {
     pub fn new(address: Address, amount: u64) -> Result<Self, Error> {
-        if amount < DUST_ALLOWANCE_MINIMUM || amount > IOTA_SUPPLY {
-            return Err(Error::InvalidAmount(amount));
+        if amount < DUST_ALLOWANCE_MINIMUM_AMOUNT || amount > IOTA_SUPPLY {
+            return Err(Error::InvalidDustAmount(amount));
         }
 
         Ok(Self { address, amount })

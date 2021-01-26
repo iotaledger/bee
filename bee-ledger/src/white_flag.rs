@@ -3,7 +3,7 @@
 
 use crate::{
     conflict::ConflictReason,
-    dust::{DUST_ALLOWANCE_DIVISOR, DUST_ALLOWANCE_MINIMUM},
+    dust::{dust_outputs_max, DUST_THRESHOLD},
     error::Error,
     metadata::WhiteFlagMetadata,
     model::BalanceDiff,
@@ -34,19 +34,14 @@ fn validate_transaction(
     let mut created_amount: u64 = 0;
     let mut consumed_amount: u64 = 0;
 
-    // TODO
-    // The address type of the referenced UTXO must match the signature type contained in the corresponding Signature
-    // Unlock Block. The Signature Unlock Blocks are valid, i.e. the signatures prove ownership over the addresses
-    // of the referenced UTXOs.
     // TODO saturating ? Overflowing ? Checked ?
-    // TODO also check against tota supply
 
     for created_output in transaction.essence().outputs() {
         match created_output {
             Output::SignatureLockedSingle(created_output) => {
                 created_amount = created_amount.saturating_add(created_output.amount());
                 balance_diff.balance_add(*created_output.address(), created_output.amount());
-                if created_output.amount() < DUST_ALLOWANCE_MINIMUM {
+                if created_output.amount() < DUST_THRESHOLD {
                     balance_diff.dust_output_inc(*created_output.address());
                 }
             }
@@ -66,7 +61,7 @@ fn validate_transaction(
             Output::SignatureLockedSingle(consumed_output) => {
                 consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
                 balance_diff.balance_sub(*consumed_output.address(), consumed_output.amount());
-                if consumed_output.amount() < DUST_ALLOWANCE_MINIMUM {
+                if consumed_output.amount() < DUST_THRESHOLD {
                     balance_diff.dust_output_dec(*consumed_output.address());
                 }
                 if !match transaction.unlock_block(index) {
@@ -99,15 +94,12 @@ fn validate_transaction(
 }
 
 #[inline]
-async fn on_message<N: Node>(
-    storage: &N::Backend,
+async fn on_message<B: StorageBackend>(
+    storage: &B,
     message_id: &MessageId,
     message: &Message,
     metadata: &mut WhiteFlagMetadata,
-) -> Result<(), Error>
-where
-    N::Backend: StorageBackend,
-{
+) -> Result<(), Error> {
     metadata.num_referenced_messages += 1;
 
     let transaction = if let Some(Payload::Transaction(transaction)) = message.payload() {
@@ -178,8 +170,8 @@ where
             dust_output += entry.dust_output;
         }
 
-        if (dust_output as i64 + entry.dust_output) as u64
-            > ((dust_allowance as i64 + entry.dust_allowance) as u64 / DUST_ALLOWANCE_DIVISOR)
+        if (dust_output as i64 + entry.dust_output) as usize
+            > dust_outputs_max((dust_allowance as i64 + entry.dust_allowance) as u64)
         {
             metadata
                 .excluded_conflicting_messages
@@ -251,7 +243,7 @@ where
                 let parent2 = message.parent2();
 
                 if visited.contains(parent1) && visited.contains(parent2) {
-                    on_message::<N>(storage, message_id, &message, metadata).await?;
+                    on_message(storage, message_id, &message, metadata).await?;
                     visited.insert(*message_id);
                     messages_ids.pop();
                 } else if !visited.contains(parent1) {

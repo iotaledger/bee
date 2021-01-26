@@ -14,7 +14,7 @@ use bee_message::{
 };
 
 use async_trait::async_trait;
-use rocksdb::{ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Options, SliceTransform, DB};
+use rocksdb::{ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, Options, SliceTransform, DB};
 
 pub const CF_MESSAGE_ID_TO_MESSAGE: &str = "message_id_to_message";
 pub const CF_MESSAGE_ID_TO_METADATA: &str = "message_id_to_metadata";
@@ -100,8 +100,16 @@ impl Storage {
         opts.set_compaction_readahead_size(config.set_compaction_readahead_size);
         opts.set_compaction_style(DBCompactionStyle::from(config.set_compaction_style));
         opts.set_max_write_buffer_number(config.set_max_write_buffer_number);
+        opts.set_write_buffer_size(config.set_write_buffer_size);
+        opts.set_db_write_buffer_size(config.set_db_write_buffer_size);
         opts.set_disable_auto_compactions(config.set_disable_auto_compactions);
         opts.set_compression_type(DBCompressionType::from(config.set_compression_type));
+        opts.set_unordered_write(config.set_unordered_write);
+
+        let mut env = Env::default()?;
+        env.set_background_threads(config.env.set_background_threads);
+        env.set_high_priority_background_threads(config.env.set_high_priority_background_threads);
+        opts.set_env(&env);
 
         let column_familes = vec![
             cf_message_id_to_message,
