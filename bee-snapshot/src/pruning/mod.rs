@@ -14,8 +14,6 @@ pub use config::{PruningConfig, PruningConfigBuilder};
 // use bee_tangle::traversal;
 // use bee_storage::storage::Backend;
 
-// use dashmap::DashMap;
-
 // use log::{info, warn};
 
 // #[derive(Debug)]
