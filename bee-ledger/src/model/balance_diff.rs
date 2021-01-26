@@ -10,15 +10,15 @@ use std::collections::{
 
 #[derive(Debug, Default)]
 pub struct BalanceDiffEntry {
-    pub(crate) balance: i64,
+    pub(crate) amount: i64,
     pub(crate) dust_allowance: i64,
     pub(crate) dust_output: i64,
 }
 
 impl BalanceDiffEntry {
-    pub fn new(balance: i64, dust_allowance: i64, dust_output: i64) -> Self {
+    pub fn new(amount: i64, dust_allowance: i64, dust_output: i64) -> Self {
         Self {
-            balance,
+            amount,
             dust_allowance,
             dust_output,
         }
@@ -36,7 +36,7 @@ impl BalanceDiff {
     pub fn merge(&mut self, other: Self) {
         for (address, entry) in other.0 {
             let e = self.0.entry(address).or_default();
-            e.balance = e.balance.saturating_add(entry.balance);
+            e.amount = e.amount.saturating_add(entry.amount);
             e.dust_allowance = e.dust_allowance.saturating_add(entry.dust_allowance);
             e.dust_output = e.dust_output.saturating_add(entry.dust_output);
         }
@@ -46,14 +46,14 @@ impl BalanceDiff {
         self.0.get(address)
     }
 
-    pub fn balance_add(&mut self, address: Address, amount: u64) {
+    pub fn amount_add(&mut self, address: Address, amount: u64) {
         let entry = self.0.entry(address).or_default();
-        entry.balance = entry.balance.saturating_add(amount as i64);
+        entry.amount = entry.amount.saturating_add(amount as i64);
     }
 
-    pub fn balance_sub(&mut self, address: Address, amount: u64) {
+    pub fn amount_sub(&mut self, address: Address, amount: u64) {
         let entry = self.0.entry(address).or_default();
-        entry.balance = entry.balance.saturating_sub(amount as i64);
+        entry.amount = entry.amount.saturating_sub(amount as i64);
     }
 
     pub fn dust_allowance_add(&mut self, address: Address, amount: u64) {

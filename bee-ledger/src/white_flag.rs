@@ -40,14 +40,14 @@ fn validate_transaction(
         match created_output {
             Output::SignatureLockedSingle(created_output) => {
                 created_amount = created_amount.saturating_add(created_output.amount());
-                balance_diff.balance_add(*created_output.address(), created_output.amount());
+                balance_diff.amount_add(*created_output.address(), created_output.amount());
                 if created_output.amount() < DUST_THRESHOLD {
                     balance_diff.dust_output_inc(*created_output.address());
                 }
             }
             Output::SignatureLockedDustAllowance(created_output) => {
                 created_amount = created_amount.saturating_add(created_output.amount());
-                balance_diff.balance_add(*created_output.address(), created_output.amount());
+                balance_diff.amount_add(*created_output.address(), created_output.amount());
                 balance_diff.dust_allowance_add(*created_output.address(), created_output.amount());
             }
             _ => return Err(Error::UnsupportedOutputType),
@@ -60,7 +60,7 @@ fn validate_transaction(
         match consumed_output.inner() {
             Output::SignatureLockedSingle(consumed_output) => {
                 consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
-                balance_diff.balance_sub(*consumed_output.address(), consumed_output.amount());
+                balance_diff.amount_sub(*consumed_output.address(), consumed_output.amount());
                 if consumed_output.amount() < DUST_THRESHOLD {
                     balance_diff.dust_output_dec(*consumed_output.address());
                 }
@@ -73,7 +73,7 @@ fn validate_transaction(
             }
             Output::SignatureLockedDustAllowance(consumed_output) => {
                 consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
-                balance_diff.balance_sub(*consumed_output.address(), consumed_output.amount());
+                balance_diff.amount_sub(*consumed_output.address(), consumed_output.amount());
                 balance_diff.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
                 if !match transaction.unlock_block(index) {
                     UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_bytes, signature),

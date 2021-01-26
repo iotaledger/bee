@@ -7,25 +7,28 @@ use bee_common::packable::{Packable, Read, Write};
 
 #[derive(Debug)]
 pub struct Balance {
-    pub(crate) balance: u64,
+    pub(crate) amount: u64,
     pub(crate) dust_allowance: u64,
     pub(crate) dust_output: u64,
 }
 
 impl Balance {
-    pub fn new(balance: u64, dust_allowance: u64, dust_output: u64) -> Self {
+    pub fn new(amount: u64, dust_allowance: u64, dust_output: u64) -> Self {
         Self {
-            balance,
+            amount,
             dust_allowance,
             dust_output,
         }
     }
-    pub fn balance(&self) -> u64 {
-        self.balance
+
+    pub fn amount(&self) -> u64 {
+        self.amount
     }
+
     pub fn dust_allowance(&self) -> u64 {
         self.dust_allowance
     }
+
     pub fn dust_output(&self) -> u64 {
         self.dust_output
     }
@@ -35,11 +38,11 @@ impl Packable for Balance {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.balance.packed_len() + self.dust_allowance.packed_len() + self.dust_output.packed_len()
+        self.amount.packed_len() + self.dust_allowance.packed_len() + self.dust_output.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.balance.pack(writer)?;
+        self.amount.pack(writer)?;
         self.dust_allowance.pack(writer)?;
         self.dust_output.pack(writer)?;
 

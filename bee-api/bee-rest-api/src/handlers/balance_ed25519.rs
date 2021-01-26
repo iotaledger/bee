@@ -28,7 +28,7 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
         Some(balance) => Ok(warp::reply::json(&SuccessBody::new(BalanceForAddressResponse {
             address_type: 1,
             address: addr.to_string(),
-            balance: balance.balance(),
+            balance: balance.amount(),
         }))),
         None => Err(reject::custom(NotFound("balance not found".to_string()))),
     }

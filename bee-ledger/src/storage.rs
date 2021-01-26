@@ -181,9 +181,9 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
 
     if let Some(balances) = balances {
         for (address, entry) in balances.iter() {
-            let (balance, dust_allowance, dust_output) = fetch_balance(storage, address)
+            let (amount, dust_allowance, dust_output) = fetch_balance(storage, address)
                 .await?
-                .map(|b| (b.balance as i64, b.dust_allowance as i64, b.dust_output as i64))
+                .map(|b| (b.amount as i64, b.dust_allowance as i64, b.dust_output as i64))
                 .unwrap_or_default();
 
             Batch::<Address, Balance>::batch_insert(
@@ -191,7 +191,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
                 &mut batch,
                 address,
                 &Balance::new(
-                    (balance + entry.balance) as u64,
+                    (amount + entry.amount) as u64,
                     (dust_allowance + entry.dust_allowance) as u64,
                     (dust_output + entry.dust_output) as u64,
                 ),
