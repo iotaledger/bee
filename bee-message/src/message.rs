@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::Payload, Error, MessageId, Vertex, MESSAGE_ID_LENGTH};
+use crate::{payload::Payload, Error, MessageId, MESSAGE_ID_LENGTH};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_pow::providers::{Miner, Provider, ProviderBuilder};
@@ -126,18 +126,6 @@ impl Packable for Message {
             payload,
             nonce,
         })
-    }
-}
-
-impl Vertex for Message {
-    type Id = MessageId;
-
-    fn parent1(&self) -> &Self::Id {
-        &self.parent1
-    }
-
-    fn parent2(&self) -> &Self::Id {
-        &self.parent2
     }
 }
 

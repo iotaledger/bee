@@ -54,6 +54,7 @@ where
         match Fetch::<(), SnapshotInfo>::fetch(&*storage, &()).await {
             Ok(None) => {
                 task::spawn(async move {
+                    // TODO handle error
                     import_snapshots(
                         storage,
                         network_id,
@@ -67,10 +68,20 @@ where
                     .await
                 });
             }
-            Err(e) => return Err(Error::StorageBackend(Box::new(e))),
-            _ => {
-                // TODO log snapshot
+            Ok(Some(info)) => {
+                if info.network_id() != network_id {
+                    return Err(Error::NetworkIdMismatch(info.network_id(), network_id));
+                }
+
+                info!(
+                    "Loaded snapshot from {} with snapshot index {}, entry point index {} and pruning index {}.",
+                    Utc.timestamp(info.timestamp() as i64, 0).format("%d-%m-%Y %H:%M:%S"),
+                    *info.snapshot_index(),
+                    *info.entry_point_index(),
+                    *info.pruning_index(),
+                );
             }
+            Err(e) => return Err(Error::StorageBackend(Box::new(e))),
         }
 
         Ok(Self {
@@ -105,7 +116,7 @@ async fn import_snapshot<B: StorageBackend>(
     }
 
     if header.network_id() != network_id {
-        return Err(Error::NetworkIdMismatch(network_id, header.network_id()));
+        return Err(Error::NetworkIdMismatch(header.network_id(), network_id));
     }
 
     match header.kind() {

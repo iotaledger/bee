@@ -197,24 +197,46 @@ impl TransactionPayloadEssenceBuilder {
 
         let mut total: u64 = 0;
 
-        for output in self.outputs.iter() {
-            if let Output::SignatureLockedSingle(u) = output {
-                // The Address must be unique in the set of SigLockedSingleDeposits.
-                if self
-                    .outputs
-                    .iter()
-                    .filter(|j| matches!(j, Output::SignatureLockedSingle(s) if s.address() == u.address()))
-                    .count()
-                    > 1
-                {
-                    return Err(Error::DuplicateError);
-                }
+        // TODO iteration-based or memory-based ?
 
-                total = total
-                    .checked_add(u.amount())
-                    .ok_or_else(|| Error::InvalidAccumulatedOutput((total + u.amount()) as u128))?;
-                // TODO handle dust
+        for output in self.outputs.iter() {
+            match output {
+                Output::SignatureLockedSingle(single) => {
+                    // The address must be unique in the set of SigLockedSingleDeposits.
+                    if self
+                        .outputs
+                        .iter()
+                        .filter(|o| matches!(o, Output::SignatureLockedSingle(s) if s.address() == single.address()))
+                        .count()
+                        > 1
+                    {
+                        return Err(Error::DuplicateError);
+                    }
+
+                    total = total
+                        .checked_add(single.amount())
+                        .ok_or_else(|| Error::InvalidAccumulatedOutput((total + single.amount()) as u128))?;
+                }
+                Output::SignatureLockedDustAllowance(dust_allowance) => {
+                    // The address must be unique in the set of SignatureLockedDustAllowances.
+                    if self
+                        .outputs
+                        .iter()
+                        .filter(
+                            |o| matches!(o, Output::SignatureLockedDustAllowance(s) if s.address() == dust_allowance.address()),
+                        )
+                        .count()
+                        > 1
+                    {
+                        return Err(Error::DuplicateError);
+                    }
+
+                    total = total
+                        .checked_add(dust_allowance.amount())
+                        .ok_or_else(|| Error::InvalidAccumulatedOutput((total + dust_allowance.amount()) as u128))?;
+                }
             }
+
             // Accumulated output balance must not exceed the total supply of tokens.
             if total > IOTA_SUPPLY {
                 return Err(Error::InvalidAccumulatedOutput(total as u128));
