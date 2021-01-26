@@ -3,13 +3,13 @@
 
 use crate::{
     error::Error,
-    model::{Balance, BalanceDiff, Output, OutputDiff, Spent, Unspent},
+    model::{Balance, BalanceDiff, OutputDiff, Unspent},
 };
 
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::MilestoneIndex,
-    payload::transaction::{self, Address, Ed25519Address, OutputId},
+    payload::transaction::{Address, ConsumedOutput, CreatedOutput, Ed25519Address, Output, OutputId},
 };
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
@@ -23,27 +23,27 @@ use std::collections::HashMap;
 pub trait StorageBackend:
     backend::StorageBackend
     + BatchBuilder
-    + Batch<OutputId, Output>
-    + Batch<OutputId, Spent>
+    + Batch<OutputId, CreatedOutput>
+    + Batch<OutputId, ConsumedOutput>
     + Batch<Unspent, ()>
     + Batch<(), LedgerIndex>
     + Batch<MilestoneIndex, OutputDiff>
     + Batch<(Ed25519Address, OutputId), ()>
     + Batch<Address, Balance>
-    + Delete<OutputId, Output>
-    + Delete<OutputId, Spent>
+    + Delete<OutputId, CreatedOutput>
+    + Delete<OutputId, ConsumedOutput>
     + Delete<Unspent, ()>
     + Delete<(), LedgerIndex>
-    + Exist<OutputId, Output>
-    + Exist<OutputId, Spent>
+    + Exist<OutputId, CreatedOutput>
+    + Exist<OutputId, ConsumedOutput>
     + Exist<Unspent, ()>
     + Exist<(), LedgerIndex>
-    + Fetch<OutputId, Output>
-    + Fetch<OutputId, Spent>
+    + Fetch<OutputId, CreatedOutput>
+    + Fetch<OutputId, ConsumedOutput>
     + Fetch<(), LedgerIndex>
     + Fetch<Address, Balance>
-    + Insert<OutputId, Output>
-    + Insert<OutputId, Spent>
+    + Insert<OutputId, CreatedOutput>
+    + Insert<OutputId, ConsumedOutput>
     + Insert<Unspent, ()>
     + Insert<(), LedgerIndex>
     + for<'a> AsStream<'a, Unspent, ()>
@@ -55,27 +55,27 @@ pub trait StorageBackend:
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + BatchBuilder
-        + Batch<OutputId, Output>
-        + Batch<OutputId, Spent>
+        + Batch<OutputId, CreatedOutput>
+        + Batch<OutputId, ConsumedOutput>
         + Batch<Unspent, ()>
         + Batch<(), LedgerIndex>
         + Batch<MilestoneIndex, OutputDiff>
         + Batch<(Ed25519Address, OutputId), ()>
         + Batch<Address, Balance>
-        + Delete<OutputId, Output>
-        + Delete<OutputId, Spent>
+        + Delete<OutputId, CreatedOutput>
+        + Delete<OutputId, ConsumedOutput>
         + Delete<Unspent, ()>
         + Delete<(), LedgerIndex>
-        + Exist<OutputId, Output>
-        + Exist<OutputId, Spent>
+        + Exist<OutputId, CreatedOutput>
+        + Exist<OutputId, ConsumedOutput>
         + Exist<Unspent, ()>
         + Exist<(), LedgerIndex>
-        + Fetch<OutputId, Output>
-        + Fetch<OutputId, Spent>
+        + Fetch<OutputId, CreatedOutput>
+        + Fetch<OutputId, ConsumedOutput>
         + Fetch<(), LedgerIndex>
         + Fetch<Address, Balance>
-        + Insert<OutputId, Output>
-        + Insert<OutputId, Spent>
+        + Insert<OutputId, CreatedOutput>
+        + Insert<OutputId, ConsumedOutput>
         + Insert<Unspent, ()>
         + Insert<(), LedgerIndex>
         + for<'a> AsStream<'a, Unspent, ()>
@@ -105,18 +105,18 @@ pub fn create_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
-    output: &Output,
+    output: &CreatedOutput,
 ) -> Result<(), Error> {
-    Batch::<OutputId, Output>::batch_insert(storage, batch, output_id, output)
+    Batch::<OutputId, CreatedOutput>::batch_insert(storage, batch, output_id, output)
         .map_err(|e| Error::Storage(Box::new(e)))?;
     Batch::<Unspent, ()>::batch_insert(storage, batch, &(*output_id).into(), &())
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     match output.inner() {
-        transaction::Output::SignatureLockedSingle(output) => {
+        Output::SignatureLockedSingle(output) => {
             create_address_output_relation_batch(storage, batch, output.address(), output_id)?
         }
-        transaction::Output::SignatureLockedDustAllowance(output) => {
+        Output::SignatureLockedDustAllowance(output) => {
             create_address_output_relation_batch(storage, batch, output.address(), output_id)?
         }
         _ => return Err(Error::UnsupportedOutputType),
@@ -125,7 +125,11 @@ pub fn create_output_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub async fn create_output<B: StorageBackend>(storage: &B, output_id: &OutputId, output: &Output) -> Result<(), Error> {
+pub async fn create_output<B: StorageBackend>(
+    storage: &B,
+    output_id: &OutputId,
+    output: &CreatedOutput,
+) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
     create_output_batch(storage, &mut batch, output_id, output)?;
@@ -140,9 +144,9 @@ pub fn consume_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
-    output: &Spent,
+    output: &ConsumedOutput,
 ) -> Result<(), Error> {
-    Batch::<OutputId, Spent>::batch_insert(storage, batch, output_id, output)
+    Batch::<OutputId, ConsumedOutput>::batch_insert(storage, batch, output_id, output)
         .map_err(|e| Error::Storage(Box::new(e)))?;
     Batch::<Unspent, ()>::batch_delete(storage, batch, &(*output_id).into())
         .map_err(|e| Error::Storage(Box::new(e)))?;
@@ -153,8 +157,8 @@ pub fn consume_output_batch<B: StorageBackend>(
 pub async fn apply_outputs_diff<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
-    created_outputs: &HashMap<OutputId, Output>,
-    consumed_outputs: &HashMap<OutputId, Spent>,
+    created_outputs: &HashMap<OutputId, CreatedOutput>,
+    consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
     balances: Option<&BalanceDiff>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
@@ -213,8 +217,8 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
 pub async fn rollback_outputs_diff<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
-    created_outputs: &HashMap<OutputId, Output>,
-    consumed_outputs: &HashMap<OutputId, Spent>,
+    created_outputs: &HashMap<OutputId, CreatedOutput>,
+    consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
@@ -222,14 +226,14 @@ pub async fn rollback_outputs_diff<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     for (output_id, _) in created_outputs.iter() {
-        Batch::<OutputId, Output>::batch_delete(storage, &mut batch, output_id)
+        Batch::<OutputId, CreatedOutput>::batch_delete(storage, &mut batch, output_id)
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &(*output_id).into())
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
     for (output_id, _spent) in consumed_outputs.iter() {
-        Batch::<OutputId, Spent>::batch_delete(storage, &mut batch, output_id)
+        Batch::<OutputId, ConsumedOutput>::batch_delete(storage, &mut batch, output_id)
             .map_err(|e| Error::Storage(Box::new(e)))?;
         Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &(*output_id).into(), &())
             .map_err(|e| Error::Storage(Box::new(e)))?;
@@ -267,8 +271,8 @@ pub(crate) async fn insert_ledger_index<B: StorageBackend>(storage: &B, index: &
 pub(crate) async fn fetch_output<B: StorageBackend>(
     storage: &B,
     output_id: &OutputId,
-) -> Result<Option<Output>, Error> {
-    Fetch::<OutputId, Output>::fetch(storage, output_id)
+) -> Result<Option<CreatedOutput>, Error> {
+    Fetch::<OutputId, CreatedOutput>::fetch(storage, output_id)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }

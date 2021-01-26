@@ -13,7 +13,6 @@ mod requester;
 mod responder;
 mod solidifier;
 mod status;
-mod tangle;
 mod tip_pool_cleaner;
 
 pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
@@ -38,5 +37,4 @@ pub(crate) use responder::{
 };
 pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
 pub(crate) use status::StatusWorker;
-pub use tangle::TangleWorker;
 pub(crate) use tip_pool_cleaner::TipPoolCleanerWorker;

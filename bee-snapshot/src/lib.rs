@@ -13,14 +13,12 @@ pub mod event;
 pub mod header;
 pub mod info;
 pub mod milestone_diff;
-pub mod snapshot;
 pub mod storage;
 pub mod worker;
 
 pub use error::Error;
 pub use header::SnapshotHeader;
 pub use info::SnapshotInfo;
-pub use snapshot::Snapshot;
 pub use worker::SnapshotWorker;
 
 use bee_runtime::node::{Node, NodeBuilder};

@@ -32,10 +32,10 @@ use bee_protocol::{
         LatestMilestoneChanged, LatestSolidMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded,
         TipRemoved,
     },
-    MetricsWorker, PeerManagerResWorker, TangleWorker,
+    MetricsWorker, PeerManagerResWorker,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::MsTangle;
+use bee_tangle::{MsTangle, TangleWorker};
 
 use asset::Asset;
 use async_trait::async_trait;

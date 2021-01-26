@@ -7,6 +7,7 @@ use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     Message, MessageId,
 };
+use bee_snapshot::storage::StorageBackend as SnapshotStorageBackend;
 use bee_storage::{
     access::{Fetch, Insert},
     backend,
@@ -22,6 +23,7 @@ pub trait StorageBackend:
     + Fetch<MessageId, MessageMetadata>
     + Fetch<MessageId, Vec<MessageId>>
     + Fetch<MilestoneIndex, Milestone>
+    + SnapshotStorageBackend
 {
 }
 
@@ -35,5 +37,6 @@ impl<T> StorageBackend for T where
         + Fetch<MessageId, MessageMetadata>
         + Fetch<MessageId, Vec<MessageId>>
         + Fetch<MilestoneIndex, Milestone>
+        + SnapshotStorageBackend
 {
 }

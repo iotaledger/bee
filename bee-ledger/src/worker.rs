@@ -4,16 +4,18 @@
 use crate::{
     conflict::ConflictReason,
     error::Error,
-    event::{MilestoneConfirmed, NewOutput, NewSpent},
+    event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
     merkle_hasher::MerkleHasher,
     metadata::WhiteFlagMetadata,
-    storage::{self, StorageBackend},
+    state::check_ledger_state,
+    storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, StorageBackend},
     white_flag,
 };
 
 use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, payload::Payload, MessageId};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::MsTangle;
+use bee_snapshot::{milestone_diff::MilestoneDiff, SnapshotWorker};
+use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -21,7 +23,7 @@ use log::{error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::convert::Infallible;
+use std::any::TypeId;
 
 pub struct LedgerWorkerEvent(pub MessageId);
 
@@ -147,11 +149,11 @@ where
     });
 
     for (_, output) in metadata.created_outputs {
-        bus.dispatch(NewOutput(output));
+        bus.dispatch(NewCreatedOutput(output));
     }
 
     for (_, spent) in metadata.consumed_outputs {
-        bus.dispatch(NewSpent(spent));
+        bus.dispatch(NewConsumedOutput(spent));
     }
 
     Ok(())
@@ -163,7 +165,11 @@ where
     N::Backend: StorageBackend,
 {
     type Config = ();
-    type Error = Infallible;
+    type Error = Error;
+
+    fn dependencies() -> &'static [TypeId] {
+        vec![TypeId::of::<SnapshotWorker>(), TypeId::of::<TangleWorker>()].leak()
+    }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
@@ -171,6 +177,52 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
         let bus = node.bus();
+
+        let output_rx = node.worker::<SnapshotWorker>().unwrap().output_rx.clone();
+        let full_diff_rx = node.worker::<SnapshotWorker>().unwrap().full_diff_rx.clone();
+        let delta_diff_rx = node.worker::<SnapshotWorker>().unwrap().delta_diff_rx.clone();
+
+        while let Ok((output_id, output)) = output_rx.recv() {
+            // TODO handle unwrap
+            create_output(&*storage, &output_id, &output).await.unwrap();
+        }
+
+        async fn read_diffs<B: StorageBackend>(
+            storage: &B,
+            diff_rx: flume::Receiver<MilestoneDiff>,
+        ) -> Result<(), Error> {
+            while let Ok(diff) = diff_rx.recv() {
+                let index = diff.index();
+                // Unwrap is fine because we just inserted the ledger index.
+                // TODO unwrap
+                let ledger_index = *storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
+
+                match index {
+                    MilestoneIndex(index) if index == ledger_index + 1 => {
+                        // TODO unwrap until we merge both crates
+                        apply_outputs_diff(&*storage, MilestoneIndex(index), diff.created(), diff.consumed(), None)
+                            .await
+                            .unwrap();
+                    }
+                    MilestoneIndex(index) if index == ledger_index => {
+                        // TODO unwrap until we merge both crates
+                        rollback_outputs_diff(&*storage, MilestoneIndex(index), diff.created(), diff.consumed())
+                            .await
+                            .unwrap();
+                    }
+                    _ => return Err(Error::UnexpectedDiffIndex(index)),
+                }
+            }
+            Ok(())
+        }
+
+        read_diffs(&*storage, full_diff_rx).await?;
+        read_diffs(&*storage, delta_diff_rx).await?;
+
+        // TODO unwrap
+        if !check_ledger_state(&*storage).await.unwrap() {
+            return Err(Error::InvalidLedgerState);
+        }
 
         // bus.add_listener::<Self, LatestSolidMilestoneChanged, _>(move |event| {
         //     if let Err(e) = tx.send(*event.milestone.message_id()) {
@@ -183,16 +235,18 @@ where
         //     }
         // });
 
+        // Unwrap is fine because we just inserted the ledger index.
+        // TODO unwrap
+        let mut ledger_index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
+        tangle.update_latest_solid_milestone_index(MilestoneIndex(*ledger_index));
+
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
-            // Unwrap is fine because we just inserted the ledger index.
-            // TODO unwrap
-            let mut index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
 
             while let Some(LedgerWorkerEvent(message_id)) = receiver.next().await {
-                if let Err(e) = confirm::<N>(&tangle, &storage, &bus, message_id, &mut index).await {
+                if let Err(e) = confirm::<N>(&tangle, &storage, &bus, message_id, &mut ledger_index).await {
                     error!("Confirmation error on {}: {}.", message_id, e);
                     panic!("Aborting due to unexpected ledger error.");
                 }

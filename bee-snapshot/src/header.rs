@@ -15,6 +15,9 @@ pub struct SnapshotHeader {
     pub(crate) network_id: u64,
     pub(crate) sep_index: MilestoneIndex,
     pub(crate) ledger_index: MilestoneIndex,
+    pub(crate) sep_count: u64,
+    pub(crate) output_count: u64,
+    pub(crate) milestone_diff_count: u64,
 }
 
 impl SnapshotHeader {
@@ -37,6 +40,18 @@ impl SnapshotHeader {
     pub fn ledger_index(&self) -> MilestoneIndex {
         self.ledger_index
     }
+
+    pub fn sep_count(&self) -> u64 {
+        self.sep_count
+    }
+
+    pub fn output_count(&self) -> u64 {
+        self.output_count
+    }
+
+    pub fn milestone_diff_count(&self) -> u64 {
+        self.milestone_diff_count
+    }
 }
 
 impl Packable for SnapshotHeader {
@@ -49,6 +64,13 @@ impl Packable for SnapshotHeader {
             + self.network_id.packed_len()
             + self.sep_index.packed_len()
             + self.ledger_index.packed_len()
+            + self.sep_count.packed_len()
+            + if self.kind == Kind::Full {
+                self.output_count.packed_len()
+            } else {
+                0
+            }
+            + self.milestone_diff_count.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -58,6 +80,11 @@ impl Packable for SnapshotHeader {
         self.network_id.pack(writer)?;
         self.sep_index.pack(writer)?;
         self.ledger_index.pack(writer)?;
+        self.sep_count.pack(writer)?;
+        if self.kind == Kind::Full {
+            self.output_count.pack(writer)?
+        }
+        self.milestone_diff_count.pack(writer)?;
 
         Ok(())
     }
@@ -74,6 +101,9 @@ impl Packable for SnapshotHeader {
         let network_id = u64::unpack(reader)?;
         let sep_index = MilestoneIndex::unpack(reader)?;
         let ledger_index = MilestoneIndex::unpack(reader)?;
+        let sep_count = u64::unpack(reader)?;
+        let output_count = if kind == Kind::Full { u64::unpack(reader)? } else { 0 };
+        let milestone_diff_count = u64::unpack(reader)?;
 
         Ok(Self {
             kind,
@@ -81,6 +111,9 @@ impl Packable for SnapshotHeader {
             network_id,
             sep_index,
             ledger_index,
+            sep_count,
+            output_count,
+            milestone_diff_count,
         })
     }
 }

@@ -30,12 +30,9 @@ use blake2::{
 };
 use futures::{
     channel::oneshot::Sender,
-    stream::unfold,
-    stream::Fuse,
+    stream::{unfold, Fuse},
     task::{Context, Poll},
-    FutureExt,
-    StreamExt,
-    Stream,
+    FutureExt, Stream, StreamExt,
 };
 use log::{info, trace, warn};
 use pin_project::pin_project;
@@ -136,9 +133,17 @@ where
             let task_rx = task_rx.clone();
             let mut processor_worker = processor_worker.clone();
             node.spawn::<Self, _, _>(|shutdown| async move {
-                let mut s = ShutdownStream::new(shutdown, unfold((), |()| task_rx.recv().map(|t| Some((t.ok()?, ())))).boxed());
+                let mut s = ShutdownStream::new(
+                    shutdown,
+                    unfold((), |()| task_rx.recv().map(|t| Some((t.ok()?, ())))).boxed(),
+                );
 
-                while let Some(HashTask { batch_size, mut hasher, events }) = s.next().await {
+                while let Some(HashTask {
+                    batch_size,
+                    mut hasher,
+                    events,
+                }) = s.next().await
+                {
                     tokio::task::block_in_place(|| {
                         if batch_size < BATCH_SIZE_THRESHOLD {
                             send_hashes(hasher.hash_unbatched(), events, &mut processor_worker);

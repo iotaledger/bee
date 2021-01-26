@@ -4,13 +4,13 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Balance, Output, OutputDiff, Spent, Unspent};
+use bee_ledger::model::{Balance, OutputDiff, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::HashedIndex,
-        transaction::{Address, Ed25519Address, OutputId},
+        transaction::{Address, ConsumedOutput, CreatedOutput, Ed25519Address, OutputId},
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId,
@@ -77,24 +77,24 @@ impl Exist<(HashedIndex, MessageId), ()> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Exist<OutputId, Output> for Storage {
+impl Exist<OutputId, CreatedOutput> for Storage {
     async fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_OUTPUT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
         Ok(self.inner.get_cf(&cf, output_id.pack_new())?.is_some())
     }
 }
 
 #[async_trait::async_trait]
-impl Exist<OutputId, Spent> for Storage {
+impl Exist<OutputId, ConsumedOutput> for Storage {
     async fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_SPENT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_SPENT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
         Ok(self.inner.get_cf(&cf, output_id.pack_new())?.is_some())
     }

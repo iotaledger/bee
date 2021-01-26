@@ -21,7 +21,6 @@ pub use peer::{Peer, PeerManager, PeerMetrics};
 pub use storage::StorageBackend;
 pub use worker::{
     MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent, MetricsWorker, PeerManagerResWorker,
-    TangleWorker,
 };
 
 use crate::{
@@ -48,7 +47,6 @@ where
     N::Backend: StorageBackend,
 {
     node_builder
-        .with_worker::<TangleWorker>()
         .with_worker::<MetricsWorker>()
         .with_worker::<PeerManagerResWorker>()
         .with_worker_cfg::<PeerManagerWorker>(events)

@@ -4,13 +4,13 @@
 use crate::{error::Error, storage::*};
 
 use bee_common::packable::Packable;
-use bee_ledger::model::{Balance, Output, OutputDiff, Spent, Unspent};
+use bee_ledger::model::{Balance, OutputDiff, Unspent};
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     payload::{
         indexation::HashedIndex,
-        transaction::{Address, Ed25519Address, OutputId},
+        transaction::{Address, ConsumedOutput, CreatedOutput, Ed25519Address, OutputId},
     },
     solid_entry_point::SolidEntryPoint,
     Message, MessageId,
@@ -85,12 +85,12 @@ impl Delete<(HashedIndex, MessageId), ()> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Delete<OutputId, Output> for Storage {
+impl Delete<OutputId, CreatedOutput> for Storage {
     async fn delete(&self, output_id: &OutputId) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_OUTPUT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
         self.inner.delete_cf(&cf, output_id.pack_new())?;
 
@@ -99,12 +99,12 @@ impl Delete<OutputId, Output> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Delete<OutputId, Spent> for Storage {
+impl Delete<OutputId, ConsumedOutput> for Storage {
     async fn delete(&self, output_id: &OutputId) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
-            .cf_handle(CF_OUTPUT_ID_TO_SPENT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_SPENT))?;
+            .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
         self.inner.delete_cf(&cf, output_id.pack_new())?;
 

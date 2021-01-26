@@ -1,12 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    conflict::ConflictReason,
-    model::{Output, Spent},
-};
+use crate::conflict::ConflictReason;
 
-use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_message::{
+    milestone::MilestoneIndex,
+    payload::transaction::{ConsumedOutput, CreatedOutput},
+    MessageId,
+};
 
 // TODO why do we need to full vectors here ?
 #[derive(Clone)]
@@ -22,6 +23,6 @@ pub struct MilestoneConfirmed {
     pub consumed_outputs: usize,
 }
 
-pub struct NewSpent(pub Spent);
+pub struct NewConsumedOutput(pub ConsumedOutput);
 
-pub struct NewOutput(pub Output);
+pub struct NewCreatedOutput(pub CreatedOutput);

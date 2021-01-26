@@ -16,12 +16,12 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorker, PeerManager, PeerManagerResWorker, TangleWorker};
+use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorker, PeerManager, PeerManagerResWorker};
 use bee_runtime::{
     node::{Node, NodeBuilder},
     worker::{Error as WorkerError, Worker},
 };
-use bee_tangle::MsTangle;
+use bee_tangle::{MsTangle, TangleWorker};
 use bee_network::NetworkController;
 
 use async_trait::async_trait;

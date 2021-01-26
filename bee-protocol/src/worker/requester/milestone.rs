@@ -5,14 +5,14 @@ use crate::{
     packet::MilestoneRequest,
     peer::PeerManager,
     storage::StorageBackend,
-    worker::{MetricsWorker, PeerManagerResWorker, TangleWorker},
+    worker::{MetricsWorker, PeerManagerResWorker},
     ProtocolMetrics, Sender,
 };
 
 use bee_message::milestone::MilestoneIndex;
 use bee_network::PeerId;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::MsTangle;
+use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::StreamExt;
@@ -214,10 +214,10 @@ where
             info!("Requester stopped.");
         });
 
+        let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<ProtocolMetrics>();
-        let tangle = node.resource::<MsTangle<N::Backend>>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Retryer running.");
