@@ -16,7 +16,6 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 
 use futures::StreamExt;
 use log::debug;
-use serde::Serialize;
 
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
