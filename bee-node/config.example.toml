@@ -45,6 +45,7 @@ start       = 0
 end         = 0
 [protocol.workers]
 status_interval = 10
+ms_sync_count = 200
 
 [rest_api]
 binding_port          = 14265

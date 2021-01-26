@@ -22,7 +22,7 @@ const DEFAULT_COO_PUBLIC_KEY_RANGES: [(&str, MilestoneIndex, MilestoneIndex); 2]
 const DEFAULT_MESSAGE_WORKER_CACHE: usize = 10000;
 const DEFAULT_STATUS_INTERVAL: u64 = 10;
 const DEFAULT_HANDSHAKE_WINDOW: u64 = 10;
-const DEFAULT_MS_SYNC_COUNT: u32 = 1;
+const DEFAULT_MS_SYNC_COUNT: u32 = 200;
 
 #[derive(Default, Deserialize)]
 struct ProtocolCoordinatorConfigBuilder {
