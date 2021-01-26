@@ -108,24 +108,22 @@ fn spawn_gossip_in_task(
         let mut buffer = vec![0u8; MSG_BUFFER_SIZE];
 
         loop {
-            match recv_message(&mut reader, &mut buffer).await {
-                Ok(num_read) => {
-                    if let Err(e) = incoming_gossip_sender
-                        .send(buffer[..num_read].to_vec())
-                        .map_err(|_| Error::ForwardIncomingMessageFailure("MessageReceived"))
-                    {
-                        error!("{:?}", e);
-                    }
-                }
-                Err(_) => {
-                    trace!("Remote dropped connection.");
+            if let Ok(num_read) = recv_message(&mut reader, &mut buffer).await {
+                if incoming_gossip_sender.send(buffer[..num_read].to_vec()).is_err() {
+                    // Any reason sending to this channel fails is unrecoverable (OOM or receiver dropped),
+                    // hence, we will silently just end this task.
                     break;
                 }
+            } else {
+                // Connection with peer stopped due to reasons outside of our control.
+                break;
             }
         }
 
         // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
         let _ = internal_event_sender.send(InternalEvent::ConnectionDropped { peer_id });
+
+        trace!("Exiting gossip-in processor for {}", peer_id.short());
     });
 }
 
@@ -139,15 +137,17 @@ fn spawn_gossip_out_task(
         let mut outgoing_gossip_receiver = outgoing_gossip_receiver.fuse();
 
         while let Some(message) = outgoing_gossip_receiver.next().await {
-            if let Err(e) = send_message(&mut writer, &message).await {
-                error!("{:?}", e);
-                continue;
+            if send_message(&mut writer, &message).await.is_err() {
+                // Any reason sending to the stream fails is considered unrecoverable, hence,
+                // we will end this task.
+                break;
             }
         }
-        trace!("Dropping connection.");
 
         // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
         let _ = internal_event_sender.send(InternalEvent::ConnectionDropped { peer_id });
+
+        trace!("Exiting gossip-out processor for {}", peer_id.short());
     });
 }
 
