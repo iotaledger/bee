@@ -71,10 +71,19 @@ pub struct UtxoInputDto {
 #[serde(untagged)]
 pub enum OutputDto {
     SignatureLockedSingle(SignatureLockedSingleOutputDto),
+    SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedSingleOutputDto {
+    #[serde(rename = "type")]
+    pub kind: u32,
+    pub address: AddressDto,
+    pub amount: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SignatureLockedDustAllowanceOutputDto {
     #[serde(rename = "type")]
     pub kind: u32,
     pub address: AddressDto,
