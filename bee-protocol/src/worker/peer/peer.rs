@@ -4,7 +4,7 @@
 use crate::{
     helper,
     packet::{tlv_from_bytes, Header, Heartbeat, Message, MessageRequest, MilestoneRequest, Packet, TlvError},
-    peer::{Peer, PeerManager},
+    peer::Peer,
     storage::StorageBackend,
     worker::{
         peer::packet_handler::PacketHandler, HasherWorkerEvent, MessageResponderWorkerEvent,
@@ -39,7 +39,6 @@ impl From<TlvError> for Error {
 pub struct PeerWorker {
     peer: Arc<Peer>,
     metrics: ResourceHandle<ProtocolMetrics>,
-    peer_manager: ResourceHandle<PeerManager>,
     hasher: mpsc::UnboundedSender<HasherWorkerEvent>,
     message_responder: mpsc::UnboundedSender<MessageResponderWorkerEvent>,
     milestone_responder: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
@@ -50,7 +49,6 @@ impl PeerWorker {
     pub(crate) fn new(
         peer: Arc<Peer>,
         metrics: ResourceHandle<ProtocolMetrics>,
-        peer_manager: ResourceHandle<PeerManager>,
         hasher: mpsc::UnboundedSender<HasherWorkerEvent>,
         message_responder: mpsc::UnboundedSender<MessageResponderWorkerEvent>,
         milestone_responder: mpsc::UnboundedSender<MilestoneResponderWorkerEvent>,
@@ -59,7 +57,6 @@ impl PeerWorker {
         Self {
             peer,
             metrics,
-            peer_manager,
             hasher,
             message_responder,
             milestone_responder,

@@ -94,7 +94,6 @@ where
                                 PeerWorker::new(
                                     peer.0.clone(),
                                     metrics.clone(),
-                                    peer_manager.clone(),
                                     hasher.clone(),
                                     message_responder.clone(),
                                     milestone_responder.clone(),
