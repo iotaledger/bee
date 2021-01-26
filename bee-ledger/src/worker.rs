@@ -235,17 +235,18 @@ where
         //     }
         // });
 
+        // Unwrap is fine because we just inserted the ledger index.
+        // TODO unwrap
+        let mut ledger_index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
+        tangle.update_latest_solid_milestone_index(MilestoneIndex(*ledger_index));
+
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
-            // Unwrap is fine because we just inserted the ledger index.
-            // TODO unwrap
-            let mut index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
-            tangle.update_latest_solid_milestone_index(MilestoneIndex(*index));
 
             while let Some(LedgerWorkerEvent(message_id)) = receiver.next().await {
-                if let Err(e) = confirm::<N>(&tangle, &storage, &bus, message_id, &mut index).await {
+                if let Err(e) = confirm::<N>(&tangle, &storage, &bus, message_id, &mut ledger_index).await {
                     error!("Confirmation error on {}: {}.", message_id, e);
                     panic!("Aborting due to unexpected ledger error.");
                 }
