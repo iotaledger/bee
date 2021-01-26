@@ -111,8 +111,6 @@ impl PeerWorker {
         }
 
         info!("[{}] Stopped.", self.peer.address());
-
-        self.peer_manager.remove(&self.peer.id()).await;
     }
 
     fn process_packet<B: StorageBackend>(
