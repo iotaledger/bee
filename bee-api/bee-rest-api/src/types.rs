@@ -373,6 +373,13 @@ impl TryFrom<&Output> for OutputDto {
                 address: s.address().try_into()?,
                 amount: s.amount(),
             })),
+            Output::SignatureLockedDustAllowance(s) => Ok(OutputDto::SignatureLockedDustAllowance(
+                SignatureLockedDustAllowanceOutputDto {
+                    kind: 1,
+                    address: s.address().try_into()?,
+                    amount: s.amount(),
+                },
+            )),
             _ => Err("output type not supported".to_string()),
         }
     }
@@ -385,6 +392,11 @@ impl TryFrom<&OutputDto> for Output {
         match value {
             OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(
                 SignatureLockedSingleOutput::new((&s.address).try_into()?, s.amount)
+                    // TODO unwrap
+                    .unwrap(),
+            )),
+            OutputDto::SignatureLockedDustAllowance(s) => Ok(Output::SignatureLockedDustAllowance(
+                SignatureLockedDustAllowanceOutput::new((&s.address).try_into()?, s.amount)
                     // TODO unwrap
                     .unwrap(),
             )),
