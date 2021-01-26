@@ -44,17 +44,14 @@ impl Peer {
         &self.id
     }
 
-    #[allow(dead_code)]
     pub fn address(&self) -> &Multiaddr {
         &self.info.address
     }
 
-    #[allow(dead_code)]
     pub fn alias(&self) -> &String {
         &self.info.alias
     }
 
-    #[allow(dead_code)]
     pub fn relation(&self) -> PeerRelation {
         self.info.relation
     }
@@ -91,7 +88,6 @@ impl Peer {
         self.connected_peers.store(connected_peers, Ordering::Relaxed);
     }
 
-    #[allow(dead_code)]
     pub fn connected_peers(&self) -> u8 {
         self.connected_peers.load(Ordering::Relaxed)
     }
@@ -100,7 +96,6 @@ impl Peer {
         self.synced_peers.store(synced_peers, Ordering::Relaxed);
     }
 
-    #[allow(dead_code)]
     pub fn synced_peers(&self) -> u8 {
         self.synced_peers.load(Ordering::Relaxed)
     }
