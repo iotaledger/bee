@@ -1,31 +1,21 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugins::dashboard::{
-    websocket::{
-        responses::{WsEvent, WsEventInner},
-        topics::WsTopic,
-    },
-    workers::peer_metric::PeerMetrics,
+use crate::plugins::dashboard::websocket::{
+    responses::{WsEvent, WsEventInner},
+    topics::WsTopic,
 };
+
+use bee_rest_api::handlers::peers::PeersResponse;
 
 use serde::Serialize;
 
-#[derive(Clone, Debug, Serialize)]
-pub(crate) struct PeerMetricResponse(pub PeerMetrics);
-
-pub(crate) fn forward(event: PeerMetrics) -> WsEvent {
+pub(crate) fn forward(event: PeersResponse) -> WsEvent {
     event.into()
 }
 
-impl From<PeerMetrics> for WsEvent {
-    fn from(val: PeerMetrics) -> Self {
-        Self::new(WsTopic::PeerMetrics, WsEventInner::PeerMetric(val.into()))
-    }
-}
-
-impl From<PeerMetrics> for PeerMetricResponse {
-    fn from(val: PeerMetrics) -> Self {
-        Self(val)
+impl From<PeersResponse> for WsEvent {
+    fn from(val: PeersResponse) -> Self {
+        Self::new(WsTopic::PeerMetrics, WsEventInner::PeerMetric(val))
     }
 }

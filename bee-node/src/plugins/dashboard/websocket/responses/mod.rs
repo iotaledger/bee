@@ -12,6 +12,8 @@ use crate::plugins::dashboard::websocket::{
     topics::WsTopic,
 };
 
+use bee_rest_api::handlers::peers::PeersResponse;
+
 use serde::Serialize;
 
 pub(crate) mod confirmed_info;
@@ -55,5 +57,5 @@ pub(crate) enum WsEventInner {
     DatabaseSizeMetrics(DatabaseSizeMetricsResponse),
     TipInfo(TipInfoResponse),
     NodeStatus(NodeStatusResponse),
-    PeerMetric(PeerMetricResponse),
+    PeerMetric(PeersResponse),
 }
