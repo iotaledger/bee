@@ -299,18 +299,6 @@ where
     }
 
     async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = HashSet<MessageId, FxBuildHasher>> + '_> {
-        // struct Children<'a> {
-        //     children: dashmap::mapref::one::Ref<'a, MessageId, (HashSet<MessageId>, bool)>,
-        // }
-
-        // impl<'a> Deref for Children<'a> {
-        //     type Target = HashSet<MessageId>;
-
-        //     fn deref(&self) -> &Self::Target {
-        //         &self.children.deref().0
-        //     }
-        // }
-
         struct Wrapper<'a> {
             children: HashSet<MessageId, FxBuildHasher>,
             phantom: PhantomData<&'a ()>,
@@ -360,7 +348,7 @@ where
             }
         };
 
-        Some(/* Children { children } */ Wrapper {
+        Some(Wrapper {
             children,
             phantom: PhantomData,
         })
@@ -406,30 +394,19 @@ where
     }
 
     async fn perform_eviction(&self) {
-        loop {
-            let len = self.len().await;
-            let mut cache = self.cache_queue.lock().await;
-
-            if len < cache.cap() {
-                break;
-            }
-
-            let remove = if cache.len() == cache.cap() {
+        let mut vertices = self.vertices.write().await;
+        let mut children = self.children.write().await;
+        let mut cache = self.cache_queue.lock().await;
+        while vertices.len() > cache.cap() {
+            if cache.len() == cache.cap() {
                 let (message_id, _) = cache.pop_lru().expect("Cache capacity is zero");
-                Some(message_id)
-            } else {
-                None
-            };
 
-            drop(cache);
-
-            if let Some(message_id) = remove {
-                self.vertices
-                    .write()
-                    .await
+                vertices
                     .remove(&message_id)
                     .expect("Expected vertex entry to exist");
-                self.children.write().await.remove(&message_id);
+                children.remove(&message_id);
+            } else {
+                break;
             }
         }
     }
