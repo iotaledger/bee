@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod broadcaster;
-mod confirmer;
 mod heartbeater;
 mod message;
 mod metrics;
@@ -14,9 +13,9 @@ mod responder;
 mod solidifier;
 mod status;
 mod tip_pool_cleaner;
+mod updater;
 
 pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
-pub(crate) use confirmer::{ConfirmationWorker, ConfirmationWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use message::{
     HasherWorker, HasherWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker,
@@ -38,3 +37,4 @@ pub(crate) use responder::{
 pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
 pub(crate) use status::StatusWorker;
 pub(crate) use tip_pool_cleaner::TipPoolCleanerWorker;
+pub(crate) use updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};

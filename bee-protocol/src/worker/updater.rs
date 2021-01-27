@@ -19,14 +19,14 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use std::{any::TypeId, collections::HashSet, convert::Infallible};
 
 #[derive(Debug)]
-pub(crate) struct ConfirmationWorkerEvent(pub(crate) MilestoneIndex, pub(crate) Milestone);
+pub(crate) struct IndexUpdaterWorkerEvent(pub(crate) MilestoneIndex, pub(crate) Milestone);
 
-pub(crate) struct ConfirmationWorker {
-    pub(crate) tx: mpsc::UnboundedSender<ConfirmationWorkerEvent>,
+pub(crate) struct IndexUpdaterWorker {
+    pub(crate) tx: mpsc::UnboundedSender<IndexUpdaterWorkerEvent>,
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for ConfirmationWorker
+impl<N: Node> Worker<N> for IndexUpdaterWorker
 where
     N::Backend: StorageBackend,
 {
@@ -47,7 +47,7 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(ConfirmationWorkerEvent(index, milestone)) = receiver.next().await {
+            while let Some(IndexUpdaterWorkerEvent(index, milestone)) = receiver.next().await {
                 process(&tangle, milestone, index).await;
             }
 
@@ -57,7 +57,7 @@ where
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
-            while let Some(Some(ConfirmationWorkerEvent(index, milestone))) = receiver.next().now_or_never() {
+            while let Some(Some(IndexUpdaterWorkerEvent(index, milestone))) = receiver.next().now_or_never() {
                 process(&tangle, milestone, index).await;
                 count += 1;
             }
@@ -79,18 +79,18 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, 
         .await
         .map(|message| (*message.parent1(), *message.parent2()))
     {
-        // Confirm the past cone of this milestone, and return all newly confir
-        let confirmed = confirm_past_cone(tangle, parent1, parent2, index).await;
+        // Update the past cone of this milestone by setting its milestone index, and return them.
+        let roots = update_past_cone(tangle, parent1, parent2, index).await;
 
         // Propagate new confirmation states
-        update_otrsi_ytrsi(tangle, confirmed).await;
+        update_future_cone(tangle, roots).await;
 
         // Update tip pool after all values got updated.
         tangle.update_tip_scores().await;
     }
 }
 
-async fn confirm_past_cone<B: StorageBackend>(
+async fn update_past_cone<B: StorageBackend>(
     tangle: &MsTangle<B>,
     parent1: MessageId,
     parent2: MessageId,
@@ -147,8 +147,8 @@ async fn confirm_past_cone<B: StorageBackend>(
 
 // NOTE: so once a milestone comes in we have to walk the future cones of the root transactions and update their
 // OTRSI and YTRSI; during that time we need to block the propagator, otherwise it will propagate outdated data.
-async fn update_otrsi_ytrsi<B: StorageBackend>(tangle: &MsTangle<B>, confirmed: HashSet<MessageId>) {
-    let mut to_process = confirmed.into_iter().collect::<Vec<_>>();
+async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, roots: HashSet<MessageId>) {
+    let mut to_process = roots.into_iter().collect::<Vec<_>>();
     let mut processed = Vec::new();
 
     while let Some(parent_id) = to_process.pop() {
