@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    balance::BalanceDiffs,
     conflict::ConflictReason,
+    dust::DUST_THRESHOLD,
     error::Error,
     event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
     merkle_hasher::MerkleHasher,
@@ -12,7 +14,12 @@ use crate::{
     white_flag,
 };
 
-use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, payload::Payload, MessageId};
+use bee_message::{
+    ledger_index::LedgerIndex,
+    milestone::MilestoneIndex,
+    payload::{transaction::Output, Payload},
+    MessageId,
+};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_snapshot::{milestone_diff::MilestoneDiff, SnapshotWorker};
 use bee_tangle::{MsTangle, TangleWorker};
@@ -23,7 +30,7 @@ use log::{error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::any::TypeId;
+use std::{any::TypeId, collections::HashMap};
 
 pub struct LedgerWorkerEvent(pub MessageId);
 
@@ -91,7 +98,7 @@ where
         metadata.index,
         &metadata.created_outputs,
         &metadata.consumed_outputs,
-        Some(&metadata.balance_diffs),
+        &metadata.balance_diffs,
     )
     .await?;
 
@@ -197,16 +204,59 @@ where
                 // TODO unwrap
                 let ledger_index = *storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
 
+                let mut balance_diffs = BalanceDiffs::new();
+
+                for (_, output) in diff.created().iter() {
+                    match output.inner() {
+                        Output::SignatureLockedSingle(output) => {
+                            balance_diffs.amount_add(*output.address(), output.amount());
+                            if output.amount() < DUST_THRESHOLD {
+                                balance_diffs.dust_output_inc(*output.address());
+                            }
+                        }
+                        Output::SignatureLockedDustAllowance(output) => {
+                            balance_diffs.amount_add(*output.address(), output.amount());
+                            balance_diffs.dust_allowance_add(*output.address(), output.amount());
+                        }
+                        _ => return Err(Error::UnsupportedOutputType),
+                    }
+                }
+
+                let mut consumed = HashMap::new();
+
+                for (output_id, (created_output, consumed_output)) in diff.consumed().into_iter() {
+                    match created_output.inner() {
+                        Output::SignatureLockedSingle(created_output) => {
+                            balance_diffs.amount_sub(*created_output.address(), created_output.amount());
+                            if created_output.amount() < DUST_THRESHOLD {
+                                balance_diffs.dust_output_dec(*created_output.address());
+                            }
+                        }
+                        Output::SignatureLockedDustAllowance(created_output) => {
+                            balance_diffs.amount_sub(*created_output.address(), created_output.amount());
+                            balance_diffs.dust_allowance_sub(*created_output.address(), created_output.amount());
+                        }
+                        _ => return Err(Error::UnsupportedOutputType),
+                    }
+                    consumed.insert(*output_id, (*consumed_output).clone());
+                }
+
                 match index {
                     MilestoneIndex(index) if index == ledger_index + 1 => {
                         // TODO unwrap until we merge both crates
-                        apply_outputs_diff(&*storage, MilestoneIndex(index), diff.created(), diff.consumed(), None)
-                            .await
-                            .unwrap();
+                        apply_outputs_diff(
+                            &*storage,
+                            MilestoneIndex(index),
+                            diff.created(),
+                            &consumed,
+                            &balance_diffs,
+                        )
+                        .await
+                        .unwrap();
                     }
                     MilestoneIndex(index) if index == ledger_index => {
                         // TODO unwrap until we merge both crates
-                        rollback_outputs_diff(&*storage, MilestoneIndex(index), diff.created(), diff.consumed())
+                        rollback_outputs_diff(&*storage, MilestoneIndex(index), diff.created(), &consumed)
                             .await
                             .unwrap();
                     }

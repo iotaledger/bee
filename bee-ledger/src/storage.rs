@@ -175,7 +175,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
-    balance_diffs: Option<&BalanceDiffs>,
+    balance_diffs: &BalanceDiffs,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
@@ -195,9 +195,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
         consumed_output_ids.push(*output_id);
     }
 
-    if let Some(balance_diffs) = balance_diffs {
-        store_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
-    }
+    store_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
 
     Batch::<MilestoneIndex, OutputDiff>::batch_insert(
         storage,
