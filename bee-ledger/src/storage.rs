@@ -155,6 +155,21 @@ pub fn consume_output_batch<B: StorageBackend>(
     Ok(())
 }
 
+pub async fn store_balance_diffs_batch<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    balance_diffs: &BalanceDiffs,
+) -> Result<(), Error> {
+    for (address, diff) in balance_diffs.iter() {
+        let balance = fetch_balance_or_default(storage, address).await?;
+
+        Batch::<Address, Balance>::batch_insert(storage, batch, address, &(balance + diff))
+            .map_err(|e| Error::Storage(Box::new(e)))?;
+    }
+
+    Ok(())
+}
+
 pub async fn apply_outputs_diff<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
@@ -181,24 +196,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     }
 
     if let Some(balance_diffs) = balance_diffs {
-        for (address, diff) in balance_diffs.iter() {
-            let (amount, dust_allowance, dust_output) = fetch_balance(storage, address)
-                .await?
-                .map(|b| (b.amount() as i64, b.dust_allowance() as i64, b.dust_output() as i64))
-                .unwrap_or_default();
-
-            Batch::<Address, Balance>::batch_insert(
-                storage,
-                &mut batch,
-                address,
-                &Balance::new(
-                    (amount + diff.amount()) as u64,
-                    (dust_allowance + diff.dust_allowance()) as u64,
-                    (dust_output + diff.dust_output()) as u64,
-                ),
-            )
-            .map_err(|e| Error::Storage(Box::new(e)))?;
-        }
+        store_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
     }
 
     Batch::<MilestoneIndex, OutputDiff>::batch_insert(
@@ -260,6 +258,13 @@ pub(crate) async fn fetch_balance<B: StorageBackend>(storage: &B, address: &Addr
     Fetch::<Address, Balance>::fetch(storage, address)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub(crate) async fn fetch_balance_or_default<B: StorageBackend>(
+    storage: &B,
+    address: &Address,
+) -> Result<Balance, Error> {
+    Ok(fetch_balance(storage, address).await?.unwrap_or_default())
 }
 
 #[allow(dead_code)]
