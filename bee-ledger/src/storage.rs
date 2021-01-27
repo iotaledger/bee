@@ -160,7 +160,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
-    balances: Option<&BalanceDiffs>,
+    balance_diffs: Option<&BalanceDiffs>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
@@ -180,8 +180,8 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
         consumed_output_ids.push(*output_id);
     }
 
-    if let Some(balances) = balances {
-        for (address, entry) in balances.iter() {
+    if let Some(balance_diffs) = balance_diffs {
+        for (address, diff) in balance_diffs.iter() {
             let (amount, dust_allowance, dust_output) = fetch_balance(storage, address)
                 .await?
                 .map(|b| (b.amount() as i64, b.dust_allowance() as i64, b.dust_output() as i64))
@@ -192,9 +192,9 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
                 &mut batch,
                 address,
                 &Balance::new(
-                    (amount + entry.amount()) as u64,
-                    (dust_allowance + entry.dust_allowance()) as u64,
-                    (dust_output + entry.dust_output()) as u64,
+                    (amount + diff.amount()) as u64,
+                    (dust_allowance + diff.dust_allowance()) as u64,
+                    (dust_output + diff.dust_output()) as u64,
                 ),
             )
             .map_err(|e| Error::Storage(Box::new(e)))?;

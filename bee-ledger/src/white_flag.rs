@@ -158,25 +158,26 @@ async fn on_message<B: StorageBackend>(
         return Ok(());
     }
 
-    for (address, entry) in balance_diffs.iter() {
-        // TODO conditionnally fetch ?
-        let (mut dust_allowance, mut dust_output) = storage::fetch_balance(storage.deref(), &address)
-            .await?
-            .map(|b| (b.dust_allowance() as i64, b.dust_output() as i64))
-            .unwrap_or_default();
+    for (address, diff) in balance_diffs.iter() {
+        if diff.is_dust_mutating() {
+            let (mut dust_allowance, mut dust_output) = storage::fetch_balance(storage.deref(), &address)
+                .await?
+                .map(|b| (b.dust_allowance() as i64, b.dust_output() as i64))
+                .unwrap_or_default();
 
-        if let Some(entry) = metadata.balance_diffs.get(&address) {
-            dust_allowance += entry.dust_allowance();
-            dust_output += entry.dust_output();
-        }
+            if let Some(diff) = metadata.balance_diffs.get(&address) {
+                dust_allowance += diff.dust_allowance();
+                dust_output += diff.dust_output();
+            }
 
-        if (dust_output as i64 + entry.dust_output()) as usize
-            > dust_outputs_max((dust_allowance as i64 + entry.dust_allowance()) as u64)
-        {
-            metadata
-                .excluded_conflicting_messages
-                .push((*message_id, ConflictReason::InvalidDustAllowance));
-            return Ok(());
+            if (dust_output as i64 + diff.dust_output()) as usize
+                > dust_outputs_max((dust_allowance as i64 + diff.dust_allowance()) as u64)
+            {
+                metadata
+                    .excluded_conflicting_messages
+                    .push((*message_id, ConflictReason::InvalidDustAllowance));
+                return Ok(());
+            }
         }
     }
 
