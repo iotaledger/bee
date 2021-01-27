@@ -81,8 +81,8 @@ impl Packable for MilestoneDiff {
             let _message_id = MessageId::unpack(reader)?;
             let output_id = OutputId::unpack(reader)?;
             let _output = Output::unpack(reader)?;
-            let _target = TransactionId::unpack(reader)?;
-            consumed.insert(output_id, ConsumedOutput::new(*output_id.transaction_id(), index));
+            let target = TransactionId::unpack(reader)?;
+            consumed.insert(output_id, ConsumedOutput::new(target, index));
         }
 
         Ok(Self {
