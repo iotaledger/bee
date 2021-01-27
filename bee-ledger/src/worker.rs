@@ -10,7 +10,7 @@ use crate::{
     merkle_hasher::MerkleHasher,
     metadata::WhiteFlagMetadata,
     state::check_ledger_state,
-    storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, StorageBackend},
+    storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend},
     white_flag,
 };
 
@@ -189,10 +189,28 @@ where
         let full_diff_rx = node.worker::<SnapshotWorker>().unwrap().full_diff_rx.clone();
         let delta_diff_rx = node.worker::<SnapshotWorker>().unwrap().delta_diff_rx.clone();
 
+        let mut balance_diffs = BalanceDiffs::new();
+
         while let Ok((output_id, output)) = output_rx.recv_async().await {
             // TODO handle unwrap
+            // TODO batch
             create_output(&*storage, &output_id, &output).await.unwrap();
+            match output.inner() {
+                Output::SignatureLockedSingle(output) => {
+                    balance_diffs.amount_add(*output.address(), output.amount());
+                    if output.amount() < DUST_THRESHOLD {
+                        balance_diffs.dust_output_inc(*output.address());
+                    }
+                }
+                Output::SignatureLockedDustAllowance(output) => {
+                    balance_diffs.amount_add(*output.address(), output.amount());
+                    balance_diffs.dust_allowance_add(*output.address(), output.amount());
+                }
+                _ => return Err(Error::UnsupportedOutputType),
+            }
         }
+
+        store_balance_diffs(&*storage, &balance_diffs).await?;
 
         async fn read_diffs<B: StorageBackend>(
             storage: &B,

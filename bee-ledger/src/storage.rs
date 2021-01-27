@@ -155,6 +155,17 @@ pub fn consume_output_batch<B: StorageBackend>(
     Ok(())
 }
 
+pub async fn store_balance_diffs<B: StorageBackend>(storage: &B, balance_diffs: &BalanceDiffs) -> Result<(), Error> {
+    let mut batch = B::batch_begin();
+
+    store_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
+
+    storage
+        .batch_commit(batch, true)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
 pub async fn store_balance_diffs_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
