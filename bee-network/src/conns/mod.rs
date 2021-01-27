@@ -115,13 +115,13 @@ fn spawn_gossip_in_task(
                     break;
                 }
             } else {
+                // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
+                let _ = internal_event_sender.send(InternalEvent::ConnectionDropped { peer_id });
+
                 // Connection with peer stopped due to reasons outside of our control.
                 break;
             }
         }
-
-        // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
-        let _ = internal_event_sender.send(InternalEvent::ConnectionDropped { peer_id });
 
         trace!("Exiting gossip-in processor for {}", peer_id.short());
     });
@@ -136,16 +136,20 @@ fn spawn_gossip_out_task(
     tokio::spawn(async move {
         let mut outgoing_gossip_receiver = outgoing_gossip_receiver.fuse();
 
-        while let Some(message) = outgoing_gossip_receiver.next().await {
-            if send_message(&mut writer, &message).await.is_err() {
-                // Any reason sending to the stream fails is considered unrecoverable, hence,
-                // we will end this task.
+        loop {
+            if let Some(message) = outgoing_gossip_receiver.next().await {
+                if send_message(&mut writer, &message).await.is_err() {
+                    // Any reason sending to the stream fails is considered unrecoverable, hence,
+                    // we will end this task.
+                    break;
+                }
+            } else {
+                // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
+                let _ = internal_event_sender.send(InternalEvent::ConnectionDropped { peer_id });
+
                 break;
             }
         }
-
-        // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
-        let _ = internal_event_sender.send(InternalEvent::ConnectionDropped { peer_id });
 
         trace!("Exiting gossip-out processor for {}", peer_id.short());
     });
