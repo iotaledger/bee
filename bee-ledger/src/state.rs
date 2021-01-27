@@ -53,5 +53,5 @@ pub async fn check_ledger_balance_state<B: StorageBackend>(storage: &B) -> Resul
 }
 
 pub async fn check_ledger_state<B: StorageBackend>(storage: &B) -> Result<bool, Error> {
-    Ok(check_ledger_unspent_state(storage).await?) //&& check_ledger_balance_state(storage).await?)
+    Ok(check_ledger_unspent_state(storage).await? && check_ledger_balance_state(storage).await?)
 }
