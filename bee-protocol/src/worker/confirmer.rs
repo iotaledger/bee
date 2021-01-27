@@ -99,34 +99,34 @@ async fn confirm_past_cone<B: StorageBackend>(
     let mut parents = vec![parent1, parent2];
     let mut confirmed = HashSet::new();
 
-    while let Some(id) = parents.pop() {
+    while let Some(parent_id) = parents.pop() {
         // Our stop conditions. Note that the order of calls is important (from cheap to more expensive) for performance
         // reasons.
-        if confirmed.contains(&id)
-            || tangle.is_solid_entry_point(&id)
-            || tangle.get_metadata(&id).await.unwrap().flags().is_confirmed()
+        if confirmed.contains(&parent_id)
+            || tangle.is_solid_entry_point(&parent_id)
+            || tangle.get_metadata(&parent_id).await.unwrap().flags().is_confirmed()
         {
             continue;
         }
 
         tangle
-            .update_metadata(&id, |metadata| {
+            .update_metadata(&parent_id, |metadata| {
                 // TODO: Throw one of those indexes away ;)
                 metadata.set_milestone_index(index);
                 metadata.set_cone_index(index);
-                metadata.set_otrsi(IndexId(index, id));
-                metadata.set_ytrsi(IndexId(index, id));
+                metadata.set_otrsi(IndexId(index, parent_id));
+                metadata.set_ytrsi(IndexId(index, parent_id));
                 metadata.flags_mut().set_confirmed(true);
             })
             .await;
 
-        if let Some((parent1, parent2)) = tangle
-            .get(&id)
+        if let Some((grand_parent1, grand_parent2)) = tangle
+            .get(&parent_id)
             .await
-            .map(|message| (*message.parent1(), *message.parent2()))
+            .map(|parent| (*parent.parent1(), *parent.parent2()))
         {
-            parents.push(parent1);
-            parents.push(parent2);
+            parents.push(grand_parent1);
+            parents.push(grand_parent2);
         }
 
         // Preferably we would only collect the 'root messages/transactions'. They are defined as being confirmed by
@@ -134,7 +134,7 @@ async fn confirm_past_cone<B: StorageBackend>(
         // point for new messages to the main tangle. It is ensured however, that this set *contains* the root messages
         // as well, and during the future walk we will skip already confirmed children, which shouldn't be a performance
         // issue.
-        confirmed.insert(id);
+        confirmed.insert(parent_id);
     }
 
     debug!("Confirmed {} messages.", confirmed.len());
