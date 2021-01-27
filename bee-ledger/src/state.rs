@@ -45,8 +45,8 @@ pub async fn check_ledger_balance_state<B: StorageBackend>(storage: &B) -> Resul
         .await
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    while let Some((_, entry)) = stream.next().await {
-        supply += entry.amount();
+    while let Some((_, balance)) = stream.next().await {
+        supply += balance.amount();
     }
 
     Ok(supply == IOTA_SUPPLY)

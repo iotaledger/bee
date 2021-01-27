@@ -35,6 +35,13 @@ impl BalanceDiff {
     pub fn dust_output(&self) -> i64 {
         self.dust_output
     }
+
+    /// Dust validation rules need to be check if
+    ///    dust allowance has been decreased
+    /// || dust output has been increased.
+    pub fn is_dust_mutating(&self) -> bool {
+        self.dust_allowance < 0 || self.dust_output > 0
+    }
 }
 
 #[derive(Debug, Default)]
@@ -46,11 +53,11 @@ impl BalanceDiffs {
     }
 
     pub fn merge(&mut self, other: Self) {
-        for (address, entry) in other.0 {
+        for (address, diff) in other.0 {
             let e = self.0.entry(address).or_default();
-            e.amount = e.amount.saturating_add(entry.amount);
-            e.dust_allowance = e.dust_allowance.saturating_add(entry.dust_allowance);
-            e.dust_output = e.dust_output.saturating_add(entry.dust_output);
+            e.amount = e.amount.saturating_add(diff.amount);
+            e.dust_allowance = e.dust_allowance.saturating_add(diff.dust_allowance);
+            e.dust_output = e.dust_output.saturating_add(diff.dust_output);
         }
     }
 
