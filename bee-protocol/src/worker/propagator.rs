@@ -90,7 +90,7 @@ async fn propagate<B: StorageBackend>(
                     metadata.set_solid();
 
                     if metadata.flags().is_milestone() {
-                        Some(metadata.milestone_index())
+                        metadata.milestone_index()
                     } else {
                         metadata.set_otrsi(child_otrsi);
                         metadata.set_ytrsi(child_ytrsi);

@@ -47,7 +47,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                 let should_promote;
                 let should_reattach;
 
-                if let Some(milestone) = metadata.cone_index() {
+                if let Some(milestone) = metadata.milestone_index() {
                     // message is referenced by a milestone
                     is_solid = true;
                     referenced_by_milestone_index = Some(*milestone);

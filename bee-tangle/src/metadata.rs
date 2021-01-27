@@ -15,12 +15,10 @@ use std::{
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MessageMetadata {
     flags: Flags,
-    milestone_index: MilestoneIndex,
+    milestone_index: Option<MilestoneIndex>,
     arrival_timestamp: u64,
     solidification_timestamp: u64,
     confirmation_timestamp: u64,
-    cone_index: Option<MilestoneIndex>, /* maybe merge milestone_index and cone_index; keep it like that for now to
-                                         * avoid conflicts; */
     otrsi: Option<IndexId>,
     ytrsi: Option<IndexId>,
     conflict: u8,
@@ -30,11 +28,10 @@ impl MessageMetadata {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         flags: Flags,
-        milestone_index: MilestoneIndex,
+        milestone_index: Option<MilestoneIndex>,
         arrival_timestamp: u64,
         solidification_timestamp: u64,
         confirmation_timestamp: u64,
-        cone_index: Option<MilestoneIndex>,
         otrsi: Option<IndexId>,
         ytrsi: Option<IndexId>,
         conflict: u8,
@@ -45,7 +42,6 @@ impl MessageMetadata {
             arrival_timestamp,
             solidification_timestamp,
             confirmation_timestamp,
-            cone_index,
             otrsi,
             ytrsi,
             conflict,
@@ -70,12 +66,12 @@ impl MessageMetadata {
         &mut self.flags
     }
 
-    pub fn milestone_index(&self) -> MilestoneIndex {
+    pub fn milestone_index(&self) -> Option<MilestoneIndex> {
         self.milestone_index
     }
 
     pub fn set_milestone_index(&mut self, index: MilestoneIndex) {
-        self.milestone_index = index;
+        self.milestone_index = Some(index);
     }
 
     pub fn arrival_timestamp(&self) -> u64 {
@@ -84,14 +80,6 @@ impl MessageMetadata {
 
     pub fn solidification_timestamp(&self) -> u64 {
         self.solidification_timestamp
-    }
-
-    pub fn cone_index(&self) -> Option<MilestoneIndex> {
-        self.cone_index
-    }
-
-    pub fn set_cone_index(&mut self, cone_index: MilestoneIndex) {
-        self.cone_index = Some(cone_index);
     }
 
     pub fn otrsi(&self) -> Option<IndexId> {
@@ -170,7 +158,6 @@ impl Packable for MessageMetadata {
             + self.arrival_timestamp.packed_len()
             + self.solidification_timestamp.packed_len()
             + self.confirmation_timestamp.packed_len()
-            + self.cone_index.packed_len()
             + self.otrsi.packed_len()
             + self.ytrsi.packed_len()
             + self.conflict.packed_len()
@@ -182,7 +169,6 @@ impl Packable for MessageMetadata {
         self.arrival_timestamp.pack(writer)?;
         self.solidification_timestamp.pack(writer)?;
         self.confirmation_timestamp.pack(writer)?;
-        self.cone_index.pack(writer)?;
         self.otrsi.pack(writer)?;
         self.ytrsi.pack(writer)?;
         self.conflict.pack(writer)?;
@@ -193,11 +179,10 @@ impl Packable for MessageMetadata {
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self {
             flags: Flags::unpack(reader)?,
-            milestone_index: MilestoneIndex::unpack(reader)?,
+            milestone_index: Option::<MilestoneIndex>::unpack(reader)?,
             arrival_timestamp: u64::unpack(reader)?,
             solidification_timestamp: u64::unpack(reader)?,
             confirmation_timestamp: u64::unpack(reader)?,
-            cone_index: Option::<MilestoneIndex>::unpack(reader)?,
             otrsi: Option::<IndexId>::unpack(reader)?,
             ytrsi: Option::<IndexId>::unpack(reader)?,
             conflict: u8::unpack(reader)?,

@@ -104,7 +104,12 @@ async fn confirm_past_cone<B: StorageBackend>(
         // reasons.
         if confirmed.contains(&parent_id)
             || tangle.is_solid_entry_point(&parent_id)
-            || tangle.get_metadata(&parent_id).await.unwrap().flags().is_confirmed()
+            || tangle
+                .get_metadata(&parent_id)
+                .await
+                .unwrap()
+                .milestone_index()
+                .is_some()
         {
             continue;
         }
@@ -113,10 +118,8 @@ async fn confirm_past_cone<B: StorageBackend>(
             .update_metadata(&parent_id, |metadata| {
                 // TODO: Throw one of those indexes away ;)
                 metadata.set_milestone_index(index);
-                metadata.set_cone_index(index);
                 metadata.set_otrsi(IndexId(index, parent_id));
                 metadata.set_ytrsi(IndexId(index, parent_id));
-                metadata.flags_mut().set_confirmed(true);
             })
             .await;
 
