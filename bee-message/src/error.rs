@@ -18,6 +18,7 @@ pub enum Error {
     InvalidUnlockKind(u8),
     InvalidAccumulatedOutput(u128),
     InvalidUnlockBlockCount(usize, usize),
+    InvalidParentsCount(usize),
     NoInput,
     NoOutput,
     DuplicateError,
@@ -54,6 +55,9 @@ impl fmt::Display for Error {
             Error::InvalidAccumulatedOutput(value) => write!(f, "Invalid accumulated output balance: {}.", value),
             Error::InvalidUnlockBlockCount(input, block) => {
                 write!(f, "Invalid unlock block count: {} != {}.", input, block)
+            }
+            Error::InvalidParentsCount(count) => {
+                write!(f, "Invalid parents count: {}.", count)
             }
             Error::NoInput => write!(f, "No input provided."),
             Error::NoOutput => write!(f, "No output provided."),
