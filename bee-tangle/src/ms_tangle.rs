@@ -143,6 +143,8 @@ impl<B: StorageBackend> MsTangle<B> {
             .update_metadata(&milestone.message_id(), |metadata| {
                 metadata.flags_mut().set_milestone(true);
                 metadata.set_milestone_index(idx);
+                metadata.set_otrsi(IndexId(idx, *milestone.message_id()));
+                metadata.set_ytrsi(IndexId(idx, *milestone.message_id()));
             })
             .await;
         self.inner
