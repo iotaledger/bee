@@ -160,19 +160,15 @@ async fn on_message<B: StorageBackend>(
 
     for (address, diff) in balance_diffs.iter() {
         if diff.is_dust_mutating() {
-            let (mut dust_allowance, mut dust_output) = storage::fetch_balance(storage.deref(), &address)
-                .await?
-                .map(|b| (b.dust_allowance() as i64, b.dust_output() as i64))
-                .unwrap_or_default();
+            let mut balance = storage::fetch_balance_or_default(storage.deref(), &address).await?;
 
             if let Some(diff) = metadata.balance_diffs.get(&address) {
-                dust_allowance += diff.dust_allowance();
-                dust_output += diff.dust_output();
+                balance = balance + diff;
             }
 
-            if (dust_output as i64 + diff.dust_output()) as usize
-                > dust_outputs_max((dust_allowance as i64 + diff.dust_allowance()) as u64)
-            {
+            balance = balance + diff;
+
+            if balance.dust_output() as usize > dust_outputs_max(balance.dust_allowance()) {
                 metadata
                     .excluded_conflicting_messages
                     .push((*message_id, ConflictReason::InvalidDustAllowance));
