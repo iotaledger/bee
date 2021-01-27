@@ -160,14 +160,16 @@ where
                                 *lsmi + 1,
                                 *next - 1
                             );
-                            helper::request_message(
-                                &tangle,
-                                &message_requester,
-                                &requested_messages,
-                                *message.parent2(),
-                                index,
-                            )
-                            .await;
+                            for parent in message.parents().iter() {
+                                helper::request_message(
+                                    &tangle,
+                                    &message_requester,
+                                    &requested_messages,
+                                    *parent,
+                                    index,
+                                )
+                                .await;
+                            }
                         } else {
                             error!("Requested milestone {} message not present in the tangle.", index)
                         }

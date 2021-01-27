@@ -36,8 +36,7 @@ pub struct MpsMetricsUpdated {
 #[derive(Clone)]
 pub struct NewVertex {
     pub id: String,
-    pub parent1_id: String,
-    pub parent2_id: String,
+    pub parent_ids: Vec<String>,
     pub is_solid: bool,
     pub is_referenced: bool,
     pub is_conflicting: bool,

@@ -33,7 +33,7 @@ pub(crate) struct PropagatorWorker {
 async fn propagate<B: StorageBackend>(
     message_id: MessageId,
     tangle: &MsTangle<B>,
-    tip_tx: &async_channel::Sender<(MessageId, MessageId, MessageId, Option<MilestoneIndex>)>,
+    tip_tx: &async_channel::Sender<(MessageId, Vec<MessageId>, Option<MilestoneIndex>)>,
 ) {
     let mut children = vec![message_id];
 
@@ -143,9 +143,9 @@ where
                 let tangle = tangle.clone();
 
                 async move {
-                    while let Ok((message_id, parent1, parent2, index)) = tip_rx.recv().await {
+                    while let Ok((message_id, parents, index)) = tip_rx.recv().await {
                         bus.dispatch(MessageSolidified(message_id));
-                        tangle.insert_tip(message_id, parent1, parent2).await;
+                        tangle.insert_tip(message_id, parents).await;
 
                         if let Some(index) = index {
                             if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
