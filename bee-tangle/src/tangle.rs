@@ -262,20 +262,14 @@ where
         Update: FnMut(&mut T) -> R,
     {
         self.pull_message(message_id).await;
-        let r = if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
-            let metadata = vtx.metadata().clone();
+        if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
             let r = update(vtx.metadata_mut());
 
-            Some((r, metadata))
-        } else {
-            None
-        };
-
-        if let Some((r, metadata)) = r {
             self.hooks
-                .insert_metadata(*message_id, metadata)
+                .insert_metadata(*message_id, vtx.metadata().clone())
                 .await
                 .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
+
             Some(r)
         } else {
             None
