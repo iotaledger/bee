@@ -50,7 +50,7 @@ async fn propagate<B: StorageBackend>(
             .map(|message| (*message.parent1(), *message.parent2()))
         {
             // If either of the parents is not yet solid, we do not propagate their current state.
-            if !tangle.is_solid_message_maybe(&parent1).await || !tangle.is_solid_message_maybe(&parent2).await {
+            if !tangle.is_solid_message(&parent1).await || !tangle.is_solid_message(&parent2).await {
                 continue;
             }
 

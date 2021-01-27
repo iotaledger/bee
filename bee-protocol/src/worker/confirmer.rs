@@ -84,10 +84,10 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, 
 
         // Propagate new confirmation states
         update_otrsi_ytrsi(tangle, confirmed).await;
-    }
 
-    // Update tip pool after all values got updated.
-    tangle.update_tip_scores().await;
+        // Update tip pool after all values got updated.
+        tangle.update_tip_scores().await;
+    }
 }
 
 async fn confirm_past_cone<B: StorageBackend>(
