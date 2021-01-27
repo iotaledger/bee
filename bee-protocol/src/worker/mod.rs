@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod broadcaster;
+mod confirmer;
 mod heartbeater;
 mod message;
 mod metrics;
-mod milestone_cone_updater;
 mod mps;
 mod peer;
 mod propagator;
@@ -16,6 +16,7 @@ mod status;
 mod tip_pool_cleaner;
 
 pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
+pub(crate) use confirmer::{ConfirmationWorker, ConfirmationWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use message::{
     HasherWorker, HasherWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker,
@@ -23,7 +24,6 @@ pub(crate) use message::{
 };
 pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 pub use metrics::MetricsWorker;
-pub(crate) use milestone_cone_updater::{MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent};
 pub(crate) use mps::MpsWorker;
 pub use peer::PeerManagerResWorker;
 pub(crate) use peer::{PeerManagerWorker, PeerWorker};

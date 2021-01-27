@@ -111,7 +111,7 @@ impl MessageMetadata {
         self.confirmation_timestamp
     }
 
-    pub fn solidify(&mut self) {
+    pub fn set_solid(&mut self) {
         self.flags.set_solid(true);
         self.solidification_timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)

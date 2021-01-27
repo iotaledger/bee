@@ -24,14 +24,14 @@ use std::{
 };
 
 #[derive(Debug)]
-pub(crate) struct MilestoneConeUpdaterWorkerEvent(pub(crate) MilestoneIndex, pub(crate) Milestone);
+pub(crate) struct ConfirmationWorkerEvent(pub(crate) MilestoneIndex, pub(crate) Milestone);
 
-pub(crate) struct MilestoneConeUpdaterWorker {
-    pub(crate) tx: mpsc::UnboundedSender<MilestoneConeUpdaterWorkerEvent>,
+pub(crate) struct ConfirmationWorker {
+    pub(crate) tx: mpsc::UnboundedSender<ConfirmationWorkerEvent>,
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for MilestoneConeUpdaterWorker
+impl<N: Node> Worker<N> for ConfirmationWorker
 where
     N::Backend: StorageBackend,
 {
@@ -52,7 +52,7 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(MilestoneConeUpdaterWorkerEvent(index, milestone)) = receiver.next().await {
+            while let Some(ConfirmationWorkerEvent(index, milestone)) = receiver.next().await {
                 process(&tangle, index, milestone).await;
             }
 
@@ -62,7 +62,7 @@ where
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
-            while let Some(Some(MilestoneConeUpdaterWorkerEvent(index, milestone))) = receiver.next().now_or_never() {
+            while let Some(Some(ConfirmationWorkerEvent(index, milestone))) = receiver.next().now_or_never() {
                 process(&tangle, index, milestone).await;
                 count += 1;
             }
