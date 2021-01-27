@@ -43,11 +43,12 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Running.");
+            info!("xTRSI updater started.");
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(ConfirmationWorkerEvent(index, milestone)) = receiver.next().await {
+                println!("RECEIVED MILESTONE");
                 process(&tangle, milestone, index).await;
             }
 
@@ -64,7 +65,7 @@ where
 
             debug!("Drained {} milestones.", count);
 
-            info!("Stopped.");
+            info!("xTRSI updater stopped.");
         });
 
         Ok(Self { tx })
@@ -157,8 +158,18 @@ async fn update_otrsi_ytrsi<B: StorageBackend>(tangle: &MsTangle<B>, confirmed: 
             let (parent_otrsi, parent_ytrsi) = tangle
                 .get_metadata(&parent_id)
                 .await
-                .map(|md| (md.otrsi().unwrap(), md.ytrsi().unwrap()))
+                .map(|md| (md.otrsi(), md.ytrsi()))
                 .unwrap();
+
+            // TODO: investigate data race
+            // Skip vertices with unset otrsi/ytrsi
+            let (parent_otrsi, parent_ytrsi) = {
+                if parent_otrsi.is_none() || parent_ytrsi.is_none() {
+                    continue;
+                } else {
+                    (parent_otrsi.unwrap(), parent_ytrsi.unwrap())
+                }
+            };
 
             // We can update the OTRSI/YTRSI of those children that inherited the value from the current parent.
             for child in &children {
