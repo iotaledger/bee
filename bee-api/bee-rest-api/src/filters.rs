@@ -14,10 +14,12 @@ use bee_tangle::MsTangle;
 use tokio::sync::mpsc;
 use warp::{reject, Filter, Rejection};
 
-use std::collections::HashMap;
+use crate::filters::CustomRejection::Forbidden;
+use std::{collections::HashMap, net::SocketAddr};
 
 #[derive(Debug, Clone)]
 pub(crate) enum CustomRejection {
+    Forbidden,
     BadRequest(String),
     NotFound(String),
     ServiceUnavailable(String),
@@ -36,7 +38,7 @@ pub fn all<B: StorageBackend>(
     peer_manager: ResourceHandle<PeerManager>,
     network_controller: ResourceHandle<NetworkController>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    health(tangle.clone()).or(info(
+    health(rest_api_config.clone(), tangle.clone()).or(info(
         tangle.clone(),
         network_id.clone(),
         bech32_hrp,
@@ -70,9 +72,11 @@ pub fn all<B: StorageBackend>(
 }
 
 fn health<B: StorageBackend>(
+    rest_api_config: RestApiConfig,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
+        .and(has_permission("/health".to_string(), rest_api_config))
         .and(warp::path("health"))
         .and(warp::path::end())
         .and(with_tangle(tangle))
@@ -417,6 +421,22 @@ mod custom_path_param {
             }
         })
     }
+}
+
+pub fn has_permission(
+    route: String,
+    rest_api_config: RestApiConfig,
+) -> impl Filter<Extract = (), Error = Rejection> + Copy {
+    warp::addr::remote().and_then(|addr: Option<SocketAddr>| {
+        if let Some(v) = addr {
+            if rest_api_config.whitelisted_ip_addresses.contains(&v.ip())
+                || rest_api_config.public_routes.contains(&route)
+            {
+                Ok(())
+            }
+        }
+        Err(reject::custom(Forbidden))
+    })
 }
 
 fn with_network_id(
