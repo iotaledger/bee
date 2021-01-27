@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    metadata::MessageMetadata,
+    metadata::{IndexId, MessageMetadata},
     storage::StorageBackend,
     tangle::{Hooks, Tangle},
     urts::UrtsTipPool,
@@ -286,9 +286,9 @@ impl<B: StorageBackend> MsTangle<B> {
         }
     }
 
-    pub async fn otrsi(&self, hash: &MessageId) -> Option<MilestoneIndex> {
+    pub async fn otrsi(&self, hash: &MessageId) -> Option<IndexId> {
         match self.solid_entry_points.get(hash) {
-            Some(sep) => Some(*sep.value()),
+            Some(sep) => Some(IndexId(*sep.value(), *sep.key())),
             None => match self.get_metadata(hash).await {
                 Some(metadata) => metadata.otrsi(),
                 None => None,
@@ -296,9 +296,9 @@ impl<B: StorageBackend> MsTangle<B> {
         }
     }
 
-    pub async fn ytrsi(&self, hash: &MessageId) -> Option<MilestoneIndex> {
+    pub async fn ytrsi(&self, hash: &MessageId) -> Option<IndexId> {
         match self.solid_entry_points.get(hash) {
-            Some(sep) => Some(*sep.value()),
+            Some(sep) => Some(IndexId(*sep.value(), *sep.key())),
             None => match self.get_metadata(hash).await {
                 Some(metadata) => metadata.ytrsi(),
                 None => None,

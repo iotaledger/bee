@@ -4,9 +4,12 @@
 use crate::flags::Flags;
 
 use bee_common::packable::{OptionError, Packable, Read, Write};
-use bee_message::milestone::MilestoneIndex;
+use bee_message::{milestone::MilestoneIndex, MessageId};
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    cmp::Ordering,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 // TODO Should it really be copy ?
 #[derive(Copy, Clone, Default, Debug)]
@@ -18,8 +21,8 @@ pub struct MessageMetadata {
     confirmation_timestamp: u64,
     cone_index: Option<MilestoneIndex>, /* maybe merge milestone_index and cone_index; keep it like that for now to
                                          * avoid conflicts; */
-    otrsi: Option<MilestoneIndex>,
-    ytrsi: Option<MilestoneIndex>,
+    otrsi: Option<IndexId>,
+    ytrsi: Option<IndexId>,
     conflict: u8,
 }
 
@@ -32,8 +35,8 @@ impl MessageMetadata {
         solidification_timestamp: u64,
         confirmation_timestamp: u64,
         cone_index: Option<MilestoneIndex>,
-        otrsi: Option<MilestoneIndex>,
-        ytrsi: Option<MilestoneIndex>,
+        otrsi: Option<IndexId>,
+        ytrsi: Option<IndexId>,
         conflict: u8,
     ) -> Self {
         Self {
@@ -91,19 +94,19 @@ impl MessageMetadata {
         self.cone_index = Some(cone_index);
     }
 
-    pub fn otrsi(&self) -> Option<MilestoneIndex> {
+    pub fn otrsi(&self) -> Option<IndexId> {
         self.otrsi
     }
 
-    pub fn set_otrsi(&mut self, otrsi: MilestoneIndex) {
+    pub fn set_otrsi(&mut self, otrsi: IndexId) {
         self.otrsi = Some(otrsi);
     }
 
-    pub fn ytrsi(&self) -> Option<MilestoneIndex> {
+    pub fn ytrsi(&self) -> Option<IndexId> {
         self.ytrsi
     }
 
-    pub fn set_ytrsi(&mut self, ytrsi: MilestoneIndex) {
+    pub fn set_ytrsi(&mut self, ytrsi: IndexId) {
         self.ytrsi = Some(ytrsi);
     }
 
@@ -137,6 +140,7 @@ impl MessageMetadata {
 pub enum MessageMetadataError {
     Io(std::io::Error),
     OptionIndex(<Option<MilestoneIndex> as Packable>::Error),
+    OptionIndexId(<Option<IndexId> as Packable>::Error),
 }
 
 impl From<std::io::Error> for MessageMetadataError {
@@ -148,6 +152,12 @@ impl From<std::io::Error> for MessageMetadataError {
 impl From<OptionError<std::io::Error>> for MessageMetadataError {
     fn from(error: OptionError<std::io::Error>) -> Self {
         MessageMetadataError::OptionIndex(error)
+    }
+}
+
+impl From<OptionError<IndexIdError>> for MessageMetadataError {
+    fn from(error: OptionError<IndexIdError>) -> Self {
+        MessageMetadataError::OptionIndexId(error)
     }
 }
 
@@ -188,9 +198,73 @@ impl Packable for MessageMetadata {
             solidification_timestamp: u64::unpack(reader)?,
             confirmation_timestamp: u64::unpack(reader)?,
             cone_index: Option::<MilestoneIndex>::unpack(reader)?,
-            otrsi: Option::<MilestoneIndex>::unpack(reader)?,
-            ytrsi: Option::<MilestoneIndex>::unpack(reader)?,
+            otrsi: Option::<IndexId>::unpack(reader)?,
+            ytrsi: Option::<IndexId>::unpack(reader)?,
             conflict: u8::unpack(reader)?,
         })
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct IndexId(pub MilestoneIndex, pub MessageId);
+
+impl IndexId {
+    pub fn update(&mut self, index: MilestoneIndex) {
+        self.0 = index;
+    }
+}
+
+impl Ord for IndexId {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.cmp(&other.0)
+    }
+}
+impl PartialOrd for IndexId {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl Eq for IndexId {}
+impl PartialEq for IndexId {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl Packable for IndexId {
+    type Error = IndexIdError;
+
+    fn packed_len(&self) -> usize {
+        self.0.packed_len() + self.1.packed_len()
+    }
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        self.0.pack(writer)?;
+        self.1.pack(writer)?;
+
+        Ok(())
+    }
+
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(Self(MilestoneIndex::unpack(reader)?, MessageId::unpack(reader)?))
+    }
+}
+
+#[derive(Debug)]
+pub enum IndexIdError {
+    Io(std::io::Error),
+    MessageId(bee_message::Error),
+}
+
+impl From<std::io::Error> for IndexIdError {
+    fn from(error: std::io::Error) -> Self {
+        IndexIdError::Io(error)
+    }
+}
+
+impl From<bee_message::Error> for IndexIdError {
+    fn from(error: bee_message::Error) -> Self {
+        IndexIdError::MessageId(error)
     }
 }

@@ -9,7 +9,7 @@ use crate::{
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -63,7 +63,7 @@ async fn propagate<B: StorageBackend>(
 
             // Determine OTRSI/YTRSI of parent1
             let (parent1_otrsi, parent1_ytrsi) = match tangle.get_solid_entry_point_index(&parent1) {
-                Some(parent1_sepi) => (parent1_sepi, parent1_sepi),
+                Some(parent1_sepi) => (IndexId(parent1_sepi, parent1), IndexId(parent1_sepi, parent1)),
                 None => match tangle.get_metadata(&parent1).await {
                     Some(parent1_md) => (parent1_md.otrsi().unwrap(), parent1_md.ytrsi().unwrap()),
                     None => continue,
@@ -72,7 +72,7 @@ async fn propagate<B: StorageBackend>(
 
             // Determine OTRSI/YTRSI of parent2
             let (parent2_otrsi, parent2_ytrsi) = match tangle.get_solid_entry_point_index(&parent2) {
-                Some(parent2_sepi) => (parent2_sepi, parent2_sepi),
+                Some(parent2_sepi) => (IndexId(parent2_sepi, parent2), IndexId(parent2_sepi, parent2)),
                 None => match tangle.get_metadata(&parent2).await {
                     Some(parent2_md) => (parent2_md.otrsi().unwrap(), parent2_md.ytrsi().unwrap()),
                     None => continue,

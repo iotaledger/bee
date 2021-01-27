@@ -3,7 +3,12 @@
 
 use crate::rand::{integer::rand_integer, milestone::rand_milestone_index, option::rand_option};
 
-use bee_tangle::{flags::Flags, metadata::MessageMetadata};
+use bee_tangle::{
+    flags::Flags,
+    metadata::{IndexId, MessageMetadata},
+};
+
+use super::message::rand_message_id;
 
 pub fn rand_metadata() -> MessageMetadata {
     MessageMetadata::new(
@@ -13,8 +18,8 @@ pub fn rand_metadata() -> MessageMetadata {
         rand_integer(),
         rand_integer(),
         rand_option(rand_milestone_index()),
-        rand_option(rand_milestone_index()),
-        rand_option(rand_milestone_index()),
+        rand_option(IndexId(rand_milestone_index(), rand_message_id())),
+        rand_option(IndexId(rand_milestone_index(), rand_message_id())),
         rand_integer(),
     )
 }

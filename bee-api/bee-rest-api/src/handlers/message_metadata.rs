@@ -86,10 +86,11 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
 
                     let lsmi = *tangle.get_latest_solid_milestone_index();
                     // unwrap() of OTRSI/YTRSI is safe since message is solid
-                    if (lsmi - *metadata.otrsi().unwrap()) > below_max_depth {
+                    if (lsmi - *metadata.otrsi().unwrap().0) > below_max_depth {
                         should_promote = Some(false);
                         should_reattach = Some(true);
-                    } else if (lsmi - *metadata.ytrsi().unwrap()) > ytrsi_delta || (lsmi - otrsi_delta) > otrsi_delta {
+                    } else if (lsmi - *metadata.ytrsi().unwrap().0) > ytrsi_delta || (lsmi - otrsi_delta) > otrsi_delta
+                    {
                         should_promote = Some(true);
                         should_reattach = Some(false);
                     } else {
