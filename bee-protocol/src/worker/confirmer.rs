@@ -48,7 +48,6 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(ConfirmationWorkerEvent(index, milestone)) = receiver.next().await {
-                println!("RECEIVED MILESTONE");
                 process(&tangle, milestone, index).await;
             }
 
