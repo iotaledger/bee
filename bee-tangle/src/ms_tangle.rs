@@ -43,13 +43,15 @@ impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
 
     async fn insert_message(&self, msg_id: MessageId, msg: Message) -> Result<(), Self::Error> {
         trace!("Attempted to insert message {:?}", msg_id);
-        let _ = self.tx.send(HookOperation::Message(msg_id, msg));
+        // let _ = self.tx.send(HookOperation::Message(msg_id, msg));
+        let _ = self.storage.insert(&msg_id, &msg).await;
         Ok(())
     }
 
     async fn insert_metadata(&self, msg_id: MessageId, metadata: MessageMetadata) -> Result<(), Self::Error> {
         trace!("Attempted to insert metadata {:?}", msg_id);
-        let _ = self.tx.send(HookOperation::Metadata(msg_id, metadata));
+        // let _ = self.tx.send(HookOperation::Metadata(msg_id, metadata));
+        let _ = self.storage.insert(&msg_id, &metadata).await;
         Ok(())
     }
 
@@ -60,7 +62,8 @@ impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
 
     async fn insert_approver(&self, msg: MessageId, approver: MessageId) -> Result<(), Self::Error> {
         trace!("Attempted to insert approver for message {:?}", msg);
-        let _ = self.tx.send(HookOperation::Approver(msg, approver));
+        // let _ = self.tx.send(HookOperation::Approver(msg, approver));
+        let _ = self.storage.insert(&(msg, approver), &()).await;
         Ok(())
     }
 
