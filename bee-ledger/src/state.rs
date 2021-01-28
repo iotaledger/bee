@@ -15,7 +15,7 @@ use futures::StreamExt;
 
 pub const IOTA_SUPPLY: u64 = 2_779_530_283_277_761;
 
-pub async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B) -> Result<bool, Error> {
+async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B) -> Result<bool, Error> {
     let mut supply: u64 = 0;
     let mut stream = AsStream::<Unspent, ()>::stream(storage)
         .await
@@ -39,15 +39,14 @@ pub async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B) -> Resul
     Ok(supply == IOTA_SUPPLY)
 }
 
-pub async fn check_ledger_balance_state<B: StorageBackend>(storage: &B) -> Result<bool, Error> {
-    let mut supply: u64 = 0;
-    let mut stream = AsStream::<Address, Balance>::stream(storage)
+async fn check_ledger_balance_state<B: StorageBackend>(storage: &B) -> Result<bool, Error> {
+    let stream = AsStream::<Address, Balance>::stream(storage)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    while let Some((_, balance)) = stream.next().await {
-        supply += balance.amount();
-    }
+    let supply = stream
+        .fold(0, |acc, (_, balance)| async move { acc + balance.amount() })
+        .await;
 
     Ok(supply == IOTA_SUPPLY)
 }
