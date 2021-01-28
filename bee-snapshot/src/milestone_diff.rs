@@ -17,7 +17,7 @@ use std::collections::HashMap;
 pub struct MilestoneDiff {
     index: MilestoneIndex,
     created: HashMap<OutputId, CreatedOutput>,
-    consumed: HashMap<OutputId, ConsumedOutput>,
+    consumed: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
 }
 
 impl MilestoneDiff {
@@ -29,7 +29,7 @@ impl MilestoneDiff {
         &self.created
     }
 
-    pub fn consumed(&self) -> &HashMap<OutputId, ConsumedOutput> {
+    pub fn consumed(&self) -> &HashMap<OutputId, (CreatedOutput, ConsumedOutput)> {
         &self.consumed
     }
 }
@@ -53,9 +53,9 @@ impl Packable for MilestoneDiff {
         }
 
         (self.consumed.len() as u64).pack(writer)?;
-        for (_output_id, spent) in self.consumed.iter() {
+        for (_output_id, _spent) in self.consumed.iter() {
             // TODO finish
-            spent.pack(writer)?;
+            // spent.pack(writer)?;
         }
 
         Ok(())
@@ -78,11 +78,17 @@ impl Packable for MilestoneDiff {
         let mut consumed = HashMap::new();
 
         for _ in 0..consumed_count {
-            let _message_id = MessageId::unpack(reader)?;
+            let message_id = MessageId::unpack(reader)?;
             let output_id = OutputId::unpack(reader)?;
-            let _output = Output::unpack(reader)?;
-            let _target = TransactionId::unpack(reader)?;
-            consumed.insert(output_id, ConsumedOutput::new(*output_id.transaction_id(), index));
+            let output = Output::unpack(reader)?;
+            let target = TransactionId::unpack(reader)?;
+            consumed.insert(
+                output_id,
+                (
+                    CreatedOutput::new(message_id, output),
+                    ConsumedOutput::new(target, index),
+                ),
+            );
         }
 
         Ok(Self {

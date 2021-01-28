@@ -53,7 +53,7 @@ pub(crate) async fn request_message<B: StorageBackend>(
     index: MilestoneIndex,
 ) {
     if !tangle.contains(&message_id).await
-        && !tangle.is_solid_entry_point(&message_id)
+        && !tangle.is_solid_entry_point(&message_id).await
         && !requested_messages.contains(&message_id).await
     {
         if let Err(e) = message_requester.send(MessageRequesterWorkerEvent(message_id, index)) {
@@ -67,7 +67,7 @@ pub(crate) async fn request_message<B: StorageBackend>(
 pub async fn send_heartbeat(
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
-    to: PeerId,
+    to: &PeerId,
     latest_solid_milestone_index: MilestoneIndex,
     pruning_milestone_index: MilestoneIndex,
     latest_milestone_index: MilestoneIndex,
@@ -75,7 +75,7 @@ pub async fn send_heartbeat(
     Sender::<Heartbeat>::send(
         peer_manager,
         metrics,
-        &to,
+        to,
         Heartbeat::new(
             *latest_solid_milestone_index,
             *pruning_milestone_index,
@@ -100,7 +100,7 @@ pub async fn broadcast_heartbeat(
         send_heartbeat(
             peer_manager,
             metrics,
-            peer_id.clone(),
+            &peer_id,
             latest_solid_milestone_index,
             pruning_milestone_index,
             latest_milestone_index,

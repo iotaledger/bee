@@ -17,7 +17,6 @@ bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 async-trait = "0.1"
-bytemuck = "1.2"
 chrono = "0.4"
 flume = "0.10"
 futures = "0.3"

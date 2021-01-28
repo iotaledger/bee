@@ -158,25 +158,22 @@ async fn on_message<B: StorageBackend>(
         return Ok(());
     }
 
-    for (address, entry) in balance_diffs.iter() {
-        // TODO conditionnally fetch ?
-        let (mut dust_allowance, mut dust_output) = storage::fetch_balance(storage.deref(), &address)
-            .await?
-            .map(|b| (b.dust_allowance() as i64, b.dust_output() as i64))
-            .unwrap_or_default();
+    for (address, diff) in balance_diffs.iter() {
+        if diff.is_dust_mutating() {
+            let mut balance = storage::fetch_balance_or_default(storage.deref(), &address).await?;
 
-        if let Some(entry) = metadata.balance_diffs.get(&address) {
-            dust_allowance += entry.dust_allowance();
-            dust_output += entry.dust_output();
-        }
+            if let Some(diff) = metadata.balance_diffs.get(&address) {
+                balance = balance + diff;
+            }
 
-        if (dust_output as i64 + entry.dust_output()) as usize
-            > dust_outputs_max((dust_allowance as i64 + entry.dust_allowance()) as u64)
-        {
-            metadata
-                .excluded_conflicting_messages
-                .push((*message_id, ConflictReason::InvalidDustAllowance));
-            return Ok(());
+            balance = balance + diff;
+
+            if balance.dust_output() as usize > dust_outputs_max(balance.dust_allowance()) {
+                metadata
+                    .excluded_conflicting_messages
+                    .push((*message_id, ConflictReason::InvalidDustAllowance));
+                return Ok(());
+            }
         }
     }
 
@@ -221,7 +218,7 @@ where
         let meta = match tangle.get_metadata(message_id).await {
             Some(meta) => meta,
             None => {
-                if !tangle.is_solid_entry_point(message_id) {
+                if !tangle.is_solid_entry_point(message_id).await {
                     return Err(Error::MissingMessage(*message_id));
                 } else {
                     visited.insert(*message_id);
@@ -253,7 +250,7 @@ where
                 }
             }
             None => {
-                if !tangle.is_solid_entry_point(message_id) {
+                if !tangle.is_solid_entry_point(message_id).await {
                     return Err(Error::MissingMessage(*message_id));
                 } else {
                     visited.insert(*message_id);

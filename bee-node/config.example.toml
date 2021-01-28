@@ -49,7 +49,7 @@ ms_sync_count = 200
 
 [rest_api]
 binding_port          = 14265
-binding_ip_addr       = "127.0.0.1"
+binding_ip_addr       = "0.0.0.0"
 feature_proof_of_work = true
 
 [snapshot]

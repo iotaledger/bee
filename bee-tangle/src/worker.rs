@@ -45,7 +45,7 @@ where
         // TODO batch ?
 
         while let Ok((sep, index)) = full_sep_rx.recv_async().await {
-            tangle.add_solid_entry_point(*sep, index);
+            tangle.add_solid_entry_point(*sep, index).await;
             Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &sep, &index)
                 .await
                 .unwrap();
@@ -56,13 +56,13 @@ where
         //     .await
         //     .unwrap();
         while let Ok((sep, index)) = delta_sep_rx.recv_async().await {
-            tangle.add_solid_entry_point(*sep, index);
+            tangle.add_solid_entry_point(*sep, index).await;
             Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &sep, &index)
                 .await
                 .unwrap();
         }
 
-        tangle.add_solid_entry_point(MessageId::null(), MilestoneIndex(0));
+        tangle.add_solid_entry_point(MessageId::null(), MilestoneIndex(0)).await;
 
         // This needs to be done after the streams are emptied.
 
