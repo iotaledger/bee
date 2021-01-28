@@ -95,6 +95,7 @@ fn info<B: StorageBackend>(
         .and(warp::path("v1"))
         .and(warp::path("info"))
         .and(warp::path::end())
+        .and(warp::addr::remote())
         .and(with_tangle(tangle))
         .and(with_network_id(network_id))
         .and(with_bech32_hrp(bech32_hrp))

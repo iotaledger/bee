@@ -19,12 +19,19 @@ use warp::Reply;
 use std::convert::Infallible;
 
 pub(crate) async fn info<B: StorageBackend>(
+    remote_addr: SocketAddr,
     tangle: ResourceHandle<MsTangle<B>>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Infallible> {
+
+    println!("addr {}", remote_addr);
+    for e in &rest_api_config.public_routes {
+        println!("addr {}", e);
+    }
+
     Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
         name: String::from("Bee"),
         version: {
