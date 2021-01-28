@@ -76,7 +76,6 @@ fn health<B: StorageBackend>(
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
-        .and(has_permission("/health".to_string(), rest_api_config))
         .and(warp::path("health"))
         .and(warp::path::end())
         .and(with_tangle(tangle))

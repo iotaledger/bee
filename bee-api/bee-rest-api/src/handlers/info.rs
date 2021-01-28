@@ -28,7 +28,7 @@ pub(crate) async fn info<B: StorageBackend>(
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Infallible> {
 
-    println!("addr {}", remote_addr);
+    println!("addr {}", remote_addr.unwrap());
     for e in &rest_api_config.public_routes {
         println!("addr {}", e);
     }
