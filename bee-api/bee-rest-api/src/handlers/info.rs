@@ -20,7 +20,7 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 
 pub(crate) async fn info<B: StorageBackend>(
-    remote_addr: SocketAddr,
+    remote_addr: Option<SocketAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
