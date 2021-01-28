@@ -99,7 +99,7 @@ async fn update_messages_referenced_by_milestone<B: StorageBackend>(
             visited.insert(*message_id);
         }
 
-        if tangle.is_solid_entry_point(&message_id) {
+        if tangle.is_solid_entry_point(&message_id).await {
             continue;
         }
 
