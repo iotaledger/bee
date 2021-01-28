@@ -3,6 +3,7 @@
 
 mod broadcaster;
 mod heartbeater;
+mod index_updater;
 mod message;
 mod metrics;
 mod mps;
@@ -13,10 +14,10 @@ mod responder;
 mod solidifier;
 mod status;
 mod tip_pool_cleaner;
-mod updater;
 
 pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
+pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
 pub(crate) use message::{
     HasherWorker, HasherWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker,
     PayloadWorker, PayloadWorkerEvent, ProcessorWorker, TransactionPayloadWorker,
@@ -37,4 +38,3 @@ pub(crate) use responder::{
 pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
 pub(crate) use status::StatusWorker;
 pub(crate) use tip_pool_cleaner::TipPoolCleanerWorker;
-pub(crate) use updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
