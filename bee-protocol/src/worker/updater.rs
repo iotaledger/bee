@@ -82,7 +82,7 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, 
         // Update the past cone of this milestone by setting its milestone index, and return them.
         let roots = update_past_cone(tangle, parent1, parent2, index).await;
 
-        // Propagate new confirmation states
+        // Propagate new otrsi/ytrsi
         update_future_cone(tangle, roots).await;
 
         // Update tip pool after all values got updated.
@@ -97,12 +97,12 @@ async fn update_past_cone<B: StorageBackend>(
     index: MilestoneIndex,
 ) -> HashSet<MessageId> {
     let mut parents = vec![parent1, parent2];
-    let mut confirmed = HashSet::new();
+    let mut updated = HashSet::new();
 
     while let Some(parent_id) = parents.pop() {
         // Our stop conditions. Note that the order of calls is important (from cheap to more expensive) for performance
         // reasons.
-        if confirmed.contains(&parent_id)
+        if updated.contains(&parent_id)
             || tangle.is_solid_entry_point(&parent_id)
             || tangle
                 .get_metadata(&parent_id)
@@ -137,12 +137,12 @@ async fn update_past_cone<B: StorageBackend>(
         // point for new messages to the main tangle. It is ensured however, that this set *contains* the root messages
         // as well, and during the future walk we will skip already confirmed children, which shouldn't be a performance
         // issue.
-        confirmed.insert(parent_id);
+        updated.insert(parent_id);
     }
 
-    debug!("Confirmed {} messages.", confirmed.len());
+    debug!("Updated milestone index for {} messages.", updated.len());
 
-    confirmed
+    updated
 }
 
 // NOTE: so once a milestone comes in we have to walk the future cones of the root transactions and update their
@@ -174,7 +174,9 @@ async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, roots: Hash
             for child in &children {
                 if let Some(child_metadata) = tangle.get_metadata(&child).await {
                     // We can ignore children that are already confirmed
-                    if child_metadata.flags().is_confirmed() {
+                    // TODO: resolve ambiguity betwenn `is_confirmed()` and `milestone_index().is_some()`
+                    // if child_metadata.flags().is_confirmed() {
+                    if child_metadata.milestone_index().is_some() {
                         continue;
                     }
 
@@ -211,5 +213,5 @@ async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, roots: Hash
         }
     }
 
-    debug!("Finished updating OTRSI/YTRSI values");
+    debug!("Updated xTRSI values for {} messages.", processed.len());
 }
