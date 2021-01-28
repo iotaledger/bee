@@ -3,6 +3,7 @@
 
 use crate::{
     balance::Balance,
+    // dust::dust_outputs_max,
     error::Error,
     model::Unspent,
     storage::{self, StorageBackend},
@@ -40,13 +41,18 @@ async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B) -> Result<bo
 }
 
 async fn check_ledger_balance_state<B: StorageBackend>(storage: &B) -> Result<bool, Error> {
-    let stream = AsStream::<Address, Balance>::stream(storage)
+    let mut supply = 0;
+    let mut stream = AsStream::<Address, Balance>::stream(storage)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    let supply = stream
-        .fold(0, |acc, (_, balance)| async move { acc + balance.amount() })
-        .await;
+    while let Some((_, balance)) = stream.next().await {
+        // if balance.dust_output() as usize > dust_outputs_max(balance.dust_allowance()) {
+        //     // TODO reason why
+        //     return Ok(false);
+        // }
+        supply += balance.amount();
+    }
 
     Ok(supply == IOTA_SUPPLY)
 }
