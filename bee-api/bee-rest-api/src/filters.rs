@@ -14,8 +14,8 @@ use bee_tangle::MsTangle;
 use tokio::sync::mpsc;
 use warp::{reject, Filter, Rejection};
 
-use crate::filters::CustomRejection::Forbidden;
 use std::{collections::HashMap, net::SocketAddr};
+use std::net::IpAddr;
 
 #[derive(Debug, Clone)]
 pub(crate) enum CustomRejection {
@@ -38,7 +38,7 @@ pub fn all<B: StorageBackend>(
     peer_manager: ResourceHandle<PeerManager>,
     network_controller: ResourceHandle<NetworkController>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    health(rest_api_config.clone(), tangle.clone()).or(info(
+    health(tangle.clone()).or(info(
         tangle.clone(),
         network_id.clone(),
         bech32_hrp,
@@ -72,7 +72,6 @@ pub fn all<B: StorageBackend>(
 }
 
 fn health<B: StorageBackend>(
-    rest_api_config: RestApiConfig,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -95,6 +94,8 @@ fn info<B: StorageBackend>(
         .and(warp::path("info"))
         .and(warp::path::end())
         .and(warp::addr::remote())
+        .and(with_permitted_ip_addresses(rest_api_config.whitelisted_ip_addresses.clone()))
+        .and(with_public_routes(rest_api_config.public_routes.clone()))
         .and(with_tangle(tangle))
         .and(with_network_id(network_id))
         .and(with_bech32_hrp(bech32_hrp))
@@ -358,6 +359,23 @@ fn peer_remove(
         .and_then(handlers::remove_peer::remove_peer)
 }
 
+pub(crate) fn has_permission(route: String, public_routes: Vec<String>, remote_addr: Option<SocketAddr>, permitted_addr: Vec<IpAddr>) -> bool {
+    if public_routes.contains(&route) {
+        true
+    } else {
+        match remote_addr {
+            Some(remote) => {
+                if permitted_addr.contains(&remote.ip()) {
+                    true
+                } else {
+                    false
+                }
+            }
+            None => false
+        }
+    }
+}
+
 mod custom_path_param {
 
     use super::*;
@@ -421,6 +439,18 @@ mod custom_path_param {
             }
         })
     }
+}
+
+fn with_permitted_ip_addresses(
+    ip_addresses: Vec<IpAddr>,
+) -> impl Filter<Extract = (Vec<IpAddr>,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || ip_addresses.clone())
+}
+
+fn with_public_routes(
+    routes: Vec<String>,
+) -> impl Filter<Extract = (Vec<String>,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || routes.clone())
 }
 
 fn with_network_id(

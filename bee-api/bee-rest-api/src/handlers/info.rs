@@ -8,6 +8,8 @@ use crate::{
     storage::StorageBackend,
     Bech32Hrp, NetworkId,
 };
+use crate::filters::CustomRejection::Forbidden;
+use crate::filters::has_permission;
 
 use bee_protocol::config::ProtocolConfig;
 use bee_runtime::resource::ResourceHandle;
@@ -18,9 +20,12 @@ use warp::Reply;
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
+use std::net::IpAddr;
 
 pub(crate) async fn info<B: StorageBackend>(
     remote_addr: Option<SocketAddr>,
+    permitted_ip_addresses: Vec<IpAddr>,
+    public_routes: Vec<String>,
     tangle: ResourceHandle<MsTangle<B>>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
@@ -28,9 +33,8 @@ pub(crate) async fn info<B: StorageBackend>(
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Infallible> {
 
-    println!("addr {}", remote_addr.unwrap());
-    for e in &rest_api_config.public_routes {
-        println!("addr {}", e);
+    if !has_permission("/api/v1/health".to_string(), public_routes, remote_addr, permitted_ip_addresses) {
+        warp::reject::custom(Forbidden);
     }
 
     Ok(warp::reply::json(&SuccessBody::new(InfoResponse {

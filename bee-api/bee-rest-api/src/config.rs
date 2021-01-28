@@ -6,7 +6,7 @@ use serde::Deserialize;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 pub(crate) const DEFAULT_BINDING_PORT: u16 = 14265;
-pub(crate) const DEFAULT_BINDING_IP_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+pub(crate) const DEFAULT_BINDING_IP_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
 /// the routes that are available for public use
 pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 15] = [
     "/health",
