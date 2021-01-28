@@ -100,13 +100,17 @@ async fn update_past_cone<B: StorageBackend>(
     let mut updated = HashSet::new();
 
     while let Some(parent_id) = parents.pop() {
-        // Our stop conditions. Note that the order of calls is important (from cheap to more expensive) for performance
-        // reasons.
+        // Our skip conditions:
+        // 1) check if we already updated it during this run
+        // 2) check if it's an SEP
+        // 3) check if we already updated it during a previous run
+        // Note that the order of calls is important (from cheap to more expensive) for performance reasons.
         if updated.contains(&parent_id)
             || tangle.is_solid_entry_point(&parent_id).await
             || tangle
                 .get_metadata(&parent_id)
                 .await
+                // TODO: I don't think unwrapping here is safe. Investigate!
                 .unwrap()
                 .milestone_index()
                 .is_some()
@@ -118,6 +122,8 @@ async fn update_past_cone<B: StorageBackend>(
             .update_metadata(&parent_id, |metadata| {
                 // TODO: Throw one of those indexes away ;)
                 metadata.set_milestone_index(index);
+                // TODO: That was fine in a synchronous scenario, where this algo had the newest information,
+                // but probably isn't the case in the now asynchronous scenario. Investigate!
                 metadata.set_otrsi(IndexId(index, parent_id));
                 metadata.set_ytrsi(IndexId(index, parent_id));
             })
