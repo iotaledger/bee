@@ -78,23 +78,23 @@ async fn process_request(
         return;
     }
 
-    if process_request_unchecked(index, peer_id, peer_manager, metrics, counter).await && index.0 != 0 {
+    if index.0 != 0 {
         requested_milestones.insert(index).await;
     }
+
+    process_request_unchecked(index, peer_id, peer_manager, metrics, counter).await;
 }
 
-/// Return `true` if the milestone was requested
 async fn process_request_unchecked(
     index: MilestoneIndex,
     peer_id: Option<PeerId>,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
     counter: &mut usize,
-) -> bool {
+) {
     match peer_id {
         Some(peer_id) => {
             Sender::<MilestoneRequest>::send(peer_manager, metrics, &peer_id, MilestoneRequest::new(*index)).await;
-            true
         }
         None => {
             let guard = peer_manager.peers_keys.read().await;
@@ -114,12 +114,10 @@ async fn process_request_unchecked(
                             MilestoneRequest::new(*index),
                         )
                         .await;
-                        return true;
+                        return;
                     }
                 }
             }
-
-            false
         }
     }
 }
@@ -146,14 +144,15 @@ async fn retry_requests<B: StorageBackend>(
             .map_or(false, |d| d.as_millis() as u64 > RETRY_INTERVAL_MS)
         {
             to_retry.push(*index);
+            retry_counts += 1;
         };
     }
 
     for index in to_retry {
         if tangle.contains_milestone(index).await {
             requested_milestones.remove(&index).await;
-        } else if process_request_unchecked(index, None, peer_manager, metrics, counter).await {
-            retry_counts += 1;
+        } else {
+            process_request_unchecked(index, None, peer_manager, metrics, counter).await;
         }
     }
 
