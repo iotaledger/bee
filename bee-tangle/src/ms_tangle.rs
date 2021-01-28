@@ -20,10 +20,10 @@ use log::{info, trace};
 use tokio::sync::Mutex;
 
 use std::{
+    collections::HashMap,
     ops::Deref,
     sync::atomic::{AtomicU32, Ordering},
     time::{SystemTime, UNIX_EPOCH},
-    collections::HashMap,
 };
 
 pub struct StorageHooks<B> {
@@ -163,7 +163,15 @@ impl<B: StorageBackend> MsTangle<B> {
             info!("Failed to insert message {:?}", e);
             None
         }) {
-            Some(*self.milestones.lock().await.entry(idx).or_insert(milestone).message_id())
+            Some(
+                *self
+                    .milestones
+                    .lock()
+                    .await
+                    .entry(idx)
+                    .or_insert(milestone)
+                    .message_id(),
+            )
         } else {
             None
         }
