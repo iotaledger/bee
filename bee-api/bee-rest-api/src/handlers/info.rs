@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use warp::Reply;
 
 use std::convert::Infallible;
+use std::net::SocketAddr;
 
 pub(crate) async fn info<B: StorageBackend>(
     remote_addr: SocketAddr,

@@ -424,22 +424,6 @@ mod custom_path_param {
     }
 }
 
-pub fn has_permission(
-    route: String,
-    rest_api_config: RestApiConfig,
-) -> impl Filter<Extract = (), Error = Rejection> + Copy {
-    warp::addr::remote().and_then(|addr: Option<SocketAddr>| {
-        if let Some(v) = addr {
-            if rest_api_config.whitelisted_ip_addresses.contains(&v.ip())
-                || rest_api_config.public_routes.contains(&route)
-            {
-                Ok(())
-            }
-        }
-        Err(reject::custom(Forbidden))
-    })
-}
-
 fn with_network_id(
     network_id: NetworkId,
 ) -> impl Filter<Extract = (NetworkId,), Error = std::convert::Infallible> + Clone {
