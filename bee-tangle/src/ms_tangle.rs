@@ -16,11 +16,11 @@ use bee_message::{
 use bee_runtime::resource::ResourceHandle;
 
 use async_trait::async_trait;
-use dashmap::DashMap;
 use log::{info, trace};
 use tokio::sync::Mutex;
 
 use std::{
+    collections::HashMap,
     ops::Deref,
     sync::atomic::{AtomicU32, Ordering},
     time::{SystemTime, UNIX_EPOCH},
@@ -83,8 +83,8 @@ impl<B: StorageBackend> StorageHooks<B> {
 /// Milestone-based Tangle.
 pub struct MsTangle<B> {
     pub(crate) inner: Tangle<MessageMetadata, StorageHooks<B>>,
-    pub(crate) milestones: DashMap<MilestoneIndex, Milestone>,
-    pub(crate) solid_entry_points: DashMap<MessageId, MilestoneIndex>,
+    pub(crate) milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
+    pub(crate) solid_entry_points: Mutex<HashMap<MessageId, MilestoneIndex>>,
     latest_milestone_index: AtomicU32,
     latest_solid_milestone_index: AtomicU32,
     snapshot_index: AtomicU32,
@@ -153,19 +153,27 @@ impl<B: StorageBackend> MsTangle<B> {
             .await
             .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
         // TODO can there be a race condition between 2 ops ?
-        self.milestones.insert(idx, milestone);
+        self.milestones.lock().await.insert(idx, milestone);
     }
 
-    pub fn remove_milestone(&self, index: MilestoneIndex) {
-        self.milestones.remove(&index);
+    pub async fn remove_milestone(&self, index: MilestoneIndex) {
+        self.milestones.lock().await.remove(&index);
     }
 
-    async fn pull_milestone(&self, idx: MilestoneIndex) -> Option<impl Deref<Target = Milestone> + '_> {
+    async fn pull_milestone(&self, idx: MilestoneIndex) -> Option<MessageId> {
         if let Some(milestone) = self.inner.hooks().get_milestone(&idx).await.unwrap_or_else(|e| {
             info!("Failed to insert message {:?}", e);
             None
         }) {
-            Some(self.milestones.entry(idx).or_insert(milestone))
+            Some(
+                *self
+                    .milestones
+                    .lock()
+                    .await
+                    .entry(idx)
+                    .or_insert(milestone)
+                    .message_id(),
+            )
         } else {
             None
         }
@@ -181,14 +189,14 @@ impl<B: StorageBackend> MsTangle<B> {
 
     // TODO: use combinator instead of match
     pub async fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
-        match self.milestones.get(&index) {
+        match self.milestones.lock().await.get(&index) {
             Some(m) => Some(*m.message_id()),
-            None => Some(*self.pull_milestone(index).await?.message_id()),
+            None => Some(self.pull_milestone(index).await?),
         }
     }
 
     pub async fn contains_milestone(&self, idx: MilestoneIndex) -> bool {
-        self.milestones.contains_key(&idx) || self.pull_milestone(idx).await.is_some()
+        self.milestones.lock().await.contains_key(&idx) || self.pull_milestone(idx).await.is_some()
     }
 
     pub fn get_latest_milestone_index(&self) -> MilestoneIndex {
@@ -241,31 +249,31 @@ impl<B: StorageBackend> MsTangle<B> {
         *self.get_latest_solid_milestone_index() >= self.get_latest_milestone_index().saturating_sub(threshold)
     }
 
-    pub fn get_solid_entry_point_index(&self, hash: &MessageId) -> Option<MilestoneIndex> {
-        self.solid_entry_points.get(hash).map(|i| *i)
+    pub async fn get_solid_entry_point_index(&self, hash: &MessageId) -> Option<MilestoneIndex> {
+        self.solid_entry_points.lock().await.get(hash).map(|i| *i)
     }
 
-    pub fn add_solid_entry_point(&self, hash: MessageId, index: MilestoneIndex) {
-        self.solid_entry_points.insert(hash, index);
+    pub async fn add_solid_entry_point(&self, hash: MessageId, index: MilestoneIndex) {
+        self.solid_entry_points.lock().await.insert(hash, index);
     }
 
     /// Removes `hash` from the set of solid entry points.
-    pub fn remove_solid_entry_point(&self, hash: &MessageId) {
-        self.solid_entry_points.remove(hash);
+    pub async fn remove_solid_entry_point(&self, hash: &MessageId) {
+        self.solid_entry_points.lock().await.remove(hash);
     }
 
-    pub fn clear_solid_entry_points(&self) {
-        self.solid_entry_points.clear();
+    pub async fn clear_solid_entry_points(&self) {
+        self.solid_entry_points.lock().await.clear();
     }
 
     /// Returns whether the message associated with `hash` is a solid entry point.
-    pub fn is_solid_entry_point(&self, hash: &MessageId) -> bool {
-        self.solid_entry_points.contains_key(hash)
+    pub async fn is_solid_entry_point(&self, hash: &MessageId) -> bool {
+        self.solid_entry_points.lock().await.contains_key(hash)
     }
 
     /// Returns whether the message associated with `hash` is deemed `solid`.
     pub async fn is_solid_message(&self, hash: &MessageId) -> bool {
-        if self.is_solid_entry_point(hash) {
+        if self.is_solid_entry_point(hash).await {
             true
         } else {
             self.inner
@@ -277,7 +285,7 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 
     pub async fn is_solid_message_maybe(&self, hash: &MessageId) -> bool {
-        if self.is_solid_entry_point(hash) {
+        if self.is_solid_entry_point(hash).await {
             true
         } else {
             self.inner
@@ -289,8 +297,8 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 
     pub async fn otrsi(&self, hash: &MessageId) -> Option<IndexId> {
-        match self.solid_entry_points.get(hash) {
-            Some(sep) => Some(IndexId(*sep.value(), *sep.key())),
+        match self.solid_entry_points.lock().await.get(hash) {
+            Some(sep) => Some(IndexId(*sep, *hash)),
             None => match self.get_metadata(hash).await {
                 Some(metadata) => metadata.otrsi(),
                 None => None,
@@ -299,8 +307,8 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 
     pub async fn ytrsi(&self, hash: &MessageId) -> Option<IndexId> {
-        match self.solid_entry_points.get(hash) {
-            Some(sep) => Some(IndexId(*sep.value(), *sep.key())),
+        match self.solid_entry_points.lock().await.get(hash) {
+            Some(sep) => Some(IndexId(*sep, *hash)),
             None => match self.get_metadata(hash).await {
                 Some(metadata) => metadata.ytrsi(),
                 None => None,

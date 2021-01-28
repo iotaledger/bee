@@ -103,7 +103,7 @@ async fn update_past_cone<B: StorageBackend>(
         // Our stop conditions. Note that the order of calls is important (from cheap to more expensive) for performance
         // reasons.
         if updated.contains(&parent_id)
-            || tangle.is_solid_entry_point(&parent_id)
+            || tangle.is_solid_entry_point(&parent_id).await
             || tangle
                 .get_metadata(&parent_id)
                 .await

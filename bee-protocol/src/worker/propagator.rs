@@ -62,7 +62,7 @@ async fn propagate<B: StorageBackend>(
             // parent in question turns out to be a SEP.
 
             // Determine OTRSI/YTRSI of parent1
-            let (parent1_otrsi, parent1_ytrsi) = match tangle.get_solid_entry_point_index(&parent1) {
+            let (parent1_otrsi, parent1_ytrsi) = match tangle.get_solid_entry_point_index(&parent1).await {
                 Some(parent1_sepi) => (IndexId(parent1_sepi, parent1), IndexId(parent1_sepi, parent1)),
                 None => match tangle.get_metadata(&parent1).await {
                     Some(parent1_md) => (parent1_md.otrsi().unwrap(), parent1_md.ytrsi().unwrap()),
@@ -71,7 +71,7 @@ async fn propagate<B: StorageBackend>(
             };
 
             // Determine OTRSI/YTRSI of parent2
-            let (parent2_otrsi, parent2_ytrsi) = match tangle.get_solid_entry_point_index(&parent2) {
+            let (parent2_otrsi, parent2_ytrsi) = match tangle.get_solid_entry_point_index(&parent2).await {
                 Some(parent2_sepi) => (IndexId(parent2_sepi, parent2), IndexId(parent2_sepi, parent2)),
                 None => match tangle.get_metadata(&parent2).await {
                     Some(parent2_md) => (parent2_md.otrsi().unwrap(), parent2_md.ytrsi().unwrap()),

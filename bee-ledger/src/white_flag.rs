@@ -218,7 +218,7 @@ where
         let meta = match tangle.get_metadata(message_id).await {
             Some(meta) => meta,
             None => {
-                if !tangle.is_solid_entry_point(message_id) {
+                if !tangle.is_solid_entry_point(message_id).await {
                     return Err(Error::MissingMessage(*message_id));
                 } else {
                     visited.insert(*message_id);
@@ -250,7 +250,7 @@ where
                 }
             }
             None => {
-                if !tangle.is_solid_entry_point(message_id) {
+                if !tangle.is_solid_entry_point(message_id).await {
                     return Err(Error::MissingMessage(*message_id));
                 } else {
                     visited.insert(*message_id);
