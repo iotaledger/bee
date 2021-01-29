@@ -89,8 +89,7 @@ impl PeerWorker {
             &*tangle,
             &self.milestone_requester,
             &*requested_milestones,
-            // TODO should be copy ?
-            Some(self.peer.id().clone()),
+            Some(*self.peer.id()),
         )
         .await;
 
@@ -123,7 +122,7 @@ impl PeerWorker {
                 let packet = tlv_from_bytes::<MilestoneRequest>(&header, bytes)?;
 
                 let _ = self.milestone_responder.send(MilestoneResponderWorkerEvent {
-                    peer_id: self.peer.id().clone(),
+                    peer_id: *self.peer.id(),
                     request: packet,
                 });
 
@@ -136,7 +135,7 @@ impl PeerWorker {
                 let packet = tlv_from_bytes::<Message>(&header, bytes)?;
 
                 let _ = self.hasher.send(HasherWorkerEvent {
-                    from: Some(self.peer.id().clone()),
+                    from: Some(*self.peer.id()),
                     message_packet: packet,
                     notifier: None,
                 });
@@ -150,7 +149,7 @@ impl PeerWorker {
                 let packet = tlv_from_bytes::<MessageRequest>(&header, bytes)?;
 
                 let _ = self.message_responder.send(MessageResponderWorkerEvent {
-                    peer_id: self.peer.id().clone(),
+                    peer_id: *self.peer.id(),
                     request: packet,
                 });
 
