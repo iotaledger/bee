@@ -19,6 +19,7 @@ mod vertex;
 
 pub use ms_tangle::MsTangle;
 pub use tangle::{Hooks, Tangle};
+pub use urts::BELOW_MAX_DEPTH;
 pub use worker::TangleWorker;
 
 use bee_message::Message;
