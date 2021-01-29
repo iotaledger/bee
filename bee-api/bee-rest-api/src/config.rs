@@ -145,7 +145,7 @@ impl RestApiConfig {
     pub fn public_routes(&self) -> &Vec<String> {
         &self.public_routes
     }
-    /// Returns all the routes that are available for public use.
+    /// Returns the IP addresses that are allowed to access all the routes.
     pub fn allowed_ips(&self) -> &Vec<IpAddr> {
         &self.allowed_ips
     }
