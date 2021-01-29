@@ -14,7 +14,9 @@ use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use serde::{Deserialize, Serialize};
-use warp::{Rejection, Reply};
+use warp::Reply;
+
+use std::convert::Infallible;
 
 pub(crate) async fn info<B: StorageBackend>(
     tangle: ResourceHandle<MsTangle<B>>,
@@ -22,7 +24,7 @@ pub(crate) async fn info<B: StorageBackend>(
     bech32_hrp: Bech32Hrp,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
-) -> Result<impl Reply, Rejection> {
+) -> Result<impl Reply, Infallible> {
     Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
         name: String::from("Bee"),
         version: {

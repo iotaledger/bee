@@ -49,7 +49,7 @@ pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 16] = [
     ROUTE_SUBMIT_MESSAGE_RAW,
     ROUTE_TIPS,
 ];
-pub(crate) const DEFAULT_WHITELISTED_IP_ADDRESSES: [IpAddr; 1] = [IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))];
+pub(crate) const DEFAULT_ALLOWED_IPS: [IpAddr; 1] = [IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))];
 pub(crate) const DEFAULT_FEATURE_PROOF_OF_WORK: bool = true;
 
 /// REST API configuration builder.
@@ -58,7 +58,7 @@ pub struct RestApiConfigBuilder {
     binding_port: Option<u16>,
     binding_ip_addr: Option<IpAddr>,
     public_routes: Option<Vec<String>>,
-    whitelisted_ip_addresses: Option<Vec<IpAddr>>,
+    allowed_ips: Option<Vec<IpAddr>>,
     feature_proof_of_work: Option<bool>,
 }
 
@@ -91,9 +91,9 @@ impl RestApiConfigBuilder {
         self
     }
 
-    /// Sets the IP addresses that are permitted to have access to all routes.
-    pub fn whitelisted_ip_addresses(mut self, ip_addresses: Vec<IpAddr>) -> Self {
-        self.whitelisted_ip_addresses.replace(ip_addresses);
+    /// Sets the IP addresses that are allowed to access all the routes.
+    pub fn allowed_ips(mut self, allowed_ips: Vec<IpAddr>) -> Self {
+        self.allowed_ips.replace(allowed_ips);
         self
     }
 
@@ -112,14 +112,12 @@ impl RestApiConfigBuilder {
         let public_routes = self
             .public_routes
             .unwrap_or(DEFAULT_PUBLIC_ROUTES.iter().map(|s| s.to_string()).collect());
-        let whitelisted_ip_addresses = self
-            .whitelisted_ip_addresses
-            .unwrap_or(DEFAULT_WHITELISTED_IP_ADDRESSES.to_vec());
+        let allowed_ips = self.allowed_ips.unwrap_or(DEFAULT_ALLOWED_IPS.to_vec());
         let feature_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
         RestApiConfig {
             binding_socket_addr,
             public_routes,
-            whitelisted_ip_addresses,
+            allowed_ips,
             feature_proof_of_work,
         }
     }
@@ -130,7 +128,7 @@ impl RestApiConfigBuilder {
 pub struct RestApiConfig {
     pub(crate) binding_socket_addr: SocketAddr,
     pub(crate) public_routes: Vec<String>,
-    pub(crate) whitelisted_ip_addresses: Vec<IpAddr>,
+    pub(crate) allowed_ips: Vec<IpAddr>,
     pub(crate) feature_proof_of_work: bool,
 }
 
@@ -148,8 +146,8 @@ impl RestApiConfig {
         &self.public_routes
     }
     /// Returns all the routes that are available for public use.
-    pub fn whitelisted_ip_addresses(&self) -> &Vec<IpAddr> {
-        &self.whitelisted_ip_addresses
+    pub fn allowed_ips(&self) -> &Vec<IpAddr> {
+        &self.allowed_ips
     }
     /// Returns if feature "Proof-of-Work" is enabled or not
     pub fn feature_proof_of_work(&self) -> bool {

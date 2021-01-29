@@ -40,7 +40,7 @@ impl reject::Reject for CustomRejection {}
 
 pub fn all<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
     storage: ResourceHandle<B>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
@@ -51,23 +51,19 @@ pub fn all<B: StorageBackend>(
     peer_manager: ResourceHandle<PeerManager>,
     network_controller: ResourceHandle<NetworkController>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    health(public_routes.clone(), whitelisted_ip_addresses.clone(), tangle.clone()).or(info(
+    health(public_routes.clone(), allowed_ips.clone(), tangle.clone()).or(info(
         public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
+        allowed_ips.clone(),
         tangle.clone(),
         network_id.clone(),
         bech32_hrp,
         rest_api_config.clone(),
         protocol_config.clone(),
     )
-    .or(tips(
-        public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
-        tangle.clone(),
-    ))
+    .or(tips(public_routes.clone(), allowed_ips.clone(), tangle.clone()))
     .or(submit_message(
         public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
+        allowed_ips.clone(),
         tangle.clone(),
         message_submitter.clone(),
         network_id,
@@ -76,108 +72,76 @@ pub fn all<B: StorageBackend>(
     ))
     .or(submit_message_raw(
         public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
+        allowed_ips.clone(),
         tangle.clone(),
         message_submitter,
     ))
     .or(message_indexation(
         public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
+        allowed_ips.clone(),
         storage.clone(),
     ))
-    .or(message(
-        public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
-        tangle.clone(),
-    ))
+    .or(message(public_routes.clone(), allowed_ips.clone(), tangle.clone()))
     .or(message_metadata(
         public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
+        allowed_ips.clone(),
         tangle.clone(),
     ))
-    .or(message_raw(
-        public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
-        tangle.clone(),
-    ))
+    .or(message_raw(public_routes.clone(), allowed_ips.clone(), tangle.clone()))
     .or(message_children(
         public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
+        allowed_ips.clone(),
         tangle.clone(),
     ))
-    .or(output(
-        public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
-        storage.clone(),
-    ))
+    .or(output(public_routes.clone(), allowed_ips.clone(), storage.clone()))
     .or(balance_bech32(
         public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
+        allowed_ips.clone(),
         storage.clone(),
     ))
     .or(balance_ed25519(
         public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
+        allowed_ips.clone(),
         storage.clone(),
     ))
     .or(outputs_bech32(
         public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
+        allowed_ips.clone(),
         storage.clone(),
     ))
-    .or(outputs_ed25519(
-        public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
-        storage,
-    ))
-    .or(milestone(
-        public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
-        tangle,
-    ))
-    .or(peers(
-        public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
-        peer_manager.clone(),
-    ))
+    .or(outputs_ed25519(public_routes.clone(), allowed_ips.clone(), storage))
+    .or(milestone(public_routes.clone(), allowed_ips.clone(), tangle))
+    .or(peers(public_routes.clone(), allowed_ips.clone(), peer_manager.clone()))
     .or(peer_add(
         public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
+        allowed_ips.clone(),
         peer_manager.clone(),
         network_controller.clone(),
     ))
     .or(peer_remove(
         public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
+        allowed_ips.clone(),
         network_controller,
     ))
-    .or(peer(
-        public_routes.clone(),
-        whitelisted_ip_addresses.clone(),
-        peer_manager,
-    )))
+    .or(peer(public_routes.clone(), allowed_ips.clone(), peer_manager)))
 }
 
 fn health<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
         .and(warp::path("health"))
         .and(warp::path::end())
-        .and(has_permission(
-            ROUTE_HEALTH.to_string(),
-            public_routes,
-            whitelisted_ip_addresses,
-        ))
+        .and(has_permission(ROUTE_HEALTH.to_string(), public_routes, allowed_ips))
         .and(with_tangle(tangle))
         .and_then(handlers::health::health)
 }
 
 fn info<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
@@ -189,11 +153,7 @@ fn info<B: StorageBackend>(
         .and(warp::path("v1"))
         .and(warp::path("info"))
         .and(warp::path::end())
-        .and(has_permission(
-            ROUTE_INFO.to_string(),
-            public_routes,
-            whitelisted_ip_addresses,
-        ))
+        .and(has_permission(ROUTE_INFO.to_string(), public_routes, allowed_ips))
         .and(with_tangle(tangle))
         .and(with_network_id(network_id))
         .and(with_bech32_hrp(bech32_hrp))
@@ -204,7 +164,7 @@ fn info<B: StorageBackend>(
 
 fn tips<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -212,18 +172,14 @@ fn tips<B: StorageBackend>(
         .and(warp::path("v1"))
         .and(warp::path("tips"))
         .and(warp::path::end())
-        .and(has_permission(
-            ROUTE_TIPS.to_string(),
-            public_routes,
-            whitelisted_ip_addresses,
-        ))
+        .and(has_permission(ROUTE_TIPS.to_string(), public_routes, allowed_ips))
         .and(with_tangle(tangle))
         .and_then(handlers::tips::tips)
 }
 
 fn submit_message<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
     network_id: NetworkId,
@@ -238,7 +194,7 @@ fn submit_message<B: StorageBackend>(
         .and(has_permission(
             ROUTE_SUBMIT_MESSAGE.to_string(),
             public_routes,
-            whitelisted_ip_addresses,
+            allowed_ips,
         ))
         .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
@@ -250,7 +206,7 @@ fn submit_message<B: StorageBackend>(
 
 fn submit_message_raw<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -263,7 +219,7 @@ fn submit_message_raw<B: StorageBackend>(
         .and(has_permission(
             ROUTE_SUBMIT_MESSAGE_RAW.to_string(),
             public_routes,
-            whitelisted_ip_addresses,
+            allowed_ips,
         ))
         .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
@@ -272,7 +228,7 @@ fn submit_message_raw<B: StorageBackend>(
 
 fn message_indexation<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -283,7 +239,7 @@ fn message_indexation<B: StorageBackend>(
         .and(has_permission(
             ROUTE_MESSAGES_FIND.to_string(),
             public_routes,
-            whitelisted_ip_addresses,
+            allowed_ips,
         ))
         .and(warp::query().and_then(|query: HashMap<String, String>| async move {
             match query.get("index") {
@@ -297,7 +253,7 @@ fn message_indexation<B: StorageBackend>(
 
 fn message<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -306,18 +262,14 @@ fn message<B: StorageBackend>(
         .and(warp::path("messages"))
         .and(custom_path_param::message_id())
         .and(warp::path::end())
-        .and(has_permission(
-            ROUTE_MESSAGE.to_string(),
-            public_routes,
-            whitelisted_ip_addresses,
-        ))
+        .and(has_permission(ROUTE_MESSAGE.to_string(), public_routes, allowed_ips))
         .and(with_tangle(tangle))
         .and_then(handlers::message::message)
 }
 
 fn message_metadata<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -330,7 +282,7 @@ fn message_metadata<B: StorageBackend>(
         .and(has_permission(
             ROUTE_MESSAGE_METADATA.to_string(),
             public_routes,
-            whitelisted_ip_addresses,
+            allowed_ips,
         ))
         .and(with_tangle(tangle))
         .and_then(handlers::message_metadata::message_metadata)
@@ -338,7 +290,7 @@ fn message_metadata<B: StorageBackend>(
 
 fn message_raw<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -351,7 +303,7 @@ fn message_raw<B: StorageBackend>(
         .and(has_permission(
             ROUTE_MESSAGE_RAW.to_string(),
             public_routes,
-            whitelisted_ip_addresses,
+            allowed_ips,
         ))
         .and(with_tangle(tangle))
         .and_then(handlers::message_raw::message_raw)
@@ -359,7 +311,7 @@ fn message_raw<B: StorageBackend>(
 
 fn message_children<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -372,7 +324,7 @@ fn message_children<B: StorageBackend>(
         .and(has_permission(
             ROUTE_MESSAGE_CHILDREN.to_string(),
             public_routes,
-            whitelisted_ip_addresses,
+            allowed_ips,
         ))
         .and(with_tangle(tangle))
         .and_then(handlers::message_children::message_children)
@@ -380,7 +332,7 @@ fn message_children<B: StorageBackend>(
 
 fn output<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -389,18 +341,14 @@ fn output<B: StorageBackend>(
         .and(warp::path("outputs"))
         .and(custom_path_param::output_id())
         .and(warp::path::end())
-        .and(has_permission(
-            ROUTE_OUTPUT.to_string(),
-            public_routes,
-            whitelisted_ip_addresses,
-        ))
+        .and(has_permission(ROUTE_OUTPUT.to_string(), public_routes, allowed_ips))
         .and(with_storage(storage))
         .and_then(handlers::output::output)
 }
 
 fn balance_bech32<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -412,7 +360,7 @@ fn balance_bech32<B: StorageBackend>(
         .and(has_permission(
             ROUTE_BALANCE_BECH32.to_string(),
             public_routes,
-            whitelisted_ip_addresses,
+            allowed_ips,
         ))
         .and(with_storage(storage))
         .and_then(handlers::balance_bech32::balance_bech32)
@@ -420,7 +368,7 @@ fn balance_bech32<B: StorageBackend>(
 
 fn balance_ed25519<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -433,7 +381,7 @@ fn balance_ed25519<B: StorageBackend>(
         .and(has_permission(
             ROUTE_BALANCE_ED25519.to_string(),
             public_routes,
-            whitelisted_ip_addresses,
+            allowed_ips,
         ))
         .and(with_storage(storage))
         .and_then(handlers::balance_ed25519::balance_ed25519)
@@ -441,7 +389,7 @@ fn balance_ed25519<B: StorageBackend>(
 
 fn outputs_bech32<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -454,7 +402,7 @@ fn outputs_bech32<B: StorageBackend>(
         .and(has_permission(
             ROUTE_OUTPUTS_BECH32.to_string(),
             public_routes,
-            whitelisted_ip_addresses,
+            allowed_ips,
         ))
         .and(with_storage(storage))
         .and_then(handlers::outputs_bech32::outputs_bech32)
@@ -462,7 +410,7 @@ fn outputs_bech32<B: StorageBackend>(
 
 fn outputs_ed25519<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -476,7 +424,7 @@ fn outputs_ed25519<B: StorageBackend>(
         .and(has_permission(
             ROUTE_OUTPUTS_ED25519.to_string(),
             public_routes,
-            whitelisted_ip_addresses,
+            allowed_ips,
         ))
         .and(with_storage(storage))
         .and_then(handlers::outputs_ed25519::outputs_ed25519)
@@ -484,7 +432,7 @@ fn outputs_ed25519<B: StorageBackend>(
 
 fn milestone<B: StorageBackend>(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -493,18 +441,14 @@ fn milestone<B: StorageBackend>(
         .and(warp::path("milestones"))
         .and(custom_path_param::milestone_index())
         .and(warp::path::end())
-        .and(has_permission(
-            ROUTE_MILESTONE.to_string(),
-            public_routes,
-            whitelisted_ip_addresses,
-        ))
+        .and(has_permission(ROUTE_MILESTONE.to_string(), public_routes, allowed_ips))
         .and(with_tangle(tangle))
         .and_then(handlers::milestone::milestone)
 }
 
 fn peers(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     peer_manager: ResourceHandle<PeerManager>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -512,18 +456,14 @@ fn peers(
         .and(warp::path("v1"))
         .and(warp::path("peers"))
         .and(warp::path::end())
-        .and(has_permission(
-            ROUTE_PEERS.to_string(),
-            public_routes,
-            whitelisted_ip_addresses,
-        ))
+        .and(has_permission(ROUTE_PEERS.to_string(), public_routes, allowed_ips))
         .and(with_peer_manager(peer_manager))
         .and_then(handlers::peers::peers)
 }
 
 fn peer(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     peer_manager: ResourceHandle<PeerManager>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::get()
@@ -532,18 +472,14 @@ fn peer(
         .and(warp::path("peer"))
         .and(custom_path_param::peer_id())
         .and(warp::path::end())
-        .and(has_permission(
-            ROUTE_PEER.to_string(),
-            public_routes,
-            whitelisted_ip_addresses,
-        ))
+        .and(has_permission(ROUTE_PEER.to_string(), public_routes, allowed_ips))
         .and(with_peer_manager(peer_manager))
         .and_then(handlers::peer::peer)
 }
 
 fn peer_add(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     peer_manager: ResourceHandle<PeerManager>,
     network_controller: ResourceHandle<NetworkController>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -553,11 +489,7 @@ fn peer_add(
         .and(warp::path("peer"))
         .and(warp::path::end())
         .and(warp::body::json())
-        .and(has_permission(
-            ROUTE_ADD_PEER.to_string(),
-            public_routes,
-            whitelisted_ip_addresses,
-        ))
+        .and(has_permission(ROUTE_ADD_PEER.to_string(), public_routes, allowed_ips))
         .and(with_peer_manager(peer_manager))
         .and(with_network_controller(network_controller))
         .and_then(handlers::add_peer::add_peer)
@@ -565,7 +497,7 @@ fn peer_add(
 
 fn peer_remove(
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
     network_controller: ResourceHandle<NetworkController>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::delete()
@@ -577,7 +509,7 @@ fn peer_remove(
         .and(has_permission(
             ROUTE_REMOVE_PEER.to_string(),
             public_routes,
-            whitelisted_ip_addresses,
+            allowed_ips,
         ))
         .and(with_network_controller(network_controller))
         .and_then(handlers::remove_peer::remove_peer)
@@ -586,16 +518,16 @@ fn peer_remove(
 pub fn has_permission(
     route: String,
     public_routes: Vec<String>,
-    whitelisted_ip_addresses: Vec<IpAddr>,
+    allowed_ips: Vec<IpAddr>,
 ) -> impl Filter<Extract = (), Error = Rejection> + Clone {
     warp::addr::remote()
         .and_then(move |addr: Option<SocketAddr>| {
             let route = route.clone();
             let public_routes = public_routes.clone();
-            let whitelisted_ip_addresses = whitelisted_ip_addresses.clone();
+            let allowed_ips = allowed_ips.clone();
             async move {
                 if let Some(v) = addr {
-                    if whitelisted_ip_addresses.contains(&v.ip()) || public_routes.contains(&route) {
+                    if allowed_ips.contains(&v.ip()) || public_routes.contains(&route) {
                         return Ok(());
                     }
                 }
