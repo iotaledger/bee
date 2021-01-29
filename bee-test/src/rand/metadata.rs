@@ -1,14 +1,14 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{integer::rand_integer, milestone::rand_milestone_index, option::rand_option};
+use crate::rand::{
+    integer::rand_integer, message::rand_message_id, milestone::rand_milestone_index, option::rand_option,
+};
 
 use bee_tangle::{
     flags::Flags,
     metadata::{IndexId, MessageMetadata},
 };
-
-use super::message::rand_message_id;
 
 pub fn rand_metadata() -> MessageMetadata {
     MessageMetadata::new(
