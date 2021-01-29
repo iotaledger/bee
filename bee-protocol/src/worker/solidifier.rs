@@ -70,7 +70,7 @@ async fn heavy_solidification<B: StorageBackend>(
 async fn solidify<B: StorageBackend>(
     tangle: &MsTangle<B>,
     ledger_worker: &mpsc::UnboundedSender<LedgerWorkerEvent>,
-    milestone_cone_updater: &mpsc::UnboundedSender<IndexUpdaterWorkerEvent>,
+    index_updater_worker: &mpsc::UnboundedSender<IndexUpdaterWorkerEvent>,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
     bus: &Bus<'static>,
@@ -85,11 +85,17 @@ async fn solidify<B: StorageBackend>(
         warn!("Sending message_id to ledger worker failed: {}.", e);
     }
 
-    if let Err(e) = milestone_cone_updater
-        // TODO get MS
-        .send(IndexUpdaterWorkerEvent(index, Milestone::new(id, 0)))
-    {
-        warn!("Sending message_id to `IndexUpdater` failed: {:?}.", e);
+    const MAX_BELOW_DEPTH: u32 = 15;
+
+    // Note: For tip-selection only the most recent tangle is relevent. That means that during
+    // synchronization we do not need to update xMRSI values before MAX_BELOW_DEPTH.
+    if index > tangle.get_latest_milestone_index() - MAX_BELOW_DEPTH.into() {
+        if let Err(e) = index_updater_worker
+            // TODO get MS
+            .send(IndexUpdaterWorkerEvent(index, Milestone::new(id, 0)))
+        {
+            warn!("Sending message_id to `IndexUpdater` failed: {:?}.", e);
+        }
     }
 
     helper::broadcast_heartbeat(&peer_manager, &metrics, &tangle).await;
