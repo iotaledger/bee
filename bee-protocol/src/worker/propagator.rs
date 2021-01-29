@@ -87,7 +87,7 @@ async fn propagate<B: StorageBackend>(
             let ms_index_maybe = tangle
                 .update_metadata(&message_id, |metadata| {
                     // The child inherits the solid property from its parents.
-                    metadata.set_solid();
+                    metadata.solidify();
 
                     if metadata.flags().is_milestone() {
                         metadata.milestone_index()
