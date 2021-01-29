@@ -9,11 +9,11 @@ use crate::{
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
-use log::{debug, error, info};
+use log::*;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -38,6 +38,7 @@ async fn propagate<B: StorageBackend>(
     let mut children = vec![message_id];
 
     while let Some(ref message_id) = children.pop() {
+        // Skip messages that are already solid.
         if tangle.is_solid_message(message_id).await {
             continue;
         }
@@ -48,50 +49,68 @@ async fn propagate<B: StorageBackend>(
             .await
             .map(|message| (*message.parent1(), *message.parent2()))
         {
-            if !tangle.is_solid_message_maybe(&parent1).await || !tangle.is_solid_message_maybe(&parent2).await {
+            // If either of the parents is not yet solid, we do not propagate their current state.
+            if !tangle.is_solid_message(&parent1).await || !tangle.is_solid_message(&parent2).await {
                 continue;
             }
 
-            // get OTRSI/YTRSI from parents
-            let p1sepi = tangle.get_solid_entry_point_index(&parent1);
-            let p2sepi = tangle.get_solid_entry_point_index(&parent2);
-            let p1m = tangle.get_metadata(&parent1).await;
-            let p2m = tangle.get_metadata(&parent2).await;
-            let parent1_otsri = p1sepi.or_else(|| p1m?.otrsi());
-            let parent2_otsri = p2sepi.or_else(|| p2m?.otrsi());
-            let parent1_ytrsi = p1sepi.or_else(|| p1m?.ytrsi());
-            let parent2_ytrsi = p2sepi.or_else(|| p2m?.ytrsi());
+            // Note: There are two types of solidity carriers:
+            // * solid messages (with available history)
+            // * solid entry points / sep (with verified history)
+            // Because we know both parents are solid, we also know that they have set OTRSI/YTRSI values, hence
+            // we can simply unwrap. We also try to minimise unnecessary Tangle API calls if - for example - the
+            // parent in question turns out to be a SEP.
 
-            // get best OTRSI/YTRSI from parents
-            // unwrap() is safe because parents are solid which implies that OTRSI/YTRSI values are
-            // available.
-            let new_otrsi = min(parent1_otsri.unwrap(), parent2_otsri.unwrap());
-            let new_ytrsi = max(parent1_ytrsi.unwrap(), parent2_ytrsi.unwrap());
+            // Determine OTRSI/YTRSI of parent1
+            let (parent1_otrsi, parent1_ytrsi) = match tangle.get_solid_entry_point_index(&parent1).await {
+                Some(parent1_sepi) => (IndexId::new(parent1_sepi, parent1), IndexId::new(parent1_sepi, parent1)),
+                None => match tangle.get_metadata(&parent1).await {
+                    Some(parent1_md) => (parent1_md.otrsi().unwrap(), parent1_md.ytrsi().unwrap()),
+                    None => continue,
+                },
+            };
 
-            let index = tangle
+            // Determine OTRSI/YTRSI of parent2
+            let (parent2_otrsi, parent2_ytrsi) = match tangle.get_solid_entry_point_index(&parent2).await {
+                Some(parent2_sepi) => (IndexId::new(parent2_sepi, parent2), IndexId::new(parent2_sepi, parent2)),
+                None => match tangle.get_metadata(&parent2).await {
+                    Some(parent2_md) => (parent2_md.otrsi().unwrap(), parent2_md.ytrsi().unwrap()),
+                    None => continue,
+                },
+            };
+
+            // Derive child OTRSI/YTRSI from its parents.
+            // Note: The child inherits oldest (lowest) otrsi and the newest (highest) ytrsi from its parents.
+            let child_otrsi = min(parent1_otrsi, parent2_otrsi);
+            let child_ytrsi = max(parent1_ytrsi, parent2_ytrsi);
+
+            let ms_index_maybe = tangle
                 .update_metadata(&message_id, |metadata| {
-                    // OTRSI/YTRSI values need to be set before the solid flag, to ensure that the
-                    // MilestoneConeUpdater is aware of all values.
-                    metadata.set_otrsi(new_otrsi);
-                    metadata.set_ytrsi(new_ytrsi);
+                    // The child inherits the solid property from its parents.
                     metadata.solidify();
 
                     if metadata.flags().is_milestone() {
-                        Some(metadata.milestone_index())
+                        metadata.milestone_index()
                     } else {
+                        metadata.set_otrsi(child_otrsi);
+                        metadata.set_ytrsi(child_ytrsi);
                         None
                     }
                 })
                 .await
                 .expect("Failed to fetch metadata.");
 
+            // Try to propagate as far as possible into the future.
             if let Some(msg_children) = tangle.get_children(&message_id).await {
                 for child in msg_children {
                     children.push(child);
                 }
             }
 
-            let _ = tip_tx.send((*message_id, parent1, parent2, index)).await;
+            // Send child to the tip pool.
+            if let Err(e) = tip_tx.send((*message_id, parent1, parent2, ms_index_maybe)).await {
+                warn!("Failed to send message to the tip pool. Cause: {:?}", e);
+            }
         }
     }
 }

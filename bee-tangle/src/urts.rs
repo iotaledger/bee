@@ -157,8 +157,8 @@ impl UrtsTipPool {
         }
 
         let lsmi = *tangle.get_latest_solid_milestone_index();
-        let otrsi = *tangle.otrsi(&hash).await.unwrap();
-        let ytrsi = *tangle.ytrsi(&hash).await.unwrap();
+        let otrsi = *tangle.otrsi(&hash).await.unwrap().index();
+        let ytrsi = *tangle.ytrsi(&hash).await.unwrap().index();
 
         if (lsmi - ytrsi) > YTRSI_DELTA {
             return Score::Lazy;

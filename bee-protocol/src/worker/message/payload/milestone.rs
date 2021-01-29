@@ -117,14 +117,7 @@ async fn process<B: StorageBackend>(
                 info!("New milestone {} {}.", *index, milestone.message_id());
                 tangle.update_latest_milestone_index(index);
 
-                helper::broadcast_heartbeat(
-                    &peer_manager,
-                    &metrics,
-                    tangle.get_latest_solid_milestone_index(),
-                    tangle.get_pruning_index(),
-                    index,
-                )
-                .await;
+                helper::broadcast_heartbeat(&peer_manager, &metrics, tangle).await;
 
                 bus.dispatch(LatestMilestoneChanged {
                     index,

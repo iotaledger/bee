@@ -2,17 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    balance::BalanceDiffs,
     conflict::ConflictReason,
+    dust::DUST_THRESHOLD,
     error::Error,
     event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
     merkle_hasher::MerkleHasher,
     metadata::WhiteFlagMetadata,
     state::check_ledger_state,
-    storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, StorageBackend},
+    storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend},
     white_flag,
 };
 
-use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, payload::Payload, MessageId};
+use bee_message::{
+    ledger_index::LedgerIndex,
+    milestone::MilestoneIndex,
+    payload::{transaction::Output, Payload},
+    MessageId,
+};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_snapshot::{milestone_diff::MilestoneDiff, SnapshotWorker};
 use bee_tangle::{MsTangle, TangleWorker};
@@ -23,7 +30,7 @@ use log::{error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::any::TypeId;
+use std::{any::TypeId, collections::HashMap};
 
 pub struct LedgerWorkerEvent(pub MessageId);
 
@@ -91,7 +98,7 @@ where
         metadata.index,
         &metadata.created_outputs,
         &metadata.consumed_outputs,
-        Some(&metadata.balance_diffs),
+        &metadata.balance_diffs,
     )
     .await?;
 
@@ -101,7 +108,6 @@ where
         tangle
             .update_metadata(message_id, |message_metadata| {
                 message_metadata.set_conflict(ConflictReason::None as u8);
-                message_metadata.set_milestone_index(metadata.index);
                 message_metadata.confirm(milestone.essence().timestamp());
             })
             .await;
@@ -111,7 +117,6 @@ where
         tangle
             .update_metadata(message_id, |message_metadata| {
                 message_metadata.set_conflict(*conflict as u8);
-                message_metadata.set_milestone_index(metadata.index);
                 message_metadata.confirm(milestone.essence().timestamp());
             })
             .await;
@@ -121,7 +126,6 @@ where
         tangle
             .update_metadata(message_id, |message_metadata| {
                 message_metadata.set_conflict(ConflictReason::None as u8);
-                message_metadata.set_milestone_index(metadata.index);
                 message_metadata.confirm(milestone.essence().timestamp());
             })
             .await;
@@ -182,10 +186,28 @@ where
         let full_diff_rx = node.worker::<SnapshotWorker>().unwrap().full_diff_rx.clone();
         let delta_diff_rx = node.worker::<SnapshotWorker>().unwrap().delta_diff_rx.clone();
 
+        let mut balance_diffs = BalanceDiffs::new();
+
         while let Ok((output_id, output)) = output_rx.recv_async().await {
             // TODO handle unwrap
+            // TODO batch
             create_output(&*storage, &output_id, &output).await.unwrap();
+            match output.inner() {
+                Output::SignatureLockedSingle(output) => {
+                    balance_diffs.amount_add(*output.address(), output.amount());
+                    if output.amount() < DUST_THRESHOLD {
+                        balance_diffs.dust_output_inc(*output.address());
+                    }
+                }
+                Output::SignatureLockedDustAllowance(output) => {
+                    balance_diffs.amount_add(*output.address(), output.amount());
+                    balance_diffs.dust_allowance_add(*output.address(), output.amount());
+                }
+                _ => return Err(Error::UnsupportedOutputType),
+            }
         }
+
+        store_balance_diffs(&*storage, &balance_diffs).await?;
 
         async fn read_diffs<B: StorageBackend>(
             storage: &B,
@@ -197,16 +219,59 @@ where
                 // TODO unwrap
                 let ledger_index = *storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
 
+                let mut balance_diffs = BalanceDiffs::new();
+
+                for (_, output) in diff.created().iter() {
+                    match output.inner() {
+                        Output::SignatureLockedSingle(output) => {
+                            balance_diffs.amount_add(*output.address(), output.amount());
+                            if output.amount() < DUST_THRESHOLD {
+                                balance_diffs.dust_output_inc(*output.address());
+                            }
+                        }
+                        Output::SignatureLockedDustAllowance(output) => {
+                            balance_diffs.amount_add(*output.address(), output.amount());
+                            balance_diffs.dust_allowance_add(*output.address(), output.amount());
+                        }
+                        _ => return Err(Error::UnsupportedOutputType),
+                    }
+                }
+
+                let mut consumed = HashMap::new();
+
+                for (output_id, (created_output, consumed_output)) in diff.consumed().into_iter() {
+                    match created_output.inner() {
+                        Output::SignatureLockedSingle(created_output) => {
+                            balance_diffs.amount_sub(*created_output.address(), created_output.amount());
+                            if created_output.amount() < DUST_THRESHOLD {
+                                balance_diffs.dust_output_dec(*created_output.address());
+                            }
+                        }
+                        Output::SignatureLockedDustAllowance(created_output) => {
+                            balance_diffs.amount_sub(*created_output.address(), created_output.amount());
+                            balance_diffs.dust_allowance_sub(*created_output.address(), created_output.amount());
+                        }
+                        _ => return Err(Error::UnsupportedOutputType),
+                    }
+                    consumed.insert(*output_id, (*consumed_output).clone());
+                }
+
                 match index {
                     MilestoneIndex(index) if index == ledger_index + 1 => {
                         // TODO unwrap until we merge both crates
-                        apply_outputs_diff(&*storage, MilestoneIndex(index), diff.created(), diff.consumed(), None)
-                            .await
-                            .unwrap();
+                        apply_outputs_diff(
+                            &*storage,
+                            MilestoneIndex(index),
+                            diff.created(),
+                            &consumed,
+                            &balance_diffs,
+                        )
+                        .await
+                        .unwrap();
                     }
                     MilestoneIndex(index) if index == ledger_index => {
                         // TODO unwrap until we merge both crates
-                        rollback_outputs_diff(&*storage, MilestoneIndex(index), diff.created(), diff.consumed())
+                        rollback_outputs_diff(&*storage, MilestoneIndex(index), diff.created(), &consumed)
                             .await
                             .unwrap();
                     }

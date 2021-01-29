@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    helper,
     peer::{Peer, PeerManager},
     storage::StorageBackend,
     worker::{
@@ -109,6 +110,9 @@ where
 
                             info!("Connected peer {}.", peer.0.alias());
                         }
+
+                        // TODO can't do it in the if because of deadlock, but it's not really right to do it here.
+                        helper::send_heartbeat(&*peer_manager, &*metrics, &*tangle, &id).await;
                     }
                     Event::PeerDisconnected { id } => {
                         // TODO write a get_mut peer manager method

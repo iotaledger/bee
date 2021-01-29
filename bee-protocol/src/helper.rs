@@ -53,7 +53,7 @@ pub(crate) async fn request_message<B: StorageBackend>(
     index: MilestoneIndex,
 ) {
     if !tangle.contains(&message_id).await
-        && !tangle.is_solid_entry_point(&message_id)
+        && !tangle.is_solid_entry_point(&message_id).await
         && !requested_messages.contains(&message_id).await
     {
         if let Err(e) = message_requester.send(MessageRequesterWorkerEvent(message_id, index)) {
@@ -64,22 +64,20 @@ pub(crate) async fn request_message<B: StorageBackend>(
 
 // Heartbeat
 
-pub async fn send_heartbeat(
+pub async fn send_heartbeat<B: StorageBackend>(
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
+    tangle: &MsTangle<B>,
     to: &PeerId,
-    latest_solid_milestone_index: MilestoneIndex,
-    pruning_milestone_index: MilestoneIndex,
-    latest_milestone_index: MilestoneIndex,
 ) {
     Sender::<Heartbeat>::send(
         peer_manager,
         metrics,
         to,
         Heartbeat::new(
-            *latest_solid_milestone_index,
-            *pruning_milestone_index,
-            *latest_milestone_index,
+            *tangle.get_latest_solid_milestone_index(),
+            *tangle.get_pruning_index(),
+            *tangle.get_latest_milestone_index(),
             peer_manager.connected_peers().await,
             peer_manager.synced_peers().await,
         ),
@@ -87,24 +85,14 @@ pub async fn send_heartbeat(
     .await;
 }
 
-pub async fn broadcast_heartbeat(
+pub async fn broadcast_heartbeat<B: StorageBackend>(
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
-    latest_solid_milestone_index: MilestoneIndex,
-    pruning_milestone_index: MilestoneIndex,
-    latest_milestone_index: MilestoneIndex,
+    tangle: &MsTangle<B>,
 ) {
     // TODO bring it back
     //    peer_manager.for_each_peer(|peer_id, _| async {
     for (peer_id, _) in peer_manager.peers.read().await.iter() {
-        send_heartbeat(
-            peer_manager,
-            metrics,
-            &peer_id,
-            latest_solid_milestone_index,
-            pruning_milestone_index,
-            latest_milestone_index,
-        )
-        .await
+        send_heartbeat(peer_manager, metrics, tangle, &peer_id).await
     }
 }

@@ -155,16 +155,32 @@ pub fn consume_output_batch<B: StorageBackend>(
     Ok(())
 }
 
+pub async fn store_balance_diffs<B: StorageBackend>(storage: &B, balance_diffs: &BalanceDiffs) -> Result<(), Error> {
+    let mut batch = B::batch_begin();
+
+    store_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
+
+    storage
+        .batch_commit(batch, true)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
 pub async fn store_balance_diffs_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     balance_diffs: &BalanceDiffs,
 ) -> Result<(), Error> {
     for (address, diff) in balance_diffs.iter() {
-        let balance = fetch_balance_or_default(storage, address).await?;
+        let balance = fetch_balance_or_default(storage, address).await? + diff;
 
-        Batch::<Address, Balance>::batch_insert(storage, batch, address, &(balance + diff))
-            .map_err(|e| Error::Storage(Box::new(e)))?;
+        if balance.amount() != 0 {
+            Batch::<Address, Balance>::batch_insert(storage, batch, address, &balance)
+                .map_err(|e| Error::Storage(Box::new(e)))?;
+        } else {
+            Batch::<Address, Balance>::batch_delete(storage, batch, address)
+                .map_err(|e| Error::Storage(Box::new(e)))?;
+        }
     }
 
     Ok(())
@@ -175,7 +191,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
-    balance_diffs: Option<&BalanceDiffs>,
+    balance_diffs: &BalanceDiffs,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
@@ -195,9 +211,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
         consumed_output_ids.push(*output_id);
     }
 
-    if let Some(balance_diffs) = balance_diffs {
-        store_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
-    }
+    store_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
 
     Batch::<MilestoneIndex, OutputDiff>::batch_insert(
         storage,

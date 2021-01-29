@@ -5,7 +5,7 @@ use crate::{error::Error, milestone::MilestoneIndex, payload::transaction::Trans
 
 use bee_common::packable::{Packable, Read, Write};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ConsumedOutput {
     target: TransactionId,
     index: MilestoneIndex,

@@ -76,19 +76,18 @@ async fn process_request(
         return;
     }
 
-    if process_request_unchecked(message_id, index, peer_manager, metrics, counter).await {
-        requested_messages.insert(message_id, index).await;
-    }
+    requested_messages.insert(message_id, index).await;
+
+    process_request_unchecked(message_id, index, peer_manager, metrics, counter).await;
 }
 
-/// Return `true` if the message was requested.
 async fn process_request_unchecked(
     message_id: MessageId,
     index: MilestoneIndex,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
     counter: &mut usize,
-) -> bool {
+) {
     let guard = peer_manager.peers_keys.read().await;
 
     for _ in 0..guard.len() {
@@ -105,12 +104,10 @@ async fn process_request_unchecked(
                     MessageRequest::new(message_id.as_ref()),
                 )
                 .await;
-                return true;
+                return;
             }
         }
     }
-
-    let mut requested = false;
 
     for _ in 0..guard.len() {
         let peer_id = &guard[*counter % guard.len()];
@@ -126,12 +123,9 @@ async fn process_request_unchecked(
                     MessageRequest::new(message_id.as_ref()),
                 )
                 .await;
-                requested = true;
             }
         }
     }
-
-    requested
 }
 
 async fn retry_requests<B: StorageBackend>(
@@ -156,14 +150,15 @@ async fn retry_requests<B: StorageBackend>(
             .map_or(false, |d| d.as_millis() as u64 > RETRY_INTERVAL_MS)
         {
             to_retry.push((*message_id, *index));
+            retry_counts += 1;
         }
     }
 
     for (message_id, index) in to_retry {
         if tangle.contains(&message_id).await {
             requested_messages.remove(&message_id).await;
-        } else if process_request_unchecked(message_id, index, peer_manager, metrics, counter).await {
-            retry_counts += 1;
+        } else {
+            process_request_unchecked(message_id, index, peer_manager, metrics, counter).await;
         }
     }
 
