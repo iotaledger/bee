@@ -80,6 +80,8 @@ where
             info!("Running.");
 
             let routes = filters::all(
+                rest_api_config.public_routes.clone(),
+                rest_api_config.allowed_ips.clone(),
                 tangle,
                 storage,
                 message_submitter,
@@ -109,6 +111,7 @@ where
 async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (http_code, err_code, reason) = match err.find() {
         // handle custom rejections
+        Some(CustomRejection::Forbidden(reason)) => (StatusCode::FORBIDDEN, "403".to_string(), reason.to_owned()),
         Some(CustomRejection::NotFound(reason)) => (StatusCode::NOT_FOUND, "404".to_string(), reason.to_owned()),
         Some(CustomRejection::BadRequest(reason)) => (StatusCode::BAD_REQUEST, "400".to_string(), reason.to_owned()),
         Some(CustomRejection::ServiceUnavailable(reason)) => {

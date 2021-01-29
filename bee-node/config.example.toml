@@ -51,6 +51,26 @@ ms_sync_count = 200
 binding_port          = 14265
 binding_ip_addr       = "0.0.0.0"
 feature_proof_of_work = true
+public_routes = [
+    "/api/v1/addresses/:address",
+    "/api/v1/addresses/ed25519/:address",
+    "/health",
+    "/api/v1/info",
+    "/api/v1/messages/:messageId",
+    "/api/v1/messages/:messageId/children",
+    "/api/v1/messages/:messageId/metadata",
+    "/api/v1/messages/:messageId/raw",
+    "/api/v1/messages",
+    "/api/v1/milestones/:milestoneIndex",
+    "/api/v1/outputs/:outputId",
+    "/api/v1/addresses/:address/outputs",
+    "/api/v1/addresses/ed25519/:address/outputs",
+    "/api/v1/messages",
+    "/api/v1/tips",
+]
+allowed_ips = [
+    "127.0.0.1"
+]
 
 [snapshot]
 full_path         = "./snapshots/alphanet/full_snapshot.bin"
