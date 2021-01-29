@@ -3,9 +3,9 @@
 
 mod broadcaster;
 mod heartbeater;
+mod index_updater;
 mod message;
 mod metrics;
-mod milestone_cone_updater;
 mod mps;
 mod peer;
 mod propagator;
@@ -17,13 +17,13 @@ mod tip_pool_cleaner;
 
 pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
+pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
 pub(crate) use message::{
     HasherWorker, HasherWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker,
     PayloadWorker, PayloadWorkerEvent, ProcessorWorker, TransactionPayloadWorker,
 };
 pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 pub use metrics::MetricsWorker;
-pub(crate) use milestone_cone_updater::{MilestoneConeUpdaterWorker, MilestoneConeUpdaterWorkerEvent};
 pub(crate) use mps::MpsWorker;
 pub use peer::PeerManagerResWorker;
 pub(crate) use peer::{PeerManagerWorker, PeerWorker};

@@ -7,9 +7,8 @@ use crate::{
     peer::PeerManager,
     storage::StorageBackend,
     worker::{
-        MessageRequesterWorker, MessageRequesterWorkerEvent, MetricsWorker, MilestoneConeUpdaterWorker,
-        MilestoneConeUpdaterWorkerEvent, MilestoneRequesterWorker, PeerManagerResWorker, RequestedMessages,
-        RequestedMilestones,
+        IndexUpdaterWorker, IndexUpdaterWorkerEvent, MessageRequesterWorker, MessageRequesterWorkerEvent,
+        MetricsWorker, MilestoneRequesterWorker, PeerManagerResWorker, RequestedMessages, RequestedMilestones,
     },
     ProtocolMetrics,
 };
@@ -71,7 +70,7 @@ async fn heavy_solidification<B: StorageBackend>(
 async fn solidify<B: StorageBackend>(
     tangle: &MsTangle<B>,
     ledger_worker: &mpsc::UnboundedSender<LedgerWorkerEvent>,
-    milestone_cone_updater: &mpsc::UnboundedSender<MilestoneConeUpdaterWorkerEvent>,
+    milestone_cone_updater: &mpsc::UnboundedSender<IndexUpdaterWorkerEvent>,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
     bus: &Bus<'static>,
@@ -88,9 +87,9 @@ async fn solidify<B: StorageBackend>(
 
     if let Err(e) = milestone_cone_updater
         // TODO get MS
-        .send(MilestoneConeUpdaterWorkerEvent(index, Milestone::new(id, 0)))
+        .send(IndexUpdaterWorkerEvent(index, Milestone::new(id, 0)))
     {
-        warn!("Sending message_id to `MilestoneConeUpdater` failed: {:?}.", e);
+        warn!("Sending message_id to `IndexUpdater` failed: {:?}.", e);
     }
 
     helper::broadcast_heartbeat(&peer_manager, &metrics, &tangle).await;
@@ -118,7 +117,7 @@ where
             TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<LedgerWorker>(),
-            TypeId::of::<MilestoneConeUpdaterWorker>(),
+            TypeId::of::<IndexUpdaterWorker>(),
         ]
         .leak()
     }
@@ -128,7 +127,7 @@ where
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
         let ledger_worker = node.worker::<LedgerWorker>().unwrap().tx.clone();
-        let milestone_cone_updater = node.worker::<MilestoneConeUpdaterWorker>().unwrap().tx.clone();
+        let milestone_cone_updater = node.worker::<IndexUpdaterWorker>().unwrap().tx.clone();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
         let requested_milestones = node.resource::<RequestedMilestones>();

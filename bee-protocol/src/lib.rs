@@ -27,8 +27,8 @@ use crate::{
     config::ProtocolConfig,
     sender::Sender,
     worker::{
-        BroadcasterWorker, HasherWorker, HeartbeaterWorker, IndexationPayloadWorker, MessageRequesterWorker,
-        MessageResponderWorker, MilestoneConeUpdaterWorker, MilestonePayloadWorker, MilestoneRequesterWorker,
+        BroadcasterWorker, HasherWorker, HeartbeaterWorker, IndexUpdaterWorker, IndexationPayloadWorker,
+        MessageRequesterWorker, MessageResponderWorker, MilestonePayloadWorker, MilestoneRequesterWorker,
         MilestoneResponderWorker, MilestoneSolidifierWorker, MpsWorker, PayloadWorker, PeerManagerWorker,
         ProcessorWorker, PropagatorWorker, StatusWorker, TipPoolCleanerWorker, TransactionPayloadWorker,
     },
@@ -65,7 +65,7 @@ where
         .with_worker::<PropagatorWorker>()
         .with_worker::<MpsWorker>()
         .with_worker_cfg::<MilestoneSolidifierWorker>(config.workers.ms_sync_count)
-        .with_worker::<MilestoneConeUpdaterWorker>()
+        .with_worker::<IndexUpdaterWorker>()
         .with_worker::<TipPoolCleanerWorker>()
         .with_worker_cfg::<StatusWorker>(config.workers.status_interval)
         .with_worker::<HeartbeaterWorker>()

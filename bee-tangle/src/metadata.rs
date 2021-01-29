@@ -4,22 +4,23 @@
 use crate::flags::Flags;
 
 use bee_common::packable::{OptionError, Packable, Read, Write};
-use bee_message::milestone::MilestoneIndex;
+use bee_message::{milestone::MilestoneIndex, MessageId};
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    cmp::Ordering,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 // TODO Should it really be copy ?
 #[derive(Copy, Clone, Default, Debug)]
 pub struct MessageMetadata {
     flags: Flags,
-    milestone_index: MilestoneIndex,
+    milestone_index: Option<MilestoneIndex>,
     arrival_timestamp: u64,
     solidification_timestamp: u64,
     confirmation_timestamp: u64,
-    cone_index: Option<MilestoneIndex>, /* maybe merge milestone_index and cone_index; keep it like that for now to
-                                         * avoid conflicts; */
-    otrsi: Option<MilestoneIndex>,
-    ytrsi: Option<MilestoneIndex>,
+    otrsi: Option<IndexId>,
+    ytrsi: Option<IndexId>,
     conflict: u8,
 }
 
@@ -27,13 +28,12 @@ impl MessageMetadata {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         flags: Flags,
-        milestone_index: MilestoneIndex,
+        milestone_index: Option<MilestoneIndex>,
         arrival_timestamp: u64,
         solidification_timestamp: u64,
         confirmation_timestamp: u64,
-        cone_index: Option<MilestoneIndex>,
-        otrsi: Option<MilestoneIndex>,
-        ytrsi: Option<MilestoneIndex>,
+        otrsi: Option<IndexId>,
+        ytrsi: Option<IndexId>,
         conflict: u8,
     ) -> Self {
         Self {
@@ -42,7 +42,6 @@ impl MessageMetadata {
             arrival_timestamp,
             solidification_timestamp,
             confirmation_timestamp,
-            cone_index,
             otrsi,
             ytrsi,
             conflict,
@@ -67,12 +66,12 @@ impl MessageMetadata {
         &mut self.flags
     }
 
-    pub fn milestone_index(&self) -> MilestoneIndex {
+    pub fn milestone_index(&self) -> Option<MilestoneIndex> {
         self.milestone_index
     }
 
     pub fn set_milestone_index(&mut self, index: MilestoneIndex) {
-        self.milestone_index = index;
+        self.milestone_index = Some(index);
     }
 
     pub fn arrival_timestamp(&self) -> u64 {
@@ -83,27 +82,19 @@ impl MessageMetadata {
         self.solidification_timestamp
     }
 
-    pub fn cone_index(&self) -> Option<MilestoneIndex> {
-        self.cone_index
-    }
-
-    pub fn set_cone_index(&mut self, cone_index: MilestoneIndex) {
-        self.cone_index = Some(cone_index);
-    }
-
-    pub fn otrsi(&self) -> Option<MilestoneIndex> {
+    pub fn otrsi(&self) -> Option<IndexId> {
         self.otrsi
     }
 
-    pub fn set_otrsi(&mut self, otrsi: MilestoneIndex) {
+    pub fn set_otrsi(&mut self, otrsi: IndexId) {
         self.otrsi = Some(otrsi);
     }
 
-    pub fn ytrsi(&self) -> Option<MilestoneIndex> {
+    pub fn ytrsi(&self) -> Option<IndexId> {
         self.ytrsi
     }
 
-    pub fn set_ytrsi(&mut self, ytrsi: MilestoneIndex) {
+    pub fn set_ytrsi(&mut self, ytrsi: IndexId) {
         self.ytrsi = Some(ytrsi);
     }
 
@@ -137,6 +128,7 @@ impl MessageMetadata {
 pub enum MessageMetadataError {
     Io(std::io::Error),
     OptionIndex(<Option<MilestoneIndex> as Packable>::Error),
+    OptionIndexId(<Option<IndexId> as Packable>::Error),
 }
 
 impl From<std::io::Error> for MessageMetadataError {
@@ -151,6 +143,12 @@ impl From<OptionError<std::io::Error>> for MessageMetadataError {
     }
 }
 
+impl From<OptionError<IndexIdError>> for MessageMetadataError {
+    fn from(error: OptionError<IndexIdError>) -> Self {
+        MessageMetadataError::OptionIndexId(error)
+    }
+}
+
 impl Packable for MessageMetadata {
     type Error = MessageMetadataError;
 
@@ -160,7 +158,6 @@ impl Packable for MessageMetadata {
             + self.arrival_timestamp.packed_len()
             + self.solidification_timestamp.packed_len()
             + self.confirmation_timestamp.packed_len()
-            + self.cone_index.packed_len()
             + self.otrsi.packed_len()
             + self.ytrsi.packed_len()
             + self.conflict.packed_len()
@@ -172,7 +169,6 @@ impl Packable for MessageMetadata {
         self.arrival_timestamp.pack(writer)?;
         self.solidification_timestamp.pack(writer)?;
         self.confirmation_timestamp.pack(writer)?;
-        self.cone_index.pack(writer)?;
         self.otrsi.pack(writer)?;
         self.ytrsi.pack(writer)?;
         self.conflict.pack(writer)?;
@@ -183,14 +179,91 @@ impl Packable for MessageMetadata {
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self {
             flags: Flags::unpack(reader)?,
-            milestone_index: MilestoneIndex::unpack(reader)?,
+            milestone_index: Option::<MilestoneIndex>::unpack(reader)?,
             arrival_timestamp: u64::unpack(reader)?,
             solidification_timestamp: u64::unpack(reader)?,
             confirmation_timestamp: u64::unpack(reader)?,
-            cone_index: Option::<MilestoneIndex>::unpack(reader)?,
-            otrsi: Option::<MilestoneIndex>::unpack(reader)?,
-            ytrsi: Option::<MilestoneIndex>::unpack(reader)?,
+            otrsi: Option::<IndexId>::unpack(reader)?,
+            ytrsi: Option::<IndexId>::unpack(reader)?,
             conflict: u8::unpack(reader)?,
         })
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct IndexId(MilestoneIndex, MessageId);
+
+impl IndexId {
+    pub fn new(index: MilestoneIndex, id: MessageId) -> Self {
+        Self(index, id)
+    }
+
+    pub fn index(&self) -> MilestoneIndex {
+        self.0
+    }
+
+    pub fn id(&self) -> MessageId {
+        self.1
+    }
+}
+
+impl IndexId {
+    pub fn update(&mut self, index: MilestoneIndex) {
+        self.0 = index;
+    }
+}
+
+impl Ord for IndexId {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.cmp(&other.0)
+    }
+}
+impl PartialOrd for IndexId {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl Eq for IndexId {}
+impl PartialEq for IndexId {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl Packable for IndexId {
+    type Error = IndexIdError;
+
+    fn packed_len(&self) -> usize {
+        self.0.packed_len() + self.1.packed_len()
+    }
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        self.0.pack(writer)?;
+        self.1.pack(writer)?;
+
+        Ok(())
+    }
+
+    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(Self(MilestoneIndex::unpack(reader)?, MessageId::unpack(reader)?))
+    }
+}
+
+#[derive(Debug)]
+pub enum IndexIdError {
+    Io(std::io::Error),
+    MessageId(bee_message::Error),
+}
+
+impl From<std::io::Error> for IndexIdError {
+    fn from(error: std::io::Error) -> Self {
+        IndexIdError::Io(error)
+    }
+}
+
+impl From<bee_message::Error> for IndexIdError {
+    fn from(error: bee_message::Error) -> Self {
+        IndexIdError::MessageId(error)
     }
 }
