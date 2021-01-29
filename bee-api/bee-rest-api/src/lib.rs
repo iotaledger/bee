@@ -80,6 +80,8 @@ where
             info!("Running.");
 
             let routes = filters::all(
+                rest_api_config.public_routes.clone(),
+                rest_api_config.whitelisted_ip_addresses.clone(),
                 tangle,
                 storage,
                 message_submitter,

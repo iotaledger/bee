@@ -7,23 +7,47 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 pub(crate) const DEFAULT_BINDING_PORT: u16 = 14265;
 pub(crate) const DEFAULT_BINDING_IP_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
+
+// all available routes
+pub(crate) const ROUTE_ADD_PEER: &str = "/api/v1/peer";
+pub(crate) const ROUTE_BALANCE_BECH32: &str = "/api/v1/addresses/:address";
+pub(crate) const ROUTE_BALANCE_ED25519: &str = "/api/v1/addresses/ed25519/:address";
+pub(crate) const ROUTE_HEALTH: &str = "/health";
+pub(crate) const ROUTE_INFO: &str = "/api/v1/info";
+pub(crate) const ROUTE_MESSAGE: &str = "/api/v1/messages/:messageId";
+pub(crate) const ROUTE_MESSAGE_CHILDREN: &str = "/api/v1/messages/:messageId/children";
+pub(crate) const ROUTE_MESSAGE_METADATA: &str = "/api/v1/messages/:messageId/metadata";
+pub(crate) const ROUTE_MESSAGE_RAW: &str = "/api/v1/messages/:messageId/raw";
+pub(crate) const ROUTE_MESSAGES_FIND: &str = "/api/v1/messages";
+pub(crate) const ROUTE_MILESTONE: &str = "/api/v1/milestones/:milestoneIndex";
+pub(crate) const ROUTE_OUTPUT: &str = "/api/v1/outputs/:outputId";
+pub(crate) const ROUTE_OUTPUTS_BECH32: &str = "/api/v1/addresses/:address/outputs";
+pub(crate) const ROUTE_OUTPUTS_ED25519: &str = "/api/v1/addresses/ed25519/:address/outputs";
+pub(crate) const ROUTE_PEER: &str = "/api/v1/peer/:peerId";
+pub(crate) const ROUTE_PEERS: &str = "/api/v1/peers";
+pub(crate) const ROUTE_REMOVE_PEER: &str = "/api/v1/peer/:peerId";
+pub(crate) const ROUTE_SUBMIT_MESSAGE: &str = "/api/v1/messages";
+pub(crate) const ROUTE_SUBMIT_MESSAGE_RAW: &str = "/api/v1/messages";
+pub(crate) const ROUTE_TIPS: &str = "/api/v1/tips";
+
 /// the routes that are available for public use
-pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 15] = [
-    "/health",
-    "/api/v1/info",
-    "/api/v1/tips",
-    "/api/v1/messages/:messageID",
-    "/api/v1/messages/:messageID/metadata",
-    "/api/v1/messages/:messageID/raw",
-    "/api/v1/messages/:messageID/children",
-    "/api/v1/messages",
-    "/api/v1/milestones/:milestoneIndex",
-    "/api/v1/milestones/:milestoneIndex/utxo-changes",
-    "/api/v1/outputs/:outputID",
-    "/api/v1/addresses/:address",
-    "/api/v1/addresses/:address/outputs",
-    "/api/v1/addresses/ed25519/:address",
-    "/api/v1/addresses/ed25519/:address/outputs",
+pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 16] = [
+    ROUTE_BALANCE_BECH32,
+    ROUTE_BALANCE_ED25519,
+    ROUTE_HEALTH,
+    ROUTE_INFO,
+    ROUTE_MESSAGE,
+    ROUTE_MESSAGE_CHILDREN,
+    ROUTE_MESSAGE_METADATA,
+    ROUTE_MESSAGE_RAW,
+    ROUTE_MESSAGES_FIND,
+    ROUTE_MILESTONE,
+    ROUTE_OUTPUT,
+    ROUTE_OUTPUTS_BECH32,
+    ROUTE_OUTPUTS_ED25519,
+    ROUTE_SUBMIT_MESSAGE,
+    ROUTE_SUBMIT_MESSAGE_RAW,
+    ROUTE_TIPS,
 ];
 pub(crate) const DEFAULT_WHITELISTED_IP_ADDRESSES: [IpAddr; 1] = [IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))];
 pub(crate) const DEFAULT_FEATURE_PROOF_OF_WORK: bool = true;
@@ -88,9 +112,6 @@ impl RestApiConfigBuilder {
         let public_routes = self
             .public_routes
             .unwrap_or(DEFAULT_PUBLIC_ROUTES.iter().map(|s| s.to_string()).collect());
-        for w in self.whitelisted_ip_addresses.clone().unwrap() {
-            println!("w: {}", w);
-        }
         let whitelisted_ip_addresses = self
             .whitelisted_ip_addresses
             .unwrap_or(DEFAULT_WHITELISTED_IP_ADDRESSES.to_vec());

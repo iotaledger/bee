@@ -8,35 +8,21 @@ use crate::{
     storage::StorageBackend,
     Bech32Hrp, NetworkId,
 };
-use crate::filters::CustomRejection::Forbidden;
-use crate::filters::has_permission;
 
 use bee_protocol::config::ProtocolConfig;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use serde::{Deserialize, Serialize};
-use warp::Reply;
-
-use std::convert::Infallible;
-use std::net::SocketAddr;
-use std::net::IpAddr;
+use warp::{Rejection, Reply};
 
 pub(crate) async fn info<B: StorageBackend>(
-    remote_addr: Option<SocketAddr>,
-    permitted_ip_addresses: Vec<IpAddr>,
-    public_routes: Vec<String>,
     tangle: ResourceHandle<MsTangle<B>>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
-) -> Result<impl Reply, Infallible> {
-
-    if !has_permission("/api/v1/health".to_string(), public_routes, remote_addr, permitted_ip_addresses) {
-        warp::reject::custom(Forbidden);
-    }
-
+) -> Result<impl Reply, Rejection> {
     Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
         name: String::from("Bee"),
         version: {
