@@ -13,7 +13,7 @@ use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
-use log::{debug, error, info};
+use log::*;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -108,7 +108,9 @@ async fn propagate<B: StorageBackend>(
             }
 
             // Send child to the tip pool.
-            let _ = tip_tx.send((*message_id, parent1, parent2, ms_index_maybe)).await;
+            if let Err(e) = tip_tx.send((*message_id, parent1, parent2, ms_index_maybe)).await {
+                warn!("Failed to send message to the tip pool. Cause: {:?}", e);
+            }
         }
     }
 }
