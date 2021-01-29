@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    helper,
     peer::{Peer, PeerManager},
     storage::StorageBackend,
     worker::{
@@ -106,6 +107,16 @@ where
                                     shutdown_rx,
                                 ),
                             );
+
+                            helper::send_heartbeat(
+                                &*peer_manager,
+                                &*metrics,
+                                &id,
+                                tangle.get_latest_solid_milestone_index(),
+                                tangle.get_pruning_index(),
+                                tangle.get_latest_milestone_index(),
+                            )
+                            .await;
 
                             info!("Connected peer {}.", peer.0.alias());
                         }

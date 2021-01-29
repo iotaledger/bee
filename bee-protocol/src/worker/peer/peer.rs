@@ -77,14 +77,6 @@ impl PeerWorker {
 
         let mut packet_handler = PacketHandler::new(receiver, shutdown_fused, self.peer.address().clone());
 
-        //                 Protocol::send_heartbeat(
-        //                     self.peer.id(),
-        //                     tangle.get_latest_solid_milestone_index(),
-        //                     tangle.get_pruning_index(),
-        //                     tangle.get_latest_milestone_index(),
-        //                 );
-        //
-
         helper::request_latest_milestone(
             &*tangle,
             &self.milestone_requester,
