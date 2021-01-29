@@ -59,14 +59,7 @@ where
 
             while ticker.next().await.is_some() {
                 // TODO real impl
-                helper::broadcast_heartbeat(
-                    &peer_manager,
-                    &metrics,
-                    tangle.get_latest_solid_milestone_index(),
-                    tangle.get_pruning_index(),
-                    tangle.get_latest_milestone_index(),
-                )
-                .await;
+                helper::broadcast_heartbeat(&peer_manager, &metrics, &tangle).await;
             }
 
             info!("Stopped.");

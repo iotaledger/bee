@@ -93,14 +93,7 @@ async fn solidify<B: StorageBackend>(
         warn!("Sending message_id to `MilestoneConeUpdater` failed: {:?}.", e);
     }
 
-    helper::broadcast_heartbeat(
-        &peer_manager,
-        &metrics,
-        index,
-        tangle.get_pruning_index(),
-        tangle.get_latest_milestone_index(),
-    )
-    .await;
+    helper::broadcast_heartbeat(&peer_manager, &metrics, &tangle).await;
 
     bus.dispatch(LatestSolidMilestoneChanged {
         index,

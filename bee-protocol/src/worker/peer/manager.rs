@@ -108,15 +108,7 @@ where
                                 ),
                             );
 
-                            helper::send_heartbeat(
-                                &*peer_manager,
-                                &*metrics,
-                                &id,
-                                tangle.get_latest_solid_milestone_index(),
-                                tangle.get_pruning_index(),
-                                tangle.get_latest_milestone_index(),
-                            )
-                            .await;
+                            helper::send_heartbeat(&*peer_manager, &*metrics, &*tangle, &id).await;
 
                             info!("Connected peer {}.", peer.0.alias());
                         }

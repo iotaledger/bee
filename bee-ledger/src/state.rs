@@ -3,7 +3,6 @@
 
 use crate::{
     balance::Balance,
-    // dust::dust_outputs_max,
     error::Error,
     model::Unspent,
     storage::{self, StorageBackend},
