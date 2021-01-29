@@ -62,7 +62,7 @@ pub(crate) struct MessageRequesterWorkerEvent(pub(crate) MessageId, pub(crate) M
 
 impl Ord for MessageRequesterWorkerEvent {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.1.cmp(&other.1)
+        self.1.cmp(&other.1).reverse()
     }
 }
 
