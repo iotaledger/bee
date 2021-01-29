@@ -111,7 +111,7 @@ where
 async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (http_code, err_code, reason) = match err.find() {
         // handle custom rejections
-        Some(CustomRejection::Forbidden(reason)) => (StatusCode::FORBIDDEN, "403".to_string(), reason.to_owned()),
+        Some(CustomRejection::Forbidden) => (StatusCode::FORBIDDEN, "403".to_string(), "access forbidden".to_string()),
         Some(CustomRejection::NotFound(reason)) => (StatusCode::NOT_FOUND, "404".to_string(), reason.to_owned()),
         Some(CustomRejection::BadRequest(reason)) => (StatusCode::BAD_REQUEST, "400".to_string(), reason.to_owned()),
         Some(CustomRejection::ServiceUnavailable(reason)) => {
@@ -123,9 +123,9 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
                 (StatusCode::NOT_FOUND, "404".to_string(), "data not found".to_string())
             } else if err.find::<warp::reject::MethodNotAllowed>().is_some() {
                 (
-                    StatusCode::METHOD_NOT_ALLOWED,
-                    "405".to_string(),
-                    "method not allowed".to_string(),
+                    StatusCode::FORBIDDEN,
+                    "403".to_string(),
+                    "access forbidden".to_string(),
                 )
             } else {
                 error!("unhandled rejection: {:?}", err);

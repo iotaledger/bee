@@ -29,7 +29,7 @@ use std::{
 
 #[derive(Debug, Clone)]
 pub(crate) enum CustomRejection {
-    Forbidden(String),
+    Forbidden,
     BadRequest(String),
     NotFound(String),
     ServiceUnavailable(String),
@@ -487,7 +487,7 @@ pub fn has_permission(
                         return Ok(());
                     }
                 }
-                Err(reject::custom(Forbidden("access forbidden".to_string())))
+                Err(reject::custom(Forbidden))
             }
         })
         .untuple_one()
