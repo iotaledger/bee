@@ -130,10 +130,10 @@ fn health<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
+    has_permission(ROUTE_HEALTH, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("health"))
         .and(warp::path::end())
-        .and(has_permission(ROUTE_HEALTH, public_routes, allowed_ips))
         .and(with_tangle(tangle))
         .and_then(handlers::health::health)
 }
@@ -147,8 +147,8 @@ fn info<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_INFO, public_routes, allowed_ips))
+    has_permission(ROUTE_INFO, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("info"))
@@ -166,8 +166,8 @@ fn tips<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_TIPS, public_routes, allowed_ips))
+    has_permission(ROUTE_TIPS, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("tips"))
@@ -185,8 +185,8 @@ fn submit_message<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::post()
-        .and(has_permission(ROUTE_SUBMIT_MESSAGE, public_routes, allowed_ips))
+    has_permission(ROUTE_SUBMIT_MESSAGE, public_routes, allowed_ips)
+        .and(warp::post())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -206,8 +206,8 @@ fn submit_message_raw<B: StorageBackend>(
     tangle: ResourceHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::post()
-        .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
+    has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips)
+        .and(warp::post())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -223,8 +223,8 @@ fn message_indexation<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_MESSAGES_FIND, public_routes, allowed_ips))
+    has_permission(ROUTE_MESSAGES_FIND, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -244,8 +244,8 @@ fn message<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_MESSAGE, public_routes, allowed_ips))
+    has_permission(ROUTE_MESSAGE, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -260,8 +260,8 @@ fn message_metadata<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_MESSAGE_METADATA, public_routes, allowed_ips))
+    has_permission(ROUTE_MESSAGE_METADATA, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -277,8 +277,8 @@ fn message_raw<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_MESSAGE_RAW, public_routes, allowed_ips))
+    has_permission(ROUTE_MESSAGE_RAW, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -294,8 +294,8 @@ fn message_children<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_MESSAGE_CHILDREN, public_routes, allowed_ips))
+    has_permission(ROUTE_MESSAGE_CHILDREN, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -311,8 +311,8 @@ fn output<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_OUTPUT, public_routes, allowed_ips))
+    has_permission(ROUTE_OUTPUT, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("outputs"))
@@ -327,8 +327,8 @@ fn balance_bech32<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_BALANCE_BECH32, public_routes, allowed_ips))
+    has_permission(ROUTE_BALANCE_BECH32, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
@@ -343,8 +343,8 @@ fn balance_ed25519<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_BALANCE_ED25519, public_routes, allowed_ips))
+    has_permission(ROUTE_BALANCE_ED25519, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
@@ -360,8 +360,8 @@ fn outputs_bech32<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_OUTPUTS_BECH32, public_routes, allowed_ips))
+    has_permission(ROUTE_OUTPUTS_BECH32, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
@@ -377,8 +377,8 @@ fn outputs_ed25519<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_OUTPUTS_ED25519, public_routes, allowed_ips))
+    has_permission(ROUTE_OUTPUTS_ED25519, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
@@ -395,8 +395,8 @@ fn milestone<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_MILESTONE, public_routes, allowed_ips))
+    has_permission(ROUTE_MILESTONE, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("milestones"))
@@ -411,8 +411,8 @@ fn peers(
     allowed_ips: Vec<IpAddr>,
     peer_manager: ResourceHandle<PeerManager>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_PEERS, public_routes, allowed_ips))
+    has_permission(ROUTE_PEERS, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("peers"))
@@ -426,8 +426,8 @@ fn peer(
     allowed_ips: Vec<IpAddr>,
     peer_manager: ResourceHandle<PeerManager>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_PEER, public_routes, allowed_ips))
+    has_permission(ROUTE_PEER, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("peer"))
@@ -443,8 +443,8 @@ fn peer_add(
     peer_manager: ResourceHandle<PeerManager>,
     network_controller: ResourceHandle<NetworkController>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(has_permission(ROUTE_ADD_PEER, public_routes, allowed_ips))
+    has_permission(ROUTE_ADD_PEER, public_routes, allowed_ips)
+        .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("peer"))
@@ -460,8 +460,8 @@ fn peer_remove(
     allowed_ips: Vec<IpAddr>,
     network_controller: ResourceHandle<NetworkController>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::delete()
-        .and(has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips))
+    has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips)
+        .and(warp::delete())
         .and(warp::path("api"))
         .and(warp::path("v1"))
         .and(warp::path("peer"))
@@ -487,7 +487,7 @@ pub fn has_permission(
                         return Ok(());
                     }
                 }
-                Err(reject::custom(Forbidden("not available for public use".to_string())))
+                Err(reject::custom(Forbidden("access forbidden".to_string())))
             }
         })
         .untuple_one()
