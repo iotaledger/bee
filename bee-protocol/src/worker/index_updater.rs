@@ -124,8 +124,8 @@ async fn update_past_cone<B: StorageBackend>(
                 metadata.set_milestone_index(index);
                 // TODO: That was fine in a synchronous scenario, where this algo had the newest information,
                 // but probably isn't the case in the now asynchronous scenario. Investigate!
-                metadata.set_otrsi(IndexId(index, parent_id));
-                metadata.set_ytrsi(IndexId(index, parent_id));
+                metadata.set_otrsi(IndexId::new(index, parent_id));
+                metadata.set_ytrsi(IndexId::new(index, parent_id));
             })
             .await;
 
@@ -188,10 +188,10 @@ async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, roots: Hash
 
                     // If the childs OTRSI was previously inherited from the current parent, update it.
                     if let Some(child_otrsi) = child_metadata.otrsi() {
-                        if child_otrsi.1.eq(&parent_id) {
+                        if child_otrsi.id().eq(&parent_id) {
                             tangle
                                 .update_metadata(child, |md| {
-                                    md.set_otrsi(IndexId(parent_otrsi.0, parent_id));
+                                    md.set_otrsi(IndexId::new(parent_otrsi.index(), parent_id));
                                 })
                                 .await;
                         }
@@ -199,10 +199,10 @@ async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, roots: Hash
 
                     // If the childs YTRSI was previously inherited from the current parent, update it.
                     if let Some(child_ytrsi) = child_metadata.ytrsi() {
-                        if child_ytrsi.1.eq(&parent_id) {
+                        if child_ytrsi.id().eq(&parent_id) {
                             tangle
                                 .update_metadata(child, |md| {
-                                    md.set_ytrsi(IndexId(parent_ytrsi.0, parent_id));
+                                    md.set_ytrsi(IndexId::new(parent_ytrsi.index(), parent_id));
                                 })
                                 .await;
                         }

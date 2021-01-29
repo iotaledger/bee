@@ -191,7 +191,21 @@ impl Packable for MessageMetadata {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct IndexId(pub MilestoneIndex, pub MessageId);
+pub struct IndexId(MilestoneIndex, MessageId);
+
+impl IndexId {
+    pub fn new(index: MilestoneIndex, id: MessageId) -> Self {
+        Self(index, id)
+    }
+
+    pub fn index(&self) -> MilestoneIndex {
+        self.0
+    }
+
+    pub fn id(&self) -> MessageId {
+        self.1
+    }
+}
 
 impl IndexId {
     pub fn update(&mut self, index: MilestoneIndex) {

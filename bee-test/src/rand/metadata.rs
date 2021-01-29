@@ -17,8 +17,8 @@ pub fn rand_metadata() -> MessageMetadata {
         rand_integer(),
         rand_integer(),
         rand_integer(),
-        rand_option(IndexId(rand_milestone_index(), rand_message_id())),
-        rand_option(IndexId(rand_milestone_index(), rand_message_id())),
+        rand_option(IndexId::new(rand_milestone_index(), rand_message_id())),
+        rand_option(IndexId::new(rand_milestone_index(), rand_message_id())),
         rand_integer(),
     )
 }

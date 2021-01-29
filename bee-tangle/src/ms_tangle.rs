@@ -143,8 +143,8 @@ impl<B: StorageBackend> MsTangle<B> {
             .update_metadata(&milestone.message_id(), |metadata| {
                 metadata.flags_mut().set_milestone(true);
                 metadata.set_milestone_index(idx);
-                metadata.set_otrsi(IndexId(idx, *milestone.message_id()));
-                metadata.set_ytrsi(IndexId(idx, *milestone.message_id()));
+                metadata.set_otrsi(IndexId::new(idx, *milestone.message_id()));
+                metadata.set_ytrsi(IndexId::new(idx, *milestone.message_id()));
             })
             .await;
         self.inner
@@ -298,7 +298,7 @@ impl<B: StorageBackend> MsTangle<B> {
 
     pub async fn otrsi(&self, hash: &MessageId) -> Option<IndexId> {
         match self.solid_entry_points.lock().await.get(hash) {
-            Some(sep) => Some(IndexId(*sep, *hash)),
+            Some(sep) => Some(IndexId::new(*sep, *hash)),
             None => match self.get_metadata(hash).await {
                 Some(metadata) => metadata.otrsi(),
                 None => None,
@@ -308,7 +308,7 @@ impl<B: StorageBackend> MsTangle<B> {
 
     pub async fn ytrsi(&self, hash: &MessageId) -> Option<IndexId> {
         match self.solid_entry_points.lock().await.get(hash) {
-            Some(sep) => Some(IndexId(*sep, *hash)),
+            Some(sep) => Some(IndexId::new(*sep, *hash)),
             None => match self.get_metadata(hash).await {
                 Some(metadata) => metadata.ytrsi(),
                 None => None,
