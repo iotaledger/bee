@@ -149,7 +149,7 @@ async fn update_past_cone<B: StorageBackend>(
         updated.insert(parent_id);
     }
 
-    debug!("Updated milestone index for {} messages.", updated.len());
+    debug!("Set milestone index ({}) for {} messages.", index, updated.len());
 
     updated
 }
