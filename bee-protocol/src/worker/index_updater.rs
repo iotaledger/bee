@@ -83,13 +83,13 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, 
         let roots = update_past_cone(tangle, parent1, parent2, index).await;
 
         // Note: For tip-selection only the most recent tangle is relevent. That means that during
-        // synchronization we do not need to update xMRSI values before (LMI - BELOW_MAX_DEPTH).
+        // synchronization we do not need to update xMRSI values or tip scores before (LMI - BELOW_MAX_DEPTH).
         if index > tangle.get_latest_milestone_index() - BELOW_MAX_DEPTH.into() {
             update_future_cone(tangle, roots).await;
-        }
 
-        // Update tip pool after all values got updated.
-        tangle.update_tip_scores().await;
+            // Update tip pool after all values got updated.
+            tangle.update_tip_scores().await;
+        }
     }
 }
 
@@ -123,7 +123,6 @@ async fn update_past_cone<B: StorageBackend>(
 
         tangle
             .update_metadata(&parent_id, |metadata| {
-                // TODO: Throw one of those indexes away ;)
                 metadata.set_milestone_index(index);
                 // TODO: That was fine in a synchronous scenario, where this algo had the newest information,
                 // but probably isn't the case in the now asynchronous scenario. Investigate!
@@ -183,7 +182,7 @@ async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, roots: Hash
             for child in &children {
                 if let Some(child_metadata) = tangle.get_metadata(&child).await {
                     // We can ignore children that are already confirmed
-                    // TODO: resolve ambiguity betwenn `is_confirmed()` and `milestone_index().is_some()`
+                    // TODO: resolve ambiguity between `is_confirmed()` and `milestone_index().is_some()`
                     // if child_metadata.flags().is_confirmed() {
                     if child_metadata.milestone_index().is_some() {
                         continue;
