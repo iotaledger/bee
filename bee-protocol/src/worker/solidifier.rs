@@ -70,7 +70,7 @@ async fn heavy_solidification<B: StorageBackend>(
 async fn solidify<B: StorageBackend>(
     tangle: &MsTangle<B>,
     ledger_worker: &mpsc::UnboundedSender<LedgerWorkerEvent>,
-    milestone_cone_updater: &mpsc::UnboundedSender<IndexUpdaterWorkerEvent>,
+    index_updater_worker: &mpsc::UnboundedSender<IndexUpdaterWorkerEvent>,
     peer_manager: &PeerManager,
     metrics: &ProtocolMetrics,
     bus: &Bus<'static>,
@@ -85,7 +85,7 @@ async fn solidify<B: StorageBackend>(
         warn!("Sending message_id to ledger worker failed: {}.", e);
     }
 
-    if let Err(e) = milestone_cone_updater
+    if let Err(e) = index_updater_worker
         // TODO get MS
         .send(IndexUpdaterWorkerEvent(index, Milestone::new(id, 0)))
     {
