@@ -19,7 +19,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{traversal, MsTangle, TangleWorker, BELOW_MAX_DEPTH};
+use bee_tangle::{traversal, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::StreamExt;
@@ -85,15 +85,11 @@ async fn solidify<B: StorageBackend>(
         warn!("Sending message_id to ledger worker failed: {}.", e);
     }
 
-    // Note: For tip-selection only the most recent tangle is relevent. That means that during
-    // synchronization we do not need to update xMRSI values before (LMI - BELOW_MAX_DEPTH).
-    if index > tangle.get_latest_milestone_index() - BELOW_MAX_DEPTH.into() {
-        if let Err(e) = index_updater_worker
-            // TODO get MS
-            .send(IndexUpdaterWorkerEvent(index, Milestone::new(id, 0)))
-        {
-            warn!("Sending message_id to `IndexUpdater` failed: {:?}.", e);
-        }
+    if let Err(e) = index_updater_worker
+        // TODO get MS
+        .send(IndexUpdaterWorkerEvent(index, Milestone::new(id, 0)))
+    {
+        warn!("Sending message_id to `IndexUpdater` failed: {:?}.", e);
     }
 
     helper::broadcast_heartbeat(&peer_manager, &metrics, &tangle).await;

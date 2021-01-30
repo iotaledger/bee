@@ -8,7 +8,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker};
+use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker, BELOW_MAX_DEPTH};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -82,8 +82,11 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, 
         // Update the past cone of this milestone by setting its milestone index, and return them.
         let roots = update_past_cone(tangle, parent1, parent2, index).await;
 
-        // Propagate new otrsi/ytrsi
-        update_future_cone(tangle, roots).await;
+        // Note: For tip-selection only the most recent tangle is relevent. That means that during
+        // synchronization we do not need to update xMRSI values before (LMI - BELOW_MAX_DEPTH).
+        if index > tangle.get_latest_milestone_index() - BELOW_MAX_DEPTH.into() {
+            update_future_cone(tangle, roots).await;
+        }
 
         // Update tip pool after all values got updated.
         tangle.update_tip_scores().await;
