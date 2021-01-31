@@ -17,11 +17,7 @@ use log::*;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{
-    any::TypeId,
-    cmp::{max, min},
-    convert::Infallible,
-};
+use std::{any::TypeId, convert::Infallible};
 
 #[derive(Debug)]
 pub(crate) struct PropagatorWorkerEvent(pub(crate) MessageId);
@@ -44,14 +40,12 @@ async fn propagate<B: StorageBackend>(
         }
 
         // TODO Copying parents to avoid double locking, will be refactored.
-        if let Some((parent1, parent2)) = tangle
-            .get(&message_id)
-            .await
-            .map(|message| (*message.parent1(), *message.parent2()))
-        {
+        if let Some(parents) = tangle.get(&message_id).await.map(|message| message.parents().to_vec()) {
             // If either of the parents is not yet solid, we do not propagate their current state.
-            if !tangle.is_solid_message(&parent1).await || !tangle.is_solid_message(&parent2).await {
-                continue;
+            for parent in parents.iter() {
+                if !tangle.is_solid_message(parent).await {
+                    continue;
+                }
             }
 
             // Note: There are two types of solidity carriers:
@@ -62,27 +56,27 @@ async fn propagate<B: StorageBackend>(
             // parent in question turns out to be a SEP.
 
             // Determine OTRSI/YTRSI of parent1
-            let (parent1_otrsi, parent1_ytrsi) = match tangle.get_solid_entry_point_index(&parent1).await {
-                Some(parent1_sepi) => (IndexId::new(parent1_sepi, parent1), IndexId::new(parent1_sepi, parent1)),
-                None => match tangle.get_metadata(&parent1).await {
-                    Some(parent1_md) => (parent1_md.otrsi().unwrap(), parent1_md.ytrsi().unwrap()),
-                    None => continue,
-                },
-            };
 
-            // Determine OTRSI/YTRSI of parent2
-            let (parent2_otrsi, parent2_ytrsi) = match tangle.get_solid_entry_point_index(&parent2).await {
-                Some(parent2_sepi) => (IndexId::new(parent2_sepi, parent2), IndexId::new(parent2_sepi, parent2)),
-                None => match tangle.get_metadata(&parent2).await {
-                    Some(parent2_md) => (parent2_md.otrsi().unwrap(), parent2_md.ytrsi().unwrap()),
-                    None => continue,
-                },
-            };
+            let mut parent_otrsis = Vec::new();
+            let mut parent_ytrsis = Vec::new();
+
+            for parent in parents.iter() {
+                let (parent_otrsi, parent_ytrsi) = match tangle.get_solid_entry_point_index(parent).await {
+                    Some(parent_sepi) => (IndexId::new(parent_sepi, *parent), IndexId::new(parent_sepi, *parent)),
+                    None => match tangle.get_metadata(parent).await {
+                        Some(parent_md) => (parent_md.otrsi().unwrap(), parent_md.ytrsi().unwrap()),
+                        None => continue,
+                    },
+                };
+                parent_otrsis.push(parent_otrsi);
+                parent_ytrsis.push(parent_ytrsi);
+            }
 
             // Derive child OTRSI/YTRSI from its parents.
             // Note: The child inherits oldest (lowest) otrsi and the newest (highest) ytrsi from its parents.
-            let child_otrsi = min(parent1_otrsi, parent2_otrsi);
-            let child_ytrsi = max(parent1_ytrsi, parent2_ytrsi);
+            // TODO @Alex: what to do if parent_otrsis and/or parent_ytrsis are empty ?
+            let child_otrsi = parent_otrsis.iter().min().unwrap();
+            let child_ytrsi = parent_ytrsis.iter().max().unwrap();
 
             let ms_index_maybe = tangle
                 .update_metadata(&message_id, |metadata| {
@@ -92,8 +86,8 @@ async fn propagate<B: StorageBackend>(
                     if metadata.flags().is_milestone() {
                         metadata.milestone_index()
                     } else {
-                        metadata.set_otrsi(child_otrsi);
-                        metadata.set_ytrsi(child_ytrsi);
+                        metadata.set_otrsi(*child_otrsi);
+                        metadata.set_ytrsi(*child_ytrsi);
                         None
                     }
                 })
@@ -108,7 +102,7 @@ async fn propagate<B: StorageBackend>(
             }
 
             // Send child to the tip pool.
-            if let Err(e) = tip_tx.send((*message_id, parent1, parent2, ms_index_maybe)).await {
+            if let Err(e) = tip_tx.send((*message_id, parents, ms_index_maybe)).await {
                 warn!("Failed to send message to the tip pool. Cause: {:?}", e);
             }
         }

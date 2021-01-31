@@ -240,7 +240,7 @@ where
 
                 for parent in message.parents() {
                     if !visited.contains(parent) {
-                        next = Some(parent);
+                        next.replace(parent);
                         break;
                     }
                 }
