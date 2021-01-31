@@ -74,13 +74,9 @@ where
 async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, index: MilestoneIndex) {
     let message_id = milestone.message_id();
 
-    if let Some((parent1, parent2)) = tangle
-        .get(message_id)
-        .await
-        .map(|message| (*message.parent1(), *message.parent2()))
-    {
+    if let Some(parents) = tangle.get(message_id).await.map(|message| message.parents().to_vec()) {
         // Update the past cone of this milestone by setting its milestone index, and return them.
-        let roots = update_past_cone(tangle, parent1, parent2, index).await;
+        let roots = update_past_cone(tangle, parents, index).await;
 
         // Note: For tip-selection only the most recent tangle is relevent. That means that during
         // synchronization we do not need to update xMRSI values or tip scores before (LMI - BELOW_MAX_DEPTH).
@@ -95,11 +91,9 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, 
 
 async fn update_past_cone<B: StorageBackend>(
     tangle: &MsTangle<B>,
-    parent1: MessageId,
-    parent2: MessageId,
+    mut parents: Vec<MessageId>,
     index: MilestoneIndex,
 ) -> HashSet<MessageId> {
-    let mut parents = vec![parent1, parent2];
     let mut updated = HashSet::new();
 
     while let Some(parent_id) = parents.pop() {
@@ -131,13 +125,8 @@ async fn update_past_cone<B: StorageBackend>(
             })
             .await;
 
-        if let Some((grand_parent1, grand_parent2)) = tangle
-            .get(&parent_id)
-            .await
-            .map(|parent| (*parent.parent1(), *parent.parent2()))
-        {
-            parents.push(grand_parent1);
-            parents.push(grand_parent2);
+        if let Some(mut grand_parents) = tangle.get(&parent_id).await.map(|parent| parent.parents().to_vec()) {
+            parents.append(&mut grand_parents);
         }
 
         // Preferably we would only collect the 'root messages/transactions'. They are defined as being confirmed by
