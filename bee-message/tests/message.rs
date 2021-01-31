@@ -13,8 +13,7 @@ use bee_test::rand::message::rand_message_id;
 fn pow_default_provider() {
     let message = MessageBuilder::<Miner>::new()
         .with_network_id(0)
-        .with_parent1(rand_message_id())
-        .with_parent2(rand_message_id())
+        .with_parents(vec![rand_message_id()])
         .finish()
         .unwrap();
 
@@ -28,8 +27,7 @@ fn pow_default_provider() {
 fn pow_provider() {
     let message = MessageBuilder::new()
         .with_network_id(0)
-        .with_parent1(rand_message_id())
-        .with_parent2(rand_message_id())
+        .with_parents(vec![rand_message_id()])
         .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64)
         .finish()
         .unwrap();
@@ -40,15 +38,14 @@ fn pow_provider() {
     assert!(score >= 10000f64);
 }
 
-// #[test]
-// fn invalid_length() {
-//     let res = MessageBuilder::new()
-//         .with_network_id(0)
-//         .with_parent1(rand_message_id())
-//         .with_parent2(rand_message_id())
-//         .with_nonce_provider(ConstantBuilder::new().with_value(42).finish(), 10000f64)
-//         .with_payload(IndexationPayload::new("42".to_owned(), &[0u8; 32000]).unwrap().into())
-//         .finish();
-//
-//     assert!(matches!(res, Err(Error::InvalidMessageLength(32096))));
-// }
+#[test]
+fn invalid_length() {
+    let res = MessageBuilder::new()
+        .with_network_id(0)
+        .with_parents(vec![rand_message_id()])
+        .with_nonce_provider(ConstantBuilder::new().with_value(42).finish(), 10000f64)
+        .with_payload(IndexationPayload::new("42".to_owned(), &[0u8; 32000]).unwrap().into())
+        .finish();
+
+    assert!(matches!(res, Err(Error::InvalidMessageLength(32096))));
+}
