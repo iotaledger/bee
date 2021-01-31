@@ -15,9 +15,9 @@ pub use signature_locked_single::SignatureLockedSingleOutput;
 pub use storable::{ConsumedOutput, CreatedOutput};
 pub use treasury::TreasuryOutput;
 
-use signature_locked_dust_allowance::SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_TYPE;
-use signature_locked_single::SIGNATURE_LOCKED_SINGLE_OUTPUT_TYPE;
-use treasury::TREASURY_OUTPUT_TYPE;
+use signature_locked_dust_allowance::SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND;
+use signature_locked_single::SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND;
+use treasury::TREASURY_OUTPUT_KIND;
 
 use crate::Error;
 
@@ -55,9 +55,9 @@ impl From<TreasuryOutput> for Output {
 impl Output {
     pub fn kind(&self) -> u8 {
         match self {
-            Self::SignatureLockedSingle(_) => SIGNATURE_LOCKED_SINGLE_OUTPUT_TYPE,
-            Self::SignatureLockedDustAllowance(_) => SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_TYPE,
-            Self::Treasury(_) => TREASURY_OUTPUT_TYPE,
+            Self::SignatureLockedSingle(_) => SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND,
+            Self::SignatureLockedDustAllowance(_) => SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND,
+            Self::Treasury(_) => TREASURY_OUTPUT_KIND,
         }
     }
 }
@@ -68,27 +68,27 @@ impl Packable for Output {
     fn packed_len(&self) -> usize {
         match self {
             Self::SignatureLockedSingle(output) => {
-                SIGNATURE_LOCKED_SINGLE_OUTPUT_TYPE.packed_len() + output.packed_len()
+                SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND.packed_len() + output.packed_len()
             }
             Self::SignatureLockedDustAllowance(output) => {
-                SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_TYPE.packed_len() + output.packed_len()
+                SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND.packed_len() + output.packed_len()
             }
-            Self::Treasury(output) => TREASURY_OUTPUT_TYPE.packed_len() + output.packed_len(),
+            Self::Treasury(output) => TREASURY_OUTPUT_KIND.packed_len() + output.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::SignatureLockedSingle(output) => {
-                SIGNATURE_LOCKED_SINGLE_OUTPUT_TYPE.pack(writer)?;
+                SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND.pack(writer)?;
                 output.pack(writer)?;
             }
             Self::SignatureLockedDustAllowance(output) => {
-                SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_TYPE.pack(writer)?;
+                SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND.pack(writer)?;
                 output.pack(writer)?;
             }
             Self::Treasury(output) => {
-                TREASURY_OUTPUT_TYPE.pack(writer)?;
+                TREASURY_OUTPUT_KIND.pack(writer)?;
                 output.pack(writer)?;
             }
         }
@@ -98,14 +98,14 @@ impl Packable for Output {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            SIGNATURE_LOCKED_SINGLE_OUTPUT_TYPE => {
+            SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND => {
                 Self::SignatureLockedSingle(SignatureLockedSingleOutput::unpack(reader)?)
             }
-            SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_TYPE => {
+            SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND => {
                 Self::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput::unpack(reader)?)
             }
-            TREASURY_OUTPUT_TYPE => Self::Treasury(TreasuryOutput::unpack(reader)?),
-            t => return Err(Self::Error::InvalidOutputType(t)),
+            TREASURY_OUTPUT_KIND => Self::Treasury(TreasuryOutput::unpack(reader)?),
+            t => return Err(Self::Error::InvalidOutputKind(t)),
         })
     }
 }

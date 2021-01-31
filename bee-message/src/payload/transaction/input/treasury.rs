@@ -7,7 +7,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::{convert::From, str::FromStr};
 
-pub(crate) const TREASURY_INPUT_TYPE: u8 = 1;
+pub(crate) const TREASURY_INPUT_KIND: u8 = 1;
 
 #[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct TreasuryInput(MessageId);

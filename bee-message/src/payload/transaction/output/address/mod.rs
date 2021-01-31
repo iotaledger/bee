@@ -3,7 +3,7 @@
 
 mod ed25519;
 
-use ed25519::ED25519_ADDRESS_TYPE;
+use ed25519::ED25519_ADDRESS_KIND;
 pub use ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
 
 use crate::{payload::transaction::SignatureUnlock, Error};
@@ -61,14 +61,14 @@ impl Packable for Address {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::Ed25519(address) => ED25519_ADDRESS_TYPE.packed_len() + address.packed_len(),
+            Self::Ed25519(address) => ED25519_ADDRESS_KIND.packed_len() + address.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::Ed25519(address) => {
-                ED25519_ADDRESS_TYPE.pack(writer)?;
+                ED25519_ADDRESS_KIND.pack(writer)?;
                 address.pack(writer)?;
             }
         }
@@ -77,8 +77,8 @@ impl Packable for Address {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            ED25519_ADDRESS_TYPE => Self::Ed25519(Ed25519Address::unpack(reader)?),
-            t => return Err(Self::Error::InvalidAddressType(t)),
+            ED25519_ADDRESS_KIND => Self::Ed25519(Ed25519Address::unpack(reader)?),
+            t => return Err(Self::Error::InvalidAddressKind(t)),
         })
     }
 }

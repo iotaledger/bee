@@ -10,7 +10,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use serde::{Deserialize, Serialize};
 
-pub(crate) const SIGNATURE_LOCKED_SINGLE_OUTPUT_TYPE: u8 = 0;
+pub(crate) const SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND: u8 = 0;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
 pub struct SignatureLockedSingleOutput {

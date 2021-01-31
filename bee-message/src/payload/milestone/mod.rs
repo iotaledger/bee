@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use alloc::{boxed::Box, vec::Vec};
 use core::convert::TryInto;
 
-pub(crate) const MILESTONE_PAYLOAD_TYPE: u32 = 1;
+pub(crate) const MILESTONE_PAYLOAD_KIND: u32 = 1;
 
 pub const MILESTONE_SIGNATURE_LENGTH: usize = 64;
 

@@ -33,8 +33,8 @@ use serde::{Deserialize, Serialize};
 use alloc::{boxed::Box, vec::Vec};
 use core::{cmp::Ordering, slice::Iter};
 
-pub(crate) const TRANSACTION_PAYLOAD_TYPE: u32 = 0;
-pub(crate) use treasury::TREASURY_TRANSACTION_PAYLOAD_TYPE;
+pub(crate) const TRANSACTION_PAYLOAD_KIND: u32 = 0;
+pub(crate) use treasury::TREASURY_TRANSACTION_PAYLOAD_KIND;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct TransactionPayload {
@@ -50,7 +50,7 @@ impl TransactionPayload {
     pub fn id(&self) -> TransactionId {
         let mut hasher = VarBlake2b::new(TRANSACTION_ID_LENGTH).unwrap();
 
-        hasher.update(TRANSACTION_PAYLOAD_TYPE.to_le_bytes());
+        hasher.update(TRANSACTION_PAYLOAD_KIND.to_le_bytes());
         hasher.update(self.pack_new());
 
         let mut bytes = [0u8; TRANSACTION_ID_LENGTH];

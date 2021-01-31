@@ -167,7 +167,8 @@ mod tests {
     use super::*;
     use futures::{channel::oneshot, future::FutureExt};
     use std::time::Duration;
-    use tokio::{spawn, time::sleep};
+    use tokio::{spawn, sync::mpsc, time::sleep};
+    use tokio_stream::wrappers::UnboundedReceiverStream;
 
     /// Generate a vector of events filled with packets of a desired length.
     fn gen_events(event_len: usize, msg_size: usize, n_msg: usize) -> Vec<Vec<u8>> {
@@ -197,7 +198,7 @@ mod tests {
         let (sender_shutdown, receiver_shutdown) = oneshot::channel::<()>();
         let (sender, receiver) = mpsc::unbounded_channel::<Vec<u8>>();
         let mut msg_handler = PacketHandler::new(
-            receiver,
+            UnboundedReceiverStream::new(receiver),
             receiver_shutdown.fuse(),
             "/ip4/0.0.0.0/tcp/8080".parse().unwrap(),
         );
@@ -291,7 +292,7 @@ mod tests {
         let (sender, receiver) = mpsc::unbounded_channel::<Vec<u8>>();
 
         let mut msg_handler = PacketHandler::new(
-            receiver,
+            UnboundedReceiverStream::new(receiver),
             receiver_shutdown.fuse(),
             "/ip4/0.0.0.0/tcp/8080".parse().unwrap(),
         );

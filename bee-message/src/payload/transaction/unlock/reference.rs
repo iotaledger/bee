@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use core::convert::{TryFrom, TryInto};
 
-pub(crate) const REFERENCE_UNLOCK_TYPE: u8 = 1;
+pub(crate) const REFERENCE_UNLOCK_KIND: u8 = 1;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct ReferenceUnlock(u16);

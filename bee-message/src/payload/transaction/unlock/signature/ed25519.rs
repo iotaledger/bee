@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use alloc::boxed::Box;
 
-pub(crate) const ED25519_SIGNATURE_TYPE: u8 = 1;
+pub(crate) const ED25519_SIGNATURE_KIND: u8 = 1;
 const ED25519_PUBLIC_KEY_LENGTH: usize = 32;
 const ED25519_SIGNATURE_LENGTH: usize = 64;
 

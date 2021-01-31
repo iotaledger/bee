@@ -9,12 +9,12 @@ pub enum Error {
     InvalidDustAmount(u64),
     InvalidInputOutputCount(usize),
     InvalidInputOutputIndex(u16),
-    InvalidInputType(u8),
-    InvalidOutputType(u8),
-    InvalidPayloadType(u32),
-    InvalidAddressType(u8),
-    InvalidSignatureType(u8),
-    InvalidUnlockType(u8),
+    InvalidInputKind(u8),
+    InvalidOutputKind(u8),
+    InvalidPayloadKind(u32),
+    InvalidAddressKind(u8),
+    InvalidSignatureKind(u8),
+    InvalidUnlockKind(u8),
     InvalidAccumulatedOutput(u128),
     InvalidUnlockBlockCount(usize, usize),
     NoInput,
@@ -26,7 +26,7 @@ pub enum Error {
     MissingField(&'static str),
     Io(std::io::Error),
     Utf8String(alloc::string::FromUtf8Error),
-    InvalidType(u8, u8),
+    InvalidKind(u8, u8),
     InvalidAnnouncedLength(usize, usize),
     InvalidHex,
     InvalidIndexationLength(usize),
@@ -43,12 +43,12 @@ impl fmt::Display for Error {
             Error::InvalidDustAmount(amount) => write!(f, "Invalid dust amount: {}.", amount),
             Error::InvalidInputOutputCount(count) => write!(f, "Invalid input or output count: {}.", count),
             Error::InvalidInputOutputIndex(index) => write!(f, "Invalid input or output index: {}.", index),
-            Error::InvalidInputType(t) => write!(f, "Invalid input type: {}.", t),
-            Error::InvalidOutputType(t) => write!(f, "Invalid output type: {}.", t),
-            Error::InvalidPayloadType(t) => write!(f, "Invalid payload type: {}.", t),
-            Error::InvalidAddressType(t) => write!(f, "Invalid address type: {}.", t),
-            Error::InvalidSignatureType(t) => write!(f, "Invalid signature type: {}.", t),
-            Error::InvalidUnlockType(t) => write!(f, "Invalid unlock type: {}.", t),
+            Error::InvalidInputKind(t) => write!(f, "Invalid input kind: {}.", t),
+            Error::InvalidOutputKind(t) => write!(f, "Invalid output kind: {}.", t),
+            Error::InvalidPayloadKind(t) => write!(f, "Invalid payload kind: {}.", t),
+            Error::InvalidAddressKind(t) => write!(f, "Invalid address kind: {}.", t),
+            Error::InvalidSignatureKind(t) => write!(f, "Invalid signature kind: {}.", t),
+            Error::InvalidUnlockKind(t) => write!(f, "Invalid unlock kind: {}.", t),
             Error::InvalidAccumulatedOutput(value) => write!(f, "Invalid accumulated output balance: {}.", value),
             Error::InvalidUnlockBlockCount(input, block) => {
                 write!(f, "Invalid unlock block count: {} != {}.", input, block)
@@ -62,14 +62,14 @@ impl fmt::Display for Error {
             Error::MissingField(s) => write!(f, "Missing required field: {}.", s),
             Error::Io(e) => write!(f, "I/O error happened: {}.", e),
             Error::Utf8String(e) => write!(f, "Invalid Utf8 string read: {}.", e),
-            Error::InvalidType(expected, actual) => write!(f, "Invalid type read: {}, {}.", expected, actual),
+            Error::InvalidKind(expected, actual) => write!(f, "Invalid kind read: {}, {}.", expected, actual),
             Error::InvalidAnnouncedLength(expected, actual) => {
                 write!(f, "Invalid announced length: {}, {}.", expected, actual)
             }
             Error::InvalidHex => write!(f, "Invalid hexadecimal conversion."),
             Error::InvalidIndexationLength(length) => write!(f, "Invalid indexation index or data length {}.", length),
             Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
-            Error::InvalidTransactionPayload => write!(f, "Invalid transaction payload type."),
+            Error::InvalidTransactionPayload => write!(f, "Invalid transaction payload kind."),
         }
     }
 }

@@ -7,7 +7,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use serde::{Deserialize, Serialize};
 
-pub(crate) const RECEIPT_PAYLOAD_TYPE: u32 = 3;
+pub(crate) const RECEIPT_PAYLOAD_KIND: u32 = 3;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct ReceiptPayload {}

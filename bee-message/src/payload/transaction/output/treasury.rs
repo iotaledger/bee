@@ -7,7 +7,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use serde::{Deserialize, Serialize};
 
-pub(crate) const TREASURY_OUTPUT_TYPE: u8 = 2;
+pub(crate) const TREASURY_OUTPUT_KIND: u8 = 2;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
 pub struct TreasuryOutput {

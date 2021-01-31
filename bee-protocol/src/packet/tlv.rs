@@ -135,7 +135,7 @@ mod tests {
         let mut rng = rand::thread_rng();
 
         for _ in 0..1000 {
-            let length = rng.gen_range(P::size_range().start, P::size_range().end);
+            let length = rng.gen_range(P::size_range());
             let bytes_from: Vec<u8> = (0..length).map(|_| rand::random::<u8>()).collect();
             let packet = tlv_from_bytes::<P>(
                 &Header {

@@ -14,7 +14,7 @@ use crypto::{
 use alloc::{string::String, vec};
 use core::{convert::TryInto, str::FromStr};
 
-pub(crate) const ED25519_ADDRESS_TYPE: u8 = 1;
+pub(crate) const ED25519_ADDRESS_KIND: u8 = 1;
 pub const ED25519_ADDRESS_LENGTH: usize = 32;
 
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]

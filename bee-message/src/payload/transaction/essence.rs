@@ -82,10 +82,10 @@ impl Packable for TransactionPayloadEssence {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let essence_type = u8::unpack(reader)?;
+        let essence_kind = u8::unpack(reader)?;
 
-        if essence_type != 0u8 {
-            return Err(Self::Error::InvalidType(0, essence_type));
+        if essence_kind != 0u8 {
+            return Err(Self::Error::InvalidKind(0, essence_kind));
         }
 
         let inputs_len = u16::unpack(reader)? as usize;
@@ -190,7 +190,7 @@ impl TransactionPayloadEssenceBuilder {
                         return Err(Error::DuplicateError);
                     }
                 }
-                _ => return Err(Error::InvalidInputType(input.kind())),
+                _ => return Err(Error::InvalidInputKind(input.kind())),
             }
         }
 
@@ -236,7 +236,7 @@ impl TransactionPayloadEssenceBuilder {
                         .checked_add(dust_allowance.amount())
                         .ok_or_else(|| Error::InvalidAccumulatedOutput((total + dust_allowance.amount()) as u128))?;
                 }
-                _ => return Err(Error::InvalidOutputType(output.kind())),
+                _ => return Err(Error::InvalidOutputKind(output.kind())),
             }
 
             // Accumulated output balance must not exceed the total supply of tokens.

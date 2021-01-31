@@ -10,7 +10,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use serde::{Deserialize, Serialize};
 
-pub(crate) const TREASURY_TRANSACTION_PAYLOAD_TYPE: u32 = 4;
+pub(crate) const TREASURY_TRANSACTION_PAYLOAD_KIND: u32 = 4;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct TreasuryTransactionPayload {
@@ -21,11 +21,11 @@ pub struct TreasuryTransactionPayload {
 impl TreasuryTransactionPayload {
     pub fn new(input: Input, output: Output) -> Result<Self, Error> {
         if !matches!(input, Input::Treasury(_)) {
-            return Err(Error::InvalidInputType(input.kind()));
+            return Err(Error::InvalidInputKind(input.kind()));
         }
 
         if !matches!(output, Output::Treasury(_)) {
-            return Err(Error::InvalidOutputType(output.kind()));
+            return Err(Error::InvalidOutputKind(output.kind()));
         }
 
         Ok(Self { input, output })

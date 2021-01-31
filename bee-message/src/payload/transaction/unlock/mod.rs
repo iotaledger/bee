@@ -5,8 +5,8 @@ mod reference;
 mod signature;
 
 pub use reference::ReferenceUnlock;
-use reference::REFERENCE_UNLOCK_TYPE;
-use signature::SIGNATURE_UNLOCK_TYPE;
+use reference::REFERENCE_UNLOCK_KIND;
+use signature::SIGNATURE_UNLOCK_KIND;
 pub use signature::{Ed25519Signature, SignatureUnlock};
 
 use crate::Error;
@@ -40,19 +40,19 @@ impl Packable for UnlockBlock {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::Signature(unlock) => SIGNATURE_UNLOCK_TYPE.packed_len() + unlock.packed_len(),
-            Self::Reference(unlock) => REFERENCE_UNLOCK_TYPE.packed_len() + unlock.packed_len(),
+            Self::Signature(unlock) => SIGNATURE_UNLOCK_KIND.packed_len() + unlock.packed_len(),
+            Self::Reference(unlock) => REFERENCE_UNLOCK_KIND.packed_len() + unlock.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::Signature(unlock) => {
-                SIGNATURE_UNLOCK_TYPE.pack(writer)?;
+                SIGNATURE_UNLOCK_KIND.pack(writer)?;
                 unlock.pack(writer)?;
             }
             Self::Reference(unlock) => {
-                REFERENCE_UNLOCK_TYPE.pack(writer)?;
+                REFERENCE_UNLOCK_KIND.pack(writer)?;
                 unlock.pack(writer)?;
             }
         }
@@ -62,9 +62,9 @@ impl Packable for UnlockBlock {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            SIGNATURE_UNLOCK_TYPE => Self::Signature(SignatureUnlock::unpack(reader)?),
-            REFERENCE_UNLOCK_TYPE => Self::Reference(ReferenceUnlock::unpack(reader)?),
-            t => return Err(Self::Error::InvalidUnlockType(t)),
+            SIGNATURE_UNLOCK_KIND => Self::Signature(SignatureUnlock::unpack(reader)?),
+            REFERENCE_UNLOCK_KIND => Self::Reference(ReferenceUnlock::unpack(reader)?),
+            t => return Err(Self::Error::InvalidUnlockKind(t)),
         })
     }
 }
