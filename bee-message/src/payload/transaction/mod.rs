@@ -6,18 +6,20 @@ mod essence;
 mod input;
 mod output;
 mod transaction_id;
+mod treasury;
 mod unlock;
 
 use crate::Error;
 
 pub use constants::{INPUT_OUTPUT_COUNT_MAX, INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE};
 pub use essence::{TransactionPayloadEssence, TransactionPayloadEssenceBuilder};
-pub use input::{Input, UTXOInput};
+pub use input::{Input, TreasuryInput, UTXOInput};
 pub use output::{
     Address, Bech32Address, ConsumedOutput, CreatedOutput, Ed25519Address, Output, OutputId,
     SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH,
 };
 pub use transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
+pub use treasury::TreasuryTransactionPayload;
 pub use unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock};
 
 use bee_common::packable::{Packable, Read, Write};
@@ -32,6 +34,7 @@ use alloc::{boxed::Box, vec::Vec};
 use core::{cmp::Ordering, slice::Iter};
 
 pub(crate) const TRANSACTION_PAYLOAD_TYPE: u32 = 0;
+pub(crate) use treasury::TREASURY_TRANSACTION_PAYLOAD_TYPE;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct TransactionPayload {

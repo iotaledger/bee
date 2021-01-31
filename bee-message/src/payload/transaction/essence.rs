@@ -190,6 +190,7 @@ impl TransactionPayloadEssenceBuilder {
                         return Err(Error::DuplicateError);
                     }
                 }
+                _ => return Err(Error::InvalidInputType(input.kind())),
             }
         }
 
@@ -235,6 +236,7 @@ impl TransactionPayloadEssenceBuilder {
                         .checked_add(dust_allowance.amount())
                         .ok_or_else(|| Error::InvalidAccumulatedOutput((total + dust_allowance.amount()) as u128))?;
                 }
+                _ => return Err(Error::InvalidOutputType(output.kind())),
             }
 
             // Accumulated output balance must not exceed the total supply of tokens.

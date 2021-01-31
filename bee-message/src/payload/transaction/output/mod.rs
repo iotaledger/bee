@@ -6,15 +6,18 @@ mod output_id;
 mod signature_locked_dust_allowance;
 mod signature_locked_single;
 mod storable;
+mod treasury;
 
 pub use address::{Address, Bech32Address, Ed25519Address, ED25519_ADDRESS_LENGTH};
 pub use output_id::{OutputId, OUTPUT_ID_LENGTH};
 pub use signature_locked_dust_allowance::SignatureLockedDustAllowanceOutput;
 pub use signature_locked_single::SignatureLockedSingleOutput;
 pub use storable::{ConsumedOutput, CreatedOutput};
+pub use treasury::TreasuryOutput;
 
-use signature_locked_dust_allowance::SIGNATURE_LOCKED_DUST_ALLOWANCE_TYPE;
-use signature_locked_single::SIGNATURE_LOCKED_SINGLE_TYPE;
+use signature_locked_dust_allowance::SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_TYPE;
+use signature_locked_single::SIGNATURE_LOCKED_SINGLE_OUTPUT_TYPE;
+use treasury::TREASURY_OUTPUT_TYPE;
 
 use crate::Error;
 
@@ -28,6 +31,7 @@ use serde::{Deserialize, Serialize};
 pub enum Output {
     SignatureLockedSingle(SignatureLockedSingleOutput),
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput),
+    Treasury(TreasuryOutput),
 }
 
 impl From<SignatureLockedSingleOutput> for Output {
@@ -42,26 +46,49 @@ impl From<SignatureLockedDustAllowanceOutput> for Output {
     }
 }
 
+impl From<TreasuryOutput> for Output {
+    fn from(output: TreasuryOutput) -> Self {
+        Self::Treasury(output)
+    }
+}
+
+impl Output {
+    pub fn kind(&self) -> u8 {
+        match self {
+            Self::SignatureLockedSingle(_) => SIGNATURE_LOCKED_SINGLE_OUTPUT_TYPE,
+            Self::SignatureLockedDustAllowance(_) => SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_TYPE,
+            Self::Treasury(_) => TREASURY_OUTPUT_TYPE,
+        }
+    }
+}
+
 impl Packable for Output {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::SignatureLockedSingle(output) => SIGNATURE_LOCKED_SINGLE_TYPE.packed_len() + output.packed_len(),
-            Self::SignatureLockedDustAllowance(output) => {
-                SIGNATURE_LOCKED_DUST_ALLOWANCE_TYPE.packed_len() + output.packed_len()
+            Self::SignatureLockedSingle(output) => {
+                SIGNATURE_LOCKED_SINGLE_OUTPUT_TYPE.packed_len() + output.packed_len()
             }
+            Self::SignatureLockedDustAllowance(output) => {
+                SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_TYPE.packed_len() + output.packed_len()
+            }
+            Self::Treasury(output) => TREASURY_OUTPUT_TYPE.packed_len() + output.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::SignatureLockedSingle(output) => {
-                SIGNATURE_LOCKED_SINGLE_TYPE.pack(writer)?;
+                SIGNATURE_LOCKED_SINGLE_OUTPUT_TYPE.pack(writer)?;
                 output.pack(writer)?;
             }
             Self::SignatureLockedDustAllowance(output) => {
-                SIGNATURE_LOCKED_DUST_ALLOWANCE_TYPE.pack(writer)?;
+                SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_TYPE.pack(writer)?;
+                output.pack(writer)?;
+            }
+            Self::Treasury(output) => {
+                TREASURY_OUTPUT_TYPE.pack(writer)?;
                 output.pack(writer)?;
             }
         }
@@ -71,10 +98,13 @@ impl Packable for Output {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            SIGNATURE_LOCKED_SINGLE_TYPE => Self::SignatureLockedSingle(SignatureLockedSingleOutput::unpack(reader)?),
-            SIGNATURE_LOCKED_DUST_ALLOWANCE_TYPE => {
+            SIGNATURE_LOCKED_SINGLE_OUTPUT_TYPE => {
+                Self::SignatureLockedSingle(SignatureLockedSingleOutput::unpack(reader)?)
+            }
+            SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_TYPE => {
                 Self::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput::unpack(reader)?)
             }
+            TREASURY_OUTPUT_TYPE => Self::Treasury(TreasuryOutput::unpack(reader)?),
             t => return Err(Self::Error::InvalidOutputType(t)),
         })
     }

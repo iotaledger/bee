@@ -3,11 +3,15 @@
 
 pub mod indexation;
 pub mod milestone;
+pub mod receipt;
 pub mod transaction;
 
 use indexation::{IndexationPayload, INDEXATION_PAYLOAD_TYPE};
 use milestone::{MilestonePayload, MILESTONE_PAYLOAD_TYPE};
-use transaction::{TransactionPayload, TRANSACTION_PAYLOAD_TYPE};
+use receipt::{ReceiptPayload, RECEIPT_PAYLOAD_TYPE};
+use transaction::{
+    TransactionPayload, TreasuryTransactionPayload, TRANSACTION_PAYLOAD_TYPE, TREASURY_TRANSACTION_PAYLOAD_TYPE,
+};
 
 use crate::Error;
 
@@ -24,6 +28,8 @@ pub enum Payload {
     Transaction(Box<TransactionPayload>),
     Milestone(Box<MilestonePayload>),
     Indexation(Box<IndexationPayload>),
+    Receipt(Box<ReceiptPayload>),
+    TreasuryTransaction(Box<TreasuryTransactionPayload>),
 }
 
 impl From<TransactionPayload> for Payload {
@@ -44,6 +50,18 @@ impl From<IndexationPayload> for Payload {
     }
 }
 
+impl From<ReceiptPayload> for Payload {
+    fn from(payload: ReceiptPayload) -> Self {
+        Self::Receipt(Box::new(payload))
+    }
+}
+
+impl From<TreasuryTransactionPayload> for Payload {
+    fn from(payload: TreasuryTransactionPayload) -> Self {
+        Self::TreasuryTransaction(Box::new(payload))
+    }
+}
+
 impl Packable for Payload {
     type Error = Error;
 
@@ -52,6 +70,8 @@ impl Packable for Payload {
             Self::Transaction(payload) => TRANSACTION_PAYLOAD_TYPE.packed_len() + payload.packed_len(),
             Self::Milestone(payload) => MILESTONE_PAYLOAD_TYPE.packed_len() + payload.packed_len(),
             Self::Indexation(payload) => INDEXATION_PAYLOAD_TYPE.packed_len() + payload.packed_len(),
+            Self::Receipt(payload) => RECEIPT_PAYLOAD_TYPE.packed_len() + payload.packed_len(),
+            Self::TreasuryTransaction(payload) => TREASURY_TRANSACTION_PAYLOAD_TYPE.packed_len() + payload.packed_len(),
         }
     }
 
@@ -69,6 +89,14 @@ impl Packable for Payload {
                 INDEXATION_PAYLOAD_TYPE.pack(writer)?;
                 payload.pack(writer)?;
             }
+            Self::Receipt(payload) => {
+                RECEIPT_PAYLOAD_TYPE.pack(writer)?;
+                payload.pack(writer)?;
+            }
+            Self::TreasuryTransaction(payload) => {
+                TREASURY_TRANSACTION_PAYLOAD_TYPE.pack(writer)?;
+                payload.pack(writer)?;
+            }
         }
 
         Ok(())
@@ -79,6 +107,10 @@ impl Packable for Payload {
             TRANSACTION_PAYLOAD_TYPE => Self::Transaction(Box::new(TransactionPayload::unpack(reader)?)),
             MILESTONE_PAYLOAD_TYPE => Self::Milestone(Box::new(MilestonePayload::unpack(reader)?)),
             INDEXATION_PAYLOAD_TYPE => Self::Indexation(Box::new(IndexationPayload::unpack(reader)?)),
+            RECEIPT_PAYLOAD_TYPE => Self::Receipt(Box::new(ReceiptPayload::unpack(reader)?)),
+            TREASURY_TRANSACTION_PAYLOAD_TYPE => {
+                Self::TreasuryTransaction(Box::new(TreasuryTransactionPayload::unpack(reader)?))
+            }
             t => return Err(Self::Error::InvalidPayloadType(t)),
         })
     }

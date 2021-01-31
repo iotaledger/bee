@@ -10,7 +10,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use serde::{Deserialize, Serialize};
 
-pub(crate) const SIGNATURE_LOCKED_DUST_ALLOWANCE_TYPE: u8 = 1;
+pub(crate) const SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_TYPE: u8 = 1;
 pub(crate) const DUST_ALLOWANCE_MINIMUM_AMOUNT: u64 = 1_000_000;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]

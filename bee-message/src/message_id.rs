@@ -9,7 +9,7 @@ use core::{convert::TryInto, str::FromStr};
 
 pub const MESSAGE_ID_LENGTH: usize = 32;
 
-#[derive(Clone, Copy, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct MessageId([u8; MESSAGE_ID_LENGTH]);
 
 string_serde_impl!(MessageId);
