@@ -10,7 +10,10 @@ use bee_common::packable::{Packable, Read, Write};
 
 use serde::{Deserialize, Serialize};
 
+use std::ops::RangeInclusive;
+
 pub(crate) const SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND: u8 = 0;
+const SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
 pub struct SignatureLockedSingleOutput {
@@ -20,7 +23,7 @@ pub struct SignatureLockedSingleOutput {
 
 impl SignatureLockedSingleOutput {
     pub fn new(address: Address, amount: u64) -> Result<Self, Error> {
-        if amount == 0 || amount > IOTA_SUPPLY {
+        if !SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT.contains(&amount) {
             return Err(Error::InvalidAmount(amount));
         }
 

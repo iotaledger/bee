@@ -10,8 +10,10 @@ use bee_common::packable::{Packable, Read, Write};
 
 use serde::{Deserialize, Serialize};
 
+use std::ops::RangeInclusive;
+
 pub(crate) const SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND: u8 = 1;
-pub(crate) const DUST_ALLOWANCE_MINIMUM_AMOUNT: u64 = 1_000_000;
+const SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1_000_000..=IOTA_SUPPLY;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
 pub struct SignatureLockedDustAllowanceOutput {
@@ -21,7 +23,7 @@ pub struct SignatureLockedDustAllowanceOutput {
 
 impl SignatureLockedDustAllowanceOutput {
     pub fn new(address: Address, amount: u64) -> Result<Self, Error> {
-        if amount < DUST_ALLOWANCE_MINIMUM_AMOUNT || amount > IOTA_SUPPLY {
+        if !SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT.contains(&amount) {
             return Err(Error::InvalidDustAmount(amount));
         }
 
