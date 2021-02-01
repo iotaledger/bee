@@ -354,6 +354,12 @@ where
             }
         };
 
+        // Insert cache queue entry to track eviction priority
+        self.cache_queue
+            .lock()
+            .await
+            .put(*message_id, self.generate_cache_index());
+
         Some(/* Children { children } */ Wrapper {
             children,
             phantom: PhantomData,
@@ -412,12 +418,7 @@ where
                 break;
             }
 
-            let remove = if cache.len() == cache.cap() {
-                let (message_id, _) = cache.pop_lru().expect("Cache capacity is zero");
-                Some(message_id)
-            } else {
-                None
-            };
+            let remove = cache.pop_lru().map(|(id, _)| id);
 
             drop(cache);
 
@@ -428,6 +429,8 @@ where
                     .remove(&message_id)
                     .expect("Expected vertex entry to exist");
                 self.children.write().await.remove(&message_id);
+            } else {
+                break;
             }
         }
     }
