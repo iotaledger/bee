@@ -342,6 +342,11 @@ where
             }
         };
 
+        self.cache_queue
+            .lock()
+            .await
+            .put(*message_id, self.generate_cache_index());
+
         Some(Wrapper {
             children,
             phantom: PhantomData,
