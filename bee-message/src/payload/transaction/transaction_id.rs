@@ -5,14 +5,14 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 use core::{convert::TryInto, str::FromStr};
 
 pub const TRANSACTION_ID_LENGTH: usize = 32;
 
-#[derive(Clone, Copy, Eq, Hash, PartialEq, Serialize, Deserialize, Ord, PartialOrd)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct TransactionId([u8; TRANSACTION_ID_LENGTH]);
+
+string_serde_impl!(TransactionId);
 
 impl From<[u8; TRANSACTION_ID_LENGTH]> for TransactionId {
     fn from(bytes: [u8; TRANSACTION_ID_LENGTH]) -> Self {
