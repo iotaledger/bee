@@ -166,7 +166,7 @@ impl TryFrom<&Message> for MessageDto {
     fn try_from(value: &Message) -> Result<Self, Self::Error> {
         Ok(MessageDto {
             network_id: value.network_id().to_string(),
-            parents: vec![value.parents()[0].to_string(), value.parents()[1].to_string()],
+            parents: value.parents().iter().map(|p| p.to_string()).collect(),
             payload: value.payload().as_ref().map(TryInto::try_into).transpose()?,
             nonce: value.nonce().to_string(),
         })
