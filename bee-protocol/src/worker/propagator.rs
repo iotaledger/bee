@@ -33,18 +33,18 @@ async fn propagate<B: StorageBackend>(
 ) {
     let mut children = vec![message_id];
 
-    while let Some(ref message_id) = children.pop() {
+    'outer: while let Some(ref message_id) = children.pop() {
         // Skip messages that are already solid.
         if tangle.is_solid_message(message_id).await {
-            continue;
+            continue 'outer;
         }
 
         // TODO Copying parents to avoid double locking, will be refactored.
         if let Some(parents) = tangle.get(&message_id).await.map(|message| message.parents().to_vec()) {
-            // If either of the parents is not yet solid, we do not propagate their current state.
+            // If one of the parents is not yet solid, we skip the current message.
             for parent in parents.iter() {
                 if !tangle.is_solid_message(parent).await {
-                    continue;
+                    continue 'outer;
                 }
             }
 
@@ -55,8 +55,6 @@ async fn propagate<B: StorageBackend>(
             // we can simply unwrap. We also try to minimise unnecessary Tangle API calls if - for example - the
             // parent in question turns out to be a SEP.
 
-            // Determine OTRSI/YTRSI of parent1
-
             let mut parent_otrsis = Vec::new();
             let mut parent_ytrsis = Vec::new();
 
@@ -64,8 +62,12 @@ async fn propagate<B: StorageBackend>(
                 let (parent_otrsi, parent_ytrsi) = match tangle.get_solid_entry_point_index(parent).await {
                     Some(parent_sepi) => (IndexId::new(parent_sepi, *parent), IndexId::new(parent_sepi, *parent)),
                     None => match tangle.get_metadata(parent).await {
-                        Some(parent_md) => (parent_md.otrsi().unwrap(), parent_md.ytrsi().unwrap()),
-                        None => continue,
+                        // 'unwrap' is safe (see explanation above)
+                        Some(parent_md) => (
+                            parent_md.otrsi().expect("solid msg with unset omrsi"),
+                            parent_md.ytrsi().expect("solid msg with unset ymrsi"),
+                        ),
+                        None => continue 'outer,
                     },
                 };
                 parent_otrsis.push(parent_otrsi);
@@ -74,7 +76,6 @@ async fn propagate<B: StorageBackend>(
 
             // Derive child OTRSI/YTRSI from its parents.
             // Note: The child inherits oldest (lowest) otrsi and the newest (highest) ytrsi from its parents.
-            // TODO @Alex: what to do if parent_otrsis and/or parent_ytrsis are empty ?
             let child_otrsi = parent_otrsis.iter().min().unwrap();
             let child_ytrsi = parent_ytrsis.iter().max().unwrap();
 
