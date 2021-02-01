@@ -65,23 +65,23 @@ impl UrtsTipPool {
         &mut self,
         tangle: &MsTangle<B>,
         message_id: MessageId,
-        parent1: MessageId,
-        parent2: MessageId,
+        parents: Vec<MessageId>
     ) {
         if let Score::NonLazy = self.tip_score::<B>(tangle, &message_id).await {
             self.non_lazy_tips.insert(message_id);
             self.tips.insert(message_id, TipMetadata::new());
-            self.link_parents_with_child(&message_id, &parent1, &parent2);
-            self.check_retention_rules_for_parents(&parent1, &parent2);
+            self.link_parents_with_child(&message_id, &parents);
+            self.check_retention_rules_for_parents(&parents);
         }
     }
 
-    fn link_parents_with_child(&mut self, hash: &MessageId, parent1: &MessageId, parent2: &MessageId) {
-        if parent1 == parent2 {
-            self.add_child(*parent1, *hash);
-        } else {
-            self.add_child(*parent1, *hash);
-            self.add_child(*parent2, *hash);
+    fn link_parents_with_child(&mut self, child: &MessageId, parents: &Vec<MessageId>) {
+        let mut linked = Vec::new();
+        for parent in parents {
+            if !linked.contains(parent) {
+                self.add_child(*parent, *child);
+                linked.push(*parent);
+            }
         }
     }
 
@@ -103,12 +103,13 @@ impl UrtsTipPool {
         }
     }
 
-    fn check_retention_rules_for_parents(&mut self, parent1: &MessageId, parent2: &MessageId) {
-        if parent1 == parent2 {
-            self.check_retention_rules_for_parent(parent1);
-        } else {
-            self.check_retention_rules_for_parent(parent1);
-            self.check_retention_rules_for_parent(parent2);
+    fn check_retention_rules_for_parents(&mut self, parents: &Vec<MessageId>) {
+        let mut checked = Vec::new();
+        for parent in parents {
+            if !checked.contains(parent) {
+                self.check_retention_rules_for_parent(parent);
+                checked.push(*parent);
+            }
         }
     }
 

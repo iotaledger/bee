@@ -317,8 +317,7 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 
     pub async fn insert_tip(&self, message_id: MessageId, parents: Vec<MessageId>) {
-        // TODO
-        // self.tip_pool.lock().await.insert(&self, message_id, parents).await;
+        self.tip_pool.lock().await.insert(&self, message_id, parents).await;
     }
 
     pub async fn update_tip_scores(&self) {
