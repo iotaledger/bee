@@ -397,7 +397,7 @@ where
         let mut children = self.children.write().await;
         let mut cache = self.cache_queue.lock().await;
         while vertices.len() > cache.cap() {
-            if cache.len() == cache.cap() {
+            if cache.len() == cache.cap() || true {
                 let (message_id, _) = cache.pop_lru().expect("Cache capacity is zero");
 
                 vertices
