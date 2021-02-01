@@ -12,7 +12,10 @@ use blake2::{
 };
 use serde::{Deserialize, Serialize};
 
+use std::ops::RangeInclusive;
+
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
+pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Message {
@@ -94,7 +97,7 @@ impl Packable for Message {
 
         let parents_len = u8::unpack(reader)? as usize;
 
-        if parents_len != 2 {
+        if !MESSAGE_PARENTS_RANGE.contains(&parents_len) {
             return Err(Error::InvalidParentsCount(parents_len));
         }
 
@@ -185,7 +188,7 @@ impl<P: Provider> MessageBuilder<P> {
             nonce: 0,
         };
 
-        if message.parents.len() != 2 {
+        if !MESSAGE_PARENTS_RANGE.contains(&message.parents.len()) {
             return Err(Error::InvalidParentsCount(message.parents.len()));
         }
 
