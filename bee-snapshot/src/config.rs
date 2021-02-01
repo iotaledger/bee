@@ -1,8 +1,6 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::pruning::{PruningConfig, PruningConfigBuilder};
-
 use serde::Deserialize;
 
 use std::path::{Path, PathBuf};
@@ -22,7 +20,6 @@ pub struct SnapshotConfigBuilder {
     depth: Option<u32>,
     interval_synced: Option<u32>,
     interval_unsynced: Option<u32>,
-    pruning: Option<PruningConfigBuilder>,
 }
 
 impl SnapshotConfigBuilder {
@@ -68,7 +65,6 @@ impl SnapshotConfigBuilder {
             depth: self.depth.unwrap_or(DEFAULT_DEPTH),
             interval_synced: self.interval_synced.unwrap_or(DEFAULT_INTERVAL_SYNCED),
             interval_unsynced: self.interval_unsynced.unwrap_or(DEFAULT_INTERVAL_UNSYNCED),
-            pruning: self.pruning.unwrap_or_default().finish(),
         }
     }
 }
@@ -81,7 +77,6 @@ pub struct SnapshotConfig {
     depth: u32,
     interval_synced: u32,
     interval_unsynced: u32,
-    pruning: PruningConfig,
 }
 
 impl SnapshotConfig {
@@ -111,9 +106,5 @@ impl SnapshotConfig {
 
     pub fn interval_unsynced(&self) -> u32 {
         self.interval_unsynced
-    }
-
-    pub fn pruning(&self) -> &PruningConfig {
-        &self.pruning
     }
 }

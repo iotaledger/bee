@@ -5,7 +5,6 @@ mod download;
 
 pub(crate) mod constants;
 pub(crate) mod kind;
-pub(crate) mod pruning;
 
 pub mod config;
 pub mod error;

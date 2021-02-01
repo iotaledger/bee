@@ -14,6 +14,8 @@ pub mod traversal;
 pub mod urts;
 pub mod worker;
 
+pub(crate) mod pruning;
+
 mod tangle;
 mod vertex;
 

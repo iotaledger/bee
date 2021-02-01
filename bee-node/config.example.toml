@@ -81,14 +81,14 @@ download_urls     = [
 depth             = 50
 interval_synced   = 50
 interval_unsynced = 1000
-[snapshot.pruning]
-enabled = true
-delay   = 60480
 
 [storage]
 path = "./storage/alphanet"
 
 [tangle]
+[tangle.pruning]
+enabled = true
+delay   = 60480
 
 [mqtt]
 address = "tcp://localhost:1883"

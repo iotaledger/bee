@@ -1,10 +1,14 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::pruning::{PruningConfig, PruningConfigBuilder};
+
 use serde::Deserialize;
 
 #[derive(Default, Deserialize)]
-pub struct TangleConfigBuilder {}
+pub struct TangleConfigBuilder {
+    pruning: Option<PruningConfigBuilder>,
+}
 
 impl TangleConfigBuilder {
     pub fn new() -> Self {
@@ -12,15 +16,23 @@ impl TangleConfigBuilder {
     }
 
     pub fn finish(self) -> TangleConfig {
-        TangleConfig {}
+        TangleConfig {
+            pruning: self.pruning.unwrap_or_default().finish(),
+        }
     }
 }
 
 #[derive(Clone)]
-pub struct TangleConfig {}
+pub struct TangleConfig {
+    pruning: PruningConfig,
+}
 
 impl TangleConfig {
     pub fn build() -> TangleConfigBuilder {
         TangleConfigBuilder::new()
+    }
+
+    pub fn pruning(&self) -> &PruningConfig {
+        &self.pruning
     }
 }
