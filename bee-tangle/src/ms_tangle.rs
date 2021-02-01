@@ -324,7 +324,7 @@ impl<B: StorageBackend> MsTangle<B> {
         self.tip_pool.lock().await.update_scores(&self).await;
     }
 
-    pub async fn get_messages_to_approve(&self) -> Option<(MessageId, MessageId)> {
+    pub async fn get_messages_to_approve(&self) -> Option<Vec<MessageId>> {
         self.tip_pool.lock().await.two_non_lazy_tips()
     }
 

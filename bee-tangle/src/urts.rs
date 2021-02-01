@@ -65,7 +65,7 @@ impl UrtsTipPool {
         &mut self,
         tangle: &MsTangle<B>,
         message_id: MessageId,
-        parents: Vec<MessageId>
+        parents: Vec<MessageId>,
     ) {
         if let Score::NonLazy = self.tip_score::<B>(tangle, &message_id).await {
             self.non_lazy_tips.insert(message_id);
@@ -176,21 +176,27 @@ impl UrtsTipPool {
         Score::NonLazy
     }
 
-    pub fn two_non_lazy_tips(&self) -> Option<(MessageId, MessageId)> {
+    pub fn two_non_lazy_tips(&self) -> Option<Vec<MessageId>> {
         let non_lazy_tips = &self.non_lazy_tips;
         if non_lazy_tips.is_empty() {
             None
-        } else if non_lazy_tips.len() == 1 {
-            let tip = non_lazy_tips.iter().next().unwrap();
-            Some((*tip, *tip))
-        } else if non_lazy_tips.len() == 2 {
-            let mut iter = non_lazy_tips.iter();
-            Some((*iter.next().unwrap(), *iter.next().unwrap()))
         } else {
-            let hashes = non_lazy_tips.iter().choose_multiple(&mut rand::thread_rng(), 2);
-            let mut iter = hashes.iter();
-            Some((**iter.next().unwrap(), **iter.next().unwrap()))
+            Some(if non_lazy_tips.len() < self.optimal_num_tips() {
+                non_lazy_tips.iter().map(|t| *t).collect()
+            } else {
+                non_lazy_tips
+                    .iter()
+                    .choose_multiple(&mut rand::thread_rng(), self.optimal_num_tips())
+                    .iter()
+                    .map(|t| **t)
+                    .collect()
+            })
         }
+    }
+
+    pub(crate) fn optimal_num_tips(&self) -> usize {
+        // TODO: hardcoded at the moment
+        4
     }
 
     pub(crate) fn reduce_tips(&mut self) {
