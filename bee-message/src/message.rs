@@ -192,6 +192,9 @@ impl<P: Provider> MessageBuilder<P> {
             return Err(Error::InvalidParentsCount(message.parents.len()));
         }
 
+        message.parents.sort_unstable();
+        message.parents.dedup();
+
         let message_bytes = message.pack_new();
 
         if message_bytes.len() > MESSAGE_LENGTH_MAX {
