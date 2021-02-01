@@ -5,23 +5,19 @@
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum ConflictReason {
     /// The message has no conflict.
-    None,
+    None = 0,
     /// The referenced UTXO was already spent.
-    InputUTXOAlreadySpent,
+    InputUTXOAlreadySpent = 1,
     /// The referenced UTXO was already spent while confirming this milestone.
-    InputUTXOAlreadySpentInThisMilestone,
+    InputUTXOAlreadySpentInThisMilestone = 2,
     /// The referenced UTXO cannot be found.
-    InputUTXONotFound,
+    InputUTXONotFound = 3,
     /// The sum of the inputs and output values does not match.
-    InputOutputSumMismatch,
+    InputOutputSumMismatch = 4,
     /// The unlock block signature is invalid.
-    InvalidSignature,
-    /// The input or output type used is unsupported.
-    UnsupportedInputOrOutputType,
-    /// The used address type is unsupported.
-    UnsupportedAddressType,
+    InvalidSignature = 5,
     /// The dust allowance for the address is invalid.
-    InvalidDustAllowance,
+    InvalidDustAllowance = 6,
     /// The semantic validation failed.
-    SemanticValidationFailed,
+    SemanticValidationFailed = 255,
 }
