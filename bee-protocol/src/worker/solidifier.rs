@@ -41,7 +41,7 @@ async fn heavy_solidification<B: StorageBackend>(
     requested_messages: &RequestedMessages,
     target_index: MilestoneIndex,
     target_id: MessageId,
-) {
+) -> usize {
     // TODO: This wouldn't be necessary if the traversal code wasn't closure-driven
     let mut missing = Vec::new();
 
@@ -55,16 +55,13 @@ async fn heavy_solidification<B: StorageBackend>(
     )
     .await;
 
-    debug!(
-        "Heavy solidification of milestone {} {}: {} messages requested.",
-        *target_index,
-        target_id,
-        missing.len()
-    );
+    let missing_len = missing.len();
 
     for missing_id in missing {
         helper::request_message(tangle, message_requester, requested_messages, missing_id, target_index).await;
     }
+
+    missing_len
 }
 
 async fn solidify<B: StorageBackend>(
@@ -156,7 +153,13 @@ where
                 if index < next {
                     if let Some(message_id) = tangle.get_milestone_message_id(index).await {
                         if let Some(message) = tangle.get(&message_id).await {
-                            debug!("Light solidification of milestone {} {}.", index, message_id);
+                            debug!(
+                                "Light solidification of milestone {} {} in [{};{}].",
+                                index,
+                                message_id,
+                                *lsmi + 1,
+                                *next - 1
+                            );
                             helper::request_message(
                                 &tangle,
                                 &message_requester,
@@ -191,7 +194,17 @@ where
                             .await;
                         } else {
                             // TODO Is this actually necessary ?
-                            heavy_solidification(&tangle, &message_requester, &requested_messages, target, id).await;
+                            let missing_len =
+                                heavy_solidification(&tangle, &message_requester, &requested_messages, target, id)
+                                    .await;
+                            debug!(
+                                "Heavy solidification of milestone {} {}: {} messages requested in [{};{}].",
+                                target,
+                                id,
+                                missing_len,
+                                *lsmi + 1,
+                                *next - 1
+                            );
                             break;
                         }
                     } else {
