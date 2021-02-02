@@ -19,7 +19,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-const CACHE_LEN: usize = 1_000_000;
+const CACHE_LEN: usize = 100_000;
 
 /// A trait used to provide hooks for a tangle. The tangle acts as an in-memory cache and will use hooks to extend its
 /// effective volume. When an entry doesn't exist in the tangle cache and needs fetching, or when an entry gets
@@ -81,7 +81,6 @@ where
     T: Clone,
 {
     // Global Tangle Lock. Remove this as and when it is deemed correct to do so.
-    // gtl: RwLock<()>,
     vertices: TRwLock<HashMap<MessageId, Vertex<T>>>,
     children: TRwLock<HashMap<MessageId, (HashSet<MessageId>, bool)>>,
 
@@ -108,7 +107,6 @@ where
     /// Creates a new Tangle.
     pub fn new(hooks: H) -> Self {
         Self {
-            // gtl: RwLock::new(()),
             vertices: TRwLock::new(HashMap::new()),
             children: TRwLock::new(HashMap::new()),
 
@@ -162,8 +160,6 @@ where
         if self.contains_inner(&message_id).await {
             None
         } else {
-            // let _gtl_guard = self.gtl.write().await;
-
             // Insert into backend using hooks
             self.hooks
                 .insert(message_id, message.clone(), metadata.clone())
@@ -186,10 +182,6 @@ where
             .insert_approver(parent, child)
             .await
             .unwrap_or_else(|e| info!("Failed to update approvers for message {:?}", e));
-        // self.hooks
-        // .update_approvers(parent, &children.iter().copied().collect::<Vec<_>>())
-        // .await
-        // .unwrap_or_else(|e| info!("Failed to update approvers for message message {:?}", e));
     }
 
     async fn get_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex<T>> + '_> {
@@ -250,8 +242,6 @@ where
     pub async fn set_metadata(&self, message_id: &MessageId, metadata: T) {
         self.pull_message(message_id).await;
         if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
-            // let _gtl_guard = self.gtl.write().await;
-
             *vtx.metadata_mut() = metadata;
             self.hooks
                 .insert(*message_id, (&**vtx.message()).clone(), vtx.metadata().clone())
@@ -267,8 +257,6 @@ where
     {
         self.pull_message(message_id).await;
         if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
-            // let _gtl_guard = self.gtl.write().await;
-
             let r = update(vtx.metadata_mut());
             self.hooks
                 .insert(*message_id, (&**vtx.message()).clone(), vtx.metadata().clone())
@@ -328,8 +316,6 @@ where
             Some(children) => children.0.clone(),
             None => {
                 drop(children_map);
-                // let _gtl_guard = self.gtl.write().await;
-
                 let to_insert = match self.hooks.fetch_approvers(message_id).await {
                     Err(e) => {
                         info!("Failed to update approvers for message message {:?}", e);
@@ -382,8 +368,6 @@ where
 
     #[cfg(test)]
     pub async fn clear(&mut self) {
-        // let _gtl_guard = self.gtl.write().await;
-
         self.vertices.write().await.clear();
         self.children.write().await.clear();
     }
@@ -394,8 +378,6 @@ where
         if self.vertices.read().await.contains_key(message_id) {
             true
         } else {
-            // let _gtl_guard = self.gtl.write().await;
-
             if let Ok(Some((tx, metadata))) = self.hooks.get(message_id).await {
                 self.insert_inner(*message_id, tx, metadata).await;
                 true
