@@ -2,7 +2,7 @@
 
 alias       = "bee"
 bech32_hrp  = "atoi"
-network_id  = "testnet2"
+network_id  = "testnet3"
 
 [logger]
 color_enabled = true
@@ -51,7 +51,7 @@ ms_sync_count = 200
 binding_port          = 14265
 binding_ip_addr       = "0.0.0.0"
 feature_proof_of_work = true
-public_routes = [
+public_routes         = [
     "/api/v1/addresses/:address",
     "/api/v1/addresses/ed25519/:address",
     "/health",
