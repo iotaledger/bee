@@ -9,7 +9,7 @@ use crate::{
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker};
+use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker, BELOW_MAX_DEPTH};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -29,7 +29,7 @@ pub(crate) struct PropagatorWorker {
 async fn propagate<B: StorageBackend>(
     message_id: MessageId,
     tangle: &MsTangle<B>,
-    tip_tx: &async_channel::Sender<(MessageId, Vec<MessageId>, Option<MilestoneIndex>)>,
+    solidified_tx: &async_channel::Sender<(MessageId, Vec<MessageId>, Option<MilestoneIndex>)>,
 ) {
     let mut children = vec![message_id];
 
@@ -103,7 +103,7 @@ async fn propagate<B: StorageBackend>(
             }
 
             // Send child to the tip pool.
-            if let Err(e) = tip_tx.send((*message_id, parents, ms_index_maybe)).await {
+            if let Err(e) = solidified_tx.send((*message_id, parents, ms_index_maybe)).await {
                 warn!("Failed to send message to the tip pool. Cause: {:?}", e);
             }
         }
@@ -132,15 +132,35 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let (tip_tx, tip_rx) = async_channel::unbounded();
+            let (solidified_tx, solidified_rx) = async_channel::unbounded();
 
             tokio::task::spawn({
                 let tangle = tangle.clone();
 
                 async move {
-                    while let Ok((message_id, parents, index)) = tip_rx.recv().await {
+                    while let Ok((message_id, parents, index)) = solidified_rx.recv().await {
                         bus.dispatch(MessageSolidified(message_id));
-                        tangle.insert_tip(message_id, parents).await;
+
+                        const SAFETY_THRESHOLD: u32 = 5; // Number of ms before eligible section of the Tangle begins
+
+                        // NOTE: We need to decide whether we want to put this new solid message to the tip-pool.
+                        // Two things to consider:
+                        // 1) During synchronization we receive many non-eligible messages, that are way too old for
+                        //    the TSA, hence we want to exclude them.
+                        // 2) We don't know the confirming milestone index of each eventually confirmed message at this
+                        // point in time, hence we need to employ a heuristic with a security threshold to minimise the
+                        // risk of a false-negative (something excluded from the tip-pool, that would be eligible as
+                        // a tip). That heuristic is: Do not add to the tip-pool as long as the Tangle is not within
+                        // BELOW_MAX_DEPTH + <some_safety_threshold>
+                        // 3) Even if this method doesn't work perfectly, the tip set would only be a little
+                        // bit smaller than it could be for a very short time after the node is synchronized.
+
+                        // NOTE: That diff is always okay, because of the invariant: LSMI <= LMI or 0 <= (LMI - LSMI)
+                        if (tangle.get_latest_milestone_index() - tangle.get_latest_solid_milestone_index())
+                            <= (BELOW_MAX_DEPTH + SAFETY_THRESHOLD).into()
+                        {
+                            tangle.insert_tip(message_id, parents).await;
+                        }
 
                         if let Some(index) = index {
                             if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
@@ -154,7 +174,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(PropagatorWorkerEvent(message_id)) = receiver.next().await {
-                propagate(message_id, &tangle, &tip_tx).await;
+                propagate(message_id, &tangle, &solidified_tx).await;
             }
 
             // Before the worker completely stops, the receiver needs to be drained for statuses to be propagated.
@@ -164,7 +184,7 @@ where
             let mut count: usize = 0;
 
             while let Some(Some(PropagatorWorkerEvent(message_id))) = receiver.next().now_or_never() {
-                propagate(message_id, &tangle, &tip_tx).await;
+                propagate(message_id, &tangle, &solidified_tx).await;
                 count += 1;
             }
 
