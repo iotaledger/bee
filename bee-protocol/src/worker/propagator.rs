@@ -143,8 +143,8 @@ where
 
                         const SAFETY_THRESHOLD: u32 = 5; // Number of ms before eligible section of the Tangle begins
 
-                        // NOTE: We need to decide whether we want to put this new solid message to the tip-pool.
-                        // Two things to consider:
+                        // NOTE: We need to decide whether we want to put this new solid message into the tip-pool.
+                        // Some things to consider:
                         // 1) During synchronization we receive many non-eligible messages, that are way too old for
                         //    the TSA, hence we want to exclude them.
                         // 2) We don't know the confirming milestone index of each eventually confirmed message at this
