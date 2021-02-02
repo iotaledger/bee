@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use log::info;
 use lru::LruCache;
 use tokio::sync::{Mutex, RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard};
-use hashbrown::{hash_map::Entry, HashMap, HashSet};
+use hashbrown::{hash_map::{Entry, DefaultHashBuilder}, HashMap, HashSet};
 
 use std::{
     fmt::Debug,
@@ -86,7 +86,7 @@ where
     children: TRwLock<HashMap<MessageId, (HashSet<MessageId>, bool)>>,
 
     pub(crate) cache_counter: AtomicU64,
-    pub(crate) cache_queue: Mutex<LruCache<MessageId, u64>>,
+    pub(crate) cache_queue: Mutex<LruCache<MessageId, u64, DefaultHashBuilder>>,
 
     pub(crate) hooks: H,
 }
@@ -113,7 +113,7 @@ where
             children: TRwLock::new(HashMap::new()),
 
             cache_counter: AtomicU64::new(0),
-            cache_queue: Mutex::new(LruCache::new(CACHE_LEN + 1)),
+            cache_queue: Mutex::new(LruCache::with_hasher(CACHE_LEN + 1, DefaultHashBuilder::default())),
 
             hooks,
         }
@@ -122,7 +122,7 @@ where
     /// Create a new tangle with the given capacity.
     pub fn with_capacity(self, cap: usize) -> Self {
         Self {
-            cache_queue: Mutex::new(LruCache::new(cap + 1)),
+            cache_queue: Mutex::new(LruCache::with_hasher(cap + 1, DefaultHashBuilder::default())),
             ..self
         }
     }
