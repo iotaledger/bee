@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{Error, MessageId};
+use crate::{payload::Payload, Error, MessageId};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -20,6 +20,7 @@ pub struct MilestonePayloadEssence {
     parent2: MessageId,
     merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
     public_keys: Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>,
+    receipt: Option<Payload>,
 }
 
 impl MilestonePayloadEssence {
@@ -38,6 +39,7 @@ impl MilestonePayloadEssence {
             parent2,
             merkle_proof,
             public_keys,
+            receipt: None,
         }
     }
 
@@ -64,6 +66,10 @@ impl MilestonePayloadEssence {
     pub fn public_keys(&self) -> &Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]> {
         &self.public_keys
     }
+
+    pub fn receipt(&self) -> Option<&Payload> {
+        self.receipt.as_ref()
+    }
 }
 
 impl Packable for MilestonePayloadEssence {
@@ -77,6 +83,8 @@ impl Packable for MilestonePayloadEssence {
             + MILESTONE_MERKLE_PROOF_LENGTH
             + 0u8.packed_len()
             + self.public_keys.len() * MILESTONE_PUBLIC_KEY_LENGTH
+            + 0u32.packed_len()
+            + self.receipt.iter().map(Packable::packed_len).sum::<usize>()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -93,6 +101,14 @@ impl Packable for MilestonePayloadEssence {
 
         for public_key in &self.public_keys {
             writer.write_all(public_key)?;
+        }
+
+        match self.receipt {
+            Some(ref receipt) => {
+                (receipt.packed_len() as u32).pack(writer)?;
+                receipt.pack(writer)?;
+            }
+            None => 0u32.pack(writer)?,
         }
 
         Ok(())
@@ -117,6 +133,22 @@ impl Packable for MilestonePayloadEssence {
             public_keys.push(public_key);
         }
 
+        let receipt_len = u32::unpack(reader)? as usize;
+        let receipt = if receipt_len > 0 {
+            let receipt = Payload::unpack(reader)?;
+            if receipt_len != receipt.packed_len() {
+                return Err(Self::Error::InvalidAnnouncedLength(receipt_len, receipt.packed_len()));
+            }
+            if !matches!(receipt, Payload::Receipt(_)) {
+                return Err(Error::InvalidPayloadKind(receipt.kind()));
+            }
+            Some(receipt)
+        } else {
+            None
+        };
+
+        // TODO builder ?
+
         Ok(Self {
             index,
             timestamp,
@@ -124,6 +156,7 @@ impl Packable for MilestonePayloadEssence {
             parent2,
             merkle_proof,
             public_keys,
+            receipt,
         })
     }
 }

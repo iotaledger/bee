@@ -62,6 +62,18 @@ impl From<TreasuryTransactionPayload> for Payload {
     }
 }
 
+impl Payload {
+    pub fn kind(&self) -> u32 {
+        match self {
+            Self::Transaction(_) => TRANSACTION_PAYLOAD_KIND,
+            Self::Milestone(_) => MILESTONE_PAYLOAD_KIND,
+            Self::Indexation(_) => INDEXATION_PAYLOAD_KIND,
+            Self::Receipt(_) => RECEIPT_PAYLOAD_KIND,
+            Self::TreasuryTransaction(_) => TREASURY_TRANSACTION_PAYLOAD_KIND,
+        }
+    }
+}
+
 impl Packable for Payload {
     type Error = Error;
 
