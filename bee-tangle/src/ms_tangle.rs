@@ -18,9 +18,9 @@ use bee_runtime::resource::ResourceHandle;
 use async_trait::async_trait;
 use log::{info, trace};
 use tokio::sync::Mutex;
+use hashbrown::HashMap;
 
 use std::{
-    collections::HashMap,
     ops::Deref,
     sync::atomic::{AtomicU32, Ordering},
     time::{SystemTime, UNIX_EPOCH},

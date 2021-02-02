@@ -7,11 +7,9 @@ use bee_message::MessageId;
 
 use log::debug;
 use rand::seq::IteratorRandom;
+use hashbrown::{hash_map::Entry, HashMap, HashSet};
 
-use std::{
-    collections::{hash_map::Entry, HashMap, HashSet},
-    time::Instant,
-};
+use std::time::Instant;
 
 enum Score {
     NonLazy,
