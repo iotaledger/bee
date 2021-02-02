@@ -30,6 +30,14 @@ impl TreasuryTransactionPayload {
 
         Ok(Self { input, output })
     }
+
+    pub fn input(&self) -> &Input {
+        &self.input
+    }
+
+    pub fn output(&self) -> &Output {
+        &self.output
+    }
 }
 
 impl Packable for TreasuryTransactionPayload {
