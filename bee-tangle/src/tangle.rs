@@ -10,9 +10,9 @@ use async_trait::async_trait;
 use log::info;
 use lru::LruCache;
 use tokio::sync::{Mutex, RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard};
+use hashbrown::{hash_map::Entry, HashMap, HashSet};
 
 use std::{
-    collections::{hash_map::Entry, HashMap, HashSet},
     fmt::Debug,
     marker::PhantomData,
     ops::Deref,
