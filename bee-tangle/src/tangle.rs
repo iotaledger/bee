@@ -392,25 +392,15 @@ where
     }
 
     async fn perform_eviction(&self) {
-        loop {
-            let len = self.len().await;
-            let mut cache = self.cache_queue.lock().await;
-
-            if len < cache.cap() {
-                break;
-            }
-
-            let remove = cache.pop_lru().map(|(id, _)| id);
-
-            drop(cache);
+        let mut vertices = self.vertices.write().await;
+        let mut children = self.children.write().await;
+        let mut cache_queue = self.cache_queue.lock().await;
+        while vertices.len() > cache_queue.cap() {
+            let remove = cache_queue.pop_lru().map(|(id, _)| id);
 
             if let Some(message_id) = remove {
-                self.vertices
-                    .write()
-                    .await
-                    .remove(&message_id)
-                    .expect("Expected vertex entry to exist");
-                self.children.write().await.remove(&message_id);
+                vertices.remove(&message_id);
+                children.remove(&message_id);
             } else {
                 break;
             }
