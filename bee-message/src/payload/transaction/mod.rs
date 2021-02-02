@@ -11,12 +11,13 @@ mod unlock;
 
 use crate::Error;
 
-pub use constants::{INPUT_OUTPUT_COUNT_MAX, INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE};
+pub use constants::{INPUT_OUTPUT_COUNT_MAX, INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE, IOTA_SUPPLY};
 pub use essence::{TransactionPayloadEssence, TransactionPayloadEssenceBuilder};
 pub use input::{Input, TreasuryInput, UTXOInput};
 pub use output::{
     Address, Bech32Address, ConsumedOutput, CreatedOutput, Ed25519Address, Output, OutputId,
-    SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH,
+    SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput, ED25519_ADDRESS_LENGTH,
+    OUTPUT_ID_LENGTH,
 };
 pub use transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
 pub use treasury::TreasuryTransactionPayload;

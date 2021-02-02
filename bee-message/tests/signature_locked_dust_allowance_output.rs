@@ -18,6 +18,15 @@ fn valid() {
 }
 
 #[test]
+fn valid_supply_amount() {
+    let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
+    let output = SignatureLockedDustAllowanceOutput::new(address, IOTA_SUPPLY).unwrap();
+
+    assert_eq!(*output.address(), address);
+    assert_eq!(output.amount(), IOTA_SUPPLY);
+}
+
+#[test]
 fn invalid_amount_less_than_minimum() {
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     assert!(matches!(
