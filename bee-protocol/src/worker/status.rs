@@ -6,6 +6,7 @@ use crate::{
     worker::{MessageRequesterWorker, RequestedMessages},
 };
 
+use bee_ledger::LedgerWorker;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 
@@ -29,7 +30,12 @@ where
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>(), TypeId::of::<MessageRequesterWorker>()].leak()
+        vec![
+            TypeId::of::<TangleWorker>(),
+            TypeId::of::<MessageRequesterWorker>(),
+            TypeId::of::<LedgerWorker>(),
+        ]
+        .leak()
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
