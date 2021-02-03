@@ -9,7 +9,7 @@ use crate::{
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker};
+use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker, BELOW_MAX_DEPTH};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -17,11 +17,7 @@ use log::*;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{
-    any::TypeId,
-    cmp::{max, min},
-    convert::Infallible,
-};
+use std::{any::TypeId, convert::Infallible};
 
 #[derive(Debug)]
 pub(crate) struct PropagatorWorkerEvent(pub(crate) MessageId);
@@ -33,25 +29,23 @@ pub(crate) struct PropagatorWorker {
 async fn propagate<B: StorageBackend>(
     message_id: MessageId,
     tangle: &MsTangle<B>,
-    tip_tx: &async_channel::Sender<(MessageId, MessageId, MessageId, Option<MilestoneIndex>)>,
+    solidified_tx: &async_channel::Sender<(MessageId, Vec<MessageId>, Option<MilestoneIndex>)>,
 ) {
     let mut children = vec![message_id];
 
-    while let Some(ref message_id) = children.pop() {
+    'outer: while let Some(ref message_id) = children.pop() {
         // Skip messages that are already solid.
         if tangle.is_solid_message(message_id).await {
-            continue;
+            continue 'outer;
         }
 
         // TODO Copying parents to avoid double locking, will be refactored.
-        if let Some((parent1, parent2)) = tangle
-            .get(&message_id)
-            .await
-            .map(|message| (*message.parent1(), *message.parent2()))
-        {
-            // If either of the parents is not yet solid, we do not propagate their current state.
-            if !tangle.is_solid_message(&parent1).await || !tangle.is_solid_message(&parent2).await {
-                continue;
+        if let Some(parents) = tangle.get(&message_id).await.map(|message| message.parents().to_vec()) {
+            // If one of the parents is not yet solid, we skip the current message.
+            for parent in parents.iter() {
+                if !tangle.is_solid_message(parent).await {
+                    continue 'outer;
+                }
             }
 
             // Note: There are two types of solidity carriers:
@@ -61,28 +55,29 @@ async fn propagate<B: StorageBackend>(
             // we can simply unwrap. We also try to minimise unnecessary Tangle API calls if - for example - the
             // parent in question turns out to be a SEP.
 
-            // Determine OTRSI/YTRSI of parent1
-            let (parent1_otrsi, parent1_ytrsi) = match tangle.get_solid_entry_point_index(&parent1).await {
-                Some(parent1_sepi) => (IndexId::new(parent1_sepi, parent1), IndexId::new(parent1_sepi, parent1)),
-                None => match tangle.get_metadata(&parent1).await {
-                    Some(parent1_md) => (parent1_md.otrsi().unwrap(), parent1_md.ytrsi().unwrap()),
-                    None => continue,
-                },
-            };
+            let mut parent_otrsis = Vec::new();
+            let mut parent_ytrsis = Vec::new();
 
-            // Determine OTRSI/YTRSI of parent2
-            let (parent2_otrsi, parent2_ytrsi) = match tangle.get_solid_entry_point_index(&parent2).await {
-                Some(parent2_sepi) => (IndexId::new(parent2_sepi, parent2), IndexId::new(parent2_sepi, parent2)),
-                None => match tangle.get_metadata(&parent2).await {
-                    Some(parent2_md) => (parent2_md.otrsi().unwrap(), parent2_md.ytrsi().unwrap()),
-                    None => continue,
-                },
-            };
+            for parent in parents.iter() {
+                let (parent_otrsi, parent_ytrsi) = match tangle.get_solid_entry_point_index(parent).await {
+                    Some(parent_sepi) => (IndexId::new(parent_sepi, *parent), IndexId::new(parent_sepi, *parent)),
+                    None => match tangle.get_metadata(parent).await {
+                        // 'unwrap' is safe (see explanation above)
+                        Some(parent_md) => (
+                            parent_md.otrsi().expect("solid msg with unset omrsi"),
+                            parent_md.ytrsi().expect("solid msg with unset ymrsi"),
+                        ),
+                        None => continue 'outer,
+                    },
+                };
+                parent_otrsis.push(parent_otrsi);
+                parent_ytrsis.push(parent_ytrsi);
+            }
 
             // Derive child OTRSI/YTRSI from its parents.
             // Note: The child inherits oldest (lowest) otrsi and the newest (highest) ytrsi from its parents.
-            let child_otrsi = min(parent1_otrsi, parent2_otrsi);
-            let child_ytrsi = max(parent1_ytrsi, parent2_ytrsi);
+            let child_otrsi = parent_otrsis.iter().min().unwrap();
+            let child_ytrsi = parent_ytrsis.iter().max().unwrap();
 
             let ms_index_maybe = tangle
                 .update_metadata(&message_id, |metadata| {
@@ -92,8 +87,8 @@ async fn propagate<B: StorageBackend>(
                     if metadata.flags().is_milestone() {
                         metadata.milestone_index()
                     } else {
-                        metadata.set_otrsi(child_otrsi);
-                        metadata.set_ytrsi(child_ytrsi);
+                        metadata.set_otrsi(*child_otrsi);
+                        metadata.set_ytrsi(*child_ytrsi);
                         None
                     }
                 })
@@ -108,7 +103,7 @@ async fn propagate<B: StorageBackend>(
             }
 
             // Send child to the tip pool.
-            if let Err(e) = tip_tx.send((*message_id, parent1, parent2, ms_index_maybe)).await {
+            if let Err(e) = solidified_tx.send((*message_id, parents, ms_index_maybe)).await {
                 warn!("Failed to send message to the tip pool. Cause: {:?}", e);
             }
         }
@@ -137,15 +132,35 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let (tip_tx, tip_rx) = async_channel::unbounded();
+            let (solidified_tx, solidified_rx) = async_channel::unbounded();
 
             tokio::task::spawn({
                 let tangle = tangle.clone();
 
                 async move {
-                    while let Ok((message_id, parent1, parent2, index)) = tip_rx.recv().await {
+                    while let Ok((message_id, parents, index)) = solidified_rx.recv().await {
                         bus.dispatch(MessageSolidified(message_id));
-                        tangle.insert_tip(message_id, parent1, parent2).await;
+
+                        const SAFETY_THRESHOLD: u32 = 5; // Number of ms before eligible section of the Tangle begins
+
+                        // NOTE: We need to decide whether we want to put this new solid message into the tip-pool.
+                        // Some things to consider:
+                        // 1) During synchronization we receive many non-eligible messages, that are way too old for
+                        //    the TSA, hence we want to exclude them.
+                        // 2) We don't know the confirming milestone index of each eventually confirmed message at this
+                        // point in time, hence we need to employ a heuristic with a security threshold to minimise the
+                        // risk of a false-negative (something excluded from the tip-pool, that would be eligible as
+                        // a tip). That heuristic is: Do not add to the tip-pool as long as the Tangle is not within
+                        // BELOW_MAX_DEPTH + <some_safety_threshold>
+                        // 3) Even if this method doesn't work perfectly, the tip set would only be a little
+                        // bit smaller than it could be for a very short time after the node is synchronized.
+
+                        // NOTE: That diff is always okay, because of the invariant: LSMI <= LMI or 0 <= (LMI - LSMI)
+                        if (tangle.get_latest_milestone_index() - tangle.get_latest_solid_milestone_index())
+                            <= (BELOW_MAX_DEPTH + SAFETY_THRESHOLD).into()
+                        {
+                            tangle.insert_tip(message_id, parents).await;
+                        }
 
                         if let Some(index) = index {
                             if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
@@ -159,7 +174,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(PropagatorWorkerEvent(message_id)) = receiver.next().await {
-                propagate(message_id, &tangle, &tip_tx).await;
+                propagate(message_id, &tangle, &solidified_tx).await;
             }
 
             // Before the worker completely stops, the receiver needs to be drained for statuses to be propagated.
@@ -169,7 +184,7 @@ where
             let mut count: usize = 0;
 
             while let Some(Some(PropagatorWorkerEvent(message_id))) = receiver.next().now_or_never() {
-                propagate(message_id, &tangle, &tip_tx).await;
+                propagate(message_id, &tangle, &solidified_tx).await;
                 count += 1;
             }
 

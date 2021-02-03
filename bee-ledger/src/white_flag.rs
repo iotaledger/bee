@@ -236,17 +236,22 @@ where
 
         match tangle.get(message_id).await {
             Some(message) => {
-                let parent1 = message.parent1();
-                let parent2 = message.parent2();
+                let mut next = None;
 
-                if visited.contains(parent1) && visited.contains(parent2) {
-                    on_message(storage, message_id, &message, metadata).await?;
-                    visited.insert(*message_id);
-                    messages_ids.pop();
-                } else if !visited.contains(parent1) {
-                    messages_ids.push(*parent1);
-                } else if !visited.contains(parent2) {
-                    messages_ids.push(*parent2);
+                for parent in message.parents() {
+                    if !visited.contains(parent) {
+                        next.replace(parent);
+                        break;
+                    }
+                }
+
+                match next {
+                    Some(next) => messages_ids.push(*next),
+                    None => {
+                        on_message(storage, message_id, &message, metadata).await?;
+                        visited.insert(*message_id);
+                        messages_ids.pop();
+                    }
                 }
             }
             None => {

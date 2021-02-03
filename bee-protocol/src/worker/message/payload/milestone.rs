@@ -35,8 +35,7 @@ use std::{any::TypeId, convert::Infallible};
 pub(crate) enum Error {
     UnknownMessage,
     NoMilestonePayload,
-    Parent1Mismatch(MessageId, MessageId),
-    Parent2Mismatch(MessageId, MessageId),
+    ParentsMismatch,
     InvalidMilestone(MilestoneValidationError),
 }
 
@@ -56,17 +55,8 @@ async fn validate<B: StorageBackend>(
 
     match message.payload() {
         Some(Payload::Milestone(milestone)) => {
-            if message.parent1() != milestone.essence().parent1() {
-                return Err(Error::Parent1Mismatch(
-                    *message.parent1(),
-                    *milestone.essence().parent1(),
-                ));
-            }
-            if message.parent2() != milestone.essence().parent2() {
-                return Err(Error::Parent2Mismatch(
-                    *message.parent2(),
-                    *milestone.essence().parent2(),
-                ));
+            if message.parents() != milestone.essence().parents() {
+                return Err(Error::ParentsMismatch);
             }
 
             milestone

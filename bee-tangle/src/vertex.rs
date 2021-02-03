@@ -27,12 +27,8 @@ where
         }
     }
 
-    pub fn parent1(&self) -> &MessageId {
-        self.message.parent1()
-    }
-
-    pub fn parent2(&self) -> &MessageId {
-        self.message.parent2()
+    pub fn parents(&self) -> &[MessageId] {
+        self.message.parents()
     }
 
     pub fn message(&self) -> &MessageRef {

@@ -134,8 +134,9 @@ where
         let r = match self.vertices.write().await.entry(message_id) {
             Entry::Occupied(_) => None,
             Entry::Vacant(entry) => {
-                self.add_child_inner(*message.parent1(), message_id).await;
-                self.add_child_inner(*message.parent2(), message_id).await;
+                for parent in message.parents().iter() {
+                    self.add_child_inner(*parent, message_id).await;
+                }
                 let vtx = Vertex::new(message, metadata);
                 let tx = vtx.message().clone();
                 entry.insert(vtx);

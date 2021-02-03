@@ -17,10 +17,8 @@ use std::{
 pub struct MessageDto {
     #[serde(rename = "networkId")]
     pub network_id: String,
-    #[serde(rename = "parent1MessageId")]
-    pub parent_1_message_id: String,
-    #[serde(rename = "parent2MessageId")]
-    pub parent_2_message_id: String,
+    #[serde(rename = "parentMessageIds")]
+    pub parents: Vec<String>,
     pub payload: Option<PayloadDto>,
     pub nonce: String,
 }
@@ -145,10 +143,8 @@ pub struct MilestoneDto {
     pub kind: u32,
     pub index: u32,
     pub timestamp: u64,
-    #[serde(rename = "parent1MessageId")]
-    pub parent_1_message_id: String,
-    #[serde(rename = "parent2MessageId")]
-    pub parent_2_message_id: String,
+    #[serde(rename = "parentMessageIds")]
+    pub parents: Vec<String>,
     #[serde(rename = "inclusionMerkleProof")]
     pub inclusion_merkle_proof: String,
     #[serde(rename = "publicKeys")]
@@ -170,8 +166,7 @@ impl TryFrom<&Message> for MessageDto {
     fn try_from(value: &Message) -> Result<Self, Self::Error> {
         Ok(MessageDto {
             network_id: value.network_id().to_string(),
-            parent_1_message_id: value.parent1().to_string(),
-            parent_2_message_id: value.parent2().to_string(),
+            parents: value.parents().iter().map(|p| p.to_string()).collect(),
             payload: value.payload().as_ref().map(TryInto::try_into).transpose()?,
             nonce: value.nonce().to_string(),
         })
@@ -189,18 +184,20 @@ impl TryFrom<&MessageDto> for Message {
                     .parse::<u64>()
                     .map_err(|_| "invalid network id: expected an u64-string")?,
             )
-            .with_parent1(value.parent_1_message_id.parse::<MessageId>().map_err(|_| {
-                format!(
-                    "invalid parent 1: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH * 2
-                )
-            })?)
-            .with_parent2(value.parent_2_message_id.parse::<MessageId>().map_err(|_| {
-                format!(
-                    "invalid parent 2: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH * 2
-                )
-            })?)
+            .with_parents(
+                value
+                    .parents
+                    .iter()
+                    .map(|m| {
+                        m.parse::<MessageId>().map_err(|_| {
+                            format!(
+                                "invalid parent: expected a hex-string of length {}",
+                                MESSAGE_ID_LENGTH * 2
+                            )
+                        })
+                    })
+                    .collect::<Result<Vec<MessageId>, String>>()?,
+            )
             .with_nonce_provider(
                 ConstantBuilder::new()
                     .with_value(
@@ -508,8 +505,7 @@ impl From<&Box<MilestonePayload>> for MilestoneDto {
             kind: 1,
             index: value.essence().index(),
             timestamp: value.essence().timestamp(),
-            parent_1_message_id: value.essence().parent1().to_string(),
-            parent_2_message_id: value.essence().parent2().to_string(),
+            parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
             inclusion_merkle_proof: hex::encode(value.essence().merkle_proof()),
             public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
             signatures: value.signatures().iter().map(hex::encode).collect(),
@@ -524,18 +520,15 @@ impl TryFrom<&MilestoneDto> for Box<MilestonePayload> {
         let essence = {
             let index = value.index;
             let timestamp = value.timestamp;
-            let parent_1_message_id = value.parent_1_message_id.parse::<MessageId>().map_err(|_| {
-                format!(
-                    "invalid parent 1 in milestone essence: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH * 2
-                )
-            })?;
-            let parent_2_message_id = value.parent_2_message_id.parse::<MessageId>().map_err(|_| {
-                format!(
-                    "invalid parent 2 in milestone essence: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH * 2
-                )
-            })?;
+            let mut parent_ids = Vec::new();
+            for msg_id in &value.parents{
+                parent_ids.push(msg_id.parse::<MessageId>().map_err(|_| {
+                    format!(
+                        "invalid parent in milestone essence: expected a hex-string of length {}",
+                        MESSAGE_ID_LENGTH * 2
+                    )
+                })?);
+            }
             let merkle_proof = {
                 let mut buf = [0u8; MILESTONE_MERKLE_PROOF_LENGTH];
                 hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf).map_err(|_| {
@@ -563,8 +556,7 @@ impl TryFrom<&MilestoneDto> for Box<MilestonePayload> {
             MilestonePayloadEssence::new(
                 index,
                 timestamp,
-                parent_1_message_id,
-                parent_2_message_id,
+                parent_ids,
                 merkle_proof,
                 public_keys,
             )

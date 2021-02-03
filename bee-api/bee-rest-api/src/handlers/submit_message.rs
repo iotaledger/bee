@@ -33,11 +33,8 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Rejection> {
-    let is_set = |value: &JsonValue| -> bool { !value.is_null() };
-
     let network_id_v = &value["network_id"];
-    let parent_1_v = &value["parent1MessageId"];
-    let parent_2_v = &value["parent2MessageId"];
+    let parents_v = &value["parents"];
     let payload_v = &value["payload"];
     let nonce_v = &value["nonce"];
 
@@ -54,82 +51,32 @@ pub(crate) async fn submit_message<B: StorageBackend>(
             .map_err(|_| reject::custom(BadRequest("invalid network id: expected an u64-string".to_string())))?
     };
 
-    let (parent_1_message_id, parent_2_message_id) = if is_set(parent_1_v) && is_set(parent_2_v) {
-        // if both parents are set
-        let parent1 = parent_1_v
-            .as_str()
-            .ok_or_else(|| {
-                reject::custom(BadRequest(format!(
-                    "invalid parent 1: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH * 2
-                )))
-            })?
-            .parse::<MessageId>()
-            .map_err(|_| {
-                reject::custom(BadRequest(format!(
-                    "invalid parent 1: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH * 2
-                )))
-            })?;
-        let parent2 = parent_2_v
-            .as_str()
-            .ok_or_else(|| {
-                reject::custom(BadRequest(format!(
-                    "invalid parent 2: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH * 2
-                )))
-            })?
-            .parse::<MessageId>()
-            .map_err(|_| {
-                reject::custom(BadRequest(format!(
-                    "invalid parent 2: expected a hex-string of length {}",
-                    MESSAGE_ID_LENGTH * 2
-                )))
-            })?;
-        (parent1, parent2)
-    } else if parent_1_v.is_null() && parent_2_v.is_null() {
-        // if none of the parents are set
+    let parents: Vec<MessageId> = if parents_v.is_null() {
         tangle.get_messages_to_approve().await.ok_or_else(|| {
             reject::custom(ServiceUnavailable(
                 "can not auto-fill parents: no tips available".to_string(),
             ))
         })?
     } else {
-        // if only one parent is set
-        let parent = if is_set(parent_1_v) {
-            parent_1_v
+        let array = parents_v.as_array().ok_or_else(|| {
+            reject::custom(BadRequest(
+                "invalid parents: expected an array of message ids".to_string(),
+            ))
+        })?;
+        let mut message_ids = Vec::new();
+        for s in array {
+            let message_id = s
                 .as_str()
                 .ok_or_else(|| {
-                    reject::custom(BadRequest(format!(
-                        "invalid parent 1: expected a hex-string of length {}",
-                        MESSAGE_ID_LENGTH * 2
-                    )))
+                    reject::custom(BadRequest(
+                        "invalid parents: expected an array of message ids".to_string(),
+                    ))
                 })?
                 .parse::<MessageId>()
-                .map_err(|_| {
-                    reject::custom(BadRequest(format!(
-                        "invalid parent 1: expected a hex-string of length {}",
-                        MESSAGE_ID_LENGTH * 2
-                    )))
-                })?
-        } else {
-            parent_2_v
-                .as_str()
-                .ok_or_else(|| {
-                    reject::custom(BadRequest(format!(
-                        "invalid parent 2: expected a hex-string of length {}",
-                        MESSAGE_ID_LENGTH * 2
-                    )))
-                })?
-                .parse::<MessageId>()
-                .map_err(|_| {
-                    reject::custom(BadRequest(format!(
-                        "invalid parent 2: expected a hex-string of length {}",
-                        MESSAGE_ID_LENGTH * 2
-                    )))
-                })?
-        };
-        (parent, parent)
+                .map_err(|_| reject::custom(BadRequest("invalid network id: expected an u64-string".to_string())))?;
+            message_ids.push(message_id);
+        }
+        message_ids
     };
 
     let payload = if payload_v.is_null() {
@@ -158,8 +105,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     let message = if let Some(nonce) = nonce {
         let mut builder = MessageBuilder::new()
             .with_network_id(network_id)
-            .with_parent1(parent_1_message_id)
-            .with_parent2(parent_2_message_id)
+            .with_parents(parents)
             .with_nonce_provider(ConstantBuilder::new().with_value(nonce).finish(), 0f64);
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
@@ -175,8 +121,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         }
         let mut builder = MessageBuilder::new()
             .with_network_id(network_id)
-            .with_parent1(parent_1_message_id)
-            .with_parent2(parent_2_message_id)
+            .with_parents(parents)
             .with_nonce_provider(
                 MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
                 protocol_config.minimum_pow_score(),

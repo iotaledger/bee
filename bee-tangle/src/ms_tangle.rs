@@ -316,19 +316,15 @@ impl<B: StorageBackend> MsTangle<B> {
         }
     }
 
-    pub async fn insert_tip(&self, message_id: MessageId, parent1: MessageId, parent2: MessageId) {
-        self.tip_pool
-            .lock()
-            .await
-            .insert(&self, message_id, parent1, parent2)
-            .await;
+    pub async fn insert_tip(&self, message_id: MessageId, parents: Vec<MessageId>) {
+        self.tip_pool.lock().await.insert(&self, message_id, parents).await;
     }
 
     pub async fn update_tip_scores(&self) {
         self.tip_pool.lock().await.update_scores(&self).await;
     }
 
-    pub async fn get_messages_to_approve(&self) -> Option<(MessageId, MessageId)> {
+    pub async fn get_messages_to_approve(&self) -> Option<Vec<MessageId>> {
         self.tip_pool.lock().await.two_non_lazy_tips()
     }
 

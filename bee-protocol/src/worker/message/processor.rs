@@ -142,8 +142,7 @@ where
 
                         let metadata = MessageMetadata::arrived();
 
-                        let parent1 = *message.parent1();
-                        let parent2 = *message.parent2();
+                        let parents = message.parents().to_vec();
 
                         // store message
                         let inserted = tangle.insert(message, message_id, metadata).await.is_some();
@@ -164,8 +163,7 @@ where
                         // TODO: boolean values are false at this point in time? trigger event from another location?
                         bus.dispatch(NewVertex {
                             id: message_id.to_string(),
-                            parent1_id: parent1.to_string(),
-                            parent2_id: parent2.to_string(),
+                            parent_ids: parents.iter().map(|p| p.to_string()).collect(),
                             is_solid: false,
                             is_referenced: false,
                             is_conflicting: false,
@@ -188,20 +186,13 @@ where
                                 latency_sum += (Instant::now() - instant).as_millis() as u64;
                                 metrics.messages_average_latency_set(latency_sum / latency_num);
 
-                                helper::request_message(
-                                    &tangle,
-                                    &message_requester,
-                                    &*requested_messages,
-                                    parent1,
-                                    index,
-                                )
-                                .await;
-                                if parent1 != parent2 {
+                                for parent in parents.iter() {
+                                    // TODO only request once if same parents
                                     helper::request_message(
                                         &tangle,
                                         &message_requester,
                                         &*requested_messages,
-                                        parent2,
+                                        *parent,
                                         index,
                                     )
                                     .await;
