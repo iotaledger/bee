@@ -36,7 +36,7 @@ pub(crate) async fn milestone<B: StorageBackend>(
 /// Response of GET /api/v1/milestone/{milestone_index}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MilestoneResponse {
-    #[serde(rename = "milestoneIndex")]
+    #[serde(rename = "index")]
     pub milestone_index: u32,
     #[serde(rename = "messageId")]
     pub message_id: String,
