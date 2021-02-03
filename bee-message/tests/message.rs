@@ -4,7 +4,7 @@
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
 use bee_pow::{
-    providers::{Miner, MinerBuilder, ProviderBuilder},
+    providers::{ConstantBuilder, Miner, MinerBuilder, ProviderBuilder},
     score::compute_pow_score,
 };
 use bee_test::rand::message::rand_message_id;
@@ -44,8 +44,12 @@ fn invalid_length() {
         .with_network_id(0)
         .with_parents(vec![rand_message_id(), rand_message_id()])
         .with_nonce_provider(ConstantBuilder::new().with_value(42).finish(), 10000f64)
-        .with_payload(IndexationPayload::new("42".to_owned(), &[0u8; 32000]).unwrap().into())
+        .with_payload(
+            IndexationPayload::new("42".to_owned(), &[0u8; MESSAGE_LENGTH_MAX])
+                .unwrap()
+                .into(),
+        )
         .finish();
 
-    assert!(matches!(res, Err(Error::InvalidMessageLength(32096))));
+    assert!(matches!(res, Err(Error::InvalidMessageLength(len)) if len == MESSAGE_LENGTH_MAX + 97));
 }

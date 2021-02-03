@@ -18,5 +18,5 @@ pub use crate::{
         },
         Payload,
     },
-    Error, Message, MessageBuilder, MessageId, MESSAGE_ID_LENGTH,
+    Error, Message, MessageBuilder, MessageId, MESSAGE_ID_LENGTH, MESSAGE_LENGTH_MAX,
 };
