@@ -116,6 +116,7 @@ where
         let rest_api_config = node_config.rest_api.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
+        let storage = node.storage();
 
         // Keep track of all connected users, key is usize, value
         // is a websocket sender.
@@ -195,30 +196,33 @@ where
             // Turn our "state" into a new Filter...
             let users = warp::any().map(move || users.clone());
             let tangle = warp::any().map(move || tangle.clone());
+            let storage = warp::any().map(move || storage.clone());
 
-            let routes =
-                warp::path::end()
-                    .and_then(serve_index)
-                    .or(warp::path("branding").and(warp::path::full()).and_then(serve_full_path))
-                    .or(warp::path("static").and(warp::path::full()).and_then(serve_full_path))
-                    .or(warp::path("ws").and(warp::ws()).and(users).and(tangle).map(
-                        |ws: warp::ws::Ws, users, tangle| {
-                            // This will call our function if the handshake succeeds.
-                            ws.on_upgrade(move |socket| user_connected(socket, users, tangle))
-                        },
-                    ))
-                    .or(warp::path!("api" / ..).and(
-                        reverse_proxy_filter(
-                            "".to_string(),
-                            "http://".to_owned() + &rest_api_config.binding_socket_addr().to_string() + "/",
-                        )
-                        .map(|res| res),
-                    ))
-                    .or(warp::path!("analytics" / ..).and_then(serve_index))
-                    .or(warp::path!("peers" / ..).and_then(serve_index))
-                    .or(warp::path!("explorer" / ..).and_then(serve_index))
-                    .or(warp::path!("visualizer" / ..).and_then(serve_index))
-                    .or(warp::path!("settings" / ..).and_then(serve_index));
+            let routes = warp::path::end()
+                .and_then(serve_index)
+                .or(warp::path("branding").and(warp::path::full()).and_then(serve_full_path))
+                .or(warp::path("static").and(warp::path::full()).and_then(serve_full_path))
+                .or(warp::path("ws")
+                    .and(warp::ws())
+                    .and(users)
+                    .and(tangle)
+                    .and(storage)
+                    .map(|ws: warp::ws::Ws, users, tangle, storage| {
+                        // This will call our function if the handshake succeeds.
+                        ws.on_upgrade(move |socket| user_connected(socket, users, tangle, storage))
+                    }))
+                .or(warp::path!("api" / ..).and(
+                    reverse_proxy_filter(
+                        "".to_string(),
+                        "http://".to_owned() + &rest_api_config.binding_socket_addr().to_string() + "/",
+                    )
+                    .map(|res| res),
+                ))
+                .or(warp::path!("analytics" / ..).and_then(serve_index))
+                .or(warp::path!("peers" / ..).and_then(serve_index))
+                .or(warp::path!("explorer" / ..).and_then(serve_index))
+                .or(warp::path!("visualizer" / ..).and_then(serve_index))
+                .or(warp::path!("settings" / ..).and_then(serve_index));
 
             info!("Dashboard available at http://localhost:{}.", config.port());
 
@@ -281,11 +285,12 @@ pub(crate) async fn broadcast(event: WsEvent, users: &WsUsers) {
 pub(crate) async fn send_to_specific(event: WsEvent, user_id: usize, users: &WsUsers) {
     match serde_json::to_string(&event) {
         Ok(as_text) => {
-            let user = users.read().await.get(&user_id);
-            if let Err(_disconnected) = user.tx.send(Ok(Message::text(as_text.clone()))) {
-                // The tx is disconnected, our `user_disconnected` code
-                // should be happening in another task, nothing more to
-                // do here.
+            if let Some(user) = users.read().await.get(&user_id) {
+                if let Err(_disconnected) = user.tx.send(Ok(Message::text(as_text.clone()))) {
+                    // The tx is disconnected, our `user_disconnected` code
+                    // should be happening in another task, nothing more to
+                    // do here.
+                }
             }
         }
         Err(e) => error!("can not convert event to string: {}", e),
