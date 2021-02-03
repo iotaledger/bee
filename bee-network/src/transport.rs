@@ -22,7 +22,7 @@ pub fn build_transport(local_keys: &identity::Keypair) -> io::Result<Boxed<(Peer
     let transport = dns::DnsConfig::new(tcp)?;
 
     Ok(transport
-        .upgrade(upgrade::Version::V1)
+        .upgrade(upgrade::Version::V1Lazy)
         .authenticate(noise::NoiseConfig::xx(noise_keys).into_authenticated())
         .multiplex(mplex::MplexConfig::new())
         // .multiplex(SelectUpgrade::new(yamux::Config::default(), mplex::MplexConfig::new()))

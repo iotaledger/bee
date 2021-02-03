@@ -45,7 +45,7 @@ pub(crate) async fn upgrade_connection(
                 .await
                 .map_err(|_| Error::CreatingOutboundSubstreamFailed(peer_id.short()))?;
 
-            upgrade::apply_outbound(outbound, GossipProtocol, upgrade::Version::V1)
+            upgrade::apply_outbound(outbound, GossipProtocol, upgrade::Version::V1Lazy)
                 .await
                 .map_err(|_| Error::SubstreamProtocolUpgradeFailed(peer_id.short()))?
         }
