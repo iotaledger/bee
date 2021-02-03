@@ -3,7 +3,7 @@
 
 use crate::{storage::StorageBackend, MsTangle};
 
-use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MessageId};
+use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 use bee_runtime::{node::Node, worker::Worker};
 use bee_snapshot::{SnapshotInfo, SnapshotWorker};
 use bee_storage::access::{Fetch, Insert};
@@ -45,7 +45,7 @@ where
         // TODO batch ?
 
         while let Ok((sep, index)) = full_sep_rx.recv_async().await {
-            tangle.add_solid_entry_point(*sep, index).await;
+            tangle.add_solid_entry_point(sep, index).await;
             Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &sep, &index)
                 .await
                 .unwrap();
@@ -56,13 +56,15 @@ where
         //     .await
         //     .unwrap();
         while let Ok((sep, index)) = delta_sep_rx.recv_async().await {
-            tangle.add_solid_entry_point(*sep, index).await;
+            tangle.add_solid_entry_point(sep, index).await;
             Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &sep, &index)
                 .await
                 .unwrap();
         }
 
-        tangle.add_solid_entry_point(MessageId::null(), MilestoneIndex(0)).await;
+        tangle
+            .add_solid_entry_point(SolidEntryPoint::null(), MilestoneIndex(0))
+            .await;
 
         // This needs to be done after the streams are emptied.
 

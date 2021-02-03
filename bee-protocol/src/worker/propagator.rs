@@ -7,13 +7,14 @@ use crate::{
     worker::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent},
 };
 
-use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker, BELOW_MAX_DEPTH};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
 use log::*;
+use ref_cast::RefCast;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -59,7 +60,10 @@ async fn propagate<B: StorageBackend>(
             let mut parent_ytrsis = Vec::new();
 
             for parent in parents.iter() {
-                let (parent_otrsi, parent_ytrsi) = match tangle.get_solid_entry_point_index(parent).await {
+                let (parent_otrsi, parent_ytrsi) = match tangle
+                    .get_solid_entry_point_index(SolidEntryPoint::ref_cast(&parent))
+                    .await
+                {
                     Some(parent_sepi) => (IndexId::new(parent_sepi, *parent), IndexId::new(parent_sepi, *parent)),
                     None => match tangle.get_metadata(parent).await {
                         // 'unwrap' is safe (see explanation above)

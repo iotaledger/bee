@@ -11,14 +11,16 @@ use crate::{
 
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
+    solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
 use bee_runtime::resource::ResourceHandle;
 
 use async_trait::async_trait;
-use log::{info, trace};
-use tokio::sync::Mutex;
 use hashbrown::HashMap;
+use log::{info, trace};
+use ref_cast::RefCast;
+use tokio::sync::Mutex;
 
 use std::{
     ops::Deref,
@@ -84,7 +86,7 @@ impl<B: StorageBackend> StorageHooks<B> {
 pub struct MsTangle<B> {
     pub(crate) inner: Tangle<MessageMetadata, StorageHooks<B>>,
     pub(crate) milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
-    pub(crate) solid_entry_points: Mutex<HashMap<MessageId, MilestoneIndex>>,
+    pub(crate) solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
     latest_milestone_index: AtomicU32,
     latest_solid_milestone_index: AtomicU32,
     snapshot_index: AtomicU32,
@@ -249,67 +251,70 @@ impl<B: StorageBackend> MsTangle<B> {
         *self.get_latest_solid_milestone_index() >= self.get_latest_milestone_index().saturating_sub(threshold)
     }
 
-    pub async fn get_solid_entry_point_index(&self, hash: &MessageId) -> Option<MilestoneIndex> {
-        self.solid_entry_points.lock().await.get(hash).map(|i| *i)
+    pub async fn get_solid_entry_point_index(&self, sep: &SolidEntryPoint) -> Option<MilestoneIndex> {
+        self.solid_entry_points.lock().await.get(sep).map(|i| *i)
     }
 
-    pub async fn add_solid_entry_point(&self, hash: MessageId, index: MilestoneIndex) {
-        self.solid_entry_points.lock().await.insert(hash, index);
+    pub async fn add_solid_entry_point(&self, sep: SolidEntryPoint, index: MilestoneIndex) {
+        self.solid_entry_points.lock().await.insert(sep, index);
     }
 
-    /// Removes `hash` from the set of solid entry points.
-    pub async fn remove_solid_entry_point(&self, hash: &MessageId) {
-        self.solid_entry_points.lock().await.remove(hash);
+    /// Removes `sep` from the set of solid entry points.
+    pub async fn remove_solid_entry_point(&self, sep: &SolidEntryPoint) {
+        self.solid_entry_points.lock().await.remove(sep);
     }
 
     pub async fn clear_solid_entry_points(&self) {
         self.solid_entry_points.lock().await.clear();
     }
 
-    /// Returns whether the message associated with `hash` is a solid entry point.
-    pub async fn is_solid_entry_point(&self, hash: &MessageId) -> bool {
-        self.solid_entry_points.lock().await.contains_key(hash)
+    /// Returns whether the message associated with `sep` is a solid entry point.
+    pub async fn is_solid_entry_point(&self, id: &MessageId) -> bool {
+        self.solid_entry_points
+            .lock()
+            .await
+            .contains_key(SolidEntryPoint::ref_cast(id))
     }
 
-    /// Returns whether the message associated with `hash` is deemed `solid`.
-    pub async fn is_solid_message(&self, hash: &MessageId) -> bool {
-        if self.is_solid_entry_point(hash).await {
+    /// Returns whether the message associated with `id` is deemed `solid`.
+    pub async fn is_solid_message(&self, id: &MessageId) -> bool {
+        if self.is_solid_entry_point(id).await {
             true
         } else {
             self.inner
-                .get_metadata(hash)
+                .get_metadata(id)
                 .await
                 .map(|metadata| metadata.flags().is_solid())
                 .unwrap_or(false)
         }
     }
 
-    pub async fn is_solid_message_maybe(&self, hash: &MessageId) -> bool {
-        if self.is_solid_entry_point(hash).await {
+    pub async fn is_solid_message_maybe(&self, id: &MessageId) -> bool {
+        if self.is_solid_entry_point(id).await {
             true
         } else {
             self.inner
-                .get_metadata_maybe(hash)
+                .get_metadata_maybe(id)
                 .await
                 .map(|metadata| metadata.flags().is_solid())
                 .unwrap_or(false)
         }
     }
 
-    pub async fn otrsi(&self, hash: &MessageId) -> Option<IndexId> {
-        match self.solid_entry_points.lock().await.get(hash) {
-            Some(sep) => Some(IndexId::new(*sep, *hash)),
-            None => match self.get_metadata(hash).await {
+    pub async fn otrsi(&self, id: &MessageId) -> Option<IndexId> {
+        match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
+            Some(sep) => Some(IndexId::new(*sep, *id)),
+            None => match self.get_metadata(id).await {
                 Some(metadata) => metadata.otrsi(),
                 None => None,
             },
         }
     }
 
-    pub async fn ytrsi(&self, hash: &MessageId) -> Option<IndexId> {
-        match self.solid_entry_points.lock().await.get(hash) {
-            Some(sep) => Some(IndexId::new(*sep, *hash)),
-            None => match self.get_metadata(hash).await {
+    pub async fn ytrsi(&self, id: &MessageId) -> Option<IndexId> {
+        match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
+            Some(sep) => Some(IndexId::new(*sep, *id)),
+            None => match self.get_metadata(id).await {
                 Some(metadata) => metadata.ytrsi(),
                 None => None,
             },

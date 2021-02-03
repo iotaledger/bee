@@ -5,8 +5,12 @@ use crate::MessageId;
 
 use bee_common::packable::{Packable, Read, Write};
 
+use ref_cast::RefCast;
+
 use std::ops::Deref;
 
+#[derive(RefCast)]
+#[repr(transparent)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SolidEntryPoint(MessageId);
 
@@ -27,6 +31,10 @@ impl Deref for SolidEntryPoint {
 impl SolidEntryPoint {
     pub fn new(message_id: MessageId) -> Self {
         message_id.into()
+    }
+
+    pub fn null() -> Self {
+        Self(MessageId::null())
     }
 
     pub fn message_id(&self) -> &MessageId {
