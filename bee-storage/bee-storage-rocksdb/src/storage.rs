@@ -16,6 +16,7 @@ use bee_message::{
 use async_trait::async_trait;
 use rocksdb::{ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, Options, SliceTransform, DB};
 
+pub const CF_SYSTEM: &str = "system";
 pub const CF_MESSAGE_ID_TO_MESSAGE: &str = "message_id_to_message";
 pub const CF_MESSAGE_ID_TO_METADATA: &str = "message_id_to_metadata";
 pub const CF_MESSAGE_ID_TO_MESSAGE_ID: &str = "message_id_to_message_id";
@@ -38,6 +39,8 @@ pub struct Storage {
 
 impl Storage {
     pub fn try_new(config: RocksDBConfig) -> Result<DB, Error> {
+        let cf_system = ColumnFamilyDescriptor::new(CF_SYSTEM, Options::default());
+
         let cf_message_id_to_message = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE, Options::default());
 
         let cf_message_id_to_metadata = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_METADATA, Options::default());
@@ -112,6 +115,7 @@ impl Storage {
         opts.set_env(&env);
 
         let column_familes = vec![
+            cf_system,
             cf_message_id_to_message,
             cf_message_id_to_metadata,
             cf_message_id_to_message_id,
