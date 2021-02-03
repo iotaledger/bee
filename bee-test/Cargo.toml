@@ -15,7 +15,6 @@ bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-ledger = { path = "../bee-ledger" }
 bee-message = { path = "../bee-message" }
 bee-pow = { path = "../bee-pow" }
-bee-protocol = { path = "../bee-protocol" }
 bee-snapshot = { path = "../bee-snapshot" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-tangle = { path = "../bee-tangle" }
@@ -24,9 +23,5 @@ bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 futures = "0.3"
 num_cpus = "1.12"
 rand = "0.8"
-tokio = { version = "1.1", features = [] }
-toml = "0.5"
-
-[dev-dependencies]
 serde = "1.0"
-serde_json = "1.0"
+tokio = { version = "1.1", features = [] }
