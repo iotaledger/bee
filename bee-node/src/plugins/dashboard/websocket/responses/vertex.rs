@@ -13,7 +13,7 @@ use serde::Serialize;
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct VertexResponse {
     id: String,
-    parent_ids: Vec<String>,
+    parents: Vec<String>,
     is_solid: bool,
     is_referenced: bool,
     is_conflicting: bool,
@@ -36,7 +36,7 @@ impl From<NewVertex> for VertexResponse {
     fn from(val: NewVertex) -> Self {
         Self {
             id: val.id,
-            parent_ids: val.parent_ids,
+            parents: val.parent_ids,
             is_solid: val.is_solid,
             is_referenced: val.is_referenced,
             is_conflicting: val.is_conflicting,
