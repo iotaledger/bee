@@ -67,7 +67,7 @@ where
 
         let propagator = node.worker::<PropagatorWorker>().unwrap().tx.clone();
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
-        let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
+        let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();
         let payload_worker = node.worker::<PayloadWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();

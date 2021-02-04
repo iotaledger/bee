@@ -1,9 +1,9 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::model::Error as ModelError;
+use crate::{balance::Balance, model::Error as ModelError};
 
-use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_message::{milestone::MilestoneIndex, payload::transaction::Address, MessageId};
 
 use thiserror::Error;
 
@@ -31,8 +31,12 @@ pub enum Error {
     InvalidMessagesCount(usize, usize, usize, usize),
     #[error("Unexpected milestine diff index: {0:?}.")]
     UnexpectedDiffIndex(MilestoneIndex),
-    #[error("Invalid ledger state.")]
-    InvalidLedgerState,
+    #[error("Invalid ledger unspent state: {0}.")]
+    InvalidLedgerUnspentState(u64),
+    #[error("Invalid ledger balance state: {0}.")]
+    InvalidLedgerBalanceState(u64),
+    #[error("Invalid ledger dust state: {0:?} {1:?}.")]
+    InvalidLedgerDustState(Address, Balance),
     #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
 }

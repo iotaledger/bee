@@ -166,7 +166,7 @@ where
             info!("Running.");
 
             while let Some(task) = receiver.next().await {
-                task_tx.send(task).await.unwrap();
+                let _ = task_tx.send(task).await;
             }
 
             info!("Stopped.");

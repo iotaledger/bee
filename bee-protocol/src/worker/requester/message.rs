@@ -13,21 +13,24 @@ use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 
+use async_priority_queue::PriorityQueue;
 use async_trait::async_trait;
 use futures::StreamExt;
 use fxhash::FxBuildHasher;
 use log::{debug, info, trace};
 use tokio::{
-    sync::{mpsc, RwLock},
+    sync::RwLock,
     time::interval,
 };
-use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
+use tokio_stream::wrappers::IntervalStream;
 
 use std::{
     any::TypeId,
     collections::HashMap,
     convert::Infallible,
     time::{Duration, Instant},
+    sync::Arc,
+    cmp::{Ord, PartialOrd, Ordering},
 };
 
 const RETRY_INTERVAL_MS: u64 = 2500;
@@ -54,10 +57,30 @@ impl RequestedMessages {
     }
 }
 
+#[derive(Eq, PartialEq)]
 pub(crate) struct MessageRequesterWorkerEvent(pub(crate) MessageId, pub(crate) MilestoneIndex);
 
+impl Ord for MessageRequesterWorkerEvent {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.1.cmp(&other.1).reverse()
+    }
+}
+
+impl PartialOrd for MessageRequesterWorkerEvent {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[derive(Clone)]
 pub(crate) struct MessageRequesterWorker {
-    pub(crate) tx: mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
+    req_queue: Arc<PriorityQueue<MessageRequesterWorkerEvent>>,
+}
+
+impl MessageRequesterWorker {
+    pub fn request(&self, request: MessageRequesterWorkerEvent) {
+        self.req_queue.push(request);
+    }
 }
 
 async fn process_request(
@@ -185,7 +208,7 @@ where
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        let (tx, rx) = mpsc::unbounded_channel();
+        let req_queue = Arc::new(PriorityQueue::new());
 
         let requested_messages: RequestedMessages = Default::default();
         node.register_resource(requested_messages);
@@ -194,27 +217,30 @@ where
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<ProtocolMetrics>();
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Requester running.");
+        node.spawn::<Self, _, _>({
+            let req_queue = req_queue.clone();
+            |shutdown| async move {
+                info!("Requester running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
-            let mut counter: usize = 0;
+                let mut receiver = ShutdownStream::new(shutdown, req_queue.incoming());
+                let mut counter: usize = 0;
 
-            while let Some(MessageRequesterWorkerEvent(message_id, index)) = receiver.next().await {
-                trace!("Requesting message {}.", message_id);
+                while let Some(MessageRequesterWorkerEvent(message_id, index)) = receiver.next().await {
+                    trace!("Requesting message {}.", message_id);
 
-                process_request(
-                    message_id,
-                    index,
-                    &peer_manager,
-                    &metrics,
-                    &requested_messages,
-                    &mut counter,
-                )
-                .await
+                    process_request(
+                        message_id,
+                        index,
+                        &peer_manager,
+                        &metrics,
+                        &requested_messages,
+                        &mut counter,
+                    )
+                    .await
+                }
+
+                info!("Requester stopped.");
             }
-
-            info!("Requester stopped.");
         });
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
@@ -238,6 +264,6 @@ where
             info!("Retryer stopped.");
         });
 
-        Ok(Self { tx })
+        Ok(Self { req_queue })
     }
 }

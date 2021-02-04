@@ -7,7 +7,7 @@ use crate::{
     peer::PeerManager,
     storage::StorageBackend,
     worker::{
-        IndexUpdaterWorker, IndexUpdaterWorkerEvent, MessageRequesterWorker, MessageRequesterWorkerEvent,
+        IndexUpdaterWorker, IndexUpdaterWorkerEvent, MessageRequesterWorker,
         MetricsWorker, MilestoneRequesterWorker, PeerManagerResWorker, RequestedMessages, RequestedMilestones,
     },
     ProtocolMetrics,
@@ -37,7 +37,7 @@ pub(crate) struct MilestoneSolidifierWorker {
 
 async fn heavy_solidification<B: StorageBackend>(
     tangle: &MsTangle<B>,
-    message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
+    message_requester: &MessageRequesterWorker,
     requested_messages: &RequestedMessages,
     target_index: MilestoneIndex,
     target_id: MessageId,
@@ -121,7 +121,7 @@ where
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
-        let message_requester = node.worker::<MessageRequesterWorker>().unwrap().tx.clone();
+        let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
         let ledger_worker = node.worker::<LedgerWorker>().unwrap().tx.clone();
         let milestone_cone_updater = node.worker::<IndexUpdaterWorker>().unwrap().tx.clone();

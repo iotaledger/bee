@@ -18,7 +18,7 @@ use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use futures::{channel::oneshot, future::FutureExt};
-use log::{error, info, trace, warn};
+use log::{debug, error, info, trace};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -167,7 +167,7 @@ impl PeerWorker {
                         .peer
                         .has_data(MilestoneIndex(*tangle.get_latest_solid_milestone_index() + 1))
                 {
-                    warn!(
+                    debug!(
                         "The peer {} can't help syncing because the required index {} is not in its database [{};{}].",
                         self.peer.address(),
                         *tangle.get_latest_solid_milestone_index() + 1,

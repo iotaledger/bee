@@ -11,7 +11,7 @@ use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use warp::{reject, Rejection, Reply};
 
 pub(crate) async fn milestone<B: StorageBackend>(
@@ -34,9 +34,9 @@ pub(crate) async fn milestone<B: StorageBackend>(
 }
 
 /// Response of GET /api/v1/milestone/{milestone_index}
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MilestoneResponse {
-    #[serde(rename = "milestoneIndex")]
+    #[serde(rename = "index")]
     pub milestone_index: u32,
     #[serde(rename = "messageId")]
     pub message_id: String,
