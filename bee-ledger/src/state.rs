@@ -14,6 +14,8 @@ use bee_storage::access::AsStream;
 
 use futures::StreamExt;
 
+// TODO saturating operations ?
+
 pub const IOTA_SUPPLY: u64 = 2_779_530_283_277_761;
 
 async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
