@@ -153,6 +153,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-priority-queue"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "327a05f4e4b447de629293f84baf0fd25616c2dfad963c9bf2cd8507c95b7852"
+dependencies = [
+ "futures",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -374,6 +383,7 @@ name = "bee-protocol"
 version = "0.1.0-alpha"
 dependencies = [
  "async-channel",
+ "async-priority-queue",
  "async-trait",
  "bee-common",
  "bee-crypto",

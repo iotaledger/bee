@@ -16,7 +16,7 @@ use crate::{
                 confirmed_info, milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, tip_info,
                 vertex, WsEvent,
             },
-            user_connected, WsUsers,
+            user_connected, WsUsers, WsUser
         },
         workers::{
             confirmed_ms_metrics::confirmed_ms_metrics_worker, db_size_metrics::db_size_metrics_worker,
@@ -282,15 +282,13 @@ pub(crate) async fn broadcast(event: WsEvent, users: &WsUsers) {
     }
 }
 
-pub(crate) async fn send_to_specific(event: WsEvent, user_id: usize, users: &WsUsers) {
+pub(crate) async fn send_to_specific(event: WsEvent, user: &WsUser) {
     match serde_json::to_string(&event) {
         Ok(as_text) => {
-            if let Some(user) = users.read().await.get(&user_id) {
-                if let Err(_disconnected) = user.tx.send(Ok(Message::text(as_text.clone()))) {
-                    // The tx is disconnected, our `user_disconnected` code
-                    // should be happening in another task, nothing more to
-                    // do here.
-                }
+            if let Err(_disconnected) = user.tx.send(Ok(Message::text(as_text.clone()))) {
+                // The tx is disconnected, our `user_disconnected` code
+                // should be happening in another task, nothing more to
+                // do here.
             }
         }
         Err(e) => error!("can not convert event to string: {}", e),
