@@ -302,8 +302,13 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 
     pub async fn otrsi(&self, id: &MessageId) -> Option<IndexId> {
-        match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
-            Some(sep) => Some(IndexId::new(*sep, *id)),
+        match self.solid_entry_points
+            .lock()
+            .await
+            .get(SolidEntryPoint::ref_cast(id))
+            .map(|sep| IndexId::new(*sep, *id))
+        {
+            Some(x) => Some(x),
             None => match self.get_metadata(id).await {
                 Some(metadata) => metadata.otrsi(),
                 None => None,
@@ -312,8 +317,13 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 
     pub async fn ytrsi(&self, id: &MessageId) -> Option<IndexId> {
-        match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
-            Some(sep) => Some(IndexId::new(*sep, *id)),
+        match self.solid_entry_points
+            .lock()
+            .await
+            .get(SolidEntryPoint::ref_cast(id))
+            .map(|sep| IndexId::new(*sep, *id))
+        {
+            Some(x) => Some(x),
             None => match self.get_metadata(id).await {
                 Some(metadata) => metadata.ytrsi(),
                 None => None,
