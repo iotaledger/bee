@@ -191,8 +191,8 @@ impl<B: StorageBackend> MsTangle<B> {
 
     // TODO: use combinator instead of match
     pub async fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
-        match self.milestones.lock().await.get(&index) {
-            Some(m) => Some(*m.message_id()),
+        match self.milestones.lock().await.get(&index).map(|m| *m.message_id()) {
+            Some(m) => Some(m),
             None => Some(self.pull_milestone(index).await?),
         }
     }
