@@ -26,7 +26,7 @@ pub struct MessageDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PayloadDto {
-    Transaction(TransactionDto),
+    Transaction(Box<TransactionDto>),
     Milestone(MilestoneDto),
     Indexation(IndexationDto),
 }
@@ -46,7 +46,7 @@ pub struct TransactionEssenceDto {
     pub kind: u32,
     pub inputs: Vec<InputDto>,
     pub outputs: Vec<OutputDto>,
-    pub payload: Option<IndexationDto>,
+    pub payload: Option<PayloadDto>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -241,11 +241,11 @@ impl TryFrom<&PayloadDto> for Payload {
     }
 }
 
-// &Box<Transaction> -> TransactionDto
-impl TryFrom<&Box<TransactionPayload>> for TransactionDto {
+// &Box<Transaction> -> Box<TransactionDto>
+impl TryFrom<&Box<TransactionPayload>> for Box<TransactionDto> {
     type Error = String;
     fn try_from(value: &Box<TransactionPayload>) -> Result<Self, Self::Error> {
-        Ok(TransactionDto {
+        Ok(Box::new(TransactionDto {
             kind: 0,
             essence: value.essence().try_into()?,
             unlock_blocks: value
@@ -253,14 +253,14 @@ impl TryFrom<&Box<TransactionPayload>> for TransactionDto {
                 .iter()
                 .map(|u| u.try_into())
                 .collect::<Result<Vec<_>, _>>()?,
-        })
+        }))
     }
 }
 
 // &TransactionDto -> Box<Transaction>
-impl TryFrom<&TransactionDto> for Box<TransactionPayload> {
+impl TryFrom<&Box<TransactionDto>> for Box<TransactionPayload> {
     type Error = String;
-    fn try_from(value: &TransactionDto) -> Result<Self, Self::Error> {
+    fn try_from(value: &Box<TransactionDto>) -> Result<Self, Self::Error> {
         let mut builder = TransactionPayload::builder().with_essence((&value.essence).try_into()?);
         for b in &value.unlock_blocks {
             builder = builder.add_unlock_block(b.try_into()?);
@@ -290,7 +290,7 @@ impl TryFrom<&TransactionPayloadEssence> for TransactionEssenceDto {
                 .map(|o| o.try_into())
                 .collect::<Result<Vec<_>, _>>()?,
             payload: match value.payload() {
-                Some(Payload::Indexation(i)) => Some(i.into()),
+                Some(Payload::Indexation(i)) => Some(PayloadDto::Indexation(i.into())),
                 Some(_) => {
                     return Err("invalid transaction essence: expected an optional indexation-payload".to_string())
                 }
@@ -315,7 +315,11 @@ impl TryFrom<&TransactionEssenceDto> for TransactionPayloadEssence {
         }
 
         if let Some(p) = &value.payload {
-            builder = builder.with_payload(Payload::Indexation((p).try_into()?));
+            if let Some(&PayloadDto::Indexation(i)) = p {
+                builder = builder.with_payload(Payload::Indexation((i).try_into()?));
+            } else {
+                return Err("invalid transaction essence: expected an optional indexation-payload".to_string());
+            }
         }
 
         Ok(builder
