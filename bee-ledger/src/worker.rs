@@ -284,10 +284,7 @@ where
         read_diffs(&*storage, full_diff_rx).await?;
         read_diffs(&*storage, delta_diff_rx).await?;
 
-        // TODO unwrap
-        if !check_ledger_state(&*storage).await.unwrap() {
-            return Err(Error::InvalidLedgerState);
-        }
+        check_ledger_state(&*storage).await?;
 
         // bus.add_listener::<Self, LatestSolidMilestoneChanged, _>(move |event| {
         //     if let Err(e) = tx.send(*event.milestone.message_id()) {
