@@ -198,7 +198,11 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 
     pub async fn contains_milestone(&self, idx: MilestoneIndex) -> bool {
-        self.milestones.lock().await.contains_key(&idx) || self.pull_milestone(idx).await.is_some()
+        // Not using `||` as its first operand would keep the lock alive causing a deadlock with its second operand.
+        if self.milestones.lock().await.contains_key(&idx) {
+            return true;
+        }
+        self.pull_milestone(idx).await.is_some()
     }
 
     pub fn get_latest_milestone_index(&self) -> MilestoneIndex {
