@@ -521,7 +521,7 @@ impl TryFrom<&MilestoneDto> for Box<MilestonePayload> {
             let index = value.index;
             let timestamp = value.timestamp;
             let mut parent_ids = Vec::new();
-            for msg_id in &value.parents{
+            for msg_id in &value.parents {
                 parent_ids.push(msg_id.parse::<MessageId>().map_err(|_| {
                     format!(
                         "invalid parent in milestone essence: expected a hex-string of length {}",
@@ -553,13 +553,7 @@ impl TryFrom<&MilestoneDto> for Box<MilestonePayload> {
                 };
                 public_keys.push(key);
             }
-            MilestonePayloadEssence::new(
-                index,
-                timestamp,
-                parent_ids,
-                merkle_proof,
-                public_keys,
-            )
+            MilestonePayloadEssence::new(index, timestamp, parent_ids, merkle_proof, public_keys)
         };
         let mut signatures = Vec::new();
         for v in &value.signatures {

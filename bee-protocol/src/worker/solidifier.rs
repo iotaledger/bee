@@ -7,8 +7,8 @@ use crate::{
     peer::PeerManager,
     storage::StorageBackend,
     worker::{
-        IndexUpdaterWorker, IndexUpdaterWorkerEvent, MessageRequesterWorker,
-        MetricsWorker, MilestoneRequesterWorker, PeerManagerResWorker, RequestedMessages, RequestedMilestones,
+        IndexUpdaterWorker, IndexUpdaterWorkerEvent, MessageRequesterWorker, MetricsWorker, MilestoneRequesterWorker,
+        PeerManagerResWorker, RequestedMessages, RequestedMilestones,
     },
     ProtocolMetrics,
 };
