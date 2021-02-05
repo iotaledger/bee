@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, storage::*};
+use crate::{error::Error, storage::*, system::System};
 
 use bee_common::packable::Packable;
 use bee_ledger::{
@@ -98,6 +98,17 @@ macro_rules! impl_stream {
             }
         }
     };
+}
+
+impl<'a> StorageStream<'a, u8, System> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (u8, System) {
+        (
+            // Unpacking from storage is fine.
+            u8::unpack(&mut key).unwrap(),
+            // Unpacking from storage is fine.
+            System::unpack(&mut value).unwrap(),
+        )
+    }
 }
 
 impl<'a> StorageStream<'a, MessageId, Message> {
@@ -265,6 +276,7 @@ impl<'a> StorageStream<'a, Address, Balance> {
     }
 }
 
+impl_stream!(u8, System, CF_SYSTEM);
 impl_stream!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_stream!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_stream!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);

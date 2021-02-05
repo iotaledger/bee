@@ -191,14 +191,18 @@ impl<B: StorageBackend> MsTangle<B> {
 
     // TODO: use combinator instead of match
     pub async fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
-        match self.milestones.lock().await.get(&index) {
-            Some(m) => Some(*m.message_id()),
+        match self.milestones.lock().await.get(&index).map(|m| *m.message_id()) {
+            Some(m) => Some(m),
             None => Some(self.pull_milestone(index).await?),
         }
     }
 
     pub async fn contains_milestone(&self, idx: MilestoneIndex) -> bool {
-        self.milestones.lock().await.contains_key(&idx) || self.pull_milestone(idx).await.is_some()
+        // Not using `||` as its first operand would keep the lock alive causing a deadlock with its second operand.
+        if self.milestones.lock().await.contains_key(&idx) {
+            return true;
+        }
+        self.pull_milestone(idx).await.is_some()
     }
 
     pub fn get_latest_milestone_index(&self) -> MilestoneIndex {

@@ -5,9 +5,9 @@ use crate::{ms_tangle::MsTangle, storage::StorageBackend};
 
 use bee_message::MessageId;
 
+use hashbrown::{hash_map::Entry, HashMap, HashSet};
 use log::debug;
 use rand::seq::IteratorRandom;
-use hashbrown::{hash_map::Entry, HashMap, HashSet};
 
 use std::time::Instant;
 

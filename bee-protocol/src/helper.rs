@@ -5,7 +5,10 @@ use crate::{
     packet::Heartbeat,
     peer::PeerManager,
     storage::StorageBackend,
-    worker::{MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages, RequestedMilestones},
+    worker::{
+        MessageRequesterWorker, MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages,
+        RequestedMilestones,
+    },
     ProtocolMetrics, Sender,
 };
 
@@ -47,7 +50,7 @@ pub(crate) async fn request_latest_milestone<B: StorageBackend>(
 
 pub(crate) async fn request_message<B: StorageBackend>(
     tangle: &MsTangle<B>,
-    message_requester: &mpsc::UnboundedSender<MessageRequesterWorkerEvent>,
+    message_requester: &MessageRequesterWorker,
     requested_messages: &RequestedMessages,
     message_id: MessageId,
     index: MilestoneIndex,
@@ -56,9 +59,7 @@ pub(crate) async fn request_message<B: StorageBackend>(
         && !tangle.is_solid_entry_point(&message_id).await
         && !requested_messages.contains(&message_id).await
     {
-        if let Err(e) = message_requester.send(MessageRequesterWorkerEvent(message_id, index)) {
-            warn!("Requesting message failed: {}.", e);
-        }
+        message_requester.request(MessageRequesterWorkerEvent(message_id, index));
     }
 }
 

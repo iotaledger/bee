@@ -16,8 +16,8 @@ use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct SyncStatusResponse {
-    lmi: u32,
-    lsmi: u32, // Shouldn't it be `smi` (solid milestone index) instead?
+    pub(crate) lmi: u32,
+    pub(crate) lsmi: u32, // Shouldn't it be `smi` (solid milestone index) instead?
 }
 
 pub(crate) fn forward_latest_milestone_changed<B: StorageBackend>(

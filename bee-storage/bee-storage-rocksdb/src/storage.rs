@@ -4,9 +4,13 @@
 use super::{
     config::{RocksDBConfig, RocksDBConfigBuilder, StorageConfig},
     error::Error,
+    system::{System, STORAGE_VERSION, STORAGE_VERSION_KEY},
 };
 
-pub use bee_storage::backend::StorageBackend;
+pub use bee_storage::{
+    access::{Fetch, Insert},
+    backend::StorageBackend,
+};
 
 use bee_message::{
     payload::{indexation::HASHED_INDEX_LENGTH, transaction::ED25519_ADDRESS_LENGTH},
@@ -108,6 +112,7 @@ impl Storage {
         opts.set_disable_auto_compactions(config.set_disable_auto_compactions);
         opts.set_compression_type(DBCompressionType::from(config.set_compression_type));
         opts.set_unordered_write(config.set_unordered_write);
+        opts.set_use_direct_io_for_flush_and_compaction(config.set_use_direct_io_for_flush_and_compaction);
 
         let mut env = Env::default()?;
         env.set_background_threads(config.env.set_background_threads);
@@ -144,10 +149,24 @@ impl StorageBackend for Storage {
 
     /// It starts RocksDB instance and then initializes the required column familes.
     async fn start(config: Self::Config) -> Result<Self, Self::Error> {
-        Ok(Storage {
+        let storage = Storage {
             config: config.storage.clone(),
             inner: Self::try_new(config)?,
-        })
+        };
+
+        match Fetch::<u8, System>::fetch(&storage, &STORAGE_VERSION_KEY).await? {
+            Some(System::Version(version)) => {
+                if version != STORAGE_VERSION {
+                    return Err(Error::VersionMismatch(version, STORAGE_VERSION));
+                }
+            }
+            None => {
+                Insert::<u8, System>::insert(&storage, &STORAGE_VERSION_KEY, &System::Version(STORAGE_VERSION)).await?
+            }
+            _ => panic!("Another system value was inserted on the version key."),
+        }
+
+        Ok(storage)
     }
 
     /// It shutdown RocksDB instance.
