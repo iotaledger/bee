@@ -145,10 +145,12 @@ impl StorageBackend for Storage {
 
     /// It starts RocksDB instance and then initializes the required column familes.
     async fn start(config: Self::Config) -> Result<Self, Self::Error> {
-        Ok(Storage {
+        let storage = Storage {
             config: config.storage.clone(),
             inner: Self::try_new(config)?,
-        })
+        };
+
+        Ok(storage)
     }
 
     /// It shutdown RocksDB instance.

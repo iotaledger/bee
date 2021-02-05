@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, storage::*};
+use crate::{error::Error, storage::*, system::System};
 
 use bee_common::packable::Packable;
 use bee_ledger::{balance::Balance, model::OutputDiff};
@@ -22,6 +22,20 @@ use bee_storage::access::Fetch;
 use bee_tangle::metadata::MessageMetadata;
 
 use std::convert::TryInto;
+
+#[async_trait::async_trait]
+impl Fetch<u8, System> for Storage {
+    async fn fetch(&self, key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {
+        let cf = self.inner.cf_handle(CF_SYSTEM).ok_or(Error::UnknownCf(CF_SYSTEM))?;
+
+        if let Some(res) = self.inner.get_cf(&cf, [*key])? {
+            // Unpacking from storage is fine.
+            Ok(Some(System::unpack(&mut res.as_slice()).unwrap()))
+        } else {
+            Ok(None)
+        }
+    }
+}
 
 #[async_trait::async_trait]
 impl Fetch<MessageId, Message> for Storage {
