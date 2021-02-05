@@ -4,9 +4,13 @@
 use super::{
     config::{RocksDBConfig, RocksDBConfigBuilder, StorageConfig},
     error::Error,
+    system::{System, STORAGE_VERSION, STORAGE_VERSION_KEY},
 };
 
-pub use bee_storage::backend::StorageBackend;
+pub use bee_storage::{
+    access::{Fetch, Insert},
+    backend::StorageBackend,
+};
 
 use bee_message::{
     payload::{indexation::HASHED_INDEX_LENGTH, transaction::ED25519_ADDRESS_LENGTH},
@@ -149,6 +153,18 @@ impl StorageBackend for Storage {
             config: config.storage.clone(),
             inner: Self::try_new(config)?,
         };
+
+        match Fetch::<u8, System>::fetch(&storage, &STORAGE_VERSION_KEY).await? {
+            Some(System::Version(version)) => {
+                if version != STORAGE_VERSION {
+                    return Err(Error::VersionMismatch(version, STORAGE_VERSION));
+                }
+            }
+            None => {
+                Insert::<u8, System>::insert(&storage, &STORAGE_VERSION_KEY, &System::Version(STORAGE_VERSION)).await?
+            }
+            _ => panic!("Another system value was inserted on the version key."),
+        }
 
         Ok(storage)
     }
