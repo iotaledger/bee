@@ -27,8 +27,8 @@ pub struct MessageDto {
 #[serde(untagged)]
 pub enum PayloadDto {
     Transaction(Box<TransactionDto>),
-    Milestone(MilestoneDto),
-    Indexation(IndexationDto),
+    Milestone(Box<MilestoneDto>),
+    Indexation(Box<IndexationDto>),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -315,7 +315,7 @@ impl TryFrom<&TransactionEssenceDto> for TransactionPayloadEssence {
         }
 
         if let Some(p) = &value.payload {
-            if let Some(&PayloadDto::Indexation(i)) = p {
+            if let &PayloadDto::Indexation(i) = &p {
                 builder = builder.with_payload(Payload::Indexation((i).try_into()?));
             } else {
                 return Err("invalid transaction essence: expected an optional indexation-payload".to_string());
@@ -503,9 +503,9 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
 }
 
 // Box<Milestone> -> MilestoneDto
-impl From<&Box<MilestonePayload>> for MilestoneDto {
+impl From<&Box<MilestonePayload>> for Box<MilestoneDto> {
     fn from(value: &Box<MilestonePayload>) -> Self {
-        MilestoneDto {
+        Box::new(MilestoneDto {
             kind: 1,
             index: value.essence().index(),
             timestamp: value.essence().timestamp(),
@@ -513,19 +513,19 @@ impl From<&Box<MilestonePayload>> for MilestoneDto {
             inclusion_merkle_proof: hex::encode(value.essence().merkle_proof()),
             public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
             signatures: value.signatures().iter().map(hex::encode).collect(),
-        }
+        })
     }
 }
 
-// MilestoneDto -> Box<Milestone>
-impl TryFrom<&MilestoneDto> for Box<MilestonePayload> {
+// &Box<MilestoneDto> -> Box<Milestone>
+impl TryFrom<&Box<MilestoneDto>> for Box<MilestonePayload> {
     type Error = String;
-    fn try_from(value: &MilestoneDto) -> Result<Self, Self::Error> {
+    fn try_from(value: &Box<MilestoneDto>) -> Result<Self, Self::Error> {
         let essence = {
             let index = value.index;
             let timestamp = value.timestamp;
             let mut parent_ids = Vec::new();
-            for msg_id in &value.parents{
+            for msg_id in &value.parents {
                 parent_ids.push(msg_id.parse::<MessageId>().map_err(|_| {
                     format!(
                         "invalid parent in milestone essence: expected a hex-string of length {}",
@@ -557,13 +557,7 @@ impl TryFrom<&MilestoneDto> for Box<MilestonePayload> {
                 };
                 public_keys.push(key);
             }
-            MilestonePayloadEssence::new(
-                index,
-                timestamp,
-                parent_ids,
-                merkle_proof,
-                public_keys,
-            )
+            MilestonePayloadEssence::new(index, timestamp, parent_ids, merkle_proof, public_keys)
         };
         let mut signatures = Vec::new();
         for v in &value.signatures {
@@ -582,20 +576,21 @@ impl TryFrom<&MilestoneDto> for Box<MilestonePayload> {
     }
 }
 
-impl From<&Box<IndexationPayload>> for IndexationDto {
+// &Box<IndexationPayload> -> Box<IndexationDto>
+impl From<&Box<IndexationPayload>> for Box<IndexationDto> {
     fn from(value: &Box<IndexationPayload>) -> Self {
-        IndexationDto {
+        Box::new(IndexationDto {
             kind: 2,
             index: value.index().to_owned(),
             data: hex::encode(value.data()),
-        }
+        })
     }
 }
 
-// IndexationDto -> Box<Indexation>
-impl TryFrom<&IndexationDto> for Box<IndexationPayload> {
+// &Box<IndexationDto> -> Box<IndexationPayload>
+impl TryFrom<&Box<IndexationDto>> for Box<IndexationPayload> {
     type Error = String;
-    fn try_from(value: &IndexationDto) -> Result<Self, Self::Error> {
+    fn try_from(value: &Box<IndexationDto>) -> Result<Self, Self::Error> {
         Ok(Box::new(
             IndexationPayload::new(
                 value.index.clone(),
