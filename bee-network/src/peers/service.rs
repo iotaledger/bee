@@ -382,9 +382,12 @@ async fn process_internal_event(
             // TODO: maybe allow some fixed timespan for a connection recovery from either end before removing.
             peers.remove_if(&peer_id, |info, _| info.relation.is_unknown()).await;
 
-            event_sender
+            // NOTE: During shutdown the protocol layer shuts down before the network service, so sending would fail,
+            // hence we need to silently ignore send failures until we have a way to query current node state (e.g.
+            // NodeState::ShuttingDown)
+            let _ = event_sender
                 .send(Event::PeerDisconnected { id: peer_id })
-                .map_err(|_| Error::EventSendFailure("PeerDisconnected"))?;
+                .map_err(|_| Error::EventSendFailure("PeerDisconnected"));
         }
 
         InternalEvent::ReconnectScheduled { peer_id } => {
