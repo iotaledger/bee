@@ -8,11 +8,11 @@ use bee_runtime::resource::ResourceHandle;
 
 use serde::{Deserialize, Serialize};
 
+use bee_message::payload::receipt::ReceiptPayload;
 use std::{
     convert::{TryFrom, TryInto},
     sync::Arc,
 };
-use bee_message::payload::receipt::ReceiptPayload;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
@@ -30,7 +30,8 @@ pub enum PayloadDto {
     Transaction(Box<TransactionDto>),
     Milestone(Box<MilestoneDto>),
     Indexation(Box<IndexationDto>),
-    Receipt(Box<ReceiptDto>)
+    Receipt(Box<ReceiptDto>),
+    TreasuryTransaction(Box<TreasuryTransactionDto>),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -55,6 +56,7 @@ pub struct TransactionEssenceDto {
 #[serde(untagged)]
 pub enum InputDto {
     UTXO(UtxoInputDto),
+    Treasury(TreasuryInputDto),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -68,10 +70,19 @@ pub struct UtxoInputDto {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TreasuryInputDto {
+    #[serde(rename = "type")]
+    pub kind: u32,
+    #[serde(rename = "transactionId")]
+    pub message_id: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum OutputDto {
     SignatureLockedSingle(SignatureLockedSingleOutputDto),
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto),
+    Treasury(TreasuryOutputDto),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -101,6 +112,13 @@ pub struct Ed25519AddressDto {
     #[serde(rename = "type")]
     pub kind: u32,
     pub address: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TreasuryOutputDto {
+    #[serde(rename = "type")]
+    pub kind: u32,
+    pub amount: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -169,7 +187,13 @@ pub struct ReceiptDto {
     pub kind: u32,
 }
 
-
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TreasuryTransactionDto {
+    #[serde(rename = "type")]
+    pub kind: u32,
+    pub input: InputDto,
+    pub output: OutputDto,
+}
 
 // &Message -> MessageDto
 impl TryFrom<&Message> for MessageDto {
@@ -249,6 +273,7 @@ impl TryFrom<&PayloadDto> for Payload {
             PayloadDto::Milestone(m) => Ok(Payload::Milestone(m.try_into()?)),
             PayloadDto::Indexation(i) => Ok(Payload::Indexation(i.try_into()?)),
             PayloadDto::Receipt(r) => Ok(Payload::Receipt(r.try_into()?)),
+            PayloadDto::TreasuryTransaction(t) => Ok(Payload::TreasuryTransaction(t.try_into()?)),
         }
     }
 }
@@ -350,6 +375,10 @@ impl TryFrom<&Input> for InputDto {
                 transaction_id: u.output_id().transaction_id().to_string(),
                 transaction_output_index: u.output_id().index(),
             })),
+            Input::Treasury(t) => Ok(InputDto::Treasury(TreasuryInputDto {
+                kind: 1,
+                message_id: t.message_id().to_string(),
+            })),
             _ => Err("input type not supported".to_string()),
         }
     }
@@ -371,6 +400,12 @@ impl TryFrom<&InputDto> for Input {
                     i.transaction_output_index,
                 )
                 .map_err(|e| format!("invalid input: {}", e))?,
+            )),
+            InputDto::Treasury(t) => Ok(Input::Treasury(
+                t.message_id
+                    .parse::<MessageId>()
+                    .map_err(|e| format!("invalid treasury input: {}", e))?
+                    .into(),
             )),
         }
     }
@@ -410,6 +445,11 @@ impl TryFrom<&OutputDto> for Output {
             )),
             OutputDto::SignatureLockedDustAllowance(s) => Ok(Output::SignatureLockedDustAllowance(
                 SignatureLockedDustAllowanceOutput::new((&s.address).try_into()?, s.amount)
+                    // TODO unwrap
+                    .unwrap(),
+            )),
+            OutputDto::Treasury(t) => Ok(Output::Treasury(
+                TreasuryOutput::new(t.amount)
                     // TODO unwrap
                     .unwrap(),
             )),
@@ -619,9 +659,7 @@ impl TryFrom<&Box<IndexationDto>> for Box<IndexationPayload> {
 // &Box<ReceiptPayload> -> Box<ReceiptDto>
 impl From<&Box<ReceiptPayload>> for Box<ReceiptDto> {
     fn from(_value: &Box<ReceiptPayload>) -> Self {
-        Box::new(ReceiptDto {
-            kind: 3 // TODO: is this the correct payload type value?
-        })
+        Box::new(ReceiptDto { kind: 3 })
     }
 }
 
@@ -629,8 +667,35 @@ impl From<&Box<ReceiptPayload>> for Box<ReceiptDto> {
 impl TryFrom<&Box<ReceiptDto>> for Box<ReceiptPayload> {
     type Error = String;
     fn try_from(_value: &Box<ReceiptDto>) -> Result<Self, Self::Error> {
+        Ok(Box::new(ReceiptPayload::new()))
+    }
+}
+
+// &Box<ReceiptPayload> -> Box<ReceiptDto>
+impl TryFrom<&Box<TreasuryTransactionPayload>> for Box<TreasuryTransactionDto> {
+    type Error = String;
+    fn try_from(value: &Box<TreasuryTransactionPayload>) -> Result<Self, Self::Error> {
+        Ok(Box::new(TreasuryTransactionDto {
+            kind: 4,
+            input: value.input().try_into()?,
+            output: value.output().try_into()?,
+        }))
+    }
+}
+
+// &Box<TreasuryTransactionDto> -> Box<TreasuryTransactionPayload>
+impl TryFrom<&Box<TreasuryTransactionDto>> for Box<TreasuryTransactionPayload> {
+    type Error = String;
+    fn try_from(value: &Box<TreasuryTransactionDto>) -> Result<Self, Self::Error> {
+        let input: Input = (&value.input)
+            .try_into()
+            .map_err(|_| "invalid input in treasury transaction payload: expected a treasury input")?;
+        let output: Output = (&value.output)
+            .try_into()
+            .map_err(|_| "invalid output in treasury transaction payload: expected a treasury output")?;
         Ok(Box::new(
-            ReceiptPayload::new(),
+            TreasuryTransactionPayload::new(input, output)
+                .map_err(|e| format!("invalid treasury transaction payload: {}", e))?,
         ))
     }
 }
