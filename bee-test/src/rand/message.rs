@@ -6,12 +6,12 @@ use crate::rand::{
     integer::rand_integer,
     string::rand_string,
 };
-
 use bee_message::{
     payload::{indexation::IndexationPayload, Payload},
     Message, MessageBuilder, MessageId,
 };
 use bee_pow::providers::{Constant, ConstantBuilder, ProviderBuilder};
+use std::sync::{atomic::AtomicBool, Arc};
 
 pub fn rand_message_id() -> MessageId {
     MessageId::new(rand_bytes_32())
@@ -31,7 +31,11 @@ pub fn rand_message_with_parents(parents: Vec<MessageId>) -> Message {
         .with_network_id(rand_integer())
         .with_parents(parents)
         .with_payload(rand_payload())
-        .with_nonce_provider(ConstantBuilder::new().with_value(rand_integer()).finish(), 0f64)
+        .with_nonce_provider(
+            ConstantBuilder::new().with_value(rand_integer()).finish(),
+            0f64,
+            Arc::new(AtomicBool::new(false)),
+        )
         .finish()
         .unwrap()
 }
