@@ -108,6 +108,7 @@ impl Storage {
         opts.set_disable_auto_compactions(config.set_disable_auto_compactions);
         opts.set_compression_type(DBCompressionType::from(config.set_compression_type));
         opts.set_unordered_write(config.set_unordered_write);
+        opts.set_use_direct_io_for_flush_and_compaction(config.set_use_direct_io_for_flush_and_compaction);
 
         let mut env = Env::default()?;
         env.set_background_threads(config.env.set_background_threads);
