@@ -12,6 +12,7 @@ use std::{
     convert::{TryFrom, TryInto},
     sync::Arc,
 };
+use bee_message::payload::receipt::ReceiptPayload;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
@@ -29,6 +30,7 @@ pub enum PayloadDto {
     Transaction(Box<TransactionDto>),
     Milestone(Box<MilestoneDto>),
     Indexation(Box<IndexationDto>),
+    Receipt(Box<ReceiptDto>)
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -149,6 +151,7 @@ pub struct MilestoneDto {
     pub inclusion_merkle_proof: String,
     #[serde(rename = "publicKeys")]
     pub public_keys: Vec<String>,
+    pub receipt: Option<PayloadDto>,
     pub signatures: Vec<String>,
 }
 
@@ -159,6 +162,14 @@ pub struct IndexationDto {
     pub index: String,
     pub data: String,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReceiptDto {
+    #[serde(rename = "type")]
+    pub kind: u32,
+}
+
+
 
 // &Message -> MessageDto
 impl TryFrom<&Message> for MessageDto {
@@ -222,7 +233,7 @@ impl TryFrom<&Payload> for PayloadDto {
     fn try_from(value: &Payload) -> Result<Self, Self::Error> {
         match value {
             Payload::Transaction(t) => Ok(PayloadDto::Transaction(t.try_into()?)),
-            Payload::Milestone(m) => Ok(PayloadDto::Milestone(m.into())),
+            Payload::Milestone(m) => Ok(PayloadDto::Milestone(m.try_into()?)),
             Payload::Indexation(i) => Ok(PayloadDto::Indexation(i.into())),
             _ => Err("payload type not supported".to_string()),
         }
@@ -237,6 +248,7 @@ impl TryFrom<&PayloadDto> for Payload {
             PayloadDto::Transaction(t) => Ok(Payload::Transaction(t.try_into()?)),
             PayloadDto::Milestone(m) => Ok(Payload::Milestone(m.try_into()?)),
             PayloadDto::Indexation(i) => Ok(Payload::Indexation(i.try_into()?)),
+            PayloadDto::Receipt(r) => Ok(Payload::Receipt(r.try_into()?)),
         }
     }
 }
@@ -503,17 +515,19 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
 }
 
 // Box<Milestone> -> MilestoneDto
-impl From<&Box<MilestonePayload>> for Box<MilestoneDto> {
-    fn from(value: &Box<MilestonePayload>) -> Self {
-        Box::new(MilestoneDto {
+impl TryFrom<&Box<MilestonePayload>> for Box<MilestoneDto> {
+    type Error = String;
+    fn try_from(value: &Box<MilestonePayload>) -> Result<Self, Self::Error> {
+        Ok(Box::new(MilestoneDto {
             kind: 1,
             index: value.essence().index(),
             timestamp: value.essence().timestamp(),
             parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
             inclusion_merkle_proof: hex::encode(value.essence().merkle_proof()),
             public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
+            receipt: value.essence().receipt().map(TryInto::try_into).transpose()?,
             signatures: value.signatures().iter().map(hex::encode).collect(),
-        })
+        }))
     }
 }
 
@@ -598,6 +612,25 @@ impl TryFrom<&Box<IndexationDto>> for Box<IndexationPayload> {
                     .map_err(|_| "invalid data in indexation payload: expected a hex-string")?,
             )
             .map_err(|e| format!("invalid indexation payload: {}", e))?,
+        ))
+    }
+}
+
+// &Box<ReceiptPayload> -> Box<ReceiptDto>
+impl From<&Box<ReceiptPayload>> for Box<ReceiptDto> {
+    fn from(_value: &Box<ReceiptPayload>) -> Self {
+        Box::new(ReceiptDto {
+            kind: 3 // TODO: is this the correct payload type value?
+        })
+    }
+}
+
+// &Box<ReceiptDto> -> Box<ReceiptPayload>
+impl TryFrom<&Box<ReceiptDto>> for Box<ReceiptPayload> {
+    type Error = String;
+    fn try_from(_value: &Box<ReceiptDto>) -> Result<Self, Self::Error> {
+        Ok(Box::new(
+            ReceiptPayload::new(),
         ))
     }
 }
