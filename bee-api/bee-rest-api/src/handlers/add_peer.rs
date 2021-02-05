@@ -82,7 +82,7 @@ pub(crate) async fn add_peer(
                     multi_addresses: vec![multi_address.to_string()],
                     relation: RelationDto::Known,
                     connected: false,
-                    gossip: GossipDto::default(),
+                    gossip: Some(GossipDto::default()),
                 }))),
                 StatusCode::OK,
             ))
