@@ -12,7 +12,7 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_network::{Event, NetworkListener};
+use bee_network::{Event, NetworkListener, NetworkService};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 
@@ -37,6 +37,7 @@ where
     fn dependencies() -> &'static [TypeId] {
         vec![
             TypeId::of::<TangleWorker>(),
+            TypeId::of::<NetworkService>(),
             TypeId::of::<MilestoneRequesterWorker>(),
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<HasherWorker>(),

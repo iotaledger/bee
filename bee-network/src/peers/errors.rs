@@ -29,6 +29,6 @@ pub enum Error {
     PeerAlreadyUnbanned(String),
     #[error("Already added that peer: {}", .0)]
     PeerAlreadyAdded(String),
-    #[error("Tried to add more unknown peers than allowed ({}).", .0)]
+    #[error("Tried to add more unknown peers than defined in the config ({}).", .0)]
     UnknownPeerLimitReached(usize),
 }

@@ -3,7 +3,7 @@
 
 use crate::{
     interaction::events::InternalEventSender,
-    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerRelation},
+    peers::{BannedAddrList, BannedPeerList, NetworkService, PeerInfo, PeerList, PeerRelation},
     transport::build_transport,
     Multiaddr, PeerId, ShortId,
 };
@@ -22,28 +22,24 @@ use libp2p::{
 use log::*;
 
 use std::{
+    any::TypeId,
     convert::Infallible,
     io,
     pin::Pin,
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc, RwLock,
-    },
+    sync::{Arc, RwLock},
 };
 
 type ListenerUpgrade = Pin<Box<(dyn Future<Output = Result<(PeerId, StreamMuxerBox), io::Error>> + Send + 'static)>>;
 type PeerListener = Pin<Box<dyn Stream<Item = Result<ListenerEvent<ListenerUpgrade, io::Error>, io::Error>> + Send>>;
-
-pub static NUM_LISTENER_EVENT_PROCESSING_ERRORS: AtomicUsize = AtomicUsize::new(0);
 
 lazy_static! {
     pub static ref LISTEN_ADDRESSES: Arc<RwLock<Vec<Multiaddr>>> = Arc::new(RwLock::new(Vec::new()));
 }
 
 #[derive(Default)]
-pub struct ConnectionManager {}
+pub struct Server {}
 
-pub struct ConnectionManagerConfig {
+pub struct ServerConfig {
     peers: PeerList,
     banned_addrs: BannedAddrList,
     banned_peers: BannedPeerList,
@@ -51,7 +47,7 @@ pub struct ConnectionManagerConfig {
     internal_event_sender: InternalEventSender,
 }
 
-impl ConnectionManagerConfig {
+impl ServerConfig {
     pub async fn new(
         local_keys: identity::Keypair,
         // TODO: allow multiple bind addresses
@@ -68,16 +64,16 @@ impl ConnectionManagerConfig {
             .listen_on(bind_address.clone())
             .map_err(|_| Error::BindingAddressFailed(bind_address))?;
 
-        let listen_address = if let Some(Ok(ListenerEvent::NewAddress(listen_address))) = peer_listener.next().await {
-            trace!("listening address = {}", listen_address);
-            listen_address
+        if let Some(Ok(ListenerEvent::NewAddress(listen_address))) = peer_listener.next().await {
+            LISTEN_ADDRESSES
+                .write()
+                .expect("adding listen address")
+                .push(listen_address.clone());
+
+            trace!("Accepting connections on {}.", listen_address);
         } else {
             return Err(Error::NotListeningError);
-        };
-
-        trace!("Accepting connections on {}.", listen_address);
-
-        LISTEN_ADDRESSES.write().unwrap().push(listen_address);
+        }
 
         Ok(Self {
             peers,
@@ -90,16 +86,19 @@ impl ConnectionManagerConfig {
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for ConnectionManager {
-    type Config = ConnectionManagerConfig;
+impl<N: Node> Worker<N> for Server {
+    type Config = ServerConfig;
     type Error = Infallible;
 
-    // fn dependencies() -> &'static [TypeId] {
-    //     vec![TypeId::of::<PeerManager>()].leak()
-    // }
+    // NOTE: The server is dependent on the `NetworkService` as it processes the events produced by the server.
+    fn dependencies() -> &'static [TypeId] {
+        vec![TypeId::of::<NetworkService>()].leak()
+    }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let ConnectionManagerConfig {
+        info!("Server started.");
+
+        let ServerConfig {
             peers,
             banned_peers,
             banned_addrs,
@@ -109,126 +108,105 @@ impl<N: Node> Worker<N> for ConnectionManager {
         } = config;
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Listener started.");
+            info!("Listening for peers.");
 
             let mut incoming = ShutdownStream::new(shutdown, peer_listener);
 
+            // NOTE: The first events will be `ListenerEvent::NewAddress`
             while let Some(Ok(listener_event)) = incoming.next().await {
-                //
-                if let Some((upgrade, peer_address)) = listener_event.into_upgrade() {
-                    // TODO: try again to move this block into its own function (beware: lifetime issues ahead!!!)
+                match listener_event {
+                    ListenerEvent::AddressExpired(addr) => trace!("Address expired: {}", addr),
+                    ListenerEvent::Error(e) => error!("Libp2p error. Cause: {:?}", e),
+                    ListenerEvent::NewAddress(ref listen_address) => {
+                        LISTEN_ADDRESSES
+                            .write()
+                            .expect("adding listen address")
+                            .push(listen_address.clone());
 
-                    // Prevent accepting from banned addresses.
-                    let peer_address_str = peer_address.to_string();
-                    if banned_addrs.contains(&peer_address_str) {
-                        trace!("Ignoring peer. Cause: {} is banned.", peer_address_str);
-                        NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
-                        continue;
+                        trace!("Accepting connections on {}.", listen_address);
                     }
+                    ListenerEvent::Upgrade {
+                        upgrade,
+                        local_addr: _, // to which listen address the peer connected
+                        remote_addr,   // the address of the peer that wants to connect
+                    } => {
+                        // TODO: try again to move this block into its own function (beware: lifetime issues ahead!!!)
 
-                    let (peer_id, muxer) = match upgrade.await {
-                        Ok(u) => u,
-                        Err(_) => {
-                            trace!("Ignoring peer. Cause: Handshake failed.");
-                            NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
+                        // Prevent accepting from banned addresses.
+                        let peer_address_str = remote_addr.to_string();
+                        if banned_addrs.contains(&peer_address_str) {
+                            warn!("Ignoring peer. Cause: {} is banned.", peer_address_str);
                             continue;
                         }
-                    };
 
-                    // Prevent accepting duplicate connections.
-                    if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()).await {
-                        if connected {
-                            trace!("Already connected to {}", peer_id);
-                            NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
-                            continue;
-                        }
-                    }
-
-                    // Prevent accepting banned peers.
-                    if banned_peers.contains(&peer_id) {
-                        trace!("Ignoring peer. Cause: {} is banned.", peer_id);
-                        NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
-                        continue;
-                    }
-
-                    let peer_info = if let Ok(peer_info) = peers.get_info(&peer_id).await {
-                        // If we have this peer id in our peerlist (but are not already connected to it),
-                        // then we allow the connection.
-                        peer_info
-                    } else {
-                        // We also allow for a certain number of unknown peers.
-                        let peer_info = PeerInfo {
-                            address: peer_address,
-                            alias: peer_id.short(),
-                            relation: PeerRelation::Unknown,
+                        let (peer_id, muxer) = match upgrade.await {
+                            Ok(u) => u,
+                            Err(_) => {
+                                warn!("Ignoring peer. Cause: Handshake failed.");
+                                continue;
+                            }
                         };
 
-                        if let Err(e) = peers.accepts(&peer_id, &peer_info).await {
-                            trace!("Unknown peer rejected. Cause: {}.", e);
-                            NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
+                        // Prevent accepting duplicate connections.
+                        if let Ok(connected) = peers.is(&peer_id, |_, state| state.is_connected()).await {
+                            if connected {
+                                warn!("Already connected to {}", peer_id);
+                                continue;
+                            }
+                        }
+
+                        // Prevent accepting banned peers.
+                        if banned_peers.contains(&peer_id) {
+                            warn!("Ignoring peer. Cause: {} is banned.", peer_id);
                             continue;
+                        }
+
+                        let peer_info = if let Ok(peer_info) = peers.get_info(&peer_id).await {
+                            // If we have this peer id in our peerlist (but are not already connected to it),
+                            // then we allow the connection.
+                            peer_info
                         } else {
                             // We also allow for a certain number of unknown peers.
-                            info!("Unknown peer '{}' accepted.", peer_info.alias);
+                            let peer_info = PeerInfo {
+                                address: remote_addr,
+                                alias: peer_id.short(),
+                                relation: PeerRelation::Unknown,
+                            };
 
-                            peer_info
+                            if let Err(e) = peers.accepts(&peer_id, &peer_info).await {
+                                warn!("Unknown peer rejected. Cause: {}.", e);
+                                continue;
+                            } else {
+                                // We also allow for a certain number of unknown peers.
+                                info!("Unknown peer '{}' accepted.", peer_info.alias);
+
+                                peer_info
+                            }
+                        };
+
+                        if let Err(e) = super::upgrade_connection(
+                            peer_id.clone(),
+                            peer_info,
+                            muxer,
+                            Origin::Inbound,
+                            internal_event_sender.clone(),
+                        )
+                        .await
+                        {
+                            error!("Error occurred during upgrading the connection. Cause: {}", e);
+                            continue;
                         }
-                    };
-
-                    log_inbound_connection_success(&peer_info);
-
-                    if let Err(e) = super::upgrade_connection(
-                        peer_id.clone(),
-                        peer_info,
-                        muxer,
-                        Origin::Inbound,
-                        internal_event_sender.clone(),
-                    )
-                    .await
-                    {
-                        error!("Error occurred during upgrading the connection. Cause: {}", e);
-                        NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
-                        continue;
                     }
                 }
             }
 
-            info!("Listener stopped.")
+            info!("Server stopped.")
         });
-
-        // loop {
-        //     select! {
-        //         _ = fused_shutdown_listener => {
-        //             trace!("Connection Manager received shutdown signal.");
-        //             break;
-        //         },
-        //         listener_event = fused_incoming_streams.next() => {
-        //             if let Some(listener_event) = listener_event {
-        //                 if let Ok(listener_event) = listener_event {
-        //                 } else {
-        //                     error!("Listener event stream failure.");
-        //                     NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
-        //                     continue;
-        //                 }
-        //             } else {
-        //                 error!("Fatal: Listener event stream stopped.");
-        //                 NUM_LISTENER_EVENT_PROCESSING_ERRORS.fetch_add(1, Ordering::Relaxed);
-        //                 break;
-        //             }
-        //         },
-        //     }
-        // }
-
-        trace!("Connection Manager started.");
 
         Ok(Self::default())
     }
 
     async fn stop(self, _node: &mut N) -> Result<(), Self::Error> {
-        info!("Stopping spawned tasks...");
         Ok(())
     }
-}
-fn log_inbound_connection_success(peer_info: &PeerInfo) {
-    info!("Established (inbound) connection with '{}'.", peer_info.alias);
 }

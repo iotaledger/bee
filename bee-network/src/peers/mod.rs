@@ -4,12 +4,12 @@
 mod banned;
 mod errors;
 mod list;
-mod manager;
+mod service;
 
 pub use banned::*;
 pub use errors::Error;
 pub use list::*;
-pub use manager::*;
+pub use service::*;
 
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;

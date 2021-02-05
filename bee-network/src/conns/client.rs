@@ -43,7 +43,7 @@ pub async fn dial_peer(
     let peer_info = peers
         .get_info(peer_id)
         .await
-        .map_err(|_| Error::DialedUnlistedPeer(peer_id.short()))?;
+        .map_err(|_| Error::DialedUnregisteredPeer(peer_id.short()))?;
 
     // Prevent dialing banned addresses.
     if banned_addrs.contains(&peer_info.address.to_string()) {
@@ -68,8 +68,6 @@ pub async fn dial_peer(
     }
 
     let peer_id = id;
-
-    log_outbound_connection_success(&peer_info);
 
     super::upgrade_connection(
         peer_id,
@@ -148,8 +146,6 @@ pub async fn dial_address(
         peer_info
     };
 
-    log_outbound_connection_success(&peer_info);
-
     super::upgrade_connection(
         peer_id,
         peer_info,
@@ -160,8 +156,4 @@ pub async fn dial_address(
     .await?;
 
     Ok(())
-}
-
-fn log_outbound_connection_success(peer_info: &PeerInfo) {
-    info!("Established (outbound) connection with '{}'.", peer_info.alias);
 }

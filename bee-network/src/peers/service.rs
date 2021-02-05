@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    conns::{self, ConnectionManager},
+    conns,
     interaction::{
         commands::{Command, CommandReceiver},
         events::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
@@ -22,12 +22,14 @@ use log::*;
 use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
-use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
+use std::{convert::Infallible, sync::atomic::Ordering};
 
+/// Processes issued commands and published events.
+/// NOTE: This is only exported to be used as a worker dependency.
 #[derive(Default)]
-pub struct PeerManager {}
+pub struct NetworkService {}
 
-pub struct PeerManagerConfig {
+pub struct NetworkServiceConfig {
     local_keys: identity::Keypair,
     event_sender: EventSender,
     internal_event_sender: InternalEventSender,
@@ -38,7 +40,7 @@ pub struct PeerManagerConfig {
     internal_event_receiver: InternalEventReceiver,
 }
 
-impl PeerManagerConfig {
+impl NetworkServiceConfig {
     pub fn new(
         local_keys: identity::Keypair,
         peers: PeerList,
@@ -63,16 +65,14 @@ impl PeerManagerConfig {
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for PeerManager {
-    type Config = PeerManagerConfig;
+impl<N: Node> Worker<N> for NetworkService {
+    type Config = NetworkServiceConfig;
     type Error = Infallible;
 
-    fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<ConnectionManager>()].leak()
-    }
-
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let PeerManagerConfig {
+        info!("Network service started.");
+
+        let NetworkServiceConfig {
             local_keys,
             peers,
             banned_addrs,
@@ -91,7 +91,7 @@ impl<N: Node> Worker<N> for PeerManager {
         let internal_event_sender_clone = internal_event_sender.clone();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Command processor started.");
+            info!("Command handler running.");
 
             let mut commands = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(command_receiver));
 
@@ -112,14 +112,14 @@ impl<N: Node> Worker<N> for PeerManager {
                 }
             }
 
-            info!("Command processor stopped.");
+            info!("Command handler stopped.");
         });
 
         let peers_clone = peers.clone();
         let internal_event_sender_clone = internal_event_sender.clone();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Event processor started.");
+            info!("Event handler running.");
 
             let mut internal_events =
                 ShutdownStream::new(shutdown, UnboundedReceiverStream::new(internal_event_receiver));
@@ -141,11 +141,11 @@ impl<N: Node> Worker<N> for PeerManager {
                 }
             }
 
-            info!("Event processor stopped.");
+            info!("Event handler stopped.");
         });
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Reconnector started.");
+            info!("Reconnector running.");
 
             let start = Instant::now() + Duration::from_secs(RECONNECT_INTERVAL_SECS.load(Ordering::Relaxed));
             let mut connected_check = ShutdownStream::new(
@@ -174,8 +174,6 @@ impl<N: Node> Worker<N> for PeerManager {
 
             info!("Reconnector stopped.");
         });
-
-        trace!("Peer Manager started.");
 
         Ok(Self::default())
     }
@@ -342,7 +340,7 @@ async fn process_internal_event(
             peer_info,
             gossip_in,
             gossip_out,
-            ..
+            origin,
         } => {
             match peer_info.relation {
                 PeerRelation::Known => peers.update_state(&peer_id, PeerState::Connected).await?,
@@ -362,6 +360,8 @@ async fn process_internal_event(
                 // Ignore 'PeerRelation::Discovered' case until autopeering has landed.
                 _ => (),
             }
+
+            info!("Established ({}) connection with '{}'.", origin, peer_info.alias);
 
             event_sender
                 .send(Event::PeerConnected {

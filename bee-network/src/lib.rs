@@ -27,18 +27,18 @@ pub use config::{NetworkConfig, NetworkConfigBuilder};
 pub use conns::Origin;
 pub use interaction::{commands::Command, events::Event};
 pub use network::NetworkController;
-pub use peers::{MessageReceiver, MessageSender, PeerInfo, PeerRelation};
+pub use peers::{MessageReceiver, MessageSender, NetworkService, PeerInfo, PeerRelation};
 
 /// A type that receives any event published by the networking layer.
 pub type NetworkListener = UnboundedReceiver<Event>;
 
 use config::DEFAULT_RECONNECT_INTERVAL_SECS;
-use conns::{ConnectionManager, ConnectionManagerConfig};
+use conns::{Server, ServerConfig};
 use interaction::{
     commands,
     events::{self, InternalEvent},
 };
-use peers::{BannedAddrList, BannedPeerList, PeerList, PeerManager, PeerManagerConfig};
+use peers::{BannedAddrList, BannedPeerList, NetworkServiceConfig, PeerList};
 
 use bee_runtime::node::{Node, NodeBuilder};
 
@@ -76,7 +76,7 @@ pub async fn init<N: Node>(
     let banned_peers = BannedPeerList::new();
     let peers = PeerList::new();
 
-    let peer_manager_config = PeerManagerConfig::new(
+    let network_service_config = NetworkServiceConfig::new(
         local_keys.clone(),
         peers.clone(),
         banned_addrs.clone(),
@@ -87,7 +87,7 @@ pub async fn init<N: Node>(
         internal_event_receiver,
     );
 
-    let conn_manager_config = ConnectionManagerConfig::new(
+    let server_config = ServerConfig::new(
         local_keys,
         config.bind_address.clone(),
         peers,
@@ -103,8 +103,8 @@ pub async fn init<N: Node>(
     let network_controller = NetworkController::new(config, command_sender, local_id);
 
     node_builder = node_builder
-        .with_worker_cfg::<PeerManager>(peer_manager_config)
-        .with_worker_cfg::<ConnectionManager>(conn_manager_config)
+        .with_worker_cfg::<NetworkService>(network_service_config)
+        .with_worker_cfg::<Server>(server_config)
         .with_resource(network_controller);
 
     (node_builder, event_receiver)

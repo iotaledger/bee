@@ -108,7 +108,7 @@ fn spawn_gossip_in_task(
         let mut buffer = vec![0u8; MSG_BUFFER_SIZE];
 
         loop {
-            if let Ok(num_read) = recv_message(&mut reader, &mut buffer).await {
+            if let Ok(num_read) = recv_message(&mut reader, &mut buffer, &peer_id).await {
                 if incoming_gossip_sender.send(buffer[..num_read].to_vec()).is_err() {
                     // Any reason sending to this channel fails is unrecoverable (OOM or receiver dropped),
                     // hence, we will silently just end this task.
@@ -162,22 +162,22 @@ where
     stream.write_all(message).await.map_err(|_| Error::MessageSendError)?;
     stream.flush().await.map_err(|_| Error::MessageSendError)?;
 
-    trace!("Wrote {} bytes to stream.", message.len());
+    // trace!("Wrote {} bytes to stream.", message.len());
     Ok(())
 }
 
-async fn recv_message<S>(stream: &mut S, message: &mut [u8]) -> Result<usize, Error>
+async fn recv_message<S>(stream: &mut S, message: &mut [u8], peer_id: &PeerId) -> Result<usize, Error>
 where
     S: AsyncRead + Unpin,
 {
     let num_read = stream.read(message).await.map_err(|_| Error::MessageRecvError)?;
     if num_read == 0 {
         // EOF
-        debug!("Stream was closed remotely (EOF).");
-        return Err(Error::StreamClosedByRemote);
+        trace!("Stream was closed remotely (EOF).");
+        return Err(Error::StreamClosedByRemote(peer_id.short()));
     }
 
-    trace!("Read {} bytes from stream.", num_read);
+    // trace!("Read {} bytes from stream.", num_read);
     Ok(num_read)
 }
 
