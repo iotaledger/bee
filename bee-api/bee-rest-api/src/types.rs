@@ -605,7 +605,7 @@ pub struct PeerDto {
     pub alias: Option<String>,
     pub relation: RelationDto,
     pub connected: bool,
-    pub gossip: GossipDto,
+    pub gossip: Option<GossipDto>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
@@ -680,7 +680,7 @@ pub async fn peer_to_peer_dto(peer: &Arc<Peer>, peer_manager: &ResourceHandle<Pe
             }
         },
         connected: peer_manager.is_connected(peer.id()).await,
-        gossip: GossipDto {
+        gossip: Some(GossipDto {
             heartbeat: HeartbeatDto {
                 solid_milestone_index: *peer.latest_solid_milestone_index(),
                 pruned_milestone_index: *peer.pruned_index(),
@@ -701,6 +701,6 @@ pub async fn peer_to_peer_dto(peer: &Arc<Peer>, peer_manager: &ResourceHandle<Pe
                 sent_heartbeats: peer.metrics().heartbeats_sent(),
                 dropped_packets: peer.metrics().invalid_packets(), // TODO dropped_packets == invalid_packets?
             },
-        },
+        }),
     }
 }
