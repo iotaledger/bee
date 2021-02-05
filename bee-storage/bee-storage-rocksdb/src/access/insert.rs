@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, storage::*};
+use crate::{error::Error, storage::*, system::System};
 
 use bee_common::packable::Packable;
 use bee_ledger::{
@@ -21,6 +21,17 @@ use bee_message::{
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Insert;
 use bee_tangle::metadata::MessageMetadata;
+
+#[async_trait::async_trait]
+impl Insert<u8, System> for Storage {
+    async fn insert(&self, key: &u8, value: &System) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self.inner.cf_handle(CF_SYSTEM).ok_or(Error::UnknownCf(CF_SYSTEM))?;
+
+        self.inner.put_cf(&cf, [*key], value.pack_new())?;
+
+        Ok(())
+    }
+}
 
 #[async_trait::async_trait]
 impl Insert<MessageId, Message> for Storage {

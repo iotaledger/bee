@@ -5,7 +5,10 @@ use crate::{
     packet::Heartbeat,
     peer::PeerManager,
     storage::StorageBackend,
-    worker::{MessageRequesterWorker, MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages, RequestedMilestones},
+    worker::{
+        MessageRequesterWorker, MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages,
+        RequestedMilestones,
+    },
     ProtocolMetrics, Sender,
 };
 

@@ -18,19 +18,16 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use fxhash::FxBuildHasher;
 use log::{debug, info, trace};
-use tokio::{
-    sync::RwLock,
-    time::interval,
-};
+use tokio::{sync::RwLock, time::interval};
 use tokio_stream::wrappers::IntervalStream;
 
 use std::{
     any::TypeId,
+    cmp::{Ord, Ordering, PartialOrd},
     collections::HashMap,
     convert::Infallible,
-    time::{Duration, Instant},
     sync::Arc,
-    cmp::{Ord, PartialOrd, Ordering},
+    time::{Duration, Instant},
 };
 
 const RETRY_INTERVAL_MS: u64 = 2500;

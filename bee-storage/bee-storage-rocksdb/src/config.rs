@@ -33,6 +33,7 @@ const DEFAULT_SET_DB_WRITE_BUFFER_SIZE: usize = 67_108_864; // 64 MiB
 const DEFAULT_SET_DISABLE_AUTO_COMPACTIONS: bool = false;
 const DEFAULT_SET_COMPRESSION_TYPE: CompressionType = CompressionType::None;
 const DEFAULT_SET_UNORDERED_WRITE: bool = true;
+const DEFAULT_SET_USE_DIRECT_IO_FOR_FLUSH_AND_COMPACTION: bool = true;
 
 const DEFAULT_SET_HIGH_PRIORITY_BACKGROUND_THREADS: i32 = 2;
 
@@ -105,6 +106,7 @@ pub struct RocksDBConfigBuilder {
     set_disable_auto_compactions: Option<bool>,
     set_compression_type: Option<CompressionType>,
     set_unordered_write: Option<bool>,
+    set_use_direct_io_for_flush_and_compaction: Option<bool>,
     env: Option<RocksDBEnvConfigBuilder>,
 }
 
@@ -169,6 +171,9 @@ impl From<RocksDBConfigBuilder> for RocksDBConfig {
                 .unwrap_or(DEFAULT_SET_DISABLE_AUTO_COMPACTIONS),
             set_compression_type: builder.set_compression_type.unwrap_or(DEFAULT_SET_COMPRESSION_TYPE),
             set_unordered_write: builder.set_unordered_write.unwrap_or(DEFAULT_SET_UNORDERED_WRITE),
+            set_use_direct_io_for_flush_and_compaction: builder
+                .set_use_direct_io_for_flush_and_compaction
+                .unwrap_or(DEFAULT_SET_USE_DIRECT_IO_FOR_FLUSH_AND_COMPACTION),
             env: builder.env.unwrap_or_default().finish(),
         }
     }
@@ -213,5 +218,6 @@ pub struct RocksDBConfig {
     pub(crate) set_disable_auto_compactions: bool,
     pub(crate) set_compression_type: CompressionType,
     pub(crate) set_unordered_write: bool,
+    pub(crate) set_use_direct_io_for_flush_and_compaction: bool,
     pub(crate) env: RocksDBEnvConfig,
 }

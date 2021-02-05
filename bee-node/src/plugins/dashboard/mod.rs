@@ -16,7 +16,7 @@ use crate::{
                 confirmed_info, milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, tip_info,
                 vertex, WsEvent,
             },
-            user_connected, WsUsers,
+            user_connected, WsUser, WsUsers,
         },
         workers::{
             confirmed_ms_metrics::confirmed_ms_metrics_worker, db_size_metrics::db_size_metrics_worker,
@@ -116,6 +116,7 @@ where
         let rest_api_config = node_config.rest_api.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
+        let storage = node.storage();
 
         // Keep track of all connected users, key is usize, value
         // is a websocket sender.
@@ -194,6 +195,8 @@ where
 
             // Turn our "state" into a new Filter...
             let users = warp::any().map(move || users.clone());
+            let tangle = warp::any().map(move || tangle.clone());
+            let storage = warp::any().map(move || storage.clone());
 
             let routes = warp::path::end()
                 .and_then(serve_index)
@@ -202,9 +205,11 @@ where
                 .or(warp::path("ws")
                     .and(warp::ws())
                     .and(users)
-                    .map(|ws: warp::ws::Ws, users| {
+                    .and(tangle)
+                    .and(storage)
+                    .map(|ws: warp::ws::Ws, users, tangle, storage| {
                         // This will call our function if the handshake succeeds.
-                        ws.on_upgrade(move |socket| user_connected(socket, users))
+                        ws.on_upgrade(move |socket| user_connected(socket, users, tangle, storage))
                     }))
                 .or(warp::path!("api" / ..).and(
                     reverse_proxy_filter(
@@ -262,15 +267,28 @@ fn serve_asset(path: &str) -> Result<impl Reply, Rejection> {
 
 pub(crate) async fn broadcast(event: WsEvent, users: &WsUsers) {
     match serde_json::to_string(&event) {
-        Ok(event_as_string) => {
+        Ok(as_text) => {
             for (_, user) in users.read().await.iter() {
                 if user.topics.contains(&event.kind) {
-                    if let Err(_disconnected) = user.tx.send(Ok(Message::text(event_as_string.clone()))) {
+                    if let Err(_disconnected) = user.tx.send(Ok(Message::text(as_text.clone()))) {
                         // The tx is disconnected, our `user_disconnected` code
                         // should be happening in another task, nothing more to
                         // do here.
                     }
                 }
+            }
+        }
+        Err(e) => error!("can not convert event to string: {}", e),
+    }
+}
+
+pub(crate) async fn send_to_specific(event: WsEvent, user: &WsUser) {
+    match serde_json::to_string(&event) {
+        Ok(as_text) => {
+            if let Err(_disconnected) = user.tx.send(Ok(Message::text(as_text.clone()))) {
+                // The tx is disconnected, our `user_disconnected` code
+                // should be happening in another task, nothing more to
+                // do here.
             }
         }
         Err(e) => error!("can not convert event to string: {}", e),

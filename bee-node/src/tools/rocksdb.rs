@@ -20,7 +20,7 @@ use bee_storage::{
     access::{AsStream, Exist, Fetch},
     backend::StorageBackend,
 };
-use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::*};
+use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::*, system::System};
 use bee_tangle::metadata::MessageMetadata;
 
 use futures::{executor, stream::StreamExt};
@@ -240,6 +240,16 @@ pub fn exec(tool: &Rocksdb) {
                 RocksdbCommand::Fetch { key: _key } => {}
                 RocksdbCommand::Stream => {
                     let mut stream = AsStream::<Address, Balance>::stream(&storage).await.unwrap();
+
+                    while let Some((key, value)) = stream.next().await {
+                        println!("Key: {:?}\nValue: {:?}\n", key, value);
+                    }
+                }
+            },
+            CF_SYSTEM => match &tool.command {
+                RocksdbCommand::Fetch { key: _key } => {}
+                RocksdbCommand::Stream => {
+                    let mut stream = AsStream::<u8, System>::stream(&storage).await.unwrap();
 
                     while let Some((key, value)) = stream.next().await {
                         println!("Key: {:?}\nValue: {:?}\n", key, value);
