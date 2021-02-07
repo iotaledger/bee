@@ -52,15 +52,17 @@ use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
 };
 
+const SYNCED_THRESHOLD: u32 = 5;
+
 #[derive(Default)]
 pub struct Dashboard {}
 
 fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, require_node_synced: bool, f: F)
-where
-    N: Node,
-    N::Backend: StorageBackend,
-    E: Any + Clone + Send + Sync,
-    F: 'static + Fn(E) -> WsEvent + Send + Sync,
+    where
+        N: Node,
+        N::Backend: StorageBackend,
+        E: Any + Clone + Send + Sync,
+        F: 'static + Fn(E) -> WsEvent + Send + Sync,
 {
     let tangle = node.resource::<MsTangle<N::Backend>>();
     let bus = node.bus();
@@ -74,7 +76,7 @@ where
 
         while let Some(event) = receiver.next().await {
             if require_node_synced {
-                if tangle.is_synced() {
+                if tangle.is_synced_threshold(SYNCED_THRESHOLD) {
                     broadcast(f(event), &users).await;
                 }
             } else {
@@ -95,8 +97,8 @@ where
 
 #[async_trait]
 impl<N: Node> Worker<N> for Dashboard
-where
-    N::Backend: StorageBackend,
+    where
+        N::Backend: StorageBackend,
 {
     type Config = DashboardConfig;
     type Error = Infallible;
@@ -107,7 +109,7 @@ where
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
         ]
-        .leak()
+            .leak()
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
@@ -216,7 +218,7 @@ where
                         "".to_string(),
                         "http://localhost:".to_owned() + &rest_api_config.binding_socket_addr().port().to_string() + "/",
                     )
-                    .map(|res| res),
+                        .map(|res| res),
                 ))
                 .or(warp::path!("analytics" / ..).and_then(serve_index))
                 .or(warp::path!("peers" / ..).and_then(serve_index))
