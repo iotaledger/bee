@@ -14,7 +14,7 @@ async fn main() {
     let cli = CliArgs::new();
 
     if let Some(tool) = cli.tool() {
-        tools::exec(tool);
+        tools::exec(tool).unwrap();
         return;
     }
 
