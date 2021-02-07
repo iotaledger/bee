@@ -6,6 +6,7 @@ use crate::rand::{
     integer::rand_integer,
     string::rand_string,
 };
+
 use bee_message::{
     payload::{indexation::IndexationPayload, Payload},
     Message, MessageBuilder, MessageId,

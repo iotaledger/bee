@@ -6,6 +6,7 @@ mod miner;
 
 pub use constant::{Constant, ConstantBuilder};
 pub use miner::{Miner, MinerBuilder};
+
 use std::sync::{atomic::AtomicBool, Arc};
 
 pub trait ProviderBuilder: Default + Sized {

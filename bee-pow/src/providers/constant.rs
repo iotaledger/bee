@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::providers::{Provider, ProviderBuilder};
+
 use std::sync::{atomic::AtomicBool, Arc};
 
 const DEFAULT_VALUE: u64 = 0;
