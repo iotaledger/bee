@@ -107,11 +107,14 @@ impl Provider for Miner {
     type Builder = MinerBuilder;
     type Error = Error;
 
-    fn nonce(&self, bytes: &[u8], target_score: f64, done: Arc<AtomicBool>) -> Result<u64, Self::Error> {
+    fn nonce(&self, bytes: &[u8], target_score: f64, done: Option<Arc<AtomicBool>>) -> Result<u64, Self::Error> {
         let mut nonce = 0;
         let mut blake = VarBlake2b::new(32).unwrap();
         let mut pow_digest = TritBuf::<T1B1Buf>::new();
-
+        let done = match done {
+            Some(d) => d,
+            None => Arc::new(AtomicBool::new(false)),
+        };
         blake.update(&bytes);
         blake.finalize_variable_reset(|hash| b1t6::encode::<T1B1Buf>(&hash).iter().for_each(|t| pow_digest.push(t)));
 

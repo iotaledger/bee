@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use std::{
     convert::{TryFrom, TryInto},
-    sync::{atomic::AtomicBool, Arc},
+    sync::Arc,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -208,7 +208,7 @@ impl TryFrom<&MessageDto> for Message {
                     )
                     .finish(),
                 0f64,
-                Arc::new(AtomicBool::new(false)),
+                None,
             );
         if let Some(p) = value.payload.as_ref() {
             builder = builder.with_payload(p.try_into()?);
