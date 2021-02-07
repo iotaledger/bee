@@ -71,7 +71,7 @@ impl PeerWorker {
         receiver: UnboundedReceiverStream<Vec<u8>>,
         shutdown: oneshot::Receiver<()>,
     ) {
-        info!("[{}] Running.", self.peer.address());
+        info!("[{}] Running.", self.peer.alias());
 
         let shutdown_fused = shutdown.fuse();
 
@@ -92,13 +92,13 @@ impl PeerWorker {
             let tangle = tangle.upgrade().expect("Needed Tangle resource but it was removed");
 
             if let Err(e) = self.process_packet(&tangle, &header, bytes) {
-                error!("[{}] Processing packet failed: {:?}.", self.peer.address(), e);
+                error!("[{}] Processing packet failed: {:?}.", self.peer.alias(), e);
                 self.peer.metrics().invalid_packets_inc();
                 self.metrics.invalid_packets_inc();
             }
         }
 
-        info!("[{}] Stopped.", self.peer.address());
+        info!("[{}] Stopped.", self.peer.alias());
     }
 
     fn process_packet<B: StorageBackend>(
@@ -109,7 +109,7 @@ impl PeerWorker {
     ) -> Result<(), Error> {
         match header.packet_type {
             MilestoneRequest::ID => {
-                trace!("[{}] Reading MilestoneRequest...", self.peer.address());
+                trace!("[{}] Reading MilestoneRequest...", self.peer.alias());
 
                 let packet = tlv_from_bytes::<MilestoneRequest>(&header, bytes)?;
 
@@ -122,7 +122,7 @@ impl PeerWorker {
                 self.metrics.milestone_requests_received_inc();
             }
             Message::ID => {
-                trace!("[{}] Reading Message...", self.peer.address());
+                trace!("[{}] Reading Message...", self.peer.alias());
 
                 let packet = tlv_from_bytes::<Message>(&header, bytes)?;
 
@@ -136,7 +136,7 @@ impl PeerWorker {
                 self.metrics.messages_received_inc();
             }
             MessageRequest::ID => {
-                trace!("[{}] Reading MessageRequest...", self.peer.address());
+                trace!("[{}] Reading MessageRequest...", self.peer.alias());
 
                 let packet = tlv_from_bytes::<MessageRequest>(&header, bytes)?;
 
@@ -149,7 +149,7 @@ impl PeerWorker {
                 self.metrics.message_requests_received_inc();
             }
             Heartbeat::ID => {
-                trace!("[{}] Reading Heartbeat...", self.peer.address());
+                trace!("[{}] Reading Heartbeat...", self.peer.alias());
 
                 let packet = tlv_from_bytes::<Heartbeat>(&header, bytes)?;
 
@@ -169,7 +169,7 @@ impl PeerWorker {
                 {
                     debug!(
                         "The peer {} can't help syncing because the required index {} is not in its database [{};{}].",
-                        self.peer.address(),
+                        self.peer.alias(),
                         *tangle.get_latest_solid_milestone_index() + 1,
                         packet.pruned_index,
                         packet.latest_solid_milestone_index
