@@ -7,6 +7,8 @@ mod miner;
 pub use constant::{Constant, ConstantBuilder};
 pub use miner::{Miner, MinerBuilder};
 
+use std::sync::{atomic::AtomicBool, Arc};
+
 pub trait ProviderBuilder: Default + Sized {
     type Provider: Provider<Builder = Self>;
 
@@ -18,5 +20,5 @@ pub trait Provider: Sized {
     type Builder: ProviderBuilder<Provider = Self>;
     type Error: std::error::Error;
 
-    fn nonce(&self, bytes: &[u8], target_score: f64) -> Result<u64, Self::Error>;
+    fn nonce(&self, bytes: &[u8], target_score: f64, done: Option<Arc<AtomicBool>>) -> Result<u64, Self::Error>;
 }

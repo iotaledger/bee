@@ -243,6 +243,7 @@ impl TryFrom<&MessageDto> for Message {
                     )
                     .finish(),
                 0f64,
+                None,
             );
         if let Some(p) = value.payload.as_ref() {
             builder = builder.with_payload(p.try_into()?);
