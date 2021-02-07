@@ -214,7 +214,7 @@ where
                 .or(warp::path!("api" / ..).and(
                     reverse_proxy_filter(
                         "".to_string(),
-                        "http://127.0.0.1:".to_owned() + &rest_api_config.port().to_string() + "/",
+                        "http://localhost:".to_owned() + &rest_api_config.socket_addr().port().to_string() + "/",
                     )
                     .map(|res| res),
                 ))
