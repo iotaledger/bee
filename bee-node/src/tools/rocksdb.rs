@@ -52,6 +52,21 @@ pub fn exec(tool: &Rocksdb) {
         let storage = Storage::start(config).await.unwrap();
 
         match &tool.column_family[..] {
+            CF_SYSTEM => match &tool.command {
+                RocksdbCommand::Fetch { key } => {
+                    let key = u8::from_str(key).unwrap();
+                    let value = Fetch::<u8, System>::fetch(&storage, &key).await.unwrap();
+
+                    println!("Key: {:?}\nValue: {:?}\n", key, value);
+                }
+                RocksdbCommand::Stream => {
+                    let mut stream = AsStream::<u8, System>::stream(&storage).await.unwrap();
+
+                    while let Some((key, value)) = stream.next().await {
+                        println!("Key: {:?}\nValue: {:?}\n", key, value);
+                    }
+                }
+            },
             CF_MESSAGE_ID_TO_MESSAGE => match &tool.command {
                 RocksdbCommand::Fetch { key } => {
                     let key = MessageId::from_str(key).unwrap();
@@ -195,7 +210,12 @@ pub fn exec(tool: &Rocksdb) {
                 }
             },
             CF_MILESTONE_INDEX_TO_MILESTONE => match &tool.command {
-                RocksdbCommand::Fetch { key: _key } => {}
+                RocksdbCommand::Fetch { key } => {
+                    let key = MilestoneIndex(u32::from_str(key).unwrap());
+                    let value = Fetch::<MilestoneIndex, Milestone>::fetch(&storage, &key).await.unwrap();
+
+                    println!("Key: {:?}\nValue: {:?}\n", key, value);
+                }
                 RocksdbCommand::Stream => {
                     let mut stream = AsStream::<MilestoneIndex, Milestone>::stream(&storage).await.unwrap();
 
@@ -205,7 +225,9 @@ pub fn exec(tool: &Rocksdb) {
                 }
             },
             CF_SNAPSHOT_INFO => match &tool.command {
-                RocksdbCommand::Fetch { key: _key } => {}
+                RocksdbCommand::Fetch { key: _key } => {
+                    panic!("Unhandled command");
+                }
                 RocksdbCommand::Stream => {
                     let mut stream = AsStream::<(), SnapshotInfo>::stream(&storage).await.unwrap();
 
@@ -215,7 +237,14 @@ pub fn exec(tool: &Rocksdb) {
                 }
             },
             CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX => match &tool.command {
-                RocksdbCommand::Fetch { key: _key } => {}
+                RocksdbCommand::Fetch { key } => {
+                    let key = SolidEntryPoint::from(MessageId::from_str(key).unwrap());
+                    let value = Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(&storage, &key)
+                        .await
+                        .unwrap();
+
+                    println!("Key: {:?}\nValue: {:?}\n", key, value);
+                }
                 RocksdbCommand::Stream => {
                     let mut stream = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&storage)
                         .await
@@ -227,7 +256,14 @@ pub fn exec(tool: &Rocksdb) {
                 }
             },
             CF_MILESTONE_INDEX_TO_OUTPUT_DIFF => match &tool.command {
-                RocksdbCommand::Fetch { key: _key } => {}
+                RocksdbCommand::Fetch { key } => {
+                    let key = MilestoneIndex(u32::from_str(key).unwrap());
+                    let value = Fetch::<MilestoneIndex, OutputDiff>::fetch(&storage, &key)
+                        .await
+                        .unwrap();
+
+                    println!("Key: {:?}\nValue: {:?}\n", key, value);
+                }
                 RocksdbCommand::Stream => {
                     let mut stream = AsStream::<MilestoneIndex, OutputDiff>::stream(&storage).await.unwrap();
 
@@ -237,7 +273,12 @@ pub fn exec(tool: &Rocksdb) {
                 }
             },
             CF_ADDRESS_TO_BALANCE => match &tool.command {
-                RocksdbCommand::Fetch { key: _key } => {}
+                RocksdbCommand::Fetch { key } => {
+                    let key = Address::from(Ed25519Address::from_str(key).unwrap());
+                    let value = Fetch::<Address, Balance>::fetch(&storage, &key).await.unwrap();
+
+                    println!("Key: {:?}\nValue: {:?}\n", key, value);
+                }
                 RocksdbCommand::Stream => {
                     let mut stream = AsStream::<Address, Balance>::stream(&storage).await.unwrap();
 
@@ -246,16 +287,7 @@ pub fn exec(tool: &Rocksdb) {
                     }
                 }
             },
-            CF_SYSTEM => match &tool.command {
-                RocksdbCommand::Fetch { key: _key } => {}
-                RocksdbCommand::Stream => {
-                    let mut stream = AsStream::<u8, System>::stream(&storage).await.unwrap();
 
-                    while let Some((key, value)) = stream.next().await {
-                        println!("Key: {:?}\nValue: {:?}\n", key, value);
-                    }
-                }
-            },
             _ => {
                 println!("Unknown column family.");
             }
