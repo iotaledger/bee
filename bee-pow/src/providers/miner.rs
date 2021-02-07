@@ -111,10 +111,7 @@ impl Provider for Miner {
         let mut nonce = 0;
         let mut blake = VarBlake2b::new(32).unwrap();
         let mut pow_digest = TritBuf::<T1B1Buf>::new();
-        let done = match done {
-            Some(d) => d,
-            None => Arc::new(AtomicBool::new(false)),
-        };
+        let done = done.unwrap_or_else(|| Arc::new(AtomicBool::new(false)));
         blake.update(&bytes);
         blake.finalize_variable_reset(|hash| b1t6::encode::<T1B1Buf>(&hash).iter().for_each(|t| pow_digest.push(t)));
 

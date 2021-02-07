@@ -20,9 +20,10 @@ use futures::channel::oneshot;
 use log::error;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
-use std::convert::TryFrom;
 use tokio::sync::mpsc;
 use warp::{http::StatusCode, reject, Rejection, Reply};
+
+use std::convert::TryFrom;
 
 pub(crate) async fn submit_message<B: StorageBackend>(
     value: JsonValue,
