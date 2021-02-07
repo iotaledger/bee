@@ -3,7 +3,7 @@
 
 use serde::Deserialize;
 
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 pub(crate) const DEFAULT_BINDING_PORT: u16 = 14265;
 pub(crate) const DEFAULT_BINDING_IP_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
@@ -49,7 +49,7 @@ pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 16] = [
     ROUTE_SUBMIT_MESSAGE_RAW,
     ROUTE_TIPS,
 ];
-pub(crate) const DEFAULT_ALLOWED_IPS: [IpAddr; 1] = [IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))];
+pub(crate) const DEFAULT_ALLOWED_IPS: [IpAddr; 2] = [IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1))];
 pub(crate) const DEFAULT_FEATURE_PROOF_OF_WORK: bool = true;
 
 /// REST API configuration builder.
