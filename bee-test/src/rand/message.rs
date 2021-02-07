@@ -31,7 +31,7 @@ pub fn rand_message_with_parents(parents: Vec<MessageId>) -> Message {
         .with_network_id(rand_integer())
         .with_parents(parents)
         .with_payload(rand_payload())
-        .with_nonce_provider(ConstantBuilder::new().with_value(rand_integer()).finish(), 0f64)
+        .with_nonce_provider(ConstantBuilder::new().with_value(rand_integer()).finish(), 0f64, None)
         .finish()
         .unwrap()
 }

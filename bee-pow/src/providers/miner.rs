@@ -107,11 +107,11 @@ impl Provider for Miner {
     type Builder = MinerBuilder;
     type Error = Error;
 
-    fn nonce(&self, bytes: &[u8], target_score: f64) -> Result<u64, Self::Error> {
+    fn nonce(&self, bytes: &[u8], target_score: f64, done: Option<Arc<AtomicBool>>) -> Result<u64, Self::Error> {
         let mut nonce = 0;
         let mut blake = VarBlake2b::new(32).unwrap();
         let mut pow_digest = TritBuf::<T1B1Buf>::new();
-
+        let done = done.unwrap_or_else(|| Arc::new(AtomicBool::new(false)));
         blake.update(&bytes);
         blake.finalize_variable_reset(|hash| b1t6::encode::<T1B1Buf>(&hash).iter().for_each(|t| pow_digest.push(t)));
 
@@ -119,7 +119,6 @@ impl Provider for Miner {
             (((bytes.len() + std::mem::size_of::<u64>()) as f64 * target_score).ln() / LN_3).ceil() as usize;
         let worker_width = u64::MAX / self.num_workers as u64;
 
-        let done = Arc::new(AtomicBool::new(false));
         let mut workers = Vec::with_capacity(self.num_workers);
 
         for i in 0..self.num_workers {
