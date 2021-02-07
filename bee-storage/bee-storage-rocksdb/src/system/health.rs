@@ -5,6 +5,8 @@ use bee_common::packable::{Packable, Read, Write};
 
 // TODO handle panic
 
+pub(crate) const STORAGE_HEALTH_KEY: u8 = 1;
+
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum StorageHealth {

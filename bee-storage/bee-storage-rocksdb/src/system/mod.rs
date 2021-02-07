@@ -4,11 +4,12 @@
 mod health;
 mod version;
 
-use health::StorageHealth;
-use version::StorageVersion;
+pub(crate) use health::{StorageHealth, STORAGE_HEALTH_KEY};
+pub(crate) use version::{StorageVersion, STORAGE_VERSION, STORAGE_VERSION_KEY};
 
 use bee_common::packable::{Packable, Read, Write};
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum System {
     Version(StorageVersion),
     Health(StorageHealth),
@@ -19,19 +20,19 @@ impl Packable for System {
 
     fn packed_len(&self) -> usize {
         match self {
-            System::Version(version) => 0u8.packed_len() + version.packed_len(),
-            System::Health(health) => 1u8.packed_len() + health.packed_len(),
+            System::Version(version) => STORAGE_VERSION_KEY.packed_len() + version.packed_len(),
+            System::Health(health) => STORAGE_HEALTH_KEY.packed_len() + health.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             System::Version(version) => {
-                0u8.pack(writer)?;
+                STORAGE_VERSION_KEY.pack(writer)?;
                 version.pack(writer)?;
             }
             System::Health(health) => {
-                1u8.pack(writer)?;
+                STORAGE_HEALTH_KEY.pack(writer)?;
                 health.pack(writer)?;
             }
         }
@@ -41,8 +42,8 @@ impl Packable for System {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            0 => System::Version(StorageVersion::unpack(reader)?),
-            1 => System::Health(StorageHealth::unpack(reader)?),
+            STORAGE_VERSION_KEY => System::Version(StorageVersion::unpack(reader)?),
+            STORAGE_HEALTH_KEY => System::Health(StorageHealth::unpack(reader)?),
             _ => panic!("Unhandled system type"),
         })
     }

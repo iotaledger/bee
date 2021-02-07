@@ -7,10 +7,13 @@ use bee_message::{Message, MessageId};
 
 use async_trait::async_trait;
 // use dashmap::{mapref::entry::Entry, DashMap};
+use hashbrown::{
+    hash_map::{DefaultHashBuilder, Entry},
+    HashMap, HashSet,
+};
 use log::info;
 use lru::LruCache;
 use tokio::sync::{Mutex, RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard};
-use hashbrown::{hash_map::{Entry, DefaultHashBuilder}, HashMap, HashSet};
 
 use std::{
     fmt::Debug,

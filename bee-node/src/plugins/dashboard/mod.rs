@@ -16,7 +16,7 @@ use crate::{
                 confirmed_info, milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, tip_info,
                 vertex, WsEvent,
             },
-            user_connected, WsUsers, WsUser
+            user_connected, WsUser, WsUsers,
         },
         workers::{
             confirmed_ms_metrics::confirmed_ms_metrics_worker, db_size_metrics::db_size_metrics_worker,
