@@ -1,8 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::prelude::*;
-use bee_message::payload::receipt::ReceiptPayload;
+use bee_message::{payload::receipt::ReceiptPayload, prelude::*};
 use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
 use bee_protocol::{Peer, PeerManager};
 use bee_runtime::resource::ResourceHandle;

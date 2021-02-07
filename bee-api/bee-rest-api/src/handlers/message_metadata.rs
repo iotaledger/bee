@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::NotFound,
+    filters::CustomRejection::{NotFound, ServiceUnavailable},
     handlers::{BodyInner, SuccessBody},
     storage::StorageBackend,
+    IS_SYNCED_THRESHOLD,
 };
 
 use bee_ledger::conflict::ConflictReason;
@@ -19,7 +20,12 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    // TODO: response only when the node is synced
+    if !tangle.is_synced_threshold(IS_SYNCED_THRESHOLD) {
+        return Err(reject::custom(ServiceUnavailable(
+            "the node is not synchronized".to_string(),
+        )));
+    }
+
     match tangle.get(&message_id).await.map(|m| (*m).clone()) {
         Some(message) => {
             // existing message <=> existing metadata, therefore unwrap() is safe
