@@ -5,25 +5,28 @@ mod commands;
 pub(crate) mod responses;
 mod topics;
 
-use crate::{plugins::dashboard::websocket::responses::WsEvent, storage::StorageBackend};
 use commands::WsCommand;
 use topics::WsTopic;
 
-use bee_runtime::resource::ResourceHandle;
+use crate::{
+    plugins::dashboard::{
+        send_to_specific,
+        websocket::responses::{
+            database_size_metrics::DatabaseSizeMetricsResponse, sync_status::SyncStatusResponse, WsEvent, WsEventInner,
+        },
+    },
+    storage::StorageBackend,
+};
+
+use bee_runtime::{resource::ResourceHandle, shutdown_stream::ShutdownStream};
 use bee_tangle::MsTangle;
 
-use futures::{FutureExt, StreamExt};
+use futures::{channel::oneshot, FutureExt, StreamExt};
 use log::{debug, error};
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::ws::{Message, WebSocket};
 
-use crate::plugins::dashboard::{
-    send_to_specific,
-    websocket::responses::{
-        database_size_metrics::DatabaseSizeMetricsResponse, sync_status::SyncStatusResponse, WsEventInner,
-    },
-};
 use std::{
     collections::{HashMap, HashSet},
     convert::TryInto,
@@ -38,6 +41,7 @@ static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
 
 pub(crate) struct WsUser {
     pub(crate) tx: mpsc::UnboundedSender<Result<Message, warp::Error>>,
+    pub(crate) shutdown: Option<oneshot::Sender<()>>,
     pub(crate) topics: HashSet<WsTopic>,
 }
 
@@ -64,8 +68,10 @@ pub(crate) async fn user_connected<B: StorageBackend>(
     // Use an unbounded channel to handle buffering and flushing of messages
     // to the websocket...
     let (tx, rx) = mpsc::unbounded_channel();
-    let rx = UnboundedReceiverStream::new(rx);
-    tokio::task::spawn(rx.forward(ws_tx).map(|result| {
+    let (shutdown_tx, shutdown_rx) = oneshot::channel();
+    let receiver = ShutdownStream::new(shutdown_rx, UnboundedReceiverStream::new(rx));
+
+    tokio::task::spawn(receiver.forward(ws_tx).map(|result| {
         if let Err(e) = result {
             error!("websocket send error: {}", e);
         }
@@ -76,6 +82,7 @@ pub(crate) async fn user_connected<B: StorageBackend>(
         user_id,
         WsUser {
             tx,
+            shutdown: Some(shutdown_tx),
             topics: HashSet::new(),
         },
     );

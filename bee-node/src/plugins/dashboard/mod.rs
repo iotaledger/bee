@@ -195,10 +195,12 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
+            let _users = users.clone();
+
             // Turn our "state" into a new Filter...
-            let users = warp::any().map(move || users.clone());
-            let tangle = warp::any().map(move || tangle.clone());
-            let storage = warp::any().map(move || storage.clone());
+            let users_filter = warp::any().map(move || users.clone());
+            let tangle_filter = warp::any().map(move || tangle.clone());
+            let storage_filter = warp::any().map(move || storage.clone());
 
             let routes = warp::path::end()
                 .and_then(serve_index)
@@ -206,9 +208,9 @@ where
                 .or(warp::path("static").and(warp::path::full()).and_then(serve_full_path))
                 .or(warp::path("ws")
                     .and(warp::ws())
-                    .and(users)
-                    .and(tangle)
-                    .and(storage)
+                    .and(users_filter)
+                    .and(tangle_filter)
+                    .and(storage_filter)
                     .map(|ws: warp::ws::Ws, users, tangle, storage| {
                         // This will call our function if the handshake succeeds.
                         ws.on_upgrade(move |socket| user_connected(socket, users, tangle, storage))
@@ -239,6 +241,12 @@ where
             );
 
             server.await;
+
+            for (_, user) in _users.write().await.iter_mut() {
+                if let Some(shutdown) = user.shutdown.take() {
+                    let _ = shutdown.send(());
+                }
+            }
 
             info!("Stopped.");
         });
