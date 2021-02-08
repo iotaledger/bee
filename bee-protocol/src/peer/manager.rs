@@ -83,26 +83,16 @@ impl PeerManager {
     }
 
     pub async fn connected_peers(&self) -> u8 {
-        let mut count = 0;
-
-        for (_, (_, ctx)) in self.peers.read().await.iter() {
-            if ctx.is_some() {
-                count += 1;
-            }
-        }
-
-        count
+        self.peers
+            .read()
+            .await
+            .iter()
+            .fold(0, |acc, (_, (_, ctx))| acc + ctx.is_some() as u8)
     }
 
     pub async fn synced_peers(&self) -> u8 {
-        let mut count = 0;
-
-        for (_, (peer, ctx)) in self.peers.read().await.iter() {
-            if ctx.is_some() && peer.is_synced_threshold(2) {
-                count += 1;
-            }
-        }
-
-        count
+        self.peers.read().await.iter().fold(0, |acc, (_, (peer, ctx))| {
+            acc + (ctx.is_some() && peer.is_synced_threshold(2)) as u8
+        })
     }
 }
