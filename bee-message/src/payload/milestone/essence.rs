@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::Payload, Error, MessageId, MESSAGE_ID_LENGTH};
+use crate::{payload::Payload, Error, MessageId, MESSAGE_ID_LENGTH, MESSAGE_PARENTS_RANGE};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -117,7 +117,7 @@ impl Packable for MilestonePayloadEssence {
 
         let parents_len = u8::unpack(reader)? as usize;
 
-        if parents_len != 2 {
+        if !MESSAGE_PARENTS_RANGE.contains(&parents_len) {
             return Err(Error::InvalidParentsCount(parents_len));
         }
 
