@@ -13,17 +13,17 @@ use hashbrown::{
 };
 use log::info;
 use lru::LruCache;
-use tokio::sync::{Mutex, RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard, mpsc};
+use tokio::sync::{RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard, mpsc};
 
 use std::{
     fmt::Debug,
     marker::PhantomData,
     ops::Deref,
     future::Future,
-    sync::{Arc, atomic::{AtomicU64, Ordering}},
+    sync::Arc,
 };
 
-const CACHE_LEN: usize = 100_000;
+pub const DEFAULT_CACHE_LEN: usize = 100_000;
 
 /// A trait used to provide hooks for a tangle. The tangle acts as an in-memory cache and will use hooks to extend its
 /// effective volume. When an entry doesn't exist in the tangle cache and needs fetching, or when an entry gets
@@ -81,6 +81,7 @@ impl<T: Send + Sync> Hooks<T> for NullHooks<T> {
 
 #[derive(Debug)]
 pub enum Event {
+    Resize(usize),
     Access(MessageId),
     Insert(MessageId),
 }
@@ -93,9 +94,6 @@ where
     // Global Tangle Lock. Remove this as and when it is deemed correct to do so.
     vertices: TRwLock<HashMap<MessageId, Vertex<T>>>,
     children: TRwLock<HashMap<MessageId, (HashSet<MessageId>, bool)>>,
-
-    // pub(crate) cache_counter: AtomicU64,
-    // pub(crate) cache_queue: Mutex<LruCache<MessageId, u64, DefaultHashBuilder>>,
 
     pub(crate) hooks: H,
 
@@ -124,9 +122,6 @@ where
             vertices: TRwLock::new(HashMap::new()),
             children: TRwLock::new(HashMap::new()),
 
-            // cache_counter: AtomicU64::new(0),
-            // cache_queue: Mutex::new(LruCache::with_hasher(CACHE_LEN + 1, DefaultHashBuilder::default())),
-
             hooks,
 
             events_tx,
@@ -135,34 +130,41 @@ where
         let evicter = {
             let tangle = this.clone();
             async move {
-                let mut lru = LruCache::with_hasher(CACHE_LEN + 1, DefaultHashBuilder::default());
+                let mut lru = LruCache::with_hasher(usize::MAX, DefaultHashBuilder::default());
+                let mut cache_len = DEFAULT_CACHE_LEN;
 
                 while let Some(event) = events_rx.recv().await {
-                    match event {
-                        Event::Access(message_id) => { lru.put(message_id, ()); },
-                        Event::Insert(message_id) => {
-                            lru.put(message_id, ());
+                    let needs_eviction = match event {
+                        Event::Resize(len) => { cache_len = len; true },
+                        Event::Access(message_id) => { lru.put(message_id, ()); false },
+                        Event::Insert(message_id) => { lru.put(message_id, ()); true },
+                    };
 
-                            // Perform eviction of excess cache entries
-                            let mut vertices = tangle.vertices.write().await;
-                            let mut children = tangle.children.write().await;
-                            while vertices.len() > lru.cap() {
-                                let remove = lru.pop_lru().map(|(id, _)| id);
+                    if needs_eviction {
+                        // Perform eviction of excess cache entries
+                        let mut vertices = tangle.vertices.write().await;
+                        let mut children = tangle.children.write().await;
+                        while vertices.len() > cache_len {
+                            let remove = lru.pop_lru().map(|(id, _)| id);
 
-                                if let Some(message_id) = remove {
-                                    vertices.remove(&message_id);
-                                    children.remove(&message_id);
-                                } else {
-                                    break;
-                                }
+                            if let Some(message_id) = remove {
+                                vertices.remove(&message_id);
+                                children.remove(&message_id);
+                            } else {
+                                break;
                             }
-                        },
+                        }
                     }
                 }
             }
         };
 
         (this, evicter)
+    }
+
+    /// Change the maximum number of entries to store in the cache.
+    pub fn resize(&self, len: usize) {
+        self.events_tx.send(Event::Resize(len)).unwrap();
     }
 
     /// Create a new tangle with the given capacity.
