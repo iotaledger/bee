@@ -5,8 +5,8 @@ use crate::{
     config::{
         RestApiConfig, ROUTE_ADD_PEER, ROUTE_BALANCE_BECH32, ROUTE_BALANCE_ED25519, ROUTE_HEALTH, ROUTE_INFO,
         ROUTE_MESSAGE, ROUTE_MESSAGES_FIND, ROUTE_MESSAGE_CHILDREN, ROUTE_MESSAGE_METADATA, ROUTE_MESSAGE_RAW,
-        ROUTE_MILESTONE, ROUTE_OUTPUT, ROUTE_OUTPUTS_BECH32, ROUTE_OUTPUTS_ED25519, ROUTE_PEER, ROUTE_PEERS,
-        ROUTE_REMOVE_PEER, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW, ROUTE_TIPS,
+        ROUTE_MILESTONE, ROUTE_MILESTONE_UTXO_CHANGES, ROUTE_OUTPUT, ROUTE_OUTPUTS_BECH32, ROUTE_OUTPUTS_ED25519,
+        ROUTE_PEER, ROUTE_PEERS, ROUTE_REMOVE_PEER, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW, ROUTE_TIPS,
     },
     filters::CustomRejection::{BadRequest, Forbidden},
     handlers,
@@ -108,8 +108,17 @@ pub fn all<B: StorageBackend>(
         allowed_ips.clone(),
         storage.clone(),
     ))
-    .or(outputs_ed25519(public_routes.clone(), allowed_ips.clone(), storage))
+    .or(outputs_ed25519(
+        public_routes.clone(),
+        allowed_ips.clone(),
+        storage.clone(),
+    ))
     .or(milestone(public_routes.clone(), allowed_ips.clone(), tangle))
+    .or(milestone_utxo_changes(
+        public_routes.clone(),
+        allowed_ips.clone(),
+        storage,
+    ))
     .or(peers(public_routes.clone(), allowed_ips.clone(), peer_manager.clone()))
     .or(peer_add(
         public_routes.clone(),
@@ -404,6 +413,23 @@ fn milestone<B: StorageBackend>(
         .and(warp::path::end())
         .and(with_tangle(tangle))
         .and_then(handlers::milestone::milestone)
+}
+
+fn milestone_utxo_changes<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    storage: ResourceHandle<B>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    has_permission(ROUTE_MILESTONE_UTXO_CHANGES, public_routes, allowed_ips)
+        .and(warp::get())
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("milestones"))
+        .and(custom_path_param::milestone_index())
+        .and(warp::path("utxo-changes"))
+        .and(warp::path::end())
+        .and(with_storage(storage))
+        .and_then(handlers::milestone_utxo_changes::milestone_utxo_changes)
 }
 
 fn peers(
