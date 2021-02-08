@@ -15,3 +15,5 @@ bee-storage/bee-storage-rocksdb/tests/database
 
 # bee-test
 bee-test/dbfolder/*
+
+book
