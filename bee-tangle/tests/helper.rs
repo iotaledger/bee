@@ -1,6 +1,6 @@
-// // Copyright 2020 IOTA Stiftung
-// // SPDX-License-Identifier: Apache-2.0
-//
+// Copyright 2020 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 // use bee_message::{Message, MessageId};
 // use bee_tangle::Tangle;
 // use bee_test::transaction::{create_random_attached_tx, create_random_tx};
