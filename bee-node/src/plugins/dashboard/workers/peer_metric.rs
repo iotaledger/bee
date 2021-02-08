@@ -33,7 +33,7 @@ where
     let users = users.clone();
 
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
-        debug!("Ws `peer_metric_worker`is running.");
+        debug!("Ws PeerMetrics topic handler running.");
 
         let mut ticker = ShutdownStream::new(
             shutdown,
@@ -48,6 +48,6 @@ where
             broadcast(peer_metric::forward(PeersResponse(peers_dtos)), &users).await;
         }
 
-        debug!("Ws `peer_metric_worker` stopped.");
+        debug!("Ws PeerMetrics topic handler stopped.");
     });
 }
