@@ -24,7 +24,8 @@ use tokio::sync::Mutex;
 
 use std::{
     ops::Deref,
-    sync::atomic::{AtomicU32, Ordering},
+    future::Future,
+    sync::{Arc, atomic::{AtomicU32, Ordering}},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -84,7 +85,7 @@ impl<B: StorageBackend> StorageHooks<B> {
 
 /// Milestone-based Tangle.
 pub struct MsTangle<B> {
-    pub(crate) inner: Tangle<MessageMetadata, StorageHooks<B>>,
+    pub(crate) inner: Arc<Tangle<MessageMetadata, StorageHooks<B>>>,
     pub(crate) milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
     pub(crate) solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
     latest_milestone_index: AtomicU32,
@@ -104,9 +105,11 @@ impl<B> Deref for MsTangle<B> {
 }
 
 impl<B: StorageBackend> MsTangle<B> {
-    pub fn new(storage: ResourceHandle<B>) -> Self {
-        Self {
-            inner: Tangle::new(StorageHooks { storage }),
+    pub fn new(storage: ResourceHandle<B>) -> (Self, impl Future<Output = ()>) {
+        let (tangle, task) = Tangle::new(StorageHooks { storage });
+
+        (Self {
+            inner: tangle,
             milestones: Default::default(),
             solid_entry_points: Default::default(),
             latest_milestone_index: Default::default(),
@@ -115,7 +118,7 @@ impl<B: StorageBackend> MsTangle<B> {
             pruning_index: Default::default(),
             entry_point_index: Default::default(),
             tip_pool: Mutex::new(UrtsTipPool::default()),
-        }
+        }, task)
     }
 
     pub async fn shutdown(self) {

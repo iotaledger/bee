@@ -13,13 +13,14 @@ use hashbrown::{
 };
 use log::info;
 use lru::LruCache;
-use tokio::sync::{Mutex, RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard};
+use tokio::sync::{Mutex, RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard, mpsc};
 
 use std::{
     fmt::Debug,
     marker::PhantomData,
     ops::Deref,
-    sync::atomic::{AtomicU64, Ordering},
+    future::Future,
+    sync::{Arc, atomic::{AtomicU64, Ordering}},
 };
 
 const CACHE_LEN: usize = 100_000;
@@ -78,6 +79,12 @@ impl<T: Send + Sync> Hooks<T> for NullHooks<T> {
     }
 }
 
+#[derive(Debug)]
+pub enum Event {
+    Access(MessageId),
+    Insert(MessageId),
+}
+
 /// A foundational, thread-safe graph datastructure to represent the IOTA Tangle.
 pub struct Tangle<T, H = NullHooks<T>>
 where
@@ -87,46 +94,84 @@ where
     vertices: TRwLock<HashMap<MessageId, Vertex<T>>>,
     children: TRwLock<HashMap<MessageId, (HashSet<MessageId>, bool)>>,
 
-    pub(crate) cache_counter: AtomicU64,
-    pub(crate) cache_queue: Mutex<LruCache<MessageId, u64, DefaultHashBuilder>>,
+    // pub(crate) cache_counter: AtomicU64,
+    // pub(crate) cache_queue: Mutex<LruCache<MessageId, u64, DefaultHashBuilder>>,
 
     pub(crate) hooks: H,
+
+    events_tx: mpsc::UnboundedSender<Event>,
 }
 
-impl<T, H: Hooks<T>> Default for Tangle<T, H>
-where
-    T: Clone,
-    H: Default,
-{
-    fn default() -> Self {
-        Self::new(H::default())
-    }
-}
+// impl<T, H: Hooks<T>> Default for Tangle<T, H>
+// where
+//     T: Clone,
+//     H: Default,
+// {
+//     fn default() -> Self {
+//         Self::new(H::default())
+//     }
+// }
 
 impl<T, H: Hooks<T>> Tangle<T, H>
 where
     T: Clone,
 {
     /// Creates a new Tangle.
-    pub fn new(hooks: H) -> Self {
-        Self {
+    pub fn new(hooks: H) -> (Arc<Self>, impl Future<Output = ()>) {
+        let (events_tx, mut events_rx) = mpsc::unbounded_channel();
+
+        let this = Arc::new(Self {
             vertices: TRwLock::new(HashMap::new()),
             children: TRwLock::new(HashMap::new()),
 
-            cache_counter: AtomicU64::new(0),
-            cache_queue: Mutex::new(LruCache::with_hasher(CACHE_LEN + 1, DefaultHashBuilder::default())),
+            // cache_counter: AtomicU64::new(0),
+            // cache_queue: Mutex::new(LruCache::with_hasher(CACHE_LEN + 1, DefaultHashBuilder::default())),
 
             hooks,
-        }
+
+            events_tx,
+        });
+
+        let evicter = {
+            let tangle = this.clone();
+            async move {
+                let mut lru = LruCache::with_hasher(CACHE_LEN + 1, DefaultHashBuilder::default());
+
+                while let Some(event) = events_rx.recv().await {
+                    match event {
+                        Event::Access(message_id) => { lru.put(message_id, ()); },
+                        Event::Insert(message_id) => {
+                            lru.put(message_id, ());
+
+                            // Perform eviction of excess cache entries
+                            let mut vertices = tangle.vertices.write().await;
+                            let mut children = tangle.children.write().await;
+                            while vertices.len() > lru.cap() {
+                                let remove = lru.pop_lru().map(|(id, _)| id);
+
+                                if let Some(message_id) = remove {
+                                    vertices.remove(&message_id);
+                                    children.remove(&message_id);
+                                } else {
+                                    break;
+                                }
+                            }
+                        },
+                    }
+                }
+            }
+        };
+
+        (this, evicter)
     }
 
     /// Create a new tangle with the given capacity.
-    pub fn with_capacity(self, cap: usize) -> Self {
-        Self {
-            cache_queue: Mutex::new(LruCache::with_hasher(cap + 1, DefaultHashBuilder::default())),
-            ..self
-        }
-    }
+    // pub fn with_capacity(self, cap: usize) -> Self {
+    //     Self {
+    //         cache_queue: Mutex::new(LruCache::with_hasher(cap + 1, DefaultHashBuilder::default())),
+    //         ..self
+    //     }
+    // }
 
     /// Return a reference to the storage hooks used by this tangle.
     pub fn hooks(&self) -> &H {
@@ -134,7 +179,7 @@ where
     }
 
     async fn insert_inner(&self, message_id: MessageId, message: Message, metadata: T) -> Option<MessageRef> {
-        let r = match self.vertices.write().await.entry(message_id) {
+        match self.vertices.write().await.entry(message_id) {
             Entry::Occupied(_) => None,
             Entry::Vacant(entry) => {
                 for parent in message.parents().iter() {
@@ -144,19 +189,11 @@ where
                 let tx = vtx.message().clone();
                 entry.insert(vtx);
 
-                // Insert cache queue entry to track eviction priority
-                self.cache_queue
-                    .lock()
-                    .await
-                    .put(message_id, self.generate_cache_index());
+                self.events_tx.send(Event::Insert(message_id)).unwrap();
 
                 Some(tx)
             }
-        };
-
-        self.perform_eviction().await;
-
-        r
+        }
     }
 
     /// Inserts a message, and returns a thread-safe reference to it in case it didn't already exist.
@@ -192,16 +229,7 @@ where
         let res = TRwLockReadGuard::try_map(self.vertices.read().await, |m| m.get(message_id)).ok();
 
         if res.is_some() {
-            let mut cache_queue = self.cache_queue.lock().await;
-            // Update message_id priority
-            let entry = cache_queue.get_mut(message_id);
-            let entry = if entry.is_none() {
-                cache_queue.put(*message_id, 0);
-                cache_queue.get_mut(message_id)
-            } else {
-                entry
-            };
-            *entry.unwrap() = self.generate_cache_index();
+            self.events_tx.send(Event::Access(*message_id)).unwrap();
         }
 
         res
@@ -344,11 +372,7 @@ where
             }
         };
 
-        // Insert cache queue entry to track eviction priority
-        self.cache_queue
-            .lock()
-            .await
-            .put(*message_id, self.generate_cache_index());
+        self.events_tx.send(Event::Access(*message_id)).unwrap();
 
         Some(/* Children { children } */ Wrapper {
             children,
@@ -391,25 +415,25 @@ where
         }
     }
 
-    fn generate_cache_index(&self) -> u64 {
-        self.cache_counter.fetch_add(1, Ordering::Relaxed)
-    }
+    // fn generate_cache_index(&self) -> u64 {
+    //     self.cache_counter.fetch_add(1, Ordering::Relaxed)
+    // }
 
-    async fn perform_eviction(&self) {
-        let mut vertices = self.vertices.write().await;
-        let mut children = self.children.write().await;
-        let mut cache_queue = self.cache_queue.lock().await;
-        while vertices.len() > cache_queue.cap() {
-            let remove = cache_queue.pop_lru().map(|(id, _)| id);
+    // async fn perform_eviction(&self) {
+    //     let mut vertices = self.vertices.write().await;
+    //     let mut children = self.children.write().await;
+    //     let mut cache_queue = self.cache_queue.lock().await;
+    //     while vertices.len() > cache_queue.cap() {
+    //         let remove = cache_queue.pop_lru().map(|(id, _)| id);
 
-            if let Some(message_id) = remove {
-                vertices.remove(&message_id);
-                children.remove(&message_id);
-            } else {
-                break;
-            }
-        }
-    }
+    //         if let Some(message_id) = remove {
+    //             vertices.remove(&message_id);
+    //             children.remove(&message_id);
+    //         } else {
+    //             break;
+    //         }
+    //     }
+    // }
 }
 
 // #[cfg(test)]

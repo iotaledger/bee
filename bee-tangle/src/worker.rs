@@ -34,10 +34,13 @@ where
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         // TODO unwraps
-        let tangle = MsTangle::<N::Backend>::new(node.storage());
+        let (tangle, task) = MsTangle::<N::Backend>::new(node.storage());
         node.register_resource(tangle);
         let storage = node.storage();
         let tangle = node.resource::<MsTangle<N::Backend>>();
+
+        // Spawn tangle cleanup task
+        node.spawn::<Self, _, _>(move |_| task);
 
         let full_sep_rx = node.worker::<SnapshotWorker>().unwrap().full_sep_rx.clone();
         let delta_sep_rx = node.worker::<SnapshotWorker>().unwrap().delta_sep_rx.clone();
