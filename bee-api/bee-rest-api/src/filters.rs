@@ -108,8 +108,17 @@ pub fn all<B: StorageBackend>(
         allowed_ips.clone(),
         storage.clone(),
     ))
-    .or(outputs_ed25519(public_routes.clone(), allowed_ips.clone(), storage))
+    .or(outputs_ed25519(
+        public_routes.clone(),
+        allowed_ips.clone(),
+        storage.clone(),
+    ))
     .or(milestone(public_routes.clone(), allowed_ips.clone(), tangle))
+    .or(milestone_utxo_changes(
+        public_routes.clone(),
+        allowed_ips.clone(),
+        storage,
+    ))
     .or(peers(public_routes.clone(), allowed_ips.clone(), peer_manager.clone()))
     .or(peer_add(
         public_routes.clone(),
@@ -404,6 +413,23 @@ fn milestone<B: StorageBackend>(
         .and(warp::path::end())
         .and(with_tangle(tangle))
         .and_then(handlers::milestone::milestone)
+}
+
+fn milestone_utxo_changes<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    storage: ResourceHandle<B>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    has_permission(ROUTE_MILESTONE, public_routes, allowed_ips)
+        .and(warp::get())
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("milestones"))
+        .and(custom_path_param::milestone_index())
+        .and(warp::path("utxo-changes"))
+        .and(warp::path::end())
+        .and(with_storage(storage))
+        .and_then(handlers::milestone_utxo_changes::milestone_utxo_changes)
 }
 
 fn peers(

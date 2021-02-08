@@ -1,10 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::balance::Balance;
+use bee_ledger::{balance::Balance, model::OutputDiff};
 use bee_message::{
     payload::transaction::{Address, ConsumedOutput, CreatedOutput, Ed25519Address, OutputId},
-    prelude::HashedIndex,
+    prelude::{HashedIndex, MilestoneIndex},
     MessageId,
 };
 use bee_storage::{access::Fetch, backend};
@@ -16,6 +16,7 @@ pub trait StorageBackend:
     + Fetch<OutputId, ConsumedOutput>
     + Fetch<Ed25519Address, Vec<OutputId>>
     + Fetch<Address, Balance>
+    + Fetch<MilestoneIndex, OutputDiff>
     + bee_protocol::storage::StorageBackend
 {
 }
@@ -26,6 +27,7 @@ impl<T> StorageBackend for T where
         + Fetch<OutputId, CreatedOutput>
         + Fetch<OutputId, ConsumedOutput>
         + Fetch<Ed25519Address, Vec<OutputId>>
+        + Fetch<MilestoneIndex, OutputDiff>
         + bee_protocol::storage::StorageBackend
 {
 }
