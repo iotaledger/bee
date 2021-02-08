@@ -5,8 +5,8 @@ use crate::{
     config::{
         RestApiConfig, ROUTE_ADD_PEER, ROUTE_BALANCE_BECH32, ROUTE_BALANCE_ED25519, ROUTE_HEALTH, ROUTE_INFO,
         ROUTE_MESSAGE, ROUTE_MESSAGES_FIND, ROUTE_MESSAGE_CHILDREN, ROUTE_MESSAGE_METADATA, ROUTE_MESSAGE_RAW,
-        ROUTE_MILESTONE, ROUTE_OUTPUT, ROUTE_OUTPUTS_BECH32, ROUTE_OUTPUTS_ED25519, ROUTE_PEER, ROUTE_PEERS,
-        ROUTE_REMOVE_PEER, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW, ROUTE_TIPS,
+        ROUTE_MILESTONE, ROUTE_MILESTONE_UTXO_CHANGES, ROUTE_OUTPUT, ROUTE_OUTPUTS_BECH32, ROUTE_OUTPUTS_ED25519,
+        ROUTE_PEER, ROUTE_PEERS, ROUTE_REMOVE_PEER, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW, ROUTE_TIPS,
     },
     filters::CustomRejection::{BadRequest, Forbidden},
     handlers,
@@ -420,7 +420,7 @@ fn milestone_utxo_changes<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    has_permission(ROUTE_MILESTONE, public_routes, allowed_ips)
+    has_permission(ROUTE_MILESTONE_UTXO_CHANGES, public_routes, allowed_ips)
         .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
