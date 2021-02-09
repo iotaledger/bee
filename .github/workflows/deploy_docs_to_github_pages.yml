@@ -3,7 +3,7 @@ name: deploy docs to github pages
 on:
   push:
     branches:
-      - feat(docs)/setup
+      - chrysalis-pt-2
 
 jobs:
   deploy:
@@ -24,3 +24,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./book
+          cname: bee.docs.iota.org
