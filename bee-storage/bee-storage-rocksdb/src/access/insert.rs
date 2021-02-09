@@ -20,7 +20,7 @@ use bee_message::{
 };
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Insert;
-use bee_tangle::metadata::MessageMetadata;
+use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
 
 #[async_trait::async_trait]
 impl Insert<u8, System> for Storage {
@@ -265,6 +265,27 @@ impl Insert<Address, Balance> for Storage {
             .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
 
         self.inner.put_cf(&cf, address.pack_new(), balance.pack_new())?;
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl Insert<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
+    async fn insert(
+        &self,
+        (index, message_id): &(MilestoneIndex, UnconfirmedMessage),
+        (): &(),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
+
+        let mut key = index.pack_new();
+        key.extend_from_slice(message_id.as_ref());
+
+        self.inner.put_cf(&cf, key, [])?;
 
         Ok(())
     }

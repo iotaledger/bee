@@ -13,6 +13,7 @@ pub use bee_storage::{
 };
 
 use bee_message::{
+    milestone::MilestoneIndex,
     payload::{indexation::HASHED_INDEX_LENGTH, transaction::ED25519_ADDRESS_LENGTH},
     MESSAGE_ID_LENGTH,
 };
@@ -35,6 +36,7 @@ pub const CF_SNAPSHOT_INFO: &str = "snapshot_info";
 pub const CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX: &str = "solid_entry_point_to_milestone_index";
 pub const CF_MILESTONE_INDEX_TO_OUTPUT_DIFF: &str = "milestone_index_to_output_diff";
 pub const CF_ADDRESS_TO_BALANCE: &str = "address_to_balance";
+pub const CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE: &str = "milestone_index_to_unconfirmed_message";
 
 pub struct Storage {
     pub(crate) config: StorageConfig,
@@ -87,6 +89,12 @@ impl Storage {
 
         let cf_address_to_balance = ColumnFamilyDescriptor::new(CF_ADDRESS_TO_BALANCE, Options::default());
 
+        let prefix_extractor = SliceTransform::create_fixed_prefix(std::mem::size_of::<MilestoneIndex>());
+        let mut options = Options::default();
+        options.set_prefix_extractor(prefix_extractor);
+        let cf_milestone_index_to_unconfirmed_message =
+            ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE, options);
+
         let mut opts = Options::default();
 
         opts.create_if_missing(config.create_if_missing);
@@ -135,6 +143,7 @@ impl Storage {
             cf_solid_entry_point_to_milestone_index,
             cf_milestone_index_to_output_diff,
             cf_address_to_balance,
+            cf_milestone_index_to_unconfirmed_message,
         ];
 
         Ok(DB::open_cf_descriptors(&opts, config.path, column_familes)?)

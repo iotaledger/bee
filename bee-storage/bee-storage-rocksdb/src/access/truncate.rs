@@ -21,7 +21,7 @@ use bee_message::{
 };
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Truncate;
-use bee_tangle::metadata::MessageMetadata;
+use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
 
 #[async_trait::async_trait]
 impl Truncate<MessageId, Message> for Storage {
@@ -235,6 +235,21 @@ impl Truncate<Address, Balance> for Storage {
             .inner
             .cf_handle(CF_ADDRESS_TO_BALANCE)
             .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
+
+        // TODO check that this is fine
+        self.inner.delete_range_cf(cf, [0x00u8; 1], [0xffu8; 1])?;
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl Truncate<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
 
         // TODO check that this is fine
         self.inner.delete_range_cf(cf, [0x00u8; 1], [0xffu8; 1])?;

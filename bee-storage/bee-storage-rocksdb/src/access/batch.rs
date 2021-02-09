@@ -20,7 +20,7 @@ use bee_message::{
 };
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::{Batch, BatchBuilder};
-use bee_tangle::metadata::MessageMetadata;
+use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
 
 use rocksdb::{WriteBatch, WriteOptions};
 
@@ -580,6 +580,47 @@ impl Batch<Address, Balance> for Storage {
             .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
 
         batch.inner.delete_cf(&cf, address.pack_new());
+
+        Ok(())
+    }
+}
+
+impl Batch<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        (index, message_id): &(MilestoneIndex, UnconfirmedMessage),
+        (): &(),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
+
+        batch.key_buf.clear();
+        batch.key_buf.extend_from_slice(&index.pack_new());
+        batch.key_buf.extend_from_slice(message_id.as_ref());
+
+        batch.inner.put_cf(&cf, &batch.key_buf, []);
+
+        Ok(())
+    }
+
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        (index, message_id): &(MilestoneIndex, UnconfirmedMessage),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
+
+        batch.key_buf.clear();
+        batch.key_buf.extend_from_slice(&index.pack_new());
+        batch.key_buf.extend_from_slice(message_id.as_ref());
+
+        batch.inner.delete_cf(&cf, &batch.key_buf);
 
         Ok(())
     }

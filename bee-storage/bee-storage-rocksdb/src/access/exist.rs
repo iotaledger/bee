@@ -20,7 +20,7 @@ use bee_message::{
 };
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Exist;
-use bee_tangle::metadata::MessageMetadata;
+use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
 
 #[async_trait::async_trait]
 impl Exist<MessageId, Message> for Storage {
@@ -202,5 +202,23 @@ impl Exist<Address, Balance> for Storage {
             .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
 
         Ok(self.inner.get_cf(&cf, address.pack_new())?.is_some())
+    }
+}
+
+#[async_trait::async_trait]
+impl Exist<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
+    async fn exist(
+        &self,
+        (index, message_id): &(MilestoneIndex, UnconfirmedMessage),
+    ) -> Result<bool, <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
+
+        let mut key = index.pack_new();
+        key.extend_from_slice(message_id.as_ref());
+
+        Ok(self.inner.get_cf(&cf, key)?.is_some())
     }
 }

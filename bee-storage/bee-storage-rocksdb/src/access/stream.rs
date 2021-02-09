@@ -20,7 +20,7 @@ use bee_message::{
 };
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::AsStream;
-use bee_tangle::metadata::MessageMetadata;
+use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
 
 use futures::{
     stream::Stream,
@@ -276,6 +276,20 @@ impl<'a> StorageStream<'a, Address, Balance> {
     }
 }
 
+impl<'a> StorageStream<'a, (MilestoneIndex, UnconfirmedMessage), ()> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> ((MilestoneIndex, UnconfirmedMessage), ()) {
+        (
+            (
+                // Unpacking from storage is fine.
+                MilestoneIndex::unpack(&mut key).unwrap(),
+                // Unpacking from storage is fine.
+                UnconfirmedMessage::unpack(&mut value).unwrap(),
+            ),
+            (),
+        )
+    }
+}
+
 impl_stream!(u8, System, CF_SYSTEM);
 impl_stream!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_stream!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
@@ -291,3 +305,8 @@ impl_stream!((), SnapshotInfo, CF_SNAPSHOT_INFO);
 impl_stream!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
 impl_stream!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
 impl_stream!(Address, Balance, CF_ADDRESS_TO_BALANCE);
+impl_stream!(
+    (MilestoneIndex, UnconfirmedMessage),
+    (),
+    CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE
+);
