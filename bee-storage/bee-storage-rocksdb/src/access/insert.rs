@@ -274,7 +274,7 @@ impl Insert<Address, Balance> for Storage {
 impl Insert<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
     async fn insert(
         &self,
-        (index, message_id): &(MilestoneIndex, UnconfirmedMessage),
+        (index, unconfirmed_message): &(MilestoneIndex, UnconfirmedMessage),
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
@@ -283,7 +283,7 @@ impl Insert<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
             .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
 
         let mut key = index.pack_new();
-        key.extend_from_slice(message_id.as_ref());
+        key.extend_from_slice(unconfirmed_message.as_ref());
 
         self.inner.put_cf(&cf, key, [])?;
 

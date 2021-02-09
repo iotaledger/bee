@@ -237,7 +237,7 @@ impl Delete<Address, Balance> for Storage {
 impl Delete<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
     async fn delete(
         &self,
-        (index, message_id): &(MilestoneIndex, UnconfirmedMessage),
+        (index, unconfirmed_message): &(MilestoneIndex, UnconfirmedMessage),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
@@ -245,7 +245,7 @@ impl Delete<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
             .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
 
         let mut key = index.pack_new();
-        key.extend_from_slice(message_id.as_ref());
+        key.extend_from_slice(unconfirmed_message.as_ref());
 
         self.inner.delete_cf(&cf, key)?;
 

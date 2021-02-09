@@ -589,7 +589,7 @@ impl Batch<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
-        (index, message_id): &(MilestoneIndex, UnconfirmedMessage),
+        (index, unconfirmed_message): &(MilestoneIndex, UnconfirmedMessage),
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
@@ -599,7 +599,7 @@ impl Batch<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&index.pack_new());
-        batch.key_buf.extend_from_slice(message_id.as_ref());
+        batch.key_buf.extend_from_slice(unconfirmed_message.as_ref());
 
         batch.inner.put_cf(&cf, &batch.key_buf, []);
 
@@ -609,7 +609,7 @@ impl Batch<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
     fn batch_delete(
         &self,
         batch: &mut Self::Batch,
-        (index, message_id): &(MilestoneIndex, UnconfirmedMessage),
+        (index, unconfirmed_message): &(MilestoneIndex, UnconfirmedMessage),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner
@@ -618,7 +618,7 @@ impl Batch<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&index.pack_new());
-        batch.key_buf.extend_from_slice(message_id.as_ref());
+        batch.key_buf.extend_from_slice(unconfirmed_message.as_ref());
 
         batch.inner.delete_cf(&cf, &batch.key_buf);
 

@@ -277,13 +277,15 @@ impl<'a> StorageStream<'a, Address, Balance> {
 }
 
 impl<'a> StorageStream<'a, (MilestoneIndex, UnconfirmedMessage), ()> {
-    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> ((MilestoneIndex, UnconfirmedMessage), ()) {
+    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MilestoneIndex, UnconfirmedMessage), ()) {
+        let (mut index, mut unconfirmed_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
+
         (
             (
                 // Unpacking from storage is fine.
-                MilestoneIndex::unpack(&mut key).unwrap(),
+                MilestoneIndex::unpack(&mut index).unwrap(),
                 // Unpacking from storage is fine.
-                UnconfirmedMessage::unpack(&mut value).unwrap(),
+                UnconfirmedMessage::unpack(&mut unconfirmed_message).unwrap(),
             ),
             (),
         )

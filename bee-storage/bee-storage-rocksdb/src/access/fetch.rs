@@ -290,10 +290,10 @@ impl Fetch<MilestoneIndex, Vec<UnconfirmedMessage>> for Storage {
             self.inner
                 .prefix_iterator_cf(&cf, index.pack_new())
                 .map(|(key, _)| {
-                    let (_, message_id) = key.split_at(MESSAGE_ID_LENGTH);
+                    let (_, unconfirmed_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
                     // Unpacking from storage is fine.
-                    let message_id: [u8; MESSAGE_ID_LENGTH] = message_id.try_into().unwrap();
-                    UnconfirmedMessage::from(MessageId::from(message_id))
+                    let unconfirmed_message: [u8; MESSAGE_ID_LENGTH] = unconfirmed_message.try_into().unwrap();
+                    UnconfirmedMessage::from(MessageId::from(unconfirmed_message))
                 })
                 .collect(),
         ))

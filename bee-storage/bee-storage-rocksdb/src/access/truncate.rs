@@ -252,7 +252,11 @@ impl Truncate<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
             .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
 
         // TODO check that this is fine
-        self.inner.delete_range_cf(cf, [0x00u8; 1], [0xffu8; 1])?;
+        self.inner.delete_range_cf(
+            cf,
+            [0x00u8; std::mem::size_of::<MilestoneIndex>() + MESSAGE_ID_LENGTH],
+            [0xffu8; std::mem::size_of::<MilestoneIndex>() + MESSAGE_ID_LENGTH],
+        )?;
 
         Ok(())
     }
