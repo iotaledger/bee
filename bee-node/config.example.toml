@@ -28,7 +28,7 @@ unknown_peers_limit = 4
 # alias   = ""
 
 [protocol]
-minimum_pow_score = 100
+minimum_pow_score = 4000
 [protocol.coordinator]
 public_key_count  = 2
 [[protocol.coordinator.public_key_ranges]]
