@@ -13,6 +13,7 @@ pub mod storage;
 pub mod traversal;
 pub mod urts;
 pub mod worker;
+pub mod unconfirmed_message;
 
 pub(crate) mod pruning;
 
