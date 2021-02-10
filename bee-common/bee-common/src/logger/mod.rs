@@ -32,7 +32,7 @@ macro_rules! log_format {
     ($target:expr, $level:expr, $message:expr) => {
         format_args!(
             "{} {:target_width$} {:level_width$} {}",
-            chrono::Local::now().format("[%Y-%m-%d %H:%M:%S]"),
+            chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
             $target,
             $level,
             $message,
