@@ -1,9 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{Multiaddr, ShortId, MAX_UNKNOWN_PEERS};
-
-use super::{errors::Error, PeerRelation};
+use crate::MAX_UNKNOWN_PEERS;
 
 use libp2p::PeerId;
 use log::trace;
@@ -13,6 +11,8 @@ use std::{
     collections::HashMap,
     sync::{atomic::Ordering, Arc},
 };
+
+use super::{Error, PeerInfo, PeerState};
 
 const DEFAULT_PEERLIST_CAPACITY: usize = 8;
 
@@ -35,18 +35,27 @@ impl PeerList {
         }
     }
 
-    pub async fn update_relation(&self, id: &PeerId, relation: PeerRelation) -> Result<(), Error> {
+    pub async fn upgrade_relation(&self, id: &PeerId) -> Result<(), Error> {
         let mut this = self.0.write().await;
-        let mut kv = this.get_mut(id).ok_or_else(|| Error::UnlistedPeer(id.short()))?;
+        let kv = this.get_mut(id).ok_or_else(|| Error::UnregisteredPeer(*id))?;
 
-        kv.0.relation = relation;
+        kv.0.relation.upgrade();
+
+        Ok(())
+    }
+
+    pub async fn downgrade_relation(&self, id: &PeerId) -> Result<(), Error> {
+        let mut this = self.0.write().await;
+        let kv = this.get_mut(id).ok_or_else(|| Error::UnregisteredPeer(*id))?;
+
+        kv.0.relation.downgrade();
 
         Ok(())
     }
 
     pub async fn update_state(&self, id: &PeerId, state: PeerState) -> Result<(), Error> {
         let mut this = self.0.write().await;
-        let mut kv = this.get_mut(id).ok_or_else(|| Error::UnlistedPeer(id.short()))?;
+        let mut kv = this.get_mut(id).ok_or_else(|| Error::UnregisteredPeer(*id))?;
 
         kv.1 = state;
 
@@ -60,27 +69,20 @@ impl PeerList {
 
     pub async fn accepts(&self, id: &PeerId, info: &PeerInfo) -> Result<(), Error> {
         if self.0.read().await.contains_key(id) {
-            let alias = info.alias.clone();
-            return Err(Error::PeerAlreadyAdded(alias));
+            return Err(Error::PeerAlreadyAdded(*id));
         }
 
         // Prevent inserting more peers than preconfigured.
-        match info.relation {
-            PeerRelation::Unknown => {
-                if self.count_if(|info, _| info.relation.is_unknown()).await
-                    >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed)
-                {
-                    return Err(Error::UnknownPeerLimitReached(
-                        MAX_UNKNOWN_PEERS.load(Ordering::Relaxed),
-                    ));
-                }
+        if info.relation.is_ephemeral() {
+            if self.count_if(|info, _| info.relation.is_ephemeral()).await >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed)
+            {
+                return Err(Error::UnknownPeerLimitReached(
+                    MAX_UNKNOWN_PEERS.load(Ordering::Relaxed),
+                ));
             }
-            // TODO: Handle 'PeerRelation::Discovered' case once autopeering has landed.
-            _ => (),
         }
         if self.0.read().await.contains_key(id) {
-            let alias = info.alias.clone();
-            return Err(Error::PeerAlreadyAdded(alias));
+            return Err(Error::PeerAlreadyAdded(*id));
         }
 
         Ok(())
@@ -92,7 +94,7 @@ impl PeerList {
             .write()
             .await
             .remove(id)
-            .ok_or_else(|| Error::UnlistedPeer(id.short()))?;
+            .ok_or_else(|| Error::UnregisteredPeer(*id))?;
 
         Ok(info)
     }
@@ -102,13 +104,13 @@ impl PeerList {
         self.0.read().await.len()
     }
 
+    // TODO: change return value to `Option<PeerInfo>`1
     pub async fn get_info(&self, id: &PeerId) -> Result<PeerInfo, Error> {
         self.0
             .read()
             .await
             .get(id)
-            .ok_or_else(|| Error::UnlistedPeer(id.short()))
-            // .map(|kv| kv.value().0.clone())
+            .ok_or_else(|| Error::UnregisteredPeer(*id))
             .map(|kv| kv.0.clone())
     }
 
@@ -117,8 +119,7 @@ impl PeerList {
             .read()
             .await
             .get(id)
-            .ok_or_else(|| Error::UnlistedPeer(id.short()))
-            // .map(|kv| predicate(&kv.value().0, &kv.value().1))
+            .ok_or_else(|| Error::UnregisteredPeer(*id))
             .map(|kv| predicate(&kv.0, &kv.1))
     }
 
@@ -130,7 +131,6 @@ impl PeerList {
             .filter_map(|kv| {
                 let (info, state) = kv.1; // kv.value();
                 if predicate(info, state) {
-                    // Some(kv.key().clone())
                     Some(kv.0.clone())
                 } else {
                     None
@@ -168,32 +168,5 @@ impl PeerList {
     pub async fn clear(&self) {
         trace!("Dropping message senders.");
         self.0.write().await.clear();
-    }
-}
-
-/// Additional information about a peer.
-#[derive(Clone, Debug)]
-pub struct PeerInfo {
-    /// The peer's address.
-    pub address: Multiaddr,
-    /// The peer's alias.
-    pub alias: String,
-    /// The type of relation we have with this peer.
-    pub relation: PeerRelation,
-}
-
-#[derive(Clone)]
-pub enum PeerState {
-    Disconnected,
-    Connected,
-}
-
-impl PeerState {
-    pub fn is_connected(&self) -> bool {
-        matches!(*self, PeerState::Connected)
-    }
-
-    pub fn is_disconnected(&self) -> bool {
-        matches!(*self, PeerState::Disconnected)
     }
 }

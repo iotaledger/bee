@@ -14,11 +14,11 @@ homepage = "https://www.iota.org"
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 async-trait = "0.1"
-dashmap = "4.0"
 futures = "0.3"
 lazy_static = "1.4"
-libp2p = { version = "0.34", default-features = false, features = ["dns", "mplex", "noise", "tcp-tokio", "yamux"]}
+libp2p = { version = "0.34", default-features = false, features = ["dns", "identify", "mplex", "noise", "tcp-tokio", "yamux"]}
 log = "0.4"
+rand = "0.8.3"
 serde = { version = "1.0", features = ["derive" ] }
 thiserror = "1.0"
 tokio = { version = "1.1", features = ["rt", "time"] }

@@ -299,13 +299,13 @@ dependencies = [
  "async-trait",
  "bee-runtime",
  "bee-storage",
- "dashmap",
  "env_logger 0.8.2",
  "futures",
  "lazy_static",
  "libp2p",
  "log",
  "pretty_env_logger",
+ "rand 0.8.3",
  "serde",
  "structopt",
  "thiserror",
@@ -1640,6 +1640,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-core-derive",
  "libp2p-dns",
+ "libp2p-identify",
  "libp2p-mplex",
  "libp2p-noise",
  "libp2p-swarm",
@@ -1705,6 +1706,22 @@ dependencies = [
  "futures",
  "libp2p-core",
  "log",
+]
+
+[[package]]
+name = "libp2p-identify"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b40fb36a059b7a8cce1514bd8b546fa612e006c9937caa7f5950cb20021fe91e"
+dependencies = [
+ "futures",
+ "libp2p-core",
+ "libp2p-swarm",
+ "log",
+ "prost",
+ "prost-build",
+ "smallvec",
+ "wasm-timer",
 ]
 
 [[package]]

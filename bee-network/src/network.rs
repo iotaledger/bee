@@ -3,15 +3,13 @@
 
 use crate::{
     config::NetworkConfig,
-    interaction::commands::{Command, CommandSender},
+    service::commands::{Command, CommandSender},
     PeerId,
 };
 
-use thiserror::Error;
-
 use std::sync::Arc;
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Error sending command.")]
     CommandSendFailure,
