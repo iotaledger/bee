@@ -12,6 +12,7 @@ pub mod message_metadata;
 pub mod message_raw;
 pub mod messages_find;
 pub mod milestone;
+pub mod milestone_utxo_changes;
 pub mod output;
 pub mod outputs_bech32;
 pub mod outputs_ed25519;

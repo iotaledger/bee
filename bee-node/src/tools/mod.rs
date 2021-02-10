@@ -7,6 +7,7 @@ mod rocksdb;
 mod snapshot_info;
 
 use structopt::StructOpt;
+use thiserror::Error;
 
 #[non_exhaustive]
 #[derive(Debug, StructOpt)]
@@ -16,16 +17,28 @@ pub enum Tool {
     /// Generates a p2p identity.
     P2pIdentity(p2p_identity::P2pIdentityTool),
     /// Rocksdb database analyser.
-    Rocksdb(rocksdb::Rocksdb),
+    Rocksdb(rocksdb::RocksdbTool),
     /// Outputs information about a snapshot file.
-    SnapshotInfo(snapshot_info::SnapshotInfo),
+    SnapshotInfo(snapshot_info::SnapshotInfoTool),
 }
 
-pub fn exec(tool: &Tool) {
+#[derive(Debug, Error)]
+pub enum ToolError {
+    #[error("{0}")]
+    Ed25519(#[from] ed25519::Ed25519Error),
+    #[error("{0}")]
+    Rocksdb(#[from] rocksdb::RocksdbError),
+    #[error("{0}")]
+    SnapshotInfo(#[from] snapshot_info::SnapshotInfoError),
+}
+
+pub fn exec(tool: &Tool) -> Result<(), ToolError> {
     match tool {
-        Tool::Ed25519(tool) => ed25519::exec(tool),
+        Tool::Ed25519(tool) => ed25519::exec(tool)?,
         Tool::P2pIdentity(tool) => p2p_identity::exec(tool),
-        Tool::Rocksdb(tool) => rocksdb::exec(tool),
-        Tool::SnapshotInfo(tool) => snapshot_info::exec(tool),
+        Tool::Rocksdb(tool) => rocksdb::exec(tool)?,
+        Tool::SnapshotInfo(tool) => snapshot_info::exec(tool)?,
     }
+
+    Ok(())
 }

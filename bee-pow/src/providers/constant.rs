@@ -3,6 +3,8 @@
 
 use crate::providers::{Provider, ProviderBuilder};
 
+use std::sync::{atomic::AtomicBool, Arc};
+
 const DEFAULT_VALUE: u64 = 0;
 
 #[derive(Default)]
@@ -39,7 +41,7 @@ impl Provider for Constant {
     type Builder = ConstantBuilder;
     type Error = std::convert::Infallible;
 
-    fn nonce(&self, _: &[u8], _: f64) -> Result<u64, Self::Error> {
+    fn nonce(&self, _: &[u8], _: f64, _: Option<Arc<AtomicBool>>) -> Result<u64, Self::Error> {
         Ok(self.value)
     }
 }

@@ -12,7 +12,10 @@ use blake2::{
 };
 use serde::{Deserialize, Serialize};
 
-use std::ops::RangeInclusive;
+use std::{
+    ops::RangeInclusive,
+    sync::{atomic::AtomicBool, Arc},
+};
 
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
 pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
@@ -141,7 +144,7 @@ pub struct MessageBuilder<P: Provider = Miner> {
     network_id: Option<u64>,
     parents: Option<Vec<MessageId>>,
     payload: Option<Payload>,
-    nonce_provider: Option<(P, f64)>,
+    nonce_provider: Option<(P, f64, Option<Arc<AtomicBool>>)>,
 }
 
 impl<P: Provider> Default for MessageBuilder<P> {
@@ -175,8 +178,8 @@ impl<P: Provider> MessageBuilder<P> {
         self
     }
 
-    pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: f64) -> Self {
-        self.nonce_provider = Some((nonce_provider, target_score));
+    pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: f64, done: Option<Arc<AtomicBool>>) -> Self {
+        self.nonce_provider = Some((nonce_provider, target_score, done));
         self
     }
 
@@ -201,12 +204,15 @@ impl<P: Provider> MessageBuilder<P> {
             return Err(Error::InvalidMessageLength(message_bytes.len()));
         }
 
-        let (nonce_provider, target_score) = self.nonce_provider.unwrap_or((P::Builder::new().finish(), 4000f64));
+        let (nonce_provider, target_score, done) =
+            self.nonce_provider
+                .unwrap_or((P::Builder::new().finish(), 4000f64, None));
 
         message.nonce = nonce_provider
             .nonce(
                 &message_bytes[..message_bytes.len() - std::mem::size_of::<u64>()],
                 target_score,
+                done,
             )
             .unwrap_or(0);
 

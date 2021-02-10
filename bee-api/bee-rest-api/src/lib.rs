@@ -33,6 +33,8 @@ use std::{any::TypeId, convert::Infallible};
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;
 
+pub(crate) const IS_SYNCED_THRESHOLD: u32 = 5;
+
 pub async fn init<N: Node>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,

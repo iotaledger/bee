@@ -1,3 +1,6 @@
+// Copyright 2020 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use bee_storage::backend::StorageBackend;
 
 use std::{convert::Infallible, error::Error};

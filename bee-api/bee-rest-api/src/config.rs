@@ -3,7 +3,7 @@
 
 use serde::Deserialize;
 
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 pub(crate) const DEFAULT_BINDING_PORT: u16 = 14265;
 pub(crate) const DEFAULT_BINDING_IP_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
@@ -20,6 +20,7 @@ pub(crate) const ROUTE_MESSAGE_METADATA: &str = "/api/v1/messages/:messageId/met
 pub(crate) const ROUTE_MESSAGE_RAW: &str = "/api/v1/messages/:messageId/raw";
 pub(crate) const ROUTE_MESSAGES_FIND: &str = "/api/v1/messages";
 pub(crate) const ROUTE_MILESTONE: &str = "/api/v1/milestones/:milestoneIndex";
+pub(crate) const ROUTE_MILESTONE_UTXO_CHANGES: &str = "/api/v1/milestones/:milestoneIndex/utxo-changes";
 pub(crate) const ROUTE_OUTPUT: &str = "/api/v1/outputs/:outputId";
 pub(crate) const ROUTE_OUTPUTS_BECH32: &str = "/api/v1/addresses/:address/outputs";
 pub(crate) const ROUTE_OUTPUTS_ED25519: &str = "/api/v1/addresses/ed25519/:address/outputs";
@@ -31,7 +32,7 @@ pub(crate) const ROUTE_SUBMIT_MESSAGE_RAW: &str = "/api/v1/messages";
 pub(crate) const ROUTE_TIPS: &str = "/api/v1/tips";
 
 /// the routes that are available for public use
-pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 16] = [
+pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 17] = [
     ROUTE_BALANCE_BECH32,
     ROUTE_BALANCE_ED25519,
     ROUTE_HEALTH,
@@ -42,6 +43,7 @@ pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 16] = [
     ROUTE_MESSAGE_RAW,
     ROUTE_MESSAGES_FIND,
     ROUTE_MILESTONE,
+    ROUTE_MILESTONE_UTXO_CHANGES,
     ROUTE_OUTPUT,
     ROUTE_OUTPUTS_BECH32,
     ROUTE_OUTPUTS_ED25519,
@@ -49,7 +51,10 @@ pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 16] = [
     ROUTE_SUBMIT_MESSAGE_RAW,
     ROUTE_TIPS,
 ];
-pub(crate) const DEFAULT_ALLOWED_IPS: [IpAddr; 1] = [IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))];
+pub(crate) const DEFAULT_ALLOWED_IPS: [IpAddr; 2] = [
+    IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+    IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)),
+];
 pub(crate) const DEFAULT_FEATURE_PROOF_OF_WORK: bool = true;
 
 /// REST API configuration builder.

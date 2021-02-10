@@ -5,6 +5,7 @@ use crate::{
     filters::CustomRejection::ServiceUnavailable,
     handlers::{BodyInner, SuccessBody},
     storage::StorageBackend,
+    IS_SYNCED_THRESHOLD,
 };
 
 use bee_runtime::resource::ResourceHandle;
@@ -14,6 +15,11 @@ use serde::{Deserialize, Serialize};
 use warp::{reject, Rejection, Reply};
 
 pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<MsTangle<B>>) -> Result<impl Reply, Rejection> {
+    if !tangle.is_synced_threshold(IS_SYNCED_THRESHOLD) {
+        return Err(reject::custom(ServiceUnavailable(
+            "the node is not synchronized".to_string(),
+        )));
+    }
     match tangle.get_messages_to_approve().await {
         Some(tips) => Ok(warp::reply::json(&SuccessBody::new(TipsResponse {
             tip_message_ids: tips.iter().map(|t| t.to_string()).collect(),

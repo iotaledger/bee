@@ -28,7 +28,7 @@ unknown_peers_limit = 4
 # alias   = ""
 
 [protocol]
-minimum_pow_score = 100
+minimum_pow_score = 4000
 [protocol.coordinator]
 public_key_count  = 2
 [[protocol.coordinator.public_key_ranges]]
@@ -62,6 +62,7 @@ public_routes         = [
     "/api/v1/messages/:messageId/raw",
     "/api/v1/messages",
     "/api/v1/milestones/:milestoneIndex",
+    "/api/v1/milestones/:milestoneIndex/utxo-changes",
     "/api/v1/outputs/:outputId",
     "/api/v1/addresses/:address/outputs",
     "/api/v1/addresses/ed25519/:address/outputs",
@@ -69,7 +70,8 @@ public_routes         = [
     "/api/v1/tips",
 ]
 allowed_ips = [
-    "127.0.0.1"
+    "127.0.0.1",
+    "::1"
 ]
 
 [snapshot]

@@ -28,7 +28,11 @@ fn pow_provider() {
     let message = MessageBuilder::new()
         .with_network_id(0)
         .with_parents(vec![rand_message_id(), rand_message_id()])
-        .with_nonce_provider(MinerBuilder::new().with_num_workers(num_cpus::get()).finish(), 10000f64)
+        .with_nonce_provider(
+            MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
+            10000f64,
+            None,
+        )
         .finish()
         .unwrap();
 
@@ -43,7 +47,7 @@ fn invalid_length() {
     let res = MessageBuilder::new()
         .with_network_id(0)
         .with_parents(vec![rand_message_id(), rand_message_id()])
-        .with_nonce_provider(ConstantBuilder::new().with_value(42).finish(), 10000f64)
+        .with_nonce_provider(ConstantBuilder::new().with_value(42).finish(), 10000f64, None)
         .with_payload(
             IndexationPayload::new("42".to_owned(), &[0u8; MESSAGE_LENGTH_MAX])
                 .unwrap()
