@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{storage::StorageBackend, worker::HasherWorker};
+use crate::storage::StorageBackend;
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::{
@@ -18,8 +18,6 @@ use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::any::TypeId;
-
 const UNCONFIRMED_MESSAGE_BATCH_SIZE: usize = 1000;
 
 pub struct UnconfirmedMessageInserterWorkerEvent(pub(crate) MessageId, pub(crate) MilestoneIndex);
@@ -35,10 +33,6 @@ where
 {
     type Config = ();
     type Error = WorkerError;
-
-    fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<HasherWorker>()].leak()
-    }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
