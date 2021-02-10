@@ -21,7 +21,7 @@ use bee_storage::{
     backend::StorageBackend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, error::Error as BackendError, storage::*, system::System};
-use bee_tangle::metadata::MessageMetadata;
+use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
 
 use futures::{executor, stream::StreamExt};
 use structopt::StructOpt;
@@ -275,6 +275,21 @@ async fn exec_inner(tool: &RocksdbTool) -> Result<(), RocksdbError> {
             }
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<Address, Balance>::stream(&storage).await?;
+
+                while let Some((key, value)) = stream.next().await {
+                    println!("Key: {:?}\nValue: {:?}\n", key, value);
+                }
+            }
+        },
+        CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE => match &tool.command {
+            RocksdbCommand::Fetch { key } => {
+                let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
+                let value = Fetch::<MilestoneIndex, Vec<UnconfirmedMessage>>::fetch(&storage, &key).await?;
+
+                println!("Key: {:?}\nValue: {:?}\n", key, value);
+            }
+            RocksdbCommand::Stream => {
+                let mut stream = AsStream::<(MilestoneIndex, UnconfirmedMessage), ()>::stream(&storage).await?;
 
                 while let Some((key, value)) = stream.next().await {
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
