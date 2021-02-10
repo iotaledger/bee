@@ -19,8 +19,8 @@ pub struct MessageMetadata {
     arrival_timestamp: u64,
     solidification_timestamp: u64,
     confirmation_timestamp: u64,
-    otrsi: Option<IndexId>,
-    ytrsi: Option<IndexId>,
+    omrsi: Option<IndexId>,
+    ymrsi: Option<IndexId>,
     conflict: u8,
 }
 
@@ -32,8 +32,8 @@ impl MessageMetadata {
         arrival_timestamp: u64,
         solidification_timestamp: u64,
         confirmation_timestamp: u64,
-        otrsi: Option<IndexId>,
-        ytrsi: Option<IndexId>,
+        omrsi: Option<IndexId>,
+        ymrsi: Option<IndexId>,
         conflict: u8,
     ) -> Self {
         Self {
@@ -42,8 +42,8 @@ impl MessageMetadata {
             arrival_timestamp,
             solidification_timestamp,
             confirmation_timestamp,
-            otrsi,
-            ytrsi,
+            omrsi,
+            ymrsi,
             conflict,
         }
     }
@@ -82,20 +82,20 @@ impl MessageMetadata {
         self.solidification_timestamp
     }
 
-    pub fn otrsi(&self) -> Option<IndexId> {
-        self.otrsi
+    pub fn omrsi(&self) -> Option<IndexId> {
+        self.omrsi
     }
 
-    pub fn set_otrsi(&mut self, otrsi: IndexId) {
-        self.otrsi = Some(otrsi);
+    pub fn set_omrsi(&mut self, omrsi: IndexId) {
+        self.omrsi = Some(omrsi);
     }
 
-    pub fn ytrsi(&self) -> Option<IndexId> {
-        self.ytrsi
+    pub fn ymrsi(&self) -> Option<IndexId> {
+        self.ymrsi
     }
 
-    pub fn set_ytrsi(&mut self, ytrsi: IndexId) {
-        self.ytrsi = Some(ytrsi);
+    pub fn set_ymrsi(&mut self, ymrsi: IndexId) {
+        self.ymrsi = Some(ymrsi);
     }
 
     pub fn confirmation_timestamp(&self) -> u64 {
@@ -158,8 +158,8 @@ impl Packable for MessageMetadata {
             + self.arrival_timestamp.packed_len()
             + self.solidification_timestamp.packed_len()
             + self.confirmation_timestamp.packed_len()
-            + self.otrsi.packed_len()
-            + self.ytrsi.packed_len()
+            + self.omrsi.packed_len()
+            + self.ymrsi.packed_len()
             + self.conflict.packed_len()
     }
 
@@ -169,8 +169,8 @@ impl Packable for MessageMetadata {
         self.arrival_timestamp.pack(writer)?;
         self.solidification_timestamp.pack(writer)?;
         self.confirmation_timestamp.pack(writer)?;
-        self.otrsi.pack(writer)?;
-        self.ytrsi.pack(writer)?;
+        self.omrsi.pack(writer)?;
+        self.ymrsi.pack(writer)?;
         self.conflict.pack(writer)?;
 
         Ok(())
@@ -183,8 +183,8 @@ impl Packable for MessageMetadata {
             arrival_timestamp: u64::unpack(reader)?,
             solidification_timestamp: u64::unpack(reader)?,
             confirmation_timestamp: u64::unpack(reader)?,
-            otrsi: Option::<IndexId>::unpack(reader)?,
-            ytrsi: Option::<IndexId>::unpack(reader)?,
+            omrsi: Option::<IndexId>::unpack(reader)?,
+            ymrsi: Option::<IndexId>::unpack(reader)?,
             conflict: u8::unpack(reader)?,
         })
     }
