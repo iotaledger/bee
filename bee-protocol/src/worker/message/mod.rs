@@ -6,6 +6,7 @@ mod hasher;
 mod payload;
 mod processor;
 mod submitter;
+mod unconfirmed_inserter;
 
 pub(crate) use hash_cache::HashCache;
 pub(crate) use hasher::{HasherWorker, HasherWorkerEvent};
@@ -15,6 +16,7 @@ pub(crate) use payload::{
 };
 pub(crate) use processor::{ProcessorWorker, ProcessorWorkerEvent};
 pub use submitter::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
+pub(crate) use unconfirmed_inserter::{UnconfirmedMessageInserterWorker, UnconfirmedMessageInserterWorkerEvent};
 
 // #[cfg(test)]
 // mod tests {

@@ -11,7 +11,7 @@ use crate::{
     worker::{
         BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker, MessageSubmitterError, MetricsWorker,
         PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,
-        RequestedMessages,
+        RequestedMessages, UnconfirmedMessageInserterWorker, UnconfirmedMessageInserterWorkerEvent,
     },
     ProtocolMetrics,
 };
@@ -58,6 +58,7 @@ where
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<PayloadWorker>(),
+            TypeId::of::<UnconfirmedMessageInserterWorker>(),
         ]
         .leak()
     }
@@ -69,6 +70,7 @@ where
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();
         let payload_worker = node.worker::<PayloadWorker>().unwrap().tx.clone();
+        let unconfirmed_inserted_worker = node.worker::<UnconfirmedMessageInserterWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
@@ -91,6 +93,7 @@ where
                 let broadcaster = broadcaster.clone();
                 let message_requester = message_requester.clone();
                 let payload_worker = payload_worker.clone();
+                let unconfirmed_inserted_worker = unconfirmed_inserted_worker.clone();
                 let tangle = tangle.clone();
                 let requested_messages = requested_messages.clone();
                 let metrics = metrics.clone();
@@ -205,6 +208,12 @@ where
                                     message: message_packet,
                                 }) {
                                     warn!("Broadcasting message failed: {}.", e);
+                                }
+                                if let Err(e) = unconfirmed_inserted_worker.send(UnconfirmedMessageInserterWorkerEvent(
+                                    message_id,
+                                    tangle.get_latest_milestone_index(),
+                                )) {
+                                    warn!("Sending message to unconfirmed inserter failed: {}.", e);
                                 }
                             }
                         };
