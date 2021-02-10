@@ -167,15 +167,15 @@ impl<B: StorageBackend> MsTangle<B> {
             info!("Failed to insert message {:?}", e);
             None
         }) {
-            Some(
-                *self
-                    .milestones
-                    .lock()
-                    .await
-                    .entry(idx)
-                    .or_insert(milestone)
-                    .message_id(),
-            )
+            let message_id = *self
+                .milestones
+                .lock()
+                .await
+                .entry(idx)
+                .or_insert(milestone)
+                .message_id();
+
+            Some(message_id)
         } else {
             None
         }
@@ -191,7 +191,9 @@ impl<B: StorageBackend> MsTangle<B> {
 
     // TODO: use combinator instead of match
     pub async fn get_milestone_message_id(&self, index: MilestoneIndex) -> Option<MessageId> {
-        match self.milestones.lock().await.get(&index).map(|m| *m.message_id()) {
+        let message_id = self.milestones.lock().await.get(&index).map(|m| *m.message_id());
+
+        match message_id {
             Some(m) => Some(m),
             None => Some(self.pull_milestone(index).await?),
         }
