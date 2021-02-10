@@ -12,6 +12,7 @@ use crate::{
     storage::StorageBackend,
 };
 
+use bee_protocol::ProtocolMetrics;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use bee_tangle::MsTangle;
 
@@ -39,6 +40,7 @@ where
 {
     let tangle = node.resource::<MsTangle<N::Backend>>();
     let node_config = node.resource::<NodeConfig<N::Backend>>();
+    let metrics = node.resource::<ProtocolMetrics>();
     let peering_config = node_config.peering.clone();
     let users = users.clone();
 
@@ -75,18 +77,18 @@ where
                 request_queue_processing: 0,
                 request_queue_avg_latency: 0,
                 server_metrics: ServerMetrics {
-                    all_msgs: 0,
-                    new_msgs: 0,
-                    known_msgs: 0,
-                    invalid_msgs: 0,
+                    all_msgs: metrics.messages_received() as usize,
+                    new_msgs: metrics.new_messages() as usize,
+                    known_msgs: metrics.known_messages() as usize,
+                    invalid_msgs: metrics.invalid_messages() as usize,
                     invalid_req: 0,
-                    rec_msg_req: 0,
-                    rec_ms_req: 0,
-                    rec_heartbeat: 0,
-                    sent_msgs: 0,
-                    sent_msg_req: 0,
-                    sent_ms_req: 0,
-                    sent_heartbeat: 0,
+                    rec_msg_req: metrics.message_requests_received() as usize,
+                    rec_ms_req: metrics.milestone_requests_received() as usize,
+                    rec_heartbeat: metrics.heartbeats_received() as usize,
+                    sent_msgs: metrics.messages_sent() as usize,
+                    sent_msg_req: metrics.message_requests_sent() as usize,
+                    sent_ms_req: metrics.milestone_requests_sent() as usize,
+                    sent_heartbeat: metrics.heartbeats_sent() as usize,
                     dropped_sent_packets: 0,
                     sent_spam_messages: 0,
                     validated_messages: 0,
