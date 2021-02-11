@@ -91,7 +91,4 @@ pub enum InternalEvent {
     ConnectionDropped {
         peer_id: PeerId,
     },
-    ReconnectScheduled {
-        peer_id: PeerId,
-    },
 }

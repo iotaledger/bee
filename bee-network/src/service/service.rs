@@ -68,6 +68,7 @@ impl<N: Node> Worker<N> for Service {
         let event_sender_clone = event_sender.clone();
         let internal_command_sender_clone = internal_command_sender.clone();
 
+        // Spawn command handler task
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Command handler running.");
 
@@ -80,7 +81,7 @@ impl<N: Node> Worker<N> for Service {
                     &banned_addrlist_clone,
                     &banned_peerlist_clone,
                     &event_sender_clone,
-                    &internal_command_sender,
+                    &internal_command_sender_clone,
                 )
                 .await
                 {
@@ -94,7 +95,9 @@ impl<N: Node> Worker<N> for Service {
 
         let peerlist_clone = peerlist.clone();
         let internal_event_sender_clone = internal_event_sender.clone();
+        let internal_command_sender_clone = internal_command_sender.clone();
 
+        // Spawn internal event handler task
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Event handler running.");
 
@@ -121,6 +124,7 @@ impl<N: Node> Worker<N> for Service {
             info!("Event handler stopped.");
         });
 
+        // Spawn reconnecter task
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Reconnecter running.");
 
@@ -147,12 +151,7 @@ impl<N: Node> Worker<N> for Service {
                     .iter_if(|info, state| info.relation.is_known() && state.is_disconnected())
                     .await
                 {
-                    if internal_event_sender
-                        .send(InternalEvent::ReconnectScheduled { peer_id })
-                        .is_err()
-                    {
-                        trace!("Failed to send 'ReconnectScheduled' event. (Shutting down?)");
-                    }
+                    let _ = internal_command_sender.send(Command::DialPeer { peer_id });
                 }
             }
 
@@ -241,7 +240,8 @@ async fn process_command(
             peerlist.downgrade_relation(&peer_id).await?;
         }
         Command::DiscoverPeers => {
-            let _ = internal_command_sender.send(Command::DiscoverPeers);
+            // TODO: Peer discovery
+            // let _ = internal_command_sender.send(Command::DiscoverPeers);
         }
     }
 
@@ -333,10 +333,6 @@ async fn process_internal_event(
             if event_sender.send(Event::PeerDisconnected { peer_id }).is_err() {
                 trace!("Error sending event 'PeerDisconnected'. (Shutting down?)");
             }
-        }
-
-        InternalEvent::ReconnectScheduled { peer_id } => {
-            let _ = internal_command_sender.send(Command::DialPeer { peer_id });
         }
     }
 
