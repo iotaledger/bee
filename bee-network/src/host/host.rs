@@ -76,6 +76,7 @@ impl<N: Node> Worker<N> for Host {
 
             loop {
                 let swarm_next_event = Swarm::next_event(&mut swarm);
+                // let swarm_next = Swarm::next(&mut swarm);
                 let recv_command = (&mut internal_command_receiver).recv();
 
                 tokio::select! {
@@ -85,6 +86,9 @@ impl<N: Node> Worker<N> for Host {
                     event = swarm_next_event => {
                         process_swarm_event(event, &internal_event_sender);
                     }
+                    // _ = swarm_next => {
+                    //     unreachable!();
+                    // }
                     // Process command
                     command = recv_command => {
                         if let Some(command) = command {
@@ -103,65 +107,11 @@ impl<N: Node> Worker<N> for Host {
     }
 }
 
-fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, internal_event_sender: &InternalEventSender) {
+fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, _internal_event_sender: &InternalEventSender) {
+    // TODO: consider handling more events
     match event {
-        SwarmEvent::ConnectionEstablished {
-            peer_id,
-            endpoint,
-            num_established,
-        } => {
-            println!("CONNECTION ESTABLISHED");
-        }
-        SwarmEvent::ConnectionClosed {
-            peer_id,
-            endpoint,
-            num_established,
-            cause,
-        } => {
-            println!("CONNECTION CLOSED");
-        }
-        SwarmEvent::IncomingConnection {
-            local_addr,
-            send_back_addr,
-        } => {
-            println!("INCOMING CONNECTION");
-        }
-        SwarmEvent::IncomingConnectionError {
-            local_addr,
-            send_back_addr,
-            error,
-        } => {
-            println!("INCOMING CONNECTION ERROR");
-        }
-        SwarmEvent::BannedPeer { peer_id, endpoint } => {
-            println!("BANNED PEER");
-        }
-        SwarmEvent::UnreachableAddr {
-            peer_id,
-            address,
-            error,
-            attempts_remaining,
-        } => {
-            println!("UNREACHABLE ADDRESS");
-        }
-        SwarmEvent::UnknownPeerUnreachableAddr { address, error } => {
-            println!("UNKNOWN PEER UNREACHABLE ADDR");
-        }
         SwarmEvent::NewListenAddr(_) => {
             // TODO: add to listen addresses
-            println!("NEW LISTEN ADDR");
-        }
-        SwarmEvent::ExpiredListenAddr(_) => {
-            println!("EXPIRED LISTEN ADDR");
-        }
-        SwarmEvent::ListenerClosed { addresses, reason } => {
-            println!("LISTENER CLOSED");
-        }
-        SwarmEvent::ListenerError { error } => {
-            println!("LISTENER ERROR");
-        }
-        SwarmEvent::Dialing(peer_id) => {
-            println!("DIALING");
         }
         _ => {}
     }

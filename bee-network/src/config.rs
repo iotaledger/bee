@@ -9,7 +9,6 @@ use std::str::FromStr;
 const DEFAULT_BIND_ADDRESS: &str = "/ip4/0.0.0.0/tcp/15600";
 
 pub const DEFAULT_RECONNECT_INTERVAL_SECS: u64 = 30;
-pub const DEFAULT_CONNECTION_TIMEOUT_SECS: u64 = 10;
 
 /// A network configuration builder.
 #[derive(Default, Deserialize)]

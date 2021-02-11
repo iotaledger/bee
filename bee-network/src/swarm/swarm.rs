@@ -15,6 +15,7 @@ use crate::service::events::InternalEventSender;
 use super::SwarmBehavior;
 
 const MAX_CONNECTIONS_PER_PEER: u32 = 1;
+const DEFAULT_CONNECTION_TIMEOUT_SECS: u64 = 10;
 
 pub async fn build_swarm(
     local_keys: &identity::Keypair,
@@ -24,12 +25,12 @@ pub async fn build_swarm(
     let local_peer_id = local_public_key.clone().into_peer_id();
 
     // TODO: error propagation
-    let nse_keys = noise::Keypair::<noise::X25519Spec>::new()
+    let noise_keys = noise::Keypair::<noise::X25519Spec>::new()
         .into_authentic(local_keys)
         .expect("error creating noise keys");
 
     let tcp_config = tcp::TokioTcpConfig::new().nodelay(true);
-    let noi_config = noise::NoiseConfig::xx(nse_keys);
+    let noi_config = noise::NoiseConfig::xx(noise_keys);
     let dns_config = dns::DnsConfig::new(tcp_config)?;
     let mpx_config = mplex::MplexConfig::default();
     let ymx_config = yamux::YamuxConfig::default();
@@ -38,9 +39,7 @@ pub async fn build_swarm(
         .upgrade(upgrade::Version::V1)
         .authenticate(noi_config.into_authenticated())
         .multiplex(SelectUpgrade::new(ymx_config, mpx_config))
-        .outbound_timeout(Duration::from_secs(60))
-        .inbound_timeout(Duration::from_secs(10))
-        .timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))
         .boxed();
 
     let behavior = SwarmBehavior::new(local_public_key, internal_sender).await;

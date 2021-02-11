@@ -20,8 +20,6 @@ pub struct SwarmBehavior {
 
 impl SwarmBehavior {
     pub async fn new(local_public_key: PublicKey, internal_sender: InternalEventSender) -> Self {
-        let peer_id = local_public_key.clone().into_peer_id();
-
         Self {
             identify: Identify::new(
                 "iota/0.1.0".to_string(),

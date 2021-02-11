@@ -8,9 +8,9 @@ use std::{iter, sync::atomic::Ordering};
 
 /// Configuration for an upgrade to the `IotaGossip` protocol.
 #[derive(Debug, Clone, Default)]
-pub struct GossipConfig;
+pub struct GossipUpgrade;
 
-impl UpgradeInfo for GossipConfig {
+impl UpgradeInfo for GossipUpgrade {
     type Info = Vec<u8>;
     type InfoIter = iter::Once<Self::Info>;
 
@@ -23,7 +23,7 @@ impl UpgradeInfo for GossipConfig {
     }
 }
 
-impl<C> InboundUpgrade<C> for GossipConfig
+impl<C> InboundUpgrade<C> for GossipUpgrade
 where
     C: AsyncRead + AsyncWrite + Unpin,
 {
@@ -32,13 +32,14 @@ where
     type Future = future::Ready<Result<Self::Output, Self::Error>>;
 
     fn upgrade_inbound(self, stream: C, _: Self::Info) -> Self::Future {
+        trace!("GOSSIP UPGRADE: INBOUND");
         // NOTE: do nothing, just return the stream.
         trace!("Upgrading inbound connection to gossip protocol.");
         future::ok(stream)
     }
 }
 
-impl<C> OutboundUpgrade<C> for GossipConfig
+impl<C> OutboundUpgrade<C> for GossipUpgrade
 where
     C: AsyncRead + AsyncWrite + Unpin + Send + 'static,
 {
@@ -47,8 +48,8 @@ where
     type Future = future::Ready<Result<Self::Output, Self::Error>>;
 
     fn upgrade_outbound(self, stream: C, _: Self::Info) -> Self::Future {
+        trace!("GOSSIP UPGRADE: OUTBOUND");
         // NOTE: do nothing, just return the stream.
-        trace!("Upgrading outbound connection to gossip protocol.");
         future::ok(stream)
     }
 }

@@ -4,7 +4,7 @@
 //! Networking layer for the Bee framework.
 
 #![warn(missing_docs)]
-// #![deny(warnings)]
+#![deny(warnings)]
 
 mod config;
 mod host;
@@ -73,7 +73,7 @@ pub async fn init<N: Node>(
 
     let local_keys = identity::Keypair::Ed25519(local_keys);
     let local_id = PeerId::from_public_key(local_keys.public());
-    info!("Own peer id: {}", local_id);
+    info!("Local peer id: {}", local_id);
 
     let (command_sender, command_receiver) = commands::command_channel();
     let (internal_command_sender, internal_command_receiver) = commands::command_channel();

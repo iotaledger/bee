@@ -51,7 +51,7 @@ impl<N: Node> Worker<N> for Service {
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let ServiceConfig {
-            local_keys,
+            local_keys: _,
             peerlist,
             banned_addrs,
             banned_peers,
@@ -251,11 +251,11 @@ async fn process_command(
 async fn process_internal_event(
     internal_event: InternalEvent,
     peerlist: &PeerList,
-    banned_addrs: &BannedAddrList,
-    banned_peers: &BannedPeerList,
+    _banned_addrs: &BannedAddrList,
+    _banned_peers: &BannedPeerList,
     event_sender: &EventSender,
-    internal_event_sender: &InternalEventSender,
-    internal_command_sender: &CommandSender,
+    _internal_event_sender: &InternalEventSender,
+    _internal_command_sender: &CommandSender,
 ) -> Result<(), peers::Error> {
     trace!("Received {:?}.", internal_event);
 
