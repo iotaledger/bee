@@ -56,7 +56,7 @@ fn validate_transaction(
 
     let essence_bytes = transaction.essence().pack_new();
 
-    for (index, (_, consumed_output)) in consumed_outputs.iter().enumerate() {
+    for (output_id, consumed_output) in consumed_outputs.iter() {
         match consumed_output.inner() {
             Output::SignatureLockedSingle(consumed_output) => {
                 consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
@@ -64,7 +64,7 @@ fn validate_transaction(
                 if consumed_output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_output_dec(*consumed_output.address());
                 }
-                if !match transaction.unlock_block(index) {
+                if !match transaction.unlock_block(output_id.index() as usize) {
                     UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_bytes, signature),
                     _ => false,
                 } {
@@ -75,7 +75,7 @@ fn validate_transaction(
                 consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
                 balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
                 balance_diffs.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
-                if !match transaction.unlock_block(index) {
+                if !match transaction.unlock_block(output_id.index() as usize) {
                     UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_bytes, signature),
                     _ => false,
                 } {
