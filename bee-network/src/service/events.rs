@@ -79,26 +79,6 @@ pub enum Event {
     },
 }
 
-#[derive(Debug, thiserror::Error)]
-#[non_exhaustive]
-pub enum Reason {
-    /// The peer has already been added.
-    #[error("")]
-    PeerAlreadyAdded,
-    /// The peer has already been removed.
-    #[error("")]
-    PeerAlreadyRemoved,
-    /// The peer is already connected.
-    #[error("")]
-    PeerAlreadyConnected,
-    /// The peer is already disconected.
-    #[error("")]
-    PeerAlreadyDisconnected,
-    /// The reason for the command failure is unknown.
-    #[error("Command failed for an unknown reason.")]
-    Unknown,
-}
-
 #[derive(Debug)]
 pub enum InternalEvent {
     ConnectionEstablished {

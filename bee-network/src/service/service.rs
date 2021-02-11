@@ -3,7 +3,7 @@
 
 use super::{
     commands::{Command, CommandReceiver, CommandSender},
-    events::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender, Reason},
+    events::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
 };
 use crate::{
     alias,
@@ -182,7 +182,7 @@ async fn process_command(
             alias,
             relation,
         } => {
-            let alias = alias.unwrap_or(alias!(peer_id));
+            let alias = alias.unwrap_or(alias!(peer_id).to_string());
 
             // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
             if relation.is_known() {
@@ -273,7 +273,7 @@ async fn process_internal_event(
             } else {
                 PeerInfo {
                     address: peer_addr,
-                    alias: alias!(peer_id),
+                    alias: alias!(peer_id).to_string(),
                     relation: PeerRelation::Unknown,
                 }
             };

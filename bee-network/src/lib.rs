@@ -121,6 +121,6 @@ pub async fn init<N: Node>(
 #[macro_export]
 macro_rules! alias {
     ($peer_id:expr) => {
-        format!("{}", &$peer_id.to_base58()[46..])
+        &$peer_id.to_base58()[46..]
     };
 }
