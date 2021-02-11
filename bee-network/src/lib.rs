@@ -81,16 +81,16 @@ pub async fn init<N: Node>(
     let (event_sender, event_receiver) = events::event_channel::<Event>();
     let (internal_event_sender, internal_event_receiver) = events::event_channel::<InternalEvent>();
 
-    let banned_addrlist = BannedAddrList::new();
-    let banned_peerlist = BannedPeerList::new();
+    let banned_addrs = BannedAddrList::new();
+    let banned_peers = BannedPeerList::new();
     let peerlist = PeerList::new();
 
     let host_config = HostConfig {
         local_keys: local_keys.clone(),
         bind_address,
         peerlist: peerlist.clone(),
-        banned_addrlist: banned_addrlist.clone(),
-        banned_peerlist: banned_peerlist.clone(),
+        banned_addrs: banned_addrs.clone(),
+        banned_peers: banned_peers.clone(),
         internal_event_sender: internal_event_sender.clone(),
         internal_command_receiver,
     };
@@ -98,8 +98,8 @@ pub async fn init<N: Node>(
     let service_config = ServiceConfig {
         local_keys,
         peerlist,
-        banned_addrlist,
-        banned_peerlist,
+        banned_addrs,
+        banned_peers,
         event_sender: event_sender.clone(),
         internal_event_sender,
         internal_command_sender,

@@ -23,16 +23,16 @@ use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
 use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
 
-/// Processes issued commands and published events.
-/// NOTE: This is only exported to be used as a worker dependency.
+/// A node worker, that deals with processing user commands, and publishing events.
+/// NOTE: This type is only exported to be used as a worker dependency.
 #[derive(Default)]
 pub struct Service {}
 
 pub struct ServiceConfig {
     pub local_keys: identity::Keypair,
     pub peerlist: PeerList,
-    pub banned_addrlist: BannedAddrList,
-    pub banned_peerlist: BannedPeerList,
+    pub banned_addrs: BannedAddrList,
+    pub banned_peers: BannedPeerList,
     pub event_sender: EventSender,
     pub internal_event_sender: InternalEventSender,
     pub internal_command_sender: CommandSender,
@@ -53,8 +53,8 @@ impl<N: Node> Worker<N> for Service {
         let ServiceConfig {
             local_keys,
             peerlist,
-            banned_addrlist,
-            banned_peerlist,
+            banned_addrs,
+            banned_peers,
             event_sender,
             internal_event_sender,
             internal_command_sender,
@@ -63,8 +63,8 @@ impl<N: Node> Worker<N> for Service {
         } = config;
 
         let peerlist_clone = peerlist.clone();
-        let banned_addrlist_clone = banned_addrlist.clone();
-        let banned_peerlist_clone = banned_peerlist.clone();
+        let banned_addrlist_clone = banned_addrs.clone();
+        let banned_peerlist_clone = banned_peers.clone();
         let event_sender_clone = event_sender.clone();
         let internal_command_sender_clone = internal_command_sender.clone();
 
@@ -108,8 +108,8 @@ impl<N: Node> Worker<N> for Service {
                 if let Err(e) = process_internal_event(
                     internal_event,
                     &peerlist_clone,
-                    &banned_addrlist,
-                    &banned_peerlist,
+                    &banned_addrs,
+                    &banned_peers,
                     &event_sender,
                     &internal_event_sender_clone,
                     &internal_command_sender_clone,
@@ -206,7 +206,7 @@ async fn process_command(
             disconnect_peer(peer_id, peerlist, event_sender).await?;
         }
         Command::BanAddress { address } => {
-            if !banned_addrlist.insert(address.to_string()).await {
+            if !banned_addrlist.insert(address.clone()).await {
                 return Err(peers::Error::AddressAlreadyBanned(address));
             } else {
                 if event_sender.send(Event::AddressBanned { address }).is_err() {
@@ -224,7 +224,7 @@ async fn process_command(
             }
         }
         Command::UnbanAddress { address } => {
-            if !banned_addrlist.remove(&address.to_string()).await {
+            if !banned_addrlist.remove(&address).await {
                 return Err(peers::Error::AddressAlreadyUnbanned(address));
             }
         }
@@ -251,8 +251,8 @@ async fn process_command(
 async fn process_internal_event(
     internal_event: InternalEvent,
     peerlist: &PeerList,
-    banned_addrlist: &BannedAddrList,
-    banned_peerlist: &BannedPeerList,
+    banned_addrs: &BannedAddrList,
+    banned_peers: &BannedPeerList,
     event_sender: &EventSender,
     internal_event_sender: &InternalEventSender,
     internal_command_sender: &CommandSender,

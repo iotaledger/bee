@@ -1,7 +1,7 @@
 pub mod protocols;
 
-mod build;
-pub use build::*;
+mod swarm;
+pub use swarm::*;
 
 mod behavior;
 pub use behavior::*;

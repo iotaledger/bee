@@ -1,16 +1,16 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use libp2p::PeerId;
+use libp2p::{Multiaddr, PeerId};
 use tokio::sync::RwLock;
 
 use std::{collections::HashSet, hash::Hash, sync::Arc};
 
-const DEFAULT_BANNED_PEER_CAPACITY: usize = 64;
-const DEFAULT_BANNED_ADDR_CAPACITY: usize = 32;
+const DEFAULT_BANNED_PEER_CAPACITY: usize = 32;
+const DEFAULT_BANNED_ADDR_CAPACITY: usize = 16;
 
 pub type BannedPeerList = BannedList<PeerId>;
-pub type BannedAddrList = BannedList<String>;
+pub type BannedAddrList = BannedList<Multiaddr>;
 
 #[derive(Clone, Default)]
 pub struct BannedList<T: Hash + Eq>(Arc<RwLock<HashSet<T>>>);
@@ -23,7 +23,7 @@ impl BannedList<PeerId> {
     }
 }
 
-impl BannedList<String> {
+impl BannedList<Multiaddr> {
     pub fn new() -> Self {
         Self(Arc::new(RwLock::new(HashSet::with_capacity(
             DEFAULT_BANNED_ADDR_CAPACITY,

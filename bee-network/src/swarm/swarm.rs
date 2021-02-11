@@ -1,5 +1,8 @@
 use libp2p::{
-    core::upgrade::{self, SelectUpgrade},
+    core::{
+        connection::ConnectionLimits,
+        upgrade::{self, SelectUpgrade},
+    },
     dns, identity, mplex, noise,
     swarm::SwarmBuilder,
     tcp, yamux, Swarm, Transport,
@@ -10,6 +13,8 @@ use std::{io, time::Duration};
 use crate::service::events::InternalEventSender;
 
 use super::SwarmBehavior;
+
+const MAX_CONNECTIONS_PER_PEER: u32 = 1;
 
 pub async fn build_swarm(
     local_keys: &identity::Keypair,
@@ -39,8 +44,10 @@ pub async fn build_swarm(
         .boxed();
 
     let behavior = SwarmBehavior::new(local_public_key, internal_sender).await;
+    let limits = ConnectionLimits::default().with_max_established_per_peer(Some(MAX_CONNECTIONS_PER_PEER));
 
     let swarm = SwarmBuilder::new(transport, behavior, local_peer_id)
+        .connection_limits(limits)
         // We want the connection background tasks to be spawned
         // onto the tokio runtime.
         .executor(Box::new(|fut| {
