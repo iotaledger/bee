@@ -26,15 +26,72 @@ use std::{
     ops::Deref,
 };
 
-fn validate_transaction(
+async fn validate_transaction<B: StorageBackend>(
+    storage: &B,
     transaction: &TransactionPayload,
-    consumed_outputs: &HashMap<OutputId, CreatedOutput>,
+    metadata: &mut WhiteFlagMetadata,
+    consumed_outputs: &mut HashMap<OutputId, CreatedOutput>,
     balance_diffs: &mut BalanceDiffs,
 ) -> Result<ConflictReason, Error> {
     let mut created_amount: u64 = 0;
     let mut consumed_amount: u64 = 0;
 
     // TODO saturating ? Overflowing ? Checked ?
+
+    let essence_bytes = transaction.essence().pack_new();
+
+    for (index, input) in transaction.essence().inputs().iter().enumerate() {
+        let (output_id, consumed_output) = if let Input::UTXO(utxo_input) = input {
+            let output_id = utxo_input.output_id();
+
+            if metadata.consumed_outputs.contains_key(output_id) {
+                return Ok(ConflictReason::InputUTXOAlreadySpentInThisMilestone);
+            }
+
+            if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
+                (output_id, output)
+            } else if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
+                if !storage::is_output_unspent(storage.deref(), output_id).await? {
+                    return Ok(ConflictReason::InputUTXOAlreadySpent);
+                }
+                (output_id, output)
+            } else {
+                return Ok(ConflictReason::InputUTXONotFound);
+            }
+        } else {
+            return Err(Error::UnsupportedInputType);
+        };
+
+        match consumed_output.inner() {
+            Output::SignatureLockedSingle(consumed_output) => {
+                consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
+                balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
+                if consumed_output.amount() < DUST_THRESHOLD {
+                    balance_diffs.dust_output_dec(*consumed_output.address());
+                }
+                if !match transaction.unlock_block(index) {
+                    UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_bytes, signature),
+                    _ => false,
+                } {
+                    return Ok(ConflictReason::InvalidSignature);
+                }
+            }
+            Output::SignatureLockedDustAllowance(consumed_output) => {
+                consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
+                balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
+                balance_diffs.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
+                if !match transaction.unlock_block(index) {
+                    UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_bytes, signature),
+                    _ => false,
+                } {
+                    return Ok(ConflictReason::InvalidSignature);
+                }
+            }
+            _ => return Err(Error::UnsupportedOutputType),
+        }
+
+        consumed_outputs.insert(*output_id, consumed_output);
+    }
 
     for created_output in transaction.essence().outputs() {
         match created_output {
@@ -49,38 +106,6 @@ fn validate_transaction(
                 created_amount = created_amount.saturating_add(created_output.amount());
                 balance_diffs.amount_add(*created_output.address(), created_output.amount());
                 balance_diffs.dust_allowance_add(*created_output.address(), created_output.amount());
-            }
-            _ => return Err(Error::UnsupportedOutputType),
-        }
-    }
-
-    let essence_bytes = transaction.essence().pack_new();
-
-    for (output_id, consumed_output) in consumed_outputs.iter() {
-        match consumed_output.inner() {
-            Output::SignatureLockedSingle(consumed_output) => {
-                consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
-                balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
-                if consumed_output.amount() < DUST_THRESHOLD {
-                    balance_diffs.dust_output_dec(*consumed_output.address());
-                }
-                if !match transaction.unlock_block(output_id.index() as usize) {
-                    UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_bytes, signature),
-                    _ => false,
-                } {
-                    return Ok(ConflictReason::InvalidSignature);
-                }
-            }
-            Output::SignatureLockedDustAllowance(consumed_output) => {
-                consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
-                balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
-                balance_diffs.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
-                if !match transaction.unlock_block(output_id.index() as usize) {
-                    UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_bytes, signature),
-                    _ => false,
-                } {
-                    return Ok(ConflictReason::InvalidSignature);
-                }
             }
             _ => return Err(Error::UnsupportedOutputType),
         }
@@ -112,46 +137,16 @@ async fn on_message<B: StorageBackend>(
     let transaction_id = transaction.id();
     let essence = transaction.essence();
     let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
-    let mut conflict = ConflictReason::None;
-
-    for input in essence.inputs() {
-        if let Input::UTXO(utxo_input) = input {
-            let output_id = utxo_input.output_id();
-
-            if metadata.consumed_outputs.contains_key(output_id) {
-                conflict = ConflictReason::InputUTXOAlreadySpentInThisMilestone;
-                break;
-            }
-
-            if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
-                consumed_outputs.insert(*output_id, output);
-                continue;
-            }
-
-            if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
-                if !storage::is_output_unspent(storage.deref(), output_id).await? {
-                    conflict = ConflictReason::InputUTXOAlreadySpent;
-                    break;
-                }
-                consumed_outputs.insert(*output_id, output);
-                continue;
-            } else {
-                conflict = ConflictReason::InputUTXONotFound;
-                break;
-            }
-        } else {
-            return Err(Error::UnsupportedInputType);
-        };
-    }
-
-    if conflict != ConflictReason::None {
-        metadata.excluded_conflicting_messages.push((*message_id, conflict));
-        return Ok(());
-    }
-
     let mut balance_diffs = BalanceDiffs::new();
 
-    conflict = validate_transaction(&transaction, &consumed_outputs, &mut balance_diffs)?;
+    let conflict = validate_transaction(
+        storage,
+        &transaction,
+        metadata,
+        &mut consumed_outputs,
+        &mut balance_diffs,
+    )
+    .await?;
 
     if conflict != ConflictReason::None {
         metadata.excluded_conflicting_messages.push((*message_id, conflict));
