@@ -4,7 +4,7 @@
 //! Networking layer for the Bee framework.
 
 #![warn(missing_docs)]
-#![deny(warnings)]
+// #![deny(warnings)]
 
 mod config;
 mod host;
@@ -62,7 +62,12 @@ pub async fn init<N: Node>(
     max_unknown_peers: usize,
     mut node_builder: N::Builder,
 ) -> (N::Builder, NetworkListener) {
-    RECONNECT_INTERVAL_SECS.swap(config.reconnect_interval_secs, Ordering::Relaxed);
+    let NetworkConfig {
+        bind_address,
+        reconnect_interval_secs,
+    } = config;
+
+    RECONNECT_INTERVAL_SECS.swap(reconnect_interval_secs, Ordering::Relaxed);
     NETWORK_ID.swap(network_id, Ordering::Relaxed);
     MAX_UNKNOWN_PEERS.swap(max_unknown_peers, Ordering::Relaxed);
 
@@ -71,6 +76,8 @@ pub async fn init<N: Node>(
     info!("Own peer id: {}", local_id);
 
     let (command_sender, command_receiver) = commands::command_channel();
+    let (internal_command_sender, internal_command_receiver) = commands::command_channel();
+
     let (event_sender, event_receiver) = events::event_channel::<Event>();
     let (internal_event_sender, internal_event_receiver) = events::event_channel::<InternalEvent>();
 
@@ -78,27 +85,29 @@ pub async fn init<N: Node>(
     let banned_peerlist = BannedPeerList::new();
     let peerlist = PeerList::new();
 
+    let host_config = HostConfig {
+        local_keys: local_keys.clone(),
+        bind_address,
+        peerlist: peerlist.clone(),
+        banned_addrlist: banned_addrlist.clone(),
+        banned_peerlist: banned_peerlist.clone(),
+        internal_event_sender: internal_event_sender.clone(),
+        internal_command_receiver,
+    };
+
     let service_config = ServiceConfig {
-        local_keys.clone(),
-        peerlist.clone(),
-        banned_addrlist.clone(),
-        banned_peerlist.clone(),
-        event_sender,
-        internal_event_sender.clone(),
+        local_keys,
+        peerlist,
+        banned_addrlist,
+        banned_peerlist,
+        event_sender: event_sender.clone(),
+        internal_event_sender,
+        internal_command_sender,
         command_receiver,
         internal_event_receiver,
     };
 
-    let host_config = HostConfig {
-        local_keys,
-        config.bind_address.clone(),
-        peerlist,
-        banned_addrlist,
-        banned_peerlist,
-        internal_event_sender,
-    };
-
-    let network_controller = NetworkController::new(config, command_sender, local_id);
+    let network_controller = NetworkController::new(command_sender, local_id);
 
     node_builder = node_builder
         .with_worker_cfg::<Service>(service_config)

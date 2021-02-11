@@ -1,27 +1,27 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_runtime::shutdown_stream::ShutdownStream;
-
-use futures::{channel::oneshot, StreamExt};
-use libp2p::{identity, Multiaddr, PeerId};
-use log::*;
-use rand::Rng;
-use tokio::time::{self, Duration, Instant};
-use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
-
-use std::sync::atomic::Ordering;
-
+use super::{
+    commands::{Command, CommandReceiver, CommandSender},
+    events::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender, Reason},
+};
 use crate::{
     alias,
     peers::{self, BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerRelation, PeerState},
     RECONNECT_INTERVAL_SECS,
 };
 
-use super::{
-    commands::{Command, CommandReceiver, CommandSender},
-    events::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender, Reason},
-};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+
+use async_trait::async_trait;
+use futures::StreamExt;
+use libp2p::{identity, Multiaddr, PeerId};
+use log::*;
+use rand::Rng;
+use tokio::time::{self, Duration, Instant};
+use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
+
+use std::{convert::Infallible, sync::atomic::Ordering};
 
 /// Processes issued commands and published events.
 /// NOTE: This is only exported to be used as a worker dependency.
@@ -30,26 +30,26 @@ pub struct Service {}
 
 pub struct ServiceConfig {
     pub local_keys: identity::Keypair,
-    pub event_sender: EventSender,
-    pub internal_event_sender: InternalEventSender,
-    pub internal_command_sender: CommandSender,
     pub peerlist: PeerList,
     pub banned_addrlist: BannedAddrList,
     pub banned_peerlist: BannedPeerList,
+    pub event_sender: EventSender,
+    pub internal_event_sender: InternalEventSender,
+    pub internal_command_sender: CommandSender,
     pub command_receiver: CommandReceiver,
     pub internal_event_receiver: InternalEventReceiver,
-    pub shutdown: oneshot::Receiver<()>,
 }
 
-impl Service {
-    // #[async_trait]
-    // impl<N: Node> Worker<N> for Service {
-    //     type Config = NetworkServiceConfig;
-    //     type Error = Infallible;
+#[async_trait]
+impl<N: Node> Worker<N> for Service {
+    type Config = ServiceConfig;
+    type Error = Infallible;
 
-    pub async fn start(config: ServiceConfig) {
-        info!("Network service started.");
+    // fn dependencies() -> &'static [TypeId] {
+    //     vec![TypeId::of::<Service>()].leak()
+    // }
 
+    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let ServiceConfig {
             local_keys,
             peerlist,
@@ -60,12 +60,7 @@ impl Service {
             internal_command_sender,
             command_receiver,
             internal_event_receiver,
-            shutdown,
         } = config;
-
-        let (cmd_handler_sd_sender, cmd_handler_sd_receiver) = oneshot::channel::<()>();
-        let (evt_handler_sd_sender, evt_handler_sd_receiver) = oneshot::channel::<()>();
-        let (rec_handler_sd_sender, rec_handler_sd_receiver) = oneshot::channel::<()>();
 
         let peerlist_clone = peerlist.clone();
         let banned_addrlist_clone = banned_addrlist.clone();
@@ -73,11 +68,10 @@ impl Service {
         let event_sender_clone = event_sender.clone();
         let internal_command_sender_clone = internal_command_sender.clone();
 
-        let cmd_task = tokio::spawn(async move {
+        node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Command handler running.");
 
-            let mut commands =
-                ShutdownStream::new(cmd_handler_sd_receiver, UnboundedReceiverStream::new(command_receiver));
+            let mut commands = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(command_receiver));
 
             while let Some(command) = commands.next().await {
                 if let Err(e) = process_command(
@@ -101,13 +95,11 @@ impl Service {
         let peerlist_clone = peerlist.clone();
         let internal_event_sender_clone = internal_event_sender.clone();
 
-        let evt_task = tokio::spawn(async move {
+        node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Event handler running.");
 
-            let mut internal_events = ShutdownStream::new(
-                evt_handler_sd_receiver,
-                UnboundedReceiverStream::new(internal_event_receiver),
-            );
+            let mut internal_events =
+                ShutdownStream::new(shutdown, UnboundedReceiverStream::new(internal_event_receiver));
 
             while let Some(internal_event) = internal_events.next().await {
                 if let Err(e) = process_internal_event(
@@ -129,7 +121,7 @@ impl Service {
             info!("Event handler stopped.");
         });
 
-        let rec_task = tokio::spawn(async move {
+        node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Reconnecter running.");
 
             // NOTE: we add a random amount of milliseconds to when the reconnector starts, so that even if 2 nodes
@@ -141,7 +133,7 @@ impl Service {
                 + Duration::from_millis(RECONNECT_INTERVAL_SECS.load(Ordering::Relaxed) * 1000 + random_delay);
 
             let mut connected_check_timer = ShutdownStream::new(
-                rec_handler_sd_receiver,
+                shutdown,
                 IntervalStream::new(time::interval_at(
                     start,
                     Duration::from_secs(RECONNECT_INTERVAL_SECS.load(Ordering::Relaxed)),
@@ -167,25 +159,9 @@ impl Service {
             info!("Reconnecter stopped.");
         });
 
-        shutdown
-            .await
-            .expect("Fatal error: waiting for service shutdown signal.");
+        info!("Network service started.");
 
-        info!("Service shutting down...");
-
-        cmd_handler_sd_sender
-            .send(())
-            .expect("Fatal error: sending shutdown signal to command handler.");
-        evt_handler_sd_sender
-            .send(())
-            .expect("Fatal error: sending shutdown signal to event handler.");
-        rec_handler_sd_sender
-            .send(())
-            .expect("Fatal error: sending shutdown signal to reconnecter.");
-
-        cmd_task.await.expect("Fatal error: shutting down command handler task");
-        evt_task.await.expect("Fatal error: shutting down event handler task");
-        rec_task.await.expect("Fatal error: shutting down reconnecter task");
+        Ok(Self::default())
     }
 }
 

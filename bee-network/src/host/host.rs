@@ -1,5 +1,5 @@
 use crate::{
-    peers::{PeerInfo, PeerList},
+    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList},
     service::{
         commands::{Command, CommandReceiver},
         events::InternalEventSender,
@@ -8,78 +8,91 @@ use crate::{
     swarm::SwarmBehavior,
 };
 
-use futures::channel::oneshot;
+use bee_runtime::{node::Node, worker::Worker};
+
+use async_trait::async_trait;
 use libp2p::{identity::Keypair, Multiaddr, Swarm};
 use log::*;
+
+use std::convert::Infallible;
 
 pub struct HostConfig {
     pub local_keys: Keypair,
     pub bind_address: Multiaddr,
     pub peerlist: PeerList,
+    pub banned_addrlist: BannedAddrList,
+    pub banned_peerlist: BannedPeerList,
     pub internal_event_sender: InternalEventSender,
     pub internal_command_receiver: CommandReceiver,
-    pub shutdown: oneshot::Receiver<()>,
 }
 
+#[derive(Default)]
 pub struct Host {}
 
-impl Host {
-    // #[async_trait]
-    // impl<N: Node> Worker<N> for Service {
-    //     type Config = NetworkServiceConfig;
-    //     type Error = Infallible;
+#[async_trait]
+impl<N: Node> Worker<N> for Host {
+    type Config = HostConfig;
+    type Error = Infallible;
 
-    pub async fn start(config: HostConfig) {
-        info!("Network host started.");
+    // fn dependencies() -> &'static [TypeId] {
+    //     vec![TypeId::of::<Service>()].leak()
+    // }
 
+    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let HostConfig {
             local_keys,
             bind_address,
             peerlist,
+            banned_addrlist,
+            banned_peerlist,
             internal_event_sender,
             mut internal_command_receiver,
-            mut shutdown,
         } = config;
 
-        let local_keys_clone = local_keys.clone();
-        let internal_event_sender_clone = internal_event_sender.clone();
+        node.spawn::<Self, _, _>(|mut shutdown| async move {
+            let local_keys_clone = local_keys.clone();
+            let internal_event_sender_clone = internal_event_sender.clone();
 
-        // A swarm for listening.
-        let mut swarm = swarm::build_swarm(&local_keys_clone, internal_event_sender_clone)
-            .await
-            .expect("Fatal error: creating transport layer failed.");
+            // A swarm for listening.
+            let mut swarm = swarm::build_swarm(&local_keys_clone, internal_event_sender_clone)
+                .await
+                .expect("Fatal error: creating transport layer failed.");
 
-        info!("Binding address(es): {}", bind_address);
+            info!("Binding address(es): {}", bind_address);
 
-        let _ = Swarm::listen_on(&mut swarm, bind_address).expect("Fatal error: address binding failed.");
+            let _ = Swarm::listen_on(&mut swarm, bind_address).expect("Fatal error: address binding failed.");
 
-        info!("Host running.");
+            info!("Host listening for incoming connections.");
 
-        loop {
-            // let next_event = Swarm::next_event(&mut swarm);
-            let next = Swarm::next(&mut swarm);
-            let recv_command = (&mut internal_command_receiver).recv();
+            loop {
+                let swarm_next = Swarm::next(&mut swarm);
+                let recv_command = (&mut internal_command_receiver).recv();
 
-            tokio::select! {
-                // Break on shutdown signal
-                _ = &mut shutdown => break,
-                // Process swarm event
-                event = next => {
-                    // All events are handled by the `NetworkBehaviourEventProcess`es.
-                    // I.e. the `swarm.next()` future drives the `Swarm` without ever
-                    // terminating.
-                    unreachable!("Unexpected event: {:?}", event);
-                }
-                // Process command
-                command = recv_command => {
-                    if let Some(command) = command {
-                        process_command(command, &mut swarm, &peerlist).await;
+                tokio::select! {
+                    // Break on shutdown signal
+                    _ = &mut shutdown => break,
+                    // Process swarm event
+                    event = swarm_next => {
+                        // All events are handled by the `NetworkBehaviourEventProcess`es.
+                        // I.e. the `swarm.next()` future drives the `Swarm` without ever
+                        // terminating.
+                        unreachable!("Unexpected event: {:?}", event);
                     }
-                },
+                    // Process command
+                    command = recv_command => {
+                        if let Some(command) = command {
+                            process_command(command, &mut swarm, &peerlist).await;
+                        }
+                    },
+                }
             }
-        }
 
-        info!("Host shutting down...");
+            info!("Listener stopped.");
+        });
+
+        info!("Network host started.");
+
+        Ok(Self::default())
     }
 }
 
