@@ -86,7 +86,7 @@ impl<B: StorageBackend> StorageHooks<B> {
 /// Milestone-based Tangle.
 pub struct MsTangle<B> {
     pub(crate) inner: Arc<Tangle<MessageMetadata, StorageHooks<B>>>,
-    pub(crate) milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
+    milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
     pub(crate) solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
     latest_milestone_index: AtomicU32,
     latest_solid_milestone_index: AtomicU32,

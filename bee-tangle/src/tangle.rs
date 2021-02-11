@@ -100,16 +100,6 @@ where
     events_tx: mpsc::UnboundedSender<Event>,
 }
 
-// impl<T, H: Hooks<T>> Default for Tangle<T, H>
-// where
-//     T: Clone,
-//     H: Default,
-// {
-//     fn default() -> Self {
-//         Self::new(H::default())
-//     }
-// }
-
 impl<T, H: Hooks<T>> Tangle<T, H>
 where
     T: Clone,
@@ -130,7 +120,7 @@ where
         let evicter = {
             let tangle = this.clone();
             async move {
-                let mut lru = LruCache::with_hasher(usize::MAX, DefaultHashBuilder::default());
+                let mut lru = LruCache::unbounded_with_hasher(DefaultHashBuilder::default());
                 let mut cache_len = DEFAULT_CACHE_LEN;
 
                 while let Some(event) = events_rx.recv().await {
@@ -166,14 +156,6 @@ where
     pub fn resize(&self, len: usize) {
         self.events_tx.send(Event::Resize(len)).unwrap();
     }
-
-    /// Create a new tangle with the given capacity.
-    // pub fn with_capacity(self, cap: usize) -> Self {
-    //     Self {
-    //         cache_queue: Mutex::new(LruCache::with_hasher(cap + 1, DefaultHashBuilder::default())),
-    //         ..self
-    //     }
-    // }
 
     /// Return a reference to the storage hooks used by this tangle.
     pub fn hooks(&self) -> &H {
@@ -416,26 +398,6 @@ where
             }
         }
     }
-
-    // fn generate_cache_index(&self) -> u64 {
-    //     self.cache_counter.fetch_add(1, Ordering::Relaxed)
-    // }
-
-    // async fn perform_eviction(&self) {
-    //     let mut vertices = self.vertices.write().await;
-    //     let mut children = self.children.write().await;
-    //     let mut cache_queue = self.cache_queue.lock().await;
-    //     while vertices.len() > cache_queue.cap() {
-    //         let remove = cache_queue.pop_lru().map(|(id, _)| id);
-
-    //         if let Some(message_id) = remove {
-    //             vertices.remove(&message_id);
-    //             children.remove(&message_id);
-    //         } else {
-    //             break;
-    //         }
-    //     }
-    // }
 }
 
 // #[cfg(test)]
