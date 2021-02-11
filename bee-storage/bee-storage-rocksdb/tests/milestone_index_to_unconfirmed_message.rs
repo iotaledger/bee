@@ -1,14 +1,14 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{milestone::MilestoneIndex};
+use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend::StorageBackend,
 };
 use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
-use bee_test::rand::{milestone::rand_milestone_index, unconfirmed_message::rand_unconfirmed_message};
 use bee_tangle::unconfirmed_message::UnconfirmedMessage;
+use bee_test::rand::{milestone::rand_milestone_index, unconfirmed_message::rand_unconfirmed_message};
 
 use futures::stream::StreamExt;
 
@@ -25,22 +25,28 @@ async fn access() {
 
     let (index, unconfirmed_message) = (rand_milestone_index(), rand_unconfirmed_message());
 
-    assert!(!Exist::<(MilestoneIndex, UnconfirmedMessage), ()>::exist(&storage, &(index, unconfirmed_message))
-        .await
-        .unwrap());
-    assert!(Fetch::<MilestoneIndex, Vec<UnconfirmedMessage>>::fetch(&storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        !Exist::<(MilestoneIndex, UnconfirmedMessage), ()>::exist(&storage, &(index, unconfirmed_message))
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<MilestoneIndex, Vec<UnconfirmedMessage>>::fetch(&storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     Insert::<(MilestoneIndex, UnconfirmedMessage), ()>::insert(&storage, &(index, unconfirmed_message), &())
         .await
         .unwrap();
 
-    assert!(Exist::<(MilestoneIndex, UnconfirmedMessage), ()>::exist(&storage, &(index, unconfirmed_message))
-        .await
-        .unwrap());
+    assert!(
+        Exist::<(MilestoneIndex, UnconfirmedMessage), ()>::exist(&storage, &(index, unconfirmed_message))
+            .await
+            .unwrap()
+    );
     assert_eq!(
         Fetch::<MilestoneIndex, Vec<UnconfirmedMessage>>::fetch(&storage, &index)
             .await
@@ -53,14 +59,18 @@ async fn access() {
         .await
         .unwrap();
 
-    assert!(!Exist::<(MilestoneIndex, UnconfirmedMessage), ()>::exist(&storage, &(index, unconfirmed_message))
-        .await
-        .unwrap());
-    assert!(Fetch::<MilestoneIndex, Vec<UnconfirmedMessage>>::fetch(&storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        !Exist::<(MilestoneIndex, UnconfirmedMessage), ()>::exist(&storage, &(index, unconfirmed_message))
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<MilestoneIndex, Vec<UnconfirmedMessage>>::fetch(&storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     let mut batch = Storage::batch_begin();
 
@@ -69,20 +79,33 @@ async fn access() {
         Insert::<(MilestoneIndex, UnconfirmedMessage), ()>::insert(&storage, &(index, unconfirmed_message), &())
             .await
             .unwrap();
-        Batch::<(MilestoneIndex, UnconfirmedMessage), ()>::batch_delete(&storage, &mut batch, &(index, unconfirmed_message)).unwrap();
+        Batch::<(MilestoneIndex, UnconfirmedMessage), ()>::batch_delete(
+            &storage,
+            &mut batch,
+            &(index, unconfirmed_message),
+        )
+        .unwrap();
     }
 
     let mut unconfirmed_messages = HashMap::new();
 
     for _ in 0usize..10usize {
         let (index, unconfirmed_message) = (rand_milestone_index(), rand_unconfirmed_message());
-        Batch::<(MilestoneIndex, UnconfirmedMessage), ()>::batch_insert(&storage, &mut batch, &(index, unconfirmed_message), &()).unwrap();
+        Batch::<(MilestoneIndex, UnconfirmedMessage), ()>::batch_insert(
+            &storage,
+            &mut batch,
+            &(index, unconfirmed_message),
+            &(),
+        )
+        .unwrap();
         unconfirmed_messages.insert(index, unconfirmed_message);
     }
 
     storage.batch_commit(batch, true).await.unwrap();
 
-    let mut stream = AsStream::<(MilestoneIndex, UnconfirmedMessage), ()>::stream(&storage).await.unwrap();
+    let mut stream = AsStream::<(MilestoneIndex, UnconfirmedMessage), ()>::stream(&storage)
+        .await
+        .unwrap();
     let mut count = 0;
 
     while let Some(((index, message_id), _)) = stream.next().await {
@@ -96,7 +119,9 @@ async fn access() {
         .await
         .unwrap();
 
-    let mut stream = AsStream::<(MilestoneIndex, UnconfirmedMessage), ()>::stream(&storage).await.unwrap();
+    let mut stream = AsStream::<(MilestoneIndex, UnconfirmedMessage), ()>::stream(&storage)
+        .await
+        .unwrap();
 
     assert!(stream.next().await.is_none());
 
