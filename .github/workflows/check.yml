@@ -5,10 +5,12 @@ on:
     branches:
       - dev
       - stable
+      - chrysalis-pt-2
   pull_request:
     branches:
       - dev
       - stable
+      - chrysalis-pt-2
 
 jobs:
   check:
