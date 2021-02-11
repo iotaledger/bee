@@ -15,26 +15,26 @@ pub struct PeerInfo {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PeerRelation {
     /// Represents a persistent peer. If the connection to such a peer drops, the network will try to reconnect.
-    Persistent,
+    Known,
     /// Represents an ephemeral peer. If the connection to such a peer drops, the network won't try to reconnect.
-    Ephemeral,
+    Unknown,
 }
 
 impl PeerRelation {
-    /// Returns whether the peer is persistent.
-    pub fn is_persistent(&self) -> bool {
-        matches!(*self, PeerRelation::Persistent)
+    /// Returns whether the peer is known.
+    pub fn is_known(&self) -> bool {
+        matches!(*self, PeerRelation::Known)
     }
 
-    /// Returns whether the peer is untrusted.
-    pub fn is_ephemeral(&self) -> bool {
-        matches!(*self, PeerRelation::Ephemeral)
+    /// Returns whether the peer is unknown.
+    pub fn is_unknown(&self) -> bool {
+        matches!(*self, PeerRelation::Unknown)
     }
 
     /// Upgrades the peer relations.
     pub fn upgrade(&mut self) {
         match self {
-            Self::Ephemeral => *self = Self::Persistent,
+            Self::Unknown => *self = Self::Known,
             _ => (),
         }
     }
@@ -42,7 +42,7 @@ impl PeerRelation {
     /// Downgrades the peer relation.
     pub fn downgrade(&mut self) {
         match self {
-            Self::Persistent => *self = Self::Ephemeral,
+            Self::Known => *self = Self::Unknown,
             _ => (),
         }
     }

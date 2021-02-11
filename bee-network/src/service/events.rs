@@ -3,6 +3,7 @@
 
 use crate::{
     host::connections::ConnectionInfo,
+    peers,
     peers::PeerInfo,
     swarm::protocols::gossip::{GossipReceiver, GossipSender},
 };
@@ -74,7 +75,7 @@ pub enum Event {
         /// The command that failed.
         command: Command,
         /// The reason for the failure.
-        reason: Reason,
+        reason: peers::Error,
     },
 }
 

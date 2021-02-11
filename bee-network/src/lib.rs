@@ -23,10 +23,10 @@ pub use libp2p::{
 
 // Exports
 pub use config::{NetworkConfig, NetworkConfigBuilder};
-pub use host::connections::Origin;
+pub use host::{connections::Origin, Host};
 pub use network::NetworkController;
 pub use peers::{PeerInfo, PeerRelation};
-pub use service::{commands::Command, events::Event};
+pub use service::{commands::Command, events::Event, Service};
 pub use swarm::protocols::gossip::{GossipReceiver, GossipSender};
 
 /// A type that receives any event published by the networking layer.
@@ -34,12 +34,12 @@ pub type NetworkListener = UnboundedReceiver<Event>;
 
 use bee_runtime::node::{Node, NodeBuilder};
 
-use host::{Host, HostConfig};
+use host::HostConfig;
 use peers::{BannedAddrList, BannedPeerList, PeerList};
 use service::{
     commands,
     events::{self, InternalEvent},
-    Service, ServiceConfig,
+    ServiceConfig,
 };
 
 use libp2p::identity;

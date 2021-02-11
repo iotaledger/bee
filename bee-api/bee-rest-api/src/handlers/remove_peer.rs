@@ -12,7 +12,7 @@ pub(crate) async fn remove_peer(
     peer_id: PeerId,
     network_controller: ResourceHandle<NetworkController>,
 ) -> Result<impl Reply, Rejection> {
-    if let Err(e) = network_controller.send(RemovePeer { id: peer_id }) {
+    if let Err(e) = network_controller.send(RemovePeer { peer_id }) {
         return Err(reject::custom(NotFound(format!("failed to remove peer: {}", e))));
     }
     Ok(StatusCode::OK)

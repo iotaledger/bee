@@ -12,7 +12,7 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_network::{Event, NetworkListener, NetworkService};
+use bee_network::{Event, NetworkListener, Service as NetworkService};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 
@@ -68,26 +68,26 @@ where
                 trace!("Received event {:?}.", event);
 
                 match event {
-                    Event::PeerAdded { id, info } => {
+                    Event::PeerAdded { peer_id, info } => {
                         // TODO check if not already added ?
                         info!("Added peer {}.", info.alias);
 
-                        let peer = Arc::new(Peer::new(id, info));
+                        let peer = Arc::new(Peer::new(peer_id, info));
                         peer_manager.add(peer).await;
                     }
-                    Event::PeerRemoved { id } => {
-                        if let Some(peer) = peer_manager.remove(&id).await {
+                    Event::PeerRemoved { peer_id } => {
+                        if let Some(peer) = peer_manager.remove(&peer_id).await {
                             info!("Removed peer {}.", peer.0.alias());
                         }
                     }
                     Event::PeerConnected {
-                        id,
+                        peer_id,
                         address: _,
                         gossip_in: receiver,
                         gossip_out: sender,
                     } => {
                         // TODO write a get_mut peer manager method
-                        if let Some(peer) = peer_manager.peers.write().await.get_mut(&id) {
+                        if let Some(peer) = peer_manager.peers.write().await.get_mut(&peer_id) {
                             let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
                             peer.1 = Some((sender, shutdown_tx));
@@ -113,11 +113,11 @@ where
                         }
 
                         // TODO can't do it in the if because of deadlock, but it's not really right to do it here.
-                        helper::send_heartbeat(&*peer_manager, &*metrics, &*tangle, &id).await;
+                        helper::send_heartbeat(&*peer_manager, &*metrics, &*tangle, &peer_id).await;
                     }
-                    Event::PeerDisconnected { id } => {
+                    Event::PeerDisconnected { peer_id } => {
                         // TODO write a get_mut peer manager method
-                        if let Some(peer) = peer_manager.peers.write().await.get_mut(&id) {
+                        if let Some(peer) = peer_manager.peers.write().await.get_mut(&peer_id) {
                             if let Some((_, shutdown)) = peer.1.take() {
                                 if let Err(e) = shutdown.send(()) {
                                     warn!("Sending shutdown to {} failed: {:?}.", peer.0.alias(), e);

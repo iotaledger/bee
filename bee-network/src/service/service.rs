@@ -21,7 +21,7 @@ use rand::Rng;
 use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
-use std::{convert::Infallible, sync::atomic::Ordering};
+use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
 
 /// Processes issued commands and published events.
 /// NOTE: This is only exported to be used as a worker dependency.
@@ -45,9 +45,9 @@ impl<N: Node> Worker<N> for Service {
     type Config = ServiceConfig;
     type Error = Infallible;
 
-    // fn dependencies() -> &'static [TypeId] {
-    //     vec![TypeId::of::<Service>()].leak()
-    // }
+    fn dependencies() -> &'static [TypeId] {
+        vec![].leak()
+    }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let ServiceConfig {
@@ -144,7 +144,7 @@ impl<N: Node> Worker<N> for Service {
                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
                 // of those.
                 for peer_id in peerlist
-                    .iter_if(|info, state| info.relation.is_persistent() && state.is_disconnected())
+                    .iter_if(|info, state| info.relation.is_known() && state.is_disconnected())
                     .await
                 {
                     if internal_event_sender
@@ -185,7 +185,7 @@ async fn process_command(
             let alias = alias.unwrap_or(alias!(peer_id));
 
             // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
-            if relation.is_persistent() {
+            if relation.is_known() {
                 add_peer(peer_id, address, alias, relation, peerlist, event_sender).await?;
 
                 // We automatically connect to such peers. Since we can connect concurrently, we spawn a task here.
@@ -274,13 +274,13 @@ async fn process_internal_event(
                 PeerInfo {
                     address: peer_addr,
                     alias: alias!(peer_id),
-                    relation: PeerRelation::Ephemeral,
+                    relation: PeerRelation::Unknown,
                 }
             };
 
             match peer_info.relation {
-                PeerRelation::Persistent => peerlist.update_state(&peer_id, PeerState::Connected).await?,
-                PeerRelation::Ephemeral => {
+                PeerRelation::Known => peerlist.update_state(&peer_id, PeerState::Connected).await?,
+                PeerRelation::Unknown => {
                     peerlist
                         .insert(peer_id.clone(), peer_info.clone(), PeerState::Connected)
                         .await
@@ -325,9 +325,7 @@ async fn process_internal_event(
             }
 
             // TODO: maybe allow some fixed timespan for a connection recovery from either end before removing.
-            peerlist
-                .remove_if(&peer_id, |info, _| info.relation.is_ephemeral())
-                .await;
+            peerlist.remove_if(&peer_id, |info, _| info.relation.is_unknown()).await;
 
             // NOTE: During shutdown the protocol layer shuts down before the network service, so sending would fail,
             // hence we need to silently ignore send failures until we have a way to query current node state (e.g.
@@ -360,19 +358,18 @@ async fn add_peer(
     };
 
     // If the insert fails for some reason, we get the peer info back.
-    if let Err((id, info, e)) = peerlist.insert(peer_id, info.clone(), PeerState::Disconnected).await {
-        // // Inform the user that the command failed.
-        // event_sender
-        //     .send(Event::CommandFailed {
-        //         command: Command::AddPeer {
-        //             id,
-        //             address: info.address,
-        //             // NOTE: the returned failed command now has the default alias, if none was specified originally.
-        //             alias: Some(info.alias),
-        //             relation: info.relation,
-        //         },
-        //     })
-        //     .map_err(|_| Error::EventSendFailure("CommandFailed"))?;
+    if let Err((peer_id, info, e)) = peerlist.insert(peer_id, info.clone(), PeerState::Disconnected).await {
+        // Inform the user that the command failed.
+        let _ = event_sender.send(Event::CommandFailed {
+            command: Command::AddPeer {
+                peer_id,
+                address: info.address,
+                // NOTE: the returned failed command now has the default alias, if none was specified originally.
+                alias: Some(info.alias),
+                relation: info.relation,
+            },
+            reason: e.clone(),
+        });
 
         return Err(e);
     }
@@ -388,12 +385,11 @@ async fn add_peer(
 async fn remove_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), peers::Error> {
     match peerlist.remove(&peer_id).await {
         Err(e) => {
-            // // Inform the user that the command failed.
-            // event_sender
-            //     .send(Event::CommandFailed {
-            //         command: Command::RemovePeer { id },
-            //     })
-            //     .map_err(|_| Error::EventSendFailure("CommandFailed"))?;
+            // Inform the user that the command failed.
+            let _ = event_sender.send(Event::CommandFailed {
+                command: Command::RemovePeer { peer_id },
+                reason: e.clone(),
+            });
 
             Err(e)
         }
@@ -414,23 +410,16 @@ async fn disconnect_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &Ev
     match peerlist.update_state(&peer_id, PeerState::Disconnected).await {
         Err(e) => {
             // Inform the user that the command failed.
-            if event_sender
-                .send(Event::CommandFailed {
-                    command: Command::DisconnectPeer { peer_id },
-                    reason: Reason::Unknown,
-                })
-                .is_err()
-            {
-                //.map_err(|_| Error::EventSendFailure("CommandFailed"))?;
-            }
+            let _ = event_sender.send(Event::CommandFailed {
+                command: Command::DisconnectPeer { peer_id },
+                reason: e.clone(),
+            });
 
             Err(e)
         }
         Ok(()) => {
             // Inform the user that the command succeeded.
-            if event_sender.send(Event::PeerDisconnected { peer_id }).is_err() {
-                // .map_err(|_| Error::EventSendFailure("PeerDisconnected"))?;
-            }
+            let _ = event_sender.send(Event::PeerDisconnected { peer_id });
 
             Ok(())
         }

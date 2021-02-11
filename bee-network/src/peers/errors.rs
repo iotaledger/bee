@@ -3,7 +3,7 @@
 
 use libp2p::{Multiaddr, PeerId};
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Clone, Debug, thiserror::Error)]
 pub enum Error {
     // #[error("Failed to send an event ({}).", .0)]
     // EventSendFailure(&'static str),

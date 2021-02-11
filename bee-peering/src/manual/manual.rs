@@ -41,9 +41,9 @@ impl PeerManager for ManualPeerManager {
 }
 
 #[inline]
-fn add_peer(network: &NetworkController, id: PeerId, address: Multiaddr, alias: Option<String>) {
+fn add_peer(network: &NetworkController, peer_id: PeerId, address: Multiaddr, alias: Option<String>) {
     if let Err(e) = network.send(AddPeer {
-        id,
+        peer_id,
         address,
         alias,
         relation: PeerRelation::Known,

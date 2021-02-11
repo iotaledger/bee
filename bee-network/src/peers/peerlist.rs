@@ -73,9 +73,8 @@ impl PeerList {
         }
 
         // Prevent inserting more peers than preconfigured.
-        if info.relation.is_ephemeral() {
-            if self.count_if(|info, _| info.relation.is_ephemeral()).await >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed)
-            {
+        if info.relation.is_unknown() {
+            if self.count_if(|info, _| info.relation.is_unknown()).await >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed) {
                 return Err(Error::UnknownPeerLimitReached(
                     MAX_UNKNOWN_PEERS.load(Ordering::Relaxed),
                 ));

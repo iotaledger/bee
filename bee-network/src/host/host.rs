@@ -3,6 +3,7 @@ use crate::{
     service::{
         commands::{Command, CommandReceiver},
         events::InternalEventSender,
+        Service,
     },
     swarm,
     swarm::SwarmBehavior,
@@ -14,7 +15,7 @@ use async_trait::async_trait;
 use libp2p::{identity::Keypair, Multiaddr, Swarm};
 use log::*;
 
-use std::convert::Infallible;
+use std::{any::TypeId, convert::Infallible};
 
 pub struct HostConfig {
     pub local_keys: Keypair,
@@ -34,9 +35,9 @@ impl<N: Node> Worker<N> for Host {
     type Config = HostConfig;
     type Error = Infallible;
 
-    // fn dependencies() -> &'static [TypeId] {
-    //     vec![TypeId::of::<Service>()].leak()
-    // }
+    fn dependencies() -> &'static [TypeId] {
+        vec![TypeId::of::<Service>()].leak()
+    }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let HostConfig {
