@@ -12,6 +12,14 @@ use futures::{channel::oneshot, future::Future};
 
 use std::any::Any;
 
+/// A type holding information about a node.
+pub struct NodeInfo {
+    /// Name of the node.
+    pub name: String,
+    /// Version of the node.
+    pub version: String,
+}
+
 /// A trait representing a node framework through which node workers may communicate.
 #[async_trait]
 pub trait Node: Send + Sized + 'static {
@@ -48,6 +56,12 @@ pub trait Node: Send + Sized + 'static {
     /// Obtain an owning handle to a node resource.
     #[track_caller]
     fn resource<R: Any + Send + Sync>(&self) -> ResourceHandle<R>;
+
+    /// Obtain an owning handle to the node's info.
+    #[track_caller]
+    fn info(&self) -> ResourceHandle<NodeInfo> {
+        self.resource()
+    }
 
     /// Obtain an owning handle to the node's storage backend.
     #[track_caller]
