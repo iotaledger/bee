@@ -250,18 +250,6 @@ where
         self.get_inner(message_id).await
     }
 
-    /// Updates the metadata of a particular vertex.
-    // pub async fn set_metadata(&self, message_id: &MessageId, metadata: T) {
-    //     self.pull_message(message_id).await;
-    //     if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
-    //         *vtx.metadata_mut() = metadata;
-    //         self.hooks
-    //             .insert(*message_id, (&**vtx.message()).clone(), vtx.metadata().clone())
-    //             .await
-    //             .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
-    //     }
-    // }
-
     /// Updates the metadata of a vertex.
     pub async fn update_metadata<R, Update>(&self, message_id: &MessageId, mut update: Update) -> Option<R>
     where
