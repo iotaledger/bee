@@ -17,13 +17,13 @@ enum Score {
     Lazy,
 }
 
-// C1: the maximum allowed delta value for the YTRSI of a given message in relation to the current LSMI before it
+// C1: the maximum allowed delta value for the YMRSI of a given message in relation to the current LSMI before it
 // gets lazy.
-const YTRSI_DELTA: u32 = 8;
-// C2: the maximum allowed delta value between OTRSI of a given message in relation to the current LSMI before it
+const YMRSI_DELTA: u32 = 8;
+// C2: the maximum allowed delta value between OMRSI of a given message in relation to the current LSMI before it
 // gets semi-lazy.
-const OTRSI_DELTA: u32 = 13;
-// M: the maximum allowed delta value between OTRSI of a given message in relation to the current LSMI before it
+const OMRSI_DELTA: u32 = 13;
+// M: the maximum allowed delta value between OMRSI of a given message in relation to the current LSMI before it
 // gets lazy.
 pub const BELOW_MAX_DEPTH: u32 = 15;
 // If the amount of non-lazy tips exceed this limit, remove the parent(s) of the inserted tip to compensate for the
@@ -156,18 +156,18 @@ impl UrtsTipPool {
         }
 
         let lsmi = *tangle.get_latest_solid_milestone_index();
-        let otrsi = *tangle.otrsi(&hash).await.unwrap().index();
-        let ytrsi = *tangle.ytrsi(&hash).await.unwrap().index();
+        let omrsi = *tangle.omrsi(&hash).await.unwrap().index();
+        let ymrsi = *tangle.ymrsi(&hash).await.unwrap().index();
 
-        if (lsmi - ytrsi) > YTRSI_DELTA {
+        if (lsmi - ymrsi) > YMRSI_DELTA {
             return Score::Lazy;
         }
 
-        if (lsmi - otrsi) > BELOW_MAX_DEPTH {
+        if (lsmi - omrsi) > BELOW_MAX_DEPTH {
             return Score::Lazy;
         }
 
-        if (lsmi - otrsi) > OTRSI_DELTA {
+        if (lsmi - omrsi) > OMRSI_DELTA {
             return Score::SemiLazy;
         }
 

@@ -31,6 +31,7 @@ use crate::{
         MessageRequesterWorker, MessageResponderWorker, MilestonePayloadWorker, MilestoneRequesterWorker,
         MilestoneResponderWorker, MilestoneSolidifierWorker, MpsWorker, PayloadWorker, PeerManagerWorker,
         ProcessorWorker, PropagatorWorker, StatusWorker, TipPoolCleanerWorker, TransactionPayloadWorker,
+        UnconfirmedMessageInserterWorker,
     },
 };
 
@@ -70,4 +71,5 @@ where
         .with_worker_cfg::<StatusWorker>(config.workers.status_interval)
         .with_worker::<HeartbeaterWorker>()
         .with_worker::<MessageSubmitterWorker>()
+        .with_worker::<UnconfirmedMessageInserterWorker>()
 }

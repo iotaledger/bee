@@ -20,7 +20,8 @@ pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
 pub(crate) use message::{
     HasherWorker, HasherWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker,
-    PayloadWorker, PayloadWorkerEvent, ProcessorWorker, TransactionPayloadWorker,
+    PayloadWorker, PayloadWorkerEvent, ProcessorWorker, TransactionPayloadWorker, UnconfirmedMessageInserterWorker,
+    UnconfirmedMessageInserterWorkerEvent,
 };
 pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 pub use metrics::MetricsWorker;

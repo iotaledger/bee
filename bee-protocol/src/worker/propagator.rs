@@ -52,15 +52,15 @@ async fn propagate<B: StorageBackend>(
             // Note: There are two types of solidity carriers:
             // * solid messages (with available history)
             // * solid entry points / sep (with verified history)
-            // Because we know both parents are solid, we also know that they have set OTRSI/YTRSI values, hence
+            // Because we know both parents are solid, we also know that they have set OMRSI/YMRSI values, hence
             // we can simply unwrap. We also try to minimise unnecessary Tangle API calls if - for example - the
             // parent in question turns out to be a SEP.
 
-            let mut parent_otrsis = Vec::new();
-            let mut parent_ytrsis = Vec::new();
+            let mut parent_omrsis = Vec::new();
+            let mut parent_ymrsis = Vec::new();
 
             for parent in parents.iter() {
-                let (parent_otrsi, parent_ytrsi) = match tangle
+                let (parent_omrsi, parent_ymrsi) = match tangle
                     .get_solid_entry_point_index(SolidEntryPoint::ref_cast(&parent))
                     .await
                 {
@@ -68,20 +68,20 @@ async fn propagate<B: StorageBackend>(
                     None => match tangle.get_metadata(parent).await {
                         // 'unwrap' is safe (see explanation above)
                         Some(parent_md) => (
-                            parent_md.otrsi().expect("solid msg with unset omrsi"),
-                            parent_md.ytrsi().expect("solid msg with unset ymrsi"),
+                            parent_md.omrsi().expect("solid msg with unset omrsi"),
+                            parent_md.ymrsi().expect("solid msg with unset ymrsi"),
                         ),
                         None => continue 'outer,
                     },
                 };
-                parent_otrsis.push(parent_otrsi);
-                parent_ytrsis.push(parent_ytrsi);
+                parent_omrsis.push(parent_omrsi);
+                parent_ymrsis.push(parent_ymrsi);
             }
 
-            // Derive child OTRSI/YTRSI from its parents.
-            // Note: The child inherits oldest (lowest) otrsi and the newest (highest) ytrsi from its parents.
-            let child_otrsi = parent_otrsis.iter().min().unwrap();
-            let child_ytrsi = parent_ytrsis.iter().max().unwrap();
+            // Derive child OMRSI/YMRSI from its parents.
+            // Note: The child inherits oldest (lowest) omrsi and the newest (highest) ymrsi from its parents.
+            let child_omrsi = parent_omrsis.iter().min().unwrap();
+            let child_ymrsi = parent_ymrsis.iter().max().unwrap();
 
             let ms_index_maybe = tangle
                 .update_metadata(&message_id, |metadata| {
@@ -91,8 +91,8 @@ async fn propagate<B: StorageBackend>(
                     if metadata.flags().is_milestone() {
                         metadata.milestone_index()
                     } else {
-                        metadata.set_otrsi(*child_otrsi);
-                        metadata.set_ytrsi(*child_ytrsi);
+                        metadata.set_omrsi(*child_omrsi);
+                        metadata.set_ymrsi(*child_ymrsi);
                         None
                     }
                 })

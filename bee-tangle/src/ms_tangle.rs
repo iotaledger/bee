@@ -145,8 +145,8 @@ impl<B: StorageBackend> MsTangle<B> {
             .update_metadata(&milestone.message_id(), |metadata| {
                 metadata.flags_mut().set_milestone(true);
                 metadata.set_milestone_index(idx);
-                metadata.set_otrsi(IndexId::new(idx, *milestone.message_id()));
-                metadata.set_ytrsi(IndexId::new(idx, *milestone.message_id()));
+                metadata.set_omrsi(IndexId::new(idx, *milestone.message_id()));
+                metadata.set_ymrsi(IndexId::new(idx, *milestone.message_id()));
             })
             .await;
         self.inner
@@ -307,21 +307,21 @@ impl<B: StorageBackend> MsTangle<B> {
         }
     }
 
-    pub async fn otrsi(&self, id: &MessageId) -> Option<IndexId> {
+    pub async fn omrsi(&self, id: &MessageId) -> Option<IndexId> {
         match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
             Some(sep) => Some(IndexId::new(*sep, *id)),
             None => match self.get_metadata(id).await {
-                Some(metadata) => metadata.otrsi(),
+                Some(metadata) => metadata.omrsi(),
                 None => None,
             },
         }
     }
 
-    pub async fn ytrsi(&self, id: &MessageId) -> Option<IndexId> {
+    pub async fn ymrsi(&self, id: &MessageId) -> Option<IndexId> {
         match self.solid_entry_points.lock().await.get(SolidEntryPoint::ref_cast(id)) {
             Some(sep) => Some(IndexId::new(*sep, *id)),
             None => match self.get_metadata(id).await {
-                Some(metadata) => metadata.ytrsi(),
+                Some(metadata) => metadata.ymrsi(),
                 None => None,
             },
         }

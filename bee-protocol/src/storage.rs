@@ -10,18 +10,20 @@ use bee_message::{
 };
 use bee_snapshot::info::SnapshotInfo;
 use bee_storage::{
-    access::{AsStream, Fetch, Insert},
+    access::{AsStream, Batch, Fetch, Insert},
     backend,
 };
-use bee_tangle::metadata::MessageMetadata;
+use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
 
 pub trait StorageBackend:
     backend::StorageBackend
+    + Batch<(MilestoneIndex, UnconfirmedMessage), ()>
     + Insert<MessageId, Message>
     + Insert<MessageId, MessageMetadata>
     + Insert<(MessageId, MessageId), ()>
     + Insert<MilestoneIndex, Milestone>
     + Insert<(HashedIndex, MessageId), ()>
+    + Insert<(MilestoneIndex, UnconfirmedMessage), ()>
     + Fetch<MessageId, Message>
     + Fetch<MessageId, MessageMetadata>
     + Fetch<MessageId, Vec<MessageId>>
@@ -34,11 +36,13 @@ pub trait StorageBackend:
 
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
+        + Batch<(MilestoneIndex, UnconfirmedMessage), ()>
         + Insert<MessageId, Message>
         + Insert<MessageId, MessageMetadata>
         + Insert<(MessageId, MessageId), ()>
         + Insert<MilestoneIndex, Milestone>
         + Insert<(HashedIndex, MessageId), ()>
+        + Insert<(MilestoneIndex, UnconfirmedMessage), ()>
         + Fetch<MessageId, Message>
         + Fetch<MessageId, MessageMetadata>
         + Fetch<MessageId, Vec<MessageId>>

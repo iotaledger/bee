@@ -32,8 +32,8 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
             let metadata = tangle.get_metadata(&message_id).await.unwrap();
 
             // TODO: access constants from URTS
-            let ytrsi_delta = 8;
-            let otrsi_delta = 13;
+            let ymrsi_delta = 8;
+            let omrsi_delta = 13;
             let below_max_depth = 15;
 
             let (
@@ -91,12 +91,12 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     conflict_reason = None;
 
                     let lsmi = *tangle.get_latest_solid_milestone_index();
-                    // unwrap() of OTRSI/YTRSI is safe since message is solid
-                    if (lsmi - *metadata.otrsi().unwrap().index()) > below_max_depth {
+                    // unwrap() of OMRSI/YMRSI is safe since message is solid
+                    if (lsmi - *metadata.omrsi().unwrap().index()) > below_max_depth {
                         should_promote = Some(false);
                         should_reattach = Some(true);
-                    } else if (lsmi - *metadata.ytrsi().unwrap().index()) > ytrsi_delta
-                        || (lsmi - otrsi_delta) > otrsi_delta
+                    } else if (lsmi - *metadata.ymrsi().unwrap().index()) > ymrsi_delta
+                        || (lsmi - omrsi_delta) > omrsi_delta
                     {
                         should_promote = Some(true);
                         should_reattach = Some(false);
