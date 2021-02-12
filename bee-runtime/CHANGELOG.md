@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.1.1-alpha - 2021-02-12
+
+### Added
+
+- `NodeInfo` type;
+- `Node::info` method;
 
 ## 0.1.0-alpha - 2021-01-08
 
