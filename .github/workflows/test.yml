@@ -29,6 +29,13 @@ jobs:
         toolchain: ${{ matrix.rust }}
         override: true
 
+    - name: Set up MSYS2 and install clang
+      if: matrix.os == 'windows-latest'
+      uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: mingw-w64-x86_64-clang
+
     - name: Cache cargo registry
       uses: actions/cache@v2
       with:
