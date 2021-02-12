@@ -131,7 +131,8 @@ pub fn all<B: StorageBackend>(
         allowed_ips.clone(),
         network_controller,
     ))
-    .or(peer(public_routes.clone(), allowed_ips.clone(), peer_manager)))
+    .or(peer(public_routes.clone(), allowed_ips.clone(), peer_manager))
+    .or(white_flag(public_routes.clone(), allowed_ips.clone())))
 }
 
 fn health<B: StorageBackend>(
@@ -495,6 +496,19 @@ fn peer_remove(
         .and(warp::path::end())
         .and(with_network_controller(network_controller))
         .and_then(handlers::remove_peer::remove_peer)
+}
+
+fn white_flag(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    has_permission(ROUTE_INFO, public_routes, allowed_ips)
+        .and(warp::post())
+        .and(warp::path("debug"))
+        .and(warp::path("whiteflag"))
+        .and(warp::path::end())
+        .and(warp::body::json())
+        .and_then(handlers::debug::white_flag::white_flag)
 }
 
 pub fn has_permission(

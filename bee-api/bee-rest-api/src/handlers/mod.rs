@@ -4,6 +4,7 @@
 pub mod add_peer;
 pub mod balance_bech32;
 pub mod balance_ed25519;
+pub mod debug;
 pub mod health;
 pub mod info;
 pub mod message;
