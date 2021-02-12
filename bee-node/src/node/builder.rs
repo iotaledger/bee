@@ -6,6 +6,7 @@ use crate::plugins::Dashboard;
 
 use crate::{
     config::NodeConfig,
+    constants::{BEE_GIT_COMMIT, BEE_VERSION},
     node::{BeeNode, Error},
     plugins::{self, Mqtt, VersionChecker},
     storage::StorageBackend,
@@ -15,7 +16,7 @@ use bee_network::{self, NetworkController};
 use bee_peering::{ManualPeerManager, PeerManager};
 use bee_runtime::{
     event::Bus,
-    node::{Node, NodeBuilder},
+    node::{Node, NodeBuilder, NodeInfo},
     worker::Worker,
 };
 
@@ -86,6 +87,16 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
     type Config = NodeConfig<B>;
 
     fn new(config: Self::Config) -> Result<Self, Self::Error> {
+        let version = if BEE_GIT_COMMIT.is_empty() {
+            BEE_VERSION.to_owned()
+        } else {
+            BEE_VERSION.to_owned() + "-" + &BEE_GIT_COMMIT[0..7]
+        };
+        let node_info = NodeInfo {
+            name: "Bee".to_owned(),
+            version,
+        };
+
         Ok(Self {
             deps: HashMap::default(),
             worker_starts: HashMap::default(),
@@ -94,11 +105,12 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
             resource_registers: Vec::default(),
             config: config.clone(),
         }
-        .with_resource(Bus::<TypeId>::default())
+        .with_resource(node_info)
         // TODO block ? Make new async ?
         .with_resource(
             futures::executor::block_on(B::start(config.storage)).map_err(|e| Error::StorageBackend(Box::new(e)))?,
-        ))
+        )
+        .with_resource(Bus::<TypeId>::default()))
     }
 
     fn with_worker<W: Worker<BeeNode<B>> + 'static>(self) -> Self

@@ -1,7 +1,6 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod constants;
 mod filters;
 
 pub mod config;
@@ -77,6 +76,7 @@ where
         let message_submitter = node.worker::<MessageSubmitterWorker>().unwrap().tx.clone();
         let peer_manager = node.resource::<PeerManager>();
         let network_controller = node.resource::<NetworkController>();
+        let node_info = node.info();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -93,6 +93,7 @@ where
                 protocol_config,
                 peer_manager,
                 network_controller,
+                node_info,
             )
             .recover(handle_rejection);
 
