@@ -16,12 +16,11 @@
 #![allow(dead_code, unused_imports)]
 
 mod common;
-
 use common::*;
 
 use bee_network::{
-    Command::*, Event, Keypair, MessageReceiver, MessageSender, Multiaddr, NetworkConfig, NetworkController,
-    NetworkListener, PeerId, PeerInfo, PeerRelation, ShortId,
+    alias, Command::*, Event, GossipReceiver, GossipSender, Keypair, Multiaddr, NetworkConfig, NetworkController,
+    NetworkListener, PeerId, PeerInfo, PeerRelation,
 };
 use bee_runtime::{
     node::{Node, NodeBuilder},
@@ -295,32 +294,32 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
 
 async fn process_event(event: Event, connected_peers: &mut PeerList) {
     match event {
-        Event::PeerAdded { id, info } => {
-            info!("[gossip.rs] Added peer '{}' ({:?}).", id, info);
+        Event::PeerAdded { peer_id, info } => {
+            info!("[gossip.rs] Added peer '{}' ({:?}).", peer_id, info);
         }
         Event::PeerConnected {
-            id,
+            peer_id,
             address,
             gossip_in,
             gossip_out,
         } => {
-            info!("[gossip.rs] Connected peer '{}' with address '{}'.", id, address);
+            info!("[gossip.rs] Connected peer '{}' with address '{}'.", peer_id, address);
 
             let (tx, rx) = oneshot::channel::<()>();
 
             let peer = Peer { shutdown: tx };
 
-            connected_peers.insert(id.clone(), peer);
+            connected_peers.insert(peer_id, peer);
 
-            send_gossip(id, gossip_out, rx);
-            recv_gossip(id, gossip_in)
+            send_gossip(peer_id, gossip_out, rx);
+            recv_gossip(peer_id, gossip_in)
         }
 
-        Event::PeerDisconnected { id } => {
+        Event::PeerDisconnected { peer_id } => {
             // Removing the peer will trigger the shutdown signal, which stops the gossip task
-            connected_peers.remove(&id);
+            connected_peers.remove(&peer_id);
 
-            info!("[gossip.rs] Disconnected peer {}.", id);
+            info!("[gossip.rs] Disconnected peer {}.", peer_id);
         }
         // Ignore all other events
         _ => (),
@@ -339,7 +338,7 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
     receiver
 }
 
-fn send_gossip(peer_id: PeerId, gossip_out: MessageSender, shutdown_rx: oneshot::Receiver<()>) {
+fn send_gossip(peer_id: PeerId, gossip_out: GossipSender, shutdown_rx: oneshot::Receiver<()>) {
     tokio::spawn(async move {
         info!("[gossip.rs] Sending gossip to {}", peer_id);
 
@@ -352,7 +351,7 @@ fn send_gossip(peer_id: PeerId, gossip_out: MessageSender, shutdown_rx: oneshot:
         while let Some(_) = shutdown_stream.next().await {
             let message = i.to_string();
 
-            info!("[gossip.rs] Sending message to peer {} ({}).", peer_id.short(), message);
+            info!("[gossip.rs] Sending message to peer {} ({}).", alias!(peer_id), message);
 
             if let Err(e) = gossip_out.send(message.as_bytes().to_vec()) {
                 warn!("Sending message to peer failed. Error: {:?}", e);
@@ -365,14 +364,14 @@ fn send_gossip(peer_id: PeerId, gossip_out: MessageSender, shutdown_rx: oneshot:
     });
 }
 
-fn recv_gossip(peer_id: PeerId, mut gossip_in: MessageReceiver) {
+fn recv_gossip(peer_id: PeerId, mut gossip_in: GossipReceiver) {
     tokio::spawn(async move {
         info!("[gossip.rs] Receiving gossip from {}", peer_id);
 
         while let Some(message) = gossip_in.next().await {
             info!(
                 "[gossip.rs] Received message from {} ('{}').",
-                peer_id.short(),
+                alias!(peer_id),
                 String::from_utf8(message).unwrap(),
             );
         }
