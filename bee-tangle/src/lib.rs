@@ -11,9 +11,9 @@ pub mod metadata;
 pub mod ms_tangle;
 pub mod storage;
 pub mod traversal;
+pub mod unconfirmed_message;
 pub mod urts;
 pub mod worker;
-pub mod unconfirmed_message;
 
 pub(crate) mod pruning;
 
