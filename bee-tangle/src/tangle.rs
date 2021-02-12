@@ -13,17 +13,12 @@ use hashbrown::{
 };
 use log::info;
 use lru::LruCache;
-use tokio::sync::{RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard, mpsc};
+use tokio::sync::{mpsc, RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard};
 
-use std::{
-    fmt::Debug,
-    marker::PhantomData,
-    ops::Deref,
-    future::Future,
-    sync::Arc,
-};
+use std::{fmt::Debug, future::Future, marker::PhantomData, ops::Deref, sync::Arc};
 
 pub const DEFAULT_CACHE_LEN: usize = 100_000;
+const CACHE_THRESHOLD: usize = DEFAULT_CACHE_LEN / 100;
 
 /// A trait used to provide hooks for a tangle. The tangle acts as an in-memory cache and will use hooks to extend its
 /// effective volume. When an entry doesn't exist in the tangle cache and needs fetching, or when an entry gets
@@ -124,17 +119,18 @@ where
                 let mut cache_len = DEFAULT_CACHE_LEN;
 
                 while let Some(event) = events_rx.recv().await {
-                    let needs_eviction = match event {
-                        Event::Resize(len) => { cache_len = len; true },
-                        Event::Access(message_id) => { lru.put(message_id, ()); false },
-                        Event::Insert(message_id) => { lru.put(message_id, ()); true },
-                    };
+                    match event {
+                        Event::Resize(len) => cache_len = len,
+                        Event::Access(message_id) | Event::Insert(message_id) => {
+                            lru.put(message_id, ());
+                        }
+                    }
 
-                    if needs_eviction {
-                        // Perform eviction of excess cache entries
+                    // Perform eviction of excess cache entries
+                    if tangle.vertices.read().await.len() > cache_len {
                         let mut vertices = tangle.vertices.write().await;
                         let mut children = tangle.children.write().await;
-                        while vertices.len() > cache_len {
+                        while vertices.len().saturating_sub(CACHE_THRESHOLD) > cache_len {
                             let remove = lru.pop_lru().map(|(id, _)| id);
 
                             if let Some(message_id) = remove {
@@ -255,16 +251,16 @@ where
     }
 
     /// Updates the metadata of a particular vertex.
-    pub async fn set_metadata(&self, message_id: &MessageId, metadata: T) {
-        self.pull_message(message_id).await;
-        if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
-            *vtx.metadata_mut() = metadata;
-            self.hooks
-                .insert(*message_id, (&**vtx.message()).clone(), vtx.metadata().clone())
-                .await
-                .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
-        }
-    }
+    // pub async fn set_metadata(&self, message_id: &MessageId, metadata: T) {
+    //     self.pull_message(message_id).await;
+    //     if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
+    //         *vtx.metadata_mut() = metadata;
+    //         self.hooks
+    //             .insert(*message_id, (&**vtx.message()).clone(), vtx.metadata().clone())
+    //             .await
+    //             .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
+    //     }
+    // }
 
     /// Updates the metadata of a vertex.
     pub async fn update_metadata<R, Update>(&self, message_id: &MessageId, mut update: Update) -> Option<R>
@@ -297,18 +293,6 @@ where
     }
 
     async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = HashSet<MessageId>> + '_> {
-        // struct Children<'a> {
-        //     children: dashmap::mapref::one::Ref<'a, MessageId, (HashSet<MessageId>, bool)>,
-        // }
-
-        // impl<'a> Deref for Children<'a> {
-        //     type Target = HashSet<MessageId>;
-
-        //     fn deref(&self) -> &Self::Target {
-        //         &self.children.deref().0
-        //     }
-        // }
-
         struct Wrapper<'a> {
             children: HashSet<MessageId>,
             phantom: PhantomData<&'a ()>,
@@ -387,7 +371,7 @@ where
     // Attempts to pull the message from the storage, returns true if successful.
     async fn pull_message(&self, message_id: &MessageId) -> bool {
         // If the tangle already contains the tx, do no more work
-        if self.vertices.read().await.contains_key(message_id) {
+        if if self.vertices.read().await.contains_key(message_id) {
             true
         } else {
             if let Ok(Some((tx, metadata))) = self.hooks.get(message_id).await {
@@ -396,6 +380,11 @@ where
             } else {
                 false
             }
+        } {
+            self.events_tx.send(Event::Access(*message_id)).unwrap();
+            true
+        } else {
+            false
         }
     }
 }

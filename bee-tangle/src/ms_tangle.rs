@@ -23,9 +23,12 @@ use ref_cast::RefCast;
 use tokio::sync::Mutex;
 
 use std::{
-    ops::Deref,
     future::Future,
-    sync::{Arc, atomic::{AtomicU32, Ordering}},
+    ops::Deref,
+    sync::{
+        atomic::{AtomicU32, Ordering},
+        Arc,
+    },
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -108,17 +111,20 @@ impl<B: StorageBackend> MsTangle<B> {
     pub fn new(storage: ResourceHandle<B>) -> (Self, impl Future<Output = ()>) {
         let (tangle, task) = Tangle::new(StorageHooks { storage });
 
-        (Self {
-            inner: tangle,
-            milestones: Default::default(),
-            solid_entry_points: Default::default(),
-            latest_milestone_index: Default::default(),
-            latest_solid_milestone_index: Default::default(),
-            snapshot_index: Default::default(),
-            pruning_index: Default::default(),
-            entry_point_index: Default::default(),
-            tip_pool: Mutex::new(UrtsTipPool::default()),
-        }, task)
+        (
+            Self {
+                inner: tangle,
+                milestones: Default::default(),
+                solid_entry_points: Default::default(),
+                latest_milestone_index: Default::default(),
+                latest_solid_milestone_index: Default::default(),
+                snapshot_index: Default::default(),
+                pruning_index: Default::default(),
+                entry_point_index: Default::default(),
+                tip_pool: Mutex::new(UrtsTipPool::default()),
+            },
+            task,
+        )
     }
 
     pub async fn shutdown(self) {
@@ -261,7 +267,8 @@ impl<B: StorageBackend> MsTangle<B> {
 
     // TODO reduce to one atomic value ?
     pub fn get_sync_threshold(&self) -> u32 {
-        self.get_latest_milestone_index().saturating_sub(*self.get_latest_solid_milestone_index())
+        self.get_latest_milestone_index()
+            .saturating_sub(*self.get_latest_solid_milestone_index())
     }
 
     // TODO reduce to one atomic value ?
