@@ -1,6 +1,9 @@
+// Copyright 2020 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use super::GossipHandler;
 
-use crate::host::connections::{ConnectionInfo, Origin};
+use crate::conns::info::{ConnectionInfo, Origin};
 
 use libp2p::{
     core::{connection::ConnectionId, ConnectedPoint},

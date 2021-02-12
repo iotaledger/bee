@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    service::commands::{Command, CommandSender},
+    api::commands::{Command, CommandSender},
     PeerId,
 };
 

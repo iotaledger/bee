@@ -1,12 +1,15 @@
+// Copyright 2020 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use super::Error;
 use crate::{
     alias,
-    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList},
-    service::{
+    api::{
         commands::{Command, CommandReceiver},
         events::InternalEventSender,
         Service,
     },
+    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList},
     swarm,
     swarm::SwarmBehavior,
 };

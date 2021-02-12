@@ -1,5 +1,8 @@
+// Copyright 2020 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use super::GossipUpgrade;
-use crate::host::connections::Origin;
+use crate::conns::info::Origin;
 
 use libp2p::{
     swarm::{

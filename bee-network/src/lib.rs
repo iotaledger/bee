@@ -6,11 +6,10 @@
 #![warn(missing_docs)]
 #![deny(warnings)]
 
+mod api;
 mod config;
-mod host;
-mod network;
+mod conns;
 mod peers;
-mod service;
 mod swarm;
 
 // Reexports
@@ -22,11 +21,10 @@ pub use libp2p::{
 };
 
 // Exports
+pub use api::{commands::Command, events::Event, NetworkController, Service};
 pub use config::{NetworkConfig, NetworkConfigBuilder};
-pub use host::{connections::Origin, Host};
-pub use network::NetworkController;
+pub use conns::{info::Origin, Host};
 pub use peers::{PeerInfo, PeerRelation};
-pub use service::{commands::Command, events::Event, Service};
 pub use swarm::protocols::gossip::{GossipReceiver, GossipSender};
 
 /// A type that receives any event published by the networking layer.
@@ -34,13 +32,13 @@ pub type NetworkListener = UnboundedReceiver<Event>;
 
 use bee_runtime::node::{Node, NodeBuilder};
 
-use host::HostConfig;
-use peers::{BannedAddrList, BannedPeerList, PeerList};
-use service::{
+use api::{
     commands,
     events::{self, InternalEvent},
     ServiceConfig,
 };
+use conns::HostConfig;
+use peers::{BannedAddrList, BannedPeerList, PeerList};
 
 use libp2p::identity;
 use log::{info, *};

@@ -1,5 +1,8 @@
+// Copyright 2020 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use super::protocols::gossip::{self, Gossip, GossipEvent};
-use crate::service::events::{InternalEvent, InternalEventSender};
+use crate::api::events::{InternalEvent, InternalEventSender};
 
 use futures::AsyncReadExt;
 use libp2p::{

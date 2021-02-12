@@ -10,5 +10,5 @@ pub use errors::Error;
 mod peerlist;
 pub use peerlist::*;
 
-mod peer;
-pub use peer::*;
+mod info;
+pub use info::*;

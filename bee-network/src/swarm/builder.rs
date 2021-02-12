@@ -1,3 +1,6 @@
+// Copyright 2020 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use libp2p::{
     core::{
         connection::ConnectionLimits,
@@ -10,7 +13,7 @@ use libp2p::{
 
 use std::{io, time::Duration};
 
-use crate::service::events::InternalEventSender;
+use crate::api::events::InternalEventSender;
 
 use super::SwarmBehavior;
 

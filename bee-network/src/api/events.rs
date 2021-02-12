@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    host::connections::ConnectionInfo,
+    conns::info::ConnectionInfo,
     peers,
     peers::PeerInfo,
     swarm::protocols::gossip::{GossipReceiver, GossipSender},
