@@ -3,7 +3,6 @@
 
 use crate::{
     config::NodeConfig,
-    constants::{BEE_GIT_COMMIT, BEE_VERSION},
     plugins::dashboard::{
         broadcast,
         websocket::{responses::node_status, WsUsers},
@@ -41,6 +40,7 @@ where
     let tangle = node.resource::<MsTangle<N::Backend>>();
     let node_config = node.resource::<NodeConfig<N::Backend>>();
     let metrics = node.resource::<ProtocolMetrics>();
+    let node_info = node.info();
     let peering_config = node_config.peering.clone();
     let users = users.clone();
 
@@ -52,11 +52,6 @@ where
             IntervalStream::new(interval(Duration::from_secs(NODE_STATUS_METRICS_WORKER_INTERVAL_SEC))),
         );
         let uptime = Instant::now();
-        let version = if BEE_GIT_COMMIT.is_empty() {
-            BEE_VERSION.to_owned()
-        } else {
-            BEE_VERSION.to_owned() + "-" + &BEE_GIT_COMMIT[0..7]
-        };
 
         while ticker.next().await.is_some() {
             let status = NodeStatus {
@@ -64,8 +59,8 @@ where
                 pruning_index: *tangle.get_pruning_index(),
                 is_healthy: tangle.is_healthy().await,
                 is_synced: tangle.is_synced(),
-                version: version.clone(),
-                latest_version: version.clone(),
+                version: node_info.version.clone(),
+                latest_version: node_info.version.clone(),
                 uptime: uptime.elapsed().as_millis() as u64,
                 autopeering_id: peering_config.peer_id.to_string(),
                 node_alias: node_config.alias.clone(),
