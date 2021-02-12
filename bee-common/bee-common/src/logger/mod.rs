@@ -29,15 +29,15 @@ pub enum Error {
 }
 
 macro_rules! log_format {
-    ($target:expr, $level:expr, $message:expr) => {
+    ($target:expr, $level:expr, $message:expr, $target_width:expr, $level_width:expr) => {
         format_args!(
             "{} {:target_width$} {:level_width$} {}",
             chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
             $target,
             $level,
             $message,
-            target_width = 42,
-            level_width = 5
+            target_width = $target_width,
+            level_width = $level_width
         )
     };
 }
@@ -48,6 +48,9 @@ macro_rules! log_format {
 ///
 /// * `config`  -   Logger configuration
 pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
+    let target_width = config.target_width;
+    let level_width = config.level_width;
+
     let mut logger = if config.color_enabled {
         let colors = ColoredLevelConfig::new()
             .trace(Color::BrightMagenta)
@@ -58,12 +61,25 @@ pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
 
         // Creates a logger dispatch with color support.
         Dispatch::new().format(move |out, message, record| {
-            out.finish(log_format!(record.target(), colors.color(record.level()), message))
+            out.finish(log_format!(
+                record.target(),
+                colors.color(record.level()),
+                message,
+                target_width,
+                level_width
+            ))
         })
     } else {
         // Creates a logger dispatch without color support.
-        Dispatch::new()
-            .format(move |out, message, record| out.finish(log_format!(record.target(), record.level(), message)))
+        Dispatch::new().format(move |out, message, record| {
+            out.finish(log_format!(
+                record.target(),
+                record.level(),
+                message,
+                target_width,
+                level_width
+            ))
+        })
     };
 
     for output in config.outputs {
