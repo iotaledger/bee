@@ -18,7 +18,7 @@ use tokio::sync::{mpsc, RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard};
 use std::{fmt::Debug, future::Future, marker::PhantomData, ops::Deref, sync::Arc};
 
 pub const DEFAULT_CACHE_LEN: usize = 100_000;
-const CACHE_THRESHOLD: usize = DEFAULT_CACHE_LEN / 100;
+const CACHE_THRESHOLD_FACTOR: f32 = 0.1;
 
 /// A trait used to provide hooks for a tangle. The tangle acts as an in-memory cache and will use hooks to extend its
 /// effective volume. When an entry doesn't exist in the tangle cache and needs fetching, or when an entry gets
@@ -130,7 +130,7 @@ where
                     if tangle.vertices.read().await.len() > cache_len {
                         let mut vertices = tangle.vertices.write().await;
                         let mut children = tangle.children.write().await;
-                        while vertices.len().saturating_sub(CACHE_THRESHOLD) > cache_len {
+                        while vertices.len() > ((1.0 - CACHE_THRESHOLD_FACTOR) * cache_len as f32) as usize {
                             let remove = lru.pop_lru().map(|(id, _)| id);
 
                             if let Some(message_id) = remove {
