@@ -26,7 +26,6 @@ impl FromStr for MessageId {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes: [u8; MESSAGE_ID_LENGTH] = hex::decode(s)
             .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
-            .as_slice()
             .try_into()
             .map_err(|_| Self::Err::InvalidHexadecimalLength(MESSAGE_ID_LENGTH * 2, s.len()))?;
 
@@ -35,7 +34,6 @@ impl FromStr for MessageId {
 }
 
 impl AsRef<[u8]> for MessageId {
-    #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }

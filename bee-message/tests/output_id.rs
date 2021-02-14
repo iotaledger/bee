@@ -11,9 +11,9 @@ use core::{
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const OUTPUT_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00";
-const INVALID_OUTPUT_ID_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f00";
-const INVALID_OUTPUT_ID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f0x";
-const INVALID_OUTPUT_ID_LEN: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f";
+const OUTPUT_ID_INVALID_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f00";
+const OUTPUT_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f0x";
+const OUTPUT_ID_INVALID_LEN: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f";
 
 #[test]
 fn valid_new() {
@@ -56,7 +56,7 @@ fn valid_try_from() {
 
 #[test]
 fn invalid_try_from() {
-    let output_id_bytes: [u8; OUTPUT_ID_LENGTH] = hex::decode(INVALID_OUTPUT_ID_INDEX).unwrap().try_into().unwrap();
+    let output_id_bytes: [u8; OUTPUT_ID_LENGTH] = hex::decode(OUTPUT_ID_INVALID_INDEX).unwrap().try_into().unwrap();
 
     assert!(matches!(
         OutputId::try_from(output_id_bytes),
@@ -76,7 +76,7 @@ fn valid_from_str() {
 #[test]
 fn invalid_from_str_index() {
     assert!(matches!(
-        OutputId::from_str(INVALID_OUTPUT_ID_INDEX),
+        OutputId::from_str(OUTPUT_ID_INVALID_INDEX),
         Err(Error::InvalidInputOutputIndex(127))
     ));
 }
@@ -84,16 +84,16 @@ fn invalid_from_str_index() {
 #[test]
 fn invalid_from_str_hex() {
     assert!(matches!(
-        OutputId::from_str(INVALID_OUTPUT_ID_HEX),
+        OutputId::from_str(OUTPUT_ID_INVALID_HEX),
         Err(Error::InvalidHexadecimalChar(hex))
-            if hex == INVALID_OUTPUT_ID_HEX
+            if hex == OUTPUT_ID_INVALID_HEX
     ));
 }
 
 #[test]
 fn invalid_from_str_len() {
     assert!(matches!(
-        OutputId::from_str(INVALID_OUTPUT_ID_LEN),
+        OutputId::from_str(OUTPUT_ID_INVALID_LEN),
         Err(Error::InvalidHexadecimalLength(expected, actual))
             if expected == OUTPUT_ID_LENGTH * 2 && actual == OUTPUT_ID_LENGTH * 2 - 2
     ));
