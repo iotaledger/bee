@@ -33,10 +33,10 @@ impl FromStr for Ed25519Address {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes: [u8; ED25519_ADDRESS_LENGTH] = hex::decode(s)
-            .map_err(|_| Self::Err::InvalidHex)?
+            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
             .as_slice()
             .try_into()
-            .map_err(|_| Self::Err::InvalidHex)?;
+            .map_err(|_| Self::Err::InvalidHexadecimalLength(ED25519_ADDRESS_LENGTH * 2, s.len()))?;
 
         Ok(Ed25519Address::from(bytes))
     }

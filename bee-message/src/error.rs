@@ -30,7 +30,8 @@ pub enum Error {
     Utf8String(alloc::string::FromUtf8Error),
     InvalidKind(u8, u8),
     InvalidAnnouncedLength(usize, usize),
-    InvalidHex,
+    InvalidHexadecimalChar(String),
+    InvalidHexadecimalLength(usize, usize),
     InvalidIndexationLength(usize),
     InvalidMessageLength(usize),
     InvalidTransactionPayload,
@@ -72,7 +73,10 @@ impl fmt::Display for Error {
             Error::InvalidAnnouncedLength(expected, actual) => {
                 write!(f, "Invalid announced length: {}, {}.", expected, actual)
             }
-            Error::InvalidHex => write!(f, "Invalid hexadecimal conversion."),
+            Error::InvalidHexadecimalChar(hex) => write!(f, "Invalid hexadecimal character: {}.", hex),
+            Error::InvalidHexadecimalLength(expected, actual) => {
+                write!(f, "Invalid hexadecimal length: expected {} got {}.", expected, actual)
+            }
             Error::InvalidIndexationLength(length) => write!(f, "Invalid indexation index or data length {}.", length),
             Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
             Error::InvalidTransactionPayload => write!(f, "Invalid transaction payload kind."),

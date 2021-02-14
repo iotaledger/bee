@@ -5,6 +5,7 @@
 macro_rules! string_serde_impl {
     ($type:ty) => {
         use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
+
         impl Serialize for $type {
             fn serialize<S: Serializer>(&self, s: S) -> std::result::Result<S::Ok, S::Error> {
                 s.serialize_str(&self.to_string())
@@ -17,8 +18,10 @@ macro_rules! string_serde_impl {
                 D: Deserializer<'de>,
             {
                 struct StringVisitor;
+
                 impl<'de> Visitor<'de> for StringVisitor {
                     type Value = $type;
+
                     fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                         formatter.write_str("a string representing the value")
                     }
@@ -31,6 +34,7 @@ macro_rules! string_serde_impl {
                         Ok(value)
                     }
                 }
+
                 deserializer.deserialize_str(StringVisitor)
             }
         }
