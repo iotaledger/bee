@@ -21,7 +21,7 @@ use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Fetch;
 use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
 
-use std::convert::TryInto;
+use std::convert::{TryFrom, TryInto};
 
 #[async_trait::async_trait]
 impl Fetch<u8, System> for Storage {
@@ -165,7 +165,7 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
                 .map(|(key, _)| {
                     let (_, output_id) = key.split_at(ED25519_ADDRESS_LENGTH);
                     // Unpacking from storage is fine.
-                    From::<[u8; OUTPUT_ID_LENGTH]>::from(output_id.try_into().unwrap())
+                    TryFrom::<[u8; OUTPUT_ID_LENGTH]>::try_from(output_id.try_into().unwrap()).unwrap()
                 })
                 .take(self.config.fetch_output_id_limit)
                 .collect(),
