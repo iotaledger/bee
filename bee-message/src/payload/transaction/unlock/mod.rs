@@ -64,7 +64,7 @@ impl Packable for UnlockBlock {
         Ok(match u8::unpack(reader)? {
             SIGNATURE_UNLOCK_KIND => Self::Signature(SignatureUnlock::unpack(reader)?),
             REFERENCE_UNLOCK_KIND => Self::Reference(ReferenceUnlock::unpack(reader)?),
-            t => return Err(Self::Error::InvalidUnlockKind(t)),
+            k => return Err(Self::Error::InvalidUnlockKind(k)),
         })
     }
 }

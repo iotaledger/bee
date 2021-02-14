@@ -4,7 +4,7 @@
 use crate::{storage::StorageBackend, worker::MetricsWorker, ProtocolMetrics};
 
 use bee_message::{
-    payload::{indexation::HashedIndex, Payload},
+    payload::{indexation::HashedIndex, transaction::Essence, Payload},
     MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
@@ -35,10 +35,17 @@ async fn process<B: StorageBackend>(
     if let Some(message) = tangle.get(&message_id).await.map(|m| (*m).clone()) {
         let indexation = match message.payload() {
             Some(Payload::Indexation(indexation)) => indexation,
-            Some(Payload::Transaction(transaction)) => match transaction.essence().payload() {
-                Some(Payload::Indexation(indexation)) => indexation,
-                _ => return,
-            },
+            Some(Payload::Transaction(transaction)) => {
+                if let Essence::Regular(essence) = transaction.essence() {
+                    if let Some(Payload::Indexation(indexation)) = essence.payload() {
+                        indexation
+                    } else {
+                        return;
+                    }
+                } else {
+                    return;
+                }
+            }
             _ => return,
         };
 

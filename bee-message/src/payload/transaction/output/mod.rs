@@ -105,7 +105,7 @@ impl Packable for Output {
                 Self::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput::unpack(reader)?)
             }
             TREASURY_OUTPUT_KIND => Self::Treasury(TreasuryOutput::unpack(reader)?),
-            t => return Err(Self::Error::InvalidOutputKind(t)),
+            k => return Err(Self::Error::InvalidOutputKind(k)),
         })
     }
 }

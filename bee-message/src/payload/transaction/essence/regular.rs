@@ -19,16 +19,18 @@ use serde::{Deserialize, Serialize};
 
 use alloc::{boxed::Box, vec::Vec};
 
+pub(crate) const REGULAR_ESSENCE_KIND: u8 = 0;
+
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct TransactionPayloadEssence {
+pub struct RegularEssence {
     inputs: Box<[Input]>,
     outputs: Box<[Output]>,
     payload: Option<Payload>,
 }
 
-impl TransactionPayloadEssence {
-    pub fn builder() -> TransactionPayloadEssenceBuilder {
-        TransactionPayloadEssenceBuilder::new()
+impl RegularEssence {
+    pub fn builder() -> RegularEssenceBuilder {
+        RegularEssenceBuilder::new()
     }
 
     pub fn inputs(&self) -> &[Input] {
@@ -44,12 +46,11 @@ impl TransactionPayloadEssence {
     }
 }
 
-impl Packable for TransactionPayloadEssence {
+impl Packable for RegularEssence {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0u8.packed_len()
-            + 0u16.packed_len()
+        0u16.packed_len()
             + self.inputs.iter().map(Packable::packed_len).sum::<usize>()
             + 0u16.packed_len()
             + self.outputs.iter().map(Packable::packed_len).sum::<usize>()
@@ -58,8 +59,6 @@ impl Packable for TransactionPayloadEssence {
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        0u8.pack(writer)?;
-
         (self.inputs.len() as u16).pack(writer)?;
         for input in self.inputs.iter() {
             input.pack(writer)?;
@@ -82,12 +81,6 @@ impl Packable for TransactionPayloadEssence {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let essence_kind = u8::unpack(reader)?;
-
-        if essence_kind != 0u8 {
-            return Err(Self::Error::InvalidKind(0, essence_kind));
-        }
-
         let inputs_len = u16::unpack(reader)? as usize;
 
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&inputs_len) {
@@ -126,13 +119,13 @@ impl Packable for TransactionPayloadEssence {
 }
 
 #[derive(Debug, Default)]
-pub struct TransactionPayloadEssenceBuilder {
+pub struct RegularEssenceBuilder {
     pub(crate) inputs: Vec<Input>,
     pub(crate) outputs: Vec<Output>,
     pub(crate) payload: Option<Payload>,
 }
 
-impl TransactionPayloadEssenceBuilder {
+impl RegularEssenceBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -162,7 +155,7 @@ impl TransactionPayloadEssenceBuilder {
         self
     }
 
-    pub fn finish(mut self) -> Result<TransactionPayloadEssence, Error> {
+    pub fn finish(mut self) -> Result<RegularEssence, Error> {
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.inputs.len()) {
             return Err(Error::InvalidInputOutputCount(self.inputs.len()));
         }
@@ -248,7 +241,7 @@ impl TransactionPayloadEssenceBuilder {
         self.inputs.sort();
         self.outputs.sort();
 
-        Ok(TransactionPayloadEssence {
+        Ok(RegularEssence {
             inputs: self.inputs.into_boxed_slice(),
             outputs: self.outputs.into_boxed_slice(),
             payload: self.payload,
