@@ -3,7 +3,7 @@
 
 use crate::{
     handlers::{BodyInner, SuccessBody},
-    types::{GossipDto, PeerDto},
+    types::PeerDto,
 };
 
 use bee_network::{Command::AddPeer, Multiaddr, NetworkController, PeerId, PeerRelation, Protocol};

@@ -187,9 +187,9 @@ impl TransactionPayloadBuilder {
                 //     // Signature Unlock Blocks must define an Ed25519-Signature
                 //     match block {
                 //         UnlockBlock::Reference(r) => {
-                //             // Reference Unlock Blocks must specify a previous Unlock Block which is not of type Reference
-                //             // Unlock Block. Since it's not the first input it unlocks, it must have
-                //             // differente transaction id from previous one
+                //             // Reference Unlock Blocks must specify a previous Unlock Block which is not of type
+                // Reference             // Unlock Block. Since it's not the first input it unlocks, it
+                // must have             // differente transaction id from previous one
                 //             if i != 0 {
                 //                 match &essence.inputs()[i] {
                 //                     Input::UTXO(u) => match &essence.inputs()[i - 1] {
@@ -208,14 +208,14 @@ impl TransactionPayloadBuilder {
                 //             }
                 //         }
                 //         UnlockBlock::Signature(_) => {
-                //             // A Signature Unlock Block unlocking multiple inputs must only appear once (be unique) and be
-                //             // positioned at same index of the first input it unlocks.
+                //             // A Signature Unlock Block unlocking multiple inputs must only appear once (be unique)
+                // and be             // positioned at same index of the first input it unlocks.
                 //             if self.unlock_blocks.iter().filter(|j| *j == block).count() > 1 {
                 //                 return Err(Error::DuplicateError);
                 //             }
 
-                //             // Since it's first input it unlocks, it must have differente transaction id from previous one
-                //             if i != 0 {
+                //             // Since it's first input it unlocks, it must have differente transaction id from
+                // previous one             if i != 0 {
                 //                 match &essence.inputs()[i] {
                 //                     Input::UTXO(u) => match &essence.inputs()[i - 1] {
                 //                         Input::UTXO(v) => {
