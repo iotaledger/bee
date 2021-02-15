@@ -57,21 +57,18 @@ impl<N: Node> Worker<N> for NetworkHost {
             mut internal_command_receiver,
         } = config;
 
+        let local_keys_clone = local_keys.clone();
+        let internal_event_sender_clone = internal_event_sender.clone();
+
+        let mut swarm = swarm::build_swarm(&local_keys_clone, internal_event_sender_clone)
+            .await
+            .expect("Fatal error: creating transport layer failed.");
+
+        info!("Binding address(es): {}", bind_address);
+
+        let _ = Swarm::listen_on(&mut swarm, bind_address).expect("Fatal error: address binding failed.");
+
         node.spawn::<Self, _, _>(|mut shutdown| async move {
-            let local_keys_clone = local_keys.clone();
-            let internal_event_sender_clone = internal_event_sender.clone();
-
-            // A swarm for listening.
-            let mut swarm = swarm::build_swarm(&local_keys_clone, internal_event_sender_clone)
-                .await
-                .expect("Fatal error: creating transport layer failed.");
-
-            info!("Binding address(es): {}", bind_address);
-
-            let _ = Swarm::listen_on(&mut swarm, bind_address).expect("Fatal error: address binding failed.");
-
-            // let swarm_events = ShutdownStream::new(shutdown, swarm);
-            // while let Some(swarm_event) = swarm_events.next().await { .. }
 
             loop {
                 let swarm_next_event = Swarm::next_event(&mut swarm);
@@ -107,11 +104,18 @@ impl<N: Node> Worker<N> for NetworkHost {
 }
 
 fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, _internal_event_sender: &InternalEventSender) {
-    // TODO: consider handling more events
-    #[allow(clippy::single_match)]
     match event {
         SwarmEvent::NewListenAddr(_address) => {
             // TODO: collect listen address to deny dialing it
+        }
+        SwarmEvent::ConnectionEstablished { peer_id, .. } => {
+            info!("Started protocol with {}", peer_id);
+        }
+        SwarmEvent::ConnectionClosed { peer_id, .. } => {
+            info!("Stopped protocol with {}", peer_id);
+        }
+        SwarmEvent::ListenerError { error } => {
+            error!("Libp2p error: Cause: {}", error);
         }
         _ => {}
     }

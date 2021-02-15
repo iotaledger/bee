@@ -85,7 +85,7 @@ impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
 
         if self
             .internal_sender
-            .send(InternalEvent::ConnectionEstablished {
+            .send(InternalEvent::ProtocolEstablished {
                 peer_id,
                 peer_addr,
                 conn_info,

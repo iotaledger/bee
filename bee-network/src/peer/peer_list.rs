@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::MAX_UNKNOWN_PEERS;
+use crate::{swarm::protocols::gossip::GossipSender, MAX_UNKNOWN_PEERS};
 
 use libp2p::PeerId;
 use tokio::sync::RwLock;
@@ -25,24 +25,23 @@ impl PeerList {
     }
 
     // If the insertion fails for some reason, we give it back to the caller.
-    pub async fn insert(
-        &self,
-        peer_id: PeerId,
-        peer_info: PeerInfo,
-        peer_state: PeerState,
-    ) -> Result<(), InsertionFailure> {
+    pub async fn insert(&self, peer_id: PeerId, peer_info: PeerInfo) -> Result<(), InsertionFailure> {
         if let Err(e) = self.accepts(&peer_id, &peer_info).await {
-            Err(InsertionFailure(peer_id, peer_info, peer_state, e))
+            Err(InsertionFailure(peer_id, peer_info, e))
         } else {
             // Since we already checked that such a `peer_id` is not yet present, the returned value is always `None`.
-            let _ = self.0.write().await.insert(peer_id, (peer_info, peer_state));
+            let _ = self
+                .0
+                .write()
+                .await
+                .insert(peer_id, (peer_info, PeerState::disconnected()));
             Ok(())
         }
     }
 
     pub async fn upgrade_relation(&self, peer_id: &PeerId) -> Result<(), Error> {
         let mut this = self.0.write().await;
-        let (info, _) = this.get_mut(peer_id).ok_or_else(|| Error::UnregisteredPeer(*peer_id))?;
+        let (info, _) = this.get_mut(peer_id).ok_or_else(|| Error::PeerMissing(*peer_id))?;
 
         info.relation.upgrade();
 
@@ -51,30 +50,44 @@ impl PeerList {
 
     pub async fn downgrade_relation(&self, peer_id: &PeerId) -> Result<(), Error> {
         let mut this = self.0.write().await;
-        let (info, _) = this.get_mut(peer_id).ok_or_else(|| Error::UnregisteredPeer(*peer_id))?;
+        let (info, _) = this.get_mut(peer_id).ok_or_else(|| Error::PeerMissing(*peer_id))?;
 
         info.relation.downgrade();
 
         Ok(())
     }
 
-    pub async fn update_state(&self, peer_id: &PeerId, new_peer_state: PeerState) -> Result<(), Error> {
+    pub async fn connect(&self, peer_id: &PeerId, gossip_sender: GossipSender) -> Result<(), Error> {
         let mut this = self.0.write().await;
-        let (_, state) = this.get_mut(peer_id).ok_or_else(|| Error::UnregisteredPeer(*peer_id))?;
+        let (_, state) = this.get_mut(peer_id).ok_or_else(|| Error::PeerMissing(*peer_id))?;
 
-        *state = new_peer_state;
-
-        Ok(())
+        if state.is_connected() {
+            Err(Error::PeerAlreadyConnected(*peer_id))
+        } else {
+            state.set_connected(gossip_sender);
+            Ok(())
+        }
     }
 
-    #[allow(dead_code)]
+    pub async fn disconnect(&self, peer_id: &PeerId) -> Result<GossipSender, Error> {
+        let mut this = self.0.write().await;
+        let (_, state) = this.get_mut(peer_id).ok_or_else(|| Error::PeerMissing(*peer_id))?;
+
+        if state.is_disconnected() {
+            Err(Error::PeerAlreadyDisconnected(*peer_id))
+        } else {
+            // `unwrap` is safe, because we know we're connected.
+            Ok(state.set_disconnected().unwrap())
+        }
+    }
+
     pub async fn contains(&self, peer_id: &PeerId) -> bool {
         self.0.read().await.contains_key(peer_id)
     }
 
     pub async fn accepts(&self, peer_id: &PeerId, peer_info: &PeerInfo) -> Result<(), Error> {
         if self.0.read().await.contains_key(peer_id) {
-            return Err(Error::PeerAlreadyRegistered(*peer_id));
+            return Err(Error::PeerAlreadyAdded(*peer_id));
         }
 
         // Prevent inserting more peers than preconfigured.
@@ -86,7 +99,7 @@ impl PeerList {
             ));
         }
         if self.0.read().await.contains_key(peer_id) {
-            return Err(Error::PeerAlreadyRegistered(*peer_id));
+            return Err(Error::PeerAlreadyAdded(*peer_id));
         }
 
         Ok(())
@@ -98,7 +111,7 @@ impl PeerList {
             .write()
             .await
             .remove(peer_id)
-            .ok_or_else(|| Error::UnregisteredPeer(*peer_id))?;
+            .ok_or_else(|| Error::PeerMissing(*peer_id))?;
 
         Ok(info)
     }
@@ -114,8 +127,17 @@ impl PeerList {
             .read()
             .await
             .get(peer_id)
-            .ok_or_else(|| Error::UnregisteredPeer(*peer_id))
+            .ok_or_else(|| Error::PeerMissing(*peer_id))
             .map(|(peer_info, _)| peer_info.clone())
+    }
+
+    pub async fn update_info(&self, peer_id: &PeerId, peer_info: PeerInfo) -> Result<(), Error> {
+        let mut this = self.0.write().await;
+        let (info, _) = this.get_mut(peer_id).ok_or_else(|| Error::PeerMissing(*peer_id))?;
+
+        *info = peer_info;
+
+        Ok(())
     }
 
     pub async fn is(&self, peer_id: &PeerId, predicate: impl Fn(&PeerInfo, &PeerState) -> bool) -> Result<bool, Error> {
@@ -123,7 +145,7 @@ impl PeerList {
             .read()
             .await
             .get(peer_id)
-            .ok_or_else(|| Error::UnregisteredPeer(*peer_id))
+            .ok_or_else(|| Error::PeerMissing(*peer_id))
             .map(|(info, state)| predicate(info, state))
     }
 
@@ -158,15 +180,15 @@ impl PeerList {
         )
     }
 
-    pub async fn remove_if(&self, id: &PeerId, predicate: impl Fn(&PeerInfo, &PeerState) -> bool) {
-        let remove = if let Some((info, state)) = self.0.read().await.get(id) {
-            predicate(info, state)
+    pub async fn remove_if(&self, peer_id: &PeerId, predicate: impl Fn(&PeerInfo, &PeerState) -> bool) -> bool {
+        if let Some((info, state)) = self.0.read().await.get(peer_id) {
+            if predicate(info, state) {
+                self.0.write().await.remove(peer_id).is_some()
+            } else {
+                false
+            }
         } else {
-            return;
-        };
-
-        if remove {
-            let _ = self.0.write().await.remove(id);
+            false
         }
     }
 

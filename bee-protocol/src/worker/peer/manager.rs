@@ -12,7 +12,7 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_network::{Event, NetworkListener, Service as NetworkService};
+use bee_network::{Event, NetworkListener, NetworkService};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 

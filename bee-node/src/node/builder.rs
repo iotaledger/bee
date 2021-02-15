@@ -12,7 +12,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_network::{self, NetworkController};
+use bee_network::{self, NetworkServiceController};
 use bee_peering::{ManualPeerManager, PeerManager};
 use bee_runtime::{
     event::Bus,
@@ -244,7 +244,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         // TODO: turn into worker
         info!("Starting manual peer manager...");
-        let network = node.resource::<NetworkController>();
+        let network = node.resource::<NetworkServiceController>();
         let manual_peering_config = config.peering.manual.clone();
         ManualPeerManager::new(manual_peering_config, &network).await;
 

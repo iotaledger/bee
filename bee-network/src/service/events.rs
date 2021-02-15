@@ -81,14 +81,14 @@ pub enum Event {
 
 #[derive(Debug)]
 pub enum InternalEvent {
-    ConnectionEstablished {
+    ProtocolEstablished {
         peer_id: PeerId,
         peer_addr: Multiaddr,
         conn_info: ConnectionInfo,
         gossip_in: GossipReceiver,
         gossip_out: GossipSender,
     },
-    ConnectionDropped {
+    ProtocolDropped {
         peer_id: PeerId,
     },
 }

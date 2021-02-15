@@ -7,7 +7,7 @@ use super::{
 };
 use crate::{
     alias,
-    peer::{self, AddrBanlist, InsertionFailure, PeerBanlist, PeerInfo, PeerList, PeerRelation, PeerState},
+    peer::{self, AddrBanlist, InsertionFailure, PeerBanlist, PeerInfo, PeerList, PeerRelation},
     RECONNECT_INTERVAL_SECS,
 };
 
@@ -258,79 +258,68 @@ async fn process_internal_event(
     trace!("Received {:?}.", internal_event);
 
     match internal_event {
-        InternalEvent::ConnectionEstablished {
+        InternalEvent::ProtocolEstablished {
             peer_id,
             peer_addr,
             conn_info,
             gossip_in,
             gossip_out,
         } => {
-            // Get the PeerInfo, or create one
-            let peer_info = if let Ok(peer_info) = peerlist.get_info(&peer_id).await {
-                peer_info
-            } else {
-                PeerInfo {
+            // In case the peer doesn't exist yet, we create a `PeerInfo` for that peer on-the-fly.
+            if !peerlist.contains(&peer_id).await {
+                let peer_info = PeerInfo {
                     address: peer_addr,
                     alias: alias!(peer_id).to_string(),
                     relation: PeerRelation::Unknown,
-                }
-            };
+                };
 
-            match peer_info.relation {
-                PeerRelation::Known => peerlist.update_state(&peer_id, PeerState::Connected).await?,
-                PeerRelation::Unknown => {
-                    peerlist
-                        .insert(peer_id, peer_info.clone(), PeerState::Connected)
-                        .await
-                        .map_err(|InsertionFailure(_, _, _, e)| e)?;
+                peerlist
+                    .insert(peer_id, peer_info.clone())
+                    .await
+                    .map_err(|InsertionFailure(_, _, e)| e)?;
 
-                    if event_sender
-                        .send(Event::PeerAdded {
-                            peer_id,
-                            info: peer_info.clone(),
-                        })
-                        .is_err()
-                    {
-                        trace!("Error sending event 'PeerAdded'. (Shutting down?)");
-                    }
-                }
+                let _ = event_sender.send(Event::PeerAdded {
+                    peer_id,
+                    info: peer_info,
+                });
             }
 
+            debug_assert!(peerlist.contains(&peer_id).await);
+
+            // We can now be sure to always get a `PeerInfo`.
+            let peer_info = peerlist
+                .get_info(&peer_id)
+                .await
+                .expect("error getting info although checked");
+
+            peerlist.connect(&peer_id, gossip_out.clone()).await?;
+
             info!(
-                "Established ({}) connection with '{}'.",
+                "Established ({}) protocol with '{}'.",
                 conn_info.origin, peer_info.alias
             );
 
-            if event_sender
-                .send(Event::PeerConnected {
-                    peer_id,
-                    address: peer_info.address,
-                    gossip_in,
-                    gossip_out,
-                })
-                .is_err()
-            {
-                trace!("Error sending event 'PeerConnected'. (Shutting down?)");
-            }
+            let _ = event_sender.send(Event::PeerConnected {
+                peer_id,
+                address: peer_info.address,
+                gossip_in,
+                gossip_out,
+            });
         }
 
-        InternalEvent::ConnectionDropped { peer_id } => {
-            if let Err(peer::Error::UnregisteredPeer(_)) =
-                peerlist.update_state(&peer_id, PeerState::Disconnected).await
-            {
-                // NOTE: the peer has been removed already
-                return Ok(());
-            }
+        InternalEvent::ProtocolDropped { peer_id } => {
+            // NB: Just in case there is any error (PeerMissing, PeerAlreadyDisconnected),
+            // then 'disconnect' just becomes a NoOp.
 
-            // TODO: maybe allow some fixed timespan for a connection recovery from either end before removing.
-            peerlist.remove_if(&peer_id, |info, _| info.relation.is_unknown()).await;
+            let _ = peerlist.disconnect(&peer_id).await;
 
-            // NOTE: During shutdown the protocol layer shuts down before the network service, so sending would fail,
-            // hence we need to silently ignore send failures until we have a way to query current node state (e.g.
-            // NodeState::ShuttingDown)
-            if event_sender.send(Event::PeerDisconnected { peer_id }).is_err() {
-                trace!("Error sending event 'PeerDisconnected'. (Shutting down?)");
-            }
+            // NB: In case of an "unknown" peer, we also want it removed from the peerlist. This operation will
+            // only fail, if it has been removed already, but will never leave an "unknown" peer in the list.
+            let _ = peerlist
+                .remove_if(&peer_id, |peer_info, _| peer_info.relation.is_unknown())
+                .await;
+
+            let _ = event_sender.send(Event::PeerDisconnected { peer_id });
         }
     }
 
@@ -352,7 +341,7 @@ async fn add_peer(
     };
 
     // If the insert fails for some reason, we get the peer data back, so it can be reused.
-    match peerlist.insert(peer_id, peer_info, PeerState::Disconnected).await {
+    match peerlist.insert(peer_id, peer_info).await {
         Ok(()) => {
             // NB: We could also make `insert` return the just inserted `PeerInfo`, but that would
             // make for an unusual API.
@@ -360,14 +349,29 @@ async fn add_peer(
             // We just added it, so 'unwrap'ping is safe!
             let info = peerlist.get_info(&peer_id).await.unwrap();
 
-            // Inform the user that the command succeeded.
-            if event_sender.send(Event::PeerAdded { peer_id, info }).is_err() {
-                warn!("Failed to send 'PeerAdded' event. (Shutting down?)");
-            }
+            let _ = event_sender.send(Event::PeerAdded { peer_id, info });
+
             Ok(())
         }
-        Err(InsertionFailure(peer_id, peer_info, _, e)) => {
-            // Inform the user that the command failed.
+        Err(InsertionFailure(peer_id, peer_info, mut e)) => {
+            // NB: This fixes an edge case where an in fact known peer connects before being added by the
+            // manual peer manager, and hence, as unknown. In such a case we simply update to the correct
+            // info (address, alias, relation).
+
+            if matches!(e, peer::Error::PeerAlreadyAdded(_)) && peer_info.relation.is_known() {
+                match peerlist.update_info(&peer_id, peer_info.clone()).await {
+                    Ok(()) => {
+                        let _ = event_sender.send(Event::PeerAdded {
+                            peer_id,
+                            info: peer_info,
+                        });
+
+                        return Ok(());
+                    }
+                    Err(error) => e = error,
+                }
+            }
+
             let _ = event_sender.send(Event::CommandFailed {
                 command: Command::AddPeer {
                     peer_id,
@@ -385,9 +389,15 @@ async fn add_peer(
 }
 
 async fn remove_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), peer::Error> {
+    disconnect_peer(peer_id, peerlist, event_sender).await?;
+
     match peerlist.remove(&peer_id).await {
+        Ok(_peer_info) => {
+            let _ = event_sender.send(Event::PeerRemoved { peer_id });
+
+            Ok(())
+        }
         Err(e) => {
-            // Inform the user that the command failed.
             let _ = event_sender.send(Event::CommandFailed {
                 command: Command::RemovePeer { peer_id },
                 reason: e.clone(),
@@ -395,35 +405,32 @@ async fn remove_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventS
 
             Err(e)
         }
-        Ok(_) => {
-            // Inform the user that the command succeeded.
-            if event_sender.send(Event::PeerRemoved { peer_id }).is_err() {
-                // .map_err(|_| peers::Error::EventSendFailure("PeerRemoved"))?;
-            }
-
-            Ok(())
-        }
     }
 }
 
 async fn disconnect_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), peer::Error> {
-    // NOTE: that's a bit wonky now since we don't own the message sender anymore, but instead pass it to the consumer
-    // we propably should intercept
-    match peerlist.update_state(&peer_id, PeerState::Disconnected).await {
+    // NB: We sent the `PeerDisconnected` event *before* we sent the shutdown signal to the stream writer task, so
+    // it can stop adding messages to the channel before we drop the receiver.
+
+    match peerlist.disconnect(&peer_id).await {
+        Ok(gossip_sender) => {
+            let _ = event_sender.send(Event::PeerDisconnected { peer_id });
+
+            let shutdown_msg = Vec::with_capacity(0);
+
+            // In very weird situations where both peers disconnect from each other at almost the same time, we
+            // might not be able to send to this channel anylonger, so we ignore `SendError`s.
+            let _ = gossip_sender.send(shutdown_msg);
+
+            Ok(())
+        }
         Err(e) => {
-            // Inform the user that the command failed.
             let _ = event_sender.send(Event::CommandFailed {
                 command: Command::DisconnectPeer { peer_id },
                 reason: e.clone(),
             });
 
             Err(e)
-        }
-        Ok(()) => {
-            // Inform the user that the command succeeded.
-            let _ = event_sender.send(Event::PeerDisconnected { peer_id });
-
-            Ok(())
         }
     }
 }

@@ -12,8 +12,6 @@ use log::*;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use super::error::Error;
-
 const MSG_BUFFER_SIZE: usize = 32768;
 
 /// A shorthand for an unbounded channel sender.
@@ -31,92 +29,100 @@ pub fn spawn_gossip_in_task(
     peer_id: PeerId,
     mut reader: ReadHalf<NegotiatedSubstream>,
     incoming_gossip_sender: GossipSender,
-    internal_sender: InternalEventSender,
+    internal_event_sender: InternalEventSender,
 ) {
     tokio::spawn(async move {
-        let mut buffer = vec![0u8; MSG_BUFFER_SIZE];
+        let mut msg_buf = vec![0u8; MSG_BUFFER_SIZE];
+        let mut msg_len = 0;
 
         loop {
-            if let Ok(num_read) = recv_message(&mut reader, &mut buffer, &peer_id).await {
-                debug_assert!(num_read > 0);
-
-                if incoming_gossip_sender.send(buffer[..num_read].to_vec()).is_err() {
-                    // Any reason sending to this channel fails is unrecoverable (OOM or receiver dropped),
-                    // hence, we will silently just end this task.
+            if recv_message(&mut reader, &mut msg_buf, &mut msg_len).await {
+                if incoming_gossip_sender.send(msg_buf[..msg_len].to_vec()).is_err() {
+                    // The receiver of this channel was dropped, maybe due to a shutdown. There is nothing we can do to
+                    // salvage this situation, hence we drop the connection.
                     break;
                 }
             } else {
-                // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
-                if internal_sender
-                    .send(InternalEvent::ConnectionDropped { peer_id })
-                    .is_err()
-                {
-                    trace!("Receiver of internal event channel already dropped.");
-                }
-
-                // Connection with peer stopped due to reasons outside of our control.
+                // We could not read anymore from the underlying stream, probably because the peer dropped the
+                // connection.
                 break;
             }
         }
 
-        trace!("Exiting gossip-in processor for {}", peer_id);
+        trace!("Exiting incoming gossip event loop for {}", peer_id);
+
+        // NB: The network service will not shut down before it has received the `ConnectionDropped` event from all
+        // once connected peers, hence if the following send fails, then it must be considered a bug.
+
+        internal_event_sender
+            .send(InternalEvent::ProtocolDropped { peer_id })
+            .expect("The service must not shutdown as long as there are gossip tasks running.");
     });
+}
+
+async fn recv_message<S>(stream: &mut S, message: &mut [u8], message_len: &mut usize) -> bool
+where
+    S: AsyncRead + Unpin,
+{
+    if let Ok(len) = stream.read(message).await {
+        *message_len = len;
+        true
+    } else {
+        // Stream closed remotely or some other unsalvageable connection issue.
+        false
+    }
 }
 
 pub fn spawn_gossip_out_task(
     peer_id: PeerId,
     mut writer: WriteHalf<NegotiatedSubstream>,
     outgoing_gossip_receiver: GossipReceiver,
-    internal_sender: InternalEventSender,
+    internal_event_sender: InternalEventSender,
 ) {
     tokio::spawn(async move {
         let mut outgoing_gossip_receiver = outgoing_gossip_receiver.fuse();
 
-        loop {
-            if let Some(message) = outgoing_gossip_receiver.next().await {
-                if send_message(&mut writer, &message).await.is_err() {
-                    // Any reason sending to the stream fails is considered unrecoverable, hence,
-                    // we will end this task.
-                    break;
-                }
-            } else {
-                // NOTE: we silently ignore, if that event can't be send as this usually means, that the node shut down
-                if internal_sender
-                    .send(InternalEvent::ConnectionDropped { peer_id })
-                    .is_err()
-                {
-                    trace!("Receiver of internal event channel already dropped.");
-                }
+        // If the gossip sender dropped we end the connection.
+        while let Some(message) = outgoing_gossip_receiver.next().await {
+            let message_len = message.len();
 
+            // NB: Instead of polling another shutdown channel, we analogously use an empty message
+            // to signal that we want to end the connection. We use this "trick" whenever the network
+            // receives the `DisconnectPeer` command to enforce that the connection will be dropped.
+
+            if message_len == 0 {
+                trace!("Stream closing locally.");
+                break;
+            }
+
+            // If sending to the stream fails we end the connection.
+            if !send_message(&mut writer, &message).await {
                 break;
             }
         }
 
-        trace!("Exiting gossip-out processor for {}", peer_id);
+        trace!("Exiting outgoing gossip event loop for {}", peer_id);
+
+        // NB: The network service will not shut down before it has received the `ConnectionDropped` event from all
+        // once connected peers, hence if the following send fails, then it must be considered a bug.
+
+        internal_event_sender
+            .send(InternalEvent::ProtocolDropped { peer_id })
+            .expect("The service must not shutdown as long as there are gossip tasks running.");
     });
 }
 
-async fn send_message<S>(stream: &mut S, message: &[u8]) -> Result<(), Error>
+async fn send_message<S>(stream: &mut S, message: &[u8]) -> bool
 where
     S: AsyncWrite + Unpin,
 {
-    stream.write_all(message).await.map_err(|_| Error::MessageSendError)?;
-
-    stream.flush().await.map_err(|_| Error::MessageSendError)?;
-
-    Ok(())
-}
-
-async fn recv_message<S>(stream: &mut S, message: &mut [u8], peer_id: &PeerId) -> Result<usize, Error>
-where
-    S: AsyncRead + Unpin,
-{
-    let num_read = stream.read(message).await.map_err(|_| Error::MessageRecvError)?;
-
-    if num_read == 0 {
-        trace!("Stream was closed remotely (EOF).");
-        return Err(Error::StreamClosedByRemote(*peer_id));
+    if stream.write_all(message).await.is_err() {
+        return false;
     }
 
-    Ok(num_read)
+    if stream.flush().await.is_err() {
+        return false;
+    }
+
+    true
 }

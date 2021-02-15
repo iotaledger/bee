@@ -15,7 +15,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_network::NetworkController;
+use bee_network::NetworkServiceController;
 use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorker, PeerManager, PeerManagerResWorker};
 use bee_runtime::{
     node::{Node, NodeBuilder},
@@ -75,7 +75,7 @@ where
         let storage = node.storage();
         let message_submitter = node.worker::<MessageSubmitterWorker>().unwrap().tx.clone();
         let peer_manager = node.resource::<PeerManager>();
-        let network_controller = node.resource::<NetworkController>();
+        let network_controller = node.resource::<NetworkServiceController>();
         let node_info = node.info();
 
         node.spawn::<Self, _, _>(|shutdown| async move {

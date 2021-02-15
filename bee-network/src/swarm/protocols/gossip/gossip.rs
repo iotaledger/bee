@@ -94,6 +94,8 @@ impl NetworkBehaviour for Gossip {
     }
 
     fn inject_connection_established(&mut self, peer_id: &PeerId, conn_id: &ConnectionId, endpoint: &ConnectedPoint) {
+        // TODO: Perform the connection checks (not banned, not a duplicate etc)
+
         let (address, origin) = match endpoint {
             ConnectedPoint::Dialer { address } => (address.clone(), Origin::Outbound),
             ConnectedPoint::Listener { send_back_addr, .. } => (send_back_addr.clone(), Origin::Inbound),

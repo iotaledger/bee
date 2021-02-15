@@ -35,9 +35,9 @@ where
     type Future = future::Ready<Result<Self::Output, Self::Error>>;
 
     fn upgrade_inbound(self, stream: C, _: Self::Info) -> Self::Future {
-        trace!("GOSSIP UPGRADE: INBOUND");
-        // NOTE: do nothing, just return the stream.
         trace!("Upgrading inbound connection to gossip protocol.");
+
+        // Just return the stream.
         future::ok(stream)
     }
 }
@@ -51,8 +51,8 @@ where
     type Future = future::Ready<Result<Self::Output, Self::Error>>;
 
     fn upgrade_outbound(self, stream: C, _: Self::Info) -> Self::Future {
-        trace!("GOSSIP UPGRADE: OUTBOUND");
-        // NOTE: do nothing, just return the stream.
+        trace!("Upgrading outbound connection to gossip protocol.");
+
         future::ok(stream)
     }
 }
