@@ -9,6 +9,7 @@ pub use crate::{
             MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH,
             MILESTONE_SIGNATURE_LENGTH,
         },
+        receipt::{MigratedFundsEntry, ReceiptPayload},
         transaction::{
             Address, Bech32Address, ConsumedOutput, CreatedOutput, Ed25519Address, Ed25519Signature, Input, Output,
             OutputId, ReferenceUnlock, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput,

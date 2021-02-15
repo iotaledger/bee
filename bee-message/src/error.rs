@@ -8,6 +8,7 @@ pub enum Error {
     InvalidAmount(u64),
     InvalidDustAmount(u64),
     InvalidTreasuryAmount(u64),
+    InvalidMigratedFundsEntryAmount(u64),
     InvalidInputOutputCount(usize),
     InvalidInputOutputIndex(u16),
     InvalidInputKind(u8),
@@ -45,6 +46,9 @@ impl fmt::Display for Error {
             Error::InvalidAmount(amount) => write!(f, "Invalid amount: {}.", amount),
             Error::InvalidDustAmount(amount) => write!(f, "Invalid dust amount: {}.", amount),
             Error::InvalidTreasuryAmount(amount) => write!(f, "Invalid treasury amount: {}.", amount),
+            Error::InvalidMigratedFundsEntryAmount(amount) => {
+                write!(f, "Invalid migrated funds entry amount: {}.", amount)
+            }
             Error::InvalidInputOutputCount(count) => write!(f, "Invalid input or output count: {}.", count),
             Error::InvalidInputOutputIndex(index) => write!(f, "Invalid input or output index: {}.", index),
             Error::InvalidInputKind(t) => write!(f, "Invalid input kind: {}.", t),
