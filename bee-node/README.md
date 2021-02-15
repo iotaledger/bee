@@ -30,7 +30,7 @@ Restart Powershell
 
 ### Rust
 
-Minimum required version 1.47.
+Minimum required version 1.48.
 
 #### Installation (Debian, MacOS)
 
