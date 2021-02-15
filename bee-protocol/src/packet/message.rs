@@ -5,12 +5,9 @@
 
 use crate::packet::Packet;
 
-use bee_message::MESSAGE_LENGTH_MAX;
+use bee_message::{MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN};
 
 use std::ops::Range;
-
-const VARIABLE_MIN_SIZE: usize = 77;
-const VARIABLE_MAX_SIZE: usize = MESSAGE_LENGTH_MAX;
 
 /// A packet to send a message.
 #[derive(Clone, Default)]
@@ -31,7 +28,7 @@ impl Packet for Message {
     const ID: u8 = 0x02;
 
     fn size_range() -> Range<usize> {
-        (VARIABLE_MIN_SIZE)..(VARIABLE_MAX_SIZE + 1)
+        (MESSAGE_LENGTH_MIN)..(MESSAGE_LENGTH_MAX + 1)
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
@@ -87,13 +84,13 @@ mod tests {
 
     #[test]
     fn size_range() {
-        assert_eq!(Message::size_range().contains(&(VARIABLE_MIN_SIZE - 1)), false);
-        assert_eq!(Message::size_range().contains(&VARIABLE_MIN_SIZE), true);
-        assert_eq!(Message::size_range().contains(&(VARIABLE_MIN_SIZE + 1)), true);
+        assert_eq!(Message::size_range().contains(&(MESSAGE_LENGTH_MIN - 1)), false);
+        assert_eq!(Message::size_range().contains(&MESSAGE_LENGTH_MIN), true);
+        assert_eq!(Message::size_range().contains(&(MESSAGE_LENGTH_MIN + 1)), true);
 
-        assert_eq!(Message::size_range().contains(&(VARIABLE_MAX_SIZE - 1)), true);
-        assert_eq!(Message::size_range().contains(&VARIABLE_MAX_SIZE), true);
-        assert_eq!(Message::size_range().contains(&(VARIABLE_MAX_SIZE + 1)), false);
+        assert_eq!(Message::size_range().contains(&(MESSAGE_LENGTH_MAX - 1)), true);
+        assert_eq!(Message::size_range().contains(&MESSAGE_LENGTH_MAX), true);
+        assert_eq!(Message::size_range().contains(&(MESSAGE_LENGTH_MAX + 1)), false);
     }
 
     #[test]

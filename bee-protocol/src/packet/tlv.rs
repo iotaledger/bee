@@ -9,8 +9,8 @@ use crate::packet::{Header, Packet, HEADER_SIZE};
 #[derive(Debug)]
 pub(crate) enum Error {
     InvalidAdvertisedType(u8, u8),
-    InvalidAdvertisedLength(usize, usize),
-    InvalidLength(usize),
+    InvalidAdvertisedLength(u8, usize, usize),
+    InvalidLength(u8, usize),
 }
 
 /// Deserializes a TLV header and a byte buffer into a packet.
@@ -32,13 +32,14 @@ pub(crate) fn tlv_from_bytes<P: Packet>(header: &Header, bytes: &[u8]) -> Result
 
     if header.packet_length as usize != bytes.len() {
         return Err(Error::InvalidAdvertisedLength(
+            header.packet_type,
             header.packet_length as usize,
             bytes.len(),
         ));
     }
 
     if !P::size_range().contains(&bytes.len()) {
-        return Err(Error::InvalidLength(bytes.len()));
+        return Err(Error::InvalidLength(header.packet_type, bytes.len()));
     }
 
     Ok(P::from_bytes(bytes))
@@ -99,7 +100,8 @@ mod tests {
             },
             &vec![0u8; P::size_range().start + 1],
         ) {
-            Err(Error::InvalidAdvertisedLength(advertised_length, actual_length)) => {
+            Err(Error::InvalidAdvertisedLength(id, advertised_length, actual_length)) => {
+                assert_eq!(id, P::ID);
                 assert_eq!(advertised_length, P::size_range().start);
                 assert_eq!(actual_length, P::size_range().start + 1);
             }
@@ -115,7 +117,10 @@ mod tests {
             },
             &vec![0u8; P::size_range().start - 1],
         ) {
-            Err(Error::InvalidLength(length)) => assert_eq!(length, P::size_range().start - 1),
+            Err(Error::InvalidLength(id, length)) => {
+                assert_eq!(id, P::ID);
+                assert_eq!(length, P::size_range().start - 1);
+            }
             _ => unreachable!(),
         }
 
@@ -126,7 +131,10 @@ mod tests {
             },
             &vec![0u8; P::size_range().end],
         ) {
-            Err(Error::InvalidLength(length)) => assert_eq!(length, P::size_range().end),
+            Err(Error::InvalidLength(id, length)) => {
+                assert_eq!(id, P::ID);
+                assert_eq!(length, P::size_range().end);
+            }
             _ => unreachable!(),
         }
     }
