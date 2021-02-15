@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.3.1-alpha - 2021-02-15
+
+### Added
+
+- `LoggerConfig::target_width`;
+- `LoggerConfig::level_width`;
+
 ## 0.3.0-alpha - 2021-01-15
 
 ### Added
