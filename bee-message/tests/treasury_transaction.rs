@@ -11,7 +11,7 @@ const UTXO_INPUT: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb04
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
-fn valid() {
+fn new_valid() {
     let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
     let output = Output::from(TreasuryOutput::new(1_000).unwrap());
     let transaction = TreasuryTransactionPayload::new(input.clone(), output.clone()).unwrap();
@@ -21,7 +21,7 @@ fn valid() {
 }
 
 #[test]
-fn invalid_input() {
+fn new_invalid_input() {
     let input = Input::from(UTXOInput::from_str(UTXO_INPUT).unwrap());
     let output = Output::from(TreasuryOutput::new(1_000).unwrap());
 
@@ -32,7 +32,7 @@ fn invalid_input() {
 }
 
 #[test]
-fn invalid_output() {
+fn new_invalid_output() {
     let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let output = Output::from(SignatureLockedSingleOutput::new(address, IOTA_SUPPLY).unwrap());

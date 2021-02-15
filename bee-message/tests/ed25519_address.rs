@@ -70,12 +70,12 @@ fn bech32_string_to_address() {
 }
 
 #[test]
-fn valid_from_str() {
+fn from_str_valid() {
     Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
 }
 
 #[test]
-fn invalid_from_str_hex() {
+fn from_str_invalid_hex() {
     assert!(matches!(
         Ed25519Address::from_str(ED25519_ADDRESS_INVALID_HEX),
         Err(Error::InvalidHexadecimalChar(hex))
@@ -84,7 +84,7 @@ fn invalid_from_str_hex() {
 }
 
 #[test]
-fn invalid_from_str_len() {
+fn from_str_invalid_len() {
     assert!(matches!(
         Ed25519Address::from_str(ED25519_ADDRESS_INVALID_LEN),
         Err(Error::InvalidHexadecimalLength(expected, actual))

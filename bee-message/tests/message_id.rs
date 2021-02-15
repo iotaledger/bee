@@ -10,12 +10,12 @@ const MESSAGE_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10
 const MESSAGE_ID_INVALID_LEN: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6";
 
 #[test]
-fn valid_from_str() {
+fn from_str_valid() {
     MessageId::from_str(MESSAGE_ID).unwrap();
 }
 
 #[test]
-fn invalid_from_str_hex() {
+fn from_str_invalid_hex() {
     assert!(matches!(
         MessageId::from_str(MESSAGE_ID_INVALID_HEX),
         Err(Error::InvalidHexadecimalChar(hex))
@@ -24,7 +24,7 @@ fn invalid_from_str_hex() {
 }
 
 #[test]
-fn invalid_from_str_len() {
+fn from_str_invalid_len() {
     assert!(matches!(
         MessageId::from_str(MESSAGE_ID_INVALID_LEN),
         Err(Error::InvalidHexadecimalLength(expected, actual))

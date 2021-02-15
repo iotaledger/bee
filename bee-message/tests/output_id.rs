@@ -16,7 +16,7 @@ const OUTPUT_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d100
 const OUTPUT_ID_INVALID_LEN: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f";
 
 #[test]
-fn valid_new() {
+fn new_valid() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
     let output_id = OutputId::new(transaction_id, 42).unwrap();
 
@@ -25,7 +25,7 @@ fn valid_new() {
 }
 
 #[test]
-fn valid_split() {
+fn split_valid() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
     let output_id = OutputId::new(transaction_id, 42).unwrap();
     let (transaction_id_s, index) = output_id.split();
@@ -35,7 +35,7 @@ fn valid_split() {
 }
 
 #[test]
-fn invalid_new() {
+fn new_invalid() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
 
     assert!(matches!(
@@ -45,7 +45,7 @@ fn invalid_new() {
 }
 
 #[test]
-fn valid_try_from() {
+fn try_from_valid() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
     let output_id_bytes: [u8; OUTPUT_ID_LENGTH] = hex::decode(OUTPUT_ID).unwrap().try_into().unwrap();
     let output_id = OutputId::try_from(output_id_bytes).unwrap();
@@ -55,7 +55,7 @@ fn valid_try_from() {
 }
 
 #[test]
-fn invalid_try_from() {
+fn try_from_invalid() {
     let output_id_bytes: [u8; OUTPUT_ID_LENGTH] = hex::decode(OUTPUT_ID_INVALID_INDEX).unwrap().try_into().unwrap();
 
     assert!(matches!(
@@ -65,7 +65,7 @@ fn invalid_try_from() {
 }
 
 #[test]
-fn valid_from_str() {
+fn from_str_valid() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
 
@@ -74,7 +74,7 @@ fn valid_from_str() {
 }
 
 #[test]
-fn invalid_from_str_index() {
+fn from_str_invalid_index() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_INDEX),
         Err(Error::InvalidInputOutputIndex(127))
@@ -82,7 +82,7 @@ fn invalid_from_str_index() {
 }
 
 #[test]
-fn invalid_from_str_hex() {
+fn from_str_invalid_hex() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_HEX),
         Err(Error::InvalidHexadecimalChar(hex))
@@ -91,7 +91,7 @@ fn invalid_from_str_hex() {
 }
 
 #[test]
-fn invalid_from_str_len() {
+fn from_str_invalid_len() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_LEN),
         Err(Error::InvalidHexadecimalLength(expected, actual))

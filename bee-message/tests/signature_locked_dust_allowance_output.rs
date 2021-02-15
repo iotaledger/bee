@@ -9,7 +9,7 @@ use std::str::FromStr;
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
-fn valid_min_amount() {
+fn new_valid_min_amount() {
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let output = SignatureLockedDustAllowanceOutput::new(address, 1_000_000).unwrap();
 
@@ -18,7 +18,7 @@ fn valid_min_amount() {
 }
 
 #[test]
-fn valid_supply_amount() {
+fn new_valid_supply_amount() {
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let output = SignatureLockedDustAllowanceOutput::new(address, IOTA_SUPPLY).unwrap();
 
@@ -27,7 +27,7 @@ fn valid_supply_amount() {
 }
 
 #[test]
-fn invalid_less_than_min_amount() {
+fn new_invalid_less_than_min_amount() {
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
 
     assert!(matches!(
@@ -37,7 +37,7 @@ fn invalid_less_than_min_amount() {
 }
 
 #[test]
-fn invalid_more_than_max_amount() {
+fn new_invalid_more_than_max_amount() {
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
 
     assert!(matches!(

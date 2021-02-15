@@ -9,7 +9,7 @@ use core::str::FromStr;
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
-fn valid_new() {
+fn new_valid() {
     let tth = [42; 49];
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let amount = 42424242;
@@ -22,7 +22,7 @@ fn valid_new() {
 }
 
 #[test]
-fn invalid_new_amount() {
+fn new_invalid_amount() {
     let tth = [42; 49];
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let amount = 42;
