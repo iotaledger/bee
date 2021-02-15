@@ -24,7 +24,7 @@ pub struct SignatureLockedDustAllowanceOutput {
 impl SignatureLockedDustAllowanceOutput {
     pub fn new(address: Address, amount: u64) -> Result<Self, Error> {
         if !SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT.contains(&amount) {
-            return Err(Error::InvalidDustAmount(amount));
+            return Err(Error::InvalidDustAllowanceAmount(amount));
         }
 
         Ok(Self { address, amount })
