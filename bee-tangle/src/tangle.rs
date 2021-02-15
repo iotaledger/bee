@@ -19,10 +19,11 @@ use std::{
     fmt::Debug,
     marker::PhantomData,
     ops::Deref,
-    sync::atomic::{AtomicU64, Ordering},
+    sync::atomic::{AtomicUsize, Ordering},
 };
 
-const CACHE_LEN: usize = 100_000;
+pub const DEFAULT_CACHE_LEN: usize = 100_000;
+const CACHE_THRESHOLD_FACTOR: f64 = 0.1;
 
 /// A trait used to provide hooks for a tangle. The tangle acts as an in-memory cache and will use hooks to extend its
 /// effective volume. When an entry doesn't exist in the tangle cache and needs fetching, or when an entry gets
@@ -87,8 +88,8 @@ where
     vertices: TRwLock<HashMap<MessageId, Vertex<T>>>,
     children: TRwLock<HashMap<MessageId, (HashSet<MessageId>, bool)>>,
 
-    pub(crate) cache_counter: AtomicU64,
-    pub(crate) cache_queue: Mutex<LruCache<MessageId, u64, DefaultHashBuilder>>,
+    pub(crate) cache_queue: Mutex<LruCache<MessageId, (), DefaultHashBuilder>>,
+    max_len: AtomicUsize,
 
     pub(crate) hooks: H,
 }
@@ -113,8 +114,8 @@ where
             vertices: TRwLock::new(HashMap::new()),
             children: TRwLock::new(HashMap::new()),
 
-            cache_counter: AtomicU64::new(0),
-            cache_queue: Mutex::new(LruCache::with_hasher(CACHE_LEN + 1, DefaultHashBuilder::default())),
+            cache_queue: Mutex::new(LruCache::unbounded_with_hasher(DefaultHashBuilder::default())),
+            max_len: AtomicUsize::new(DEFAULT_CACHE_LEN),
 
             hooks,
         }
@@ -126,6 +127,11 @@ where
             cache_queue: Mutex::new(LruCache::with_hasher(cap + 1, DefaultHashBuilder::default())),
             ..self
         }
+    }
+
+    /// Change the maximum number of entries to store in the cache.
+    pub fn resize(&self, len: usize) {
+        self.max_len.store(len, Ordering::Relaxed);
     }
 
     /// Return a reference to the storage hooks used by this tangle.
@@ -145,10 +151,7 @@ where
                 entry.insert(vtx);
 
                 // Insert cache queue entry to track eviction priority
-                self.cache_queue
-                    .lock()
-                    .await
-                    .put(message_id, self.generate_cache_index());
+                self.cache_queue.lock().await.put(message_id, ());
 
                 Some(tx)
             }
@@ -194,14 +197,7 @@ where
         if res.is_some() {
             let mut cache_queue = self.cache_queue.lock().await;
             // Update message_id priority
-            let entry = cache_queue.get_mut(message_id);
-            let entry = if entry.is_none() {
-                cache_queue.put(*message_id, 0);
-                cache_queue.get_mut(message_id)
-            } else {
-                entry
-            };
-            *entry.unwrap() = self.generate_cache_index();
+            cache_queue.put(*message_id, ());
         }
 
         res
@@ -285,18 +281,6 @@ where
     }
 
     async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = HashSet<MessageId>> + '_> {
-        // struct Children<'a> {
-        //     children: dashmap::mapref::one::Ref<'a, MessageId, (HashSet<MessageId>, bool)>,
-        // }
-
-        // impl<'a> Deref for Children<'a> {
-        //     type Target = HashSet<MessageId>;
-
-        //     fn deref(&self) -> &Self::Target {
-        //         &self.children.deref().0
-        //     }
-        // }
-
         struct Wrapper<'a> {
             children: HashSet<MessageId>,
             phantom: PhantomData<&'a ()>,
@@ -345,12 +329,9 @@ where
         };
 
         // Insert cache queue entry to track eviction priority
-        self.cache_queue
-            .lock()
-            .await
-            .put(*message_id, self.generate_cache_index());
+        self.cache_queue.lock().await.put(*message_id, ());
 
-        Some(/* Children { children } */ Wrapper {
+        Some(Wrapper {
             children,
             phantom: PhantomData,
         })
@@ -391,22 +372,21 @@ where
         }
     }
 
-    fn generate_cache_index(&self) -> u64 {
-        self.cache_counter.fetch_add(1, Ordering::Relaxed)
-    }
-
     async fn perform_eviction(&self) {
-        let mut vertices = self.vertices.write().await;
-        let mut children = self.children.write().await;
-        let mut cache_queue = self.cache_queue.lock().await;
-        while vertices.len() > cache_queue.cap() {
-            let remove = cache_queue.pop_lru().map(|(id, _)| id);
+        let max_len = self.max_len.load(Ordering::Relaxed);
+        if self.vertices.read().await.len() > max_len {
+            let mut vertices = self.vertices.write().await;
+            let mut children = self.children.write().await;
+            let mut cache_queue = self.cache_queue.lock().await;
+            while vertices.len() > ((1.0 - CACHE_THRESHOLD_FACTOR) * max_len as f64) as usize {
+                let remove = cache_queue.pop_lru().map(|(id, _)| id);
 
-            if let Some(message_id) = remove {
-                vertices.remove(&message_id);
-                children.remove(&message_id);
-            } else {
-                break;
+                if let Some(message_id) = remove {
+                    vertices.remove(&message_id);
+                    children.remove(&message_id);
+                } else {
+                    break;
+                }
             }
         }
     }

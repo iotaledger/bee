@@ -22,7 +22,7 @@ bitflags = "1.2"
 dashmap = "4.0"
 futures = "0.3"
 log = "0.4"
-lru = "0.6"
+lru = "0.6.5"
 rand = "0.8"
 ref-cast = "1.0"
 serde = { version = "1.0", features = ["derive" ] }
