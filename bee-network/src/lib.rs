@@ -5,11 +5,12 @@
 
 #![warn(missing_docs)]
 #![deny(warnings)]
+#![allow(clippy::module_inception)]
 
-mod api;
 mod config;
-mod conns;
-mod peers;
+mod host;
+mod peer;
+mod service;
 mod swarm;
 
 // Reexports
@@ -21,10 +22,10 @@ pub use libp2p::{
 };
 
 // Exports
-pub use api::{commands::Command, events::Event, NetworkController, Service};
 pub use config::{NetworkConfig, NetworkConfigBuilder};
-pub use conns::{info::Origin, Host};
-pub use peers::{PeerInfo, PeerRelation};
+pub use host::{NetworkHost, Origin};
+pub use peer::{PeerInfo, PeerRelation};
+pub use service::{Command, Event, NetworkService, NetworkServiceController};
 pub use swarm::protocols::gossip::{GossipReceiver, GossipSender};
 
 /// A type that receives any event published by the networking layer.
@@ -32,13 +33,9 @@ pub type NetworkListener = UnboundedReceiver<Event>;
 
 use bee_runtime::node::{Node, NodeBuilder};
 
-use api::{
-    commands,
-    events::{self, InternalEvent},
-    ServiceConfig,
-};
-use conns::HostConfig;
-use peers::{BannedAddrList, BannedPeerList, PeerList};
+use host::NetworkHostConfig;
+use peer::{AddrBanlist, PeerBanlist, PeerList};
+use service::{InternalEvent, NetworkServiceConfig};
 
 use libp2p::identity;
 use log::{info, *};
@@ -73,17 +70,17 @@ pub async fn init<N: Node>(
     let local_id = PeerId::from_public_key(local_keys.public());
     info!("Local peer id: {}", local_id);
 
-    let (command_sender, command_receiver) = commands::command_channel();
-    let (internal_command_sender, internal_command_receiver) = commands::command_channel();
+    let (command_sender, command_receiver) = service::command_channel();
+    let (internal_command_sender, internal_command_receiver) = service::command_channel();
 
-    let (event_sender, event_receiver) = events::event_channel::<Event>();
-    let (internal_event_sender, internal_event_receiver) = events::event_channel::<InternalEvent>();
+    let (event_sender, event_receiver) = service::event_channel::<Event>();
+    let (internal_event_sender, internal_event_receiver) = service::event_channel::<InternalEvent>();
 
-    let banned_addrs = BannedAddrList::new();
-    let banned_peers = BannedPeerList::new();
+    let banned_addrs = AddrBanlist::new();
+    let banned_peers = PeerBanlist::new();
     let peerlist = PeerList::new();
 
-    let host_config = HostConfig {
+    let host_config = NetworkHostConfig {
         local_keys: local_keys.clone(),
         bind_address,
         peerlist: peerlist.clone(),
@@ -93,24 +90,24 @@ pub async fn init<N: Node>(
         internal_command_receiver,
     };
 
-    let service_config = ServiceConfig {
+    let service_config = NetworkServiceConfig {
         local_keys,
         peerlist,
         banned_addrs,
         banned_peers,
-        event_sender: event_sender.clone(),
+        event_sender,
         internal_event_sender,
         internal_command_sender,
         command_receiver,
         internal_event_receiver,
     };
 
-    let network_controller = NetworkController::new(command_sender, local_id);
+    let network_service_controller = NetworkServiceController::new(command_sender, local_id);
 
     node_builder = node_builder
-        .with_worker_cfg::<Service>(service_config)
-        .with_worker_cfg::<Host>(host_config)
-        .with_resource(network_controller);
+        .with_worker_cfg::<NetworkService>(service_config)
+        .with_worker_cfg::<NetworkHost>(host_config)
+        .with_resource(network_service_controller);
 
     (node_builder, event_receiver)
 }

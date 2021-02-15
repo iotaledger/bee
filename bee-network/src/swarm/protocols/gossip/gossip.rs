@@ -3,7 +3,7 @@
 
 use super::GossipHandler;
 
-use crate::conns::info::{ConnectionInfo, Origin};
+use crate::host::{ConnectionInfo, Origin};
 
 use libp2p::{
     core::{connection::ConnectionId, ConnectedPoint},
@@ -104,10 +104,7 @@ impl NetworkBehaviour for Gossip {
         let builder = GossipEventBuilder::default()
             .with_peer_id(*peer_id)
             .with_peer_addr(address)
-            .with_conn_info(ConnectionInfo {
-                id: *conn_id,
-                origin: origin.clone(),
-            });
+            .with_conn_info(ConnectionInfo { id: *conn_id, origin });
 
         self.builder.replace(builder);
 

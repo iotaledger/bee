@@ -4,12 +4,8 @@
 use super::Error;
 use crate::{
     alias,
-    api::{
-        commands::{Command, CommandReceiver},
-        events::InternalEventSender,
-        Service,
-    },
-    peers::{BannedAddrList, BannedPeerList, PeerInfo, PeerList},
+    peer::{AddrBanlist, PeerBanlist, PeerInfo, PeerList},
+    service::{Command, CommandReceiver, InternalEventSender, NetworkService},
     swarm,
     swarm::SwarmBehavior,
 };
@@ -26,12 +22,12 @@ use log::*;
 
 use std::{any::TypeId, convert::Infallible};
 
-pub struct HostConfig {
+pub struct NetworkHostConfig {
     pub local_keys: Keypair,
     pub bind_address: Multiaddr,
     pub peerlist: PeerList,
-    pub banned_addrs: BannedAddrList,
-    pub banned_peers: BannedPeerList,
+    pub banned_addrs: AddrBanlist,
+    pub banned_peers: PeerBanlist,
     pub internal_event_sender: InternalEventSender,
     pub internal_command_receiver: CommandReceiver,
 }
@@ -39,19 +35,19 @@ pub struct HostConfig {
 /// A node worker, that deals with accepting and initiating connections with remote peers.
 /// NOTE: This type is only exported to be used as a worker dependency.
 #[derive(Default)]
-pub struct Host {}
+pub struct NetworkHost {}
 
 #[async_trait]
-impl<N: Node> Worker<N> for Host {
-    type Config = HostConfig;
+impl<N: Node> Worker<N> for NetworkHost {
+    type Config = NetworkHostConfig;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<Service>()].leak()
+        vec![TypeId::of::<NetworkService>()].leak()
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let HostConfig {
+        let NetworkHostConfig {
             local_keys,
             bind_address,
             peerlist,
@@ -112,9 +108,10 @@ impl<N: Node> Worker<N> for Host {
 
 fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, _internal_event_sender: &InternalEventSender) {
     // TODO: consider handling more events
+    #[allow(clippy::single_match)]
     match event {
-        SwarmEvent::NewListenAddr(_) => {
-            // TODO: add to listen addresses
+        SwarmEvent::NewListenAddr(_address) => {
+            // TODO: collect listen address to deny dialing it
         }
         _ => {}
     }
@@ -125,8 +122,8 @@ async fn process_command(
     swarm: &mut Swarm<SwarmBehavior>,
     local_keys: &Keypair,
     peerlist: &PeerList,
-    banned_addrs: &BannedAddrList,
-    banned_peers: &BannedPeerList,
+    banned_addrs: &AddrBanlist,
+    banned_peers: &PeerBanlist,
 ) {
     match command {
         Command::DialPeer { peer_id } => {
@@ -150,7 +147,7 @@ async fn process_command(
 async fn dial_addr(
     swarm: &mut Swarm<SwarmBehavior>,
     address: Multiaddr,
-    banned_addrs: &BannedAddrList,
+    banned_addrs: &AddrBanlist,
 ) -> Result<(), Error> {
     // TODO
     // Prevent dialing own listen addresses.
@@ -169,8 +166,8 @@ async fn dial_peer(
     local_keys: &identity::Keypair,
     remote_peer_id: PeerId,
     peerlist: &PeerList,
-    banned_addrs: &BannedAddrList,
-    banned_peers: &BannedPeerList,
+    banned_addrs: &AddrBanlist,
+    banned_peers: &PeerBanlist,
 ) -> Result<(), Error> {
     let local_peer_id = local_keys.public().into_peer_id();
 
@@ -224,7 +221,7 @@ async fn check_if_duplicate_conn(remote_peer_id: &PeerId, peerlist: &PeerList) -
     }
 }
 
-async fn check_if_banned_peer(remote_peer_id: &PeerId, banned_peers: &BannedPeerList) -> Result<(), Error> {
+async fn check_if_banned_peer(remote_peer_id: &PeerId, banned_peers: &PeerBanlist) -> Result<(), Error> {
     if banned_peers.contains(remote_peer_id).await {
         Err(Error::DialedBannedPeer(*remote_peer_id))
     } else {
@@ -239,7 +236,7 @@ async fn check_if_unregistered_or_get_info(remote_peer_id: &PeerId, peerlist: &P
         .map_err(|_| Error::DialedUnregisteredPeer(*remote_peer_id))
 }
 
-async fn check_if_banned_addr(addr: &Multiaddr, banned_addrs: &BannedAddrList) -> Result<(), Error> {
+async fn check_if_banned_addr(addr: &Multiaddr, banned_addrs: &AddrBanlist) -> Result<(), Error> {
     if banned_addrs.contains(addr).await {
         Err(Error::DialedBannedAddress(addr.clone()))
     } else {

@@ -13,7 +13,7 @@ use libp2p::{
 
 use std::{io, time::Duration};
 
-use crate::api::events::InternalEventSender;
+use crate::service::InternalEventSender;
 
 use super::SwarmBehavior;
 

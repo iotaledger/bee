@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    conns::info::ConnectionInfo,
-    peers,
-    peers::PeerInfo,
+    host::ConnectionInfo,
+    peer,
+    peer::PeerInfo,
     swarm::protocols::gossip::{GossipReceiver, GossipSender},
 };
 
@@ -75,7 +75,7 @@ pub enum Event {
         /// The command that failed.
         command: Command,
         /// The reason for the failure.
-        reason: peers::Error,
+        reason: peer::Error,
     },
 }
 

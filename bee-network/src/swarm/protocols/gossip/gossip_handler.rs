@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::GossipUpgrade;
-use crate::conns::info::Origin;
+use crate::host::Origin;
 
 use libp2p::{
     swarm::{
@@ -68,6 +68,7 @@ impl ProtocolsHandler for GossipHandler {
         KeepAlive::Yes
     }
 
+    #[allow(clippy::type_complexity)]
     fn poll(
         &mut self,
         cx: &mut std::task::Context<'_>,

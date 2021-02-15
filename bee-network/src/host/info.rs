@@ -25,12 +25,12 @@ pub enum Origin {
 impl Origin {
     /// Returns whether the connection is inbound.
     pub fn is_inbound(&self) -> bool {
-        matches!(self, Origin::Inbound)
+        self.eq(&Self::Inbound)
     }
 
     /// Returns whether the connection is outbound.
     pub fn is_outbound(&self) -> bool {
-        matches!(self, Origin::Outbound)
+        self.eq(&Self::Outbound)
     }
 }
 

@@ -26,31 +26,29 @@ pub enum PeerRelation {
 impl PeerRelation {
     /// Returns whether the peer is known.
     pub fn is_known(&self) -> bool {
-        matches!(*self, PeerRelation::Known)
+        self.eq(&Self::Known)
     }
 
     /// Returns whether the peer is unknown.
     pub fn is_unknown(&self) -> bool {
-        matches!(*self, PeerRelation::Unknown)
+        self.eq(&Self::Unknown)
     }
 
     /// Upgrades the peer relations.
     pub fn upgrade(&mut self) {
-        match self {
-            Self::Unknown => *self = Self::Known,
-            _ => (),
+        if self.is_unknown() {
+            *self = Self::Known;
         }
     }
 
     /// Downgrades the peer relation.
     pub fn downgrade(&mut self) {
-        match self {
-            Self::Known => *self = Self::Unknown,
-            _ => (),
+        if self.is_known() {
+            *self = Self::Unknown;
         }
     }
 }
-#[derive(Clone)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PeerState {
     Disconnected,
     Connected,
@@ -58,10 +56,10 @@ pub enum PeerState {
 
 impl PeerState {
     pub fn is_connected(&self) -> bool {
-        matches!(*self, PeerState::Connected)
+        self.eq(&Self::Connected)
     }
 
     pub fn is_disconnected(&self) -> bool {
-        matches!(*self, PeerState::Disconnected)
+        self.eq(&Self::Disconnected)
     }
 }

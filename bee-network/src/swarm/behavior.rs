@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::protocols::gossip::{self, Gossip, GossipEvent};
-use crate::api::events::{InternalEvent, InternalEventSender};
+use crate::service::{InternalEvent, InternalEventSender};
 
 use futures::AsyncReadExt;
 use libp2p::{

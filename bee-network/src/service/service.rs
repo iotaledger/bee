@@ -7,7 +7,7 @@ use super::{
 };
 use crate::{
     alias,
-    peers::{self, BannedAddrList, BannedPeerList, PeerInfo, PeerList, PeerRelation, PeerState},
+    peer::{self, AddrBanlist, InsertionFailure, PeerBanlist, PeerInfo, PeerList, PeerRelation, PeerState},
     RECONNECT_INTERVAL_SECS,
 };
 
@@ -26,13 +26,13 @@ use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
 /// A node worker, that deals with processing user commands, and publishing events.
 /// NOTE: This type is only exported to be used as a worker dependency.
 #[derive(Default)]
-pub struct Service {}
+pub struct NetworkService {}
 
-pub struct ServiceConfig {
+pub struct NetworkServiceConfig {
     pub local_keys: identity::Keypair,
     pub peerlist: PeerList,
-    pub banned_addrs: BannedAddrList,
-    pub banned_peers: BannedPeerList,
+    pub banned_addrs: AddrBanlist,
+    pub banned_peers: PeerBanlist,
     pub event_sender: EventSender,
     pub internal_event_sender: InternalEventSender,
     pub internal_command_sender: CommandSender,
@@ -41,8 +41,8 @@ pub struct ServiceConfig {
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for Service {
-    type Config = ServiceConfig;
+impl<N: Node> Worker<N> for NetworkService {
+    type Config = NetworkServiceConfig;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -50,7 +50,7 @@ impl<N: Node> Worker<N> for Service {
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let ServiceConfig {
+        let NetworkServiceConfig {
             local_keys: _,
             peerlist,
             banned_addrs,
@@ -94,7 +94,6 @@ impl<N: Node> Worker<N> for Service {
         });
 
         let peerlist_clone = peerlist.clone();
-        let internal_event_sender_clone = internal_event_sender.clone();
         let internal_command_sender_clone = internal_command_sender.clone();
 
         // Spawn internal event handler task
@@ -111,7 +110,7 @@ impl<N: Node> Worker<N> for Service {
                     &banned_addrs,
                     &banned_peers,
                     &event_sender,
-                    &internal_event_sender_clone,
+                    &internal_event_sender,
                     &internal_command_sender_clone,
                 )
                 .await
@@ -167,11 +166,11 @@ impl<N: Node> Worker<N> for Service {
 async fn process_command(
     command: Command,
     peerlist: &PeerList,
-    banned_addrlist: &BannedAddrList,
-    banned_peerlist: &BannedPeerList,
+    banned_addrlist: &AddrBanlist,
+    banned_peerlist: &PeerBanlist,
     event_sender: &EventSender,
     internal_command_sender: &CommandSender,
-) -> Result<(), peers::Error> {
+) -> Result<(), peer::Error> {
     trace!("Received {:?}.", command);
 
     match command {
@@ -181,7 +180,7 @@ async fn process_command(
             alias,
             relation,
         } => {
-            let alias = alias.unwrap_or(alias!(peer_id).to_string());
+            let alias = alias.unwrap_or_else(|| alias!(peer_id).to_string());
 
             // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
             if relation.is_known() {
@@ -207,30 +206,29 @@ async fn process_command(
         }
         Command::BanAddress { address } => {
             if !banned_addrlist.insert(address.clone()).await {
-                return Err(peers::Error::AddressAlreadyBanned(address));
-            } else {
-                if event_sender.send(Event::AddressBanned { address }).is_err() {
-                    trace!("Failed to send 'AddressBanned' event. (Shutting down?)")
-                }
+                return Err(peer::Error::AddressAlreadyBanned(address));
+            }
+            if event_sender.send(Event::AddressBanned { address }).is_err() {
+                trace!("Failed to send 'AddressBanned' event. (Shutting down?)")
             }
         }
         Command::BanPeer { peer_id } => {
             if !banned_peerlist.insert(peer_id).await {
-                return Err(peers::Error::PeerAlreadyBanned(peer_id));
-            } else {
-                if event_sender.send(Event::PeerBanned { peer_id }).is_err() {
-                    trace!("Failed to send 'PeerBanned' event. (Shutting down?)")
-                }
+                return Err(peer::Error::PeerAlreadyBanned(peer_id));
+            }
+
+            if event_sender.send(Event::PeerBanned { peer_id }).is_err() {
+                trace!("Failed to send 'PeerBanned' event. (Shutting down?)")
             }
         }
         Command::UnbanAddress { address } => {
             if !banned_addrlist.remove(&address).await {
-                return Err(peers::Error::AddressAlreadyUnbanned(address));
+                return Err(peer::Error::AddressAlreadyUnbanned(address));
             }
         }
         Command::UnbanPeer { peer_id } => {
             if !banned_peerlist.remove(&peer_id).await {
-                return Err(peers::Error::PeerAlreadyUnbanned(peer_id));
+                return Err(peer::Error::PeerAlreadyUnbanned(peer_id));
             }
         }
         Command::UpgradeRelation { peer_id } => {
@@ -251,12 +249,12 @@ async fn process_command(
 async fn process_internal_event(
     internal_event: InternalEvent,
     peerlist: &PeerList,
-    _banned_addrs: &BannedAddrList,
-    _banned_peers: &BannedPeerList,
+    _banned_addrs: &AddrBanlist,
+    _banned_peers: &PeerBanlist,
     event_sender: &EventSender,
     _internal_event_sender: &InternalEventSender,
     _internal_command_sender: &CommandSender,
-) -> Result<(), peers::Error> {
+) -> Result<(), peer::Error> {
     trace!("Received {:?}.", internal_event);
 
     match internal_event {
@@ -282,9 +280,9 @@ async fn process_internal_event(
                 PeerRelation::Known => peerlist.update_state(&peer_id, PeerState::Connected).await?,
                 PeerRelation::Unknown => {
                     peerlist
-                        .insert(peer_id.clone(), peer_info.clone(), PeerState::Connected)
+                        .insert(peer_id, peer_info.clone(), PeerState::Connected)
                         .await
-                        .map_err(|(_, _, e)| e)?;
+                        .map_err(|InsertionFailure(_, _, _, e)| e)?;
 
                     if event_sender
                         .send(Event::PeerAdded {
@@ -317,7 +315,7 @@ async fn process_internal_event(
         }
 
         InternalEvent::ConnectionDropped { peer_id } => {
-            if let Err(peers::Error::UnregisteredPeer(_)) =
+            if let Err(peer::Error::UnregisteredPeer(_)) =
                 peerlist.update_state(&peer_id, PeerState::Disconnected).await
             {
                 // NOTE: the peer has been removed already
@@ -346,39 +344,47 @@ async fn add_peer(
     relation: PeerRelation,
     peerlist: &PeerList,
     event_sender: &EventSender,
-) -> Result<(), peers::Error> {
-    let info = PeerInfo {
+) -> Result<(), peer::Error> {
+    let peer_info = PeerInfo {
         address,
         alias,
         relation,
     };
 
-    // If the insert fails for some reason, we get the peer info back.
-    if let Err((peer_id, info, e)) = peerlist.insert(peer_id, info.clone(), PeerState::Disconnected).await {
-        // Inform the user that the command failed.
-        let _ = event_sender.send(Event::CommandFailed {
-            command: Command::AddPeer {
-                peer_id,
-                address: info.address,
-                // NOTE: the returned failed command now has the default alias, if none was specified originally.
-                alias: Some(info.alias),
-                relation: info.relation,
-            },
-            reason: e.clone(),
-        });
+    // If the insert fails for some reason, we get the peer data back, so it can be reused.
+    match peerlist.insert(peer_id, peer_info, PeerState::Disconnected).await {
+        Ok(()) => {
+            // NB: We could also make `insert` return the just inserted `PeerInfo`, but that would
+            // make for an unusual API.
 
-        return Err(e);
+            // We just added it, so 'unwrap'ping is safe!
+            let info = peerlist.get_info(&peer_id).await.unwrap();
+
+            // Inform the user that the command succeeded.
+            if event_sender.send(Event::PeerAdded { peer_id, info }).is_err() {
+                warn!("Failed to send 'PeerAdded' event. (Shutting down?)");
+            }
+            Ok(())
+        }
+        Err(InsertionFailure(peer_id, peer_info, _, e)) => {
+            // Inform the user that the command failed.
+            let _ = event_sender.send(Event::CommandFailed {
+                command: Command::AddPeer {
+                    peer_id,
+                    address: peer_info.address,
+                    // NOTE: the returned failed command now has the default alias, if none was specified originally.
+                    alias: Some(peer_info.alias),
+                    relation: peer_info.relation,
+                },
+                reason: e.clone(),
+            });
+
+            Err(e)
+        }
     }
-
-    // Inform the user that the command succeeded.
-    if event_sender.send(Event::PeerAdded { peer_id, info }).is_err() {
-        warn!("Failed to send 'PeerAdded' event. (Shutting down?)");
-    }
-
-    Ok(())
 }
 
-async fn remove_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), peers::Error> {
+async fn remove_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), peer::Error> {
     match peerlist.remove(&peer_id).await {
         Err(e) => {
             // Inform the user that the command failed.
@@ -400,7 +406,7 @@ async fn remove_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventS
     }
 }
 
-async fn disconnect_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), peers::Error> {
+async fn disconnect_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), peer::Error> {
     // NOTE: that's a bit wonky now since we don't own the message sender anymore, but instead pass it to the consumer
     // we propably should intercept
     match peerlist.update_state(&peer_id, PeerState::Disconnected).await {

@@ -9,13 +9,13 @@ use std::{collections::HashSet, hash::Hash, sync::Arc};
 const DEFAULT_BANNED_PEER_CAPACITY: usize = 32;
 const DEFAULT_BANNED_ADDR_CAPACITY: usize = 16;
 
-pub type BannedPeerList = BannedList<PeerId>;
-pub type BannedAddrList = BannedList<Multiaddr>;
+pub type PeerBanlist = Banlist<PeerId>;
+pub type AddrBanlist = Banlist<Multiaddr>;
 
 #[derive(Clone, Default)]
-pub struct BannedList<T: Hash + Eq>(Arc<RwLock<HashSet<T>>>);
+pub struct Banlist<T: Hash + Eq>(Arc<RwLock<HashSet<T>>>);
 
-impl BannedList<PeerId> {
+impl Banlist<PeerId> {
     pub fn new() -> Self {
         Self(Arc::new(RwLock::new(HashSet::with_capacity(
             DEFAULT_BANNED_PEER_CAPACITY,
@@ -23,7 +23,7 @@ impl BannedList<PeerId> {
     }
 }
 
-impl BannedList<Multiaddr> {
+impl Banlist<Multiaddr> {
     pub fn new() -> Self {
         Self(Arc::new(RwLock::new(HashSet::with_capacity(
             DEFAULT_BANNED_ADDR_CAPACITY,
@@ -31,7 +31,7 @@ impl BannedList<Multiaddr> {
     }
 }
 
-impl<T> BannedList<T>
+impl<T> Banlist<T>
 where
     T: Hash + Eq,
 {

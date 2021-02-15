@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::api::events::{InternalEvent, InternalEventSender};
+use crate::service::{InternalEvent, InternalEventSender};
 
 use futures::{
     io::{ReadHalf, WriteHalf},
@@ -12,7 +12,7 @@ use log::*;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use super::errors::Error;
+use super::error::Error;
 
 const MSG_BUFFER_SIZE: usize = 32768;
 
