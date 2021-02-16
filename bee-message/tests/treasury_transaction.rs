@@ -44,11 +44,23 @@ fn new_invalid_output() {
 }
 
 #[test]
-fn pack_unpack() {
+fn pack_unpack_valid() {
     let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
     let output = Output::from(TreasuryOutput::new(1_000).unwrap());
     let transaction_1 = TreasuryTransactionPayload::new(input, output).unwrap();
     let transaction_2 = TreasuryTransactionPayload::unpack(&mut transaction_1.pack_new().as_slice()).unwrap();
 
     assert_eq!(transaction_1, transaction_2);
+}
+
+#[test]
+fn pack_unpack_invalid() {
+    let bytes = vec![
+        1, 82, 253, 252, 7, 33, 130, 101, 79, 22, 63, 95, 15, 154, 98, 29, 114, 149, 102, 199, 77, 16, 3, 124, 77, 123,
+        187, 4, 7, 209, 226, 198, 73, /* Faulty byte here -> */ 0, 232, 3, 0, 0, 0, 0, 0, 0,
+    ];
+
+    // Actual error is not checked because the output type check is done after the output is parsed so the error is not
+    // `InvalidOutputKind` but something related to an invalid address, so not really relevant for this test.
+    assert!(TreasuryTransactionPayload::unpack(&mut bytes.as_slice()).is_err());
 }

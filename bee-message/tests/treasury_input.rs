@@ -40,7 +40,7 @@ fn from_str_to_str() {
 }
 
 #[test]
-fn pack_unpack() {
+fn pack_unpack_valid() {
     let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
     let input_1 = TreasuryInput::new(message_id);
     let input_2 = TreasuryInput::unpack(&mut input_1.pack_new().as_slice()).unwrap();
