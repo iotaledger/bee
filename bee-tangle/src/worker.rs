@@ -70,9 +70,9 @@ where
 
         let snapshot_info = Fetch::<(), SnapshotInfo>::fetch(&*storage, &()).await.unwrap().unwrap();
 
-        tangle.update_latest_milestone_index(snapshot_info.snapshot_index().into());
-        tangle.update_snapshot_index(snapshot_info.snapshot_index().into());
-        tangle.update_pruning_index(snapshot_info.pruning_index().into());
+        tangle.update_latest_milestone_index(snapshot_info.snapshot_index());
+        tangle.update_snapshot_index(snapshot_info.snapshot_index());
+        tangle.update_pruning_index(snapshot_info.pruning_index());
         // TODO
         // tangle.add_milestone(config.sep_index().into(), *config.sep_id());
 
@@ -110,6 +110,8 @@ where
             }
         };
 
-        Ok(tangle.shutdown().await)
+        tangle.shutdown().await;
+
+        Ok(())
     }
 }

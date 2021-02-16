@@ -59,7 +59,7 @@ pub fn all<B: StorageBackend>(
         bech32_hrp,
         rest_api_config.clone(),
         protocol_config.clone(),
-        node_info.clone(),
+        node_info,
     )
     .or(tips(public_routes.clone(), allowed_ips.clone(), tangle.clone()))
     .or(submit_message(
@@ -134,7 +134,7 @@ pub fn all<B: StorageBackend>(
         network_controller,
     ))
     .or(peer(public_routes.clone(), allowed_ips.clone(), peer_manager))
-    .or(white_flag(public_routes.clone(), allowed_ips.clone())))
+    .or(white_flag(public_routes, allowed_ips)))
 }
 
 fn health<B: StorageBackend>(

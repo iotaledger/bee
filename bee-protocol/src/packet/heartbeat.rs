@@ -24,7 +24,7 @@ const CONSTANT_SIZE: usize = LATEST_SOLID_MILESTONE_INDEX_SIZE
 /// - did a snapshot and pruned away a part of the tangle;
 /// - solidified a new milestone;
 /// It also helps other nodes to know if they can ask it a specific message.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub(crate) struct Heartbeat {
     /// Index of the latest solid milestone.
     pub(crate) latest_solid_milestone_index: u32,
@@ -64,24 +64,28 @@ impl Packet for Heartbeat {
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
-        let mut packet = Self::default();
-
         let (bytes, next) = bytes.split_at(LATEST_SOLID_MILESTONE_INDEX_SIZE);
-        packet.latest_solid_milestone_index = u32::from_le_bytes(bytes.try_into().expect("Invalid buffer size"));
+        let latest_solid_milestone_index = u32::from_le_bytes(bytes.try_into().expect("Invalid buffer size"));
 
         let (bytes, next) = next.split_at(PRUNED_INDEX_SIZE);
-        packet.pruned_index = u32::from_le_bytes(bytes.try_into().expect("Invalid buffer size"));
+        let pruned_index = u32::from_le_bytes(bytes.try_into().expect("Invalid buffer size"));
 
         let (bytes, next) = next.split_at(LATEST_MILESTONE_INDEX_SIZE);
-        packet.latest_milestone_index = u32::from_le_bytes(bytes.try_into().expect("Invalid buffer size"));
+        let latest_milestone_index = u32::from_le_bytes(bytes.try_into().expect("Invalid buffer size"));
 
         let (bytes, next) = next.split_at(CONNECTED_PEERS_SIZE);
-        packet.connected_peers = u8::from_le_bytes(bytes.try_into().expect("Invalid buffer size"));
+        let connected_peers = u8::from_le_bytes(bytes.try_into().expect("Invalid buffer size"));
 
         let (bytes, _) = next.split_at(SYNCED_PEERS_SIZE);
-        packet.synced_peers = u8::from_le_bytes(bytes.try_into().expect("Invalid buffer size"));
+        let synced_peers = u8::from_le_bytes(bytes.try_into().expect("Invalid buffer size"));
 
-        packet
+        Self {
+            latest_solid_milestone_index,
+            pruned_index,
+            latest_milestone_index,
+            connected_peers,
+            synced_peers,
+        }
     }
 
     fn size(&self) -> usize {

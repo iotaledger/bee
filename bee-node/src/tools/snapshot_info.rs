@@ -28,9 +28,9 @@ pub fn exec(tool: &SnapshotInfoTool) -> Result<(), SnapshotInfoError> {
         OpenOptions::new()
             .read(true)
             .open(Path::new(&tool.path))
-            .map_err(|e| SnapshotInfoError::Io(e))?,
+            .map_err(SnapshotInfoError::Io)?,
     );
-    let header = SnapshotHeader::unpack(&mut reader).map_err(|e| SnapshotInfoError::InvalidSnapshotHeader(e))?;
+    let header = SnapshotHeader::unpack(&mut reader).map_err(SnapshotInfoError::InvalidSnapshotHeader)?;
 
     println!("Type:\t\t\t{:?}", header.kind());
     println!(

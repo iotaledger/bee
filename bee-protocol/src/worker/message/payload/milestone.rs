@@ -67,7 +67,7 @@ async fn validate<B: StorageBackend>(
                         .collect::<Vec<String>>(),
                     key_manager.min_threshold(),
                 )
-                .map_err(|e| Error::InvalidMilestone(e))?;
+                .map_err(Error::InvalidMilestone)?;
 
             Ok((
                 MilestoneIndex(milestone.essence().index()),

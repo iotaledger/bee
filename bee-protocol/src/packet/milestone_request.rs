@@ -11,7 +11,7 @@ const INDEX_SIZE: usize = 4;
 const CONSTANT_SIZE: usize = INDEX_SIZE;
 
 /// A packet to request a milestone.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub(crate) struct MilestoneRequest {
     /// Index of the requested milestone.
     pub(crate) index: u32,
@@ -31,11 +31,9 @@ impl Packet for MilestoneRequest {
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
-        let mut packet = Self::default();
-
-        packet.index = u32::from_le_bytes(bytes[0..INDEX_SIZE].try_into().expect("Invalid buffer size"));
-
-        packet
+        Self {
+            index: u32::from_le_bytes(bytes[0..INDEX_SIZE].try_into().expect("Invalid buffer size")),
+        }
     }
 
     fn size(&self) -> usize {

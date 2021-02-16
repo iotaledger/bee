@@ -10,7 +10,7 @@ use bee_message::{MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN};
 use std::ops::Range;
 
 /// A packet to send a message.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub(crate) struct Message {
     /// Message to send.
     pub(crate) bytes: Vec<u8>,
@@ -32,11 +32,7 @@ impl Packet for Message {
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
-        let mut packet = Self::default();
-
-        packet.bytes = bytes.to_vec();
-
-        packet
+        Self { bytes: bytes.to_vec() }
     }
 
     fn size(&self) -> usize {

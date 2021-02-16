@@ -239,7 +239,7 @@ where
 
                 let mut consumed = HashMap::new();
 
-                for (output_id, (created_output, consumed_output)) in diff.consumed().into_iter() {
+                for (output_id, (created_output, consumed_output)) in diff.consumed().iter() {
                     match created_output.inner() {
                         Output::SignatureLockedSingle(created_output) => {
                             balance_diffs.amount_sub(*created_output.address(), created_output.amount());

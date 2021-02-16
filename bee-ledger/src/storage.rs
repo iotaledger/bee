@@ -93,7 +93,7 @@ pub fn create_address_output_relation_batch<B: StorageBackend>(
 ) -> Result<(), Error> {
     match address {
         Address::Ed25519(address) => {
-            Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, batch, &(address.clone(), *output_id), &())
+            Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, batch, &(*address, *output_id), &())
                 .map_err(|e| Error::Storage(Box::new(e)))?;
         }
         _ => return Err(Error::UnsupportedAddressType),

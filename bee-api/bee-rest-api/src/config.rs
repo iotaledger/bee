@@ -116,9 +116,10 @@ impl RestApiConfigBuilder {
         };
         let public_routes = self
             .public_routes
-            .unwrap_or(DEFAULT_PUBLIC_ROUTES.iter().map(|s| s.to_string()).collect());
-        let allowed_ips = self.allowed_ips.unwrap_or(DEFAULT_ALLOWED_IPS.to_vec());
+            .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|s| s.to_string()).collect());
+        let allowed_ips = self.allowed_ips.unwrap_or_else(|| DEFAULT_ALLOWED_IPS.to_vec());
         let feature_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
+
         RestApiConfig {
             binding_socket_addr,
             public_routes,
