@@ -9,6 +9,7 @@ target/
 bee-node/config.toml
 bee-node/snapshots/
 bee-node/storage/
+bee-node/error.log
 
 # bee-storage
 bee-storage/bee-storage-rocksdb/tests/database
