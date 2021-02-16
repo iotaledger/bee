@@ -12,7 +12,6 @@ use libp2p::{
     swarm::SwarmBuilder,
     tcp, yamux, Swarm, Transport,
 };
-use tokio::sync::mpsc::unbounded_channel;
 
 use std::{io, time::Duration};
 

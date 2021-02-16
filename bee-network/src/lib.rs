@@ -4,7 +4,7 @@
 //! Networking layer for the Bee framework.
 
 #![warn(missing_docs)]
-// #![deny(warnings)]
+#![deny(warnings)]
 #![allow(clippy::module_inception)]
 
 mod config;

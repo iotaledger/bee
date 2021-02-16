@@ -5,13 +5,11 @@ use super::GossipHandler;
 
 use crate::host::{ConnectionInfo, Origin};
 
-use futures::{executor::block_on, FutureExt};
 use libp2p::{
     core::{connection::ConnectionId, ConnectedPoint},
     swarm::{NegotiatedSubstream, NetworkBehaviour, NetworkBehaviourAction, ProtocolsHandler},
     Multiaddr, PeerId,
 };
-use log::*;
 use tokio::sync::mpsc;
 
 use std::{
@@ -29,7 +27,7 @@ struct Id(PeerId, ConnectionId);
 // #[derive(Default)]
 pub struct Gossip {
     // Connection origins we are listening to
-    origin_rx: mpsc::UnboundedReceiver<Origin>,
+    // origin_rx: mpsc::UnboundedReceiver<Origin>,
     // Gossip event builder per peer id
     builders: HashMap<PeerId, GossipEventBuilder>,
     // Events produced by the 'GossipHandlers'
@@ -37,9 +35,9 @@ pub struct Gossip {
 }
 
 impl Gossip {
-    pub fn new(origin_rx: mpsc::UnboundedReceiver<Origin>) -> Self {
+    pub fn new(_origin_rx: mpsc::UnboundedReceiver<Origin>) -> Self {
         Self {
-            origin_rx,
+            // origin_rx,
             builders: HashMap::default(),
             events: VecDeque::default(),
         }
