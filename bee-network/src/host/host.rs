@@ -108,21 +108,21 @@ fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, _internal_
         SwarmEvent::NewListenAddr(_address) => {
             // TODO: collect listen address to deny dialing it
         }
-        SwarmEvent::ConnectionEstablished { peer_id, endpoint, .. } => {
-            info!("Negotiating protocol with {} ({:?})", peer_id, endpoint);
+        SwarmEvent::ConnectionEstablished { peer_id, .. } => {
+            debug!("Negotiating protocol with '{}'.", alias!(peer_id));
         }
         SwarmEvent::ConnectionClosed { peer_id, .. } => {
-            info!("Stopped protocol with {}", peer_id);
+            debug!("Stopped protocol with '{}'.", alias!(peer_id));
         }
         SwarmEvent::ListenerError { error } => {
             error!("Libp2p error: Cause: {}", error);
         }
-        SwarmEvent::Dialing(_peer_id) => {
+        SwarmEvent::Dialing(peer_id) => {
             // NB: strange, but this event is not actually fired when dialing. (open issue?)
-            println!("HOST: dialing");
+            debug!("Dialing '{}'.", alias!(peer_id));
         }
-        SwarmEvent::IncomingConnection { .. } => {
-            println!("HOST: accepting");
+        SwarmEvent::IncomingConnection { send_back_addr, .. } => {
+            debug!("Being dialed from {}.", send_back_addr);
         }
         _ => {}
     }

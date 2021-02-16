@@ -45,7 +45,7 @@ impl SwarmBehavior {
 
 impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
     fn inject_event(&mut self, event: IdentifyEvent) {
-        trace!("IdentifyEvent.");
+        trace!("Behavior received identify event.");
 
         match event {
             IdentifyEvent::Received {
@@ -53,13 +53,14 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
                 info: _,
                 observed_addr,
             } => {
-                debug!(
+                trace!(
                     "Received Identify request from {}. Observed addresses: {:?}.",
-                    peer_id, observed_addr
+                    peer_id,
+                    observed_addr
                 );
             }
             IdentifyEvent::Sent { peer_id } => {
-                debug!("Sent Identify request to {}.", peer_id);
+                trace!("Sent Identify request to {}.", peer_id);
             }
             IdentifyEvent::Error { peer_id, error } => {
                 warn!("Identification error with {}: Cause: {:?}.", peer_id, error);
@@ -70,7 +71,7 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
 
 impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
     fn inject_event(&mut self, event: GossipEvent) {
-        trace!("GossipEvent.");
+        trace!("Behavior received gossip event.");
 
         let GossipEvent {
             peer_id,
@@ -79,7 +80,7 @@ impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
             conn_info,
         } = event;
 
-        info!("New gossip stream with {} [conn_info: {:?}]", peer_id, conn_info);
+        debug!("New gossip stream with {} [conn_info: {:?}]", peer_id, conn_info);
 
         let (reader, writer) = conn.split();
 
@@ -91,7 +92,7 @@ impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
 
         // TODO: retrieve the PeerInfo from the peer list
 
-        if self
+        let _ = self
             .internal_sender
             .send(InternalEvent::ProtocolEstablished {
                 peer_id,
@@ -100,9 +101,6 @@ impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
                 gossip_in: incoming_gossip_receiver,
                 gossip_out: outgoing_gossip_sender,
             })
-            .is_err()
-        {
-            trace!("Receiver of internal event channel dropped.");
-        }
+            .expect("Receiver of internal event channel dropped.");
     }
 }

@@ -58,7 +58,7 @@ pub fn spawn_gossip_in_task(
             }
         }
 
-        println!("IO: Exiting incoming gossip event loop for {}", peer_id);
+        trace!("Exiting incoming gossip event loop for {}", peer_id);
     });
 }
 
@@ -111,12 +111,11 @@ pub fn spawn_gossip_out_task(
 
             // If sending to the stream fails we end the connection.
             if !send_valid_message(&mut writer, &message).await {
-                println!("IO: Sending valid message failed.");
                 break;
             }
         }
 
-        println!("IO: Exiting outgoing gossip event loop for {}", peer_id);
+        trace!("Exiting outgoing gossip event loop for {}", peer_id);
     });
 }
 

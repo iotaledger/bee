@@ -70,7 +70,7 @@ impl<N: Node> Worker<N> for NetworkService {
 
         // Spawn command handler task
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Command handler running.");
+            debug!("Command handler running.");
 
             let mut commands = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(command_receiver));
 
@@ -90,7 +90,7 @@ impl<N: Node> Worker<N> for NetworkService {
                 }
             }
 
-            info!("Command handler stopped.");
+            debug!("Command handler stopped.");
         });
 
         let peerlist_clone = peerlist.clone();
@@ -98,16 +98,12 @@ impl<N: Node> Worker<N> for NetworkService {
 
         // Spawn internal event handler task
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Event handler running.");
+            debug!("Event handler running.");
 
             let mut internal_events =
                 ShutdownStream::new(shutdown, UnboundedReceiverStream::new(internal_event_receiver));
 
-            let mut foo = 0;
             while let Some(internal_event) = internal_events.next().await {
-                println!("SERVICE: foo-index={}", foo);
-                foo += 1;
-
                 if let Err(e) = process_internal_event(
                     internal_event,
                     &peerlist_clone,
@@ -124,7 +120,7 @@ impl<N: Node> Worker<N> for NetworkService {
                 }
             }
 
-            info!("Event handler stopped.");
+            debug!("Event handler stopped.");
         });
 
         // Spawn reconnecter task
@@ -146,7 +142,7 @@ impl<N: Node> Worker<N> for NetworkService {
                 )),
             );
 
-            info!("Reconnecter starting in {:?}.", randomized_delay);
+            debug!("Reconnecter starting in {:?}.", randomized_delay);
 
             while connected_check_timer.next().await.is_some() {
                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
@@ -164,7 +160,7 @@ impl<N: Node> Worker<N> for NetworkService {
                 }
             }
 
-            info!("Reconnecter stopped.");
+            debug!("Reconnecter stopped.");
         });
 
         info!("Network service started.");
@@ -421,8 +417,6 @@ async fn remove_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventS
 async fn disconnect_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), peer::Error> {
     // NB: We sent the `PeerDisconnected` event *before* we sent the shutdown signal to the stream writer task, so
     // it can stop adding messages to the channel before we drop the receiver.
-
-    println!("DISCOOOOOONNNEEEEEEEEEEEEEEEEEEEEEEEEEECT");
 
     match peerlist.disconnect(&peer_id).await {
         Ok(gossip_sender) => {

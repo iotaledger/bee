@@ -51,7 +51,7 @@ impl NetworkBehaviour for Gossip {
     type OutEvent = GossipEvent; //<Self::ProtocolsHandler as ProtocolsHandler>::OutEvent;
 
     fn new_handler(&mut self) -> Self::ProtocolsHandler {
-        // NB: it is very hackish how we solve this. Maybe there's a better way!
+        // NB: it is very hackish how we solve this. There has to be a better way!
 
         // let origin = if let Some(origin) = self.origin_rx.recv().now_or_never().flatten() {
         //     origin
@@ -65,7 +65,7 @@ impl NetworkBehaviour for Gossip {
             Origin::Inbound
         };
 
-        println!("GOSSIP: New_handler: {}", origin);
+        // println!("GOSSIP: New_handler: {}", origin);
         GossipHandler::new(origin)
     }
 
@@ -82,7 +82,7 @@ impl NetworkBehaviour for Gossip {
             ConnectedPoint::Listener { send_back_addr, .. } => (send_back_addr.clone(), Origin::Inbound),
         };
 
-        println!("GOSSIP: Connection ({}) established: {} [{}]", origin, peer_id, address);
+        // println!("GOSSIP: Connection ({}) established: {} [{}]", origin, peer_id, address);
 
         let builder = GossipEventBuilder::default()
             .with_peer_id(*peer_id)
@@ -101,7 +101,7 @@ impl NetworkBehaviour for Gossip {
         conn: NegotiatedSubstream, //<GossipHandler as ProtocolsHandler>::OutEvent,
     ) {
         if let Some(builder) = self.builders.remove(&peer_id) {
-            println!("GOSSIP: finishing builder for {}", peer_id);
+            // println!("GOSSIP: finishing builder for {}", peer_id);
             self.events.push_back(builder.with_conn(conn).finish());
         }
     }
@@ -114,10 +114,10 @@ impl NetworkBehaviour for Gossip {
         _params: &mut impl libp2p::swarm::PollParameters,
     ) -> Poll<NetworkBehaviourAction<<Self::ProtocolsHandler as ProtocolsHandler>::InEvent, Self::OutEvent>> {
         if let Some(event) = self.events.pop_front() {
-            println!("GOSSIP: POLL READY");
+            // println!("GOSSIP: POLL READY");
             Poll::Ready(NetworkBehaviourAction::GenerateEvent(event))
         } else {
-            println!("GOSSIP: POLL PENDING");
+            // println!("GOSSIP: POLL PENDING");
             Poll::Pending
         }
     }
@@ -160,8 +160,7 @@ impl GossipEventBuilder {
     }
 
     fn finish(self) -> GossipEvent {
-        // NOTE: calling 'finish' without prior checking with 'is_complete' is considered a programmer error,
-        // hence 'unwrap' is safe.
+        // If any 'unwrap' fails, then that's a programmer error!
         GossipEvent {
             peer_id: self.peer_id.unwrap(),
             peer_addr: self.peer_addr.unwrap(),
