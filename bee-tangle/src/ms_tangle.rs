@@ -4,7 +4,7 @@
 use crate::{
     metadata::{IndexId, MessageMetadata},
     storage::StorageBackend,
-    tangle::{Hooks, Tangle},
+    tangle::{Hooks, Tangle, DEFAULT_CACHE_LEN},
     urts::UrtsTipPool,
     MessageRef,
 };
@@ -85,7 +85,7 @@ impl<B: StorageBackend> StorageHooks<B> {
 /// Milestone-based Tangle.
 pub struct MsTangle<B> {
     pub(crate) inner: Tangle<MessageMetadata, StorageHooks<B>>,
-    pub(crate) milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
+    milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
     pub(crate) solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
     latest_milestone_index: AtomicU32,
     latest_solid_milestone_index: AtomicU32,
@@ -221,6 +221,10 @@ impl<B: StorageBackend> MsTangle<B> {
 
     pub fn update_latest_solid_milestone_index(&self, new_index: MilestoneIndex) {
         self.latest_solid_milestone_index.store(*new_index, Ordering::Relaxed);
+
+        // TODO: Formalise this a little better
+        let new_len = ((1000.0 + self.get_sync_threshold() as f32 * 500.0) as usize).min(DEFAULT_CACHE_LEN);
+        self.inner.resize(new_len);
     }
 
     pub fn get_snapshot_index(&self) -> MilestoneIndex {
@@ -250,6 +254,12 @@ impl<B: StorageBackend> MsTangle<B> {
     // TODO reduce to one atomic value ?
     pub fn is_synced(&self) -> bool {
         self.is_synced_threshold(0)
+    }
+
+    // TODO reduce to one atomic value ?
+    pub fn get_sync_threshold(&self) -> u32 {
+        self.get_latest_milestone_index()
+            .saturating_sub(*self.get_latest_solid_milestone_index())
     }
 
     // TODO reduce to one atomic value ?
