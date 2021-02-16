@@ -14,7 +14,7 @@ use crate::{
     Bech32Hrp, NetworkId,
 };
 
-use bee_network::{NetworkController, PeerId};
+use bee_network::{NetworkServiceController, PeerId};
 use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;
@@ -48,7 +48,7 @@ pub fn all<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
     peer_manager: ResourceHandle<PeerManager>,
-    network_controller: ResourceHandle<NetworkController>,
+    network_controller: ResourceHandle<NetworkServiceController>,
     node_info: ResourceHandle<NodeInfo>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     health(public_routes.clone(), allowed_ips.clone(), tangle.clone()).or(info(
@@ -472,7 +472,7 @@ fn peer_add(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     peer_manager: ResourceHandle<PeerManager>,
-    network_controller: ResourceHandle<NetworkController>,
+    network_controller: ResourceHandle<NetworkServiceController>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     has_permission(ROUTE_ADD_PEER, public_routes, allowed_ips)
         .and(warp::get())
@@ -489,7 +489,7 @@ fn peer_add(
 fn peer_remove(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
-    network_controller: ResourceHandle<NetworkController>,
+    network_controller: ResourceHandle<NetworkServiceController>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips)
         .and(warp::delete())
@@ -652,8 +652,8 @@ fn with_peer_manager(
 }
 
 fn with_network_controller(
-    network_controller: ResourceHandle<NetworkController>,
-) -> impl Filter<Extract = (ResourceHandle<NetworkController>,), Error = std::convert::Infallible> + Clone {
+    network_controller: ResourceHandle<NetworkServiceController>,
+) -> impl Filter<Extract = (ResourceHandle<NetworkServiceController>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || network_controller.clone())
 }
 

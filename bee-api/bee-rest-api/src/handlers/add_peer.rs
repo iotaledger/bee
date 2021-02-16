@@ -6,7 +6,7 @@ use crate::{
     types::PeerDto,
 };
 
-use bee_network::{Command::AddPeer, Multiaddr, NetworkController, PeerId, PeerRelation, Protocol};
+use bee_network::{Command::AddPeer, Multiaddr, NetworkServiceController, PeerId, PeerRelation, Protocol};
 use bee_runtime::resource::ResourceHandle;
 
 use serde::{Deserialize, Serialize};
@@ -23,7 +23,7 @@ use warp::http::StatusCode;
 pub(crate) async fn add_peer(
     value: JsonValue,
     peer_manager: ResourceHandle<PeerManager>,
-    network_controller: ResourceHandle<NetworkController>,
+    network_controller: ResourceHandle<NetworkServiceController>,
 ) -> Result<impl Reply, Rejection> {
     let multi_address_v = &value["multiAddress"];
     let alias_v = &value["alias"];
@@ -67,7 +67,7 @@ pub(crate) async fn add_peer(
             };
 
             if let Err(e) = network_controller.send(AddPeer {
-                id: peer_id,
+                peer_id,
                 address: multi_address.clone(),
                 alias: alias.clone(),
                 relation: PeerRelation::Known,
