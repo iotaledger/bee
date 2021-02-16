@@ -25,17 +25,15 @@ impl FromStr for TransactionId {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes: [u8; TRANSACTION_ID_LENGTH] = hex::decode(s)
-            .map_err(|_| Self::Err::InvalidHex)?
-            .as_slice()
+            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
             .try_into()
-            .map_err(|_| Self::Err::InvalidHex)?;
+            .map_err(|_| Self::Err::InvalidHexadecimalLength(TRANSACTION_ID_LENGTH * 2, s.len()))?;
 
         Ok(TransactionId::from(bytes))
     }
 }
 
 impl AsRef<[u8]> for TransactionId {
-    #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }

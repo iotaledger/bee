@@ -9,7 +9,7 @@ use crate::{
 use bee_common::packable::{Packable, Read, Write};
 
 use core::{
-    convert::{From, TryInto},
+    convert::{From, TryFrom, TryInto},
     str::FromStr,
 };
 
@@ -23,14 +23,18 @@ pub struct OutputId {
 
 string_serde_impl!(OutputId);
 
-impl From<[u8; OUTPUT_ID_LENGTH]> for OutputId {
-    fn from(bytes: [u8; OUTPUT_ID_LENGTH]) -> Self {
-        Self {
-            transaction_id: From::<[u8; TRANSACTION_ID_LENGTH]>::from(
-                bytes[0..TRANSACTION_ID_LENGTH].try_into().unwrap(),
-            ),
-            index: u16::from_le_bytes(bytes[TRANSACTION_ID_LENGTH..].try_into().unwrap()),
-        }
+impl TryFrom<[u8; OUTPUT_ID_LENGTH]> for OutputId {
+    type Error = Error;
+
+    fn try_from(bytes: [u8; OUTPUT_ID_LENGTH]) -> Result<Self, Self::Error> {
+        let (transaction_id, index) = bytes.split_at(TRANSACTION_ID_LENGTH);
+
+        Self::new(
+            // Unwrap is fine because size is already known and valid.
+            From::<[u8; TRANSACTION_ID_LENGTH]>::from(transaction_id.try_into().unwrap()),
+            // Unwrap is fine because size is already known and valid.
+            u16::from_le_bytes(index.try_into().unwrap()),
+        )
     }
 }
 
@@ -38,18 +42,12 @@ impl FromStr for OutputId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes = hex::decode(s).map_err(|_| Self::Err::InvalidHex)?;
-        let transaction_id_bytes: [u8; TRANSACTION_ID_LENGTH] = bytes[..TRANSACTION_ID_LENGTH]
+        let bytes: [u8; OUTPUT_ID_LENGTH] = hex::decode(s)
+            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
             .try_into()
-            .map_err(|_| Self::Err::InvalidHex)?;
-        let transaction_id = TransactionId::from(transaction_id_bytes);
-        let index = u16::from_le_bytes(
-            bytes[TRANSACTION_ID_LENGTH..]
-                .try_into()
-                .map_err(|_| Self::Err::InvalidHex)?,
-        );
+            .map_err(|_| Self::Err::InvalidHexadecimalLength(OUTPUT_ID_LENGTH * 2, s.len()))?;
 
-        OutputId::new(transaction_id, index)
+        Ok(bytes.try_into()?)
     }
 }
 

@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::ops::RangeInclusive;
 
 pub(crate) const TREASURY_OUTPUT_KIND: u8 = 2;
+// TODO check if this is correct
 const TREASURY_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]

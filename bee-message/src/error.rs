@@ -6,12 +6,14 @@ use core::fmt;
 #[derive(Debug)]
 pub enum Error {
     InvalidAmount(u64),
-    InvalidDustAmount(u64),
+    InvalidDustAllowanceAmount(u64),
     InvalidTreasuryAmount(u64),
+    InvalidMigratedFundsEntryAmount(u64),
     InvalidInputOutputCount(usize),
     InvalidInputOutputIndex(u16),
     InvalidInputKind(u8),
     InvalidOutputKind(u8),
+    InvalidEssenceKind(u8),
     InvalidPayloadKind(u32),
     InvalidAddressKind(u8),
     InvalidSignatureKind(u8),
@@ -28,9 +30,9 @@ pub enum Error {
     MissingField(&'static str),
     Io(std::io::Error),
     Utf8String(alloc::string::FromUtf8Error),
-    InvalidKind(u8, u8),
     InvalidAnnouncedLength(usize, usize),
-    InvalidHex,
+    InvalidHexadecimalChar(String),
+    InvalidHexadecimalLength(usize, usize),
     InvalidIndexationLength(usize),
     InvalidMessageLength(usize),
     InvalidTransactionPayload,
@@ -42,16 +44,20 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::InvalidAmount(amount) => write!(f, "Invalid amount: {}.", amount),
-            Error::InvalidDustAmount(amount) => write!(f, "Invalid dust amount: {}.", amount),
+            Error::InvalidDustAllowanceAmount(amount) => write!(f, "Invalid dust allowance amount: {}.", amount),
             Error::InvalidTreasuryAmount(amount) => write!(f, "Invalid treasury amount: {}.", amount),
+            Error::InvalidMigratedFundsEntryAmount(amount) => {
+                write!(f, "Invalid migrated funds entry amount: {}.", amount)
+            }
             Error::InvalidInputOutputCount(count) => write!(f, "Invalid input or output count: {}.", count),
             Error::InvalidInputOutputIndex(index) => write!(f, "Invalid input or output index: {}.", index),
-            Error::InvalidInputKind(t) => write!(f, "Invalid input kind: {}.", t),
-            Error::InvalidOutputKind(t) => write!(f, "Invalid output kind: {}.", t),
-            Error::InvalidPayloadKind(t) => write!(f, "Invalid payload kind: {}.", t),
-            Error::InvalidAddressKind(t) => write!(f, "Invalid address kind: {}.", t),
-            Error::InvalidSignatureKind(t) => write!(f, "Invalid signature kind: {}.", t),
-            Error::InvalidUnlockKind(t) => write!(f, "Invalid unlock kind: {}.", t),
+            Error::InvalidInputKind(k) => write!(f, "Invalid input kind: {}.", k),
+            Error::InvalidOutputKind(k) => write!(f, "Invalid output kind: {}.", k),
+            Error::InvalidEssenceKind(k) => write!(f, "Invalid essence kind: {}.", k),
+            Error::InvalidPayloadKind(k) => write!(f, "Invalid payload kind: {}.", k),
+            Error::InvalidAddressKind(k) => write!(f, "Invalid address kind: {}.", k),
+            Error::InvalidSignatureKind(k) => write!(f, "Invalid signature kind: {}.", k),
+            Error::InvalidUnlockKind(k) => write!(f, "Invalid unlock kind: {}.", k),
             Error::InvalidAccumulatedOutput(value) => write!(f, "Invalid accumulated output balance: {}.", value),
             Error::InvalidUnlockBlockCount(input, block) => {
                 write!(f, "Invalid unlock block count: {} != {}.", input, block)
@@ -68,11 +74,13 @@ impl fmt::Display for Error {
             Error::MissingField(s) => write!(f, "Missing required field: {}.", s),
             Error::Io(e) => write!(f, "I/O error happened: {}.", e),
             Error::Utf8String(e) => write!(f, "Invalid Utf8 string read: {}.", e),
-            Error::InvalidKind(expected, actual) => write!(f, "Invalid kind read: {}, {}.", expected, actual),
             Error::InvalidAnnouncedLength(expected, actual) => {
                 write!(f, "Invalid announced length: {}, {}.", expected, actual)
             }
-            Error::InvalidHex => write!(f, "Invalid hexadecimal conversion."),
+            Error::InvalidHexadecimalChar(hex) => write!(f, "Invalid hexadecimal character: {}.", hex),
+            Error::InvalidHexadecimalLength(expected, actual) => {
+                write!(f, "Invalid hexadecimal length: expected {} got {}.", expected, actual)
+            }
             Error::InvalidIndexationLength(length) => write!(f, "Invalid indexation index or data length {}.", length),
             Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
             Error::InvalidTransactionPayload => write!(f, "Invalid transaction payload kind."),

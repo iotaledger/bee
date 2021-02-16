@@ -123,7 +123,7 @@ impl Packable for Payload {
             TREASURY_TRANSACTION_PAYLOAD_KIND => {
                 Self::TreasuryTransaction(Box::new(TreasuryTransactionPayload::unpack(reader)?))
             }
-            t => return Err(Self::Error::InvalidPayloadKind(t)),
+            k => return Err(Self::Error::InvalidPayloadKind(k)),
         })
     }
 }

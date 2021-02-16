@@ -7,7 +7,10 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_message::{payload::Payload, MessageId};
+use bee_message::{
+    payload::{transaction::Essence, Payload},
+    MessageId,
+};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 
@@ -40,12 +43,14 @@ async fn process<B: StorageBackend>(
 
         metrics.transaction_payload_inc(1);
 
-        if let Some(Payload::Indexation(_)) = transaction.essence().payload() {
-            if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
-                error!(
-                    "Sending message id {} to indexation payload worker failed: {:?}.",
-                    message_id, e
-                );
+        if let Essence::Regular(essence) = transaction.essence() {
+            if let Some(Payload::Indexation(_)) = essence.payload() {
+                if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
+                    error!(
+                        "Sending message id {} to indexation payload worker failed: {:?}.",
+                        message_id, e
+                    );
+                }
             }
         }
     }

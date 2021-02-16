@@ -17,6 +17,7 @@ use std::{
     sync::{atomic::AtomicBool, Arc},
 };
 
+pub const MESSAGE_LENGTH_MIN: usize = 53;
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
 pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 

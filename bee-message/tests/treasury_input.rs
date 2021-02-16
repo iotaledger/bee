@@ -9,7 +9,7 @@ use std::str::FromStr;
 const MESSAGE_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
-fn valid_new() {
+fn new_valid() {
     let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
     let input = TreasuryInput::new(message_id);
 
@@ -17,7 +17,7 @@ fn valid_new() {
 }
 
 #[test]
-fn valid_from() {
+fn from_valid() {
     let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
     let input: TreasuryInput = message_id.into();
 
@@ -25,7 +25,7 @@ fn valid_from() {
 }
 
 #[test]
-fn valid_from_str() {
+fn from_str_valid() {
     let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
     let input = TreasuryInput::from_str(MESSAGE_ID).unwrap();
 
@@ -40,7 +40,7 @@ fn from_str_to_str() {
 }
 
 #[test]
-fn pack_unpack() {
+fn pack_unpack_valid() {
     let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
     let input_1 = TreasuryInput::new(message_id);
     let input_2 = TreasuryInput::unpack(&mut input_1.pack_new().as_slice()).unwrap();

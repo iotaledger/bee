@@ -9,6 +9,9 @@ color_enabled = true
 [[logger.outputs]]
 name          = "stdout"
 level_filter  = "info"
+[[logger.outputs]]
+name          = "error.log"
+level_filter  = "error"
 
 [network]
 bind_address             = "/ip4/0.0.0.0/tcp/15600"

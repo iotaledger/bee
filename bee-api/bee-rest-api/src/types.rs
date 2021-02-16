@@ -26,26 +26,32 @@ pub struct MessageDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PayloadDto {
-    Transaction(Box<TransactionDto>),
-    Milestone(Box<MilestoneDto>),
-    Indexation(Box<IndexationDto>),
-    Receipt(Box<ReceiptDto>),
-    TreasuryTransaction(Box<TreasuryTransactionDto>),
+    Transaction(Box<TransactionPayloadDto>),
+    Milestone(Box<MilestonePayloadDto>),
+    Indexation(Box<IndexationPayloadDto>),
+    Receipt(Box<ReceiptPayloadDto>),
+    TreasuryTransaction(Box<TreasuryTransactionPayloadDto>),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TransactionDto {
+pub struct TransactionPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    pub essence: TransactionEssenceDto,
+    pub essence: EssenceDto,
     #[serde(rename = "unlockBlocks")]
     pub unlock_blocks: Vec<UnlockBlockDto>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TransactionEssenceDto {
+#[serde(untagged)]
+pub enum EssenceDto {
+    Regular(RegularEssenceDto),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RegularEssenceDto {
     #[serde(rename = "type")]
-    pub kind: u32,
+    pub kind: u8,
     pub inputs: Vec<InputDto>,
     pub outputs: Vec<OutputDto>,
     pub payload: Option<PayloadDto>,
@@ -54,14 +60,14 @@ pub struct TransactionEssenceDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum InputDto {
-    UTXO(UtxoInputDto),
+    UTXO(UTXOInputDto),
     Treasury(TreasuryInputDto),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct UtxoInputDto {
+pub struct UTXOInputDto {
     #[serde(rename = "type")]
-    pub kind: u32,
+    pub kind: u8,
     #[serde(rename = "transactionId")]
     pub transaction_id: String,
     #[serde(rename = "transactionOutputIndex")]
@@ -71,7 +77,7 @@ pub struct UtxoInputDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TreasuryInputDto {
     #[serde(rename = "type")]
-    pub kind: u32,
+    pub kind: u8,
     #[serde(rename = "transactionId")]
     pub message_id: String,
 }
@@ -87,7 +93,7 @@ pub enum OutputDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedSingleOutputDto {
     #[serde(rename = "type")]
-    pub kind: u32,
+    pub kind: u8,
     pub address: AddressDto,
     pub amount: u64,
 }
@@ -95,7 +101,7 @@ pub struct SignatureLockedSingleOutputDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedDustAllowanceOutputDto {
     #[serde(rename = "type")]
-    pub kind: u32,
+    pub kind: u8,
     pub address: AddressDto,
     pub amount: u64,
 }
@@ -109,14 +115,14 @@ pub enum AddressDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Ed25519AddressDto {
     #[serde(rename = "type")]
-    pub kind: u32,
+    pub kind: u8,
     pub address: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TreasuryOutputDto {
     #[serde(rename = "type")]
-    pub kind: u32,
+    pub kind: u8,
     pub amount: u64,
 }
 
@@ -130,7 +136,7 @@ pub enum UnlockBlockDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureUnlockDto {
     #[serde(rename = "type")]
-    pub kind: u32,
+    pub kind: u8,
     pub signature: SignatureDto,
 }
 
@@ -143,7 +149,7 @@ pub enum SignatureDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Ed25519SignatureDto {
     #[serde(rename = "type")]
-    pub kind: u32,
+    pub kind: u8,
     #[serde(rename = "publicKey")]
     pub public_key: String,
     pub signature: String,
@@ -152,12 +158,12 @@ pub struct Ed25519SignatureDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReferenceUnlockDto {
     #[serde(rename = "type")]
-    pub kind: u32,
+    pub kind: u8,
     pub index: u16,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MilestoneDto {
+pub struct MilestonePayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
     pub index: u32,
@@ -173,7 +179,7 @@ pub struct MilestoneDto {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct IndexationDto {
+pub struct IndexationPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
     pub index: String,
@@ -181,13 +187,13 @@ pub struct IndexationDto {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ReceiptDto {
+pub struct ReceiptPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TreasuryTransactionDto {
+pub struct TreasuryTransactionPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
     pub input: InputDto,
@@ -279,10 +285,10 @@ impl TryFrom<&PayloadDto> for Payload {
 }
 
 // &Box<Transaction> -> Box<TransactionDto>
-impl TryFrom<&Box<TransactionPayload>> for Box<TransactionDto> {
+impl TryFrom<&Box<TransactionPayload>> for Box<TransactionPayloadDto> {
     type Error = String;
     fn try_from(value: &Box<TransactionPayload>) -> Result<Self, Self::Error> {
-        Ok(Box::new(TransactionDto {
+        Ok(Box::new(TransactionPayloadDto {
             kind: 0,
             essence: value.essence().try_into()?,
             unlock_blocks: value
@@ -295,9 +301,9 @@ impl TryFrom<&Box<TransactionPayload>> for Box<TransactionDto> {
 }
 
 // &TransactionDto -> Box<Transaction>
-impl TryFrom<&Box<TransactionDto>> for Box<TransactionPayload> {
+impl TryFrom<&Box<TransactionPayloadDto>> for Box<TransactionPayload> {
     type Error = String;
-    fn try_from(value: &Box<TransactionDto>) -> Result<Self, Self::Error> {
+    fn try_from(value: &Box<TransactionPayloadDto>) -> Result<Self, Self::Error> {
         let mut builder = TransactionPayload::builder().with_essence((&value.essence).try_into()?);
         for b in &value.unlock_blocks {
             builder = builder.add_unlock_block(b.try_into()?);
@@ -310,11 +316,32 @@ impl TryFrom<&Box<TransactionDto>> for Box<TransactionPayload> {
     }
 }
 
-// &TransactionEssence -> TransactionEssenceDto
-impl TryFrom<&TransactionPayloadEssence> for TransactionEssenceDto {
+// &Essence -> EssenceDto
+impl TryFrom<&Essence> for EssenceDto {
     type Error = String;
-    fn try_from(value: &TransactionPayloadEssence) -> Result<Self, Self::Error> {
-        Ok(TransactionEssenceDto {
+    fn try_from(value: &Essence) -> Result<Self, Self::Error> {
+        match value {
+            Essence::Regular(r) => Ok(EssenceDto::Regular(r.try_into()?)),
+            _ => Err("essence type not supported".to_string()),
+        }
+    }
+}
+
+// &EssenceDto -> Essence
+impl TryFrom<&EssenceDto> for Essence {
+    type Error = String;
+    fn try_from(value: &EssenceDto) -> Result<Self, Self::Error> {
+        match value {
+            EssenceDto::Regular(r) => Ok(Essence::Regular(r.try_into()?)),
+        }
+    }
+}
+
+// &RegularEssence -> RegularEssenceDto
+impl TryFrom<&RegularEssence> for RegularEssenceDto {
+    type Error = String;
+    fn try_from(value: &RegularEssence) -> Result<Self, Self::Error> {
+        Ok(RegularEssenceDto {
             kind: 0, // TODO: should this be removed?
             inputs: value
                 .inputs()
@@ -337,11 +364,11 @@ impl TryFrom<&TransactionPayloadEssence> for TransactionEssenceDto {
     }
 }
 
-// &TransactionEssenceDto -> TransactionEssence
-impl TryFrom<&TransactionEssenceDto> for TransactionPayloadEssence {
+// &RegularEssenceDto -> RegularEssence
+impl TryFrom<&RegularEssenceDto> for RegularEssence {
     type Error = String;
-    fn try_from(value: &TransactionEssenceDto) -> Result<Self, Self::Error> {
-        let mut builder = TransactionPayloadEssence::builder();
+    fn try_from(value: &RegularEssenceDto) -> Result<Self, Self::Error> {
+        let mut builder = RegularEssence::builder();
 
         for i in &value.inputs {
             builder = builder.add_input(i.try_into()?);
@@ -370,7 +397,7 @@ impl TryFrom<&Input> for InputDto {
     type Error = String;
     fn try_from(value: &Input) -> Result<Self, Self::Error> {
         match value {
-            Input::UTXO(u) => Ok(InputDto::UTXO(UtxoInputDto {
+            Input::UTXO(u) => Ok(InputDto::UTXO(UTXOInputDto {
                 kind: 0,
                 transaction_id: u.output_id().transaction_id().to_string(),
                 transaction_output_index: u.output_id().index(),
@@ -555,10 +582,10 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
 }
 
 // Box<Milestone> -> MilestoneDto
-impl TryFrom<&Box<MilestonePayload>> for Box<MilestoneDto> {
+impl TryFrom<&Box<MilestonePayload>> for Box<MilestonePayloadDto> {
     type Error = String;
     fn try_from(value: &Box<MilestonePayload>) -> Result<Self, Self::Error> {
-        Ok(Box::new(MilestoneDto {
+        Ok(Box::new(MilestonePayloadDto {
             kind: 1,
             index: value.essence().index(),
             timestamp: value.essence().timestamp(),
@@ -572,9 +599,9 @@ impl TryFrom<&Box<MilestonePayload>> for Box<MilestoneDto> {
 }
 
 // &Box<MilestoneDto> -> Box<Milestone>
-impl TryFrom<&Box<MilestoneDto>> for Box<MilestonePayload> {
+impl TryFrom<&Box<MilestonePayloadDto>> for Box<MilestonePayload> {
     type Error = String;
-    fn try_from(value: &Box<MilestoneDto>) -> Result<Self, Self::Error> {
+    fn try_from(value: &Box<MilestonePayloadDto>) -> Result<Self, Self::Error> {
         let essence = {
             let index = value.index;
             let timestamp = value.timestamp;
@@ -631,9 +658,9 @@ impl TryFrom<&Box<MilestoneDto>> for Box<MilestonePayload> {
 }
 
 // &Box<IndexationPayload> -> Box<IndexationDto>
-impl From<&Box<IndexationPayload>> for Box<IndexationDto> {
+impl From<&Box<IndexationPayload>> for Box<IndexationPayloadDto> {
     fn from(value: &Box<IndexationPayload>) -> Self {
-        Box::new(IndexationDto {
+        Box::new(IndexationPayloadDto {
             kind: 2,
             index: value.index().to_owned(),
             data: hex::encode(value.data()),
@@ -642,9 +669,9 @@ impl From<&Box<IndexationPayload>> for Box<IndexationDto> {
 }
 
 // &Box<IndexationDto> -> Box<IndexationPayload>
-impl TryFrom<&Box<IndexationDto>> for Box<IndexationPayload> {
+impl TryFrom<&Box<IndexationPayloadDto>> for Box<IndexationPayload> {
     type Error = String;
-    fn try_from(value: &Box<IndexationDto>) -> Result<Self, Self::Error> {
+    fn try_from(value: &Box<IndexationPayloadDto>) -> Result<Self, Self::Error> {
         Ok(Box::new(
             IndexationPayload::new(
                 value.index.clone(),
@@ -657,25 +684,25 @@ impl TryFrom<&Box<IndexationDto>> for Box<IndexationPayload> {
 }
 
 // &Box<ReceiptPayload> -> Box<ReceiptDto>
-impl From<&Box<ReceiptPayload>> for Box<ReceiptDto> {
+impl From<&Box<ReceiptPayload>> for Box<ReceiptPayloadDto> {
     fn from(_value: &Box<ReceiptPayload>) -> Self {
-        Box::new(ReceiptDto { kind: 3 })
+        Box::new(ReceiptPayloadDto { kind: 3 })
     }
 }
 
 // &Box<ReceiptDto> -> Box<ReceiptPayload>
-impl TryFrom<&Box<ReceiptDto>> for Box<ReceiptPayload> {
+impl TryFrom<&Box<ReceiptPayloadDto>> for Box<ReceiptPayload> {
     type Error = String;
-    fn try_from(_value: &Box<ReceiptDto>) -> Result<Self, Self::Error> {
+    fn try_from(_value: &Box<ReceiptPayloadDto>) -> Result<Self, Self::Error> {
         Ok(Box::new(ReceiptPayload::new()))
     }
 }
 
 // &Box<ReceiptPayload> -> Box<ReceiptDto>
-impl TryFrom<&Box<TreasuryTransactionPayload>> for Box<TreasuryTransactionDto> {
+impl TryFrom<&Box<TreasuryTransactionPayload>> for Box<TreasuryTransactionPayloadDto> {
     type Error = String;
     fn try_from(value: &Box<TreasuryTransactionPayload>) -> Result<Self, Self::Error> {
-        Ok(Box::new(TreasuryTransactionDto {
+        Ok(Box::new(TreasuryTransactionPayloadDto {
             kind: 4,
             input: value.input().try_into()?,
             output: value.output().try_into()?,
@@ -684,9 +711,9 @@ impl TryFrom<&Box<TreasuryTransactionPayload>> for Box<TreasuryTransactionDto> {
 }
 
 // &Box<TreasuryTransactionDto> -> Box<TreasuryTransactionPayload>
-impl TryFrom<&Box<TreasuryTransactionDto>> for Box<TreasuryTransactionPayload> {
+impl TryFrom<&Box<TreasuryTransactionPayloadDto>> for Box<TreasuryTransactionPayload> {
     type Error = String;
-    fn try_from(value: &Box<TreasuryTransactionDto>) -> Result<Self, Self::Error> {
+    fn try_from(value: &Box<TreasuryTransactionPayloadDto>) -> Result<Self, Self::Error> {
         let input: Input = (&value.input)
             .try_into()
             .map_err(|_| "invalid input in treasury transaction payload: expected a treasury input")?;

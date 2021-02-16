@@ -1,6 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod migrated_funds_entry;
+
+pub use migrated_funds_entry::MigratedFundsEntry;
+
 use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};

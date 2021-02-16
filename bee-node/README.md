@@ -28,11 +28,9 @@ choco install git --params '/NoAutoCrlf' nodejs-lts cmake --installargs 'ADD_CMA
 ```
 Restart Powershell
 
-> **WARNING**: If you already had git installed from another source and havent already, set `autocrlf` to `false` for this repo.
-
 ### Rust
 
-Minimum required version 1.47.
+Minimum required version 1.48.
 
 #### Installation (Debian, MacOS)
 
