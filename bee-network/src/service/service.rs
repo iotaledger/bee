@@ -188,24 +188,27 @@ async fn process_command(
         } => {
             let alias = alias.unwrap_or_else(|| alias!(peer_id).to_string());
 
-            // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
-            if relation.is_known() {
-                add_peer(peer_id, address, alias, relation, peerlist, event_sender).await?;
+            add_peer(peer_id, address, alias, relation, peerlist, event_sender).await?;
 
-                // We automatically connect to such peers. Since we can connect concurrently, we spawn a task here.
-                let _ = internal_command_sender.send(Command::DialPeer { peer_id });
-            } else {
-                add_peer(peer_id, address, alias, relation, peerlist, event_sender).await?;
+            // We automatically connect to known peers.
+            if relation.is_known() {
+                internal_command_sender
+                    .send(Command::DialPeer { peer_id })
+                    .expect("internal command receiver dropped");
             }
         }
         Command::RemovePeer { peer_id } => {
             remove_peer(peer_id, peerlist, event_sender).await?;
         }
         Command::DialPeer { peer_id } => {
-            let _ = internal_command_sender.send(Command::DialPeer { peer_id });
+            internal_command_sender
+                .send(Command::DialPeer { peer_id })
+                .expect("internal command receiver dropped");
         }
         Command::DialAddress { address } => {
-            let _ = internal_command_sender.send(Command::DialAddress { address });
+            internal_command_sender
+                .send(Command::DialAddress { address })
+                .expect("internal command receiver dropped");
         }
         Command::DisconnectPeer { peer_id } => {
             disconnect_peer(peer_id, peerlist, event_sender).await?;
