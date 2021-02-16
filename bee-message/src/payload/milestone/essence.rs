@@ -5,6 +5,7 @@ use crate::{payload::Payload, Error, MessageId, MESSAGE_ID_LENGTH, MESSAGE_PAREN
 
 use bee_common::packable::{Packable, Read, Write};
 
+use crypto::blake2b;
 use serde::{Deserialize, Serialize};
 
 use alloc::vec::Vec;
@@ -62,6 +63,14 @@ impl MilestonePayloadEssence {
 
     pub fn receipt(&self) -> Option<&Payload> {
         self.receipt.as_ref()
+    }
+
+    pub fn hash(&self) -> [u8; 32] {
+        let mut hash = [0u8; 32];
+
+        blake2b::hash(&self.pack_new(), &mut hash);
+
+        hash
     }
 }
 

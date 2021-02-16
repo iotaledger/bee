@@ -11,6 +11,7 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
+use crypto::blake2b;
 use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
@@ -31,6 +32,14 @@ impl Essence {
         match self {
             Self::Regular(_) => REGULAR_ESSENCE_KIND,
         }
+    }
+
+    pub fn hash(&self) -> [u8; 32] {
+        let mut hash = [0u8; 32];
+
+        blake2b::hash(&self.pack_new(), &mut hash);
+
+        hash
     }
 }
 
