@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::protocols::gossip::{self, Gossip, GossipEvent};
-use crate::service::{InternalEvent, InternalEventSender};
+use crate::{
+    host::Origin,
+    service::{InternalEvent, InternalEventSender},
+};
 
 use futures::AsyncReadExt;
 use libp2p::{
@@ -12,6 +15,7 @@ use libp2p::{
     NetworkBehaviour,
 };
 use log::*;
+use tokio::sync::mpsc;
 
 #[derive(NetworkBehaviour)]
 pub struct SwarmBehavior {
@@ -22,14 +26,18 @@ pub struct SwarmBehavior {
 }
 
 impl SwarmBehavior {
-    pub async fn new(local_public_key: PublicKey, internal_sender: InternalEventSender) -> Self {
+    pub async fn new(
+        local_public_key: PublicKey,
+        internal_sender: InternalEventSender,
+        origin_rx: mpsc::UnboundedReceiver<Origin>,
+    ) -> Self {
         Self {
             identify: Identify::new(
                 "iota/0.1.0".to_string(),
                 "github.com/iotaledger/bee".to_string(),
                 local_public_key,
             ),
-            gossip: Gossip::new(),
+            gossip: Gossip::new(origin_rx),
             internal_sender,
         }
     }
@@ -37,7 +45,7 @@ impl SwarmBehavior {
 
 impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
     fn inject_event(&mut self, event: IdentifyEvent) {
-        debug!("Swarm produced IdentifyEvent.");
+        trace!("IdentifyEvent.");
 
         match event {
             IdentifyEvent::Received {
@@ -45,13 +53,13 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
                 info: _,
                 observed_addr,
             } => {
-                info!(
+                debug!(
                     "Received Identify request from {}. Observed addresses: {:?}.",
                     peer_id, observed_addr
                 );
             }
             IdentifyEvent::Sent { peer_id } => {
-                info!("Sent Identify request to {}.", peer_id);
+                debug!("Sent Identify request to {}.", peer_id);
             }
             IdentifyEvent::Error { peer_id, error } => {
                 warn!("Identification error with {}: Cause: {:?}.", peer_id, error);
@@ -62,7 +70,7 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
 
 impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
     fn inject_event(&mut self, event: GossipEvent) {
-        debug!("Swarm produced GossipEvent.");
+        trace!("GossipEvent.");
 
         let GossipEvent {
             peer_id,

@@ -36,39 +36,44 @@ pub fn spawn_gossip_in_task(
         let mut msg_len = 0;
 
         loop {
-            if recv_message(&mut reader, &mut msg_buf, &mut msg_len).await {
+            if recv_valid_message(&mut reader, &mut msg_buf, &mut msg_len).await {
                 if incoming_gossip_sender.send(msg_buf[..msg_len].to_vec()).is_err() {
                     // The receiver of this channel was dropped, maybe due to a shutdown. There is nothing we can do to
                     // salvage this situation, hence we drop the connection.
                     break;
                 }
             } else {
-                // We could not read anymore from the underlying stream, probably because the peer dropped the
-                // connection.
+                trace!("Gossip-IO: Stream closed remotely.");
+
+                // NB: The network service will not shut down before it has received the `ProtocolDropped` event from
+                // all once connected peers, hence if the following send fails, then it must be
+                // considered a bug.
+
+                // The remote peer dropped the connection.
+                internal_event_sender
+                    .send(InternalEvent::ProtocolDropped { peer_id })
+                    .expect("The service must not shutdown as long as there are gossip tasks running.");
+
                 break;
             }
         }
 
-        trace!("Exiting incoming gossip event loop for {}", peer_id);
-
-        // NB: The network service will not shut down before it has received the `ConnectionDropped` event from all
-        // once connected peers, hence if the following send fails, then it must be considered a bug.
-
-        internal_event_sender
-            .send(InternalEvent::ProtocolDropped { peer_id })
-            .expect("The service must not shutdown as long as there are gossip tasks running.");
+        println!("IO: Exiting incoming gossip event loop for {}", peer_id);
     });
 }
 
-async fn recv_message<S>(stream: &mut S, message: &mut [u8], message_len: &mut usize) -> bool
+async fn recv_valid_message<S>(stream: &mut S, message: &mut [u8], message_len: &mut usize) -> bool
 where
     S: AsyncRead + Unpin,
 {
-    if let Ok(len) = stream.read(message).await {
-        *message_len = len;
-        true
+    if let Ok(msg_len) = stream.read(message).await {
+        if msg_len == 0 {
+            false
+        } else {
+            *message_len = msg_len;
+            true
+        }
     } else {
-        // Stream closed remotely or some other unsalvageable connection issue.
         false
     }
 }
@@ -84,35 +89,38 @@ pub fn spawn_gossip_out_task(
 
         // If the gossip sender dropped we end the connection.
         while let Some(message) = outgoing_gossip_receiver.next().await {
-            let message_len = message.len();
+            let msg_len = message.len();
 
             // NB: Instead of polling another shutdown channel, we analogously use an empty message
             // to signal that we want to end the connection. We use this "trick" whenever the network
             // receives the `DisconnectPeer` command to enforce that the connection will be dropped.
 
-            if message_len == 0 {
-                trace!("Stream closing locally.");
+            if msg_len == 0 {
+                trace!("Gossip-IO: Stream closing locally.");
+
+                // NB: The network service will not shut down before it has received the `ConnectionDropped` event from
+                // all once connected peers, hence if the following send fails, then it must be
+                // considered a bug.
+
+                internal_event_sender
+                    .send(InternalEvent::ProtocolDropped { peer_id })
+                    .expect("The service must not shutdown as long as there are gossip tasks running.");
+
                 break;
             }
 
             // If sending to the stream fails we end the connection.
-            if !send_message(&mut writer, &message).await {
+            if !send_valid_message(&mut writer, &message).await {
+                println!("IO: Sending valid message failed.");
                 break;
             }
         }
 
-        trace!("Exiting outgoing gossip event loop for {}", peer_id);
-
-        // NB: The network service will not shut down before it has received the `ConnectionDropped` event from all
-        // once connected peers, hence if the following send fails, then it must be considered a bug.
-
-        internal_event_sender
-            .send(InternalEvent::ProtocolDropped { peer_id })
-            .expect("The service must not shutdown as long as there are gossip tasks running.");
+        println!("IO: Exiting outgoing gossip event loop for {}", peer_id);
     });
 }
 
-async fn send_message<S>(stream: &mut S, message: &[u8]) -> bool
+async fn send_valid_message<S>(stream: &mut S, message: &[u8]) -> bool
 where
     S: AsyncWrite + Unpin,
 {

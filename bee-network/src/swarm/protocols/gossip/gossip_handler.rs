@@ -11,29 +11,27 @@ use libp2p::{
     },
     OutboundUpgrade,
 };
-use log::trace;
-use tokio::sync::mpsc::Receiver;
 
 use std::{io, task::Poll};
 
 pub struct GossipHandler {
-    origin_rx: Receiver<Origin>,
-    origin: Option<Origin>,
+    origin: Origin,
     stream: Option<NegotiatedSubstream>,
+    sent_request: bool,
 }
 
 impl GossipHandler {
-    pub fn new(origin_rx: Receiver<Origin>) -> Self {
+    pub fn new(origin: Origin) -> Self {
         Self {
-            origin_rx,
-            origin: None,
+            origin,
             stream: None,
+            sent_request: false,
         }
     }
 }
 
 impl ProtocolsHandler for GossipHandler {
-    type InEvent = ();
+    type InEvent = Origin;
     type OutEvent = NegotiatedSubstream;
     type Error = io::Error;
     type InboundProtocol = GossipUpgrade;
@@ -46,16 +44,19 @@ impl ProtocolsHandler for GossipHandler {
     }
 
     fn inject_fully_negotiated_inbound(&mut self, stream: NegotiatedSubstream, _: Self::InboundOpenInfo) {
-        trace!("HANDLER: negotiated inbound");
+        // println!("HANDLER: negotiated inbound");
         self.stream.replace(stream);
     }
 
     fn inject_fully_negotiated_outbound(&mut self, stream: NegotiatedSubstream, _: Self::OutboundOpenInfo) {
-        trace!("HANDLER: negotiated outbound");
+        // println!("HANDLER: negotiated outbound");
         self.stream.replace(stream);
     }
 
-    fn inject_event(&mut self, _event: Self::InEvent) {}
+    fn inject_event(&mut self, event: Self::InEvent) {
+        // println!("HANDLER: in event: {}", event);
+        self.origin = event;
+    }
 
     fn inject_dial_upgrade_error(
         &mut self,
@@ -71,28 +72,23 @@ impl ProtocolsHandler for GossipHandler {
     #[allow(clippy::type_complexity)]
     fn poll(
         &mut self,
-        cx: &mut std::task::Context<'_>,
+        _cx: &mut std::task::Context<'_>,
     ) -> Poll<ProtocolsHandlerEvent<Self::OutboundProtocol, Self::OutboundOpenInfo, Self::OutEvent, Self::Error>> {
-        if self.origin.is_none() {
-            match self.origin_rx.poll_recv(cx) {
-                Poll::Ready(Some(origin)) => {
-                    self.origin.replace(origin);
-                    if origin.is_outbound() {
-                        let request_sent_event = ProtocolsHandlerEvent::OutboundSubstreamRequest {
-                            protocol: SubstreamProtocol::new(GossipUpgrade::default(), ()),
-                        };
-                        trace!("HANDLER: request sent event");
-                        return Poll::Ready(request_sent_event);
-                    } else {
-                        return Poll::Pending;
-                    }
-                }
-                _ => return Poll::Pending,
-            }
+        // NB: It is important to send the request to the peer only once and especially by convention only if the
+        // connection is outbound.
+
+        if !self.sent_request && self.origin.is_outbound() {
+            self.sent_request = true;
+
+            let request_sent_event = ProtocolsHandlerEvent::OutboundSubstreamRequest {
+                protocol: SubstreamProtocol::new(GossipUpgrade::default(), ()),
+            };
+            // println!("HANDLER: request sent event");
+            return Poll::Ready(request_sent_event);
         }
 
         if let Some(stream) = self.stream.take() {
-            trace!("HANDLER: stream result event");
+            // println!("HANDLER: stream result event");
             Poll::Ready(ProtocolsHandlerEvent::Custom(stream))
         } else {
             Poll::Pending

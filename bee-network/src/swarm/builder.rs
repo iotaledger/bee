@@ -1,6 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::host::Origin;
+
 use libp2p::{
     core::{
         connection::ConnectionLimits,
@@ -10,6 +12,7 @@ use libp2p::{
     swarm::SwarmBuilder,
     tcp, yamux, Swarm, Transport,
 };
+use tokio::sync::mpsc::unbounded_channel;
 
 use std::{io, time::Duration};
 
@@ -32,7 +35,7 @@ pub async fn build_swarm(
         .into_authentic(local_keys)
         .expect("error creating noise keys");
 
-    let tcp_config = tcp::TokioTcpConfig::new().nodelay(true);
+    let tcp_config = tcp::TokioTcpConfig::new().nodelay(true).port_reuse(true);
     let noi_config = noise::NoiseConfig::xx(noise_keys);
     let dns_config = dns::DnsConfig::new(tcp_config)?;
     let mpx_config = mplex::MplexConfig::default();
@@ -45,7 +48,8 @@ pub async fn build_swarm(
         .timeout(Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))
         .boxed();
 
-    let behavior = SwarmBehavior::new(local_public_key, internal_sender).await;
+    let (_tx, rx) = tokio::sync::mpsc::unbounded_channel::<Origin>();
+    let behavior = SwarmBehavior::new(local_public_key, internal_sender, rx).await;
     let limits = ConnectionLimits::default().with_max_established_per_peer(Some(MAX_CONNECTIONS_PER_PEER));
 
     let swarm = SwarmBuilder::new(transport, behavior, local_peer_id)

@@ -19,8 +19,8 @@ mod common;
 use common::*;
 
 use bee_network::{
-    alias, Command::*, Event, GossipReceiver, GossipSender, Keypair, Multiaddr, NetworkConfig, NetworkController,
-    NetworkListener, PeerId, PeerInfo, PeerRelation,
+    alias, Command::*, Event, GossipReceiver, GossipSender, Keypair, Multiaddr, NetworkConfig, NetworkListener,
+    NetworkServiceController, PeerId, PeerInfo, PeerRelation,
 };
 use bee_runtime::{
     node::{Node, NodeBuilder},
@@ -37,7 +37,6 @@ use futures::{
     stream::{Fuse, StreamExt},
     AsyncWriteExt, Future, FutureExt,
 };
-use log::*;
 use structopt::StructOpt;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
@@ -50,13 +49,14 @@ use std::{
     time::Duration,
 };
 
-const RECONNECT_INTERVAL_SECS: u64 = 30;
+const RECONNECT_INTERVAL_SECS: u64 = 5;
+const MAX_UNKNOWN_PEERS: usize = 4;
 
 type WorkerStart<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + 'a>>;
 type WorkerStop<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> + Send;
 type ResourceRegister<N> = dyn for<'a> FnOnce(&'a mut N);
 
-#[tokio::main(flavor = "current_thread")]
+#[tokio::main(flavor = "multi_thread")] // current_thread
 async fn main() {
     let args = Args::from_args();
     let config = args.into_config();
@@ -65,18 +65,17 @@ async fn main() {
 
     let node = ExampleNodeBuilder::new(config.clone()).unwrap().finish().await.unwrap();
 
-    let network_controller = node.resource::<NetworkController>();
+    let network_controller = node.resource::<NetworkServiceController>();
 
-    info!("[gossip.rs] Dialing unkown peers (by address)...");
+    println!("Dialing unknown peers (by address)...");
+
     for peer_address in &config.peers {
         if let Err(e) = network_controller.send(DialAddress {
             address: peer_address.clone(),
         }) {
-            warn!("Dialing peer (by address) failed. Error: {:?}", e);
+            println!("Dialing peer (by address) failed. Error: {:?}", e);
         }
     }
-
-    info!("[gossip.rs] ...finished.");
 
     node.run().await;
 }
@@ -111,24 +110,23 @@ impl ExampleNode {
             ..
         } = self;
 
-        info!("[gossip.rs] Node running.");
-
         let sigterm_listener = ctrl_c_listener();
         let mut network_events = ShutdownStream::new(sigterm_listener, UnboundedReceiverStream::new(network_listener));
 
-        while let Some(event) = network_events.next().await {
-            info!("Received {:?}.", event);
+        println!("Node running.");
 
+        while let Some(event) = network_events.next().await {
+            println!("Received {:?}.", event);
             process_event(event, &mut connected_peers).await;
         }
 
-        info!("[gossip.rs] Stopping node...");
+        println!("Stopping node...");
 
         for (_, peer) in connected_peers {
             peer.shutdown.send(()).expect("Sending shutdown signal failed");
         }
 
-        info!("[gossip.rs] Stopped.");
+        println!("Stopped.");
     }
 
     fn add_worker<W: Worker<Self> + Send + Sync>(&mut self, worker: W) {
@@ -225,7 +223,7 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
             TypeId::of::<W>(),
             Box::new(|node| {
                 Box::pin(async move {
-                    debug!("Starting worker {}...", type_name::<W>());
+                    println!("Starting worker {}...", type_name::<W>());
                     match W::start(node, config).await {
                         Ok(w) => node.add_worker(w),
                         Err(e) => panic!("Worker `{}` failed to start: {:?}.", type_name::<W>(), e),
@@ -237,7 +235,7 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
             TypeId::of::<W>(),
             Box::new(|node| {
                 Box::pin(async move {
-                    debug!("Stopping worker {}...", type_name::<W>());
+                    println!("Stopping worker {}...", type_name::<W>());
                     match node.remove_worker::<W>().stop(node).await {
                         Ok(()) => {}
                         Err(e) => panic!("Worker `{}` failed to stop: {:?}.", type_name::<W>(), e),
@@ -261,15 +259,15 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
             .reconnect_interval_secs(RECONNECT_INTERVAL_SECS)
             .finish();
 
-        info!("[gossip.rs] Initializing network...");
+        println!("Initializing network...");
 
         let local_keys = Keypair::generate();
         let network_id = 1;
 
         let (mut this, network_listener) =
-            bee_network::init::<ExampleNode>(network_config, local_keys, network_id, 1, self).await;
+            bee_network::init::<ExampleNode>(network_config, local_keys, network_id, MAX_UNKNOWN_PEERS, self).await;
 
-        info!("[gossip.rs] Node initialized.");
+        println!("Node initialized.");
 
         let mut node = ExampleNode {
             config: this.config,
@@ -295,7 +293,7 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
 async fn process_event(event: Event, connected_peers: &mut PeerList) {
     match event {
         Event::PeerAdded { peer_id, info } => {
-            info!("[gossip.rs] Added peer '{}' ({:?}).", peer_id, info);
+            println!("Added peer *{} ({:?}).", alias!(peer_id), info);
         }
         Event::PeerConnected {
             peer_id,
@@ -303,7 +301,7 @@ async fn process_event(event: Event, connected_peers: &mut PeerList) {
             gossip_in,
             gossip_out,
         } => {
-            info!("[gossip.rs] Connected peer '{}' with address '{}'.", peer_id, address);
+            println!("Connected peer '*{}' [{}].", alias!(peer_id), address);
 
             let (tx, rx) = oneshot::channel::<()>();
 
@@ -319,7 +317,7 @@ async fn process_event(event: Event, connected_peers: &mut PeerList) {
             // Removing the peer will trigger the shutdown signal, which stops the gossip task
             connected_peers.remove(&peer_id);
 
-            info!("[gossip.rs] Disconnected peer {}.", peer_id);
+            println!("Disconnected peer {}.", alias!(peer_id));
         }
         // Ignore all other events
         _ => (),
@@ -340,7 +338,7 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
 
 fn send_gossip(peer_id: PeerId, gossip_out: GossipSender, shutdown_rx: oneshot::Receiver<()>) {
     tokio::spawn(async move {
-        info!("[gossip.rs] Sending gossip to {}", peer_id);
+        println!("Sending gossip to *{}", alias!(peer_id));
 
         let mut i = 0usize;
         let mut shutdown_stream = ShutdownStream::new(
@@ -351,30 +349,30 @@ fn send_gossip(peer_id: PeerId, gossip_out: GossipSender, shutdown_rx: oneshot::
         while let Some(_) = shutdown_stream.next().await {
             let message = i.to_string();
 
-            info!("[gossip.rs] Sending message to peer {} ({}).", alias!(peer_id), message);
+            println!("Sending message to peer *{} (\"{}\").", alias!(peer_id), message);
 
             if let Err(e) = gossip_out.send(message.as_bytes().to_vec()) {
-                warn!("Sending message to peer failed. Error: {:?}", e);
+                println!("Sending message to peer *{} failed. Error: {:?}", alias!(peer_id), e);
             }
 
             i += 1;
         }
 
-        info!("[gossip.rs] Stopped sending gossip to {}", peer_id);
+        println!("Stopped sending gossip to *{}", alias!(peer_id));
     });
 }
 
 fn recv_gossip(peer_id: PeerId, mut gossip_in: GossipReceiver) {
     tokio::spawn(async move {
-        info!("[gossip.rs] Receiving gossip from {}", peer_id);
+        println!("Receiving gossip from *{}", alias!(peer_id));
 
         while let Some(message) = gossip_in.next().await {
-            info!(
-                "[gossip.rs] Received message from {} ('{}').",
+            println!(
+                "Received message from *{} (\"{}\").",
                 alias!(peer_id),
                 String::from_utf8(message).unwrap(),
             );
         }
-        info!("[gossip.rs] Stopped listening to gossip from {}", peer_id);
+        println!("Stopped listening to gossip from *{}", alias!(peer_id));
     });
 }

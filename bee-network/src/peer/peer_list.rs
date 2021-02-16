@@ -117,7 +117,7 @@ impl PeerList {
     }
 
     #[allow(dead_code)]
-    pub async fn count(&self) -> usize {
+    pub async fn len(&self) -> usize {
         self.0.read().await.len()
     }
 
@@ -181,12 +181,16 @@ impl PeerList {
     }
 
     pub async fn remove_if(&self, peer_id: &PeerId, predicate: impl Fn(&PeerInfo, &PeerState) -> bool) -> bool {
-        if let Some((info, state)) = self.0.read().await.get(peer_id) {
-            if predicate(info, state) {
-                self.0.write().await.remove(peer_id).is_some()
-            } else {
-                false
-            }
+        // NB: We need to be very cautious here to not accidentally nest the requests for the lock!
+
+        let can_remove = if let Some((info, state)) = self.0.read().await.get(peer_id) {
+            predicate(info, state)
+        } else {
+            false
+        };
+
+        if can_remove {
+            self.0.write().await.remove(peer_id).is_some()
         } else {
             false
         }

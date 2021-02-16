@@ -103,7 +103,11 @@ impl<N: Node> Worker<N> for NetworkService {
             let mut internal_events =
                 ShutdownStream::new(shutdown, UnboundedReceiverStream::new(internal_event_receiver));
 
+            let mut foo = 0;
             while let Some(internal_event) = internal_events.next().await {
+                println!("SERVICE: foo-index={}", foo);
+                foo += 1;
+
                 if let Err(e) = process_internal_event(
                     internal_event,
                     &peerlist_clone,
@@ -125,15 +129,14 @@ impl<N: Node> Worker<N> for NetworkService {
 
         // Spawn reconnecter task
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("Reconnecter running.");
-
             // NOTE: we add a random amount of milliseconds to when the reconnector starts, so that even if 2 nodes
             // go online at the same time the probablilty of them simultaneously dialing each other is reduced
             // significantly.
             // TODO: remove magic number
-            let random_delay = rand::thread_rng().gen_range(0u64..5000);
-            let start = Instant::now()
-                + Duration::from_millis(RECONNECT_INTERVAL_SECS.load(Ordering::Relaxed) * 1000 + random_delay);
+            let randomized_delay = Duration::from_millis(
+                RECONNECT_INTERVAL_SECS.load(Ordering::Relaxed) * 1000 + rand::thread_rng().gen_range(0u64..1000),
+            );
+            let start = Instant::now() + randomized_delay;
 
             let mut connected_check_timer = ShutdownStream::new(
                 shutdown,
@@ -143,6 +146,8 @@ impl<N: Node> Worker<N> for NetworkService {
                 )),
             );
 
+            info!("Reconnecter starting in {:?}.", randomized_delay);
+
             while connected_check_timer.next().await.is_some() {
                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
                 // of those.
@@ -150,7 +155,12 @@ impl<N: Node> Worker<N> for NetworkService {
                     .iter_if(|info, state| info.relation.is_known() && state.is_disconnected())
                     .await
                 {
-                    let _ = internal_command_sender.send(Command::DialPeer { peer_id });
+                    info!("Reconnecting to {}", peer_id);
+
+                    // Not being able to send something over this channel must be considered a bug.
+                    internal_command_sender
+                        .send(Command::DialPeer { peer_id })
+                        .expect("Reconnector failed to send 'DialPeer' command.")
                 }
             }
 
@@ -255,8 +265,6 @@ async fn process_internal_event(
     _internal_event_sender: &InternalEventSender,
     _internal_command_sender: &CommandSender,
 ) -> Result<(), peer::Error> {
-    trace!("Received {:?}.", internal_event);
-
     match internal_event {
         InternalEvent::ProtocolEstablished {
             peer_id,
@@ -358,7 +366,9 @@ async fn add_peer(
             // manual peer manager, and hence, as unknown. In such a case we simply update to the correct
             // info (address, alias, relation).
 
-            if matches!(e, peer::Error::PeerAlreadyAdded(_)) && peer_info.relation.is_known() {
+            if matches!(e, peer::Error::PeerAlreadyAdded(_))
+            // && peer_info.relation.is_known()
+            {
                 match peerlist.update_info(&peer_id, peer_info.clone()).await {
                     Ok(()) => {
                         let _ = event_sender.send(Event::PeerAdded {
@@ -411,6 +421,8 @@ async fn remove_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventS
 async fn disconnect_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), peer::Error> {
     // NB: We sent the `PeerDisconnected` event *before* we sent the shutdown signal to the stream writer task, so
     // it can stop adding messages to the channel before we drop the receiver.
+
+    println!("DISCOOOOOONNNEEEEEEEEEEEEEEEEEEEEEEEEEECT");
 
     match peerlist.disconnect(&peer_id).await {
         Ok(gossip_sender) => {

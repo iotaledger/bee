@@ -7,7 +7,7 @@ use crate::{
     peer::{AddrBanlist, PeerBanlist, PeerInfo, PeerList},
     service::{Command, CommandReceiver, InternalEventSender, NetworkService},
     swarm,
-    swarm::SwarmBehavior,
+    swarm::{protocols::gossip::GOSSIP_ORIGIN, SwarmBehavior},
 };
 
 use bee_runtime::{node::Node, worker::Worker};
@@ -20,7 +20,7 @@ use libp2p::{
 };
 use log::*;
 
-use std::{any::TypeId, convert::Infallible};
+use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
 
 pub struct NetworkHostConfig {
     pub local_keys: Keypair,
@@ -108,14 +108,21 @@ fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, _internal_
         SwarmEvent::NewListenAddr(_address) => {
             // TODO: collect listen address to deny dialing it
         }
-        SwarmEvent::ConnectionEstablished { peer_id, .. } => {
-            info!("Started protocol with {}", peer_id);
+        SwarmEvent::ConnectionEstablished { peer_id, endpoint, .. } => {
+            info!("Negotiating protocol with {} ({:?})", peer_id, endpoint);
         }
         SwarmEvent::ConnectionClosed { peer_id, .. } => {
             info!("Stopped protocol with {}", peer_id);
         }
         SwarmEvent::ListenerError { error } => {
             error!("Libp2p error: Cause: {}", error);
+        }
+        SwarmEvent::Dialing(_peer_id) => {
+            // NB: strange, but this event is not actually fired when dialing. (open issue?)
+            println!("HOST: dialing");
+        }
+        SwarmEvent::IncomingConnection { .. } => {
+            println!("HOST: accepting");
         }
         _ => {}
     }
@@ -160,6 +167,8 @@ async fn dial_addr(
     // Prevent dialing banned addresses.
     check_if_banned_addr(&address, &banned_addrs).await?;
 
+    //
+    GOSSIP_ORIGIN.store(true, Ordering::SeqCst);
     Swarm::dial_addr(swarm, address.clone()).map_err(|_| Error::DialingFailed(address))?;
 
     Ok(())
@@ -196,6 +205,7 @@ async fn dial_peer(
     // Prevent dialing banned addresses.
     check_if_banned_addr(&address, &banned_addrs).await?;
 
+    GOSSIP_ORIGIN.store(true, Ordering::SeqCst);
     Swarm::dial_addr(swarm, address.clone()).map_err(|_| Error::DialingFailed(address))?;
 
     // // Prevent connecting to dishonest peers or peers we have no up-to-date information about.
