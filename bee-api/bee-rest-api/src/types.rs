@@ -689,7 +689,7 @@ impl TryFrom<&Box<MilestonePayload>> for Box<MilestonePayloadDto> {
             kind: 1,
             index: value.essence().index(),
             timestamp: value.essence().timestamp(),
-            parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
+            parents: value.essence().parents().map(|p| p.to_string()).collect(),
             inclusion_merkle_proof: hex::encode(value.essence().merkle_proof()),
             public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
             receipt: value.essence().receipt().map(TryInto::try_into).transpose()?,
