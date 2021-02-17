@@ -19,6 +19,7 @@ use std::{
 
 pub const MESSAGE_LENGTH_MIN: usize = 53;
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
+// TODO remove when we start using the Parents type
 pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

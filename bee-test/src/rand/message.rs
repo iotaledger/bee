@@ -17,6 +17,10 @@ pub fn rand_message_id() -> MessageId {
     MessageId::new(rand_bytes_32())
 }
 
+pub fn rand_message_ids(len: usize) -> Vec<MessageId> {
+    (0..len).map(|_| rand_message_id()).collect()
+}
+
 pub fn rand_indexation() -> IndexationPayload {
     IndexationPayload::new(rand_string(32), &rand_bytes(64)).unwrap()
 }
