@@ -36,6 +36,7 @@ pub enum Error {
     InvalidIndexationLength(usize),
     InvalidMessageLength(usize),
     InvalidTransactionPayload,
+    InvalidReceiptFundsCount(usize),
 }
 
 impl std::error::Error for Error {}
@@ -84,6 +85,7 @@ impl fmt::Display for Error {
             Error::InvalidIndexationLength(length) => write!(f, "Invalid indexation index or data length {}.", length),
             Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
             Error::InvalidTransactionPayload => write!(f, "Invalid transaction payload kind."),
+            Error::InvalidReceiptFundsCount(count) => write!(f, "Invalid receipt funds count: {}.", count),
         }
     }
 }

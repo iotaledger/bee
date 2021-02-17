@@ -17,11 +17,11 @@ use blake2::{
     VarBlake2b,
 };
 
-use std::ops::Range;
+use core::ops::RangeInclusive;
 
 pub(crate) const INDEXATION_PAYLOAD_KIND: u32 = 2;
 
-const INDEX_LENGTH_RANGE: Range<usize> = 1..65;
+const INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=64;
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct IndexationPayload {

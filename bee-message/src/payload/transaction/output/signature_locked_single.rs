@@ -10,7 +10,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use serde::{Deserialize, Serialize};
 
-use std::ops::RangeInclusive;
+use core::ops::RangeInclusive;
 
 pub(crate) const SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND: u8 = 0;
 const SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;

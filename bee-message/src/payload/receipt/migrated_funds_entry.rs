@@ -8,19 +8,17 @@ use crate::{
 
 use bee_common::packable::{Packable, Read, Write};
 
-// TODO
-// use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
-use core::ops::RangeInclusive;
+use core::{convert::TryInto, ops::RangeInclusive};
 
 const MIGRATED_FUNDS_ENTRY_AMOUNT: RangeInclusive<u64> = 1_000_000..=IOTA_SUPPLY;
 const TAIL_TRANSACTION_HASH_LEN: usize = 49;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-// TODO
-// #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct MigratedFundsEntry {
-    tail_transaction_hash: [u8; TAIL_TRANSACTION_HASH_LEN],
+    // TODO switch to array when const generics serde is available
+    tail_transaction_hash: Box<[u8]>,
     address: Address,
     amount: u64,
 }
@@ -32,14 +30,14 @@ impl MigratedFundsEntry {
         }
 
         Ok(Self {
-            tail_transaction_hash,
+            tail_transaction_hash: Box::new(tail_transaction_hash),
             address,
             amount,
         })
     }
 
     pub fn tail_transaction_hash(&self) -> &[u8; TAIL_TRANSACTION_HASH_LEN] {
-        &self.tail_transaction_hash
+        self.tail_transaction_hash.as_ref().try_into().unwrap()
     }
 
     pub fn address(&self) -> &Address {
