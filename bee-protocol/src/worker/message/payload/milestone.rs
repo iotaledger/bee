@@ -55,7 +55,7 @@ async fn validate<B: StorageBackend>(
 
     match message.payload() {
         Some(Payload::Milestone(milestone)) => {
-            if message.parents() != milestone.essence().parents() {
+            if !message.parents().eq(milestone.essence().parents()) {
                 return Err(Error::ParentsMismatch);
             }
 

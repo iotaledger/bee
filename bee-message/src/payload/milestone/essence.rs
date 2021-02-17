@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::Payload, Error, MessageId, MESSAGE_ID_LENGTH, MESSAGE_PARENTS_RANGE};
+use crate::{payload::Payload, Error, MessageId, Parents};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -17,7 +17,7 @@ pub const MILESTONE_PUBLIC_KEY_LENGTH: usize = 32;
 pub struct MilestonePayloadEssence {
     index: u32,
     timestamp: u64,
-    parents: Vec<MessageId>,
+    parents: Parents,
     merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
     public_keys: Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>,
     receipt: Option<Payload>,
@@ -27,7 +27,7 @@ impl MilestonePayloadEssence {
     pub fn new(
         index: u32,
         timestamp: u64,
-        parents: Vec<MessageId>,
+        parents: Parents,
         merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
         public_keys: Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>,
     ) -> Self {
@@ -49,8 +49,8 @@ impl MilestonePayloadEssence {
         self.timestamp
     }
 
-    pub fn parents(&self) -> &[MessageId] {
-        &self.parents
+    pub fn parents(&self) -> impl Iterator<Item = &MessageId> + '_ {
+        self.parents.iter()
     }
 
     pub fn merkle_proof(&self) -> &[u8] {
@@ -80,8 +80,7 @@ impl Packable for MilestonePayloadEssence {
     fn packed_len(&self) -> usize {
         self.index.packed_len()
             + self.timestamp.packed_len()
-            + 0u8.packed_len()
-            + self.parents.len() * MESSAGE_ID_LENGTH
+            + self.parents.packed_len()
             + MILESTONE_MERKLE_PROOF_LENGTH
             + 0u8.packed_len()
             + self.public_keys.len() * MILESTONE_PUBLIC_KEY_LENGTH
@@ -94,11 +93,7 @@ impl Packable for MilestonePayloadEssence {
 
         self.timestamp.pack(writer)?;
 
-        (self.parents().len() as u8).pack(writer)?;
-
-        for parent in self.parents().iter() {
-            parent.pack(writer)?;
-        }
+        self.parents.pack(writer)?;
 
         writer.write_all(&self.merkle_proof)?;
 
@@ -124,16 +119,7 @@ impl Packable for MilestonePayloadEssence {
 
         let timestamp = u64::unpack(reader)?;
 
-        let parents_len = u8::unpack(reader)? as usize;
-
-        if !MESSAGE_PARENTS_RANGE.contains(&parents_len) {
-            return Err(Error::InvalidParentsCount(parents_len));
-        }
-
-        let mut parents = Vec::with_capacity(parents_len);
-        for _ in 0..parents_len {
-            parents.push(MessageId::unpack(reader)?);
-        }
+        let parents = Parents::unpack(reader)?;
 
         let mut merkle_proof = [0u8; MILESTONE_MERKLE_PROOF_LENGTH];
         reader.read_exact(&mut merkle_proof)?;

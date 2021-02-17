@@ -5,11 +5,13 @@ use crate::{Error, MessageId, MESSAGE_ID_LENGTH};
 
 use bee_common::packable::{Packable, Read, Write};
 
+use serde::{Deserialize, Serialize};
+
 use core::ops::RangeInclusive;
 
 pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Parents {
     first: MessageId,
     others: Vec<MessageId>,

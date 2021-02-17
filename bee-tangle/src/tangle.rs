@@ -143,7 +143,7 @@ where
         let r = match self.vertices.write().await.entry(message_id) {
             Entry::Occupied(_) => None,
             Entry::Vacant(entry) => {
-                for parent in message.parents().iter() {
+                for parent in message.parents() {
                     self.add_child_inner(*parent, message_id).await;
                 }
                 let vtx = Vertex::new(message, metadata);

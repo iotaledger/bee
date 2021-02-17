@@ -4,12 +4,13 @@
 use crate::rand::{
     bytes::{rand_bytes, rand_bytes_32},
     integer::rand_integer,
+    parents::rand_parents,
     string::rand_string,
 };
 
 use bee_message::{
     payload::{indexation::IndexationPayload, Payload},
-    Message, MessageBuilder, MessageId,
+    Message, MessageBuilder, MessageId, Parents,
 };
 use bee_pow::providers::{Constant, ConstantBuilder, ProviderBuilder};
 
@@ -30,7 +31,7 @@ pub fn rand_payload() -> Payload {
     rand_indexation().into()
 }
 
-pub fn rand_message_with_parents(parents: Vec<MessageId>) -> Message {
+pub fn rand_message_with_parents(parents: Parents) -> Message {
     MessageBuilder::<Constant>::new()
         .with_network_id(rand_integer())
         .with_parents(parents)
@@ -41,6 +42,5 @@ pub fn rand_message_with_parents(parents: Vec<MessageId>) -> Message {
 }
 
 pub fn rand_message() -> Message {
-    // TODO variable number of parents
-    rand_message_with_parents(vec![rand_message_id(), rand_message_id()])
+    rand_message_with_parents(rand_parents())
 }

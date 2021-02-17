@@ -17,6 +17,6 @@ pub mod prelude;
 pub mod solid_entry_point;
 
 pub use error::Error;
-pub use message::{Message, MessageBuilder, MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN, MESSAGE_PARENTS_RANGE};
+pub use message::{Message, MessageBuilder, MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN};
 pub use message_id::{MessageId, MESSAGE_ID_LENGTH};
 pub use parents::Parents;
