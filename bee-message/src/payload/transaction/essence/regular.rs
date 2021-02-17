@@ -165,7 +165,8 @@ impl RegularEssenceBuilder {
         }
 
         if !matches!(self.payload, None | Some(Payload::Indexation(_))) {
-            return Err(Error::InvalidTransactionPayload);
+            // Unwrap is fine because we just checked the Option is not None.
+            return Err(Error::InvalidPayloadKind(self.payload.unwrap().kind()));
         }
 
         // Inputs validation

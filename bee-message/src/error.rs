@@ -5,6 +5,7 @@ use core::fmt;
 
 #[derive(Debug)]
 pub enum Error {
+    Io(std::io::Error),
     InvalidAmount(u64),
     InvalidDustAllowanceAmount(u64),
     InvalidTreasuryAmount(u64),
@@ -21,21 +22,16 @@ pub enum Error {
     InvalidAccumulatedOutput(u128),
     InvalidUnlockBlockCount(usize, usize),
     InvalidParentsCount(usize),
-    NoInput,
-    NoOutput,
     DuplicateError,
     InvalidAddress,
     InvalidSignature,
-    OrderError,
     MissingField(&'static str),
-    Io(std::io::Error),
     Utf8String(alloc::string::FromUtf8Error),
     InvalidAnnouncedLength(usize, usize),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
     InvalidIndexationLength(usize),
     InvalidMessageLength(usize),
-    InvalidTransactionPayload,
     InvalidReceiptFundsCount(usize),
 }
 
@@ -44,6 +40,7 @@ impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Error::Io(e) => write!(f, "I/O error happened: {}.", e),
             Error::InvalidAmount(amount) => write!(f, "Invalid amount: {}.", amount),
             Error::InvalidDustAllowanceAmount(amount) => write!(f, "Invalid dust allowance amount: {}.", amount),
             Error::InvalidTreasuryAmount(amount) => write!(f, "Invalid treasury amount: {}.", amount),
@@ -66,14 +63,10 @@ impl fmt::Display for Error {
             Error::InvalidParentsCount(count) => {
                 write!(f, "Invalid parents count: {}.", count)
             }
-            Error::NoInput => write!(f, "No input provided."),
-            Error::NoOutput => write!(f, "No output provided."),
             Error::DuplicateError => write!(f, "The object in the set must be unique."),
             Error::InvalidAddress => write!(f, "Invalid address provided."),
             Error::InvalidSignature => write!(f, "Invalid signature provided."),
-            Error::OrderError => write!(f, "The vector is not sorted by lexicographical order."),
             Error::MissingField(s) => write!(f, "Missing required field: {}.", s),
-            Error::Io(e) => write!(f, "I/O error happened: {}.", e),
             Error::Utf8String(e) => write!(f, "Invalid Utf8 string read: {}.", e),
             Error::InvalidAnnouncedLength(expected, actual) => {
                 write!(f, "Invalid announced length: {}, {}.", expected, actual)
@@ -84,7 +77,6 @@ impl fmt::Display for Error {
             }
             Error::InvalidIndexationLength(length) => write!(f, "Invalid indexation index or data length {}.", length),
             Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
-            Error::InvalidTransactionPayload => write!(f, "Invalid transaction payload kind."),
             Error::InvalidReceiptFundsCount(count) => write!(f, "Invalid receipt funds count: {}.", count),
         }
     }
