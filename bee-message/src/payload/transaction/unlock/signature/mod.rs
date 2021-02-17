@@ -49,7 +49,7 @@ impl Packable for SignatureUnlock {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            ED25519_SIGNATURE_KIND => Self::Ed25519(Ed25519Signature::unpack(reader)?),
+            ED25519_SIGNATURE_KIND => Ed25519Signature::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidSignatureKind(k)),
         })
     }

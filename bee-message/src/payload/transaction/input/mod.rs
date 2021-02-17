@@ -72,8 +72,8 @@ impl Packable for Input {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            UTXO_INPUT_KIND => Self::UTXO(UTXOInput::unpack(reader)?),
-            TREASURY_INPUT_KIND => Self::Treasury(TreasuryInput::unpack(reader)?),
+            UTXO_INPUT_KIND => UTXOInput::unpack(reader)?.into(),
+            TREASURY_INPUT_KIND => TreasuryInput::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidInputKind(k)),
         })
     }

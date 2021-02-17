@@ -116,13 +116,11 @@ impl Packable for Payload {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u32::unpack(reader)? {
-            TRANSACTION_PAYLOAD_KIND => Self::Transaction(Box::new(TransactionPayload::unpack(reader)?)),
-            MILESTONE_PAYLOAD_KIND => Self::Milestone(Box::new(MilestonePayload::unpack(reader)?)),
-            INDEXATION_PAYLOAD_KIND => Self::Indexation(Box::new(IndexationPayload::unpack(reader)?)),
-            RECEIPT_PAYLOAD_KIND => Self::Receipt(Box::new(ReceiptPayload::unpack(reader)?)),
-            TREASURY_TRANSACTION_PAYLOAD_KIND => {
-                Self::TreasuryTransaction(Box::new(TreasuryTransactionPayload::unpack(reader)?))
-            }
+            TRANSACTION_PAYLOAD_KIND => TransactionPayload::unpack(reader)?.into(),
+            MILESTONE_PAYLOAD_KIND => MilestonePayload::unpack(reader)?.into(),
+            INDEXATION_PAYLOAD_KIND => IndexationPayload::unpack(reader)?.into(),
+            RECEIPT_PAYLOAD_KIND => ReceiptPayload::unpack(reader)?.into(),
+            TREASURY_TRANSACTION_PAYLOAD_KIND => TreasuryTransactionPayload::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidPayloadKind(k)),
         })
     }

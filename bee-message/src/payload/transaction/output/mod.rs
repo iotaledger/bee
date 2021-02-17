@@ -98,13 +98,9 @@ impl Packable for Output {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND => {
-                Self::SignatureLockedSingle(SignatureLockedSingleOutput::unpack(reader)?)
-            }
-            SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND => {
-                Self::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput::unpack(reader)?)
-            }
-            TREASURY_OUTPUT_KIND => Self::Treasury(TreasuryOutput::unpack(reader)?),
+            SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND => SignatureLockedSingleOutput::unpack(reader)?.into(),
+            SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND => SignatureLockedDustAllowanceOutput::unpack(reader)?.into(),
+            TREASURY_OUTPUT_KIND => TreasuryOutput::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidOutputKind(k)),
         })
     }
