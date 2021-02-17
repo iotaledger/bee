@@ -190,6 +190,17 @@ pub struct IndexationPayloadDto {
 pub struct ReceiptPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
+    pub index: u32,
+    pub last: bool,
+    pub funds: Vec<MigratedFundsEntryDto>,
+    pub transaction: PayloadDto,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MigratedFundsEntryDto {
+    tail_transaction_hash: Box<[u8]>,
+    address: AddressDto,
+    amount: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -684,21 +695,73 @@ impl TryFrom<&Box<IndexationPayloadDto>> for Box<IndexationPayload> {
 }
 
 // &Box<ReceiptPayload> -> Box<ReceiptDto>
-impl From<&Box<ReceiptPayload>> for Box<ReceiptPayloadDto> {
-    fn from(_value: &Box<ReceiptPayload>) -> Self {
-        Box::new(ReceiptPayloadDto { kind: 3 })
+impl TryFrom<&Box<ReceiptPayload>> for Box<ReceiptPayloadDto> {
+    type Error = String;
+    fn try_from(value: &Box<ReceiptPayload>) -> Result<Self, Self::Error> {
+        Ok(Box::new(ReceiptPayloadDto {
+            kind: 3,
+            index: value.index(),
+            last: value.last(),
+            funds: value
+                .funds()
+                .iter()
+                .map(|m| m.try_into())
+                .collect::<Result<Vec<MigratedFundsEntryDto>, _>>()?,
+            transaction: value.transaction().try_into()?,
+        }))
     }
 }
 
 // &Box<ReceiptDto> -> Box<ReceiptPayload>
 impl TryFrom<&Box<ReceiptPayloadDto>> for Box<ReceiptPayload> {
     type Error = String;
-    fn try_from(_value: &Box<ReceiptPayloadDto>) -> Result<Self, Self::Error> {
-        Ok(Box::new(ReceiptPayload::new()))
+    fn try_from(value: &Box<ReceiptPayloadDto>) -> Result<Self, Self::Error> {
+        let receipt = ReceiptPayload::new(
+            value.index,
+            value.last,
+            value
+                .funds
+                .iter()
+                .map(|m| m.try_into())
+                .collect::<Result<Vec<MigratedFundsEntry>, _>>()?,
+            (&value.transaction).try_into()?,
+        )
+        .map_err(|e| format!("invalid receipt payload: {}", e))?;
+        Ok(Box::new(receipt))
     }
 }
 
-// &Box<ReceiptPayload> -> Box<ReceiptDto>
+// &MigratedFundsEntry -> MigratedFundsEntryDto
+impl TryFrom<&MigratedFundsEntry> for MigratedFundsEntryDto {
+    type Error = String;
+    fn try_from(value: &MigratedFundsEntry) -> Result<Self, Self::Error> {
+        Ok(MigratedFundsEntryDto {
+            tail_transaction_hash: Box::new(value.tail_transaction_hash().clone()),
+            address: value.address().try_into()?,
+            amount: value.amount(),
+        })
+    }
+}
+
+// &MigratedFundsEntryDto -> MigratedFundsEntry
+impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
+    type Error = String;
+    fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
+        let entry = MigratedFundsEntry::new(
+            value
+                .tail_transaction_hash
+                .as_ref()
+                .try_into()
+                .map_err(|e| format!("invalid tail transaction hash: {}", e))?,
+            (&value.address).try_into()?,
+            value.amount,
+        )
+        .map_err(|e| format!("invalid migrated funds entry: {}", e))?;
+        Ok(entry)
+    }
+}
+
+// &Box<ReceiptPayload> -> Box<ReceiptDto>§
 impl TryFrom<&Box<TreasuryTransactionPayload>> for Box<TreasuryTransactionPayloadDto> {
     type Error = String;
     fn try_from(value: &Box<TreasuryTransactionPayload>) -> Result<Self, Self::Error> {
