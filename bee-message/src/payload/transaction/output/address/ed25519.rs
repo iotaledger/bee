@@ -14,7 +14,7 @@ use crypto::{
 use alloc::{string::String, vec};
 use core::{convert::TryInto, str::FromStr};
 
-pub(crate) const ED25519_ADDRESS_KIND: u8 = 1;
+pub(crate) const ED25519_ADDRESS_KIND: u8 = 0;
 pub const ED25519_ADDRESS_LENGTH: usize = 32;
 
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -61,8 +61,9 @@ impl Ed25519Address {
         self.len() == 0
     }
 
+    // TODO we should probably not have this method, only go through the enum's one (because of the type byte).
     pub fn to_bech32(&self, hrp: &str) -> String {
-        let mut serialized = vec![1u8];
+        let mut serialized = vec![ED25519_ADDRESS_KIND];
         serialized.extend_from_slice(&self.0);
         bech32::encode(hrp, serialized.to_base32()).expect("Valid Ed25519 address required.")
     }

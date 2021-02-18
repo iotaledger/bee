@@ -558,7 +558,7 @@ impl TryFrom<&AddressDto> for Address {
 impl From<&Ed25519Address> for Ed25519AddressDto {
     fn from(value: &Ed25519Address) -> Self {
         Self {
-            kind: 1,
+            kind: 0,
             address: value.to_string(),
         }
     }
@@ -586,7 +586,7 @@ impl TryFrom<&UnlockBlock> for UnlockBlockDto {
                 SignatureUnlock::Ed25519(ed) => Ok(UnlockBlockDto::Signature(SignatureUnlockDto {
                     kind: 0,
                     signature: SignatureDto::Ed25519(Ed25519SignatureDto {
-                        kind: 1,
+                        kind: 0,
                         public_key: hex::encode(ed.public_key()),
                         signature: hex::encode(ed.signature()),
                     }),
