@@ -84,6 +84,7 @@ pub struct TreasuryInputDto {
 }
 
 #[derive(Clone, Debug)]
+#[serde(untagged)]
 pub enum OutputDto {
     SignatureLockedSingle(SignatureLockedSingleOutputDto),
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto),
@@ -95,8 +96,8 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
         let value = Value::deserialize(d)?;
         Ok(match value.get("type").and_then(Value::as_u64).unwrap() {
             // TODO: cover all cases + handle unwraps
-            1 => OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).unwrap()),
-            2 => OutputDto::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap()),
+            0 => OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).unwrap()),
+            1 => OutputDto::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap()),
             type_ => panic!("unsupported type {:?}", type_),
         })
     }
