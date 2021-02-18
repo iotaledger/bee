@@ -20,6 +20,7 @@ pub const ED25519_ADDRESS_LENGTH: usize = 32;
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Ed25519Address([u8; ED25519_ADDRESS_LENGTH]);
 
+#[cfg(feature = "serde")]
 string_serde_impl!(Ed25519Address);
 
 impl From<[u8; ED25519_ADDRESS_LENGTH]> for Ed25519Address {

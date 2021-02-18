@@ -12,6 +12,7 @@ pub const MESSAGE_ID_LENGTH: usize = 32;
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct MessageId([u8; MESSAGE_ID_LENGTH]);
 
+#[cfg(feature = "serde")]
 string_serde_impl!(MessageId);
 
 impl From<[u8; MESSAGE_ID_LENGTH]> for MessageId {

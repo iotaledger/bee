@@ -12,11 +12,14 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 use crypto::blake2b;
-use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(tag = "type", content = "data")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "type", content = "data")
+)]
 pub enum Essence {
     Regular(RegularEssence),
 }

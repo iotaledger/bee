@@ -10,7 +10,6 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 use crypto::ed25519;
-use serde::{Deserialize, Serialize};
 
 use alloc::{boxed::Box, vec::Vec};
 use core::convert::TryInto;
@@ -29,7 +28,8 @@ pub enum MilestoneValidationError {
     InvalidSignature(usize, String),
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayload {
     essence: MilestonePayloadEssence,
     // TODO length is 64, change to array when std::array::LengthAtMost32 disappears.

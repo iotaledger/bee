@@ -23,11 +23,13 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 #[non_exhaustive]
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
-#[serde(tag = "type", content = "data")]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "type", content = "data")
+)]
 pub enum Output {
     SignatureLockedSingle(SignatureLockedSingleOutput),
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput),

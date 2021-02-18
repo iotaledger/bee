@@ -8,14 +8,13 @@ use crate::{
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 use core::ops::RangeInclusive;
 
 pub(crate) const SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND: u8 = 1;
 const SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1_000_000..=IOTA_SUPPLY;
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SignatureLockedDustAllowanceOutput {
     address: Address,
     amount: u64,

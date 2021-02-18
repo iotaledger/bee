@@ -10,14 +10,14 @@ use blake2::{
     digest::{Update, VariableOutput},
     VarBlake2b,
 };
-use serde::{Deserialize, Serialize};
 
 use std::sync::{atomic::AtomicBool, Arc};
 
 pub const MESSAGE_LENGTH_MIN: usize = 53;
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
     network_id: u64,
     parents: Parents,

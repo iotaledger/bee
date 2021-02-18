@@ -9,14 +9,13 @@ use crate::{payload::Payload, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 use core::ops::RangeInclusive;
 
 pub(crate) const RECEIPT_PAYLOAD_KIND: u32 = 3;
 const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = 1..=127;
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReceiptPayload {
     index: u32,
     last: bool,

@@ -29,7 +29,6 @@ use blake2::{
     digest::{Update, VariableOutput},
     VarBlake2b,
 };
-use serde::{Deserialize, Serialize};
 
 use alloc::{boxed::Box, vec::Vec};
 use core::{cmp::Ordering, slice::Iter};
@@ -37,7 +36,8 @@ use core::{cmp::Ordering, slice::Iter};
 pub(crate) const TRANSACTION_PAYLOAD_KIND: u32 = 0;
 pub(crate) use treasury::TREASURY_TRANSACTION_PAYLOAD_KIND;
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionPayload {
     essence: Essence,
     unlock_blocks: Box<[UnlockBlock]>,

@@ -9,8 +9,6 @@ use crate::{Error, MESSAGE_LENGTH_MAX};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 use alloc::{boxed::Box, string::String};
 use blake2::{
     digest::{Update, VariableOutput},
@@ -23,7 +21,8 @@ pub(crate) const INDEXATION_PAYLOAD_KIND: u32 = 2;
 
 const INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=64;
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct IndexationPayload {
     index: String,
     data: Box<[u8]>,
