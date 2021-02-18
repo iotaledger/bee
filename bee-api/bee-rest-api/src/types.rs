@@ -6,7 +6,7 @@ use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
 use bee_protocol::{Peer, PeerManager};
 use bee_runtime::resource::ResourceHandle;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 
 use std::{
     convert::{TryFrom, TryInto},
@@ -82,12 +82,37 @@ pub struct TreasuryInputDto {
     pub message_id: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(untagged)]
+#[derive(Clone, Debug, Deserialize)]
 pub enum OutputDto {
     SignatureLockedSingle(SignatureLockedSingleOutputDto),
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto),
     Treasury(TreasuryOutputDto),
+}
+
+impl Serialize for OutputDto {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+    {
+        #[derive(Serialize)]
+        #[serde(untagged)]
+        enum OutputDto_<'a> {
+            T1(&'a SignatureLockedSingleOutputDto),
+            T2(&'a SignatureLockedDustAllowanceOutputDto),
+            T3(&'a TreasuryOutputDto),
+        }
+        #[derive(Serialize)]
+        struct TypedOutput<'a> {
+            #[serde(flatten)]
+            output: OutputDto_<'a>,
+        }
+        let output = match self {
+            OutputDto::SignatureLockedSingle(s) => TypedOutput { output: OutputDto_::T1(s) },
+            OutputDto::SignatureLockedDustAllowance(s) => TypedOutput { output: OutputDto_::T2(s) },
+            OutputDto::Treasury(t) => TypedOutput { output: OutputDto_::T3(t) },
+        };
+        output.serialize(serializer)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
