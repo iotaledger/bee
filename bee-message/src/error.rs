@@ -26,7 +26,6 @@ pub enum Error {
     InvalidAddress,
     InvalidSignature,
     MissingField(&'static str),
-    Utf8String(alloc::string::FromUtf8Error),
     InvalidAnnouncedLength(usize, usize),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
@@ -67,7 +66,6 @@ impl fmt::Display for Error {
             Error::InvalidAddress => write!(f, "Invalid address provided."),
             Error::InvalidSignature => write!(f, "Invalid signature provided."),
             Error::MissingField(s) => write!(f, "Missing required field: {}.", s),
-            Error::Utf8String(e) => write!(f, "Invalid Utf8 string read: {}.", e),
             Error::InvalidAnnouncedLength(expected, actual) => {
                 write!(f, "Invalid announced length: {}, {}.", expected, actual)
             }
@@ -85,11 +83,5 @@ impl fmt::Display for Error {
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Self {
         Error::Io(error)
-    }
-}
-
-impl From<alloc::string::FromUtf8Error> for Error {
-    fn from(error: alloc::string::FromUtf8Error) -> Self {
-        Error::Utf8String(error)
     }
 }

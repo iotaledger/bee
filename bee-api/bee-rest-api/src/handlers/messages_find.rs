@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::ServiceUnavailable,
+    filters::CustomRejection::{BadRequest, ServiceUnavailable},
     handlers::{BodyInner, SuccessBody},
     storage::StorageBackend,
 };
@@ -20,7 +20,8 @@ pub(crate) async fn messages_find<B: StorageBackend>(
     index: String,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    let hashed_index = IndexationPayload::new(index.clone(), &[]).unwrap().hash();
+    let index_bytes = hex::decode(index.clone()).map_err(|_| reject::custom(BadRequest("Invalid index".to_owned())))?;
+    let hashed_index = IndexationPayload::new(&index_bytes, &[]).unwrap().hash();
 
     let mut fetched = match Fetch::<HashedIndex, Vec<MessageId>>::fetch(storage.deref(), &hashed_index)
         .await

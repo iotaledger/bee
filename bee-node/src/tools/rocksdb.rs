@@ -124,9 +124,12 @@ async fn exec_inner(tool: &RocksdbTool) -> Result<(), RocksdbError> {
         },
         CF_INDEX_TO_MESSAGE_ID => match &tool.command {
             RocksdbCommand::Fetch { key } => {
-                let key = IndexationPayload::new(key.clone(), &[])
-                    .map_err(|_| RocksdbError::InvalidKey(key.clone()))?
-                    .hash();
+                let key = IndexationPayload::new(
+                    &hex::decode(key.clone()).map_err(|_| RocksdbError::InvalidKey(key.clone()))?,
+                    &[],
+                )
+                .map_err(|_| RocksdbError::InvalidKey(key.clone()))?
+                .hash();
                 let value = Fetch::<HashedIndex, Vec<MessageId>>::fetch(&storage, &key).await?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);

@@ -711,7 +711,7 @@ impl From<&Box<IndexationPayload>> for Box<IndexationPayloadDto> {
     fn from(value: &Box<IndexationPayload>) -> Self {
         Box::new(IndexationPayloadDto {
             kind: 2,
-            index: value.index().to_owned(),
+            index: hex::encode(value.index()),
             data: hex::encode(value.data()),
         })
     }
@@ -723,7 +723,8 @@ impl TryFrom<&Box<IndexationPayloadDto>> for Box<IndexationPayload> {
     fn try_from(value: &Box<IndexationPayloadDto>) -> Result<Self, Self::Error> {
         Ok(Box::new(
             IndexationPayload::new(
-                value.index.clone(),
+                &hex::decode(value.index.clone())
+                    .map_err(|_| "invalid index in indexation payload: expected a hex-string")?,
                 &hex::decode(value.data.clone())
                     .map_err(|_| "invalid data in indexation payload: expected a hex-string")?,
             )
