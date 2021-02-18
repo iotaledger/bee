@@ -3,6 +3,7 @@
 
 extern crate alloc;
 
+#[cfg(feature = "serde")]
 #[macro_use]
 mod serde;
 mod error;

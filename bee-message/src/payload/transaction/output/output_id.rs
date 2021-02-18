@@ -21,6 +21,7 @@ pub struct OutputId {
     index: u16,
 }
 
+#[cfg(feature = "serde")]
 string_serde_impl!(OutputId);
 
 impl TryFrom<[u8; OUTPUT_ID_LENGTH]> for OutputId {

@@ -5,13 +5,12 @@ use crate::{payload::transaction::constants::INPUT_OUTPUT_INDEX_RANGE, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 use core::convert::{TryFrom, TryInto};
 
 pub(crate) const REFERENCE_UNLOCK_KIND: u8 = 1;
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReferenceUnlock(u16);
 
 impl TryFrom<u16> for ReferenceUnlock {

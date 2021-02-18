@@ -8,11 +8,10 @@ use crate::{
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 pub(crate) const TREASURY_TRANSACTION_PAYLOAD_KIND: u32 = 4;
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryTransactionPayload {
     input: Input,
     output: Output,
