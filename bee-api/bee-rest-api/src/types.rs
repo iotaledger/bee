@@ -12,6 +12,7 @@ use std::{
     convert::{TryFrom, TryInto},
     sync::Arc,
 };
+use serde_json::Value;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
@@ -82,12 +83,23 @@ pub struct TreasuryInputDto {
     pub message_id: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-#[serde(untagged)]
+#[derive(Clone, Debug)]
 pub enum OutputDto {
     SignatureLockedSingle(SignatureLockedSingleOutputDto),
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto),
     Treasury(TreasuryOutputDto),
+}
+
+impl<'de> serde::Deserialize<'de> for OutputDto {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let value = Value::deserialize(d)?;
+        Ok(match value.get("type").and_then(Value::as_u8).unwrap() {
+            // TODO: cover all cases + handle unwraps
+            1 => OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).unwrap()),
+            2 => OutputDto::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap()),
+            type_ => panic!("unsupported type {:?}", type_),
+        })
+    }
 }
 
 impl Serialize for OutputDto {
