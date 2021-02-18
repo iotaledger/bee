@@ -84,7 +84,6 @@ pub struct TreasuryInputDto {
 }
 
 #[derive(Clone, Debug)]
-#[serde(untagged)]
 pub enum OutputDto {
     SignatureLockedSingle(SignatureLockedSingleOutputDto),
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto),
