@@ -2,7 +2,7 @@
 
 alias       = "bee"
 bech32_hrp  = "atoi"
-network_id  = "testnet4"
+network_id  = "testnet5"
 
 [logger]
 color_enabled = true
