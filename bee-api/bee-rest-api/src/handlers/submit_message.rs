@@ -33,8 +33,8 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> Result<impl Reply, Rejection> {
-    let network_id_v = &value["network_id"];
-    let parents_v = &value["parents"];
+    let network_id_v = &value["networkId"];
+    let parents_v = &value["parentMessageIds"];
     let payload_v = &value["payload"];
     let nonce_v = &value["nonce"];
 
