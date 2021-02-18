@@ -93,7 +93,7 @@ pub enum OutputDto {
 impl<'de> serde::Deserialize<'de> for OutputDto {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         let value = Value::deserialize(d)?;
-        Ok(match value.get("type").and_then(Value::as_u8).unwrap() {
+        Ok(match value.get("type").and_then(Value::as_u64).unwrap() {
             // TODO: cover all cases + handle unwraps
             1 => OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).unwrap()),
             2 => OutputDto::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap()),
