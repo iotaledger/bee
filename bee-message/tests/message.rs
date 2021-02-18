@@ -49,11 +49,11 @@ fn invalid_length() {
         .with_parents(vec![rand_message_id(), rand_message_id()])
         .with_nonce_provider(ConstantBuilder::new().with_value(42).finish(), 10000f64, None)
         .with_payload(
-            IndexationPayload::new("42".to_owned(), &[0u8; MESSAGE_LENGTH_MAX])
+            IndexationPayload::new(&[42], &[0u8; MESSAGE_LENGTH_MAX])
                 .unwrap()
                 .into(),
         )
         .finish();
 
-    assert!(matches!(res, Err(Error::InvalidMessageLength(len)) if len == MESSAGE_LENGTH_MAX + 97));
+    assert!(matches!(res, Err(Error::InvalidMessageLength(len)) if len == MESSAGE_LENGTH_MAX + 96));
 }

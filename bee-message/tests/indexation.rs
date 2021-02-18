@@ -3,11 +3,12 @@
 
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_test::rand::bytes::{rand_bytes, rand_bytes_32};
 
 #[test]
 fn index_length_0_new() {
     assert!(matches!(
-        IndexationPayload::new("".to_string(), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
+        IndexationPayload::new(&[], &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
         Err(Error::InvalidIndexationLength(0))
     ));
 }
@@ -22,7 +23,7 @@ fn index_length_0_unpack() {
 
 #[test]
 fn index_length_32_new() {
-    assert!(IndexationPayload::new(".".repeat(32), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).is_ok());
+    assert!(IndexationPayload::new(&rand_bytes_32(), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).is_ok());
 }
 
 #[test]
@@ -41,7 +42,7 @@ fn index_length_32_unpack() {
 #[test]
 fn index_length_65_new() {
     assert!(matches!(
-        IndexationPayload::new(".".repeat(65), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
+        IndexationPayload::new(&rand_bytes(65), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),
         Err(Error::InvalidIndexationLength(65))
     ));
 }
@@ -65,21 +66,15 @@ fn index_length_65_unpack() {
 
 #[test]
 fn packed_len() {
-    let indexation = IndexationPayload::new(
-        "indexation".to_string(),
-        &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2],
-    )
-    .unwrap();
+    let indexation =
+        IndexationPayload::new(&rand_bytes(10), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).unwrap();
     assert_eq!(indexation.packed_len(), 24);
 }
 
 #[test]
 fn pack_unpack() {
-    let indexation_1 = IndexationPayload::new(
-        "indexation".to_string(),
-        &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2],
-    )
-    .unwrap();
+    let indexation_1 =
+        IndexationPayload::new(&rand_bytes(10), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).unwrap();
     let bytes = indexation_1.pack_new();
     let indexation_2 = IndexationPayload::unpack(&mut bytes.as_slice()).unwrap();
 
@@ -120,18 +115,3 @@ fn pack_unpack() {
 //         Err(Error::Io { .. })
 //     ));
 // }
-
-#[test]
-fn unpack_non_utf8_index() {
-    let indexation = IndexationPayload::new(
-        unsafe { String::from_utf8_unchecked(vec![0, 159, 146, 150]) },
-        &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2],
-    )
-    .unwrap();
-    let bytes = indexation.pack_new();
-
-    assert!(matches!(
-        IndexationPayload::unpack(&mut bytes.as_slice()),
-        Err(Error::Utf8String(std::string::FromUtf8Error { .. }))
-    ));
-}

@@ -4,7 +4,6 @@
 use crate::rand::{
     bytes::{rand_bytes, rand_bytes_32},
     integer::rand_integer,
-    string::rand_string,
 };
 
 use bee_message::{
@@ -22,7 +21,7 @@ pub fn rand_message_ids(len: usize) -> Vec<MessageId> {
 }
 
 pub fn rand_indexation() -> IndexationPayload {
-    IndexationPayload::new(rand_string(32), &rand_bytes(64)).unwrap()
+    IndexationPayload::new(&rand_bytes_32(), &rand_bytes(64)).unwrap()
 }
 
 pub fn rand_payload() -> Payload {
