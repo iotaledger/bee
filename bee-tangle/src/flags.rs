@@ -4,9 +4,10 @@
 use bee_common::packable::{Packable, Read, Write};
 
 use bitflags::bitflags;
+use serde::Serialize;
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Default, Serialize)]
     pub struct Flags: u8 {
         const SOLID = 0b0000_0001;
         const MILESTONE = 0b0000_0010;
