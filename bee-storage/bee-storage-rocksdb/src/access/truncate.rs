@@ -23,6 +23,9 @@ use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Truncate;
 use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
 
+const L_ADDRESS: usize = 0x00u8;
+const H_ADDRESS: usize = 0xffu8;
+
 #[async_trait::async_trait]
 impl Truncate<MessageId, Message> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
@@ -32,7 +35,7 @@ impl Truncate<MessageId, Message> for Storage {
             .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE))?;
 
         self.inner
-            .delete_range_cf(cf, [0x00u8; MESSAGE_ID_LENGTH], [0xffu8; MESSAGE_ID_LENGTH])?;
+            .delete_range_cf(cf, [L_ADDRESS; MESSAGE_ID_LENGTH], [H_ADDRESS; MESSAGE_ID_LENGTH])?;
 
         Ok(())
     }
@@ -47,7 +50,7 @@ impl Truncate<MessageId, MessageMetadata> for Storage {
             .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_METADATA))?;
 
         self.inner
-            .delete_range_cf(cf, [0x00u8; MESSAGE_ID_LENGTH], [0xffu8; MESSAGE_ID_LENGTH])?;
+            .delete_range_cf(cf, [L_ADDRESS; MESSAGE_ID_LENGTH], [H_ADDRESS; MESSAGE_ID_LENGTH])?;
 
         Ok(())
     }
@@ -62,7 +65,7 @@ impl Truncate<(MessageId, MessageId), ()> for Storage {
             .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE_ID))?;
 
         self.inner
-            .delete_range_cf(cf, [0x00u8; 2 * MESSAGE_ID_LENGTH], [0xffu8; 2 * MESSAGE_ID_LENGTH])?;
+            .delete_range_cf(cf, [L_ADDRESS; 2 * MESSAGE_ID_LENGTH], [H_ADDRESS; 2 * MESSAGE_ID_LENGTH])?;
 
         Ok(())
     }
@@ -78,8 +81,8 @@ impl Truncate<(HashedIndex, MessageId), ()> for Storage {
 
         self.inner.delete_range_cf(
             cf,
-            [0x00u8; HASHED_INDEX_LENGTH + MESSAGE_ID_LENGTH],
-            [0xffu8; HASHED_INDEX_LENGTH + MESSAGE_ID_LENGTH],
+            [L_ADDRESS; HASHED_INDEX_LENGTH + MESSAGE_ID_LENGTH],
+            [H_ADDRESS; HASHED_INDEX_LENGTH + MESSAGE_ID_LENGTH],
         )?;
 
         Ok(())
@@ -95,7 +98,7 @@ impl Truncate<OutputId, CreatedOutput> for Storage {
             .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
         self.inner
-            .delete_range_cf(cf, [0x00u8; OUTPUT_ID_LENGTH], [0xffu8; OUTPUT_ID_LENGTH])?;
+            .delete_range_cf(cf, [L_ADDRESS; OUTPUT_ID_LENGTH], [H_ADDRESS; OUTPUT_ID_LENGTH])?;
 
         Ok(())
     }
@@ -110,7 +113,7 @@ impl Truncate<OutputId, ConsumedOutput> for Storage {
             .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
         self.inner
-            .delete_range_cf(cf, [0x00u8; OUTPUT_ID_LENGTH], [0xffu8; OUTPUT_ID_LENGTH])?;
+            .delete_range_cf(cf, [L_ADDRESS; OUTPUT_ID_LENGTH], [H_ADDRESS; OUTPUT_ID_LENGTH])?;
 
         Ok(())
     }
@@ -125,7 +128,7 @@ impl Truncate<Unspent, ()> for Storage {
             .ok_or(Error::UnknownCf(CF_OUTPUT_ID_UNSPENT))?;
 
         self.inner
-            .delete_range_cf(cf, [0x00u8; OUTPUT_ID_LENGTH], [0xffu8; OUTPUT_ID_LENGTH])?;
+            .delete_range_cf(cf, [L_ADDRESS; OUTPUT_ID_LENGTH], [H_ADDRESS; OUTPUT_ID_LENGTH])?;
 
         Ok(())
     }
@@ -141,8 +144,8 @@ impl Truncate<(Ed25519Address, OutputId), ()> for Storage {
 
         self.inner.delete_range_cf(
             cf,
-            [0x00u8; ED25519_ADDRESS_LENGTH + OUTPUT_ID_LENGTH],
-            [0xffu8; ED25519_ADDRESS_LENGTH + OUTPUT_ID_LENGTH],
+            [L_ADDRESS; ED25519_ADDRESS_LENGTH + OUTPUT_ID_LENGTH],
+            [H_ADDRESS; ED25519_ADDRESS_LENGTH + OUTPUT_ID_LENGTH],
         )?;
 
         Ok(())
@@ -157,7 +160,7 @@ impl Truncate<(), LedgerIndex> for Storage {
             .cf_handle(CF_LEDGER_INDEX)
             .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
 
-        self.inner.delete_range_cf(cf, [0x00u8], [0xffu8])?;
+        self.inner.delete_range_cf(cf, [L_ADDRESS], [H_ADDRESS])?;
 
         Ok(())
     }
@@ -173,8 +176,8 @@ impl Truncate<MilestoneIndex, Milestone> for Storage {
 
         self.inner.delete_range_cf(
             cf,
-            [0x00u8; std::mem::size_of::<MilestoneIndex>()],
-            [0xffu8; std::mem::size_of::<MilestoneIndex>()],
+            [L_ADDRESS; std::mem::size_of::<MilestoneIndex>()],
+            [H_ADDRESS; std::mem::size_of::<MilestoneIndex>()],
         )?;
 
         Ok(())
@@ -189,7 +192,7 @@ impl Truncate<(), SnapshotInfo> for Storage {
             .cf_handle(CF_SNAPSHOT_INFO)
             .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
 
-        self.inner.delete_range_cf(cf, [0x00u8], [0xffu8])?;
+        self.inner.delete_range_cf(cf, [L_ADDRESS], [H_ADDRESS])?;
 
         Ok(())
     }
@@ -204,7 +207,7 @@ impl Truncate<SolidEntryPoint, MilestoneIndex> for Storage {
             .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
 
         self.inner
-            .delete_range_cf(cf, [0x00u8; MESSAGE_ID_LENGTH], [0xffu8; MESSAGE_ID_LENGTH])?;
+            .delete_range_cf(cf, [L_ADDRESS; MESSAGE_ID_LENGTH], [H_ADDRESS; MESSAGE_ID_LENGTH])?;
 
         Ok(())
     }
@@ -220,8 +223,8 @@ impl Truncate<MilestoneIndex, OutputDiff> for Storage {
 
         self.inner.delete_range_cf(
             cf,
-            [0x00u8; std::mem::size_of::<MilestoneIndex>()],
-            [0xffu8; std::mem::size_of::<MilestoneIndex>()],
+            [L_ADDRESS; std::mem::size_of::<MilestoneIndex>()],
+            [H_ADDRESS; std::mem::size_of::<MilestoneIndex>()],
         )?;
 
         Ok(())
@@ -237,7 +240,7 @@ impl Truncate<Address, Balance> for Storage {
             .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
 
         // TODO check that this is fine
-        self.inner.delete_range_cf(cf, [0x00u8; 1], [0xffu8; 1])?;
+        self.inner.delete_range_cf(cf, [L_ADDRESS; 1], [H_ADDRESS; 1])?;
 
         Ok(())
     }
@@ -254,8 +257,8 @@ impl Truncate<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
         // TODO check that this is fine
         self.inner.delete_range_cf(
             cf,
-            [0x00u8; std::mem::size_of::<MilestoneIndex>() + MESSAGE_ID_LENGTH],
-            [0xffu8; std::mem::size_of::<MilestoneIndex>() + MESSAGE_ID_LENGTH],
+            [L_ADDRESS; std::mem::size_of::<MilestoneIndex>() + MESSAGE_ID_LENGTH],
+            [H_ADDRESS; std::mem::size_of::<MilestoneIndex>() + MESSAGE_ID_LENGTH],
         )?;
 
         Ok(())
