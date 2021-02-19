@@ -5,7 +5,10 @@ use crate::{Error, MessageId, MESSAGE_ID_LENGTH};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use std::{marker::PhantomData, ops::Deref};
+use std::{
+    marker::PhantomData,
+    ops::{Deref, RangeInclusive},
+};
 
 macro_rules! make_stages {
     ($($parent_n:ident),+) => {
@@ -143,9 +146,15 @@ impl Packable for Parents {
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let _parents_len = u8::unpack(reader)? as usize;
 
+        // const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
+
         // if !MESSAGE_PARENTS_RANGE.contains(&parents_len) {
         //     return Err(Error::InvalidParentsCount(parents_len));
         // }
+
+        // NB: The code doesn't depend on `parents_len`, or its correctness anymore. Instead, the
+        // code errors out, if it can not unpack at least 1, or even more than 8 parents. Each
+        // `parents` variable is a distinct type according to the builder stage we're in.
 
         let parents = Parents::new(MessageId::unpack(reader)?);
 
