@@ -178,7 +178,7 @@ impl StorageBackend for Storage {
         Ok(storage)
     }
 
-    /// It shutdown RocksDB instance.
+    /// It shutdowns RocksDB instance.
     /// Note: the shutdown is done through flush method and then droping the storage object.
     async fn shutdown(self) -> Result<(), Self::Error> {
         Ok(self.inner.flush()?)
