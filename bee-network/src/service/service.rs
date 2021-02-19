@@ -147,11 +147,11 @@ impl<N: Node> Worker<N> for NetworkService {
             while connected_check_timer.next().await.is_some() {
                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
                 // of those.
-                for peer_id in peerlist
+                for (peer_id, alias) in peerlist
                     .iter_if(|info, state| info.relation.is_known() && state.is_disconnected())
                     .await
                 {
-                    info!("Reconnecting to {}", alias!(peer_id));
+                    info!("Reconnecting to {}.", alias);
 
                     // Not being able to send something over this channel must be considered a bug.
                     internal_command_sender
