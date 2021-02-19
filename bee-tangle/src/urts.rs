@@ -36,6 +36,8 @@ const MAX_AGE_SECONDS_AFTER_FIRST_CHILD: u8 = 3;
 // used to widen the cone of the tangle.
 const MAX_NUM_CHILDREN: u8 = 2;
 
+const OPTIMAL_NUM_TIPS: u8 = 4;
+
 #[derive(Default)]
 struct TipMetadata {
     children: HashSet<MessageId>,
@@ -194,7 +196,7 @@ impl UrtsTipPool {
 
     pub(crate) fn optimal_num_tips(&self) -> usize {
         // TODO: hardcoded at the moment
-        4
+        OPTIMAL_NUM_TIPS
     }
 
     pub(crate) fn reduce_tips(&mut self) {
