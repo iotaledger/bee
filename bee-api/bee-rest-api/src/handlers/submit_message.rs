@@ -105,7 +105,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     let message = if let Some(nonce) = nonce {
         let mut builder = MessageBuilder::new()
             .with_network_id(network_id)
-            .with_parents(parents)
+            .with_parents(parents.into())
             .with_nonce_provider(ConstantBuilder::new().with_value(nonce).finish(), 0f64, None);
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
@@ -121,7 +121,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         }
         let mut builder = MessageBuilder::new()
             .with_network_id(network_id)
-            .with_parents(parents)
+            .with_parents(parents.into())
             .with_nonce_provider(
                 MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
                 protocol_config.minimum_pow_score(),

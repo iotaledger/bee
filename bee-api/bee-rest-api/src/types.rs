@@ -8,11 +8,11 @@ use bee_runtime::resource::ResourceHandle;
 
 use serde::{Deserialize, Serialize, Serializer};
 
+use serde_json::Value;
 use std::{
     convert::{TryFrom, TryInto},
     sync::Arc,
 };
-use serde_json::Value;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
@@ -96,7 +96,9 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
         Ok(match value.get("type").and_then(Value::as_u64).unwrap() {
             // TODO: cover all cases + handle unwraps
             0 => OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).unwrap()),
-            1 => OutputDto::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap()),
+            1 => OutputDto::SignatureLockedDustAllowance(
+                SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap(),
+            ),
             type_ => panic!("unsupported type {:?}", type_),
         })
     }
@@ -104,8 +106,8 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
 
 impl Serialize for OutputDto {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         #[derive(Serialize)]
         #[serde(untagged)]
@@ -120,9 +122,15 @@ impl Serialize for OutputDto {
             output: OutputDto_<'a>,
         }
         let output = match self {
-            OutputDto::SignatureLockedSingle(s) => TypedOutput { output: OutputDto_::T1(s) },
-            OutputDto::SignatureLockedDustAllowance(s) => TypedOutput { output: OutputDto_::T2(s) },
-            OutputDto::Treasury(t) => TypedOutput { output: OutputDto_::T3(t) },
+            OutputDto::SignatureLockedSingle(s) => TypedOutput {
+                output: OutputDto_::T1(s),
+            },
+            OutputDto::SignatureLockedDustAllowance(s) => TypedOutput {
+                output: OutputDto_::T2(s),
+            },
+            OutputDto::Treasury(t) => TypedOutput {
+                output: OutputDto_::T3(t),
+            },
         };
         output.serialize(serializer)
     }
@@ -255,7 +263,7 @@ impl TryFrom<&Message> for MessageDto {
     fn try_from(value: &Message) -> Result<Self, Self::Error> {
         Ok(MessageDto {
             network_id: value.network_id().to_string(),
-            parents: value.parents().iter().map(|p| p.to_string()).collect(),
+            parents: value.parents().map(|p| p.to_string()).collect(),
             payload: value.payload().as_ref().map(TryInto::try_into).transpose()?,
             nonce: value.nonce().to_string(),
         })
@@ -285,7 +293,8 @@ impl TryFrom<&MessageDto> for Message {
                             )
                         })
                     })
-                    .collect::<Result<Vec<MessageId>, String>>()?,
+                    .collect::<Result<Vec<MessageId>, String>>()?
+                    .into(),
             )
             .with_nonce_provider(
                 ConstantBuilder::new()
@@ -687,7 +696,7 @@ impl TryFrom<&Box<MilestonePayloadDto>> for Box<MilestonePayload> {
                 };
                 public_keys.push(key);
             }
-            MilestonePayloadEssence::new(index, timestamp, parent_ids, merkle_proof, public_keys)
+            MilestonePayloadEssence::new(index, timestamp, parent_ids.into(), merkle_proof, public_keys)
         };
         let mut signatures = Vec::new();
         for v in &value.signatures {

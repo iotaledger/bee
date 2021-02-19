@@ -5,35 +5,123 @@ use crate::{Error, MessageId, MESSAGE_ID_LENGTH};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
+use std::{marker::PhantomData, ops::Deref};
 
-use core::ops::RangeInclusive;
-
-pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
-
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub struct Parents {
-    first: MessageId,
-    others: Vec<MessageId>,
+macro_rules! make_stages {
+    ($($parent_n:ident),+) => {
+        $(struct $parent_n;)+
+    }
 }
 
-impl Parents {
-    pub fn new(first: MessageId, others: Vec<MessageId>) -> Result<Self, Error> {
-        if !MESSAGE_PARENTS_RANGE.contains(&(others.len() + 1)) {
-            return Err(Error::InvalidParentsCount(others.len() + 1));
-        }
+macro_rules! impl_multip {
+    ($($parent_n:ident),+) => {
+        $(impl Parent for $parent_n {})+
+        $(impl MultiParent for $parent_n {})+
+    }
+}
 
-        Ok(Self { first, others })
+macro_rules! impl_stages {
+    ($($parent_n:ident => $parent_m:ident),+) => {
+        $(
+            impl ParentsBuilder<$parent_n> {
+                pub fn add(self, parent: MessageId) -> ParentsBuilder<$parent_m> {
+                    ParentsBuilder::<$parent_m>::new(parent, self.parents)
+                }
+            }
+        )+
+    };
+}
+
+// Needs to be private so it can't be implemented by user code
+trait Parent {}
+trait MultiParent: Parent {}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Parents(Vec<MessageId>);
+
+impl Parents {
+    fn new(message_id: MessageId) -> ParentsBuilder<Parent1> {
+        ParentsBuilder::<Parent1>::new(message_id)
     }
 
     pub fn len(&self) -> usize {
-        self.others.len() + 1
+        self.0.len()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &MessageId> + '_ {
-        std::iter::once(&self.first).chain(self.others.iter())
+        self.0.iter()
     }
 }
+
+impl Deref for Parents {
+    type Target = Vec<MessageId>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<Vec<MessageId>> for Parents {
+    fn from(mut parents: Vec<MessageId>) -> Self {
+        parents.reverse();
+        //
+        let builder = Parents::new(parents.pop().expect("empty parents vector"));
+
+        let builder = if let Some(parent) = parents.pop() {
+            builder.add(parent)
+        } else {
+            return builder.finish();
+        };
+
+        let builder = if let Some(parent) = parents.pop() {
+            builder.add(parent)
+        } else {
+            return builder.finish();
+        };
+
+        let builder = if let Some(parent) = parents.pop() {
+            builder.add(parent)
+        } else {
+            return builder.finish();
+        };
+
+        let builder = if let Some(parent) = parents.pop() {
+            builder.add(parent)
+        } else {
+            return builder.finish();
+        };
+
+        let builder = if let Some(parent) = parents.pop() {
+            builder.add(parent)
+        } else {
+            return builder.finish();
+        };
+
+        let builder = if let Some(parent) = parents.pop() {
+            builder.add(parent)
+        } else {
+            return builder.finish();
+        };
+
+        let builder = if let Some(parent) = parents.pop() {
+            builder.add(parent)
+        } else {
+            return builder.finish();
+        };
+
+        if let Some(_) = parents.pop() {
+            panic!("too many parents");
+        } else {
+            builder.finish()
+        }
+    }
+}
+
+make_stages!(Parent1, Parent2, Parent3, Parent4, Parent5, Parent6, Parent7, Parent8);
+impl Parent for Parent1 {}
+impl_multip!(Parent2, Parent3, Parent4, Parent5, Parent6, Parent7, Parent8);
+impl_stages!(Parent2 => Parent3, Parent3 => Parent4, Parent4 => Parent5, Parent5 => Parent6, Parent6 => Parent7, Parent7 => Parent8);
 
 impl Packable for Parents {
     type Error = Error;
@@ -53,19 +141,100 @@ impl Packable for Parents {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let parents_len = u8::unpack(reader)? as usize;
+        let _parents_len = u8::unpack(reader)? as usize;
 
-        if !MESSAGE_PARENTS_RANGE.contains(&parents_len) {
-            return Err(Error::InvalidParentsCount(parents_len));
+        // if !MESSAGE_PARENTS_RANGE.contains(&parents_len) {
+        //     return Err(Error::InvalidParentsCount(parents_len));
+        // }
+
+        let parents = Parents::new(MessageId::unpack(reader)?);
+
+        let parents = if let Ok(parent) = MessageId::unpack(reader) {
+            parents.add(parent)
+        } else {
+            return Ok(parents.finish());
+        };
+
+        let parents = if let Ok(parent) = MessageId::unpack(reader) {
+            parents.add(parent)
+        } else {
+            return Ok(parents.finish());
+        };
+
+        let parents = if let Ok(parent) = MessageId::unpack(reader) {
+            parents.add(parent)
+        } else {
+            return Ok(parents.finish());
+        };
+
+        let parents = if let Ok(parent) = MessageId::unpack(reader) {
+            parents.add(parent)
+        } else {
+            return Ok(parents.finish());
+        };
+
+        let parents = if let Ok(parent) = MessageId::unpack(reader) {
+            parents.add(parent)
+        } else {
+            return Ok(parents.finish());
+        };
+
+        let parents = if let Ok(parent) = MessageId::unpack(reader) {
+            parents.add(parent)
+        } else {
+            return Ok(parents.finish());
+        };
+
+        if let Ok(_) = MessageId::unpack(reader) {
+            Err(Error::InvalidParentsCount(9))
+        } else {
+            Ok(parents.finish())
+        }
+    }
+}
+
+struct ParentsBuilder<T: Parent> {
+    parents: Vec<MessageId>,
+    _phantom: PhantomData<T>,
+}
+
+impl<T: Parent> ParentsBuilder<T> {
+    pub fn finish(mut self) -> Parents {
+        self.parents.shrink_to_fit();
+
+        Parents(self.parents)
+    }
+}
+
+impl<T: MultiParent> ParentsBuilder<T> {
+    fn new(parent: MessageId, mut parents: Vec<MessageId>) -> Self {
+        // fail if parent already exists
+        if parents.binary_search(&parent).is_ok() {
+            panic!("already inserted that parent");
         }
 
-        let first = MessageId::unpack(reader)?;
+        parents.push(parent);
+        parents.sort_unstable();
 
-        let mut others = Vec::with_capacity(parents_len - 1);
-        for _ in 0..parents_len - 1 {
-            others.push(MessageId::unpack(reader)?);
+        Self {
+            parents,
+            _phantom: PhantomData,
         }
+    }
+}
 
-        Ok(Self { first, others })
+impl ParentsBuilder<Parent1> {
+    fn new(first: MessageId) -> Self {
+        let mut parents = Vec::with_capacity(8);
+        parents.push(first);
+
+        Self {
+            parents,
+            _phantom: PhantomData,
+        }
+    }
+
+    fn add(self, parent: MessageId) -> ParentsBuilder<Parent2> {
+        ParentsBuilder::<Parent2>::new(parent, self.parents)
     }
 }
