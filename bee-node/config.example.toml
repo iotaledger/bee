@@ -100,3 +100,8 @@ address = "tcp://localhost:1883"
 
 [dashboard]
 port  = 8081
+[dashboard.auth]
+session_timeout = 86400,
+user            = "",
+password_hash   = "",
+password_salt   = "",
