@@ -3,6 +3,7 @@
 
 mod ed25519;
 mod p2p_identity;
+mod password;
 mod rocksdb;
 mod snapshot_info;
 
@@ -20,6 +21,8 @@ pub enum Tool {
     Rocksdb(rocksdb::RocksdbTool),
     /// Outputs information about a snapshot file.
     SnapshotInfo(snapshot_info::SnapshotInfoTool),
+    /// Generates password salt and hash.
+    Password(password::PasswordTool),
 }
 
 #[derive(Debug, Error)]
@@ -30,6 +33,8 @@ pub enum ToolError {
     Rocksdb(#[from] rocksdb::RocksdbError),
     #[error("{0}")]
     SnapshotInfo(#[from] snapshot_info::SnapshotInfoError),
+    #[error("{0}")]
+    Password(#[from] password::PasswordError),
 }
 
 pub fn exec(tool: &Tool) -> Result<(), ToolError> {
@@ -38,6 +43,7 @@ pub fn exec(tool: &Tool) -> Result<(), ToolError> {
         Tool::P2pIdentity(tool) => p2p_identity::exec(tool),
         Tool::Rocksdb(tool) => rocksdb::exec(tool)?,
         Tool::SnapshotInfo(tool) => snapshot_info::exec(tool)?,
+        Tool::Password(tool) => password::exec(tool)?,
     }
 
     Ok(())
