@@ -151,7 +151,7 @@ impl<N: Node> Worker<N> for NetworkService {
                     .iter_if(|info, state| info.relation.is_known() && state.is_disconnected())
                     .await
                 {
-                    info!("Reconnecting to {}", peer_id);
+                    info!("Reconnecting to {}", alias!(peer_id));
 
                     // Not being able to send something over this channel must be considered a bug.
                     internal_command_sender
