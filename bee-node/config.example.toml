@@ -101,7 +101,7 @@ address = "tcp://localhost:1883"
 [dashboard]
 port  = 8081
 [dashboard.auth]
-session_timeout = 86400,
-user            = "admin",
-password_salt   = "8929cbf3cd1f46b29d312310a1d40bd1ae538f622a5a2f706fa7436fee1d5735",
-password_hash   = "0da6fa0a3dd84b2683a4ea3557fbd69222b146cf21291b263c29b28de9442484",
+session_timeout = 86400
+user            = "admin"
+password_salt   = "8929cbf3cd1f46b29d312310a1d40bd1ae538f622a5a2f706fa7436fee1d5735"
+password_hash   = "0da6fa0a3dd84b2683a4ea3557fbd69222b146cf21291b263c29b28de9442484"
