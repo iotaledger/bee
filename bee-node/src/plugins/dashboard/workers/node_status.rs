@@ -5,7 +5,10 @@ use crate::{
     config::NodeConfig,
     plugins::dashboard::{
         broadcast,
-        websocket::{responses::node_status, WsUsers},
+        websocket::{
+            responses::{node_status, public_node_status},
+            WsUsers,
+        },
         Dashboard,
     },
     storage::StorageBackend,
@@ -45,7 +48,7 @@ where
     let users = users.clone();
 
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
-        debug!("Ws NodeStatus topic handler running.");
+        debug!("Ws PublicNodeStatus/NodeStatus topics handler running.");
 
         let mut ticker = ShutdownStream::new(
             shutdown,
@@ -54,11 +57,14 @@ where
         let uptime = Instant::now();
 
         while ticker.next().await.is_some() {
-            let status = NodeStatus {
+            let public_node_status = PublicNodeStatus {
                 snapshot_index: *tangle.get_snapshot_index(),
                 pruning_index: *tangle.get_pruning_index(),
                 is_healthy: tangle.is_healthy().await,
                 is_synced: tangle.is_synced(),
+            };
+
+            let node_status = NodeStatus {
                 version: node_info.version.clone(),
                 latest_version: node_info.version.clone(),
                 uptime: uptime.elapsed().as_millis() as u64,
@@ -109,19 +115,25 @@ where
                     incoming_message_work_units: IncomingMessageWorkUnits { size: 0 },
                 },
             };
-            broadcast(node_status::forward(status), &users).await;
+
+            broadcast(node_status::forward(node_status), &users).await;
+            broadcast(public_node_status::forward(public_node_status), &users).await;
         }
 
-        debug!("Ws NodeStatus topic handler stopped.");
+        debug!("Ws PublicNodeStatus/NodeStatus topics handler stopped.");
     });
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct NodeStatus {
+pub struct PublicNodeStatus {
     pub snapshot_index: u32,
     pub pruning_index: u32,
     pub is_healthy: bool,
     pub is_synced: bool,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct NodeStatus {
     pub version: String,
     pub latest_version: String,
     pub uptime: u64,

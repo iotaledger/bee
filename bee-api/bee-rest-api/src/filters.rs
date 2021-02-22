@@ -8,7 +8,6 @@ use crate::{
         ROUTE_MILESTONE, ROUTE_MILESTONE_UTXO_CHANGES, ROUTE_OUTPUT, ROUTE_OUTPUTS_BECH32, ROUTE_OUTPUTS_ED25519,
         ROUTE_PEER, ROUTE_PEERS, ROUTE_REMOVE_PEER, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW, ROUTE_TIPS,
     },
-    filters::CustomRejection::{BadRequest, Forbidden},
     handlers,
     storage::StorageBackend,
     Bech32Hrp, NetworkId,
@@ -246,7 +245,9 @@ fn message_indexation<B: StorageBackend>(
         .and(warp::query().and_then(|query: HashMap<String, String>| async move {
             match query.get("index") {
                 Some(i) => Ok(i.to_string()),
-                None => Err(reject::custom(BadRequest("invalid query parameter".to_string()))),
+                None => Err(reject::custom(CustomRejection::BadRequest(
+                    "invalid query parameter".to_string(),
+                ))),
             }
         }))
         .and(with_storage(storage))
@@ -531,7 +532,7 @@ pub fn has_permission(
                         return Ok(());
                     }
                 }
-                Err(reject::custom(Forbidden))
+                Err(reject::custom(CustomRejection::Forbidden))
             }
         })
         .untuple_one()
@@ -551,7 +552,9 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<OutputId>() {
                 Ok(id) => Ok(id),
-                Err(_) => Err(reject::custom(BadRequest("invalid output id".to_string()))),
+                Err(_) => Err(reject::custom(CustomRejection::BadRequest(
+                    "invalid output id".to_string(),
+                ))),
             }
         })
     }
@@ -560,7 +563,9 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<MessageId>() {
                 Ok(msg) => Ok(msg),
-                Err(_) => Err(reject::custom(BadRequest("invalid message id".to_string()))),
+                Err(_) => Err(reject::custom(CustomRejection::BadRequest(
+                    "invalid message id".to_string(),
+                ))),
             }
         })
     }
@@ -569,7 +574,9 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<u32>() {
                 Ok(i) => Ok(MilestoneIndex(i)),
-                Err(_) => Err(reject::custom(BadRequest("invalid milestone index".to_string()))),
+                Err(_) => Err(reject::custom(CustomRejection::BadRequest(
+                    "invalid milestone index".to_string(),
+                ))),
             }
         })
     }
@@ -578,7 +585,9 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match Address::try_from_bech32(&value) {
                 Ok(addr) => Ok(addr),
-                Err(_) => Err(reject::custom(BadRequest("invalid address".to_string()))),
+                Err(_) => Err(reject::custom(CustomRejection::BadRequest(
+                    "invalid address".to_string(),
+                ))),
             }
         })
     }
@@ -587,7 +596,9 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<Ed25519Address>() {
                 Ok(addr) => Ok(addr),
-                Err(_) => Err(reject::custom(BadRequest("invalid Ed25519 address".to_string()))),
+                Err(_) => Err(reject::custom(CustomRejection::BadRequest(
+                    "invalid Ed25519 address".to_string(),
+                ))),
             }
         })
     }
@@ -596,7 +607,9 @@ mod custom_path_param {
         warp::path::param().and_then(|value: String| async move {
             match value.parse::<PeerId>() {
                 Ok(id) => Ok(id),
-                Err(_) => Err(reject::custom(BadRequest("invalid peer id".to_string()))),
+                Err(_) => Err(reject::custom(CustomRejection::BadRequest(
+                    "invalid peer id".to_string(),
+                ))),
             }
         })
     }
