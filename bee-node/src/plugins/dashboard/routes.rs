@@ -119,13 +119,13 @@ pub(crate) fn api_routes(
             .and(warp::delete())
             .and(warp::path!("/api/v1/peers" / ..)));
 
-    allowed_routes.and(warp::path!("api" / ..).and({
+    allowed_routes.and(warp::path!("api" / ..).and(
         reverse_proxy_filter(
             "".to_string(),
             "http://localhost:".to_owned() + &rest_api_config.binding_socket_addr().port().to_string() + "/",
         )
-        .map(|res| res)
-    }))
+
+    )).map(|_, res| res)
 }
 
 pub fn auth_filter(
