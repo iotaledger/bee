@@ -462,7 +462,7 @@ fn peer(
         .and(warp::get())
         .and(warp::path("api"))
         .and(warp::path("v1"))
-        .and(warp::path("peer"))
+        .and(warp::path("peers"))
         .and(custom_path_param::peer_id())
         .and(warp::path::end())
         .and(with_peer_manager(peer_manager))
@@ -476,10 +476,10 @@ fn peer_add(
     network_controller: ResourceHandle<NetworkServiceController>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     has_permission(ROUTE_ADD_PEER, public_routes, allowed_ips)
-        .and(warp::get())
+        .and(warp::post())
         .and(warp::path("api"))
         .and(warp::path("v1"))
-        .and(warp::path("peer"))
+        .and(warp::path("peers"))
         .and(warp::path::end())
         .and(warp::body::json())
         .and(with_peer_manager(peer_manager))
