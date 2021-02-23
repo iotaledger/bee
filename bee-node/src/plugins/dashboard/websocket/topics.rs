@@ -9,21 +9,22 @@ use std::convert::TryFrom;
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize_repr)]
 pub(crate) enum WsTopic {
     SyncStatus = 0,
-    NodeStatus = 1,
-    MPSMetrics = 2,
-    TipSelectionMetrics = 3,
-    Milestone = 4,
-    PeerMetrics = 5,
-    ConfirmedMilestoneMetrics = 6,
-    Vertex = 7,
-    SolidInfo = 8,
-    ConfirmedInfo = 9,
-    MilestoneInfo = 10,
-    TipInfo = 11,
-    DatabaseSizeMetrics = 12,
-    DatabaseCleanupEvent = 13,
-    SpamMetrics = 14,
-    AverageSpamMetrics = 15,
+    PublicNodeStatus = 1,
+    NodeStatus = 2,
+    MPSMetrics = 3,
+    TipSelectionMetrics = 4,
+    Milestone = 5,
+    PeerMetrics = 6,
+    ConfirmedMilestoneMetrics = 7,
+    Vertex = 8,
+    SolidInfo = 9,
+    ConfirmedInfo = 10,
+    MilestoneInfo = 11,
+    TipInfo = 12,
+    DatabaseSizeMetrics = 13,
+    DatabaseCleanupEvent = 14,
+    SpamMetrics = 15,
+    AverageSpamMetrics = 16,
 }
 
 impl TryFrom<u8> for WsTopic {
@@ -32,22 +33,41 @@ impl TryFrom<u8> for WsTopic {
     fn try_from(val: u8) -> Result<Self, Self::Error> {
         match val {
             0 => Ok(WsTopic::SyncStatus),
-            1 => Ok(WsTopic::NodeStatus),
-            2 => Ok(WsTopic::MPSMetrics),
-            3 => Ok(WsTopic::TipSelectionMetrics),
-            4 => Ok(WsTopic::Milestone),
-            5 => Ok(WsTopic::PeerMetrics),
-            6 => Ok(WsTopic::ConfirmedMilestoneMetrics),
-            7 => Ok(WsTopic::Vertex),
-            8 => Ok(WsTopic::SolidInfo),
-            9 => Ok(WsTopic::ConfirmedInfo),
-            10 => Ok(WsTopic::MilestoneInfo),
-            11 => Ok(WsTopic::TipInfo),
-            12 => Ok(WsTopic::DatabaseSizeMetrics),
-            13 => Ok(WsTopic::DatabaseCleanupEvent),
-            14 => Ok(WsTopic::SpamMetrics),
-            15 => Ok(WsTopic::AverageSpamMetrics),
+            1 => Ok(WsTopic::PublicNodeStatus),
+            2 => Ok(WsTopic::NodeStatus),
+            3 => Ok(WsTopic::MPSMetrics),
+            4 => Ok(WsTopic::TipSelectionMetrics),
+            5 => Ok(WsTopic::Milestone),
+            6 => Ok(WsTopic::PeerMetrics),
+            7 => Ok(WsTopic::ConfirmedMilestoneMetrics),
+            8 => Ok(WsTopic::Vertex),
+            9 => Ok(WsTopic::SolidInfo),
+            10 => Ok(WsTopic::ConfirmedInfo),
+            11 => Ok(WsTopic::MilestoneInfo),
+            12 => Ok(WsTopic::TipInfo),
+            13 => Ok(WsTopic::DatabaseSizeMetrics),
+            14 => Ok(WsTopic::DatabaseCleanupEvent),
+            15 => Ok(WsTopic::SpamMetrics),
+            16 => Ok(WsTopic::AverageSpamMetrics),
             _ => Err(val),
         }
+    }
+}
+
+impl WsTopic {
+    pub fn is_public(&self) -> bool {
+        matches!(
+            self,
+            WsTopic::SyncStatus
+                | WsTopic::PublicNodeStatus
+                | WsTopic::MPSMetrics
+                | WsTopic::Milestone
+                | WsTopic::ConfirmedMilestoneMetrics
+                | WsTopic::Vertex
+                | WsTopic::SolidInfo
+                | WsTopic::ConfirmedInfo
+                | WsTopic::MilestoneInfo
+                | WsTopic::TipInfo
+        )
     }
 }

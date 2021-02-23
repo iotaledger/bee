@@ -13,9 +13,9 @@ use std::{fs::OpenOptions, io::BufReader, path::Path};
 #[derive(Debug, Error)]
 pub enum SnapshotInfoError {
     #[error("{0}")]
-    Io(std::io::Error),
+    Io(#[from] std::io::Error),
     #[error("{0}")]
-    InvalidSnapshotHeader(SnapshotError),
+    InvalidSnapshotHeader(#[from] SnapshotError),
 }
 
 #[derive(Debug, StructOpt)]
@@ -24,13 +24,8 @@ pub struct SnapshotInfoTool {
 }
 
 pub fn exec(tool: &SnapshotInfoTool) -> Result<(), SnapshotInfoError> {
-    let mut reader = BufReader::new(
-        OpenOptions::new()
-            .read(true)
-            .open(Path::new(&tool.path))
-            .map_err(SnapshotInfoError::Io)?,
-    );
-    let header = SnapshotHeader::unpack(&mut reader).map_err(SnapshotInfoError::InvalidSnapshotHeader)?;
+    let mut reader = BufReader::new(OpenOptions::new().read(true).open(Path::new(&tool.path))?);
+    let header = SnapshotHeader::unpack(&mut reader)?;
 
     println!("Type:\t\t\t{:?}", header.kind());
     println!(

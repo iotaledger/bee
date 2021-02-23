@@ -9,7 +9,7 @@ pub(crate) const DEFAULT_BINDING_PORT: u16 = 14265;
 pub(crate) const DEFAULT_BINDING_IP_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
 
 // all available routes
-pub(crate) const ROUTE_ADD_PEER: &str = "/api/v1/peer";
+pub(crate) const ROUTE_ADD_PEER: &str = "/api/v1/peers";
 pub(crate) const ROUTE_BALANCE_BECH32: &str = "/api/v1/addresses/:address";
 pub(crate) const ROUTE_BALANCE_ED25519: &str = "/api/v1/addresses/ed25519/:address";
 pub(crate) const ROUTE_HEALTH: &str = "/health";
@@ -24,9 +24,9 @@ pub(crate) const ROUTE_MILESTONE_UTXO_CHANGES: &str = "/api/v1/milestones/:miles
 pub(crate) const ROUTE_OUTPUT: &str = "/api/v1/outputs/:outputId";
 pub(crate) const ROUTE_OUTPUTS_BECH32: &str = "/api/v1/addresses/:address/outputs";
 pub(crate) const ROUTE_OUTPUTS_ED25519: &str = "/api/v1/addresses/ed25519/:address/outputs";
-pub(crate) const ROUTE_PEER: &str = "/api/v1/peer/:peerId";
+pub(crate) const ROUTE_PEER: &str = "/api/v1/peers/:peerId";
 pub(crate) const ROUTE_PEERS: &str = "/api/v1/peers";
-pub(crate) const ROUTE_REMOVE_PEER: &str = "/api/v1/peer/:peerId";
+pub(crate) const ROUTE_REMOVE_PEER: &str = "/api/v1/peers/:peerId";
 pub(crate) const ROUTE_SUBMIT_MESSAGE: &str = "/api/v1/messages";
 pub(crate) const ROUTE_SUBMIT_MESSAGE_RAW: &str = "/api/v1/messages";
 pub(crate) const ROUTE_TIPS: &str = "/api/v1/tips";
