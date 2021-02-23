@@ -7,28 +7,25 @@ use bee_test::rand::message::{rand_message_id, rand_message_ids};
 
 #[test]
 fn new_valid() {
-    let first = rand_message_id();
-    let others = rand_message_ids(7);
-    let parents = Parents::new(first, others.clone()).unwrap();
+    let inner = rand_message_ids(8);
+    let parents = Parents::new(inner.clone()).unwrap();
 
     let parents_vec = parents.iter().copied().collect::<Vec<MessageId>>();
 
-    assert_eq!(first, parents_vec[0]);
-    assert_eq!(others, parents_vec[1..].to_vec());
+    assert_eq!(inner, parents_vec[0..].to_vec());
 }
 
 #[test]
 fn new_invalid_more_than_max() {
-    let first = rand_message_id();
-    let mut others = Vec::new();
+    let mut inner = vec![rand_message_id()];
 
     for _ in 0..8 {
-        Parents::new(first, others.clone()).unwrap();
-        others.push(rand_message_id())
+        Parents::new(inner.clone()).unwrap();
+        inner.push(rand_message_id())
     }
 
     assert!(matches!(
-        Parents::new(first, others.clone()),
+        Parents::new(inner.clone()),
         Err(Error::InvalidParentsCount(9))
     ));
 }
@@ -37,9 +34,8 @@ fn new_invalid_more_than_max() {
 
 #[test]
 fn pack_unpack_valid() {
-    let first = rand_message_id();
-    let others = rand_message_ids(7);
-    let parents_1 = Parents::new(first, others.clone()).unwrap();
+    let inner = rand_message_ids(8);
+    let parents_1 = Parents::new(inner.clone()).unwrap();
     let parents_2 = Parents::unpack(&mut parents_1.pack_new().as_slice()).unwrap();
 
     assert_eq!(parents_1, parents_2);
