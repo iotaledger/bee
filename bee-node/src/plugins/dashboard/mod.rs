@@ -4,6 +4,9 @@
 pub mod config;
 
 mod asset;
+mod auth;
+mod rejection;
+mod routes;
 mod websocket;
 mod workers;
 
@@ -16,7 +19,7 @@ use crate::{
                 confirmed_info, milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, tip_info,
                 vertex, WsEvent,
             },
-            user_connected, WsUser, WsUsers,
+            WsUsers,
         },
         workers::{
             confirmed_ms_metrics::confirmed_ms_metrics_worker, db_size_metrics::db_size_metrics_worker,
@@ -37,14 +40,12 @@ use bee_protocol::{
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 
-use asset::Asset;
 use async_trait::async_trait;
 use futures::stream::StreamExt;
 use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use warp::{http::header::HeaderValue, path::FullPath, reply::Response, ws::Message, Filter, Rejection, Reply};
-use warp_reverse_proxy::reverse_proxy_filter;
+use warp::ws::Message;
 
 use std::{
     any::{Any, TypeId},
@@ -116,12 +117,11 @@ where
         // TODO: load them differently if possible
         let node_config = node.resource::<NodeConfig<N::Backend>>();
         let rest_api_config = node_config.rest_api.clone();
-
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
+        let peering_config = node_config.peering.clone();
 
-        // Keep track of all connected users, key is usize, value
-        // is a websocket sender.
+        // Keep track of all connected users, key is usize, value is a websocket sender.
         let users = WsUsers::default();
 
         // Register event handlers
@@ -195,40 +195,14 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let _users = users.clone();
-
-            // Turn our "state" into a new Filter...
-            let users_filter = warp::any().map(move || users.clone());
-            let tangle_filter = warp::any().map(move || tangle.clone());
-            let storage_filter = warp::any().map(move || storage.clone());
-
-            let routes = warp::path::end()
-                .and_then(serve_index)
-                .or(warp::path("branding").and(warp::path::full()).and_then(serve_full_path))
-                .or(warp::path("static").and(warp::path::full()).and_then(serve_full_path))
-                .or(warp::path("ws")
-                    .and(warp::ws())
-                    .and(users_filter)
-                    .and(tangle_filter)
-                    .and(storage_filter)
-                    .map(|ws: warp::ws::Ws, users, tangle, storage| {
-                        // This will call our function if the handshake succeeds.
-                        ws.on_upgrade(move |socket| user_connected(socket, users, tangle, storage))
-                    }))
-                .or(warp::path!("api" / ..).and(
-                    reverse_proxy_filter(
-                        "".to_string(),
-                        "http://localhost:".to_owned()
-                            + &rest_api_config.binding_socket_addr().port().to_string()
-                            + "/",
-                    )
-                    .map(|res| res),
-                ))
-                .or(warp::path!("analytics" / ..).and_then(serve_index))
-                .or(warp::path!("peers" / ..).and_then(serve_index))
-                .or(warp::path!("explorer" / ..).and_then(serve_index))
-                .or(warp::path!("visualizer" / ..).and_then(serve_index))
-                .or(warp::path!("settings" / ..).and_then(serve_index));
+            let routes = routes::routes(
+                storage.clone(),
+                tangle.clone(),
+                peering_config.peer_id.to_string().clone(),
+                config.auth().clone(),
+                rest_api_config.clone(),
+                users.clone(),
+            );
 
             info!("Dashboard available at http://localhost:{}.", config.port());
 
@@ -242,7 +216,7 @@ where
 
             server.await;
 
-            for (_, user) in _users.write().await.iter_mut() {
+            for (_, user) in users.write().await.iter_mut() {
                 if let Some(shutdown) = user.shutdown.take() {
                     let _ = shutdown.send(());
                 }
@@ -255,52 +229,16 @@ where
     }
 }
 
-async fn serve_index() -> Result<impl Reply, Rejection> {
-    serve_asset("index.html")
-}
-
-async fn serve_full_path(path: FullPath) -> Result<impl Reply, Rejection> {
-    serve_asset(&path.as_str()[1..])
-}
-
-fn serve_asset(path: &str) -> Result<impl Reply, Rejection> {
-    debug!("Serving asset {}...", path);
-
-    let asset = Asset::get(path).ok_or_else(warp::reject::not_found)?;
-    // TODO remove dep
-    let mime = mime_guess::from_path(path).first_or_octet_stream();
-    let mut res = Response::new(asset.into());
-
-    res.headers_mut()
-        .insert("content-type", HeaderValue::from_str(mime.as_ref()).unwrap());
-
-    Ok(res)
-}
-
 pub(crate) async fn broadcast(event: WsEvent, users: &WsUsers) {
     match serde_json::to_string(&event) {
         Ok(as_text) => {
             for (_, user) in users.read().await.iter() {
                 if user.topics.contains(&event.kind) {
                     if let Err(_disconnected) = user.tx.send(Ok(Message::text(as_text.clone()))) {
-                        // The tx is disconnected, our `user_disconnected` code
-                        // should be happening in another task, nothing more to
-                        // do here.
+                        // The tx is disconnected, our `user_disconnected` code should be happening in another task,
+                        // nothing more to do here.
                     }
                 }
-            }
-        }
-        Err(e) => error!("can not convert event to string: {}", e),
-    }
-}
-
-pub(crate) async fn send_to_specific(event: WsEvent, user: &WsUser) {
-    match serde_json::to_string(&event) {
-        Ok(as_text) => {
-            if let Err(_disconnected) = user.tx.send(Ok(Message::text(as_text.clone()))) {
-                // The tx is disconnected, our `user_disconnected` code
-                // should be happening in another task, nothing more to
-                // do here.
             }
         }
         Err(e) => error!("can not convert event to string: {}", e),
