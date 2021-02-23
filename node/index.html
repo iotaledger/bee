@@ -163,37 +163,37 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#setup-a-node" id="setup-a-node">Setup a Node</a></h1>
-<h1><a class="header" href="#bee-node" id="bee-node">bee-node</a></h1>
-<h1><a class="header" href="#installing-from-source" id="installing-from-source">Installing from source</a></h1>
-<h2><a class="header" href="#dependencies" id="dependencies">Dependencies</a></h2>
-<h3><a class="header" href="#debian" id="debian">Debian</a></h3>
+                        <h1 id="setup-a-node"><a class="header" href="#setup-a-node">Setup a Node</a></h1>
+<h1 id="bee-node"><a class="header" href="#bee-node">bee-node</a></h1>
+<h1 id="installing-from-source"><a class="header" href="#installing-from-source">Installing from source</a></h1>
+<h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
+<h3 id="debian"><a class="header" href="#debian">Debian</a></h3>
 <pre><code class="language-sh">apt-get update
 apt-get upgrade
 apt-get install git npm build-essential cmake pkg-config librocksdb-dev llvm clang libclang-dev libssl-dev
 </code></pre>
-<h3><a class="header" href="#macos" id="macos">MacOS</a></h3>
+<h3 id="macos"><a class="header" href="#macos">MacOS</a></h3>
 <pre><code class="language-sh">/bin/bash -c &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)&quot;
 brew install cmake npm
 </code></pre>
-<h3><a class="header" href="#windows" id="windows">Windows</a></h3>
+<h3 id="windows"><a class="header" href="#windows">Windows</a></h3>
 <p>Open Powershell and execute the following commands:</p>
 <pre><code class="language-sh">Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 choco install git --params '/NoAutoCrlf' nodejs-lts cmake --installargs 'ADD_CMAKE_TO_PATH=System' llvm
 </code></pre>
 <p>Restart Powershell</p>
-<h3><a class="header" href="#rust" id="rust">Rust</a></h3>
+<h3 id="rust"><a class="header" href="#rust">Rust</a></h3>
 <p>Minimum required version 1.48.</p>
-<h4><a class="header" href="#installation-debian-macos" id="installation-debian-macos">Installation (Debian, MacOS)</a></h4>
+<h4 id="installation-debian-macos"><a class="header" href="#installation-debian-macos">Installation (Debian, MacOS)</a></h4>
 <pre><code class="language-sh">curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source $HOME/.cargo/env
 </code></pre>
-<h4><a class="header" href="#installation-windows" id="installation-windows">Installation (Windows)</a></h4>
+<h4 id="installation-windows"><a class="header" href="#installation-windows">Installation (Windows)</a></h4>
 <p>Install Rust from <a href="https://www.rust-lang.org/learn/get-started">here</a>.</p>
-<h4><a class="header" href="#update" id="update">Update</a></h4>
+<h4 id="update"><a class="header" href="#update">Update</a></h4>
 <pre><code class="language-sh">rustup update
 </code></pre>
-<h2><a class="header" href="#compilation" id="compilation">Compilation</a></h2>
+<h2 id="compilation"><a class="header" href="#compilation">Compilation</a></h2>
 <pre><code class="language-sh">git clone https://github.com/iotaledger/bee.git --branch chrysalis-pt-2
 cd bee/bee-node
 </code></pre>
@@ -208,7 +208,7 @@ cargo build --release --features dashboard
 <p>Without dashboard</p>
 <pre><code class="language-sh">cargo build --release
 </code></pre>
-<h2><a class="header" href="#running" id="running">Running</a></h2>
+<h2 id="running"><a class="header" href="#running">Running</a></h2>
 <pre><code class="language-sh">cp config.example.toml config.toml
 ../target/release/bee
 </code></pre>
