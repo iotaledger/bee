@@ -300,7 +300,7 @@ where
         // Unwrap is fine because we just inserted the ledger index.
         // TODO unwrap
         let mut ledger_index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
-        tangle.update_latest_solid_milestone_index(MilestoneIndex(*ledger_index));
+        tangle.update_solid_milestone_index(MilestoneIndex(*ledger_index));
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

@@ -162,7 +162,7 @@ async fn send_init_values_for_topics<B: StorageBackend>(
                 WsTopic::SyncStatus,
                 WsEventInner::SyncStatus(SyncStatusResponse {
                     lmi: *tangle.get_latest_milestone_index(),
-                    lsmi: *tangle.get_latest_solid_milestone_index(),
+                    lsmi: *tangle.get_solid_milestone_index(),
                 }),
             );
             send_to_specific(event, user).await;

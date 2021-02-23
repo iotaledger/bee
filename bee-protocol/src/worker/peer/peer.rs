@@ -153,8 +153,7 @@ impl PeerWorker {
 
                 let packet = tlv_from_bytes::<Heartbeat>(&header, bytes)?;
 
-                self.peer
-                    .set_latest_solid_milestone_index(packet.latest_solid_milestone_index.into());
+                self.peer.set_solid_milestone_index(packet.solid_milestone_index.into());
                 self.peer.set_pruned_index(packet.pruned_index.into());
                 self.peer
                     .set_latest_milestone_index(packet.latest_milestone_index.into());
@@ -165,14 +164,14 @@ impl PeerWorker {
                 if !tangle.is_synced_threshold(2)
                     && !self
                         .peer
-                        .has_data(MilestoneIndex(*tangle.get_latest_solid_milestone_index() + 1))
+                        .has_data(MilestoneIndex(*tangle.get_solid_milestone_index() + 1))
                 {
                     debug!(
                         "The peer {} can't help syncing because the required index {} is not in its database [{};{}].",
                         self.peer.alias(),
-                        *tangle.get_latest_solid_milestone_index() + 1,
+                        *tangle.get_solid_milestone_index() + 1,
                         packet.pruned_index,
-                        packet.latest_solid_milestone_index
+                        packet.solid_milestone_index
                     );
                     // TODO drop if autopeered.
                 }

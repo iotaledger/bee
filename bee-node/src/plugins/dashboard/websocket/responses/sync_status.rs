@@ -28,20 +28,20 @@ pub(crate) fn forward_latest_milestone_changed<B: StorageBackend>(
         WsTopic::SyncStatus,
         WsEventInner::SyncStatus(SyncStatusResponse {
             lmi: *latest_milestone.index,
-            lsmi: *tangle.get_latest_solid_milestone_index(),
+            lsmi: *tangle.get_solid_milestone_index(),
         }),
     )
 }
 
 pub(crate) fn forward_solid_milestone_changed<B: StorageBackend>(
-    latest_solid_milestone: LatestSolidMilestoneChanged,
+    solid_milestone: LatestSolidMilestoneChanged,
     tangle: &MsTangle<B>,
 ) -> WsEvent {
     WsEvent::new(
         WsTopic::SyncStatus,
         WsEventInner::SyncStatus(SyncStatusResponse {
             lmi: *tangle.get_latest_milestone_index(),
-            lsmi: *latest_solid_milestone.index,
+            lsmi: *solid_milestone.index,
         }),
     )
 }

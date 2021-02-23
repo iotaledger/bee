@@ -76,7 +76,7 @@ pub async fn send_heartbeat<B: StorageBackend>(
         metrics,
         to,
         Heartbeat::new(
-            *tangle.get_latest_solid_milestone_index(),
+            *tangle.get_solid_milestone_index(),
             *tangle.get_pruning_index(),
             *tangle.get_latest_milestone_index(),
             peer_manager.connected_peers().await,

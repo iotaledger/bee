@@ -76,7 +76,7 @@ async fn solidify<B: StorageBackend>(
 ) {
     debug!("New solid milestone {}.", *index);
 
-    tangle.update_latest_solid_milestone_index(index);
+    tangle.update_solid_milestone_index(index);
 
     if let Err(e) = ledger_worker.send(LedgerWorkerEvent(id)) {
         warn!("Sending message_id to ledger worker failed: {}.", e);
@@ -138,14 +138,14 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            let mut next = tangle.get_latest_solid_milestone_index() + MilestoneIndex(1);
+            let mut next = tangle.get_solid_milestone_index() + MilestoneIndex(1);
 
             while let Some(MilestoneSolidifierWorkerEvent(index)) = receiver.next().await {
-                let lsmi = tangle.get_latest_solid_milestone_index();
+                let smi = tangle.get_solid_milestone_index();
                 let lmi = tangle.get_latest_milestone_index();
 
                 // Request all milestones within a range.
-                while next <= cmp::min(lsmi + MilestoneIndex(ms_sync_count), lmi) {
+                while next <= cmp::min(smi + MilestoneIndex(ms_sync_count), lmi) {
                     helper::request_milestone(&tangle, &milestone_requester, &*requested_milestones, next, None).await;
                     next = next + MilestoneIndex(1);
                 }
@@ -157,7 +157,7 @@ where
                                 "Light solidification of milestone {} {} in [{};{}].",
                                 index,
                                 message_id,
-                                *lsmi + 1,
+                                *smi + 1,
                                 *next - 1
                             );
                             for parent in message.parents().iter() {
@@ -178,7 +178,7 @@ where
                     }
                 }
 
-                let mut target = lsmi + MilestoneIndex(1);
+                let mut target = smi + MilestoneIndex(1);
 
                 while target <= lmi {
                     if let Some(id) = tangle.get_milestone_message_id(target).await {
@@ -204,7 +204,7 @@ where
                                 target,
                                 id,
                                 missing_len,
-                                *lsmi + 1,
+                                *smi + 1,
                                 *next - 1
                             );
                             break;

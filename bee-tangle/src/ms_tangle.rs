@@ -88,7 +88,7 @@ pub struct MsTangle<B> {
     milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
     pub(crate) solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
     latest_milestone_index: AtomicU32,
-    latest_solid_milestone_index: AtomicU32,
+    solid_milestone_index: AtomicU32,
     snapshot_index: AtomicU32,
     pruning_index: AtomicU32,
     entry_point_index: AtomicU32,
@@ -110,7 +110,7 @@ impl<B: StorageBackend> MsTangle<B> {
             milestones: Default::default(),
             solid_entry_points: Default::default(),
             latest_milestone_index: Default::default(),
-            latest_solid_milestone_index: Default::default(),
+            solid_milestone_index: Default::default(),
             snapshot_index: Default::default(),
             pruning_index: Default::default(),
             entry_point_index: Default::default(),
@@ -215,12 +215,12 @@ impl<B: StorageBackend> MsTangle<B> {
         self.latest_milestone_index.store(*new_index, Ordering::Relaxed);
     }
 
-    pub fn get_latest_solid_milestone_index(&self) -> MilestoneIndex {
-        self.latest_solid_milestone_index.load(Ordering::Relaxed).into()
+    pub fn get_solid_milestone_index(&self) -> MilestoneIndex {
+        self.solid_milestone_index.load(Ordering::Relaxed).into()
     }
 
-    pub fn update_latest_solid_milestone_index(&self, new_index: MilestoneIndex) {
-        self.latest_solid_milestone_index.store(*new_index, Ordering::Relaxed);
+    pub fn update_solid_milestone_index(&self, new_index: MilestoneIndex) {
+        self.solid_milestone_index.store(*new_index, Ordering::Relaxed);
 
         // TODO: Formalise this a little better
         let new_len = ((1000.0 + self.get_sync_threshold() as f32 * 500.0) as usize).min(DEFAULT_CACHE_LEN);
@@ -259,12 +259,12 @@ impl<B: StorageBackend> MsTangle<B> {
     // TODO reduce to one atomic value ?
     pub fn get_sync_threshold(&self) -> u32 {
         self.get_latest_milestone_index()
-            .saturating_sub(*self.get_latest_solid_milestone_index())
+            .saturating_sub(*self.get_solid_milestone_index())
     }
 
     // TODO reduce to one atomic value ?
     pub fn is_synced_threshold(&self, threshold: u32) -> bool {
-        *self.get_latest_solid_milestone_index() >= self.get_latest_milestone_index().saturating_sub(threshold)
+        *self.get_solid_milestone_index() >= self.get_latest_milestone_index().saturating_sub(threshold)
     }
 
     pub async fn get_solid_entry_point_index(&self, sep: &SolidEntryPoint) -> Option<MilestoneIndex> {
