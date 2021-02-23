@@ -139,11 +139,11 @@ impl<N: Node> Worker<N> for SnapshotWorker {
             info!("Stopped.");
         });
 
-        // bus.add_listener(move |latest_solid_milestone: &LatestSolidMilestoneChanged| {
-        //     if let Err(e) = snapshot_worker.send(worker::SnapshotWorkerEvent(latest_solid_milestone.0.clone())) {
+        // bus.add_listener(move |solid_milestone: &LatestSolidMilestoneChanged| {
+        //     if let Err(e) = snapshot_worker.send(worker::SnapshotWorkerEvent(solid_milestone.0.clone())) {
         //         warn!(
         //             "Failed to send milestone {} to snapshot worker: {:?}.",
-        //             *latest_solid_milestone.0.index(),
+        //             *solid_milestone.0.index(),
         //             e
         //         )
         //     }

@@ -6,8 +6,9 @@ use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
 use bee_protocol::{Peer, PeerManager};
 use bee_runtime::resource::ResourceHandle;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 
+use serde_json::Value;
 use std::{
     convert::{TryFrom, TryInto},
     sync::Arc,
@@ -82,12 +83,57 @@ pub struct TreasuryInputDto {
     pub message_id: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(untagged)]
+#[derive(Clone, Debug)]
 pub enum OutputDto {
     SignatureLockedSingle(SignatureLockedSingleOutputDto),
     SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto),
     Treasury(TreasuryOutputDto),
+}
+
+impl<'de> serde::Deserialize<'de> for OutputDto {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let value = Value::deserialize(d)?;
+        Ok(match value.get("type").and_then(Value::as_u64).unwrap() {
+            // TODO: cover all cases + handle unwraps
+            0 => OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).unwrap()),
+            1 => OutputDto::SignatureLockedDustAllowance(
+                SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap(),
+            ),
+            type_ => panic!("unsupported type {:?}", type_),
+        })
+    }
+}
+
+impl Serialize for OutputDto {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        #[derive(Serialize)]
+        #[serde(untagged)]
+        enum OutputDto_<'a> {
+            T1(&'a SignatureLockedSingleOutputDto),
+            T2(&'a SignatureLockedDustAllowanceOutputDto),
+            T3(&'a TreasuryOutputDto),
+        }
+        #[derive(Serialize)]
+        struct TypedOutput<'a> {
+            #[serde(flatten)]
+            output: OutputDto_<'a>,
+        }
+        let output = match self {
+            OutputDto::SignatureLockedSingle(s) => TypedOutput {
+                output: OutputDto_::T1(s),
+            },
+            OutputDto::SignatureLockedDustAllowance(s) => TypedOutput {
+                output: OutputDto_::T2(s),
+            },
+            OutputDto::Treasury(t) => TypedOutput {
+                output: OutputDto_::T3(t),
+            },
+        };
+        output.serialize(serializer)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -190,6 +236,17 @@ pub struct IndexationPayloadDto {
 pub struct ReceiptPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
+    pub index: u32,
+    pub last: bool,
+    pub funds: Vec<MigratedFundsEntryDto>,
+    pub transaction: PayloadDto,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MigratedFundsEntryDto {
+    tail_transaction_hash: Box<[u8]>,
+    address: AddressDto,
+    amount: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -509,7 +566,7 @@ impl TryFrom<&AddressDto> for Address {
 impl From<&Ed25519Address> for Ed25519AddressDto {
     fn from(value: &Ed25519Address) -> Self {
         Self {
-            kind: 1,
+            kind: 0,
             address: value.to_string(),
         }
     }
@@ -537,7 +594,7 @@ impl TryFrom<&UnlockBlock> for UnlockBlockDto {
                 SignatureUnlock::Ed25519(ed) => Ok(UnlockBlockDto::Signature(SignatureUnlockDto {
                     kind: 0,
                     signature: SignatureDto::Ed25519(Ed25519SignatureDto {
-                        kind: 1,
+                        kind: 0,
                         public_key: hex::encode(ed.public_key()),
                         signature: hex::encode(ed.signature()),
                     }),
@@ -662,7 +719,7 @@ impl From<&Box<IndexationPayload>> for Box<IndexationPayloadDto> {
     fn from(value: &Box<IndexationPayload>) -> Self {
         Box::new(IndexationPayloadDto {
             kind: 2,
-            index: value.index().to_owned(),
+            index: hex::encode(value.index()),
             data: hex::encode(value.data()),
         })
     }
@@ -674,7 +731,8 @@ impl TryFrom<&Box<IndexationPayloadDto>> for Box<IndexationPayload> {
     fn try_from(value: &Box<IndexationPayloadDto>) -> Result<Self, Self::Error> {
         Ok(Box::new(
             IndexationPayload::new(
-                value.index.clone(),
+                &hex::decode(value.index.clone())
+                    .map_err(|_| "invalid index in indexation payload: expected a hex-string")?,
                 &hex::decode(value.data.clone())
                     .map_err(|_| "invalid data in indexation payload: expected a hex-string")?,
             )
@@ -684,21 +742,73 @@ impl TryFrom<&Box<IndexationPayloadDto>> for Box<IndexationPayload> {
 }
 
 // &Box<ReceiptPayload> -> Box<ReceiptDto>
-impl From<&Box<ReceiptPayload>> for Box<ReceiptPayloadDto> {
-    fn from(_value: &Box<ReceiptPayload>) -> Self {
-        Box::new(ReceiptPayloadDto { kind: 3 })
+impl TryFrom<&Box<ReceiptPayload>> for Box<ReceiptPayloadDto> {
+    type Error = String;
+    fn try_from(value: &Box<ReceiptPayload>) -> Result<Self, Self::Error> {
+        Ok(Box::new(ReceiptPayloadDto {
+            kind: 3,
+            index: value.index(),
+            last: value.last(),
+            funds: value
+                .funds()
+                .iter()
+                .map(|m| m.try_into())
+                .collect::<Result<Vec<MigratedFundsEntryDto>, _>>()?,
+            transaction: value.transaction().try_into()?,
+        }))
     }
 }
 
 // &Box<ReceiptDto> -> Box<ReceiptPayload>
 impl TryFrom<&Box<ReceiptPayloadDto>> for Box<ReceiptPayload> {
     type Error = String;
-    fn try_from(_value: &Box<ReceiptPayloadDto>) -> Result<Self, Self::Error> {
-        Ok(Box::new(ReceiptPayload::new()))
+    fn try_from(value: &Box<ReceiptPayloadDto>) -> Result<Self, Self::Error> {
+        let receipt = ReceiptPayload::new(
+            value.index,
+            value.last,
+            value
+                .funds
+                .iter()
+                .map(|m| m.try_into())
+                .collect::<Result<Vec<MigratedFundsEntry>, _>>()?,
+            (&value.transaction).try_into()?,
+        )
+        .map_err(|e| format!("invalid receipt payload: {}", e))?;
+        Ok(Box::new(receipt))
     }
 }
 
-// &Box<ReceiptPayload> -> Box<ReceiptDto>
+// &MigratedFundsEntry -> MigratedFundsEntryDto
+impl TryFrom<&MigratedFundsEntry> for MigratedFundsEntryDto {
+    type Error = String;
+    fn try_from(value: &MigratedFundsEntry) -> Result<Self, Self::Error> {
+        Ok(MigratedFundsEntryDto {
+            tail_transaction_hash: Box::new(value.tail_transaction_hash().clone()),
+            address: value.address().try_into()?,
+            amount: value.amount(),
+        })
+    }
+}
+
+// &MigratedFundsEntryDto -> MigratedFundsEntry
+impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
+    type Error = String;
+    fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
+        let entry = MigratedFundsEntry::new(
+            value
+                .tail_transaction_hash
+                .as_ref()
+                .try_into()
+                .map_err(|e| format!("invalid tail transaction hash: {}", e))?,
+            (&value.address).try_into()?,
+            value.amount,
+        )
+        .map_err(|e| format!("invalid migrated funds entry: {}", e))?;
+        Ok(entry)
+    }
+}
+
+// &Box<ReceiptPayload> -> Box<ReceiptDto>§
 impl TryFrom<&Box<TreasuryTransactionPayload>> for Box<TreasuryTransactionPayloadDto> {
     type Error = String;
     fn try_from(value: &Box<TreasuryTransactionPayload>) -> Result<Self, Self::Error> {
@@ -812,7 +922,7 @@ pub async fn peer_to_peer_dto(peer: &Arc<Peer>, peer_manager: &ResourceHandle<Pe
         connected: peer_manager.is_connected(peer.id()).await,
         gossip: Some(GossipDto {
             heartbeat: HeartbeatDto {
-                solid_milestone_index: *peer.latest_solid_milestone_index(),
+                solid_milestone_index: *peer.solid_milestone_index(),
                 pruned_milestone_index: *peer.pruned_index(),
                 latest_milestone_index: *peer.latest_milestone_index(),
                 connected_neighbors: peer.connected_peers(),

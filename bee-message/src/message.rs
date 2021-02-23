@@ -10,7 +10,6 @@ use blake2::{
     digest::{Update, VariableOutput},
     VarBlake2b,
 };
-use serde::{Deserialize, Serialize};
 
 use std::{
     ops::RangeInclusive,
@@ -19,9 +18,11 @@ use std::{
 
 pub const MESSAGE_LENGTH_MIN: usize = 53;
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
+// TODO remove when we start using the Parents type
 pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
     network_id: u64,
     parents: Vec<MessageId>,

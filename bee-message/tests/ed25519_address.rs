@@ -27,7 +27,7 @@ fn generate_bech32_string() {
     let bech32_string = address.to_bech32("iota");
     assert_eq!(
         bech32_string,
-        "iota1q9f0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryj0w6qwt"
+        "iota1qpf0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryj430ldu"
     );
 }
 
@@ -40,7 +40,7 @@ fn generate_bech32_testnet_string() {
     let bech32_string = address.to_bech32("atoi");
     assert_eq!(
         bech32_string,
-        "atoi1q9f0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryjgqtp5x"
+        "atoi1qpf0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryjjl77h3"
     );
 }
 

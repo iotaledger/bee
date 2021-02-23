@@ -15,13 +15,12 @@ use crate::{
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 use alloc::{boxed::Box, vec::Vec};
 
 pub(crate) const REGULAR_ESSENCE_KIND: u8 = 0;
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RegularEssence {
     inputs: Box<[Input]>,
     outputs: Box<[Output]>,
@@ -165,7 +164,8 @@ impl RegularEssenceBuilder {
         }
 
         if !matches!(self.payload, None | Some(Payload::Indexation(_))) {
-            return Err(Error::InvalidTransactionPayload);
+            // Unwrap is fine because we just checked the Option is not None.
+            return Err(Error::InvalidPayloadKind(self.payload.unwrap().kind()));
         }
 
         // Inputs validation

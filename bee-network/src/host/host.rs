@@ -138,15 +138,11 @@ async fn process_command(
 ) {
     match command {
         Command::DialPeer { peer_id } => {
-            info!("Dialing peer {}.", peer_id);
-
             if let Err(e) = dial_peer(swarm, local_keys, peer_id, &peerlist, &banned_addrs, &banned_peers).await {
                 warn!("Failed to dial peer '...{}'. Cause: {}", alias!(peer_id), e);
             }
         }
         Command::DialAddress { address } => {
-            info!("Dialing address {}.", address);
-
             if let Err(e) = dial_addr(swarm, address.clone(), &banned_addrs).await {
                 warn!("Failed to dial address '{}'. Cause: {}", address, e);
             }
@@ -167,6 +163,7 @@ async fn dial_addr(
     // Prevent dialing banned addresses.
     check_if_banned_addr(&address, &banned_addrs).await?;
 
+    info!("Dialing address {}.", address);
     //
     GOSSIP_ORIGIN.store(true, Ordering::SeqCst);
     Swarm::dial_addr(swarm, address.clone()).map_err(|_| Error::DialingFailed(address))?;
@@ -196,7 +193,7 @@ async fn dial_peer(
     check_if_banned_peer(&remote_peer_id, &banned_peers).await?;
 
     // Prevent dialing unregistered peers.
-    let PeerInfo { address, .. } = check_if_unregistered_or_get_info(&remote_peer_id, &peerlist).await?;
+    let PeerInfo { address, alias, .. } = check_if_unregistered_or_get_info(&remote_peer_id, &peerlist).await?;
 
     // TODO
     // Prevent dialing own listen addresses.
@@ -204,6 +201,8 @@ async fn dial_peer(
 
     // Prevent dialing banned addresses.
     check_if_banned_addr(&address, &banned_addrs).await?;
+
+    info!("Dialing peer {}.", alias);
 
     GOSSIP_ORIGIN.store(true, Ordering::SeqCst);
     Swarm::dial_addr(swarm, address.clone()).map_err(|_| Error::DialingFailed(address))?;

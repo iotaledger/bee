@@ -6,14 +6,14 @@ use crate::{payload::Payload, Error, MessageId, MESSAGE_ID_LENGTH, MESSAGE_PAREN
 use bee_common::packable::{Packable, Read, Write};
 
 use crypto::blake2b;
-use serde::{Deserialize, Serialize};
 
 use alloc::vec::Vec;
 
 pub const MILESTONE_MERKLE_PROOF_LENGTH: usize = 32;
 pub const MILESTONE_PUBLIC_KEY_LENGTH: usize = 32;
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayloadEssence {
     index: u32,
     timestamp: u64,

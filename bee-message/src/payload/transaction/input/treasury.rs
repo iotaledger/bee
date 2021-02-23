@@ -12,6 +12,7 @@ pub(crate) const TREASURY_INPUT_KIND: u8 = 1;
 #[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct TreasuryInput(MessageId);
 
+#[cfg(feature = "serde")]
 string_serde_impl!(TreasuryInput);
 
 impl From<MessageId> for TreasuryInput {

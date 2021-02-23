@@ -12,6 +12,7 @@ pub const TRANSACTION_ID_LENGTH: usize = 32;
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct TransactionId([u8; TRANSACTION_ID_LENGTH]);
 
+#[cfg(feature = "serde")]
 string_serde_impl!(TransactionId);
 
 impl From<[u8; TRANSACTION_ID_LENGTH]> for TransactionId {

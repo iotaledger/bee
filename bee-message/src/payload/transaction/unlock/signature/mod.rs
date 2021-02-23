@@ -10,13 +10,15 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 pub(crate) const SIGNATURE_UNLOCK_KIND: u8 = 0;
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(tag = "type", content = "data")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "type", content = "data")
+)]
 pub enum SignatureUnlock {
     Ed25519(Ed25519Signature),
 }
@@ -49,7 +51,7 @@ impl Packable for SignatureUnlock {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            ED25519_SIGNATURE_KIND => Self::Ed25519(Ed25519Signature::unpack(reader)?),
+            ED25519_SIGNATURE_KIND => Ed25519Signature::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidSignatureKind(k)),
         })
     }

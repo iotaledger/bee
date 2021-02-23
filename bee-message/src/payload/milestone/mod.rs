@@ -10,7 +10,6 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 use crypto::ed25519;
-use serde::{Deserialize, Serialize};
 
 use alloc::{boxed::Box, vec::Vec};
 use core::convert::TryInto;
@@ -29,7 +28,8 @@ pub enum MilestoneValidationError {
     InvalidSignature(usize, String),
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayload {
     essence: MilestonePayloadEssence,
     // TODO length is 64, change to array when std::array::LengthAtMost32 disappears.
@@ -80,7 +80,7 @@ impl MilestonePayload {
             ));
         }
 
-        let essence_bytes = self.essence().pack_new();
+        let essence_hash = self.essence().hash();
 
         // TODO zip public key and signature
         for (index, public_key) in self.essence().public_keys().iter().enumerate() {
@@ -95,7 +95,7 @@ impl MilestonePayload {
             let ed25519_signature =
                 ed25519::Signature::from_bytes(self.signatures()[index].as_ref().try_into().unwrap());
 
-            if !ed25519::verify(&ed25519_public_key, &ed25519_signature, &essence_bytes) {
+            if !ed25519::verify(&ed25519_public_key, &ed25519_signature, &essence_hash) {
                 return Err(MilestoneValidationError::InvalidSignature(
                     index,
                     hex::encode(public_key),

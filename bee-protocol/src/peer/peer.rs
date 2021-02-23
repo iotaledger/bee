@@ -15,7 +15,7 @@ pub struct Peer {
     id: PeerId,
     info: PeerInfo,
     metrics: PeerMetrics,
-    latest_solid_milestone_index: AtomicU32,
+    solid_milestone_index: AtomicU32,
     pruned_index: AtomicU32,
     latest_milestone_index: AtomicU32,
     connected_peers: AtomicU8,
@@ -30,7 +30,7 @@ impl Peer {
             id,
             info,
             metrics: PeerMetrics::default(),
-            latest_solid_milestone_index: AtomicU32::new(0),
+            solid_milestone_index: AtomicU32::new(0),
             pruned_index: AtomicU32::new(0),
             latest_milestone_index: AtomicU32::new(0),
             connected_peers: AtomicU8::new(0),
@@ -60,12 +60,12 @@ impl Peer {
         &self.metrics
     }
 
-    pub(crate) fn set_latest_solid_milestone_index(&self, index: MilestoneIndex) {
-        self.latest_solid_milestone_index.store(*index, Ordering::Relaxed);
+    pub(crate) fn set_solid_milestone_index(&self, index: MilestoneIndex) {
+        self.solid_milestone_index.store(*index, Ordering::Relaxed);
     }
 
-    pub fn latest_solid_milestone_index(&self) -> MilestoneIndex {
-        self.latest_solid_milestone_index.load(Ordering::Relaxed).into()
+    pub fn solid_milestone_index(&self) -> MilestoneIndex {
+        self.solid_milestone_index.load(Ordering::Relaxed).into()
     }
 
     pub(crate) fn set_pruned_index(&self, index: MilestoneIndex) {
@@ -137,12 +137,12 @@ impl Peer {
 
     // TODO reduce to one atomic value ?
     pub fn is_synced_threshold(&self, threshold: u32) -> bool {
-        *self.latest_solid_milestone_index() >= (*self.latest_milestone_index()).saturating_sub(threshold)
+        *self.solid_milestone_index() >= (*self.latest_milestone_index()).saturating_sub(threshold)
     }
 
     pub(crate) fn has_data(&self, index: MilestoneIndex) -> bool {
         // +1 to allow for a little delay before a Heartbeat comes from a peer.
-        index > self.pruned_index() && index <= self.latest_solid_milestone_index() + MilestoneIndex(1)
+        index > self.pruned_index() && index <= self.solid_milestone_index() + MilestoneIndex(1)
     }
 
     pub(crate) fn maybe_has_data(&self, index: MilestoneIndex) -> bool {

@@ -14,11 +14,13 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 #[non_exhaustive]
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Hash, Ord, PartialOrd)]
-#[serde(tag = "type", content = "data")]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "type", content = "data")
+)]
 pub enum Input {
     UTXO(UTXOInput),
     Treasury(TreasuryInput),
@@ -72,8 +74,8 @@ impl Packable for Input {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            UTXO_INPUT_KIND => Self::UTXO(UTXOInput::unpack(reader)?),
-            TREASURY_INPUT_KIND => Self::Treasury(TreasuryInput::unpack(reader)?),
+            UTXO_INPUT_KIND => UTXOInput::unpack(reader)?.into(),
+            TREASURY_INPUT_KIND => TreasuryInput::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidInputKind(k)),
         })
     }

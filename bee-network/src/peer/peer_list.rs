@@ -149,21 +149,22 @@ impl PeerList {
             .map(|(info, state)| predicate(info, state))
     }
 
-    pub async fn iter_if(&self, predicate: impl Fn(&PeerInfo, &PeerState) -> bool) -> impl Iterator<Item = PeerId> {
+    pub async fn iter_if(
+        &self,
+        predicate: impl Fn(&PeerInfo, &PeerState) -> bool,
+    ) -> impl Iterator<Item = (PeerId, String)> {
         self.0
             .read()
             .await
             .iter()
-            .filter_map(
-                |(peer_id, (info, state))| {
-                    if predicate(info, state) {
-                        Some(*peer_id)
-                    } else {
-                        None
-                    }
-                },
-            )
-            .collect::<Vec<PeerId>>()
+            .filter_map(|(peer_id, (info, state))| {
+                if predicate(info, state) {
+                    Some((*peer_id, info.alias.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<(PeerId, String)>>()
             .into_iter()
     }
 

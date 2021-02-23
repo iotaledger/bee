@@ -10,7 +10,6 @@ use crate::{
     storage::{self, StorageBackend},
 };
 
-use bee_common::packable::Packable;
 use bee_message::{
     payload::{
         transaction::{
@@ -42,7 +41,7 @@ async fn validate_transaction<B: StorageBackend>(
 
     // TODO
     if let Essence::Regular(essence) = transaction.essence() {
-        let essence_bytes = transaction.essence().pack_new();
+        let essence_hash = transaction.essence().hash();
 
         for (index, input) in essence.inputs().iter().enumerate() {
             let (output_id, consumed_output) = if let Input::UTXO(utxo_input) = input {
@@ -74,9 +73,7 @@ async fn validate_transaction<B: StorageBackend>(
                         balance_diffs.dust_output_dec(*consumed_output.address());
                     }
                     if !match transaction.unlock_block(index) {
-                        UnlockBlock::Signature(signature) => {
-                            consumed_output.address().verify(&essence_bytes, signature)
-                        }
+                        UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_hash, signature),
                         _ => false,
                     } {
                         return Ok(ConflictReason::InvalidSignature);
@@ -87,9 +84,7 @@ async fn validate_transaction<B: StorageBackend>(
                     balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
                     balance_diffs.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
                     if !match transaction.unlock_block(index) {
-                        UnlockBlock::Signature(signature) => {
-                            consumed_output.address().verify(&essence_bytes, signature)
-                        }
+                        UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_hash, signature),
                         _ => false,
                     } {
                         return Ok(ConflictReason::InvalidSignature);

@@ -11,14 +11,17 @@ use crate::{payload::transaction::SignatureUnlock, Error};
 use bee_common::packable::{Packable, Read, Write};
 
 use bech32::FromBase32;
-use serde::{Deserialize, Serialize};
 
 use alloc::string::String;
 use core::ops::Deref;
 
 #[non_exhaustive]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize, Ord, PartialOrd, Hash)]
-#[serde(tag = "type", content = "data")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "type", content = "data")
+)]
 pub enum Address {
     Ed25519(Ed25519Address),
 }
@@ -77,14 +80,15 @@ impl Packable for Address {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            ED25519_ADDRESS_KIND => Self::Ed25519(Ed25519Address::unpack(reader)?),
+            ED25519_ADDRESS_KIND => Ed25519Address::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidAddressKind(k)),
         })
     }
 }
 
 /// Bech32 encoded address struct
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bech32Address(pub String);
 
 impl Deref for Bech32Address {

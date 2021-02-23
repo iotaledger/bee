@@ -6,13 +6,15 @@ use crate::flags::Flags;
 use bee_common::packable::{OptionError, Packable, Read, Write};
 use bee_message::{milestone::MilestoneIndex, MessageId};
 
+use serde::Serialize;
+
 use std::{
     cmp::Ordering,
     time::{SystemTime, UNIX_EPOCH},
 };
 
 // TODO Should it really be copy ?
-#[derive(Copy, Clone, Default, Debug)]
+#[derive(Copy, Clone, Default, Debug, Serialize)]
 pub struct MessageMetadata {
     flags: Flags,
     milestone_index: Option<MilestoneIndex>,
@@ -190,7 +192,7 @@ impl Packable for MessageMetadata {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize)]
 pub struct IndexId(MilestoneIndex, MessageId);
 
 impl IndexId {

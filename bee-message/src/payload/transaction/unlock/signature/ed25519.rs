@@ -5,15 +5,14 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 use alloc::boxed::Box;
 
-pub(crate) const ED25519_SIGNATURE_KIND: u8 = 1;
+pub(crate) const ED25519_SIGNATURE_KIND: u8 = 0;
 const ED25519_PUBLIC_KEY_LENGTH: usize = 32;
 const ED25519_SIGNATURE_LENGTH: usize = 64;
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Ed25519Signature {
     public_key: [u8; ED25519_PUBLIC_KEY_LENGTH],
     // TODO size is 64, change with generic const.

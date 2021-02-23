@@ -15,6 +15,7 @@ pub(crate) const UTXO_INPUT_KIND: u8 = 0;
 #[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct UTXOInput(OutputId);
 
+#[cfg(feature = "serde")]
 string_serde_impl!(UTXOInput);
 
 impl From<OutputId> for UTXOInput {

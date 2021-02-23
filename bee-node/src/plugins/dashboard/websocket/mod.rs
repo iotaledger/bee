@@ -10,7 +10,8 @@ use topics::WsTopic;
 
 use crate::{
     plugins::dashboard::{
-        send_to_specific,
+        auth::{jwt::JsonWebToken, AUDIENCE_CLAIM},
+        config::DashboardAuthConfig,
         websocket::responses::{
             database_size_metrics::DatabaseSizeMetricsResponse, sync_status::SyncStatusResponse, WsEvent, WsEventInner,
         },
@@ -45,17 +46,29 @@ pub(crate) struct WsUser {
     pub(crate) topics: HashSet<WsTopic>,
 }
 
-/// Our state of currently connected users.
-///
-/// - Key is their id
-/// - Value is a sender of `warp::ws::Message`
+impl WsUser {
+    pub(crate) fn send(&self, event: WsEvent) {
+        match serde_json::to_string(&event) {
+            Ok(as_text) => {
+                if let Err(_) = self.tx.send(Ok(Message::text(as_text.clone()))) {
+                    // The tx is disconnected, our `user_disconnected` code should be happening in another task, nothing
+                    // more to do here.
+                }
+            }
+            Err(e) => error!("can not convert event to string: {}", e),
+        }
+    }
+}
+
 pub(crate) type WsUsers = Arc<RwLock<HashMap<usize, WsUser>>>;
 
 pub(crate) async fn user_connected<B: StorageBackend>(
     ws: WebSocket,
-    users: WsUsers,
-    tangle: ResourceHandle<MsTangle<B>>,
     storage: ResourceHandle<B>,
+    tangle: ResourceHandle<MsTangle<B>>,
+    users: WsUsers,
+    node_id: String,
+    auth_config: DashboardAuthConfig,
 ) {
     // Use a counter to assign a new unique ID for this user.
     let user_id = NEXT_USER_ID.fetch_add(1, Ordering::Relaxed);
@@ -96,7 +109,7 @@ pub(crate) async fn user_connected<B: StorageBackend>(
                 break;
             }
         };
-        user_message(user_id, msg, &users, &tangle, &storage).await;
+        user_message(user_id, msg, &users, &tangle, &storage, &node_id, &auth_config).await;
     }
 
     // ws_rx stream will keep processing as long as the user stays
@@ -110,35 +123,61 @@ async fn user_message<B: StorageBackend>(
     users: &WsUsers,
     tangle: &MsTangle<B>,
     storage: &B,
+    node_id: &String,
+    auth_config: &DashboardAuthConfig,
 ) {
-    if msg.is_binary() {
-        let bytes = msg.as_bytes();
-        if bytes.len() >= 2 {
-            let command = match bytes[0].try_into() {
-                Ok(command) => command,
-                Err(e) => {
-                    error!("Unknown websocket command: {}.", e);
-                    return;
-                }
-            };
-            let topic = match bytes[1].try_into() {
-                Ok(topic) => topic,
-                Err(e) => {
-                    error!("Unknown websocket topic: {}.", e);
-                    return;
-                }
-            };
+    if !msg.is_binary() {
+        return;
+    }
 
-            if let Some(user) = users.write().await.get_mut(&user_id) {
-                match command {
-                    WsCommand::Register => {
-                        send_init_values_for_topics(&topic, &user, tangle, storage).await;
-                        let _ = user.topics.insert(topic);
+    let bytes = msg.as_bytes();
+
+    if bytes.len() < 2 {
+        return;
+    }
+
+    let command: WsCommand = match bytes[0].try_into() {
+        Ok(command) => command,
+        Err(e) => {
+            error!("Unknown websocket command: {}.", e);
+            return;
+        }
+    };
+    let topic: WsTopic = match bytes[1].try_into() {
+        Ok(topic) => topic,
+        Err(e) => {
+            error!("Unknown websocket topic: {}.", e);
+            return;
+        }
+    };
+
+    if let Some(user) = users.write().await.get_mut(&user_id) {
+        match command {
+            WsCommand::Register => {
+                if !topic.is_public() {
+                    if bytes.len() < 3 {
+                        return;
                     }
-                    WsCommand::Unregister => {
-                        let _ = user.topics.remove(&topic);
+                    let jwt = JsonWebToken::from(match String::from_utf8(bytes[2..].to_vec()) {
+                        Ok(jwt) => jwt,
+                        Err(e) => {
+                            error!("Invalid provided JWT: {}", e);
+                            return;
+                        }
+                    });
+                    if !jwt.validate(
+                        node_id.clone(),
+                        auth_config.user().to_owned(),
+                        AUDIENCE_CLAIM.to_owned(),
+                    ) {
+                        return;
                     }
                 }
+                send_init_values(&topic, &user, tangle, storage).await;
+                let _ = user.topics.insert(topic);
+            }
+            WsCommand::Unregister => {
+                let _ = user.topics.remove(&topic);
             }
         }
     }
@@ -146,28 +185,22 @@ async fn user_message<B: StorageBackend>(
 
 async fn user_disconnected(user_id: usize, users: &WsUsers) {
     debug!("User {} disconnected.", user_id);
-    // Stream closed up, so remove from the user list
     users.write().await.remove(&user_id);
 }
 
-async fn send_init_values_for_topics<B: StorageBackend>(
-    topic: &WsTopic,
-    user: &WsUser,
-    tangle: &MsTangle<B>,
-    storage: &B,
-) {
+async fn send_init_values<B: StorageBackend>(topic: &WsTopic, user: &WsUser, tangle: &MsTangle<B>, storage: &B) {
     match topic {
-        &WsTopic::SyncStatus => {
+        WsTopic::SyncStatus => {
             let event = WsEvent::new(
                 WsTopic::SyncStatus,
                 WsEventInner::SyncStatus(SyncStatusResponse {
                     lmi: *tangle.get_latest_milestone_index(),
-                    lsmi: *tangle.get_latest_solid_milestone_index(),
+                    lsmi: *tangle.get_solid_milestone_index(),
                 }),
             );
-            send_to_specific(event, user).await;
+            user.send(event);
         }
-        &WsTopic::DatabaseSizeMetrics => {
+        WsTopic::DatabaseSizeMetrics => {
             let event = WsEvent::new(
                 WsTopic::DatabaseSizeMetrics,
                 WsEventInner::DatabaseSizeMetrics(DatabaseSizeMetricsResponse {
@@ -175,7 +208,7 @@ async fn send_init_values_for_topics<B: StorageBackend>(
                     ts: 0,
                 }),
             );
-            send_to_specific(event, user).await;
+            user.send(event);
         }
         _ => {}
     }

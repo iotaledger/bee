@@ -12,11 +12,14 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 use crypto::blake2b;
-use serde::{Deserialize, Serialize};
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(tag = "type", content = "data")]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "type", content = "data")
+)]
 pub enum Essence {
     Regular(RegularEssence),
 }
@@ -65,7 +68,7 @@ impl Packable for Essence {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            REGULAR_ESSENCE_KIND => Self::Regular(RegularEssence::unpack(reader)?),
+            REGULAR_ESSENCE_KIND => RegularEssence::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidEssenceKind(k)),
         })
     }

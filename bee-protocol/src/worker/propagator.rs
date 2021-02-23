@@ -159,8 +159,8 @@ where
                         // 3) Even if this method doesn't work perfectly, the tip set would only be a little
                         // bit smaller than it could be for a very short time after the node is synchronized.
 
-                        // NOTE: That diff is always okay, because of the invariant: LSMI <= LMI or 0 <= (LMI - LSMI)
-                        if (tangle.get_latest_milestone_index() - tangle.get_latest_solid_milestone_index())
+                        // NOTE: That diff is always okay, because of the invariant: SMI <= LMI or 0 <= (LMI - SMI)
+                        if (tangle.get_latest_milestone_index() - tangle.get_solid_milestone_index())
                             <= (BELOW_MAX_DEPTH + SAFETY_THRESHOLD).into()
                         {
                             tangle.insert_tip(message_id, parents).await;
