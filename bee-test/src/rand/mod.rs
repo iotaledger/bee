@@ -3,6 +3,7 @@
 
 pub mod address;
 pub mod balance;
+pub mod bool;
 pub mod bytes;
 pub mod input;
 pub mod integer;
@@ -12,6 +13,7 @@ pub mod milestone;
 pub mod option;
 pub mod output;
 pub mod output_diff;
+pub mod receipt;
 pub mod snapshot;
 pub mod solid_entry_point;
 pub mod string;

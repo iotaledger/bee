@@ -7,7 +7,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::{convert::TryInto, ops::RangeInclusive};
 
-const MIGRATED_FUNDS_ENTRY_AMOUNT: RangeInclusive<u64> = 1_000_000..=IOTA_SUPPLY;
+pub const MIGRATED_FUNDS_ENTRY_AMOUNT: RangeInclusive<u64> = 1_000_000..=IOTA_SUPPLY;
 const TAIL_TRANSACTION_HASH_LEN: usize = 49;
 
 #[derive(Clone, Debug, Eq, PartialEq)]

@@ -6,7 +6,7 @@ use crate::model::Error;
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{milestone::MilestoneIndex, payload::receipt::ReceiptPayload};
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Receipt {
     inner: ReceiptPayload,
     included_in: MilestoneIndex,

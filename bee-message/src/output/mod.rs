@@ -11,7 +11,7 @@ pub use output_id::{OutputId, OUTPUT_ID_LENGTH};
 pub use signature_locked_dust_allowance::SignatureLockedDustAllowanceOutput;
 pub use signature_locked_single::SignatureLockedSingleOutput;
 pub use storable::{ConsumedOutput, CreatedOutput};
-pub use treasury::TreasuryOutput;
+pub use treasury::{TreasuryOutput, TREASURY_OUTPUT_AMOUNT};
 
 use signature_locked_dust_allowance::SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND;
 use signature_locked_single::SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND;

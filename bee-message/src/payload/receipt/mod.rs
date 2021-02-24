@@ -3,7 +3,7 @@
 
 mod migrated_funds_entry;
 
-pub use migrated_funds_entry::MigratedFundsEntry;
+pub use migrated_funds_entry::{MigratedFundsEntry, MIGRATED_FUNDS_ENTRY_AMOUNT};
 
 use crate::{payload::Payload, Error};
 
