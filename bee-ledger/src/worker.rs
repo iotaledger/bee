@@ -3,15 +3,13 @@
 
 use crate::{
     balance::BalanceDiffs,
-    conflict::ConflictReason,
     dust::DUST_THRESHOLD,
     error::Error,
     event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
-    merkle_hasher::MerkleHasher,
-    metadata::WhiteFlagMetadata,
     state::check_ledger_state,
     storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend},
     white_flag,
+    white_flag::{conflict::ConflictReason, merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
 };
 
 use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, output::Output, payload::Payload, MessageId};
@@ -61,7 +59,7 @@ where
 
     drop(message);
 
-    white_flag::traversal::<N>(tangle, storage, parents, &mut metadata).await?;
+    white_flag::validation::traversal::<N>(tangle, storage, parents, &mut metadata).await?;
 
     // Account for the milestone itself.
     metadata.num_referenced_messages += 1;

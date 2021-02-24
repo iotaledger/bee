@@ -4,7 +4,6 @@
 //#![warn(missing_docs)]
 
 pub mod balance;
-pub mod conflict;
 pub mod dust;
 pub mod error;
 pub mod event;
@@ -12,13 +11,11 @@ pub mod model;
 pub mod state;
 pub mod storage;
 
-mod merkle_hasher;
-mod metadata;
 mod white_flag;
 mod worker;
 
-pub use conflict::ConflictReason;
 pub use storage::StorageBackend;
+pub use white_flag::conflict::ConflictReason;
 pub use worker::{LedgerWorker, LedgerWorkerEvent};
 
 use bee_runtime::node::{Node, NodeBuilder};

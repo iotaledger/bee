@@ -3,11 +3,10 @@
 
 use crate::{
     balance::BalanceDiffs,
-    conflict::ConflictReason,
     dust::{dust_outputs_max, DUST_THRESHOLD},
     error::Error,
-    metadata::WhiteFlagMetadata,
     storage::{self, StorageBackend},
+    white_flag::{conflict::ConflictReason, metadata::WhiteFlagMetadata},
 };
 
 use bee_message::{
