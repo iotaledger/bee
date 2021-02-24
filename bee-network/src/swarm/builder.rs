@@ -10,7 +10,7 @@ use libp2p::{
     },
     dns, identity, mplex, noise,
     swarm::SwarmBuilder,
-    tcp, yamux, Swarm, Transport,
+    tcp, yamux, Multiaddr, Swarm, Transport,
 };
 
 use std::{io, time::Duration};
@@ -25,6 +25,7 @@ const DEFAULT_CONNECTION_TIMEOUT_SECS: u64 = 10;
 pub async fn build_swarm(
     local_keys: &identity::Keypair,
     internal_sender: InternalEventSender,
+    entry_nodes: Vec<Multiaddr>,
 ) -> io::Result<Swarm<SwarmBehavior>> {
     let local_public_key = local_keys.public();
     let local_peer_id = local_public_key.clone().into_peer_id();
@@ -48,7 +49,7 @@ pub async fn build_swarm(
         .boxed();
 
     let (_tx, rx) = tokio::sync::mpsc::unbounded_channel::<Origin>();
-    let behavior = SwarmBehavior::new(local_public_key, internal_sender, rx).await;
+    let behavior = SwarmBehavior::new(local_public_key, internal_sender, rx, entry_nodes).await;
     let limits = ConnectionLimits::default().with_max_established_per_peer(Some(MAX_CONNECTIONS_PER_PEER));
 
     let swarm = SwarmBuilder::new(transport, behavior, local_peer_id)

@@ -4,7 +4,7 @@
 //! Networking layer for the Bee framework.
 
 #![warn(missing_docs)]
-#![deny(warnings)]
+// #![deny(warnings)]
 #![allow(clippy::module_inception)]
 
 mod config;
@@ -60,6 +60,7 @@ pub async fn init<N: Node>(
     let NetworkConfig {
         bind_address,
         reconnect_interval_secs,
+        entry_nodes,
     } = config;
 
     RECONNECT_INTERVAL_SECS.swap(reconnect_interval_secs, Ordering::Relaxed);
@@ -88,6 +89,7 @@ pub async fn init<N: Node>(
         banned_peers: banned_peers.clone(),
         internal_event_sender: internal_event_sender.clone(),
         internal_command_receiver,
+        entry_nodes,
     };
 
     let service_config = NetworkServiceConfig {

@@ -30,6 +30,7 @@ pub struct NetworkHostConfig {
     pub banned_peers: PeerBanlist,
     pub internal_event_sender: InternalEventSender,
     pub internal_command_receiver: CommandReceiver,
+    pub entry_nodes: Vec<Multiaddr>,
 }
 
 /// A node worker, that deals with accepting and initiating connections with remote peers.
@@ -55,12 +56,13 @@ impl<N: Node> Worker<N> for NetworkHost {
             banned_peers,
             internal_event_sender,
             mut internal_command_receiver,
+            entry_nodes,
         } = config;
 
         let local_keys_clone = local_keys.clone();
         let internal_event_sender_clone = internal_event_sender.clone();
 
-        let mut swarm = swarm::build_swarm(&local_keys_clone, internal_event_sender_clone)
+        let mut swarm = swarm::build_swarm(&local_keys_clone, internal_event_sender_clone, entry_nodes)
             .await
             .expect("Fatal error: creating transport layer failed.");
 
