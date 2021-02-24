@@ -25,12 +25,11 @@ bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 async-channel = "1.5"
 async-priority-queue = "0.1"
 async-trait = "0.1"
-blake2 = "0.9"
 futures = "0.3"
 futures-util = "0.3"
 fxhash = "0.2"
 hex = "0.4"
-iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", branch = "dev", features = ["ed25519"] }
+iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "09ff1a94d6a87838589ccf1b874cfa3283a00f26", features = ["blake2b", "ed25519"] }
 log = "0.4"
 num_cpus = "1.13"
 pin-project = "1.0"

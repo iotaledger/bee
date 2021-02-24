@@ -23,10 +23,10 @@ bee-tangle = { path = "../../bee-tangle" }
 
 async-trait = "0.1"
 bech32 = "0.7"
-blake2 = "0.9"
 digest = "0.9"
 futures = "0.3"
 hex = "0.4"
+iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "09ff1a94d6a87838589ccf1b874cfa3283a00f26", features = ["blake2b"] }
 log = "0.4"
 num_cpus = "1.13"
 serde = { version = "1.0", features = ["derive"] }

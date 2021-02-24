@@ -1,7 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::{blake2b, ed25519::SecretKey};
+use crypto::{
+    ed25519::SecretKey,
+    hashes::{blake2b::Blake2b256, Digest},
+};
 
 use structopt::StructOpt;
 use thiserror::Error;
@@ -29,8 +32,7 @@ pub fn exec(tool: &Ed25519Tool) -> Result<(), Ed25519Error> {
                 return Err(Ed25519Error::InvalidPublicKey(public.clone()));
             }
             let bytes = hex::decode(public).map_err(|_| Ed25519Error::InvalidPublicKey(public.clone()))?;
-            let mut hash = [0u8; 32];
-            blake2b::hash(&bytes, &mut hash);
+            let hash = Blake2b256::digest(&bytes);
 
             println!("Your ed25519 address:\t{}", hex::encode(hash));
         }

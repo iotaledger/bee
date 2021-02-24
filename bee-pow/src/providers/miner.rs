@@ -9,10 +9,7 @@ use bee_crypto::ternary::{
 };
 use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf};
 
-use blake2::{
-    digest::{Update, VariableOutput},
-    VarBlake2b,
-};
+use crypto::hashes::{blake2b::Blake2b256, Digest};
 use thiserror::Error;
 
 use std::{
@@ -109,17 +106,15 @@ impl Provider for Miner {
 
     fn nonce(&self, bytes: &[u8], target_score: f64, done: Option<Arc<AtomicBool>>) -> Result<u64, Self::Error> {
         let mut nonce = 0;
-        let mut blake = VarBlake2b::new(32).unwrap();
         let mut pow_digest = TritBuf::<T1B1Buf>::new();
         let done = done.unwrap_or_else(|| Arc::new(AtomicBool::new(false)));
-        blake.update(&bytes);
-        blake.finalize_variable_reset(|hash| b1t6::encode::<T1B1Buf>(&hash).iter().for_each(|t| pow_digest.push(t)));
-
         let target_zeros =
             (((bytes.len() + std::mem::size_of::<u64>()) as f64 * target_score).ln() / LN_3).ceil() as usize;
         let worker_width = u64::MAX / self.num_workers as u64;
-
         let mut workers = Vec::with_capacity(self.num_workers);
+        let hash = Blake2b256::digest(&bytes);
+
+        b1t6::encode::<T1B1Buf>(&hash).iter().for_each(|t| pow_digest.push(t));
 
         for i in 0..self.num_workers {
             let start_nonce = i as u64 * worker_width;

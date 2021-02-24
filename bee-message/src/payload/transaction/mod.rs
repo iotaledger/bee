@@ -23,18 +23,16 @@ pub use transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
 pub use treasury::TreasuryTransactionPayload;
 pub use unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock};
 
+pub(crate) use treasury::TREASURY_TRANSACTION_PAYLOAD_KIND;
+
 use bee_common::packable::{Packable, Read, Write};
 
-use blake2::{
-    digest::{Update, VariableOutput},
-    VarBlake2b,
-};
+use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use alloc::{boxed::Box, vec::Vec};
 use core::{cmp::Ordering, slice::Iter};
 
 pub(crate) const TRANSACTION_PAYLOAD_KIND: u32 = 0;
-pub(crate) use treasury::TREASURY_TRANSACTION_PAYLOAD_KIND;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -49,15 +47,12 @@ impl TransactionPayload {
     }
 
     pub fn id(&self) -> TransactionId {
-        let mut hasher = VarBlake2b::new(TRANSACTION_ID_LENGTH).unwrap();
+        let mut hasher = Blake2b256::new();
 
         hasher.update(TRANSACTION_PAYLOAD_KIND.to_le_bytes());
         hasher.update(self.pack_new());
 
-        let mut bytes = [0u8; TRANSACTION_ID_LENGTH];
-        hasher.finalize_variable(|res| bytes.copy_from_slice(res));
-
-        TransactionId::new(bytes)
+        TransactionId::new(hasher.finalize().into())
     }
 
     pub fn essence(&self) -> &Essence {

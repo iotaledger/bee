@@ -25,6 +25,7 @@ use bee_snapshot::{milestone_diff::MilestoneDiff, SnapshotWorker};
 use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
+use crypto::hashes::blake2b::Blake2b256;
 use futures::stream::StreamExt;
 use log::{error, info};
 use tokio::sync::mpsc;
@@ -71,7 +72,7 @@ where
     metadata.num_referenced_messages += 1;
     metadata.excluded_no_transaction_messages.push(message_id);
 
-    let merkle_proof = MerkleHasher::new().digest(&metadata.included_messages);
+    let merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
 
     if !merkle_proof.eq(&milestone.essence().merkle_proof()) {
         return Err(Error::MerkleProofMismatch(

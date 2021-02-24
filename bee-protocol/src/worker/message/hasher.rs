@@ -18,16 +18,13 @@ use bee_crypto::ternary::{
     sponge::{BatchHasher, CurlPRounds, BATCH_SIZE},
     HASH_LENGTH,
 };
-use bee_message::{MessageId, MESSAGE_ID_LENGTH};
+use bee_message::MessageId;
 use bee_network::PeerId;
 use bee_runtime::{node::Node, resource::ResourceHandle, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_ternary::{b1t6, Btrit, T1B1Buf, T5B1Buf, TritBuf};
 
 use async_trait::async_trait;
-use blake2::{
-    digest::{Update, VariableOutput},
-    VarBlake2b,
-};
+use crypto::hashes::{blake2b::Blake2b256, Digest};
 use futures::{
     channel::oneshot::Sender,
     stream::{unfold, Fuse},
@@ -185,7 +182,7 @@ pub(crate) struct BatchStream {
     cache: HashCache,
     hasher: BatchHasher<T5B1Buf>,
     events: Vec<HasherWorkerEvent>,
-    blake2b: VarBlake2b,
+    blake2b: Blake2b256,
 }
 
 impl BatchStream {
@@ -203,7 +200,7 @@ impl BatchStream {
             cache: HashCache::new(cache_size),
             hasher: BatchHasher::new(HASH_LENGTH, CurlPRounds::Rounds81),
             events: Vec::with_capacity(BATCH_SIZE),
-            blake2b: VarBlake2b::new(MESSAGE_ID_LENGTH).unwrap(),
+            blake2b: Blake2b256::new(),
         }
     }
 }
@@ -274,12 +271,13 @@ impl Stream for BatchStream {
                     // TODO check
                     // TODO see if there is something we can reuse from pow crate
                     blake2b.update(&event.message_packet.bytes[..event.message_packet.bytes.len() - 8]);
+
                     let mut pow_input = TritBuf::with_capacity(243);
-                    blake2b.finalize_variable_reset(|pow_digest| {
-                        b1t6::encode::<T1B1Buf>(&pow_digest)
-                            .iter()
-                            .for_each(|t| pow_input.push(t))
-                    });
+                    let pow_digest = blake2b.finalize_reset();
+
+                    b1t6::encode::<T1B1Buf>(&pow_digest)
+                        .iter()
+                        .for_each(|t| pow_input.push(t));
                     b1t6::encode::<T1B1Buf>(&event.message_packet.bytes[event.message_packet.bytes.len() - 8..])
                         .iter()
                         .for_each(|t| pow_input.push(t));

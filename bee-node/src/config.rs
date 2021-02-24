@@ -15,10 +15,7 @@ use bee_snapshot::config::{SnapshotConfig, SnapshotConfigBuilder};
 use bee_storage::backend::StorageBackend;
 use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
 
-use blake2::{
-    digest::{Update, VariableOutput},
-    VarBlake2b,
-};
+use crypto::hashes::{blake2b::Blake2b256, Digest};
 use serde::Deserialize;
 use thiserror::Error;
 
@@ -64,15 +61,17 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
     }
 
     pub fn finish(self) -> NodeConfig<B> {
-        let mut hasher = VarBlake2b::new(32).unwrap();
-        let mut network_id: (String, u64) = (self.network_id.unwrap_or_else(|| DEFAULT_NETWORK_ID.to_string()), 0);
-        hasher.update(network_id.0.as_bytes());
-        hasher.finalize_variable(|res| network_id.1 = u64::from_le_bytes(res[0..8].try_into().unwrap()));
+        let network_id_string = self.network_id.unwrap_or_else(|| DEFAULT_NETWORK_ID.to_string());
+        let network_id_numeric = u64::from_le_bytes(
+            Blake2b256::digest(network_id_string.as_bytes())[0..8]
+                .try_into()
+                .unwrap(),
+        );
 
         NodeConfig {
             alias: self.alias.unwrap_or_else(|| DEFAULT_ALIAS.to_owned()),
             bech32_hrp: self.bech32_hrp.unwrap_or_else(|| DEFAULT_BECH32_HRP.to_owned()),
-            network_id,
+            network_id: (network_id_string, network_id_numeric),
             logger: self.logger.unwrap_or_default().finish(),
             network: self.network.unwrap_or_default().finish(),
             peering: self.peering.unwrap_or_default().finish(),

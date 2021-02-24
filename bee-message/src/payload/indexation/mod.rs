@@ -9,12 +9,9 @@ use crate::{Error, MESSAGE_LENGTH_MAX};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use alloc::boxed::Box;
-use blake2::{
-    digest::{Update, VariableOutput},
-    VarBlake2b,
-};
+use crypto::hashes::{blake2b::Blake2b256, Digest};
 
+use alloc::boxed::Box;
 use core::ops::RangeInclusive;
 
 pub(crate) const INDEXATION_PAYLOAD_KIND: u32 = 2;
@@ -52,16 +49,8 @@ impl IndexationPayload {
         &self.data
     }
 
-    // TODO use crypto.rs
     pub fn hash(&self) -> HashedIndex {
-        let mut hasher = VarBlake2b::new(HASHED_INDEX_LENGTH).unwrap();
-
-        hasher.update(&self.index);
-
-        let mut hash = [0u8; HASHED_INDEX_LENGTH];
-        hasher.finalize_variable(|res| hash.copy_from_slice(res));
-
-        HashedIndex::new(hash)
+        HashedIndex::new(Blake2b256::digest(&self.index).into())
     }
 }
 

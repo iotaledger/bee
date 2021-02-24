@@ -7,8 +7,8 @@ use bee_common::packable::{Packable, Read, Write};
 
 use bech32::{self, ToBase32};
 use crypto::{
-    blake2b,
     ed25519::{self, PublicKey, Signature},
+    hashes::{blake2b::Blake2b256, Digest},
 };
 
 use alloc::{string::String, vec};
@@ -69,11 +69,9 @@ impl Ed25519Address {
     }
 
     pub fn verify(&self, msg: &[u8], signature: &Ed25519Signature) -> bool {
-        let mut address = [0u8; ED25519_ADDRESS_LENGTH];
+        let address = Blake2b256::digest(signature.public_key());
 
-        blake2b::hash(signature.public_key(), &mut address);
-
-        if self.0 != address {
+        if self.0 != *address {
             return false;
         }
 

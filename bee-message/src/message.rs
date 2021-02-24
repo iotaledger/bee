@@ -6,10 +6,7 @@ use crate::{payload::Payload, Error, MessageId, MESSAGE_ID_LENGTH};
 use bee_common::packable::{Packable, Read, Write};
 use bee_pow::providers::{Miner, Provider, ProviderBuilder};
 
-use blake2::{
-    digest::{Update, VariableOutput},
-    VarBlake2b,
-};
+use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use std::{
     ops::RangeInclusive,
@@ -35,16 +32,12 @@ impl Message {
         MessageBuilder::new()
     }
 
+    // TODO should not return bytes anymore ?
     pub fn id(&self) -> (MessageId, Vec<u8>) {
-        let mut hasher = VarBlake2b::new(MESSAGE_ID_LENGTH).unwrap();
         let bytes = self.pack_new();
+        let id = Blake2b256::digest(&bytes);
 
-        hasher.update(&bytes);
-
-        let mut id = [0u8; MESSAGE_ID_LENGTH];
-        hasher.finalize_variable(|res| id.copy_from_slice(res));
-
-        (MessageId::new(id), bytes)
+        (MessageId::new(id.into()), bytes)
     }
 
     pub fn network_id(&self) -> u64 {

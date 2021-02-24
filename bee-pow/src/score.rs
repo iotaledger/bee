@@ -7,27 +7,22 @@ use bee_crypto::ternary::{
 };
 use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf, Trits, T1B1};
 
-use blake2::{
-    digest::{Update, VariableOutput},
-    VarBlake2b,
-};
+use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 pub fn compute_pow_score(bytes: &[u8]) -> f64 {
     pow_score(&pow_hash(bytes), bytes.len())
 }
 
 pub fn pow_hash(bytes: &[u8]) -> TritBuf<T1B1Buf> {
-    let mut blake = VarBlake2b::new(32).unwrap();
     let mut curl = CurlP81::new();
+    // TODO panic if length < 8
     let length = bytes.len() - std::mem::size_of::<u64>();
     let mut pow_input = TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH);
+    let pow_digest = Blake2b256::digest(&bytes[..length]);
 
-    blake.update(&bytes[..length]);
-    blake.finalize_variable_reset(|pow_digest| {
-        b1t6::encode::<T1B1Buf>(&pow_digest)
-            .iter()
-            .for_each(|t| pow_input.push(t))
-    });
+    b1t6::encode::<T1B1Buf>(&pow_digest)
+        .iter()
+        .for_each(|t| pow_input.push(t));
     b1t6::encode::<T1B1Buf>(&bytes[length..])
         .iter()
         .for_each(|t| pow_input.push(t));

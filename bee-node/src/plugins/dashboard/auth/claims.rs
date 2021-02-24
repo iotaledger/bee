@@ -15,10 +15,10 @@ pub struct Claims {
     /// subject. The subject value MUST either be scoped to be locally unique in the context of the issuer or be
     /// globally unique. The processing of this claim is generally application specific.
     sub: String,
-    /// Identifies the recipients that the JWT is intended for. Each principal intended to process the JWT MUST identify
-    /// itself with a value in the audience claim. If the principal processing the claim does not identify itself with a
-    /// value in the "aud" claim when this claim is present, then the JWT MUST be rejected. The interpretation of
-    /// audience values is generally application specific.
+    /// Identifies the recipients that the JWT is intended for. Each principal intended to process the JWT MUST
+    /// identify itself with a value in the audience claim. If the principal processing the claim does not identify
+    /// itself with a value in the "aud" claim when this claim is present, then the JWT MUST be rejected. The
+    /// interpretation of audience values is generally application specific.
     aud: String,
     /// Identifies the expiration time on or after which the JWT MUST NOT be accepted for processing. The processing of
     /// the "exp" claim requires that the current date/time MUST be before the expiration date/time listed in the "exp"
