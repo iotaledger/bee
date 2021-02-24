@@ -5,7 +5,7 @@ use crate::{error::Error, storage::*};
 
 use bee_ledger::{
     balance::Balance,
-    model::{OutputDiff, Unspent},
+    model::{OutputDiff, Receipt, Unspent},
 };
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
@@ -254,6 +254,21 @@ impl Truncate<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
             [0x00u8; std::mem::size_of::<MilestoneIndex>() + MESSAGE_ID_LENGTH],
             [0xffu8; std::mem::size_of::<MilestoneIndex>() + MESSAGE_ID_LENGTH],
         )?;
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl Truncate<(MilestoneIndex, Receipt), ()> for Storage {
+    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_RECEIPT))?;
+
+        // TODO check that this is fine
+        self.inner.delete_range_cf(cf, [0x00u8; 1], [0xffu8; 1])?;
 
         Ok(())
     }

@@ -6,7 +6,7 @@ use crate::{error::Error, storage::*};
 use bee_common::packable::Packable;
 use bee_ledger::{
     balance::Balance,
-    model::{OutputDiff, Unspent},
+    model::{OutputDiff, Receipt, Unspent},
 };
 use bee_message::{
     address::{Address, Ed25519Address},
@@ -245,6 +245,26 @@ impl Delete<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
 
         let mut key = index.pack_new();
         key.extend_from_slice(unconfirmed_message.as_ref());
+
+        self.inner.delete_cf(&cf, key)?;
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl Delete<(MilestoneIndex, Receipt), ()> for Storage {
+    async fn delete(
+        &self,
+        (index, receipt): &(MilestoneIndex, Receipt),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_RECEIPT))?;
+
+        let mut key = index.pack_new();
+        key.extend_from_slice(&receipt.pack_new());
 
         self.inner.delete_cf(&cf, key)?;
 

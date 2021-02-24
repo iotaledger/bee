@@ -3,7 +3,7 @@
 
 use bee_ledger::{
     balance::Balance,
-    model::{OutputDiff, Unspent},
+    model::{OutputDiff, Receipt, Unspent},
 };
 use bee_message::{
     address::{Address, Ed25519Address},
@@ -292,6 +292,21 @@ async fn exec_inner(tool: &RocksdbTool) -> Result<(), RocksdbError> {
             }
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<(MilestoneIndex, UnconfirmedMessage), ()>::stream(&storage).await?;
+
+                while let Some((key, value)) = stream.next().await {
+                    println!("Key: {:?}\nValue: {:?}\n", key, value);
+                }
+            }
+        },
+        CF_MILESTONE_INDEX_TO_RECEIPT => match &tool.command {
+            RocksdbCommand::Fetch { key } => {
+                let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
+                let value = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &key).await?;
+
+                println!("Key: {:?}\nValue: {:?}\n", key, value);
+            }
+            RocksdbCommand::Stream => {
+                let mut stream = AsStream::<(MilestoneIndex, Receipt), ()>::stream(&storage).await?;
 
                 while let Some((key, value)) = stream.next().await {
                     println!("Key: {:?}\nValue: {:?}\n", key, value);

@@ -4,7 +4,10 @@
 use crate::{error::Error, storage::*, system::System};
 
 use bee_common::packable::Packable;
-use bee_ledger::{balance::Balance, model::OutputDiff};
+use bee_ledger::{
+    balance::Balance,
+    model::{OutputDiff, Receipt},
+};
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     ledger_index::LedgerIndex,
@@ -291,6 +294,27 @@ impl Fetch<MilestoneIndex, Vec<UnconfirmedMessage>> for Storage {
                     // Unpacking from storage is fine.
                     let unconfirmed_message: [u8; MESSAGE_ID_LENGTH] = unconfirmed_message.try_into().unwrap();
                     UnconfirmedMessage::from(MessageId::from(unconfirmed_message))
+                })
+                .collect(),
+        ))
+    }
+}
+
+#[async_trait::async_trait]
+impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
+    async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Vec<Receipt>>, <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_RECEIPT))?;
+
+        Ok(Some(
+            self.inner
+                .prefix_iterator_cf(&cf, index.pack_new())
+                .map(|(mut key, _)| {
+                    let (_, receipt) = key.split_at_mut(std::mem::size_of::<MilestoneIndex>());
+                    // Unpacking from storage is fine.
+                    Receipt::unpack(&mut receipt.as_ref()).unwrap()
                 })
                 .collect(),
         ))
