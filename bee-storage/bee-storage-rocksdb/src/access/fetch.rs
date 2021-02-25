@@ -6,7 +6,7 @@ use crate::{error::Error, storage::*, system::System};
 use bee_common::packable::Packable;
 use bee_ledger::{
     balance::Balance,
-    model::{OutputDiff, Receipt},
+    model::{OutputDiff, Receipt, TreasuryOutput},
 };
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
@@ -315,6 +315,27 @@ impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
                     let (_, receipt) = key.split_at_mut(std::mem::size_of::<MilestoneIndex>());
                     // Unpacking from storage is fine.
                     Receipt::unpack(&mut receipt.as_ref()).unwrap()
+                })
+                .collect(),
+        ))
+    }
+}
+
+#[async_trait::async_trait]
+impl Fetch<bool, Vec<TreasuryOutput>> for Storage {
+    async fn fetch(&self, spent: &bool) -> Result<Option<Vec<TreasuryOutput>>, <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_SPENT_TO_TREASURY_OUTPUT))?;
+
+        Ok(Some(
+            self.inner
+                .prefix_iterator_cf(&cf, spent.pack_new())
+                .map(|(mut key, _)| {
+                    let (_, receipt) = key.split_at_mut(std::mem::size_of::<bool>());
+                    // Unpacking from storage is fine.
+                    TreasuryOutput::unpack(&mut receipt.as_ref()).unwrap()
                 })
                 .collect(),
         ))

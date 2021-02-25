@@ -6,7 +6,7 @@ use crate::{error::Error, storage::*};
 use bee_common::packable::Packable;
 use bee_ledger::{
     balance::Balance,
-    model::{OutputDiff, Receipt, Unspent},
+    model::{OutputDiff, Receipt, TreasuryOutput, Unspent},
 };
 use bee_message::{
     address::{Address, Ed25519Address},
@@ -235,6 +235,21 @@ impl Exist<(MilestoneIndex, Receipt), ()> for Storage {
 
         let mut key = index.pack_new();
         key.extend_from_slice(&receipt.pack_new());
+
+        Ok(self.inner.get_cf(&cf, key)?.is_some())
+    }
+}
+
+#[async_trait::async_trait]
+impl Exist<(bool, TreasuryOutput), ()> for Storage {
+    async fn exist(&self, (spent, output): &(bool, TreasuryOutput)) -> Result<bool, <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_SPENT_TO_TREASURY_OUTPUT))?;
+
+        let mut key = spent.pack_new();
+        key.extend_from_slice(&output.pack_new());
 
         Ok(self.inner.get_cf(&cf, key)?.is_some())
     }
