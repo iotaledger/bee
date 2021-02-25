@@ -30,7 +30,7 @@ impl Packable for Receipt {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.inner.packed_len() + self.included_in.packed_len()
+        self.inner.packed_len() + self.inner.packed_len() + self.included_in.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
