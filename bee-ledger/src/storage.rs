@@ -4,7 +4,7 @@
 use crate::{
     balance::{Balance, BalanceDiffs},
     error::Error,
-    model::{OutputDiff, Receipt, Unspent},
+    model::{OutputDiff, Receipt, TreasuryOutput, Unspent},
 };
 
 use bee_message::{
@@ -44,6 +44,7 @@ pub trait StorageBackend:
     + Fetch<OutputId, ConsumedOutput>
     + Fetch<(), LedgerIndex>
     + Fetch<Address, Balance>
+    + Fetch<bool, Vec<TreasuryOutput>>
     + Insert<OutputId, CreatedOutput>
     + Insert<OutputId, ConsumedOutput>
     + Insert<Unspent, ()>
@@ -76,6 +77,7 @@ impl<T> StorageBackend for T where
         + Fetch<OutputId, ConsumedOutput>
         + Fetch<(), LedgerIndex>
         + Fetch<Address, Balance>
+        + Fetch<bool, Vec<TreasuryOutput>>
         + Insert<OutputId, CreatedOutput>
         + Insert<OutputId, ConsumedOutput>
         + Insert<Unspent, ()>
@@ -303,4 +305,22 @@ pub(crate) async fn is_output_unspent<B: StorageBackend>(storage: &B, output_id:
     Exist::<Unspent, ()>::exist(storage, &(*output_id).into())
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub(crate) async fn fetch_unspent_treasury_output<B: StorageBackend>(storage: &B) -> Result<TreasuryOutput, Error> {
+    match Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &false).await {
+        Ok(Some(outputs)) => {
+            if outputs.len() != 1 {
+                panic!("More than one unspent treasury output found");
+            }
+            // Indexing is fine because len has just been checked.
+            return Ok(outputs[0].clone());
+        }
+        Ok(None) => {
+            panic!("No unspent treasury output found");
+        }
+        Err(e) => {
+            return Err(Error::Storage(Box::new(e)));
+        }
+    }
 }
