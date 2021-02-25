@@ -63,7 +63,9 @@ impl Packable for MilestoneDiff {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let index = MilestoneIndex::unpack(reader)?;
+        let _milestone_len = u32::unpack(reader)? as usize;
+        // let index = MilestoneIndex::unpack(reader)?;
+        let _milestone = MilestonePayload::unpack(reader)?;
 
         let created_count = u64::unpack(reader)? as usize;
         let mut created = HashMap::new();
@@ -87,13 +89,13 @@ impl Packable for MilestoneDiff {
                 output_id,
                 (
                     CreatedOutput::new(message_id, output),
-                    ConsumedOutput::new(target, index),
+                    ConsumedOutput::new(target, _milestone.essence().index().into()),
                 ),
             );
         }
 
         Ok(Self {
-            index,
+            index: _milestone.essence().index().into(),
             created,
             consumed,
         })

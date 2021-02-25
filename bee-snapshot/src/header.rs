@@ -4,7 +4,7 @@
 use crate::{kind::Kind, Error};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::milestone::MilestoneIndex;
+use bee_message::{milestone::MilestoneIndex, payload::milestone::MilestoneId};
 
 const SNAPSHOT_VERSION: u8 = 1;
 
@@ -71,6 +71,8 @@ impl Packable for SnapshotHeader {
                 0
             }
             + self.milestone_diff_count.packed_len()
+
+        // TODO treasury
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -85,6 +87,8 @@ impl Packable for SnapshotHeader {
             self.output_count.pack(writer)?
         }
         self.milestone_diff_count.pack(writer)?;
+
+        // TODO treasury
 
         Ok(())
     }
@@ -104,6 +108,12 @@ impl Packable for SnapshotHeader {
         let sep_count = u64::unpack(reader)?;
         let output_count = if kind == Kind::Full { u64::unpack(reader)? } else { 0 };
         let milestone_diff_count = u64::unpack(reader)?;
+
+        if kind == Kind::Full {
+            let _milestone_id = MilestoneId::unpack(reader)?;
+            let _amount = u64::unpack(reader)?;
+            // TODO
+        }
 
         Ok(Self {
             kind,

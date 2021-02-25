@@ -190,6 +190,8 @@ async fn import_snapshot<B: StorageBackend>(
         let _ = diff_tx.send_async(MilestoneDiff::unpack(&mut reader)?).await;
     }
 
+    // TODO check nothing left
+
     info!(
         "Imported {} snapshot file from {} with sep index {}, ledger index {}, {} solid entry points{} and {} milestone diffs.",
         kind_str,
