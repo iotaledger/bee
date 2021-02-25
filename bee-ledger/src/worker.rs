@@ -6,6 +6,7 @@ use crate::{
     dust::DUST_THRESHOLD,
     error::Error,
     event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
+    model::Receipt,
     state::check_ledger_state,
     storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend},
     white_flag,
@@ -87,12 +88,33 @@ where
         ));
     }
 
+    let _milestone_id = milestone.id();
+
+    let receipt = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
+        let receipt = Receipt::new(receipt.as_ref().clone(), milestone.essence().index().into());
+
+        // TODO optional receipt validation
+
+        // get unspent treasury output
+
+        // validate receipt
+
+        // get migrated outputs from receipt
+
+        // generate treasury migration
+
+        Some(receipt)
+    } else {
+        None
+    };
+
     storage::apply_outputs_diff(
         &*storage,
         metadata.index,
         &metadata.created_outputs,
         &metadata.consumed_outputs,
         &metadata.balance_diffs,
+        &receipt,
     )
     .await?;
 
@@ -259,6 +281,7 @@ where
                             diff.created(),
                             &consumed,
                             &balance_diffs,
+                            &None,
                         )
                         .await
                         .unwrap();

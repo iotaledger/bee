@@ -4,7 +4,7 @@
 use crate::{
     balance::{Balance, BalanceDiffs},
     error::Error,
-    model::{OutputDiff, Unspent},
+    model::{OutputDiff, Receipt, Unspent},
 };
 
 use bee_message::{
@@ -193,6 +193,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
     balance_diffs: &BalanceDiffs,
+    _receipt: &Option<Receipt>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 

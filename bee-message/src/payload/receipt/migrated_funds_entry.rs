@@ -15,6 +15,7 @@ const TAIL_TRANSACTION_HASH_LEN: usize = 49;
 pub struct MigratedFundsEntry {
     // TODO switch to array when const generics serde is available
     tail_transaction_hash: Box<[u8]>,
+    // TODO output
     address: Address,
     amount: u64,
 }
