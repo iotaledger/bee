@@ -13,7 +13,10 @@ use crate::rand::{
 use bee_ledger::model::Receipt;
 use bee_message::payload::{
     receipt::{MigratedFundsEntry, ReceiptPayload, MIGRATED_FUNDS_ENTRY_AMOUNT},
-    transaction::{Input, Output, TreasuryInput, TreasuryOutput, TreasuryTransactionPayload, TREASURY_OUTPUT_AMOUNT},
+    transaction::{
+        Input, Output, SignatureLockedSingleOutput, TreasuryInput, TreasuryOutput, TreasuryTransactionPayload,
+        TREASURY_OUTPUT_AMOUNT,
+    },
     Payload,
 };
 
@@ -41,8 +44,7 @@ pub fn rand_treasury_transaction() -> Payload {
 pub fn rand_migrated_funds_entry() -> MigratedFundsEntry {
     MigratedFundsEntry::new(
         rand_bytes(49).try_into().unwrap(),
-        rand_address(),
-        rand_integer_range(MIGRATED_FUNDS_ENTRY_AMOUNT),
+        SignatureLockedSingleOutput::new(rand_address(), rand_integer_range(MIGRATED_FUNDS_ENTRY_AMOUNT)).unwrap(),
     )
     .unwrap()
 }
