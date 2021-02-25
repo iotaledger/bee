@@ -11,10 +11,8 @@ use log::info;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-pub struct ReceiptValidatorWorkerEvent(pub Receipt);
-
 pub struct ReceiptValidatorWorker {
-    pub tx: mpsc::UnboundedSender<ReceiptValidatorWorkerEvent>,
+    pub tx: mpsc::UnboundedSender<Receipt>,
 }
 
 #[async_trait]
@@ -33,7 +31,7 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(ReceiptValidatorWorkerEvent(_receipt)) = receiver.next().await {}
+            while let Some(_receipt) = receiver.next().await {}
 
             info!("Stopped.");
         });
