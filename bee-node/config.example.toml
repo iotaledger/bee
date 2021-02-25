@@ -16,6 +16,12 @@ level_filter  = "error"
 [network]
 bind_address             = "/ip4/0.0.0.0/tcp/15600"
 reconnect_interval_secs  = 30
+[network.dht]
+# DHT entry nodes
+#[[network.dht.entry_nodes]]
+#address = ""
+#[[network.dht.entry_nodes]]
+#address = ""
 
 [peering]
 # hex representation of an Ed25519 keypair
