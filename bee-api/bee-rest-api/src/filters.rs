@@ -6,7 +6,8 @@ use crate::{
         RestApiConfig, ROUTE_ADD_PEER, ROUTE_BALANCE_BECH32, ROUTE_BALANCE_ED25519, ROUTE_HEALTH, ROUTE_INFO,
         ROUTE_MESSAGE, ROUTE_MESSAGES_FIND, ROUTE_MESSAGE_CHILDREN, ROUTE_MESSAGE_METADATA, ROUTE_MESSAGE_RAW,
         ROUTE_MILESTONE, ROUTE_MILESTONE_UTXO_CHANGES, ROUTE_OUTPUT, ROUTE_OUTPUTS_BECH32, ROUTE_OUTPUTS_ED25519,
-        ROUTE_PEER, ROUTE_PEERS, ROUTE_REMOVE_PEER, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW, ROUTE_TIPS,
+        ROUTE_PEER, ROUTE_PEERS, ROUTE_RECEIPTS, ROUTE_RECEIPTS_AT, ROUTE_REMOVE_PEER, ROUTE_SUBMIT_MESSAGE,
+        ROUTE_SUBMIT_MESSAGE_RAW, ROUTE_TIPS,
     },
     handlers,
     permission::has_permission,
@@ -114,7 +115,7 @@ pub fn all<B: StorageBackend>(
     .or(milestone_utxo_changes(
         public_routes.clone(),
         allowed_ips.clone(),
-        storage,
+        storage.clone(),
     ))
     .or(peers(public_routes.clone(), allowed_ips.clone(), peer_manager.clone()))
     .or(peer_add(
@@ -129,6 +130,8 @@ pub fn all<B: StorageBackend>(
         network_controller,
     ))
     .or(peer(public_routes.clone(), allowed_ips.clone(), peer_manager))
+    .or(receipts(public_routes.clone(), allowed_ips.clone(), storage.clone()))
+    .or(receipts_at(public_routes.clone(), allowed_ips.clone(), storage))
     .or(white_flag(public_routes, allowed_ips)))
 }
 
@@ -494,13 +497,44 @@ fn peer_remove(
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
-        .and(warp::path("peer"))
+        .and(warp::path("peers"))
         .and(custom_path_param::peer_id())
         .and(warp::path::end())
         .and(warp::delete())
         .and(has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips))
         .and(with_network_controller(network_controller))
         .and_then(handlers::api::v1::remove_peer::remove_peer)
+}
+
+fn receipts<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    storage: ResourceHandle<B>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("receipts"))
+        .and(warp::path::end())
+        .and(has_permission(ROUTE_RECEIPTS, public_routes, allowed_ips))
+        .and(with_storage(storage))
+        .and_then(handlers::receipt::receipts)
+}
+
+fn receipts_at<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    storage: ResourceHandle<B>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("receipts"))
+        .and(custom_path_param::milestone_index())
+        .and(warp::path::end())
+        .and(has_permission(ROUTE_RECEIPTS_AT, public_routes, allowed_ips))
+        .and(with_storage(storage))
+        .and_then(handlers::receipt::receipts_at)
 }
 
 fn white_flag(

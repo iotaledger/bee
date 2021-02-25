@@ -71,6 +71,8 @@ public_routes         = [
     "/api/v1/addresses/ed25519/:address/outputs",
     "/api/v1/messages",
     "/api/v1/tips",
+    "/api/v1/receipts",
+    "/api/v1/receipts/:milestoneIndex",
 ]
 allowed_ips = [
     "127.0.0.1",
