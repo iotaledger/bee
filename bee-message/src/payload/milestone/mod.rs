@@ -2,14 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod essence;
+mod milestone_id;
 
 pub use essence::{MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH};
+pub use milestone_id::{MilestoneId, MILESTONE_ID_LENGTH};
 
 use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use crypto::ed25519;
+use crypto::{
+    ed25519,
+    hashes::{blake2b::Blake2b256, Digest},
+};
 
 use alloc::{boxed::Box, vec::Vec};
 use core::convert::TryInto;
@@ -39,6 +44,10 @@ pub struct MilestonePayload {
 impl MilestonePayload {
     pub fn new(essence: MilestonePayloadEssence, signatures: Vec<Box<[u8]>>) -> Self {
         Self { essence, signatures }
+    }
+
+    pub fn id(&self) -> MilestoneId {
+        MilestoneId::new(Blake2b256::digest(&self.pack_new()).into())
     }
 
     pub fn essence(&self) -> &MilestonePayloadEssence {
