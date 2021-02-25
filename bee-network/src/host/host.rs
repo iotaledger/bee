@@ -86,7 +86,7 @@ impl<N: Node> Worker<N> for NetworkHost {
                     _ = &mut shutdown => break,
                     // Process swarm event
                     event = swarm_next_event => {
-                        process_swarm_event(event, &swarm_event_sender);
+                        process_swarm_event(event, &mut swarm, &swarm_event_sender);
                     }
                     // _ = swarm_next => {
                     //     unreachable!();
@@ -109,13 +109,21 @@ impl<N: Node> Worker<N> for NetworkHost {
     }
 }
 
-fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, _internal_event_sender: &SwarmEventSender) {
+fn process_swarm_event(
+    event: SwarmEvent<(), impl std::error::Error>,
+    swarm: &mut Swarm<SwarmBehavior>,
+    _internal_event_sender: &SwarmEventSender,
+) {
     match event {
         SwarmEvent::NewListenAddr(_address) => {
             // TODO: collect listen address to deny dialing it
         }
-        SwarmEvent::ConnectionEstablished { peer_id, .. } => {
-            debug!("Negotiating protocol with '{}'.", alias!(peer_id));
+        SwarmEvent::ConnectionEstablished { peer_id, endpoint, .. } => {
+            let address = endpoint.get_remote_address();
+
+            debug!("Negotiating protocol with '{}' [{}].", alias!(peer_id), address,);
+
+            (*swarm).kademlia.add_address(&peer_id, address.clone());
         }
         SwarmEvent::ConnectionClosed { peer_id, .. } => {
             debug!("Stopped protocol with '{}'.", alias!(peer_id));
@@ -128,7 +136,7 @@ fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, _internal_
             debug!("Dialing '{}'.", alias!(peer_id));
         }
         SwarmEvent::IncomingConnection { send_back_addr, .. } => {
-            debug!("Being dialed from {}.", send_back_addr);
+            debug!("Being dialed from address {}.", send_back_addr);
         }
         _ => {}
     }
