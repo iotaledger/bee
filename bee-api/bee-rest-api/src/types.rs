@@ -789,8 +789,8 @@ impl TryFrom<&MigratedFundsEntry> for MigratedFundsEntryDto {
     fn try_from(value: &MigratedFundsEntry) -> Result<Self, Self::Error> {
         Ok(MigratedFundsEntryDto {
             tail_transaction_hash: Box::new(value.tail_transaction_hash().clone()),
-            address: value.address().try_into()?,
-            amount: value.amount(),
+            address: value.output().address().try_into()?,
+            amount: value.output().amount(),
         })
     }
 }
@@ -805,8 +805,8 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
                 .as_ref()
                 .try_into()
                 .map_err(|e| format!("invalid tail transaction hash: {}", e))?,
-            (&value.address).try_into()?,
-            value.amount,
+            SignatureLockedSingleOutput::new((&value.address).try_into()?, value.amount)
+                .map_err(|e| format!("invalid address or amount: {}", e))?,
         )
         .map_err(|e| format!("invalid migrated funds entry: {}", e))?;
         Ok(entry)

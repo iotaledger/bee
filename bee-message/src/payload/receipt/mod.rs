@@ -60,7 +60,7 @@ impl ReceiptPayload {
     }
 
     pub fn amount(&self) -> u64 {
-        self.funds.iter().fold(0, |acc, funds| acc + funds.amount())
+        self.funds.iter().fold(0, |acc, funds| acc + funds.output().amount())
     }
 }
 
