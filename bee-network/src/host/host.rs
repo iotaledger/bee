@@ -70,6 +70,8 @@ impl<N: Node> Worker<N> for NetworkHost {
 
         let _ = Swarm::listen_on(&mut swarm, bind_address).expect("Fatal error: address binding failed.");
 
+        (*swarm).kademlia.bootstrap().expect("error bootstrapping node");
+
         node.spawn::<Self, _, _>(|mut shutdown| async move {
 
             loop {
@@ -152,7 +154,6 @@ async fn process_command(
                 warn!("Failed to dial address '{}'. Cause: {}", address, e);
             }
         }
-        _ => {}
     }
 }
 

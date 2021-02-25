@@ -5,6 +5,7 @@ use std::time::Duration;
 
 use super::protocols::gossip::{self, Gossip, GossipEvent};
 use crate::{
+    alias,
     host::Origin,
     service::{SwarmEvent, SwarmEventSender},
 };
@@ -50,10 +51,13 @@ impl SwarmBehavior {
 
         let peer_store = MemoryStore::new(local_id);
         let mut kad_config = KademliaConfig::default();
+
         kad_config.set_query_timeout(Duration::from_secs(KADEMLIA_QUERY_TIMEOUT));
+        kad_config.disjoint_query_paths(true);
 
         let mut kademlia = Kademlia::with_config(local_id, peer_store, kad_config);
 
+        // Connect this node to the entry nodes
         for mut p2p_addr in entry_nodes {
             if let Some(Protocol::P2p(multihash)) = p2p_addr.pop() {
                 kademlia.add_address(&PeerId::from_multihash(multihash).unwrap(), p2p_addr);
@@ -145,6 +149,9 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for SwarmBehavior {
         match event {
             KademliaEvent::QueryResult { id, result, stats } => {
                 println!("Kademlia QueryResult.");
+                println!("QueryId: {:?}", id);
+                println!("QueryResult: {:?}", result);
+                println!("QueryStats: {:?}", stats);
             }
             KademliaEvent::RoutingUpdated {
                 peer,
@@ -152,15 +159,18 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for SwarmBehavior {
                 old_peer,
             } => {
                 println!("Kademlia RoutingUpdated.");
+                println!("Peer: {}", alias!(peer));
+                println!("Addresses: {:?}", addresses);
+                println!("Old peer: {:?}", old_peer);
             }
             KademliaEvent::UnroutablePeer { peer } => {
-                println!("Kademlia UnroutablePeer.");
+                println!("Kademlia UnroutablePeer: {}.", alias!(peer));
             }
             KademliaEvent::RoutablePeer { peer, address } => {
-                println!("Kademlia RoutablePeer.");
+                println!("Kademlia RoutablePeer: {} [{}].", alias!(peer), address);
             }
             KademliaEvent::PendingRoutablePeer { peer, address } => {
-                println!("Kademlia PendingRoutablePeer.");
+                println!("Kademlia PendingRoutablePeer: {} [{}].", peer, address);
             }
         }
     }
