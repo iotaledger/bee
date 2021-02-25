@@ -205,6 +205,7 @@ pub struct Ed25519SignatureDto {
 pub struct ReferenceUnlockDto {
     #[serde(rename = "type")]
     pub kind: u8,
+    #[serde(rename = "reference")]
     pub index: u16,
 }
 
