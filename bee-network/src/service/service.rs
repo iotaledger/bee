@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
-    commands::{Command, CommandReceiver, CommandSender},
-    events::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
+    commands::{Command, CommandReceiver, HostCommand, HostCommandSender},
+    events::{Event, EventSender, SwarmEvent, SwarmEventReceiver, SwarmEventSender},
 };
 use crate::{
     alias,
@@ -34,10 +34,10 @@ pub struct NetworkServiceConfig {
     pub banned_addrs: AddrBanlist,
     pub banned_peers: PeerBanlist,
     pub event_sender: EventSender,
-    pub internal_event_sender: InternalEventSender,
-    pub internal_command_sender: CommandSender,
     pub command_receiver: CommandReceiver,
-    pub internal_event_receiver: InternalEventReceiver,
+    pub swarm_event_sender: SwarmEventSender,
+    pub swarm_event_receiver: SwarmEventReceiver,
+    pub host_command_sender: HostCommandSender,
 }
 
 #[async_trait]
@@ -56,17 +56,17 @@ impl<N: Node> Worker<N> for NetworkService {
             banned_addrs,
             banned_peers,
             event_sender,
-            internal_event_sender,
-            internal_command_sender,
             command_receiver,
-            internal_event_receiver,
+            swarm_event_sender,
+            swarm_event_receiver,
+            host_command_sender,
         } = config;
 
         let peerlist_clone = peerlist.clone();
         let banned_addrlist_clone = banned_addrs.clone();
         let banned_peerlist_clone = banned_peers.clone();
         let event_sender_clone = event_sender.clone();
-        let internal_command_sender_clone = internal_command_sender.clone();
+        let host_command_sender_clone = host_command_sender.clone();
 
         // Spawn command handler task
         node.spawn::<Self, _, _>(|shutdown| async move {
@@ -81,7 +81,7 @@ impl<N: Node> Worker<N> for NetworkService {
                     &banned_addrlist_clone,
                     &banned_peerlist_clone,
                     &event_sender_clone,
-                    &internal_command_sender_clone,
+                    &host_command_sender_clone,
                 )
                 .await
                 {
@@ -94,24 +94,23 @@ impl<N: Node> Worker<N> for NetworkService {
         });
 
         let peerlist_clone = peerlist.clone();
-        let internal_command_sender_clone = internal_command_sender.clone();
+        let host_command_sender_clone = host_command_sender.clone();
 
         // Spawn internal event handler task
         node.spawn::<Self, _, _>(|shutdown| async move {
             debug!("Event handler running.");
 
-            let mut internal_events =
-                ShutdownStream::new(shutdown, UnboundedReceiverStream::new(internal_event_receiver));
+            let mut swarm_events = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(swarm_event_receiver));
 
-            while let Some(internal_event) = internal_events.next().await {
-                if let Err(e) = process_internal_event(
-                    internal_event,
+            while let Some(swarm_event) = swarm_events.next().await {
+                if let Err(e) = process_swarm_event(
+                    swarm_event,
                     &peerlist_clone,
                     &banned_addrs,
                     &banned_peers,
                     &event_sender,
-                    &internal_event_sender,
-                    &internal_command_sender_clone,
+                    &swarm_event_sender,
+                    &host_command_sender_clone,
                 )
                 .await
                 {
@@ -154,8 +153,8 @@ impl<N: Node> Worker<N> for NetworkService {
                     info!("Reconnecting to {}.", alias);
 
                     // Not being able to send something over this channel must be considered a bug.
-                    internal_command_sender
-                        .send(Command::DialPeer { peer_id })
+                    host_command_sender
+                        .send(HostCommand::DialPeer { peer_id })
                         .expect("Reconnector failed to send 'DialPeer' command.")
                 }
             }
@@ -175,7 +174,7 @@ async fn process_command(
     banned_addrlist: &AddrBanlist,
     banned_peerlist: &PeerBanlist,
     event_sender: &EventSender,
-    internal_command_sender: &CommandSender,
+    host_command_sender: &HostCommandSender,
 ) -> Result<(), peer::Error> {
     trace!("Received {:?}.", command);
 
@@ -188,24 +187,24 @@ async fn process_command(
         } => {
             let alias = alias.unwrap_or_else(|| alias!(peer_id).to_string());
 
-            // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
-            if relation.is_known() {
-                add_peer(peer_id, address, alias, relation, peerlist, event_sender).await?;
+            add_peer(peer_id, address.clone(), alias, relation, peerlist, event_sender).await?;
 
-                // We automatically connect to such peers. Since we can connect concurrently, we spawn a task here.
-                let _ = internal_command_sender.send(Command::DialPeer { peer_id });
-            } else {
-                add_peer(peer_id, address, alias, relation, peerlist, event_sender).await?;
+            // Add this peer to the DHT.
+            let _ = host_command_sender.send(HostCommand::AddPeer { peer_id, address });
+
+            // We try to connect to known peers immediatedly.
+            if relation.is_known() {
+                let _ = host_command_sender.send(HostCommand::DialPeer { peer_id });
             }
         }
         Command::RemovePeer { peer_id } => {
             remove_peer(peer_id, peerlist, event_sender).await?;
         }
         Command::DialPeer { peer_id } => {
-            let _ = internal_command_sender.send(Command::DialPeer { peer_id });
+            let _ = host_command_sender.send(HostCommand::DialPeer { peer_id });
         }
         Command::DialAddress { address } => {
-            let _ = internal_command_sender.send(Command::DialAddress { address });
+            let _ = host_command_sender.send(HostCommand::DialAddress { address });
         }
         Command::DisconnectPeer { peer_id } => {
             disconnect_peer(peer_id, peerlist, event_sender).await?;
@@ -252,17 +251,17 @@ async fn process_command(
     Ok(())
 }
 
-async fn process_internal_event(
-    internal_event: InternalEvent,
+async fn process_swarm_event(
+    swarm_event: SwarmEvent,
     peerlist: &PeerList,
     _banned_addrs: &AddrBanlist,
     _banned_peers: &PeerBanlist,
     event_sender: &EventSender,
-    _internal_event_sender: &InternalEventSender,
-    _internal_command_sender: &CommandSender,
+    _swarm_event_sender: &SwarmEventSender,
+    _host_command_sender: &HostCommandSender,
 ) -> Result<(), peer::Error> {
-    match internal_event {
-        InternalEvent::ProtocolEstablished {
+    match swarm_event {
+        SwarmEvent::ProtocolEstablished {
             peer_id,
             peer_addr,
             conn_info,
@@ -311,7 +310,7 @@ async fn process_internal_event(
             });
         }
 
-        InternalEvent::ProtocolDropped { peer_id } => {
+        SwarmEvent::ProtocolDropped { peer_id } => {
             // NB: Just in case there is any error (PeerMissing, PeerAlreadyDisconnected),
             // then 'disconnect' just becomes a NoOp.
 

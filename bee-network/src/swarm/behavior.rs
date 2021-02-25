@@ -6,17 +6,14 @@ use std::time::Duration;
 use super::protocols::gossip::{self, Gossip, GossipEvent};
 use crate::{
     host::Origin,
-    service::{InternalEvent, InternalEventSender},
+    service::{SwarmEvent, SwarmEventSender},
 };
 
 use futures::AsyncReadExt;
 use libp2p::{
     identify::{Identify, IdentifyEvent},
     identity::PublicKey,
-    kad::{
-        record::store::RecordStore, store::MemoryStore, GetClosestPeersError, Kademlia, KademliaConfig, KademliaEvent,
-        QueryResult,
-    },
+    kad::{store::MemoryStore, Kademlia, KademliaConfig, KademliaEvent},
     multiaddr::Protocol,
     swarm::{NetworkBehaviour, NetworkBehaviourEventProcess},
     Multiaddr, NetworkBehaviour, PeerId,
@@ -24,34 +21,42 @@ use libp2p::{
 use log::*;
 use tokio::sync::mpsc;
 
+const KADEMLIA_QUERY_TIMEOUT: u64 = 5 * 60;
+
+/// A type that contains the different protocols that are negotiated on top of the basic transport of a peer connection.
 #[derive(NetworkBehaviour)]
 pub struct SwarmBehavior {
-    identify: Identify,
-    gossip: Gossip,
-    kad: Kademlia<MemoryStore>,
+    /// Identify protocol.
+    pub(crate) identify: Identify,
+
+    /// IOTA gossip protocol.
+    pub(crate) gossip: Gossip,
+
+    /// Kademlia protocol.
+    pub(crate) kademlia: Kademlia<MemoryStore>,
+
     #[behaviour(ignore)]
-    internal_sender: InternalEventSender,
+    swarm_event_sender: SwarmEventSender,
 }
 
 impl SwarmBehavior {
     pub async fn new(
         local_public_key: PublicKey,
-        internal_sender: InternalEventSender,
+        swarm_event_sender: SwarmEventSender,
         origin_rx: mpsc::UnboundedReceiver<Origin>,
         entry_nodes: Vec<Multiaddr>,
     ) -> Self {
         let local_id = local_public_key.clone().into();
 
-        const QUERY_TIMEOUT: u64 = 1 * 60; // 5 mins
         let peer_store = MemoryStore::new(local_id);
         let mut kad_config = KademliaConfig::default();
-        kad_config.set_query_timeout(Duration::from_secs(QUERY_TIMEOUT));
+        kad_config.set_query_timeout(Duration::from_secs(KADEMLIA_QUERY_TIMEOUT));
 
-        let mut kad = Kademlia::with_config(local_id, peer_store, kad_config);
+        let mut kademlia = Kademlia::with_config(local_id, peer_store, kad_config);
 
         for mut p2p_addr in entry_nodes {
             if let Some(Protocol::P2p(multihash)) = p2p_addr.pop() {
-                kad.add_address(&PeerId::from_multihash(multihash).unwrap(), p2p_addr);
+                kademlia.add_address(&PeerId::from_multihash(multihash).unwrap(), p2p_addr);
             }
         }
 
@@ -62,8 +67,8 @@ impl SwarmBehavior {
                 local_public_key,
             ),
             gossip: Gossip::new(origin_rx),
-            kad,
-            internal_sender,
+            kademlia,
+            swarm_event_sender,
         }
     }
 }
@@ -112,14 +117,19 @@ impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
         let (incoming_gossip_sender, incoming_gossip_receiver) = gossip::gossip_channel();
         let (outgoing_gossip_sender, outgoing_gossip_receiver) = gossip::gossip_channel();
 
-        gossip::spawn_gossip_in_task(peer_id, reader, incoming_gossip_sender, self.internal_sender.clone());
-        gossip::spawn_gossip_out_task(peer_id, writer, outgoing_gossip_receiver, self.internal_sender.clone());
+        gossip::spawn_gossip_in_task(peer_id, reader, incoming_gossip_sender, self.swarm_event_sender.clone());
+        gossip::spawn_gossip_out_task(
+            peer_id,
+            writer,
+            outgoing_gossip_receiver,
+            self.swarm_event_sender.clone(),
+        );
 
         // TODO: retrieve the PeerInfo from the peer list
 
         let _ = self
-            .internal_sender
-            .send(InternalEvent::ProtocolEstablished {
+            .swarm_event_sender
+            .send(SwarmEvent::ProtocolEstablished {
                 peer_id,
                 peer_addr,
                 conn_info,

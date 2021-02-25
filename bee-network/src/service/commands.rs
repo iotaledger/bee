@@ -10,12 +10,15 @@ use tokio::sync::mpsc;
 pub type CommandReceiver = mpsc::UnboundedReceiver<Command>;
 pub type CommandSender = mpsc::UnboundedSender<Command>;
 
-pub fn command_channel() -> (CommandSender, CommandReceiver) {
+pub type HostCommandReceiver = mpsc::UnboundedReceiver<HostCommand>;
+pub type HostCommandSender = mpsc::UnboundedSender<HostCommand>;
+
+pub fn command_channel<T>() -> (mpsc::UnboundedSender<T>, mpsc::UnboundedReceiver<T>) {
     mpsc::unbounded_channel()
 }
 
 /// Describes the commands accepted by the networking layer.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Command {
     /// Adds a peer.
@@ -81,4 +84,11 @@ pub enum Command {
     },
     /// Discovers new peers.
     DiscoverPeers,
+}
+
+#[derive(Debug)]
+pub enum HostCommand {
+    AddPeer { peer_id: PeerId, address: Multiaddr },
+    DialPeer { peer_id: PeerId },
+    DialAddress { address: Multiaddr },
 }

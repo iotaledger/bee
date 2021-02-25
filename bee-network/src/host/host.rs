@@ -5,7 +5,7 @@ use super::Error;
 use crate::{
     alias,
     peer::{AddrBanlist, PeerBanlist, PeerInfo, PeerList},
-    service::{Command, CommandReceiver, InternalEventSender, NetworkService},
+    service::{HostCommand, HostCommandReceiver, NetworkService, SwarmEventSender},
     swarm,
     swarm::{protocols::gossip::GOSSIP_ORIGIN, SwarmBehavior},
 };
@@ -28,8 +28,8 @@ pub struct NetworkHostConfig {
     pub peerlist: PeerList,
     pub banned_addrs: AddrBanlist,
     pub banned_peers: PeerBanlist,
-    pub internal_event_sender: InternalEventSender,
-    pub internal_command_receiver: CommandReceiver,
+    pub swarm_event_sender: SwarmEventSender,
+    pub host_command_receiver: HostCommandReceiver,
     pub entry_nodes: Vec<Multiaddr>,
 }
 
@@ -54,15 +54,15 @@ impl<N: Node> Worker<N> for NetworkHost {
             peerlist,
             banned_addrs,
             banned_peers,
-            internal_event_sender,
-            mut internal_command_receiver,
+            swarm_event_sender,
+            mut host_command_receiver,
             entry_nodes,
         } = config;
 
         let local_keys_clone = local_keys.clone();
-        let internal_event_sender_clone = internal_event_sender.clone();
+        let swarm_event_sender_clone = swarm_event_sender.clone();
 
-        let mut swarm = swarm::build_swarm(&local_keys_clone, internal_event_sender_clone, entry_nodes)
+        let mut swarm = swarm::build_swarm(&local_keys_clone, swarm_event_sender_clone, entry_nodes)
             .await
             .expect("Fatal error: creating transport layer failed.");
 
@@ -75,14 +75,14 @@ impl<N: Node> Worker<N> for NetworkHost {
             loop {
                 let swarm_next_event = Swarm::next_event(&mut swarm);
                 // let swarm_next = Swarm::next(&mut swarm);
-                let recv_command = (&mut internal_command_receiver).recv();
+                let recv_command = (&mut host_command_receiver).recv();
 
                 tokio::select! {
                     // Break on shutdown signal
                     _ = &mut shutdown => break,
                     // Process swarm event
                     event = swarm_next_event => {
-                        process_swarm_event(event, &internal_event_sender);
+                        process_swarm_event(event, &swarm_event_sender);
                     }
                     // _ = swarm_next => {
                     //     unreachable!();
@@ -105,7 +105,7 @@ impl<N: Node> Worker<N> for NetworkHost {
     }
 }
 
-fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, _internal_event_sender: &InternalEventSender) {
+fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, _internal_event_sender: &SwarmEventSender) {
     match event {
         SwarmEvent::NewListenAddr(_address) => {
             // TODO: collect listen address to deny dialing it
@@ -131,7 +131,7 @@ fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, _internal_
 }
 
 async fn process_command(
-    command: Command,
+    command: HostCommand,
     swarm: &mut Swarm<SwarmBehavior>,
     local_keys: &Keypair,
     peerlist: &PeerList,
@@ -139,12 +139,15 @@ async fn process_command(
     banned_peers: &PeerBanlist,
 ) {
     match command {
-        Command::DialPeer { peer_id } => {
+        HostCommand::AddPeer { address, peer_id, .. } => {
+            (*swarm).kademlia.add_address(&peer_id, address);
+        }
+        HostCommand::DialPeer { peer_id } => {
             if let Err(e) = dial_peer(swarm, local_keys, peer_id, &peerlist, &banned_addrs, &banned_peers).await {
                 warn!("Failed to dial peer '...{}'. Cause: {}", alias!(peer_id), e);
             }
         }
-        Command::DialAddress { address } => {
+        HostCommand::DialAddress { address } => {
             if let Err(e) = dial_addr(swarm, address.clone(), &banned_addrs).await {
                 warn!("Failed to dial address '{}'. Cause: {}", address, e);
             }

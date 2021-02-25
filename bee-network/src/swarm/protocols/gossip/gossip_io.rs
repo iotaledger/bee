@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::service::{InternalEvent, InternalEventSender};
+use crate::service::{SwarmEvent, SwarmEventSender};
 
 use futures::{
     io::{ReadHalf, WriteHalf},
@@ -29,7 +29,7 @@ pub fn spawn_gossip_in_task(
     peer_id: PeerId,
     mut reader: ReadHalf<NegotiatedSubstream>,
     incoming_gossip_sender: GossipSender,
-    internal_event_sender: InternalEventSender,
+    swarm_event_sender: SwarmEventSender,
 ) {
     tokio::spawn(async move {
         let mut msg_buf = vec![0u8; MSG_BUFFER_SIZE];
@@ -50,8 +50,8 @@ pub fn spawn_gossip_in_task(
                 // considered a bug.
 
                 // The remote peer dropped the connection.
-                internal_event_sender
-                    .send(InternalEvent::ProtocolDropped { peer_id })
+                swarm_event_sender
+                    .send(SwarmEvent::ProtocolDropped { peer_id })
                     .expect("The service must not shutdown as long as there are gossip tasks running.");
 
                 break;
@@ -82,7 +82,7 @@ pub fn spawn_gossip_out_task(
     peer_id: PeerId,
     mut writer: WriteHalf<NegotiatedSubstream>,
     outgoing_gossip_receiver: GossipReceiver,
-    internal_event_sender: InternalEventSender,
+    swarm_event_sender: SwarmEventSender,
 ) {
     tokio::spawn(async move {
         let mut outgoing_gossip_receiver = outgoing_gossip_receiver.fuse();
@@ -102,8 +102,8 @@ pub fn spawn_gossip_out_task(
                 // all once connected peers, hence if the following send fails, then it must be
                 // considered a bug.
 
-                internal_event_sender
-                    .send(InternalEvent::ProtocolDropped { peer_id })
+                swarm_event_sender
+                    .send(SwarmEvent::ProtocolDropped { peer_id })
                     .expect("The service must not shutdown as long as there are gossip tasks running.");
 
                 break;

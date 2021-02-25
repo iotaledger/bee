@@ -14,8 +14,9 @@ use tokio::sync::mpsc;
 use super::commands::Command;
 
 pub type EventSender = mpsc::UnboundedSender<Event>;
-pub type InternalEventReceiver = mpsc::UnboundedReceiver<InternalEvent>;
-pub type InternalEventSender = mpsc::UnboundedSender<InternalEvent>;
+
+pub type SwarmEventReceiver = mpsc::UnboundedReceiver<SwarmEvent>;
+pub type SwarmEventSender = mpsc::UnboundedSender<SwarmEvent>;
 
 pub fn event_channel<T>() -> (mpsc::UnboundedSender<T>, mpsc::UnboundedReceiver<T>) {
     mpsc::unbounded_channel()
@@ -80,7 +81,7 @@ pub enum Event {
 }
 
 #[derive(Debug)]
-pub enum InternalEvent {
+pub enum SwarmEvent {
     ProtocolEstablished {
         peer_id: PeerId,
         peer_addr: Multiaddr,

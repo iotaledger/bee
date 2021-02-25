@@ -35,7 +35,7 @@ use bee_runtime::node::{Node, NodeBuilder};
 
 use host::NetworkHostConfig;
 use peer::{AddrBanlist, PeerBanlist, PeerList};
-use service::{InternalEvent, NetworkServiceConfig};
+use service::{HostCommand, NetworkServiceConfig, SwarmEvent};
 
 use libp2p::identity;
 use log::{info, *};
@@ -71,11 +71,11 @@ pub async fn init<N: Node>(
     let local_id = PeerId::from_public_key(local_keys.public());
     info!("Local peer id: {}", local_id);
 
-    let (command_sender, command_receiver) = service::command_channel();
-    let (internal_command_sender, internal_command_receiver) = service::command_channel();
+    let (command_sender, command_receiver) = service::command_channel::<Command>();
+    let (host_command_sender, host_command_receiver) = service::command_channel::<HostCommand>();
 
     let (event_sender, event_receiver) = service::event_channel::<Event>();
-    let (internal_event_sender, internal_event_receiver) = service::event_channel::<InternalEvent>();
+    let (swarm_event_sender, swarm_event_receiver) = service::event_channel::<SwarmEvent>();
 
     let banned_addrs = AddrBanlist::new();
     let banned_peers = PeerBanlist::new();
@@ -87,8 +87,8 @@ pub async fn init<N: Node>(
         peerlist: peerlist.clone(),
         banned_addrs: banned_addrs.clone(),
         banned_peers: banned_peers.clone(),
-        internal_event_sender: internal_event_sender.clone(),
-        internal_command_receiver,
+        swarm_event_sender: swarm_event_sender.clone(),
+        host_command_receiver,
         entry_nodes,
     };
 
@@ -98,10 +98,10 @@ pub async fn init<N: Node>(
         banned_addrs,
         banned_peers,
         event_sender,
-        internal_event_sender,
-        internal_command_sender,
         command_receiver,
-        internal_event_receiver,
+        swarm_event_sender,
+        swarm_event_receiver,
+        host_command_sender,
     };
 
     let network_service_controller = NetworkServiceController::new(command_sender, local_id);
