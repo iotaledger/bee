@@ -4,11 +4,11 @@
 mod error;
 mod output_diff;
 mod receipt;
-mod unspent;
 mod treasury_output;
+mod unspent;
 
 pub use error::Error;
-pub use output_diff::OutputDiff;
+pub use output_diff::{OutputDiff, TreasuryDiff};
 pub use receipt::Receipt;
-pub use unspent::Unspent;
 pub use treasury_output::TreasuryOutput;
+pub use unspent::Unspent;

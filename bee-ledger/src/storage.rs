@@ -221,7 +221,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
         storage,
         &mut batch,
         &index,
-        &OutputDiff::new(created_output_ids, consumed_output_ids),
+        &OutputDiff::new(created_output_ids, consumed_output_ids, None),
     )
     .map_err(|e| Error::Storage(Box::new(e)))?;
 

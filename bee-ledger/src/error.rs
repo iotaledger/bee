@@ -10,7 +10,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("")]
-    Model(ModelError),
+    Model(#[from] ModelError),
     #[error("Message {0} is missing in the past cone of the milestone")]
     MissingMessage(MessageId),
     #[error("")]
@@ -41,10 +41,4 @@ pub enum Error {
     InvalidLedgerDustState(Address, Balance),
     #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
-}
-
-impl From<ModelError> for Error {
-    fn from(error: ModelError) -> Self {
-        Error::Model(error)
-    }
 }
