@@ -37,7 +37,7 @@ pub const CF_MILESTONE_INDEX_TO_OUTPUT_DIFF: &str = "milestone_index_to_output_d
 pub const CF_ADDRESS_TO_BALANCE: &str = "address_to_balance";
 pub const CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE: &str = "milestone_index_to_unconfirmed_message";
 pub const CF_MILESTONE_INDEX_TO_RECEIPT: &str = "milestone_index_to_receipt";
-pub const CF_SPENT_TO_TREASURY_OUTPUT: &str = "spent_to_treasury";
+pub const CF_SPENT_TO_TREASURY_OUTPUT: &str = "spent_to_treasury_output";
 
 pub struct Storage {
     pub(crate) config: StorageConfig,

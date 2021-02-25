@@ -26,6 +26,8 @@ where
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
 
+        // TODO spawn depending on configuration
+
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 

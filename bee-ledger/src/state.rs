@@ -18,7 +18,7 @@ use futures::StreamExt;
 
 pub const IOTA_SUPPLY: u64 = 2_779_530_283_277_761;
 
-async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
+async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
     let mut supply: u64 = 0;
     let mut stream = AsStream::<Unspent, ()>::stream(storage)
         .await
@@ -39,14 +39,14 @@ async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B) -> Result<()
         }
     }
 
-    if supply != IOTA_SUPPLY {
+    if supply + treasury != IOTA_SUPPLY {
         return Err(Error::InvalidLedgerUnspentState(supply));
     }
 
     Ok(())
 }
 
-async fn check_ledger_balance_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
+async fn check_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
     let mut supply = 0;
     let mut stream = AsStream::<Address, Balance>::stream(storage)
         .await
@@ -59,7 +59,7 @@ async fn check_ledger_balance_state<B: StorageBackend>(storage: &B) -> Result<()
         supply += balance.amount();
     }
 
-    if supply != IOTA_SUPPLY {
+    if supply + treasury != IOTA_SUPPLY {
         return Err(Error::InvalidLedgerBalanceState(supply));
     }
 
@@ -67,8 +67,13 @@ async fn check_ledger_balance_state<B: StorageBackend>(storage: &B) -> Result<()
 }
 
 pub async fn check_ledger_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
-    check_ledger_unspent_state(storage).await?;
-    check_ledger_balance_state(storage).await?;
+    let treasury = match storage::fetch_unspent_treasury_output(storage).await? {
+        Some(treasury) => treasury.inner().amount(),
+        None => 0,
+    };
+
+    check_ledger_unspent_state(storage, treasury).await?;
+    check_ledger_balance_state(storage, treasury).await?;
 
     Ok(())
 }
