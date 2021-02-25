@@ -7,7 +7,7 @@ use crate::{
         ROUTE_MESSAGE, ROUTE_MESSAGES_FIND, ROUTE_MESSAGE_CHILDREN, ROUTE_MESSAGE_METADATA, ROUTE_MESSAGE_RAW,
         ROUTE_MILESTONE, ROUTE_MILESTONE_UTXO_CHANGES, ROUTE_OUTPUT, ROUTE_OUTPUTS_BECH32, ROUTE_OUTPUTS_ED25519,
         ROUTE_PEER, ROUTE_PEERS, ROUTE_RECEIPTS, ROUTE_RECEIPTS_AT, ROUTE_REMOVE_PEER, ROUTE_SUBMIT_MESSAGE,
-        ROUTE_SUBMIT_MESSAGE_RAW, ROUTE_TIPS,
+        ROUTE_SUBMIT_MESSAGE_RAW, ROUTE_TIPS, ROUTE_TREASURY,
     },
     handlers,
     permission::has_permission,
@@ -131,7 +131,8 @@ pub fn all<B: StorageBackend>(
     ))
     .or(peer(public_routes.clone(), allowed_ips.clone(), peer_manager))
     .or(receipts(public_routes.clone(), allowed_ips.clone(), storage.clone()))
-    .or(receipts_at(public_routes.clone(), allowed_ips.clone(), storage))
+    .or(receipts_at(public_routes.clone(), allowed_ips.clone(), storage.clone()))
+    .or(treasury(public_routes.clone(), allowed_ips.clone(), storage))
     .or(white_flag(public_routes, allowed_ips)))
 }
 
@@ -535,6 +536,21 @@ fn receipts_at<B: StorageBackend>(
         .and(has_permission(ROUTE_RECEIPTS_AT, public_routes, allowed_ips))
         .and(with_storage(storage))
         .and_then(handlers::receipt::receipts_at)
+}
+
+fn treasury<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    storage: ResourceHandle<B>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
+        .and(warp::path("api"))
+        .and(warp::path("v1"))
+        .and(warp::path("treasury"))
+        .and(warp::path::end())
+        .and(has_permission(ROUTE_TREASURY, public_routes, allowed_ips))
+        .and(with_storage(storage))
+        .and_then(handlers::treasury::treasury)
 }
 
 fn white_flag(

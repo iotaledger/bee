@@ -73,6 +73,7 @@ public_routes         = [
     "/api/v1/tips",
     "/api/v1/receipts",
     "/api/v1/receipts/:milestoneIndex",
+    "/api/v1/treasury",
 ]
 allowed_ips = [
     "127.0.0.1",

@@ -32,9 +32,10 @@ pub(crate) const ROUTE_SUBMIT_MESSAGE_RAW: &str = "/api/v1/messages";
 pub(crate) const ROUTE_TIPS: &str = "/api/v1/tips";
 pub(crate) const ROUTE_RECEIPTS: &str = "/api/v1/receipts";
 pub(crate) const ROUTE_RECEIPTS_AT: &str = "/api/v1/receipts/:milestoneIndex";
+pub(crate) const ROUTE_TREASURY: &str = "/api/v1/treasury";
 
 /// the routes that are available for public use
-pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 19] = [
+pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 20] = [
     ROUTE_BALANCE_BECH32,
     ROUTE_BALANCE_ED25519,
     ROUTE_HEALTH,
@@ -54,6 +55,7 @@ pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 19] = [
     ROUTE_TIPS,
     ROUTE_RECEIPTS,
     ROUTE_RECEIPTS_AT,
+    ROUTE_TREASURY,
 ];
 pub(crate) const DEFAULT_ALLOWED_IPS: [IpAddr; 2] = [
     IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
