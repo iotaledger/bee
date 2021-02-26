@@ -258,12 +258,12 @@ async fn process_swarm_event(
     _banned_peers: &PeerBanlist,
     event_sender: &EventSender,
     _swarm_event_sender: &SwarmEventSender,
-    _host_command_sender: &HostCommandSender,
+    host_command_sender: &HostCommandSender,
 ) -> Result<(), peer::Error> {
     match swarm_event {
         SwarmEvent::ProtocolEstablished {
             peer_id,
-            peer_addr,
+            address,
             conn_info,
             gossip_in,
             gossip_out,
@@ -271,7 +271,7 @@ async fn process_swarm_event(
             // In case the peer doesn't exist yet, we create a `PeerInfo` for that peer on-the-fly.
             if !peerlist.contains(&peer_id).await {
                 let peer_info = PeerInfo {
-                    address: peer_addr,
+                    address,
                     alias: alias!(peer_id).to_string(),
                     relation: PeerRelation::Unknown,
                 };
@@ -309,7 +309,6 @@ async fn process_swarm_event(
                 gossip_out,
             });
         }
-
         SwarmEvent::ProtocolDropped { peer_id } => {
             // NB: Just in case there is any error (PeerMissing, PeerAlreadyDisconnected),
             // then 'disconnect' just becomes a NoOp.
@@ -323,6 +322,29 @@ async fn process_swarm_event(
                 .await;
 
             let _ = event_sender.send(Event::PeerDisconnected { peer_id });
+        }
+        SwarmEvent::PeerDiscovered { peer_id, addresses } => {
+            // For now we only consider the first address provided.
+            let address = addresses
+                .iter()
+                .nth(0)
+                .expect("peer didn't provide any addresses")
+                .clone();
+
+            let peer_info = PeerInfo {
+                address,
+                alias: alias!(peer_id).to_string(),
+                relation: PeerRelation::Unknown,
+            };
+
+            // Connect to the discovered peer, if all checks pass
+            if peerlist.accepts(&peer_id, &peer_info).await.is_ok() {
+                host_command_sender
+                    .send(HostCommand::DialAddress {
+                        address: peer_info.address,
+                    })
+                    .expect("command channel receiver dropped");
+            }
         }
     }
 

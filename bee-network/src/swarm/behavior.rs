@@ -16,13 +16,13 @@ use libp2p::{
     identity::PublicKey,
     kad::{store::MemoryStore, Kademlia, KademliaConfig, KademliaEvent},
     multiaddr::Protocol,
-    swarm::{NetworkBehaviour, NetworkBehaviourEventProcess},
+    swarm::NetworkBehaviourEventProcess,
     Multiaddr, NetworkBehaviour, PeerId,
 };
 use log::*;
 use tokio::sync::mpsc;
 
-const KADEMLIA_QUERY_TIMEOUT: u64 = 5 * 60;
+const KADEMLIA_QUERY_TIMEOUT: u64 = 1 * 60;
 
 /// A type that contains the different protocols that are negotiated on top of the basic transport of a peer connection.
 #[derive(NetworkBehaviour)]
@@ -135,12 +135,12 @@ impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
             .swarm_event_sender
             .send(SwarmEvent::ProtocolEstablished {
                 peer_id,
-                peer_addr,
+                address: peer_addr,
                 conn_info,
                 gossip_in: incoming_gossip_receiver,
                 gossip_out: outgoing_gossip_sender,
             })
-            .expect("Receiver of internal event channel dropped.");
+            .expect("Receiver of event channel dropped.");
     }
 }
 
@@ -162,6 +162,14 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for SwarmBehavior {
                 println!("Peer: {}", alias!(peer));
                 println!("Addresses: {:?}", addresses);
                 println!("Old peer: {:?}", old_peer);
+
+                let _ = self
+                    .swarm_event_sender
+                    .send(SwarmEvent::PeerDiscovered {
+                        peer_id: peer,
+                        addresses,
+                    })
+                    .expect("Receiver of event channel dropped.");
             }
             KademliaEvent::UnroutablePeer { peer } => {
                 println!("Kademlia UnroutablePeer: {}.", alias!(peer));

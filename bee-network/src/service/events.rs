@@ -8,7 +8,7 @@ use crate::{
     swarm::protocols::gossip::{GossipReceiver, GossipSender},
 };
 
-use libp2p::{Multiaddr, PeerId};
+use libp2p::{kad::Addresses, Multiaddr, PeerId};
 use tokio::sync::mpsc;
 
 use super::commands::Command;
@@ -84,12 +84,16 @@ pub enum Event {
 pub enum SwarmEvent {
     ProtocolEstablished {
         peer_id: PeerId,
-        peer_addr: Multiaddr,
+        address: Multiaddr,
         conn_info: ConnectionInfo,
         gossip_in: GossipReceiver,
         gossip_out: GossipSender,
     },
     ProtocolDropped {
         peer_id: PeerId,
+    },
+    PeerDiscovered {
+        peer_id: PeerId,
+        addresses: Addresses,
     },
 }

@@ -85,6 +85,7 @@ impl PeerList {
         self.0.read().await.contains_key(peer_id)
     }
 
+    // TODO: ensure that the peer id and the peer's addresses are not banned
     pub async fn accepts(&self, peer_id: &PeerId, peer_info: &PeerInfo) -> Result<(), Error> {
         if self.0.read().await.contains_key(peer_id) {
             return Err(Error::PeerAlreadyAdded(*peer_id));

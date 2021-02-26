@@ -15,6 +15,7 @@ use bee_runtime::{node::Node, worker::Worker};
 use async_trait::async_trait;
 use libp2p::{
     identity::{self, Keypair},
+    kad::{store::MemoryStore, Kademlia},
     swarm::SwarmEvent,
     Multiaddr, PeerId, Swarm,
 };
@@ -70,8 +71,19 @@ impl<N: Node> Worker<N> for NetworkHost {
 
         let _ = Swarm::listen_on(&mut swarm, bind_address).expect("Fatal error: address binding failed.");
 
-        if let Err(_) = (*swarm).kademlia.bootstrap() {
-            info!("Running node without DHT entry nodes.");
+        {
+            use std::ops::DerefMut;
+            let swarm_behavior: &mut crate::swarm::SwarmBehavior = swarm.deref_mut();
+
+            // TEMP
+            info!(
+                "Kademlia protocol name: {}",
+                String::from_utf8_lossy(swarm_behavior.kademlia.protocol_name())
+            );
+
+            if let Err(_) = swarm_behavior.kademlia.bootstrap() {
+                info!("Running node without DHT entry nodes.");
+            }
         }
 
         node.spawn::<Self, _, _>(|mut shutdown| async move {
