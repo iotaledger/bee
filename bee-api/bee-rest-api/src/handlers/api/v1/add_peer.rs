@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    handlers::{BodyInner, SuccessBody},
+    body::{BodyInner, SuccessBody},
     rejection::CustomRejection,
     types::{peer_to_peer_dto, PeerDto, RelationDto},
 };

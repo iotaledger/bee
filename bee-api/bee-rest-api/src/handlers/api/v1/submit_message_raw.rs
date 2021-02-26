@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    handlers::{
-        api::v1::submit_message::{forward_to_message_submitter, SubmitMessageResponse},
-        SuccessBody,
-    },
+    body::SuccessBody,
+    handlers::api::v1::submit_message::{forward_to_message_submitter, SubmitMessageResponse},
     rejection::CustomRejection,
     storage::StorageBackend,
 };

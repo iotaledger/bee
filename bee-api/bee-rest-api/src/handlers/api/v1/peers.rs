@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    handlers::{BodyInner, SuccessBody},
-    types::PeerDto,
+    body::{BodyInner, SuccessBody},
+    types::{peer_to_peer_dto, PeerDto},
 };
 
 use bee_protocol::PeerManager;
@@ -12,7 +12,6 @@ use bee_runtime::resource::ResourceHandle;
 use serde::{Deserialize, Serialize};
 use warp::Reply;
 
-use crate::types::peer_to_peer_dto;
 use std::convert::Infallible;
 
 pub(crate) async fn peers(peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Infallible> {

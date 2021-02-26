@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    body::{BodyInner, SuccessBody},
     config::RestApiConfig,
-    handlers::{BodyInner, SuccessBody},
     storage::StorageBackend,
     Bech32Hrp, NetworkId,
 };

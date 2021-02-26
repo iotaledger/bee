@@ -7,8 +7,8 @@ use bee_protocol::{Peer, PeerManager};
 use bee_runtime::resource::ResourceHandle;
 
 use serde::{Deserialize, Serialize, Serializer};
-
 use serde_json::Value;
+
 use std::{
     convert::{TryFrom, TryInto},
     sync::Arc,

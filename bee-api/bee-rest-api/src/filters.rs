@@ -21,7 +21,7 @@ use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
 use tokio::sync::mpsc;
-use warp::{reject, Filter, Rejection};
+use warp::{reject, Filter, Rejection, Reply};
 
 use std::{collections::HashMap, net::IpAddr};
 
@@ -38,7 +38,7 @@ pub fn all<B: StorageBackend>(
     peer_manager: ResourceHandle<PeerManager>,
     network_controller: ResourceHandle<NetworkServiceController>,
     node_info: ResourceHandle<NodeInfo>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     health(public_routes.clone(), allowed_ips.clone(), tangle.clone()).or(info(
         public_routes.clone(),
         allowed_ips.clone(),
@@ -129,7 +129,7 @@ fn health<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("health")
         .and(warp::path::end())
         .and(warp::get())
@@ -147,7 +147,7 @@ fn info<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
     node_info: ResourceHandle<NodeInfo>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("info"))
@@ -167,7 +167,7 @@ fn tips<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("tips"))
@@ -186,7 +186,7 @@ fn submit_message<B: StorageBackend>(
     network_id: NetworkId,
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -207,7 +207,7 @@ fn submit_message_raw<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -224,7 +224,7 @@ fn message_indexation<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -247,7 +247,7 @@ fn message<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -263,7 +263,7 @@ fn message_metadata<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -280,7 +280,7 @@ fn message_raw<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -297,7 +297,7 @@ fn message_children<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("messages"))
@@ -314,7 +314,7 @@ fn output<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("outputs"))
@@ -330,7 +330,7 @@ fn balance_bech32<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
@@ -346,7 +346,7 @@ fn balance_ed25519<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
@@ -363,7 +363,7 @@ fn outputs_bech32<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
@@ -380,7 +380,7 @@ fn outputs_ed25519<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
@@ -398,7 +398,7 @@ fn milestone<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("milestones"))
@@ -414,7 +414,7 @@ fn milestone_utxo_changes<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("milestones"))
@@ -431,7 +431,7 @@ fn peers(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     peer_manager: ResourceHandle<PeerManager>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("peers"))
@@ -446,7 +446,7 @@ fn peer(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     peer_manager: ResourceHandle<PeerManager>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("peers"))
@@ -463,7 +463,7 @@ fn peer_add(
     allowed_ips: Vec<IpAddr>,
     peer_manager: ResourceHandle<PeerManager>,
     network_controller: ResourceHandle<NetworkServiceController>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("peers"))
@@ -480,7 +480,7 @@ fn peer_remove(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     network_controller: ResourceHandle<NetworkServiceController>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("peer"))
@@ -495,7 +495,7 @@ fn peer_remove(
 fn white_flag(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("debug")
         .and(warp::path("whiteflag"))
         .and(warp::path::end())

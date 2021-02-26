@@ -3,6 +3,7 @@
 
 mod filters;
 
+pub mod body;
 pub mod config;
 pub mod handlers;
 pub mod permission;
@@ -11,8 +12,8 @@ pub mod storage;
 pub mod types;
 
 use crate::{
+    body::{DefaultErrorResponse, ErrorBody},
     config::RestApiConfig,
-    handlers::{DefaultErrorResponse, ErrorBody},
     rejection::CustomRejection,
     storage::StorageBackend,
 };
