@@ -4,7 +4,7 @@
 use crate::model::Error;
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::payload::transaction::OutputId;
+use bee_message::output::OutputId;
 
 #[derive(Debug)]
 pub struct OutputDiff {

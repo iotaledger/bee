@@ -11,12 +11,13 @@ use crate::{
 };
 
 use bee_message::{
+    input::Input,
+    output::{ConsumedOutput, CreatedOutput, Output, OutputId},
     payload::{
-        transaction::{
-            ConsumedOutput, CreatedOutput, Essence, Input, Output, OutputId, TransactionPayload, UnlockBlock,
-        },
+        transaction::{Essence, TransactionPayload},
         Payload,
     },
+    unlock::UnlockBlock,
     Message, MessageId,
 };
 use bee_runtime::node::Node;

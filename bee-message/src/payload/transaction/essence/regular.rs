@@ -2,14 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    payload::{
-        transaction::{
-            constants::{INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE, IOTA_SUPPLY},
-            input::Input,
-            output::Output,
-        },
-        Payload,
-    },
+    constants::{INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE, IOTA_SUPPLY},
+    input::Input,
+    output::Output,
+    payload::Payload,
     Error,
 };
 

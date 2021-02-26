@@ -3,7 +3,7 @@
 
 use crate::rand::bytes::rand_bytes;
 
-use bee_message::payload::transaction::{Address, Ed25519Address};
+use bee_message::address::{Address, Ed25519Address};
 
 use std::convert::TryInto;
 

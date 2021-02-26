@@ -5,13 +5,13 @@ pub mod indexation;
 pub mod milestone;
 pub mod receipt;
 pub mod transaction;
+pub mod treasury;
 
 use indexation::{IndexationPayload, INDEXATION_PAYLOAD_KIND};
 use milestone::{MilestonePayload, MILESTONE_PAYLOAD_KIND};
 use receipt::{ReceiptPayload, RECEIPT_PAYLOAD_KIND};
-use transaction::{
-    TransactionPayload, TreasuryTransactionPayload, TRANSACTION_PAYLOAD_KIND, TREASURY_TRANSACTION_PAYLOAD_KIND,
-};
+use transaction::{TransactionPayload, TRANSACTION_PAYLOAD_KIND};
+use treasury::{TreasuryTransactionPayload, TREASURY_TRANSACTION_PAYLOAD_KIND};
 
 use crate::Error;
 

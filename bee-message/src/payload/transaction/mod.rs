@@ -1,29 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod constants;
 mod essence;
-mod input;
-mod output;
 mod transaction_id;
-mod treasury;
-mod unlock;
 
-use crate::Error;
+use crate::{constants::INPUT_OUTPUT_COUNT_RANGE, unlock::UnlockBlock, Error};
 
-pub use constants::{INPUT_OUTPUT_COUNT_MAX, INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE, IOTA_SUPPLY};
 pub use essence::{Essence, RegularEssence, RegularEssenceBuilder};
-pub use input::{Input, TreasuryInput, UTXOInput};
-pub use output::{
-    Address, Bech32Address, ConsumedOutput, CreatedOutput, Ed25519Address, Output, OutputId,
-    SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput, ED25519_ADDRESS_LENGTH,
-    OUTPUT_ID_LENGTH,
-};
 pub use transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
-pub use treasury::TreasuryTransactionPayload;
-pub use unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock};
-
-pub(crate) use treasury::TREASURY_TRANSACTION_PAYLOAD_KIND;
 
 use bee_common::packable::{Packable, Read, Write};
 

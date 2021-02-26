@@ -10,7 +10,7 @@ use bee_common::packable::Packable;
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::MilestoneIndex,
-    payload::transaction::{CreatedOutput, Output, OutputId},
+    output::{CreatedOutput, Output, OutputId},
     solid_entry_point::SolidEntryPoint,
     MessageId,
 };

@@ -5,7 +5,7 @@ use crate::{balance::BalanceDiffs, conflict::ConflictReason};
 
 use bee_message::{
     milestone::MilestoneIndex,
-    payload::transaction::{ConsumedOutput, CreatedOutput, OutputId},
+    output::{ConsumedOutput, CreatedOutput, OutputId},
     MessageId,
 };
 

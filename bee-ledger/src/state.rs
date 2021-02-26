@@ -9,7 +9,7 @@ use crate::{
     storage::{self, StorageBackend},
 };
 
-use bee_message::payload::transaction::{self, Address};
+use bee_message::{address::Address, output};
 use bee_storage::access::AsStream;
 
 use futures::StreamExt;
@@ -29,10 +29,10 @@ async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B) -> Result<()
         let output = storage::fetch_output(storage, &*output_id).await?.unwrap();
 
         match output.inner() {
-            transaction::Output::SignatureLockedSingle(output) => {
+            output::Output::SignatureLockedSingle(output) => {
                 supply += output.amount();
             }
-            transaction::Output::SignatureLockedDustAllowance(output) => {
+            output::Output::SignatureLockedDustAllowance(output) => {
                 supply += output.amount();
             }
             _ => return Err(Error::UnsupportedOutputType),

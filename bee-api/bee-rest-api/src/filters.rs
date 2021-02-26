@@ -520,10 +520,7 @@ mod custom_path_param {
 
     use super::*;
     use bee_message::{
-        milestone::MilestoneIndex,
-        payload::transaction::{Address, OutputId},
-        prelude::Ed25519Address,
-        MessageId,
+        address::Address, milestone::MilestoneIndex, output::OutputId, prelude::Ed25519Address, MessageId,
     };
 
     pub(super) fn output_id() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Copy {

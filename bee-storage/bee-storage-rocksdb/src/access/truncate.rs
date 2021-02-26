@@ -8,14 +8,11 @@ use bee_ledger::{
     model::{OutputDiff, Unspent},
 };
 use bee_message::{
+    address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
-    payload::{
-        indexation::{HashedIndex, HASHED_INDEX_LENGTH},
-        transaction::{
-            Address, ConsumedOutput, CreatedOutput, Ed25519Address, OutputId, ED25519_ADDRESS_LENGTH, OUTPUT_ID_LENGTH,
-        },
-    },
+    output::{ConsumedOutput, CreatedOutput, OutputId, OUTPUT_ID_LENGTH},
+    payload::indexation::{HashedIndex, HASHED_INDEX_LENGTH},
     solid_entry_point::SolidEntryPoint,
     Message, MessageId, MESSAGE_ID_LENGTH,
 };

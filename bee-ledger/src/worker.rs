@@ -14,12 +14,7 @@ use crate::{
     white_flag,
 };
 
-use bee_message::{
-    ledger_index::LedgerIndex,
-    milestone::MilestoneIndex,
-    payload::{transaction::Output, Payload},
-    MessageId,
-};
+use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, output::Output, payload::Payload, MessageId};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_snapshot::{milestone_diff::MilestoneDiff, SnapshotWorker};
 use bee_tangle::{MsTangle, TangleWorker};
