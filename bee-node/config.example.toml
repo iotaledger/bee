@@ -1,8 +1,9 @@
 # Duplicate this file to config.toml to use it
 
-alias       = "bee"
-bech32_hrp  = "atoi"
-network_id  = "testnet5"
+identity   = ""
+alias      = "bee"
+bech32_hrp = "atoi"
+network_id = "testnet5"
 
 [logger]
 color_enabled = true
@@ -14,18 +15,19 @@ name          = "error.log"
 level_filter  = "error"
 
 [network]
-bind_address             = "/ip4/0.0.0.0/tcp/15600"
-reconnect_interval_secs  = 30
-[network.dht]
-# DHT entry nodes
-#[[network.dht.entry_nodes]]
+bind_address                = "/ip4/0.0.0.0/tcp/15600"
+reconnect_interval_secs     = 30
+max_unknown_peers_accepted  = 4
+max_discovered_peers_dialed = 2
+[network.peering]
+#[[network.peering.peers]]
 #address = ""
-#[[network.dht.entry_nodes]]
+#alias = ""
+#[[network.peering.peers]]
 #address = ""
+#alias = ""
 
 [peering]
-# hex representation of an Ed25519 keypair
-identity_private_key  = ""
 [peering.manual]
 unknown_peers_limit = 4
 # known peers
