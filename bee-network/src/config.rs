@@ -76,27 +76,12 @@ pub struct DhtConfig {
     pub entry_nodes: Vec<Multiaddr>,
 }
 
-impl DhtConfig {
-    pub fn build() -> DhtConfigBuilder {
-        DhtConfigBuilder::new()
-    }
-}
-
 #[derive(Default, Deserialize)]
 pub struct DhtConfigBuilder {
     pub entry_nodes: Option<Vec<EntryNode>>,
 }
 
 impl DhtConfigBuilder {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn entry_nodes(mut self, entry_nodes: Vec<EntryNode>) -> Self {
-        self.entry_nodes.replace(entry_nodes);
-        self
-    }
-
     pub fn finish(self) -> DhtConfig {
         let entry_nodes = match self.entry_nodes {
             None => Vec::new(),

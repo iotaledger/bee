@@ -190,6 +190,7 @@ async fn process_command(
             add_peer(peer_id, address.clone(), alias, relation, peerlist, event_sender).await?;
 
             // Add this peer to the DHT.
+            // TODO: make it optional to add peer to routing table
             let _ = host_command_sender.send(HostCommand::AddPeer { peer_id, address });
 
             // We try to connect to known peers immediatedly.
@@ -337,8 +338,11 @@ async fn process_swarm_event(
                 relation: PeerRelation::Unknown,
             };
 
+            println!("Peer discovered: {}, {:?}", peer_id, peer_info);
+
             // Connect to the discovered peer, if all checks pass
             if peerlist.accepts(&peer_id, &peer_info).await.is_ok() {
+                println!("Discoverd peer can be dialed.");
                 host_command_sender
                     .send(HostCommand::DialAddress {
                         address: peer_info.address,

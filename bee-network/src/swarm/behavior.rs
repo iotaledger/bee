@@ -153,6 +153,7 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for SwarmBehavior {
                 println!("QueryResult: {:?}", result);
                 println!("QueryStats: {:?}", stats);
             }
+            // Fired, when we updated the routing table via `add_address`
             KademliaEvent::RoutingUpdated {
                 peer,
                 addresses,

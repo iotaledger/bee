@@ -15,13 +15,12 @@ use bee_runtime::{node::Node, worker::Worker};
 use async_trait::async_trait;
 use libp2p::{
     identity::{self, Keypair},
-    kad::{store::MemoryStore, Kademlia},
     swarm::SwarmEvent,
     Multiaddr, PeerId, Swarm,
 };
 use log::*;
 
-use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
+use std::{any::TypeId, convert::Infallible, ops::DerefMut, sync::atomic::Ordering};
 
 pub struct NetworkHostConfig {
     pub local_keys: Keypair,
@@ -72,7 +71,6 @@ impl<N: Node> Worker<N> for NetworkHost {
         let _ = Swarm::listen_on(&mut swarm, bind_address).expect("Fatal error: address binding failed.");
 
         {
-            use std::ops::DerefMut;
             let swarm_behavior: &mut crate::swarm::SwarmBehavior = swarm.deref_mut();
 
             // TEMP
@@ -121,9 +119,11 @@ impl<N: Node> Worker<N> for NetworkHost {
     }
 }
 
+// **Note**: Handles only basic libp2p swarm events mostly relevant for logging. The more specific behavior events
+// should be handled in `behavior.rs`.
 fn process_swarm_event(
     event: SwarmEvent<(), impl std::error::Error>,
-    swarm: &mut Swarm<SwarmBehavior>,
+    _swarm: &mut Swarm<SwarmBehavior>,
     _internal_event_sender: &SwarmEventSender,
 ) {
     match event {
@@ -132,20 +132,21 @@ fn process_swarm_event(
         }
         SwarmEvent::ConnectionEstablished { peer_id, endpoint, .. } => {
             let address = endpoint.get_remote_address();
-
-            debug!("Negotiating protocol with '{}' [{}].", alias!(peer_id), address,);
-
-            (*swarm).kademlia.add_address(&peer_id, address.clone());
+            debug!(
+                "Underlying transport established with '{}' [{}].",
+                alias!(peer_id),
+                address,
+            );
         }
         SwarmEvent::ConnectionClosed { peer_id, .. } => {
-            debug!("Stopped protocol with '{}'.", alias!(peer_id));
+            debug!("Closed transport with '{}'.", alias!(peer_id));
         }
         SwarmEvent::ListenerError { error } => {
             error!("Libp2p error: Cause: {}", error);
         }
         SwarmEvent::Dialing(peer_id) => {
             // NB: strange, but this event is not actually fired when dialing. (open issue?)
-            debug!("Dialing '{}'.", alias!(peer_id));
+            debug!("Dialing peer: '{}'.", alias!(peer_id));
         }
         SwarmEvent::IncomingConnection { send_back_addr, .. } => {
             debug!("Being dialed from address {}.", send_back_addr);
@@ -164,7 +165,11 @@ async fn process_command(
 ) {
     match command {
         HostCommand::AddPeer { address, peer_id, .. } => {
-            (*swarm).kademlia.add_address(&peer_id, address);
+            println!("Adding address of {} to routing table.", alias!(peer_id));
+            {
+                let swarm_behavior: &mut crate::swarm::SwarmBehavior = swarm.deref_mut();
+                swarm_behavior.kademlia.add_address(&peer_id, address);
+            }
         }
         HostCommand::DialPeer { peer_id } => {
             if let Err(e) = dial_peer(swarm, local_keys, peer_id, &peerlist, &banned_addrs, &banned_peers).await {
