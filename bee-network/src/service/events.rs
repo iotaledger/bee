@@ -92,7 +92,7 @@ pub enum SwarmEvent {
     ProtocolDropped {
         peer_id: PeerId,
     },
-    PeerDiscovered {
+    RoutingTableUpdated {
         peer_id: PeerId,
         addresses: Addresses,
     },

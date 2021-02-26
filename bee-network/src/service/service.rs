@@ -324,7 +324,7 @@ async fn process_swarm_event(
 
             let _ = event_sender.send(Event::PeerDisconnected { peer_id });
         }
-        SwarmEvent::PeerDiscovered { peer_id, addresses } => {
+        SwarmEvent::RoutingTableUpdated { peer_id, addresses } => {
             // For now we only consider the first address provided.
             let address = addresses
                 .iter()
@@ -338,11 +338,10 @@ async fn process_swarm_event(
                 relation: PeerRelation::Unknown,
             };
 
-            println!("Peer discovered: {}, {:?}", peer_id, peer_info);
-
             // Connect to the discovered peer, if all checks pass
             if peerlist.accepts(&peer_id, &peer_info).await.is_ok() {
-                println!("Discoverd peer can be dialed.");
+                println!("New dialable peer: {}, {:?}", peer_id, peer_info);
+
                 host_command_sender
                     .send(HostCommand::DialAddress {
                         address: peer_info.address,

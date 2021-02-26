@@ -166,7 +166,7 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for SwarmBehavior {
 
                 let _ = self
                     .swarm_event_sender
-                    .send(SwarmEvent::PeerDiscovered {
+                    .send(SwarmEvent::RoutingTableUpdated {
                         peer_id: peer,
                         addresses,
                     })
