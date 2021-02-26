@@ -3,7 +3,7 @@
 
 use crate::rand::output::rand_output_id;
 
-use bee_message::payload::transaction::{Input, UTXOInput};
+use bee_message::input::{Input, UTXOInput};
 
 pub fn rand_input() -> Input {
     // TODO add other kind of inputs

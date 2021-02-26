@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::payload::transaction::Address;
+use bee_message::address::Address;
 
 use std::collections::{
     hash_map::{IntoIter, Iter},

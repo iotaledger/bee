@@ -3,7 +3,7 @@
 
 use crate::{balance::Balance, model::Error as ModelError};
 
-use bee_message::{milestone::MilestoneIndex, payload::transaction::Address, MessageId};
+use bee_message::{address::Address, milestone::MilestoneIndex, MessageId};
 
 use thiserror::Error;
 

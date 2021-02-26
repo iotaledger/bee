@@ -1,14 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod address;
 mod output_id;
 mod signature_locked_dust_allowance;
 mod signature_locked_single;
 mod storable;
 mod treasury;
 
-pub use address::{Address, Bech32Address, Ed25519Address, ED25519_ADDRESS_LENGTH};
 pub use output_id::{OutputId, OUTPUT_ID_LENGTH};
 pub use signature_locked_dust_allowance::SignatureLockedDustAllowanceOutput;
 pub use signature_locked_single::SignatureLockedSingleOutput;

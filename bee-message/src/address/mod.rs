@@ -6,7 +6,7 @@ mod ed25519;
 use ed25519::ED25519_ADDRESS_KIND;
 pub use ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
 
-use crate::{payload::transaction::SignatureUnlock, Error};
+use crate::{unlock::SignatureUnlock, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 

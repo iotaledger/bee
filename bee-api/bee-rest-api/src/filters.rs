@@ -519,10 +519,11 @@ fn white_flag(
 mod custom_path_param {
 
     use super::*;
+
     use bee_message::{
+        address::{Address, Ed25519Address},
         milestone::MilestoneIndex,
-        payload::transaction::{Address, OutputId},
-        prelude::Ed25519Address,
+        output::OutputId,
         MessageId,
     };
 

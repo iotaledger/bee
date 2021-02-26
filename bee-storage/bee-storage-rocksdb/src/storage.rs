@@ -13,8 +13,7 @@ pub use bee_storage::{
 };
 
 use bee_message::{
-    milestone::MilestoneIndex,
-    payload::{indexation::HASHED_INDEX_LENGTH, transaction::ED25519_ADDRESS_LENGTH},
+    address::ED25519_ADDRESS_LENGTH, milestone::MilestoneIndex, payload::indexation::HASHED_INDEX_LENGTH,
     MESSAGE_ID_LENGTH,
 };
 

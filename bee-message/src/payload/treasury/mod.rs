@@ -1,10 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    payload::transaction::{Input, Output},
-    Error,
-};
+use crate::{input::Input, output::Output, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 

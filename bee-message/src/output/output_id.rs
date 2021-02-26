@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    payload::transaction::{constants::INPUT_OUTPUT_INDEX_RANGE, TransactionId, TRANSACTION_ID_LENGTH},
+    constants::INPUT_OUTPUT_INDEX_RANGE,
+    payload::transaction::{TransactionId, TRANSACTION_ID_LENGTH},
     Error,
 };
 

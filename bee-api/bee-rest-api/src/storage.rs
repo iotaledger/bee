@@ -3,7 +3,8 @@
 
 use bee_ledger::{balance::Balance, model::OutputDiff};
 use bee_message::{
-    payload::transaction::{Address, ConsumedOutput, CreatedOutput, Ed25519Address, OutputId},
+    address::{Address, Ed25519Address},
+    output::{ConsumedOutput, CreatedOutput, OutputId},
     prelude::{HashedIndex, MilestoneIndex},
     MessageId,
 };

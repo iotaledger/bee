@@ -1,10 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    payload::transaction::{Address, IOTA_SUPPLY},
-    Error,
-};
+use crate::{address::Address, constants::IOTA_SUPPLY, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 

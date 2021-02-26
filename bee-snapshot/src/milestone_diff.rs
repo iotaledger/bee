@@ -8,7 +8,8 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
     milestone::MilestoneIndex,
-    payload::transaction::{ConsumedOutput, CreatedOutput, Output, OutputId, TransactionId},
+    output::{ConsumedOutput, CreatedOutput, Output, OutputId},
+    payload::transaction::TransactionId,
     MessageId,
 };
 

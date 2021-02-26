@@ -2,7 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use crate::{
+    address::{Address, Bech32Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
+    constants::IOTA_SUPPLY,
+    input::{Input, TreasuryInput, UTXOInput},
     milestone::{MilestoneIndex, MilestoneKeyRange},
+    output::{
+        ConsumedOutput, CreatedOutput, Output, OutputId, SignatureLockedDustAllowanceOutput,
+        SignatureLockedSingleOutput, TreasuryOutput, OUTPUT_ID_LENGTH,
+    },
     payload::{
         indexation::{HashedIndex, IndexationPayload, HASHED_INDEX_LENGTH},
         milestone::{
@@ -11,13 +18,12 @@ pub use crate::{
         },
         receipt::{MigratedFundsEntry, ReceiptPayload},
         transaction::{
-            Address, Bech32Address, ConsumedOutput, CreatedOutput, Ed25519Address, Ed25519Signature, Essence, Input,
-            Output, OutputId, ReferenceUnlock, RegularEssence, RegularEssenceBuilder,
-            SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, SignatureUnlock, TransactionId,
-            TransactionPayload, TransactionPayloadBuilder, TreasuryInput, TreasuryOutput, TreasuryTransactionPayload,
-            UTXOInput, UnlockBlock, ED25519_ADDRESS_LENGTH, IOTA_SUPPLY, OUTPUT_ID_LENGTH, TRANSACTION_ID_LENGTH,
+            Essence, RegularEssence, RegularEssenceBuilder, TransactionId, TransactionPayload,
+            TransactionPayloadBuilder, TRANSACTION_ID_LENGTH,
         },
+        treasury::TreasuryTransactionPayload,
         Payload,
     },
+    unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock},
     Error, Message, MessageBuilder, MessageId, Parents, MESSAGE_ID_LENGTH, MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN,
 };

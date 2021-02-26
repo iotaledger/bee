@@ -8,9 +8,10 @@ use crate::{
 };
 
 use bee_message::{
+    address::{Address, Ed25519Address},
     ledger_index::LedgerIndex,
     milestone::MilestoneIndex,
-    payload::transaction::{Address, ConsumedOutput, CreatedOutput, Ed25519Address, Output, OutputId},
+    output::{ConsumedOutput, CreatedOutput, Output, OutputId},
 };
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},

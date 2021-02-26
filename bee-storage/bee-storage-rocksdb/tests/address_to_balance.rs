@@ -3,7 +3,7 @@
 
 use bee_common::packable::Packable;
 use bee_ledger::balance::Balance;
-use bee_message::payload::transaction::Address;
+use bee_message::address::Address;
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend::StorageBackend,
