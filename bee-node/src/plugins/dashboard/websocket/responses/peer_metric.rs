@@ -6,7 +6,7 @@ use crate::plugins::dashboard::websocket::{
     topics::WsTopic,
 };
 
-use bee_rest_api::handlers::peers::PeersResponse;
+use bee_rest_api::handlers::api::v1::peers::PeersResponse;
 
 pub(crate) fn forward(event: PeersResponse) -> WsEvent {
     event.into()

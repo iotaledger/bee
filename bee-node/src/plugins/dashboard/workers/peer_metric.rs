@@ -11,7 +11,7 @@ use crate::{
 };
 
 use bee_protocol::PeerManager;
-use bee_rest_api::{handlers::peers::PeersResponse, types::peer_to_peer_dto};
+use bee_rest_api::{handlers::api::v1::peers::PeersResponse, types::peer_to_peer_dto};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 
 use futures::StreamExt;
