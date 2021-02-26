@@ -10,7 +10,6 @@ use libp2p::{
     swarm::{NegotiatedSubstream, NetworkBehaviour, NetworkBehaviourAction, ProtocolsHandler},
     Multiaddr, PeerId,
 };
-use tokio::sync::mpsc;
 
 use std::{
     collections::{HashMap, VecDeque},
@@ -24,10 +23,8 @@ pub static GOSSIP_ORIGIN: AtomicBool = AtomicBool::new(false);
 #[derive(Eq, PartialEq, Hash, Debug, Clone, Copy)]
 struct Id(PeerId, ConnectionId);
 
-// #[derive(Default)]
+#[derive(Default)]
 pub struct Gossip {
-    // Connection origins we are listening to
-    // origin_rx: mpsc::UnboundedReceiver<Origin>,
     // Gossip event builder per peer id
     builders: HashMap<PeerId, GossipEventBuilder>,
     // Events produced by the 'GossipHandlers'
@@ -35,12 +32,8 @@ pub struct Gossip {
 }
 
 impl Gossip {
-    pub fn new(_origin_rx: mpsc::UnboundedReceiver<Origin>) -> Self {
-        Self {
-            // origin_rx,
-            builders: HashMap::default(),
-            events: VecDeque::default(),
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 
@@ -121,11 +114,14 @@ impl NetworkBehaviour for Gossip {
     }
 }
 
-pub struct GossipEvent {
-    pub peer_id: PeerId,
-    pub peer_addr: Multiaddr,
-    pub conn: NegotiatedSubstream,
-    pub conn_info: ConnectionInfo,
+pub enum GossipEvent {
+    Success {
+        peer_id: PeerId,
+        peer_addr: Multiaddr,
+        conn: NegotiatedSubstream,
+        conn_info: ConnectionInfo,
+    },
+    Failure,
 }
 
 #[derive(Default)]
@@ -159,7 +155,7 @@ impl GossipEventBuilder {
 
     fn finish(self) -> GossipEvent {
         // If any 'unwrap' fails, then that's a programmer error!
-        GossipEvent {
+        GossipEvent::Success {
             peer_id: self.peer_id.unwrap(),
             peer_addr: self.peer_addr.unwrap(),
             conn: self.conn.unwrap(),

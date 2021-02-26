@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use libp2p::Multiaddr;
+use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
 use serde::Deserialize;
 
 use std::str::FromStr;
@@ -9,6 +9,8 @@ use std::str::FromStr;
 const DEFAULT_BIND_ADDRESSES: &str = "/ip4/0.0.0.0/tcp/15600";
 
 pub const DEFAULT_RECONNECT_INTERVAL_SECS: u64 = 30;
+pub const DEFAULT_MAX_UNKNOWN_PEERS_ACCEPTED: usize = 4;
+pub const DEFAULT_MAX_DISCOVERED_PEERS_DIALED: usize = 4;
 
 /// The network configuration.
 #[derive(Clone, Debug)]
@@ -17,8 +19,12 @@ pub struct NetworkConfig {
     pub bind_address: Multiaddr,
     /// The automatic reconnect interval in seconds for known peers.
     pub reconnect_interval_secs: u64,
-    /// The configured entry nodes for peer discovery.
-    pub entry_nodes: Vec<Multiaddr>,
+    /// The maximum number of gossip connections with unknown peers.
+    pub max_unknown_peers_accepted: usize,
+    /// The maximum number of gossip connections with discovered peers.
+    pub max_discovered_peers_dialed: usize,
+    /// The static peers.
+    pub peers: Vec<Peer>,
 }
 
 impl NetworkConfig {
@@ -32,12 +38,11 @@ impl NetworkConfig {
 /// Note: The fields of this struct have to correspond with the parameters in the config.
 #[derive(Default, Deserialize)]
 pub struct NetworkConfigBuilder {
-    /// The address/es the networking layer tries binding to.
     bind_address: Option<Multiaddr>,
-    /// The automatic reconnect interval in seconds for known peers.
     reconnect_interval_secs: Option<u64>,
-    /// The configured entry nodes for peer discovery.
-    dht: DhtConfigBuilder,
+    max_unknown_peers_accepted: Option<usize>,
+    max_discovered_peers_dialed: Option<usize>,
+    peering: PeeringConfigBuilder,
 }
 
 impl NetworkConfigBuilder {
@@ -65,37 +70,74 @@ impl NetworkConfigBuilder {
             bind_address: self
                 .bind_address
                 .unwrap_or_else(|| Multiaddr::from_str(DEFAULT_BIND_ADDRESSES).unwrap()),
+
             reconnect_interval_secs: self.reconnect_interval_secs.unwrap_or(DEFAULT_RECONNECT_INTERVAL_SECS),
-            entry_nodes: self.dht.finish().entry_nodes,
+
+            max_unknown_peers_accepted: self
+                .max_unknown_peers_accepted
+                .unwrap_or(DEFAULT_MAX_UNKNOWN_PEERS_ACCEPTED),
+
+            max_discovered_peers_dialed: self
+                .max_discovered_peers_dialed
+                .unwrap_or(DEFAULT_MAX_DISCOVERED_PEERS_DIALED),
+
+            peers: self.peering.finish().peers,
         }
     }
 }
 
 #[derive(Clone)]
-pub struct DhtConfig {
-    pub entry_nodes: Vec<Multiaddr>,
+pub struct PeeringConfig {
+    pub peers: Vec<Peer>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Peer {
+    pub peer_id: PeerId,
+    pub address: Multiaddr,
+    pub alias: Option<String>,
 }
 
 #[derive(Default, Deserialize)]
-pub struct DhtConfigBuilder {
-    pub entry_nodes: Option<Vec<EntryNode>>,
+pub struct PeeringConfigBuilder {
+    pub peers: Option<Vec<PeerBuilder>>,
 }
 
-impl DhtConfigBuilder {
-    pub fn finish(self) -> DhtConfig {
-        let entry_nodes = match self.entry_nodes {
+impl PeeringConfigBuilder {
+    pub fn finish(self) -> PeeringConfig {
+        let peers = match self.peers {
             None => Vec::new(),
-            Some(entry_nodes) => entry_nodes
+            Some(peer_builders) => peer_builders
                 .into_iter()
-                .map(|entry| Multiaddr::from_str(&entry.address[..]).expect("error parsing multiaddr."))
+                .map(|pb| {
+                    // **Note**: this Multiaddr comes with the '../p2p/XYZ' suffix.
+                    let mut p2p_addr = Multiaddr::from_str(&pb.address).expect("error parsing multiaddr.");
+
+                    // NOTE: `unwrap`ing should be fine here since it comes from the config.
+                    let (peer_id, address) = if let Protocol::P2p(multihash) = p2p_addr.pop().unwrap() {
+                        let peer_id = PeerId::from_multihash(multihash).expect("Invalid Multiaddr.");
+                        (peer_id, p2p_addr)
+                    } else {
+                        unreachable!(
+                            "Invalid Peer descriptor. The multiaddress did not have a valid peer id as its last segment."
+                        )
+                    };
+
+                    Peer {
+                        peer_id,
+                        address,
+                        alias: pb.alias,
+                    }
+                })
                 .collect(),
         };
 
-        DhtConfig { entry_nodes }
+        PeeringConfig { peers }
     }
 }
 
 #[derive(Deserialize)]
-pub struct EntryNode {
+pub struct PeerBuilder {
     address: String,
+    alias: Option<String>,
 }

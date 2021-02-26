@@ -7,7 +7,7 @@ use crate::{
     peer::{AddrBanlist, PeerBanlist, PeerInfo, PeerList},
     service::{HostCommand, HostCommandReceiver, NetworkService, SwarmEventSender},
     swarm,
-    swarm::{protocols::gossip::GOSSIP_ORIGIN, SwarmBehavior},
+    swarm::{protocols::gossip::GOSSIP_ORIGIN, SubstreamBehavior},
 };
 
 use bee_runtime::{node::Node, worker::Worker};
@@ -30,7 +30,6 @@ pub struct NetworkHostConfig {
     pub banned_peers: PeerBanlist,
     pub swarm_event_sender: SwarmEventSender,
     pub host_command_receiver: HostCommandReceiver,
-    pub entry_nodes: Vec<Multiaddr>,
 }
 
 /// A node worker, that deals with accepting and initiating connections with remote peers.
@@ -56,13 +55,12 @@ impl<N: Node> Worker<N> for NetworkHost {
             banned_peers,
             swarm_event_sender,
             mut host_command_receiver,
-            entry_nodes,
         } = config;
 
         let local_keys_clone = local_keys.clone();
         let swarm_event_sender_clone = swarm_event_sender.clone();
 
-        let mut swarm = swarm::build_swarm(&local_keys_clone, swarm_event_sender_clone, entry_nodes)
+        let mut swarm = swarm::build_swarm(&local_keys_clone, swarm_event_sender_clone)
             .await
             .expect("Fatal error: creating transport layer failed.");
 
@@ -70,19 +68,13 @@ impl<N: Node> Worker<N> for NetworkHost {
 
         let _ = Swarm::listen_on(&mut swarm, bind_address).expect("Fatal error: address binding failed.");
 
-        {
-            let swarm_behavior: &mut crate::swarm::SwarmBehavior = swarm.deref_mut();
+        // {
+        //     let swarm_behavior: &mut crate::swarm::SwarmBehavior = swarm.deref_mut();
 
-            // TEMP
-            info!(
-                "Kademlia protocol name: {}",
-                String::from_utf8_lossy(swarm_behavior.kademlia.protocol_name())
-            );
-
-            if let Err(_) = swarm_behavior.kademlia.bootstrap() {
-                info!("Running node without DHT entry nodes.");
-            }
-        }
+        //     if !swarm_behavior.bootstrap_routing_table() {
+        //         info!("Running node without DHT entry nodes.");
+        //     }
+        // }
 
         node.spawn::<Self, _, _>(|mut shutdown| async move {
 
@@ -123,7 +115,7 @@ impl<N: Node> Worker<N> for NetworkHost {
 // should be handled in `behavior.rs`.
 fn process_swarm_event(
     event: SwarmEvent<(), impl std::error::Error>,
-    _swarm: &mut Swarm<SwarmBehavior>,
+    _swarm: &mut Swarm<SubstreamBehavior>,
     _internal_event_sender: &SwarmEventSender,
 ) {
     match event {
@@ -142,7 +134,7 @@ fn process_swarm_event(
             debug!("Closed transport with '{}'.", alias!(peer_id));
         }
         SwarmEvent::ListenerError { error } => {
-            error!("Libp2p error: Cause: {}", error);
+            error!("libp2p error: Cause: {}", error);
         }
         SwarmEvent::Dialing(peer_id) => {
             // NB: strange, but this event is not actually fired when dialing. (open issue?)
@@ -157,7 +149,7 @@ fn process_swarm_event(
 
 async fn process_command(
     command: HostCommand,
-    swarm: &mut Swarm<SwarmBehavior>,
+    swarm: &mut Swarm<SubstreamBehavior>,
     local_keys: &Keypair,
     peerlist: &PeerList,
     banned_addrs: &AddrBanlist,
@@ -167,8 +159,8 @@ async fn process_command(
         HostCommand::AddPeer { address, peer_id, .. } => {
             println!("Adding address of {} to routing table.", alias!(peer_id));
             {
-                let swarm_behavior: &mut crate::swarm::SwarmBehavior = swarm.deref_mut();
-                swarm_behavior.kademlia.add_address(&peer_id, address);
+                let swarm_behavior: &mut crate::swarm::SubstreamBehavior = swarm.deref_mut();
+                swarm_behavior.add_address_to_routing_table(&peer_id, address);
             }
         }
         HostCommand::DialPeer { peer_id } => {
@@ -185,7 +177,7 @@ async fn process_command(
 }
 
 async fn dial_addr(
-    swarm: &mut Swarm<SwarmBehavior>,
+    swarm: &mut Swarm<SubstreamBehavior>,
     address: Multiaddr,
     banned_addrs: &AddrBanlist,
 ) -> Result<(), Error> {
@@ -205,7 +197,7 @@ async fn dial_addr(
 }
 
 async fn dial_peer(
-    swarm: &mut Swarm<SwarmBehavior>,
+    swarm: &mut Swarm<SubstreamBehavior>,
     local_keys: &identity::Keypair,
     remote_peer_id: PeerId,
     peerlist: &PeerList,

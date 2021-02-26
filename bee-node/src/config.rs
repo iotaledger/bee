@@ -7,7 +7,7 @@ use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder}
 use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
 
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
-use bee_network::{NetworkConfig, NetworkConfigBuilder};
+use bee_network::{Keypair, NetworkConfig, NetworkConfigBuilder, PeerId, PublicKey};
 use bee_peering::{PeeringConfig, PeeringConfigBuilder};
 use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::config::{RestApiConfig, RestApiConfigBuilder};
@@ -38,6 +38,7 @@ pub enum Error {
 
 #[derive(Default, Deserialize)]
 pub struct NodeConfigBuilder<B: StorageBackend> {
+    pub(crate) identity: Option<String>,
     pub(crate) alias: Option<String>,
     pub(crate) bech32_hrp: Option<String>,
     pub(crate) network_id: Option<String>,
@@ -69,7 +70,26 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
         hasher.update(network_id.0.as_bytes());
         hasher.finalize_variable(|res| network_id.1 = u64::from_le_bytes(res[0..8].try_into().unwrap()));
 
+        let (identity, identity_string, new) = if let Some(identity_string) = self.identity {
+            if identity_string.len() == 128 {
+                let mut decoded = [0u8; 64];
+                hex::decode_to_slice(&identity_string[..], &mut decoded).expect("error decoding identity");
+                let identity = Keypair::decode(&mut decoded).expect("error decoding identity");
+                (identity, identity_string, false)
+            } else if identity_string.is_empty() {
+                generate_random_identity()
+            } else {
+                panic!("invalid identity string length");
+            }
+        } else {
+            generate_random_identity()
+        };
+
+        let peer_id = PeerId::from_public_key(PublicKey::Ed25519(identity.public()));
+
         NodeConfig {
+            identity: (identity, identity_string, new),
+            peer_id,
             alias: self.alias.unwrap_or_else(|| DEFAULT_ALIAS.to_owned()),
             bech32_hrp: self.bech32_hrp.unwrap_or_else(|| DEFAULT_BECH32_HRP.to_owned()),
             network_id,
@@ -89,6 +109,8 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
 }
 
 pub struct NodeConfig<B: StorageBackend> {
+    pub identity: (Keypair, String, bool),
+    pub peer_id: PeerId,
     pub alias: String,
     pub bech32_hrp: String,
     pub network_id: (String, u64),
@@ -108,6 +130,8 @@ pub struct NodeConfig<B: StorageBackend> {
 impl<B: StorageBackend> Clone for NodeConfig<B> {
     fn clone(&self) -> Self {
         Self {
+            identity: self.identity.clone(),
+            peer_id: self.peer_id,
             alias: self.alias.clone(),
             bech32_hrp: self.bech32_hrp.clone(),
             network_id: self.network_id.clone(),
@@ -124,4 +148,11 @@ impl<B: StorageBackend> Clone for NodeConfig<B> {
             dashboard: self.dashboard.clone(),
         }
     }
+}
+
+fn generate_random_identity() -> (Keypair, String, bool) {
+    let identity = Keypair::generate();
+    let encoded = identity.encode();
+    let identity_string = hex::encode(encoded);
+    (identity, identity_string, true)
 }

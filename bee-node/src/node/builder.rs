@@ -12,8 +12,6 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_network::{self, NetworkServiceController};
-use bee_peering::{ManualPeerManager, PeerManager};
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder, NodeInfo},
@@ -157,10 +155,8 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
     }
 
     async fn finish(mut self) -> Result<BeeNode<B>, Error> {
-        if self.config.peering.identity_private_key.2 {
-            return Err(Error::InvalidOrNoIdentityPrivateKey(
-                self.config.peering.identity_private_key.1,
-            ));
+        if self.config.identity.2 {
+            return Err(Error::InvalidOrNoIdentityPrivateKey(self.config.identity.1));
         }
 
         info!(
@@ -173,14 +169,12 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let network_config = config.network.clone();
         let network_id = config.network_id.1;
 
-        let max_unknown_peers = config.peering.manual.unknown_peers_limit;
-        let local_keys = config.peering.identity_private_key.0.clone();
+        let local_keys = config.identity.0.clone();
 
         let this = self.with_resource(config.clone()); // TODO: Remove clone
 
         info!("Initializing network layer...");
-        let (this, events) =
-            bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, max_unknown_peers, this).await;
+        let (this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
 
         let this = this.with_resource(ctrl_c_listener());
 
@@ -241,12 +235,6 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         for id in node.worker_order.clone() {
             this.worker_starts.remove(&id).unwrap()(&mut node).await;
         }
-
-        // TODO: turn into worker
-        info!("Starting manual peer manager...");
-        let network = node.resource::<NetworkServiceController>();
-        let manual_peering_config = config.peering.manual.clone();
-        ManualPeerManager::new(manual_peering_config, &network).await;
 
         info!("Initialized.");
 

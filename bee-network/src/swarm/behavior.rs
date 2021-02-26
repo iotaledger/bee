@@ -6,7 +6,6 @@ use std::time::Duration;
 use super::protocols::gossip::{self, Gossip, GossipEvent};
 use crate::{
     alias,
-    host::Origin,
     service::{SwarmEvent, SwarmEventSender},
 };
 
@@ -15,38 +14,35 @@ use libp2p::{
     identify::{Identify, IdentifyEvent},
     identity::PublicKey,
     kad::{store::MemoryStore, Kademlia, KademliaConfig, KademliaEvent},
-    multiaddr::Protocol,
     swarm::NetworkBehaviourEventProcess,
     Multiaddr, NetworkBehaviour, PeerId,
 };
 use log::*;
-use tokio::sync::mpsc;
 
 const KADEMLIA_QUERY_TIMEOUT: u64 = 1 * 60;
+const IDENTIFY_PROTOCOL_NAME: &str = "iota/0.1.0";
+const IDENTIFY_AGENT_VERSION: &str = "github.com/iotaledger/bee";
+
+pub type Swarm = libp2p::swarm::Swarm<SubstreamBehavior>;
 
 /// A type that contains the different protocols that are negotiated on top of the basic transport of a peer connection.
 #[derive(NetworkBehaviour)]
-pub struct SwarmBehavior {
+pub struct SubstreamBehavior {
     /// Identify protocol.
-    pub(crate) identify: Identify,
+    identify: Identify,
 
     /// IOTA gossip protocol.
-    pub(crate) gossip: Gossip,
+    gossip: Gossip,
 
     /// Kademlia protocol.
-    pub(crate) kademlia: Kademlia<MemoryStore>,
+    kademlia: Kademlia<MemoryStore>,
 
     #[behaviour(ignore)]
     swarm_event_sender: SwarmEventSender,
 }
 
-impl SwarmBehavior {
-    pub async fn new(
-        local_public_key: PublicKey,
-        swarm_event_sender: SwarmEventSender,
-        origin_rx: mpsc::UnboundedReceiver<Origin>,
-        entry_nodes: Vec<Multiaddr>,
-    ) -> Self {
+impl SubstreamBehavior {
+    pub async fn new(local_public_key: PublicKey, swarm_event_sender: SwarmEventSender) -> Self {
         let local_id = local_public_key.clone().into();
 
         let peer_store = MemoryStore::new(local_id);
@@ -55,29 +51,42 @@ impl SwarmBehavior {
         kad_config.set_query_timeout(Duration::from_secs(KADEMLIA_QUERY_TIMEOUT));
         kad_config.disjoint_query_paths(true);
 
-        let mut kademlia = Kademlia::with_config(local_id, peer_store, kad_config);
+        let kademlia = Kademlia::with_config(local_id, peer_store, kad_config);
 
-        // Connect this node to the entry nodes
-        for mut p2p_addr in entry_nodes {
-            if let Some(Protocol::P2p(multihash)) = p2p_addr.pop() {
-                kademlia.add_address(&PeerId::from_multihash(multihash).unwrap(), p2p_addr);
-            }
-        }
+        info!(
+            "Kademlia protocol name: {}",
+            String::from_utf8_lossy(kademlia.protocol_name())
+        );
+
+        info!("Identify protocol name: {}", IDENTIFY_PROTOCOL_NAME);
+
+        let identify = Identify::new(
+            IDENTIFY_PROTOCOL_NAME.to_string(),
+            IDENTIFY_AGENT_VERSION.to_string(),
+            local_public_key,
+        );
 
         Self {
-            identify: Identify::new(
-                "iota/0.1.0".to_string(),
-                "github.com/iotaledger/bee".to_string(),
-                local_public_key,
-            ),
-            gossip: Gossip::new(origin_rx),
+            identify,
+            gossip: Gossip::new(),
             kademlia,
             swarm_event_sender,
         }
     }
+
+    /// Adds the address of a peer to the routing table.
+    /// **Note**: Does nothing if Kademlia is disabled.
+    pub fn add_address_to_routing_table(&mut self, peer_id: &PeerId, address: Multiaddr) {
+        self.kademlia.add_address(peer_id, address);
+    }
+
+    ///
+    pub fn bootstrap_local_routing_table(&mut self) -> bool {
+        self.kademlia.bootstrap().is_ok()
+    }
 }
 
-impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
+impl NetworkBehaviourEventProcess<IdentifyEvent> for SubstreamBehavior {
     fn inject_event(&mut self, event: IdentifyEvent) {
         trace!("Behavior received identify event.");
 
@@ -103,48 +112,51 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
     }
 }
 
-impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
+impl NetworkBehaviourEventProcess<GossipEvent> for SubstreamBehavior {
     fn inject_event(&mut self, event: GossipEvent) {
         trace!("Behavior received gossip event.");
 
-        let GossipEvent {
-            peer_id,
-            peer_addr,
-            conn,
-            conn_info,
-        } = event;
-
-        debug!("New gossip stream with {} [conn_info: {:?}]", peer_id, conn_info);
-
-        let (reader, writer) = conn.split();
-
-        let (incoming_gossip_sender, incoming_gossip_receiver) = gossip::gossip_channel();
-        let (outgoing_gossip_sender, outgoing_gossip_receiver) = gossip::gossip_channel();
-
-        gossip::spawn_gossip_in_task(peer_id, reader, incoming_gossip_sender, self.swarm_event_sender.clone());
-        gossip::spawn_gossip_out_task(
-            peer_id,
-            writer,
-            outgoing_gossip_receiver,
-            self.swarm_event_sender.clone(),
-        );
-
-        // TODO: retrieve the PeerInfo from the peer list
-
-        let _ = self
-            .swarm_event_sender
-            .send(SwarmEvent::ProtocolEstablished {
+        match event {
+            GossipEvent::Success {
                 peer_id,
-                address: peer_addr,
+                peer_addr,
+                conn,
                 conn_info,
-                gossip_in: incoming_gossip_receiver,
-                gossip_out: outgoing_gossip_sender,
-            })
-            .expect("Receiver of event channel dropped.");
+            } => {
+                debug!("New gossip stream with {} [conn_info: {:?}]", peer_id, conn_info);
+
+                let (reader, writer) = conn.split();
+
+                let (incoming_gossip_sender, incoming_gossip_receiver) = gossip::gossip_channel();
+                let (outgoing_gossip_sender, outgoing_gossip_receiver) = gossip::gossip_channel();
+
+                gossip::spawn_gossip_in_task(peer_id, reader, incoming_gossip_sender, self.swarm_event_sender.clone());
+                gossip::spawn_gossip_out_task(
+                    peer_id,
+                    writer,
+                    outgoing_gossip_receiver,
+                    self.swarm_event_sender.clone(),
+                );
+
+                // TODO: retrieve the PeerInfo from the peer list
+
+                let _ = self
+                    .swarm_event_sender
+                    .send(SwarmEvent::ProtocolEstablished {
+                        peer_id,
+                        address: peer_addr,
+                        conn_info,
+                        gossip_in: incoming_gossip_receiver,
+                        gossip_out: outgoing_gossip_sender,
+                    })
+                    .expect("Receiver of event channel dropped.");
+            }
+            GossipEvent::Failure => (),
+        }
     }
 }
 
-impl NetworkBehaviourEventProcess<KademliaEvent> for SwarmBehavior {
+impl NetworkBehaviourEventProcess<KademliaEvent> for SubstreamBehavior {
     fn inject_event(&mut self, event: KademliaEvent) {
         match event {
             KademliaEvent::QueryResult { id, result, stats } => {

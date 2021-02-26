@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{swarm::protocols::gossip::GossipSender, MAX_UNKNOWN_PEERS};
+use crate::{swarm::protocols::gossip::GossipSender, MAX_UNKNOWN_PEERS_ACCEPTED};
 
 use libp2p::PeerId;
 use tokio::sync::RwLock;
@@ -93,10 +93,11 @@ impl PeerList {
 
         // Prevent inserting more peers than preconfigured.
         if peer_info.relation.is_unknown()
-            && self.count_if(|info, _| info.relation.is_unknown()).await >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed)
+            && self.count_if(|info, _| info.relation.is_unknown()).await
+                >= MAX_UNKNOWN_PEERS_ACCEPTED.load(Ordering::Relaxed)
         {
             return Err(Error::UnknownPeerLimitReached(
-                MAX_UNKNOWN_PEERS.load(Ordering::Relaxed),
+                MAX_UNKNOWN_PEERS_ACCEPTED.load(Ordering::Relaxed),
             ));
         }
         if self.0.read().await.contains_key(peer_id) {
