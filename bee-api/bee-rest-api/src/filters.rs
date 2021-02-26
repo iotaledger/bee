@@ -9,6 +9,7 @@ use crate::{
         ROUTE_PEER, ROUTE_PEERS, ROUTE_REMOVE_PEER, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW, ROUTE_TIPS,
     },
     handlers,
+    permission::has_permission,
     storage::StorageBackend,
     Bech32Hrp, NetworkId,
 };
@@ -21,10 +22,7 @@ use bee_tangle::MsTangle;
 use tokio::sync::mpsc;
 use warp::{reject, Filter, Rejection};
 
-use std::{
-    collections::HashMap,
-    net::{IpAddr, SocketAddr},
-};
+use std::{collections::HashMap, net::IpAddr};
 
 #[derive(Debug, Clone)]
 pub(crate) enum CustomRejection {
@@ -514,28 +512,6 @@ fn white_flag(
         .and(has_permission(ROUTE_INFO, public_routes, allowed_ips))
         .and(warp::body::json())
         .and_then(handlers::debug::white_flag::white_flag)
-}
-
-pub fn has_permission(
-    route: &'static str,
-    public_routes: Vec<String>,
-    allowed_ips: Vec<IpAddr>,
-) -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    warp::addr::remote()
-        .and_then(move |addr: Option<SocketAddr>| {
-            let route = route.to_owned();
-            let public_routes = public_routes.clone();
-            let allowed_ips = allowed_ips.clone();
-            async move {
-                if let Some(v) = addr {
-                    if allowed_ips.contains(&v.ip()) || public_routes.contains(&route) {
-                        return Ok(());
-                    }
-                }
-                Err(reject::custom(CustomRejection::Forbidden))
-            }
-        })
-        .untuple_one()
 }
 
 mod custom_path_param {

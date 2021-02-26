@@ -5,6 +5,7 @@ mod filters;
 
 pub mod config;
 pub mod handlers;
+pub mod permission;
 pub mod storage;
 pub mod types;
 
