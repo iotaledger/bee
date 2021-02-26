@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::BadRequest, handlers::balance_ed25519::balance_ed25519, storage::StorageBackend,
+    filters::CustomRejection::BadRequest, handlers::api::v1::balance_ed25519::balance_ed25519, storage::StorageBackend,
 };
 
 use bee_message::prelude::*;

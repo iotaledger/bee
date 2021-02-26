@@ -3,7 +3,10 @@
 
 use crate::{
     filters::CustomRejection::BadRequest,
-    handlers::{submit_message::forward_to_message_submitter, SuccessBody},
+    handlers::{
+        api::v1::submit_message::{forward_to_message_submitter, SubmitMessageResponse},
+        SuccessBody,
+    },
     storage::StorageBackend,
 };
 
@@ -15,8 +18,6 @@ use bee_tangle::MsTangle;
 
 use tokio::sync::mpsc;
 use warp::{http::StatusCode, reject, Rejection, Reply};
-
-use crate::handlers::submit_message::SubmitMessageResponse;
 
 pub(crate) async fn submit_message_raw<B: StorageBackend>(
     buf: warp::hyper::body::Bytes,

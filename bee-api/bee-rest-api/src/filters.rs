@@ -171,7 +171,7 @@ fn info<B: StorageBackend>(
         .and(with_rest_api_config(rest_api_config))
         .and(with_protocol_config(protocol_config))
         .and(with_node_info(node_info))
-        .and_then(handlers::info::info)
+        .and_then(handlers::api::v1::info::info)
 }
 
 fn tips<B: StorageBackend>(
@@ -186,7 +186,7 @@ fn tips<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_TIPS, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(handlers::tips::tips)
+        .and_then(handlers::api::v1::tips::tips)
 }
 
 fn submit_message<B: StorageBackend>(
@@ -210,7 +210,7 @@ fn submit_message<B: StorageBackend>(
         .and(with_network_id(network_id))
         .and(with_rest_api_config(rest_api_config))
         .and(with_protocol_config(protocol_config))
-        .and_then(handlers::submit_message::submit_message)
+        .and_then(handlers::api::v1::submit_message::submit_message)
 }
 
 fn submit_message_raw<B: StorageBackend>(
@@ -228,7 +228,7 @@ fn submit_message_raw<B: StorageBackend>(
         .and(warp::body::bytes())
         .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
-        .and_then(handlers::submit_message_raw::submit_message_raw)
+        .and_then(handlers::api::v1::submit_message_raw::submit_message_raw)
 }
 
 fn message_indexation<B: StorageBackend>(
@@ -251,7 +251,7 @@ fn message_indexation<B: StorageBackend>(
             }
         }))
         .and(with_storage(storage))
-        .and_then(handlers::messages_find::messages_find)
+        .and_then(handlers::api::v1::messages_find::messages_find)
 }
 
 fn message<B: StorageBackend>(
@@ -267,7 +267,7 @@ fn message<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(handlers::message::message)
+        .and_then(handlers::api::v1::message::message)
 }
 
 fn message_metadata<B: StorageBackend>(
@@ -284,7 +284,7 @@ fn message_metadata<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_METADATA, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(handlers::message_metadata::message_metadata)
+        .and_then(handlers::api::v1::message_metadata::message_metadata)
 }
 
 fn message_raw<B: StorageBackend>(
@@ -301,7 +301,7 @@ fn message_raw<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_RAW, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(handlers::message_raw::message_raw)
+        .and_then(handlers::api::v1::message_raw::message_raw)
 }
 
 fn message_children<B: StorageBackend>(
@@ -318,7 +318,7 @@ fn message_children<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_CHILDREN, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(handlers::message_children::message_children)
+        .and_then(handlers::api::v1::message_children::message_children)
 }
 
 fn output<B: StorageBackend>(
@@ -334,7 +334,7 @@ fn output<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUT, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::output::output)
+        .and_then(handlers::api::v1::output::output)
 }
 
 fn balance_bech32<B: StorageBackend>(
@@ -350,7 +350,7 @@ fn balance_bech32<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_BALANCE_BECH32, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::balance_bech32::balance_bech32)
+        .and_then(handlers::api::v1::balance_bech32::balance_bech32)
 }
 
 fn balance_ed25519<B: StorageBackend>(
@@ -367,7 +367,7 @@ fn balance_ed25519<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_BALANCE_ED25519, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::balance_ed25519::balance_ed25519)
+        .and_then(handlers::api::v1::balance_ed25519::balance_ed25519)
 }
 
 fn outputs_bech32<B: StorageBackend>(
@@ -384,7 +384,7 @@ fn outputs_bech32<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUTS_BECH32, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::outputs_bech32::outputs_bech32)
+        .and_then(handlers::api::v1::outputs_bech32::outputs_bech32)
 }
 
 fn outputs_ed25519<B: StorageBackend>(
@@ -402,7 +402,7 @@ fn outputs_ed25519<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUTS_ED25519, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::outputs_ed25519::outputs_ed25519)
+        .and_then(handlers::api::v1::outputs_ed25519::outputs_ed25519)
 }
 
 fn milestone<B: StorageBackend>(
@@ -418,7 +418,7 @@ fn milestone<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MILESTONE, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(handlers::milestone::milestone)
+        .and_then(handlers::api::v1::milestone::milestone)
 }
 
 fn milestone_utxo_changes<B: StorageBackend>(
@@ -435,7 +435,7 @@ fn milestone_utxo_changes<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MILESTONE_UTXO_CHANGES, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::milestone_utxo_changes::milestone_utxo_changes)
+        .and_then(handlers::api::v1::milestone_utxo_changes::milestone_utxo_changes)
 }
 
 fn peers(
@@ -450,7 +450,7 @@ fn peers(
         .and(warp::get())
         .and(has_permission(ROUTE_PEERS, public_routes, allowed_ips))
         .and(with_peer_manager(peer_manager))
-        .and_then(handlers::peers::peers)
+        .and_then(handlers::api::v1::peers::peers)
 }
 
 fn peer(
@@ -466,7 +466,7 @@ fn peer(
         .and(warp::get())
         .and(has_permission(ROUTE_PEER, public_routes, allowed_ips))
         .and(with_peer_manager(peer_manager))
-        .and_then(handlers::peer::peer)
+        .and_then(handlers::api::v1::peer::peer)
 }
 
 fn peer_add(
@@ -484,7 +484,7 @@ fn peer_add(
         .and(warp::body::json())
         .and(with_peer_manager(peer_manager))
         .and(with_network_controller(network_controller))
-        .and_then(handlers::add_peer::add_peer)
+        .and_then(handlers::api::v1::add_peer::add_peer)
 }
 
 fn peer_remove(
@@ -500,7 +500,7 @@ fn peer_remove(
         .and(warp::delete())
         .and(has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips))
         .and(with_network_controller(network_controller))
-        .and_then(handlers::remove_peer::remove_peer)
+        .and_then(handlers::api::v1::remove_peer::remove_peer)
 }
 
 fn white_flag(
