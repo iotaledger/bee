@@ -519,8 +519,12 @@ fn white_flag(
 mod custom_path_param {
 
     use super::*;
+
     use bee_message::{
-        address::Address, milestone::MilestoneIndex, output::OutputId, prelude::Ed25519Address, MessageId,
+        address::{Address, Ed25519Address},
+        milestone::MilestoneIndex,
+        output::OutputId,
+        MessageId,
     };
 
     pub(super) fn output_id() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Copy {
