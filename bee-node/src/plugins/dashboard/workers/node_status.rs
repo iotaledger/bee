@@ -44,7 +44,6 @@ where
     let node_config = node.resource::<NodeConfig<N::Backend>>();
     let metrics = node.resource::<ProtocolMetrics>();
     let node_info = node.info();
-    let peering_config = node_config.peering.clone();
     let users = users.clone();
 
     node.spawn::<Dashboard, _, _>(|shutdown| async move {
@@ -68,7 +67,6 @@ where
                 version: node_info.version.clone(),
                 latest_version: node_info.version.clone(),
                 uptime: uptime.elapsed().as_millis() as u64,
-                autopeering_id: peering_config.peer_id.to_string(),
                 node_alias: node_config.alias.clone(),
                 bech32_hrp: node_config.bech32_hrp.clone(),
                 connected_peers_count: 0,
@@ -137,7 +135,6 @@ pub struct NodeStatus {
     pub version: String,
     pub latest_version: String,
     pub uptime: u64,
-    pub autopeering_id: String,
     pub node_alias: String,
     pub bech32_hrp: String,
     pub connected_peers_count: usize,
