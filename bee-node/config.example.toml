@@ -27,17 +27,6 @@ max_discovered_peers_dialed = 2
 #address = ""
 #alias = ""
 
-[peering]
-[peering.manual]
-unknown_peers_limit = 4
-# known peers
-# [[peering.manual.peers]]
-# address = ""
-# alias   = ""
-# [[peering.manual.peers]]
-# address = ""
-# alias   = ""
-
 [protocol]
 minimum_pow_score = 4000
 [protocol.coordinator]

@@ -331,7 +331,6 @@ dependencies = [
  "bee-ledger",
  "bee-message",
  "bee-network",
- "bee-peering",
  "bee-protocol",
  "bee-rest-api",
  "bee-runtime",
@@ -364,17 +363,6 @@ dependencies = [
  "toml",
  "warp",
  "warp-reverse-proxy",
-]
-
-[[package]]
-name = "bee-peering"
-version = "0.1.0-alpha"
-dependencies = [
- "async-trait",
- "bee-network",
- "hex",
- "log",
- "serde",
 ]
 
 [[package]]

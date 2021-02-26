@@ -8,7 +8,6 @@ use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
 
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
 use bee_network::{Keypair, NetworkConfig, NetworkConfigBuilder, PeerId, PublicKey};
-use bee_peering::{PeeringConfig, PeeringConfigBuilder};
 use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_snapshot::config::{SnapshotConfig, SnapshotConfigBuilder};
@@ -44,7 +43,6 @@ pub struct NodeConfigBuilder<B: StorageBackend> {
     pub(crate) network_id: Option<String>,
     pub(crate) logger: Option<LoggerConfigBuilder>,
     pub(crate) network: Option<NetworkConfigBuilder>,
-    pub(crate) peering: Option<PeeringConfigBuilder>,
     pub(crate) protocol: Option<ProtocolConfigBuilder>,
     pub(crate) rest_api: Option<RestApiConfigBuilder>,
     pub(crate) snapshot: Option<SnapshotConfigBuilder>,
@@ -95,7 +93,6 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
             network_id,
             logger: self.logger.unwrap_or_default().finish(),
             network: self.network.unwrap_or_default().finish(),
-            peering: self.peering.unwrap_or_default().finish(),
             protocol: self.protocol.unwrap_or_default().finish(),
             rest_api: self.rest_api.unwrap_or_default().finish(),
             snapshot: self.snapshot.unwrap_or_default().finish(),
@@ -116,7 +113,6 @@ pub struct NodeConfig<B: StorageBackend> {
     pub network_id: (String, u64),
     pub logger: LoggerConfig,
     pub network: NetworkConfig,
-    pub peering: PeeringConfig,
     pub protocol: ProtocolConfig,
     pub rest_api: RestApiConfig,
     pub snapshot: SnapshotConfig,
@@ -137,7 +133,6 @@ impl<B: StorageBackend> Clone for NodeConfig<B> {
             network_id: self.network_id.clone(),
             logger: self.logger.clone(),
             network: self.network.clone(),
-            peering: self.peering.clone(),
             protocol: self.protocol.clone(),
             rest_api: self.rest_api.clone(),
             snapshot: self.snapshot.clone(),
