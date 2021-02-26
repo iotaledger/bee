@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::ServiceUnavailable,
     handlers::{BodyInner, SuccessBody},
+    rejection::CustomRejection,
     storage::StorageBackend,
 };
 
@@ -22,8 +22,11 @@ pub(crate) async fn outputs_ed25519<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     let mut fetched = match Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage.deref(), &addr)
         .await
-        .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
-    {
+        .map_err(|_| {
+            reject::custom(CustomRejection::ServiceUnavailable(
+                "can not fetch from storage".to_string(),
+            ))
+        })? {
         Some(ids) => ids,
         None => vec![],
     };

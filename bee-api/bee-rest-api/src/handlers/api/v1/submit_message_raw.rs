@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::BadRequest,
     handlers::{
         api::v1::submit_message::{forward_to_message_submitter, SubmitMessageResponse},
         SuccessBody,
     },
+    rejection::CustomRejection,
     storage::StorageBackend,
 };
 
@@ -25,7 +25,8 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<impl Reply, Rejection> {
     let bytes = (*buf).to_vec();
-    let message = Message::unpack(&mut bytes.as_slice()).map_err(|e| reject::custom(BadRequest(e.to_string())))?;
+    let message = Message::unpack(&mut bytes.as_slice())
+        .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
     Ok(warp::reply::with_status(
         warp::reply::json(&SuccessBody::new(SubmitMessageResponse {

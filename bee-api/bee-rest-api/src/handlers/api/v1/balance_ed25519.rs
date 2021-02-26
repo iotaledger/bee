@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::{NotFound, ServiceUnavailable},
     handlers::{BodyInner, SuccessBody},
+    rejection::CustomRejection,
     storage::StorageBackend,
 };
 
@@ -23,14 +23,19 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     match Fetch::<Address, Balance>::fetch(storage.deref(), &Address::Ed25519(addr))
         .await
-        .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
-    {
+        .map_err(|_| {
+            reject::custom(CustomRejection::ServiceUnavailable(
+                "can not fetch from storage".to_string(),
+            ))
+        })? {
         Some(balance) => Ok(warp::reply::json(&SuccessBody::new(BalanceForAddressResponse {
             address_type: 1,
             address: addr.to_string(),
             balance: balance.amount(),
         }))),
-        None => Err(reject::custom(NotFound("balance not found".to_string()))),
+        None => Err(reject::custom(CustomRejection::NotFound(
+            "balance not found".to_string(),
+        ))),
     }
 }
 

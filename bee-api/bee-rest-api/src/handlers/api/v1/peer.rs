@@ -3,6 +3,8 @@
 
 use crate::{
     handlers::{BodyInner, SuccessBody},
+    rejection::CustomRejection,
+    types::peer_to_peer_dto,
     types::PeerDto,
 };
 
@@ -13,14 +15,12 @@ use bee_runtime::resource::ResourceHandle;
 use serde::{Deserialize, Serialize};
 use warp::{reject, Rejection, Reply};
 
-use crate::{filters::CustomRejection::NotFound, types::peer_to_peer_dto};
-
 pub(crate) async fn peer(peer_id: PeerId, peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Rejection> {
     match peer_manager.get(&peer_id).await {
         Some(peer_entry) => Ok(warp::reply::json(&SuccessBody::new(PeerResponse(
             peer_to_peer_dto(&peer_entry.0, &peer_manager).await,
         )))),
-        None => Err(reject::custom(NotFound("peer not found".to_string()))),
+        None => Err(reject::custom(CustomRejection::NotFound("peer not found".to_string()))),
     }
 }
 

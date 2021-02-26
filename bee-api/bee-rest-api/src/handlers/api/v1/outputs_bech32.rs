@@ -1,9 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    filters::CustomRejection::BadRequest, handlers::api::v1::outputs_ed25519::outputs_ed25519, storage::StorageBackend,
-};
+use crate::{handlers::api::v1::outputs_ed25519::outputs_ed25519, rejection::CustomRejection, storage::StorageBackend};
 
 use bee_message::prelude::*;
 use bee_runtime::resource::ResourceHandle;
@@ -16,6 +14,8 @@ pub(crate) async fn outputs_bech32<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     match addr {
         Address::Ed25519(a) => outputs_ed25519(a, storage).await,
-        _ => Err(reject::custom(BadRequest("address type not supported".to_string()))),
+        _ => Err(reject::custom(CustomRejection::BadRequest(
+            "address type not supported".to_string(),
+        ))),
     }
 }

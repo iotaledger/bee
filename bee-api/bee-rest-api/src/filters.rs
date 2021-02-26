@@ -10,6 +10,7 @@ use crate::{
     },
     handlers,
     permission::has_permission,
+    rejection::CustomRejection,
     storage::StorageBackend,
     Bech32Hrp, NetworkId,
 };
@@ -23,16 +24,6 @@ use tokio::sync::mpsc;
 use warp::{reject, Filter, Rejection};
 
 use std::{collections::HashMap, net::IpAddr};
-
-#[derive(Debug, Clone)]
-pub(crate) enum CustomRejection {
-    Forbidden,
-    BadRequest(String),
-    NotFound(String),
-    ServiceUnavailable(String),
-}
-
-impl reject::Reject for CustomRejection {}
 
 pub fn all<B: StorageBackend>(
     public_routes: Vec<String>,

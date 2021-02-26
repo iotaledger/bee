@@ -3,8 +3,8 @@
 
 use crate::{
     config::RestApiConfig,
-    filters::CustomRejection::{BadRequest, ServiceUnavailable},
     handlers::{BodyInner, SuccessBody},
+    rejection::CustomRejection,
     storage::StorageBackend,
     types::*,
     NetworkId,
@@ -46,20 +46,28 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     } else {
         network_id_v
             .as_str()
-            .ok_or_else(|| reject::custom(BadRequest("invalid network id: expected an u64-string".to_string())))?
+            .ok_or_else(|| {
+                reject::custom(CustomRejection::BadRequest(
+                    "invalid network id: expected an u64-string".to_string(),
+                ))
+            })?
             .parse::<u64>()
-            .map_err(|_| reject::custom(BadRequest("invalid network id: expected an u64-string".to_string())))?
+            .map_err(|_| {
+                reject::custom(CustomRejection::BadRequest(
+                    "invalid network id: expected an u64-string".to_string(),
+                ))
+            })?
     };
 
     let parents: Vec<MessageId> = if parents_v.is_null() {
         tangle.get_messages_to_approve().await.ok_or_else(|| {
-            reject::custom(ServiceUnavailable(
+            reject::custom(CustomRejection::ServiceUnavailable(
                 "can not auto-fill parents: no tips available".to_string(),
             ))
         })?
     } else {
         let array = parents_v.as_array().ok_or_else(|| {
-            reject::custom(BadRequest(
+            reject::custom(CustomRejection::BadRequest(
                 "invalid parents: expected an array of message ids".to_string(),
             ))
         })?;
@@ -68,12 +76,16 @@ pub(crate) async fn submit_message<B: StorageBackend>(
             let message_id = s
                 .as_str()
                 .ok_or_else(|| {
-                    reject::custom(BadRequest(
+                    reject::custom(CustomRejection::BadRequest(
                         "invalid parents: expected an array of message ids".to_string(),
                     ))
                 })?
                 .parse::<MessageId>()
-                .map_err(|_| reject::custom(BadRequest("invalid network id: expected an u64-string".to_string())))?;
+                .map_err(|_| {
+                    reject::custom(CustomRejection::BadRequest(
+                        "invalid network id: expected an u64-string".to_string(),
+                    ))
+                })?;
             message_ids.push(message_id);
         }
         message_ids
@@ -83,8 +95,8 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         None
     } else {
         let payload_dto = serde_json::from_value::<PayloadDto>(payload_v.clone())
-            .map_err(|e| reject::custom(BadRequest(e.to_string())))?;
-        Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(BadRequest(e)))?)
+            .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
+        Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(CustomRejection::BadRequest(e)))?)
     };
 
     let nonce = if nonce_v.is_null() {
@@ -92,9 +104,17 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     } else {
         let parsed = nonce_v
             .as_str()
-            .ok_or_else(|| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?
+            .ok_or_else(|| {
+                reject::custom(CustomRejection::BadRequest(
+                    "invalid nonce: expected an u64-string".to_string(),
+                ))
+            })?
             .parse::<u64>()
-            .map_err(|_| reject::custom(BadRequest("invalid nonce: expected an u64-string".to_string())))?;
+            .map_err(|_| {
+                reject::custom(CustomRejection::BadRequest(
+                    "invalid nonce: expected an u64-string".to_string(),
+                ))
+            })?;
         if parsed == 0 {
             None
         } else {
@@ -112,10 +132,10 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         }
         builder
             .finish()
-            .map_err(|e| reject::custom(BadRequest(e.to_string())))?
+            .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?
     } else {
         if !rest_api_config.feature_proof_of_work() {
-            return Err(reject::custom(ServiceUnavailable(
+            return Err(reject::custom(CustomRejection::ServiceUnavailable(
                 "can not auto-fill nonce: feature `PoW` not enabled".to_string(),
             )));
         }
@@ -132,7 +152,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         }
         builder
             .finish()
-            .map_err(|e| reject::custom(BadRequest(e.to_string())))?
+            .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?
     };
 
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
@@ -165,18 +185,22 @@ pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
         })
         .map_err(|e| {
             error!("can not submit message: {}", e);
-            reject::custom(ServiceUnavailable("can not submit message".to_string()))
+            reject::custom(CustomRejection::ServiceUnavailable(
+                "can not submit message".to_string(),
+            ))
         })?;
 
     let result = waiter.await.map_err(|_| {
         // TODO: report back from HasherWorker and replace following line with:
         // error!("can not submit message: {:?}",e);
-        reject::custom(BadRequest("invalid message recognized by hash-cache".to_string()))
+        reject::custom(CustomRejection::BadRequest(
+            "invalid message recognized by hash-cache".to_string(),
+        ))
     })?;
 
     match result {
         Ok(message_id) => Ok(message_id),
-        Err(e) => Err(reject::custom(BadRequest(e.to_string()))),
+        Err(e) => Err(reject::custom(CustomRejection::BadRequest(e.to_string()))),
     }
 }
 

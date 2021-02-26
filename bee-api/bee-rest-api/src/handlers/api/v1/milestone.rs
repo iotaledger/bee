@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::NotFound,
     handlers::{BodyInner, SuccessBody},
+    rejection::CustomRejection,
     storage::StorageBackend,
 };
 
@@ -25,11 +25,13 @@ pub(crate) async fn milestone<B: StorageBackend>(
                 message_id: message_id.to_string(),
                 timestamp: metadata.arrival_timestamp(),
             }))),
-            None => Err(reject::custom(NotFound(
+            None => Err(reject::custom(CustomRejection::NotFound(
                 "can not find metadata for milestone".to_string(),
             ))),
         },
-        None => Err(reject::custom(NotFound("can not find milestone".to_string()))),
+        None => Err(reject::custom(CustomRejection::NotFound(
+            "can not find milestone".to_string(),
+        ))),
     }
 }
 

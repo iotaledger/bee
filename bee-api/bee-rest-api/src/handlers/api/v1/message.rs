@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::{BadRequest, NotFound},
     handlers::{BodyInner, SuccessBody},
+    rejection::CustomRejection,
     storage::StorageBackend,
     types::*,
 };
@@ -23,9 +23,11 @@ pub(crate) async fn message<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     match tangle.get(&message_id).await.map(|m| (*m).clone()) {
         Some(message) => Ok(warp::reply::json(&SuccessBody::new(MessageResponse(
-            MessageDto::try_from(&message).map_err(|e| reject::custom(BadRequest(e)))?,
+            MessageDto::try_from(&message).map_err(|e| reject::custom(CustomRejection::BadRequest(e)))?,
         )))),
-        None => Err(reject::custom(NotFound("can not find message".to_string()))),
+        None => Err(reject::custom(CustomRejection::NotFound(
+            "can not find message".to_string(),
+        ))),
     }
 }
 

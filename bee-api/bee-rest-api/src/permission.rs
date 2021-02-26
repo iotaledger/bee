@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::filters::CustomRejection;
+use crate::rejection::CustomRejection;
 
 use warp::{reject, Filter, Rejection};
 

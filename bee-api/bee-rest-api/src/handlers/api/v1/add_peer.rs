@@ -3,22 +3,17 @@
 
 use crate::{
     handlers::{BodyInner, SuccessBody},
-    types::PeerDto,
+    rejection::CustomRejection,
+    types::{peer_to_peer_dto, PeerDto, RelationDto},
 };
 
 use bee_network::{Command::AddPeer, Multiaddr, NetworkServiceController, PeerId, PeerRelation, Protocol};
+use bee_protocol::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
-use warp::{reject, Rejection, Reply};
-
-use crate::{
-    filters::CustomRejection::{BadRequest, NotFound},
-    types::{peer_to_peer_dto, RelationDto},
-};
-use bee_protocol::PeerManager;
-use warp::http::StatusCode;
+use warp::{http::StatusCode, reject, Rejection, Reply};
 
 pub(crate) async fn add_peer(
     value: JsonValue,
@@ -30,15 +25,19 @@ pub(crate) async fn add_peer(
 
     let mut multi_address = multi_address_v
         .as_str()
-        .ok_or_else(|| reject::custom(BadRequest("invalid multi address: expected a string".to_string())))?
+        .ok_or_else(|| {
+            reject::custom(CustomRejection::BadRequest(
+                "invalid multi address: expected a string".to_string(),
+            ))
+        })?
         .parse::<Multiaddr>()
-        .map_err(|e| reject::custom(BadRequest(format!("invalid multi address: {}", e))))?;
+        .map_err(|e| reject::custom(CustomRejection::BadRequest(format!("invalid multi address: {}", e))))?;
 
     let peer_id = match multi_address.pop().unwrap() {
         Protocol::P2p(multihash) => PeerId::from_multihash(multihash)
-            .map_err(|_| reject::custom(BadRequest("invalid multi address".to_string())))?,
+            .map_err(|_| reject::custom(CustomRejection::BadRequest("invalid multi address".to_string())))?,
         _ => {
-            return Err(reject::custom(BadRequest(
+            return Err(reject::custom(CustomRejection::BadRequest(
                 "Invalid peer descriptor. The multi address did not have a valid peer id as its last segment."
                     .to_string(),
             )))
@@ -61,7 +60,11 @@ pub(crate) async fn add_peer(
                 Some(
                     alias_v
                         .as_str()
-                        .ok_or_else(|| reject::custom(BadRequest("invalid alias: expected a string".to_string())))?
+                        .ok_or_else(|| {
+                            reject::custom(CustomRejection::BadRequest(
+                                "invalid alias: expected a string".to_string(),
+                            ))
+                        })?
                         .to_string(),
                 )
             };
@@ -72,7 +75,10 @@ pub(crate) async fn add_peer(
                 alias: alias.clone(),
                 relation: PeerRelation::Known,
             }) {
-                return Err(reject::custom(NotFound(format!("failed to add peer: {}", e))));
+                return Err(reject::custom(CustomRejection::NotFound(format!(
+                    "failed to add peer: {}",
+                    e
+                ))));
             }
 
             Ok(warp::reply::with_status(

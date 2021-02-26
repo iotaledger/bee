@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::BadRequest,
     handlers::{BodyInner, SuccessBody},
+    rejection::CustomRejection,
 };
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
@@ -17,26 +17,34 @@ pub(crate) async fn white_flag(body: JsonValue) -> Result<impl Reply, Rejection>
     let parents_json = &body["parentMessageIds"];
 
     let index = if index_json.is_null() {
-        return Err(reject::custom(BadRequest(
+        return Err(reject::custom(CustomRejection::BadRequest(
             "Invalid index: expected a MilestoneIndex".to_string(),
         )));
     } else {
         MilestoneIndex(
             index_json
                 .as_str()
-                .ok_or_else(|| reject::custom(BadRequest("Invalid index: expected a MilestoneIndex".to_string())))?
+                .ok_or_else(|| {
+                    reject::custom(CustomRejection::BadRequest(
+                        "Invalid index: expected a MilestoneIndex".to_string(),
+                    ))
+                })?
                 .parse::<u32>()
-                .map_err(|_| reject::custom(BadRequest("Invalid index: expected a MilestoneIndex".to_string())))?,
+                .map_err(|_| {
+                    reject::custom(CustomRejection::BadRequest(
+                        "Invalid index: expected a MilestoneIndex".to_string(),
+                    ))
+                })?,
         )
     };
 
     let parents: Vec<MessageId> = if parents_json.is_null() {
-        return Err(reject::custom(BadRequest(
+        return Err(reject::custom(CustomRejection::BadRequest(
             "Invalid parents: expected an array of MessageId".to_string(),
         )));
     } else {
         let array = parents_json.as_array().ok_or_else(|| {
-            reject::custom(BadRequest(
+            reject::custom(CustomRejection::BadRequest(
                 "Invalid parents: expected an array of MessageId".to_string(),
             ))
         })?;
@@ -45,13 +53,13 @@ pub(crate) async fn white_flag(body: JsonValue) -> Result<impl Reply, Rejection>
             let message_id = s
                 .as_str()
                 .ok_or_else(|| {
-                    reject::custom(BadRequest(
+                    reject::custom(CustomRejection::BadRequest(
                         "Invalid parents: expected an array of MessageId".to_string(),
                     ))
                 })?
                 .parse::<MessageId>()
                 .map_err(|_| {
-                    reject::custom(BadRequest(
+                    reject::custom(CustomRejection::BadRequest(
                         "Invalid parents: expected an array of MessageId".to_string(),
                     ))
                 })?;

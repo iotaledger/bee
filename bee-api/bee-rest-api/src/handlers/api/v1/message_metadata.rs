@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::{NotFound, ServiceUnavailable},
     handlers::{BodyInner, SuccessBody},
+    rejection::CustomRejection,
     storage::StorageBackend,
     IS_SYNCED_THRESHOLD,
 };
@@ -21,7 +21,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     if !tangle.is_synced_threshold(IS_SYNCED_THRESHOLD) {
-        return Err(reject::custom(ServiceUnavailable(
+        return Err(reject::custom(CustomRejection::ServiceUnavailable(
             "the node is not synchronized".to_string(),
         )));
     }
@@ -138,7 +138,9 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                 should_reattach,
             })))
         }
-        None => Err(reject::custom(NotFound("can not find message".to_string()))),
+        None => Err(reject::custom(CustomRejection::NotFound(
+            "can not find message".to_string(),
+        ))),
     }
 }
 

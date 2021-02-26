@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::{NotFound, ServiceUnavailable},
     handlers::{BodyInner, SuccessBody},
+    rejection::CustomRejection,
     storage::StorageBackend,
 };
 
@@ -23,11 +23,14 @@ pub(crate) async fn milestone_utxo_changes<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     let fetched = match Fetch::<MilestoneIndex, OutputDiff>::fetch(storage.deref(), &index)
         .await
-        .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?
-    {
+        .map_err(|_| {
+            reject::custom(CustomRejection::ServiceUnavailable(
+                "can not fetch from storage".to_string(),
+            ))
+        })? {
         Some(diff) => diff,
         None => {
-            return Err(reject::custom(NotFound(
+            return Err(reject::custom(CustomRejection::NotFound(
                 "can not find UTXO changes for given milestone index".to_string(),
             )))
         }

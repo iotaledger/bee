@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{filters::CustomRejection::NotFound, storage::StorageBackend};
+use crate::{rejection::CustomRejection, storage::StorageBackend};
 
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
@@ -18,6 +18,8 @@ pub async fn message_raw<B: StorageBackend>(
         Some(message) => Ok(Response::builder()
             .header("Content-Type", "application/octet-stream")
             .body(message.pack_new())),
-        None => Err(reject::custom(NotFound("can not find message".to_string()))),
+        None => Err(reject::custom(CustomRejection::NotFound(
+            "can not find message".to_string(),
+        ))),
     }
 }

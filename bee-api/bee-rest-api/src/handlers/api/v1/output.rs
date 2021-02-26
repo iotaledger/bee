@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    filters::CustomRejection::{BadRequest, NotFound, ServiceUnavailable},
     handlers::{BodyInner, SuccessBody},
+    rejection::CustomRejection,
     storage::StorageBackend,
     types::OutputDto,
 };
@@ -23,19 +23,32 @@ pub(crate) async fn output<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     let output = Fetch::<OutputId, CreatedOutput>::fetch(storage.deref(), &output_id)
         .await
-        .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?;
+        .map_err(|_| {
+            reject::custom(CustomRejection::ServiceUnavailable(
+                "can not fetch from storage".to_string(),
+            ))
+        })?;
     let is_spent = Fetch::<OutputId, ConsumedOutput>::fetch(storage.deref(), &output_id)
         .await
-        .map_err(|_| reject::custom(ServiceUnavailable("can not fetch from storage".to_string())))?;
+        .map_err(|_| {
+            reject::custom(CustomRejection::ServiceUnavailable(
+                "can not fetch from storage".to_string(),
+            ))
+        })?;
     match output {
         Some(output) => Ok(warp::reply::json(&SuccessBody::new(OutputResponse {
             message_id: output.message_id().to_string(),
             transaction_id: output_id.transaction_id().to_string(),
             output_index: output_id.index(),
             is_spent: is_spent.is_some(),
-            output: output.inner().try_into().map_err(|e| reject::custom(BadRequest(e)))?,
+            output: output
+                .inner()
+                .try_into()
+                .map_err(|e| reject::custom(CustomRejection::BadRequest(e)))?,
         }))),
-        None => Err(reject::custom(NotFound("can not find output".to_string()))),
+        None => Err(reject::custom(CustomRejection::NotFound(
+            "can not find output".to_string(),
+        ))),
     }
 }
 

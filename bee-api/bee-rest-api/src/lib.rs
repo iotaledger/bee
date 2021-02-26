@@ -6,13 +6,14 @@ mod filters;
 pub mod config;
 pub mod handlers;
 pub mod permission;
+pub mod rejection;
 pub mod storage;
 pub mod types;
 
 use crate::{
     config::RestApiConfig,
-    filters::CustomRejection,
     handlers::{DefaultErrorResponse, ErrorBody},
+    rejection::CustomRejection,
     storage::StorageBackend,
 };
 
