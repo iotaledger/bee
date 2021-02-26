@@ -39,7 +39,13 @@ pub fn all<B: StorageBackend>(
     network_controller: ResourceHandle<NetworkServiceController>,
     node_info: ResourceHandle<NodeInfo>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    health(public_routes.clone(), allowed_ips.clone(), tangle.clone()).or(info(
+    health(
+        public_routes.clone(),
+        allowed_ips.clone(),
+        tangle.clone(),
+        peer_manager.clone(),
+    )
+    .or(info(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),
@@ -48,6 +54,7 @@ pub fn all<B: StorageBackend>(
         rest_api_config.clone(),
         protocol_config.clone(),
         node_info,
+        peer_manager.clone(),
     )
     .or(tips(public_routes.clone(), allowed_ips.clone(), tangle.clone()))
     .or(submit_message(
@@ -129,12 +136,14 @@ fn health<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
+    peer_manager: ResourceHandle<PeerManager>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("health")
         .and(warp::path::end())
         .and(warp::get())
         .and(has_permission(ROUTE_HEALTH, public_routes, allowed_ips))
         .and(with_tangle(tangle))
+        .and(with_peer_manager(peer_manager))
         .and_then(handlers::health::health)
 }
 
@@ -147,6 +156,7 @@ fn info<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
     node_info: ResourceHandle<NodeInfo>,
+    peer_manager: ResourceHandle<PeerManager>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path("api")
         .and(warp::path("v1"))
@@ -160,6 +170,7 @@ fn info<B: StorageBackend>(
         .and(with_rest_api_config(rest_api_config))
         .and(with_protocol_config(protocol_config))
         .and(with_node_info(node_info))
+        .and(with_peer_manager(peer_manager))
         .and_then(handlers::api::v1::info::info)
 }
 

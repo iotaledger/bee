@@ -4,11 +4,12 @@
 use crate::{
     body::{BodyInner, SuccessBody},
     config::RestApiConfig,
+    handlers::health::is_healthy,
     storage::StorageBackend,
     Bech32Hrp, NetworkId,
 };
 
-use bee_protocol::config::ProtocolConfig;
+use bee_protocol::{config::ProtocolConfig, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
@@ -24,11 +25,12 @@ pub(crate) async fn info<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
     node_info: ResourceHandle<NodeInfo>,
+    peer_manager: ResourceHandle<PeerManager>,
 ) -> Result<impl Reply, Infallible> {
     Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
         name: node_info.name.clone(),
         version: node_info.version.clone(),
-        is_healthy: tangle.is_healthy().await,
+        is_healthy: is_healthy(&tangle, &peer_manager).await,
         network_id: network_id.0,
         bech32_hrp,
         latest_milestone_index: *tangle.get_latest_milestone_index(),
