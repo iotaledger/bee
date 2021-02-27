@@ -28,7 +28,7 @@ use thiserror::Error;
 
 use std::str::FromStr;
 
-#[derive(Debug, StructOpt)]
+#[derive(Clone, Debug, StructOpt)]
 pub enum RocksdbCommand {
     /// Fetches a value by its key.
     Fetch { key: String },
@@ -38,17 +38,17 @@ pub enum RocksdbCommand {
 
 #[derive(Debug, Error)]
 pub enum RocksdbError {
-    #[error("{0}")]
+    #[error("Storage backend error: {0}")]
     StorageBackend(#[from] BackendError),
-    #[error("{0}")]
+    #[error("Invalid key: {0}")]
     InvalidKey(String),
-    #[error("{0}")]
+    #[error("Unknown column family: {0}")]
     UnknownColumnFamily(String),
     #[error("Unsupported command")]
     UnsupportedCommand,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Clone, Debug, StructOpt)]
 pub struct RocksdbTool {
     path: String,
     column_family: String,

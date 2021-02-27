@@ -7,7 +7,6 @@ mod banner;
 mod cli;
 mod config;
 mod constants;
-mod logger;
 mod node;
 mod storage;
 

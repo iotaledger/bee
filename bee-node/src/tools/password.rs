@@ -15,7 +15,7 @@ pub enum PasswordError {
     Argon(#[from] argon2::Error),
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Clone, Debug, StructOpt)]
 pub struct PasswordTool {}
 
 pub fn exec(_tool: &PasswordTool) -> Result<(), PasswordError> {

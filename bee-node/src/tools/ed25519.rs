@@ -11,13 +11,15 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Ed25519Error {
-    #[error("{0}")]
-    InvalidPublicKey(String),
+    #[error("Invalid public key length: {0}")]
+    InvalidPublicKeyLength(usize),
+    #[error("Invalid public key hexadecimal: {0}")]
+    InvalidPublicKeyHex(String),
     #[error("Secret generation failed")]
     SecretGenerationFailed,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Clone, Debug, StructOpt)]
 pub enum Ed25519Tool {
     /// Generates an Ed25519 address from a public key.
     Address { public: String },
@@ -29,9 +31,9 @@ pub fn exec(tool: &Ed25519Tool) -> Result<(), Ed25519Error> {
     match tool {
         Ed25519Tool::Address { public } => {
             if public.len() != 32 {
-                return Err(Ed25519Error::InvalidPublicKey(public.clone()));
+                return Err(Ed25519Error::InvalidPublicKeyLength(public.len()));
             }
-            let bytes = hex::decode(public).map_err(|_| Ed25519Error::InvalidPublicKey(public.clone()))?;
+            let bytes = hex::decode(public).map_err(|_| Ed25519Error::InvalidPublicKeyHex(public.clone()))?;
             let hash = Blake2b256::digest(&bytes);
 
             println!("Your ed25519 address:\t{}", hex::encode(hash));

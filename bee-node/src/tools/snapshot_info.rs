@@ -14,11 +14,11 @@ use std::{fs::OpenOptions, io::BufReader, path::Path};
 pub enum SnapshotInfoError {
     #[error("{0}")]
     Io(#[from] std::io::Error),
-    #[error("{0}")]
+    #[error("Invalid snapshot header: {0}")]
     InvalidSnapshotHeader(#[from] SnapshotError),
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Clone, Debug, StructOpt)]
 pub struct SnapshotInfoTool {
     path: String,
 }

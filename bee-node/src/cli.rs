@@ -9,7 +9,7 @@ use bee_storage::backend::StorageBackend;
 use log::LevelFilter;
 use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Clone, Debug, StructOpt)]
 pub struct CliArgs {
     #[structopt(short = "c", long = "config", help = "Path of the configuration file")]
     config: Option<String>,

@@ -1,6 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_common::logger::logger_init;
 use bee_node::{plugins, print_banner_and_version, tools, CliArgs, NodeBuilder, NodeConfigBuilder};
 use bee_runtime::node::NodeBuilder as _;
 use bee_storage_rocksdb::storage::Storage as Rocksdb;
@@ -13,8 +14,19 @@ const CONFIG_PATH: &str = "./config.toml";
 async fn main() {
     let cli = CliArgs::new();
 
+    let config = match NodeConfigBuilder::from_file(cli.config().unwrap_or(&CONFIG_PATH.to_owned())) {
+        Ok(builder) => builder.with_cli_args(cli.clone()).finish(),
+        Err(e) => panic!("Failed to create the node config builder: {}", e),
+    };
+
+    if let Err(e) = logger_init(config.logger.clone()) {
+        panic!("Failed to initialise the logger: {}", e);
+    }
+
     if let Some(tool) = cli.tool() {
-        tools::exec(tool).unwrap();
+        if let Err(e) = tools::exec(tool) {
+            error!("Tool execution failed: {}", e);
+        }
         return;
     }
 
@@ -24,16 +36,8 @@ async fn main() {
         return;
     }
 
-    let config = NodeConfigBuilder::from_file(match cli.config() {
-        Some(path) => path,
-        None => CONFIG_PATH,
-    })
-    .expect("Error when creating node config builder")
-    .with_cli_args(cli)
-    .finish();
-
     match NodeBuilder::<Rocksdb>::new(config) {
-        Ok(builder) => match builder.with_plugin::<plugins::Mps>().with_logging().finish().await {
+        Ok(builder) => match builder.with_plugin::<plugins::Mps>().finish().await {
             Ok(node) => {
                 if let Err(e) = node.run().await {
                     error!("Failed to run node: {}", e)
@@ -41,6 +45,6 @@ async fn main() {
             }
             Err(e) => error!("Failed to build node: {}", e),
         },
-        Err(e) => panic!("Failed to build node builder: {}", e),
+        Err(e) => error!("Failed to build node builder: {}", e),
     }
 }

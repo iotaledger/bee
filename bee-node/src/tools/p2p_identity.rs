@@ -5,7 +5,7 @@ use bee_network::{Keypair, PeerId, PublicKey};
 
 use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Clone, Debug, StructOpt)]
 pub struct P2pIdentityTool {}
 
 pub fn exec(_tool: &P2pIdentityTool) {

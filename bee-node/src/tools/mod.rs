@@ -11,7 +11,7 @@ use structopt::StructOpt;
 use thiserror::Error;
 
 #[non_exhaustive]
-#[derive(Debug, StructOpt)]
+#[derive(Clone, Debug, StructOpt)]
 pub enum Tool {
     /// Generates Ed25519 public/private keys and addresses.
     Ed25519(ed25519::Ed25519Tool),
