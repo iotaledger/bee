@@ -6,29 +6,25 @@ use bee_message::prelude::*;
 
 #[test]
 fn new_valid_min_amount() {
-    let output = TreasuryOutput::new(1).unwrap();
-
-    assert_eq!(output.amount(), 1);
+    assert_eq!(TreasuryOutput::new(0).unwrap().amount(), 0);
 }
 
 #[test]
 fn new_valid_max_amount() {
-    let output = TreasuryOutput::new(IOTA_SUPPLY).unwrap();
-
-    assert_eq!(output.amount(), IOTA_SUPPLY);
-}
-
-#[test]
-fn new_invalid_less_than_min_amount() {
-    assert!(matches!(TreasuryOutput::new(0), Err(Error::InvalidTreasuryAmount(0))));
+    assert_eq!(TreasuryOutput::new(IOTA_SUPPLY).unwrap().amount(), IOTA_SUPPLY);
 }
 
 #[test]
 fn invalid_more_than_max_amount() {
     assert!(matches!(
-        TreasuryOutput::new(3_333_333_333_333_333),
-        Err(Error::InvalidTreasuryAmount(3_333_333_333_333_333))
+        TreasuryOutput::new(3_038_287_259_199_220_266),
+        Err(Error::InvalidTreasuryAmount(3_038_287_259_199_220_266))
     ));
+}
+
+#[test]
+fn packed_len() {
+    assert_eq!(TreasuryOutput::new(1_000).unwrap().packed_len(), 8);
 }
 
 #[test]
@@ -41,10 +37,8 @@ fn pack_unpack_valid() {
 
 #[test]
 fn pack_unpack_invalid() {
-    let bytes = vec![0, 0, 0, 0, 0, 0, 0, 0];
-
     assert!(matches!(
-        TreasuryOutput::unpack(&mut bytes.as_slice()),
-        Err(Error::InvalidTreasuryAmount(0))
+        TreasuryOutput::unpack(&mut vec![0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a].as_slice()),
+        Err(Error::InvalidTreasuryAmount(3_038_287_259_199_220_266))
     ));
 }

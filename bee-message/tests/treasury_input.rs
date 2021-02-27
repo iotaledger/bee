@@ -55,10 +55,10 @@ fn from_str_to_str() {
 
 #[test]
 fn packed_len() {
-    let message_id = MessageId::from_str(MESSAGE_ID_VALID).unwrap();
-    let input = TreasuryInput::new(message_id);
-
-    assert_eq!(input.packed_len(), 32);
+    assert_eq!(
+        TreasuryInput::new(MessageId::from_str(MESSAGE_ID_VALID).unwrap()).packed_len(),
+        32
+    );
 }
 
 #[test]

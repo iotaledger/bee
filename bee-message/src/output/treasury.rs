@@ -8,8 +8,7 @@ use bee_common::packable::{Packable, Read, Write};
 use std::ops::RangeInclusive;
 
 pub(crate) const TREASURY_OUTPUT_KIND: u8 = 2;
-// TODO check if this is correct
-const TREASURY_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
+const TREASURY_OUTPUT_AMOUNT: RangeInclusive<u64> = 0..=IOTA_SUPPLY;
 
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
