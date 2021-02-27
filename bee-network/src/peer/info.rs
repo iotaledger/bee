@@ -19,10 +19,13 @@ pub struct PeerInfo {
 /// Describes the relation with a peer.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PeerRelation {
-    /// Represents a persistent peer. If the connection to such a peer drops, the network will try to reconnect.
+    /// Represents a known peer. If the connection to such a peer drops, the network will try to reconnect.
     Known,
-    /// Represents an ephemeral peer. If the connection to such a peer drops, the network won't try to reconnect.
+    /// Represents an unknown peer. If the connection to such a peer drops, the network won't try to reconnect.
     Unknown,
+    /// Represents a discovered peer. If the connection to such a peer drops, the network tries to connect to a
+    /// different discovered peer, depending on `MAX_DISCOVERED_PEERS_DIALED`.
+    Discovered,
 }
 
 impl PeerRelation {
@@ -34,6 +37,11 @@ impl PeerRelation {
     /// Returns whether the peer is unknown.
     pub fn is_unknown(&self) -> bool {
         self.eq(&Self::Unknown)
+    }
+
+    /// Returns whether the peer has been discovered.
+    pub fn is_discovered(&self) -> bool {
+        self.eq(&Self::Discovered)
     }
 
     /// Upgrades the peer relations.
@@ -50,6 +58,7 @@ impl PeerRelation {
         }
     }
 }
+
 #[derive(Clone, Debug, Default)]
 pub struct PeerState(Option<GossipSender>);
 
