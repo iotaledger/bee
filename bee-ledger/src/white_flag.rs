@@ -73,8 +73,10 @@ async fn validate_transaction<B: StorageBackend>(
                     if consumed_output.amount() < DUST_THRESHOLD {
                         balance_diffs.dust_output_dec(*consumed_output.address());
                     }
-                    if !match transaction.unlock_block(index) {
-                        UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_hash, signature),
+                    if !match transaction.unlock_blocks().get(index) {
+                        Some(UnlockBlock::Signature(signature)) => {
+                            consumed_output.address().verify(&essence_hash, signature)
+                        }
                         _ => false,
                     } {
                         return Ok(ConflictReason::InvalidSignature);
@@ -84,8 +86,10 @@ async fn validate_transaction<B: StorageBackend>(
                     consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
                     balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
                     balance_diffs.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
-                    if !match transaction.unlock_block(index) {
-                        UnlockBlock::Signature(signature) => consumed_output.address().verify(&essence_hash, signature),
+                    if !match transaction.unlock_blocks().get(index) {
+                        Some(UnlockBlock::Signature(signature)) => {
+                            consumed_output.address().verify(&essence_hash, signature)
+                        }
                         _ => false,
                     } {
                         return Ok(ConflictReason::InvalidSignature);

@@ -362,10 +362,14 @@ impl TryFrom<&Box<TransactionPayload>> for Box<TransactionPayloadDto> {
 impl TryFrom<&Box<TransactionPayloadDto>> for Box<TransactionPayload> {
     type Error = String;
     fn try_from(value: &Box<TransactionPayloadDto>) -> Result<Self, Self::Error> {
-        let mut builder = TransactionPayload::builder().with_essence((&value.essence).try_into()?);
+        let mut unlock_blocks = Vec::new();
         for b in &value.unlock_blocks {
-            builder = builder.add_unlock_block(b.try_into()?);
+            unlock_blocks.push(b.try_into()?);
         }
+        let builder = TransactionPayload::builder()
+            .with_essence((&value.essence).try_into()?)
+            .with_unlock_blocks(UnlockBlocks::new(unlock_blocks).map_err(|e| e.to_string())?);
+
         Ok(Box::new(
             builder
                 .finish()

@@ -4,7 +4,7 @@
 mod essence;
 mod transaction_id;
 
-use crate::{constants::INPUT_OUTPUT_COUNT_RANGE, unlock::UnlockBlock, Error};
+use crate::{unlock::UnlockBlocks, Error};
 
 pub use essence::{Essence, RegularEssence, RegularEssenceBuilder};
 pub use transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
@@ -13,7 +13,6 @@ use bee_common::packable::{Packable, Read, Write};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
-use alloc::{boxed::Box, vec::Vec};
 use core::{cmp::Ordering, slice::Iter};
 
 pub(crate) const TRANSACTION_PAYLOAD_KIND: u32 = 0;
@@ -22,7 +21,7 @@ pub(crate) const TRANSACTION_PAYLOAD_KIND: u32 = 0;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionPayload {
     essence: Essence,
-    unlock_blocks: Box<[UnlockBlock]>,
+    unlock_blocks: UnlockBlocks,
 }
 
 impl TransactionPayload {
@@ -43,17 +42,8 @@ impl TransactionPayload {
         &self.essence
     }
 
-    pub fn unlock_blocks(&self) -> &[UnlockBlock] {
+    pub fn unlock_blocks(&self) -> &UnlockBlocks {
         &self.unlock_blocks
-    }
-
-    pub fn unlock_block(&self, index: usize) -> &UnlockBlock {
-        let unlock_block = &self.unlock_blocks[index];
-        if let UnlockBlock::Reference(reference) = unlock_block {
-            &self.unlock_blocks[reference.index() as usize]
-        } else {
-            unlock_block
-        }
     }
 }
 
@@ -61,43 +51,25 @@ impl Packable for TransactionPayload {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.essence.packed_len()
-            + 0u16.packed_len()
-            + self.unlock_blocks.iter().map(Packable::packed_len).sum::<usize>()
+        self.essence.packed_len() + self.unlock_blocks.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.essence.pack(writer)?;
-
-        (self.unlock_blocks.len() as u16).pack(writer)?;
-        for unlock_block in self.unlock_blocks.as_ref() {
-            unlock_block.pack(writer)?;
-        }
+        self.unlock_blocks.pack(writer)?;
 
         Ok(())
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let essence = Essence::unpack(reader)?;
-
-        let unlock_blocks_len = u16::unpack(reader)? as usize;
-
-        if !INPUT_OUTPUT_COUNT_RANGE.contains(&unlock_blocks_len) {
-            return Err(Error::InvalidInputOutputCount(unlock_blocks_len));
-        }
-
-        let mut unlock_blocks = Vec::with_capacity(unlock_blocks_len);
-        for _ in 0..unlock_blocks_len {
-            unlock_blocks.push(UnlockBlock::unpack(reader)?);
-        }
-
         Self::builder()
-            .with_essence(essence)
-            .with_unlock_blocks(unlock_blocks)
+            .with_essence(Essence::unpack(reader)?)
+            .with_unlock_blocks(UnlockBlocks::unpack(reader)?)
             .finish()
     }
 }
 
+// TODO ?
 #[allow(dead_code)]
 fn is_sorted<T: Ord>(iterator: Iter<T>) -> bool {
     let mut iterator = iterator;
@@ -119,7 +91,7 @@ fn is_sorted<T: Ord>(iterator: Iter<T>) -> bool {
 #[derive(Debug, Default)]
 pub struct TransactionPayloadBuilder {
     essence: Option<Essence>,
-    unlock_blocks: Vec<UnlockBlock>,
+    unlock_blocks: Option<UnlockBlocks>,
 }
 
 impl TransactionPayloadBuilder {
@@ -128,19 +100,13 @@ impl TransactionPayloadBuilder {
     }
 
     pub fn with_essence(mut self, essence: Essence) -> Self {
-        self.essence = Some(essence);
+        self.essence.replace(essence);
 
         self
     }
 
-    pub fn with_unlock_blocks(mut self, unlock_blocks: Vec<UnlockBlock>) -> Self {
-        self.unlock_blocks = unlock_blocks;
-
-        self
-    }
-
-    pub fn add_unlock_block(mut self, unlock_block: UnlockBlock) -> Self {
-        self.unlock_blocks.push(unlock_block);
+    pub fn with_unlock_blocks(mut self, unlock_blocks: UnlockBlocks) -> Self {
+        self.unlock_blocks.replace(unlock_blocks);
 
         self
     }
@@ -151,14 +117,15 @@ impl TransactionPayloadBuilder {
         // outputs.sort();
 
         let essence = self.essence.ok_or(Error::MissingField("essence"))?;
+        let unlock_blocks = self.unlock_blocks.ok_or(Error::MissingField("unlock_blocks"))?;
 
         match essence {
             Essence::Regular(ref essence) => {
                 // Unlock Blocks validation
-                if essence.inputs().len() != self.unlock_blocks.len() {
-                    return Err(Error::InvalidUnlockBlockCount(
+                if essence.inputs().len() != unlock_blocks.len() {
+                    return Err(Error::InputUnlockBlockCountMismatch(
                         essence.inputs().len(),
-                        self.unlock_blocks.len(),
+                        unlock_blocks.len(),
                     ));
                 }
 
@@ -211,9 +178,6 @@ impl TransactionPayloadBuilder {
             }
         }
 
-        Ok(TransactionPayload {
-            essence,
-            unlock_blocks: self.unlock_blocks.into_boxed_slice(),
-        })
+        Ok(TransactionPayload { essence, unlock_blocks })
     }
 }
