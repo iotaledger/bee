@@ -5,15 +5,33 @@ use crate::{Error, MessageId};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{convert::From, str::FromStr};
+use core::{convert::From, ops::Deref, str::FromStr};
 
 pub(crate) const TREASURY_INPUT_KIND: u8 = 1;
 
-#[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct TreasuryInput(MessageId);
+
+impl TreasuryInput {
+    pub fn new(id: MessageId) -> Self {
+        Self(id)
+    }
+
+    pub fn message_id(&self) -> &MessageId {
+        &self.0
+    }
+}
 
 #[cfg(feature = "serde")]
 string_serde_impl!(TreasuryInput);
+
+impl Deref for TreasuryInput {
+    type Target = MessageId;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl From<MessageId> for TreasuryInput {
     fn from(id: MessageId) -> Self {
@@ -26,16 +44,6 @@ impl FromStr for TreasuryInput {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(TreasuryInput(MessageId::from_str(s)?))
-    }
-}
-
-impl TreasuryInput {
-    pub fn new(id: MessageId) -> Self {
-        Self(id)
-    }
-
-    pub fn message_id(&self) -> &MessageId {
-        &self.0
     }
 }
 
