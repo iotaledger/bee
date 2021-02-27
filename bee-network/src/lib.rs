@@ -47,8 +47,8 @@ use config::DEFAULT_RECONNECT_INTERVAL_SECS;
 
 pub(crate) static RECONNECT_INTERVAL_SECS: AtomicU64 = AtomicU64::new(DEFAULT_RECONNECT_INTERVAL_SECS);
 pub(crate) static NETWORK_ID: AtomicU64 = AtomicU64::new(0);
-pub(crate) static MAX_UNKNOWN_PEERS_ACCEPTED: AtomicUsize = AtomicUsize::new(0);
-pub(crate) static MAX_DISCOVERED_PEERS_DIALED: AtomicUsize = AtomicUsize::new(0);
+pub(crate) static MAX_UNKNOWN_PEERS: AtomicUsize = AtomicUsize::new(0);
+pub(crate) static MAX_DISCOVERED_PEERS: AtomicUsize = AtomicUsize::new(0);
 
 /// Initializes the networking layer.
 pub async fn init<N: Node>(
@@ -67,8 +67,8 @@ pub async fn init<N: Node>(
 
     RECONNECT_INTERVAL_SECS.swap(reconnect_interval_secs, Ordering::Relaxed);
     NETWORK_ID.swap(network_id, Ordering::Relaxed);
-    MAX_UNKNOWN_PEERS_ACCEPTED.swap(max_unknown_peers_accepted, Ordering::Relaxed);
-    MAX_DISCOVERED_PEERS_DIALED.swap(max_discovered_peers_dialed, Ordering::Relaxed);
+    MAX_UNKNOWN_PEERS.swap(max_unknown_peers_accepted, Ordering::Relaxed);
+    MAX_DISCOVERED_PEERS.swap(max_discovered_peers_dialed, Ordering::Relaxed);
 
     let local_keys = identity::Keypair::Ed25519(local_keys);
     let local_id = PeerId::from_public_key(local_keys.public());

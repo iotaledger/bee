@@ -68,14 +68,6 @@ impl<N: Node> Worker<N> for NetworkHost {
 
         let _ = Swarm::listen_on(&mut swarm, bind_address).expect("Fatal error: address binding failed.");
 
-        // {
-        //     let swarm_behavior: &mut crate::swarm::SwarmBehavior = swarm.deref_mut();
-
-        //     if !swarm_behavior.bootstrap_routing_table() {
-        //         info!("Running node without DHT entry nodes.");
-        //     }
-        // }
-
         node.spawn::<Self, _, _>(|mut shutdown| async move {
 
             loop {
@@ -156,13 +148,6 @@ async fn process_command(
     banned_peers: &PeerBanlist,
 ) {
     match command {
-        HostCommand::AddPeer { address, peer_id, .. } => {
-            println!("Adding address of {} to routing table.", alias!(peer_id));
-            {
-                let swarm_behavior: &mut crate::swarm::SubstreamBehavior = swarm.deref_mut();
-                swarm_behavior.add_address_to_routing_table(&peer_id, address);
-            }
-        }
         HostCommand::DialPeer { peer_id } => {
             if let Err(e) = dial_peer(swarm, local_keys, peer_id, &peerlist, &banned_addrs, &banned_peers).await {
                 warn!("Failed to dial peer '...{}'. Cause: {}", alias!(peer_id), e);
@@ -171,6 +156,21 @@ async fn process_command(
         HostCommand::DialAddress { address } => {
             if let Err(e) = dial_addr(swarm, address.clone(), &banned_addrs).await {
                 warn!("Failed to dial address '{}'. Cause: {}", address, e);
+            }
+        }
+        HostCommand::AddPeerAddrToRoutingTable { address, peer_id, .. } => {
+            println!("Adding address of {} to routing table.", alias!(peer_id));
+            {
+                let swarm_behavior: &mut crate::swarm::SubstreamBehavior = swarm.deref_mut();
+                swarm_behavior.add_address_to_routing_table(&peer_id, address);
+            }
+        }
+        HostCommand::BootstrapRoutingTable => {
+            println!("Bootstrapping routing table.");
+            let swarm_behavior: &mut crate::swarm::SubstreamBehavior = swarm.deref_mut();
+
+            if !swarm_behavior.bootstrap_local_routing_table() {
+                info!("Running node without DHT entry nodes.");
             }
         }
     }
@@ -269,7 +269,7 @@ async fn check_if_banned_peer(remote_peer_id: &PeerId, banned_peers: &PeerBanlis
 
 async fn check_if_unregistered_or_get_info(remote_peer_id: &PeerId, peerlist: &PeerList) -> Result<PeerInfo, Error> {
     peerlist
-        .get_info(remote_peer_id)
+        .info(remote_peer_id)
         .await
         .map_err(|_| Error::DialedUnregisteredPeer(*remote_peer_id))
 }

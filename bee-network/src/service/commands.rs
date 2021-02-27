@@ -82,13 +82,12 @@ pub enum Command {
         /// The peer's id.
         peer_id: PeerId,
     },
-    /// Discovers new peers.
-    DiscoverPeers,
 }
 
 #[derive(Debug)]
 pub enum HostCommand {
-    AddPeer { peer_id: PeerId, address: Multiaddr },
     DialPeer { peer_id: PeerId },
     DialAddress { address: Multiaddr },
+    AddPeerAddrToRoutingTable { peer_id: PeerId, address: Multiaddr },
+    BootstrapRoutingTable,
 }

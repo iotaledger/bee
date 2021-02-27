@@ -187,11 +187,12 @@ async fn process_command(
         } => {
             let alias = alias.unwrap_or_else(|| alias!(peer_id).to_string());
 
+            // Add this peer to the peer list.
             add_peer(peer_id, address.clone(), alias, relation, peerlist, event_sender).await?;
 
-            // Add this peer to the DHT.
-            // TODO: make it optional to add peer to routing table
-            let _ = host_command_sender.send(HostCommand::AddPeer { peer_id, address });
+            // Add address of this peer to the routing table.
+            // TODO: make this optional
+            let _ = host_command_sender.send(HostCommand::AddPeerAddrToRoutingTable { peer_id, address });
 
             // We try to connect to known peers immediatedly.
             if relation.is_known() {
@@ -238,14 +239,18 @@ async fn process_command(
             }
         }
         Command::UpgradeRelation { peer_id } => {
-            peerlist.upgrade_relation(&peer_id).await?;
+            peerlist
+                .update_info(&peer_id, |info| {
+                    info.relation.upgrade();
+                })
+                .await?;
         }
         Command::DowngradeRelation { peer_id } => {
-            peerlist.downgrade_relation(&peer_id).await?;
-        }
-        Command::DiscoverPeers => {
-            // TODO: Peer discovery
-            // let _ = internal_command_sender.send(Command::DiscoverPeers);
+            peerlist
+                .update_info(&peer_id, |info| {
+                    info.relation.downgrade();
+                })
+                .await?;
         }
     }
 
@@ -292,11 +297,13 @@ async fn process_swarm_event(
 
             // We can now be sure to always get a `PeerInfo`.
             let peer_info = peerlist
-                .get_info(&peer_id)
+                .info(&peer_id)
                 .await
                 .expect("error getting info although checked");
 
-            peerlist.connect(&peer_id, gossip_out.clone()).await?;
+            let _ = peerlist
+                .update_state(&peer_id, |state| state.set_connected(gossip_out.clone()))
+                .await?;
 
             info!(
                 "Established ({}) protocol with '{}'.",
@@ -310,22 +317,31 @@ async fn process_swarm_event(
                 gossip_out,
             });
         }
+
         SwarmEvent::ProtocolDropped { peer_id } => {
             // NB: Just in case there is any error (PeerMissing, PeerAlreadyDisconnected),
             // then 'disconnect' just becomes a NoOp.
 
-            let _ = peerlist.disconnect(&peer_id).await;
-
-            // NB: In case of an "unknown" peer, we also want it removed from the peerlist. This operation will
-            // only fail, if it has been removed already, but will never leave an "unknown" peer in the list.
             let _ = peerlist
-                .remove_if(&peer_id, |peer_info, _| peer_info.relation.is_unknown())
+                .update_state(&peer_id, |state| {
+                    // ignore the returned gossip sender
+                    state.set_disconnected()
+                })
+                .await?;
+
+            // Only in case of an *known* peer, we want to keep it in the peerlist. This operation will only fail, if it
+            // has been removed already, but will never leave an "unknown" peer in the list.
+            let _ = peerlist
+                .remove_if(&peer_id, |peer_info, _| !peer_info.relation.is_known())
                 .await;
 
             let _ = event_sender.send(Event::PeerDisconnected { peer_id });
         }
+
         SwarmEvent::RoutingTableUpdated { peer_id, addresses } => {
-            // For now we only consider the first address provided.
+            println!("Routing table updated for {} ({} addresses)", peer_id, addresses.len());
+
+            // TODO: also consider other addresses.
             let address = addresses
                 .iter()
                 .nth(0)
@@ -335,19 +351,24 @@ async fn process_swarm_event(
             let peer_info = PeerInfo {
                 address,
                 alias: alias!(peer_id).to_string(),
-                relation: PeerRelation::Unknown,
+                relation: PeerRelation::Discovered,
             };
 
-            // Connect to the discovered peer, if all checks pass
-            if peerlist.accepts(&peer_id, &peer_info).await.is_ok() {
-                println!("New dialable peer: {}, {:?}", peer_id, peer_info);
+            peerlist
+                .insert(peer_id, peer_info)
+                .await
+                .map_err(|InsertionFailure(_, _, e)| e)?;
 
-                host_command_sender
-                    .send(HostCommand::DialAddress {
-                        address: peer_info.address,
-                    })
-                    .expect("command channel receiver dropped");
-            }
+            // // Connect to the discovered peer, if all checks pass
+            // if peerlist.accepts(&peer_id, &peer_info).await.is_ok() {
+            //     println!("New dialable peer: {}, {:?}", peer_id, peer_info);
+
+            //     host_command_sender
+            //         .send(HostCommand::DialAddress {
+            //             address: peer_info.address,
+            //         })
+            //         .expect("command channel receiver dropped");
+            // }
         }
     }
 
@@ -375,31 +396,36 @@ async fn add_peer(
             // make for an unusual API.
 
             // We just added it, so 'unwrap'ping is safe!
-            let info = peerlist.get_info(&peer_id).await.unwrap();
+            let info = peerlist.info(&peer_id).await.unwrap();
 
             let _ = event_sender.send(Event::PeerAdded { peer_id, info });
 
             Ok(())
         }
-        Err(InsertionFailure(peer_id, peer_info, mut e)) => {
-            // NB: This fixes an edge case where an in fact known peer connects before being added by the
+        Err(InsertionFailure(peer_id, peer_info, e)) => {
+            // **NB**: This fixes an edge case where an in fact known peer connects before being added by the
             // manual peer manager, and hence, as unknown. In such a case we simply update to the correct
             // info (address, alias, relation).
+            // **UPDATE**: This edge case should not happen anymore since `bee-peering` became part of `bee-network`.
 
-            if matches!(e, peer::Error::PeerAlreadyAdded(_))
-            // && peer_info.relation.is_known()
-            {
-                match peerlist.update_info(&peer_id, peer_info.clone()).await {
-                    Ok(()) => {
-                        let _ = event_sender.send(Event::PeerAdded {
-                            peer_id,
-                            info: peer_info,
-                        });
+            if matches!(e, peer::Error::PeerAlreadyAdded(_)) {
+                unreachable!("peer already added edge case");
+                // match peerlist
+                //     .update(&peer_id, |info, _| {
+                //         *info = peer_info.clone();
+                //     })
+                //     .await
+                // {
+                //     Ok(()) => {
+                //         let _ = event_sender.send(Event::PeerAdded {
+                //             peer_id,
+                //             info: peer_info,
+                //         });
 
-                        return Ok(());
-                    }
-                    Err(error) => e = error,
-                }
+                //         return Ok(());
+                //     }
+                //     Err(error) => e = error,
+                // }
             }
 
             let _ = event_sender.send(Event::CommandFailed {
@@ -439,11 +465,12 @@ async fn remove_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventS
 }
 
 async fn disconnect_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), peer::Error> {
-    // NB: We sent the `PeerDisconnected` event *before* we sent the shutdown signal to the stream writer task, so
+    // **NB**: We sent the `PeerDisconnected` event *before* we sent the shutdown signal to the stream writer task, so
     // it can stop adding messages to the channel before we drop the receiver.
 
-    match peerlist.disconnect(&peer_id).await {
-        Ok(gossip_sender) => {
+    match peerlist.update_state(&peer_id, |state| state.set_disconnected()).await {
+        // match peerlist.disconnect(&peer_id).await {
+        Ok(Some(gossip_sender)) => {
             let _ = event_sender.send(Event::PeerDisconnected { peer_id });
 
             let shutdown_msg = Vec::with_capacity(0);
@@ -454,6 +481,7 @@ async fn disconnect_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &Ev
 
             Ok(())
         }
+        Ok(None) => Ok(()),
         Err(e) => {
             let _ = event_sender.send(Event::CommandFailed {
                 command: Command::DisconnectPeer { peer_id },

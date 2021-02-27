@@ -9,7 +9,7 @@ use libp2p::Multiaddr;
 #[derive(Clone, Debug)]
 pub struct PeerInfo {
     /// The peer's address.
-    pub address: Multiaddr,
+    pub address: Multiaddr, // TODO: allow multiple addresses per peer via libp2p::Addresses
     /// The peer's alias.
     pub alias: String,
     /// The type of relation we have with this peer.
@@ -63,11 +63,11 @@ impl PeerRelation {
 pub struct PeerState(Option<GossipSender>);
 
 impl PeerState {
-    pub fn connected(gossip_sender: GossipSender) -> Self {
+    pub fn from_connected(gossip_sender: GossipSender) -> Self {
         Self(Some(gossip_sender))
     }
 
-    pub fn disconnected() -> Self {
+    pub fn from_disconnected() -> Self {
         Self(None)
     }
 
@@ -79,8 +79,8 @@ impl PeerState {
         self.0.is_some()
     }
 
-    pub fn set_connected(&mut self, gossip_sender: GossipSender) {
-        self.0.replace(gossip_sender);
+    pub fn set_connected(&mut self, gossip_sender: GossipSender) -> Option<GossipSender> {
+        self.0.replace(gossip_sender)
     }
 
     pub fn set_disconnected(&mut self) -> Option<GossipSender> {

@@ -11,8 +11,14 @@ pub struct InsertionFailure(pub PeerId, pub PeerInfo, pub Error);
 #[derive(Clone, Debug, thiserror::Error)]
 pub enum Error {
     /// A failure due to a peer not being present in the peerlist.
-    #[error("Missing peer: {}", .0)]
-    PeerMissing(PeerId),
+    #[error("Peer is not recognized: {}", .0)]
+    PeerUnrecognized(PeerId),
+    /// A failure due to a peer being banned.
+    #[error("Peer was banned: {}", .0)]
+    PeerBanned(PeerId),
+    /// A failure due to an address being banned.
+    #[error("Address was banned: {}", .0)]
+    AddressBanned(Multiaddr),
     /// A failure due to attempting to add a peer twice.
     #[error("Already added that peer: {}", .0)]
     PeerAlreadyAdded(PeerId),
@@ -30,7 +36,10 @@ pub enum Error {
     PeerAlreadyUnbanned(PeerId),
     /// A failure due to hitting the maximum number of allowed unknown peers.
     #[error("Tried to add more unknown peers than defined in the config ({}).", .0)]
-    UnknownPeerLimitReached(usize),
+    MaxUnknownPeersLimitExceeded(usize),
+    /// A failure due to hitting the maximum number of allowed discovered peers.
+    #[error("Tried to add more discovered peers than defined in the config ({}).", .0)]
+    MaxDiscoveredPeersLimitExceeded(usize),
     /// A failure due to attempting to connect a peer twice.
     #[error("Already connected that peer: {}", .0)]
     PeerAlreadyConnected(PeerId),
