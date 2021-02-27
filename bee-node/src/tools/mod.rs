@@ -43,11 +43,7 @@ pub fn exec(tool: &Tool) -> Result<(), ToolError> {
         Tool::P2pIdentity(tool) => p2p_identity::exec(tool),
         Tool::Rocksdb(tool) => rocksdb::exec(tool)?,
         Tool::SnapshotInfo(tool) => snapshot_info::exec(tool)?,
-        Tool::Password(tool) => {
-            if let Err(e) = password::exec(tool) {
-                println!("error: {}", e)
-            }
-        }
+        Tool::Password(tool) => password::exec(tool)?,
     }
 
     Ok(())
