@@ -77,44 +77,6 @@ impl PeerList {
             .map(|(peer_info, _)| peer_info.clone())
     }
 
-    /// Bans a peer.
-    pub async fn ban_peer(&self, peer_id: PeerId) -> Result<(), Error> {
-        // TODO: use storage to persist banned peers
-        if self.banned_peers.write().await.insert(peer_id) {
-            Ok(())
-        } else {
-            Err(Error::PeerAlreadyBanned(peer_id))
-        }
-    }
-
-    /// Bans an address.
-    pub async fn ban_address(&self, address: Multiaddr) -> Result<(), Error> {
-        // TODO: use storage to persist banned addrs
-        if self.banned_addrs.write().await.insert(address.clone()) {
-            Ok(())
-        } else {
-            Err(Error::AddressAlreadyBanned(address))
-        }
-    }
-
-    /// Unbans a peer.
-    pub async fn unban_peer(&self, peer_id: &PeerId) -> Result<(), Error> {
-        if self.banned_peers.write().await.remove(peer_id) {
-            Ok(())
-        } else {
-            Err(Error::PeerAlreadyUnbanned(*peer_id))
-        }
-    }
-
-    /// Unbans an address.
-    pub async fn unban_address(&self, address: &Multiaddr) -> Result<(), Error> {
-        if self.banned_addrs.write().await.remove(address) {
-            Ok(())
-        } else {
-            Err(Error::AddressAlreadyUnbanned(address.clone()))
-        }
-    }
-
     /// Checks wether the peer would be accepted by the peer list. Those checks are:
     ///     1. the peer id does not already exist,
     ///     2. the `max_unknown_peers_acccepted` has not been reached yet,
@@ -260,8 +222,59 @@ impl PeerList {
         }
     }
 
+    /// Clears the peer list.
     #[allow(dead_code)]
     pub async fn clear(&self) {
         self.peers.write().await.clear();
+        self.banned_peers.write().await.clear();
+        self.banned_addrs.write().await.clear();
+    }
+
+    /// Bans a peer.
+    pub async fn ban_peer(&self, peer_id: PeerId) -> Result<(), Error> {
+        // TODO: use storage to persist banned peers
+        if self.banned_peers.write().await.insert(peer_id) {
+            Ok(())
+        } else {
+            Err(Error::PeerAlreadyBanned(peer_id))
+        }
+    }
+
+    /// Bans an address.
+    pub async fn ban_address(&self, address: Multiaddr) -> Result<(), Error> {
+        // TODO: use storage to persist banned addrs
+        if self.banned_addrs.write().await.insert(address.clone()) {
+            Ok(())
+        } else {
+            Err(Error::AddressAlreadyBanned(address))
+        }
+    }
+
+    /// Unbans a peer.
+    pub async fn unban_peer(&self, peer_id: &PeerId) -> Result<(), Error> {
+        if self.banned_peers.write().await.remove(peer_id) {
+            Ok(())
+        } else {
+            Err(Error::PeerAlreadyUnbanned(*peer_id))
+        }
+    }
+
+    /// Unbans an address.
+    pub async fn unban_address(&self, address: &Multiaddr) -> Result<(), Error> {
+        if self.banned_addrs.write().await.remove(address) {
+            Ok(())
+        } else {
+            Err(Error::AddressAlreadyUnbanned(address.clone()))
+        }
+    }
+
+    /// Returns whether a given peer is banned.
+    pub async fn is_peer_banned(&self, peer_id: &PeerId) -> bool {
+        self.banned_peers.read().await.contains(peer_id)
+    }
+
+    /// Returns whether a given address is banned.
+    pub async fn is_addr_banned(&self, address: &Multiaddr) -> bool {
+        self.banned_addrs.read().await.contains(address)
     }
 }

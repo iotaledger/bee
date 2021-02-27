@@ -34,7 +34,7 @@ pub type NetworkListener = UnboundedReceiver<Event>;
 use bee_runtime::node::{Node, NodeBuilder};
 
 use host::NetworkHostConfig;
-use peer::{AddrBanlist, PeerBanlist, PeerList};
+use peer::PeerList;
 use service::{HostCommand, NetworkServiceConfig, SwarmEvent};
 
 use libp2p::identity;
@@ -80,16 +80,12 @@ pub async fn init<N: Node>(
     let (event_sender, event_receiver) = service::event_channel::<Event>();
     let (swarm_event_sender, swarm_event_receiver) = service::event_channel::<SwarmEvent>();
 
-    let banned_addrs = AddrBanlist::new();
-    let banned_peers = PeerBanlist::new();
     let peerlist = PeerList::new();
 
     let host_config = NetworkHostConfig {
         local_keys: local_keys.clone(),
         bind_address,
         peerlist: peerlist.clone(),
-        banned_addrs: banned_addrs.clone(),
-        banned_peers: banned_peers.clone(),
         swarm_event_sender: swarm_event_sender.clone(),
         host_command_receiver,
     };
@@ -97,8 +93,6 @@ pub async fn init<N: Node>(
     let service_config = NetworkServiceConfig {
         local_keys,
         peerlist,
-        banned_addrs,
-        banned_peers,
         event_sender,
         command_receiver,
         swarm_event_sender,

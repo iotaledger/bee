@@ -7,7 +7,7 @@ use super::{
 };
 use crate::{
     alias,
-    peer::{self, AddrBanlist, InsertionFailure, PeerBanlist, PeerInfo, PeerList, PeerRelation},
+    peer::{self, InsertionFailure, PeerInfo, PeerList, PeerRelation},
     RECONNECT_INTERVAL_SECS,
 };
 
@@ -31,8 +31,6 @@ pub struct NetworkService {}
 pub struct NetworkServiceConfig {
     pub local_keys: identity::Keypair,
     pub peerlist: PeerList,
-    pub banned_addrs: AddrBanlist,
-    pub banned_peers: PeerBanlist,
     pub event_sender: EventSender,
     pub command_receiver: CommandReceiver,
     pub swarm_event_sender: SwarmEventSender,
@@ -53,8 +51,6 @@ impl<N: Node> Worker<N> for NetworkService {
         let NetworkServiceConfig {
             local_keys: _,
             peerlist,
-            banned_addrs,
-            banned_peers,
             event_sender,
             command_receiver,
             swarm_event_sender,
@@ -63,8 +59,6 @@ impl<N: Node> Worker<N> for NetworkService {
         } = config;
 
         let peerlist_clone = peerlist.clone();
-        let banned_addrlist_clone = banned_addrs.clone();
-        let banned_peerlist_clone = banned_peers.clone();
         let event_sender_clone = event_sender.clone();
         let host_command_sender_clone = host_command_sender.clone();
 
@@ -78,8 +72,6 @@ impl<N: Node> Worker<N> for NetworkService {
                 if let Err(e) = process_command(
                     command,
                     &peerlist_clone,
-                    &banned_addrlist_clone,
-                    &banned_peerlist_clone,
                     &event_sender_clone,
                     &host_command_sender_clone,
                 )
@@ -106,8 +98,6 @@ impl<N: Node> Worker<N> for NetworkService {
                 if let Err(e) = process_swarm_event(
                     swarm_event,
                     &peerlist_clone,
-                    &banned_addrs,
-                    &banned_peers,
                     &event_sender,
                     &swarm_event_sender,
                     &host_command_sender_clone,
@@ -171,8 +161,6 @@ impl<N: Node> Worker<N> for NetworkService {
 async fn process_command(
     command: Command,
     peerlist: &PeerList,
-    banned_addrlist: &AddrBanlist,
-    banned_peerlist: &PeerBanlist,
     event_sender: &EventSender,
     host_command_sender: &HostCommandSender,
 ) -> Result<(), peer::Error> {
@@ -212,31 +200,24 @@ async fn process_command(
             disconnect_peer(peer_id, peerlist, event_sender).await?;
         }
         Command::BanAddress { address } => {
-            if !banned_addrlist.insert(address.clone()).await {
-                return Err(peer::Error::AddressAlreadyBanned(address));
-            }
+            peerlist.ban_address(address.clone()).await?;
+
             if event_sender.send(Event::AddressBanned { address }).is_err() {
                 trace!("Failed to send 'AddressBanned' event. (Shutting down?)")
             }
         }
         Command::BanPeer { peer_id } => {
-            if !banned_peerlist.insert(peer_id).await {
-                return Err(peer::Error::PeerAlreadyBanned(peer_id));
-            }
+            peerlist.ban_peer(peer_id).await?;
 
             if event_sender.send(Event::PeerBanned { peer_id }).is_err() {
                 trace!("Failed to send 'PeerBanned' event. (Shutting down?)")
             }
         }
         Command::UnbanAddress { address } => {
-            if !banned_addrlist.remove(&address).await {
-                return Err(peer::Error::AddressAlreadyUnbanned(address));
-            }
+            peerlist.unban_address(&address).await?;
         }
         Command::UnbanPeer { peer_id } => {
-            if !banned_peerlist.remove(&peer_id).await {
-                return Err(peer::Error::PeerAlreadyUnbanned(peer_id));
-            }
+            peerlist.unban_peer(&peer_id).await?;
         }
         Command::UpgradeRelation { peer_id } => {
             peerlist
@@ -260,8 +241,6 @@ async fn process_command(
 async fn process_swarm_event(
     swarm_event: SwarmEvent,
     peerlist: &PeerList,
-    _banned_addrs: &AddrBanlist,
-    _banned_peers: &PeerBanlist,
     event_sender: &EventSender,
     _swarm_event_sender: &SwarmEventSender,
     host_command_sender: &HostCommandSender,

@@ -4,7 +4,7 @@
 use super::Error;
 use crate::{
     alias,
-    peer::{AddrBanlist, PeerBanlist, PeerInfo, PeerList},
+    peer::{PeerInfo, PeerList},
     service::{HostCommand, HostCommandReceiver, NetworkService, SwarmEventSender},
     swarm,
     swarm::{protocols::gossip::GOSSIP_ORIGIN, SubstreamBehavior},
@@ -26,8 +26,6 @@ pub struct NetworkHostConfig {
     pub local_keys: Keypair,
     pub bind_address: Multiaddr,
     pub peerlist: PeerList,
-    pub banned_addrs: AddrBanlist,
-    pub banned_peers: PeerBanlist,
     pub swarm_event_sender: SwarmEventSender,
     pub host_command_receiver: HostCommandReceiver,
 }
@@ -51,8 +49,6 @@ impl<N: Node> Worker<N> for NetworkHost {
             local_keys,
             bind_address,
             peerlist,
-            banned_addrs,
-            banned_peers,
             swarm_event_sender,
             mut host_command_receiver,
         } = config;
@@ -69,7 +65,6 @@ impl<N: Node> Worker<N> for NetworkHost {
         let _ = Swarm::listen_on(&mut swarm, bind_address).expect("Fatal error: address binding failed.");
 
         node.spawn::<Self, _, _>(|mut shutdown| async move {
-
             loop {
                 let swarm_next_event = Swarm::next_event(&mut swarm);
                 // let swarm_next = Swarm::next(&mut swarm);
@@ -88,7 +83,7 @@ impl<N: Node> Worker<N> for NetworkHost {
                     // Process command
                     command = recv_command => {
                         if let Some(command) = command {
-                            process_command(command, &mut swarm, &local_keys, &peerlist, &banned_addrs, &banned_peers).await;
+                            process_command(command, &mut swarm, &local_keys, &peerlist).await;
                         }
                     },
                 }
@@ -144,17 +139,15 @@ async fn process_command(
     swarm: &mut Swarm<SubstreamBehavior>,
     local_keys: &Keypair,
     peerlist: &PeerList,
-    banned_addrs: &AddrBanlist,
-    banned_peers: &PeerBanlist,
 ) {
     match command {
         HostCommand::DialPeer { peer_id } => {
-            if let Err(e) = dial_peer(swarm, local_keys, peer_id, &peerlist, &banned_addrs, &banned_peers).await {
+            if let Err(e) = dial_peer(swarm, local_keys, peer_id, &peerlist).await {
                 warn!("Failed to dial peer '...{}'. Cause: {}", alias!(peer_id), e);
             }
         }
         HostCommand::DialAddress { address } => {
-            if let Err(e) = dial_addr(swarm, address.clone(), &banned_addrs).await {
+            if let Err(e) = dial_addr(swarm, address.clone(), &peerlist).await {
                 warn!("Failed to dial address '{}'. Cause: {}", address, e);
             }
         }
@@ -176,17 +169,13 @@ async fn process_command(
     }
 }
 
-async fn dial_addr(
-    swarm: &mut Swarm<SubstreamBehavior>,
-    address: Multiaddr,
-    banned_addrs: &AddrBanlist,
-) -> Result<(), Error> {
+async fn dial_addr(swarm: &mut Swarm<SubstreamBehavior>, address: Multiaddr, peerlist: &PeerList) -> Result<(), Error> {
     // TODO
     // Prevent dialing own listen addresses.
     // check_if_dialing_own_addr(&address).await?;
 
     // Prevent dialing banned addresses.
-    check_if_banned_addr(&address, &banned_addrs).await?;
+    check_if_banned_addr(&address, &peerlist).await?;
 
     info!("Dialing address {}.", address);
     //
@@ -201,8 +190,6 @@ async fn dial_peer(
     local_keys: &identity::Keypair,
     remote_peer_id: PeerId,
     peerlist: &PeerList,
-    banned_addrs: &AddrBanlist,
-    banned_peers: &PeerBanlist,
 ) -> Result<(), Error> {
     let local_peer_id = local_keys.public().into_peer_id();
 
@@ -215,7 +202,7 @@ async fn dial_peer(
     check_if_duplicate_conn(&remote_peer_id, &peerlist).await?;
 
     // Prevent dialing banned peers.
-    check_if_banned_peer(&remote_peer_id, &banned_peers).await?;
+    check_if_banned_peer(&remote_peer_id, &peerlist).await?;
 
     // Prevent dialing unregistered peers.
     let PeerInfo { address, alias, .. } = check_if_unregistered_or_get_info(&remote_peer_id, &peerlist).await?;
@@ -225,7 +212,7 @@ async fn dial_peer(
     // check_if_dialing_own_addr(&address).await?;
 
     // Prevent dialing banned addresses.
-    check_if_banned_addr(&address, &banned_addrs).await?;
+    check_if_banned_addr(&address, &peerlist).await?;
 
     info!("Dialing peer {}.", alias);
 
@@ -259,8 +246,8 @@ async fn check_if_duplicate_conn(remote_peer_id: &PeerId, peerlist: &PeerList) -
     }
 }
 
-async fn check_if_banned_peer(remote_peer_id: &PeerId, banned_peers: &PeerBanlist) -> Result<(), Error> {
-    if banned_peers.contains(remote_peer_id).await {
+async fn check_if_banned_peer(remote_peer_id: &PeerId, peerlist: &PeerList) -> Result<(), Error> {
+    if peerlist.is_peer_banned(remote_peer_id).await {
         Err(Error::DialedBannedPeer(*remote_peer_id))
     } else {
         Ok(())
@@ -274,9 +261,9 @@ async fn check_if_unregistered_or_get_info(remote_peer_id: &PeerId, peerlist: &P
         .map_err(|_| Error::DialedUnregisteredPeer(*remote_peer_id))
 }
 
-async fn check_if_banned_addr(addr: &Multiaddr, banned_addrs: &AddrBanlist) -> Result<(), Error> {
-    if banned_addrs.contains(addr).await {
-        Err(Error::DialedBannedAddress(addr.clone()))
+async fn check_if_banned_addr(address: &Multiaddr, peerlist: &PeerList) -> Result<(), Error> {
+    if peerlist.is_addr_banned(address).await {
+        Err(Error::DialedBannedAddress(address.clone()))
     } else {
         Ok(())
     }
