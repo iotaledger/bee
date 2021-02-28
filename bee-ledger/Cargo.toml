@@ -27,6 +27,7 @@ futures = "0.3"
 hex = "0.4"
 iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "09ff1a94d6a87838589ccf1b874cfa3283a00f26", features = ["blake2b"] }
 log = "0.4"
+serde = { version = "1.0", features = ["derive" ] }
 thiserror = "1.0"
 tokio = { version = "1.1", features = ["sync"] }
 tokio-stream = "0.1"

@@ -4,6 +4,7 @@
 //#![warn(missing_docs)]
 
 pub mod balance;
+pub mod config;
 pub mod dust;
 pub mod error;
 pub mod event;

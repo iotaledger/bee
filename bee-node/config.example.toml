@@ -98,6 +98,8 @@ path = "./storage/alphanet"
 enabled = true
 delay   = 60480
 
+[ledger]
+
 [mqtt]
 address = "tcp://localhost:1883"
 
