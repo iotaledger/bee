@@ -1,70 +1,28 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::model::Error;
+use crate::model::{treasury_diff::TreasuryDiff, Error};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::{payload::milestone::MilestoneId, output::OutputId};
-
-#[derive(Debug)]
-pub struct TreasuryDiff {
-    created: MilestoneId,
-    consumed: MilestoneId,
-}
-
-impl TreasuryDiff {
-    pub fn new(created: MilestoneId, consumed: MilestoneId) -> Self {
-        Self { created, consumed }
-    }
-
-    pub fn created(&self) -> &MilestoneId {
-        &self.created
-    }
-
-    pub fn consumed(&self) -> &MilestoneId {
-        &self.consumed
-    }
-}
-
-impl Packable for TreasuryDiff {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        self.created.packed_len() + self.consumed.packed_len()
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.created.pack(writer)?;
-        self.consumed.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self {
-            created: MilestoneId::unpack(reader)?,
-            consumed: MilestoneId::unpack(reader)?,
-        })
-    }
-}
+use bee_message::output::OutputId;
 
 #[derive(Debug)]
 pub struct OutputDiff {
     created_outputs: Vec<OutputId>,
     consumed_outputs: Vec<OutputId>,
-    treasury: Option<TreasuryDiff>,
+    treasury_diff: Option<TreasuryDiff>,
 }
 
 impl OutputDiff {
     pub fn new(
         created_outputs: Vec<OutputId>,
         consumed_outputs: Vec<OutputId>,
-        treasury: Option<TreasuryDiff>,
+        treasury_diff: Option<TreasuryDiff>,
     ) -> Self {
         Self {
             created_outputs,
             consumed_outputs,
-            treasury,
+            treasury_diff,
         }
     }
 
@@ -76,8 +34,8 @@ impl OutputDiff {
         &self.consumed_outputs
     }
 
-    pub fn treasury(&self) -> Option<&TreasuryDiff> {
-        self.treasury.as_ref()
+    pub fn treasury_diff(&self) -> Option<&TreasuryDiff> {
+        self.treasury_diff.as_ref()
     }
 }
 
@@ -85,7 +43,7 @@ impl Packable for OutputDiff {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.created_outputs.packed_len() + self.consumed_outputs.packed_len() + self.treasury.packed_len()
+        self.created_outputs.packed_len() + self.consumed_outputs.packed_len() + self.treasury_diff.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -99,7 +57,7 @@ impl Packable for OutputDiff {
             output.pack(writer)?;
         }
 
-        self.treasury.pack(writer).map_err(|_| Error::Option)?;
+        self.treasury_diff.pack(writer).map_err(|_| Error::Option)?;
 
         Ok(())
     }
@@ -120,7 +78,7 @@ impl Packable for OutputDiff {
         Ok(Self {
             created_outputs,
             consumed_outputs,
-            treasury: Option::<TreasuryDiff>::unpack(reader).map_err(|_| Error::Option)?,
+            treasury_diff: Option::<TreasuryDiff>::unpack(reader).map_err(|_| Error::Option)?,
         })
     }
 }
