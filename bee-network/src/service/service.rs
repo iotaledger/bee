@@ -112,6 +112,9 @@ impl<N: Node> Worker<N> for NetworkService {
             debug!("Event handler stopped.");
         });
 
+        let peerlist_clone = peerlist.clone();
+        let host_command_sender_clone = host_command_sender.clone();
+
         // Spawn reconnecter task
         node.spawn::<Self, _, _>(|shutdown| async move {
             // NOTE: we add a random amount of milliseconds to when the reconnector starts, so that even if 2 nodes
@@ -123,6 +126,8 @@ impl<N: Node> Worker<N> for NetworkService {
             );
             let start = Instant::now() + randomized_delay;
 
+            debug!("Reconnecter starting in {:?}.", randomized_delay);
+
             let mut connected_check_timer = ShutdownStream::new(
                 shutdown,
                 IntervalStream::new(time::interval_at(
@@ -131,25 +136,54 @@ impl<N: Node> Worker<N> for NetworkService {
                 )),
             );
 
-            debug!("Reconnecter starting in {:?}.", randomized_delay);
-
             while connected_check_timer.next().await.is_some() {
                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
                 // of those.
-                for (peer_id, alias) in peerlist
+                for (peer_id, alias) in peerlist_clone
                     .iter_if(|info, state| info.relation.is_known() && state.is_disconnected())
                     .await
                 {
-                    info!("Reconnecting to {}.", alias);
+                    info!("Reconnecting to '{}'.", alias);
 
                     // Not being able to send something over this channel must be considered a bug.
-                    host_command_sender
+                    host_command_sender_clone
                         .send(HostCommand::DialPeer { peer_id })
                         .expect("Reconnector failed to send 'DialPeer' command.")
                 }
             }
 
             debug!("Reconnecter stopped.");
+        });
+
+        // Spawn autopeerer task
+        node.spawn::<Self, _, _>(|shutdown| async move {
+            // TODO: constants
+            let delay = Duration::from_secs(10);
+            let start = Instant::now() + delay;
+
+            debug!("Autopeerer starting in {:?}", delay);
+
+            let mut autopeering_timer = ShutdownStream::new(
+                shutdown,
+                IntervalStream::new(time::interval_at(start, Duration::from_secs(30))),
+            );
+
+            while autopeering_timer.next().await.is_some() {
+                // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
+                // of those.
+                for (peer_id, alias) in peerlist
+                    .iter_if(|info, state| info.relation.is_discovered() && state.is_disconnected())
+                    .await
+                {
+                    info!("(Auto)peering with '{}'.", alias);
+
+                    // Not being able to send something over this channel must be considered a bug.
+                    host_command_sender
+                        .send(HostCommand::DialPeer { peer_id })
+                        .expect("Autopeerer failed to send 'DialPeer' command.")
+                }
+            }
+            debug!("Autopeerer stopped.");
         });
 
         info!("Network service started.");
@@ -243,7 +277,7 @@ async fn process_swarm_event(
     peerlist: &PeerList,
     event_sender: &EventSender,
     _swarm_event_sender: &SwarmEventSender,
-    host_command_sender: &HostCommandSender,
+    _host_command_sender: &HostCommandSender,
 ) -> Result<(), peer::Error> {
     match swarm_event {
         SwarmEvent::ProtocolEstablished {
@@ -280,6 +314,10 @@ async fn process_swarm_event(
                 .await
                 .expect("error getting info although checked");
 
+            // **NB**: one sender is kept in the network layer, and stored inside of a `PeerState` enum, the other is
+            // published via the `PeerConnected` event in order to be held by the user of this crate. This is to remain
+            // in control over the lifetime of the spawned tokio tasks.
+
             let _ = peerlist
                 .update_state(&peer_id, |state| state.set_connected(gossip_out.clone()))
                 .await?;
@@ -298,9 +336,6 @@ async fn process_swarm_event(
         }
 
         SwarmEvent::ProtocolDropped { peer_id } => {
-            // NB: Just in case there is any error (PeerMissing, PeerAlreadyDisconnected),
-            // then 'disconnect' just becomes a NoOp.
-
             let _ = peerlist
                 .update_state(&peer_id, |state| {
                     // ignore the returned gossip sender
@@ -333,21 +368,13 @@ async fn process_swarm_event(
                 relation: PeerRelation::Discovered,
             };
 
-            peerlist
-                .insert(peer_id, peer_info)
-                .await
-                .map_err(|InsertionFailure(_, _, e)| e)?;
+            if let Err(InsertionFailure(peer_id, _, e)) = peerlist.insert(peer_id, peer_info).await {
+                debug!("'{}' not added to peer list. Cause: {}", alias!(peer_id), e);
 
-            // // Connect to the discovered peer, if all checks pass
-            // if peerlist.accepts(&peer_id, &peer_info).await.is_ok() {
-            //     println!("New dialable peer: {}, {:?}", peer_id, peer_info);
-
-            //     host_command_sender
-            //         .send(HostCommand::DialAddress {
-            //             address: peer_info.address,
-            //         })
-            //         .expect("command channel receiver dropped");
-            // }
+                return Ok(());
+            } else {
+                println!("Added discovered peer '{}' to the peer list", alias!(peer_id));
+            }
         }
     }
 

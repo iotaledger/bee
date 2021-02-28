@@ -121,6 +121,7 @@ pub enum GossipEvent {
         conn: NegotiatedSubstream,
         conn_info: ConnectionInfo,
     },
+    #[allow(dead_code)]
     Failure,
 }
 

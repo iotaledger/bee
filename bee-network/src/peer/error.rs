@@ -10,6 +10,9 @@ pub struct InsertionFailure(pub PeerId, pub PeerInfo, pub Error);
 
 #[derive(Clone, Debug, thiserror::Error)]
 pub enum Error {
+    /// A failure due to a given peer being an invalid choice.
+    #[error("Peer is invalid: {}", .0)]
+    PeerInvalid(PeerId),
     /// A failure due to a peer not being present in the peerlist.
     #[error("Peer is not recognized: {}", .0)]
     PeerUnrecognized(PeerId),

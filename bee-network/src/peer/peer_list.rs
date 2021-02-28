@@ -17,8 +17,9 @@ const DEFAULT_PEERLIST_CAP: usize = 8;
 const DEFAULT_BANNED_PEERS_CAP: usize = 32;
 const DEFAULT_BANNED_ADDRS_CAP: usize = 16;
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct PeerList {
+    local_peer_id: PeerId,
     peers: Arc<RwLock<HashMap<PeerId, (PeerInfo, PeerState)>>>,
     banned_peers: Arc<RwLock<HashSet<PeerId>>>,
     banned_addrs: Arc<RwLock<HashSet<Multiaddr>>>,
@@ -26,8 +27,9 @@ pub struct PeerList {
 
 impl PeerList {
     /// Creates a new empty peer list.
-    pub fn new() -> Self {
+    pub fn new(local_peer_id: PeerId) -> Self {
         Self {
+            local_peer_id,
             peers: Arc::new(RwLock::new(HashMap::with_capacity(DEFAULT_PEERLIST_CAP))),
             banned_peers: Arc::new(RwLock::new(HashSet::with_capacity(DEFAULT_BANNED_PEERS_CAP))),
             banned_addrs: Arc::new(RwLock::new(HashSet::with_capacity(DEFAULT_BANNED_ADDRS_CAP))),
@@ -35,7 +37,7 @@ impl PeerList {
     }
 
     /// Inserts a peer id together with some metadata into the peer list.
-    /// **Note**: If the insertion fails for some reason, we give it back to the caller.
+    /// **Note**: If the insertion fails for some reason, we give data back to the caller together with the cause.
     pub async fn insert(&self, peer_id: PeerId, peer_info: PeerInfo) -> Result<(), InsertionFailure> {
         if let Err(e) = self.accepts(&peer_id, &peer_info).await {
             Err(InsertionFailure(peer_id, peer_info, e))
@@ -78,12 +80,23 @@ impl PeerList {
     }
 
     /// Checks wether the peer would be accepted by the peer list. Those checks are:
-    ///     1. the peer id does not already exist,
-    ///     2. the `max_unknown_peers_acccepted` has not been reached yet,
-    ///     3. the `max_discovered_peers_dialed` has not been reached yet,
-    ///     4. the peer id has not been banned,
-    ///     5. the peer address has not been banned,
+    ///     1. the peer id is not the same as the local peer id,
+    ///     2. the peer id is not a duplicate,
+    ///     3. the peer id has not been banned,
+    ///     4. the address has not been banned,
+    ///     5. the `max_unknown_peers_acccepted` has not been reached yet,
+    ///     6. the `max_discovered_peers_dialed` has not been reached yet,
     pub async fn accepts(&self, peer_id: &PeerId, peer_info: &PeerInfo) -> Result<(), Error> {
+        // Deny self.
+        if peer_id.eq(&self.local_peer_id) {
+            return Err(Error::PeerInvalid(*peer_id));
+        }
+
+        // Deny duplicates.
+        if self.peers.read().await.contains_key(peer_id) {
+            return Err(Error::PeerAlreadyAdded(*peer_id));
+        }
+
         // Deny banned peers.
         if self.banned_peers.read().await.contains(peer_id) {
             return Err(Error::PeerBanned(*peer_id));
@@ -92,11 +105,6 @@ impl PeerList {
         // Deny banned addresses.
         if self.banned_addrs.read().await.contains(&peer_info.address) {
             return Err(Error::AddressBanned(peer_info.address.clone()));
-        }
-
-        // Deny duplicates.
-        if self.peers.read().await.contains_key(peer_id) {
-            return Err(Error::PeerAlreadyAdded(*peer_id));
         }
 
         // Deny more than `MAX_UNKNOWN_PEERS` peers.

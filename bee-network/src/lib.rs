@@ -71,8 +71,8 @@ pub async fn init<N: Node>(
     MAX_DISCOVERED_PEERS.swap(max_discovered_peers_dialed, Ordering::Relaxed);
 
     let local_keys = identity::Keypair::Ed25519(local_keys);
-    let local_id = PeerId::from_public_key(local_keys.public());
-    info!("Local peer id: {}", local_id);
+    let local_peer_id = PeerId::from_public_key(local_keys.public());
+    info!("Local peer id: {}", local_peer_id);
 
     let (command_sender, command_receiver) = service::command_channel::<Command>();
     let (host_command_sender, host_command_receiver) = service::command_channel::<HostCommand>();
@@ -80,7 +80,7 @@ pub async fn init<N: Node>(
     let (event_sender, event_receiver) = service::event_channel::<Event>();
     let (swarm_event_sender, swarm_event_receiver) = service::event_channel::<SwarmEvent>();
 
-    let peerlist = PeerList::new();
+    let peerlist = PeerList::new(local_peer_id);
 
     let host_config = NetworkHostConfig {
         local_keys: local_keys.clone(),
@@ -100,7 +100,7 @@ pub async fn init<N: Node>(
         host_command_sender,
     };
 
-    let network_service_controller = NetworkServiceController::new(command_sender, local_id);
+    let network_service_controller = NetworkServiceController::new(command_sender);
 
     for peer in peers {
         network_service_controller
