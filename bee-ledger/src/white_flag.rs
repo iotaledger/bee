@@ -14,10 +14,10 @@ use bee_message::{
     input::Input,
     output::{ConsumedOutput, CreatedOutput, Output, OutputId},
     payload::{
-        transaction::{Essence, TransactionPayload},
+        transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
         Payload,
     },
-    unlock::UnlockBlock,
+    unlock::{UnlockBlock, UnlockBlocks},
     Message, MessageId,
 };
 use bee_runtime::node::Node;
@@ -28,140 +28,100 @@ use std::{
     ops::Deref,
 };
 
-async fn validate_transaction<B: StorageBackend>(
+async fn validate_regular_essence<B: StorageBackend>(
     storage: &B,
-    transaction: &TransactionPayload,
+    message_id: &MessageId,
+    transaction_id: &TransactionId,
+    essence: &RegularEssence,
+    unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
-    consumed_outputs: &mut HashMap<OutputId, CreatedOutput>,
-    balance_diffs: &mut BalanceDiffs,
 ) -> Result<ConflictReason, Error> {
+    let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
+    let mut balance_diffs = BalanceDiffs::new();
     let mut created_amount: u64 = 0;
     let mut consumed_amount: u64 = 0;
+    // TODO avoid clone
+    let essence_hash = Essence::from(essence.clone()).hash();
 
     // TODO saturating ? Overflowing ? Checked ?
 
-    // TODO
-    if let Essence::Regular(essence) = transaction.essence() {
-        let essence_hash = transaction.essence().hash();
+    for (index, input) in essence.inputs().iter().enumerate() {
+        let (output_id, consumed_output) = if let Input::UTXO(utxo_input) = input {
+            let output_id = utxo_input.output_id();
 
-        for (index, input) in essence.inputs().iter().enumerate() {
-            let (output_id, consumed_output) = if let Input::UTXO(utxo_input) = input {
-                let output_id = utxo_input.output_id();
+            if metadata.consumed_outputs.contains_key(output_id) {
+                return Ok(ConflictReason::InputUTXOAlreadySpentInThisMilestone);
+            }
 
-                if metadata.consumed_outputs.contains_key(output_id) {
-                    return Ok(ConflictReason::InputUTXOAlreadySpentInThisMilestone);
+            if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
+                (output_id, output)
+            } else if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
+                if !storage::is_output_unspent(storage.deref(), output_id).await? {
+                    return Ok(ConflictReason::InputUTXOAlreadySpent);
                 }
-
-                if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
-                    (output_id, output)
-                } else if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
-                    if !storage::is_output_unspent(storage.deref(), output_id).await? {
-                        return Ok(ConflictReason::InputUTXOAlreadySpent);
-                    }
-                    (output_id, output)
-                } else {
-                    return Ok(ConflictReason::InputUTXONotFound);
-                }
+                (output_id, output)
             } else {
-                return Err(Error::UnsupportedInputType);
-            };
-
-            match consumed_output.inner() {
-                Output::SignatureLockedSingle(consumed_output) => {
-                    consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
-                    balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
-                    if consumed_output.amount() < DUST_THRESHOLD {
-                        balance_diffs.dust_output_dec(*consumed_output.address());
-                    }
-                    if !match transaction.unlock_blocks().get(index) {
-                        Some(UnlockBlock::Signature(signature)) => {
-                            consumed_output.address().verify(&essence_hash, signature)
-                        }
-                        _ => false,
-                    } {
-                        return Ok(ConflictReason::InvalidSignature);
-                    }
-                }
-                Output::SignatureLockedDustAllowance(consumed_output) => {
-                    consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
-                    balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
-                    balance_diffs.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
-                    if !match transaction.unlock_blocks().get(index) {
-                        Some(UnlockBlock::Signature(signature)) => {
-                            consumed_output.address().verify(&essence_hash, signature)
-                        }
-                        _ => false,
-                    } {
-                        return Ok(ConflictReason::InvalidSignature);
-                    }
-                }
-                _ => return Err(Error::UnsupportedOutputType),
+                return Ok(ConflictReason::InputUTXONotFound);
             }
+        } else {
+            return Err(Error::UnsupportedInputType);
+        };
 
-            consumed_outputs.insert(*output_id, consumed_output);
+        match consumed_output.inner() {
+            Output::SignatureLockedSingle(consumed_output) => {
+                consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
+                balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
+                if consumed_output.amount() < DUST_THRESHOLD {
+                    balance_diffs.dust_output_dec(*consumed_output.address());
+                }
+                if !match unlock_blocks.get(index) {
+                    Some(UnlockBlock::Signature(signature)) => {
+                        consumed_output.address().verify(&essence_hash, signature)
+                    }
+                    _ => false,
+                } {
+                    return Ok(ConflictReason::InvalidSignature);
+                }
+            }
+            Output::SignatureLockedDustAllowance(consumed_output) => {
+                consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
+                balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
+                balance_diffs.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
+                if !match unlock_blocks.get(index) {
+                    Some(UnlockBlock::Signature(signature)) => {
+                        consumed_output.address().verify(&essence_hash, signature)
+                    }
+                    _ => false,
+                } {
+                    return Ok(ConflictReason::InvalidSignature);
+                }
+            }
+            _ => return Err(Error::UnsupportedOutputType),
         }
 
-        for created_output in essence.outputs() {
-            match created_output {
-                Output::SignatureLockedSingle(created_output) => {
-                    created_amount = created_amount.saturating_add(created_output.amount());
-                    balance_diffs.amount_add(*created_output.address(), created_output.amount());
-                    if created_output.amount() < DUST_THRESHOLD {
-                        balance_diffs.dust_output_inc(*created_output.address());
-                    }
-                }
-                Output::SignatureLockedDustAllowance(created_output) => {
-                    created_amount = created_amount.saturating_add(created_output.amount());
-                    balance_diffs.amount_add(*created_output.address(), created_output.amount());
-                    balance_diffs.dust_allowance_add(*created_output.address(), created_output.amount());
-                }
-                _ => return Err(Error::UnsupportedOutputType),
-            }
-        }
+        consumed_outputs.insert(*output_id, consumed_output);
+    }
 
-        if created_amount != consumed_amount {
-            return Ok(ConflictReason::InputOutputSumMismatch);
+    for created_output in essence.outputs() {
+        match created_output {
+            Output::SignatureLockedSingle(created_output) => {
+                created_amount = created_amount.saturating_add(created_output.amount());
+                balance_diffs.amount_add(*created_output.address(), created_output.amount());
+                if created_output.amount() < DUST_THRESHOLD {
+                    balance_diffs.dust_output_inc(*created_output.address());
+                }
+            }
+            Output::SignatureLockedDustAllowance(created_output) => {
+                created_amount = created_amount.saturating_add(created_output.amount());
+                balance_diffs.amount_add(*created_output.address(), created_output.amount());
+                balance_diffs.dust_allowance_add(*created_output.address(), created_output.amount());
+            }
+            _ => return Err(Error::UnsupportedOutputType),
         }
     }
 
-    Ok(ConflictReason::None)
-}
-
-#[inline]
-async fn on_message<B: StorageBackend>(
-    storage: &B,
-    message_id: &MessageId,
-    message: &Message,
-    metadata: &mut WhiteFlagMetadata,
-) -> Result<(), Error> {
-    metadata.num_referenced_messages += 1;
-
-    let transaction = if let Some(Payload::Transaction(transaction)) = message.payload() {
-        transaction
-    } else {
-        metadata.excluded_no_transaction_messages.push(*message_id);
-        return Ok(());
-    };
-
-    let transaction_id = transaction.id();
-    let essence = transaction.essence();
-    let mut consumed_outputs = HashMap::new();
-    // TODO bring back
-    // let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
-    let mut balance_diffs = BalanceDiffs::new();
-
-    let conflict = validate_transaction(
-        storage,
-        &transaction,
-        metadata,
-        &mut consumed_outputs,
-        &mut balance_diffs,
-    )
-    .await?;
-
-    if conflict != ConflictReason::None {
-        metadata.excluded_conflicting_messages.push((*message_id, conflict));
-        return Ok(());
+    if created_amount != consumed_amount {
+        return Ok(ConflictReason::InputOutputSumMismatch);
     }
 
     for (address, diff) in balance_diffs.iter() {
@@ -175,35 +135,78 @@ async fn on_message<B: StorageBackend>(
             balance = balance + diff;
 
             if balance.dust_output() as usize > dust_outputs_max(balance.dust_allowance()) {
-                metadata
-                    .excluded_conflicting_messages
-                    .push((*message_id, ConflictReason::InvalidDustAllowance));
-                return Ok(());
+                return Ok(ConflictReason::InvalidDustAllowance);
             }
         }
     }
 
     metadata.balance_diffs.merge(balance_diffs);
 
-    // TODO
-    if let Essence::Regular(essence) = essence {
-        for (index, output) in essence.outputs().iter().enumerate() {
-            metadata.created_outputs.insert(
-                // Unwrap is fine, the index is known to be valid.
-                OutputId::new(transaction_id, index as u16).unwrap(),
-                CreatedOutput::new(*message_id, output.clone()),
-            );
-        }
+    for (index, output) in essence.outputs().iter().enumerate() {
+        metadata.created_outputs.insert(
+            // Unwrap is fine, the index is known to be valid.
+            OutputId::new(*transaction_id, index as u16).unwrap(),
+            CreatedOutput::new(*message_id, output.clone()),
+        );
     }
 
     // TODO output ?
     for (output_id, _) in consumed_outputs {
         metadata
             .consumed_outputs
-            .insert(output_id, ConsumedOutput::new(transaction_id, metadata.index));
+            .insert(output_id, ConsumedOutput::new(*transaction_id, metadata.index));
     }
 
-    metadata.included_messages.push(*message_id);
+    Ok(ConflictReason::None)
+}
+
+async fn validate_transaction<B: StorageBackend>(
+    storage: &B,
+    message_id: &MessageId,
+    transaction: &TransactionPayload,
+    metadata: &mut WhiteFlagMetadata,
+) -> Result<ConflictReason, Error> {
+    let transaction_id = transaction.id();
+
+    match transaction.essence() {
+        Essence::Regular(essence) => {
+            validate_regular_essence(
+                storage,
+                message_id,
+                &transaction_id,
+                essence,
+                transaction.unlock_blocks(),
+                metadata,
+            )
+            .await
+        }
+        _ => return Err(Error::UnsupportedTransactionEssenceType),
+    }
+}
+
+async fn validate_message<B: StorageBackend>(
+    storage: &B,
+    message_id: &MessageId,
+    message: &Message,
+    metadata: &mut WhiteFlagMetadata,
+) -> Result<(), Error> {
+    metadata.num_referenced_messages += 1;
+
+    let conflict = match message.payload() {
+        Some(Payload::Transaction(transaction)) => {
+            validate_transaction(storage, message_id, transaction, metadata).await?
+        }
+        _ => {
+            metadata.excluded_no_transaction_messages.push(*message_id);
+            return Ok(());
+        }
+    };
+
+    if conflict != ConflictReason::None {
+        metadata.excluded_conflicting_messages.push((*message_id, conflict));
+    } else {
+        metadata.included_messages.push(*message_id);
+    }
 
     Ok(())
 }
@@ -257,7 +260,7 @@ where
                 match next {
                     Some(next) => messages_ids.push(*next),
                     None => {
-                        on_message(storage, message_id, &message, metadata).await?;
+                        validate_message(storage, message_id, &message, metadata).await?;
                         visited.insert(*message_id);
                         messages_ids.pop();
                     }
