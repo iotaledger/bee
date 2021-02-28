@@ -159,14 +159,19 @@ impl<N: Node> Worker<N> for NetworkService {
         node.spawn::<Self, _, _>(|shutdown| async move {
             // TODO: constants
             let delay = Duration::from_secs(10);
-            let start = Instant::now() + delay;
 
             debug!("Autopeerer starting in {:?}", delay);
 
-            let mut autopeering_timer = ShutdownStream::new(
-                shutdown,
-                IntervalStream::new(time::interval_at(start, Duration::from_secs(30))),
-            );
+            // We wait for our manual peers to be connected before we bootstrap the routing table.
+            time::sleep(delay).await;
+
+            // Not being able to send something over this channel must be considered a bug.
+            host_command_sender
+                .send(HostCommand::BootstrapRoutingTable)
+                .expect("Autopeerer failed to send 'BootstrapRoutingTable' command.");
+
+            let mut autopeering_timer =
+                ShutdownStream::new(shutdown, IntervalStream::new(time::interval(Duration::from_secs(30))));
 
             while autopeering_timer.next().await.is_some() {
                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
