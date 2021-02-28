@@ -142,6 +142,7 @@ async fn process_command(
 ) {
     match command {
         HostCommand::DialPeer { peer_id } => {
+            println!("DIALING PEER: {}", alias!(peer_id));
             if let Err(e) = dial_peer(swarm, local_keys, peer_id, &peerlist).await {
                 warn!("Failed to dial peer '...{}'. Cause: {}", alias!(peer_id), e);
             }
