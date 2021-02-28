@@ -5,7 +5,7 @@ use crate::{constants::INPUT_OUTPUT_INDEX_RANGE, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::convert::{TryFrom, TryInto};
+use core::convert::TryFrom;
 
 pub(crate) const REFERENCE_UNLOCK_KIND: u8 = 1;
 
@@ -13,25 +13,25 @@ pub(crate) const REFERENCE_UNLOCK_KIND: u8 = 1;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReferenceUnlock(u16);
 
-impl TryFrom<u16> for ReferenceUnlock {
-    type Error = Error;
-
-    fn try_from(index: u16) -> Result<Self, Self::Error> {
+impl ReferenceUnlock {
+    pub fn new(index: u16) -> Result<Self, Error> {
         if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
-            return Err(Self::Error::InvalidInputOutputIndex(index));
+            return Err(Error::InvalidReferenceIndex(index));
         }
 
         Ok(Self(index))
     }
-}
-
-impl ReferenceUnlock {
-    pub fn new(index: u16) -> Result<Self, Error> {
-        index.try_into()
-    }
 
     pub fn index(&self) -> u16 {
         self.0
+    }
+}
+
+impl TryFrom<u16> for ReferenceUnlock {
+    type Error = Error;
+
+    fn try_from(index: u16) -> Result<Self, Self::Error> {
+        Self::new(index)
     }
 }
 
@@ -49,6 +49,6 @@ impl Packable for ReferenceUnlock {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(u16::unpack(reader)?)?)
+        Self::new(u16::unpack(reader)?)
     }
 }
