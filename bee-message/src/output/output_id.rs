@@ -49,7 +49,7 @@ impl FromStr for OutputId {
             .try_into()
             .map_err(|_| Self::Err::InvalidHexadecimalLength(OUTPUT_ID_LENGTH * 2, s.len()))?;
 
-        Ok(bytes.try_into()?)
+        bytes.try_into()
     }
 }
 
@@ -105,6 +105,6 @@ impl Packable for OutputId {
         let transaction_id = TransactionId::unpack(reader)?;
         let index = u16::unpack(reader)?;
 
-        Ok(Self::new(transaction_id, index)?)
+        Self::new(transaction_id, index)
     }
 }

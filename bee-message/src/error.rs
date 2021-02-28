@@ -20,7 +20,7 @@ pub enum Error {
     InvalidPayloadKind(u32),
     InvalidAddressKind(u8),
     InvalidSignatureKind(u8),
-    InvalidUnlockKind(u8),
+    InvalidUnlockBlockKind(u8),
     InvalidAccumulatedOutput(u128),
     InputUnlockBlockCountMismatch(usize, usize),
     InvalidParentsCount(usize),
@@ -58,7 +58,7 @@ impl fmt::Display for Error {
             Error::InvalidPayloadKind(k) => write!(f, "Invalid payload kind: {}.", k),
             Error::InvalidAddressKind(k) => write!(f, "Invalid address kind: {}.", k),
             Error::InvalidSignatureKind(k) => write!(f, "Invalid signature kind: {}.", k),
-            Error::InvalidUnlockKind(k) => write!(f, "Invalid unlock kind: {}.", k),
+            Error::InvalidUnlockBlockKind(k) => write!(f, "Invalid unlock block kind: {}.", k),
             Error::InvalidAccumulatedOutput(value) => write!(f, "Invalid accumulated output balance: {}.", value),
             Error::InputUnlockBlockCountMismatch(input, block) => {
                 write!(
