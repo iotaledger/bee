@@ -4,7 +4,7 @@
 use crate::model::Error;
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::payload::{milestone::MilestoneId, transaction::OutputId};
+use bee_message::{payload::milestone::MilestoneId, output::OutputId};
 
 #[derive(Debug)]
 pub struct TreasuryDiff {

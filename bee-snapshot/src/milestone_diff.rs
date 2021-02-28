@@ -9,7 +9,7 @@ use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
     milestone::MilestoneIndex,
     output::{ConsumedOutput, CreatedOutput, Output, OutputId},
-    payload::transaction::TransactionId,
+    payload::{milestone::MilestonePayload, transaction::TransactionId},
     MessageId,
 };
 

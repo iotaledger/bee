@@ -6,20 +6,20 @@
 use crate::model::Error;
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::payload::{milestone::MilestoneId, transaction};
+use bee_message::{output, payload::milestone::MilestoneId};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TreasuryOutput {
-    inner: transaction::TreasuryOutput,
+    inner: output::TreasuryOutput,
     milestone_id: MilestoneId,
 }
 
 impl TreasuryOutput {
-    pub fn new(inner: transaction::TreasuryOutput, milestone_id: MilestoneId) -> Self {
+    pub fn new(inner: output::TreasuryOutput, milestone_id: MilestoneId) -> Self {
         Self { inner, milestone_id }
     }
 
-    pub fn inner(&self) -> &transaction::TreasuryOutput {
+    pub fn inner(&self) -> &output::TreasuryOutput {
         &self.inner
     }
 
@@ -44,7 +44,7 @@ impl Packable for TreasuryOutput {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self::new(
-            transaction::TreasuryOutput::unpack(reader)?,
+            output::TreasuryOutput::unpack(reader)?,
             MilestoneId::unpack(reader)?,
         ))
     }

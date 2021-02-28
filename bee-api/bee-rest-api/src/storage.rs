@@ -3,11 +3,7 @@
 
 use bee_ledger::model::{OutputDiff, Receipt};
 use bee_message::{
-    address::{Address, Ed25519Address},
-    output::{ConsumedOutput, CreatedOutput, OutputId},
-    prelude::{HashedIndex, MilestoneIndex},
-    milestone::MilestoneIndex,
-    MessageId,
+    address::Ed25519Address, milestone::MilestoneIndex, output::OutputId, payload::indexation::HashedIndex, MessageId,
 };
 use bee_storage::{
     access::{AsStream, Fetch},

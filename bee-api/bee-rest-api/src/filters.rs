@@ -519,7 +519,7 @@ fn receipts<B: StorageBackend>(
         .and(warp::path::end())
         .and(has_permission(ROUTE_RECEIPTS, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::receipt::receipts)
+        .and_then(handlers::api::v1::receipt::receipts)
 }
 
 fn receipts_at<B: StorageBackend>(
@@ -535,7 +535,7 @@ fn receipts_at<B: StorageBackend>(
         .and(warp::path::end())
         .and(has_permission(ROUTE_RECEIPTS_AT, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::receipt::receipts_at)
+        .and_then(handlers::api::v1::receipt::receipts_at)
 }
 
 fn treasury<B: StorageBackend>(
@@ -550,7 +550,7 @@ fn treasury<B: StorageBackend>(
         .and(warp::path::end())
         .and(has_permission(ROUTE_TREASURY, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::treasury::treasury)
+        .and_then(handlers::api::v1::treasury::treasury)
 }
 
 fn white_flag(

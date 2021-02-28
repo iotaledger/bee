@@ -11,13 +11,14 @@ use crate::rand::{
 };
 
 use bee_ledger::model::Receipt;
-use bee_message::payload::{
-    receipt::{MigratedFundsEntry, ReceiptPayload, MIGRATED_FUNDS_ENTRY_AMOUNT},
-    transaction::{
-        Input, Output, SignatureLockedSingleOutput, TreasuryInput, TreasuryOutput, TreasuryTransactionPayload,
-        TREASURY_OUTPUT_AMOUNT,
+use bee_message::{
+    input::{Input, TreasuryInput},
+    output::{Output, SignatureLockedSingleOutput, TreasuryOutput, TREASURY_OUTPUT_AMOUNT},
+    payload::{
+        receipt::{MigratedFundsEntry, ReceiptPayload, MIGRATED_FUNDS_ENTRY_AMOUNT},
+        treasury::TreasuryTransactionPayload,
+        Payload,
     },
-    Payload,
 };
 
 use std::convert::TryInto;

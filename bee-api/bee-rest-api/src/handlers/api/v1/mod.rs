@@ -21,3 +21,5 @@ pub mod remove_peer;
 pub mod submit_message;
 pub mod submit_message_raw;
 pub mod tips;
+pub mod receipt;
+pub mod treasury;
