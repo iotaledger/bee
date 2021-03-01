@@ -512,11 +512,11 @@ fn receipts<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(warp::path("api"))
+    warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("receipts"))
         .and(warp::path::end())
+        .and(warp::get())
         .and(has_permission(ROUTE_RECEIPTS, public_routes, allowed_ips))
         .and(with_storage(storage))
         .and_then(handlers::api::v1::receipt::receipts)
@@ -527,12 +527,12 @@ fn receipts_at<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(warp::path("api"))
+    warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("receipts"))
         .and(custom_path_param::milestone_index())
         .and(warp::path::end())
+        .and(warp::get())
         .and(has_permission(ROUTE_RECEIPTS_AT, public_routes, allowed_ips))
         .and(with_storage(storage))
         .and_then(handlers::api::v1::receipt::receipts_at)
@@ -543,11 +543,11 @@ fn treasury<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::get()
-        .and(warp::path("api"))
+    warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("treasury"))
         .and(warp::path::end())
+        .and(warp::get())
         .and(has_permission(ROUTE_TREASURY, public_routes, allowed_ips))
         .and(with_storage(storage))
         .and_then(handlers::api::v1::treasury::treasury)
