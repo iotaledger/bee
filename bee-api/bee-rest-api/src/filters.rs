@@ -9,14 +9,14 @@ use crate::{
         ROUTE_PEER, ROUTE_PEERS, ROUTE_RECEIPTS, ROUTE_RECEIPTS_AT, ROUTE_REMOVE_PEER, ROUTE_SUBMIT_MESSAGE,
         ROUTE_SUBMIT_MESSAGE_RAW, ROUTE_TIPS, ROUTE_TREASURY,
     },
-    handlers,
+    handlers, path_params,
     permission::has_permission,
     rejection::CustomRejection,
     storage::StorageBackend,
     Bech32Hrp, NetworkId,
 };
 
-use bee_network::{NetworkServiceController, PeerId};
+use bee_network::NetworkServiceController;
 use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;
@@ -266,7 +266,7 @@ fn message<B: StorageBackend>(
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("messages"))
-        .and(custom_path_param::message_id())
+        .and(path_params::message_id())
         .and(warp::path::end())
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE, public_routes, allowed_ips))
@@ -282,7 +282,7 @@ fn message_metadata<B: StorageBackend>(
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("messages"))
-        .and(custom_path_param::message_id())
+        .and(path_params::message_id())
         .and(warp::path("metadata"))
         .and(warp::path::end())
         .and(warp::get())
@@ -299,7 +299,7 @@ fn message_raw<B: StorageBackend>(
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("messages"))
-        .and(custom_path_param::message_id())
+        .and(path_params::message_id())
         .and(warp::path("raw"))
         .and(warp::path::end())
         .and(warp::get())
@@ -316,7 +316,7 @@ fn message_children<B: StorageBackend>(
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("messages"))
-        .and(custom_path_param::message_id())
+        .and(path_params::message_id())
         .and(warp::path("children"))
         .and(warp::path::end())
         .and(warp::get())
@@ -333,7 +333,7 @@ fn output<B: StorageBackend>(
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("outputs"))
-        .and(custom_path_param::output_id())
+        .and(path_params::output_id())
         .and(warp::path::end())
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUT, public_routes, allowed_ips))
@@ -349,7 +349,7 @@ fn balance_bech32<B: StorageBackend>(
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
-        .and(custom_path_param::bech32_address())
+        .and(path_params::bech32_address())
         .and(warp::path::end())
         .and(warp::get())
         .and(has_permission(ROUTE_BALANCE_BECH32, public_routes, allowed_ips))
@@ -366,7 +366,7 @@ fn balance_ed25519<B: StorageBackend>(
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
         .and(warp::path("ed25519"))
-        .and(custom_path_param::ed25519_address())
+        .and(path_params::ed25519_address())
         .and(warp::path::end())
         .and(warp::get())
         .and(has_permission(ROUTE_BALANCE_ED25519, public_routes, allowed_ips))
@@ -382,7 +382,7 @@ fn outputs_bech32<B: StorageBackend>(
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
-        .and(custom_path_param::bech32_address())
+        .and(path_params::bech32_address())
         .and(warp::path("outputs"))
         .and(warp::path::end())
         .and(warp::get())
@@ -400,7 +400,7 @@ fn outputs_ed25519<B: StorageBackend>(
         .and(warp::path("v1"))
         .and(warp::path("addresses"))
         .and(warp::path("ed25519"))
-        .and(custom_path_param::ed25519_address())
+        .and(path_params::ed25519_address())
         .and(warp::path("outputs"))
         .and(warp::path::end())
         .and(warp::get())
@@ -417,7 +417,7 @@ fn milestone<B: StorageBackend>(
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("milestones"))
-        .and(custom_path_param::milestone_index())
+        .and(path_params::milestone_index())
         .and(warp::path::end())
         .and(warp::get())
         .and(has_permission(ROUTE_MILESTONE, public_routes, allowed_ips))
@@ -433,7 +433,7 @@ fn milestone_utxo_changes<B: StorageBackend>(
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("milestones"))
-        .and(custom_path_param::milestone_index())
+        .and(path_params::milestone_index())
         .and(warp::path("utxo-changes"))
         .and(warp::path::end())
         .and(warp::get())
@@ -465,7 +465,7 @@ fn peer(
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("peers"))
-        .and(custom_path_param::peer_id())
+        .and(path_params::peer_id())
         .and(warp::path::end())
         .and(warp::get())
         .and(has_permission(ROUTE_PEER, public_routes, allowed_ips))
@@ -499,7 +499,7 @@ fn peer_remove(
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("peers"))
-        .and(custom_path_param::peer_id())
+        .and(path_params::peer_id())
         .and(warp::path::end())
         .and(warp::delete())
         .and(has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips))
@@ -530,7 +530,7 @@ fn receipts_at<B: StorageBackend>(
     warp::path("api")
         .and(warp::path("v1"))
         .and(warp::path("receipts"))
-        .and(custom_path_param::milestone_index())
+        .and(path_params::milestone_index())
         .and(warp::path::end())
         .and(warp::get())
         .and(has_permission(ROUTE_RECEIPTS_AT, public_routes, allowed_ips))
@@ -564,84 +564,6 @@ fn white_flag(
         .and(has_permission(ROUTE_INFO, public_routes, allowed_ips))
         .and(warp::body::json())
         .and_then(handlers::debug::white_flag::white_flag)
-}
-
-mod custom_path_param {
-
-    use super::*;
-
-    use bee_message::{
-        address::{Address, Ed25519Address},
-        milestone::MilestoneIndex,
-        output::OutputId,
-        MessageId,
-    };
-
-    pub(super) fn output_id() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Copy {
-        warp::path::param().and_then(|value: String| async move {
-            match value.parse::<OutputId>() {
-                Ok(id) => Ok(id),
-                Err(_) => Err(reject::custom(CustomRejection::BadRequest(
-                    "invalid output id".to_string(),
-                ))),
-            }
-        })
-    }
-
-    pub(super) fn message_id() -> impl Filter<Extract = (MessageId,), Error = Rejection> + Copy {
-        warp::path::param().and_then(|value: String| async move {
-            match value.parse::<MessageId>() {
-                Ok(msg) => Ok(msg),
-                Err(_) => Err(reject::custom(CustomRejection::BadRequest(
-                    "invalid message id".to_string(),
-                ))),
-            }
-        })
-    }
-
-    pub(super) fn milestone_index() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Copy {
-        warp::path::param().and_then(|value: String| async move {
-            match value.parse::<u32>() {
-                Ok(i) => Ok(MilestoneIndex(i)),
-                Err(_) => Err(reject::custom(CustomRejection::BadRequest(
-                    "invalid milestone index".to_string(),
-                ))),
-            }
-        })
-    }
-
-    pub(super) fn bech32_address() -> impl Filter<Extract = (Address,), Error = Rejection> + Copy {
-        warp::path::param().and_then(|value: String| async move {
-            match Address::try_from_bech32(&value) {
-                Ok(addr) => Ok(addr),
-                Err(_) => Err(reject::custom(CustomRejection::BadRequest(
-                    "invalid address".to_string(),
-                ))),
-            }
-        })
-    }
-
-    pub(super) fn ed25519_address() -> impl Filter<Extract = (Ed25519Address,), Error = Rejection> + Copy {
-        warp::path::param().and_then(|value: String| async move {
-            match value.parse::<Ed25519Address>() {
-                Ok(addr) => Ok(addr),
-                Err(_) => Err(reject::custom(CustomRejection::BadRequest(
-                    "invalid Ed25519 address".to_string(),
-                ))),
-            }
-        })
-    }
-
-    pub(super) fn peer_id() -> impl Filter<Extract = (PeerId,), Error = Rejection> + Copy {
-        warp::path::param().and_then(|value: String| async move {
-            match value.parse::<PeerId>() {
-                Ok(id) => Ok(id),
-                Err(_) => Err(reject::custom(CustomRejection::BadRequest(
-                    "invalid peer id".to_string(),
-                ))),
-            }
-        })
-    }
 }
 
 fn with_network_id(
