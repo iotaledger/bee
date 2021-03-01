@@ -10,6 +10,7 @@ pub(crate) enum CustomRejection {
     NotFound(String),
     ServiceUnavailable(String),
     InternalError,
+    StorageBackend,
 }
 
 impl Reject for CustomRejection {}

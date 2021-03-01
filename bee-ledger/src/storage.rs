@@ -307,21 +307,19 @@ pub(crate) async fn is_output_unspent<B: StorageBackend>(storage: &B, output_id:
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) async fn fetch_unspent_treasury_output<B: StorageBackend>(
-    storage: &B,
-) -> Result<Option<TreasuryOutput>, Error> {
+pub async fn fetch_unspent_treasury_output<B: StorageBackend>(storage: &B) -> Result<TreasuryOutput, Error> {
     match Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &false)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))?
     {
         Some(outputs) => {
             match outputs.len() {
-                0 => Ok(None),
+                0 => panic!("No unspent treasury output found"),
                 // Indexing is fine since length is known
-                1 => Ok(Some(outputs[0].clone())),
+                1 => Ok(outputs[0].clone()),
                 _ => panic!("More than one unspent treasury output found"),
             }
         }
-        None => Ok(None),
+        None => panic!("No unspent treasury output found"),
     }
 }
