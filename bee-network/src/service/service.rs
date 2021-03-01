@@ -174,6 +174,11 @@ impl<N: Node> Worker<N> for NetworkService {
                 ShutdownStream::new(shutdown, IntervalStream::new(time::interval(Duration::from_secs(30))));
 
             while autopeering_timer.next().await.is_some() {
+                println!(
+                    "NUM_DISCOVERED: {}",
+                    peerlist.count_if(|info, _| info.relation.is_discovered()).await
+                );
+
                 // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
                 // of those.
                 for (peer_id, alias) in peerlist
