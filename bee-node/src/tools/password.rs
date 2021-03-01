@@ -13,6 +13,8 @@ pub enum PasswordError {
     Io(#[from] std::io::Error),
     #[error("{0}")]
     Argon(#[from] argon2::Error),
+    #[error("Re-entered password doesn't match")]
+    NonMatching,
 }
 
 #[derive(Clone, Debug, StructOpt)]
@@ -20,6 +22,10 @@ pub struct PasswordTool {}
 
 pub fn exec(_tool: &PasswordTool) -> Result<(), PasswordError> {
     let password = read_password_from_tty(Some("Password: "))?;
+    let password_reenter = read_password_from_tty(Some("Re-enter password: "))?;
+    if password != password_reenter {
+        return Err(PasswordError::NonMatching);
+    }
     let salt = rand::thread_rng().gen::<[u8; 32]>();
     let hash = argon2::hash_raw(password.as_bytes(), &salt, &Config::default())?;
 
