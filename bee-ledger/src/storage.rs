@@ -32,6 +32,7 @@ pub trait StorageBackend:
     + Batch<MilestoneIndex, OutputDiff>
     + Batch<(Ed25519Address, OutputId), ()>
     + Batch<Address, Balance>
+    + Batch<(MilestoneIndex, Receipt), ()>
     + Delete<OutputId, CreatedOutput>
     + Delete<OutputId, ConsumedOutput>
     + Delete<Unspent, ()>
@@ -65,6 +66,7 @@ impl<T> StorageBackend for T where
         + Batch<MilestoneIndex, OutputDiff>
         + Batch<(Ed25519Address, OutputId), ()>
         + Batch<Address, Balance>
+        + Batch<(MilestoneIndex, Receipt), ()>
         + Delete<OutputId, CreatedOutput>
         + Delete<OutputId, ConsumedOutput>
         + Delete<Unspent, ()>
@@ -195,7 +197,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
     balance_diffs: &BalanceDiffs,
-    _receipt: &Option<Receipt>,
+    receipt: &Option<Receipt>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
@@ -224,6 +226,16 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
         &OutputDiff::new(created_output_ids, consumed_output_ids, None),
     )
     .map_err(|e| Error::Storage(Box::new(e)))?;
+
+    if let Some(receipt) = receipt {
+        Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(
+            storage,
+            &mut batch,
+            &(receipt.inner().index().into(), receipt.clone()),
+            &(),
+        )
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+    }
 
     storage
         .batch_commit(batch, true)

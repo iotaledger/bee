@@ -92,8 +92,7 @@ where
 
     let receipt = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
         let receipt = Receipt::new(receipt.as_ref().clone(), milestone.essence().index().into());
-
-        // TODO optional receipt validation
+        let treasury = storage::fetch_unspent_treasury_output(storage).await?;
 
         // get unspent treasury output
 
