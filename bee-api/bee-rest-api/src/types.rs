@@ -1,6 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_ledger::model::Receipt;
 use bee_message::{payload::receipt::ReceiptPayload, prelude::*};
 use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
 use bee_protocol::{Peer, PeerManager};
@@ -947,5 +948,36 @@ pub async fn peer_to_peer_dto(peer: &Arc<Peer>, peer_manager: &ResourceHandle<Pe
                 dropped_packets: peer.metrics().invalid_packets(), // TODO dropped_packets == invalid_packets?
             },
         }),
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReceiptDto {
+    pub index: u32,
+    pub last: bool,
+    pub funds: Vec<MigratedFundsEntryDto>,
+    pub transaction: PayloadDto,
+}
+
+impl TryFrom<Receipt> for ReceiptDto {
+    type Error = String;
+
+    fn try_from(value: Receipt) -> Result<Self, Self::Error> {
+        let mut funds = Vec::new();
+
+        for f in value.inner().funds() {
+            funds.push(f.try_into().map_err(|_| "Invalid migrated funds entry")?);
+        }
+
+        Ok(ReceiptDto {
+            index: value.inner().index(),
+            last: value.inner().last(),
+            funds,
+            transaction: value
+                .inner()
+                .transaction()
+                .try_into()
+                .map_err(|_| "Invalid treasury transaction".to_string())?,
+        })
     }
 }

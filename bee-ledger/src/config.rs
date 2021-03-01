@@ -4,7 +4,7 @@
 use serde::Deserialize;
 
 const DEFAULT_ENABLED: bool = false;
-const DEFAULT_API: &str = "http://localhost:14265";
+const DEFAULT_API: &str = "http://localhost:14266";
 const DEFAULT_TIMEOUT: u64 = 5;
 const DEFAULT_COORDINATOR_ADDRESS: &str =
     "JFQ999DVN9CBBQX9DSAIQRAFRALIHJMYOXAQSTCJLGA9DLOKIWHJIFQKMCQ9QHWW9RXQMDBVUIQNIY9GZ";
