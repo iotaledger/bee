@@ -4,7 +4,7 @@
 use crate::{
     body::{BodyInner, SuccessBody},
     config::RestApiConfig,
-    handlers::health::is_healthy,
+    endpoints::health::is_healthy,
     storage::StorageBackend,
     Bech32Hrp, NetworkId,
 };

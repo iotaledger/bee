@@ -9,7 +9,7 @@ use crate::{
         ROUTE_PEER, ROUTE_PEERS, ROUTE_RECEIPTS, ROUTE_RECEIPTS_AT, ROUTE_REMOVE_PEER, ROUTE_SUBMIT_MESSAGE,
         ROUTE_SUBMIT_MESSAGE_RAW, ROUTE_TIPS, ROUTE_TREASURY,
     },
-    handlers, path_params,
+    endpoints, path_params,
     permission::has_permission,
     rejection::CustomRejection,
     storage::StorageBackend,
@@ -148,7 +148,7 @@ fn health<B: StorageBackend>(
         .and(has_permission(ROUTE_HEALTH, public_routes, allowed_ips))
         .and(with_tangle(tangle))
         .and(with_peer_manager(peer_manager))
-        .and_then(handlers::health::health)
+        .and_then(endpoints::health::health)
 }
 
 fn info<B: StorageBackend>(
@@ -175,7 +175,7 @@ fn info<B: StorageBackend>(
         .and(with_protocol_config(protocol_config))
         .and(with_node_info(node_info))
         .and(with_peer_manager(peer_manager))
-        .and_then(handlers::api::v1::info::info)
+        .and_then(endpoints::api::v1::info::info)
 }
 
 fn tips<B: StorageBackend>(
@@ -190,7 +190,7 @@ fn tips<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_TIPS, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(handlers::api::v1::tips::tips)
+        .and_then(endpoints::api::v1::tips::tips)
 }
 
 fn submit_message<B: StorageBackend>(
@@ -214,7 +214,7 @@ fn submit_message<B: StorageBackend>(
         .and(with_network_id(network_id))
         .and(with_rest_api_config(rest_api_config))
         .and(with_protocol_config(protocol_config))
-        .and_then(handlers::api::v1::submit_message::submit_message)
+        .and_then(endpoints::api::v1::submit_message::submit_message)
 }
 
 fn submit_message_raw<B: StorageBackend>(
@@ -232,7 +232,7 @@ fn submit_message_raw<B: StorageBackend>(
         .and(warp::body::bytes())
         .and(with_tangle(tangle))
         .and(with_message_submitter(message_submitter))
-        .and_then(handlers::api::v1::submit_message_raw::submit_message_raw)
+        .and_then(endpoints::api::v1::submit_message_raw::submit_message_raw)
 }
 
 fn message_indexation<B: StorageBackend>(
@@ -255,7 +255,7 @@ fn message_indexation<B: StorageBackend>(
             }
         }))
         .and(with_storage(storage))
-        .and_then(handlers::api::v1::messages_find::messages_find)
+        .and_then(endpoints::api::v1::messages_find::messages_find)
 }
 
 fn message<B: StorageBackend>(
@@ -271,7 +271,7 @@ fn message<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(handlers::api::v1::message::message)
+        .and_then(endpoints::api::v1::message::message)
 }
 
 fn message_metadata<B: StorageBackend>(
@@ -288,7 +288,7 @@ fn message_metadata<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_METADATA, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(handlers::api::v1::message_metadata::message_metadata)
+        .and_then(endpoints::api::v1::message_metadata::message_metadata)
 }
 
 fn message_raw<B: StorageBackend>(
@@ -305,7 +305,7 @@ fn message_raw<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_RAW, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(handlers::api::v1::message_raw::message_raw)
+        .and_then(endpoints::api::v1::message_raw::message_raw)
 }
 
 fn message_children<B: StorageBackend>(
@@ -322,7 +322,7 @@ fn message_children<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_CHILDREN, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(handlers::api::v1::message_children::message_children)
+        .and_then(endpoints::api::v1::message_children::message_children)
 }
 
 fn output<B: StorageBackend>(
@@ -338,7 +338,7 @@ fn output<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUT, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::api::v1::output::output)
+        .and_then(endpoints::api::v1::output::output)
 }
 
 fn balance_bech32<B: StorageBackend>(
@@ -354,7 +354,7 @@ fn balance_bech32<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_BALANCE_BECH32, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::api::v1::balance_bech32::balance_bech32)
+        .and_then(endpoints::api::v1::balance_bech32::balance_bech32)
 }
 
 fn balance_ed25519<B: StorageBackend>(
@@ -371,7 +371,7 @@ fn balance_ed25519<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_BALANCE_ED25519, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::api::v1::balance_ed25519::balance_ed25519)
+        .and_then(endpoints::api::v1::balance_ed25519::balance_ed25519)
 }
 
 fn outputs_bech32<B: StorageBackend>(
@@ -388,7 +388,7 @@ fn outputs_bech32<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUTS_BECH32, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::api::v1::outputs_bech32::outputs_bech32)
+        .and_then(endpoints::api::v1::outputs_bech32::outputs_bech32)
 }
 
 fn outputs_ed25519<B: StorageBackend>(
@@ -406,7 +406,7 @@ fn outputs_ed25519<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUTS_ED25519, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::api::v1::outputs_ed25519::outputs_ed25519)
+        .and_then(endpoints::api::v1::outputs_ed25519::outputs_ed25519)
 }
 
 fn milestone<B: StorageBackend>(
@@ -422,7 +422,7 @@ fn milestone<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MILESTONE, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(handlers::api::v1::milestone::milestone)
+        .and_then(endpoints::api::v1::milestone::milestone)
 }
 
 fn milestone_utxo_changes<B: StorageBackend>(
@@ -439,7 +439,7 @@ fn milestone_utxo_changes<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MILESTONE_UTXO_CHANGES, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::api::v1::milestone_utxo_changes::milestone_utxo_changes)
+        .and_then(endpoints::api::v1::milestone_utxo_changes::milestone_utxo_changes)
 }
 
 fn peers(
@@ -454,7 +454,7 @@ fn peers(
         .and(warp::get())
         .and(has_permission(ROUTE_PEERS, public_routes, allowed_ips))
         .and(with_peer_manager(peer_manager))
-        .and_then(handlers::api::v1::peers::peers)
+        .and_then(endpoints::api::v1::peers::peers)
 }
 
 fn peer(
@@ -470,7 +470,7 @@ fn peer(
         .and(warp::get())
         .and(has_permission(ROUTE_PEER, public_routes, allowed_ips))
         .and(with_peer_manager(peer_manager))
-        .and_then(handlers::api::v1::peer::peer)
+        .and_then(endpoints::api::v1::peer::peer)
 }
 
 fn peer_add(
@@ -488,7 +488,7 @@ fn peer_add(
         .and(warp::body::json())
         .and(with_peer_manager(peer_manager))
         .and(with_network_controller(network_controller))
-        .and_then(handlers::api::v1::add_peer::add_peer)
+        .and_then(endpoints::api::v1::add_peer::add_peer)
 }
 
 fn peer_remove(
@@ -504,7 +504,7 @@ fn peer_remove(
         .and(warp::delete())
         .and(has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips))
         .and(with_network_controller(network_controller))
-        .and_then(handlers::api::v1::remove_peer::remove_peer)
+        .and_then(endpoints::api::v1::remove_peer::remove_peer)
 }
 
 fn receipts<B: StorageBackend>(
@@ -519,7 +519,7 @@ fn receipts<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_RECEIPTS, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::api::v1::receipt::receipts)
+        .and_then(endpoints::api::v1::receipt::receipts)
 }
 
 fn receipts_at<B: StorageBackend>(
@@ -535,7 +535,7 @@ fn receipts_at<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_RECEIPTS_AT, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::api::v1::receipt::receipts_at)
+        .and_then(endpoints::api::v1::receipt::receipts_at)
 }
 
 fn treasury<B: StorageBackend>(
@@ -550,7 +550,7 @@ fn treasury<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_TREASURY, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(handlers::api::v1::treasury::treasury)
+        .and_then(endpoints::api::v1::treasury::treasury)
 }
 
 fn white_flag(
@@ -563,7 +563,7 @@ fn white_flag(
         .and(warp::post())
         .and(has_permission(ROUTE_INFO, public_routes, allowed_ips))
         .and(warp::body::json())
-        .and_then(handlers::debug::white_flag::white_flag)
+        .and_then(endpoints::debug::white_flag::white_flag)
 }
 
 fn with_network_id(

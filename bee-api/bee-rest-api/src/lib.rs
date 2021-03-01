@@ -5,7 +5,7 @@ mod filters;
 
 pub mod body;
 pub mod config;
-pub mod handlers;
+pub mod endpoints;
 pub mod path_params;
 pub mod permission;
 pub mod rejection;
