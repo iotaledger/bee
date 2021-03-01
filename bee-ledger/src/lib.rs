@@ -12,11 +12,9 @@ pub mod model;
 pub mod state;
 pub mod storage;
 
-mod receipt_validator;
 mod white_flag;
 mod worker;
 
-pub use receipt_validator::ReceiptValidatorWorker;
 pub use storage::StorageBackend;
 pub use white_flag::conflict::ConflictReason;
 pub use worker::{LedgerWorker, LedgerWorkerEvent};
@@ -30,5 +28,4 @@ where
 {
     node_builder
         .with_worker::<LedgerWorker>()
-        .with_worker::<ReceiptValidatorWorker>()
 }

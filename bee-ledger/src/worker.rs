@@ -7,7 +7,6 @@ use crate::{
     error::Error,
     event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
     model::Receipt,
-    receipt_validator::ReceiptValidatorWorker,
     state::check_ledger_state,
     storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend},
     white_flag,
@@ -40,7 +39,6 @@ async fn confirm<N: Node>(
     bus: &Bus<'static>,
     message_id: MessageId,
     index: &mut LedgerIndex,
-    receipt_validator: &mpsc::UnboundedSender<Receipt>,
 ) -> Result<(), Error>
 where
     N::Backend: StorageBackend,
@@ -178,12 +176,6 @@ where
         bus.dispatch(NewConsumedOutput(spent));
     }
 
-    if let Some(receipt) = receipt {
-        if let Err(e) = receipt_validator.send(receipt) {
-            error!("Sending receipt to validator failed: {}.", e);
-        }
-    }
-
     Ok(())
 }
 
@@ -196,12 +188,7 @@ where
     type Error = Error;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![
-            TypeId::of::<SnapshotWorker>(),
-            TypeId::of::<TangleWorker>(),
-            TypeId::of::<ReceiptValidatorWorker>(),
-        ]
-        .leak()
+        vec![TypeId::of::<SnapshotWorker>(), TypeId::of::<TangleWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
@@ -211,7 +198,6 @@ where
         let storage = node.storage();
         let bus = node.bus();
 
-        let receipt_validator = node.worker::<ReceiptValidatorWorker>().unwrap().tx.clone();
         let output_rx = node.worker::<SnapshotWorker>().unwrap().output_rx.clone();
         let full_diff_rx = node.worker::<SnapshotWorker>().unwrap().full_diff_rx.clone();
         let delta_diff_rx = node.worker::<SnapshotWorker>().unwrap().delta_diff_rx.clone();
@@ -339,16 +325,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(LedgerWorkerEvent(message_id)) = receiver.next().await {
-                if let Err(e) = confirm::<N>(
-                    &tangle,
-                    &storage,
-                    &bus,
-                    message_id,
-                    &mut ledger_index,
-                    &receipt_validator,
-                )
-                .await
-                {
+                if let Err(e) = confirm::<N>(&tangle, &storage, &bus, message_id, &mut ledger_index).await {
                     error!("Confirmation error on {}: {}.", message_id, e);
                     panic!("Aborting due to unexpected ledger error.");
                 }

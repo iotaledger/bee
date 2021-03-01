@@ -98,14 +98,6 @@ path = "./storage/alphanet"
 enabled = true
 delay   = 60480
 
-[ledger]
-[ledger.receipt]
-enabled             = false
-api                 = "http://localhost:14266"
-timeout             = 5
-coordinator_address = "JFQ999DVN9CBBQX9DSAIQRAFRALIHJMYOXAQSTCJLGA9DLOKIWHJIFQKMCQ9QHWW9RXQMDBVUIQNIY9GZ"
-coordinator_depth   = 18
-
 [mqtt]
 address = "tcp://localhost:1883"
 
