@@ -4,7 +4,7 @@
 use crate::{
     body::{BodyInner, SuccessBody},
     config::RestApiConfig,
-    endpoints::health::is_healthy,
+    endpoints::health,
     storage::StorageBackend,
     Bech32Hrp, NetworkId,
 };
@@ -30,11 +30,11 @@ pub(crate) async fn info<B: StorageBackend>(
     Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
         name: node_info.name.clone(),
         version: node_info.version.clone(),
-        is_healthy: is_healthy(&tangle, &peer_manager).await,
+        is_healthy: health::is_healthy(&tangle, &peer_manager).await,
         network_id: network_id.0,
         bech32_hrp,
         latest_milestone_index: *tangle.get_latest_milestone_index(),
-        solid_milestone_index: *tangle.get_solid_milestone_index(),
+        confirmed_milestone_index: *tangle.get_confirmed_milestone_index(),
         pruning_index: *tangle.get_pruning_index(),
         features: {
             let mut features = Vec::new();
@@ -60,8 +60,8 @@ pub struct InfoResponse {
     pub bech32_hrp: String,
     #[serde(rename = "latestMilestoneIndex")]
     pub latest_milestone_index: u32,
-    #[serde(rename = "solidMilestoneIndex")]
-    pub solid_milestone_index: u32,
+    #[serde(rename = "confirmedMilestoneIndex")]
+    pub confirmed_milestone_index: u32,
     #[serde(rename = "pruningIndex")]
     pub pruning_index: u32,
     pub features: Vec<String>,

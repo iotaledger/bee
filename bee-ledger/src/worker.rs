@@ -118,6 +118,7 @@ where
     .await?;
 
     *index = LedgerIndex(MilestoneIndex(milestone.essence().index()));
+    tangle.update_confirmed_milestone_index(milestone.essence().index().into());
 
     for message_id in metadata.excluded_no_transaction_messages.iter() {
         tangle
@@ -317,6 +318,7 @@ where
         // TODO unwrap
         let mut ledger_index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
         tangle.update_solid_milestone_index(MilestoneIndex(*ledger_index));
+        tangle.update_confirmed_milestone_index(MilestoneIndex(*ledger_index));
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
