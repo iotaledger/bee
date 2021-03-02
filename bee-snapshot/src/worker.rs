@@ -180,6 +180,14 @@ async fn import_snapshot<B: StorageBackend>(
             let message_id = MessageId::unpack(&mut reader)?;
             let output_id = OutputId::unpack(&mut reader)?;
             let output = Output::unpack(&mut reader)?;
+
+            if !matches!(
+                output,
+                Output::SignatureLockedSingle(_) | Output::SignatureLockedDustAllowance(_),
+            ) {
+                return Err(Error::UnsupportedOutputKind(output.kind()));
+            }
+
             let _ = output_tx
                 .send_async((output_id, CreatedOutput::new(message_id, output)))
                 .await;
