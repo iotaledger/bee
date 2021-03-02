@@ -35,7 +35,7 @@ impl From<Ed25519Address> for Address {
 impl Address {
     pub fn try_from_bech32(addr: &str) -> Result<Self, Error> {
         match bech32::decode(&addr) {
-            Ok((_hrp, data)) => {
+            Ok((_hrp, data, _)) => {
                 let bytes = Vec::<u8>::from_base32(&data).map_err(|_| Error::InvalidAddress)?;
                 Self::unpack(&mut bytes.as_slice()).map_err(|_| Error::InvalidAddress)
             }
