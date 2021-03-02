@@ -246,7 +246,7 @@ where
             diff_rx: flume::Receiver<MilestoneDiff>,
         ) -> Result<(), Error> {
             while let Ok(diff) = diff_rx.recv_async().await {
-                let index = diff.index();
+                let index = diff.milestone().essence().index();
                 // Unwrap is fine because we just inserted the ledger index.
                 // TODO unwrap
                 let ledger_index = *storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
@@ -289,7 +289,7 @@ where
                 }
 
                 match index {
-                    MilestoneIndex(index) if index == ledger_index + 1 => {
+                    index if index == ledger_index + 1 => {
                         // TODO unwrap until we merge both crates
                         apply_outputs_diff(
                             &*storage,
@@ -302,13 +302,13 @@ where
                         .await
                         .unwrap();
                     }
-                    MilestoneIndex(index) if index == ledger_index => {
+                    index if index == ledger_index => {
                         // TODO unwrap until we merge both crates
                         rollback_outputs_diff(&*storage, MilestoneIndex(index), diff.created(), &consumed)
                             .await
                             .unwrap();
                     }
-                    _ => return Err(Error::UnexpectedDiffIndex(index)),
+                    _ => return Err(Error::UnexpectedDiffIndex(index.into())),
                 }
             }
             Ok(())

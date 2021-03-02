@@ -7,23 +7,26 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
-    milestone::MilestoneIndex,
     output::{ConsumedOutput, CreatedOutput, Output, OutputId},
-    payload::{milestone::MilestonePayload, transaction::TransactionId},
+    payload::{
+        milestone::{MilestoneId, MilestonePayload},
+        transaction::TransactionId,
+    },
     MessageId,
 };
 
 use std::collections::HashMap;
 
 pub struct MilestoneDiff {
-    index: MilestoneIndex,
+    milestone: MilestonePayload,
     created: HashMap<OutputId, CreatedOutput>,
     consumed: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
+    consumed_treasury: Option<(MilestoneId, u64)>,
 }
 
 impl MilestoneDiff {
-    pub fn index(&self) -> MilestoneIndex {
-        self.index
+    pub fn milestone(&self) -> &MilestonePayload {
+        &self.milestone
     }
 
     pub fn created(&self) -> &HashMap<OutputId, CreatedOutput> {
@@ -33,6 +36,10 @@ impl MilestoneDiff {
     pub fn consumed(&self) -> &HashMap<OutputId, (CreatedOutput, ConsumedOutput)> {
         &self.consumed
     }
+
+    pub fn consumed_treasury(&self) -> &Option<(MilestoneId, u64)> {
+        &self.consumed_treasury
+    }
 }
 
 impl Packable for MilestoneDiff {
@@ -40,11 +47,12 @@ impl Packable for MilestoneDiff {
 
     fn packed_len(&self) -> usize {
         // TODO finish
-        self.index.packed_len() + 0u64.packed_len() + 0u64.packed_len()
+        self.milestone.packed_len() + 0u64.packed_len() + 0u64.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.index.pack(writer)?;
+        // TODO finish
+        self.milestone.pack(writer)?;
 
         (self.created.len() as u64).pack(writer)?;
         for (output_id, output) in self.created.iter() {
@@ -63,9 +71,16 @@ impl Packable for MilestoneDiff {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let _milestone_len = u32::unpack(reader)? as usize;
-        // let index = MilestoneIndex::unpack(reader)?;
-        let _milestone = MilestonePayload::unpack(reader)?;
+        let milestone_len = u32::unpack(reader)? as usize;
+        let milestone = MilestonePayload::unpack(reader)?;
+
+        if milestone_len != milestone.packed_len() {}
+
+        let consumed_treasury = if milestone.essence().receipt().is_some() {
+            Some((MilestoneId::unpack(reader)?, u64::unpack(reader)?))
+        } else {
+            None
+        };
 
         let created_count = u64::unpack(reader)? as usize;
         let mut created = HashMap::new();
@@ -74,6 +89,7 @@ impl Packable for MilestoneDiff {
             let message_id = MessageId::unpack(reader)?;
             let output_id = OutputId::unpack(reader)?;
             let output = Output::unpack(reader)?;
+
             created.insert(output_id, CreatedOutput::new(message_id, output));
         }
 
@@ -85,19 +101,21 @@ impl Packable for MilestoneDiff {
             let output_id = OutputId::unpack(reader)?;
             let output = Output::unpack(reader)?;
             let target = TransactionId::unpack(reader)?;
+
             consumed.insert(
                 output_id,
                 (
                     CreatedOutput::new(message_id, output),
-                    ConsumedOutput::new(target, _milestone.essence().index().into()),
+                    ConsumedOutput::new(target, milestone.essence().index().into()),
                 ),
             );
         }
 
         Ok(Self {
-            index: _milestone.essence().index().into(),
+            milestone,
             created,
             consumed,
+            consumed_treasury,
         })
     }
 }
