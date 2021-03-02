@@ -50,6 +50,7 @@ pub trait StorageBackend:
     + Insert<OutputId, ConsumedOutput>
     + Insert<Unspent, ()>
     + Insert<(), LedgerIndex>
+    + Insert<(bool, TreasuryOutput), ()>
     + for<'a> AsStream<'a, Unspent, ()>
     + for<'a> AsStream<'a, Address, Balance>
     + bee_tangle::storage::StorageBackend
@@ -84,6 +85,7 @@ impl<T> StorageBackend for T where
         + Insert<OutputId, ConsumedOutput>
         + Insert<Unspent, ()>
         + Insert<(), LedgerIndex>
+        + Insert<(bool, TreasuryOutput), ()>
         + for<'a> AsStream<'a, Unspent, ()>
         + for<'a> AsStream<'a, Address, Balance>
         + bee_tangle::storage::StorageBackend
@@ -315,6 +317,15 @@ pub(crate) async fn fetch_output<B: StorageBackend>(
 
 pub(crate) async fn is_output_unspent<B: StorageBackend>(storage: &B, output_id: &OutputId) -> Result<bool, Error> {
     Exist::<Unspent, ()>::exist(storage, &(*output_id).into())
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub async fn store_unspent_treasury_output<B: StorageBackend>(
+    storage: &B,
+    treasury_output: &TreasuryOutput,
+) -> Result<(), Error> {
+    Insert::<(bool, TreasuryOutput), ()>::insert(storage, &(false, treasury_output.clone()), &())
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }

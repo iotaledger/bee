@@ -11,6 +11,7 @@ use bee_message::{
     ledger_index::LedgerIndex,
     milestone::MilestoneIndex,
     output::{CreatedOutput, Output, OutputId},
+    payload::milestone::MilestoneId,
     solid_entry_point::SolidEntryPoint,
     MessageId,
 };
@@ -25,6 +26,7 @@ use tokio::task;
 use std::{fs::OpenOptions, io::BufReader, path::Path};
 
 pub struct SnapshotWorker {
+    pub treasury_output_rx: flume::Receiver<(MilestoneId, u64)>,
     pub full_sep_rx: flume::Receiver<(SolidEntryPoint, MilestoneIndex)>,
     pub delta_sep_rx: flume::Receiver<(SolidEntryPoint, MilestoneIndex)>,
     pub output_rx: flume::Receiver<(OutputId, CreatedOutput)>,
@@ -42,6 +44,7 @@ where
     type Error = Error;
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+        let (treasury_output_tx, treasury_output_rx) = flume::unbounded();
         let (full_sep_tx, full_sep_rx) = flume::unbounded();
         let (delta_sep_tx, delta_sep_rx) = flume::unbounded();
         let (output_tx, output_rx) = flume::unbounded();
@@ -59,6 +62,7 @@ where
                         storage,
                         network_id,
                         config,
+                        treasury_output_tx,
                         full_sep_tx,
                         delta_sep_tx,
                         output_tx,
@@ -85,6 +89,7 @@ where
         }
 
         Ok(Self {
+            treasury_output_rx,
             full_sep_rx,
             delta_sep_rx,
             output_rx,
@@ -99,6 +104,7 @@ async fn import_snapshot<B: StorageBackend>(
     kind: Kind,
     path: &Path,
     network_id: u64,
+    treasury_output_tx: Option<flume::Sender<(MilestoneId, u64)>>,
     sep_tx: flume::Sender<(SolidEntryPoint, MilestoneIndex)>,
     output_tx: Option<flume::Sender<(OutputId, CreatedOutput)>>,
     diff_tx: flume::Sender<MilestoneDiff>,
@@ -168,6 +174,13 @@ async fn import_snapshot<B: StorageBackend>(
     .await
     .map_err(|e| Error::StorageBackend(Box::new(e)))?;
 
+    if header.kind() == Kind::Full {
+        let treasury_output_tx = treasury_output_tx.unwrap();
+        let _ = treasury_output_tx
+            .send_async((header.treasury_output_milestone_id, header.treasury_output_amount))
+            .await;
+    }
+
     for _ in 0..header.sep_count() {
         let _ = sep_tx
             .send_async((SolidEntryPoint::unpack(&mut reader)?, header.sep_index()))
@@ -222,6 +235,7 @@ async fn import_snapshots<B: StorageBackend>(
     storage: ResourceHandle<B>,
     network_id: u64,
     config: SnapshotConfig,
+    treasury_output_tx: flume::Sender<(MilestoneId, u64)>,
     full_sep_tx: flume::Sender<(SolidEntryPoint, MilestoneIndex)>,
     delta_sep_tx: flume::Sender<(SolidEntryPoint, MilestoneIndex)>,
     output_tx: flume::Sender<(OutputId, CreatedOutput)>,
@@ -243,6 +257,7 @@ async fn import_snapshots<B: StorageBackend>(
         Kind::Full,
         config.full_path(),
         network_id,
+        Some(treasury_output_tx),
         full_sep_tx,
         Some(output_tx),
         full_diff_tx,
@@ -256,6 +271,7 @@ async fn import_snapshots<B: StorageBackend>(
             Kind::Delta,
             config.delta_path(),
             network_id,
+            None,
             delta_sep_tx,
             None,
             delta_diff_tx,

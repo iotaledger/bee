@@ -6,14 +6,20 @@ use crate::{
     dust::DUST_THRESHOLD,
     error::Error,
     event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
-    model::Receipt,
+    model::{Receipt, TreasuryOutput},
     state::check_ledger_state,
     storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend},
     white_flag,
     white_flag::{conflict::ConflictReason, merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
 };
 
-use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, output::Output, payload::Payload, MessageId};
+use bee_message::{
+    ledger_index::LedgerIndex,
+    milestone::MilestoneIndex,
+    output::{self, Output},
+    payload::Payload,
+    MessageId,
+};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_snapshot::{milestone_diff::MilestoneDiff, SnapshotWorker};
 use bee_tangle::{MsTangle, TangleWorker};
@@ -92,7 +98,7 @@ where
 
     let receipt = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
         let receipt = Receipt::new(receipt.as_ref().clone(), milestone.essence().index().into());
-        let treasury = storage::fetch_unspent_treasury_output(storage).await?;
+        let _treasury = storage::fetch_unspent_treasury_output(storage).await?;
 
         // get unspent treasury output
 
@@ -198,9 +204,19 @@ where
         let storage = node.storage();
         let bus = node.bus();
 
+        let treasury_output_rx = node.worker::<SnapshotWorker>().unwrap().treasury_output_rx.clone();
         let output_rx = node.worker::<SnapshotWorker>().unwrap().output_rx.clone();
         let full_diff_rx = node.worker::<SnapshotWorker>().unwrap().full_diff_rx.clone();
         let delta_diff_rx = node.worker::<SnapshotWorker>().unwrap().delta_diff_rx.clone();
+
+        // TODO handle Err
+        if let Ok((milestone_id, amount)) = treasury_output_rx.recv_async().await {
+            storage::store_unspent_treasury_output(
+                &*storage,
+                &TreasuryOutput::new(output::TreasuryOutput::new(amount)?, milestone_id),
+            )
+            .await?
+        }
 
         let mut balance_diffs = BalanceDiffs::new();
 

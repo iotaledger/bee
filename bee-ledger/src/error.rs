@@ -3,7 +3,7 @@
 
 use crate::{balance::Balance, model::Error as ModelError};
 
-use bee_message::{address::Address, milestone::MilestoneIndex, MessageId};
+use bee_message::{address::Address, milestone::MilestoneIndex, Error as MessageError, MessageId};
 
 use thiserror::Error;
 
@@ -11,6 +11,8 @@ use thiserror::Error;
 pub enum Error {
     #[error("")]
     Model(#[from] ModelError),
+    #[error("")]
+    Message(#[from] MessageError),
     #[error("Message {0} is missing in the past cone of the milestone")]
     MissingMessage(MessageId),
     #[error("")]
