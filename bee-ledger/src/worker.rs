@@ -16,8 +16,8 @@ use crate::{
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::MilestoneIndex,
-    output::{self, Output},
-    payload::Payload,
+    output::{self, CreatedOutput, Output, OutputId},
+    payload::{transaction::TransactionId, Payload},
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
@@ -31,7 +31,7 @@ use log::{error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, collections::HashMap};
+use std::{any::TypeId, collections::HashMap, convert::TryInto};
 
 pub struct LedgerWorkerEvent(pub MessageId);
 
@@ -94,19 +94,27 @@ where
         ));
     }
 
-    let _milestone_id = milestone.id();
-
     let receipt = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
+        let milestone_id = milestone.id();
         let receipt = Receipt::new(receipt.as_ref().clone(), milestone.essence().index().into());
         let _treasury = storage::fetch_unspent_treasury_output(storage).await?;
 
-        // get unspent treasury output
+        // TODO validate receipt
 
-        // validate receipt
+        // Safe to unwrap since sizes are known to be the same
+        let fake_transaction_id = TransactionId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
+        // Safe to unwrap since sizes are known to be the same
+        let fake_message_id = MessageId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
 
-        // get migrated outputs from receipt
+        for (index, funds) in receipt.inner().funds().iter().enumerate() {
+            metadata.created_outputs.insert(
+                // Safe to unwrap because indexes are known to be valid at this point.
+                OutputId::new(fake_transaction_id, index as u16).unwrap(),
+                CreatedOutput::new(fake_message_id, Output::from(funds.output().clone())),
+            );
+        }
 
-        // generate treasury migration
+        // TODO generate treasury mutation
 
         Some(receipt)
     } else {
