@@ -111,8 +111,8 @@ async fn import_snapshot<B: StorageBackend>(
 
     let header = SnapshotHeader::unpack(&mut reader)?;
 
-    if header.kind() != kind {
-        return Err(Error::InvalidKind(kind, header.kind()));
+    if kind != header.kind() {
+        return Err(Error::UnexpectedKind(kind, header.kind()));
     }
 
     if header.network_id() != network_id {

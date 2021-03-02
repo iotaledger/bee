@@ -4,13 +4,13 @@
 mod download;
 
 pub(crate) mod constants;
-pub(crate) mod kind;
 
 pub mod config;
 pub mod error;
 pub mod event;
 pub mod header;
 pub mod info;
+pub mod kind;
 pub mod milestone_diff;
 pub mod storage;
 pub mod worker;
