@@ -5,7 +5,7 @@ mod diff;
 
 pub use diff::{BalanceDiff, BalanceDiffs};
 
-use crate::model::Error;
+use crate::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 

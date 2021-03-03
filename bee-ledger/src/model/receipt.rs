@@ -1,10 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    error::Error as LError,
-    model::{Error, TreasuryOutput},
-};
+use crate::{error::Error, model::TreasuryOutput};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
@@ -32,15 +29,15 @@ impl Receipt {
         &self.included_in
     }
 
-    pub fn validate(&self, consumed_treasury_output: &TreasuryOutput) -> Result<bool, LError> {
+    pub fn validate(&self, consumed_treasury_output: &TreasuryOutput) -> Result<bool, Error> {
         let mut migrated_amount = 0;
         let transaction = match self.inner().transaction() {
             Payload::TreasuryTransaction(transaction) => transaction,
-            _ => return Err(LError::UnsupportedPayloadType),
+            _ => return Err(Error::UnsupportedPayloadType),
         };
         let created_treasury_output = match transaction.output() {
             Output::Treasury(output) => output,
-            _ => return Err(LError::UnsupportedOutputType),
+            _ => return Err(Error::UnsupportedOutputType),
         };
 
         for funds in self.inner().funds() {
@@ -50,7 +47,7 @@ impl Receipt {
 
         // TODO check underflow
         if consumed_treasury_output.inner().amount() - migrated_amount != created_treasury_output.amount() {
-            return Err(LError::TreasuryAmountMismatch(
+            return Err(Error::TreasuryAmountMismatch(
                 consumed_treasury_output.inner().amount() - migrated_amount,
                 created_treasury_output.amount(),
             ));

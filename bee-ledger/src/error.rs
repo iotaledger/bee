@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{balance::Balance, model::Error as ModelError};
+use crate::balance::Balance;
 
 use bee_message::{address::Address, milestone::MilestoneIndex, Error as MessageError, MessageId};
 
@@ -9,8 +9,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("")]
-    Model(#[from] ModelError),
+    #[error("I/O error {0}")]
+    Io(#[from] std::io::Error),
     #[error("")]
     Message(#[from] MessageError),
     #[error("Message {0} is missing in the past cone of the milestone")]
@@ -45,6 +45,9 @@ pub enum Error {
     InvalidLedgerDustState(Address, Balance),
     #[error("Treasury amount mismatch: {0} != {1}")]
     TreasuryAmountMismatch(u64, u64),
+    #[error("")]
+    // TODO
+    Option,
     #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
 }
