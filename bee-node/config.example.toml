@@ -17,9 +17,8 @@ level_filter  = "error"
 [network]
 bind_address             = "/ip4/0.0.0.0/tcp/15600"
 reconnect_interval_secs  = 30
-
+max_unknown_peers        = 4
 [network.peering]
-max_unknown_peers = 4
 #[[network.peering.peers]]
 #address = ""
 #alias   = ""
