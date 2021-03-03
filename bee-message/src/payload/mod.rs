@@ -34,6 +34,18 @@ pub enum Payload {
     TreasuryTransaction(Box<TreasuryTransactionPayload>),
 }
 
+impl Payload {
+    pub fn kind(&self) -> u32 {
+        match self {
+            Self::Transaction(_) => TRANSACTION_PAYLOAD_KIND,
+            Self::Milestone(_) => MILESTONE_PAYLOAD_KIND,
+            Self::Indexation(_) => INDEXATION_PAYLOAD_KIND,
+            Self::Receipt(_) => RECEIPT_PAYLOAD_KIND,
+            Self::TreasuryTransaction(_) => TREASURY_TRANSACTION_PAYLOAD_KIND,
+        }
+    }
+}
+
 impl From<TransactionPayload> for Payload {
     fn from(payload: TransactionPayload) -> Self {
         Self::Transaction(Box::new(payload))
@@ -61,18 +73,6 @@ impl From<ReceiptPayload> for Payload {
 impl From<TreasuryTransactionPayload> for Payload {
     fn from(payload: TreasuryTransactionPayload) -> Self {
         Self::TreasuryTransaction(Box::new(payload))
-    }
-}
-
-impl Payload {
-    pub fn kind(&self) -> u32 {
-        match self {
-            Self::Transaction(_) => TRANSACTION_PAYLOAD_KIND,
-            Self::Milestone(_) => MILESTONE_PAYLOAD_KIND,
-            Self::Indexation(_) => INDEXATION_PAYLOAD_KIND,
-            Self::Receipt(_) => RECEIPT_PAYLOAD_KIND,
-            Self::TreasuryTransaction(_) => TREASURY_TRANSACTION_PAYLOAD_KIND,
-        }
     }
 }
 

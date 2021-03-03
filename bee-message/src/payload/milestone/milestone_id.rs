@@ -12,6 +12,16 @@ pub const MILESTONE_ID_LENGTH: usize = 32;
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct MilestoneId([u8; MILESTONE_ID_LENGTH]);
 
+impl MilestoneId {
+    pub fn new(bytes: [u8; MILESTONE_ID_LENGTH]) -> Self {
+        bytes.into()
+    }
+
+    pub fn null() -> Self {
+        Self([0u8; MILESTONE_ID_LENGTH])
+    }
+}
+
 #[cfg(feature = "serde")]
 string_serde_impl!(MilestoneId);
 
@@ -37,16 +47,6 @@ impl FromStr for MilestoneId {
 impl AsRef<[u8]> for MilestoneId {
     fn as_ref(&self) -> &[u8] {
         &self.0
-    }
-}
-
-impl MilestoneId {
-    pub fn new(bytes: [u8; MILESTONE_ID_LENGTH]) -> Self {
-        bytes.into()
-    }
-
-    pub fn null() -> Self {
-        Self([0u8; MILESTONE_ID_LENGTH])
     }
 }
 

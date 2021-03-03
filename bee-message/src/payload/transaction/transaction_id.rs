@@ -12,6 +12,12 @@ pub const TRANSACTION_ID_LENGTH: usize = 32;
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct TransactionId([u8; TRANSACTION_ID_LENGTH]);
 
+impl TransactionId {
+    pub fn new(bytes: [u8; TRANSACTION_ID_LENGTH]) -> Self {
+        bytes.into()
+    }
+}
+
 #[cfg(feature = "serde")]
 string_serde_impl!(TransactionId);
 
@@ -37,12 +43,6 @@ impl FromStr for TransactionId {
 impl AsRef<[u8]> for TransactionId {
     fn as_ref(&self) -> &[u8] {
         &self.0
-    }
-}
-
-impl TransactionId {
-    pub fn new(bytes: [u8; TRANSACTION_ID_LENGTH]) -> Self {
-        bytes.into()
     }
 }
 

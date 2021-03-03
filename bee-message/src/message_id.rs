@@ -12,6 +12,16 @@ pub const MESSAGE_ID_LENGTH: usize = 32;
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct MessageId([u8; MESSAGE_ID_LENGTH]);
 
+impl MessageId {
+    pub fn new(bytes: [u8; MESSAGE_ID_LENGTH]) -> Self {
+        bytes.into()
+    }
+
+    pub fn null() -> Self {
+        Self([0u8; MESSAGE_ID_LENGTH])
+    }
+}
+
 #[cfg(feature = "serde")]
 string_serde_impl!(MessageId);
 
@@ -37,16 +47,6 @@ impl FromStr for MessageId {
 impl AsRef<[u8]> for MessageId {
     fn as_ref(&self) -> &[u8] {
         &self.0
-    }
-}
-
-impl MessageId {
-    pub fn new(bytes: [u8; MESSAGE_ID_LENGTH]) -> Self {
-        bytes.into()
-    }
-
-    pub fn null() -> Self {
-        Self([0u8; MESSAGE_ID_LENGTH])
     }
 }
 

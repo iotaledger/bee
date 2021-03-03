@@ -24,12 +24,6 @@ pub enum Essence {
     Regular(RegularEssence),
 }
 
-impl From<RegularEssence> for Essence {
-    fn from(essence: RegularEssence) -> Self {
-        Self::Regular(essence)
-    }
-}
-
 impl Essence {
     pub fn kind(&self) -> u8 {
         match self {
@@ -39,6 +33,12 @@ impl Essence {
 
     pub fn hash(&self) -> [u8; 32] {
         Blake2b256::digest(&self.pack_new()).into()
+    }
+}
+
+impl From<RegularEssence> for Essence {
+    fn from(essence: RegularEssence) -> Self {
+        Self::Regular(essence)
     }
 }
 

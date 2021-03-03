@@ -22,6 +22,28 @@ pub struct OutputId {
     index: u16,
 }
 
+impl OutputId {
+    pub fn new(transaction_id: TransactionId, index: u16) -> Result<Self, Error> {
+        if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
+            return Err(Error::InvalidInputOutputIndex(index));
+        }
+
+        Ok(Self { transaction_id, index })
+    }
+
+    pub fn transaction_id(&self) -> &TransactionId {
+        &self.transaction_id
+    }
+
+    pub fn index(&self) -> u16 {
+        self.index
+    }
+
+    pub fn split(self) -> (TransactionId, u16) {
+        (self.transaction_id, self.index)
+    }
+}
+
 #[cfg(feature = "serde")]
 string_serde_impl!(OutputId);
 
@@ -50,28 +72,6 @@ impl FromStr for OutputId {
             .map_err(|_| Self::Err::InvalidHexadecimalLength(OUTPUT_ID_LENGTH * 2, s.len()))?;
 
         bytes.try_into()
-    }
-}
-
-impl OutputId {
-    pub fn new(transaction_id: TransactionId, index: u16) -> Result<Self, Error> {
-        if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
-            return Err(Error::InvalidInputOutputIndex(index));
-        }
-
-        Ok(Self { transaction_id, index })
-    }
-
-    pub fn transaction_id(&self) -> &TransactionId {
-        &self.transaction_id
-    }
-
-    pub fn index(&self) -> u16 {
-        self.index
-    }
-
-    pub fn split(self) -> (TransactionId, u16) {
-        (self.transaction_id, self.index)
     }
 }
 

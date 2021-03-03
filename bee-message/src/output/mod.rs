@@ -34,6 +34,16 @@ pub enum Output {
     Treasury(TreasuryOutput),
 }
 
+impl Output {
+    pub fn kind(&self) -> u8 {
+        match self {
+            Self::SignatureLockedSingle(_) => SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND,
+            Self::SignatureLockedDustAllowance(_) => SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND,
+            Self::Treasury(_) => TREASURY_OUTPUT_KIND,
+        }
+    }
+}
+
 impl From<SignatureLockedSingleOutput> for Output {
     fn from(output: SignatureLockedSingleOutput) -> Self {
         Self::SignatureLockedSingle(output)
@@ -49,16 +59,6 @@ impl From<SignatureLockedDustAllowanceOutput> for Output {
 impl From<TreasuryOutput> for Output {
     fn from(output: TreasuryOutput) -> Self {
         Self::Treasury(output)
-    }
-}
-
-impl Output {
-    pub fn kind(&self) -> u8 {
-        match self {
-            Self::SignatureLockedSingle(_) => SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND,
-            Self::SignatureLockedDustAllowance(_) => SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND,
-            Self::Treasury(_) => TREASURY_OUTPUT_KIND,
-        }
     }
 }
 

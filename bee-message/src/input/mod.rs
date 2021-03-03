@@ -26,6 +26,15 @@ pub enum Input {
     Treasury(TreasuryInput),
 }
 
+impl Input {
+    pub fn kind(&self) -> u8 {
+        match self {
+            Self::UTXO(_) => UTXO_INPUT_KIND,
+            Self::Treasury(_) => TREASURY_INPUT_KIND,
+        }
+    }
+}
+
 impl From<UTXOInput> for Input {
     fn from(input: UTXOInput) -> Self {
         Self::UTXO(input)
@@ -35,15 +44,6 @@ impl From<UTXOInput> for Input {
 impl From<TreasuryInput> for Input {
     fn from(input: TreasuryInput) -> Self {
         Self::Treasury(input)
-    }
-}
-
-impl Input {
-    pub fn kind(&self) -> u8 {
-        match self {
-            Self::UTXO(_) => UTXO_INPUT_KIND,
-            Self::Treasury(_) => TREASURY_INPUT_KIND,
-        }
     }
 }
 

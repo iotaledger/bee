@@ -20,34 +20,6 @@ pub const ED25519_ADDRESS_LENGTH: usize = 32;
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Ed25519Address([u8; ED25519_ADDRESS_LENGTH]);
 
-#[cfg(feature = "serde")]
-string_serde_impl!(Ed25519Address);
-
-impl From<[u8; ED25519_ADDRESS_LENGTH]> for Ed25519Address {
-    fn from(bytes: [u8; ED25519_ADDRESS_LENGTH]) -> Self {
-        Self(bytes)
-    }
-}
-
-impl FromStr for Ed25519Address {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; ED25519_ADDRESS_LENGTH] = hex::decode(s)
-            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
-            .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength(ED25519_ADDRESS_LENGTH * 2, s.len()))?;
-
-        Ok(Ed25519Address::from(bytes))
-    }
-}
-
-impl AsRef<[u8]> for Ed25519Address {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
-}
-
 impl Ed25519Address {
     pub fn new(address: [u8; ED25519_ADDRESS_LENGTH]) -> Self {
         address.into()
@@ -82,6 +54,34 @@ impl Ed25519Address {
             &Signature::from_bytes(signature.signature().try_into().unwrap()),
             msg,
         )
+    }
+}
+
+#[cfg(feature = "serde")]
+string_serde_impl!(Ed25519Address);
+
+impl From<[u8; ED25519_ADDRESS_LENGTH]> for Ed25519Address {
+    fn from(bytes: [u8; ED25519_ADDRESS_LENGTH]) -> Self {
+        Self(bytes)
+    }
+}
+
+impl FromStr for Ed25519Address {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes: [u8; ED25519_ADDRESS_LENGTH] = hex::decode(s)
+            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
+            .try_into()
+            .map_err(|_| Self::Err::InvalidHexadecimalLength(ED25519_ADDRESS_LENGTH * 2, s.len()))?;
+
+        Ok(Ed25519Address::from(bytes))
+    }
+}
+
+impl AsRef<[u8]> for Ed25519Address {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
     }
 }
 
