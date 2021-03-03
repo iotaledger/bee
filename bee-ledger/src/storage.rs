@@ -273,6 +273,8 @@ pub async fn rollback_outputs_diff<B: StorageBackend>(
     Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, &mut batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
+    // TODO add receipts and treasury outputs
+
     storage
         .batch_commit(batch, true)
         .await
