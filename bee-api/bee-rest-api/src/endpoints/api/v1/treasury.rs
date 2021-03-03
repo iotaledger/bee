@@ -17,8 +17,8 @@ use warp::{Rejection, Reply};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TreasuryResponse {
     #[serde(rename = "milestoneId")]
-    milestone_id: String,
-    amount: u64,
+    pub milestone_id: String,
+    pub amount: u64,
 }
 
 impl BodyInner for TreasuryResponse {}
