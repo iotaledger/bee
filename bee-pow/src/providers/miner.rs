@@ -85,9 +85,9 @@ impl Miner {
             }
 
             for (i, hash) in hasher.hash_batched().enumerate() {
-                let trainling_zeros = hash.iter().rev().take_while(|t| *t == Btrit::Zero).count();
+                let trailing_zeros = hash.iter().rev().take_while(|t| *t == Btrit::Zero).count();
 
-                if trainling_zeros >= target_zeros {
+                if trailing_zeros >= target_zeros {
                     done.store(true, Ordering::Relaxed);
                     return Ok(nonce + i as u64);
                 }
