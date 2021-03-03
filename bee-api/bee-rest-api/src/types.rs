@@ -263,9 +263,9 @@ pub struct ReceiptPayloadDto {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MigratedFundsEntryDto {
-    tail_transaction_hash: Box<[u8]>,
-    address: AddressDto,
-    amount: u64,
+    pub tail_transaction_hash: Box<[u8]>,
+    pub address: AddressDto,
+    pub amount: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
