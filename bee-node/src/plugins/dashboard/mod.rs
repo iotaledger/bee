@@ -31,10 +31,7 @@ use crate::{
 
 use bee_ledger::event::MilestoneConfirmed;
 use bee_protocol::{
-    event::{
-        LatestMilestoneChanged, LatestSolidMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded,
-        TipRemoved,
-    },
+    event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded, TipRemoved},
     MetricsWorker, PeerManagerResWorker,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
@@ -137,13 +134,9 @@ where
         }
         {
             let tangle = tangle.clone();
-            topic_handler(
-                node,
-                "SyncStatus",
-                &users,
-                false,
-                move |event: LatestSolidMilestoneChanged| sync_status::forward_solid_milestone_changed(event, &tangle),
-            );
+            topic_handler(node, "SyncStatus", &users, false, move |event: MilestoneConfirmed| {
+                sync_status::forward_confirmed_milestone_changed(&event, &tangle)
+            });
         }
         topic_handler(
             node,
