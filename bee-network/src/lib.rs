@@ -54,12 +54,12 @@ pub async fn init<N: Node>(
     config: NetworkConfig,
     local_keys: Keypair,
     network_id: u64,
-    max_unknown_peers: usize,
     mut node_builder: N::Builder,
 ) -> (N::Builder, NetworkListener) {
     let NetworkConfig {
         bind_address,
         reconnect_interval_secs,
+        max_unknown_peers,
     } = config;
 
     RECONNECT_INTERVAL_SECS.swap(reconnect_interval_secs, Ordering::Relaxed);

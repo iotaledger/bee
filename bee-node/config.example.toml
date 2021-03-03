@@ -1,8 +1,9 @@
 # Duplicate this file to config.toml to use it
 
-alias       = "bee"
-bech32_hrp  = "atoi"
-network_id  = "alphanet1"
+identity   = ""
+alias      = "bee"
+bech32_hrp = "atoi"
+network_id = "alphanet1"
 
 [logger]
 color_enabled = true
@@ -17,18 +18,14 @@ level_filter  = "error"
 bind_address             = "/ip4/0.0.0.0/tcp/15600"
 reconnect_interval_secs  = 30
 
-[peering]
-# hex representation of an Ed25519 keypair
-identity_private_key  = ""
-[peering.manual]
-unknown_peers_limit = 4
-# known peers
-# [[peering.manual.peers]]
-# address = ""
-# alias   = ""
-# [[peering.manual.peers]]
-# address = ""
-# alias   = ""
+[network.peering]
+max_unknown_peers = 4
+#[[network.peering.peers]]
+#address = ""
+#alias   = ""
+#[[network.peering.peers]]
+#address = ""
+#alias   = ""
 
 [protocol]
 minimum_pow_score = 4000
