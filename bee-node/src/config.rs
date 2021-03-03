@@ -7,6 +7,7 @@ use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder}
 use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
 
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
+use bee_ledger::config::{LedgerConfig, LedgerConfigBuilder};
 use bee_network::{NetworkConfig, NetworkConfigBuilder};
 use bee_peering::{PeeringConfig, PeeringConfigBuilder};
 use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
@@ -23,7 +24,7 @@ use std::{convert::TryInto, fs, path::Path};
 
 const DEFAULT_ALIAS: &str = "bee";
 const DEFAULT_BECH32_HRP: &str = "atoi";
-const DEFAULT_NETWORK_ID: &str = "testnet5";
+const DEFAULT_NETWORK_ID: &str = "alphanet1";
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -46,6 +47,7 @@ pub struct NodeConfigBuilder<B: StorageBackend> {
     pub(crate) snapshot: Option<SnapshotConfigBuilder>,
     pub(crate) storage: Option<B::ConfigBuilder>,
     pub(crate) tangle: Option<TangleConfigBuilder>,
+    pub(crate) ledger: Option<LedgerConfigBuilder>,
     pub(crate) mqtt: Option<MqttConfigBuilder>,
     #[cfg(feature = "dashboard")]
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
@@ -80,6 +82,7 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
             snapshot: self.snapshot.unwrap_or_default().finish(),
             storage: self.storage.unwrap_or_default().into(),
             tangle: self.tangle.unwrap_or_default().finish(),
+            ledger: self.ledger.unwrap_or_default().finish(),
             mqtt: self.mqtt.unwrap_or_default().finish(),
             #[cfg(feature = "dashboard")]
             dashboard: self.dashboard.unwrap_or_default().finish(),
@@ -99,6 +102,7 @@ pub struct NodeConfig<B: StorageBackend> {
     pub snapshot: SnapshotConfig,
     pub storage: B::Config,
     pub tangle: TangleConfig,
+    pub ledger: LedgerConfig,
     pub mqtt: MqttConfig,
     #[cfg(feature = "dashboard")]
     pub dashboard: DashboardConfig,
@@ -118,6 +122,7 @@ impl<B: StorageBackend> Clone for NodeConfig<B> {
             snapshot: self.snapshot.clone(),
             storage: self.storage.clone(),
             tangle: self.tangle.clone(),
+            ledger: self.ledger.clone(),
             mqtt: self.mqtt.clone(),
             #[cfg(feature = "dashboard")]
             dashboard: self.dashboard.clone(),

@@ -33,7 +33,7 @@ impl Packable for Kind {
         Ok(match u8::unpack(reader)? {
             0 => Kind::Full,
             1 => Kind::Delta,
-            _ => return Err(Self::Error::InvalidVariant),
+            k => return Err(Self::Error::InvalidKind(k)),
         })
     }
 }

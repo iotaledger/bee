@@ -88,6 +88,7 @@ pub struct MsTangle<B> {
     pub(crate) solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
     latest_milestone_index: AtomicU32,
     solid_milestone_index: AtomicU32,
+    confirmed_milestone_index: AtomicU32,
     snapshot_index: AtomicU32,
     pruning_index: AtomicU32,
     entry_point_index: AtomicU32,
@@ -110,6 +111,7 @@ impl<B: StorageBackend> MsTangle<B> {
             solid_entry_points: Default::default(),
             latest_milestone_index: Default::default(),
             solid_milestone_index: Default::default(),
+            confirmed_milestone_index: Default::default(),
             snapshot_index: Default::default(),
             pruning_index: Default::default(),
             entry_point_index: Default::default(),
@@ -224,6 +226,14 @@ impl<B: StorageBackend> MsTangle<B> {
         // TODO: Formalise this a little better
         let new_len = ((1000.0 + self.get_sync_threshold() as f32 * 500.0) as usize).min(DEFAULT_CACHE_LEN);
         self.inner.resize(new_len);
+    }
+
+    pub fn get_confirmed_milestone_index(&self) -> MilestoneIndex {
+        self.confirmed_milestone_index.load(Ordering::Relaxed).into()
+    }
+
+    pub fn update_confirmed_milestone_index(&self, new_index: MilestoneIndex) {
+        self.confirmed_milestone_index.store(*new_index, Ordering::Relaxed);
     }
 
     pub fn get_snapshot_index(&self) -> MilestoneIndex {

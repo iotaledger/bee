@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use rand::{
-    distributions::{uniform::SampleUniform, Distribution, Standard},
+    distributions::{
+        uniform::{SampleRange, SampleUniform},
+        Distribution, Standard,
+    },
     Rng,
 };
-
-use std::ops::Range;
 
 pub fn rand_integer<T>() -> T
 where
@@ -15,9 +16,10 @@ where
     rand::thread_rng().gen()
 }
 
-pub fn rand_integer_range<T>(range: Range<T>) -> T
+pub fn rand_integer_range<T, R>(range: R) -> T
 where
     T: SampleUniform + PartialOrd,
+    R: SampleRange<T>,
 {
     rand::thread_rng().gen_range(range)
 }

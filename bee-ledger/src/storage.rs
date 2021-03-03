@@ -4,7 +4,7 @@
 use crate::{
     balance::{Balance, BalanceDiffs},
     error::Error,
-    model::{OutputDiff, Unspent},
+    model::{OutputDiff, Receipt, TreasuryOutput, Unspent},
 };
 
 use bee_message::{
@@ -32,6 +32,7 @@ pub trait StorageBackend:
     + Batch<MilestoneIndex, OutputDiff>
     + Batch<(Ed25519Address, OutputId), ()>
     + Batch<Address, Balance>
+    + Batch<(MilestoneIndex, Receipt), ()>
     + Delete<OutputId, CreatedOutput>
     + Delete<OutputId, ConsumedOutput>
     + Delete<Unspent, ()>
@@ -44,10 +45,12 @@ pub trait StorageBackend:
     + Fetch<OutputId, ConsumedOutput>
     + Fetch<(), LedgerIndex>
     + Fetch<Address, Balance>
+    + Fetch<bool, Vec<TreasuryOutput>>
     + Insert<OutputId, CreatedOutput>
     + Insert<OutputId, ConsumedOutput>
     + Insert<Unspent, ()>
     + Insert<(), LedgerIndex>
+    + Insert<(bool, TreasuryOutput), ()>
     + for<'a> AsStream<'a, Unspent, ()>
     + for<'a> AsStream<'a, Address, Balance>
     + bee_tangle::storage::StorageBackend
@@ -64,6 +67,7 @@ impl<T> StorageBackend for T where
         + Batch<MilestoneIndex, OutputDiff>
         + Batch<(Ed25519Address, OutputId), ()>
         + Batch<Address, Balance>
+        + Batch<(MilestoneIndex, Receipt), ()>
         + Delete<OutputId, CreatedOutput>
         + Delete<OutputId, ConsumedOutput>
         + Delete<Unspent, ()>
@@ -76,10 +80,12 @@ impl<T> StorageBackend for T where
         + Fetch<OutputId, ConsumedOutput>
         + Fetch<(), LedgerIndex>
         + Fetch<Address, Balance>
+        + Fetch<bool, Vec<TreasuryOutput>>
         + Insert<OutputId, CreatedOutput>
         + Insert<OutputId, ConsumedOutput>
         + Insert<Unspent, ()>
         + Insert<(), LedgerIndex>
+        + Insert<(bool, TreasuryOutput), ()>
         + for<'a> AsStream<'a, Unspent, ()>
         + for<'a> AsStream<'a, Address, Balance>
         + bee_tangle::storage::StorageBackend
@@ -193,6 +199,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
     balance_diffs: &BalanceDiffs,
+    receipt: &Option<Receipt>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
@@ -218,9 +225,19 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
         storage,
         &mut batch,
         &index,
-        &OutputDiff::new(created_output_ids, consumed_output_ids),
+        &OutputDiff::new(created_output_ids, consumed_output_ids, None),
     )
     .map_err(|e| Error::Storage(Box::new(e)))?;
+
+    if let Some(receipt) = receipt {
+        Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(
+            storage,
+            &mut batch,
+            &(receipt.inner().index().into(), receipt.clone()),
+            &(),
+        )
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+    }
 
     storage
         .batch_commit(batch, true)
@@ -255,6 +272,8 @@ pub async fn rollback_outputs_diff<B: StorageBackend>(
 
     Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, &mut batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
+
+    // TODO add receipts and treasury outputs
 
     storage
         .batch_commit(batch, true)
@@ -302,4 +321,30 @@ pub(crate) async fn is_output_unspent<B: StorageBackend>(storage: &B, output_id:
     Exist::<Unspent, ()>::exist(storage, &(*output_id).into())
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub async fn store_unspent_treasury_output<B: StorageBackend>(
+    storage: &B,
+    treasury_output: &TreasuryOutput,
+) -> Result<(), Error> {
+    Insert::<(bool, TreasuryOutput), ()>::insert(storage, &(false, treasury_output.clone()), &())
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub async fn fetch_unspent_treasury_output<B: StorageBackend>(storage: &B) -> Result<TreasuryOutput, Error> {
+    match Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &false)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))?
+    {
+        Some(outputs) => {
+            match outputs.len() {
+                0 => panic!("No unspent treasury output found"),
+                // Indexing is fine since length is known
+                1 => Ok(outputs[0].clone()),
+                _ => panic!("More than one unspent treasury output found"),
+            }
+        }
+        None => panic!("No unspent treasury output found"),
+    }
 }

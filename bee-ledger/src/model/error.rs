@@ -8,19 +8,10 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("I/O error {0}")]
-    Io(std::io::Error),
+    Io(#[from] std::io::Error),
     #[error("")]
-    Message(MessageError),
-}
-
-impl From<std::io::Error> for Error {
-    fn from(error: std::io::Error) -> Self {
-        Error::Io(error)
-    }
-}
-
-impl From<MessageError> for Error {
-    fn from(error: MessageError) -> Self {
-        Error::Message(error)
-    }
+    Message(#[from] MessageError),
+    #[error("")]
+    // TODO
+    Option,
 }

@@ -36,6 +36,8 @@ pub const CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX: &str = "solid_entry_point_to_
 pub const CF_MILESTONE_INDEX_TO_OUTPUT_DIFF: &str = "milestone_index_to_output_diff";
 pub const CF_ADDRESS_TO_BALANCE: &str = "address_to_balance";
 pub const CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE: &str = "milestone_index_to_unconfirmed_message";
+pub const CF_MILESTONE_INDEX_TO_RECEIPT: &str = "milestone_index_to_receipt";
+pub const CF_SPENT_TO_TREASURY_OUTPUT: &str = "spent_to_treasury_output";
 
 pub struct Storage {
     pub(crate) config: StorageConfig,
@@ -94,6 +96,16 @@ impl Storage {
         let cf_milestone_index_to_unconfirmed_message =
             ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE, options);
 
+        let prefix_extractor = SliceTransform::create_fixed_prefix(std::mem::size_of::<MilestoneIndex>());
+        let mut options = Options::default();
+        options.set_prefix_extractor(prefix_extractor);
+        let cf_milestone_index_to_receipt = ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_RECEIPT, options);
+
+        let prefix_extractor = SliceTransform::create_fixed_prefix(std::mem::size_of::<bool>());
+        let mut options = Options::default();
+        options.set_prefix_extractor(prefix_extractor);
+        let cf_spent_to_treasury = ColumnFamilyDescriptor::new(CF_SPENT_TO_TREASURY_OUTPUT, options);
+
         let mut opts = Options::default();
 
         opts.create_if_missing(config.create_if_missing);
@@ -143,6 +155,8 @@ impl Storage {
             cf_milestone_index_to_output_diff,
             cf_address_to_balance,
             cf_milestone_index_to_unconfirmed_message,
+            cf_milestone_index_to_receipt,
+            cf_spent_to_treasury,
         ];
 
         Ok(DB::open_cf_descriptors(&opts, config.path, column_familes)?)

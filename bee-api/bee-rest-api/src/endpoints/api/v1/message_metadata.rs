@@ -8,7 +8,7 @@ use crate::{
     IS_SYNCED_THRESHOLD,
 };
 
-use bee_ledger::conflict::ConflictReason;
+use bee_ledger::ConflictReason;
 use bee_message::prelude::*;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;

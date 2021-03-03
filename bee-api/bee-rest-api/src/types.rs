@@ -1,6 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_ledger::model::Receipt;
 use bee_message::{payload::receipt::ReceiptPayload, prelude::*};
 use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
 use bee_protocol::{Peer, PeerManager};
@@ -789,8 +790,8 @@ impl TryFrom<&MigratedFundsEntry> for MigratedFundsEntryDto {
     fn try_from(value: &MigratedFundsEntry) -> Result<Self, Self::Error> {
         Ok(MigratedFundsEntryDto {
             tail_transaction_hash: Box::new(value.tail_transaction_hash().clone()),
-            address: value.address().try_into()?,
-            amount: value.amount(),
+            address: value.output().address().try_into()?,
+            amount: value.output().amount(),
         })
     }
 }
@@ -805,8 +806,8 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
                 .as_ref()
                 .try_into()
                 .map_err(|e| format!("invalid tail transaction hash: {}", e))?,
-            (&value.address).try_into()?,
-            value.amount,
+            SignatureLockedSingleOutput::new((&value.address).try_into()?, value.amount)
+                .map_err(|e| format!("invalid address or amount: {}", e))?,
         )
         .map_err(|e| format!("invalid migrated funds entry: {}", e))?;
         Ok(entry)
@@ -947,5 +948,36 @@ pub async fn peer_to_peer_dto(peer: &Arc<Peer>, peer_manager: &ResourceHandle<Pe
                 dropped_packets: peer.metrics().invalid_packets(), // TODO dropped_packets == invalid_packets?
             },
         }),
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ReceiptDto {
+    pub index: u32,
+    pub last: bool,
+    pub funds: Vec<MigratedFundsEntryDto>,
+    pub transaction: PayloadDto,
+}
+
+impl TryFrom<Receipt> for ReceiptDto {
+    type Error = String;
+
+    fn try_from(value: Receipt) -> Result<Self, Self::Error> {
+        let mut funds = Vec::new();
+
+        for f in value.inner().funds() {
+            funds.push(f.try_into().map_err(|_| "Invalid migrated funds entry")?);
+        }
+
+        Ok(ReceiptDto {
+            index: value.inner().index(),
+            last: value.inner().last(),
+            funds,
+            transaction: value
+                .inner()
+                .transaction()
+                .try_into()
+                .map_err(|_| "Invalid treasury transaction".to_string())?,
+        })
     }
 }

@@ -11,12 +11,14 @@ use thiserror::Error;
 pub enum Error {
     #[error("I/O error happened: {0}")]
     Io(#[from] std::io::Error),
-    #[error("Invalid variant read")]
-    InvalidVariant,
-    #[error("Invalid snapshot version: node supports {0}, read {1}")]
-    InvalidVersion(u8, u8),
-    #[error("Invalid snapshot kind: expected {0:?}, read {1:?}")]
-    InvalidKind(Kind, Kind),
+    #[error("Invalid snapshot kind: {0}")]
+    InvalidKind(u8),
+    #[error("Unsupported snapshot version: supports {0}, read {1}")]
+    UnsupportedVersion(u8, u8),
+    #[error("Unexpected snapshot kind: expected {0:?}, read {1:?}")]
+    UnexpectedKind(Kind, Kind),
+    #[error("Unsupported output kind: {0}")]
+    UnsupportedOutputKind(u8),
     #[error("")]
     NoDownloadSourceAvailable,
     #[error("")]

@@ -3,7 +3,7 @@
 
 mod migrated_funds_entry;
 
-pub use migrated_funds_entry::MigratedFundsEntry;
+pub use migrated_funds_entry::{MigratedFundsEntry, MIGRATED_FUNDS_ENTRY_AMOUNT};
 
 use crate::{payload::Payload, Error};
 
@@ -60,7 +60,7 @@ impl ReceiptPayload {
     }
 
     pub fn amount(&self) -> u64 {
-        self.funds.iter().fold(0, |acc, funds| acc + funds.amount())
+        self.funds.iter().fold(0, |acc, funds| acc + funds.output().amount())
     }
 }
 

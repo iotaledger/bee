@@ -4,9 +4,11 @@
 use crate::{kind::Kind, Error};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::milestone::MilestoneIndex;
+use bee_message::{milestone::MilestoneIndex, payload::milestone::MilestoneId};
 
 const SNAPSHOT_VERSION: u8 = 1;
+
+// TODO with Options ? two different types ?
 
 #[derive(Clone)]
 pub struct SnapshotHeader {
@@ -18,6 +20,8 @@ pub struct SnapshotHeader {
     pub(crate) sep_count: u64,
     pub(crate) output_count: u64,
     pub(crate) milestone_diff_count: u64,
+    pub(crate) treasury_output_milestone_id: MilestoneId,
+    pub(crate) treasury_output_amount: u64,
 }
 
 impl SnapshotHeader {
@@ -52,6 +56,14 @@ impl SnapshotHeader {
     pub fn milestone_diff_count(&self) -> u64 {
         self.milestone_diff_count
     }
+
+    pub fn treasury_output_milestone_id(&self) -> &MilestoneId {
+        &self.treasury_output_milestone_id
+    }
+
+    pub fn treasury_output_amount(&self) -> u64 {
+        self.treasury_output_amount
+    }
 }
 
 impl Packable for SnapshotHeader {
@@ -71,6 +83,11 @@ impl Packable for SnapshotHeader {
                 0
             }
             + self.milestone_diff_count.packed_len()
+            + if self.kind == Kind::Full {
+                self.treasury_output_milestone_id.packed_len() + self.treasury_output_amount.packed_len()
+            } else {
+                0
+            }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -82,9 +99,13 @@ impl Packable for SnapshotHeader {
         self.ledger_index.pack(writer)?;
         self.sep_count.pack(writer)?;
         if self.kind == Kind::Full {
-            self.output_count.pack(writer)?
+            self.output_count.pack(writer)?;
         }
         self.milestone_diff_count.pack(writer)?;
+        if self.kind == Kind::Full {
+            self.treasury_output_milestone_id.pack(writer)?;
+            self.treasury_output_amount.pack(writer)?;
+        }
 
         Ok(())
     }
@@ -92,8 +113,8 @@ impl Packable for SnapshotHeader {
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let version = u8::unpack(reader)?;
 
-        if version != SNAPSHOT_VERSION {
-            return Err(Self::Error::InvalidVersion(SNAPSHOT_VERSION, version));
+        if SNAPSHOT_VERSION != version {
+            return Err(Self::Error::UnsupportedVersion(SNAPSHOT_VERSION, version));
         }
 
         let kind = Kind::unpack(reader)?;
@@ -104,6 +125,11 @@ impl Packable for SnapshotHeader {
         let sep_count = u64::unpack(reader)?;
         let output_count = if kind == Kind::Full { u64::unpack(reader)? } else { 0 };
         let milestone_diff_count = u64::unpack(reader)?;
+        let (treasury_output_milestone_id, treasury_output_amount) = if kind == Kind::Full {
+            (MilestoneId::unpack(reader)?, u64::unpack(reader)?)
+        } else {
+            (MilestoneId::null(), 0)
+        };
 
         Ok(Self {
             kind,
@@ -114,6 +140,8 @@ impl Packable for SnapshotHeader {
             sep_count,
             output_count,
             milestone_diff_count,
+            treasury_output_milestone_id,
+            treasury_output_amount,
         })
     }
 }

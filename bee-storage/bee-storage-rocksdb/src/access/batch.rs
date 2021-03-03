@@ -6,7 +6,7 @@ use crate::{error::Error, storage::*};
 use bee_common::packable::Packable;
 use bee_ledger::{
     balance::Balance,
-    model::{OutputDiff, Unspent},
+    model::{OutputDiff, Receipt, TreasuryOutput, Unspent},
 };
 use bee_message::{
     address::{Address, Ed25519Address},
@@ -618,6 +618,88 @@ impl Batch<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&index.pack_new());
         batch.key_buf.extend_from_slice(unconfirmed_message.as_ref());
+
+        batch.inner.delete_cf(&cf, &batch.key_buf);
+
+        Ok(())
+    }
+}
+
+impl Batch<(MilestoneIndex, Receipt), ()> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        (index, receipt): &(MilestoneIndex, Receipt),
+        (): &(),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_RECEIPT))?;
+
+        batch.key_buf.clear();
+        batch.key_buf.extend_from_slice(&index.pack_new());
+        batch.key_buf.extend_from_slice(&receipt.pack_new());
+
+        batch.inner.put_cf(&cf, &batch.key_buf, []);
+
+        Ok(())
+    }
+
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        (index, receipt): &(MilestoneIndex, Receipt),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)
+            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_RECEIPT))?;
+
+        batch.key_buf.clear();
+        batch.key_buf.extend_from_slice(&index.pack_new());
+        batch.key_buf.extend_from_slice(&receipt.pack_new());
+
+        batch.inner.delete_cf(&cf, &batch.key_buf);
+
+        Ok(())
+    }
+}
+
+impl Batch<(bool, TreasuryOutput), ()> for Storage {
+    fn batch_insert(
+        &self,
+        batch: &mut Self::Batch,
+        (spent, output): &(bool, TreasuryOutput),
+        (): &(),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_SPENT_TO_TREASURY_OUTPUT))?;
+
+        batch.key_buf.clear();
+        batch.key_buf.extend_from_slice(&spent.pack_new());
+        batch.key_buf.extend_from_slice(&output.pack_new());
+
+        batch.inner.put_cf(&cf, &batch.key_buf, []);
+
+        Ok(())
+    }
+
+    fn batch_delete(
+        &self,
+        batch: &mut Self::Batch,
+        (spent, output): &(bool, TreasuryOutput),
+    ) -> Result<(), <Self as StorageBackend>::Error> {
+        let cf = self
+            .inner
+            .cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)
+            .ok_or(Error::UnknownCf(CF_SPENT_TO_TREASURY_OUTPUT))?;
+
+        batch.key_buf.clear();
+        batch.key_buf.extend_from_slice(&spent.pack_new());
+        batch.key_buf.extend_from_slice(&output.pack_new());
 
         batch.inner.delete_cf(&cf, &batch.key_buf);
 

@@ -6,7 +6,7 @@ use crate::{error::Error, storage::*, system::System};
 use bee_common::packable::Packable;
 use bee_ledger::{
     balance::Balance,
-    model::{OutputDiff, Unspent},
+    model::{OutputDiff, Receipt, TreasuryOutput, Unspent},
 };
 use bee_message::{
     address::{Address, Ed25519Address},
@@ -291,6 +291,38 @@ impl<'a> StorageStream<'a, (MilestoneIndex, UnconfirmedMessage), ()> {
     }
 }
 
+impl<'a> StorageStream<'a, (MilestoneIndex, Receipt), ()> {
+    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MilestoneIndex, Receipt), ()) {
+        let (mut index, mut receipt) = key.split_at(std::mem::size_of::<MilestoneIndex>());
+
+        (
+            (
+                // Unpacking from storage is fine.
+                MilestoneIndex::unpack(&mut index).unwrap(),
+                // Unpacking from storage is fine.
+                Receipt::unpack(&mut receipt).unwrap(),
+            ),
+            (),
+        )
+    }
+}
+
+impl<'a> StorageStream<'a, (bool, TreasuryOutput), ()> {
+    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((bool, TreasuryOutput), ()) {
+        let (mut index, mut receipt) = key.split_at(std::mem::size_of::<bool>());
+
+        (
+            (
+                // Unpacking from storage is fine.
+                bool::unpack(&mut index).unwrap(),
+                // Unpacking from storage is fine.
+                TreasuryOutput::unpack(&mut receipt).unwrap(),
+            ),
+            (),
+        )
+    }
+}
+
 impl_stream!(u8, System, CF_SYSTEM);
 impl_stream!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_stream!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
@@ -311,3 +343,5 @@ impl_stream!(
     (),
     CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE
 );
+impl_stream!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
+impl_stream!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);

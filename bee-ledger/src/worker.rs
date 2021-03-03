@@ -3,18 +3,23 @@
 
 use crate::{
     balance::BalanceDiffs,
-    conflict::ConflictReason,
     dust::DUST_THRESHOLD,
     error::Error,
     event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
-    merkle_hasher::MerkleHasher,
-    metadata::WhiteFlagMetadata,
+    model::{Receipt, TreasuryOutput},
     state::check_ledger_state,
     storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend},
     white_flag,
+    white_flag::{conflict::ConflictReason, merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
 };
 
-use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, output::Output, payload::Payload, MessageId};
+use bee_message::{
+    ledger_index::LedgerIndex,
+    milestone::MilestoneIndex,
+    output::{self, CreatedOutput, Output, OutputId},
+    payload::{transaction::TransactionId, Payload},
+    MessageId,
+};
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_snapshot::{milestone_diff::MilestoneDiff, SnapshotWorker};
 use bee_tangle::{MsTangle, TangleWorker};
@@ -26,7 +31,7 @@ use log::{error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, collections::HashMap};
+use std::{any::TypeId, collections::HashMap, convert::TryInto};
 
 pub struct LedgerWorkerEvent(pub MessageId);
 
@@ -61,7 +66,7 @@ where
 
     drop(message);
 
-    white_flag::traversal::<N>(tangle, storage, parents, &mut metadata).await?;
+    white_flag::validation::traversal::<N>(tangle, storage, parents, &mut metadata).await?;
 
     // Account for the milestone itself.
     metadata.num_referenced_messages += 1;
@@ -89,16 +94,45 @@ where
         ));
     }
 
+    let receipt = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
+        let milestone_id = milestone.id();
+        let receipt = Receipt::new(receipt.as_ref().clone(), milestone.essence().index().into());
+        let _treasury = storage::fetch_unspent_treasury_output(storage).await?;
+
+        // TODO validate receipt
+
+        // Safe to unwrap since sizes are known to be the same
+        let fake_transaction_id = TransactionId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
+        // Safe to unwrap since sizes are known to be the same
+        let fake_message_id = MessageId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
+
+        for (index, funds) in receipt.inner().funds().iter().enumerate() {
+            metadata.created_outputs.insert(
+                // Safe to unwrap because indexes are known to be valid at this point.
+                OutputId::new(fake_transaction_id, index as u16).unwrap(),
+                CreatedOutput::new(fake_message_id, Output::from(funds.output().clone())),
+            );
+        }
+
+        // TODO generate treasury mutation
+
+        Some(receipt)
+    } else {
+        None
+    };
+
     storage::apply_outputs_diff(
         &*storage,
         metadata.index,
         &metadata.created_outputs,
         &metadata.consumed_outputs,
         &metadata.balance_diffs,
+        &receipt,
     )
     .await?;
 
     *index = LedgerIndex(MilestoneIndex(milestone.essence().index()));
+    tangle.update_confirmed_milestone_index(milestone.essence().index().into());
 
     for message_id in metadata.excluded_no_transaction_messages.iter() {
         tangle
@@ -178,9 +212,19 @@ where
         let storage = node.storage();
         let bus = node.bus();
 
+        let treasury_output_rx = node.worker::<SnapshotWorker>().unwrap().treasury_output_rx.clone();
         let output_rx = node.worker::<SnapshotWorker>().unwrap().output_rx.clone();
         let full_diff_rx = node.worker::<SnapshotWorker>().unwrap().full_diff_rx.clone();
         let delta_diff_rx = node.worker::<SnapshotWorker>().unwrap().delta_diff_rx.clone();
+
+        // TODO handle Err
+        if let Ok((milestone_id, amount)) = treasury_output_rx.recv_async().await {
+            storage::store_unspent_treasury_output(
+                &*storage,
+                &TreasuryOutput::new(output::TreasuryOutput::new(amount)?, milestone_id),
+            )
+            .await?
+        }
 
         let mut balance_diffs = BalanceDiffs::new();
 
@@ -210,7 +254,7 @@ where
             diff_rx: flume::Receiver<MilestoneDiff>,
         ) -> Result<(), Error> {
             while let Ok(diff) = diff_rx.recv_async().await {
-                let index = diff.index();
+                let index = diff.milestone().essence().index();
                 // Unwrap is fine because we just inserted the ledger index.
                 // TODO unwrap
                 let ledger_index = *storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
@@ -253,7 +297,7 @@ where
                 }
 
                 match index {
-                    MilestoneIndex(index) if index == ledger_index + 1 => {
+                    index if index == ledger_index + 1 => {
                         // TODO unwrap until we merge both crates
                         apply_outputs_diff(
                             &*storage,
@@ -261,17 +305,18 @@ where
                             diff.created(),
                             &consumed,
                             &balance_diffs,
+                            &None,
                         )
                         .await
                         .unwrap();
                     }
-                    MilestoneIndex(index) if index == ledger_index => {
+                    index if index == ledger_index => {
                         // TODO unwrap until we merge both crates
                         rollback_outputs_diff(&*storage, MilestoneIndex(index), diff.created(), &consumed)
                             .await
                             .unwrap();
                     }
-                    _ => return Err(Error::UnexpectedDiffIndex(index)),
+                    _ => return Err(Error::UnexpectedDiffIndex(index.into())),
                 }
             }
             Ok(())
@@ -297,6 +342,7 @@ where
         // TODO unwrap
         let mut ledger_index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
         tangle.update_solid_milestone_index(MilestoneIndex(*ledger_index));
+        tangle.update_confirmed_milestone_index(MilestoneIndex(*ledger_index));
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");

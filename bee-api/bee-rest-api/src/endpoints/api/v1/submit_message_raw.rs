@@ -3,7 +3,7 @@
 
 use crate::{
     body::SuccessBody,
-    handlers::api::v1::submit_message::{forward_to_message_submitter, SubmitMessageResponse},
+    endpoints::api::v1::submit_message::{forward_to_message_submitter, SubmitMessageResponse},
     rejection::CustomRejection,
     storage::StorageBackend,
 };

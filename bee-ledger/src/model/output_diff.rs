@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::model::Error;
+use crate::model::{treasury_diff::TreasuryDiff, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::output::OutputId;
@@ -10,13 +10,19 @@ use bee_message::output::OutputId;
 pub struct OutputDiff {
     created_outputs: Vec<OutputId>,
     consumed_outputs: Vec<OutputId>,
+    treasury_diff: Option<TreasuryDiff>,
 }
 
 impl OutputDiff {
-    pub fn new(created_outputs: Vec<OutputId>, consumed_outputs: Vec<OutputId>) -> Self {
+    pub fn new(
+        created_outputs: Vec<OutputId>,
+        consumed_outputs: Vec<OutputId>,
+        treasury_diff: Option<TreasuryDiff>,
+    ) -> Self {
         Self {
             created_outputs,
             consumed_outputs,
+            treasury_diff,
         }
     }
 
@@ -27,13 +33,17 @@ impl OutputDiff {
     pub fn consumed_outputs(&self) -> &[OutputId] {
         &self.consumed_outputs
     }
+
+    pub fn treasury_diff(&self) -> Option<&TreasuryDiff> {
+        self.treasury_diff.as_ref()
+    }
 }
 
 impl Packable for OutputDiff {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.created_outputs.packed_len() + self.consumed_outputs.packed_len()
+        self.created_outputs.packed_len() + self.consumed_outputs.packed_len() + self.treasury_diff.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -46,6 +56,8 @@ impl Packable for OutputDiff {
         for output in self.consumed_outputs.iter() {
             output.pack(writer)?;
         }
+
+        self.treasury_diff.pack(writer).map_err(|_| Error::Option)?;
 
         Ok(())
     }
@@ -66,6 +78,7 @@ impl Packable for OutputDiff {
         Ok(Self {
             created_outputs,
             consumed_outputs,
+            treasury_diff: Option::<TreasuryDiff>::unpack(reader).map_err(|_| Error::Option)?,
         })
     }
 }
