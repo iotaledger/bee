@@ -7,8 +7,8 @@ use bee_common::packable::{Packable, Read, Write};
 
 use bech32::{self, ToBase32, Variant};
 use crypto::{
-    ed25519::{self, PublicKey, Signature},
     hashes::{blake2b::Blake2b256, Digest},
+    signatures::ed25519::{PublicKey, Signature},
 };
 
 use alloc::{string::String, vec};
@@ -49,11 +49,9 @@ impl Ed25519Address {
 
         // TODO unwraps are temporary until we use crypto.rs types as internals.
 
-        ed25519::verify(
-            &PublicKey::from_compressed_bytes(*signature.public_key()).unwrap(),
-            &Signature::from_bytes(signature.signature().try_into().unwrap()),
-            msg,
-        )
+        PublicKey::from_compressed_bytes(*signature.public_key())
+            .unwrap()
+            .verify(&Signature::from_bytes(signature.signature().try_into().unwrap()), msg)
     }
 }
 

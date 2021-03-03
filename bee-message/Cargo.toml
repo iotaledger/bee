@@ -17,7 +17,7 @@ bee-pow = { path = "../bee-pow" }
 bech32 = "0.8"
 digest = "0.9"
 hex = "0.4"
-iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "09ff1a94d6a87838589ccf1b874cfa3283a00f26", features = ["ed25519", "blake2b"] }
+iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "c3bf565eba62d0b81144174c2ff917bfde282e49", features = ["ed25519", "blake2b"] }
 ref-cast = "1.0"
 serde = { version = "1.0", optional = true }
 thiserror = "1.0"
