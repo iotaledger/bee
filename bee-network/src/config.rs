@@ -1,25 +1,42 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use libp2p::Multiaddr;
+use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
 use serde::Deserialize;
 
 use std::str::FromStr;
 
-const DEFAULT_BIND_ADDRESS: &str = "/ip4/0.0.0.0/tcp/15600";
+const DEFAULT_BIND_ADDRESSES: &str = "/ip4/0.0.0.0/tcp/15600";
 
 pub const DEFAULT_RECONNECT_INTERVAL_SECS: u64 = 30;
 pub const DEFAULT_MAX_UNKOWN_PEERS: usize = 4;
 
+/// The network configuration.
+#[derive(Clone)]
+pub struct NetworkConfig {
+    /// The address/es the networking layer tries binding to.
+    pub bind_address: Multiaddr,
+    /// The automatic reconnect interval in seconds for known peers.
+    pub reconnect_interval_secs: u64,
+    /// The maximum number of gossip connections with unknown peers.
+    pub max_unknown_peers: usize,
+    /// The static peers.
+    pub peers: Vec<Peer>,
+}
+
+impl NetworkConfig {
+    /// Returns a network config builder.
+    pub fn build() -> NetworkConfigBuilder {
+        NetworkConfigBuilder::new()
+    }
+}
 /// A network configuration builder.
 #[derive(Default, Deserialize)]
 pub struct NetworkConfigBuilder {
-    /// The address/es the networking layer tries binding to.
     bind_addresses: Option<Multiaddr>,
-    /// The automatic reconnect interval in seconds for known peers.
     reconnect_interval_secs: Option<u64>,
-    ///
     max_unknown_peers: Option<usize>,
+    peering: PeeringConfigBuilder,
 }
 
 impl NetworkConfigBuilder {
@@ -28,7 +45,7 @@ impl NetworkConfigBuilder {
         Self::default()
     }
 
-    /// Specifies a bind address.
+    /// Specifies the bind addresses.
     pub fn bind_addresses(mut self, address: &str) -> Self {
         self.bind_addresses
             .replace(Multiaddr::from_str(address).unwrap_or_else(|e| panic!("Error parsing address: {:?}", e)));
@@ -41,7 +58,7 @@ impl NetworkConfigBuilder {
         self
     }
 
-    ///
+    /// The maximum number of gossip connections with unknown peers.
     pub fn max_unknown_peers(mut self, n: usize) -> Self {
         self.max_unknown_peers.replace(n);
         self
@@ -52,27 +69,69 @@ impl NetworkConfigBuilder {
         NetworkConfig {
             bind_address: self
                 .bind_addresses
-                .unwrap_or_else(|| Multiaddr::from_str(DEFAULT_BIND_ADDRESS).unwrap()),
+                .unwrap_or_else(|| Multiaddr::from_str(DEFAULT_BIND_ADDRESSES).unwrap()),
+
             reconnect_interval_secs: self.reconnect_interval_secs.unwrap_or(DEFAULT_RECONNECT_INTERVAL_SECS),
+
             max_unknown_peers: self.max_unknown_peers.unwrap_or(DEFAULT_MAX_UNKOWN_PEERS),
+
+            peers: self.peering.finish().peers,
         }
     }
 }
 
-/// The network configuration.
-#[derive(Clone, Debug)]
-pub struct NetworkConfig {
-    /// The address/es the networking layer tries binding to.
-    pub bind_address: Multiaddr,
-    /// The automatic reconnect interval in seconds for known peers.
-    pub reconnect_interval_secs: u64,
-    ///
-    pub max_unknown_peers: usize,
+#[derive(Clone)]
+pub struct PeeringConfig {
+    pub peers: Vec<Peer>,
 }
 
-impl NetworkConfig {
-    /// Returns a network config builder.
-    pub fn build() -> NetworkConfigBuilder {
-        NetworkConfigBuilder::new()
+#[derive(Clone)]
+pub struct Peer {
+    pub peer_id: PeerId,
+    pub address: Multiaddr,
+    pub alias: Option<String>,
+}
+
+#[derive(Default, Deserialize)]
+pub struct PeeringConfigBuilder {
+    pub peers: Option<Vec<PeerBuilder>>,
+}
+
+impl PeeringConfigBuilder {
+    pub fn finish(self) -> PeeringConfig {
+        let peers = match self.peers {
+             None => Vec::new(),
+             Some(peer_builders) => peer_builders
+                 .into_iter()
+                 .map(|pb| {
+                     // **Note**: this Multiaddr comes with the '../p2p/XYZ' suffix.
+                     let mut p2p_addr = Multiaddr::from_str(&pb.address).expect("error parsing multiaddr.");
+
+                     // NOTE: `unwrap`ing should be fine here since it comes from the config.
+                     let (peer_id, address) = if let Protocol::P2p(multihash) = p2p_addr.pop().unwrap() {
+                         let peer_id = PeerId::from_multihash(multihash).expect("Invalid Multiaddr.");
+                         (peer_id, p2p_addr)
+                     } else {
+                         unreachable!(
+                             "Invalid Peer descriptor. The multiaddress did not have a valid peer id as its last segment."
+                         )
+                     };
+
+                     Peer {
+                         peer_id,
+                         address,
+                         alias: pb.alias,
+                     }
+                 })
+                 .collect(),
+         };
+
+        PeeringConfig { peers }
     }
+}
+
+#[derive(Deserialize)]
+pub struct PeerBuilder {
+    address: String,
+    alias: Option<String>,
 }
