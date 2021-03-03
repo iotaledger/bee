@@ -35,14 +35,16 @@ pub enum Error {
     MerkleProofMismatch(String, String),
     #[error("Invalid messages count: referenced ({0}) != no transaction ({1}) + conflicting ({2}) + included ({3})")]
     InvalidMessagesCount(usize, usize, usize, usize),
-    #[error("Unexpected milestine diff index: {0:?}.")]
+    #[error("Unexpected milestine diff index: {0:?}")]
     UnexpectedDiffIndex(MilestoneIndex),
-    #[error("Invalid ledger unspent state: {0}.")]
+    #[error("Invalid ledger unspent state: {0}")]
     InvalidLedgerUnspentState(u64),
-    #[error("Invalid ledger balance state: {0}.")]
+    #[error("Invalid ledger balance state: {0}")]
     InvalidLedgerBalanceState(u64),
-    #[error("Invalid ledger dust state: {0:?} {1:?}.")]
+    #[error("Invalid ledger dust state: {0:?} {1:?}")]
     InvalidLedgerDustState(Address, Balance),
+    #[error("Treasury amount mismatch: {0} != {1}")]
+    TreasuryAmountMismatch(u64, u64),
     #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
 }
