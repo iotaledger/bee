@@ -765,6 +765,24 @@ impl TryFrom<&Box<ReceiptPayload>> for Box<ReceiptPayloadDto> {
     }
 }
 
+// &Box<ReceiptPayload> -> Box<ReceiptDto>
+impl TryFrom<&ReceiptPayload> for ReceiptPayloadDto {
+    type Error = String;
+    fn try_from(value: &ReceiptPayload) -> Result<Self, Self::Error> {
+        Ok(ReceiptPayloadDto {
+            kind: 3,
+            index: value.index(),
+            last: value.last(),
+            funds: value
+                .funds()
+                .iter()
+                .map(|m| m.try_into())
+                .collect::<Result<Vec<MigratedFundsEntryDto>, _>>()?,
+            transaction: value.transaction().try_into()?,
+        })
+    }
+}
+
 // &Box<ReceiptDto> -> Box<ReceiptPayload>
 impl TryFrom<&Box<ReceiptPayloadDto>> for Box<ReceiptPayload> {
     type Error = String;
@@ -953,31 +971,18 @@ pub async fn peer_to_peer_dto(peer: &Arc<Peer>, peer_manager: &ResourceHandle<Pe
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceiptDto {
-    pub index: u32,
-    pub last: bool,
-    pub funds: Vec<MigratedFundsEntryDto>,
-    pub transaction: PayloadDto,
+    pub receipt: ReceiptPayloadDto,
+    #[serde(rename = "milestoneIndex")]
+    pub milestone_index: u32,
 }
 
 impl TryFrom<Receipt> for ReceiptDto {
     type Error = String;
 
     fn try_from(value: Receipt) -> Result<Self, Self::Error> {
-        let mut funds = Vec::new();
-
-        for f in value.inner().funds() {
-            funds.push(f.try_into().map_err(|_| "Invalid migrated funds entry")?);
-        }
-
         Ok(ReceiptDto {
-            index: value.inner().index(),
-            last: value.inner().last(),
-            funds,
-            transaction: value
-                .inner()
-                .transaction()
-                .try_into()
-                .map_err(|_| "Invalid treasury transaction".to_string())?,
+            receipt: value.inner().try_into().map_err(|_| "Invalid receipt".to_owned())?,
+            milestone_index: **value.included_in(),
         })
     }
 }
