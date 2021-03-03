@@ -37,4 +37,6 @@ pub enum Error {
     OnlyDeltaFileExists,
     #[error("Storage operation failed: {0}")]
     StorageBackend(Box<dyn std::error::Error + Send + 'static>),
+    #[error("")]
+    InvalidPayloadKind,
 }

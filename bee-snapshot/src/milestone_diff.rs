@@ -11,6 +11,7 @@ use bee_message::{
     payload::{
         milestone::{MilestoneId, MilestonePayload},
         transaction::TransactionId,
+        Payload,
     },
     MessageId,
 };
@@ -72,8 +73,12 @@ impl Packable for MilestoneDiff {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let milestone_len = u32::unpack(reader)? as usize;
-        let milestone = MilestonePayload::unpack(reader)?;
+        let milestone = match Payload::unpack(reader)? {
+            Payload::Milestone(milestone) => milestone,
+            _ => return Err(Error::InvalidPayloadKind),
+        };
 
+        // TODO
         if milestone_len != milestone.packed_len() {}
 
         let consumed_treasury = if milestone.essence().receipt().is_some() {
@@ -112,7 +117,7 @@ impl Packable for MilestoneDiff {
         }
 
         Ok(Self {
-            milestone,
+            milestone: *milestone,
             created,
             consumed,
             consumed_treasury,
