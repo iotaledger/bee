@@ -66,9 +66,12 @@ fn index_length_65_unpack() {
 
 #[test]
 fn packed_len() {
-    let indexation =
-        IndexationPayload::new(&rand_bytes(10), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]).unwrap();
-    assert_eq!(indexation.packed_len(), 24);
+    assert_eq!(
+        IndexationPayload::new(&rand_bytes(10), &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2])
+            .unwrap()
+            .packed_len(),
+        24
+    );
 }
 
 #[test]

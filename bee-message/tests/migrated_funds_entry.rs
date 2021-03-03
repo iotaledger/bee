@@ -11,8 +11,11 @@ const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7
 #[test]
 fn new_valid() {
     let tth = [42; 49];
-    let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
-    let output = SignatureLockedSingleOutput::new(address, 42424242).unwrap();
+    let output = SignatureLockedSingleOutput::new(
+        Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+        42424242,
+    )
+    .unwrap();
     let mfe = MigratedFundsEntry::new(tth, output.clone()).unwrap();
 
     assert_eq!(mfe.tail_transaction_hash(), &tth);
@@ -21,22 +24,44 @@ fn new_valid() {
 
 #[test]
 fn new_invalid_amount() {
-    let tth = [42; 49];
-    let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
-    let output = SignatureLockedSingleOutput::new(address, 42).unwrap();
-
     assert!(matches!(
-        MigratedFundsEntry::new(tth, output),
+        MigratedFundsEntry::new(
+            [42; 49],
+            SignatureLockedSingleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 42)
+                .unwrap()
+        ),
         Err(Error::InvalidMigratedFundsEntryAmount(42))
     ));
 }
 
 #[test]
+fn packed_len() {
+    assert_eq!(
+        MigratedFundsEntry::new(
+            [42; 49],
+            SignatureLockedSingleOutput::new(
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                42424242,
+            )
+            .unwrap(),
+        )
+        .unwrap()
+        .packed_len(),
+        49 + 1 + 32 + 8
+    );
+}
+
+#[test]
 fn pack_unpack_valid() {
-    let tth = [42; 49];
-    let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
-    let output = SignatureLockedSingleOutput::new(address, 42424242).unwrap();
-    let mfe_1 = MigratedFundsEntry::new(tth, output).unwrap();
+    let mfe_1 = MigratedFundsEntry::new(
+        [42; 49],
+        SignatureLockedSingleOutput::new(
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            42424242,
+        )
+        .unwrap(),
+    )
+    .unwrap();
     let mfe_2 = MigratedFundsEntry::unpack(&mut mfe_1.pack_new().as_slice()).unwrap();
 
     assert_eq!(mfe_1.tail_transaction_hash(), mfe_2.tail_transaction_hash());
