@@ -21,7 +21,7 @@ use std::convert::TryFrom;
 
 /// Response of GET /api/v1/receipts/{milestone_index} and /api/v1/receipts
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ReceiptsResponse(Vec<ReceiptDto>);
+pub struct ReceiptsResponse(pub Vec<ReceiptDto>);
 
 impl BodyInner for ReceiptsResponse {}
 
