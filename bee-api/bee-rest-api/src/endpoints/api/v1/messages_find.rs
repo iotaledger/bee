@@ -7,7 +7,10 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_message::prelude::*;
+use bee_message::{
+    payload::indexation::{HashedIndex, IndexationPayload},
+    MessageId,
+};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 

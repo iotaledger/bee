@@ -9,7 +9,7 @@ use crate::{
 };
 
 use bee_ledger::ConflictReason;
-use bee_message::prelude::*;
+use bee_message::{payload::Payload, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 

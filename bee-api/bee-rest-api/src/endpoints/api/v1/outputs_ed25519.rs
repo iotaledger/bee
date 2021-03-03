@@ -7,7 +7,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_message::prelude::*;
+use bee_message::{address::Ed25519Address, output::OutputId};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 

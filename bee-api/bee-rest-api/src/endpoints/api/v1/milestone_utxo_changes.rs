@@ -8,7 +8,7 @@ use crate::{
 };
 
 use bee_ledger::model::OutputDiff;
-use bee_message::prelude::*;
+use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 

@@ -26,6 +26,5 @@ where
     N: Node,
     N::Backend: StorageBackend,
 {
-    node_builder
-        .with_worker::<LedgerWorker>()
+    node_builder.with_worker::<LedgerWorker>()
 }

@@ -8,7 +8,7 @@ use crate::{
     types::OutputDto,
 };
 
-use bee_message::prelude::*;
+use bee_message::output::{ConsumedOutput, CreatedOutput, OutputId};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 

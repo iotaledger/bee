@@ -9,7 +9,7 @@ use crate::{
 };
 
 use bee_common::packable::Packable;
-use bee_message::prelude::*;
+use bee_message::Message;
 use bee_protocol::MessageSubmitterWorkerEvent;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;

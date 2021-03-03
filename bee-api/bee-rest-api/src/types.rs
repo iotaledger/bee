@@ -2,7 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_ledger::model::Receipt;
-use bee_message::{payload::receipt::ReceiptPayload, prelude::*};
+use bee_message::{
+    address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
+    input::{Input, UTXOInput},
+    output::{Output, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput},
+    payload::{
+        indexation::IndexationPayload,
+        milestone::{
+            MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH,
+            MILESTONE_SIGNATURE_LENGTH,
+        },
+        receipt::{MigratedFundsEntry, ReceiptPayload},
+        transaction::{Essence, RegularEssence, TransactionId, TransactionPayload, TRANSACTION_ID_LENGTH},
+        treasury::TreasuryTransactionPayload,
+        Payload,
+    },
+    unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
+    Message, MessageBuilder, MessageId, MESSAGE_ID_LENGTH,
+};
 use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
 use bee_protocol::{Peer, PeerManager};
 use bee_runtime::resource::ResourceHandle;

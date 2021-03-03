@@ -6,7 +6,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_message::prelude::*;
+use bee_message::MessageId;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 

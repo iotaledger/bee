@@ -5,10 +5,10 @@ use crate::{
     body::{BodyInner, SuccessBody},
     rejection::CustomRejection,
     storage::StorageBackend,
-    types::*,
+    types::MessageDto,
 };
 
-use bee_message::prelude::*;
+use bee_message::MessageId;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 

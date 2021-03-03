@@ -6,11 +6,11 @@ use crate::{
     config::RestApiConfig,
     rejection::CustomRejection,
     storage::StorageBackend,
-    types::*,
+    types::PayloadDto,
     NetworkId,
 };
 
-use bee_message::prelude::*;
+use bee_message::{payload::Payload, Message, MessageBuilder, MessageId};
 use bee_pow::providers::{ConstantBuilder, MinerBuilder, ProviderBuilder};
 use bee_protocol::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
 use bee_runtime::resource::ResourceHandle;
