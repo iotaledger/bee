@@ -6,7 +6,7 @@ use crate::{
     dust::DUST_THRESHOLD,
     error::Error,
     event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
-    model::{Receipt, TreasuryOutput},
+    model::{Migration, Receipt, TreasuryOutput},
     state::check_ledger_state,
     storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend},
     white_flag,
@@ -126,7 +126,7 @@ where
             milestone_id,
         );
 
-        Some((receipt, (created_treasury, consumed_treasury)))
+        Some(Migration::new(receipt, created_treasury, consumed_treasury))
     } else {
         None
     };
