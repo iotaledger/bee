@@ -23,6 +23,8 @@ pub enum Error {
     UnsupportedAddressType,
     #[error("")]
     UnsupportedTransactionEssenceType,
+    #[error("")]
+    UnsupportedPayloadType,
     #[error("Message was not found")]
     MilestoneMessageNotFound,
     #[error("Message payload was not a milestone")]

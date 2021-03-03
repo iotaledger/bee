@@ -199,7 +199,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
     balance_diffs: &BalanceDiffs,
-    receipt: &Option<Receipt>,
+    migration: &Option<(Receipt, (TreasuryOutput, TreasuryOutput))>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
@@ -229,11 +229,11 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     )
     .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    if let Some(receipt) = receipt {
+    if let Some(migration) = migration {
         Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(
             storage,
             &mut batch,
-            &(receipt.inner().index().into(), receipt.clone()),
+            &(migration.0.inner().index().into(), migration.0.clone()),
             &(),
         )
         .map_err(|e| Error::Storage(Box::new(e)))?;
