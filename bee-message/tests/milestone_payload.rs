@@ -22,3 +22,22 @@ fn new_invalid_no_signature() {
         Err(Error::MilestoneNoSignature)
     ));
 }
+
+#[test]
+fn new_invalid_public_keys_sgnatures_count_mismatch() {
+    assert!(matches!(
+        MilestonePayload::new(
+            MilestonePayloadEssence::new(
+                0,
+                0,
+                rand_parents(),
+                [0; MILESTONE_MERKLE_PROOF_LENGTH],
+                vec![[0; 32], [1; 32]],
+                None,
+            )
+            .unwrap(),
+            vec![Box::new([0; 64]), Box::new([1; 64]), Box::new([3; 64])],
+        ),
+        Err(Error::MilestonePublicKeysSignaturesCountMismatch(2, 3))
+    ));
+}

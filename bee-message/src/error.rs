@@ -37,6 +37,7 @@ pub enum Error {
     MilestonePublicKeysNotUniqueSorted,
     MilestoneNoPublicKey,
     MilestoneNoSignature,
+    MilestonePublicKeysSignaturesCountMismatch(usize, usize),
 }
 
 impl std::error::Error for Error {}
@@ -95,6 +96,13 @@ impl fmt::Display for Error {
             }
             Error::MilestoneNoSignature => {
                 write!(f, "No signature in milestone.")
+            }
+            Error::MilestonePublicKeysSignaturesCountMismatch(kcount, scount) => {
+                write!(
+                    f,
+                    "Milestone public keys and signatures count mismatch: {0} != {1}.",
+                    kcount, scount
+                )
             }
         }
     }

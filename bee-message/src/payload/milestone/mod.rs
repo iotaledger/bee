@@ -27,7 +27,6 @@ pub const MILESTONE_SIGNATURE_LENGTH: usize = 64;
 pub enum MilestoneValidationError {
     InvalidMinThreshold,
     TooFewSignatures(usize, usize),
-    SignaturesPublicKeysCountMismatch(usize, usize),
     InsufficientApplicablePublicKeys(usize, usize),
     UnapplicablePublicKey(String),
     InvalidSignature(usize, String),
@@ -46,6 +45,15 @@ impl MilestonePayload {
         if signatures.is_empty() {
             return Err(Error::MilestoneNoSignature);
         }
+
+        if essence.public_keys().len() != signatures.len() {
+            return Err(Error::MilestonePublicKeysSignaturesCountMismatch(
+                essence.public_keys().len(),
+                signatures.len(),
+            ));
+        }
+
+        // TODO check signature length
 
         Ok(Self { essence, signatures })
     }
@@ -82,14 +90,6 @@ impl MilestonePayload {
             return Err(MilestoneValidationError::TooFewSignatures(
                 min_threshold,
                 self.signatures().len(),
-            ));
-        }
-
-        // TODO move this check to the build/unpack validation
-        if self.signatures().len() != self.essence().public_keys().len() {
-            return Err(MilestoneValidationError::SignaturesPublicKeysCountMismatch(
-                self.signatures().len(),
-                self.essence().public_keys().len(),
             ));
         }
 
