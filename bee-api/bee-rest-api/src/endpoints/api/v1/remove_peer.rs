@@ -18,5 +18,5 @@ pub(crate) async fn remove_peer(
             e
         ))));
     }
-    Ok(StatusCode::OK)
+    Ok(StatusCode::NO_CONTENT)
 }
