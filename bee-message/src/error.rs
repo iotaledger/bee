@@ -38,6 +38,8 @@ pub enum Error {
     MilestoneNoPublicKey,
     MilestoneNoSignature,
     MilestonePublicKeysSignaturesCountMismatch(usize, usize),
+    InvalidUnlockBlockReference(usize),
+    DuplicateSignature(usize),
 }
 
 impl std::error::Error for Error {}
@@ -103,6 +105,12 @@ impl fmt::Display for Error {
                     "Milestone public keys and signatures count mismatch: {0} != {1}.",
                     kcount, scount
                 )
+            }
+            Error::InvalidUnlockBlockReference(index) => {
+                write!(f, "Invalid unlock block reference: {0}", index)
+            }
+            Error::DuplicateSignature(index) => {
+                write!(f, "Duplicate signature at index: {0}", index)
             }
         }
     }

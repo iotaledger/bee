@@ -13,7 +13,7 @@ use bee_common::packable::{Packable, Read, Write};
 pub(crate) const SIGNATURE_UNLOCK_KIND: u8 = 0;
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),

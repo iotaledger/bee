@@ -9,7 +9,7 @@ use core::convert::TryFrom;
 
 pub(crate) const REFERENCE_UNLOCK_KIND: u8 = 1;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReferenceUnlock(u16);
 

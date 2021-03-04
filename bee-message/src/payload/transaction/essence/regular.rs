@@ -234,6 +234,10 @@ impl RegularEssenceBuilder {
             }
         }
 
+        // TODO
+        // inputs.sort();
+        // outputs.sort();
+
         self.inputs.sort();
         self.outputs.sort();
 
