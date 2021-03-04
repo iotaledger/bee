@@ -36,6 +36,7 @@ pub enum Error {
     InvalidReceiptFundsCount(usize),
     MilestonePublicKeysNotUniqueSorted,
     MilestoneNoPublicKey,
+    MilestoneNoSignature,
 }
 
 impl std::error::Error for Error {}
@@ -91,6 +92,9 @@ impl fmt::Display for Error {
             }
             Error::MilestoneNoPublicKey => {
                 write!(f, "No public key in milestone.")
+            }
+            Error::MilestoneNoSignature => {
+                write!(f, "No signature in milestone.")
             }
         }
     }

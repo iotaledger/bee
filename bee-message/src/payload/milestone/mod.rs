@@ -42,8 +42,12 @@ pub struct MilestonePayload {
 }
 
 impl MilestonePayload {
-    pub fn new(essence: MilestonePayloadEssence, signatures: Vec<Box<[u8]>>) -> Self {
-        Self { essence, signatures }
+    pub fn new(essence: MilestonePayloadEssence, signatures: Vec<Box<[u8]>>) -> Result<Self, Error> {
+        if signatures.is_empty() {
+            return Err(Error::MilestoneNoSignature);
+        }
+
+        Ok(Self { essence, signatures })
     }
 
     pub fn id(&self) -> MilestoneId {
@@ -74,8 +78,7 @@ impl MilestonePayload {
             ));
         }
 
-        // TODO move is_empty to syntactic validation
-        if self.signatures().is_empty() || self.signatures().len() < min_threshold {
+        if self.signatures().len() < min_threshold {
             return Err(MilestoneValidationError::TooFewSignatures(
                 min_threshold,
                 self.signatures().len(),
@@ -137,7 +140,6 @@ impl Packable for MilestonePayload {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let essence = MilestonePayloadEssence::unpack(reader)?;
-
         let signatures_len = u8::unpack(reader)? as usize;
         let mut signatures = Vec::with_capacity(signatures_len);
         for _ in 0..signatures_len {
@@ -146,6 +148,6 @@ impl Packable for MilestonePayload {
             signatures.push(signature.into_boxed_slice());
         }
 
-        Ok(Self { essence, signatures })
+        Self::new(essence, signatures)
     }
 }

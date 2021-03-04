@@ -747,8 +747,15 @@ impl TryFrom<&Box<MilestonePayloadDto>> for Box<MilestonePayload> {
             } else {
                 None
             };
-            MilestonePayloadEssence::new(index, timestamp, Parents::new(parent_ids).map_err(|e| e.to_string())?, merkle_proof, public_keys, receipt)
-                .map_err(|e| e.to_string())?
+            MilestonePayloadEssence::new(
+                index,
+                timestamp,
+                Parents::new(parent_ids).map_err(|e| e.to_string())?,
+                merkle_proof,
+                public_keys,
+                receipt,
+            )
+            .map_err(|e| e.to_string())?
         };
         let mut signatures = Vec::new();
         for v in &value.signatures {
@@ -763,7 +770,9 @@ impl TryFrom<&Box<MilestonePayloadDto>> for Box<MilestonePayload> {
                     .into_boxed_slice(),
             )
         }
-        Ok(Box::new(MilestonePayload::new(essence, signatures)))
+        Ok(Box::new(
+            MilestonePayload::new(essence, signatures).map_err(|e| e.to_string())?,
+        ))
     }
 }
 
