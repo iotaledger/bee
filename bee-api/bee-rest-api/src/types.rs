@@ -18,7 +18,7 @@ use bee_message::{
         Payload,
     },
     unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
-    Message, MessageBuilder, MessageId, MESSAGE_ID_LENGTH,
+    Message, MessageBuilder, MessageId, Parents, MESSAGE_ID_LENGTH,
 };
 use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
 use bee_protocol::{Peer, PeerManager};
