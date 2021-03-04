@@ -5,31 +5,37 @@ use crate::{Error, MessageId, MESSAGE_ID_LENGTH};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::ops::RangeInclusive;
+use core::ops::{Deref, RangeInclusive};
 
 pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Parents {
-    first: MessageId,
-    others: Vec<MessageId>,
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Parents(Vec<MessageId>);
+
+impl Deref for Parents {
+    type Target = Vec<MessageId>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl Parents {
-    pub fn new(first: MessageId, others: Vec<MessageId>) -> Result<Self, Error> {
-        if !MESSAGE_PARENTS_RANGE.contains(&(others.len() + 1)) {
-            return Err(Error::InvalidParentsCount(others.len() + 1));
+    pub fn new(inner: Vec<MessageId>) -> Result<Self, Error> {
+        if !MESSAGE_PARENTS_RANGE.contains(&inner.len()) {
+            return Err(Error::InvalidParentsCount(inner.len()));
         }
 
-        Ok(Self { first, others })
+        Ok(Self(inner))
     }
 
     pub fn len(&self) -> usize {
-        self.others.len() + 1
+        self.0.len()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &MessageId> + '_ {
-        std::iter::once(&self.first).chain(self.others.iter())
+        self.0.iter()
     }
 }
 
@@ -57,13 +63,11 @@ impl Packable for Parents {
             return Err(Error::InvalidParentsCount(parents_len));
         }
 
-        let first = MessageId::unpack(reader)?;
-
-        let mut others = Vec::with_capacity(parents_len - 1);
-        for _ in 0..parents_len - 1 {
-            others.push(MessageId::unpack(reader)?);
+        let mut inner = Vec::with_capacity(parents_len);
+        for _ in 0..parents_len {
+            inner.push(MessageId::unpack(reader)?);
         }
 
-        Ok(Self { first, others })
+        Ok(Self(inner))
     }
 }

@@ -13,6 +13,7 @@ pub mod milestone;
 pub mod option;
 pub mod output;
 pub mod output_diff;
+pub mod parents;
 pub mod receipt;
 pub mod snapshot;
 pub mod solid_entry_point;

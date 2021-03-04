@@ -160,7 +160,7 @@ where
                                 *smi + 1,
                                 *next - 1
                             );
-                            for parent in message.parents().iter() {
+                            for parent in message.parents() {
                                 helper::request_message(
                                     &tangle,
                                     &message_requester,

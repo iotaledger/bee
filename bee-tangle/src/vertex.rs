@@ -27,7 +27,7 @@ where
         }
     }
 
-    pub fn parents(&self) -> &[MessageId] {
+    pub fn parents(&self) -> impl Iterator<Item = &MessageId> + '_ {
         self.message.parents()
     }
 

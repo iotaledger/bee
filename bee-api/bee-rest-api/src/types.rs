@@ -18,7 +18,7 @@ use bee_message::{
         Payload,
     },
     unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
-    Message, MessageBuilder, MessageId, MESSAGE_ID_LENGTH,
+    Message, MessageBuilder, MessageId, Parents, MESSAGE_ID_LENGTH,
 };
 use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
 use bee_protocol::{Peer, PeerManager};
@@ -283,7 +283,7 @@ impl TryFrom<&Message> for MessageDto {
     fn try_from(value: &Message) -> Result<Self, Self::Error> {
         Ok(MessageDto {
             network_id: value.network_id().to_string(),
-            parents: value.parents().iter().map(|p| p.to_string()).collect(),
+            parents: value.parents().map(|p| p.to_string()).collect(),
             payload: value.payload().as_ref().map(TryInto::try_into).transpose()?,
             nonce: value.nonce().to_string(),
         })
@@ -303,18 +303,21 @@ impl TryFrom<&MessageDto> for Message {
                     .map_err(|_| "invalid network id: expected an u64-string")?,
             )
             .with_parents(
-                value
-                    .parents
-                    .iter()
-                    .map(|m| {
-                        m.parse::<MessageId>().map_err(|_| {
-                            format!(
-                                "invalid parent: expected a hex-string of length {}",
-                                MESSAGE_ID_LENGTH * 2
-                            )
+                Parents::new(
+                    value
+                        .parents
+                        .iter()
+                        .map(|m| {
+                            m.parse::<MessageId>().map_err(|_| {
+                                format!(
+                                    "invalid parent: expected a hex-string of length {}",
+                                    MESSAGE_ID_LENGTH * 2
+                                )
+                            })
                         })
-                    })
-                    .collect::<Result<Vec<MessageId>, String>>()?,
+                        .collect::<Result<Vec<MessageId>, String>>()?,
+                )
+                .map_err(|e| e.to_string())?,
             )
             .with_nonce_provider(
                 ConstantBuilder::new()
@@ -689,7 +692,7 @@ impl TryFrom<&Box<MilestonePayload>> for Box<MilestonePayloadDto> {
             kind: 1,
             index: value.essence().index(),
             timestamp: value.essence().timestamp(),
-            parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
+            parents: value.essence().parents().map(|p| p.to_string()).collect(),
             inclusion_merkle_proof: hex::encode(value.essence().merkle_proof()),
             public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
             receipt: value.essence().receipt().map(TryInto::try_into).transpose()?,
@@ -744,7 +747,7 @@ impl TryFrom<&Box<MilestonePayloadDto>> for Box<MilestonePayload> {
             } else {
                 None
             };
-            MilestonePayloadEssence::new(index, timestamp, parent_ids, merkle_proof, public_keys, receipt)
+            MilestonePayloadEssence::new(index, timestamp, Parents::new(parent_ids).map_err(|e| e.to_string())?, merkle_proof, public_keys, receipt)
                 .map_err(|e| e.to_string())?
         };
         let mut signatures = Vec::new();
