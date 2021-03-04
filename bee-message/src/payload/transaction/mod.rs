@@ -13,8 +13,6 @@ use bee_common::packable::{Packable, Read, Write};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
-use core::{cmp::Ordering, slice::Iter};
-
 pub(crate) const TRANSACTION_PAYLOAD_KIND: u32 = 0;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -67,25 +65,6 @@ impl Packable for TransactionPayload {
             .with_unlock_blocks(UnlockBlocks::unpack(reader)?)
             .finish()
     }
-}
-
-// TODO ?
-#[allow(dead_code)]
-fn is_sorted<T: Ord>(iterator: Iter<T>) -> bool {
-    let mut iterator = iterator;
-    let mut last = match iterator.next() {
-        Some(e) => e,
-        None => return true,
-    };
-
-    for curr in iterator {
-        if let Ordering::Greater = &last.cmp(&curr) {
-            return false;
-        }
-        last = curr;
-    }
-
-    true
 }
 
 #[derive(Debug, Default)]
