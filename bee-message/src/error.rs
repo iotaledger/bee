@@ -34,6 +34,8 @@ pub enum Error {
     InvalidIndexationLength(usize),
     InvalidMessageLength(usize),
     InvalidReceiptFundsCount(usize),
+    MilestonePublicKeysNotUniqueSorted,
+    MilestoneNoPublicKey,
 }
 
 impl std::error::Error for Error {}
@@ -84,6 +86,12 @@ impl fmt::Display for Error {
             Error::InvalidIndexationLength(length) => write!(f, "Invalid indexation index or data length {}.", length),
             Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
             Error::InvalidReceiptFundsCount(count) => write!(f, "Invalid receipt funds count: {}.", count),
+            Error::MilestonePublicKeysNotUniqueSorted => {
+                write!(f, "Milestone public keys are not unique and/or sorted.")
+            }
+            Error::MilestoneNoPublicKey => {
+                write!(f, "No public key in milestone.")
+            }
         }
     }
 }

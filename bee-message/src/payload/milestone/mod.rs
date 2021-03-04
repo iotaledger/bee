@@ -74,6 +74,7 @@ impl MilestonePayload {
             ));
         }
 
+        // TODO move is_empty to syntactic validation
         if self.signatures().is_empty() || self.signatures().len() < min_threshold {
             return Err(MilestoneValidationError::TooFewSignatures(
                 min_threshold,

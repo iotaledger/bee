@@ -279,6 +279,7 @@ pub struct TreasuryTransactionPayloadDto {
 // &Message -> MessageDto
 impl TryFrom<&Message> for MessageDto {
     type Error = String;
+
     fn try_from(value: &Message) -> Result<Self, Self::Error> {
         Ok(MessageDto {
             network_id: value.network_id().to_string(),
@@ -292,6 +293,7 @@ impl TryFrom<&Message> for MessageDto {
 // &MessageDto -> Message
 impl TryFrom<&MessageDto> for Message {
     type Error = String;
+
     fn try_from(value: &MessageDto) -> Result<Self, Self::Error> {
         let mut builder = MessageBuilder::new()
             .with_network_id(
@@ -336,6 +338,7 @@ impl TryFrom<&MessageDto> for Message {
 // &Payload -> PayloadDto
 impl TryFrom<&Payload> for PayloadDto {
     type Error = String;
+
     fn try_from(value: &Payload) -> Result<Self, Self::Error> {
         match value {
             Payload::Transaction(t) => Ok(PayloadDto::Transaction(t.try_into()?)),
@@ -349,6 +352,7 @@ impl TryFrom<&Payload> for PayloadDto {
 // &PayloadDto -> Payload
 impl TryFrom<&PayloadDto> for Payload {
     type Error = String;
+
     fn try_from(value: &PayloadDto) -> Result<Self, Self::Error> {
         match value {
             PayloadDto::Transaction(t) => Ok(Payload::Transaction(t.try_into()?)),
@@ -363,6 +367,7 @@ impl TryFrom<&PayloadDto> for Payload {
 // &Box<Transaction> -> Box<TransactionDto>
 impl TryFrom<&Box<TransactionPayload>> for Box<TransactionPayloadDto> {
     type Error = String;
+
     fn try_from(value: &Box<TransactionPayload>) -> Result<Self, Self::Error> {
         Ok(Box::new(TransactionPayloadDto {
             kind: 0,
@@ -379,6 +384,7 @@ impl TryFrom<&Box<TransactionPayload>> for Box<TransactionPayloadDto> {
 // &TransactionDto -> Box<Transaction>
 impl TryFrom<&Box<TransactionPayloadDto>> for Box<TransactionPayload> {
     type Error = String;
+
     fn try_from(value: &Box<TransactionPayloadDto>) -> Result<Self, Self::Error> {
         let mut unlock_blocks = Vec::new();
         for b in &value.unlock_blocks {
@@ -399,6 +405,7 @@ impl TryFrom<&Box<TransactionPayloadDto>> for Box<TransactionPayload> {
 // &Essence -> EssenceDto
 impl TryFrom<&Essence> for EssenceDto {
     type Error = String;
+
     fn try_from(value: &Essence) -> Result<Self, Self::Error> {
         match value {
             Essence::Regular(r) => Ok(EssenceDto::Regular(r.try_into()?)),
@@ -410,6 +417,7 @@ impl TryFrom<&Essence> for EssenceDto {
 // &EssenceDto -> Essence
 impl TryFrom<&EssenceDto> for Essence {
     type Error = String;
+
     fn try_from(value: &EssenceDto) -> Result<Self, Self::Error> {
         match value {
             EssenceDto::Regular(r) => Ok(Essence::Regular(r.try_into()?)),
@@ -420,6 +428,7 @@ impl TryFrom<&EssenceDto> for Essence {
 // &RegularEssence -> RegularEssenceDto
 impl TryFrom<&RegularEssence> for RegularEssenceDto {
     type Error = String;
+
     fn try_from(value: &RegularEssence) -> Result<Self, Self::Error> {
         Ok(RegularEssenceDto {
             kind: 0, // TODO: should this be removed?
@@ -447,6 +456,7 @@ impl TryFrom<&RegularEssence> for RegularEssenceDto {
 // &RegularEssenceDto -> RegularEssence
 impl TryFrom<&RegularEssenceDto> for RegularEssence {
     type Error = String;
+
     fn try_from(value: &RegularEssenceDto) -> Result<Self, Self::Error> {
         let mut builder = RegularEssence::builder();
 
@@ -475,6 +485,7 @@ impl TryFrom<&RegularEssenceDto> for RegularEssence {
 // &Input -> InputDto
 impl TryFrom<&Input> for InputDto {
     type Error = String;
+
     fn try_from(value: &Input) -> Result<Self, Self::Error> {
         match value {
             Input::UTXO(u) => Ok(InputDto::UTXO(UTXOInputDto {
@@ -494,6 +505,7 @@ impl TryFrom<&Input> for InputDto {
 // &InputDto -> Input
 impl TryFrom<&InputDto> for Input {
     type Error = String;
+
     fn try_from(value: &InputDto) -> Result<Self, Self::Error> {
         match value {
             InputDto::UTXO(i) => Ok(Input::UTXO(
@@ -521,6 +533,7 @@ impl TryFrom<&InputDto> for Input {
 // &Output -> OutputDto
 impl TryFrom<&Output> for OutputDto {
     type Error = String;
+
     fn try_from(value: &Output) -> Result<Self, Self::Error> {
         match value {
             Output::SignatureLockedSingle(s) => Ok(OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
@@ -543,6 +556,7 @@ impl TryFrom<&Output> for OutputDto {
 // &OutputDto -> Output
 impl TryFrom<&OutputDto> for Output {
     type Error = String;
+
     fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
         match value {
             OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(
@@ -567,6 +581,7 @@ impl TryFrom<&OutputDto> for Output {
 // &Address -> AddressDto
 impl TryFrom<&Address> for AddressDto {
     type Error = String;
+
     fn try_from(value: &Address) -> Result<Self, Self::Error> {
         match value {
             Address::Ed25519(ed) => Ok(AddressDto::Ed25519(ed.into())),
@@ -578,6 +593,7 @@ impl TryFrom<&Address> for AddressDto {
 // &AddressDto -> Address
 impl TryFrom<&AddressDto> for Address {
     type Error = String;
+
     fn try_from(value: &AddressDto) -> Result<Self, Self::Error> {
         match value {
             AddressDto::Ed25519(a) => Ok(Address::Ed25519(a.try_into()?)),
@@ -598,6 +614,7 @@ impl From<&Ed25519Address> for Ed25519AddressDto {
 // &Ed25519AddressDto -> Ed25519Address
 impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
     type Error = String;
+
     fn try_from(value: &Ed25519AddressDto) -> Result<Self, Self::Error> {
         Ok(value.address.parse::<Ed25519Address>().map_err(|_| {
             format!(
@@ -611,6 +628,7 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
 // &UnlockBlock -> UnlockBlockDto
 impl TryFrom<&UnlockBlock> for UnlockBlockDto {
     type Error = String;
+
     fn try_from(value: &UnlockBlock) -> Result<Self, Self::Error> {
         match value {
             UnlockBlock::Signature(s) => match s {
@@ -636,6 +654,7 @@ impl TryFrom<&UnlockBlock> for UnlockBlockDto {
 // &UnlockBlockDto -> UnlockBlock
 impl TryFrom<&UnlockBlockDto> for UnlockBlock {
     type Error = String;
+
     fn try_from(value: &UnlockBlockDto) -> Result<Self, Self::Error> {
         match value {
             UnlockBlockDto::Signature(s) => match &s.signature {
@@ -664,6 +683,7 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
 // Box<Milestone> -> MilestoneDto
 impl TryFrom<&Box<MilestonePayload>> for Box<MilestonePayloadDto> {
     type Error = String;
+
     fn try_from(value: &Box<MilestonePayload>) -> Result<Self, Self::Error> {
         Ok(Box::new(MilestonePayloadDto {
             kind: 1,
@@ -681,6 +701,7 @@ impl TryFrom<&Box<MilestonePayload>> for Box<MilestonePayloadDto> {
 // &Box<MilestoneDto> -> Box<Milestone>
 impl TryFrom<&Box<MilestonePayloadDto>> for Box<MilestonePayload> {
     type Error = String;
+
     fn try_from(value: &Box<MilestonePayloadDto>) -> Result<Self, Self::Error> {
         let essence = {
             let index = value.index;
@@ -718,7 +739,13 @@ impl TryFrom<&Box<MilestonePayloadDto>> for Box<MilestonePayload> {
                 };
                 public_keys.push(key);
             }
-            MilestonePayloadEssence::new(index, timestamp, parent_ids, merkle_proof, public_keys)
+            let receipt = if let Some(receipt) = value.receipt.as_ref() {
+                Some(receipt.try_into()?)
+            } else {
+                None
+            };
+            MilestonePayloadEssence::new(index, timestamp, parent_ids, merkle_proof, public_keys, receipt)
+                .map_err(|e| e.to_string())?
         };
         let mut signatures = Vec::new();
         for v in &value.signatures {
@@ -751,6 +778,7 @@ impl From<&Box<IndexationPayload>> for Box<IndexationPayloadDto> {
 // &Box<IndexationDto> -> Box<IndexationPayload>
 impl TryFrom<&Box<IndexationPayloadDto>> for Box<IndexationPayload> {
     type Error = String;
+
     fn try_from(value: &Box<IndexationPayloadDto>) -> Result<Self, Self::Error> {
         Ok(Box::new(
             IndexationPayload::new(
@@ -767,6 +795,7 @@ impl TryFrom<&Box<IndexationPayloadDto>> for Box<IndexationPayload> {
 // &Box<ReceiptPayload> -> Box<ReceiptDto>
 impl TryFrom<&Box<ReceiptPayload>> for Box<ReceiptPayloadDto> {
     type Error = String;
+
     fn try_from(value: &Box<ReceiptPayload>) -> Result<Self, Self::Error> {
         Ok(Box::new(ReceiptPayloadDto {
             kind: 3,
@@ -785,6 +814,7 @@ impl TryFrom<&Box<ReceiptPayload>> for Box<ReceiptPayloadDto> {
 // &Box<ReceiptPayload> -> Box<ReceiptDto>
 impl TryFrom<&ReceiptPayload> for ReceiptPayloadDto {
     type Error = String;
+
     fn try_from(value: &ReceiptPayload) -> Result<Self, Self::Error> {
         Ok(ReceiptPayloadDto {
             kind: 3,
@@ -803,6 +833,7 @@ impl TryFrom<&ReceiptPayload> for ReceiptPayloadDto {
 // &Box<ReceiptDto> -> Box<ReceiptPayload>
 impl TryFrom<&Box<ReceiptPayloadDto>> for Box<ReceiptPayload> {
     type Error = String;
+
     fn try_from(value: &Box<ReceiptPayloadDto>) -> Result<Self, Self::Error> {
         let receipt = ReceiptPayload::new(
             value.index,
@@ -822,6 +853,7 @@ impl TryFrom<&Box<ReceiptPayloadDto>> for Box<ReceiptPayload> {
 // &MigratedFundsEntry -> MigratedFundsEntryDto
 impl TryFrom<&MigratedFundsEntry> for MigratedFundsEntryDto {
     type Error = String;
+
     fn try_from(value: &MigratedFundsEntry) -> Result<Self, Self::Error> {
         Ok(MigratedFundsEntryDto {
             tail_transaction_hash: Box::new(value.tail_transaction_hash().clone()),
@@ -834,6 +866,7 @@ impl TryFrom<&MigratedFundsEntry> for MigratedFundsEntryDto {
 // &MigratedFundsEntryDto -> MigratedFundsEntry
 impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
     type Error = String;
+
     fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
         let entry = MigratedFundsEntry::new(
             value
@@ -852,6 +885,7 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
 // &Box<ReceiptPayload> -> Box<ReceiptDto>§
 impl TryFrom<&Box<TreasuryTransactionPayload>> for Box<TreasuryTransactionPayloadDto> {
     type Error = String;
+
     fn try_from(value: &Box<TreasuryTransactionPayload>) -> Result<Self, Self::Error> {
         Ok(Box::new(TreasuryTransactionPayloadDto {
             kind: 4,
@@ -864,6 +898,7 @@ impl TryFrom<&Box<TreasuryTransactionPayload>> for Box<TreasuryTransactionPayloa
 // &Box<TreasuryTransactionDto> -> Box<TreasuryTransactionPayload>
 impl TryFrom<&Box<TreasuryTransactionPayloadDto>> for Box<TreasuryTransactionPayload> {
     type Error = String;
+
     fn try_from(value: &Box<TreasuryTransactionPayloadDto>) -> Result<Self, Self::Error> {
         let input: Input = (&value.input)
             .try_into()

@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::Payload, Error, MessageId, MESSAGE_ID_LENGTH, MESSAGE_PARENTS_RANGE};
+use crate::{payload::Payload, utils::is_unique_sorted, Error, MessageId, MESSAGE_ID_LENGTH, MESSAGE_PARENTS_RANGE};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -30,15 +30,29 @@ impl MilestonePayloadEssence {
         parents: Vec<MessageId>,
         merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
         public_keys: Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>,
-    ) -> Self {
-        Self {
+        receipt: Option<Payload>,
+    ) -> Result<Self, Error> {
+        if !matches!(receipt, None | Some(Payload::Receipt(_))) {
+            // Safe to unwrap since it's known not to be None.
+            return Err(Error::InvalidPayloadKind(receipt.unwrap().kind()));
+        }
+
+        if public_keys.is_empty() {
+            return Err(Error::MilestoneNoPublicKey);
+        }
+
+        if !is_unique_sorted(public_keys.iter()) {
+            return Err(Error::MilestonePublicKeysNotUniqueSorted);
+        }
+
+        Ok(Self {
             index,
             timestamp,
             parents,
             merkle_proof,
             public_keys,
-            receipt: None,
-        }
+            receipt,
+        })
     }
 
     pub fn index(&self) -> u32 {
@@ -117,9 +131,7 @@ impl Packable for MilestonePayloadEssence {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let index = u32::unpack(reader)?;
-
         let timestamp = u64::unpack(reader)?;
-
         let parents_len = u8::unpack(reader)? as usize;
 
         if !MESSAGE_PARENTS_RANGE.contains(&parents_len) {
@@ -148,9 +160,6 @@ impl Packable for MilestonePayloadEssence {
             if receipt_len != receipt.packed_len() {
                 return Err(Self::Error::InvalidAnnouncedLength(receipt_len, receipt.packed_len()));
             }
-            if !matches!(receipt, Payload::Receipt(_)) {
-                return Err(Error::InvalidPayloadKind(receipt.kind()));
-            }
             Some(receipt)
         } else {
             None
@@ -158,13 +167,6 @@ impl Packable for MilestonePayloadEssence {
 
         // TODO builder ?
 
-        Ok(Self {
-            index,
-            timestamp,
-            parents,
-            merkle_proof,
-            public_keys,
-            receipt,
-        })
+        Self::new(index, timestamp, parents, merkle_proof, public_keys, receipt)
     }
 }
