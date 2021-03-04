@@ -26,12 +26,6 @@ pub enum Address {
     Ed25519(Ed25519Address),
 }
 
-impl From<Ed25519Address> for Address {
-    fn from(address: Ed25519Address) -> Self {
-        Self::Ed25519(address)
-    }
-}
-
 impl Address {
     pub fn try_from_bech32(addr: &str) -> Result<Self, Error> {
         match bech32::decode(&addr) {
@@ -56,6 +50,12 @@ impl Address {
                 address.verify(msg, signature)
             }
         }
+    }
+}
+
+impl From<Ed25519Address> for Address {
+    fn from(address: Ed25519Address) -> Self {
+        Self::Ed25519(address)
     }
 }
 

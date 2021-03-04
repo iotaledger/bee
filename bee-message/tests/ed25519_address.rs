@@ -1,6 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_common::packable::Packable;
 use bee_message::prelude::*;
 
 use core::str::FromStr;
@@ -98,4 +99,9 @@ fn from_to_str() {
         ED25519_ADDRESS,
         Ed25519Address::from_str(ED25519_ADDRESS).unwrap().to_string()
     );
+}
+
+#[test]
+fn packed_len() {
+    assert_eq!(Ed25519Address::from_str(ED25519_ADDRESS).unwrap().packed_len(), 32);
 }

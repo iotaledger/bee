@@ -1,10 +1,14 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::model::Error;
+use crate::{error::Error, model::TreasuryOutput};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::{milestone::MilestoneIndex, payload::receipt::ReceiptPayload};
+use bee_message::{
+    milestone::MilestoneIndex,
+    output::Output,
+    payload::{receipt::ReceiptPayload, Payload},
+};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Receipt {
@@ -23,6 +27,33 @@ impl Receipt {
 
     pub fn included_in(&self) -> &MilestoneIndex {
         &self.included_in
+    }
+
+    pub fn validate(&self, consumed_treasury_output: &TreasuryOutput) -> Result<bool, Error> {
+        let mut migrated_amount = 0;
+        let transaction = match self.inner().transaction() {
+            Payload::TreasuryTransaction(transaction) => transaction,
+            _ => return Err(Error::UnsupportedPayloadType),
+        };
+        let created_treasury_output = match transaction.output() {
+            Output::Treasury(output) => output,
+            _ => return Err(Error::UnsupportedOutputType),
+        };
+
+        for funds in self.inner().funds() {
+            // TODO check overflow
+            migrated_amount += funds.output().amount();
+        }
+
+        // TODO check underflow
+        if consumed_treasury_output.inner().amount() - migrated_amount != created_treasury_output.amount() {
+            return Err(Error::TreasuryAmountMismatch(
+                consumed_treasury_output.inner().amount() - migrated_amount,
+                created_treasury_output.amount(),
+            ));
+        }
+
+        Ok(true)
     }
 }
 

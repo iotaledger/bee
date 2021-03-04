@@ -10,15 +10,15 @@ use std::ops::Deref;
 #[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct LedgerIndex(pub MilestoneIndex);
 
-impl From<MilestoneIndex> for LedgerIndex {
-    fn from(index: MilestoneIndex) -> Self {
-        Self(index)
-    }
-}
-
 impl LedgerIndex {
     pub fn new(index: MilestoneIndex) -> Self {
         index.into()
+    }
+}
+
+impl From<MilestoneIndex> for LedgerIndex {
+    fn from(index: MilestoneIndex) -> Self {
+        Self(index)
     }
 }
 

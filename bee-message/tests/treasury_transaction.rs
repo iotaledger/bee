@@ -34,8 +34,13 @@ fn new_invalid_input() {
 #[test]
 fn new_invalid_output() {
     let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
-    let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
-    let output = Output::from(SignatureLockedSingleOutput::new(address, IOTA_SUPPLY).unwrap());
+    let output = Output::from(
+        SignatureLockedSingleOutput::new(
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            IOTA_SUPPLY,
+        )
+        .unwrap(),
+    );
 
     assert!(matches!(
         TreasuryTransactionPayload::new(input, output.clone()),
@@ -44,10 +49,25 @@ fn new_invalid_output() {
 }
 
 #[test]
+fn packed_len() {
+    assert_eq!(
+        TreasuryTransactionPayload::new(
+            Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap()),
+            Output::from(TreasuryOutput::new(1_000).unwrap()),
+        )
+        .unwrap()
+        .packed_len(),
+        1 + 32 + 1 + 8
+    );
+}
+
+#[test]
 fn pack_unpack_valid() {
-    let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
-    let output = Output::from(TreasuryOutput::new(1_000).unwrap());
-    let transaction_1 = TreasuryTransactionPayload::new(input, output).unwrap();
+    let transaction_1 = TreasuryTransactionPayload::new(
+        Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap()),
+        Output::from(TreasuryOutput::new(1_000).unwrap()),
+    )
+    .unwrap();
     let transaction_2 = TreasuryTransactionPayload::unpack(&mut transaction_1.pack_new().as_slice()).unwrap();
 
     assert_eq!(transaction_1, transaction_2);

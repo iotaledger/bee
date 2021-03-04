@@ -1555,8 +1555,8 @@ dependencies = [
 
 [[package]]
 name = "iota-crypto"
-version = "0.2.0"
-source = "git+https://github.com/iotaledger/crypto.rs?rev=09ff1a94d6a87838589ccf1b874cfa3283a00f26#09ff1a94d6a87838589ccf1b874cfa3283a00f26"
+version = "0.3.0"
+source = "git+https://github.com/iotaledger/crypto.rs?rev=c3bf565eba62d0b81144174c2ff917bfde282e49#c3bf565eba62d0b81144174c2ff917bfde282e49"
 dependencies = [
  "blake2",
  "digest 0.9.0",

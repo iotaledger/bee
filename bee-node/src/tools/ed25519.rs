@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crypto::{
-    ed25519::SecretKey,
     hashes::{blake2b::Blake2b256, Digest},
+    signatures::ed25519::SecretKey,
 };
 
 use structopt::StructOpt;

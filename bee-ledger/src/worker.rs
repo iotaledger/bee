@@ -6,7 +6,7 @@ use crate::{
     dust::DUST_THRESHOLD,
     error::Error,
     event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
-    model::{Receipt, TreasuryOutput},
+    model::{Migration, Receipt, TreasuryOutput},
     state::check_ledger_state,
     storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend},
     white_flag,
@@ -94,10 +94,11 @@ where
         ));
     }
 
-    let receipt = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
+    let migration = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
+        // TODO check that the treasuryTransaction input matches the fetched unspent treasury output ?
         let milestone_id = milestone.id();
         let receipt = Receipt::new(receipt.as_ref().clone(), milestone.essence().index().into());
-        let _treasury = storage::fetch_unspent_treasury_output(storage).await?;
+        let consumed_treasury = storage::fetch_unspent_treasury_output(storage).await?;
 
         // TODO validate receipt
 
@@ -114,9 +115,18 @@ where
             );
         }
 
-        // TODO generate treasury mutation
+        let created_treasury = TreasuryOutput::new(
+            match receipt.inner().transaction() {
+                Payload::TreasuryTransaction(treasury) => match treasury.output() {
+                    Output::Treasury(output) => output.clone(),
+                    _ => return Err(Error::UnsupportedOutputType),
+                },
+                _ => return Err(Error::UnsupportedPayloadType),
+            },
+            milestone_id,
+        );
 
-        Some(receipt)
+        Some(Migration::new(receipt, created_treasury, consumed_treasury))
     } else {
         None
     };
@@ -127,7 +137,7 @@ where
         &metadata.created_outputs,
         &metadata.consumed_outputs,
         &metadata.balance_diffs,
-        &receipt,
+        &migration,
     )
     .await?;
 

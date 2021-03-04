@@ -12,6 +12,16 @@ pub(crate) const UTXO_INPUT_KIND: u8 = 0;
 #[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct UTXOInput(OutputId);
 
+impl UTXOInput {
+    pub fn new(id: TransactionId, index: u16) -> Result<Self, Error> {
+        Ok(Self(OutputId::new(id, index)?))
+    }
+
+    pub fn output_id(&self) -> &OutputId {
+        &self.0
+    }
+}
+
 #[cfg(feature = "serde")]
 string_serde_impl!(UTXOInput);
 
@@ -26,16 +36,6 @@ impl FromStr for UTXOInput {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(UTXOInput(OutputId::from_str(s)?))
-    }
-}
-
-impl UTXOInput {
-    pub fn new(id: TransactionId, index: u16) -> Result<Self, Error> {
-        Ok(Self(OutputId::new(id, index)?))
-    }
-
-    pub fn output_id(&self) -> &OutputId {
-        &self.0
     }
 }
 

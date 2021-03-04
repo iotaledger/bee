@@ -7,8 +7,8 @@ use bee_common::packable::{Packable, Read, Write};
 
 use bech32::{self, ToBase32, Variant};
 use crypto::{
-    ed25519::{self, PublicKey, Signature},
     hashes::{blake2b::Blake2b256, Digest},
+    signatures::ed25519::{PublicKey, Signature},
 };
 
 use alloc::{string::String, vec};
@@ -19,34 +19,6 @@ pub const ED25519_ADDRESS_LENGTH: usize = 32;
 
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Ed25519Address([u8; ED25519_ADDRESS_LENGTH]);
-
-#[cfg(feature = "serde")]
-string_serde_impl!(Ed25519Address);
-
-impl From<[u8; ED25519_ADDRESS_LENGTH]> for Ed25519Address {
-    fn from(bytes: [u8; ED25519_ADDRESS_LENGTH]) -> Self {
-        Self(bytes)
-    }
-}
-
-impl FromStr for Ed25519Address {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; ED25519_ADDRESS_LENGTH] = hex::decode(s)
-            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
-            .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength(ED25519_ADDRESS_LENGTH * 2, s.len()))?;
-
-        Ok(Ed25519Address::from(bytes))
-    }
-}
-
-impl AsRef<[u8]> for Ed25519Address {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
-}
 
 impl Ed25519Address {
     pub fn new(address: [u8; ED25519_ADDRESS_LENGTH]) -> Self {
@@ -77,11 +49,37 @@ impl Ed25519Address {
 
         // TODO unwraps are temporary until we use crypto.rs types as internals.
 
-        ed25519::verify(
-            &PublicKey::from_compressed_bytes(*signature.public_key()).unwrap(),
-            &Signature::from_bytes(signature.signature().try_into().unwrap()),
-            msg,
-        )
+        PublicKey::from_compressed_bytes(*signature.public_key())
+            .unwrap()
+            .verify(&Signature::from_bytes(signature.signature().try_into().unwrap()), msg)
+    }
+}
+
+#[cfg(feature = "serde")]
+string_serde_impl!(Ed25519Address);
+
+impl From<[u8; ED25519_ADDRESS_LENGTH]> for Ed25519Address {
+    fn from(bytes: [u8; ED25519_ADDRESS_LENGTH]) -> Self {
+        Self(bytes)
+    }
+}
+
+impl FromStr for Ed25519Address {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes: [u8; ED25519_ADDRESS_LENGTH] = hex::decode(s)
+            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
+            .try_into()
+            .map_err(|_| Self::Err::InvalidHexadecimalLength(ED25519_ADDRESS_LENGTH * 2, s.len()))?;
+
+        Ok(Ed25519Address::from(bytes))
+    }
+}
+
+impl AsRef<[u8]> for Ed25519Address {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
     }
 }
 

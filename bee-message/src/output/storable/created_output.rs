@@ -13,14 +13,6 @@ pub struct CreatedOutput {
     inner: Output,
 }
 
-impl Deref for CreatedOutput {
-    type Target = Output;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
 impl CreatedOutput {
     pub fn new(message_id: MessageId, inner: Output) -> Self {
         Self { message_id, inner }
@@ -31,6 +23,14 @@ impl CreatedOutput {
     }
 
     pub fn inner(&self) -> &Output {
+        &self.inner
+    }
+}
+
+impl Deref for CreatedOutput {
+    type Target = Output;
+
+    fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }

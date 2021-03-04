@@ -1,6 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_common::packable::Packable;
 use bee_message::prelude::*;
 
 use core::str::FromStr;
@@ -38,4 +39,9 @@ fn from_to_str() {
         TRANSACTION_ID,
         TransactionId::from_str(TRANSACTION_ID).unwrap().to_string()
     );
+}
+
+#[test]
+fn packed_len() {
+    assert_eq!(TransactionId::from_str(TRANSACTION_ID).unwrap().packed_len(), 32);
 }

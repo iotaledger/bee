@@ -26,17 +26,27 @@ fn from_valid() {
 
 #[test]
 fn from_str_valid() {
-    let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
-    let input = UTXOInput::from_str(OUTPUT_ID).unwrap();
-
-    assert_eq!(*input.output_id(), output_id);
+    assert_eq!(
+        *UTXOInput::from_str(OUTPUT_ID).unwrap().output_id(),
+        OutputId::from_str(OUTPUT_ID).unwrap()
+    );
 }
 
 #[test]
 fn from_str_to_str() {
-    let input = UTXOInput::from_str(OUTPUT_ID).unwrap();
+    assert_eq!(UTXOInput::from_str(OUTPUT_ID).unwrap().to_string(), OUTPUT_ID);
+}
 
-    assert_eq!(input.to_string(), OUTPUT_ID);
+#[test]
+fn packed_len() {
+    let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
+
+    assert_eq!(
+        UTXOInput::new(*output_id.transaction_id(), output_id.index())
+            .unwrap()
+            .packed_len(),
+        32 + 2
+    );
 }
 
 #[test]

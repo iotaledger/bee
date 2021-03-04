@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
-iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "09ff1a94d6a87838589ccf1b874cfa3283a00f26", features = ["blake2b", "digest"] }
+iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "c3bf565eba62d0b81144174c2ff917bfde282e49", features = ["blake2b", "digest"] }
 thiserror = "1.0"
 
 [dev-dependencies]

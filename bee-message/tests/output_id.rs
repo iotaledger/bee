@@ -107,6 +107,11 @@ fn from_str_to_str() {
 }
 
 #[test]
+fn packed_len() {
+    assert_eq!(OutputId::from_str(OUTPUT_ID).unwrap().packed_len(), 32 + 2);
+}
+
+#[test]
 fn pack_unpack_valid() {
     let output_id_1 = OutputId::from_str(OUTPUT_ID).unwrap();
     let output_id_2 = OutputId::unpack(&mut output_id_1.pack_new().as_slice()).unwrap();

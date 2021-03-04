@@ -12,8 +12,8 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 use crypto::{
-    ed25519,
     hashes::{blake2b::Blake2b256, Digest},
+    signatures::ed25519,
 };
 
 use alloc::{boxed::Box, vec::Vec};
@@ -104,7 +104,7 @@ impl MilestonePayload {
             let ed25519_signature =
                 ed25519::Signature::from_bytes(self.signatures()[index].as_ref().try_into().unwrap());
 
-            if !ed25519::verify(&ed25519_public_key, &ed25519_signature, &essence_hash) {
+            if !ed25519_public_key.verify(&ed25519_signature, &essence_hash) {
                 return Err(MilestoneValidationError::InvalidSignature(
                     index,
                     hex::encode(public_key),

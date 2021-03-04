@@ -14,20 +14,6 @@ use std::ops::Deref;
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SolidEntryPoint(MessageId);
 
-impl From<MessageId> for SolidEntryPoint {
-    fn from(message_id: MessageId) -> Self {
-        Self(message_id)
-    }
-}
-
-impl Deref for SolidEntryPoint {
-    type Target = MessageId;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 impl SolidEntryPoint {
     pub fn new(message_id: MessageId) -> Self {
         message_id.into()
@@ -38,6 +24,20 @@ impl SolidEntryPoint {
     }
 
     pub fn message_id(&self) -> &MessageId {
+        &self.0
+    }
+}
+
+impl From<MessageId> for SolidEntryPoint {
+    fn from(message_id: MessageId) -> Self {
+        Self(message_id)
+    }
+}
+
+impl Deref for SolidEntryPoint {
+    type Target = MessageId;
+
+    fn deref(&self) -> &Self::Target {
         &self.0
     }
 }

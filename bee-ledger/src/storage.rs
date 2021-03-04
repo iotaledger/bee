@@ -4,7 +4,7 @@
 use crate::{
     balance::{Balance, BalanceDiffs},
     error::Error,
-    model::{OutputDiff, Receipt, TreasuryOutput, Unspent},
+    model::{Migration, OutputDiff, Receipt, TreasuryOutput, Unspent},
 };
 
 use bee_message::{
@@ -199,7 +199,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
     balance_diffs: &BalanceDiffs,
-    receipt: &Option<Receipt>,
+    migration: &Option<Migration>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
@@ -229,11 +229,11 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
     )
     .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    if let Some(receipt) = receipt {
+    if let Some(migration) = migration {
         Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(
             storage,
             &mut batch,
-            &(receipt.inner().index().into(), receipt.clone()),
+            &(migration.receipt().inner().index().into(), migration.receipt().clone()),
             &(),
         )
         .map_err(|e| Error::Storage(Box::new(e)))?;

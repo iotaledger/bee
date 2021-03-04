@@ -14,18 +14,6 @@ pub struct MilestoneKeyRange {
     end: MilestoneIndex,
 }
 
-impl Ord for MilestoneKeyRange {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.start.cmp(&other.start)
-    }
-}
-
-impl PartialOrd for MilestoneKeyRange {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
 impl MilestoneKeyRange {
     pub fn new(public_key: String, start: MilestoneIndex, end: MilestoneIndex) -> Self {
         Self { public_key, start, end }
@@ -41,5 +29,17 @@ impl MilestoneKeyRange {
 
     pub fn end(&self) -> MilestoneIndex {
         self.end
+    }
+}
+
+impl Ord for MilestoneKeyRange {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.start.cmp(&other.start)
+    }
+}
+
+impl PartialOrd for MilestoneKeyRange {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }

@@ -33,6 +33,8 @@ fn new_invalid_more_than_max() {
     ));
 }
 
+// TODO add packed_len test
+
 #[test]
 fn pack_unpack_valid() {
     let first = rand_message_id();
