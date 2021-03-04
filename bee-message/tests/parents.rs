@@ -30,7 +30,10 @@ fn new_invalid_more_than_max() {
     ));
 }
 
-// TODO add packed_len test
+#[test]
+fn packed_len() {
+    assert_eq!(Parents::new(rand_message_ids(5)).unwrap().packed_len(), 1 + 5 * 32);
+}
 
 #[test]
 fn pack_unpack_valid() {
