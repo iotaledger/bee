@@ -7,9 +7,12 @@ find . -name "*.profdata" -type f -delete
 rm -r coverage
 mkdir coverage
 
+# Switch to nightly toolchain, in case running locally
+rustup override set nightly
+
 # Run tests with profiling instrumentation
 echo "Running instrumented unit tests..."
-RUSTFLAGS="-Zinstrument-coverage" LLVM_PROFILE_FILE="bee-%m.profraw" cargo test --tests
+RUSTFLAGS="-Zinstrument-coverage" LLVM_PROFILE_FILE="bee-%m.profraw" cargo test --tests --all --all-features
 
 # Merge all .profraw files into "bee.profdata"
 echo "Merging coverage data..."
@@ -22,7 +25,7 @@ BINARIES=""
 for file in \
   $( \
     RUSTFLAGS="-Zinstrument-coverage" \
-      cargo test --tests --no-run --message-format=json \
+      cargo test --tests --all --all-features --no-run --message-format=json \
         | jq -r "select(.profile.test == true) | .filenames[]" \
         | grep -v dSYM - \
   ); \
@@ -35,6 +38,6 @@ done
 echo "Generating lcov file..."
 cargo cov -- export ${BINARIES} \
   --instr-profile=bee.profdata \
-  --ignore-filename-regex="/.cargo|rustc|target|/.rustup" \
+  --ignore-filename-regex="/.cargo|rustc|target|tests|/.rustup" \
   --format=lcov --Xdemangler=rustfilt \
   >> coverage/coverage.info
