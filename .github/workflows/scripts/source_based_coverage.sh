@@ -9,7 +9,7 @@ mkdir coverage
 
 # Run tests with profiling instrumentation
 echo "Running instrumented unit tests..."
-RUSTFLAGS="-Zinstrument-coverage" LLVM_PROFILE_FILE="bee-%m.profraw" cargo test --tests --package bee-test
+RUSTFLAGS="-Zinstrument-coverage" LLVM_PROFILE_FILE="bee-%m.profraw" cargo test --tests
 
 # Merge all .profraw files into "bee.profdata"
 echo "Merging coverage data..."
@@ -22,7 +22,7 @@ BINARIES=""
 for file in \
   $( \
     RUSTFLAGS="-Zinstrument-coverage" \
-      cargo test --tests --package bee-test --no-run --message-format=json \
+      cargo test --tests --no-run --message-format=json \
         | jq -r "select(.profile.test == true) | .filenames[]" \
         | grep -v dSYM - \
   ); \
