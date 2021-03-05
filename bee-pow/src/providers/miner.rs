@@ -80,7 +80,7 @@ impl Miner {
         }
 
         while !done.load(Ordering::Relaxed) {
-            for (i, buffer) in buffers.iter_mut().enumerate().take(BATCH_SIZE) {
+            for (i, buffer) in buffers.iter_mut().enumerate() {
                 let nonce_trits = b1t6::encode::<T1B1Buf>(&(nonce + i as u64).to_le_bytes());
                 buffer[pow_digest.len()..pow_digest.len() + nonce_trits.len()].copy_from(&nonce_trits);
                 hasher.add(buffer.clone());
