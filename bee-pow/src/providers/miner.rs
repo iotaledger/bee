@@ -67,6 +67,8 @@ impl Miner {
         start_nonce: u64,
         target_zeros: usize,
     ) -> Result<u64, Error> {
+        assert!(target_zeros <= HASH_LENGTH);
+
         let mut nonce = start_nonce;
         let mut hasher = BatchHasher::<T1B1Buf>::new(HASH_LENGTH, CurlPRounds::Rounds81);
         let mut buffers = Vec::<TritBuf<T1B1Buf>>::with_capacity(BATCH_SIZE);
