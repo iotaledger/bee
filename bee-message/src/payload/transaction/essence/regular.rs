@@ -235,10 +235,7 @@ impl RegularEssenceBuilder {
             }
         }
 
-        // TODO
-        // inputs.sort();
-        // outputs.sort();
-
+        // Inputs must be lexicographically sorted in their serialised form
         let packed_inputs: Result<Vec<_>, _> = self.inputs.iter().map(|input| {
             let mut packed_input = vec![];
             input.pack(&mut packed_input).and(Ok(packed_input))
@@ -248,6 +245,7 @@ impl RegularEssenceBuilder {
             return Err(Error::TransactionInputsNotSorted);
         }
 
+        // Outputs must be lexicographically sorted in their serialised form
         let packed_outputs: Result<Vec<_>, _> = self.outputs.iter().map(|output| {
             let mut packed_output = vec![];
             output.pack(&mut packed_output).and(Ok(packed_output))
