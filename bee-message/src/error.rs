@@ -42,6 +42,7 @@ pub enum Error {
     DuplicateSignature(usize),
     TransactionInputsNotSorted,
     TransactionOutputsNotSorted,
+    RemainingBytesAfterMessage,
 }
 
 impl std::error::Error for Error {}
@@ -116,6 +117,9 @@ impl fmt::Display for Error {
             }
             Error::TransactionInputsNotSorted => { write!(f, "Transaction inputs are not sorted.") }
             Error::TransactionOutputsNotSorted => { write!(f, "Transaction outputs are not sorted.") }
+            Error::RemainingBytesAfterMessage => {
+                write!(f, "Remaining bytes after message.")
+            }
         }
     }
 }
