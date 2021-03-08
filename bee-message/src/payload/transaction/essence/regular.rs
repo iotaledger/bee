@@ -235,23 +235,15 @@ impl RegularEssenceBuilder {
             }
         }
 
-        // Inputs must be lexicographically sorted in their serialised form
-        let packed_inputs: Result<Vec<_>, _> = self.inputs.iter().map(|input| {
-            let mut packed_input = vec![];
-            input.pack(&mut packed_input).and(Ok(packed_input))
-        }).collect();
+        // Inputs and outputs must be lexicographically sorted in their serialised forms.
+        let packed_inputs = self.inputs.iter().map(|input| { input.pack_new() });
+        let packed_outputs = self.outputs.iter().map(|output| { output.pack_new() });
 
-        if !is_sorted(packed_inputs?.iter()) {
+        if !is_sorted(packed_inputs) {
             return Err(Error::TransactionInputsNotSorted);
         }
 
-        // Outputs must be lexicographically sorted in their serialised form
-        let packed_outputs: Result<Vec<_>, _> = self.outputs.iter().map(|output| {
-            let mut packed_output = vec![];
-            output.pack(&mut packed_output).and(Ok(packed_output))
-        }).collect();
-
-        if !is_sorted(packed_outputs?.iter()) {
+        if !is_sorted(packed_outputs) {
             return Err(Error::TransactionOutputsNotSorted);
         }
 
