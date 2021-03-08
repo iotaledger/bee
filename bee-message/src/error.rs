@@ -40,6 +40,7 @@ pub enum Error {
     MilestonePublicKeysSignaturesCountMismatch(usize, usize),
     InvalidUnlockBlockReference(usize),
     DuplicateSignature(usize),
+    RemainingBytesAfterMessage,
 }
 
 impl std::error::Error for Error {}
@@ -111,6 +112,9 @@ impl fmt::Display for Error {
             }
             Error::DuplicateSignature(index) => {
                 write!(f, "Duplicate signature at index: {0}", index)
+            }
+            Error::RemainingBytesAfterMessage => {
+                write!(f, "Remaining bytes after message.")
             }
         }
     }

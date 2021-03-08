@@ -107,6 +107,11 @@ impl Packable for Message {
             return Err(Error::InvalidMessageLength(message_len));
         }
 
+        // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
+        if reader.bytes().next().is_some() {
+            return Err(Error::RemainingBytesAfterMessage);
+        }
+
         Ok(Self {
             network_id,
             parents,
