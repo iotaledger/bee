@@ -40,6 +40,8 @@ pub enum Error {
     MilestonePublicKeysSignaturesCountMismatch(usize, usize),
     InvalidUnlockBlockReference(usize),
     DuplicateSignature(usize),
+    TransactionInputsNotSorted,
+    TransactionOutputsNotSorted,
 }
 
 impl std::error::Error for Error {}
@@ -112,6 +114,8 @@ impl fmt::Display for Error {
             Error::DuplicateSignature(index) => {
                 write!(f, "Duplicate signature at index: {0}", index)
             }
+            Error::TransactionInputsNotSorted => { write!(f, "Transaction inputs are not sorted.") }
+            Error::TransactionOutputsNotSorted => { write!(f, "Transaction outputs are not sorted.") }
         }
     }
 }

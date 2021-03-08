@@ -6,6 +6,7 @@ use crate::{
     input::Input,
     output::Output,
     payload::Payload,
+    utils::is_sorted,
     Error,
 };
 
@@ -238,8 +239,23 @@ impl RegularEssenceBuilder {
         // inputs.sort();
         // outputs.sort();
 
-        self.inputs.sort();
-        self.outputs.sort();
+        let packed_inputs: Result<Vec<_>, _> = self.inputs.iter().map(|input| {
+            let mut packed_input = vec![];
+            input.pack(&mut packed_input).and(Ok(packed_input))
+        }).collect();
+
+        if !is_sorted(packed_inputs?.iter()) {
+            return Err(Error::TransactionInputsNotSorted);
+        }
+
+        let packed_outputs: Result<Vec<_>, _> = self.outputs.iter().map(|output| {
+            let mut packed_output = vec![];
+            output.pack(&mut packed_output).and(Ok(packed_output))
+        }).collect();
+
+        if !is_sorted(packed_outputs?.iter()) {
+            return Err(Error::TransactionOutputsNotSorted);
+        }
 
         Ok(RegularEssence {
             inputs: self.inputs.into_boxed_slice(),
