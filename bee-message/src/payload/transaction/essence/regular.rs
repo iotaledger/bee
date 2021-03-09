@@ -6,6 +6,7 @@ use crate::{
     input::Input,
     output::Output,
     payload::Payload,
+    utils::is_sorted,
     Error,
 };
 
@@ -234,12 +235,17 @@ impl RegularEssenceBuilder {
             }
         }
 
-        // TODO
-        // inputs.sort();
-        // outputs.sort();
+        // Inputs and outputs must be lexicographically sorted in their serialised forms.
+        let packed_inputs = self.inputs.iter().map(|input| input.pack_new());
+        let packed_outputs = self.outputs.iter().map(|output| output.pack_new());
 
-        self.inputs.sort();
-        self.outputs.sort();
+        if !is_sorted(packed_inputs) {
+            return Err(Error::TransactionInputsNotSorted);
+        }
+
+        if !is_sorted(packed_outputs) {
+            return Err(Error::TransactionOutputsNotSorted);
+        }
 
         Ok(RegularEssence {
             inputs: self.inputs.into_boxed_slice(),
