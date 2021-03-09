@@ -3,6 +3,10 @@
 
 use crate::{
     body::{BodyInner, SuccessBody},
+    config::ROUTE_OUTPUT,
+    filters::with_storage,
+    path_params::output_id,
+    permission::has_permission,
     rejection::CustomRejection,
     storage::StorageBackend,
     types::OutputDto,
@@ -13,9 +17,25 @@ use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
 use serde::{Deserialize, Serialize};
-use warp::{reject, Rejection, Reply};
+use warp::{Filter, reject, Rejection, Reply};
 
-use std::{convert::TryInto, ops::Deref};
+use std::{convert::TryInto, net::IpAddr, ops::Deref};
+
+pub(crate) fn output_filter<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    storage: ResourceHandle<B>,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    warp::path("api")
+        .and(warp::path("v1"))
+        .and(warp::path("outputs"))
+        .and(output_id())
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(has_permission(ROUTE_OUTPUT, public_routes, allowed_ips))
+        .and(with_storage(storage))
+        .and_then(output)
+}
 
 pub(crate) async fn output<B: StorageBackend>(
     output_id: OutputId,

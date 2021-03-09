@@ -3,6 +3,9 @@
 
 use crate::{
     body::{BodyInner, SuccessBody},
+    config::ROUTE_ADD_PEER,
+    filters::{with_network_controller, with_peer_manager},
+    permission::has_permission,
     rejection::CustomRejection,
     types::{peer_to_peer_dto, PeerDto, RelationDto},
 };
@@ -13,7 +16,27 @@ use bee_runtime::resource::ResourceHandle;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
-use warp::{http::StatusCode, reject, Rejection, Reply};
+use warp::{Filter, http::StatusCode, reject, Rejection, Reply};
+
+use std::net::IpAddr;
+
+pub(crate) fn add_peer_filter(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    peer_manager: ResourceHandle<PeerManager>,
+    network_controller: ResourceHandle<NetworkServiceController>,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    warp::path("api")
+        .and(warp::path("v1"))
+        .and(warp::path("peers"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(has_permission(ROUTE_ADD_PEER, public_routes, allowed_ips))
+        .and(warp::body::json())
+        .and(with_peer_manager(peer_manager))
+        .and(with_network_controller(network_controller))
+        .and_then(add_peer)
+}
 
 pub(crate) async fn add_peer(
     value: JsonValue,

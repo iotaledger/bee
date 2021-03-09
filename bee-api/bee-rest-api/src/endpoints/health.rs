@@ -1,18 +1,37 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::config::ROUTE_HEALTH;
+use crate::permission::has_permission;
+use crate::filters::{with_peer_manager, with_tangle};
 use crate::storage::StorageBackend;
 
 use bee_protocol::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
-use warp::{http::StatusCode, Reply};
+use warp::{http::StatusCode, Filter, Rejection, Reply};
 
 use std::{
     convert::Infallible,
+    net::IpAddr,
     time::{SystemTime, UNIX_EPOCH},
 };
+
+pub(crate) fn health_filter<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    tangle: ResourceHandle<MsTangle<B>>,
+    peer_manager: ResourceHandle<PeerManager>,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    warp::path("health")
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(has_permission(ROUTE_HEALTH, public_routes, allowed_ips))
+        .and(with_tangle(tangle))
+        .and(with_peer_manager(peer_manager))
+        .and_then(health)
+}
 
 pub(crate) async fn health<B: StorageBackend>(
     tangle: ResourceHandle<MsTangle<B>>,

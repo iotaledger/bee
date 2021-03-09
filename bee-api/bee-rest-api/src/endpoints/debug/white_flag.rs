@@ -3,6 +3,8 @@
 
 use crate::{
     body::{BodyInner, SuccessBody},
+    config::ROUTE_INFO,
+    permission::has_permission,
     rejection::CustomRejection,
 };
 
@@ -10,7 +12,23 @@ use bee_message::{milestone::MilestoneIndex, MessageId};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
-use warp::{reject, Rejection, Reply};
+use warp::{Filter, reject, Rejection, Reply};
+
+use std::net::IpAddr;
+
+pub(crate) fn white_flag_filter(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    warp::path("debug")
+        .and(warp::path("whiteflag"))
+        .and(warp::path::end())
+        .and(warp::post())
+        .and(has_permission(ROUTE_INFO, public_routes, allowed_ips))
+        .and(warp::body::json())
+        .and_then(white_flag)
+
+}
 
 pub(crate) async fn white_flag(body: JsonValue) -> Result<impl Reply, Rejection> {
     let index_json = &body["index"];

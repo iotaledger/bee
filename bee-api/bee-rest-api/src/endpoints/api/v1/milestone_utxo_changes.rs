@@ -3,6 +3,10 @@
 
 use crate::{
     body::{BodyInner, SuccessBody},
+    config::ROUTE_MILESTONE_UTXO_CHANGES,
+    filters::with_storage,
+    path_params::milestone_index,
+    permission::has_permission,
     rejection::CustomRejection,
     storage::StorageBackend,
 };
@@ -13,9 +17,26 @@ use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
 use serde::{Deserialize, Serialize};
-use warp::{reject, Rejection, Reply};
+use warp::{Filter, reject, Rejection, Reply};
 
-use std::ops::Deref;
+use std::{net::IpAddr, ops::Deref};
+
+pub(crate) fn milestone_utxo_changes_filter<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    storage: ResourceHandle<B>,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    warp::path("api")
+        .and(warp::path("v1"))
+        .and(warp::path("milestones"))
+        .and(milestone_index())
+        .and(warp::path("utxo-changes"))
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(has_permission(ROUTE_MILESTONE_UTXO_CHANGES, public_routes, allowed_ips))
+        .and(with_storage(storage))
+        .and_then(milestone_utxo_changes)
+}
 
 pub(crate) async fn milestone_utxo_changes<B: StorageBackend>(
     index: MilestoneIndex,

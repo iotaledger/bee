@@ -3,6 +3,10 @@
 
 use crate::{
     body::{BodyInner, SuccessBody},
+    config::ROUTE_BALANCE_ED25519,
+    filters::with_storage,
+    path_params::ed25519_address,
+    permission::has_permission,
     rejection::CustomRejection,
     storage::StorageBackend,
 };
@@ -13,9 +17,26 @@ use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
 use serde::{Deserialize, Serialize};
-use warp::{reject, Rejection, Reply};
+use warp::{Filter, reject, Rejection, Reply};
 
-use std::ops::Deref;
+use std::{net::IpAddr, ops::Deref};
+
+pub(crate) fn balance_ed25519_filter<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    storage: ResourceHandle<B>,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    warp::path("api")
+        .and(warp::path("v1"))
+        .and(warp::path("addresses"))
+        .and(warp::path("ed25519"))
+        .and(ed25519_address())
+        .and(warp::path::end())
+        .and(warp::get())
+        .and(has_permission(ROUTE_BALANCE_ED25519, public_routes, allowed_ips))
+        .and(with_storage(storage))
+        .and_then(balance_ed25519)
+}
 
 pub(crate) async fn balance_ed25519<B: StorageBackend>(
     addr: Ed25519Address,
