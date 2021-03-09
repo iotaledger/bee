@@ -151,7 +151,7 @@ impl RegularEssenceBuilder {
         self
     }
 
-    pub fn finish(mut self) -> Result<RegularEssence, Error> {
+    pub fn finish(self) -> Result<RegularEssence, Error> {
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.inputs.len()) {
             return Err(Error::InvalidInputOutputCount(self.inputs.len()));
         }
@@ -182,6 +182,11 @@ impl RegularEssenceBuilder {
                 }
                 _ => return Err(Error::InvalidInputKind(input.kind())),
             }
+        }
+
+        // Inputs must be lexicographically sorted in their serialised forms.
+        if !is_sorted(self.inputs.iter().map(|input| input.pack_new())) {
+            return Err(Error::TransactionInputsNotSorted);
         }
 
         // Outputs validation
@@ -235,15 +240,8 @@ impl RegularEssenceBuilder {
             }
         }
 
-        // Inputs and outputs must be lexicographically sorted in their serialised forms.
-        let packed_inputs = self.inputs.iter().map(|input| input.pack_new());
-        let packed_outputs = self.outputs.iter().map(|output| output.pack_new());
-
-        if !is_sorted(packed_inputs) {
-            return Err(Error::TransactionInputsNotSorted);
-        }
-
-        if !is_sorted(packed_outputs) {
+        // Outputs must be lexicographically sorted in their serialised forms.
+        if !is_sorted(self.outputs.iter().map(|output| output.pack_new())) {
             return Err(Error::TransactionOutputsNotSorted);
         }
 
