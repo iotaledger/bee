@@ -236,8 +236,8 @@ impl RegularEssenceBuilder {
         }
 
         // Inputs and outputs must be lexicographically sorted in their serialised forms.
-        let packed_inputs = self.inputs.iter().map(|input| { input.pack_new() });
-        let packed_outputs = self.outputs.iter().map(|output| { output.pack_new() });
+        let packed_inputs = self.inputs.iter().map(|input| input.pack_new());
+        let packed_outputs = self.outputs.iter().map(|output| output.pack_new());
 
         if !is_sorted(packed_inputs) {
             return Err(Error::TransactionInputsNotSorted);

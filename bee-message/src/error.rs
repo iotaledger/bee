@@ -115,8 +115,12 @@ impl fmt::Display for Error {
             Error::DuplicateSignature(index) => {
                 write!(f, "Duplicate signature at index: {0}", index)
             }
-            Error::TransactionInputsNotSorted => { write!(f, "Transaction inputs are not sorted.") }
-            Error::TransactionOutputsNotSorted => { write!(f, "Transaction outputs are not sorted.") }
+            Error::TransactionInputsNotSorted => {
+                write!(f, "Transaction inputs are not sorted.")
+            }
+            Error::TransactionOutputsNotSorted => {
+                write!(f, "Transaction outputs are not sorted.")
+            }
             Error::RemainingBytesAfterMessage => {
                 write!(f, "Remaining bytes after message.")
             }
