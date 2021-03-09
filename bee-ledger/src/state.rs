@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    balance::Balance,
     dust::dust_outputs_max,
     error::Error,
-    model::Unspent,
     storage::{self, StorageBackend},
+    types::{Balance, Unspent},
 };
 
 use bee_message::{address::Address, output};

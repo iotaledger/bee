@@ -4,10 +4,7 @@
 use crate::{error::Error, storage::*, system::System};
 
 use bee_common::packable::Packable;
-use bee_ledger::{
-    balance::Balance,
-    model::{OutputDiff, Receipt, TreasuryOutput},
-};
+use bee_ledger::types::{Balance, OutputDiff, Receipt, TreasuryOutput};
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     ledger_index::LedgerIndex,

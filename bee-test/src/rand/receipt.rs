@@ -10,7 +10,7 @@ use crate::rand::{
     milestone::rand_milestone_index,
 };
 
-use bee_ledger::model::Receipt;
+use bee_ledger::types::Receipt;
 use bee_message::{
     input::{Input, TreasuryInput},
     output::{Output, SignatureLockedSingleOutput, TreasuryOutput, TREASURY_OUTPUT_AMOUNT},

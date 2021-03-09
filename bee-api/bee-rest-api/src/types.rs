@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::model::Receipt;
+use bee_ledger::types::Receipt;
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     input::{Input, UTXOInput},

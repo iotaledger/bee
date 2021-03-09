@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::balance::Balance;
+use crate::types::Balance;
 
 use bee_message::{address::Address, milestone::MilestoneIndex, Error as MessageError, MessageId};
 

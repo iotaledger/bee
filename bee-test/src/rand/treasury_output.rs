@@ -3,7 +3,7 @@
 
 use crate::rand::{integer::rand_integer_range, milestone::rand_milestone_id};
 
-use bee_ledger::model::TreasuryOutput;
+use bee_ledger::types::TreasuryOutput;
 use bee_message::output::{self, TREASURY_OUTPUT_AMOUNT};
 
 pub fn rand_treasury_output() -> TreasuryOutput {

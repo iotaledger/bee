@@ -2,15 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    balance::BalanceDiffs,
     dust::DUST_THRESHOLD,
     error::Error,
     event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
-    model::{Migration, Receipt, TreasuryOutput},
     state::check_ledger_state,
     storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend},
+    types::{BalanceDiffs, ConflictReason, Migration, Receipt, TreasuryOutput},
     white_flag,
-    white_flag::{conflict::ConflictReason, merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
+    white_flag::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
 };
 
 use bee_message::{

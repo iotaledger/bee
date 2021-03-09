@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    balance::{Balance, BalanceDiffs},
     error::Error,
-    model::{Migration, OutputDiff, Receipt, TreasuryOutput, Unspent},
+    types::{Balance, BalanceDiffs, Migration, OutputDiff, Receipt, TreasuryOutput, Unspent},
 };
 
 use bee_message::{
