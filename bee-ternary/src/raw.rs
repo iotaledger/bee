@@ -89,6 +89,7 @@ pub trait RawEncodingBuf {
 
     /// Convert this encoding into another encoding.
     /// TODO: Rename this `reencode`
+    #[allow(clippy::wrong_self_convention)]
     fn into_encoding<T: RawEncodingBuf>(this: TritBuf<Self>) -> TritBuf<T>
     where
         Self: Sized,
