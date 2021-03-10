@@ -19,7 +19,7 @@ use warp::{Filter, Rejection, Reply};
 
 use std::{iter::FromIterator, net::IpAddr};
 
-pub(crate) fn message_children_filter<B: StorageBackend>(
+pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,

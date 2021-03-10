@@ -20,7 +20,7 @@ use warp::{Filter, reject, Rejection, Reply};
 
 use std::net::IpAddr;
 
-pub(crate) fn milestone_filter<B: StorageBackend>(
+pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,

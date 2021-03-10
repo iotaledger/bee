@@ -20,7 +20,7 @@ use warp::{Filter, http::StatusCode, reject, Rejection, Reply};
 
 use std::net::IpAddr;
 
-pub(crate) fn add_peer_filter(
+pub(crate) fn filter(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     peer_manager: ResourceHandle<PeerManager>,

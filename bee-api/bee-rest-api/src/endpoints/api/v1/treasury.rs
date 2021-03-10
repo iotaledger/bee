@@ -18,7 +18,7 @@ use warp::{Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
-pub(crate) fn treasury_filter<B: StorageBackend>(
+pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,

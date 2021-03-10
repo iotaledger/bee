@@ -16,7 +16,7 @@ use warp::{Filter, reject, Rejection, Reply};
 
 use std::net::IpAddr;
 
-pub(crate) fn white_flag_filter(
+pub(crate) fn filter(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
@@ -27,7 +27,6 @@ pub(crate) fn white_flag_filter(
         .and(has_permission(ROUTE_INFO, public_routes, allowed_ips))
         .and(warp::body::json())
         .and_then(white_flag)
-
 }
 
 pub(crate) async fn white_flag(body: JsonValue) -> Result<impl Reply, Rejection> {

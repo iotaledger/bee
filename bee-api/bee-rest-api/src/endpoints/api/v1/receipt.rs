@@ -29,7 +29,7 @@ pub struct ReceiptsResponse(pub Vec<ReceiptDto>);
 
 impl BodyInner for ReceiptsResponse {}
 
-pub(crate) fn receipts_filter<B: StorageBackend>(
+pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,

@@ -22,7 +22,7 @@ use warp::{Filter, reject, Rejection, Reply};
 
 use std::{collections::HashMap, net::IpAddr, ops::Deref};
 
-pub(crate) fn messages_find_filter<B: StorageBackend>(
+pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,

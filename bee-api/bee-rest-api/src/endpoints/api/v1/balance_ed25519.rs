@@ -21,7 +21,7 @@ use warp::{Filter, reject, Rejection, Reply};
 
 use std::{net::IpAddr, ops::Deref};
 
-pub(crate) fn balance_ed25519_filter<B: StorageBackend>(
+pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,

@@ -16,7 +16,7 @@ use warp::{Filter, http::StatusCode, reject, Rejection, Reply};
 
 use std::net::IpAddr;
 
-pub(crate) fn remove_peer_filter(
+pub(crate) fn filter(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     network_controller: ResourceHandle<NetworkServiceController>,

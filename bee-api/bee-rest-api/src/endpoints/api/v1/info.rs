@@ -28,7 +28,7 @@ use warp::{Filter, Rejection, Reply};
 
 use std::{convert::Infallible, net::IpAddr};
 
-pub(crate) fn info_filter<B: StorageBackend>(
+pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
