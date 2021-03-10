@@ -1,4 +1,4 @@
-#! /bin/bash
+!#/usr/bin/env bash
 
 # Ensure past coverage files are deleted (useful for running locally)
 echo "Removing stale coverage files..."
@@ -41,3 +41,4 @@ cargo cov -- export ${BINARIES} \
   --ignore-filename-regex="/.cargo|rustc|target|tests|/.rustup" \
   --format=lcov --Xdemangler=rustfilt \
   >> coverage/coverage.info
+  
