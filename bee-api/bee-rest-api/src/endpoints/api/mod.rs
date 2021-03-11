@@ -15,6 +15,10 @@ use warp::{self, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
+pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
+    warp::path("api")
+}
+
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,

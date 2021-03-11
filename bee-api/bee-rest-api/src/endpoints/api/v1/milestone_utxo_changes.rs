@@ -21,17 +21,20 @@ use warp::{Filter, reject, Rejection, Reply};
 
 use std::{net::IpAddr, ops::Deref};
 
+fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
+    super::path()
+        .and(warp::path("milestones"))
+        .and(milestone_index())
+        .and(warp::path("utxo-changes"))
+        .and(warp::path::end())
+}
+
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path("api")
-        .and(warp::path("v1"))
-        .and(warp::path("milestones"))
-        .and(milestone_index())
-        .and(warp::path("utxo-changes"))
-        .and(warp::path::end())
+    self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_MILESTONE_UTXO_CHANGES, public_routes, allowed_ips))
         .and(with_storage(storage))

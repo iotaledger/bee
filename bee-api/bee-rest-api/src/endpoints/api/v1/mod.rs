@@ -18,6 +18,7 @@ pub mod outputs_ed25519;
 pub mod peer;
 pub mod peers;
 pub mod receipt;
+pub mod receipts_at;
 pub mod remove_peer;
 pub mod submit_message;
 pub mod submit_message_raw;
@@ -36,6 +37,10 @@ use warp::{self, Filter, Rejection, Reply};
 use std::net::IpAddr;
 
 use tokio::sync::mpsc;
+
+pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
+    super::path().and(warp::path("v1"))
+}
 
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
@@ -142,6 +147,11 @@ pub(crate) fn filter<B: StorageBackend>(
         public_routes.clone(), 
         allowed_ips.clone(), 
         storage.clone(),
+    ))
+    .or(receipts_at::filter(
+        public_routes.clone(),
+        allowed_ips.clone(),
+        storage.clone(),   
     ))
     .or(remove_peer::filter(
         public_routes.clone(), 

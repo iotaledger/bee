@@ -22,16 +22,19 @@ use warp::{Filter, http::StatusCode, reject, Rejection, Reply};
 
 use std::net::IpAddr;
 
+fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
+    super::path()
+        .and(warp::path("messages"))
+        .and(warp::path::end())
+}
+
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path("api")
-        .and(warp::path("v1"))
-        .and(warp::path("messages"))
-        .and(warp::path::end())
+    self::path()
         .and(warp::post())
         .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
         .and(warp::body::bytes())

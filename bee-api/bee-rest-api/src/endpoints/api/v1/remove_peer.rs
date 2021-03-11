@@ -16,16 +16,19 @@ use warp::{Filter, http::StatusCode, reject, Rejection, Reply};
 
 use std::net::IpAddr;
 
+fn path() -> impl Filter<Extract = (PeerId,), Error = warp::Rejection> + Clone {
+    super::path()
+        .and(warp::path("peers"))
+        .and(peer_id())
+        .and(warp::path::end())
+}
+
 pub(crate) fn filter(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     network_controller: ResourceHandle<NetworkServiceController>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path("api")
-        .and(warp::path("v1"))
-        .and(warp::path("peers"))
-        .and(peer_id())
-        .and(warp::path::end())
+    self::path()
         .and(warp::delete())
         .and(has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips))
         .and(with_network_controller(network_controller))

@@ -21,16 +21,19 @@ use warp::{Filter, reject, Rejection, Reply};
 
 use std::{convert::TryInto, net::IpAddr, ops::Deref};
 
+fn path() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Clone {
+    super::path()
+        .and(warp::path("outputs"))
+        .and(output_id())
+        .and(warp::path::end())
+}
+
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path("api")
-        .and(warp::path("v1"))
-        .and(warp::path("outputs"))
-        .and(output_id())
-        .and(warp::path::end())
+    self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUT, public_routes, allowed_ips))
         .and(with_storage(storage))

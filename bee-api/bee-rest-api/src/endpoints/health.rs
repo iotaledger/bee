@@ -18,14 +18,18 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
+    warp::path("health")
+        .and(warp::path::end())
+}
+
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
     peer_manager: ResourceHandle<PeerManager>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path("health")
-        .and(warp::path::end())
+    self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_HEALTH, public_routes, allowed_ips))
         .and(with_tangle(tangle))

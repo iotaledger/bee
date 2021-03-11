@@ -16,13 +16,17 @@ use warp::{Filter, reject, Rejection, Reply};
 
 use std::net::IpAddr;
 
+fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
+    super::path()
+        .and(warp::path("whiteflag"))
+        .and(warp::path::end())
+}
+
 pub(crate) fn filter(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path("debug")
-        .and(warp::path("whiteflag"))
-        .and(warp::path::end())
+    self::path()
         .and(warp::post())
         .and(has_permission(ROUTE_INFO, public_routes, allowed_ips))
         .and(warp::body::json())
