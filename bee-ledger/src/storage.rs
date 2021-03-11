@@ -102,7 +102,7 @@ pub fn create_address_output_relation_batch<B: StorageBackend>(
             Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, batch, &(*address, *output_id), &())
                 .map_err(|e| Error::Storage(Box::new(e)))?;
         }
-        _ => return Err(Error::UnsupportedAddressType),
+        address => return Err(Error::UnsupportedAddressKind(address.kind())),
     }
 
     Ok(())
@@ -126,7 +126,7 @@ pub fn create_output_batch<B: StorageBackend>(
         Output::SignatureLockedDustAllowance(output) => {
             create_address_output_relation_batch(storage, batch, output.address(), output_id)?
         }
-        _ => return Err(Error::UnsupportedOutputType),
+        output => return Err(Error::UnsupportedOutputKind(output.kind())),
     }
 
     Ok(())

@@ -3,7 +3,7 @@
 
 // TODO here or in bee-message ?
 
-use crate::error::Error;
+use crate::types::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{output, payload::milestone::MilestoneId};

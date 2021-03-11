@@ -1,0 +1,21 @@
+// Copyright 2020 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use bee_message::Error as MessageError;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("I/O error {0}")]
+    Io(#[from] std::io::Error),
+    #[error("")]
+    Message(#[from] MessageError),
+    #[error("")]
+    UnsupportedOutputKind(u8),
+    #[error("")]
+    UnsupportedPayloadKind(u32),
+    #[error("Treasury amount mismatch: {0} != {1}")]
+    TreasuryAmountMismatch(u64, u64),
+    #[error("")]
+    // TODO
+    Option,
+}

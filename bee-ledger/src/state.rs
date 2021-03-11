@@ -34,7 +34,7 @@ async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u6
             output::Output::SignatureLockedDustAllowance(output) => {
                 supply += output.amount();
             }
-            _ => return Err(Error::UnsupportedOutputType),
+            output => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
     }
 

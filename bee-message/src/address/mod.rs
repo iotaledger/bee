@@ -27,6 +27,12 @@ pub enum Address {
 }
 
 impl Address {
+    pub fn kind(&self) -> u8 {
+        match self {
+            Self::Ed25519(_) => ED25519_ADDRESS_KIND,
+        }
+    }
+
     pub fn try_from_bech32(addr: &str) -> Result<Self, Error> {
         match bech32::decode(&addr) {
             Ok((_hrp, data, _)) => {

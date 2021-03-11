@@ -45,57 +45,56 @@ async fn validate_regular_essence<B: StorageBackend>(
     // TODO saturating ? Overflowing ? Checked ?
 
     for (index, input) in essence.inputs().iter().enumerate() {
-        let (output_id, consumed_output) = if let Input::UTXO(utxo_input) = input {
-            let output_id = utxo_input.output_id();
+        let (output_id, consumed_output) = match input {
+            Input::UTXO(input) => {
+                let output_id = input.output_id();
 
-            if metadata.consumed_outputs.contains_key(output_id) {
-                return Ok(ConflictReason::InputUTXOAlreadySpentInThisMilestone);
-            }
-
-            if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
-                (output_id, output)
-            } else if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
-                if !storage::is_output_unspent(storage.deref(), output_id).await? {
-                    return Ok(ConflictReason::InputUTXOAlreadySpent);
+                if metadata.consumed_outputs.contains_key(output_id) {
+                    return Ok(ConflictReason::InputUTXOAlreadySpentInThisMilestone);
                 }
-                (output_id, output)
-            } else {
-                return Ok(ConflictReason::InputUTXONotFound);
+
+                if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
+                    (output_id, output)
+                } else if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
+                    if !storage::is_output_unspent(storage.deref(), output_id).await? {
+                        return Ok(ConflictReason::InputUTXOAlreadySpent);
+                    }
+                    (output_id, output)
+                } else {
+                    return Ok(ConflictReason::InputUTXONotFound);
+                }
             }
-        } else {
-            return Err(Error::UnsupportedInputType);
+            input => {
+                return Err(Error::UnsupportedInputKind(input.kind()));
+            }
         };
 
         match consumed_output.inner() {
-            Output::SignatureLockedSingle(consumed_output) => {
-                consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
-                balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
-                if consumed_output.amount() < DUST_THRESHOLD {
-                    balance_diffs.dust_output_dec(*consumed_output.address());
+            Output::SignatureLockedSingle(output) => {
+                consumed_amount = consumed_amount.saturating_add(output.amount());
+                balance_diffs.amount_sub(*output.address(), output.amount());
+                if output.amount() < DUST_THRESHOLD {
+                    balance_diffs.dust_output_dec(*output.address());
                 }
                 if !match unlock_blocks.get(index) {
-                    Some(UnlockBlock::Signature(signature)) => {
-                        consumed_output.address().verify(&essence_hash, signature)
-                    }
+                    Some(UnlockBlock::Signature(signature)) => output.address().verify(&essence_hash, signature),
                     _ => false,
                 } {
                     return Ok(ConflictReason::InvalidSignature);
                 }
             }
-            Output::SignatureLockedDustAllowance(consumed_output) => {
-                consumed_amount = consumed_amount.saturating_add(consumed_output.amount());
-                balance_diffs.amount_sub(*consumed_output.address(), consumed_output.amount());
-                balance_diffs.dust_allowance_sub(*consumed_output.address(), consumed_output.amount());
+            Output::SignatureLockedDustAllowance(output) => {
+                consumed_amount = consumed_amount.saturating_add(output.amount());
+                balance_diffs.amount_sub(*output.address(), output.amount());
+                balance_diffs.dust_allowance_sub(*output.address(), output.amount());
                 if !match unlock_blocks.get(index) {
-                    Some(UnlockBlock::Signature(signature)) => {
-                        consumed_output.address().verify(&essence_hash, signature)
-                    }
+                    Some(UnlockBlock::Signature(signature)) => output.address().verify(&essence_hash, signature),
                     _ => false,
                 } {
                     return Ok(ConflictReason::InvalidSignature);
                 }
             }
-            _ => return Err(Error::UnsupportedOutputType),
+            output => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
 
         consumed_outputs.insert(*output_id, consumed_output);
@@ -103,19 +102,19 @@ async fn validate_regular_essence<B: StorageBackend>(
 
     for created_output in essence.outputs() {
         match created_output {
-            Output::SignatureLockedSingle(created_output) => {
-                created_amount = created_amount.saturating_add(created_output.amount());
-                balance_diffs.amount_add(*created_output.address(), created_output.amount());
-                if created_output.amount() < DUST_THRESHOLD {
-                    balance_diffs.dust_output_inc(*created_output.address());
+            Output::SignatureLockedSingle(output) => {
+                created_amount = created_amount.saturating_add(output.amount());
+                balance_diffs.amount_add(*output.address(), output.amount());
+                if output.amount() < DUST_THRESHOLD {
+                    balance_diffs.dust_output_inc(*output.address());
                 }
             }
-            Output::SignatureLockedDustAllowance(created_output) => {
-                created_amount = created_amount.saturating_add(created_output.amount());
-                balance_diffs.amount_add(*created_output.address(), created_output.amount());
-                balance_diffs.dust_allowance_add(*created_output.address(), created_output.amount());
+            Output::SignatureLockedDustAllowance(output) => {
+                created_amount = created_amount.saturating_add(output.amount());
+                balance_diffs.amount_add(*output.address(), output.amount());
+                balance_diffs.dust_allowance_add(*output.address(), output.amount());
             }
-            _ => return Err(Error::UnsupportedOutputType),
+            output => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
     }
 
@@ -179,7 +178,7 @@ async fn validate_transaction<B: StorageBackend>(
             )
             .await
         }
-        _ => return Err(Error::UnsupportedTransactionEssenceType),
+        essence => return Err(Error::UnsupportedTransactionEssenceKind(essence.kind())),
     }
 }
 
