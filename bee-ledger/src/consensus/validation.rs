@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    dust::{dust_outputs_max, DUST_THRESHOLD},
-    error::Error,
-    storage::{self, StorageBackend},
+    consensus::{
+        dust::{dust_outputs_max, DUST_THRESHOLD},
+        error::Error,
+        metadata::WhiteFlagMetadata,
+        storage::{self, StorageBackend},
+    },
     types::{BalanceDiffs, ConflictReason},
-    white_flag::metadata::WhiteFlagMetadata,
 };
 
 use bee_message::{

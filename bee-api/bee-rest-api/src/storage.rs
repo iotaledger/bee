@@ -18,7 +18,7 @@ pub trait StorageBackend:
     + Fetch<MilestoneIndex, Vec<Receipt>>
     + for<'a> AsStream<'a, (MilestoneIndex, Receipt), ()>
     + bee_protocol::storage::StorageBackend
-    + bee_ledger::storage::StorageBackend
+    + bee_ledger::consensus::storage::StorageBackend
 {
 }
 
@@ -30,6 +30,6 @@ impl<T> StorageBackend for T where
         + Fetch<MilestoneIndex, Vec<Receipt>>
         + for<'a> AsStream<'a, (MilestoneIndex, Receipt), ()>
         + bee_protocol::storage::StorageBackend
-        + bee_ledger::storage::StorageBackend
+        + bee_ledger::consensus::storage::StorageBackend
 {
 }

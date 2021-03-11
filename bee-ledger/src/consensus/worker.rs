@@ -2,14 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    dust::DUST_THRESHOLD,
-    error::Error,
-    event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
-    state::check_ledger_state,
-    storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend},
+    consensus::{
+        dust::DUST_THRESHOLD,
+        error::Error,
+        event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
+        merkle_hasher::MerkleHasher,
+        metadata::WhiteFlagMetadata,
+        state::check_ledger_state,
+        storage::{
+            self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend,
+        },
+        validation,
+    },
     types::{BalanceDiffs, ConflictReason, Migration, Receipt, TreasuryOutput},
-    white_flag,
-    white_flag::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
 };
 
 use bee_message::{
@@ -65,7 +70,7 @@ where
 
     drop(message);
 
-    white_flag::validation::traversal::<N>(tangle, storage, parents, &mut metadata).await?;
+    validation::traversal::<N>(tangle, storage, parents, &mut metadata).await?;
 
     // Account for the milestone itself.
     metadata.num_referenced_messages += 1;

@@ -13,7 +13,7 @@ use crate::{
     ProtocolMetrics,
 };
 
-use bee_ledger::{LedgerWorker, LedgerWorkerEvent};
+use bee_ledger::consensus::{LedgerWorker, LedgerWorkerEvent};
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     MessageId,

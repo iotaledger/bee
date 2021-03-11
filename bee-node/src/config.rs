@@ -7,7 +7,7 @@ use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder}
 use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
 
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
-use bee_ledger::config::{LedgerConfig, LedgerConfigBuilder};
+use bee_ledger::consensus::config::{LedgerConfig, LedgerConfigBuilder};
 use bee_network::{NetworkConfig, NetworkConfigBuilder};
 use bee_peering::{PeeringConfig, PeeringConfigBuilder};
 use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};

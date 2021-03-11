@@ -6,7 +6,7 @@ use crate::{
     worker::{MessageRequesterWorker, RequestedMessages},
 };
 
-use bee_ledger::LedgerWorker;
+use bee_ledger::consensus::LedgerWorker;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 

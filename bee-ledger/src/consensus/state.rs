@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    dust::dust_outputs_max,
-    error::Error,
-    storage::{self, StorageBackend},
+    consensus::{
+        dust::dust_outputs_max,
+        error::Error,
+        storage::{self, StorageBackend},
+    },
     types::{Balance, Unspent},
 };
 
