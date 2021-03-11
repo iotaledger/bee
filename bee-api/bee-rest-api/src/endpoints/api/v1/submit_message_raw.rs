@@ -18,14 +18,12 @@ use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use tokio::sync::mpsc;
-use warp::{Filter, http::StatusCode, reject, Rejection, Reply};
+use warp::{http::StatusCode, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    super::path()
-        .and(warp::path("messages"))
-        .and(warp::path::end())
+    super::path().and(warp::path("messages")).and(warp::path::end())
 }
 
 pub(crate) fn filter<B: StorageBackend>(

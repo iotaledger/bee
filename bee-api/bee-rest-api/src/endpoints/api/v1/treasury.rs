@@ -19,9 +19,7 @@ use warp::{Filter, Rejection, Reply};
 use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    super::path()
-        .and(warp::path("treasury"))
-        .and(warp::path::end())
+    super::path().and(warp::path("treasury")).and(warp::path::end())
 }
 
 pub(crate) fn filter<B: StorageBackend>(

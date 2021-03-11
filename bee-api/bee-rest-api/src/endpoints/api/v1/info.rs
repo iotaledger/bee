@@ -6,13 +6,8 @@ use crate::{
     config::{RestApiConfig, ROUTE_INFO},
     endpoints::health,
     filters::{
-        with_bech32_hrp, 
-        with_network_id, 
-        with_node_info, 
-        with_peer_manager, 
-        with_protocol_config, 
-        with_rest_api_config, 
-        with_tangle
+        with_bech32_hrp, with_network_id, with_node_info, with_peer_manager, with_protocol_config,
+        with_rest_api_config, with_tangle,
     },
     permission::has_permission,
     storage::StorageBackend,
@@ -29,9 +24,7 @@ use warp::{Filter, Rejection, Reply};
 use std::{convert::Infallible, net::IpAddr};
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
-    super::path()
-        .and(warp::path("info"))
-        .and(warp::path::end())
+    super::path().and(warp::path("info")).and(warp::path::end())
 }
 
 pub(crate) fn filter<B: StorageBackend>(
@@ -45,7 +38,7 @@ pub(crate) fn filter<B: StorageBackend>(
     node_info: ResourceHandle<NodeInfo>,
     peer_manager: ResourceHandle<PeerManager>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    self::path()    
+    self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_INFO, public_routes, allowed_ips))
         .and(with_tangle(tangle))

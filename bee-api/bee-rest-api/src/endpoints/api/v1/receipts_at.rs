@@ -1,19 +1,13 @@
 use crate::{
-    body::SuccessBody,
-    config::ROUTE_RECEIPTS_AT,
-    filters::with_storage,
-    path_params::milestone_index,
-    permission::has_permission,
-    rejection::CustomRejection,
-    storage::StorageBackend,
-    types::ReceiptDto,
+    body::SuccessBody, config::ROUTE_RECEIPTS_AT, filters::with_storage, path_params::milestone_index,
+    permission::has_permission, rejection::CustomRejection, storage::StorageBackend, types::ReceiptDto,
 };
 
+use super::receipt::ReceiptsResponse;
 use bee_ledger::types::Receipt;
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
-use super::receipt::ReceiptsResponse;
 
 use warp::{Filter, Rejection, Reply};
 

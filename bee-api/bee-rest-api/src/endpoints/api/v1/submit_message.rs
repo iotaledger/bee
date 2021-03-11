@@ -4,13 +4,7 @@
 use crate::{
     body::{BodyInner, SuccessBody},
     config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE},
-    filters::{
-        with_message_submitter, 
-        with_network_id, 
-        with_protocol_config, 
-        with_rest_api_config, 
-        with_tangle
-    },
+    filters::{with_message_submitter, with_network_id, with_protocol_config, with_rest_api_config, with_tangle},
     permission::has_permission,
     rejection::CustomRejection,
     storage::StorageBackend,
@@ -29,14 +23,12 @@ use log::error;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
 use tokio::sync::mpsc;
-use warp::{Filter, http::StatusCode, reject, Rejection, Reply};
+use warp::{http::StatusCode, reject, Filter, Rejection, Reply};
 
 use std::{convert::TryFrom, net::IpAddr};
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    super::path()
-        .and(warp::path("messages"))
-        .and(warp::path::end())
+    super::path().and(warp::path("messages")).and(warp::path::end())
 }
 
 pub(crate) fn filter<B: StorageBackend>(

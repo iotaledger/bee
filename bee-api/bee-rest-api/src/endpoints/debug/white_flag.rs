@@ -12,14 +12,12 @@ use bee_message::{milestone::MilestoneIndex, MessageId};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
-use warp::{Filter, reject, Rejection, Reply};
+use warp::{reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
-    super::path()
-        .and(warp::path("whiteflag"))
-        .and(warp::path::end())
+    super::path().and(warp::path("whiteflag")).and(warp::path::end())
 }
 
 pub(crate) fn filter(

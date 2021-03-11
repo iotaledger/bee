@@ -3,7 +3,7 @@
 
 pub mod v1;
 
-use crate::{Bech32Hrp, NetworkId, config::RestApiConfig, storage::StorageBackend};
+use crate::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
 use bee_network::NetworkServiceController;
 use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};

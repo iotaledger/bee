@@ -5,12 +5,7 @@ pub mod api;
 pub mod debug;
 pub mod health;
 
-use crate::{
-    config::RestApiConfig,
-    storage::StorageBackend,
-    Bech32Hrp, 
-    NetworkId,
-};
+use crate::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
 use bee_network::NetworkServiceController;
 use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
@@ -50,14 +45,6 @@ pub(crate) fn filter_all<B: StorageBackend>(
         network_controller,
         node_info,
     )
-    .or(debug::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-    ))
-    .or(health::filter(
-        public_routes,
-        allowed_ips,
-        tangle,
-        peer_manager,
-    ))
+    .or(debug::filter(public_routes.clone(), allowed_ips.clone()))
+    .or(health::filter(public_routes, allowed_ips, tangle, peer_manager))
 }

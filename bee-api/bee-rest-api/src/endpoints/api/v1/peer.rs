@@ -16,7 +16,7 @@ use bee_protocol::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
 use serde::{Deserialize, Serialize};
-use warp::{Filter, reject, Rejection, Reply};
+use warp::{reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 

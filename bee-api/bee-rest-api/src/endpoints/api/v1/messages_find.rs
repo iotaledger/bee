@@ -18,14 +18,12 @@ use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
 use serde::{Deserialize, Serialize};
-use warp::{Filter, reject, Rejection, Reply};
+use warp::{reject, Filter, Rejection, Reply};
 
 use std::{collections::HashMap, net::IpAddr, ops::Deref};
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    super::path()
-        .and(warp::path("messages"))
-        .and(warp::path::end())
+    super::path().and(warp::path("messages")).and(warp::path::end())
 }
 
 pub(crate) fn filter<B: StorageBackend>(

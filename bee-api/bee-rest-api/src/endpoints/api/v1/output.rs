@@ -17,7 +17,7 @@ use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
 use serde::{Deserialize, Serialize};
-use warp::{Filter, reject, Rejection, Reply};
+use warp::{reject, Filter, Rejection, Reply};
 
 use std::{convert::TryInto, net::IpAddr, ops::Deref};
 

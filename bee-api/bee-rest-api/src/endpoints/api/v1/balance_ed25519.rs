@@ -17,7 +17,7 @@ use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
 use serde::{Deserialize, Serialize};
-use warp::{Filter, reject, Rejection, Reply};
+use warp::{reject, Filter, Rejection, Reply};
 
 use std::{net::IpAddr, ops::Deref};
 
@@ -34,7 +34,7 @@ pub(crate) fn filter<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    self::path()    
+    self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_BALANCE_ED25519, public_routes, allowed_ips))
         .and(with_storage(storage))

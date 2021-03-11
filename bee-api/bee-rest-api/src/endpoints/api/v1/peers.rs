@@ -13,14 +13,12 @@ use bee_protocol::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
 use serde::{Deserialize, Serialize};
-use warp::{Filter, Reply, Rejection};
+use warp::{Filter, Rejection, Reply};
 
 use std::{convert::Infallible, net::IpAddr};
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    super::path()
-        .and(warp::path("peers"))
-        .and(warp::path::end())
+    super::path().and(warp::path("peers")).and(warp::path::end())
 }
 
 pub(crate) fn filter(

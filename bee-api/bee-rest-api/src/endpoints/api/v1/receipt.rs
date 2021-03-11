@@ -29,9 +29,7 @@ pub struct ReceiptsResponse(pub Vec<ReceiptDto>);
 impl BodyInner for ReceiptsResponse {}
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
-    super::path()
-        .and(warp::path("receipts"))
-        .and(warp::path::end())
+    super::path().and(warp::path("receipts")).and(warp::path::end())
 }
 
 pub(crate) fn filter<B: StorageBackend>(

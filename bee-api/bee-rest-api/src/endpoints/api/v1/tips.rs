@@ -15,14 +15,12 @@ use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use serde::{Deserialize, Serialize};
-use warp::{Filter, reject, Rejection, Reply};
+use warp::{reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
-    super::path()
-        .and(warp::path("tips"))
-        .and(warp::path::end())
+    super::path().and(warp::path("tips")).and(warp::path::end())
 }
 
 pub(crate) fn filter<B: StorageBackend>(

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::config::ROUTE_HEALTH;
-use crate::permission::has_permission;
 use crate::filters::{with_peer_manager, with_tangle};
+use crate::permission::has_permission;
 use crate::storage::StorageBackend;
 
 use bee_protocol::PeerManager;
@@ -19,8 +19,7 @@ use std::{
 };
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
-    warp::path("health")
-        .and(warp::path::end())
+    warp::path("health").and(warp::path::end())
 }
 
 pub(crate) fn filter<B: StorageBackend>(

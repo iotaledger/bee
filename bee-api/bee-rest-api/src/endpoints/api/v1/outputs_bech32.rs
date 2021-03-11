@@ -2,18 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    config::ROUTE_OUTPUTS_BECH32,
-    endpoints::api::v1::outputs_ed25519::outputs_ed25519, 
-    filters::with_storage,
-    path_params::bech32_address,
-    permission::has_permission,
-    rejection::CustomRejection, storage::StorageBackend,
+    config::ROUTE_OUTPUTS_BECH32, endpoints::api::v1::outputs_ed25519::outputs_ed25519, filters::with_storage,
+    path_params::bech32_address, permission::has_permission, rejection::CustomRejection, storage::StorageBackend,
 };
 
 use bee_message::address::Address;
 use bee_runtime::resource::ResourceHandle;
 
-use warp::{Filter, reject, Rejection, Reply};
+use warp::{reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 

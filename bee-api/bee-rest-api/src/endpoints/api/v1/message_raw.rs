@@ -2,12 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    config::ROUTE_MESSAGE_RAW,
-    filters::with_tangle,
-    path_params::message_id,
-    permission::has_permission,
-    rejection::CustomRejection, 
-    storage::StorageBackend
+    config::ROUTE_MESSAGE_RAW, filters::with_tangle, path_params::message_id, permission::has_permission,
+    rejection::CustomRejection, storage::StorageBackend,
 };
 
 use bee_common::packable::Packable;
@@ -15,7 +11,7 @@ use bee_message::MessageId;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
-use warp::{Filter, http::Response, reject, Rejection, Reply};
+use warp::{http::Response, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
@@ -32,7 +28,7 @@ pub(crate) fn filter<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    self::path()    
+    self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_RAW, public_routes, allowed_ips))
         .and(with_tangle(tangle))

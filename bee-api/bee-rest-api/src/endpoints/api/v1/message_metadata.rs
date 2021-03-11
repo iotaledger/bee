@@ -18,7 +18,7 @@ use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use serde::{Deserialize, Serialize};
-use warp::{Filter, reject, Rejection, Reply};
+use warp::{reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
@@ -35,7 +35,7 @@ pub(crate) fn filter<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    self::path()    
+    self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_MESSAGE_METADATA, public_routes, allowed_ips))
         .and(with_tangle(tangle))

@@ -25,7 +25,7 @@ pub mod submit_message_raw;
 pub mod tips;
 pub mod treasury;
 
-use crate::{Bech32Hrp, NetworkId, config::RestApiConfig, storage::StorageBackend};
+use crate::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
 use bee_network::NetworkServiceController;
 use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
@@ -73,34 +73,34 @@ pub(crate) fn filter<B: StorageBackend>(
         storage.clone(),
     ))
     .or(info::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
+        public_routes.clone(),
+        allowed_ips.clone(),
         tangle.clone(),
-        network_id.clone(), 
-        bech32_hrp.clone(), 
-        rest_api_config.clone(), 
-        protocol_config.clone(), 
-        node_info.clone(), 
+        network_id.clone(),
+        bech32_hrp.clone(),
+        rest_api_config.clone(),
+        protocol_config.clone(),
+        node_info.clone(),
         peer_manager.clone(),
     ))
     .or(message::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
+        public_routes.clone(),
+        allowed_ips.clone(),
         tangle.clone(),
     ))
     .or(message_children::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
+        public_routes.clone(),
+        allowed_ips.clone(),
         tangle.clone(),
     ))
     .or(message_metadata::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
+        public_routes.clone(),
+        allowed_ips.clone(),
         tangle.clone(),
     ))
     .or(message_raw::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
+        public_routes.clone(),
+        allowed_ips.clone(),
         tangle.clone(),
     ))
     .or(messages_find::filter(
@@ -109,12 +109,12 @@ pub(crate) fn filter<B: StorageBackend>(
         storage.clone(),
     ))
     .or(milestone::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
+        public_routes.clone(),
+        allowed_ips.clone(),
         tangle.clone(),
     ))
     .or(milestone_utxo_changes::filter(
-        public_routes.clone(), 
+        public_routes.clone(),
         allowed_ips.clone(),
         storage.clone(),
     ))
@@ -124,13 +124,13 @@ pub(crate) fn filter<B: StorageBackend>(
         storage.clone(),
     ))
     .or(outputs_bech32::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
+        public_routes.clone(),
+        allowed_ips.clone(),
         storage.clone(),
     ))
     .or(outputs_ed25519::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
+        public_routes.clone(),
+        allowed_ips.clone(),
         storage.clone(),
     ))
     .or(peer::filter(
@@ -139,23 +139,23 @@ pub(crate) fn filter<B: StorageBackend>(
         peer_manager.clone(),
     ))
     .or(peers::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
+        public_routes.clone(),
+        allowed_ips.clone(),
         peer_manager.clone(),
     ))
     .or(receipt::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
+        public_routes.clone(),
+        allowed_ips.clone(),
         storage.clone(),
     ))
     .or(receipts_at::filter(
         public_routes.clone(),
         allowed_ips.clone(),
-        storage.clone(),   
+        storage.clone(),
     ))
     .or(remove_peer::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
+        public_routes.clone(),
+        allowed_ips.clone(),
         network_controller.clone(),
     ))
     .or(submit_message::filter(
@@ -168,18 +168,14 @@ pub(crate) fn filter<B: StorageBackend>(
         protocol_config.clone(),
     ))
     .or(submit_message_raw::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
-        tangle.clone(), 
+        public_routes.clone(),
+        allowed_ips.clone(),
+        tangle.clone(),
         message_submitter.clone(),
     ))
-    .or(tips::filter(
-        public_routes.clone(), 
-        allowed_ips.clone(), 
-        tangle.clone(),
-    ))
+    .or(tips::filter(public_routes.clone(), allowed_ips.clone(), tangle.clone()))
     .or(treasury::filter(
-        public_routes.clone(), 
+        public_routes.clone(),
         allowed_ips.clone(),
         storage.clone(),
     ))
