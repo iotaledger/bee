@@ -73,7 +73,7 @@ fn new_valid() {
         SignatureUnlock::from(Ed25519Signature::new([2; 32], Box::new([2; 64]))).into(),
         SignatureUnlock::from(Ed25519Signature::new([3; 32], Box::new([3; 64]))).into(),
         ReferenceUnlock::new(3).unwrap().into(),
-        ReferenceUnlock::new(3).unwrap().into(),
+        ReferenceUnlock::new(4).unwrap().into(),
         ReferenceUnlock::new(3).unwrap().into(),
         ReferenceUnlock::new(4).unwrap().into(),
         ReferenceUnlock::new(5).unwrap().into(),
