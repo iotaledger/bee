@@ -19,8 +19,6 @@ use crypto::{
 use alloc::{boxed::Box, vec::Vec};
 use core::convert::TryInto;
 
-pub(crate) const MILESTONE_PAYLOAD_KIND: u32 = 1;
-
 pub const MILESTONE_SIGNATURE_LENGTH: usize = 64;
 
 #[derive(Debug)]
@@ -41,6 +39,8 @@ pub struct MilestonePayload {
 }
 
 impl MilestonePayload {
+    pub const KIND: u32 = 1;
+
     pub fn new(essence: MilestonePayloadEssence, signatures: Vec<Box<[u8]>>) -> Result<Self, Error> {
         if signatures.is_empty() {
             return Err(Error::MilestoneNoSignature);

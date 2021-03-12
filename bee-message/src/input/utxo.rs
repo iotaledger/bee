@@ -7,12 +7,12 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::{convert::From, str::FromStr};
 
-pub(crate) const UTXO_INPUT_KIND: u8 = 0;
-
 #[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct UTXOInput(OutputId);
 
 impl UTXOInput {
+    pub const KIND: u8 = 0;
+
     pub fn new(id: TransactionId, index: u16) -> Result<Self, Error> {
         Ok(Self(OutputId::new(id, index)?))
     }

@@ -13,8 +13,6 @@ use bee_common::packable::{Packable, Read, Write};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
-pub(crate) const TRANSACTION_PAYLOAD_KIND: u32 = 0;
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionPayload {
@@ -23,6 +21,8 @@ pub struct TransactionPayload {
 }
 
 impl TransactionPayload {
+    pub const KIND: u32 = 0;
+
     pub fn builder() -> TransactionPayloadBuilder {
         TransactionPayloadBuilder::default()
     }
@@ -30,7 +30,7 @@ impl TransactionPayload {
     pub fn id(&self) -> TransactionId {
         let mut hasher = Blake2b256::new();
 
-        hasher.update(TRANSACTION_PAYLOAD_KIND.to_le_bytes());
+        hasher.update(Self::KIND.to_le_bytes());
         hasher.update(self.pack_new());
 
         TransactionId::new(hasher.finalize().into())

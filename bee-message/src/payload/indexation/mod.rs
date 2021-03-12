@@ -14,8 +14,6 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
 use alloc::boxed::Box;
 use core::ops::RangeInclusive;
 
-pub(crate) const INDEXATION_PAYLOAD_KIND: u32 = 2;
-
 const INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=64;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -26,6 +24,8 @@ pub struct IndexationPayload {
 }
 
 impl IndexationPayload {
+    pub const KIND: u32 = 2;
+
     pub fn new(index: &[u8], data: &[u8]) -> Result<Self, Error> {
         if !INDEX_LENGTH_RANGE.contains(&index.len()) {
             return Err(Error::InvalidIndexationLength(index.len()));

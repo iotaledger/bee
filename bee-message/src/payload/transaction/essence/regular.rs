@@ -14,8 +14,6 @@ use bee_common::packable::{Packable, Read, Write};
 
 use alloc::{boxed::Box, vec::Vec};
 
-pub(crate) const REGULAR_ESSENCE_KIND: u8 = 0;
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RegularEssence {
@@ -25,6 +23,8 @@ pub struct RegularEssence {
 }
 
 impl RegularEssence {
+    pub const KIND: u8 = 0;
+
     pub fn builder() -> RegularEssenceBuilder {
         RegularEssenceBuilder::new()
     }

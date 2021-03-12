@@ -5,6 +5,11 @@ use bee_message::prelude::*;
 use bee_test::rand::parents::rand_parents;
 
 #[test]
+fn kind() {
+    assert_eq!(MilestonePayload::KIND, 1);
+}
+
+#[test]
 fn new_invalid_no_signature() {
     assert!(matches!(
         MilestonePayload::new(

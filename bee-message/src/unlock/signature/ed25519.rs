@@ -7,7 +7,6 @@ use bee_common::packable::{Packable, Read, Write};
 
 use alloc::boxed::Box;
 
-pub(crate) const ED25519_SIGNATURE_KIND: u8 = 0;
 const ED25519_PUBLIC_KEY_LENGTH: usize = 32;
 const ED25519_SIGNATURE_LENGTH: usize = 64;
 
@@ -20,6 +19,8 @@ pub struct Ed25519Signature {
 }
 
 impl Ed25519Signature {
+    pub const KIND: u8 = 0;
+
     pub fn new(public_key: [u8; ED25519_PUBLIC_KEY_LENGTH], signature: Box<[u8]>) -> Self {
         Self { public_key, signature }
     }

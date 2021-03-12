@@ -7,7 +7,6 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::RangeInclusive;
 
-pub(crate) const SIGNATURE_LOCKED_SINGLE_OUTPUT_KIND: u8 = 0;
 const SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
 
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -18,6 +17,8 @@ pub struct SignatureLockedSingleOutput {
 }
 
 impl SignatureLockedSingleOutput {
+    pub const KIND: u8 = 0;
+
     pub fn new(address: Address, amount: u64) -> Result<Self, Error> {
         if !SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT.contains(&amount) {
             return Err(Error::InvalidAmount(amount));

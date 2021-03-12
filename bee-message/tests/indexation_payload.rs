@@ -6,6 +6,11 @@ use bee_message::prelude::*;
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_32};
 
 #[test]
+fn kind() {
+    assert_eq!(IndexationPayload::KIND, 2);
+}
+
+#[test]
 fn index_length_0_new() {
     assert!(matches!(
         IndexationPayload::new(&[], &[0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2]),

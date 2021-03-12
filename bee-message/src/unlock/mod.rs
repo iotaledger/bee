@@ -5,8 +5,6 @@ mod reference;
 mod signature;
 
 pub use reference::ReferenceUnlock;
-use reference::REFERENCE_UNLOCK_KIND;
-use signature::SIGNATURE_UNLOCK_KIND;
 pub use signature::{Ed25519Signature, SignatureUnlock};
 
 use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, Error};
@@ -29,6 +27,15 @@ pub enum UnlockBlock {
     Reference(ReferenceUnlock),
 }
 
+impl UnlockBlock {
+    pub fn kind(&self) -> u8 {
+        match self {
+            Self::Signature(_) => SignatureUnlock::KIND,
+            Self::Reference(_) => ReferenceUnlock::KIND,
+        }
+    }
+}
+
 impl From<SignatureUnlock> for UnlockBlock {
     fn from(signature: SignatureUnlock) -> Self {
         Self::Signature(signature)
@@ -46,19 +53,19 @@ impl Packable for UnlockBlock {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::Signature(unlock) => SIGNATURE_UNLOCK_KIND.packed_len() + unlock.packed_len(),
-            Self::Reference(unlock) => REFERENCE_UNLOCK_KIND.packed_len() + unlock.packed_len(),
+            Self::Signature(unlock) => SignatureUnlock::KIND.packed_len() + unlock.packed_len(),
+            Self::Reference(unlock) => ReferenceUnlock::KIND.packed_len() + unlock.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::Signature(unlock) => {
-                SIGNATURE_UNLOCK_KIND.pack(writer)?;
+                SignatureUnlock::KIND.pack(writer)?;
                 unlock.pack(writer)?;
             }
             Self::Reference(unlock) => {
-                REFERENCE_UNLOCK_KIND.pack(writer)?;
+                ReferenceUnlock::KIND.pack(writer)?;
                 unlock.pack(writer)?;
             }
         }
@@ -68,8 +75,8 @@ impl Packable for UnlockBlock {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            SIGNATURE_UNLOCK_KIND => SignatureUnlock::unpack(reader)?.into(),
-            REFERENCE_UNLOCK_KIND => ReferenceUnlock::unpack(reader)?.into(),
+            SignatureUnlock::KIND => SignatureUnlock::unpack(reader)?.into(),
+            ReferenceUnlock::KIND => ReferenceUnlock::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidUnlockBlockKind(k)),
         })
     }

@@ -5,8 +5,6 @@ mod regular;
 
 pub use regular::{RegularEssence, RegularEssenceBuilder};
 
-use regular::REGULAR_ESSENCE_KIND;
-
 use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
@@ -27,7 +25,7 @@ pub enum Essence {
 impl Essence {
     pub fn kind(&self) -> u8 {
         match self {
-            Self::Regular(_) => REGULAR_ESSENCE_KIND,
+            Self::Regular(_) => RegularEssence::KIND,
         }
     }
 
@@ -47,14 +45,14 @@ impl Packable for Essence {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::Regular(essence) => REGULAR_ESSENCE_KIND.packed_len() + essence.packed_len(),
+            Self::Regular(essence) => RegularEssence::KIND.packed_len() + essence.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::Regular(essence) => {
-                REGULAR_ESSENCE_KIND.pack(writer)?;
+                RegularEssence::KIND.pack(writer)?;
                 essence.pack(writer)?;
             }
         }
@@ -64,7 +62,7 @@ impl Packable for Essence {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            REGULAR_ESSENCE_KIND => RegularEssence::unpack(reader)?.into(),
+            RegularEssence::KIND => RegularEssence::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidEssenceKind(k)),
         })
     }

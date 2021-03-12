@@ -9,6 +9,11 @@ use std::str::FromStr;
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
+fn kind() {
+    assert_eq!(SignatureLockedSingleOutput::KIND, 0);
+}
+
+#[test]
 fn new_valid_min_amount() {
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let output = SignatureLockedSingleOutput::new(address, 1).unwrap();

@@ -9,6 +9,11 @@ use core::str::FromStr;
 const OUTPUT_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00";
 
 #[test]
+fn kind() {
+    assert_eq!(UTXOInput::KIND, 0);
+}
+
+#[test]
 fn new_valid() {
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
     let input = UTXOInput::new(*output_id.transaction_id(), output_id.index()).unwrap();

@@ -7,13 +7,13 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::convert::TryFrom;
 
-pub(crate) const REFERENCE_UNLOCK_KIND: u8 = 1;
-
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReferenceUnlock(u16);
 
 impl ReferenceUnlock {
+    pub const KIND: u8 = 1;
+
     pub fn new(index: u16) -> Result<Self, Error> {
         if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
             return Err(Error::InvalidReferenceIndex(index));
