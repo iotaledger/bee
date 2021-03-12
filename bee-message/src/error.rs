@@ -31,7 +31,8 @@ pub enum Error {
     InvalidAnnouncedLength(usize, usize),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
-    InvalidIndexationLength(usize),
+    InvalidIndexationIndexLength(usize),
+    InvalidIndexationDataLength(usize),
     InvalidMessageLength(usize),
     InvalidReceiptFundsCount(usize),
     MilestonePublicKeysNotUniqueSorted,
@@ -90,7 +91,12 @@ impl fmt::Display for Error {
             Error::InvalidHexadecimalLength(expected, actual) => {
                 write!(f, "Invalid hexadecimal length: expected {} got {}.", expected, actual)
             }
-            Error::InvalidIndexationLength(length) => write!(f, "Invalid indexation index or data length {}.", length),
+            Error::InvalidIndexationIndexLength(length) => {
+                write!(f, "Invalid indexation index length {}.", length)
+            }
+            Error::InvalidIndexationDataLength(length) => {
+                write!(f, "Invalid indexation data length {}.", length)
+            }
             Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
             Error::InvalidReceiptFundsCount(count) => write!(f, "Invalid receipt funds count: {}.", count),
             Error::MilestonePublicKeysNotUniqueSorted => {
