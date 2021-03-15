@@ -99,10 +99,12 @@ where
     }
 
     let migration = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
-        // TODO check that the treasuryTransaction input matches the fetched unspent treasury output ?
         let milestone_id = milestone.id();
         let receipt = Receipt::new(receipt.as_ref().clone(), milestone.essence().index().into());
         let consumed_treasury = storage::fetch_unspent_treasury_output(storage).await?;
+
+        // TODO check that the treasuryTransaction input matches the fetched unspent treasury output ?
+        receipt.validate(&consumed_treasury)?;
 
         // Safe to unwrap since sizes are known to be the same
         let fake_transaction_id = TransactionId::new(milestone_id.as_ref().to_vec().try_into().unwrap());

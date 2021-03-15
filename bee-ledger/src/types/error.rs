@@ -15,6 +15,8 @@ pub enum Error {
     UnsupportedPayloadKind(u32),
     #[error("Treasury amount mismatch: {0} != {1}")]
     TreasuryAmountMismatch(u64, u64),
+    #[error("Invalid migrated funds amount: {0}")]
+    InvalidMigratedFundsAmount(u64),
     #[error("")]
     // TODO
     Option,

@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::Balance;
+use crate::types::{Balance, Error as TypesError};
 
 use bee_message::{address::Address, milestone::MilestoneIndex, Error as MessageError, MessageId};
 
@@ -9,6 +9,8 @@ use bee_message::{address::Address, milestone::MilestoneIndex, Error as MessageE
 pub enum Error {
     #[error("")]
     Message(#[from] MessageError),
+    #[error("")]
+    Types(#[from] TypesError),
     #[error("Message {0} is missing in the past cone of the milestone")]
     MissingMessage(MessageId),
     #[error("")]

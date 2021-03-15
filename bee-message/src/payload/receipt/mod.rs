@@ -11,6 +11,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::RangeInclusive;
 
+// TODO use input/output range ?
 const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = 1..=127;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
