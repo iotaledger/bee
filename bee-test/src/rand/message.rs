@@ -19,7 +19,7 @@ pub fn rand_message_id() -> MessageId {
 
 pub fn rand_message_ids(len: usize) -> Vec<MessageId> {
     let mut parents = (0..len).map(|_| rand_message_id()).collect::<Vec<MessageId>>();
-    parents.sort();
+    parents.sort_by(|a, b| a.as_ref().cmp(b.as_ref()));
     parents
 }
 

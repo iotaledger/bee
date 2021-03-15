@@ -27,7 +27,7 @@ impl Parents {
             return Err(Error::InvalidParentsCount(inner.len()));
         }
 
-        if !is_unique_sorted(inner.iter()) {
+        if !is_unique_sorted(inner.iter().map(|id| id.as_ref())) {
             return Err(Error::ParentsNotUniqueSorted);
         }
 
