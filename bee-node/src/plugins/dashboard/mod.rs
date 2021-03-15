@@ -155,7 +155,7 @@ where
             let routes = routes::routes(
                 storage.clone(),
                 tangle.clone(),
-                node_config.peer_id.to_string(),
+                node_config.node_id.to_string(),
                 config.auth().clone(),
                 rest_api_config.clone(),
                 users.clone(),
