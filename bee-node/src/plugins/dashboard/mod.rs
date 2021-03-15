@@ -30,10 +30,7 @@ use crate::{
 };
 
 use bee_ledger::consensus::event::MilestoneConfirmed;
-use bee_protocol::{
-    event::{LatestMilestoneChanged, MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded, TipRemoved},
-    MetricsWorker, PeerManagerResWorker,
-};
+use bee_protocol::{event::LatestMilestoneChanged, MetricsWorker, PeerManagerResWorker};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 
@@ -138,46 +135,14 @@ where
                 sync_status::forward_confirmed_milestone_changed(&event, &tangle)
             });
         }
-        topic_handler(
-            node,
-            "MpsMetricsUpdated",
-            &users,
-            false,
-            move |event: MpsMetricsUpdated| mps_metrics_updated::forward(event),
-        );
-        topic_handler(
-            node,
-            "Milestone",
-            &users,
-            false,
-            move |event: LatestMilestoneChanged| milestone::forward(event),
-        );
-        topic_handler(node, "SolidInfo", &users, true, move |event: MessageSolidified| {
-            solid_info::forward(event)
-        });
-        topic_handler(
-            node,
-            "MilestoneInfo",
-            &users,
-            false,
-            move |event: LatestMilestoneChanged| milestone_info::forward(event),
-        );
-        topic_handler(node, "Vertex", &users, true, move |event: NewVertex| {
-            vertex::forward(event)
-        });
-        topic_handler(
-            node,
-            "MilestoneConfirmed",
-            &users,
-            false,
-            move |event: MilestoneConfirmed| confirmed_info::forward(event),
-        );
-        topic_handler(node, "TipInfo", &users, true, move |event: TipAdded| {
-            tip_info::forward_tip_added(event)
-        });
-        topic_handler(node, "TipInfo", &users, true, move |event: TipRemoved| {
-            tip_info::forward_tip_removed(event)
-        });
+        topic_handler(node, "MpsMetricsUpdated", &users, false, mps_metrics_updated::forward);
+        topic_handler(node, "Milestone", &users, false, milestone::forward);
+        topic_handler(node, "SolidInfo", &users, true, solid_info::forward);
+        topic_handler(node, "MilestoneInfo", &users, false, milestone_info::forward);
+        topic_handler(node, "Vertex", &users, true, vertex::forward);
+        topic_handler(node, "MilestoneConfirmed", &users, false, confirmed_info::forward);
+        topic_handler(node, "TipInfo", &users, true, tip_info::forward_tip_added);
+        topic_handler(node, "TipInfo", &users, true, tip_info::forward_tip_removed);
 
         // run sub-workers
         confirmed_ms_metrics_worker(node, &users);
@@ -191,7 +156,7 @@ where
             let routes = routes::routes(
                 storage.clone(),
                 tangle.clone(),
-                peering_config.peer_id.to_string().clone(),
+                peering_config.peer_id.to_string(),
                 config.auth().clone(),
                 rest_api_config.clone(),
                 users.clone(),

@@ -330,9 +330,9 @@ impl Fetch<bool, Vec<TreasuryOutput>> for Storage {
             self.inner
                 .prefix_iterator_cf(&cf, spent.pack_new())
                 .map(|(mut key, _)| {
-                    let (_, receipt) = key.split_at_mut(std::mem::size_of::<bool>());
+                    let (_, output) = key.split_at_mut(std::mem::size_of::<bool>());
                     // Unpacking from storage is fine.
-                    TreasuryOutput::unpack(&mut receipt.as_ref()).unwrap()
+                    TreasuryOutput::unpack(&mut output.as_ref()).unwrap()
                 })
                 .collect(),
         ))

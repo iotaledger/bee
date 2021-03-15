@@ -472,7 +472,7 @@ impl TryFrom<&RegularEssenceDto> for RegularEssence {
         }
 
         if let Some(p) = &value.payload {
-            if let &PayloadDto::Indexation(i) = &p {
+            if let PayloadDto::Indexation(i) = p {
                 builder = builder.with_payload(Payload::Indexation((i).try_into()?));
             } else {
                 return Err("invalid transaction essence: expected an optional indexation-payload".to_string());
@@ -868,7 +868,7 @@ impl TryFrom<&MigratedFundsEntry> for MigratedFundsEntryDto {
 
     fn try_from(value: &MigratedFundsEntry) -> Result<Self, Self::Error> {
         Ok(MigratedFundsEntryDto {
-            tail_transaction_hash: Box::new(value.tail_transaction_hash().clone()),
+            tail_transaction_hash: Box::new(*value.tail_transaction_hash()),
             address: value.output().address().try_into()?,
             amount: value.output().amount(),
         })

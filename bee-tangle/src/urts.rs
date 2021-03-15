@@ -180,7 +180,7 @@ impl UrtsTipPool {
             None
         } else {
             Some(if non_lazy_tips.len() < self.optimal_num_tips() {
-                non_lazy_tips.iter().map(|t| *t).collect()
+                non_lazy_tips.iter().copied().collect()
             } else {
                 non_lazy_tips
                     .iter()
