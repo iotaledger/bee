@@ -44,6 +44,7 @@ pub enum Error {
     TransactionInputsNotSorted,
     TransactionOutputsNotSorted,
     RemainingBytesAfterMessage,
+    ParentsNotUniqueSorted,
 }
 
 impl std::error::Error for Error {}
@@ -129,6 +130,9 @@ impl fmt::Display for Error {
             }
             Error::RemainingBytesAfterMessage => {
                 write!(f, "Remaining bytes after message.")
+            }
+            Error::ParentsNotUniqueSorted => {
+                write!(f, "Parents not unique and/or sorted.")
             }
         }
     }

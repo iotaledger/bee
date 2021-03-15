@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{Error, MessageId, MESSAGE_ID_LENGTH};
+use crate::{utils::is_unique_sorted, Error, MessageId, MESSAGE_ID_LENGTH};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -25,6 +25,10 @@ impl Parents {
     pub fn new(inner: Vec<MessageId>) -> Result<Self, Error> {
         if !MESSAGE_PARENTS_RANGE.contains(&inner.len()) {
             return Err(Error::InvalidParentsCount(inner.len()));
+        }
+
+        if !is_unique_sorted(inner.iter().map(|id| id.as_ref())) {
+            return Err(Error::ParentsNotUniqueSorted);
         }
 
         Ok(Self(inner))
@@ -68,6 +72,6 @@ impl Packable for Parents {
             inner.push(MessageId::unpack(reader)?);
         }
 
-        Ok(Self(inner))
+        Self::new(inner)
     }
 }

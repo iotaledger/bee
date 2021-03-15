@@ -21,13 +21,30 @@ fn new_invalid_more_than_max() {
 
     for _ in 0..8 {
         Parents::new(inner.clone()).unwrap();
-        inner.push(rand_message_id())
+        inner.push(rand_message_id());
+        inner.sort();
     }
 
     assert!(matches!(
         Parents::new(inner.clone()),
         Err(Error::InvalidParentsCount(9))
     ));
+}
+
+#[test]
+fn new_invalid_not_sorted() {
+    let mut inner = rand_message_ids(8);
+    inner.reverse();
+
+    assert!(matches!(Parents::new(inner.clone()), Err(Error::ParentsNotUniqueSorted)));
+}
+
+#[test]
+fn new_invalid_not_unique() {
+    let mut inner = rand_message_ids(7);
+    inner.push(*inner.last().unwrap());
+
+    assert!(matches!(Parents::new(inner.clone()), Err(Error::ParentsNotUniqueSorted)));
 }
 
 #[test]
@@ -70,4 +87,40 @@ fn pack_unpack_invalid_more_than_max() {
         Parents::unpack(&mut bytes.as_slice()),
         Err(Error::InvalidParentsCount(9))
     ));
+}
+
+#[test]
+fn unpack_invalid_not_sorted() {
+    let mut inner = rand_message_ids(8);
+    inner.reverse();
+
+    // Remove 8 byte vector length field and replace with 1 byte, to represent message parents.
+    let mut packed = (8u8).pack_new();
+    let mut packed_messages = inner.pack_new()
+        .split_at(std::mem::size_of::<u64>())
+        .1
+        .to_vec();
+    packed.append(&mut packed_messages);
+
+    let parents = Parents::unpack(&mut packed.as_slice());
+
+    assert!(matches!(parents, Err(Error::ParentsNotUniqueSorted)));
+}
+
+#[test]
+fn upnack_invalid_not_unique() {
+    let mut inner = rand_message_ids(7);
+    inner.push(*inner.last().unwrap());
+
+    // Remove 8 byte vector length field and replace with 1 byte, to represent message parents.
+    let mut packed = (8u8).pack_new();
+    let mut packed_messages = inner.pack_new()
+        .split_at(std::mem::size_of::<u64>())
+        .1
+        .to_vec();
+    packed.append(&mut packed_messages);
+
+    let parents = Parents::unpack(&mut packed.as_slice());
+
+    assert!(matches!(parents, Err(Error::ParentsNotUniqueSorted)));
 }
