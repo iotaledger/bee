@@ -172,10 +172,6 @@ impl<P: Provider> MessageBuilder<P> {
             nonce: 0,
         };
 
-        // TODO move to Parents type
-        // message.parents.sort_unstable();
-        // message.parents.dedup();
-
         let message_bytes = message.pack_new();
 
         if message_bytes.len() > MESSAGE_LENGTH_MAX {
