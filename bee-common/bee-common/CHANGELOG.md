@@ -19,12 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-<!-- ## 0.4.0 - 2021-XX-XX
+## 0.4.0 - 2021-25-03
 
 ### Added
 
 - `ord::is_unique_sorted`;
-- `ord::is_sorted`; -->
+- `ord::is_sorted`;
+- `impl<const N: usize> Packable for [u8; N]`;
+- `Packable::unpack_inner<R: Read + ?Sized, const TRUSTED: bool>`;
+
+### Changed
+
+- `Packable::unpack` is now a default implementation to `Self::unpack_inner::<R, false>`;
 
 ## 0.3.1-alpha - 2021-02-15
 
