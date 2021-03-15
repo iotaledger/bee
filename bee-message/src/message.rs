@@ -91,6 +91,15 @@ impl Packable for Message {
             if payload_len != payload.packed_len() {
                 return Err(Self::Error::InvalidAnnouncedLength(payload_len, payload.packed_len()));
             }
+
+            if !matches!(
+                payload,
+                Payload::Transaction(_) | Payload::Milestone(_) | Payload::Indexation(_)
+            ) {
+                // Safe to unwrap since it's known not to be None.
+                return Err(Error::InvalidPayloadKind(payload.kind()));
+            }
+
             Some(payload)
         } else {
             None
@@ -165,9 +174,21 @@ impl<P: Provider> MessageBuilder<P> {
     }
 
     pub fn finish(self) -> Result<Message, Error> {
+        // TODO harmonize unpack and finish
+        let network_id = self.network_id.ok_or(Error::MissingField("network_id"))?;
+        let parents = self.parents.ok_or(Error::MissingField("parents"))?;
+
+        if !matches!(
+            self.payload,
+            None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::Indexation(_))
+        ) {
+            // Safe to unwrap since it's known not to be None.
+            return Err(Error::InvalidPayloadKind(self.payload.unwrap().kind()));
+        }
+
         let mut message = Message {
-            network_id: self.network_id.ok_or(Error::MissingField("network_id"))?,
-            parents: self.parents.ok_or(Error::MissingField("parents"))?,
+            network_id,
+            parents,
             payload: self.payload,
             nonce: 0,
         };
