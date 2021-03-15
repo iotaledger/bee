@@ -17,7 +17,7 @@ pub mod outputs_bech32;
 pub mod outputs_ed25519;
 pub mod peer;
 pub mod peers;
-pub mod receipt;
+pub mod receipts;
 pub mod receipts_at;
 pub mod remove_peer;
 pub mod submit_message;
@@ -143,7 +143,7 @@ pub(crate) fn filter<B: StorageBackend>(
         allowed_ips.clone(),
         peer_manager.clone(),
     ))
-    .or(receipt::filter(
+    .or(receipts::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         storage.clone(),
