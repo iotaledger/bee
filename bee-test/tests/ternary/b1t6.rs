@@ -1,12 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ternary::{b1t6::encode, T1B1Buf};
+use bee_ternary::{
+    b1t6::{decode, encode},
+    T1B1Buf,
+};
 
 // TODO factorize tests
 
 #[test]
-fn decode() {
+fn b1t6_decode() {
     let bytes = vec![1u8];
     let str = encode::<T1B1Buf>(&bytes)
         .iter_trytes()
@@ -77,4 +80,15 @@ fn decode() {
         .collect::<String>();
 
     assert_eq!(str, "GWLW9DLDDCLAJDQXBWUZYZODBYPBJCQ9NCQYT9IYMBMWNASBEDTZOYCYUBGDM9C9");
+}
+
+#[test]
+fn encode_decode() {
+    let bytes = [
+        111, 158, 133, 16, 184, 139, 14, 164, 251, 198, 132, 223, 144, 186, 49, 5, 64, 55, 10, 4, 3, 6, 123, 34, 206,
+        244, 151, 31, 236, 62, 139, 184, 187, 7, 40, 131,
+    ];
+    let encoded = encode::<T1B1Buf>(&bytes);
+    let decoded = decode(&encoded).unwrap();
+    assert_eq!(bytes, decoded[..]);
 }
