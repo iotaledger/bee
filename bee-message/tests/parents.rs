@@ -42,7 +42,7 @@ fn new_invalid_not_sorted() {
 #[test]
 fn new_invalid_not_unique() {
     let mut inner = rand_message_ids(7);
-    inner.push(inner[0]);
+    inner.push(*inner.last().unwrap());
 
     assert!(matches!(Parents::new(inner.clone()), Err(Error::ParentsNotUniqueSorted)));
 }
@@ -110,7 +110,7 @@ fn unpack_invalid_not_sorted() {
 #[test]
 fn upnack_invalid_not_unique() {
     let mut inner = rand_message_ids(7);
-    inner.push(inner[0]);
+    inner.push(*inner.last().unwrap());
 
     // Remove 8 byte vector length field and replace with 1 byte, to represent message parents.
     let mut packed = (8u8).pack_new();
