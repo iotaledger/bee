@@ -72,6 +72,6 @@ impl Packable for Parents {
             inner.push(MessageId::unpack(reader)?);
         }
 
-        Ok(Self::new(inner)?)
+        Self::new(inner)
     }
 }
