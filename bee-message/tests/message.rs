@@ -7,13 +7,13 @@ use bee_pow::{
     providers::{ConstantBuilder, Miner, MinerBuilder, ProviderBuilder},
     score::compute_pow_score,
 };
-use bee_test::rand::message::rand_message_id;
+use bee_test::rand::message::rand_message_ids;
 
 #[test]
 fn pow_default_provider() {
     let message = MessageBuilder::<Miner>::new()
         .with_network_id(0)
-        .with_parents(Parents::new(vec![rand_message_id(), rand_message_id()]).unwrap())
+        .with_parents(Parents::new(rand_message_ids(2)).unwrap())
         .finish()
         .unwrap();
 
@@ -27,7 +27,7 @@ fn pow_default_provider() {
 fn pow_provider() {
     let message = MessageBuilder::new()
         .with_network_id(0)
-        .with_parents(Parents::new(vec![rand_message_id(), rand_message_id()]).unwrap())
+        .with_parents(Parents::new(rand_message_ids(2)).unwrap())
         .with_nonce_provider(
             MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
             10000f64,
@@ -46,7 +46,7 @@ fn pow_provider() {
 fn invalid_length() {
     let res = MessageBuilder::new()
         .with_network_id(0)
-        .with_parents(Parents::new(vec![rand_message_id(), rand_message_id()]).unwrap())
+        .with_parents(Parents::new(rand_message_ids(2)).unwrap())
         .with_nonce_provider(ConstantBuilder::new().with_value(42).finish(), 10000f64, None)
         .with_payload(
             IndexationPayload::new(&[42], &[0u8; MESSAGE_LENGTH_MAX])
