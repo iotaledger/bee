@@ -70,3 +70,12 @@ fn packable_vector() {
         vec![Some(42u32), None, Some(13)],
     );
 }
+
+#[test]
+fn packable_array() {
+    let array_1 = [42u8; 1024];
+    let array_2 = <[u8; 1024]>::unpack(&mut array_1.pack_new().as_slice()).unwrap();
+
+    assert_eq!(array_1.packed_len(), 1024);
+    assert_eq!(array_1, array_2);
+}

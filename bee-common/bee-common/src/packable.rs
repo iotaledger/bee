@@ -39,6 +39,30 @@ pub trait Packable {
     }
 }
 
+impl<const N: usize> Packable for [u8; N] {
+    type Error = std::io::Error;
+
+    fn packed_len(&self) -> usize {
+        N
+    }
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        writer.write_all(self)?;
+
+        Ok(())
+    }
+
+    fn unpack_inner<R: Read + ?Sized, const TRUSTED: bool>(reader: &mut R) -> Result<Self, Self::Error>
+    where
+        Self: Sized,
+    {
+        let mut bytes = [0u8; N];
+        reader.read_exact(&mut bytes)?;
+
+        Ok(bytes)
+    }
+}
+
 impl Packable for bool {
     type Error = std::io::Error;
 
