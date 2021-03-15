@@ -1,101 +1,105 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod manager;
-mod topics;
-
+mod broker;
 pub mod config;
+mod error;
 
-use config::MqttConfig;
-use manager::MqttManager;
-use topics::*;
+use bee_runtime::node::{Node, NodeBuilder};
 
-use bee_protocol::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use self::{
+    broker::{MqttBroker, MqttBrokerConfig},
+    config::MqttConfig,
+};
 
-use async_trait::async_trait;
-use futures::stream::StreamExt;
-use log::{debug, error, warn};
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::UnboundedReceiverStream;
+use librumqttd as mqtt;
+use rumqttlog::Config as RouterSettings;
 
-use std::{any::Any, convert::Infallible};
+use std::{collections::HashMap, thread};
 
-#[derive(Default)]
-pub struct Mqtt;
+const DEFAULT_NEXT_CONNECTION_DELAY: u64 = 1;
+const DEFAULT_CONNECTION_TIMEOUT_MS: u16 = 100;
+const DEFAULT_MAX_CLIENT_ID_LEN: usize = 256;
+const DEFAULT_THROTTLE_DELAY_MS: u64 = 0;
+const DEFAULT_MAX_PAYLOAD_SIZE: usize = 2048;
+const DEFAULT_MAX_INFLIGHT_COUNT: u16 = 500;
+const DEFAULT_MAX_INFLIGHT_SIZE: usize = 1024;
+const DEFAULT_BROKER_ID: usize = 0;
+const DEFAULT_ROUTER_ID: usize = 0;
+const DEFAULT_ROUTER_DIR: &str = "/tmp/rumqttd";
+const DEFAULT_MAX_SEGMENT_SIZE: usize = 1024 * 1024;
+const DEFAULT_MAX_SEGMENT_COUNT: usize = 1024;
+const DEFAULT_MAX_CONNECTIONS: usize = 50;
+const DEFAULT_MAX_INFLIGHT_REQUESTS: usize = 200;
 
-fn topic_handler<N, E, T, P, F>(node: &mut N, topic: &'static str, f: F)
-where
-    N: Node,
-    E: Any + Clone + Send + Sync,
-    T: Into<String> + Send,
-    P: Into<Vec<u8>> + Send,
-    F: 'static + Fn(&E) -> (T, P) + Send + Sync,
-{
-    let bus = node.bus();
-    let manager = node.resource::<MqttManager>();
-    let (tx, rx) = mpsc::unbounded_channel();
+pub async fn init<N: Node>(config: MqttConfig, mut node_builder: N::Builder) -> N::Builder {
+    let MqttConfig { port } = config;
 
-    node.spawn::<Mqtt, _, _>(|shutdown| async move {
-        debug!("Mqtt {} topic handler running.", topic);
+    let connection_settings = mqtt::ConnectionSettings {
+        connection_timeout_ms: DEFAULT_CONNECTION_TIMEOUT_MS,
+        max_client_id_len: DEFAULT_MAX_CLIENT_ID_LEN,
+        throttle_delay_ms: DEFAULT_THROTTLE_DELAY_MS,
+        max_payload_size: DEFAULT_MAX_PAYLOAD_SIZE,
+        max_inflight_count: DEFAULT_MAX_INFLIGHT_COUNT,
+        max_inflight_size: DEFAULT_MAX_INFLIGHT_SIZE,
+        username: None, // Option<String>,
+        password: None, // Option<String>,
+    };
 
-        let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
+    let server_settings = mqtt::ServerSettings {
+        port,
+        ca_path: None,   // Option<String>,
+        cert_path: None, // Option<String>,
+        key_path: None,  // Option<String>,
+        next_connection_delay_ms: DEFAULT_NEXT_CONNECTION_DELAY,
+        connections: connection_settings, // ConnectionSettings,
+    };
 
-        while let Some(event) = receiver.next().await {
-            let (topic, payload) = f(&event);
-            manager.send(topic, payload).await;
-        }
+    let router_settings = RouterSettings {
+        id: DEFAULT_ROUTER_ID,
+        dir: DEFAULT_ROUTER_DIR.into(),
+        max_segment_size: DEFAULT_MAX_SEGMENT_SIZE,
+        max_segment_count: DEFAULT_MAX_SEGMENT_COUNT,
+        max_connections: DEFAULT_MAX_CONNECTIONS,
+    };
 
-        debug!("Mqtt {} topic handler stopped.", topic);
+    // TODO: TLS server
+    let mut servers = HashMap::with_capacity(1);
+    servers.insert("non_tls".into(), server_settings);
+
+    let config = mqtt::Config {
+        id: DEFAULT_BROKER_ID,
+        router: router_settings,
+        servers,
+        cluster: None,    // Option<HashMap<String, MeshSettings>>,
+        replicator: None, // Option<ConnectionSettings>,
+        console: None,    // Option<ConsoleSettings>,
+    };
+
+    let mut broker = mqtt::Broker::new(config);
+
+    let mut latest_tx = broker.link("latest").expect("linking mqtt sender failed");
+    let mut solid_tx = broker.link("solid").expect("linking mqtt sender failed");
+
+    thread::spawn(move || {
+        // **Note**: 'start' creates a custom tokio runtime and blocks until ctrl-c is detected.
+        // This is not really integrating well into our own architecture which already uses its own tokio runtime!!
+        broker.start().expect("error starting broker");
     });
 
-    bus.add_listener::<Mqtt, _, _>(move |event: &E| {
-        if tx.send((*event).clone()).is_err() {
-            warn!("Sending event to mqtt {} topic handler failed.", topic)
-        }
-    });
-}
+    // **Note**: we are only interested in puplishing.
 
-#[async_trait]
-impl<N: Node> Worker<N> for Mqtt {
-    type Config = MqttConfig;
-    type Error = Infallible;
+    let _ = latest_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        match MqttManager::new(config) {
-            Ok(manager) => {
-                // TODO log connected
-                node.register_resource(manager);
+    let _ = solid_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-                topic_handler(node, TOPIC_MILESTONES_LATEST, |_event: &LatestMilestoneChanged| {
-                    (TOPIC_MILESTONES_LATEST, "")
-                });
-                topic_handler(node, TOPIC_MILESTONES_SOLID, |_event: &LatestSolidMilestoneChanged| {
-                    (TOPIC_MILESTONES_SOLID, "")
-                });
-                // topic_handler(node, _TOPIC_MESSAGES, |_event: &_| (_TOPIC_MESSAGES, ""));
-                // topic_handler(node, _TOPIC_MESSAGES_REFERENCED, |_event: &_| {
-                //     (_TOPIC_MESSAGES_REFERENCED, "")
-                // });
-                // topic_handler(node, _TOPIC_MESSAGES_INDEXATION, |_event: &_| {
-                //     (_TOPIC_MESSAGES_INDEXATION, "")
-                // });
-                // topic_handler(node, _TOPIC_MESSAGES_METADATA, |_event: &_| {
-                //     (_TOPIC_MESSAGES_METADATA, "")
-                // });
-                // topic_handler(node, _TOPIC_OUTPUTS, |_event: &_| (_TOPIC_OUTPUTS, ""));
-                // topic_handler(node, _TOPIC_ADDRESSES_OUTPUTS, |_event: &_| {
-                //     (_TOPIC_ADDRESSES_OUTPUTS, "")
-                // });
-                // topic_handler(node, _TOPIC_ADDRESSES_ED25519_OUTPUT, |_event: &_| {
-                //     (_TOPIC_ADDRESSES_ED25519_OUTPUT, "")
-                // });
-            }
-            Err(e) => {
-                error!("Creating mqtt manager failed {:?}.", e);
-            }
-        }
+    let broker_config = MqttBrokerConfig { latest_tx, solid_tx };
 
-        Ok(Self::default())
-    }
+    node_builder = node_builder.with_worker_cfg::<MqttBroker>(broker_config);
+
+    node_builder
 }

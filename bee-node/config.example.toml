@@ -95,7 +95,7 @@ enabled = true
 delay   = 60480
 
 [mqtt]
-address = "tcp://localhost:1883"
+port = 1883
 
 [dashboard]
 port  = 8081

@@ -8,7 +8,7 @@ use crate::{
     config::NodeConfig,
     constants::{BEE_GIT_COMMIT, BEE_VERSION},
     node::{BeeNode, Error},
-    plugins::{self, Mqtt, VersionChecker},
+    plugins::{self, mqtt, VersionChecker},
     storage::StorageBackend,
 };
 
@@ -201,8 +201,15 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         info!("Initializing tangle...");
         let this = bee_tangle::init::<BeeNode<B>>(this);
 
+        // MQTT core plugin
+        info!("Initializing MQTT core plugin...");
+        let mqtt_config = config.mqtt.clone();
+        let this = mqtt::init::<BeeNode<B>>(mqtt_config, this).await;
+
+        // Version-checker core plugin
         let mut this = this.with_worker::<VersionChecker>();
-        this = this.with_worker_cfg::<Mqtt>(config.mqtt);
+
+        // Dashboard plugin
         #[cfg(feature = "dashboard")]
         {
             this = this.with_worker_cfg::<Dashboard>(config.dashboard);
