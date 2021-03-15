@@ -7,7 +7,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_ledger::storage;
+use bee_ledger::consensus::storage;
 use bee_runtime::resource::ResourceHandle;
 
 use serde::{Deserialize, Serialize};

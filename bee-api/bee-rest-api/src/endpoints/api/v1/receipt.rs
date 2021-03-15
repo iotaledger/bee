@@ -8,7 +8,7 @@ use crate::{
     types::ReceiptDto,
 };
 
-use bee_ledger::model::Receipt;
+use bee_ledger::types::Receipt;
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::{AsStream, Fetch};

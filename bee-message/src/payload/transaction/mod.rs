@@ -13,10 +13,6 @@ use bee_common::packable::{Packable, Read, Write};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
-use core::{cmp::Ordering, slice::Iter};
-
-pub(crate) const TRANSACTION_PAYLOAD_KIND: u32 = 0;
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionPayload {
@@ -25,6 +21,8 @@ pub struct TransactionPayload {
 }
 
 impl TransactionPayload {
+    pub const KIND: u32 = 0;
+
     pub fn builder() -> TransactionPayloadBuilder {
         TransactionPayloadBuilder::default()
     }
@@ -32,7 +30,7 @@ impl TransactionPayload {
     pub fn id(&self) -> TransactionId {
         let mut hasher = Blake2b256::new();
 
-        hasher.update(TRANSACTION_PAYLOAD_KIND.to_le_bytes());
+        hasher.update(Self::KIND.to_le_bytes());
         hasher.update(self.pack_new());
 
         TransactionId::new(hasher.finalize().into())
@@ -69,25 +67,6 @@ impl Packable for TransactionPayload {
     }
 }
 
-// TODO ?
-#[allow(dead_code)]
-fn is_sorted<T: Ord>(iterator: Iter<T>) -> bool {
-    let mut iterator = iterator;
-    let mut last = match iterator.next() {
-        Some(e) => e,
-        None => return true,
-    };
-
-    for curr in iterator {
-        if let Ordering::Greater = &last.cmp(&curr) {
-            return false;
-        }
-        last = curr;
-    }
-
-    true
-}
-
 #[derive(Debug, Default)]
 pub struct TransactionPayloadBuilder {
     essence: Option<Essence>,
@@ -112,69 +91,17 @@ impl TransactionPayloadBuilder {
     }
 
     pub fn finish(self) -> Result<TransactionPayload, Error> {
-        // TODO
-        // inputs.sort();
-        // outputs.sort();
-
         let essence = self.essence.ok_or(Error::MissingField("essence"))?;
         let unlock_blocks = self.unlock_blocks.ok_or(Error::MissingField("unlock_blocks"))?;
 
         match essence {
             Essence::Regular(ref essence) => {
-                // Unlock Blocks validation
                 if essence.inputs().len() != unlock_blocks.len() {
                     return Err(Error::InputUnlockBlockCountMismatch(
                         essence.inputs().len(),
                         unlock_blocks.len(),
                     ));
                 }
-
-                // for (i, block) in self.unlock_blocks.iter().enumerate() {
-                //     // Signature Unlock Blocks must define an Ed25519-Signature
-                //     match block {
-                //         UnlockBlock::Reference(r) => {
-                //             // Reference Unlock Blocks must specify a previous Unlock Block which is not of type
-                // Reference             // Unlock Block. Since it's not the first input it unlocks, it
-                // must have             // differente transaction id from previous one
-                //             if i != 0 {
-                //                 match &essence.inputs()[i] {
-                //                     Input::UTXO(u) => match &essence.inputs()[i - 1] {
-                //                         Input::UTXO(v) => {
-                //                             if u.output_id().transaction_id() != v.output_id().transaction_id() {
-                //                                 return Err(Error::InvalidIndex);
-                //                             }
-                //                         }
-                //                     },
-                //                 }
-                //             }
-
-                //             // The reference index must therefore be < the index of the Reference Unlock Block
-                //             if r.index() >= i as u16 {
-                //                 return Err(Error::InvalidIndex);
-                //             }
-                //         }
-                //         UnlockBlock::Signature(_) => {
-                //             // A Signature Unlock Block unlocking multiple inputs must only appear once (be unique)
-                // and be             // positioned at same index of the first input it unlocks.
-                //             if self.unlock_blocks.iter().filter(|j| *j == block).count() > 1 {
-                //                 return Err(Error::DuplicateError);
-                //             }
-
-                //             // Since it's first input it unlocks, it must have differente transaction id from
-                // previous one             if i != 0 {
-                //                 match &essence.inputs()[i] {
-                //                     Input::UTXO(u) => match &essence.inputs()[i - 1] {
-                //                         Input::UTXO(v) => {
-                //                             if u.output_id().transaction_id() == v.output_id().transaction_id() {
-                //                                 return Err(Error::InvalidIndex);
-                //                             }
-                //                         }
-                //                     },
-                //                 }
-                //             }
-                //         }
-                //     }
-                // }
             }
         }
 

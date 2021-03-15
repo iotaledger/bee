@@ -5,7 +5,7 @@ use crate::rand::{
     integer::rand_integer_range, milestone::rand_milestone_id, option::rand_option, output::rand_output_id,
 };
 
-use bee_ledger::model::{OutputDiff, TreasuryDiff};
+use bee_ledger::types::{OutputDiff, TreasuryDiff};
 
 pub fn rand_treasury_diff() -> TreasuryDiff {
     TreasuryDiff::new(rand_milestone_id(), rand_milestone_id())

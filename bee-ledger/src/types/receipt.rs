@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, model::TreasuryOutput};
+use crate::types::{error::Error, TreasuryOutput};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
@@ -33,11 +33,11 @@ impl Receipt {
         let mut migrated_amount = 0;
         let transaction = match self.inner().transaction() {
             Payload::TreasuryTransaction(transaction) => transaction,
-            _ => return Err(Error::UnsupportedPayloadType),
+            payload => return Err(Error::UnsupportedPayloadKind(payload.kind())),
         };
         let created_treasury_output = match transaction.output() {
             Output::Treasury(output) => output,
-            _ => return Err(Error::UnsupportedOutputType),
+            output => return Err(Error::UnsupportedOutputKind(output.kind())),
         };
 
         for funds in self.inner().funds() {
@@ -53,6 +53,7 @@ impl Receipt {
             ));
         }
 
+        // TODO useless bool ?
         Ok(true)
     }
 }

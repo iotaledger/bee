@@ -8,7 +8,7 @@ use crate::{
     IS_SYNCED_THRESHOLD,
 };
 
-use bee_ledger::ConflictReason;
+use bee_ledger::types::ConflictReason;
 use bee_message::{payload::Payload, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
@@ -128,7 +128,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
 
             Ok(warp::reply::json(&SuccessBody::new(MessageMetadataResponse {
                 message_id: message_id.to_string(),
-                parent_message_ids: message.parents().iter().map(|id| id.to_string()).collect(),
+                parent_message_ids: message.parents().map(|id| id.to_string()).collect(),
                 is_solid,
                 referenced_by_milestone_index,
                 milestone_index,

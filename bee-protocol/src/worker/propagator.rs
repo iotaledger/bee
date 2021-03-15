@@ -41,7 +41,11 @@ async fn propagate<B: StorageBackend>(
         }
 
         // TODO Copying parents to avoid double locking, will be refactored.
-        if let Some(parents) = tangle.get(&message_id).await.map(|message| message.parents().to_vec()) {
+        if let Some(parents) = tangle
+            .get(&message_id)
+            .await
+            .map(|message| message.parents().copied().collect::<Vec<MessageId>>())
+        {
             // If one of the parents is not yet solid, we skip the current message.
             for parent in parents.iter() {
                 if !tangle.is_solid_message(parent).await {

@@ -3,7 +3,6 @@
 
 mod ed25519;
 
-use ed25519::ED25519_ADDRESS_KIND;
 pub use ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
 
 use crate::{unlock::SignatureUnlock, Error};
@@ -27,6 +26,12 @@ pub enum Address {
 }
 
 impl Address {
+    pub fn kind(&self) -> u8 {
+        match self {
+            Self::Ed25519(_) => Ed25519Address::KIND,
+        }
+    }
+
     pub fn try_from_bech32(addr: &str) -> Result<Self, Error> {
         match bech32::decode(&addr) {
             Ok((_hrp, data, _)) => {
@@ -64,14 +69,14 @@ impl Packable for Address {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::Ed25519(address) => ED25519_ADDRESS_KIND.packed_len() + address.packed_len(),
+            Self::Ed25519(address) => Ed25519Address::KIND.packed_len() + address.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::Ed25519(address) => {
-                ED25519_ADDRESS_KIND.pack(writer)?;
+                Ed25519Address::KIND.pack(writer)?;
                 address.pack(writer)?;
             }
         }
@@ -80,7 +85,7 @@ impl Packable for Address {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            ED25519_ADDRESS_KIND => Ed25519Address::unpack(reader)?.into(),
+            Ed25519Address::KIND => Ed25519Address::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidAddressKind(k)),
         })
     }

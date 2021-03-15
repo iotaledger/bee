@@ -2,15 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    balance::BalanceDiffs,
-    dust::DUST_THRESHOLD,
-    error::Error,
-    event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
-    model::{Migration, Receipt, TreasuryOutput},
-    state::check_ledger_state,
-    storage::{self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend},
-    white_flag,
-    white_flag::{conflict::ConflictReason, merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
+    consensus::{
+        dust::DUST_THRESHOLD,
+        error::Error,
+        event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
+        merkle_hasher::MerkleHasher,
+        metadata::WhiteFlagMetadata,
+        state::check_ledger_state,
+        storage::{
+            self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend,
+        },
+        validation,
+    },
+    types::{BalanceDiffs, ConflictReason, Migration, Receipt, TreasuryOutput},
 };
 
 use bee_message::{
@@ -62,11 +66,11 @@ where
 
     let mut metadata = WhiteFlagMetadata::new(MilestoneIndex(milestone.essence().index()));
 
-    let parents = message.parents().to_vec();
+    let parents = message.parents().copied().collect();
 
     drop(message);
 
-    white_flag::validation::traversal::<N>(tangle, storage, parents, &mut metadata).await?;
+    validation::traversal::<N>(tangle, storage, parents, &mut metadata).await?;
 
     // Account for the milestone itself.
     metadata.num_referenced_messages += 1;
@@ -119,9 +123,9 @@ where
             match receipt.inner().transaction() {
                 Payload::TreasuryTransaction(treasury) => match treasury.output() {
                     Output::Treasury(output) => output.clone(),
-                    _ => return Err(Error::UnsupportedOutputType),
+                    output => return Err(Error::UnsupportedOutputKind(output.kind())),
                 },
-                _ => return Err(Error::UnsupportedPayloadType),
+                payload => return Err(Error::UnsupportedPayloadKind(payload.kind())),
             },
             milestone_id,
         );
@@ -253,7 +257,7 @@ where
                     balance_diffs.amount_add(*output.address(), output.amount());
                     balance_diffs.dust_allowance_add(*output.address(), output.amount());
                 }
-                _ => return Err(Error::UnsupportedOutputType),
+                output => return Err(Error::UnsupportedOutputKind(output.kind())),
             }
         }
 
@@ -283,7 +287,7 @@ where
                             balance_diffs.amount_add(*output.address(), output.amount());
                             balance_diffs.dust_allowance_add(*output.address(), output.amount());
                         }
-                        _ => return Err(Error::UnsupportedOutputType),
+                        output => return Err(Error::UnsupportedOutputKind(output.kind())),
                     }
                 }
 
@@ -291,17 +295,17 @@ where
 
                 for (output_id, (created_output, consumed_output)) in diff.consumed().iter() {
                     match created_output.inner() {
-                        Output::SignatureLockedSingle(created_output) => {
-                            balance_diffs.amount_sub(*created_output.address(), created_output.amount());
-                            if created_output.amount() < DUST_THRESHOLD {
-                                balance_diffs.dust_output_dec(*created_output.address());
+                        Output::SignatureLockedSingle(output) => {
+                            balance_diffs.amount_sub(*output.address(), output.amount());
+                            if output.amount() < DUST_THRESHOLD {
+                                balance_diffs.dust_output_dec(*output.address());
                             }
                         }
-                        Output::SignatureLockedDustAllowance(created_output) => {
-                            balance_diffs.amount_sub(*created_output.address(), created_output.amount());
-                            balance_diffs.dust_allowance_sub(*created_output.address(), created_output.amount());
+                        Output::SignatureLockedDustAllowance(output) => {
+                            balance_diffs.amount_sub(*output.address(), output.amount());
+                            balance_diffs.dust_allowance_sub(*output.address(), output.amount());
                         }
-                        _ => return Err(Error::UnsupportedOutputType),
+                        output => return Err(Error::UnsupportedOutputKind(output.kind())),
                     }
                     consumed.insert(*output_id, (*consumed_output).clone());
                 }

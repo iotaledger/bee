@@ -67,6 +67,8 @@ impl Miner {
         start_nonce: u64,
         target_zeros: usize,
     ) -> Result<u64, Error> {
+        assert!(target_zeros <= HASH_LENGTH);
+
         let mut nonce = start_nonce;
         let mut hasher = BatchHasher::<T1B1Buf>::new(HASH_LENGTH, CurlPRounds::Rounds81);
         let mut buffers = Vec::<TritBuf<T1B1Buf>>::with_capacity(BATCH_SIZE);
@@ -78,7 +80,7 @@ impl Miner {
         }
 
         while !done.load(Ordering::Relaxed) {
-            for (i, buffer) in buffers.iter_mut().enumerate().take(BATCH_SIZE) {
+            for (i, buffer) in buffers.iter_mut().enumerate() {
                 let nonce_trits = b1t6::encode::<T1B1Buf>(&(nonce + i as u64).to_le_bytes());
                 buffer[pow_digest.len()..pow_digest.len() + nonce_trits.len()].copy_from(&nonce_trits);
                 hasher.add(buffer.clone());

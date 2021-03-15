@@ -14,8 +14,6 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
 use alloc::boxed::Box;
 use core::ops::RangeInclusive;
 
-pub(crate) const INDEXATION_PAYLOAD_KIND: u32 = 2;
-
 const INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=64;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -26,13 +24,15 @@ pub struct IndexationPayload {
 }
 
 impl IndexationPayload {
+    pub const KIND: u32 = 2;
+
     pub fn new(index: &[u8], data: &[u8]) -> Result<Self, Error> {
         if !INDEX_LENGTH_RANGE.contains(&index.len()) {
-            return Err(Error::InvalidIndexationLength(index.len()));
+            return Err(Error::InvalidIndexationIndexLength(index.len()));
         }
 
         if data.len() > MESSAGE_LENGTH_MAX {
-            return Err(Error::InvalidIndexationLength(data.len()));
+            return Err(Error::InvalidIndexationDataLength(data.len()));
         }
 
         Ok(Self {
@@ -75,24 +75,24 @@ impl Packable for IndexationPayload {
         let index_len = u16::unpack(reader)? as usize;
 
         if !INDEX_LENGTH_RANGE.contains(&index_len) {
-            return Err(Error::InvalidIndexationLength(index_len));
+            return Err(Error::InvalidIndexationIndexLength(index_len));
         }
 
-        let mut index_bytes = vec![0u8; index_len];
-        reader.read_exact(&mut index_bytes)?;
+        let mut index = vec![0u8; index_len];
+        reader.read_exact(&mut index)?;
 
         let data_len = u32::unpack(reader)? as usize;
 
         if data_len > MESSAGE_LENGTH_MAX {
-            return Err(Error::InvalidIndexationLength(data_len));
+            return Err(Error::InvalidIndexationDataLength(data_len));
         }
 
-        let mut data_bytes = vec![0u8; data_len];
-        reader.read_exact(&mut data_bytes)?;
+        let mut data = vec![0u8; data_len];
+        reader.read_exact(&mut data)?;
 
         Ok(Self {
-            index: index_bytes.into_boxed_slice(),
-            data: data_bytes.into_boxed_slice(),
+            index: index.into(),
+            data: data.into(),
         })
     }
 }

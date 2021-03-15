@@ -12,26 +12,45 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-message = { path = "../bee-message" }
-bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-snapshot = { path = "../bee-snapshot" }
-bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-tangle = { path = "../bee-tangle" }
-bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-snapshot = { path = "../bee-snapshot", optional = true }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-tangle = { path = "../bee-tangle", optional = true }
+bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 
-async-trait = "0.1"
-digest = "0.9"
-flume = "0.10"
-futures = "0.3"
-hex = "0.4"
-iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "c3bf565eba62d0b81144174c2ff917bfde282e49", features = ["blake2b"] }
-log = "0.4"
-serde = { version = "1.0", features = ["derive" ] }
-thiserror = "1.0"
-tokio = { version = "1.1", features = ["sync"] }
-tokio-stream = "0.1"
+async-trait = { version = "0.1", optional = true }
+digest = { version = "0.9", optional = true }
+flume = { version = "0.10", optional = true }
+futures = { version = "0.3", optional = true }
+hex = { version = "0.4", optional = true }
+iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "c3bf565eba62d0b81144174c2ff917bfde282e49", features = ["blake2b"], optional = true }
+log = { version = "0.4", optional = true }
+serde = { version = "1.0", features = ["derive" ], optional = true }
+thiserror = { version = "1.0" }
+tokio = { version = "1.1", features = ["sync"], optional = true }
+tokio-stream = { version = "0.1", optional = true }
 
 [dev-dependencies]
-hex = "0.4"
 rand = "0.8"
+
+[features]
+consensus = [
+  "bee-crypto",
+  "bee-runtime",
+  "bee-snapshot",
+  "bee-storage",
+  "bee-tangle",
+  "bee-ternary",
+  "async-trait",
+  "digest",
+  "flume",
+  "futures",
+  "hex",
+  "iota-crypto",
+  "log",
+  "serde",
+  "tokio",
+  "tokio-stream"
+]

@@ -1,28 +1,23 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::Payload, Error, MessageId, MESSAGE_ID_LENGTH};
+use crate::{payload::Payload, Error, MessageId, Parents, MESSAGE_ID_LENGTH};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_pow::providers::{Miner, Provider, ProviderBuilder};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
-use std::{
-    ops::RangeInclusive,
-    sync::{atomic::AtomicBool, Arc},
-};
+use std::sync::{atomic::AtomicBool, Arc};
 
 pub const MESSAGE_LENGTH_MIN: usize = 53;
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
-// TODO remove when we start using the Parents type
-pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
     network_id: u64,
-    parents: Vec<MessageId>,
+    parents: Parents,
     payload: Option<Payload>,
     nonce: u64,
 }
@@ -44,8 +39,8 @@ impl Message {
         self.network_id
     }
 
-    pub fn parents(&self) -> &[MessageId] {
-        &self.parents
+    pub fn parents(&self) -> impl Iterator<Item = &MessageId> + '_ {
+        self.parents.iter()
     }
 
     pub fn payload(&self) -> &Option<Payload> {
@@ -62,8 +57,7 @@ impl Packable for Message {
 
     fn packed_len(&self) -> usize {
         self.network_id.packed_len()
-            + 0u8.packed_len()
-            + self.parents.len() * MESSAGE_ID_LENGTH
+            + self.parents.packed_len()
             + 0u32.packed_len()
             + self.payload.as_ref().map_or(0, Packable::packed_len)
             + 0u64.packed_len()
@@ -72,11 +66,7 @@ impl Packable for Message {
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.network_id.pack(writer)?;
 
-        (self.parents().len() as u8).pack(writer)?;
-
-        for parent in self.parents().iter() {
-            parent.pack(writer)?;
-        }
+        self.parents.pack(writer)?;
 
         if let Some(ref payload) = self.payload {
             (payload.packed_len() as u32).pack(writer)?;
@@ -93,16 +83,7 @@ impl Packable for Message {
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let network_id = u64::unpack(reader)?;
 
-        let parents_len = u8::unpack(reader)? as usize;
-
-        if !MESSAGE_PARENTS_RANGE.contains(&parents_len) {
-            return Err(Error::InvalidParentsCount(parents_len));
-        }
-
-        let mut parents = Vec::with_capacity(parents_len);
-        for _ in 0..parents_len {
-            parents.push(MessageId::unpack(reader)?);
-        }
+        let parents = Parents::unpack(reader)?;
 
         let payload_len = u32::unpack(reader)? as usize;
         let payload = if payload_len != 0 {
@@ -110,6 +91,15 @@ impl Packable for Message {
             if payload_len != payload.packed_len() {
                 return Err(Self::Error::InvalidAnnouncedLength(payload_len, payload.packed_len()));
             }
+
+            if !matches!(
+                payload,
+                Payload::Transaction(_) | Payload::Milestone(_) | Payload::Indexation(_)
+            ) {
+                // Safe to unwrap since it's known not to be None.
+                return Err(Error::InvalidPayloadKind(payload.kind()));
+            }
+
             Some(payload)
         } else {
             None
@@ -126,6 +116,11 @@ impl Packable for Message {
             return Err(Error::InvalidMessageLength(message_len));
         }
 
+        // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
+        if reader.bytes().next().is_some() {
+            return Err(Error::RemainingBytesAfterMessage);
+        }
+
         Ok(Self {
             network_id,
             parents,
@@ -137,7 +132,7 @@ impl Packable for Message {
 
 pub struct MessageBuilder<P: Provider = Miner> {
     network_id: Option<u64>,
-    parents: Option<Vec<MessageId>>,
+    parents: Option<Parents>,
     payload: Option<Payload>,
     nonce_provider: Option<(P, f64, Option<Arc<AtomicBool>>)>,
 }
@@ -163,7 +158,7 @@ impl<P: Provider> MessageBuilder<P> {
         self
     }
 
-    pub fn with_parents(mut self, parents: Vec<MessageId>) -> Self {
+    pub fn with_parents(mut self, parents: Parents) -> Self {
         self.parents = Some(parents);
         self
     }
@@ -179,19 +174,24 @@ impl<P: Provider> MessageBuilder<P> {
     }
 
     pub fn finish(self) -> Result<Message, Error> {
+        // TODO harmonize unpack and finish
+        let network_id = self.network_id.ok_or(Error::MissingField("network_id"))?;
+        let parents = self.parents.ok_or(Error::MissingField("parents"))?;
+
+        if !matches!(
+            self.payload,
+            None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::Indexation(_))
+        ) {
+            // Safe to unwrap since it's known not to be None.
+            return Err(Error::InvalidPayloadKind(self.payload.unwrap().kind()));
+        }
+
         let mut message = Message {
-            network_id: self.network_id.ok_or(Error::MissingField("network_id"))?,
-            parents: self.parents.ok_or(Error::MissingField("parents"))?,
+            network_id,
+            parents,
             payload: self.payload,
             nonce: 0,
         };
-
-        if !MESSAGE_PARENTS_RANGE.contains(&message.parents.len()) {
-            return Err(Error::InvalidParentsCount(message.parents.len()));
-        }
-
-        message.parents.sort_unstable();
-        message.parents.dedup();
 
         let message_bytes = message.pack_new();
 

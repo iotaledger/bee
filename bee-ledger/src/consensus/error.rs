@@ -1,30 +1,26 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::balance::Balance;
+use crate::types::Balance;
 
 use bee_message::{address::Address, milestone::MilestoneIndex, Error as MessageError, MessageId};
 
-use thiserror::Error;
-
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("I/O error {0}")]
-    Io(#[from] std::io::Error),
     #[error("")]
     Message(#[from] MessageError),
     #[error("Message {0} is missing in the past cone of the milestone")]
     MissingMessage(MessageId),
     #[error("")]
-    UnsupportedInputType,
+    UnsupportedInputKind(u8),
     #[error("")]
-    UnsupportedOutputType,
+    UnsupportedOutputKind(u8),
     #[error("")]
-    UnsupportedAddressType,
+    UnsupportedAddressKind(u8),
     #[error("")]
-    UnsupportedTransactionEssenceType,
+    UnsupportedTransactionEssenceKind(u8),
     #[error("")]
-    UnsupportedPayloadType,
+    UnsupportedPayloadKind(u32),
     #[error("Message was not found")]
     MilestoneMessageNotFound,
     #[error("Message payload was not a milestone")]
@@ -43,11 +39,6 @@ pub enum Error {
     InvalidLedgerBalanceState(u64),
     #[error("Invalid ledger dust state: {0:?} {1:?}")]
     InvalidLedgerDustState(Address, Balance),
-    #[error("Treasury amount mismatch: {0} != {1}")]
-    TreasuryAmountMismatch(u64, u64),
-    #[error("")]
-    // TODO
-    Option,
     #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
 }

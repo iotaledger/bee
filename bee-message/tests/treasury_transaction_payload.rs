@@ -11,6 +11,11 @@ const UTXO_INPUT: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb04
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
+fn kind() {
+    assert_eq!(TreasuryTransactionPayload::KIND, 4);
+}
+
+#[test]
 fn new_valid() {
     let input = Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap());
     let output = Output::from(TreasuryOutput::new(1_000).unwrap());

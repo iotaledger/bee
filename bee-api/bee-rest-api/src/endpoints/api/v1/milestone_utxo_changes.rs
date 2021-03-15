@@ -7,7 +7,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_ledger::model::OutputDiff;
+use bee_ledger::types::OutputDiff;
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;

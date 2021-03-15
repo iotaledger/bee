@@ -10,6 +10,11 @@ const MESSAGE_ID_VALID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d
 const MESSAGE_ID_INVALID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6";
 
 #[test]
+fn kind() {
+    assert_eq!(TreasuryInput::KIND, 1);
+}
+
+#[test]
 fn new_valid() {
     let message_id = MessageId::from_str(MESSAGE_ID_VALID).unwrap();
     let input = TreasuryInput::new(message_id);

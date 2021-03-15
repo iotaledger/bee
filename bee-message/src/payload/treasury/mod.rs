@@ -5,8 +5,6 @@ use crate::{input::Input, output::Output, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-pub(crate) const TREASURY_TRANSACTION_PAYLOAD_KIND: u32 = 4;
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreasuryTransactionPayload {
@@ -15,6 +13,8 @@ pub struct TreasuryTransactionPayload {
 }
 
 impl TreasuryTransactionPayload {
+    pub const KIND: u32 = 4;
+
     pub fn new(input: Input, output: Output) -> Result<Self, Error> {
         if !matches!(input, Input::Treasury(_)) {
             return Err(Error::InvalidInputKind(input.kind()));

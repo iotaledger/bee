@@ -7,12 +7,12 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::{convert::From, ops::Deref, str::FromStr};
 
-pub(crate) const TREASURY_INPUT_KIND: u8 = 1;
-
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct TreasuryInput(MessageId);
 
 impl TreasuryInput {
+    pub const KIND: u8 = 1;
+
     pub fn new(id: MessageId) -> Self {
         Self(id)
     }

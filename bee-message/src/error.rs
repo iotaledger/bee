@@ -31,9 +31,19 @@ pub enum Error {
     InvalidAnnouncedLength(usize, usize),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
-    InvalidIndexationLength(usize),
+    InvalidIndexationIndexLength(usize),
+    InvalidIndexationDataLength(usize),
     InvalidMessageLength(usize),
     InvalidReceiptFundsCount(usize),
+    MilestonePublicKeysNotUniqueSorted,
+    MilestoneNoPublicKey,
+    MilestoneNoSignature,
+    MilestonePublicKeysSignaturesCountMismatch(usize, usize),
+    InvalidUnlockBlockReference(usize),
+    DuplicateSignature(usize),
+    TransactionInputsNotSorted,
+    TransactionOutputsNotSorted,
+    RemainingBytesAfterMessage,
 }
 
 impl std::error::Error for Error {}
@@ -81,9 +91,45 @@ impl fmt::Display for Error {
             Error::InvalidHexadecimalLength(expected, actual) => {
                 write!(f, "Invalid hexadecimal length: expected {} got {}.", expected, actual)
             }
-            Error::InvalidIndexationLength(length) => write!(f, "Invalid indexation index or data length {}.", length),
+            Error::InvalidIndexationIndexLength(length) => {
+                write!(f, "Invalid indexation index length {}.", length)
+            }
+            Error::InvalidIndexationDataLength(length) => {
+                write!(f, "Invalid indexation data length {}.", length)
+            }
             Error::InvalidMessageLength(length) => write!(f, "Invalid message length {}.", length),
             Error::InvalidReceiptFundsCount(count) => write!(f, "Invalid receipt funds count: {}.", count),
+            Error::MilestonePublicKeysNotUniqueSorted => {
+                write!(f, "Milestone public keys are not unique and/or sorted.")
+            }
+            Error::MilestoneNoPublicKey => {
+                write!(f, "No public key in milestone.")
+            }
+            Error::MilestoneNoSignature => {
+                write!(f, "No signature in milestone.")
+            }
+            Error::MilestonePublicKeysSignaturesCountMismatch(kcount, scount) => {
+                write!(
+                    f,
+                    "Milestone public keys and signatures count mismatch: {0} != {1}.",
+                    kcount, scount
+                )
+            }
+            Error::InvalidUnlockBlockReference(index) => {
+                write!(f, "Invalid unlock block reference: {0}", index)
+            }
+            Error::DuplicateSignature(index) => {
+                write!(f, "Duplicate signature at index: {0}", index)
+            }
+            Error::TransactionInputsNotSorted => {
+                write!(f, "Transaction inputs are not sorted.")
+            }
+            Error::TransactionOutputsNotSorted => {
+                write!(f, "Transaction outputs are not sorted.")
+            }
+            Error::RemainingBytesAfterMessage => {
+                write!(f, "Remaining bytes after message.")
+            }
         }
     }
 }

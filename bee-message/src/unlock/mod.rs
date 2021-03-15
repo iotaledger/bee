@@ -5,8 +5,6 @@ mod reference;
 mod signature;
 
 pub use reference::ReferenceUnlock;
-use reference::REFERENCE_UNLOCK_KIND;
-use signature::SIGNATURE_UNLOCK_KIND;
 pub use signature::{Ed25519Signature, SignatureUnlock};
 
 use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, Error};
@@ -14,9 +12,11 @@ use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, Error};
 use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::Deref;
+// TODO no_std
+use std::collections::HashSet;
 
 #[non_exhaustive]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
@@ -25,6 +25,15 @@ use core::ops::Deref;
 pub enum UnlockBlock {
     Signature(SignatureUnlock),
     Reference(ReferenceUnlock),
+}
+
+impl UnlockBlock {
+    pub fn kind(&self) -> u8 {
+        match self {
+            Self::Signature(_) => SignatureUnlock::KIND,
+            Self::Reference(_) => ReferenceUnlock::KIND,
+        }
+    }
 }
 
 impl From<SignatureUnlock> for UnlockBlock {
@@ -44,19 +53,19 @@ impl Packable for UnlockBlock {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::Signature(unlock) => SIGNATURE_UNLOCK_KIND.packed_len() + unlock.packed_len(),
-            Self::Reference(unlock) => REFERENCE_UNLOCK_KIND.packed_len() + unlock.packed_len(),
+            Self::Signature(unlock) => SignatureUnlock::KIND.packed_len() + unlock.packed_len(),
+            Self::Reference(unlock) => ReferenceUnlock::KIND.packed_len() + unlock.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
             Self::Signature(unlock) => {
-                SIGNATURE_UNLOCK_KIND.pack(writer)?;
+                SignatureUnlock::KIND.pack(writer)?;
                 unlock.pack(writer)?;
             }
             Self::Reference(unlock) => {
-                REFERENCE_UNLOCK_KIND.pack(writer)?;
+                ReferenceUnlock::KIND.pack(writer)?;
                 unlock.pack(writer)?;
             }
         }
@@ -66,8 +75,8 @@ impl Packable for UnlockBlock {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            SIGNATURE_UNLOCK_KIND => SignatureUnlock::unpack(reader)?.into(),
-            REFERENCE_UNLOCK_KIND => ReferenceUnlock::unpack(reader)?.into(),
+            SignatureUnlock::KIND => SignatureUnlock::unpack(reader)?.into(),
+            ReferenceUnlock::KIND => ReferenceUnlock::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidUnlockBlockKind(k)),
         })
     }
@@ -81,6 +90,26 @@ impl UnlockBlocks {
     pub fn new(unlock_blocks: Vec<UnlockBlock>) -> Result<Self, Error> {
         if !UNLOCK_BLOCK_COUNT_RANGE.contains(&unlock_blocks.len()) {
             return Err(Error::InvalidUnlockBlockCount(unlock_blocks.len()));
+        }
+
+        let mut seen_signatures = HashSet::new();
+
+        for (index, unlock_block) in unlock_blocks.iter().enumerate() {
+            match unlock_block {
+                UnlockBlock::Reference(r) => {
+                    if index == 0
+                        || r.index() >= index as u16
+                        || matches!(unlock_blocks[r.index() as usize], UnlockBlock::Reference(_))
+                    {
+                        return Err(Error::InvalidUnlockBlockReference(index));
+                    }
+                }
+                UnlockBlock::Signature(s) => {
+                    if !seen_signatures.insert(s) {
+                        return Err(Error::DuplicateSignature(index));
+                    }
+                }
+            }
         }
 
         Ok(Self(unlock_blocks.into_boxed_slice()))
@@ -131,6 +160,6 @@ impl Packable for UnlockBlocks {
             unlock_blocks.push(UnlockBlock::unpack(reader)?);
         }
 
-        Ok(Self(unlock_blocks.into_boxed_slice()))
+        Self::new(unlock_blocks)
     }
 }

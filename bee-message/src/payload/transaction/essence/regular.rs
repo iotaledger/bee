@@ -6,14 +6,13 @@ use crate::{
     input::Input,
     output::Output,
     payload::Payload,
+    utils::is_sorted,
     Error,
 };
 
 use bee_common::packable::{Packable, Read, Write};
 
 use alloc::{boxed::Box, vec::Vec};
-
-pub(crate) const REGULAR_ESSENCE_KIND: u8 = 0;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -24,6 +23,8 @@ pub struct RegularEssence {
 }
 
 impl RegularEssence {
+    pub const KIND: u8 = 0;
+
     pub fn builder() -> RegularEssenceBuilder {
         RegularEssenceBuilder::new()
     }
@@ -150,7 +151,7 @@ impl RegularEssenceBuilder {
         self
     }
 
-    pub fn finish(mut self) -> Result<RegularEssence, Error> {
+    pub fn finish(self) -> Result<RegularEssence, Error> {
         if !INPUT_OUTPUT_COUNT_RANGE.contains(&self.inputs.len()) {
             return Err(Error::InvalidInputOutputCount(self.inputs.len()));
         }
@@ -181,6 +182,11 @@ impl RegularEssenceBuilder {
                 }
                 _ => return Err(Error::InvalidInputKind(input.kind())),
             }
+        }
+
+        // Inputs must be lexicographically sorted in their serialised forms.
+        if !is_sorted(self.inputs.iter().map(|input| input.pack_new())) {
+            return Err(Error::TransactionInputsNotSorted);
         }
 
         // Outputs validation
@@ -234,8 +240,10 @@ impl RegularEssenceBuilder {
             }
         }
 
-        self.inputs.sort();
-        self.outputs.sort();
+        // Outputs must be lexicographically sorted in their serialised forms.
+        if !is_sorted(self.outputs.iter().map(|output| output.pack_new())) {
+            return Err(Error::TransactionOutputsNotSorted);
+        }
 
         Ok(RegularEssence {
             inputs: self.inputs.into_boxed_slice(),

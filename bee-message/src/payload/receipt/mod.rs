@@ -11,7 +11,6 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::RangeInclusive;
 
-pub(crate) const RECEIPT_PAYLOAD_KIND: u32 = 3;
 const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = 1..=127;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -24,6 +23,8 @@ pub struct ReceiptPayload {
 }
 
 impl ReceiptPayload {
+    pub const KIND: u32 = 3;
+
     pub fn new(index: u32, last: bool, funds: Vec<MigratedFundsEntry>, transaction: Payload) -> Result<Self, Error> {
         if !MIGRATED_FUNDS_ENTRY_RANGE.contains(&funds.len()) {
             return Err(Error::InvalidReceiptFundsCount(funds.len()));
