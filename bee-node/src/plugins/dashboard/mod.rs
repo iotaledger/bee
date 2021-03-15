@@ -113,7 +113,6 @@ where
         let rest_api_config = node_config.rest_api.clone();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
-        let peering_config = node_config.peering.clone();
 
         // Keep track of all connected users, key is usize, value is a websocket sender.
         let users = WsUsers::default();
@@ -156,7 +155,7 @@ where
             let routes = routes::routes(
                 storage.clone(),
                 tangle.clone(),
-                peering_config.peer_id.to_string(),
+                node_config.node_id.to_string(),
                 config.auth().clone(),
                 rest_api_config.clone(),
                 users.clone(),

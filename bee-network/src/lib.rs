@@ -54,12 +54,13 @@ pub async fn init<N: Node>(
     config: NetworkConfig,
     local_keys: Keypair,
     network_id: u64,
-    max_unknown_peers: usize,
     mut node_builder: N::Builder,
 ) -> (N::Builder, NetworkListener) {
     let NetworkConfig {
         bind_address,
         reconnect_interval_secs,
+        max_unknown_peers,
+        peers,
     } = config;
 
     RECONNECT_INTERVAL_SECS.swap(reconnect_interval_secs, Ordering::Relaxed);
@@ -67,8 +68,8 @@ pub async fn init<N: Node>(
     MAX_UNKNOWN_PEERS.swap(max_unknown_peers, Ordering::Relaxed);
 
     let local_keys = identity::Keypair::Ed25519(local_keys);
-    let local_id = PeerId::from_public_key(local_keys.public());
-    info!("Local peer id: {}", local_id);
+    let local_peer_id = PeerId::from_public_key(local_keys.public());
+    info!("Local peer id: {}", local_peer_id);
 
     let (command_sender, command_receiver) = service::command_channel();
     let (internal_command_sender, internal_command_receiver) = service::command_channel();
@@ -102,7 +103,18 @@ pub async fn init<N: Node>(
         internal_event_receiver,
     };
 
-    let network_service_controller = NetworkServiceController::new(command_sender, local_id);
+    let network_service_controller = NetworkServiceController::new(command_sender);
+
+    for peer in peers {
+        network_service_controller
+            .send(Command::AddPeer {
+                peer_id: peer.peer_id,
+                address: peer.address,
+                alias: peer.alias,
+                relation: PeerRelation::Known,
+            })
+            .expect("network service command receiver dropped");
+    }
 
     node_builder = node_builder
         .with_worker_cfg::<NetworkService>(service_config)

@@ -8,8 +8,7 @@ use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
 
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
 use bee_ledger::consensus::config::{LedgerConfig, LedgerConfigBuilder};
-use bee_network::{NetworkConfig, NetworkConfigBuilder};
-use bee_peering::{PeeringConfig, PeeringConfigBuilder};
+use bee_network::{Keypair, NetworkConfig, NetworkConfigBuilder, PeerId, PublicKey};
 use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_snapshot::config::{SnapshotConfig, SnapshotConfigBuilder};
@@ -36,12 +35,12 @@ pub enum Error {
 
 #[derive(Default, Deserialize)]
 pub struct NodeConfigBuilder<B: StorageBackend> {
+    pub(crate) identity: Option<String>,
     pub(crate) alias: Option<String>,
     pub(crate) bech32_hrp: Option<String>,
     pub(crate) network_id: Option<String>,
     pub(crate) logger: Option<LoggerConfigBuilder>,
     pub(crate) network: Option<NetworkConfigBuilder>,
-    pub(crate) peering: Option<PeeringConfigBuilder>,
     pub(crate) protocol: Option<ProtocolConfigBuilder>,
     pub(crate) rest_api: Option<RestApiConfigBuilder>,
     pub(crate) snapshot: Option<SnapshotConfigBuilder>,
@@ -63,6 +62,23 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
     }
 
     pub fn finish(self) -> NodeConfig<B> {
+        let (identity, identity_string, new) = if let Some(identity_string) = self.identity {
+            if identity_string.len() == 128 {
+                let mut decoded = [0u8; 64];
+                hex::decode_to_slice(&identity_string[..], &mut decoded).expect("error decoding identity");
+                let identity = Keypair::decode(&mut decoded).expect("error decoding identity");
+                (identity, identity_string, false)
+            } else if identity_string.is_empty() {
+                generate_random_identity()
+            } else {
+                panic!("invalid identity string length");
+            }
+        } else {
+            generate_random_identity()
+        };
+
+        let node_id = PeerId::from_public_key(PublicKey::Ed25519(identity.public()));
+
         let network_id_string = self.network_id.unwrap_or_else(|| DEFAULT_NETWORK_ID.to_string());
         let network_id_numeric = u64::from_le_bytes(
             Blake2b256::digest(network_id_string.as_bytes())[0..8]
@@ -71,12 +87,13 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
         );
 
         NodeConfig {
+            identity: (identity, identity_string, new),
+            node_id,
             alias: self.alias.unwrap_or_else(|| DEFAULT_ALIAS.to_owned()),
             bech32_hrp: self.bech32_hrp.unwrap_or_else(|| DEFAULT_BECH32_HRP.to_owned()),
             network_id: (network_id_string, network_id_numeric),
             logger: self.logger.unwrap_or_default().finish(),
             network: self.network.unwrap_or_default().finish(),
-            peering: self.peering.unwrap_or_default().finish(),
             protocol: self.protocol.unwrap_or_default().finish(),
             rest_api: self.rest_api.unwrap_or_default().finish(),
             snapshot: self.snapshot.unwrap_or_default().finish(),
@@ -90,13 +107,21 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
     }
 }
 
+fn generate_random_identity() -> (Keypair, String, bool) {
+    let identity = Keypair::generate();
+    let encoded = identity.encode();
+    let identity_string = hex::encode(encoded);
+    (identity, identity_string, true)
+}
+
 pub struct NodeConfig<B: StorageBackend> {
+    pub identity: (Keypair, String, bool),
+    pub node_id: PeerId,
     pub alias: String,
     pub bech32_hrp: String,
     pub network_id: (String, u64),
     pub logger: LoggerConfig,
     pub network: NetworkConfig,
-    pub peering: PeeringConfig,
     pub protocol: ProtocolConfig,
     pub rest_api: RestApiConfig,
     pub snapshot: SnapshotConfig,
@@ -111,12 +136,13 @@ pub struct NodeConfig<B: StorageBackend> {
 impl<B: StorageBackend> Clone for NodeConfig<B> {
     fn clone(&self) -> Self {
         Self {
+            identity: self.identity.clone(),
+            node_id: self.node_id,
             alias: self.alias.clone(),
             bech32_hrp: self.bech32_hrp.clone(),
             network_id: self.network_id.clone(),
             logger: self.logger.clone(),
             network: self.network.clone(),
-            peering: self.peering.clone(),
             protocol: self.protocol.clone(),
             rest_api: self.rest_api.clone(),
             snapshot: self.snapshot.clone(),
