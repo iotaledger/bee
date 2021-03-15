@@ -36,7 +36,10 @@ fn new_invalid_not_sorted() {
     let mut inner = rand_message_ids(8);
     inner.reverse();
 
-    assert!(matches!(Parents::new(inner.clone()), Err(Error::ParentsNotUniqueSorted)));
+    assert!(matches!(
+        Parents::new(inner.clone()),
+        Err(Error::ParentsNotUniqueSorted)
+    ));
 }
 
 #[test]
@@ -44,7 +47,10 @@ fn new_invalid_not_unique() {
     let mut inner = rand_message_ids(7);
     inner.push(*inner.last().unwrap());
 
-    assert!(matches!(Parents::new(inner.clone()), Err(Error::ParentsNotUniqueSorted)));
+    assert!(matches!(
+        Parents::new(inner.clone()),
+        Err(Error::ParentsNotUniqueSorted)
+    ));
 }
 
 #[test]
@@ -96,10 +102,7 @@ fn unpack_invalid_not_sorted() {
 
     // Remove 8 byte vector length field and replace with 1 byte, to represent message parents.
     let mut packed = (8u8).pack_new();
-    let mut packed_messages = inner.pack_new()
-        .split_at(std::mem::size_of::<u64>())
-        .1
-        .to_vec();
+    let mut packed_messages = inner.pack_new().split_at(std::mem::size_of::<u64>()).1.to_vec();
     packed.append(&mut packed_messages);
 
     let parents = Parents::unpack(&mut packed.as_slice());
@@ -114,10 +117,7 @@ fn upnack_invalid_not_unique() {
 
     // Remove 8 byte vector length field and replace with 1 byte, to represent message parents.
     let mut packed = (8u8).pack_new();
-    let mut packed_messages = inner.pack_new()
-        .split_at(std::mem::size_of::<u64>())
-        .1
-        .to_vec();
+    let mut packed_messages = inner.pack_new().split_at(std::mem::size_of::<u64>()).1.to_vec();
     packed.append(&mut packed_messages);
 
     let parents = Parents::unpack(&mut packed.as_slice());

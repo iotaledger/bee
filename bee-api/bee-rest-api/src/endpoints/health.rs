@@ -1,10 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::config::ROUTE_HEALTH;
-use crate::filters::{with_peer_manager, with_tangle};
-use crate::permission::has_permission;
-use crate::storage::StorageBackend;
+use crate::{
+    config::ROUTE_HEALTH,
+    filters::{with_peer_manager, with_tangle},
+    permission::has_permission,
+    storage::StorageBackend,
+};
 
 use bee_protocol::PeerManager;
 use bee_runtime::resource::ResourceHandle;
