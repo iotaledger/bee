@@ -3,7 +3,10 @@
 
 use crate::{
     body::SuccessBody,
+    config::ROUTE_SUBMIT_MESSAGE_RAW,
     endpoints::api::v1::submit_message::{forward_to_message_submitter, SubmitMessageResponse},
+    filters::{with_message_submitter, with_tangle},
+    permission::has_permission,
     rejection::CustomRejection,
     storage::StorageBackend,
 };
@@ -15,7 +18,28 @@ use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use tokio::sync::mpsc;
-use warp::{http::StatusCode, reject, Rejection, Reply};
+use warp::{http::StatusCode, reject, Filter, Rejection, Reply};
+
+use std::net::IpAddr;
+
+fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
+    super::path().and(warp::path("messages")).and(warp::path::end())
+}
+
+pub(crate) fn filter<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    tangle: ResourceHandle<MsTangle<B>>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    self::path()
+        .and(warp::post())
+        .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
+        .and(warp::body::bytes())
+        .and(with_tangle(tangle))
+        .and(with_message_submitter(message_submitter))
+        .and_then(submit_message_raw)
+}
 
 pub(crate) async fn submit_message_raw<B: StorageBackend>(
     buf: warp::hyper::body::Bytes,

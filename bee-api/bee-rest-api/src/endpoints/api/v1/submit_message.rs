@@ -3,7 +3,9 @@
 
 use crate::{
     body::{BodyInner, SuccessBody},
-    config::RestApiConfig,
+    config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE},
+    filters::{with_message_submitter, with_network_id, with_protocol_config, with_rest_api_config, with_tangle},
+    permission::has_permission,
     rejection::CustomRejection,
     storage::StorageBackend,
     types::PayloadDto,
@@ -21,9 +23,34 @@ use log::error;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
 use tokio::sync::mpsc;
-use warp::{http::StatusCode, reject, Rejection, Reply};
+use warp::{http::StatusCode, reject, Filter, Rejection, Reply};
 
-use std::convert::TryFrom;
+use std::{convert::TryFrom, net::IpAddr};
+
+fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
+    super::path().and(warp::path("messages")).and(warp::path::end())
+}
+
+pub(crate) fn filter<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    tangle: ResourceHandle<MsTangle<B>>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+    network_id: NetworkId,
+    rest_api_config: RestApiConfig,
+    protocol_config: ProtocolConfig,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    self::path()
+        .and(warp::post())
+        .and(has_permission(ROUTE_SUBMIT_MESSAGE, public_routes, allowed_ips))
+        .and(warp::body::json())
+        .and(with_tangle(tangle))
+        .and(with_message_submitter(message_submitter))
+        .and(with_network_id(network_id))
+        .and(with_rest_api_config(rest_api_config))
+        .and(with_protocol_config(protocol_config))
+        .and_then(submit_message)
+}
 
 pub(crate) async fn submit_message<B: StorageBackend>(
     value: JsonValue,

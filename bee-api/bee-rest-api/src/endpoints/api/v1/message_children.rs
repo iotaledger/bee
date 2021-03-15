@@ -3,6 +3,10 @@
 
 use crate::{
     body::{BodyInner, SuccessBody},
+    config::ROUTE_MESSAGE_CHILDREN,
+    filters::with_tangle,
+    path_params::message_id,
+    permission::has_permission,
     storage::StorageBackend,
 };
 
@@ -11,9 +15,29 @@ use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use serde::{Deserialize, Serialize};
-use warp::{Rejection, Reply};
+use warp::{Filter, Rejection, Reply};
 
-use std::iter::FromIterator;
+use std::{iter::FromIterator, net::IpAddr};
+
+fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clone {
+    super::path()
+        .and(warp::path("messages"))
+        .and(message_id())
+        .and(warp::path("children"))
+        .and(warp::path::end())
+}
+
+pub(crate) fn filter<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    tangle: ResourceHandle<MsTangle<B>>,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    self::path()
+        .and(warp::get())
+        .and(has_permission(ROUTE_MESSAGE_CHILDREN, public_routes, allowed_ips))
+        .and(with_tangle(tangle))
+        .and_then(message_children)
+}
 
 pub async fn message_children<B: StorageBackend>(
     message_id: MessageId,
