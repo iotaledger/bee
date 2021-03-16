@@ -15,7 +15,7 @@ use crate::{
 };
 
 use bee_protocol::{PeerManager, ProtocolMetrics};
-use bee_rest_api::endpoints::health::is_healthy;
+use bee_rest_api::endpoints::routes::health::is_healthy;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use bee_tangle::MsTangle;
 
