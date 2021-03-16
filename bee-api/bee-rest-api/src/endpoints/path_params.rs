@@ -7,6 +7,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     milestone::MilestoneIndex,
     output::OutputId,
+    payload::transaction::TransactionId,
     MessageId,
 };
 use bee_network::PeerId;
@@ -27,9 +28,20 @@ pub(super) fn output_id() -> impl Filter<Extract = (OutputId,), Error = Rejectio
 pub(super) fn message_id() -> impl Filter<Extract = (MessageId,), Error = Rejection> + Copy {
     warp::path::param().and_then(|value: String| async move {
         match value.parse::<MessageId>() {
-            Ok(msg) => Ok(msg),
+            Ok(id) => Ok(id),
             Err(_) => Err(reject::custom(CustomRejection::BadRequest(
                 "invalid message id".to_string(),
+            ))),
+        }
+    })
+}
+
+pub(super) fn transaction_id() -> impl Filter<Extract = (TransactionId,), Error = Rejection> + Copy {
+    warp::path::param().and_then(|value: String| async move {
+        match value.parse::<TransactionId>() {
+            Ok(id) => Ok(id),
+            Err(_) => Err(reject::custom(CustomRejection::BadRequest(
+                "invalid transaction id".to_string(),
             ))),
         }
     })

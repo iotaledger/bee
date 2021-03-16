@@ -23,6 +23,7 @@ pub mod remove_peer;
 pub mod submit_message;
 pub mod submit_message_raw;
 pub mod tips;
+pub mod transaction_included_message;
 pub mod treasury;
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
@@ -178,5 +179,11 @@ pub(crate) fn filter<B: StorageBackend>(
         public_routes.clone(),
         allowed_ips.clone(),
         storage.clone(),
+    ))
+    .or(transaction_included_message::filter(
+        public_routes.clone(),
+        allowed_ips.clone(),
+        storage.clone(),
+        tangle.clone(),
     ))
 }
