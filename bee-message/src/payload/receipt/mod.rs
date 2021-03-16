@@ -10,6 +10,7 @@ use crate::{payload::Payload, utils::is_sorted, Error};
 use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::RangeInclusive;
+use std::collections::HashMap;
 
 // TODO use input/output range ?
 const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = 1..=127;
@@ -38,6 +39,14 @@ impl ReceiptPayload {
         // Funds must be lexicographically sorted in their serialised forms.
         if !is_sorted(funds.iter().map(Packable::pack_new)) {
             return Err(Error::TransactionOutputsNotSorted);
+        }
+
+        // TODO could be merged with the lexicographic check ?
+        let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
+        for (index, funds) in funds.iter().enumerate() {
+            if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash(), index) {
+                return Err(Error::TailTransactionHashNotUnique(previous, index));
+            }
         }
 
         Ok(Self {

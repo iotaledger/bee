@@ -46,6 +46,7 @@ pub enum Error {
     MigratedFundsNotSorted,
     RemainingBytesAfterMessage,
     ParentsNotUniqueSorted,
+    TailTransactionHashNotUnique(usize, usize),
 }
 
 impl std::error::Error for Error {}
@@ -137,6 +138,13 @@ impl fmt::Display for Error {
             }
             Error::ParentsNotUniqueSorted => {
                 write!(f, "Parents not unique and/or sorted.")
+            }
+            Error::TailTransactionHashNotUnique(previous, current) => {
+                write!(
+                    f,
+                    "Tail transaction hash is not unique at indices: {0} and {1}.",
+                    previous, current
+                )
             }
         }
     }
