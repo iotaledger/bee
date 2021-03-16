@@ -189,7 +189,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let this = bee_protocol::init::<BeeNode<B>>(config.protocol.clone(), network_id, events, this);
 
         info!("Initializing REST API...");
-        let this = bee_rest_api::init::<BeeNode<B>>(
+        let this = bee_rest_api::endpoints::init::<BeeNode<B>>(
             config.rest_api.clone(),
             config.protocol.clone(),
             config.network_id.clone(),

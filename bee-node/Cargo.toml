@@ -13,11 +13,11 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-ledger = { path = "../bee-ledger" }
+bee-ledger = { path = "../bee-ledger", features = ["consensus"] }
 bee-message = { path = "../bee-message" }
 bee-network = { path = "../bee-network" }
 bee-protocol = { path = "../bee-protocol" }
-bee-rest-api = { path = "../bee-api/bee-rest-api" }
+bee-rest-api = { path = "../bee-api/bee-rest-api", features = ["endpoints"] }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-snapshot = { path = "../bee-snapshot" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
@@ -40,7 +40,7 @@ rand = "0.8"
 rpassword = "5.0"
 rust-argon2 = "0.8"
 rust-embed = { version = "5.7", features = ["interpolate-folder-path"], optional = true }
-serde = { version = "1.0", features = ["derive" ] }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_repr = { version = "0.1", optional = true }
 structopt = { version = "0.3", default-features = false }
