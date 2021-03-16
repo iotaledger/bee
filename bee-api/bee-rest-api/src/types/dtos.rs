@@ -283,7 +283,7 @@ impl TryFrom<&Message> for MessageDto {
     fn try_from(value: &Message) -> Result<Self, Self::Error> {
         Ok(MessageDto {
             network_id: value.network_id().to_string(),
-            parents: value.parents().map(|p| p.to_string()).collect(),
+            parents: value.parents().iter().map(|p| p.to_string()).collect(),
             payload: value.payload().as_ref().map(TryInto::try_into).transpose()?,
             nonce: value.nonce().to_string(),
         })
@@ -692,7 +692,7 @@ impl TryFrom<&Box<MilestonePayload>> for Box<MilestonePayloadDto> {
             kind: 1,
             index: value.essence().index(),
             timestamp: value.essence().timestamp(),
-            parents: value.essence().parents().map(|p| p.to_string()).collect(),
+            parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
             inclusion_merkle_proof: hex::encode(value.essence().merkle_proof()),
             public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
             receipt: value.essence().receipt().map(TryInto::try_into).transpose()?,

@@ -44,7 +44,7 @@ async fn propagate<B: StorageBackend>(
         if let Some(parents) = tangle
             .get(&message_id)
             .await
-            .map(|message| message.parents().copied().collect::<Vec<MessageId>>())
+            .map(|message| message.parents().iter().copied().collect::<Vec<MessageId>>())
         {
             // If one of the parents is not yet solid, we skip the current message.
             for parent in parents.iter() {

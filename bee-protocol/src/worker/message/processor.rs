@@ -146,7 +146,7 @@ where
                         let metadata = MessageMetadata::arrived();
 
                         // TODO try to avoid that
-                        let parents = message.parents().copied().collect::<Vec<MessageId>>();
+                        let parents = message.parents().iter().copied().collect::<Vec<MessageId>>();
 
                         // store message
                         let inserted = tangle.insert(message, message_id, metadata).await.is_some();

@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::Payload, utils::is_unique_sorted, Error, MessageId, Parents};
+use crate::{payload::Payload, utils::is_unique_sorted, Error, Parents};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -63,8 +63,8 @@ impl MilestonePayloadEssence {
         self.timestamp
     }
 
-    pub fn parents(&self) -> impl Iterator<Item = &MessageId> + '_ {
-        self.parents.iter()
+    pub fn parents(&self) -> &Parents {
+        &self.parents
     }
 
     pub fn merkle_proof(&self) -> &[u8] {

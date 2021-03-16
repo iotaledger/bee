@@ -250,7 +250,7 @@ where
             Some(message) => {
                 let mut next = None;
 
-                for parent in message.parents() {
+                for parent in message.parents().iter() {
                     if !visited.contains(parent) {
                         next.replace(parent);
                         break;

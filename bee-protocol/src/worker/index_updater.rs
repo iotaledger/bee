@@ -77,7 +77,7 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, 
     if let Some(parents) = tangle
         .get(message_id)
         .await
-        .map(|message| message.parents().copied().collect())
+        .map(|message| message.parents().iter().copied().collect())
     {
         // Update the past cone of this milestone by setting its milestone index, and return them.
         let roots = update_past_cone(tangle, parents, index).await;
@@ -132,7 +132,7 @@ async fn update_past_cone<B: StorageBackend>(
         if let Some(mut grand_parents) = tangle
             .get(&parent_id)
             .await
-            .map(|parent| parent.parents().copied().collect())
+            .map(|parent| parent.parents().iter().copied().collect())
         {
             parents.append(&mut grand_parents);
         }

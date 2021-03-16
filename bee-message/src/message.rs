@@ -39,8 +39,8 @@ impl Message {
         self.network_id
     }
 
-    pub fn parents(&self) -> impl Iterator<Item = &MessageId> + '_ {
-        self.parents.iter()
+    pub fn parents(&self) -> &Parents {
+        &self.parents
     }
 
     pub fn payload(&self) -> &Option<Payload> {

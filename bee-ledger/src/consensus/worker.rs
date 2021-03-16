@@ -66,7 +66,7 @@ where
 
     let mut metadata = WhiteFlagMetadata::new(MilestoneIndex(milestone.essence().index()));
 
-    let parents = message.parents().copied().collect();
+    let parents = message.parents().iter().copied().collect();
 
     drop(message);
 
