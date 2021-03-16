@@ -11,6 +11,11 @@ const ED25519_ADDRESS_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c
 const ED25519_ADDRESS_INVALID_LEN: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6";
 
 #[test]
+fn kind() {
+    assert_eq!(Ed25519Address::KIND, 0);
+}
+
+#[test]
 fn generate_address() {
     let address = Address::from(Ed25519Address::new([1; 32]));
     match address {

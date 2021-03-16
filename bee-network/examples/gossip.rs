@@ -255,7 +255,7 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
 
     async fn finish(self) -> Result<ExampleNode, Self::Error> {
         let network_config = NetworkConfig::build()
-            .bind_address(&self.config.bind_address.to_string())
+            .bind_addresses(&self.config.bind_address.to_string())
             .reconnect_interval_secs(RECONNECT_INTERVAL_SECS)
             .finish();
 
@@ -265,7 +265,7 @@ impl NodeBuilder<ExampleNode> for ExampleNodeBuilder {
         let network_id = 1;
 
         let (mut this, network_listener) =
-            bee_network::init::<ExampleNode>(network_config, local_keys, network_id, MAX_UNKNOWN_PEERS, self).await;
+            bee_network::init::<ExampleNode>(network_config, local_keys, network_id, self).await;
 
         println!("Node initialized.");
 

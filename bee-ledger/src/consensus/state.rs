@@ -2,21 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    balance::Balance,
-    dust::dust_outputs_max,
-    error::Error,
-    model::Unspent,
-    storage::{self, StorageBackend},
+    consensus::{
+        dust::dust_outputs_max,
+        error::Error,
+        storage::{self, StorageBackend},
+    },
+    types::{Balance, Unspent},
 };
 
-use bee_message::{address::Address, output};
+use bee_message::{address::Address, constants::IOTA_SUPPLY, output};
 use bee_storage::access::AsStream;
 
 use futures::StreamExt;
 
 // TODO saturating operations ?
-
-pub const IOTA_SUPPLY: u64 = 2_779_530_283_277_761;
 
 async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
     let mut supply: u64 = 0;
@@ -35,7 +34,7 @@ async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u6
             output::Output::SignatureLockedDustAllowance(output) => {
                 supply += output.amount();
             }
-            _ => return Err(Error::UnsupportedOutputType),
+            output => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
     }
 

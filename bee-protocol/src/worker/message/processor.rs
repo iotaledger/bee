@@ -145,7 +145,8 @@ where
 
                         let metadata = MessageMetadata::arrived();
 
-                        let parents = message.parents().to_vec();
+                        // TODO try to avoid that
+                        let parents = message.parents().copied().collect::<Vec<MessageId>>();
 
                         // store message
                         let inserted = tangle.insert(message, message_id, metadata).await.is_some();
@@ -190,7 +191,6 @@ where
                                 metrics.messages_average_latency_set(latency_sum / latency_num);
 
                                 for parent in parents.iter() {
-                                    // TODO only request once if same parents
                                     helper::request_message(
                                         &tangle,
                                         &message_requester,

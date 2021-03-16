@@ -10,7 +10,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_ledger::event::MilestoneConfirmed;
+use bee_ledger::consensus::event::MilestoneConfirmed;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 
 use bee_protocol::ProtocolMetrics;

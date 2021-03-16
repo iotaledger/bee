@@ -7,7 +7,6 @@ use bee_common::packable::{Packable, Read, Write};
 
 use std::ops::RangeInclusive;
 
-pub(crate) const TREASURY_OUTPUT_KIND: u8 = 2;
 pub const TREASURY_OUTPUT_AMOUNT: RangeInclusive<u64> = 0..=IOTA_SUPPLY;
 
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -17,6 +16,8 @@ pub struct TreasuryOutput {
 }
 
 impl TreasuryOutput {
+    pub const KIND: u8 = 2;
+
     pub fn new(amount: u64) -> Result<Self, Error> {
         if !TREASURY_OUTPUT_AMOUNT.contains(&amount) {
             return Err(Error::InvalidTreasuryAmount(amount));

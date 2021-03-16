@@ -85,7 +85,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let routes = filters::all(
+            let routes = endpoints::filter_all(
                 rest_api_config.public_routes.clone(),
                 rest_api_config.allowed_ips.clone(),
                 tangle,

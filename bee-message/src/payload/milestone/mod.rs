@@ -19,15 +19,12 @@ use crypto::{
 use alloc::{boxed::Box, vec::Vec};
 use core::convert::TryInto;
 
-pub(crate) const MILESTONE_PAYLOAD_KIND: u32 = 1;
-
 pub const MILESTONE_SIGNATURE_LENGTH: usize = 64;
 
 #[derive(Debug)]
 pub enum MilestoneValidationError {
     InvalidMinThreshold,
     TooFewSignatures(usize, usize),
-    SignaturesPublicKeysCountMismatch(usize, usize),
     InsufficientApplicablePublicKeys(usize, usize),
     UnapplicablePublicKey(String),
     InvalidSignature(usize, String),
@@ -42,8 +39,23 @@ pub struct MilestonePayload {
 }
 
 impl MilestonePayload {
-    pub fn new(essence: MilestonePayloadEssence, signatures: Vec<Box<[u8]>>) -> Self {
-        Self { essence, signatures }
+    pub const KIND: u32 = 1;
+
+    pub fn new(essence: MilestonePayloadEssence, signatures: Vec<Box<[u8]>>) -> Result<Self, Error> {
+        if signatures.is_empty() {
+            return Err(Error::MilestoneNoSignature);
+        }
+
+        if essence.public_keys().len() != signatures.len() {
+            return Err(Error::MilestonePublicKeysSignaturesCountMismatch(
+                essence.public_keys().len(),
+                signatures.len(),
+            ));
+        }
+
+        // TODO check signature length
+
+        Ok(Self { essence, signatures })
     }
 
     pub fn id(&self) -> MilestoneId {
@@ -74,18 +86,10 @@ impl MilestonePayload {
             ));
         }
 
-        if self.signatures().is_empty() || self.signatures().len() < min_threshold {
+        if self.signatures().len() < min_threshold {
             return Err(MilestoneValidationError::TooFewSignatures(
                 min_threshold,
                 self.signatures().len(),
-            ));
-        }
-
-        // TODO move this check to the build/unpack validation
-        if self.signatures().len() != self.essence().public_keys().len() {
-            return Err(MilestoneValidationError::SignaturesPublicKeysCountMismatch(
-                self.signatures().len(),
-                self.essence().public_keys().len(),
             ));
         }
 
@@ -136,7 +140,6 @@ impl Packable for MilestonePayload {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let essence = MilestonePayloadEssence::unpack(reader)?;
-
         let signatures_len = u8::unpack(reader)? as usize;
         let mut signatures = Vec::with_capacity(signatures_len);
         for _ in 0..signatures_len {
@@ -145,6 +148,6 @@ impl Packable for MilestonePayload {
             signatures.push(signature.into_boxed_slice());
         }
 
-        Ok(Self { essence, signatures })
+        Self::new(essence, signatures)
     }
 }

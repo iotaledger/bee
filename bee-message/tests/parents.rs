@@ -7,39 +7,61 @@ use bee_test::rand::message::{rand_message_id, rand_message_ids};
 
 #[test]
 fn new_valid() {
-    let first = rand_message_id();
-    let others = rand_message_ids(7);
-    let parents = Parents::new(first, others.clone()).unwrap();
+    let inner = rand_message_ids(8);
+    let parents = Parents::new(inner.clone()).unwrap();
 
     let parents_vec = parents.iter().copied().collect::<Vec<MessageId>>();
 
-    assert_eq!(first, parents_vec[0]);
-    assert_eq!(others, parents_vec[1..].to_vec());
+    assert_eq!(inner, parents_vec[0..].to_vec());
 }
 
 #[test]
 fn new_invalid_more_than_max() {
-    let first = rand_message_id();
-    let mut others = Vec::new();
+    let mut inner = vec![rand_message_id()];
 
     for _ in 0..8 {
-        Parents::new(first, others.clone()).unwrap();
-        others.push(rand_message_id())
+        Parents::new(inner.clone()).unwrap();
+        inner.push(rand_message_id());
+        inner.sort();
     }
 
     assert!(matches!(
-        Parents::new(first, others.clone()),
+        Parents::new(inner.clone()),
         Err(Error::InvalidParentsCount(9))
     ));
 }
 
-// TODO add packed_len test
+#[test]
+fn new_invalid_not_sorted() {
+    let mut inner = rand_message_ids(8);
+    inner.reverse();
+
+    assert!(matches!(
+        Parents::new(inner.clone()),
+        Err(Error::ParentsNotUniqueSorted)
+    ));
+}
+
+#[test]
+fn new_invalid_not_unique() {
+    let mut inner = rand_message_ids(7);
+    inner.push(*inner.last().unwrap());
+
+    assert!(matches!(
+        Parents::new(inner.clone()),
+        Err(Error::ParentsNotUniqueSorted)
+    ));
+}
+
+#[test]
+fn packed_len() {
+    assert_eq!(Parents::new(rand_message_ids(5)).unwrap().packed_len(), 1 + 5 * 32);
+}
 
 #[test]
 fn pack_unpack_valid() {
-    let first = rand_message_id();
-    let others = rand_message_ids(7);
-    let parents_1 = Parents::new(first, others.clone()).unwrap();
+    let inner = rand_message_ids(8);
+    let parents_1 = Parents::new(inner.clone()).unwrap();
     let parents_2 = Parents::unpack(&mut parents_1.pack_new().as_slice()).unwrap();
 
     assert_eq!(parents_1, parents_2);
@@ -71,4 +93,34 @@ fn pack_unpack_invalid_more_than_max() {
         Parents::unpack(&mut bytes.as_slice()),
         Err(Error::InvalidParentsCount(9))
     ));
+}
+
+#[test]
+fn unpack_invalid_not_sorted() {
+    let mut inner = rand_message_ids(8);
+    inner.reverse();
+
+    // Remove 8 byte vector length field and replace with 1 byte, to represent message parents.
+    let mut packed = (8u8).pack_new();
+    let mut packed_messages = inner.pack_new().split_at(std::mem::size_of::<u64>()).1.to_vec();
+    packed.append(&mut packed_messages);
+
+    let parents = Parents::unpack(&mut packed.as_slice());
+
+    assert!(matches!(parents, Err(Error::ParentsNotUniqueSorted)));
+}
+
+#[test]
+fn upnack_invalid_not_unique() {
+    let mut inner = rand_message_ids(7);
+    inner.push(*inner.last().unwrap());
+
+    // Remove 8 byte vector length field and replace with 1 byte, to represent message parents.
+    let mut packed = (8u8).pack_new();
+    let mut packed_messages = inner.pack_new().split_at(std::mem::size_of::<u64>()).1.to_vec();
+    packed.append(&mut packed_messages);
+
+    let parents = Parents::unpack(&mut packed.as_slice());
+
+    assert!(matches!(parents, Err(Error::ParentsNotUniqueSorted)));
 }

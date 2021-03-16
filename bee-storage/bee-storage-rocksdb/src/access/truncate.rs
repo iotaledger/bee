@@ -3,10 +3,7 @@
 
 use crate::{error::Error, storage::*};
 
-use bee_ledger::{
-    balance::Balance,
-    model::{OutputDiff, Receipt, TreasuryOutput, Unspent},
-};
+use bee_ledger::types::{Balance, OutputDiff, Receipt, TreasuryOutput, Unspent};
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     ledger_index::LedgerIndex,

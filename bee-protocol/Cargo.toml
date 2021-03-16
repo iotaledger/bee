@@ -13,7 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-ledger = { path = "../bee-ledger" }
+bee-ledger = { path = "../bee-ledger", features = ["consensus"] }
 bee-message = { path = "../bee-message", features = ["serde"] }
 bee-network = { path = "../bee-network" }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }

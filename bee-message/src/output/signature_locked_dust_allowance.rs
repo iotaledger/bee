@@ -7,7 +7,6 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::RangeInclusive;
 
-pub(crate) const SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_KIND: u8 = 1;
 const SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1_000_000..=IOTA_SUPPLY;
 
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -18,6 +17,8 @@ pub struct SignatureLockedDustAllowanceOutput {
 }
 
 impl SignatureLockedDustAllowanceOutput {
+    pub const KIND: u8 = 1;
+
     pub fn new(address: Address, amount: u64) -> Result<Self, Error> {
         if !SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT.contains(&amount) {
             return Err(Error::InvalidDustAllowanceAmount(amount));

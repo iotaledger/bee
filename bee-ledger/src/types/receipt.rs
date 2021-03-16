@@ -1,10 +1,11 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, model::TreasuryOutput};
+use crate::types::{error::Error, TreasuryOutput};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
+    constants::IOTA_SUPPLY,
     milestone::MilestoneIndex,
     output::Output,
     payload::{receipt::ReceiptPayload, Payload},
@@ -29,31 +30,50 @@ impl Receipt {
         &self.included_in
     }
 
-    pub fn validate(&self, consumed_treasury_output: &TreasuryOutput) -> Result<bool, Error> {
-        let mut migrated_amount = 0;
+    pub fn validate(&self, consumed_treasury_output: &TreasuryOutput) -> Result<(), Error> {
+        let mut migrated_amount: u64 = 0;
         let transaction = match self.inner().transaction() {
             Payload::TreasuryTransaction(transaction) => transaction,
-            _ => return Err(Error::UnsupportedPayloadType),
-        };
-        let created_treasury_output = match transaction.output() {
-            Output::Treasury(output) => output,
-            _ => return Err(Error::UnsupportedOutputType),
+            payload => return Err(Error::UnsupportedPayloadKind(payload.kind())),
         };
 
         for funds in self.inner().funds() {
-            // TODO check overflow
-            migrated_amount += funds.output().amount();
+            migrated_amount = match migrated_amount.checked_add(funds.output().amount()) {
+                Some(amount) => amount,
+                None => {
+                    return Err(Error::InvalidMigratedFundsAmount(
+                        migrated_amount + funds.output().amount(),
+                    ))
+                }
+            }
         }
 
-        // TODO check underflow
-        if consumed_treasury_output.inner().amount() - migrated_amount != created_treasury_output.amount() {
+        if migrated_amount > IOTA_SUPPLY {
+            return Err(Error::InvalidMigratedFundsAmount(migrated_amount));
+        }
+
+        let created_treasury_output = match transaction.output() {
+            Output::Treasury(output) => output,
+            output => return Err(Error::UnsupportedOutputKind(output.kind())),
+        };
+
+        let created_amount = match consumed_treasury_output.inner().amount().checked_sub(migrated_amount) {
+            Some(amount) => amount,
+            None => {
+                return Err(Error::InvalidMigratedFundsAmount(
+                    consumed_treasury_output.inner().amount() - migrated_amount,
+                ))
+            }
+        };
+
+        if created_amount != created_treasury_output.amount() {
             return Err(Error::TreasuryAmountMismatch(
-                consumed_treasury_output.inner().amount() - migrated_amount,
+                created_amount,
                 created_treasury_output.amount(),
             ));
         }
 
-        Ok(true)
+        Ok(())
     }
 }
 

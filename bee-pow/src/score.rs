@@ -14,8 +14,9 @@ pub fn compute_pow_score(bytes: &[u8]) -> f64 {
 }
 
 pub fn pow_hash(bytes: &[u8]) -> TritBuf<T1B1Buf> {
+    assert!(bytes.len() >= std::mem::size_of::<u8>());
+
     let mut curl = CurlP81::new();
-    // TODO panic if length < 8
     let length = bytes.len() - std::mem::size_of::<u64>();
     let mut pow_input = TritBuf::<T1B1Buf>::with_capacity(HASH_LENGTH);
     let pow_digest = Blake2b256::digest(&bytes[..length]);

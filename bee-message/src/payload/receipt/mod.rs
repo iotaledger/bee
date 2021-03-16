@@ -5,13 +5,14 @@ mod migrated_funds_entry;
 
 pub use migrated_funds_entry::{MigratedFundsEntry, MIGRATED_FUNDS_ENTRY_AMOUNT};
 
-use crate::{payload::Payload, Error};
+use crate::{payload::Payload, utils::is_sorted, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::RangeInclusive;
+use std::collections::HashMap;
 
-pub(crate) const RECEIPT_PAYLOAD_KIND: u32 = 3;
+// TODO use input/output range ?
 const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = 1..=127;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -24,15 +25,28 @@ pub struct ReceiptPayload {
 }
 
 impl ReceiptPayload {
+    pub const KIND: u32 = 3;
+
     pub fn new(index: u32, last: bool, funds: Vec<MigratedFundsEntry>, transaction: Payload) -> Result<Self, Error> {
         if !MIGRATED_FUNDS_ENTRY_RANGE.contains(&funds.len()) {
             return Err(Error::InvalidReceiptFundsCount(funds.len()));
         }
 
-        // TODO check lexicographic order and uniqueness of funds.
-
         if !matches!(transaction, Payload::TreasuryTransaction(_)) {
             return Err(Error::InvalidPayloadKind(transaction.kind()));
+        }
+
+        // Funds must be lexicographically sorted in their serialised forms.
+        if !is_sorted(funds.iter().map(Packable::pack_new)) {
+            return Err(Error::TransactionOutputsNotSorted);
+        }
+
+        // TODO could be merged with the lexicographic check ?
+        let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
+        for (index, funds) in funds.iter().enumerate() {
+            if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash(), index) {
+                return Err(Error::TailTransactionHashNotUnique(previous, index));
+            }
         }
 
         Ok(Self {

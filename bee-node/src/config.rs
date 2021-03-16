@@ -7,7 +7,7 @@ use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder}
 use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
 
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
-use bee_ledger::config::{LedgerConfig, LedgerConfigBuilder};
+use bee_ledger::consensus::config::{LedgerConfig, LedgerConfigBuilder};
 use bee_network::{Keypair, NetworkConfig, NetworkConfigBuilder, PeerId, PublicKey};
 use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::config::{RestApiConfig, RestApiConfigBuilder};
@@ -77,7 +77,7 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
             generate_random_identity()
         };
 
-        let peer_id = PeerId::from_public_key(PublicKey::Ed25519(identity.public()));
+        let node_id = PeerId::from_public_key(PublicKey::Ed25519(identity.public()));
 
         let network_id_string = self.network_id.unwrap_or_else(|| DEFAULT_NETWORK_ID.to_string());
         let network_id_numeric = u64::from_le_bytes(
@@ -88,7 +88,7 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
 
         NodeConfig {
             identity: (identity, identity_string, new),
-            peer_id,
+            node_id,
             alias: self.alias.unwrap_or_else(|| DEFAULT_ALIAS.to_owned()),
             bech32_hrp: self.bech32_hrp.unwrap_or_else(|| DEFAULT_BECH32_HRP.to_owned()),
             network_id: (network_id_string, network_id_numeric),
@@ -116,7 +116,7 @@ fn generate_random_identity() -> (Keypair, String, bool) {
 
 pub struct NodeConfig<B: StorageBackend> {
     pub identity: (Keypair, String, bool),
-    pub peer_id: PeerId,
+    pub node_id: PeerId,
     pub alias: String,
     pub bech32_hrp: String,
     pub network_id: (String, u64),
@@ -137,7 +137,7 @@ impl<B: StorageBackend> Clone for NodeConfig<B> {
     fn clone(&self) -> Self {
         Self {
             identity: self.identity.clone(),
-            peer_id: self.peer_id,
+            node_id: self.node_id,
             alias: self.alias.clone(),
             bech32_hrp: self.bech32_hrp.clone(),
             network_id: self.network_id.clone(),

@@ -3,18 +3,44 @@
 
 use crate::{
     body::{BodyInner, SuccessBody},
+    config::ROUTE_MESSAGE_METADATA,
+    filters::with_tangle,
+    path_params::message_id,
+    permission::has_permission,
     rejection::CustomRejection,
     storage::StorageBackend,
     IS_SYNCED_THRESHOLD,
 };
 
-use bee_ledger::ConflictReason;
+use bee_ledger::types::ConflictReason;
 use bee_message::{payload::Payload, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
 use serde::{Deserialize, Serialize};
-use warp::{reject, Rejection, Reply};
+use warp::{reject, Filter, Rejection, Reply};
+
+use std::net::IpAddr;
+
+fn path() -> impl Filter<Extract = (MessageId,), Error = warp::Rejection> + Clone {
+    super::path()
+        .and(warp::path("messages"))
+        .and(message_id())
+        .and(warp::path("metadata"))
+        .and(warp::path::end())
+}
+
+pub(crate) fn filter<B: StorageBackend>(
+    public_routes: Vec<String>,
+    allowed_ips: Vec<IpAddr>,
+    tangle: ResourceHandle<MsTangle<B>>,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    self::path()
+        .and(warp::get())
+        .and(has_permission(ROUTE_MESSAGE_METADATA, public_routes, allowed_ips))
+        .and(with_tangle(tangle))
+        .and_then(message_metadata)
+}
 
 pub(crate) async fn message_metadata<B: StorageBackend>(
     message_id: MessageId,
@@ -128,7 +154,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
 
             Ok(warp::reply::json(&SuccessBody::new(MessageMetadataResponse {
                 message_id: message_id.to_string(),
-                parent_message_ids: message.parents().iter().map(|id| id.to_string()).collect(),
+                parent_message_ids: message.parents().map(|id| id.to_string()).collect(),
                 is_solid,
                 referenced_by_milestone_index,
                 milestone_index,

@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::model::{Receipt, TreasuryOutput};
+use crate::types::{Receipt, TreasuryOutput};
 
 pub struct Migration {
     receipt: Receipt,

@@ -5,6 +5,11 @@ use bee_common::packable::Packable;
 use bee_message::prelude::*;
 
 #[test]
+fn kind() {
+    assert_eq!(TreasuryOutput::KIND, 2);
+}
+
+#[test]
 fn new_valid_min_amount() {
     assert_eq!(TreasuryOutput::new(0).unwrap().amount(), 0);
 }
