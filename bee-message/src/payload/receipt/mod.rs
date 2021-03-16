@@ -5,7 +5,7 @@ mod migrated_funds_entry;
 
 pub use migrated_funds_entry::{MigratedFundsEntry, MIGRATED_FUNDS_ENTRY_AMOUNT};
 
-use crate::{payload::Payload, Error};
+use crate::{payload::Payload, utils::is_sorted, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -31,10 +31,13 @@ impl ReceiptPayload {
             return Err(Error::InvalidReceiptFundsCount(funds.len()));
         }
 
-        // TODO check lexicographic order and uniqueness of funds.
-
         if !matches!(transaction, Payload::TreasuryTransaction(_)) {
             return Err(Error::InvalidPayloadKind(transaction.kind()));
+        }
+
+        // Funds must be lexicographically sorted in their serialised forms.
+        if !is_sorted(funds.iter().map(Packable::pack_new)) {
+            return Err(Error::TransactionOutputsNotSorted);
         }
 
         Ok(Self {

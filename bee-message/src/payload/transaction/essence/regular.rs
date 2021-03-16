@@ -185,7 +185,7 @@ impl RegularEssenceBuilder {
         }
 
         // Inputs must be lexicographically sorted in their serialised forms.
-        if !is_sorted(self.inputs.iter().map(|input| input.pack_new())) {
+        if !is_sorted(self.inputs.iter().map(Packable::pack_new)) {
             return Err(Error::TransactionInputsNotSorted);
         }
 
@@ -241,7 +241,7 @@ impl RegularEssenceBuilder {
         }
 
         // Outputs must be lexicographically sorted in their serialised forms.
-        if !is_sorted(self.outputs.iter().map(|output| output.pack_new())) {
+        if !is_sorted(self.outputs.iter().map(Packable::pack_new)) {
             return Err(Error::TransactionOutputsNotSorted);
         }
 

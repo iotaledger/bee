@@ -43,6 +43,7 @@ pub enum Error {
     DuplicateSignature(usize),
     TransactionInputsNotSorted,
     TransactionOutputsNotSorted,
+    MigratedFundsNotSorted,
     RemainingBytesAfterMessage,
     ParentsNotUniqueSorted,
 }
@@ -127,6 +128,9 @@ impl fmt::Display for Error {
             }
             Error::TransactionOutputsNotSorted => {
                 write!(f, "Transaction outputs are not sorted.")
+            }
+            Error::MigratedFundsNotSorted => {
+                write!(f, "Migrated funds are not sorted.")
             }
             Error::RemainingBytesAfterMessage => {
                 write!(f, "Remaining bytes after message.")
