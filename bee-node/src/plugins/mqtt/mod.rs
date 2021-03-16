@@ -79,7 +79,7 @@ pub async fn init<N: Node>(config: MqttConfig, mut node_builder: N::Builder) -> 
     let mut broker = mqtt::Broker::new(config);
 
     let mut latest_tx = broker.link("latest").expect("linking mqtt sender failed");
-    let mut solid_tx = broker.link("solid").expect("linking mqtt sender failed");
+    let mut confirmed_tx = broker.link("confirmed").expect("linking mqtt sender failed");
 
     thread::spawn(move || {
         // **Note**: 'start' creates a custom tokio runtime and blocks until ctrl-c is detected.
@@ -93,11 +93,14 @@ pub async fn init<N: Node>(config: MqttConfig, mut node_builder: N::Builder) -> 
         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
         .expect("mqtt connect error");
 
-    let _ = solid_tx
+    let _ = confirmed_tx
         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
         .expect("mqtt connect error");
 
-    let broker_config = MqttBrokerConfig { latest_tx, solid_tx };
+    let broker_config = MqttBrokerConfig {
+        latest_tx,
+        confirmed_tx,
+    };
 
     node_builder = node_builder.with_worker_cfg::<MqttBroker>(broker_config);
 

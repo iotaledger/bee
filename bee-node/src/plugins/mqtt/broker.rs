@@ -29,7 +29,7 @@ pub(crate) const _TOPIC_ADDRESSES_ED25519_OUTPUT: &str = "addresses/ed25519/{add
 
 pub struct MqttBrokerConfig {
     pub latest_tx: LinkTx,
-    pub solid_tx: LinkTx,
+    pub confirmed_tx: LinkTx,
 }
 
 #[derive(Default)]
@@ -45,7 +45,10 @@ impl<N: Node> Worker<N> for MqttBroker {
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let MqttBrokerConfig { latest_tx, solid_tx } = config;
+        let MqttBrokerConfig {
+            latest_tx,
+            confirmed_tx,
+        } = config;
 
         spawn_topic_handler(
             node,
@@ -56,7 +59,7 @@ impl<N: Node> Worker<N> for MqttBroker {
 
         spawn_topic_handler(
             node,
-            solid_tx,
+            confirmed_tx,
             TOPIC_MILESTONES_CONFIRMED,
             |event: LatestSolidMilestoneChanged| (TOPIC_MILESTONES_CONFIRMED, format!("{}", event.index)),
         );
