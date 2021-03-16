@@ -37,6 +37,14 @@ pub trait Packable {
     {
         Self::unpack_inner::<R, false>(reader)
     }
+
+    /// Reads trusted bytes from the passed reader and unpacks them into an instance.
+    fn unpack_unchecked<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
+    where
+        Self: Sized,
+    {
+        Self::unpack_inner::<R, true>(reader)
+    }
 }
 
 impl<const N: usize> Packable for [u8; N] {
