@@ -18,7 +18,7 @@ use std::{
 };
 
 pub(crate) const TOPIC_MILESTONES_LATEST: &str = "milestones/latest";
-pub(crate) const TOPIC_MILESTONES_SOLID: &str = "milestones/solid";
+pub(crate) const TOPIC_MILESTONES_CONFIRMED: &str = "milestones/confirmed";
 pub(crate) const _TOPIC_MESSAGES: &str = "messages";
 pub(crate) const _TOPIC_MESSAGES_REFERENCED: &str = "messages/referenced";
 pub(crate) const _TOPIC_MESSAGES_INDEXATION: &str = "messages/indexation/{index}";
@@ -57,8 +57,8 @@ impl<N: Node> Worker<N> for MqttBroker {
         spawn_topic_handler(
             node,
             solid_tx,
-            TOPIC_MILESTONES_SOLID,
-            |event: LatestSolidMilestoneChanged| (TOPIC_MILESTONES_SOLID, format!("{}", event.index)),
+            TOPIC_MILESTONES_CONFIRMED,
+            |event: LatestSolidMilestoneChanged| (TOPIC_MILESTONES_CONFIRMED, format!("{}", event.index)),
         );
 
         info!("MQTT broker started.");
