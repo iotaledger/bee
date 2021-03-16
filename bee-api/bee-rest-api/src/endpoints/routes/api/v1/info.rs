@@ -1,24 +1,25 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    body::{BodyInner, SuccessBody},
-    config::{RestApiConfig, ROUTE_INFO},
-    filters::{
-        with_bech32_hrp, with_network_id, with_node_info, with_peer_manager, with_protocol_config,
-        with_rest_api_config, with_tangle,
+use crate::{
+    endpoints::{
+        config::{RestApiConfig, ROUTE_INFO},
+        filters::{
+            with_bech32_hrp, with_network_id, with_node_info, with_peer_manager, with_protocol_config,
+            with_rest_api_config, with_tangle,
+        },
+        permission::has_permission,
+        routes::health,
+        storage::StorageBackend,
+        Bech32Hrp, NetworkId,
     },
-    permission::has_permission,
-    routes::health,
-    storage::StorageBackend,
-    Bech32Hrp, NetworkId,
+    types::{body::SuccessBody, responses::InfoResponse},
 };
 
 use bee_protocol::{config::ProtocolConfig, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
-use serde::{Deserialize, Serialize};
 use warp::{Filter, Rejection, Reply};
 
 use std::{convert::Infallible, net::IpAddr};
@@ -79,27 +80,3 @@ pub(crate) async fn info<B: StorageBackend>(
         min_pow_score: protocol_config.minimum_pow_score(),
     })))
 }
-
-/// Response of GET /api/v1/info
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct InfoResponse {
-    pub name: String,
-    pub version: String,
-    #[serde(rename = "isHealthy")]
-    pub is_healthy: bool,
-    #[serde(rename = "networkId")]
-    pub network_id: String,
-    #[serde(rename = "bech32HRP")]
-    pub bech32_hrp: String,
-    #[serde(rename = "latestMilestoneIndex")]
-    pub latest_milestone_index: u32,
-    #[serde(rename = "confirmedMilestoneIndex")]
-    pub confirmed_milestone_index: u32,
-    #[serde(rename = "pruningIndex")]
-    pub pruning_index: u32,
-    pub features: Vec<String>,
-    #[serde(rename = "minPowScore")]
-    pub min_pow_score: f64,
-}
-
-impl BodyInner for InfoResponse {}

@@ -3,7 +3,6 @@
 
 mod filters;
 
-pub mod body;
 pub mod config;
 pub mod path_params;
 pub mod permission;
@@ -11,10 +10,11 @@ pub mod rejection;
 pub mod routes;
 pub mod storage;
 
-use body::{DefaultErrorResponse, ErrorBody};
 use config::RestApiConfig;
 use rejection::CustomRejection;
 use storage::StorageBackend;
+
+use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
 use bee_network::NetworkServiceController;
 use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorker, PeerManager, PeerManagerResWorker};

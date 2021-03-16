@@ -3,14 +3,10 @@
 
 use crate::{
     endpoints::{
-        body::{BodyInner, SuccessBody},
-        config::ROUTE_RECEIPTS,
-        filters::with_storage,
-        permission::has_permission,
-        rejection::CustomRejection,
+        config::ROUTE_RECEIPTS, filters::with_storage, permission::has_permission, rejection::CustomRejection,
         storage::StorageBackend,
     },
-    types::ReceiptDto,
+    types::{body::SuccessBody, dtos::ReceiptDto, responses::ReceiptsResponse},
 };
 
 use bee_ledger::types::Receipt;
@@ -19,16 +15,9 @@ use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::AsStream;
 
 use futures::stream::StreamExt;
-use serde::{Deserialize, Serialize};
 use warp::{Filter, Rejection, Reply};
 
 use std::{convert::TryFrom, net::IpAddr};
-
-/// Response of GET /api/v1/receipts/{milestone_index} and /api/v1/receipts
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ReceiptsResponse(pub Vec<ReceiptDto>);
-
-impl BodyInner for ReceiptsResponse {}
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("receipts")).and(warp::path::end())

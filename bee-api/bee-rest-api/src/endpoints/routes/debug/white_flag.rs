@@ -1,16 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    body::{BodyInner, SuccessBody},
-    config::ROUTE_INFO,
-    permission::has_permission,
-    rejection::CustomRejection,
+use crate::{
+    endpoints::{config::ROUTE_INFO, permission::has_permission, rejection::CustomRejection},
+    types::{body::SuccessBody, responses::WhiteFlagResponse},
 };
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
 
-use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use warp::{reject, Filter, Rejection, Reply};
 
@@ -94,12 +91,3 @@ pub(crate) async fn white_flag(body: JsonValue) -> Result<impl Reply, Rejection>
         merkle_tree_hash: String::from("Bee"),
     })))
 }
-
-/// Response of GET /debug/whiteflag
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct WhiteFlagResponse {
-    #[serde(rename = "merkleTreeHash")]
-    pub merkle_tree_hash: String,
-}
-
-impl BodyInner for WhiteFlagResponse {}

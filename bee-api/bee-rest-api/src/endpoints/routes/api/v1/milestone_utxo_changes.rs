@@ -1,14 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    body::{BodyInner, SuccessBody},
-    config::ROUTE_MILESTONE_UTXO_CHANGES,
-    filters::with_storage,
-    path_params::milestone_index,
-    permission::has_permission,
-    rejection::CustomRejection,
-    storage::StorageBackend,
+use crate::{
+    endpoints::{
+        config::ROUTE_MILESTONE_UTXO_CHANGES, filters::with_storage, path_params::milestone_index,
+        permission::has_permission, rejection::CustomRejection, storage::StorageBackend,
+    },
+    types::{body::SuccessBody, responses::MilestoneUtxoChangesResponse},
 };
 
 use bee_ledger::types::OutputDiff;
@@ -16,7 +14,6 @@ use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
-use serde::{Deserialize, Serialize};
 use warp::{reject, Filter, Rejection, Reply};
 
 use std::{net::IpAddr, ops::Deref};
@@ -59,21 +56,9 @@ pub(crate) async fn milestone_utxo_changes<B: StorageBackend>(
             )))
         }
     };
-    Ok(warp::reply::json(&SuccessBody::new(MilestoneUtxoChanges {
+    Ok(warp::reply::json(&SuccessBody::new(MilestoneUtxoChangesResponse {
         index: *index,
         created_outputs: fetched.created_outputs().iter().map(|id| id.to_string()).collect(),
         consumed_outputs: fetched.consumed_outputs().iter().map(|id| id.to_string()).collect(),
     })))
 }
-
-/// Response of GET /api/v1/milestone/{milestone_index}/utxo-changes
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MilestoneUtxoChanges {
-    pub index: u32,
-    #[serde(rename = "createdOutputs")]
-    pub created_outputs: Vec<String>,
-    #[serde(rename = "consumedOutputs")]
-    pub consumed_outputs: Vec<String>,
-}
-
-impl BodyInner for MilestoneUtxoChanges {}

@@ -3,21 +3,16 @@
 
 use crate::{
     endpoints::{
-        body::{BodyInner, SuccessBody},
-        config::ROUTE_PEER,
-        filters::with_peer_manager,
-        path_params::peer_id,
-        permission::has_permission,
+        config::ROUTE_PEER, filters::with_peer_manager, path_params::peer_id, permission::has_permission,
         rejection::CustomRejection,
     },
-    types::{peer_to_peer_dto, PeerDto},
+    types::{body::SuccessBody, dtos::peer_to_peer_dto, responses::PeerResponse},
 };
 
 use bee_network::PeerId;
 use bee_protocol::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
-use serde::{Deserialize, Serialize};
 use warp::{reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
@@ -49,9 +44,3 @@ pub(crate) async fn peer(peer_id: PeerId, peer_manager: ResourceHandle<PeerManag
         None => Err(reject::custom(CustomRejection::NotFound("peer not found".to_string()))),
     }
 }
-
-/// Response of GET /api/v1/peer/{peer_id}
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct PeerResponse(pub PeerDto);
-
-impl BodyInner for PeerResponse {}

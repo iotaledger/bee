@@ -1,20 +1,18 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    body::{BodyInner, SuccessBody},
-    config::ROUTE_MESSAGE_CHILDREN,
-    filters::with_tangle,
-    path_params::message_id,
-    permission::has_permission,
-    storage::StorageBackend,
+use crate::{
+    endpoints::{
+        config::ROUTE_MESSAGE_CHILDREN, filters::with_tangle, path_params::message_id, permission::has_permission,
+        storage::StorageBackend,
+    },
+    types::{body::SuccessBody, responses::MessageChildrenResponse},
 };
 
 use bee_message::MessageId;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
-use serde::{Deserialize, Serialize};
 use warp::{Filter, Rejection, Reply};
 
 use std::{iter::FromIterator, net::IpAddr};
@@ -54,17 +52,3 @@ pub async fn message_children<B: StorageBackend>(
         children_message_ids: children.iter().map(|id| id.to_string()).collect(),
     })))
 }
-
-/// Response of GET /api/v1/messages/{message_id}/children
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MessageChildrenResponse {
-    #[serde(rename = "messageId")]
-    pub message_id: String,
-    #[serde(rename = "maxResults")]
-    pub max_results: usize,
-    pub count: usize,
-    #[serde(rename = "childrenMessageIds")]
-    pub children_message_ids: Vec<String>,
-}
-
-impl BodyInner for MessageChildrenResponse {}

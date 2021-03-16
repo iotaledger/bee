@@ -3,7 +3,6 @@
 
 use crate::{
     endpoints::{
-        body::{BodyInner, SuccessBody},
         config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE},
         filters::{with_message_submitter, with_network_id, with_protocol_config, with_rest_api_config, with_tangle},
         permission::has_permission,
@@ -11,7 +10,7 @@ use crate::{
         storage::StorageBackend,
         NetworkId,
     },
-    types::PayloadDto,
+    types::{body::SuccessBody, dtos::PayloadDto, responses::SubmitMessageResponse},
 };
 
 use bee_message::{payload::Payload, Message, MessageBuilder, MessageId, Parents};
@@ -22,7 +21,6 @@ use bee_tangle::MsTangle;
 
 use futures::channel::oneshot;
 use log::error;
-use serde::Serialize;
 use serde_json::Value as JsonValue;
 use tokio::sync::mpsc;
 use warp::{http::StatusCode, reject, Filter, Rejection, Reply};
@@ -236,12 +234,3 @@ pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
         Err(e) => Err(reject::custom(CustomRejection::BadRequest(e.to_string()))),
     }
 }
-
-/// Response of POST /api/v1/messages
-#[derive(Clone, Debug, Serialize)]
-pub struct SubmitMessageResponse {
-    #[serde(rename = "messageId")]
-    pub message_id: String,
-}
-
-impl BodyInner for SubmitMessageResponse {}

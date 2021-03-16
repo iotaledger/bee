@@ -1,13 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    body::{BodyInner, SuccessBody},
-    config::ROUTE_MESSAGES_FIND,
-    filters::with_storage,
-    permission::has_permission,
-    rejection::CustomRejection,
-    storage::StorageBackend,
+use crate::{
+    endpoints::{
+        config::ROUTE_MESSAGES_FIND, filters::with_storage, permission::has_permission, rejection::CustomRejection,
+        storage::StorageBackend,
+    },
+    types::{body::SuccessBody, responses::MessagesForIndexResponse},
 };
 
 use bee_message::{
@@ -17,7 +16,6 @@ use bee_message::{
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
-use serde::{Deserialize, Serialize};
 use warp::{reject, Filter, Rejection, Reply};
 
 use std::{collections::HashMap, net::IpAddr, ops::Deref};
@@ -76,16 +74,3 @@ pub(crate) async fn messages_find<B: StorageBackend>(
         message_ids: fetched.iter().map(|id| id.to_string()).collect(),
     })))
 }
-
-/// Response of GET /api/v1/messages/{message_id}?index={INDEX}
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MessagesForIndexResponse {
-    pub index: String,
-    #[serde(rename = "maxResults")]
-    pub max_results: usize,
-    pub count: usize,
-    #[serde(rename = "messageIds")]
-    pub message_ids: Vec<String>,
-}
-
-impl BodyInner for MessagesForIndexResponse {}

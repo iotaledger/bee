@@ -1,21 +1,18 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    body::{BodyInner, SuccessBody},
-    config::ROUTE_MILESTONE,
-    filters::with_tangle,
-    path_params::milestone_index,
-    permission::has_permission,
-    rejection::CustomRejection,
-    storage::StorageBackend,
+use crate::{
+    endpoints::{
+        config::ROUTE_MILESTONE, filters::with_tangle, path_params::milestone_index, permission::has_permission,
+        rejection::CustomRejection, storage::StorageBackend,
+    },
+    types::{body::SuccessBody, responses::MilestoneResponse},
 };
 
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
-use serde::{Deserialize, Serialize};
 use warp::{reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
@@ -59,15 +56,3 @@ pub(crate) async fn milestone<B: StorageBackend>(
         ))),
     }
 }
-
-/// Response of GET /api/v1/milestone/{milestone_index}
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MilestoneResponse {
-    #[serde(rename = "index")]
-    pub milestone_index: u32,
-    #[serde(rename = "messageId")]
-    pub message_id: String,
-    pub timestamp: u64,
-}
-
-impl BodyInner for MilestoneResponse {}

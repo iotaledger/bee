@@ -1,20 +1,17 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    body::{BodyInner, SuccessBody},
-    config::ROUTE_TIPS,
-    filters::with_tangle,
-    permission::has_permission,
-    rejection::CustomRejection,
-    storage::StorageBackend,
-    IS_SYNCED_THRESHOLD,
+use crate::{
+    endpoints::{
+        config::ROUTE_TIPS, filters::with_tangle, permission::has_permission, rejection::CustomRejection,
+        storage::StorageBackend, IS_SYNCED_THRESHOLD,
+    },
+    types::{body::SuccessBody, responses::TipsResponse},
 };
 
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
-use serde::{Deserialize, Serialize};
 use warp::{reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
@@ -50,12 +47,3 @@ pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<MsTangle<B>>)
         ))),
     }
 }
-
-/// Response of GET /api/v1/tips
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TipsResponse {
-    #[serde(rename = "tipMessageIds")]
-    pub tip_message_ids: Vec<String>,
-}
-
-impl BodyInner for TipsResponse {}

@@ -3,20 +3,22 @@
 
 use crate::{
     endpoints::{
-        body::{BodyInner, SuccessBody},
         config::ROUTE_ADD_PEER,
         filters::{with_network_controller, with_peer_manager},
         permission::has_permission,
         rejection::CustomRejection,
     },
-    types::{peer_to_peer_dto, PeerDto, RelationDto},
+    types::{
+        body::SuccessBody,
+        dtos::{peer_to_peer_dto, PeerDto, RelationDto},
+        responses::AddPeerResponse,
+    },
 };
 
 use bee_network::{Command::AddPeer, Multiaddr, NetworkServiceController, PeerId, PeerRelation, Protocol};
 use bee_protocol::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
-use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use warp::{http::StatusCode, reject, Filter, Rejection, Reply};
 
@@ -121,9 +123,3 @@ pub(crate) async fn add_peer(
         }
     }
 }
-
-/// Response of POST /api/v1/peers
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct AddPeerResponse(pub PeerDto);
-
-impl BodyInner for AddPeerResponse {}

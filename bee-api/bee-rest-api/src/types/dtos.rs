@@ -1050,3 +1050,13 @@ impl TryFrom<Receipt> for ReceiptDto {
         })
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum LedgerInclusionStateDto {
+    #[serde(rename = "conflicting")]
+    Conflicting,
+    #[serde(rename = "included")]
+    Included,
+    #[serde(rename = "noTransaction")]
+    NoTransaction,
+}

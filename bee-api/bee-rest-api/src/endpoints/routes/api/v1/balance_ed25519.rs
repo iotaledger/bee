@@ -1,14 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    body::{BodyInner, SuccessBody},
-    config::ROUTE_BALANCE_ED25519,
-    filters::with_storage,
-    path_params::ed25519_address,
-    permission::has_permission,
-    rejection::CustomRejection,
-    storage::StorageBackend,
+use crate::{
+    endpoints::{
+        config::ROUTE_BALANCE_ED25519, filters::with_storage, path_params::ed25519_address, permission::has_permission,
+        rejection::CustomRejection, storage::StorageBackend,
+    },
+    types::{body::SuccessBody, responses::BalanceForAddressResponse},
 };
 
 use bee_ledger::types::Balance;
@@ -16,7 +14,6 @@ use bee_message::address::{Address, Ed25519Address};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
-use serde::{Deserialize, Serialize};
 use warp::{reject, Filter, Rejection, Reply};
 
 use std::{net::IpAddr, ops::Deref};
@@ -62,16 +59,3 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
         ))),
     }
 }
-
-/// Response of GET /api/v1/addresses/{address}
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BalanceForAddressResponse {
-    // The type of the address (1=Ed25519).
-    #[serde(rename = "addressType")]
-    pub address_type: u8,
-    // hex encoded address
-    pub address: String,
-    pub balance: u64,
-}
-
-impl BodyInner for BalanceForAddressResponse {}

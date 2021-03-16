@@ -2,19 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{
-        body::{BodyInner, SuccessBody},
-        config::ROUTE_PEERS,
-        filters::with_peer_manager,
-        permission::has_permission,
-    },
-    types::{peer_to_peer_dto, PeerDto},
+    endpoints::{config::ROUTE_PEERS, filters::with_peer_manager, permission::has_permission},
+    types::{body::SuccessBody, dtos::peer_to_peer_dto, responses::PeersResponse},
 };
 
 use bee_protocol::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
-use serde::{Deserialize, Serialize};
 use warp::{Filter, Rejection, Reply};
 
 use std::{convert::Infallible, net::IpAddr};
@@ -42,9 +36,3 @@ pub(crate) async fn peers(peer_manager: ResourceHandle<PeerManager>) -> Result<i
     }
     Ok(warp::reply::json(&SuccessBody::new(PeersResponse(peers_dtos))))
 }
-
-/// Response of GET /api/v1/info
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct PeersResponse(pub Vec<PeerDto>);
-
-impl BodyInner for PeersResponse {}

@@ -3,22 +3,16 @@
 
 use crate::{
     endpoints::{
-        body::{BodyInner, SuccessBody},
-        config::ROUTE_MESSAGE,
-        filters::with_tangle,
-        path_params::message_id,
-        permission::has_permission,
-        rejection::CustomRejection,
-        storage::StorageBackend,
+        config::ROUTE_MESSAGE, filters::with_tangle, path_params::message_id, permission::has_permission,
+        rejection::CustomRejection, storage::StorageBackend,
     },
-    types::MessageDto,
+    types::{body::SuccessBody, dtos::MessageDto, responses::MessageResponse},
 };
 
 use bee_message::MessageId;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
-use serde::Serialize;
 use warp::{reject, Filter, Rejection, Reply};
 
 use std::{convert::TryFrom, net::IpAddr};
@@ -55,9 +49,3 @@ pub(crate) async fn message<B: StorageBackend>(
         ))),
     }
 }
-
-/// Response of GET /api/v1/messages/{message_id}
-#[derive(Clone, Debug, Serialize)]
-pub struct MessageResponse(pub MessageDto);
-
-impl BodyInner for MessageResponse {}

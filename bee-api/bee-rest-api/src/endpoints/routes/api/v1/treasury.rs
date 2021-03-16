@@ -1,19 +1,17 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    body::{BodyInner, SuccessBody},
-    config::ROUTE_TREASURY,
-    filters::with_storage,
-    permission::has_permission,
-    rejection::CustomRejection,
-    storage::StorageBackend,
+use crate::{
+    endpoints::{
+        config::ROUTE_TREASURY, filters::with_storage, permission::has_permission, rejection::CustomRejection,
+        storage::StorageBackend,
+    },
+    types::{body::SuccessBody, responses::TreasuryResponse},
 };
 
 use bee_ledger::consensus::storage;
 use bee_runtime::resource::ResourceHandle;
 
-use serde::{Deserialize, Serialize};
 use warp::{Filter, Rejection, Reply};
 
 use std::net::IpAddr;
@@ -44,13 +42,3 @@ pub(crate) async fn treasury<B: StorageBackend>(storage: ResourceHandle<B>) -> R
         amount: treasury.inner().amount(),
     })))
 }
-
-/// Response of GET /api/v1/treasury
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TreasuryResponse {
-    #[serde(rename = "milestoneId")]
-    pub milestone_id: String,
-    pub amount: u64,
-}
-
-impl BodyInner for TreasuryResponse {}

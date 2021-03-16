@@ -1,14 +1,16 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    body::SuccessBody,
-    config::ROUTE_SUBMIT_MESSAGE_RAW,
-    filters::{with_message_submitter, with_tangle},
-    permission::has_permission,
-    rejection::CustomRejection,
-    routes::api::v1::submit_message::{forward_to_message_submitter, SubmitMessageResponse},
-    storage::StorageBackend,
+use crate::{
+    endpoints::{
+        config::ROUTE_SUBMIT_MESSAGE_RAW,
+        filters::{with_message_submitter, with_tangle},
+        permission::has_permission,
+        rejection::CustomRejection,
+        routes::api::v1::submit_message::forward_to_message_submitter,
+        storage::StorageBackend,
+    },
+    types::{body::SuccessBody, responses::SubmitMessageResponse},
 };
 
 use bee_common::packable::Packable;

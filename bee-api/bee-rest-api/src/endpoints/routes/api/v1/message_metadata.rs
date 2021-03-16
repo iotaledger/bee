@@ -1,15 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    body::{BodyInner, SuccessBody},
-    config::ROUTE_MESSAGE_METADATA,
-    filters::with_tangle,
-    path_params::message_id,
-    permission::has_permission,
-    rejection::CustomRejection,
-    storage::StorageBackend,
-    IS_SYNCED_THRESHOLD,
+use crate::{
+    endpoints::{
+        config::ROUTE_MESSAGE_METADATA, filters::with_tangle, path_params::message_id, permission::has_permission,
+        rejection::CustomRejection, storage::StorageBackend, IS_SYNCED_THRESHOLD,
+    },
+    types::{body::SuccessBody, dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
 };
 
 use bee_ledger::types::ConflictReason;
@@ -17,7 +14,6 @@ use bee_message::{payload::Payload, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 
-use serde::{Deserialize, Serialize};
 use warp::{reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
@@ -169,44 +165,3 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
         ))),
     }
 }
-
-/// Response of GET /api/v1/messages/{message_id}/metadata
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MessageMetadataResponse {
-    #[serde(rename = "messageId")]
-    pub message_id: String,
-    #[serde(rename = "parentMessageIds")]
-    pub parent_message_ids: Vec<String>,
-    #[serde(rename = "isSolid")]
-    pub is_solid: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "referencedByMilestoneIndex")]
-    pub referenced_by_milestone_index: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "milestoneIndex")]
-    pub milestone_index: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "ledgerInclusionState")]
-    pub ledger_inclusion_state: Option<LedgerInclusionStateDto>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "conflictReason")]
-    pub conflict_reason: Option<u8>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "shouldPromote")]
-    pub should_promote: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "shouldReattach")]
-    pub should_reattach: Option<bool>,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub enum LedgerInclusionStateDto {
-    #[serde(rename = "conflicting")]
-    Conflicting,
-    #[serde(rename = "included")]
-    Included,
-    #[serde(rename = "noTransaction")]
-    NoTransaction,
-}
-
-impl BodyInner for MessageMetadataResponse {}

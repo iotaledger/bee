@@ -3,22 +3,16 @@
 
 use crate::{
     endpoints::{
-        body::{BodyInner, SuccessBody},
-        config::ROUTE_OUTPUT,
-        filters::with_storage,
-        path_params::output_id,
-        permission::has_permission,
-        rejection::CustomRejection,
-        storage::StorageBackend,
+        config::ROUTE_OUTPUT, filters::with_storage, path_params::output_id, permission::has_permission,
+        rejection::CustomRejection, storage::StorageBackend,
     },
-    types::OutputDto,
+    types::{body::SuccessBody, responses::OutputResponse},
 };
 
 use bee_message::output::{ConsumedOutput, CreatedOutput, OutputId};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
-use serde::{Deserialize, Serialize};
 use warp::{reject, Filter, Rejection, Reply};
 
 use std::{convert::TryInto, net::IpAddr, ops::Deref};
@@ -76,19 +70,3 @@ pub(crate) async fn output<B: StorageBackend>(
         ))),
     }
 }
-
-/// Response of GET /api/v1/outputs/{output_id}
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct OutputResponse {
-    #[serde(rename = "messageId")]
-    pub message_id: String,
-    #[serde(rename = "transactionId")]
-    pub transaction_id: String,
-    #[serde(rename = "outputIndex")]
-    pub output_index: u16,
-    #[serde(rename = "isSpent")]
-    pub is_spent: bool,
-    pub output: OutputDto,
-}
-
-impl BodyInner for OutputResponse {}

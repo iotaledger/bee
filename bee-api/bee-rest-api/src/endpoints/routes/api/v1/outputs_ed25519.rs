@@ -1,21 +1,18 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::endpoints::{
-    body::{BodyInner, SuccessBody},
-    config::ROUTE_OUTPUTS_ED25519,
-    filters::with_storage,
-    path_params::ed25519_address,
-    permission::has_permission,
-    rejection::CustomRejection,
-    storage::StorageBackend,
+use crate::{
+    endpoints::{
+        config::ROUTE_OUTPUTS_ED25519, filters::with_storage, path_params::ed25519_address, permission::has_permission,
+        rejection::CustomRejection, storage::StorageBackend,
+    },
+    types::{body::SuccessBody, responses::OutputsForAddressResponse},
 };
 
 use bee_message::{address::Ed25519Address, output::OutputId};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
-use serde::{Deserialize, Serialize};
 use warp::{reject, Filter, Rejection, Reply};
 
 use std::{net::IpAddr, ops::Deref};
@@ -68,19 +65,3 @@ pub(crate) async fn outputs_ed25519<B: StorageBackend>(
         output_ids: fetched.iter().map(|id| id.to_string()).collect(),
     })))
 }
-
-/// Response of GET /api/v1/addresses/{address}/outputs
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct OutputsForAddressResponse {
-    // The type of the address (1=Ed25519).
-    #[serde(rename = "addressType")]
-    pub address_type: u8,
-    pub address: String,
-    #[serde(rename = "maxResults")]
-    pub max_results: usize,
-    pub count: usize,
-    #[serde(rename = "outputIds")]
-    pub output_ids: Vec<String>,
-}
-
-impl BodyInner for OutputsForAddressResponse {}

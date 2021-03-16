@@ -1,14 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::receipts::ReceiptsResponse;
-
 use crate::{
     endpoints::{
-        body::SuccessBody, config::ROUTE_RECEIPTS_AT, filters::with_storage, path_params::milestone_index,
-        permission::has_permission, rejection::CustomRejection, storage::StorageBackend,
+        config::ROUTE_RECEIPTS_AT, filters::with_storage, path_params::milestone_index, permission::has_permission,
+        rejection::CustomRejection, storage::StorageBackend,
     },
-    types::ReceiptDto,
+    types::{body::SuccessBody, dtos::ReceiptDto, responses::ReceiptsResponse},
 };
 
 use bee_ledger::types::Receipt;
