@@ -92,22 +92,15 @@ impl<P: Packable> Packable for Option<P> {
     type Error = OptionError<P::Error>;
 
     fn packed_len(&self) -> usize {
-        true.packed_len()
-            + match self {
-                Some(p) => p.packed_len(),
-                None => 0,
-            }
+        true.packed_len() + self.iter().map(|p| p.packed_len()).sum::<usize>()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        match self {
-            Some(p) => {
-                true.pack(writer).map_err(OptionError::Bool)?;
-                p.pack(writer).map_err(OptionError::Inner)?;
-            }
-            None => {
-                false.pack(writer).map_err(OptionError::Bool)?;
-            }
+        if let Some(p) = self {
+            true.pack(writer).map_err(OptionError::Bool)?;
+            p.pack(writer).map_err(OptionError::Inner)?;
+        } else {
+            false.pack(writer).map_err(OptionError::Bool)?;
         }
 
         Ok(())
@@ -117,9 +110,10 @@ impl<P: Packable> Packable for Option<P> {
     where
         Self: Sized,
     {
-        Ok(match bool::unpack(reader).map_err(OptionError::Bool)? {
-            true => Some(P::unpack(reader).map_err(OptionError::Inner)?),
-            false => None,
+        Ok(if bool::unpack(reader).map_err(OptionError::Bool)? {
+            Some(P::unpack(reader).map_err(OptionError::Inner)?)
+        } else {
+            None
         })
     }
 }
