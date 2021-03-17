@@ -140,7 +140,7 @@ pub struct MessageMetadataResponse {
 impl BodyInner for MessageMetadataResponse {}
 
 /// Response of GET /api/v1/messages/{message_id}
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageResponse(pub MessageDto);
 
 impl BodyInner for MessageResponse {}

@@ -19,7 +19,10 @@ pub struct MigratedFundsEntry {
 }
 
 impl MigratedFundsEntry {
-    pub fn new(tail_transaction_hash: [u8; 49], output: SignatureLockedSingleOutput) -> Result<Self, Error> {
+    pub fn new(
+        tail_transaction_hash: [u8; TAIL_TRANSACTION_HASH_LEN],
+        output: SignatureLockedSingleOutput,
+    ) -> Result<Self, Error> {
         if !MIGRATED_FUNDS_ENTRY_AMOUNT.contains(&output.amount()) {
             return Err(Error::InvalidMigratedFundsEntryAmount(output.amount()));
         }
