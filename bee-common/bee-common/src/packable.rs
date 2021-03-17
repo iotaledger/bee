@@ -57,7 +57,7 @@ where
     type Error = P::Error;
 
     fn packed_len(&self) -> usize {
-        0u64.packed_len() + self.iter().map(|x| x.packed_len()).sum::<usize>()
+        0u64.packed_len() + self.iter().map(Packable::packed_len).sum::<usize>()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -92,7 +92,7 @@ impl<P: Packable> Packable for Option<P> {
     type Error = OptionError<P::Error>;
 
     fn packed_len(&self) -> usize {
-        true.packed_len() + self.iter().map(|p| p.packed_len()).sum::<usize>()
+        true.packed_len() + self.iter().map(Packable::packed_len).sum::<usize>()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
