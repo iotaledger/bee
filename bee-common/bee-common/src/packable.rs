@@ -92,7 +92,7 @@ impl<P: Packable> Packable for Option<P> {
     type Error = OptionError<P::Error>;
 
     fn packed_len(&self) -> usize {
-        true.packed_len() + self.iter().map(Packable::packed_len).sum::<usize>()
+        true.packed_len() + self.as_ref().map_or(0, Packable::packed_len)
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
