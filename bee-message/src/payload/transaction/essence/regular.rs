@@ -6,11 +6,13 @@ use crate::{
     input::Input,
     output::Output,
     payload::{unpack_option_payload, Payload},
-    utils::is_sorted,
     Error,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::{
+    ord::is_sorted,
+    packable::{Packable, Read, Write},
+};
 
 use alloc::{boxed::Box, vec::Vec};
 

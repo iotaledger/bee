@@ -3,11 +3,13 @@
 
 use crate::{
     payload::{unpack_option_payload, Payload},
-    utils::is_unique_sorted,
     Error, Parents,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::{
+    ord::is_unique_sorted,
+    packable::{Packable, Read, Write},
+};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 

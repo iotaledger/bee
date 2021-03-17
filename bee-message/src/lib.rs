@@ -21,7 +21,6 @@ pub mod payload;
 pub mod prelude;
 pub mod solid_entry_point;
 pub mod unlock;
-pub mod utils;
 
 pub use error::Error;
 pub use message::{Message, MessageBuilder, MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN};
