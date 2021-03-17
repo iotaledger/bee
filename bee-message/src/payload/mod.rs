@@ -127,3 +127,18 @@ impl Packable for Payload {
         })
     }
 }
+
+pub fn unpack_option_payload<R: Read + ?Sized>(reader: &mut R) -> Result<(usize, Option<Payload>), Error> {
+    let payload_len = u32::unpack(reader)? as usize;
+
+    if payload_len > 0 {
+        let payload = Payload::unpack(reader)?;
+        if payload_len != payload.packed_len() {
+            Err(Error::InvalidPayloadLength(payload_len, payload.packed_len()))
+        } else {
+            Ok((payload_len, Some(payload)))
+        }
+    } else {
+        Ok((0, None))
+    }
+}

@@ -1,7 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::Payload, Error, MessageId, Parents, MESSAGE_ID_LENGTH};
+use crate::{
+    payload::{unpack_option_payload, Payload},
+    Error, MessageId, Parents, MESSAGE_ID_LENGTH,
+};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_pow::providers::{Miner, Provider, ProviderBuilder};
@@ -85,25 +88,15 @@ impl Packable for Message {
 
         let parents = Parents::unpack(reader)?;
 
-        let payload_len = u32::unpack(reader)? as usize;
-        let payload = if payload_len != 0 {
-            let payload = Payload::unpack(reader)?;
-            if payload_len != payload.packed_len() {
-                return Err(Self::Error::InvalidAnnouncedLength(payload_len, payload.packed_len()));
-            }
+        let (payload_len, payload) = unpack_option_payload(reader)?;
 
-            if !matches!(
-                payload,
-                Payload::Transaction(_) | Payload::Milestone(_) | Payload::Indexation(_)
-            ) {
-                // Safe to unwrap since it's known not to be None.
-                return Err(Error::InvalidPayloadKind(payload.kind()));
-            }
-
-            Some(payload)
-        } else {
-            None
-        };
+        if !matches!(
+            payload,
+            None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::Indexation(_))
+        ) {
+            // Safe to unwrap since it's known not to be None.
+            return Err(Error::InvalidPayloadKind(payload.unwrap().kind()));
+        }
 
         let nonce = u64::unpack(reader)?;
 

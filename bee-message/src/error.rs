@@ -28,7 +28,8 @@ pub enum Error {
     InvalidAddress,
     InvalidSignature,
     MissingField(&'static str),
-    InvalidAnnouncedLength(usize, usize),
+    InvalidPayloadLength(usize, usize),
+    MissingPayload,
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
     InvalidIndexationIndexLength(usize),
@@ -87,9 +88,10 @@ impl fmt::Display for Error {
             Error::InvalidAddress => write!(f, "Invalid address provided."),
             Error::InvalidSignature => write!(f, "Invalid signature provided."),
             Error::MissingField(s) => write!(f, "Missing required field: {}.", s),
-            Error::InvalidAnnouncedLength(expected, actual) => {
-                write!(f, "Invalid announced length: {}, {}.", expected, actual)
+            Error::InvalidPayloadLength(expected, actual) => {
+                write!(f, "Invalid payload length: expected {}, got {}.", expected, actual)
             }
+            Error::MissingPayload => write!(f, "Missing payload."),
             Error::InvalidHexadecimalChar(hex) => write!(f, "Invalid hexadecimal character: {}.", hex),
             Error::InvalidHexadecimalLength(expected, actual) => {
                 write!(f, "Invalid hexadecimal length: expected {} got {}.", expected, actual)

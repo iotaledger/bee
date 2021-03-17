@@ -1,7 +1,11 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::Payload, utils::is_unique_sorted, Error, Parents};
+use crate::{
+    payload::{unpack_option_payload, Payload},
+    utils::is_unique_sorted,
+    Error, Parents,
+};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -140,16 +144,7 @@ impl Packable for MilestonePayloadEssence {
             public_keys.push(public_key);
         }
 
-        let receipt_len = u32::unpack(reader)? as usize;
-        let receipt = if receipt_len > 0 {
-            let receipt = Payload::unpack(reader)?;
-            if receipt_len != receipt.packed_len() {
-                return Err(Self::Error::InvalidAnnouncedLength(receipt_len, receipt.packed_len()));
-            }
-            Some(receipt)
-        } else {
-            None
-        };
+        let (_, receipt) = unpack_option_payload(reader)?;
 
         // TODO builder ?
 

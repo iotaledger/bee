@@ -255,7 +255,8 @@ pub struct IndexationPayloadDto {
 pub struct ReceiptPayloadDto {
     #[serde(rename = "type")]
     pub kind: u32,
-    pub index: u32,
+    #[serde(rename = "migratedAt")]
+    pub migrated_at: u32,
     pub last: bool,
     pub funds: Vec<MigratedFundsEntryDto>,
     pub transaction: PayloadDto,
@@ -811,7 +812,7 @@ impl TryFrom<&Box<ReceiptPayload>> for Box<ReceiptPayloadDto> {
     fn try_from(value: &Box<ReceiptPayload>) -> Result<Self, Self::Error> {
         Ok(Box::new(ReceiptPayloadDto {
             kind: 3,
-            index: value.index(),
+            migrated_at: value.migrated_at(),
             last: value.last(),
             funds: value
                 .funds()
@@ -830,7 +831,7 @@ impl TryFrom<&ReceiptPayload> for ReceiptPayloadDto {
     fn try_from(value: &ReceiptPayload) -> Result<Self, Self::Error> {
         Ok(ReceiptPayloadDto {
             kind: 3,
-            index: value.index(),
+            migrated_at: value.migrated_at(),
             last: value.last(),
             funds: value
                 .funds()
@@ -848,7 +849,7 @@ impl TryFrom<&Box<ReceiptPayloadDto>> for Box<ReceiptPayload> {
 
     fn try_from(value: &Box<ReceiptPayloadDto>) -> Result<Self, Self::Error> {
         let receipt = ReceiptPayload::new(
-            value.index,
+            value.migrated_at,
             value.last,
             value
                 .funds

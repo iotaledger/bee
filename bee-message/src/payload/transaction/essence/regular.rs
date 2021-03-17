@@ -5,7 +5,7 @@ use crate::{
     constants::{INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE, IOTA_SUPPLY},
     input::Input,
     output::Output,
-    payload::Payload,
+    payload::{unpack_option_payload, Payload},
     utils::is_sorted,
     Error,
 };
@@ -101,12 +101,7 @@ impl Packable for RegularEssence {
 
         let mut builder = Self::builder().with_inputs(inputs).with_outputs(outputs);
 
-        let payload_len = u32::unpack(reader)? as usize;
-        if payload_len > 0 {
-            let payload = Payload::unpack(reader)?;
-            if payload_len != payload.packed_len() {
-                return Err(Self::Error::InvalidAnnouncedLength(payload_len, payload.packed_len()));
-            }
+        if let (_, Some(payload)) = unpack_option_payload(reader)? {
             builder = builder.with_payload(payload);
         }
 
