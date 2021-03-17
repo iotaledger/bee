@@ -5,9 +5,9 @@ use crate::{
     config::ProtocolConfig,
     event::{MessageProcessed, NewVertex},
     helper,
-    packet::Message as MessagePacket,
     peer::PeerManager,
     storage::StorageBackend,
+    types::packet::Message as MessagePacket,
     worker::{
         BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker, MessageSubmitterError, MetricsWorker,
         PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,

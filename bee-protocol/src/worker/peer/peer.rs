@@ -3,9 +3,9 @@
 
 use crate::{
     helper,
-    packet::{tlv_from_bytes, Header, Heartbeat, Message, MessageRequest, MilestoneRequest, Packet, TlvError},
     peer::Peer,
     storage::StorageBackend,
+    types::packet::{tlv_from_bytes, Header, Heartbeat, Message, MessageRequest, MilestoneRequest, Packet, TlvError},
     worker::{
         peer::packet_handler::PacketHandler, HasherWorkerEvent, MessageResponderWorkerEvent,
         MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent, RequestedMilestones,

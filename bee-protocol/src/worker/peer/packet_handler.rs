@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::packet::{Header, HEADER_SIZE};
+use crate::types::packet::{Header, HEADER_SIZE};
 
 use bee_network::Multiaddr;
 

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    packet::Message,
     storage::StorageBackend,
+    types::packet::Message,
     worker::{HasherWorker, HasherWorkerEvent},
 };
 

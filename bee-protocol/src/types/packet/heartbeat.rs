@@ -3,7 +3,7 @@
 
 //! Heartbeat packet of the protocol.
 
-use crate::packet::Packet;
+use crate::types::packet::Packet;
 
 use std::{convert::TryInto, ops::Range};
 

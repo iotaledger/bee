@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    packet::Message,
     peer::PeerManager,
+    types::packet::Message,
     worker::{MetricsWorker, PeerManagerResWorker},
     ProtocolMetrics, Sender,
 };

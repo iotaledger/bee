@@ -7,11 +7,11 @@
 pub mod config;
 pub mod event;
 pub mod storage;
+pub mod types;
 
 mod helper;
 mod key_manager;
 mod metrics;
-mod packet;
 mod peer;
 mod sender;
 mod worker;
