@@ -7,4 +7,5 @@
 #![warn(missing_docs)]
 
 pub mod logger;
+pub mod ord;
 pub mod packable;
