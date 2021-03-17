@@ -47,8 +47,8 @@ fn is_sorted_not_unique() {
 fn vec_is_sorted() {
     assert!(ord::is_sorted(
         vec![
-            vec![0, 1, 'a' as u8, 2, 3, 4, 5, 6, 7, 8, 9],
-            vec![0, 1, 'b' as u8, 2, 3, 4, 5, 6, 7, 8, 9],
+            vec![0, 1, b'a', 2, 3, 4, 5, 6, 7, 8, 9],
+            vec![0, 1, b'b', 2, 3, 4, 5, 6, 7, 8, 9],
         ]
         .iter()
     ));
@@ -58,8 +58,8 @@ fn vec_is_sorted() {
 fn vec_is_not_sorted() {
     assert!(!ord::is_sorted(
         vec![
-            vec![0, 1, 'b' as u8, 2, 3, 4, 5, 6, 7, 8, 9],
-            vec![0, 1, 'a' as u8, 2, 3, 4, 5, 6, 7, 8, 9],
+            vec![0, 1, b'b', 2, 3, 4, 5, 6, 7, 8, 9],
+            vec![0, 1, b'a', 2, 3, 4, 5, 6, 7, 8, 9],
         ]
         .iter()
     ));
