@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+<!-- ## 0.4.0 - 2021-XX-XX
+
+### Added
+
+- `ord::is_unique_sorted`;
+- `ord::is_sorted`; -->
+
 ## 0.3.1-alpha - 2021-02-15
 
 ### Added
