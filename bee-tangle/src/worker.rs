@@ -62,10 +62,6 @@ where
                 .unwrap();
         }
 
-        tangle
-            .add_solid_entry_point(SolidEntryPoint::null(), MilestoneIndex(0))
-            .await;
-
         // This needs to be done after the streams are emptied.
 
         let snapshot_info = Fetch::<(), SnapshotInfo>::fetch(&*storage, &()).await.unwrap().unwrap();
