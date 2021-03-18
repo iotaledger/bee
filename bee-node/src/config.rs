@@ -9,7 +9,7 @@ use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
 use bee_ledger::consensus::config::{LedgerConfig, LedgerConfigBuilder};
 use bee_network::{Keypair, NetworkConfig, NetworkConfigBuilder, PeerId, PublicKey};
-use bee_protocol::config::{ProtocolConfig, ProtocolConfigBuilder};
+use bee_protocol::workers::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::endpoints::config::{RestApiConfig, RestApiConfigBuilder};
 use bee_snapshot::config::{SnapshotConfig, SnapshotConfigBuilder};
 use bee_storage::backend::StorageBackend;

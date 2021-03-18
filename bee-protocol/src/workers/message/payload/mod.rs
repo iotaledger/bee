@@ -9,7 +9,7 @@ pub(crate) use indexation::{IndexationPayloadWorker, IndexationPayloadWorkerEven
 pub(crate) use milestone::{MilestonePayloadWorker, MilestonePayloadWorkerEvent};
 pub(crate) use transaction::{TransactionPayloadWorker, TransactionPayloadWorkerEvent};
 
-use crate::storage::StorageBackend;
+use crate::workers::storage::StorageBackend;
 
 use bee_message::{payload::Payload, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};

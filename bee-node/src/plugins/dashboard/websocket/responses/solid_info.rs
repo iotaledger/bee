@@ -6,7 +6,7 @@ use crate::plugins::dashboard::websocket::{
     topics::WsTopic,
 };
 
-use bee_protocol::event::MessageSolidified;
+use bee_protocol::workers::event::MessageSolidified;
 
 use serde::Serialize;
 

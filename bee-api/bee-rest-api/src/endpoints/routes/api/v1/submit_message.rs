@@ -15,7 +15,7 @@ use crate::{
 
 use bee_message::{payload::Payload, Message, MessageBuilder, MessageId, Parents};
 use bee_pow::providers::{ConstantBuilder, MinerBuilder, ProviderBuilder};
-use bee_protocol::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
+use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 

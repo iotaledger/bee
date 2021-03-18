@@ -16,7 +16,7 @@ use crate::{
     types::{body::SuccessBody, responses::InfoResponse},
 };
 
-use bee_protocol::{config::ProtocolConfig, PeerManager};
+use bee_protocol::workers::{config::ProtocolConfig, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 

@@ -2,13 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    config::ProtocolConfig,
-    event::LatestMilestoneChanged,
-    helper,
-    peer::PeerManager,
-    storage::StorageBackend,
     types::{key_manager::KeyManager, metrics::NodeMetrics},
     workers::{
+        config::ProtocolConfig, event::LatestMilestoneChanged, helper, peer::PeerManager, storage::StorageBackend,
         MetricsWorker, MilestoneRequesterWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
         PeerManagerResWorker, RequestedMilestones,
     },

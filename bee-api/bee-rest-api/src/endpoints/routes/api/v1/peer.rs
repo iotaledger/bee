@@ -10,7 +10,7 @@ use crate::{
 };
 
 use bee_network::PeerId;
-use bee_protocol::PeerManager;
+use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
 use warp::{reject, Filter, Rejection, Reply};

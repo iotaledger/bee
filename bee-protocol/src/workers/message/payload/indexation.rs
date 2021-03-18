@@ -1,7 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{storage::StorageBackend, types::metrics::NodeMetrics, workers::MetricsWorker};
+use crate::{
+    types::metrics::NodeMetrics,
+    workers::{storage::StorageBackend, MetricsWorker},
+};
 
 use bee_message::{
     payload::{indexation::HashedIndex, transaction::Essence, Payload},

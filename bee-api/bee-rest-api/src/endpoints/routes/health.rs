@@ -8,7 +8,7 @@ use crate::endpoints::{
     storage::StorageBackend,
 };
 
-use bee_protocol::PeerManager;
+use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 

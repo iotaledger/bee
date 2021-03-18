@@ -4,11 +4,11 @@
 #![allow(clippy::assertions_on_constants)]
 
 use crate::{
-    peer::PeerManager,
-    storage::StorageBackend,
     types::{metrics::NodeMetrics, packets::Message as MessagePacket},
     workers::{
         message::{HashCache, MessageSubmitterError, ProcessorWorker, ProcessorWorkerEvent},
+        peer::PeerManager,
+        storage::StorageBackend,
         MetricsWorker, PeerManagerResWorker,
     },
 };

@@ -1,7 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{event::MpsMetricsUpdated, types::metrics::NodeMetrics, workers::MetricsWorker};
+use crate::{
+    types::metrics::NodeMetrics,
+    workers::{event::MpsMetricsUpdated, MetricsWorker},
+};
 
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 

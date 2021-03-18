@@ -16,7 +16,7 @@ use crate::{
 };
 
 use bee_network::{Command::AddPeer, Multiaddr, NetworkServiceController, PeerId, PeerRelation, Protocol};
-use bee_protocol::PeerManager;
+use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
 use serde_json::Value as JsonValue;

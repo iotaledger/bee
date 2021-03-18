@@ -1,10 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    storage::StorageBackend,
-    workers::{MessageRequesterWorker, RequestedMessages},
-};
+use crate::workers::{storage::StorageBackend, MessageRequesterWorker, RequestedMessages};
 
 use bee_ledger::consensus::LedgerWorker;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};

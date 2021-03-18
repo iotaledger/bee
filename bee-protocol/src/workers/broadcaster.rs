@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    peer::PeerManager,
     types::{metrics::NodeMetrics, packets::Message},
-    workers::{MetricsWorker, PeerManagerResWorker},
-    Sender,
+    workers::{peer::PeerManager, sender::Sender, MetricsWorker, PeerManagerResWorker},
 };
 
 use bee_network::PeerId;

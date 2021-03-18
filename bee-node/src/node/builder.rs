@@ -186,7 +186,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let this = bee_ledger::consensus::init::<BeeNode<B>>(this);
 
         info!("Initializing protocol layer...");
-        let this = bee_protocol::init::<BeeNode<B>>(config.protocol.clone(), network_id, events, this);
+        let this = bee_protocol::workers::init::<BeeNode<B>>(config.protocol.clone(), network_id, events, this);
 
         info!("Initializing REST API...");
         let this = bee_rest_api::endpoints::init::<BeeNode<B>>(

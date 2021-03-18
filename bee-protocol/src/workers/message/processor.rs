@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    config::ProtocolConfig,
-    event::{MessageProcessed, NewVertex},
-    helper,
-    peer::PeerManager,
-    storage::StorageBackend,
     types::{metrics::NodeMetrics, packets::Message as MessagePacket},
     workers::{
+        config::ProtocolConfig,
+        event::{MessageProcessed, NewVertex},
+        helper,
+        peer::PeerManager,
+        storage::StorageBackend,
         BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker, MessageSubmitterError, MetricsWorker,
         PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,
         RequestedMessages, UnconfirmedMessageInserterWorker, UnconfirmedMessageInserterWorkerEvent,

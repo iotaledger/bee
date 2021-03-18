@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    storage::StorageBackend,
     types::packets::Message,
-    workers::{HasherWorker, HasherWorkerEvent},
+    workers::{storage::StorageBackend, HasherWorker, HasherWorkerEvent},
 };
 
 use bee_message::MessageId;

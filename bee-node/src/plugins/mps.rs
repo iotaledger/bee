@@ -3,7 +3,7 @@
 
 use crate::plugins::Plugin;
 
-use bee_protocol::event::MpsMetricsUpdated;
+use bee_protocol::workers::event::MpsMetricsUpdated;
 use bee_runtime::event::Bus;
 
 use async_trait::async_trait;

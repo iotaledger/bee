@@ -30,7 +30,7 @@ use crate::{
 };
 
 use bee_ledger::consensus::event::MilestoneConfirmed;
-use bee_protocol::{event::LatestMilestoneChanged, MetricsWorker, PeerManagerResWorker};
+use bee_protocol::workers::{event::LatestMilestoneChanged, MetricsWorker, PeerManagerResWorker};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 

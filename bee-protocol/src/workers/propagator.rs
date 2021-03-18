@@ -1,10 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    event::MessageSolidified,
-    storage::StorageBackend,
-    workers::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent},
+use crate::workers::{
+    event::MessageSolidified, storage::StorageBackend, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
 };
 
 use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MessageId};

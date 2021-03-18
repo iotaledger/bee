@@ -17,7 +17,7 @@ use storage::StorageBackend;
 use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
 use bee_network::NetworkServiceController;
-use bee_protocol::{config::ProtocolConfig, MessageSubmitterWorker, PeerManager, PeerManagerResWorker};
+use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorker, PeerManager, PeerManagerResWorker};
 use bee_runtime::{
     node::{Node, NodeBuilder},
     worker::{Error as WorkerError, Worker},

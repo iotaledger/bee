@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    storage::StorageBackend,
     types::metrics::NodeMetrics,
-    workers::{IndexationPayloadWorker, IndexationPayloadWorkerEvent, MetricsWorker},
+    workers::{storage::StorageBackend, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MetricsWorker},
 };
 
 use bee_message::{

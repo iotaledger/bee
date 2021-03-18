@@ -2,14 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    peer::PeerManager,
-    storage::StorageBackend,
     types::{metrics::NodeMetrics, packets::Heartbeat},
     workers::{
-        MessageRequesterWorker, MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages,
-        RequestedMilestones,
+        peer::PeerManager, sender::Sender, storage::StorageBackend, MessageRequesterWorker,
+        MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages, RequestedMilestones,
     },
-    Sender,
 };
 
 use bee_message::{milestone::MilestoneIndex, MessageId};

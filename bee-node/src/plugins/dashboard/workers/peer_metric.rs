@@ -10,7 +10,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_protocol::PeerManager;
+use bee_protocol::workers::PeerManager;
 use bee_rest_api::types::{dtos::PeerDto, responses::PeersResponse};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 

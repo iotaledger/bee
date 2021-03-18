@@ -2,11 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    helper,
-    peer::PeerManager,
-    storage::StorageBackend,
     types::metrics::NodeMetrics,
-    workers::{MetricsWorker, PeerManagerResWorker},
+    workers::{helper, peer::PeerManager, storage::StorageBackend, MetricsWorker, PeerManagerResWorker},
 };
 
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
