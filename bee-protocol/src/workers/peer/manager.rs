@@ -90,6 +90,7 @@ where
                         if let Some(peer) = peer_manager.peers.write().await.get_mut(&peer_id) {
                             let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
+                            peer.0.set_connected(true);
                             peer.1 = Some((sender, shutdown_tx));
 
                             spawn(
@@ -118,6 +119,7 @@ where
                     Event::PeerDisconnected { peer_id } => {
                         // TODO write a get_mut peer manager method
                         if let Some(peer) = peer_manager.peers.write().await.get_mut(&peer_id) {
+                            peer.0.set_connected(false);
                             if let Some((_, shutdown)) = peer.1.take() {
                                 if let Err(e) = shutdown.send(()) {
                                     warn!("Sending shutdown to {} failed: {:?}.", peer.0.alias(), e);

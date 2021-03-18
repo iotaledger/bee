@@ -11,7 +11,7 @@ use crate::{
 };
 
 use bee_protocol::PeerManager;
-use bee_rest_api::types::{dtos::peer_to_peer_dto, responses::PeersResponse};
+use bee_rest_api::types::{dtos::PeerDto, responses::PeersResponse};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 
 use futures::StreamExt;
@@ -43,7 +43,7 @@ where
         while ticker.next().await.is_some() {
             let mut peers_dtos = Vec::new();
             for peer in peer_manager.get_all().await {
-                peers_dtos.push(peer_to_peer_dto(&peer, &peer_manager).await);
+                peers_dtos.push(PeerDto::from(peer.as_ref()));
             }
             broadcast(peer_metric::forward(PeersResponse(peers_dtos)), &users).await;
         }

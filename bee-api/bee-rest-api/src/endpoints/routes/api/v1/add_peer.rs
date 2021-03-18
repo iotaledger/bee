@@ -10,7 +10,7 @@ use crate::{
     },
     types::{
         body::SuccessBody,
-        dtos::{peer_to_peer_dto, PeerDto, RelationDto},
+        dtos::{PeerDto, RelationDto},
         responses::AddPeerResponse,
     },
 };
@@ -74,7 +74,7 @@ pub(crate) async fn add_peer(
 
     match peer_manager.get(&peer_id).await {
         Some(peer_entry) => {
-            let peer_dto = peer_to_peer_dto(&peer_entry.0, &peer_manager).await;
+            let peer_dto = PeerDto::from(peer_entry.0.as_ref());
             Ok(warp::reply::with_status(
                 warp::reply::json(&SuccessBody::new(AddPeerResponse(peer_dto))),
                 StatusCode::OK,

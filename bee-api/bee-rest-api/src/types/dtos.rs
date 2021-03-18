@@ -21,16 +21,12 @@ use bee_message::{
     Message, MessageBuilder, MessageId, Parents, MESSAGE_ID_LENGTH,
 };
 use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
-use bee_protocol::{types::peer::Peer, PeerManager};
-use bee_runtime::resource::ResourceHandle;
+use bee_protocol::types::peer::Peer;
 
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
-use std::{
-    convert::{TryFrom, TryInto},
-    sync::Arc,
-};
+use std::convert::{TryFrom, TryInto};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
@@ -993,44 +989,45 @@ pub struct MetricsDto {
     pub dropped_packets: u64,
 }
 
-// &Arc<Peer> -> PeerDto // TODO: can not implement `From` conversion since it's dependent of the `PeerManager`.
-pub async fn peer_to_peer_dto(peer: &Arc<Peer>, peer_manager: &ResourceHandle<PeerManager>) -> PeerDto {
-    PeerDto {
-        id: peer.id().to_string(),
-        alias: Some(peer.alias().to_string()),
-        multi_addresses: vec![peer.address().to_string()],
-        relation: {
-            if peer.relation().is_known() {
-                RelationDto::Known
-            } else if peer.relation().is_unknown() {
-                RelationDto::Unknown
-            } else {
-                RelationDto::Discovered
-            }
-        },
-        connected: peer_manager.is_connected(peer.id()).await,
-        gossip: Some(GossipDto {
-            heartbeat: HeartbeatDto {
-                solid_milestone_index: *peer.solid_milestone_index(),
-                pruned_milestone_index: *peer.pruned_index(),
-                latest_milestone_index: *peer.latest_milestone_index(),
-                connected_neighbors: peer.connected_peers(),
-                synced_neighbors: peer.synced_peers(),
+impl From<&Peer> for PeerDto {
+    fn from(peer: &Peer) -> Self {
+        PeerDto {
+            id: peer.id().to_string(),
+            alias: Some(peer.alias().to_string()),
+            multi_addresses: vec![peer.address().to_string()],
+            relation: {
+                if peer.relation().is_known() {
+                    RelationDto::Known
+                } else if peer.relation().is_unknown() {
+                    RelationDto::Unknown
+                } else {
+                    RelationDto::Discovered
+                }
             },
-            metrics: MetricsDto {
-                new_messages: peer.metrics().new_messages(),
-                received_messages: peer.metrics().messages_received(),
-                known_messages: peer.metrics().known_messages(),
-                received_message_requests: peer.metrics().message_requests_received(),
-                received_milestone_requests: peer.metrics().milestone_requests_received(),
-                received_heartbeats: peer.metrics().heartbeats_received(),
-                sent_messages: peer.metrics().messages_sent(),
-                sent_message_requests: peer.metrics().message_requests_sent(),
-                sent_milestone_requests: peer.metrics().milestone_requests_sent(),
-                sent_heartbeats: peer.metrics().heartbeats_sent(),
-                dropped_packets: peer.metrics().invalid_packets(), // TODO dropped_packets == invalid_packets?
-            },
-        }),
+            connected: peer.is_connected(),
+            gossip: Some(GossipDto {
+                heartbeat: HeartbeatDto {
+                    solid_milestone_index: *peer.solid_milestone_index(),
+                    pruned_milestone_index: *peer.pruned_index(),
+                    latest_milestone_index: *peer.latest_milestone_index(),
+                    connected_neighbors: peer.connected_peers(),
+                    synced_neighbors: peer.synced_peers(),
+                },
+                metrics: MetricsDto {
+                    new_messages: peer.metrics().new_messages(),
+                    received_messages: peer.metrics().messages_received(),
+                    known_messages: peer.metrics().known_messages(),
+                    received_message_requests: peer.metrics().message_requests_received(),
+                    received_milestone_requests: peer.metrics().milestone_requests_received(),
+                    received_heartbeats: peer.metrics().heartbeats_received(),
+                    sent_messages: peer.metrics().messages_sent(),
+                    sent_message_requests: peer.metrics().message_requests_sent(),
+                    sent_milestone_requests: peer.metrics().milestone_requests_sent(),
+                    sent_heartbeats: peer.metrics().heartbeats_sent(),
+                    dropped_packets: 0,
+                },
+            }),
+        }
     }
 }
 

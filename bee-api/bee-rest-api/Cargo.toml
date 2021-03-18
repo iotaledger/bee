@@ -17,7 +17,7 @@ bee-message = { path = "../../bee-message" }
 bee-network = { path = "../../bee-network", optional = true }
 bee-pow = { path = "../../bee-pow" }
 bee-protocol = { path = "../../bee-protocol" }
-bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true  }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-tangle = { path = "../../bee-tangle", optional = true }
 
@@ -38,6 +38,7 @@ warp = { version = "0.3", optional = true }
 endpoints = [
   "bee-common",
   "bee-network",
+  "bee-runtime",
   "bee-storage",
   "bee-tangle",
   "async-trait",

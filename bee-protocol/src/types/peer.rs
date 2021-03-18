@@ -7,13 +7,14 @@ use bee_message::milestone::MilestoneIndex;
 use bee_network::{Multiaddr, PeerId, PeerInfo, PeerRelation};
 
 use std::{
-    sync::atomic::{AtomicU32, AtomicU64, AtomicU8, Ordering},
+    sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicU8, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
 
 pub struct Peer {
     id: PeerId,
     info: PeerInfo,
+    connected: AtomicBool,
     metrics: PeerMetrics,
     solid_milestone_index: AtomicU32,
     pruned_index: AtomicU32,
@@ -29,6 +30,7 @@ impl Peer {
         Self {
             id,
             info,
+            connected: AtomicBool::new(false),
             metrics: PeerMetrics::default(),
             solid_milestone_index: AtomicU32::new(0),
             pruned_index: AtomicU32::new(0),
@@ -54,6 +56,14 @@ impl Peer {
 
     pub fn relation(&self) -> PeerRelation {
         self.info.relation
+    }
+
+    pub(crate) fn set_connected(&self, connected: bool) {
+        self.connected.store(connected, Ordering::Relaxed);
+    }
+
+    pub fn is_connected(&self) -> bool {
+        self.connected.load(Ordering::Relaxed)
     }
 
     pub fn metrics(&self) -> &PeerMetrics {
