@@ -50,9 +50,9 @@ impl Packable for CreatedOutput {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self {
-            message_id: MessageId::unpack(reader)?,
-            inner: Output::unpack(reader)?,
-        })
+        let message_id = MessageId::unpack(reader)?;
+        let inner = Output::unpack(reader)?;
+
+        Ok(Self { message_id, inner })
     }
 }

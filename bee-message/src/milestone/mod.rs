@@ -54,9 +54,9 @@ impl Packable for Milestone {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self {
-            message_id: MessageId::unpack(reader).map_err(Error::MessageId)?,
-            timestamp: u64::unpack(reader)?,
-        })
+        let message_id = MessageId::unpack(reader).map_err(Error::MessageId)?;
+        let timestamp = u64::unpack(reader)?;
+
+        Ok(Self { message_id, timestamp })
     }
 }
