@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    payload::{unpack_option_payload, Payload},
+    payload::{pack_option_payload, unpack_option_payload, Payload},
     Error, Parents,
 };
 
@@ -106,26 +106,14 @@ impl Packable for MilestonePayloadEssence {
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.index.pack(writer)?;
-
         self.timestamp.pack(writer)?;
-
         self.parents.pack(writer)?;
-
         writer.write_all(&self.merkle_proof)?;
-
         (self.public_keys.len() as u8).pack(writer)?;
-
         for public_key in &self.public_keys {
             writer.write_all(public_key)?;
         }
-
-        match self.receipt {
-            Some(ref receipt) => {
-                (receipt.packed_len() as u32).pack(writer)?;
-                receipt.pack(writer)?;
-            }
-            None => 0u32.pack(writer)?,
-        }
+        pack_option_payload(writer, self.receipt.as_ref())?;
 
         Ok(())
     }

@@ -5,7 +5,7 @@ use crate::{
     constants::{INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE, IOTA_SUPPLY},
     input::Input,
     output::Output,
-    payload::{unpack_option_payload, Payload},
+    payload::{pack_option_payload, unpack_option_payload, Payload},
     Error,
 };
 
@@ -61,19 +61,11 @@ impl Packable for RegularEssence {
         for input in self.inputs.iter() {
             input.pack(writer)?;
         }
-
         (self.outputs.len() as u16).pack(writer)?;
         for output in self.outputs.iter() {
             output.pack(writer)?;
         }
-
-        match self.payload {
-            Some(ref payload) => {
-                (payload.packed_len() as u32).pack(writer)?;
-                payload.pack(writer)?;
-            }
-            None => 0u32.pack(writer)?,
-        }
+        pack_option_payload(writer, self.payload.as_ref())?;
 
         Ok(())
     }

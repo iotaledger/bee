@@ -142,3 +142,14 @@ pub fn unpack_option_payload<R: Read + ?Sized>(reader: &mut R) -> Result<(usize,
         Ok((0, None))
     }
 }
+
+pub fn pack_option_payload<W: Write>(writer: &mut W, payload: Option<&Payload>) -> Result<(), Error> {
+    if let Some(payload) = payload {
+        (payload.packed_len() as u32).pack(writer)?;
+        payload.pack(writer)?;
+    } else {
+        0u32.pack(writer)?;
+    }
+
+    Ok(())
+}

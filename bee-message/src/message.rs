@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    payload::{unpack_option_payload, Payload},
+    payload::{pack_option_payload, unpack_option_payload, Payload},
     Error, MessageId, Parents, MESSAGE_ID_LENGTH,
 };
 
@@ -68,16 +68,8 @@ impl Packable for Message {
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.network_id.pack(writer)?;
-
         self.parents.pack(writer)?;
-
-        if let Some(ref payload) = self.payload {
-            (payload.packed_len() as u32).pack(writer)?;
-            payload.pack(writer)?;
-        } else {
-            0u32.pack(writer)?;
-        }
-
+        pack_option_payload(writer, self.payload.as_ref())?;
         self.nonce.pack(writer)?;
 
         Ok(())

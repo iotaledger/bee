@@ -6,12 +6,14 @@ mod migrated_funds_entry;
 pub use migrated_funds_entry::{MigratedFundsEntry, MIGRATED_FUNDS_ENTRY_AMOUNT};
 
 use crate::{
-    payload::{unpack_option_payload, Payload},
-
+    payload::{pack_option_payload, unpack_option_payload, Payload},
     Error,
 };
 
-use bee_common::{ord::is_unique_sorted,packable::{Packable, Read, Write}};
+use bee_common::{
+    ord::is_unique_sorted,
+    packable::{Packable, Read, Write},
+};
 
 use core::ops::RangeInclusive;
 use std::collections::HashMap;
@@ -105,7 +107,7 @@ impl Packable for ReceiptPayload {
         for fund in self.funds.iter() {
             fund.pack(writer)?;
         }
-        self.transaction.pack(writer)?;
+        pack_option_payload(writer, Some(&self.transaction))?;
 
         Ok(())
     }
