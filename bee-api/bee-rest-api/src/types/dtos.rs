@@ -341,9 +341,13 @@ impl TryFrom<&Payload> for PayloadDto {
 
     fn try_from(value: &Payload) -> Result<Self, Self::Error> {
         match value {
-            Payload::Transaction(t) => Ok(PayloadDto::Transaction(t.try_into()?)),
-            Payload::Milestone(m) => Ok(PayloadDto::Milestone(m.try_into()?)),
-            Payload::Indexation(i) => Ok(PayloadDto::Indexation(i.into())),
+            Payload::Transaction(t) => Ok(PayloadDto::Transaction(Box::new(TransactionPayloadDto::try_from(
+                t.as_ref(),
+            )?))),
+            Payload::Milestone(m) => Ok(PayloadDto::Milestone(Box::new(MilestonePayloadDto::try_from(
+                m.as_ref(),
+            )?))),
+            Payload::Indexation(i) => Ok(PayloadDto::Indexation(Box::new(IndexationPayloadDto::from(i.as_ref())))),
             _ => Err("payload type not supported".to_string()),
         }
     }
@@ -354,22 +358,24 @@ impl TryFrom<&PayloadDto> for Payload {
     type Error = String;
 
     fn try_from(value: &PayloadDto) -> Result<Self, Self::Error> {
-        match value {
-            PayloadDto::Transaction(t) => Ok(Payload::Transaction(t.try_into()?)),
-            PayloadDto::Milestone(m) => Ok(Payload::Milestone(m.try_into()?)),
-            PayloadDto::Indexation(i) => Ok(Payload::Indexation(i.try_into()?)),
-            PayloadDto::Receipt(r) => Ok(Payload::Receipt(r.try_into()?)),
-            PayloadDto::TreasuryTransaction(t) => Ok(Payload::TreasuryTransaction(t.try_into()?)),
-        }
+        Ok(match value {
+            PayloadDto::Transaction(t) => Payload::Transaction(Box::new(TransactionPayload::try_from(t.as_ref())?)),
+            PayloadDto::Milestone(m) => Payload::Milestone(Box::new(MilestonePayload::try_from(m.as_ref())?)),
+            PayloadDto::Indexation(i) => Payload::Indexation(Box::new(IndexationPayload::try_from(i.as_ref())?)),
+            PayloadDto::Receipt(r) => Payload::Receipt(Box::new(ReceiptPayload::try_from(r.as_ref())?)),
+            PayloadDto::TreasuryTransaction(t) => {
+                Payload::TreasuryTransaction(Box::new(TreasuryTransactionPayload::try_from(t.as_ref())?))
+            }
+        })
     }
 }
 
-// &Box<Transaction> -> Box<TransactionDto>
-impl TryFrom<&Box<TransactionPayload>> for Box<TransactionPayloadDto> {
+// &TransactionPayload -> TransactionPayloadDto
+impl TryFrom<&TransactionPayload> for TransactionPayloadDto {
     type Error = String;
 
-    fn try_from(value: &Box<TransactionPayload>) -> Result<Self, Self::Error> {
-        Ok(Box::new(TransactionPayloadDto {
+    fn try_from(value: &TransactionPayload) -> Result<Self, Self::Error> {
+        Ok(TransactionPayloadDto {
             kind: 0,
             essence: value.essence().try_into()?,
             unlock_blocks: value
@@ -377,15 +383,15 @@ impl TryFrom<&Box<TransactionPayload>> for Box<TransactionPayloadDto> {
                 .iter()
                 .map(|u| u.try_into())
                 .collect::<Result<Vec<_>, _>>()?,
-        }))
+        })
     }
 }
 
-// &TransactionDto -> Box<Transaction>
-impl TryFrom<&Box<TransactionPayloadDto>> for Box<TransactionPayload> {
+// &TransactionPayloadDto -> TransactionPayload
+impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
     type Error = String;
 
-    fn try_from(value: &Box<TransactionPayloadDto>) -> Result<Self, Self::Error> {
+    fn try_from(value: &TransactionPayloadDto) -> Result<Self, Self::Error> {
         let mut unlock_blocks = Vec::new();
         for b in &value.unlock_blocks {
             unlock_blocks.push(b.try_into()?);
@@ -394,11 +400,9 @@ impl TryFrom<&Box<TransactionPayloadDto>> for Box<TransactionPayload> {
             .with_essence((&value.essence).try_into()?)
             .with_unlock_blocks(UnlockBlocks::new(unlock_blocks).map_err(|e| e.to_string())?);
 
-        Ok(Box::new(
-            builder
-                .finish()
-                .map_err(|e| format!("invalid transaction payload: {}", e))?,
-        ))
+        Ok(builder
+            .finish()
+            .map_err(|e| format!("invalid transaction payload: {}", e))?)
     }
 }
 
@@ -443,7 +447,7 @@ impl TryFrom<&RegularEssence> for RegularEssenceDto {
                 .map(|o| o.try_into())
                 .collect::<Result<Vec<_>, _>>()?,
             payload: match value.payload() {
-                Some(Payload::Indexation(i)) => Some(PayloadDto::Indexation(i.into())),
+                Some(Payload::Indexation(i)) => Some(PayloadDto::Indexation(Box::new(i.as_ref().into()))),
                 Some(_) => {
                     return Err("invalid transaction essence: expected an optional indexation-payload".to_string())
                 }
@@ -470,7 +474,7 @@ impl TryFrom<&RegularEssenceDto> for RegularEssence {
 
         if let Some(p) = &value.payload {
             if let PayloadDto::Indexation(i) = p {
-                builder = builder.with_payload(Payload::Indexation((i).try_into()?));
+                builder = builder.with_payload(Payload::Indexation(Box::new((i.as_ref()).try_into()?)));
             } else {
                 return Err("invalid transaction essence: expected an optional indexation-payload".to_string());
             }
@@ -680,12 +684,12 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
     }
 }
 
-// Box<Milestone> -> MilestoneDto
-impl TryFrom<&Box<MilestonePayload>> for Box<MilestonePayloadDto> {
+// MilestonePayload -> MilestonePayloadDto
+impl TryFrom<&MilestonePayload> for MilestonePayloadDto {
     type Error = String;
 
-    fn try_from(value: &Box<MilestonePayload>) -> Result<Self, Self::Error> {
-        Ok(Box::new(MilestonePayloadDto {
+    fn try_from(value: &MilestonePayload) -> Result<Self, Self::Error> {
+        Ok(MilestonePayloadDto {
             kind: 1,
             index: value.essence().index(),
             timestamp: value.essence().timestamp(),
@@ -694,15 +698,15 @@ impl TryFrom<&Box<MilestonePayload>> for Box<MilestonePayloadDto> {
             public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
             receipt: value.essence().receipt().map(TryInto::try_into).transpose()?,
             signatures: value.signatures().iter().map(hex::encode).collect(),
-        }))
+        })
     }
 }
 
-// &Box<MilestoneDto> -> Box<Milestone>
-impl TryFrom<&Box<MilestonePayloadDto>> for Box<MilestonePayload> {
+// &MilestonePayloadDto -> MilestonePayload
+impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
     type Error = String;
 
-    fn try_from(value: &Box<MilestonePayloadDto>) -> Result<Self, Self::Error> {
+    fn try_from(value: &MilestonePayloadDto) -> Result<Self, Self::Error> {
         let essence = {
             let index = value.index;
             let timestamp = value.timestamp;
@@ -767,60 +771,37 @@ impl TryFrom<&Box<MilestonePayloadDto>> for Box<MilestonePayload> {
                     .into_boxed_slice(),
             )
         }
-        Ok(Box::new(
-            MilestonePayload::new(essence, signatures).map_err(|e| e.to_string())?,
-        ))
+        Ok(MilestonePayload::new(essence, signatures).map_err(|e| e.to_string())?)
     }
 }
 
-// &Box<IndexationPayload> -> Box<IndexationDto>
-impl From<&Box<IndexationPayload>> for Box<IndexationPayloadDto> {
-    fn from(value: &Box<IndexationPayload>) -> Self {
-        Box::new(IndexationPayloadDto {
+// &IndexationPayload -> IndexationPayloadDto
+impl From<&IndexationPayload> for IndexationPayloadDto {
+    fn from(value: &IndexationPayload) -> Self {
+        IndexationPayloadDto {
             kind: 2,
             index: hex::encode(value.index()),
             data: hex::encode(value.data()),
-        })
+        }
     }
 }
 
-// &Box<IndexationDto> -> Box<IndexationPayload>
-impl TryFrom<&Box<IndexationPayloadDto>> for Box<IndexationPayload> {
+// &IndexationPayloadDto -> IndexationPayload
+impl TryFrom<&IndexationPayloadDto> for IndexationPayload {
     type Error = String;
 
-    fn try_from(value: &Box<IndexationPayloadDto>) -> Result<Self, Self::Error> {
-        Ok(Box::new(
-            IndexationPayload::new(
-                &hex::decode(value.index.clone())
-                    .map_err(|_| "invalid index in indexation payload: expected a hex-string")?,
-                &hex::decode(value.data.clone())
-                    .map_err(|_| "invalid data in indexation payload: expected a hex-string")?,
-            )
-            .map_err(|e| format!("invalid indexation payload: {}", e))?,
-        ))
+    fn try_from(value: &IndexationPayloadDto) -> Result<Self, Self::Error> {
+        Ok(IndexationPayload::new(
+            &hex::decode(value.index.clone())
+                .map_err(|_| "invalid index in indexation payload: expected a hex-string")?,
+            &hex::decode(value.data.clone())
+                .map_err(|_| "invalid data in indexation payload: expected a hex-string")?,
+        )
+        .map_err(|e| format!("invalid indexation payload: {}", e))?)
     }
 }
 
-// &Box<ReceiptPayload> -> Box<ReceiptDto>
-impl TryFrom<&Box<ReceiptPayload>> for Box<ReceiptPayloadDto> {
-    type Error = String;
-
-    fn try_from(value: &Box<ReceiptPayload>) -> Result<Self, Self::Error> {
-        Ok(Box::new(ReceiptPayloadDto {
-            kind: 3,
-            migrated_at: value.migrated_at(),
-            last: value.last(),
-            funds: value
-                .funds()
-                .iter()
-                .map(|m| m.try_into())
-                .collect::<Result<Vec<MigratedFundsEntryDto>, _>>()?,
-            transaction: value.transaction().try_into()?,
-        }))
-    }
-}
-
-// &Box<ReceiptPayload> -> Box<ReceiptDto>
+// &ReceiptPayload -> ReceiptPayloadDto
 impl TryFrom<&ReceiptPayload> for ReceiptPayloadDto {
     type Error = String;
 
@@ -839,11 +820,11 @@ impl TryFrom<&ReceiptPayload> for ReceiptPayloadDto {
     }
 }
 
-// &Box<ReceiptDto> -> Box<ReceiptPayload>
-impl TryFrom<&Box<ReceiptPayloadDto>> for Box<ReceiptPayload> {
+// &ReceiptPayloadDto -> ReceiptPayload
+impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
     type Error = String;
 
-    fn try_from(value: &Box<ReceiptPayloadDto>) -> Result<Self, Self::Error> {
+    fn try_from(value: &ReceiptPayloadDto) -> Result<Self, Self::Error> {
         let receipt = ReceiptPayload::new(
             value.migrated_at,
             value.last,
@@ -855,7 +836,8 @@ impl TryFrom<&Box<ReceiptPayloadDto>> for Box<ReceiptPayload> {
             (&value.transaction).try_into()?,
         )
         .map_err(|e| format!("invalid receipt payload: {}", e))?;
-        Ok(Box::new(receipt))
+
+        Ok(receipt)
     }
 }
 
@@ -891,34 +873,32 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
     }
 }
 
-// &Box<ReceiptPayload> -> Box<ReceiptDto>§
-impl TryFrom<&Box<TreasuryTransactionPayload>> for Box<TreasuryTransactionPayloadDto> {
+// &TreasuryTransactionPayload -> TreasuryTransactionPayloadDto
+impl TryFrom<&TreasuryTransactionPayload> for TreasuryTransactionPayloadDto {
     type Error = String;
 
-    fn try_from(value: &Box<TreasuryTransactionPayload>) -> Result<Self, Self::Error> {
-        Ok(Box::new(TreasuryTransactionPayloadDto {
+    fn try_from(value: &TreasuryTransactionPayload) -> Result<Self, Self::Error> {
+        Ok(TreasuryTransactionPayloadDto {
             kind: 4,
             input: value.input().try_into()?,
             output: value.output().try_into()?,
-        }))
+        })
     }
 }
 
-// &Box<TreasuryTransactionDto> -> Box<TreasuryTransactionPayload>
-impl TryFrom<&Box<TreasuryTransactionPayloadDto>> for Box<TreasuryTransactionPayload> {
+// &TreasuryTransactionDto -> TreasuryTransactionPayload
+impl TryFrom<&TreasuryTransactionPayloadDto> for TreasuryTransactionPayload {
     type Error = String;
 
-    fn try_from(value: &Box<TreasuryTransactionPayloadDto>) -> Result<Self, Self::Error> {
+    fn try_from(value: &TreasuryTransactionPayloadDto) -> Result<Self, Self::Error> {
         let input: Input = (&value.input)
             .try_into()
             .map_err(|_| "invalid input in treasury transaction payload: expected a treasury input")?;
         let output: Output = (&value.output)
             .try_into()
             .map_err(|_| "invalid output in treasury transaction payload: expected a treasury output")?;
-        Ok(Box::new(
-            TreasuryTransactionPayload::new(input, output)
-                .map_err(|e| format!("invalid treasury transaction payload: {}", e))?,
-        ))
+        Ok(TreasuryTransactionPayload::new(input, output)
+            .map_err(|e| format!("invalid treasury transaction payload: {}", e))?)
     }
 }
 
