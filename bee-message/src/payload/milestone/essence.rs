@@ -101,7 +101,7 @@ impl Packable for MilestonePayloadEssence {
             + 0u8.packed_len()
             + self.public_keys.len() * MILESTONE_PUBLIC_KEY_LENGTH
             + 0u32.packed_len()
-            + self.receipt.iter().map(Packable::packed_len).sum::<usize>()
+            + self.receipt.as_ref().map_or(0, Packable::packed_len)
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {

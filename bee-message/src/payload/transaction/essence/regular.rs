@@ -53,7 +53,7 @@ impl Packable for RegularEssence {
             + 0u16.packed_len()
             + self.outputs.iter().map(Packable::packed_len).sum::<usize>()
             + 0u32.packed_len()
-            + self.payload.iter().map(Packable::packed_len).sum::<usize>()
+            + self.payload.as_ref().map_or(0, Packable::packed_len)
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
