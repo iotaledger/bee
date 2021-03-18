@@ -4,7 +4,7 @@
 use bee_ledger::types::Receipt;
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
-    input::{Input, UTXOInput},
+    input::{Input, TreasuryInput, UTXOInput},
     output::{Output, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput},
     payload::{
         indexation::IndexationPayload,
@@ -107,10 +107,12 @@ pub enum OutputDto {
 impl<'de> serde::Deserialize<'de> for OutputDto {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         let value = Value::deserialize(d)?;
-        Ok(match value.get("type").and_then(Value::as_u64).unwrap() {
+        Ok(match value.get("type").and_then(Value::as_u64).unwrap() as u8 {
             // TODO: cover all cases + handle unwraps
-            0 => OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).unwrap()),
-            1 => OutputDto::SignatureLockedDustAllowance(
+            SignatureLockedSingleOutput::KIND => {
+                OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).unwrap())
+            }
+            SignatureLockedDustAllowanceOutput::KIND => OutputDto::SignatureLockedDustAllowance(
                 SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap(),
             ),
             type_ => panic!("unsupported type {:?}", type_),
@@ -376,7 +378,7 @@ impl TryFrom<&TransactionPayload> for TransactionPayloadDto {
 
     fn try_from(value: &TransactionPayload) -> Result<Self, Self::Error> {
         Ok(TransactionPayloadDto {
-            kind: 0,
+            kind: TransactionPayload::KIND,
             essence: value.essence().try_into()?,
             unlock_blocks: value
                 .unlock_blocks()
@@ -435,7 +437,7 @@ impl TryFrom<&RegularEssence> for RegularEssenceDto {
 
     fn try_from(value: &RegularEssence) -> Result<Self, Self::Error> {
         Ok(RegularEssenceDto {
-            kind: 0, // TODO: should this be removed?
+            kind: RegularEssence::KIND,
             inputs: value
                 .inputs()
                 .iter()
@@ -493,12 +495,12 @@ impl TryFrom<&Input> for InputDto {
     fn try_from(value: &Input) -> Result<Self, Self::Error> {
         match value {
             Input::UTXO(u) => Ok(InputDto::UTXO(UTXOInputDto {
-                kind: 0,
+                kind: UTXOInput::KIND,
                 transaction_id: u.output_id().transaction_id().to_string(),
                 transaction_output_index: u.output_id().index(),
             })),
             Input::Treasury(t) => Ok(InputDto::Treasury(TreasuryInputDto {
-                kind: 1,
+                kind: TreasuryInput::KIND,
                 message_id: t.message_id().to_string(),
             })),
             _ => Err("input type not supported".to_string()),
@@ -541,13 +543,13 @@ impl TryFrom<&Output> for OutputDto {
     fn try_from(value: &Output) -> Result<Self, Self::Error> {
         match value {
             Output::SignatureLockedSingle(s) => Ok(OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
-                kind: 0,
+                kind: SignatureLockedSingleOutput::KIND,
                 address: s.address().try_into()?,
                 amount: s.amount(),
             })),
             Output::SignatureLockedDustAllowance(s) => Ok(OutputDto::SignatureLockedDustAllowance(
                 SignatureLockedDustAllowanceOutputDto {
-                    kind: 1,
+                    kind: SignatureLockedDustAllowanceOutput::KIND,
                     address: s.address().try_into()?,
                     amount: s.amount(),
                 },
@@ -609,7 +611,7 @@ impl TryFrom<&AddressDto> for Address {
 impl From<&Ed25519Address> for Ed25519AddressDto {
     fn from(value: &Ed25519Address) -> Self {
         Self {
-            kind: 0,
+            kind: Ed25519Address::KIND,
             address: value.to_string(),
         }
     }
@@ -637,9 +639,9 @@ impl TryFrom<&UnlockBlock> for UnlockBlockDto {
         match value {
             UnlockBlock::Signature(s) => match s {
                 SignatureUnlock::Ed25519(ed) => Ok(UnlockBlockDto::Signature(SignatureUnlockDto {
-                    kind: 0,
+                    kind: SignatureUnlock::KIND,
                     signature: SignatureDto::Ed25519(Ed25519SignatureDto {
-                        kind: 0,
+                        kind: Ed25519Signature::KIND,
                         public_key: hex::encode(ed.public_key()),
                         signature: hex::encode(ed.signature()),
                     }),
@@ -647,7 +649,7 @@ impl TryFrom<&UnlockBlock> for UnlockBlockDto {
                 _ => Err("signature unlock type not supported".to_string()),
             },
             UnlockBlock::Reference(r) => Ok(UnlockBlockDto::Reference(ReferenceUnlockDto {
-                kind: 1,
+                kind: ReferenceUnlock::KIND,
                 index: r.index(),
             })),
             _ => Err("unlock block type not supported".to_string()),
@@ -690,7 +692,7 @@ impl TryFrom<&MilestonePayload> for MilestonePayloadDto {
 
     fn try_from(value: &MilestonePayload) -> Result<Self, Self::Error> {
         Ok(MilestonePayloadDto {
-            kind: 1,
+            kind: MilestonePayload::KIND,
             index: value.essence().index(),
             timestamp: value.essence().timestamp(),
             parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
@@ -779,7 +781,7 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
 impl From<&IndexationPayload> for IndexationPayloadDto {
     fn from(value: &IndexationPayload) -> Self {
         IndexationPayloadDto {
-            kind: 2,
+            kind: IndexationPayload::KIND,
             index: hex::encode(value.index()),
             data: hex::encode(value.data()),
         }
@@ -807,7 +809,7 @@ impl TryFrom<&ReceiptPayload> for ReceiptPayloadDto {
 
     fn try_from(value: &ReceiptPayload) -> Result<Self, Self::Error> {
         Ok(ReceiptPayloadDto {
-            kind: 3,
+            kind: ReceiptPayload::KIND,
             migrated_at: value.migrated_at(),
             last: value.last(),
             funds: value
@@ -879,7 +881,7 @@ impl TryFrom<&TreasuryTransactionPayload> for TreasuryTransactionPayloadDto {
 
     fn try_from(value: &TreasuryTransactionPayload) -> Result<Self, Self::Error> {
         Ok(TreasuryTransactionPayloadDto {
-            kind: 4,
+            kind: TreasuryTransactionPayload::KIND,
             input: value.input().try_into()?,
             output: value.output().try_into()?,
         })
