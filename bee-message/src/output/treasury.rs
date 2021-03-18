@@ -5,7 +5,7 @@ use crate::{constants::IOTA_SUPPLY, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use std::ops::RangeInclusive;
+use core::ops::RangeInclusive;
 
 pub const TREASURY_OUTPUT_AMOUNT: RangeInclusive<u64> = 0..=IOTA_SUPPLY;
 

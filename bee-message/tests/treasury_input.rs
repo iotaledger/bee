@@ -4,7 +4,7 @@
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
 
-use std::str::FromStr;
+use core::str::FromStr;
 
 const MESSAGE_ID_VALID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const MESSAGE_ID_INVALID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6";

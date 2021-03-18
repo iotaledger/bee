@@ -4,7 +4,7 @@
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
 
-use std::convert::TryFrom;
+use core::convert::TryFrom;
 
 #[test]
 fn new_valid_min_index() {

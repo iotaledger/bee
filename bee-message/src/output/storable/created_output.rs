@@ -5,7 +5,7 @@ use crate::{error::Error, output::Output, MessageId};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use std::ops::Deref;
+use core::ops::Deref;
 
 #[derive(Clone, Debug)]
 pub struct CreatedOutput {

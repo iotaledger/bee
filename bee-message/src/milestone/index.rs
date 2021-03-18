@@ -3,7 +3,7 @@
 
 use bee_common::packable::{Packable, Read, Write};
 
-use std::ops::{Add, Deref, Sub};
+use core::ops::{Add, Deref, Sub};
 
 /// A wrapper around a `u32` that represents a milestone index.
 #[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
