@@ -11,8 +11,7 @@ RUSTFLAGS="-Zinstrument-coverage" LLVM_PROFILE_FILE="bee-%m.profraw" cargo +nigh
 # Merge all .profraw files into "bee.profdata"
 echo "Merging coverage data..."
 PROFRAW=""
-for file in \
-  $(find . -type f -name "*.profraw"); \
+for file in $(find . -type f -name "*.profraw");
 do
   echo "Found $file"
   PROFRAW="${PROFRAW} $file"
