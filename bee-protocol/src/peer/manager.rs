@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::peer::Peer;
+use crate::types::peer::Peer;
 
 use bee_network::{GossipSender, PeerId};
 

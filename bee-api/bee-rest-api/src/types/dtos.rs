@@ -21,7 +21,7 @@ use bee_message::{
     Message, MessageBuilder, MessageId, Parents, MESSAGE_ID_LENGTH,
 };
 use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
-use bee_protocol::{Peer, PeerManager};
+use bee_protocol::{types::peer::Peer, PeerManager};
 use bee_runtime::resource::ResourceHandle;
 
 use serde::{Deserialize, Serialize, Serializer};

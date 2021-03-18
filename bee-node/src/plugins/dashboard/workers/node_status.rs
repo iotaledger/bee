@@ -14,7 +14,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_protocol::{PeerManager, ProtocolMetrics};
+use bee_protocol::{types::metrics::NodeMetrics, PeerManager};
 use bee_rest_api::endpoints::routes::health::is_healthy;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use bee_tangle::MsTangle;
@@ -44,7 +44,7 @@ where
     let tangle = node.resource::<MsTangle<N::Backend>>();
     let peer_manager = node.resource::<PeerManager>();
     let node_config = node.resource::<NodeConfig<N::Backend>>();
-    let metrics = node.resource::<ProtocolMetrics>();
+    let metrics = node.resource::<NodeMetrics>();
     let node_info = node.info();
     let users = users.clone();
 

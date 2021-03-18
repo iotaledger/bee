@@ -3,8 +3,10 @@
 
 use crate::{
     peer::PeerManager,
-    types::packet::{tlv_into_bytes, Heartbeat, Message as MessagePacket, MessageRequest, MilestoneRequest, Packet},
-    ProtocolMetrics,
+    types::{
+        metrics::NodeMetrics,
+        packets::{tlv_into_bytes, Heartbeat, Message as MessagePacket, MessageRequest, MilestoneRequest, Packet},
+    },
 };
 
 use bee_network::PeerId;
@@ -18,12 +20,7 @@ pub(crate) struct Sender<P: Packet> {
 }
 
 impl Sender<MilestoneRequest> {
-    pub(crate) async fn send(
-        peer_manager: &PeerManager,
-        metrics: &ProtocolMetrics,
-        id: &PeerId,
-        packet: MilestoneRequest,
-    ) {
+    pub(crate) async fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: MilestoneRequest) {
         if let Some(peer) = peer_manager.get(id).await {
             if let Some(ref sender) = peer.1 {
                 match sender.0.send(tlv_into_bytes(packet)) {
@@ -41,12 +38,7 @@ impl Sender<MilestoneRequest> {
 }
 
 impl Sender<MessagePacket> {
-    pub(crate) async fn send(
-        peer_manager: &PeerManager,
-        metrics: &ProtocolMetrics,
-        id: &PeerId,
-        packet: MessagePacket,
-    ) {
+    pub(crate) async fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: MessagePacket) {
         if let Some(peer) = peer_manager.get(id).await {
             if let Some(ref sender) = peer.1 {
                 match sender.0.send(tlv_into_bytes(packet)) {
@@ -64,12 +56,7 @@ impl Sender<MessagePacket> {
 }
 
 impl Sender<MessageRequest> {
-    pub(crate) async fn send(
-        peer_manager: &PeerManager,
-        metrics: &ProtocolMetrics,
-        id: &PeerId,
-        packet: MessageRequest,
-    ) {
+    pub(crate) async fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: MessageRequest) {
         if let Some(peer) = peer_manager.get(id).await {
             if let Some(ref sender) = peer.1 {
                 match sender.0.send(tlv_into_bytes(packet)) {
@@ -87,7 +74,7 @@ impl Sender<MessageRequest> {
 }
 
 impl Sender<Heartbeat> {
-    pub(crate) async fn send(peer_manager: &PeerManager, metrics: &ProtocolMetrics, id: &PeerId, packet: Heartbeat) {
+    pub(crate) async fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: Heartbeat) {
         if let Some(peer) = peer_manager.get(id).await {
             if let Some(ref sender) = peer.1 {
                 match sender.0.send(tlv_into_bytes(packet)) {

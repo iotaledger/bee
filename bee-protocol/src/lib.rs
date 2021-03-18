@@ -10,23 +10,20 @@ pub mod storage;
 pub mod types;
 
 mod helper;
-mod key_manager;
-mod metrics;
 mod peer;
 mod sender;
-mod worker;
+mod workers;
 
-pub use metrics::ProtocolMetrics;
-pub use peer::{Peer, PeerManager, PeerMetrics};
+pub use peer::PeerManager;
 pub use storage::StorageBackend;
-pub use worker::{
+pub use workers::{
     MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent, MetricsWorker, PeerManagerResWorker,
 };
 
 use crate::{
     config::ProtocolConfig,
     sender::Sender,
-    worker::{
+    workers::{
         BroadcasterWorker, HasherWorker, HeartbeaterWorker, IndexUpdaterWorker, IndexationPayloadWorker,
         MessageRequesterWorker, MessageResponderWorker, MilestonePayloadWorker, MilestoneRequesterWorker,
         MilestoneResponderWorker, MilestoneSolidifierWorker, MpsWorker, PayloadWorker, PeerManagerWorker,

@@ -4,12 +4,12 @@
 use crate::{
     peer::PeerManager,
     storage::StorageBackend,
-    types::packet::Heartbeat,
-    worker::{
+    types::{metrics::NodeMetrics, packets::Heartbeat},
+    workers::{
         MessageRequesterWorker, MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages,
         RequestedMilestones,
     },
-    ProtocolMetrics, Sender,
+    Sender,
 };
 
 use bee_message::{milestone::MilestoneIndex, MessageId};
@@ -67,7 +67,7 @@ pub(crate) async fn request_message<B: StorageBackend>(
 
 pub async fn send_heartbeat<B: StorageBackend>(
     peer_manager: &PeerManager,
-    metrics: &ProtocolMetrics,
+    metrics: &NodeMetrics,
     tangle: &MsTangle<B>,
     to: &PeerId,
 ) {
@@ -88,7 +88,7 @@ pub async fn send_heartbeat<B: StorageBackend>(
 
 pub async fn broadcast_heartbeat<B: StorageBackend>(
     peer_manager: &PeerManager,
-    metrics: &ProtocolMetrics,
+    metrics: &NodeMetrics,
     tangle: &MsTangle<B>,
 ) {
     // TODO bring it back
