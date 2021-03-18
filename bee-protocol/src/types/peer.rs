@@ -26,7 +26,7 @@ pub struct Peer {
 }
 
 impl Peer {
-    pub(crate) fn new(id: PeerId, info: PeerInfo) -> Self {
+    pub fn new(id: PeerId, info: PeerInfo) -> Self {
         Self {
             id,
             info,
@@ -58,7 +58,7 @@ impl Peer {
         self.info.relation
     }
 
-    pub(crate) fn set_connected(&self, connected: bool) {
+    pub fn set_connected(&self, connected: bool) {
         self.connected.store(connected, Ordering::Relaxed);
     }
 
@@ -70,7 +70,7 @@ impl Peer {
         &self.metrics
     }
 
-    pub(crate) fn set_solid_milestone_index(&self, index: MilestoneIndex) {
+    pub fn set_solid_milestone_index(&self, index: MilestoneIndex) {
         self.solid_milestone_index.store(*index, Ordering::Relaxed);
     }
 
@@ -78,7 +78,7 @@ impl Peer {
         self.solid_milestone_index.load(Ordering::Relaxed).into()
     }
 
-    pub(crate) fn set_pruned_index(&self, index: MilestoneIndex) {
+    pub fn set_pruned_index(&self, index: MilestoneIndex) {
         self.pruned_index.store(*index, Ordering::Relaxed);
     }
 
@@ -86,7 +86,7 @@ impl Peer {
         self.pruned_index.load(Ordering::Relaxed).into()
     }
 
-    pub(crate) fn set_latest_milestone_index(&self, index: MilestoneIndex) {
+    pub fn set_latest_milestone_index(&self, index: MilestoneIndex) {
         self.latest_milestone_index.store(*index, Ordering::Relaxed);
     }
 
@@ -94,7 +94,7 @@ impl Peer {
         self.latest_milestone_index.load(Ordering::Relaxed).into()
     }
 
-    pub(crate) fn set_connected_peers(&self, connected_peers: u8) {
+    pub fn set_connected_peers(&self, connected_peers: u8) {
         self.connected_peers.store(connected_peers, Ordering::Relaxed);
     }
 
@@ -102,7 +102,7 @@ impl Peer {
         self.connected_peers.load(Ordering::Relaxed)
     }
 
-    pub(crate) fn set_synced_peers(&self, synced_peers: u8) {
+    pub fn set_synced_peers(&self, synced_peers: u8) {
         self.synced_peers.store(synced_peers, Ordering::Relaxed);
     }
 
@@ -110,7 +110,7 @@ impl Peer {
         self.synced_peers.load(Ordering::Relaxed)
     }
 
-    pub(crate) fn set_heartbeat_sent_timestamp(&self) {
+    pub fn set_heartbeat_sent_timestamp(&self) {
         self.heartbeat_sent_timestamp.store(
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
@@ -121,11 +121,11 @@ impl Peer {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn heartbeat_sent_timestamp(&self) -> u64 {
+    pub fn heartbeat_sent_timestamp(&self) -> u64 {
         self.heartbeat_sent_timestamp.load(Ordering::Relaxed)
     }
 
-    pub(crate) fn set_heartbeat_received_timestamp(&self) {
+    pub fn set_heartbeat_received_timestamp(&self) {
         self.heartbeat_received_timestamp.store(
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
@@ -136,7 +136,7 @@ impl Peer {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn heartbeat_received_timestamp(&self) -> u64 {
+    pub fn heartbeat_received_timestamp(&self) -> u64 {
         self.heartbeat_received_timestamp.load(Ordering::Relaxed)
     }
 
@@ -150,12 +150,12 @@ impl Peer {
         *self.solid_milestone_index() >= (*self.latest_milestone_index()).saturating_sub(threshold)
     }
 
-    pub(crate) fn has_data(&self, index: MilestoneIndex) -> bool {
+    pub fn has_data(&self, index: MilestoneIndex) -> bool {
         // +1 to allow for a little delay before a Heartbeat comes from a peer.
         index > self.pruned_index() && index <= self.solid_milestone_index() + MilestoneIndex(1)
     }
 
-    pub(crate) fn maybe_has_data(&self, index: MilestoneIndex) -> bool {
+    pub fn maybe_has_data(&self, index: MilestoneIndex) -> bool {
         // +1 to allow for a little delay before a Heartbeat comes from a peer.
         index > self.pruned_index() && index <= self.latest_milestone_index() + MilestoneIndex(1)
     }

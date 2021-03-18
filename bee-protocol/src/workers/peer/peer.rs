@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    types::{
-        metrics::NodeMetrics,
-        packets::{tlv_from_bytes, Header, Heartbeat, Message, MessageRequest, MilestoneRequest, Packet, TlvError},
-        peer::Peer,
-    },
+    types::{metrics::NodeMetrics, peer::Peer},
     workers::{
-        helper, peer::packet_handler::PacketHandler, storage::StorageBackend, HasherWorkerEvent,
-        MessageResponderWorkerEvent, MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent, RequestedMilestones,
+        helper,
+        packets::{tlv_from_bytes, Header, Heartbeat, Message, MessageRequest, MilestoneRequest, Packet, TlvError},
+        peer::packet_handler::PacketHandler,
+        storage::StorageBackend,
+        HasherWorkerEvent, MessageResponderWorkerEvent, MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent,
+        RequestedMilestones,
     },
 };
 

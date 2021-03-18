@@ -5,4 +5,5 @@
 #![allow(clippy::unit_arg)]
 
 pub mod types;
+#[cfg(feature = "workers")]
 pub mod workers;

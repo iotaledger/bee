@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    types::{metrics::NodeMetrics, packets::Heartbeat},
+    types::metrics::NodeMetrics,
     workers::{
-        peer::PeerManager, sender::Sender, storage::StorageBackend, MessageRequesterWorker,
+        packets::Heartbeat, peer::PeerManager, sender::Sender, storage::StorageBackend, MessageRequesterWorker,
         MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages, RequestedMilestones,
     },
 };

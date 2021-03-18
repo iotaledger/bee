@@ -3,7 +3,7 @@
 
 //! MessageRequest packet of the protocol.
 
-use crate::types::packets::Packet;
+use crate::workers::packets::Packet;
 
 use std::ops::Range;
 

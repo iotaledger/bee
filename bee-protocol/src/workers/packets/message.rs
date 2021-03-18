@@ -3,7 +3,7 @@
 
 //! Message packet of the protocol.
 
-use crate::types::packets::Packet;
+use crate::workers::packets::Packet;
 
 use bee_message::{MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN};
 

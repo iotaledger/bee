@@ -1,10 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::packets::Message,
-    workers::{storage::StorageBackend, HasherWorker, HasherWorkerEvent},
-};
+use crate::workers::{packets::Message, storage::StorageBackend, HasherWorker, HasherWorkerEvent};
 
 use bee_message::MessageId;
 use bee_runtime::{

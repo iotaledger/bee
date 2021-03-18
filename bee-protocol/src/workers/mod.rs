@@ -12,6 +12,7 @@ mod index_updater;
 mod message;
 mod metrics;
 mod mps;
+mod packets;
 mod peer;
 
 mod propagator;

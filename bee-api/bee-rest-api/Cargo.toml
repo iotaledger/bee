@@ -38,6 +38,7 @@ warp = { version = "0.3", optional = true }
 endpoints = [
   "bee-common",
   "bee-network",
+  "bee-protocol/workers",
   "bee-runtime",
   "bee-storage",
   "bee-tangle",

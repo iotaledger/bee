@@ -35,7 +35,7 @@ impl PeerMetrics {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn invalid_messages_inc(&self) -> u64 {
+    pub fn invalid_messages_inc(&self) -> u64 {
         self.invalid_messages.fetch_add(1, Ordering::SeqCst)
     }
 
@@ -45,7 +45,7 @@ impl PeerMetrics {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn new_messages_inc(&self) -> u64 {
+    pub fn new_messages_inc(&self) -> u64 {
         self.new_messages.fetch_add(1, Ordering::SeqCst)
     }
 
@@ -55,7 +55,7 @@ impl PeerMetrics {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn known_messages_inc(&self) -> u64 {
+    pub fn known_messages_inc(&self) -> u64 {
         self.known_messages.fetch_add(1, Ordering::SeqCst)
     }
 
@@ -65,7 +65,7 @@ impl PeerMetrics {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn invalid_packets_inc(&self) -> u64 {
+    pub fn invalid_packets_inc(&self) -> u64 {
         self.invalid_packets.fetch_add(1, Ordering::SeqCst)
     }
 
@@ -74,7 +74,7 @@ impl PeerMetrics {
         self.milestone_requests_received.load(Ordering::Relaxed)
     }
 
-    pub(crate) fn milestone_requests_received_inc(&self) -> u64 {
+    pub fn milestone_requests_received_inc(&self) -> u64 {
         self.milestone_requests_received.fetch_add(1, Ordering::SeqCst)
     }
 
@@ -83,7 +83,7 @@ impl PeerMetrics {
         self.messages_received.load(Ordering::Relaxed)
     }
 
-    pub(crate) fn messages_received_inc(&self) -> u64 {
+    pub fn messages_received_inc(&self) -> u64 {
         self.messages_received.fetch_add(1, Ordering::SeqCst)
     }
 
@@ -92,7 +92,7 @@ impl PeerMetrics {
         self.message_requests_received.load(Ordering::Relaxed)
     }
 
-    pub(crate) fn message_requests_received_inc(&self) -> u64 {
+    pub fn message_requests_received_inc(&self) -> u64 {
         self.message_requests_received.fetch_add(1, Ordering::SeqCst)
     }
 
@@ -101,7 +101,7 @@ impl PeerMetrics {
         self.heartbeats_received.load(Ordering::Relaxed)
     }
 
-    pub(crate) fn heartbeats_received_inc(&self) -> u64 {
+    pub fn heartbeats_received_inc(&self) -> u64 {
         self.heartbeats_received.fetch_add(1, Ordering::SeqCst)
     }
 
@@ -111,7 +111,7 @@ impl PeerMetrics {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn milestone_requests_sent_inc(&self) -> u64 {
+    pub fn milestone_requests_sent_inc(&self) -> u64 {
         self.milestone_requests_sent.fetch_add(1, Ordering::SeqCst)
     }
 
@@ -120,7 +120,7 @@ impl PeerMetrics {
         self.messages_sent.load(Ordering::Relaxed)
     }
 
-    pub(crate) fn messages_sent_inc(&self) -> u64 {
+    pub fn messages_sent_inc(&self) -> u64 {
         self.messages_sent.fetch_add(1, Ordering::SeqCst)
     }
 
@@ -130,7 +130,7 @@ impl PeerMetrics {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn message_requests_sent_inc(&self) -> u64 {
+    pub fn message_requests_sent_inc(&self) -> u64 {
         self.message_requests_sent.fetch_add(1, Ordering::SeqCst)
     }
 
@@ -140,7 +140,7 @@ impl PeerMetrics {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn heartbeats_sent_inc(&self) -> u64 {
+    pub fn heartbeats_sent_inc(&self) -> u64 {
         self.heartbeats_sent.fetch_add(1, Ordering::SeqCst)
     }
 }

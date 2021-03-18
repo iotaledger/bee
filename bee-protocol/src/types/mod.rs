@@ -3,5 +3,4 @@
 
 pub mod key_manager;
 pub mod metrics;
-pub mod packets;
 pub mod peer;

@@ -3,7 +3,7 @@
 
 //! Type-length-value encoding on top of the packets.
 
-use crate::types::packets::{Header, Packet, HEADER_SIZE};
+use crate::workers::packets::{Header, Packet, HEADER_SIZE};
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug)]
@@ -70,7 +70,7 @@ mod tests {
 
     use super::*;
 
-    use crate::types::packets::{Heartbeat, Message as MessagePacket, MessageRequest, MilestoneRequest, Packet};
+    use crate::workers::packets::{Heartbeat, Message as MessagePacket, MessageRequest, MilestoneRequest, Packet};
 
     use rand::Rng;
 

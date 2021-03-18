@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    types::{
-        metrics::NodeMetrics,
+    types::metrics::NodeMetrics,
+    workers::{
         packets::{Message as MessagePacket, MessageRequest},
+        peer::PeerManager,
+        sender::Sender,
+        storage::StorageBackend,
+        MetricsWorker, PeerManagerResWorker,
     },
-    workers::{peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker, PeerManagerResWorker},
 };
 
 use bee_common::packable::Packable;

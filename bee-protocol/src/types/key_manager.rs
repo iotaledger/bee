@@ -6,13 +6,13 @@ use bee_message::milestone::{MilestoneIndex, MilestoneKeyRange};
 use std::collections::HashSet;
 
 #[derive(Clone)]
-pub(crate) struct KeyManager {
+pub struct KeyManager {
     min_threshold: usize,
     key_ranges: Box<[MilestoneKeyRange]>,
 }
 
 impl KeyManager {
-    pub(crate) fn new(min_threshold: usize, mut key_ranges: Box<[MilestoneKeyRange]>) -> Self {
+    pub fn new(min_threshold: usize, mut key_ranges: Box<[MilestoneKeyRange]>) -> Self {
         key_ranges.sort();
 
         Self {
@@ -21,11 +21,11 @@ impl KeyManager {
         }
     }
 
-    pub(crate) fn min_threshold(&self) -> usize {
+    pub fn min_threshold(&self) -> usize {
         self.min_threshold
     }
 
-    pub(crate) fn get_public_keys(&self, index: MilestoneIndex) -> HashSet<String> {
+    pub fn get_public_keys(&self, index: MilestoneIndex) -> HashSet<String> {
         let mut public_keys = HashSet::with_capacity(self.key_ranges.len());
 
         for key_range in self.key_ranges.iter() {
