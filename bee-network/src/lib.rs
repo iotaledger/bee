@@ -57,7 +57,7 @@ pub async fn init<N: Node>(
     mut node_builder: N::Builder,
 ) -> (N::Builder, NetworkListener) {
     let NetworkConfig {
-        bind_address,
+        bind_addresses,
         reconnect_interval_secs,
         max_unknown_peers,
         peers,
@@ -83,7 +83,7 @@ pub async fn init<N: Node>(
 
     let host_config = NetworkHostConfig {
         local_keys: local_keys.clone(),
-        bind_address,
+        bind_addresses,
         peerlist: peerlist.clone(),
         banned_addrs: banned_addrs.clone(),
         banned_peers: banned_peers.clone(),
