@@ -5,7 +5,7 @@
 
 use crate::types::peer::Peer;
 
-use bee_network::{node::GossipSender, PeerId};
+use bee_network::{GossipSender, PeerId};
 use bee_runtime::{node::Node, worker::Worker};
 
 use async_trait::async_trait;

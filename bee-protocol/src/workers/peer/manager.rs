@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-use bee_network::node::{Event, NetworkListener, NetworkService};
+use bee_network::{Event, NetworkListener, NetworkService};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 

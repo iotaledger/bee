@@ -15,8 +15,8 @@ all-features = true
 
 [features]
 # By default we expose the full feature set.
-default = ["full"]
-full = [
+default = ["node"]
+node = [
     "bee-runtime",
     "async-trait",
     "futures",

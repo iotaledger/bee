@@ -48,7 +48,7 @@ pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorker
 pub(crate) use status::StatusWorker;
 pub(crate) use tip_pool_cleaner::TipPoolCleanerWorker;
 
-use bee_network::node::NetworkListener;
+use bee_network::NetworkListener;
 use bee_runtime::node::{Node, NodeBuilder};
 
 pub fn init<N: Node>(

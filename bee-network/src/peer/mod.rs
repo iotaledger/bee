@@ -1,22 +1,14 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[cfg(feature = "full")]
+#[cfg(feature = "node")]
 mod ban;
-#[cfg(feature = "full")]
-pub use ban::*;
-
-#[cfg(feature = "full")]
+#[cfg(feature = "node")]
 mod error;
-#[cfg(feature = "full")]
-pub use error::*;
-
-#[cfg(feature = "full")]
-mod peer_list;
-#[cfg(feature = "full")]
-pub use peer_list::*;
-
 mod info;
-#[cfg(feature = "full")]
-pub use info::PeerState;
+#[cfg(feature = "node")]
+mod peerlist;
+
+#[cfg(feature = "node")]
+pub use self::{ban::*, error::*, info::peerstate::PeerState, peerlist::*};
 pub use info::{PeerInfo, PeerRelation};

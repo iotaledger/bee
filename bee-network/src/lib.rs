@@ -7,27 +7,34 @@
 //#![deny(warnings)]
 #![allow(clippy::module_inception)]
 
-#[cfg(feature = "full")]
+#[cfg(feature = "node")]
 mod config;
-#[cfg(feature = "full")]
+#[cfg(feature = "node")]
 mod host;
-#[cfg(feature = "full")]
+mod peer;
+#[cfg(feature = "node")]
 mod service;
-#[cfg(feature = "full")]
+#[cfg(feature = "node")]
 mod swarm;
 
-mod peer;
+// Exports
+pub use self::peer::{PeerInfo, PeerRelation};
+#[cfg(feature = "node")]
+pub use self::{
+    config::{NetworkConfig, NetworkConfigBuilder},
+    host::{NetworkHost, Origin},
+    node::{init, NetworkListener},
+    service::{Command, Event, NetworkService, NetworkServiceController},
+    swarm::protocols::gossip::{GossipReceiver, GossipSender},
+};
 
-// Reexports
+// Re-Exports
 #[doc(inline)]
 pub use libp2p::{
     core::identity::{ed25519::Keypair, PublicKey},
     multiaddr::Protocol,
     Multiaddr, PeerId,
 };
-
-// Exports
-pub use peer::{PeerInfo, PeerRelation};
 
 /// Creates a (shorter) peer alias from a peer id.
 #[macro_export]
@@ -38,24 +45,17 @@ macro_rules! alias {
 }
 
 /// Provides a node with networking functionality.
-#[cfg(feature = "full")]
-pub mod node {
-    pub use super::{
-        config::{NetworkConfig, NetworkConfigBuilder},
-        host::{NetworkHost, Origin},
-        service::{Command, Event, NetworkService, NetworkServiceController},
-        swarm::protocols::gossip::{GossipReceiver, GossipSender},
-    };
-
-    /// A type that receives any event published by the networking layer.
-    pub type NetworkListener = UnboundedReceiver<Event>;
-
+#[cfg(feature = "node")]
+mod node {
     use bee_runtime::node::{Node, NodeBuilder};
 
     use super::{
-        host::NetworkHostConfig,
+        config::NetworkConfig,
+        host::{NetworkHost, NetworkHostConfig},
         peer::{AddrBanlist, PeerBanlist, PeerList},
-        service::{self, InternalEvent, NetworkServiceConfig},
+        service::{
+            self, Command, Event, InternalEvent, NetworkService, NetworkServiceConfig, NetworkServiceController,
+        },
         Keypair, PeerId, PeerRelation,
     };
 
@@ -70,6 +70,9 @@ pub mod node {
     pub(crate) static RECONNECT_INTERVAL_SECS: AtomicU64 = AtomicU64::new(DEFAULT_RECONNECT_INTERVAL_SECS);
     pub(crate) static NETWORK_ID: AtomicU64 = AtomicU64::new(0);
     pub(crate) static MAX_UNKNOWN_PEERS: AtomicUsize = AtomicUsize::new(0);
+
+    /// A type that receives any event published by the networking layer.
+    pub type NetworkListener = UnboundedReceiver<Event>;
 
     /// Initializes the networking layer.
     pub async fn init<N: Node>(
