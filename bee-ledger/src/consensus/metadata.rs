@@ -27,6 +27,7 @@ pub struct WhiteFlagMetadata {
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
     pub(crate) consumed_outputs: HashMap<OutputId, ConsumedOutput>,
     pub(crate) balance_diffs: BalanceDiffs,
+    pub(crate) merkle_proof: Vec<u8>,
 }
 
 impl WhiteFlagMetadata {
@@ -36,5 +37,9 @@ impl WhiteFlagMetadata {
             index,
             ..Self::default()
         }
+    }
+
+    pub fn merkle_proof(&self) -> &[u8] {
+        &self.merkle_proof
     }
 }
