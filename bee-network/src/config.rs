@@ -14,7 +14,7 @@ pub const DEFAULT_MAX_UNKOWN_PEERS: usize = 4;
 /// The network configuration.
 #[derive(Clone)]
 pub struct NetworkConfig {
-    /// The address/es the networking layer tries binding to.
+    /// Can represent a single or multiple ip addresses the network layer will try to bind to.
     pub bind_addresses: Multiaddr,
     /// The automatic reconnect interval in seconds for known peers.
     pub reconnect_interval_secs: u64,
