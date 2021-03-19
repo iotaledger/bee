@@ -175,7 +175,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let this = self.with_resource(config.clone()); // TODO: Remove clone
 
         info!("Initializing network layer...");
-        let (this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
+        let (this, events) = bee_network::node::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
 
         let this = this.with_resource(ctrl_c_listener());
 

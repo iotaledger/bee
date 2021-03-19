@@ -1,6 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[cfg(feature = "full")]
 use crate::swarm::protocols::gossip::GossipSender;
 
 use libp2p::Multiaddr;
@@ -50,9 +51,11 @@ impl PeerRelation {
         }
     }
 }
+#[cfg(feature = "full")]
 #[derive(Clone, Debug, Default)]
 pub struct PeerState(Option<GossipSender>);
 
+#[cfg(feature = "full")]
 impl PeerState {
     pub fn connected(gossip_sender: GossipSender) -> Self {
         Self(Some(gossip_sender))

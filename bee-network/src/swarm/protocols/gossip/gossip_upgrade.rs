@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::NETWORK_ID;
+use crate::node::NETWORK_ID;
 
 use futures::{future, AsyncRead, AsyncWrite};
 use libp2p::{core::UpgradeInfo, InboundUpgrade, OutboundUpgrade};

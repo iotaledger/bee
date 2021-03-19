@@ -6,7 +6,10 @@ use crate::endpoints::{
     rejection::CustomRejection,
 };
 
-use bee_network::{Command::RemovePeer, NetworkServiceController, PeerId};
+use bee_network::{
+    node::{Command::RemovePeer, NetworkServiceController},
+    PeerId,
+};
 use bee_runtime::resource::ResourceHandle;
 
 use warp::{http::StatusCode, reject, Filter, Rejection, Reply};

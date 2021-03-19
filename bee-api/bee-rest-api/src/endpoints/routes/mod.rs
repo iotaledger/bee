@@ -6,7 +6,7 @@ pub mod health;
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
-use bee_network::NetworkServiceController;
+use bee_network::node::NetworkServiceController;
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;

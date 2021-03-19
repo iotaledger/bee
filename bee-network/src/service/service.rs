@@ -7,8 +7,8 @@ use super::{
 };
 use crate::{
     alias,
+    node::RECONNECT_INTERVAL_SECS,
     peer::{self, AddrBanlist, InsertionFailure, PeerBanlist, PeerInfo, PeerList, PeerRelation},
-    RECONNECT_INTERVAL_SECS,
 };
 
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
