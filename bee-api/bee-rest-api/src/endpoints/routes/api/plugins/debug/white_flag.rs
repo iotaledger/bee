@@ -12,7 +12,7 @@ use crate::{
     types::{body::SuccessBody, responses::WhiteFlagResponse},
 };
 
-use bee_ledger::consensus::metadata::WhiteFlagMetadata;
+use bee_ledger::consensus::{metadata::WhiteFlagMetadata, validation};
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
@@ -43,8 +43,8 @@ pub(crate) fn filter<B: StorageBackend>(
 
 pub(crate) async fn white_flag<B: StorageBackend>(
     body: JsonValue,
-    _storage: ResourceHandle<B>,
-    _tangle: ResourceHandle<MsTangle<B>>,
+    storage: ResourceHandle<B>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     let index_json = &body["index"];
     let parents_json = &body["parentMessageIds"];
@@ -101,12 +101,13 @@ pub(crate) async fn white_flag<B: StorageBackend>(
         message_ids
     };
 
-    let mut _metadata = WhiteFlagMetadata::new(index);
+    let mut metadata = WhiteFlagMetadata::new(index);
 
-    println!("{:?}", index);
-    println!("{:?}", parents);
+    validation::traversal::<B>(&tangle, &storage, parents, &mut metadata)
+        .await
+        .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
 
     Ok(warp::reply::json(&SuccessBody::new(WhiteFlagResponse {
-        merkle_tree_hash: String::from("Bee"),
+        merkle_tree_hash: hex::encode(metadata.merkle_proof()),
     })))
 }
