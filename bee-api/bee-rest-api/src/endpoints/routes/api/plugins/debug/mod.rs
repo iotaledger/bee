@@ -3,6 +3,11 @@
 
 mod white_flag;
 
+use crate::endpoints::storage::StorageBackend;
+
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::MsTangle;
+
 use warp::{self, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
@@ -11,9 +16,11 @@ pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clo
     super::path().and(warp::path("debug"))
 }
 
-pub(crate) fn filter(
+pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
+    storage: ResourceHandle<B>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    white_flag::filter(public_routes, allowed_ips)
+    white_flag::filter(public_routes, allowed_ips, storage, tangle)
 }

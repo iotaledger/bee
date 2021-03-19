@@ -2,11 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{config::ROUTE_WHITE_FLAG, permission::has_permission, rejection::CustomRejection},
+    endpoints::{
+        config::ROUTE_WHITE_FLAG,
+        filters::{with_storage, with_tangle},
+        permission::has_permission,
+        rejection::CustomRejection,
+        storage::StorageBackend,
+    },
     types::{body::SuccessBody, responses::WhiteFlagResponse},
 };
 
+use bee_ledger::consensus::metadata::WhiteFlagMetadata;
 use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_runtime::resource::ResourceHandle;
+use bee_tangle::MsTangle;
 
 use serde_json::Value as JsonValue;
 use warp::{reject, Filter, Rejection, Reply};
@@ -17,18 +26,26 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("whiteflag")).and(warp::path::end())
 }
 
-pub(crate) fn filter(
+pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
+    storage: ResourceHandle<B>,
+    tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::post())
         .and(has_permission(ROUTE_WHITE_FLAG, public_routes, allowed_ips))
         .and(warp::body::json())
+        .and(with_storage(storage))
+        .and(with_tangle(tangle))
         .and_then(white_flag)
 }
 
-pub(crate) async fn white_flag(body: JsonValue) -> Result<impl Reply, Rejection> {
+pub(crate) async fn white_flag<B: StorageBackend>(
+    body: JsonValue,
+    _storage: ResourceHandle<B>,
+    _tangle: ResourceHandle<MsTangle<B>>,
+) -> Result<impl Reply, Rejection> {
     let index_json = &body["index"];
     let parents_json = &body["parentMessageIds"];
 
@@ -83,6 +100,8 @@ pub(crate) async fn white_flag(body: JsonValue) -> Result<impl Reply, Rejection>
         }
         message_ids
     };
+
+    let mut _metadata = WhiteFlagMetadata::new(index);
 
     println!("{:?}", index);
     println!("{:?}", parents);

@@ -37,8 +37,8 @@ pub(crate) fn filter<B: StorageBackend>(
     v1::filter(
         public_routes.clone(),
         allowed_ips.clone(),
-        tangle,
-        storage,
+        tangle.clone(),
+        storage.clone(),
         message_submitter,
         network_id,
         bech32_hrp,
@@ -48,5 +48,5 @@ pub(crate) fn filter<B: StorageBackend>(
         network_controller,
         node_info,
     )
-    .or(plugins::filter(public_routes, allowed_ips))
+    .or(plugins::filter(public_routes, allowed_ips, storage, tangle))
 }
