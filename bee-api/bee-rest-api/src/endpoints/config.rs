@@ -34,6 +34,7 @@ pub(crate) const ROUTE_RECEIPTS: &str = "/api/v1/receipts";
 pub(crate) const ROUTE_RECEIPTS_AT: &str = "/api/v1/receipts/:milestoneIndex";
 pub(crate) const ROUTE_TREASURY: &str = "/api/v1/treasury";
 pub(crate) const ROUTE_TRANSACTION_INCLUDED_MESSAGE: &str = "/api/v1/transactions/:transactionId/included-message";
+pub(crate) const ROUTE_WHITE_FLAG: &str = "/api/plugins/debug/whiteflag";
 
 /// the routes that are available for public use
 pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 21] = [

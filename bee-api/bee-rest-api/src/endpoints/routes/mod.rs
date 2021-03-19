@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod api;
-pub mod debug;
 pub mod health;
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
@@ -45,6 +44,5 @@ pub(crate) fn filter_all<B: StorageBackend>(
         network_controller,
         node_info,
     )
-    .or(debug::filter(public_routes.clone(), allowed_ips.clone()))
     .or(health::filter(public_routes, allowed_ips, tangle, peer_manager))
 }

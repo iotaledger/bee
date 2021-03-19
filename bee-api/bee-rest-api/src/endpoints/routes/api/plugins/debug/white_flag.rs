@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    endpoints::{config::ROUTE_INFO, permission::has_permission, rejection::CustomRejection},
+    endpoints::{config::ROUTE_WHITE_FLAG, permission::has_permission, rejection::CustomRejection},
     types::{body::SuccessBody, responses::WhiteFlagResponse},
 };
 
@@ -23,7 +23,7 @@ pub(crate) fn filter(
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::post())
-        .and(has_permission(ROUTE_INFO, public_routes, allowed_ips))
+        .and(has_permission(ROUTE_WHITE_FLAG, public_routes, allowed_ips))
         .and(warp::body::json())
         .and_then(white_flag)
 }

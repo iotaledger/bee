@@ -1,6 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+pub mod plugins;
 pub mod v1;
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
@@ -34,8 +35,8 @@ pub(crate) fn filter<B: StorageBackend>(
     node_info: ResourceHandle<NodeInfo>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     v1::filter(
-        public_routes,
-        allowed_ips,
+        public_routes.clone(),
+        allowed_ips.clone(),
         tangle,
         storage,
         message_submitter,
@@ -47,4 +48,5 @@ pub(crate) fn filter<B: StorageBackend>(
         network_controller,
         node_info,
     )
+    .or(plugins::filter(public_routes, allowed_ips))
 }

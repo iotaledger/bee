@@ -1,14 +1,14 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod white_flag;
+mod white_flag;
 
 use warp::{self, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
 pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
-    warp::path("debug")
+    super::path().and(warp::path("debug"))
 }
 
 pub(crate) fn filter(
