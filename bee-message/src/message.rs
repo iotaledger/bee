@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    payload::{pack_option_payload, unpack_option_payload, Payload},
+    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error, MessageId, Parents, MESSAGE_ID_LENGTH,
 };
 
@@ -61,15 +61,14 @@ impl Packable for Message {
     fn packed_len(&self) -> usize {
         self.network_id.packed_len()
             + self.parents.packed_len()
-            + 0u32.packed_len()
-            + self.payload.as_ref().map_or(0, Packable::packed_len)
-            + 0u64.packed_len()
+            + option_payload_packed_len(self.payload.as_ref())
+            + self.nonce.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.network_id.pack(writer)?;
         self.parents.pack(writer)?;
-        pack_option_payload(writer, self.payload.as_ref())?;
+        option_payload_pack(writer, self.payload.as_ref())?;
         self.nonce.pack(writer)?;
 
         Ok(())
@@ -80,7 +79,7 @@ impl Packable for Message {
 
         let parents = Parents::unpack(reader)?;
 
-        let (payload_len, payload) = unpack_option_payload(reader)?;
+        let (payload_len, payload) = option_payload_unpack(reader)?;
 
         if !matches!(
             payload,

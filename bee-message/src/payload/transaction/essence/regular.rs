@@ -5,7 +5,7 @@ use crate::{
     constants::{INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE, IOTA_SUPPLY},
     input::Input,
     output::Output,
-    payload::{pack_option_payload, unpack_option_payload, Payload},
+    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error,
 };
 
@@ -52,8 +52,7 @@ impl Packable for RegularEssence {
             + self.inputs.iter().map(Packable::packed_len).sum::<usize>()
             + 0u16.packed_len()
             + self.outputs.iter().map(Packable::packed_len).sum::<usize>()
-            + 0u32.packed_len()
-            + self.payload.as_ref().map_or(0, Packable::packed_len)
+            + option_payload_packed_len(self.payload.as_ref())
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -65,7 +64,7 @@ impl Packable for RegularEssence {
         for output in self.outputs.iter() {
             output.pack(writer)?;
         }
-        pack_option_payload(writer, self.payload.as_ref())?;
+        option_payload_pack(writer, self.payload.as_ref())?;
 
         Ok(())
     }
@@ -95,7 +94,7 @@ impl Packable for RegularEssence {
 
         let mut builder = Self::builder().with_inputs(inputs).with_outputs(outputs);
 
-        if let (_, Some(payload)) = unpack_option_payload(reader)? {
+        if let (_, Some(payload)) = option_payload_unpack(reader)? {
             builder = builder.with_payload(payload);
         }
 

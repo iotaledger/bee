@@ -3,7 +3,7 @@
 
 use crate::{
     milestone::MilestoneIndex,
-    payload::{pack_option_payload, unpack_option_payload, Payload},
+    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error, Parents,
 };
 
@@ -101,8 +101,7 @@ impl Packable for MilestonePayloadEssence {
             + MILESTONE_MERKLE_PROOF_LENGTH
             + 0u8.packed_len()
             + self.public_keys.len() * MILESTONE_PUBLIC_KEY_LENGTH
-            + 0u32.packed_len()
-            + self.receipt.as_ref().map_or(0, Packable::packed_len)
+            + option_payload_packed_len(self.receipt.as_ref())
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -114,7 +113,7 @@ impl Packable for MilestonePayloadEssence {
         for public_key in &self.public_keys {
             writer.write_all(public_key)?;
         }
-        pack_option_payload(writer, self.receipt.as_ref())?;
+        option_payload_pack(writer, self.receipt.as_ref())?;
 
         Ok(())
     }
@@ -135,7 +134,7 @@ impl Packable for MilestonePayloadEssence {
             public_keys.push(public_key);
         }
 
-        let (_, receipt) = unpack_option_payload(reader)?;
+        let (_, receipt) = option_payload_unpack(reader)?;
 
         // TODO builder ?
 
