@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    milestone::MilestoneIndex,
     payload::{pack_option_payload, unpack_option_payload, Payload},
     Error, Parents,
 };
@@ -21,7 +22,7 @@ pub const MILESTONE_PUBLIC_KEY_LENGTH: usize = 32;
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayloadEssence {
-    index: u32,
+    index: MilestoneIndex,
     timestamp: u64,
     parents: Parents,
     merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
@@ -31,7 +32,7 @@ pub struct MilestonePayloadEssence {
 
 impl MilestonePayloadEssence {
     pub fn new(
-        index: u32,
+        index: MilestoneIndex,
         timestamp: u64,
         parents: Parents,
         merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
@@ -61,7 +62,7 @@ impl MilestonePayloadEssence {
         })
     }
 
-    pub fn index(&self) -> u32 {
+    pub fn index(&self) -> MilestoneIndex {
         self.index
     }
 
@@ -119,7 +120,7 @@ impl Packable for MilestonePayloadEssence {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let index = u32::unpack(reader)?;
+        let index = MilestoneIndex::unpack(reader)?;
         let timestamp = u64::unpack(reader)?;
         let parents = Parents::unpack(reader)?;
 

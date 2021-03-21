@@ -6,6 +6,7 @@ mod migrated_funds_entry;
 pub use migrated_funds_entry::{MigratedFundsEntry, MIGRATED_FUNDS_ENTRY_AMOUNT};
 
 use crate::{
+    milestone::MilestoneIndex,
     payload::{pack_option_payload, unpack_option_payload, Payload},
     Error,
 };
@@ -24,7 +25,7 @@ const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = 1..=127;
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReceiptPayload {
-    migrated_at: u32,
+    migrated_at: MilestoneIndex,
     last: bool,
     funds: Vec<MigratedFundsEntry>,
     transaction: Payload,
@@ -34,7 +35,7 @@ impl ReceiptPayload {
     pub const KIND: u32 = 3;
 
     pub fn new(
-        migrated_at: u32,
+        migrated_at: MilestoneIndex,
         last: bool,
         funds: Vec<MigratedFundsEntry>,
         transaction: Payload,
@@ -68,7 +69,7 @@ impl ReceiptPayload {
         })
     }
 
-    pub fn migrated_at(&self) -> u32 {
+    pub fn migrated_at(&self) -> MilestoneIndex {
         self.migrated_at
     }
 
@@ -113,7 +114,7 @@ impl Packable for ReceiptPayload {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let migrated_at = u32::unpack(reader)?;
+        let migrated_at = MilestoneIndex::unpack(reader)?;
         let last = bool::unpack(reader)?;
         let funds_len = u8::unpack(reader)? as usize;
         let mut funds = Vec::with_capacity(funds_len);

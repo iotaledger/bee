@@ -65,7 +65,7 @@ async fn validate<B: StorageBackend>(
                 .map_err(Error::InvalidMilestone)?;
 
             Ok((
-                MilestoneIndex(milestone.essence().index()),
+                milestone.essence().index(),
                 Milestone::new(message_id, milestone.essence().timestamp()),
             ))
         }
