@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{swarm::protocols::gossip::GossipSender, MAX_UNKNOWN_PEERS};
+use crate::{node::MAX_UNKNOWN_PEERS, swarm::protocols::gossip::GossipSender};
 
 use libp2p::PeerId;
 use tokio::sync::RwLock;

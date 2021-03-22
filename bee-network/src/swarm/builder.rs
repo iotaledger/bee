@@ -36,7 +36,7 @@ pub async fn build_swarm(
 
     let tcp_config = tcp::TokioTcpConfig::new().nodelay(true).port_reuse(true);
     let noi_config = noise::NoiseConfig::xx(noise_keys);
-    let dns_config = dns::DnsConfig::new(tcp_config)?;
+    let dns_config = dns::TokioDnsConfig::system(tcp_config)?;
     let mpx_config = mplex::MplexConfig::default();
     let ymx_config = yamux::YamuxConfig::default();
 
