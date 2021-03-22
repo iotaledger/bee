@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    constants::{INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE, IOTA_SUPPLY},
+    constants::{INPUT_OUTPUT_COUNT_RANGE, IOTA_SUPPLY},
     input::Input,
     output::Output,
     payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
@@ -157,12 +157,7 @@ impl RegularEssenceBuilder {
 
         for input in self.inputs.iter() {
             match input {
-                Input::UTXO(u) => {
-                    // Transaction Output Index must be 0 ≤ x < 127
-                    if !INPUT_OUTPUT_INDEX_RANGE.contains(&u.output_id().index()) {
-                        return Err(Error::InvalidInputOutputIndex(u.output_id().index()));
-                    }
-
+                Input::UTXO(_) => {
                     // Every combination of Transaction ID + Transaction Output Index must be unique in the inputs set.
                     if self.inputs.iter().filter(|i| *i == input).count() > 1 {
                         return Err(Error::DuplicateError);
