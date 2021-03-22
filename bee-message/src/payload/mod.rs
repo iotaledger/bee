@@ -128,7 +128,22 @@ impl Packable for Payload {
     }
 }
 
-pub fn unpack_option_payload<R: Read + ?Sized>(reader: &mut R) -> Result<(usize, Option<Payload>), Error> {
+pub fn option_payload_packed_len(payload: Option<&Payload>) -> usize {
+    0u32.packed_len() + payload.map_or(0, Packable::packed_len)
+}
+
+pub fn option_payload_pack<W: Write>(writer: &mut W, payload: Option<&Payload>) -> Result<(), Error> {
+    if let Some(payload) = payload {
+        (payload.packed_len() as u32).pack(writer)?;
+        payload.pack(writer)?;
+    } else {
+        0u32.pack(writer)?;
+    }
+
+    Ok(())
+}
+
+pub fn option_payload_unpack<R: Read + ?Sized>(reader: &mut R) -> Result<(usize, Option<Payload>), Error> {
     let payload_len = u32::unpack(reader)? as usize;
 
     if payload_len > 0 {
@@ -141,15 +156,4 @@ pub fn unpack_option_payload<R: Read + ?Sized>(reader: &mut R) -> Result<(usize,
     } else {
         Ok((0, None))
     }
-}
-
-pub fn pack_option_payload<W: Write>(writer: &mut W, payload: Option<&Payload>) -> Result<(), Error> {
-    if let Some(payload) = payload {
-        (payload.packed_len() as u32).pack(writer)?;
-        payload.pack(writer)?;
-    } else {
-        0u32.pack(writer)?;
-    }
-
-    Ok(())
 }

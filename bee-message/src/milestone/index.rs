@@ -10,6 +10,12 @@ use core::ops::{Add, Deref, Sub};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneIndex(pub u32);
 
+impl MilestoneIndex {
+    pub fn new(value: u32) -> Self {
+        Self(value)
+    }
+}
+
 impl std::fmt::Display for MilestoneIndex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)

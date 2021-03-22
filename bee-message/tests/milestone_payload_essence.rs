@@ -7,7 +7,14 @@ use bee_test::rand::parents::rand_parents;
 #[test]
 fn new_invalid_no_public_key() {
     assert!(matches!(
-        MilestonePayloadEssence::new(0, 0, rand_parents(), [0; MILESTONE_MERKLE_PROOF_LENGTH], vec![], None,),
+        MilestonePayloadEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_parents(),
+            [0; MILESTONE_MERKLE_PROOF_LENGTH],
+            vec![],
+            None,
+        ),
         Err(Error::MilestoneNoPublicKey)
     ));
 }
@@ -15,7 +22,7 @@ fn new_invalid_no_public_key() {
 #[test]
 fn new_valid_sorted_unique_public_keys() {
     assert!(MilestonePayloadEssence::new(
-        0,
+        MilestoneIndex(0),
         0,
         rand_parents(),
         [0; MILESTONE_MERKLE_PROOF_LENGTH],
@@ -29,7 +36,7 @@ fn new_valid_sorted_unique_public_keys() {
 fn new_invalid_sorted_not_unique_public_keys() {
     assert!(matches!(
         MilestonePayloadEssence::new(
-            0,
+            MilestoneIndex(0),
             0,
             rand_parents(),
             [0; MILESTONE_MERKLE_PROOF_LENGTH],
@@ -44,7 +51,7 @@ fn new_invalid_sorted_not_unique_public_keys() {
 fn new_invalid_not_sorted_unique_public_keys() {
     assert!(matches!(
         MilestonePayloadEssence::new(
-            0,
+            MilestoneIndex(0),
             0,
             rand_parents(),
             [0; MILESTONE_MERKLE_PROOF_LENGTH],

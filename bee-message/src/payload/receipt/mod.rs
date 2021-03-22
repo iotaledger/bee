@@ -6,7 +6,8 @@ mod migrated_funds_entry;
 pub use migrated_funds_entry::{MigratedFundsEntry, MIGRATED_FUNDS_ENTRY_AMOUNT};
 
 use crate::{
-    payload::{pack_option_payload, unpack_option_payload, Payload},
+    milestone::MilestoneIndex,
+    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error,
 };
 
@@ -24,7 +25,7 @@ const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = 1..=127;
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReceiptPayload {
-    migrated_at: u32,
+    migrated_at: MilestoneIndex,
     last: bool,
     funds: Vec<MigratedFundsEntry>,
     transaction: Payload,
@@ -34,7 +35,7 @@ impl ReceiptPayload {
     pub const KIND: u32 = 3;
 
     pub fn new(
-        migrated_at: u32,
+        migrated_at: MilestoneIndex,
         last: bool,
         funds: Vec<MigratedFundsEntry>,
         transaction: Payload,
@@ -68,7 +69,7 @@ impl ReceiptPayload {
         })
     }
 
-    pub fn migrated_at(&self) -> u32 {
+    pub fn migrated_at(&self) -> MilestoneIndex {
         self.migrated_at
     }
 
@@ -97,7 +98,7 @@ impl Packable for ReceiptPayload {
             + self.last.packed_len()
             + 0u8.packed_len()
             + self.funds.iter().map(Packable::packed_len).sum::<usize>()
-            + self.transaction.packed_len()
+            + option_payload_packed_len(Some(&self.transaction))
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -107,20 +108,20 @@ impl Packable for ReceiptPayload {
         for fund in self.funds.iter() {
             fund.pack(writer)?;
         }
-        pack_option_payload(writer, Some(&self.transaction))?;
+        option_payload_pack(writer, Some(&self.transaction))?;
 
         Ok(())
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let migrated_at = u32::unpack(reader)?;
+        let migrated_at = MilestoneIndex::unpack(reader)?;
         let last = bool::unpack(reader)?;
         let funds_len = u8::unpack(reader)? as usize;
         let mut funds = Vec::with_capacity(funds_len);
         for _ in 0..funds_len {
             funds.push(MigratedFundsEntry::unpack(reader)?);
         }
-        let transaction = unpack_option_payload(reader)?.1.ok_or(Self::Error::MissingPayload)?;
+        let transaction = option_payload_unpack(reader)?.1.ok_or(Self::Error::MissingPayload)?;
 
         Self::new(migrated_at, last, funds, transaction)
     }

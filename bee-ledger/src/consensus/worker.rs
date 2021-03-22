@@ -59,11 +59,11 @@ where
         _ => return Err(Error::NoMilestonePayload),
     };
 
-    if milestone.essence().index() != **index + 1 {
-        return Err(Error::NonContiguousMilestone(milestone.essence().index(), **index));
+    if milestone.essence().index() != MilestoneIndex(**index + 1) {
+        return Err(Error::NonContiguousMilestone(*milestone.essence().index(), **index));
     }
 
-    let mut metadata = WhiteFlagMetadata::new(MilestoneIndex(milestone.essence().index()));
+    let mut metadata = WhiteFlagMetadata::new(milestone.essence().index());
 
     let parents = message.parents().iter().copied().collect();
 
@@ -143,7 +143,7 @@ where
     )
     .await?;
 
-    *index = LedgerIndex(MilestoneIndex(milestone.essence().index()));
+    *index = LedgerIndex(milestone.essence().index());
     tangle.update_confirmed_milestone_index(milestone.essence().index().into());
 
     for message_id in metadata.excluded_no_transaction_messages.iter() {
@@ -309,22 +309,15 @@ where
                 }
 
                 match index {
-                    index if index == ledger_index + 1 => {
+                    index if index == MilestoneIndex(ledger_index + 1) => {
                         // TODO unwrap until we merge both crates
-                        apply_outputs_diff(
-                            &*storage,
-                            MilestoneIndex(index),
-                            diff.created(),
-                            &consumed,
-                            &balance_diffs,
-                            &None,
-                        )
-                        .await
-                        .unwrap();
+                        apply_outputs_diff(&*storage, index, diff.created(), &consumed, &balance_diffs, &None)
+                            .await
+                            .unwrap();
                     }
-                    index if index == ledger_index => {
+                    index if index == MilestoneIndex(ledger_index) => {
                         // TODO unwrap until we merge both crates
-                        rollback_outputs_diff(&*storage, MilestoneIndex(index), diff.created(), &consumed)
+                        rollback_outputs_diff(&*storage, index, diff.created(), &consumed)
                             .await
                             .unwrap();
                     }

@@ -2,11 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::rand::{
-    address::rand_address,
-    bool::rand_bool,
-    bytes::rand_bytes,
-    integer::{rand_integer, rand_integer_range},
-    message::rand_message_id,
+    address::rand_address, bool::rand_bool, bytes::rand_bytes, integer::rand_integer_range, message::rand_message_id,
     milestone::rand_milestone_index,
 };
 
@@ -54,7 +50,7 @@ pub fn rand_receipt() -> Receipt {
     // TODO rand vector
     Receipt::new(
         ReceiptPayload::new(
-            rand_integer(),
+            rand_milestone_index(),
             rand_bool(),
             vec![rand_migrated_funds_entry()],
             rand_treasury_transaction(),

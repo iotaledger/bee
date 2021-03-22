@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    payload::{pack_option_payload, unpack_option_payload, Payload},
+    milestone::MilestoneIndex,
+    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error, Parents,
 };
 
@@ -21,7 +22,7 @@ pub const MILESTONE_PUBLIC_KEY_LENGTH: usize = 32;
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayloadEssence {
-    index: u32,
+    index: MilestoneIndex,
     timestamp: u64,
     parents: Parents,
     merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
@@ -31,7 +32,7 @@ pub struct MilestonePayloadEssence {
 
 impl MilestonePayloadEssence {
     pub fn new(
-        index: u32,
+        index: MilestoneIndex,
         timestamp: u64,
         parents: Parents,
         merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
@@ -61,7 +62,7 @@ impl MilestonePayloadEssence {
         })
     }
 
-    pub fn index(&self) -> u32 {
+    pub fn index(&self) -> MilestoneIndex {
         self.index
     }
 
@@ -100,8 +101,7 @@ impl Packable for MilestonePayloadEssence {
             + MILESTONE_MERKLE_PROOF_LENGTH
             + 0u8.packed_len()
             + self.public_keys.len() * MILESTONE_PUBLIC_KEY_LENGTH
-            + 0u32.packed_len()
-            + self.receipt.as_ref().map_or(0, Packable::packed_len)
+            + option_payload_packed_len(self.receipt.as_ref())
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -113,13 +113,13 @@ impl Packable for MilestonePayloadEssence {
         for public_key in &self.public_keys {
             writer.write_all(public_key)?;
         }
-        pack_option_payload(writer, self.receipt.as_ref())?;
+        option_payload_pack(writer, self.receipt.as_ref())?;
 
         Ok(())
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let index = u32::unpack(reader)?;
+        let index = MilestoneIndex::unpack(reader)?;
         let timestamp = u64::unpack(reader)?;
         let parents = Parents::unpack(reader)?;
 
@@ -134,7 +134,7 @@ impl Packable for MilestonePayloadEssence {
             public_keys.push(public_key);
         }
 
-        let (_, receipt) = unpack_option_payload(reader)?;
+        let (_, receipt) = option_payload_unpack(reader)?;
 
         // TODO builder ?
 

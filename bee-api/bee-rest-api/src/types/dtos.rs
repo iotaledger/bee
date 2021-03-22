@@ -5,6 +5,7 @@ use bee_ledger::types::Receipt;
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     input::{Input, TreasuryInput, UTXOInput},
+    milestone::MilestoneIndex,
     output::{Output, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput},
     payload::{
         indexation::IndexationPayload,
@@ -693,7 +694,7 @@ impl TryFrom<&MilestonePayload> for MilestonePayloadDto {
     fn try_from(value: &MilestonePayload) -> Result<Self, Self::Error> {
         Ok(MilestonePayloadDto {
             kind: MilestonePayload::KIND,
-            index: value.essence().index(),
+            index: *value.essence().index(),
             timestamp: value.essence().timestamp(),
             parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
             inclusion_merkle_proof: hex::encode(value.essence().merkle_proof()),
@@ -751,7 +752,7 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
                 None
             };
             MilestonePayloadEssence::new(
-                index,
+                MilestoneIndex(index),
                 timestamp,
                 Parents::new(parent_ids).map_err(|e| e.to_string())?,
                 merkle_proof,
@@ -810,7 +811,7 @@ impl TryFrom<&ReceiptPayload> for ReceiptPayloadDto {
     fn try_from(value: &ReceiptPayload) -> Result<Self, Self::Error> {
         Ok(ReceiptPayloadDto {
             kind: ReceiptPayload::KIND,
-            migrated_at: value.migrated_at(),
+            migrated_at: *value.migrated_at(),
             last: value.last(),
             funds: value
                 .funds()
@@ -828,7 +829,7 @@ impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
 
     fn try_from(value: &ReceiptPayloadDto) -> Result<Self, Self::Error> {
         let receipt = ReceiptPayload::new(
-            value.migrated_at,
+            MilestoneIndex(value.migrated_at),
             value.last,
             value
                 .funds
