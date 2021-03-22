@@ -44,8 +44,7 @@ status_interval       = 10
 milestone_sync_count  = 200
 
 [rest_api]
-binding_port          = 14265
-binding_ip_addr       = "0.0.0.0"
+bind_addresses        = "/ip4/0.0.0.0/tcp/14265"
 feature_proof_of_work = true
 public_routes         = [
     "/health",

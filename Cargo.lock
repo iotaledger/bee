@@ -422,6 +422,7 @@ dependencies = [
  "futures",
  "hex",
  "iota-crypto",
+ "libp2p 0.35.1",
  "log",
  "num_cpus",
  "serde",
