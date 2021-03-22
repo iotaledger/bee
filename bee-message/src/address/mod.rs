@@ -48,7 +48,7 @@ impl Address {
         }
     }
 
-    pub fn verify(&self, msg: &[u8], signature: &SignatureUnlock) -> bool {
+    pub fn verify(&self, msg: &[u8], signature: &SignatureUnlock) -> Result<(), Error> {
         match self {
             Address::Ed25519(address) => {
                 let SignatureUnlock::Ed25519(signature) = signature;

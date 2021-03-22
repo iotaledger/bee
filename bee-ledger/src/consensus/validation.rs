@@ -81,7 +81,9 @@ async fn validate_regular_essence<B: StorageBackend>(
                     balance_diffs.dust_output_dec(*output.address());
                 }
                 if !match unlock_blocks.get(index) {
-                    Some(UnlockBlock::Signature(signature)) => output.address().verify(&essence_hash, signature),
+                    Some(UnlockBlock::Signature(signature)) => {
+                        output.address().verify(&essence_hash, signature).is_ok()
+                    }
                     _ => false,
                 } {
                     return Ok(ConflictReason::InvalidSignature);
@@ -92,7 +94,9 @@ async fn validate_regular_essence<B: StorageBackend>(
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 balance_diffs.dust_allowance_sub(*output.address(), output.amount());
                 if !match unlock_blocks.get(index) {
-                    Some(UnlockBlock::Signature(signature)) => output.address().verify(&essence_hash, signature),
+                    Some(UnlockBlock::Signature(signature)) => {
+                        output.address().verify(&essence_hash, signature).is_ok()
+                    }
                     _ => false,
                 } {
                     return Ok(ConflictReason::InvalidSignature);
