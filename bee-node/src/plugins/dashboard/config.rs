@@ -1,13 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use libp2p::{multiaddr::Protocol, Multiaddr};
 use serde::Deserialize;
+use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 
 const DEFAULT_SESSION_TIMEOUT: u64 = 86400;
 const DEFAULT_USER: &str = "admin";
 const DEFAULT_PASSWORD_SALT: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 const DEFAULT_PASSWORD_HASH: &str = "0000000000000000000000000000000000000000000000000000000000000000";
-const DEFAULT_PORT: u16 = 8081;
+const DEFAULT_BIND_ADDRESSES: &str = "/ip4/1.0.0.0/tcp/8081";
 
 #[derive(Default, Deserialize)]
 pub struct DashboardAuthConfigBuilder {
@@ -64,7 +66,7 @@ impl DashboardAuthConfig {
 
 #[derive(Default, Deserialize)]
 pub struct DashboardConfigBuilder {
-    port: Option<u16>,
+    bind_addresses: Option<Multiaddr>,
     auth: Option<DashboardAuthConfigBuilder>,
 }
 
@@ -74,8 +76,36 @@ impl DashboardConfigBuilder {
     }
 
     pub fn finish(self) -> DashboardConfig {
+        let multi_addr = self
+            .bind_addresses
+            .unwrap_or_else(|| DEFAULT_BIND_ADDRESSES.parse().unwrap());
+        let address = multi_addr
+            .iter()
+            .find_map(|x| match x {
+                Protocol::Dns(std::borrow::Cow::Borrowed("localhost")) => Some(
+                    ("localhost", 0)
+                        .to_socket_addrs()
+                        .expect("error resolving 'localhost'")
+                        .nth(0)
+                        .unwrap()
+                        .ip(),
+                ),
+                Protocol::Ip4(ip) => Some(IpAddr::V4(ip)),
+                Protocol::Ip6(ip) => Some(IpAddr::V6(ip)),
+                _ => None,
+            })
+            .unwrap_or_else(|| panic!("Unsupported address"));
+
+        let port = multi_addr
+            .iter()
+            .find_map(|x| match x {
+                Protocol::Tcp(port) => Some(port),
+                _ => None,
+            })
+            .unwrap_or_else(|| panic!("Unsupported protocol"));
+
         DashboardConfig {
-            port: self.port.unwrap_or(DEFAULT_PORT),
+            bind_socket_addr: SocketAddr::new(address, port),
             auth: self.auth.unwrap_or_default().finish(),
         }
     }
@@ -83,7 +113,7 @@ impl DashboardConfigBuilder {
 
 #[derive(Clone)]
 pub struct DashboardConfig {
-    port: u16,
+    bind_socket_addr: SocketAddr,
     auth: DashboardAuthConfig,
 }
 
@@ -92,8 +122,8 @@ impl DashboardConfig {
         DashboardConfigBuilder::new()
     }
 
-    pub fn port(&self) -> u16 {
-        self.port
+    pub fn bind_socket_addr(&self) -> SocketAddr {
+        self.bind_socket_addr
     }
 
     pub fn auth(&self) -> &DashboardAuthConfig {

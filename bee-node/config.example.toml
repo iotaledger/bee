@@ -98,7 +98,7 @@ below_max_depth = 15
 address = "tcp://localhost:1883"
 
 [dashboard]
-port  = 8081
+bind_addresses  = "/ip4/0.0.0.0/tcp/8081"
 [dashboard.auth]
 session_timeout = 86400
 user            = "admin"
