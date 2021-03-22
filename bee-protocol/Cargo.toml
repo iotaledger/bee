@@ -15,7 +15,7 @@ bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", op
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-ledger = { path = "../bee-ledger", features = ["consensus"], optional = true }
 bee-message = { path = "../bee-message", features = ["serde"] }
-bee-network = { path = "../bee-network" }
+bee-network = { path = "../bee-network", default-features = false }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-snapshot = { path = "../bee-snapshot", optional = true }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
@@ -47,6 +47,7 @@ workers = [
   "bee-common",
   "bee-crypto",
   "bee-ledger",
+  "bee-network/node",
   "bee-runtime",
   "bee-snapshot",
   "bee-storage",
