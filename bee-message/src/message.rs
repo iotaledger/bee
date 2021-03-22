@@ -3,7 +3,7 @@
 
 use crate::{
     payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
-    Error, MessageId, Parents, MESSAGE_ID_LENGTH,
+    Error, MessageId, Parents,
 };
 
 use bee_common::packable::{Packable, Read, Write};
@@ -93,8 +93,7 @@ impl Packable for Message {
 
         // Computed instead of calling `packed_len` on Self because `payload_len` is already known and it may be
         // expensive to call `payload.packed_len()` twice.
-        let message_len =
-            network_id.packed_len() + parents.len() * MESSAGE_ID_LENGTH + payload_len + nonce.packed_len();
+        let message_len = network_id.packed_len() + parents.packed_len() + payload_len + nonce.packed_len();
 
         if message_len > MESSAGE_LENGTH_MAX {
             return Err(Error::InvalidMessageLength(message_len));
