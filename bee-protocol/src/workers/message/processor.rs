@@ -162,6 +162,11 @@ where
                             continue;
                         }
 
+                        // Send the propagation event ASAP to allow the propagator to do its thing
+                        if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
+                            error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
+                        }
+
                         bus.dispatch(MessageProcessed(message_id));
 
                         // TODO: boolean values are false at this point in time? trigger event from another location?
@@ -175,10 +180,6 @@ where
                             is_tip: false,
                             is_selected: false,
                         });
-
-                        if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
-                            error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
-                        }
 
                         metrics.new_messages_inc();
 

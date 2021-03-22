@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::MessageRef;
+use crate::{MessageRef, VecSet};
 
 use bee_message::{Message, MessageId};
 
@@ -12,35 +12,67 @@ pub struct Vertex<T>
 where
     T: Clone,
 {
-    message: MessageRef,
-    metadata: T,
+    message: Option<(MessageRef, T)>,
+    children: (VecSet<MessageId>, bool), // Exhaustive flag
 }
 
 impl<T> Vertex<T>
 where
     T: Clone,
 {
-    pub fn new(message: Message, metadata: T) -> Self {
+    pub fn empty() -> Self {
         Self {
-            message: MessageRef(Arc::new(message)),
-            metadata,
+            message: None,
+            children: (VecSet::default(), false),
         }
     }
 
-    pub fn parents(&self) -> impl Iterator<Item = &MessageId> + '_ {
-        self.message.parents().iter()
+    pub fn new(message: Message, metadata: T) -> Self {
+        Self {
+            message: Some((MessageRef(Arc::new(message)), metadata)),
+            children: (VecSet::default(), false),
+        }
     }
 
-    pub fn message(&self) -> &MessageRef {
-        &self.message
+    pub fn parents(&self) -> Option<impl Iterator<Item = &MessageId> + '_> {
+        Some(self.message()?.parents().iter())
     }
 
-    pub fn metadata(&self) -> &T {
-        &self.metadata
+    pub fn message_and_metadata(&self) -> Option<&(MessageRef, T)> {
+        self.message.as_ref()
     }
 
-    pub fn metadata_mut(&mut self) -> &mut T {
-        &mut self.metadata
+    pub fn message(&self) -> Option<&MessageRef> {
+        self.message_and_metadata().map(|(m, _)| m)
+    }
+
+    pub fn metadata(&self) -> Option<&T> {
+        self.message_and_metadata().map(|(_, m)| m)
+    }
+
+    pub fn metadata_mut(&mut self) -> Option<&mut T> {
+        self.message.as_mut().map(|(_, m)| m)
+    }
+
+    pub fn add_child(&mut self, child: MessageId) {
+        self.children.0.insert(child);
+    }
+
+    pub fn children(&self) -> &[MessageId] {
+        &self.children.0
+    }
+
+    pub fn children_exhaustive(&self) -> bool {
+        self.children.1
+    }
+
+    /// Set the exhaustive flag. This should not be done if the vertex's children are exhaustive.
+    pub(crate) fn set_exhaustive(&mut self) {
+        self.children.1 = true;
+    }
+
+    pub(crate) fn insert_message_and_metadata(&mut self, msg: Message, meta: T) {
+        self.message = Some((MessageRef(Arc::new(msg)), meta));
     }
 }
 

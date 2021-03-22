@@ -100,18 +100,21 @@ pub async fn visit_parents_depth_first<Fut, Metadata, Match, Apply, ElseApply, M
 
     while let Some(message_id) = parents.pop() {
         if !visited.contains(&message_id) {
-            match tangle.get_vertex(&message_id).await {
-                Some(vtx) => {
-                    let vtx = &*vtx;
+            let msg_meta = tangle
+                .get_vertex(&message_id)
+                .await
+                .as_ref()
+                .and_then(|v| v.message_and_metadata().cloned());
+            match msg_meta {
+                Some((msg, meta)) => {
+                    if matches(message_id, msg.clone(), meta).await {
+                        apply(&message_id, &msg, &meta);
 
-                    if matches(message_id, vtx.message().clone(), *vtx.metadata()).await {
-                        apply(&message_id, vtx.message(), vtx.metadata());
-
-                        for parent in vtx.parents() {
+                        for parent in msg.parents().iter() {
                             parents.push(*parent);
                         }
                     } else {
-                        else_apply(&message_id, vtx.message(), vtx.metadata());
+                        else_apply(&message_id, &msg, &meta);
                     }
                 }
                 None => {
