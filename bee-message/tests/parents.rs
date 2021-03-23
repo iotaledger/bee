@@ -102,7 +102,7 @@ fn unpack_invalid_not_sorted() {
 
     // Remove 8 byte vector length field and replace with 1 byte, to represent message parents.
     let mut packed = (8u8).pack_new();
-    let mut packed_messages = inner.pack_new().split_at(std::mem::size_of::<u64>()).1.to_vec();
+    let mut packed_messages = inner.pack_new().split_at(core::mem::size_of::<u64>()).1.to_vec();
     packed.append(&mut packed_messages);
 
     let parents = Parents::unpack(&mut packed.as_slice());

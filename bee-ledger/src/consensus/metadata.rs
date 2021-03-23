@@ -13,7 +13,7 @@ use std::collections::HashMap;
 
 /// White flag metadata of a milestone confirmation.
 #[derive(Default)]
-pub(crate) struct WhiteFlagMetadata {
+pub struct WhiteFlagMetadata {
     /// Index of the confirming milestone.
     pub(crate) index: MilestoneIndex,
     /// The number of messages which were referenced by the confirming milestone.
@@ -27,14 +27,19 @@ pub(crate) struct WhiteFlagMetadata {
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
     pub(crate) consumed_outputs: HashMap<OutputId, ConsumedOutput>,
     pub(crate) balance_diffs: BalanceDiffs,
+    pub(crate) merkle_proof: Vec<u8>,
 }
 
 impl WhiteFlagMetadata {
     /// Creates a new white flag metadata.
-    pub(crate) fn new(index: MilestoneIndex) -> WhiteFlagMetadata {
+    pub fn new(index: MilestoneIndex) -> WhiteFlagMetadata {
         WhiteFlagMetadata {
             index,
             ..Self::default()
         }
+    }
+
+    pub fn merkle_proof(&self) -> &[u8] {
+        &self.merkle_proof
     }
 }

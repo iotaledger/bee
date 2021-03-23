@@ -6,7 +6,6 @@ use crate::{
         dust::DUST_THRESHOLD,
         error::Error,
         event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
-        merkle_hasher::MerkleHasher,
         metadata::WhiteFlagMetadata,
         state::check_ledger_state,
         storage::{
@@ -29,7 +28,7 @@ use bee_snapshot::{milestone_diff::MilestoneDiff, SnapshotWorker};
 use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
-use crypto::hashes::blake2b::Blake2b256;
+
 use futures::stream::StreamExt;
 use log::{error, info};
 use tokio::sync::mpsc;
@@ -60,27 +59,25 @@ where
         _ => return Err(Error::NoMilestonePayload),
     };
 
-    if milestone.essence().index() != **index + 1 {
-        return Err(Error::NonContiguousMilestone(milestone.essence().index(), **index));
+    if milestone.essence().index() != MilestoneIndex(**index + 1) {
+        return Err(Error::NonContiguousMilestone(*milestone.essence().index(), **index));
     }
 
-    let mut metadata = WhiteFlagMetadata::new(MilestoneIndex(milestone.essence().index()));
+    let mut metadata = WhiteFlagMetadata::new(milestone.essence().index());
 
-    let parents = message.parents().copied().collect();
+    let parents = message.parents().iter().copied().collect();
 
     drop(message);
 
-    validation::traversal::<N>(tangle, storage, parents, &mut metadata).await?;
+    validation::traversal::<N::Backend>(tangle, storage, parents, &mut metadata).await?;
 
     // Account for the milestone itself.
     metadata.num_referenced_messages += 1;
     metadata.excluded_no_transaction_messages.push(message_id);
 
-    let merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
-
-    if !merkle_proof.eq(&milestone.essence().merkle_proof()) {
+    if !metadata.merkle_proof.eq(&milestone.essence().merkle_proof()) {
         return Err(Error::MerkleProofMismatch(
-            hex::encode(merkle_proof),
+            hex::encode(metadata.merkle_proof),
             hex::encode(milestone.essence().merkle_proof()),
         ));
     }
@@ -115,6 +112,7 @@ where
             metadata.created_outputs.insert(
                 // Safe to unwrap because indexes are known to be valid at this point.
                 OutputId::new(fake_transaction_id, index as u16).unwrap(),
+                // TODO is this actually fake_message_id ?
                 CreatedOutput::new(fake_message_id, Output::from(funds.output().clone())),
             );
         }
@@ -145,7 +143,7 @@ where
     )
     .await?;
 
-    *index = LedgerIndex(MilestoneIndex(milestone.essence().index()));
+    *index = LedgerIndex(milestone.essence().index());
     tangle.update_confirmed_milestone_index(milestone.essence().index().into());
 
     for message_id in metadata.excluded_no_transaction_messages.iter() {
@@ -311,22 +309,15 @@ where
                 }
 
                 match index {
-                    index if index == ledger_index + 1 => {
+                    index if index == MilestoneIndex(ledger_index + 1) => {
                         // TODO unwrap until we merge both crates
-                        apply_outputs_diff(
-                            &*storage,
-                            MilestoneIndex(index),
-                            diff.created(),
-                            &consumed,
-                            &balance_diffs,
-                            &None,
-                        )
-                        .await
-                        .unwrap();
+                        apply_outputs_diff(&*storage, index, diff.created(), &consumed, &balance_diffs, &None)
+                            .await
+                            .unwrap();
                     }
-                    index if index == ledger_index => {
+                    index if index == MilestoneIndex(ledger_index) => {
                         // TODO unwrap until we merge both crates
-                        rollback_outputs_diff(&*storage, MilestoneIndex(index), diff.created(), &consumed)
+                        rollback_outputs_diff(&*storage, index, diff.created(), &consumed)
                             .await
                             .unwrap();
                     }

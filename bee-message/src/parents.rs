@@ -1,9 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{utils::is_unique_sorted, Error, MessageId, MESSAGE_ID_LENGTH};
+use crate::{Error, MessageId, MESSAGE_ID_LENGTH};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::{
+    ord::is_unique_sorted,
+    packable::{Packable, Read, Write},
+};
 
 use core::ops::{Deref, RangeInclusive};
 

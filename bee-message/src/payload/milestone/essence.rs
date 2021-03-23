@@ -1,9 +1,16 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::Payload, utils::is_unique_sorted, Error, MessageId, Parents};
+use crate::{
+    milestone::MilestoneIndex,
+    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
+    Error, Parents,
+};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::{
+    ord::is_unique_sorted,
+    packable::{Packable, Read, Write},
+};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
@@ -15,7 +22,7 @@ pub const MILESTONE_PUBLIC_KEY_LENGTH: usize = 32;
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayloadEssence {
-    index: u32,
+    index: MilestoneIndex,
     timestamp: u64,
     parents: Parents,
     merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
@@ -25,7 +32,7 @@ pub struct MilestonePayloadEssence {
 
 impl MilestonePayloadEssence {
     pub fn new(
-        index: u32,
+        index: MilestoneIndex,
         timestamp: u64,
         parents: Parents,
         merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
@@ -55,7 +62,7 @@ impl MilestonePayloadEssence {
         })
     }
 
-    pub fn index(&self) -> u32 {
+    pub fn index(&self) -> MilestoneIndex {
         self.index
     }
 
@@ -63,8 +70,8 @@ impl MilestonePayloadEssence {
         self.timestamp
     }
 
-    pub fn parents(&self) -> impl Iterator<Item = &MessageId> + '_ {
-        self.parents.iter()
+    pub fn parents(&self) -> &Parents {
+        &self.parents
     }
 
     pub fn merkle_proof(&self) -> &[u8] {
@@ -94,38 +101,25 @@ impl Packable for MilestonePayloadEssence {
             + MILESTONE_MERKLE_PROOF_LENGTH
             + 0u8.packed_len()
             + self.public_keys.len() * MILESTONE_PUBLIC_KEY_LENGTH
-            + 0u32.packed_len()
-            + self.receipt.iter().map(Packable::packed_len).sum::<usize>()
+            + option_payload_packed_len(self.receipt.as_ref())
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.index.pack(writer)?;
-
         self.timestamp.pack(writer)?;
-
         self.parents.pack(writer)?;
-
         writer.write_all(&self.merkle_proof)?;
-
         (self.public_keys.len() as u8).pack(writer)?;
-
         for public_key in &self.public_keys {
             writer.write_all(public_key)?;
         }
-
-        match self.receipt {
-            Some(ref receipt) => {
-                (receipt.packed_len() as u32).pack(writer)?;
-                receipt.pack(writer)?;
-            }
-            None => 0u32.pack(writer)?,
-        }
+        option_payload_pack(writer, self.receipt.as_ref())?;
 
         Ok(())
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let index = u32::unpack(reader)?;
+        let index = MilestoneIndex::unpack(reader)?;
         let timestamp = u64::unpack(reader)?;
         let parents = Parents::unpack(reader)?;
 
@@ -140,16 +134,7 @@ impl Packable for MilestonePayloadEssence {
             public_keys.push(public_key);
         }
 
-        let receipt_len = u32::unpack(reader)? as usize;
-        let receipt = if receipt_len > 0 {
-            let receipt = Payload::unpack(reader)?;
-            if receipt_len != receipt.packed_len() {
-                return Err(Self::Error::InvalidAnnouncedLength(receipt_len, receipt.packed_len()));
-            }
-            Some(receipt)
-        } else {
-            None
-        };
+        let (_, receipt) = option_payload_unpack(reader)?;
 
         // TODO builder ?
 

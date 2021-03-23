@@ -12,7 +12,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_rest_api::config::RestApiConfig;
+use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
 

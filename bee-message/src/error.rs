@@ -26,9 +26,9 @@ pub enum Error {
     InvalidParentsCount(usize),
     DuplicateError,
     InvalidAddress,
-    InvalidSignature,
     MissingField(&'static str),
-    InvalidAnnouncedLength(usize, usize),
+    InvalidPayloadLength(usize, usize),
+    MissingPayload,
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
     InvalidIndexationIndexLength(usize),
@@ -47,6 +47,8 @@ pub enum Error {
     RemainingBytesAfterMessage,
     ParentsNotUniqueSorted,
     TailTransactionHashNotUnique(usize, usize),
+    SignaturePublicKeyMismatch(String, String),
+    InvalidSignature,
 }
 
 impl std::error::Error for Error {}
@@ -85,11 +87,11 @@ impl fmt::Display for Error {
             }
             Error::DuplicateError => write!(f, "The object in the set must be unique."),
             Error::InvalidAddress => write!(f, "Invalid address provided."),
-            Error::InvalidSignature => write!(f, "Invalid signature provided."),
             Error::MissingField(s) => write!(f, "Missing required field: {}.", s),
-            Error::InvalidAnnouncedLength(expected, actual) => {
-                write!(f, "Invalid announced length: {}, {}.", expected, actual)
+            Error::InvalidPayloadLength(expected, actual) => {
+                write!(f, "Invalid payload length: expected {}, got {}.", expected, actual)
             }
+            Error::MissingPayload => write!(f, "Missing payload."),
             Error::InvalidHexadecimalChar(hex) => write!(f, "Invalid hexadecimal character: {}.", hex),
             Error::InvalidHexadecimalLength(expected, actual) => {
                 write!(f, "Invalid hexadecimal length: expected {} got {}.", expected, actual)
@@ -146,6 +148,14 @@ impl fmt::Display for Error {
                     previous, current
                 )
             }
+            Error::SignaturePublicKeyMismatch(expected, actual) => {
+                write!(
+                    f,
+                    "Signature public key mismatch: expected {0}, got {1}.",
+                    expected, actual
+                )
+            }
+            Error::InvalidSignature => write!(f, "Invalid signature provided."),
         }
     }
 }

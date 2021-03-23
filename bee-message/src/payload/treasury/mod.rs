@@ -51,6 +51,9 @@ impl Packable for TreasuryTransactionPayload {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::new(Input::unpack(reader)?, Output::unpack(reader)?)
+        let input = Input::unpack(reader)?;
+        let output = Output::unpack(reader)?;
+
+        Self::new(input, output)
     }
 }

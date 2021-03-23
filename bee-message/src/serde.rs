@@ -7,7 +7,7 @@ macro_rules! string_serde_impl {
         use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 
         impl Serialize for $type {
-            fn serialize<S: Serializer>(&self, s: S) -> std::result::Result<S::Ok, S::Error> {
+            fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 s.serialize_str(&self.to_string())
             }
         }

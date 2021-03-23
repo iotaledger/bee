@@ -40,9 +40,9 @@ impl Packable for ConsumedOutput {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self {
-            target: TransactionId::unpack(reader)?,
-            index: MilestoneIndex::unpack(reader)?,
-        })
+        let target = TransactionId::unpack(reader)?;
+        let index = MilestoneIndex::unpack(reader)?;
+
+        Ok(Self { target, index })
     }
 }

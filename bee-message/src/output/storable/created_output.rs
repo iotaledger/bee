@@ -5,7 +5,7 @@ use crate::{error::Error, output::Output, MessageId};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use std::ops::Deref;
+use core::ops::Deref;
 
 #[derive(Clone, Debug)]
 pub struct CreatedOutput {
@@ -50,9 +50,9 @@ impl Packable for CreatedOutput {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self {
-            message_id: MessageId::unpack(reader)?,
-            inner: Output::unpack(reader)?,
-        })
+        let message_id = MessageId::unpack(reader)?;
+        let inner = Output::unpack(reader)?;
+
+        Ok(Self { message_id, inner })
     }
 }

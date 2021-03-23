@@ -12,7 +12,7 @@ use crate::plugins::dashboard::websocket::{
     topics::WsTopic,
 };
 
-use bee_rest_api::endpoints::api::v1::peers::PeersResponse;
+use bee_rest_api::types::responses::PeersResponse;
 
 use serde::Serialize;
 

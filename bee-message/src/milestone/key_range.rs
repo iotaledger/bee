@@ -3,7 +3,7 @@
 
 use crate::milestone::MilestoneIndex;
 
-use std::cmp::Ordering;
+use core::cmp::Ordering;
 
 #[derive(Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

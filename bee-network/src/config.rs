@@ -14,8 +14,8 @@ pub const DEFAULT_MAX_UNKOWN_PEERS: usize = 4;
 /// The network configuration.
 #[derive(Clone)]
 pub struct NetworkConfig {
-    /// The address/es the networking layer tries binding to.
-    pub bind_address: Multiaddr,
+    /// Can represent a single or multiple ip addresses the network layer will try to bind to.
+    pub bind_addresses: Multiaddr,
     /// The automatic reconnect interval in seconds for known peers.
     pub reconnect_interval_secs: u64,
     /// The maximum number of gossip connections with unknown peers.
@@ -67,7 +67,7 @@ impl NetworkConfigBuilder {
     /// Builds the network config.
     pub fn finish(self) -> NetworkConfig {
         NetworkConfig {
-            bind_address: self
+            bind_addresses: self
                 .bind_addresses
                 .unwrap_or_else(|| Multiaddr::from_str(DEFAULT_BIND_ADDRESSES).unwrap()),
 

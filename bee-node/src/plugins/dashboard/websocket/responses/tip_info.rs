@@ -6,7 +6,7 @@ use crate::plugins::dashboard::websocket::{
     topics::WsTopic,
 };
 
-use bee_protocol::event::{TipAdded, TipRemoved};
+use bee_protocol::workers::event::{TipAdded, TipRemoved};
 
 use serde::Serialize;
 

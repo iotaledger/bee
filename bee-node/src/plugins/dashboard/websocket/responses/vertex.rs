@@ -6,7 +6,7 @@ use crate::plugins::dashboard::websocket::{
     topics::WsTopic,
 };
 
-use bee_protocol::event::NewVertex;
+use bee_protocol::workers::event::NewVertex;
 
 use serde::Serialize;
 

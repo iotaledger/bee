@@ -5,7 +5,7 @@ use crate::milestone::MilestoneIndex;
 
 use bee_common::packable::{Packable, Read, Write};
 
-use std::ops::Deref;
+use core::ops::Deref;
 
 #[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct LedgerIndex(pub MilestoneIndex);

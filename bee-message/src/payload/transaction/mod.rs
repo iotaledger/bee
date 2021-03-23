@@ -60,9 +60,12 @@ impl Packable for TransactionPayload {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
+        let essence = Essence::unpack(reader)?;
+        let unlock_blocks = UnlockBlocks::unpack(reader)?;
+
         Self::builder()
-            .with_essence(Essence::unpack(reader)?)
-            .with_unlock_blocks(UnlockBlocks::unpack(reader)?)
+            .with_essence(essence)
+            .with_unlock_blocks(unlock_blocks)
             .finish()
     }
 }

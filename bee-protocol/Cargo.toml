@@ -11,36 +11,68 @@ keywords = ["iota", "tangle", "bee", "framework", "protocol"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-ledger = { path = "../bee-ledger", features = ["consensus"] }
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-ledger = { path = "../bee-ledger", features = ["consensus"], optional = true }
 bee-message = { path = "../bee-message", features = ["serde"] }
-bee-network = { path = "../bee-network" }
-bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-snapshot = { path = "../bee-snapshot" }
-bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-tangle = { path = "../bee-tangle" }
-bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-network = { path = "../bee-network", default-features = false }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-snapshot = { path = "../bee-snapshot", optional = true }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-tangle = { path = "../bee-tangle", optional = true }
+bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 
-async-channel = "1.5"
-async-priority-queue = "0.1"
-async-trait = "0.1"
-futures = "0.3"
-futures-util = "0.3"
-fxhash = "0.2"
-hex = "0.4"
-iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "c3bf565eba62d0b81144174c2ff917bfde282e49", features = ["blake2b", "ed25519"] }
-log = "0.4"
-num_cpus = "1.13"
-pin-project = "1.0"
-rand = "0.8"
-ref-cast = "1.0"
-serde = { version = "1.0", features = ["derive" ] }
-spin = "0.7"
-thiserror = "1.0"
-tokio = { version = "1.1", features = ["rt-multi-thread"] }
-tokio-stream = "0.1"
-twox-hash = "1.5"
+async-channel = { version = "1.5", optional = true }
+async-priority-queue = { version = "0.1", optional = true }
+async-trait = { version = "0.1", optional = true }
+futures = { version = "0.3", optional = true }
+futures-util = { version = "0.3", optional = true }
+fxhash = { version = "0.2", optional = true }
+hex = { version = "0.4", optional = true }
+iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "c3bf565eba62d0b81144174c2ff917bfde282e49", features = ["blake2b", "ed25519"], optional = true }
+log = { version = "0.4", optional = true }
+num_cpus = { version = "1.13", optional = true }
+pin-project = { version = "1.0", optional = true }
+rand = { version = "0.8", optional = true }
+ref-cast = { version = "1.0", optional = true }
+serde = { version = "1.0", features = [ "derive" ], optional = true }
+spin = { version = "0.9", optional = true }
+thiserror = { version = "1.0", optional = true }
+tokio = { version = "1.4", features = ["rt-multi-thread"], optional = true }
+tokio-stream = { version = "0.1", optional = true }
+twox-hash = { version = "1.5", optional = true }
+
+[features]
+workers = [
+  "bee-common",
+  "bee-crypto",
+  "bee-ledger",
+  "bee-network/node",
+  "bee-runtime",
+  "bee-snapshot",
+  "bee-storage",
+  "bee-tangle",
+  "bee-ternary",
+  "async-channel",
+  "async-priority-queue",
+  "async-trait",
+  "futures",
+  "futures-util",
+  "fxhash",
+  "hex",
+  "iota-crypto",
+  "log",
+  "num_cpus",
+  "pin-project",
+  "rand",
+  "ref-cast",
+  "serde",
+  "spin",
+  "thiserror",
+  "tokio",
+  "tokio-stream",
+  "twox-hash",
+]
 
 [dev-dependencies]
-tokio = { version = "1.1", features = ["macros"] }
+tokio = { version = "1.4", features = ["macros"] }

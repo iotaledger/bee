@@ -5,6 +5,7 @@ use crate::{
     consensus::{
         dust::{dust_outputs_max, DUST_THRESHOLD},
         error::Error,
+        merkle_hasher::MerkleHasher,
         metadata::WhiteFlagMetadata,
         storage::{self, StorageBackend},
     },
@@ -21,8 +22,9 @@ use bee_message::{
     unlock::{UnlockBlock, UnlockBlocks},
     Message, MessageId,
 };
-use bee_runtime::node::Node;
 use bee_tangle::MsTangle;
+
+use crypto::hashes::blake2b::Blake2b256;
 
 use std::{
     collections::{HashMap, HashSet},
@@ -79,7 +81,9 @@ async fn validate_regular_essence<B: StorageBackend>(
                     balance_diffs.dust_output_dec(*output.address());
                 }
                 if !match unlock_blocks.get(index) {
-                    Some(UnlockBlock::Signature(signature)) => output.address().verify(&essence_hash, signature),
+                    Some(UnlockBlock::Signature(signature)) => {
+                        output.address().verify(&essence_hash, signature).is_ok()
+                    }
                     _ => false,
                 } {
                     return Ok(ConflictReason::InvalidSignature);
@@ -90,7 +94,9 @@ async fn validate_regular_essence<B: StorageBackend>(
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 balance_diffs.dust_allowance_sub(*output.address(), output.amount());
                 if !match unlock_blocks.get(index) {
-                    Some(UnlockBlock::Signature(signature)) => output.address().verify(&essence_hash, signature),
+                    Some(UnlockBlock::Signature(signature)) => {
+                        output.address().verify(&essence_hash, signature).is_ok()
+                    }
                     _ => false,
                 } {
                     return Ok(ConflictReason::InvalidSignature);
@@ -212,15 +218,12 @@ async fn validate_message<B: StorageBackend>(
 }
 
 // TODO make it a tangle method ?
-pub(crate) async fn traversal<N: Node>(
-    tangle: &MsTangle<N::Backend>,
-    storage: &N::Backend,
+pub async fn traversal<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    storage: &B,
     mut messages_ids: Vec<MessageId>,
     metadata: &mut WhiteFlagMetadata,
-) -> Result<(), Error>
-where
-    N::Backend: StorageBackend,
-{
+) -> Result<(), Error> {
     let mut visited = HashSet::new();
     messages_ids = messages_ids.into_iter().rev().collect();
 
@@ -250,7 +253,7 @@ where
             Some(message) => {
                 let mut next = None;
 
-                for parent in message.parents() {
+                for parent in message.parents().iter() {
                     if !visited.contains(parent) {
                         next.replace(parent);
                         break;
@@ -276,6 +279,8 @@ where
             }
         }
     }
+
+    metadata.merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
 
     Ok(())
 }

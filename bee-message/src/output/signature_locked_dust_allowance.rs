@@ -51,6 +51,9 @@ impl Packable for SignatureLockedDustAllowanceOutput {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::new(Address::unpack(reader)?, u64::unpack(reader)?)
+        let address = Address::unpack(reader)?;
+        let amount = u64::unpack(reader)?;
+
+        Self::new(address, amount)
     }
 }

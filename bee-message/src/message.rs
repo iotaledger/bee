@@ -1,7 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::Payload, Error, MessageId, Parents, MESSAGE_ID_LENGTH};
+use crate::{
+    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
+    Error, MessageId, Parents,
+};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_pow::providers::{Miner, Provider, ProviderBuilder};
@@ -39,8 +42,8 @@ impl Message {
         self.network_id
     }
 
-    pub fn parents(&self) -> impl Iterator<Item = &MessageId> + '_ {
-        self.parents.iter()
+    pub fn parents(&self) -> &Parents {
+        &self.parents
     }
 
     pub fn payload(&self) -> &Option<Payload> {
@@ -58,23 +61,14 @@ impl Packable for Message {
     fn packed_len(&self) -> usize {
         self.network_id.packed_len()
             + self.parents.packed_len()
-            + 0u32.packed_len()
-            + self.payload.as_ref().map_or(0, Packable::packed_len)
-            + 0u64.packed_len()
+            + option_payload_packed_len(self.payload.as_ref())
+            + self.nonce.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.network_id.pack(writer)?;
-
         self.parents.pack(writer)?;
-
-        if let Some(ref payload) = self.payload {
-            (payload.packed_len() as u32).pack(writer)?;
-            payload.pack(writer)?;
-        } else {
-            0u32.pack(writer)?;
-        }
-
+        option_payload_pack(writer, self.payload.as_ref())?;
         self.nonce.pack(writer)?;
 
         Ok(())
@@ -85,32 +79,21 @@ impl Packable for Message {
 
         let parents = Parents::unpack(reader)?;
 
-        let payload_len = u32::unpack(reader)? as usize;
-        let payload = if payload_len != 0 {
-            let payload = Payload::unpack(reader)?;
-            if payload_len != payload.packed_len() {
-                return Err(Self::Error::InvalidAnnouncedLength(payload_len, payload.packed_len()));
-            }
+        let (payload_len, payload) = option_payload_unpack(reader)?;
 
-            if !matches!(
-                payload,
-                Payload::Transaction(_) | Payload::Milestone(_) | Payload::Indexation(_)
-            ) {
-                // Safe to unwrap since it's known not to be None.
-                return Err(Error::InvalidPayloadKind(payload.kind()));
-            }
-
-            Some(payload)
-        } else {
-            None
-        };
+        if !matches!(
+            payload,
+            None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::Indexation(_))
+        ) {
+            // Safe to unwrap since it's known not to be None.
+            return Err(Error::InvalidPayloadKind(payload.unwrap().kind()));
+        }
 
         let nonce = u64::unpack(reader)?;
 
         // Computed instead of calling `packed_len` on Self because `payload_len` is already known and it may be
         // expensive to call `payload.packed_len()` twice.
-        let message_len =
-            network_id.packed_len() + parents.len() * MESSAGE_ID_LENGTH + payload_len + nonce.packed_len();
+        let message_len = network_id.packed_len() + parents.packed_len() + payload_len + nonce.packed_len();
 
         if message_len > MESSAGE_LENGTH_MAX {
             return Err(Error::InvalidMessageLength(message_len));

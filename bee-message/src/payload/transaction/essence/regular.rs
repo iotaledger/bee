@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    constants::{INPUT_OUTPUT_COUNT_RANGE, INPUT_OUTPUT_INDEX_RANGE, IOTA_SUPPLY},
+    constants::{INPUT_OUTPUT_COUNT_RANGE, IOTA_SUPPLY},
     input::Input,
     output::Output,
-    payload::Payload,
-    utils::is_sorted,
+    payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error,
 };
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::{
+    ord::is_sorted,
+    packable::{Packable, Read, Write},
+};
 
 use alloc::{boxed::Box, vec::Vec};
 
@@ -50,8 +52,7 @@ impl Packable for RegularEssence {
             + self.inputs.iter().map(Packable::packed_len).sum::<usize>()
             + 0u16.packed_len()
             + self.outputs.iter().map(Packable::packed_len).sum::<usize>()
-            + 0u32.packed_len()
-            + self.payload.iter().map(Packable::packed_len).sum::<usize>()
+            + option_payload_packed_len(self.payload.as_ref())
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -59,19 +60,11 @@ impl Packable for RegularEssence {
         for input in self.inputs.iter() {
             input.pack(writer)?;
         }
-
         (self.outputs.len() as u16).pack(writer)?;
         for output in self.outputs.iter() {
             output.pack(writer)?;
         }
-
-        match self.payload {
-            Some(ref payload) => {
-                (payload.packed_len() as u32).pack(writer)?;
-                payload.pack(writer)?;
-            }
-            None => 0u32.pack(writer)?,
-        }
+        option_payload_pack(writer, self.payload.as_ref())?;
 
         Ok(())
     }
@@ -101,12 +94,7 @@ impl Packable for RegularEssence {
 
         let mut builder = Self::builder().with_inputs(inputs).with_outputs(outputs);
 
-        let payload_len = u32::unpack(reader)? as usize;
-        if payload_len > 0 {
-            let payload = Payload::unpack(reader)?;
-            if payload_len != payload.packed_len() {
-                return Err(Self::Error::InvalidAnnouncedLength(payload_len, payload.packed_len()));
-            }
+        if let (_, Some(payload)) = option_payload_unpack(reader)? {
             builder = builder.with_payload(payload);
         }
 
@@ -169,12 +157,7 @@ impl RegularEssenceBuilder {
 
         for input in self.inputs.iter() {
             match input {
-                Input::UTXO(u) => {
-                    // Transaction Output Index must be 0 ≤ x < 127
-                    if !INPUT_OUTPUT_INDEX_RANGE.contains(&u.output_id().index()) {
-                        return Err(Error::InvalidInputOutputIndex(u.output_id().index()));
-                    }
-
+                Input::UTXO(_) => {
                     // Every combination of Transaction ID + Transaction Output Index must be unique in the inputs set.
                     if self.inputs.iter().filter(|i| *i == input).count() > 1 {
                         return Err(Error::DuplicateError);

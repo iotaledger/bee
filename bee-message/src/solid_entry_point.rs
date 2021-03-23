@@ -7,7 +7,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use ref_cast::RefCast;
 
-use std::ops::Deref;
+use core::ops::Deref;
 
 #[derive(RefCast)]
 #[repr(transparent)]

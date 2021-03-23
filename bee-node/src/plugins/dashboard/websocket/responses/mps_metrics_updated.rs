@@ -6,7 +6,7 @@ use crate::plugins::dashboard::websocket::{
     topics::WsTopic,
 };
 
-use bee_protocol::event::MpsMetricsUpdated;
+use bee_protocol::workers::event::MpsMetricsUpdated;
 
 use serde::Serialize;
 

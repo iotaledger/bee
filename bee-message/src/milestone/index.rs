@@ -3,12 +3,18 @@
 
 use bee_common::packable::{Packable, Read, Write};
 
-use std::ops::{Add, Deref, Sub};
+use core::ops::{Add, Deref, Sub};
 
 /// A wrapper around a `u32` that represents a milestone index.
 #[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneIndex(pub u32);
+
+impl MilestoneIndex {
+    pub fn new(value: u32) -> Self {
+        Self(value)
+    }
+}
 
 impl std::fmt::Display for MilestoneIndex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

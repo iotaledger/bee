@@ -13,7 +13,7 @@ use crate::{
 use bee_ledger::consensus::event::MilestoneConfirmed;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 
-use bee_protocol::ProtocolMetrics;
+use bee_protocol::types::metrics::NodeMetrics;
 use futures::StreamExt;
 use log::{debug, error, warn};
 use tokio::sync::mpsc;
@@ -24,7 +24,7 @@ where
     N: Node,
     N::Backend: StorageBackend,
 {
-    let metrics = node.resource::<ProtocolMetrics>();
+    let metrics = node.resource::<NodeMetrics>();
     let bus = node.bus();
     let users = users.clone();
     let (tx, rx) = mpsc::unbounded_channel::<MilestoneConfirmed>();

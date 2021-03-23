@@ -41,18 +41,26 @@ impl Ed25519Address {
         bech32::encode(hrp, serialized.to_base32(), Variant::Bech32).expect("Valid Ed25519 address required.")
     }
 
-    pub fn verify(&self, msg: &[u8], signature: &Ed25519Signature) -> bool {
+    pub fn verify(&self, msg: &[u8], signature: &Ed25519Signature) -> Result<(), Error> {
         let address = Blake2b256::digest(signature.public_key());
 
         if self.0 != *address {
-            return false;
+            return Err(Error::SignaturePublicKeyMismatch(
+                hex::encode(self.0),
+                hex::encode(address),
+            ));
         }
 
         // TODO unwraps are temporary until we use crypto.rs types as internals.
 
-        PublicKey::from_compressed_bytes(*signature.public_key())
+        if !PublicKey::from_compressed_bytes(*signature.public_key())
             .unwrap()
             .verify(&Signature::from_bytes(signature.signature().try_into().unwrap()), msg)
+        {
+            return Err(Error::InvalidSignature);
+        }
+
+        Ok(())
     }
 }
 

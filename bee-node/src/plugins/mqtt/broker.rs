@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_protocol::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
+use bee_protocol::workers::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
