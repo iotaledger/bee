@@ -83,12 +83,17 @@ async fn process<B: StorageBackend>(
     key_manager: &KeyManager,
     bus: &Bus<'static>,
 ) {
+    // TODO handle in a similar way than other payloads
+
     metrics.milestone_payload_inc(1);
 
     if let Some(meta) = tangle.get_metadata(&message_id).await {
         if meta.flags().is_milestone() {
             return;
         }
+    } else {
+        error!("Missing message {}.", message_id);
+        return;
     }
 
     match validate(&tangle, &key_manager, message_id).await {

@@ -52,6 +52,8 @@ async fn process<B: StorageBackend>(
                 }
             }
         }
+    } else {
+        error!("Missing message {}.", message_id);
     }
 }
 
