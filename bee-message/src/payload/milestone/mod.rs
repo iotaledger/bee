@@ -17,8 +17,9 @@ use crypto::{
 };
 
 use alloc::{boxed::Box, vec::Vec};
-use core::convert::TryInto;
+use core::{convert::TryInto, ops::RangeInclusive};
 
+pub const MILESTONE_SIGNATURE_COUNT_RANGE: RangeInclusive<usize> = 1..=255;
 pub const MILESTONE_SIGNATURE_LENGTH: usize = 64;
 
 #[derive(Debug)]
@@ -42,8 +43,8 @@ impl MilestonePayload {
     pub const KIND: u32 = 1;
 
     pub fn new(essence: MilestonePayloadEssence, signatures: Vec<Box<[u8]>>) -> Result<Self, Error> {
-        if signatures.is_empty() {
-            return Err(Error::MilestoneNoSignature);
+        if !MILESTONE_SIGNATURE_COUNT_RANGE.contains(&signatures.len()) {
+            return Err(Error::MilestoneInvalidSignatureCount(signatures.len()));
         }
 
         if essence.public_keys().len() != signatures.len() {

@@ -15,7 +15,22 @@ fn new_invalid_no_public_key() {
             vec![],
             None,
         ),
-        Err(Error::MilestoneNoPublicKey)
+        Err(Error::MilestoneInvalidPublicKeyCount(0))
+    ));
+}
+
+#[test]
+fn new_invalid_too_many_public_keys() {
+    assert!(matches!(
+        MilestonePayloadEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_parents(),
+            [0; MILESTONE_MERKLE_PROOF_LENGTH],
+            vec![[0u8; 32]; 300],
+            None,
+        ),
+        Err(Error::MilestoneInvalidPublicKeyCount(300))
     ));
 }
 
