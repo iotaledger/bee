@@ -1,13 +1,36 @@
 ############################
-# Build
+# Prepare dependencies recipe
 ############################
-FROM rust:1 as build
+FROM lukemathwalker/cargo-chef as planner
+
+WORKDIR /src
+COPY . .
+
+RUN cargo chef prepare --recipe-path recipe.json
+
+############################
+# Dependency cache
+############################
+FROM lukemathwalker/cargo-chef as cacher
 
 RUN apt-get update && \
     apt-get install cmake clang -y
 
-COPY . /src
 WORKDIR /src
+COPY --from=planner /src/recipe.json recipe.json
+
+RUN cargo chef cook --release --recipe-path recipe.json
+
+############################
+# Build
+############################
+FROM rust:1 as build
+
+WORKDIR /src
+COPY . .
+
+COPY --from=cacher /src/target target
+COPY --from=cacher $CARGO_HOME $CARGO_HOME
 
 RUN cargo build --release --bin bee
 
