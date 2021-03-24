@@ -44,6 +44,15 @@ RUN apt-get update && \
 
 RUN rm -rf /var/lib/apt
 
+# API
+EXPOSE 14265/tcp
+# Gossip
+EXPOSE 15600/tcp
+# MQTT
+EXPOSE 1883/tcp
+# Dashboard
+EXPOSE 8081/tcp
+
 COPY --from=build /src/target/release/bee /
 
 ENTRYPOINT ["/bee"]
