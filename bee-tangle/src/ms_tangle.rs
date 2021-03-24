@@ -182,8 +182,12 @@ impl<B: StorageBackend> MsTangle<B> {
         }
     }
 
+    pub async fn get_milestone(&self, index: MilestoneIndex) -> Option<Milestone> {
+        self.milestones.lock().await.get(&index).cloned()
+    }
+
     // TODO: use combinator instead of match
-    pub async fn get_milestone(&self, index: MilestoneIndex) -> Option<MessageRef> {
+    pub async fn get_milestone_message(&self, index: MilestoneIndex) -> Option<MessageRef> {
         match self.get_milestone_message_id(index).await {
             None => None,
             Some(ref hash) => self.get(hash).await,
@@ -274,6 +278,16 @@ impl<B: StorageBackend> MsTangle<B> {
     // TODO reduce to one atomic value ?
     pub fn is_synced_threshold(&self, threshold: u32) -> bool {
         *self.get_solid_milestone_index() >= self.get_latest_milestone_index().saturating_sub(threshold)
+    }
+
+    // TODO reduce to one atomic value ?
+    pub fn is_confirmed(&self) -> bool {
+        self.is_confirmed_threshold(0)
+    }
+
+    // TODO reduce to one atomic value ?
+    pub fn is_confirmed_threshold(&self, threshold: u32) -> bool {
+        *self.get_confirmed_milestone_index() >= self.get_latest_milestone_index().saturating_sub(threshold)
     }
 
     pub async fn get_solid_entry_point_index(&self, sep: &SolidEntryPoint) -> Option<MilestoneIndex> {
