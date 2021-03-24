@@ -9,7 +9,7 @@ use crate::{unlock::SignatureUnlock, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use bech32::FromBase32;
+use bech32::{self, FromBase32, ToBase32, Variant};
 
 use alloc::{str::FromStr, string::String};
 use core::convert::TryFrom;
@@ -33,7 +33,7 @@ impl Address {
     }
 
     pub fn try_from_bech32(addr: &str) -> Result<Self, Error> {
-        match bech32::decode(&addr) {
+        match bech32::decode(addr) {
             Ok((_hrp, data, _)) => {
                 let bytes = Vec::<u8>::from_base32(&data).map_err(|_| Error::InvalidAddress)?;
                 Self::unpack(&mut bytes.as_slice()).map_err(|_| Error::InvalidAddress)
@@ -43,9 +43,7 @@ impl Address {
     }
 
     pub fn to_bech32(&self, hrp: &str) -> String {
-        match self {
-            Address::Ed25519(address) => address.to_bech32(hrp),
-        }
+        bech32::encode(hrp, self.pack_new().to_base32(), Variant::Bech32).expect("Invalid address.")
     }
 
     pub fn verify(&self, msg: &[u8], signature: &SignatureUnlock) -> Result<(), Error> {
@@ -66,6 +64,7 @@ impl From<Ed25519Address> for Address {
 
 impl FromStr for Address {
     type Err = Error;
+
     fn from_str(address: &str) -> Result<Self, Self::Err> {
         Address::try_from_bech32(address)
     }
@@ -73,6 +72,7 @@ impl FromStr for Address {
 
 impl TryFrom<String> for Address {
     type Error = Error;
+
     fn try_from(address: String) -> Result<Self, Self::Error> {
         Address::from_str(&address)
     }
