@@ -12,7 +12,7 @@ use bee_common::packable::{Packable, Read, Write};
 use bech32::FromBase32;
 
 use alloc::string::String;
-use core::{convert::TryFrom, str::FromStr};
+use core::convert::TryFrom;
 
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -67,22 +67,14 @@ impl From<Ed25519Address> for Address {
 impl TryFrom<&str> for Address {
     type Error = Error;
     fn try_from(address: &str) -> Result<Self, Self::Error> {
-        if let Ok(address) = Ed25519Address::from_str(&address) {
-            Ok(Address::Ed25519(address))
-        } else {
-            Address::try_from_bech32(address)
-        }
+        Address::try_from_bech32(address)
     }
 }
 
 impl TryFrom<String> for Address {
     type Error = Error;
     fn try_from(address: String) -> Result<Self, Self::Error> {
-        if let Ok(address) = Ed25519Address::from_str(&address) {
-            Ok(Address::Ed25519(address))
-        } else {
-            Address::try_from_bech32(&address)
-        }
+        Address::try_from_bech32(&address)
     }
 }
 
