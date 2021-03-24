@@ -82,7 +82,7 @@ async fn process<B: StorageBackend>(
 
     if let Some(message) = tangle.get(&message_id).await {
         if let Some(Payload::Milestone(milestone)) = message.payload() {
-            if milestone.essence().index() <= tangle.get_pruning_index() {
+            if milestone.essence().index() <= tangle.get_solid_milestone_index() {
                 return;
             }
             match validate(&message, &milestone, &key_manager, message_id).await {
