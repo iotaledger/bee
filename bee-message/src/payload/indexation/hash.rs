@@ -3,7 +3,7 @@
 
 pub const HASHED_INDEX_LENGTH: usize = 32;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct HashedIndex([u8; HASHED_INDEX_LENGTH]);
 
 impl HashedIndex {
@@ -21,5 +21,17 @@ impl From<[u8; HASHED_INDEX_LENGTH]> for HashedIndex {
 impl AsRef<[u8]> for HashedIndex {
     fn as_ref(&self) -> &[u8] {
         self.0.as_ref()
+    }
+}
+
+impl core::fmt::Display for HashedIndex {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", hex::encode(self.0))
+    }
+}
+
+impl core::fmt::Debug for HashedIndex {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "HashedIndex({})", self)
     }
 }

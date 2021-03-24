@@ -112,7 +112,6 @@ where
             metadata.created_outputs.insert(
                 // Safe to unwrap because indexes are known to be valid at this point.
                 OutputId::new(fake_transaction_id, index as u16).unwrap(),
-                // TODO is this actually fake_message_id ?
                 CreatedOutput::new(fake_message_id, Output::from(funds.output().clone())),
             );
         }

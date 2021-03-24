@@ -17,8 +17,9 @@ use crypto::{
 };
 
 use alloc::{boxed::Box, vec::Vec};
-use core::convert::TryInto;
+use core::{convert::TryInto, ops::RangeInclusive};
 
+pub const MILESTONE_SIGNATURE_COUNT_RANGE: RangeInclusive<usize> = 1..=255;
 pub const MILESTONE_SIGNATURE_LENGTH: usize = 64;
 
 #[derive(Debug)]
@@ -42,8 +43,8 @@ impl MilestonePayload {
     pub const KIND: u32 = 1;
 
     pub fn new(essence: MilestonePayloadEssence, signatures: Vec<Box<[u8]>>) -> Result<Self, Error> {
-        if signatures.is_empty() {
-            return Err(Error::MilestoneNoSignature);
+        if !MILESTONE_SIGNATURE_COUNT_RANGE.contains(&signatures.len()) {
+            return Err(Error::MilestoneInvalidSignatureCount(signatures.len()));
         }
 
         if essence.public_keys().len() != signatures.len() {
@@ -95,8 +96,13 @@ impl MilestonePayload {
 
         let essence_hash = self.essence().hash();
 
-        // TODO zip public key and signature
-        for (index, public_key) in self.essence().public_keys().iter().enumerate() {
+        for (index, (public_key, signature)) in self
+            .essence()
+            .public_keys()
+            .iter()
+            .zip(self.signatures.iter())
+            .enumerate()
+        {
             // TODO use concrete ED25 types
             if !applicable_public_keys.contains(&hex::encode(public_key)) {
                 return Err(MilestoneValidationError::UnapplicablePublicKey(hex::encode(public_key)));
@@ -105,8 +111,7 @@ impl MilestonePayload {
             // TODO unwrap
             let ed25519_public_key = ed25519::PublicKey::from_compressed_bytes(*public_key).unwrap();
             // TODO unwrap
-            let ed25519_signature =
-                ed25519::Signature::from_bytes(self.signatures()[index].as_ref().try_into().unwrap());
+            let ed25519_signature = ed25519::Signature::from_bytes(signature.as_ref().try_into().unwrap());
 
             if !ed25519_public_key.verify(&ed25519_signature, &essence_hash) {
                 return Err(MilestoneValidationError::InvalidSignature(

@@ -1,6 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::Error;
+
 mod index;
 mod key_range;
 
@@ -10,16 +12,6 @@ pub use key_range::MilestoneKeyRange;
 use crate::MessageId;
 
 use bee_common::packable::{Packable, Read, Write};
-
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("I/O error {0}")]
-    IO(#[from] std::io::Error),
-    #[error("MessageId error {0}")]
-    MessageId(<MessageId as Packable>::Error),
-}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Milestone {
@@ -49,12 +41,14 @@ impl Packable for Milestone {
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.message_id.pack(writer).map_err(Error::MessageId)?;
-        self.timestamp.pack(writer).map_err(Error::IO)
+        self.message_id.pack(writer)?;
+        self.timestamp.pack(writer)?;
+
+        Ok(())
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let message_id = MessageId::unpack(reader).map_err(Error::MessageId)?;
+        let message_id = MessageId::unpack(reader)?;
         let timestamp = u64::unpack(reader)?;
 
         Ok(Self { message_id, timestamp })

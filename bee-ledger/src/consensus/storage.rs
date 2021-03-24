@@ -3,7 +3,7 @@
 
 use crate::{
     consensus::error::Error,
-    types::{Balance, BalanceDiffs, Migration, OutputDiff, Receipt, TreasuryOutput, Unspent},
+    types::{Balance, BalanceDiffs, Migration, OutputDiff, Receipt, TreasuryDiff, TreasuryOutput, Unspent},
 };
 
 use bee_message::{
@@ -32,6 +32,7 @@ pub trait StorageBackend:
     + Batch<(Ed25519Address, OutputId), ()>
     + Batch<Address, Balance>
     + Batch<(MilestoneIndex, Receipt), ()>
+    + Batch<(bool, TreasuryOutput), ()>
     + Delete<OutputId, CreatedOutput>
     + Delete<OutputId, ConsumedOutput>
     + Delete<Unspent, ()>
@@ -67,6 +68,7 @@ impl<T> StorageBackend for T where
         + Batch<(Ed25519Address, OutputId), ()>
         + Batch<Address, Balance>
         + Batch<(MilestoneIndex, Receipt), ()>
+        + Batch<(bool, TreasuryOutput), ()>
         + Delete<OutputId, CreatedOutput>
         + Delete<OutputId, ConsumedOutput>
         + Delete<Unspent, ()>
@@ -220,15 +222,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
 
     store_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
 
-    Batch::<MilestoneIndex, OutputDiff>::batch_insert(
-        storage,
-        &mut batch,
-        &index,
-        &OutputDiff::new(created_output_ids, consumed_output_ids, None),
-    )
-    .map_err(|e| Error::Storage(Box::new(e)))?;
-
-    if let Some(migration) = migration {
+    let treasury_diff = if let Some(migration) = migration {
         Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(
             storage,
             &mut batch,
@@ -239,7 +233,24 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
             &(),
         )
         .map_err(|e| Error::Storage(Box::new(e)))?;
-    }
+        store_unspent_treasury_output_batch(storage, &mut batch, migration.created_treasury())?;
+        spend_treasury_output_batch(storage, &mut batch, migration.consumed_treasury())?;
+
+        Some(TreasuryDiff::new(
+            *migration.created_treasury().milestone_id(),
+            *migration.consumed_treasury().milestone_id(),
+        ))
+    } else {
+        None
+    };
+
+    Batch::<MilestoneIndex, OutputDiff>::batch_insert(
+        storage,
+        &mut batch,
+        &index,
+        &OutputDiff::new(created_output_ids, consumed_output_ids, treasury_diff),
+    )
+    .map_err(|e| Error::Storage(Box::new(e)))?;
 
     storage
         .batch_commit(batch, true)
@@ -331,6 +342,26 @@ pub async fn store_unspent_treasury_output<B: StorageBackend>(
 ) -> Result<(), Error> {
     Insert::<(bool, TreasuryOutput), ()>::insert(storage, &(false, treasury_output.clone()), &())
         .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub fn store_unspent_treasury_output_batch<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    treasury_output: &TreasuryOutput,
+) -> Result<(), Error> {
+    Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, batch, &(false, treasury_output.clone()), &())
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub fn spend_treasury_output_batch<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    treasury_output: &TreasuryOutput,
+) -> Result<(), Error> {
+    Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, batch, &(true, treasury_output.clone()), &())
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+    Batch::<(bool, TreasuryOutput), ()>::batch_delete(storage, batch, &(false, treasury_output.clone()))
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 

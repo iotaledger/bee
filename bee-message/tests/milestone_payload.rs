@@ -24,7 +24,26 @@ fn new_invalid_no_signature() {
             .unwrap(),
             vec![]
         ),
-        Err(Error::MilestoneNoSignature)
+        Err(Error::MilestoneInvalidSignatureCount(0))
+    ));
+}
+
+#[test]
+fn new_invalid_too_many_signatures() {
+    assert!(matches!(
+        MilestonePayload::new(
+            MilestonePayloadEssence::new(
+                MilestoneIndex(0),
+                0,
+                rand_parents(),
+                [0; MILESTONE_MERKLE_PROOF_LENGTH],
+                vec![[0; 32]],
+                None,
+            )
+            .unwrap(),
+            vec![Box::new([0u8; 64]); 300],
+        ),
+        Err(Error::MilestoneInvalidSignatureCount(300))
     ));
 }
 

@@ -54,6 +54,8 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, storage: &B, metrics: 
         if let Err(e) = Insert::<(HashedIndex, MessageId), ()>::insert(&*storage, &(hash, message_id), &()).await {
             error!("Inserting indexation payload failed: {:?}.", e);
         }
+    } else {
+        error!("Missing message {}.", message_id);
     }
 }
 

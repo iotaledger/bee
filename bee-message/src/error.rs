@@ -36,8 +36,8 @@ pub enum Error {
     InvalidMessageLength(usize),
     InvalidReceiptFundsCount(usize),
     MilestonePublicKeysNotUniqueSorted,
-    MilestoneNoPublicKey,
-    MilestoneNoSignature,
+    MilestoneInvalidPublicKeyCount(usize),
+    MilestoneInvalidSignatureCount(usize),
     MilestonePublicKeysSignaturesCountMismatch(usize, usize),
     InvalidUnlockBlockReference(usize),
     DuplicateSignature(usize),
@@ -107,11 +107,11 @@ impl fmt::Display for Error {
             Error::MilestonePublicKeysNotUniqueSorted => {
                 write!(f, "Milestone public keys are not unique and/or sorted.")
             }
-            Error::MilestoneNoPublicKey => {
-                write!(f, "No public key in milestone.")
+            Error::MilestoneInvalidPublicKeyCount(count) => {
+                write!(f, "Invalid milestone public key count: {}.", count)
             }
-            Error::MilestoneNoSignature => {
-                write!(f, "No signature in milestone.")
+            Error::MilestoneInvalidSignatureCount(count) => {
+                write!(f, "Invalid milestone signature count: {}.", count)
             }
             Error::MilestonePublicKeysSignaturesCountMismatch(kcount, scount) => {
                 write!(

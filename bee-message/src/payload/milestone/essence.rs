@@ -15,7 +15,9 @@ use bee_common::{
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use alloc::vec::Vec;
+use core::ops::RangeInclusive;
 
+pub const MILESTONE_PUBLIC_KEY_COUNT_RANGE: RangeInclusive<usize> = 1..=255;
 pub const MILESTONE_MERKLE_PROOF_LENGTH: usize = 32;
 pub const MILESTONE_PUBLIC_KEY_LENGTH: usize = 32;
 
@@ -39,17 +41,17 @@ impl MilestonePayloadEssence {
         public_keys: Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>,
         receipt: Option<Payload>,
     ) -> Result<Self, Error> {
-        if !matches!(receipt, None | Some(Payload::Receipt(_))) {
-            // Safe to unwrap since it's known not to be None.
-            return Err(Error::InvalidPayloadKind(receipt.unwrap().kind()));
-        }
-
-        if public_keys.is_empty() {
-            return Err(Error::MilestoneNoPublicKey);
+        if !MILESTONE_PUBLIC_KEY_COUNT_RANGE.contains(&public_keys.len()) {
+            return Err(Error::MilestoneInvalidPublicKeyCount(public_keys.len()));
         }
 
         if !is_unique_sorted(public_keys.iter()) {
             return Err(Error::MilestonePublicKeysNotUniqueSorted);
+        }
+
+        if !matches!(receipt, None | Some(Payload::Receipt(_))) {
+            // Safe to unwrap since it's known not to be None.
+            return Err(Error::InvalidPayloadKind(receipt.unwrap().kind()));
         }
 
         Ok(Self {
