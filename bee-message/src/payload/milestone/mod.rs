@@ -96,8 +96,13 @@ impl MilestonePayload {
 
         let essence_hash = self.essence().hash();
 
-        // TODO zip public key and signature
-        for (index, public_key) in self.essence().public_keys().iter().enumerate() {
+        for (index, (public_key, signature)) in self
+            .essence()
+            .public_keys()
+            .iter()
+            .zip(self.signatures.iter())
+            .enumerate()
+        {
             // TODO use concrete ED25 types
             if !applicable_public_keys.contains(&hex::encode(public_key)) {
                 return Err(MilestoneValidationError::UnapplicablePublicKey(hex::encode(public_key)));
@@ -106,8 +111,7 @@ impl MilestonePayload {
             // TODO unwrap
             let ed25519_public_key = ed25519::PublicKey::from_compressed_bytes(*public_key).unwrap();
             // TODO unwrap
-            let ed25519_signature =
-                ed25519::Signature::from_bytes(self.signatures()[index].as_ref().try_into().unwrap());
+            let ed25519_signature = ed25519::Signature::from_bytes(signature.as_ref().try_into().unwrap());
 
             if !ed25519_public_key.verify(&ed25519_signature, &essence_hash) {
                 return Err(MilestoneValidationError::InvalidSignature(
