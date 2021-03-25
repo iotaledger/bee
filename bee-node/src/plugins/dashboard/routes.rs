@@ -123,7 +123,7 @@ pub(crate) fn api_routes(
     allowed_routes
         .and(reverse_proxy_filter(
             "".to_string(),
-            "http://localhost:".to_owned() + &rest_api_config.bind_socket_addr().port().to_string() + "/",
+            "http://".to_owned() + &rest_api_config.bind_socket_addr().to_string() + "/",
         ))
         .map(|_, res| res)
 }

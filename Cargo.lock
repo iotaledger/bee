@@ -298,6 +298,7 @@ dependencies = [
  "bee-runtime",
  "futures",
  "hashbrown 0.11.2",
+ "lazy_static",
  "libp2p 0.38.0",
  "libp2p-core 0.28.3",
  "log",
@@ -335,7 +336,7 @@ dependencies = [
  "hex",
  "iota-crypto",
  "jsonwebtoken",
- "libp2p 0.35.1",
+ "libp2p 0.36.0",
  "log",
  "mime_guess",
  "paho-mqtt",
@@ -422,7 +423,7 @@ dependencies = [
  "futures",
  "hex",
  "iota-crypto",
- "libp2p 0.35.1",
+ "libp2p 0.36.0",
  "log",
  "num_cpus",
  "serde",
@@ -1664,13 +1665,33 @@ dependencies = [
  "libp2p-identify",
  "libp2p-mplex",
  "libp2p-noise",
- "libp2p-swarm 0.29.0",
- "libp2p-swarm-derive 0.23.0",
+ "libp2p-swarm 0.27.2",
+ "libp2p-swarm-derive",
  "libp2p-tcp",
  "libp2p-yamux",
  "parity-multiaddr",
  "parking_lot",
  "pin-project 1.0.7",
+ "smallvec",
+ "wasm-timer",
+]
+
+[[package]]
+name = "libp2p"
+version = "0.36.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe5759b526f75102829c15e4d8566603b4bf502ed19b5f35920d98113873470d"
+dependencies = [
+ "atomic",
+ "bytes",
+ "futures",
+ "lazy_static",
+ "libp2p-core 0.28.1",
+ "libp2p-swarm 0.28.0",
+ "libp2p-swarm-derive",
+ "parity-multiaddr",
+ "parking_lot",
+ "pin-project 1.0.5",
  "smallvec",
  "wasm-timer",
 ]
@@ -1736,6 +1757,40 @@ dependencies = [
  "ring",
  "rw-stream-sink",
  "sha2 0.9.5",
+ "smallvec",
+ "thiserror",
+ "unsigned-varint 0.7.0",
+ "void",
+ "zeroize",
+]
+
+[[package]]
+name = "libp2p-core"
+version = "0.28.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1e1797734bbd4c453664fefb029628f77c356ffc5bce98f06b18a7db3ebb0f7"
+dependencies = [
+ "asn1_der",
+ "bs58",
+ "ed25519-dalek",
+ "either",
+ "fnv",
+ "futures",
+ "futures-timer",
+ "lazy_static",
+ "libsecp256k1",
+ "log",
+ "multihash",
+ "multistream-select",
+ "parity-multiaddr",
+ "parking_lot",
+ "pin-project 1.0.5",
+ "prost",
+ "prost-build",
+ "rand 0.7.3",
+ "ring",
+ "rw-stream-sink",
+ "sha2 0.9.3",
  "smallvec",
  "thiserror",
  "unsigned-varint 0.7.0",
