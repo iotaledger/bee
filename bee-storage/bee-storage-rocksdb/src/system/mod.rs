@@ -40,10 +40,10 @@ impl Packable for System {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack(reader)? {
-            STORAGE_VERSION_KEY => System::Version(StorageVersion::unpack(reader)?),
-            STORAGE_HEALTH_KEY => System::Health(StorageHealth::unpack(reader)?),
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
+            STORAGE_VERSION_KEY => System::Version(StorageVersion::unpack_inner::<R, CHECK>(reader)?),
+            STORAGE_HEALTH_KEY => System::Health(StorageHealth::unpack_inner::<R, CHECK>(reader)?),
             _ => panic!("Unhandled system type"),
         })
     }

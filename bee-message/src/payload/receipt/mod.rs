@@ -115,13 +115,13 @@ impl Packable for ReceiptPayload {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let migrated_at = MilestoneIndex::unpack(reader)?;
-        let last = bool::unpack(reader)?;
-        let funds_len = u16::unpack(reader)? as usize;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let migrated_at = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let last = bool::unpack_inner::<R, CHECK>(reader)?;
+        let funds_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut funds = Vec::with_capacity(funds_len);
         for _ in 0..funds_len {
-            funds.push(MigratedFundsEntry::unpack(reader)?);
+            funds.push(MigratedFundsEntry::unpack_inner::<R, CHECK>(reader)?);
         }
         let transaction = option_payload_unpack(reader)?.1.ok_or(Self::Error::MissingPayload)?;
 

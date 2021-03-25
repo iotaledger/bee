@@ -69,10 +69,10 @@ impl Packable for Input {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack(reader)? {
-            UtxoInput::KIND => UtxoInput::unpack(reader)?.into(),
-            TreasuryInput::KIND => TreasuryInput::unpack(reader)?.into(),
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
+            UtxoInput::KIND => UtxoInput::unpack_inner::<R, CHECK>(reader)?.into(),
+            TreasuryInput::KIND => TreasuryInput::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidInputKind(k)),
         })
     }

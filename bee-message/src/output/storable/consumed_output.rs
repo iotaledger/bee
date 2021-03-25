@@ -39,9 +39,9 @@ impl Packable for ConsumedOutput {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let target = TransactionId::unpack(reader)?;
-        let index = MilestoneIndex::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let target = TransactionId::unpack_inner::<R, CHECK>(reader)?;
+        let index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
 
         Ok(Self { target, index })
     }

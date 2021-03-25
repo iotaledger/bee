@@ -85,10 +85,10 @@ impl Packable for Receipt {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(
-            ReceiptPayload::unpack(reader)?,
-            MilestoneIndex::unpack(reader)?,
-        ))
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let inner = ReceiptPayload::unpack_inner::<R, CHECK>(reader)?;
+        let included_in = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+
+        Ok(Self::new(inner, included_in))
     }
 }

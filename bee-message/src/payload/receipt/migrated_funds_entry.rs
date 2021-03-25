@@ -53,9 +53,9 @@ impl Packable for MigratedFundsEntry {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let tail_transaction_hash = TailTransactionHash::unpack(reader)?;
-        let output = SignatureLockedSingleOutput::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let tail_transaction_hash = TailTransactionHash::unpack_inner::<R, CHECK>(reader)?;
+        let output = SignatureLockedSingleOutput::unpack_inner::<R, CHECK>(reader)?;
 
         Self::new(tail_transaction_hash, output)
     }

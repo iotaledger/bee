@@ -11,7 +11,7 @@ keywords = ["iota", "tangle", "bee", "framework", "protocol"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-common = { git = "https://github.com/thibault-martinez/bee.git", branch = "packable-const-generic", optional = true }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-ledger = { path = "../bee-ledger", features = ["consensus"], optional = true }
 bee-message = { path = "../bee-message", features = ["serde"] }

@@ -147,18 +147,18 @@ impl Packable for MilestonePayloadEssence {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let index = MilestoneIndex::unpack(reader)?;
-        let timestamp = u64::unpack(reader)?;
-        let parents = Parents::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let timestamp = u64::unpack_inner::<R, CHECK>(reader)?;
+        let parents = Parents::unpack_inner::<R, CHECK>(reader)?;
 
         let mut merkle_proof = [0u8; MILESTONE_MERKLE_PROOF_LENGTH];
         reader.read_exact(&mut merkle_proof)?;
 
-        let next_pow_score = u32::unpack(reader)?;
-        let next_pow_score_milestone_index = u32::unpack(reader)?;
+        let next_pow_score = u32::unpack_inner::<R, CHECK>(reader)?;
+        let next_pow_score_milestone_index = u32::unpack_inner::<R, CHECK>(reader)?;
 
-        let public_keys_len = u8::unpack(reader)? as usize;
+        let public_keys_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut public_keys = Vec::with_capacity(public_keys_len);
         for _ in 0..public_keys_len {
             let mut public_key = [0u8; MILESTONE_PUBLIC_KEY_LENGTH];

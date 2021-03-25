@@ -74,33 +74,35 @@ impl Packable for Message {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let network_id = u64::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let network_id = u64::unpack_inner::<R, CHECK>(reader)?;
 
-        let parents = Parents::unpack(reader)?;
+        let parents = Parents::unpack_inner::<R, CHECK>(reader)?;
 
         let (payload_len, payload) = option_payload_unpack(reader)?;
 
-        if !matches!(
-            payload,
-            None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::Indexation(_))
-        ) {
+        if CHECK
+            && !matches!(
+                payload,
+                None | Some(Payload::Transaction(_)) | Some(Payload::Milestone(_)) | Some(Payload::Indexation(_))
+            )
+        {
             // Safe to unwrap since it's known not to be None.
             return Err(Error::InvalidPayloadKind(payload.unwrap().kind()));
         }
 
-        let nonce = u64::unpack(reader)?;
+        let nonce = u64::unpack_inner::<R, CHECK>(reader)?;
 
         // Computed instead of calling `packed_len` on Self because `payload_len` is already known and it may be
         // expensive to call `payload.packed_len()` twice.
         let message_len = network_id.packed_len() + parents.packed_len() + payload_len + nonce.packed_len();
 
-        if message_len > MESSAGE_LENGTH_MAX {
+        if CHECK && message_len > MESSAGE_LENGTH_MAX {
             return Err(Error::InvalidMessageLength(message_len));
         }
 
         // When parsing the message is complete, there should not be any trailing bytes left that were not parsed.
-        if reader.bytes().next().is_some() {
+        if CHECK && reader.bytes().next().is_some() {
             return Err(Error::RemainingBytesAfterMessage);
         }
 

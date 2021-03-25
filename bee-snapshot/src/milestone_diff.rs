@@ -71,9 +71,9 @@ impl Packable for MilestoneDiff {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let milestone_len = u32::unpack(reader)? as usize;
-        let milestone = match Payload::unpack(reader)? {
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let milestone_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
+        let milestone = match Payload::unpack_inner::<R, CHECK>(reader)? {
             Payload::Milestone(milestone) => milestone,
             _ => return Err(Error::InvalidPayloadKind),
         };
@@ -82,32 +82,33 @@ impl Packable for MilestoneDiff {
         if milestone_len != milestone.packed_len() {}
 
         let consumed_treasury = if milestone.essence().receipt().is_some() {
-            let milestone_id = MilestoneId::unpack(reader)?;
-            let amount = u64::unpack(reader)?;
+            let milestone_id = MilestoneId::unpack_inner::<R, CHECK>(reader)?;
+            let amount = u64::unpack_inner::<R, CHECK>(reader)?;
+
             Some((TreasuryOutput::new(amount)?, milestone_id))
         } else {
             None
         };
 
-        let created_count = u64::unpack(reader)? as usize;
+        let created_count = u64::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut created = HashMap::new();
 
         for _ in 0..created_count {
-            let message_id = MessageId::unpack(reader)?;
-            let output_id = OutputId::unpack(reader)?;
-            let output = Output::unpack(reader)?;
+            let message_id = MessageId::unpack_inner::<R, CHECK>(reader)?;
+            let output_id = OutputId::unpack_inner::<R, CHECK>(reader)?;
+            let output = Output::unpack_inner::<R, CHECK>(reader)?;
 
             created.insert(output_id, CreatedOutput::new(message_id, output));
         }
 
-        let consumed_count = u64::unpack(reader)? as usize;
+        let consumed_count = u64::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut consumed = HashMap::new();
 
         for _ in 0..consumed_count {
-            let message_id = MessageId::unpack(reader)?;
-            let output_id = OutputId::unpack(reader)?;
-            let output = Output::unpack(reader)?;
-            let target = TransactionId::unpack(reader)?;
+            let message_id = MessageId::unpack_inner::<R, CHECK>(reader)?;
+            let output_id = OutputId::unpack_inner::<R, CHECK>(reader)?;
+            let output = Output::unpack_inner::<R, CHECK>(reader)?;
+            let target = TransactionId::unpack_inner::<R, CHECK>(reader)?;
 
             consumed.insert(
                 output_id,
