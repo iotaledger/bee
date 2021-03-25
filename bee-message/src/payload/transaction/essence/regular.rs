@@ -94,7 +94,7 @@ impl Packable for RegularEssence {
 
         let mut builder = Self::builder().with_inputs(inputs).with_outputs(outputs);
 
-        if let (_, Some(payload)) = option_payload_unpack(reader)? {
+        if let (_, Some(payload)) = option_payload_unpack::<R, CHECK>(reader)? {
             builder = builder.with_payload(payload);
         }
 

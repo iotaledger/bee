@@ -79,7 +79,7 @@ impl Packable for Message {
 
         let parents = Parents::unpack_inner::<R, CHECK>(reader)?;
 
-        let (payload_len, payload) = option_payload_unpack(reader)?;
+        let (payload_len, payload) = option_payload_unpack::<R, CHECK>(reader)?;
 
         if CHECK
             && !matches!(

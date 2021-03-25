@@ -143,11 +143,13 @@ pub fn option_payload_pack<W: Write>(writer: &mut W, payload: Option<&Payload>) 
     Ok(())
 }
 
-pub fn option_payload_unpack<R: Read + ?Sized>(reader: &mut R) -> Result<(usize, Option<Payload>), Error> {
-    let payload_len = u32::unpack(reader)? as usize;
+pub fn option_payload_unpack<R: Read + ?Sized, const CHECK: bool>(
+    reader: &mut R,
+) -> Result<(usize, Option<Payload>), Error> {
+    let payload_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
 
     if payload_len > 0 {
-        let payload = Payload::unpack(reader)?;
+        let payload = Payload::unpack_inner::<R, CHECK>(reader)?;
         if payload_len != payload.packed_len() {
             Err(Error::InvalidPayloadLength(payload_len, payload.packed_len()))
         } else {

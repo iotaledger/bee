@@ -123,7 +123,9 @@ impl Packable for ReceiptPayload {
         for _ in 0..funds_len {
             funds.push(MigratedFundsEntry::unpack_inner::<R, CHECK>(reader)?);
         }
-        let transaction = option_payload_unpack(reader)?.1.ok_or(Self::Error::MissingPayload)?;
+        let transaction = option_payload_unpack::<R, CHECK>(reader)?
+            .1
+            .ok_or(Self::Error::MissingPayload)?;
 
         Self::new(migrated_at, last, funds, transaction)
     }

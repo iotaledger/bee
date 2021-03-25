@@ -166,7 +166,7 @@ impl Packable for MilestonePayloadEssence {
             public_keys.push(public_key);
         }
 
-        let (_, receipt) = option_payload_unpack(reader)?;
+        let (_, receipt) = option_payload_unpack::<R, CHECK>(reader)?;
 
         // TODO builder ?
 
