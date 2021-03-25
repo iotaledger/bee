@@ -104,15 +104,13 @@ where
         receipt.validate(&consumed_treasury)?;
 
         // Safe to unwrap since sizes are known to be the same
-        let fake_transaction_id = TransactionId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
-        // Safe to unwrap since sizes are known to be the same
-        let fake_message_id = MessageId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
+        let transaction_id = TransactionId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
 
         for (index, funds) in receipt.inner().funds().iter().enumerate() {
             metadata.created_outputs.insert(
                 // Safe to unwrap because indexes are known to be valid at this point.
-                OutputId::new(fake_transaction_id, index as u16).unwrap(),
-                CreatedOutput::new(fake_message_id, Output::from(funds.output().clone())),
+                OutputId::new(transaction_id, index as u16).unwrap(),
+                CreatedOutput::new(message_id, Output::from(funds.output().clone())),
             );
         }
 
