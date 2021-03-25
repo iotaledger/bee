@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `Packable::unpack` is now a default implementation to `Self::unpack_inner::<R, false>`;
+- `Packable::unpack` is now a default implementation to `Self::unpack_inner::<R, true>`;
 
 ## 0.3.1-alpha - 2021-02-15
 
