@@ -26,24 +26,26 @@ pub trait Packable {
     }
 
     /// Reads bytes from the passed reader and unpacks them into an instance.
-    fn unpack_inner<R: Read + ?Sized, const TRUSTED: bool>(reader: &mut R) -> Result<Self, Self::Error>
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
     where
         Self: Sized;
 
-    /// Reads untrusted bytes from the passed reader and unpacks them into an instance.
+    /// Reads bytes from the passed reader and unpacks them into an instance.
+    /// Applies syntactic checks.
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
     where
         Self: Sized,
     {
-        Self::unpack_inner::<R, false>(reader)
+        Self::unpack_inner::<R, true>(reader)
     }
 
-    /// Reads trusted bytes from the passed reader and unpacks them into an instance.
+    /// Reads bytes from the passed reader and unpacks them into an instance.
+    /// Doesn't apply syntactic checks.
     fn unpack_unchecked<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error>
     where
         Self: Sized,
     {
-        Self::unpack_inner::<R, true>(reader)
+        Self::unpack_inner::<R, false>(reader)
     }
 }
 
@@ -60,7 +62,7 @@ impl<const N: usize> Packable for [u8; N] {
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const TRUSTED: bool>(reader: &mut R) -> Result<Self, Self::Error>
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
     where
         Self: Sized,
     {
@@ -82,11 +84,11 @@ impl Packable for bool {
         (*self as u8).pack(writer)
     }
 
-    fn unpack_inner<R: Read + ?Sized, const TRUSTED: bool>(reader: &mut R) -> Result<Self, Self::Error>
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
     where
         Self: Sized,
     {
-        Ok(!matches!(u8::unpack_inner::<R, TRUSTED>(reader)?, 0))
+        Ok(u8::unpack_inner::<R, CHECK>(reader)? != 0)
     }
 }
 
@@ -106,12 +108,12 @@ where
         self.iter().try_for_each(|x| x.pack(writer))
     }
 
-    fn unpack_inner<R: Read + ?Sized, const TRUSTED: bool>(reader: &mut R) -> Result<Self, Self::Error>
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
     where
         Self: Sized,
     {
-        (0..u64::unpack_inner::<R, TRUSTED>(reader)?)
-            .map(|_| P::unpack_inner::<R, TRUSTED>(reader))
+        (0..u64::unpack_inner::<R, CHECK>(reader)?)
+            .map(|_| P::unpack_inner::<R, CHECK>(reader))
             .collect()
     }
 }
@@ -149,17 +151,15 @@ impl<P: Packable> Packable for Option<P> {
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const TRUSTED: bool>(reader: &mut R) -> Result<Self, Self::Error>
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
     where
         Self: Sized,
     {
-        Ok(
-            if bool::unpack_inner::<R, TRUSTED>(reader).map_err(OptionError::Bool)? {
-                Some(P::unpack_inner::<R, TRUSTED>(reader).map_err(OptionError::Inner)?)
-            } else {
-                None
-            },
-        )
+        Ok(if bool::unpack_inner::<R, CHECK>(reader).map_err(OptionError::Bool)? {
+            Some(P::unpack_inner::<R, CHECK>(reader).map_err(OptionError::Inner)?)
+        } else {
+            None
+        })
     }
 }
 
@@ -178,7 +178,7 @@ macro_rules! impl_packable_for_num {
                 Ok(())
             }
 
-            fn unpack_inner<R: Read + ?Sized, const TRUSTED: bool>(reader: &mut R) -> Result<Self, Self::Error>
+            fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
             where
                 Self: Sized,
             {
