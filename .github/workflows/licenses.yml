@@ -1,0 +1,23 @@
+name: License check
+
+on:
+  push:
+    branches:
+      - chrysalis-pt-2
+  pull_request:
+    branches:
+      - chrysalis-pt-2
+
+jobs:
+  licenses:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-lichking
+          version: 0.9.0
+      - uses: actions-rs/cargo@v1
+        with:
+          command: lichking
+          args: check
