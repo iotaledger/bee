@@ -216,14 +216,13 @@ async fn import_snapshot<B: StorageBackend>(
     info!(
         "Imported {} snapshot file from {} with sep index {}, ledger index {}, {} solid entry points{} and {} milestone diffs.",
         kind_str,
-        Utc.timestamp(header.timestamp() as i64, 0)
-            .format("%d-%m-%Y %H:%M:%S"),
+        Utc.timestamp(header.timestamp() as i64, 0).format("%d-%m-%Y %H:%M:%S"),
         *header.sep_index(),
         *header.ledger_index(),
         header.sep_count(),
         match header.kind() {
-            Kind::Full=> format!(", {} outputs", header.output_count()),
-            Kind::Delta=> "".to_owned()
+            Kind::Full => format!(", {} outputs", header.output_count()),
+            Kind::Delta => "".to_owned(),
         },
         header.milestone_diff_count()
     );

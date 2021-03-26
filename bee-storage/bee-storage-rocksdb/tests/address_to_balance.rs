@@ -27,10 +27,12 @@ async fn access() {
     let (address, balance) = (rand_address(), rand_balance());
 
     assert!(!Exist::<Address, Balance>::exist(&storage, &address).await.unwrap());
-    assert!(Fetch::<Address, Balance>::fetch(&storage, &address)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<Address, Balance>::fetch(&storage, &address)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     Insert::<Address, Balance>::insert(&storage, &address, &balance)
         .await
@@ -49,10 +51,12 @@ async fn access() {
     Delete::<Address, Balance>::delete(&storage, &address).await.unwrap();
 
     assert!(!Exist::<Address, Balance>::exist(&storage, &address).await.unwrap());
-    assert!(Fetch::<Address, Balance>::fetch(&storage, &address)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<Address, Balance>::fetch(&storage, &address)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     let mut batch = Storage::batch_begin();
 

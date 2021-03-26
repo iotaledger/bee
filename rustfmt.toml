@@ -1,3 +1,4 @@
+version = "Two"
 comment_width = 120
 format_code_in_doc_comments = true
 license_template_path = ".license_template"

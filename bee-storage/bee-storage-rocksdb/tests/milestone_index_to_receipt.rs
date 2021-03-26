@@ -30,11 +30,13 @@ async fn access() {
             .await
             .unwrap()
     );
-    assert!(Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     Insert::<(MilestoneIndex, Receipt), ()>::insert(&storage, &(index, receipt.clone()), &())
         .await
@@ -62,11 +64,13 @@ async fn access() {
             .await
             .unwrap()
     );
-    assert!(Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     let mut batch = Storage::batch_begin();
 

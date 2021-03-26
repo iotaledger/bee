@@ -68,7 +68,7 @@ pub(crate) async fn transaction_included_message<B: StorageBackend>(
         None => {
             return Err(reject::custom(CustomRejection::NotFound(
                 "Can not find output".to_string(),
-            )))
+            )));
         }
     }
 }
