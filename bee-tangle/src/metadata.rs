@@ -20,7 +20,7 @@ pub struct MessageMetadata {
     milestone_index: Option<MilestoneIndex>,
     arrival_timestamp: u64,
     solidification_timestamp: u64,
-    confirmation_timestamp: u64,
+    reference_timestamp: u64,
     omrsi: Option<IndexId>,
     ymrsi: Option<IndexId>,
     conflict: u8,
@@ -33,7 +33,7 @@ impl MessageMetadata {
         milestone_index: Option<MilestoneIndex>,
         arrival_timestamp: u64,
         solidification_timestamp: u64,
-        confirmation_timestamp: u64,
+        reference_timestamp: u64,
         omrsi: Option<IndexId>,
         ymrsi: Option<IndexId>,
         conflict: u8,
@@ -43,7 +43,7 @@ impl MessageMetadata {
             milestone_index,
             arrival_timestamp,
             solidification_timestamp,
-            confirmation_timestamp,
+            reference_timestamp,
             omrsi,
             ymrsi,
             conflict,
@@ -100,8 +100,8 @@ impl MessageMetadata {
         self.ymrsi = Some(ymrsi);
     }
 
-    pub fn confirmation_timestamp(&self) -> u64 {
-        self.confirmation_timestamp
+    pub fn reference_timestamp(&self) -> u64 {
+        self.reference_timestamp
     }
 
     pub fn solidify(&mut self) {
@@ -112,9 +112,9 @@ impl MessageMetadata {
             .as_millis() as u64;
     }
 
-    pub fn confirm(&mut self, timestamp: u64) {
-        self.flags.set_confirmed(true);
-        self.confirmation_timestamp = timestamp;
+    pub fn reference(&mut self, timestamp: u64) {
+        self.flags.set_referenced(true);
+        self.reference_timestamp = timestamp;
     }
 
     pub fn conflict(&self) -> u8 {
@@ -159,7 +159,7 @@ impl Packable for MessageMetadata {
             + self.milestone_index.packed_len()
             + self.arrival_timestamp.packed_len()
             + self.solidification_timestamp.packed_len()
-            + self.confirmation_timestamp.packed_len()
+            + self.reference_timestamp.packed_len()
             + self.omrsi.packed_len()
             + self.ymrsi.packed_len()
             + self.conflict.packed_len()
@@ -170,7 +170,7 @@ impl Packable for MessageMetadata {
         self.milestone_index.pack(writer)?;
         self.arrival_timestamp.pack(writer)?;
         self.solidification_timestamp.pack(writer)?;
-        self.confirmation_timestamp.pack(writer)?;
+        self.reference_timestamp.pack(writer)?;
         self.omrsi.pack(writer)?;
         self.ymrsi.pack(writer)?;
         self.conflict.pack(writer)?;
@@ -184,7 +184,7 @@ impl Packable for MessageMetadata {
             milestone_index: Option::<MilestoneIndex>::unpack(reader)?,
             arrival_timestamp: u64::unpack(reader)?,
             solidification_timestamp: u64::unpack(reader)?,
-            confirmation_timestamp: u64::unpack(reader)?,
+            reference_timestamp: u64::unpack(reader)?,
             omrsi: Option::<IndexId>::unpack(reader)?,
             ymrsi: Option::<IndexId>::unpack(reader)?,
             conflict: u8::unpack(reader)?,

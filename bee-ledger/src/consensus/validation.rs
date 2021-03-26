@@ -243,7 +243,7 @@ pub async fn traversal<B: StorageBackend>(
             }
         };
 
-        if meta.flags().is_confirmed() {
+        if meta.flags().is_referenced() {
             visited.insert(*message_id);
             messages_ids.pop();
             continue;

@@ -11,7 +11,7 @@ bitflags! {
     pub struct Flags: u8 {
         const SOLID = 0b0000_0001;
         const MILESTONE = 0b0000_0010;
-        const CONFIRMED = 0b0000_0100;
+        const REFERENCED = 0b0000_0100;
         const VALID = 0b0000_1000;
     }
 }
@@ -33,12 +33,12 @@ impl Flags {
         self.set(Flags::MILESTONE, is_milestone);
     }
 
-    pub fn is_confirmed(&self) -> bool {
-        self.contains(Flags::CONFIRMED)
+    pub fn is_referenced(&self) -> bool {
+        self.contains(Flags::REFERENCED)
     }
 
-    pub fn set_confirmed(&mut self, is_confirmed: bool) {
-        self.set(Flags::CONFIRMED, is_confirmed);
+    pub fn set_referenced(&mut self, is_referenced: bool) {
+        self.set(Flags::REFERENCED, is_referenced);
     }
 
     pub fn is_valid(&self) -> bool {

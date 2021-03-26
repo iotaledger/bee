@@ -147,7 +147,7 @@ where
         tangle
             .update_metadata(message_id, |message_metadata| {
                 message_metadata.set_conflict(ConflictReason::None as u8);
-                message_metadata.confirm(milestone.essence().timestamp());
+                message_metadata.reference(milestone.essence().timestamp());
             })
             .await;
     }
@@ -156,7 +156,7 @@ where
         tangle
             .update_metadata(message_id, |message_metadata| {
                 message_metadata.set_conflict(*conflict as u8);
-                message_metadata.confirm(milestone.essence().timestamp());
+                message_metadata.reference(milestone.essence().timestamp());
             })
             .await;
     }
@@ -165,7 +165,7 @@ where
         tangle
             .update_metadata(message_id, |message_metadata| {
                 message_metadata.set_conflict(ConflictReason::None as u8);
-                message_metadata.confirm(milestone.essence().timestamp());
+                message_metadata.reference(milestone.essence().timestamp());
             })
             .await;
     }
