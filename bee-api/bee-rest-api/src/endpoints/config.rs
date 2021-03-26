@@ -145,10 +145,7 @@ impl RestApiConfigBuilder {
 
         let port = multi_addr
             .iter()
-            .find_map(|x| match x {
-                Protocol::Tcp(port) => Some(port),
-                _ => None,
-            })
+            .find_map(|x| if let Protocol::Tcp(port) = x { Some(port) } else { None })
             .unwrap_or_else(|| panic!("Unsupported protocol"));
         let public_routes: Box<[String]> = self
             .public_routes
