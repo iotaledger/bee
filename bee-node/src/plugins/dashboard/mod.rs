@@ -178,8 +178,6 @@ where
                 users.clone(),
             );
 
-            info!("Dashboard available at http://{}.", config.bind_socket_addr());
-
             let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(
                 config.bind_socket_addr(),
                 async {
@@ -187,6 +185,8 @@ where
                 },
             );
 
+            info!("Dashboard available at http://{}.", config.bind_socket_addr());
+            
             server.await;
 
             let mut readies = Vec::new();
