@@ -83,10 +83,10 @@ impl DashboardConfigBuilder {
         let address = multi_addr
             .iter()
             .find_map(|x| match x {
-                Protocol::Dns(std::borrow::Cow::Borrowed("localhost")) => Some(
-                    ("localhost", 0)
+                Protocol::Dns(address) => Some(
+                    (address.to_string(), 0)
                         .to_socket_addrs()
-                        .expect("error resolving 'localhost'")
+                        .unwrap_or_else(|error| panic!("error resolving '{}':{}", address, error)) 
                         .nth(0)
                         //Unwrapping here is fine, because to_socket-addrs() didn't return an error,
                         //thus we can be sure that the iterator contains at least 1 element.
