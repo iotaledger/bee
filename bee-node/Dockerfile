@@ -3,7 +3,7 @@
 ############################
 FROM lukemathwalker/cargo-chef as planner
 
-WORKDIR /src
+WORKDIR /bee
 COPY . .
 
 RUN cargo chef prepare --recipe-path recipe.json
@@ -16,8 +16,8 @@ FROM lukemathwalker/cargo-chef as cacher
 RUN apt-get update && \
     apt-get install cmake clang -y
 
-WORKDIR /src
-COPY --from=planner /src/recipe.json recipe.json
+WORKDIR /bee
+COPY --from=planner /bee/recipe.json recipe.json
 
 RUN cargo chef cook --release --recipe-path recipe.json
 
@@ -26,10 +26,10 @@ RUN cargo chef cook --release --recipe-path recipe.json
 ############################
 FROM rust:1 as build
 
-WORKDIR /src
+WORKDIR /bee
 COPY . .
 
-COPY --from=cacher /src/target target
+COPY --from=cacher /bee/target target
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 
 RUN cargo build --release --bin bee
@@ -53,6 +53,6 @@ EXPOSE 1883/tcp
 # Dashboard
 EXPOSE 8081/tcp
 
-COPY --from=build /src/target/release/bee /
+COPY --from=build /bee/target/release/bee /
 
 ENTRYPOINT ["/bee"]
