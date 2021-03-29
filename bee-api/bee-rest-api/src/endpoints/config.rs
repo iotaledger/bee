@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use libp2p::{multiaddr::Protocol, Multiaddr};
 use serde::Deserialize;
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, ToSocketAddrs};
-use libp2p::{multiaddr::Protocol, Multiaddr};
 
 pub(crate) const DEFAULT_BIND_ADDRESSES: &str = "/ip4/0.0.0.0/tcp/14265";
 
