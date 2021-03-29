@@ -252,7 +252,6 @@ where
     /// Return the most recent opinion on the given ID. If a `VoteContext` with the ID does not exist, returns None.
     pub async fn intermediate_opinion(&self, id: String) -> Option<Opinion> {
         if let Some(context) = self.contexts.read().await.get(&id) {
-            // TODO check this.
             context.last_opinion()
         } else {
             Some(Opinion::Unknown)

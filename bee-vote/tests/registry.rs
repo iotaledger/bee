@@ -7,7 +7,8 @@ use bee_message::{payload::transaction::TransactionId, MessageId};
 use bee_vote::{
     error::Error,
     opinion,
-    statement::{conflict::Conflict, opinion::Opinion, registry::Registry, timestamp::Timestamp},
+    Registry,
+    statement::{conflict::Conflict, opinion::Opinion, timestamp::Timestamp},
 };
 
 async fn registry(node_id: &String, tx_id: TransactionId, msg_id: MessageId) -> Registry {

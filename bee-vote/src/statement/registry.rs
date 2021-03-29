@@ -22,16 +22,19 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-// TODO String -> Node ID
+/// View of all objects that a node has voted on.
 #[derive(Debug)]
 pub struct View {
-    pub node_id: String,
-    pub conflicts: EntryMap<TransactionId, Conflict>,
-    pub timestamps: EntryMap<MessageId, Timestamp>,
+    /// ID of the node.
+    node_id: String,
+    /// Opinions held on transaction conflicts.
+    conflicts: EntryMap<TransactionId, Conflict>,
+    /// Opinions held on message timestamps.
+    timestamps: EntryMap<MessageId, Timestamp>,
 }
 
-// TODO clean-up (generics)
 impl View {
+    /// Create a new, empty `View` given a node ID.
     pub fn new(node_id: String) -> Self {
         Self {
             node_id,
@@ -40,36 +43,43 @@ impl View {
         }
     }
 
+    /// Get the node ID of the `View`.
     pub fn id(&self) -> &str {
         &self.node_id
     }
 
+    /// Add a conflict entry to the `View`.
     pub fn add_conflict(&mut self, conflict: Conflict) {
         self.conflicts.add_entry(conflict);
     }
 
+    /// Add multiple conflict entries to the `View`.
     pub fn add_conflicts(&mut self, conflicts: Vec<Conflict>) {
         self.conflicts.add_entries(conflicts);
     }
 
+    /// Add a timestamp entry to the `View`.
     pub fn add_timestamp(&mut self, timestamp: Timestamp) {
         self.timestamps.add_entry(timestamp);
     }
 
+    /// Add multiple timestamp entries to the `View`.
     pub fn add_timestamps(&mut self, timestamps: Vec<Timestamp>) {
         self.timestamps.add_entries(timestamps);
     }
 
+    /// Get the node's opinions on a given transaction conflict.
     pub fn get_conflict_opinions(&self, id: TransactionId) -> Option<Opinions> {
         self.conflicts.get_entry_opinions(&id)
     }
 
+    /// Get the node's opinions on a given message timestamp.
     pub fn get_timestamp_opinions(&self, id: MessageId) -> Option<Opinions> {
         self.timestamps.get_entry_opinions(&id)
     }
 
+    /// Query a `View` for the node's opinions on a range of entry IDs.
     pub fn query(&mut self, query_ids: &QueryIds) -> Result<opinion::Opinions, Error> {
-        // TODO default empty `Opinions`.
         let mut opinions = opinion::Opinions::new(vec![]);
 
         for id in query_ids.conflict_ids.iter() {
@@ -102,13 +112,14 @@ impl View {
     }
 }
 
-// TODO String -> Node ID
+/// Stores the opinions of nodes across the voting pool on all voting objects.
 #[derive(Default)]
 pub struct Registry {
-    pub views: RwLock<HashMap<String, View>>,
+    views: RwLock<HashMap<String, View>>,
 }
 
 impl Registry {
+    /// Modify an existing `View` through a closure, or create a new `View` for the given node.
     pub async fn write_view(&self, node_id: &String, f: impl FnOnce(&mut View)) {
         let mut guard = self.views.write().await;
 
@@ -126,6 +137,8 @@ impl Registry {
         f(guard.get_mut(node_id).unwrap());
     }
 
+    /// Pass a shared reference to a `View` to a closure, given a node ID.
+    /// If this node cannot be found, return an error.
     pub async fn read_view(&self, node_id: &String, f: impl FnOnce(&View)) -> Result<(), Error> {
         let guard = self.views.read().await;
         let view = guard.get(node_id).ok_or(Error::NodeNotFound(node_id.to_string()))?;
@@ -133,6 +146,7 @@ impl Registry {
         Ok(())
     }
 
+    /// Prune the `Registry`, removing all entries created before the given duration away from the current time.
     pub async fn clean(&self, duration: Duration) {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)

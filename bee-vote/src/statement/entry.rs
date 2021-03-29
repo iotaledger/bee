@@ -13,21 +13,29 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+/// Registry entry, containing a list of opinions on the item, and a creation timestamp.
 #[derive(Debug, Clone)]
-pub struct Entry {
+pub(super) struct Entry {
+    /// Opinions held on the voting object.
     pub opinions: Opinions,
+    /// Time at which the entry was created.
     pub timestamp: u64,
 }
 
-pub trait EntryType {
+/// Trait for types that can be added to an registry `Entry`.
+pub(super) trait EntryType {
+    /// ID type.
     type Id;
 
+    /// Returns the ID of the entry.
     fn id(&self) -> &Self::Id;
+    /// Returns the opinion to be added to the registry `Entry`.
     fn opinion(&self) -> &Opinion;
 }
 
+/// `HashMap` of entries, indexed by IDs.
 #[derive(Debug)]
-pub struct EntryMap<I, T> {
+pub(super) struct EntryMap<I, T> {
     map: HashMap<I, Entry>,
     phantom: PhantomData<T>,
 }
@@ -59,14 +67,17 @@ where
     I: Hash + Eq + PartialEq + Clone,
     T: EntryType<Id = I>,
 {
-    pub fn new() -> Self {
+    /// Create a new, empty `EntryMap`.
+    pub(super) fn new() -> Self {
         Self {
             map: HashMap::new(),
             phantom: PhantomData,
         }
     }
 
-    pub fn add_entry(&mut self, entry: T) {
+    /// Adds an `Entry` to the map.
+    /// If an `Entry` with this ID already exists, add the opinion of the given `EntryType` to its stored opinions.
+    pub(super) fn add_entry(&mut self, entry: T) {
         if !self.contains_key(entry.id()) {
             let mut opinions = Opinions::new();
             opinions.push(*entry.opinion());
@@ -88,13 +99,15 @@ where
         }
     }
 
-    pub fn add_entries(&mut self, entries: Vec<T>) {
+    /// Add multiple entries to the map.
+    pub(super) fn add_entries(&mut self, entries: Vec<T>) {
         for entry in entries.into_iter() {
             self.add_entry(entry);
         }
     }
 
-    pub fn get_entry_opinions(&self, id: &I) -> Option<Opinions> {
+    /// Get all the opinions on a given `Entry`.
+    pub(super) fn get_entry_opinions(&self, id: &I) -> Option<Opinions> {
         self.deref().get(id).map(|entry| entry.opinions.clone())
     }
 }

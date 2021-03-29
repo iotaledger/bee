@@ -52,3 +52,4 @@ pub use error::Error;
 pub use events::Event;
 pub use fpc::{Fpc, FpcBuilder};
 pub use opinion::{Opinion, OpinionGiver, Opinions};
+pub use statement::registry::Registry;
