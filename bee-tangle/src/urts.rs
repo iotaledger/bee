@@ -73,7 +73,7 @@ impl UrtsTipPool {
         }
     }
 
-    fn link_parents_with_child(&mut self, child: &MessageId, parents: &Vec<MessageId>) {
+    fn link_parents_with_child(&mut self, child: &MessageId, parents: &[MessageId]) {
         let mut linked = Vec::new();
         for parent in parents {
             if !linked.contains(parent) {
@@ -101,7 +101,7 @@ impl UrtsTipPool {
         }
     }
 
-    fn check_retention_rules_for_parents(&mut self, parents: &Vec<MessageId>) {
+    fn check_retention_rules_for_parents(&mut self, parents: &[MessageId]) {
         let mut checked = Vec::new();
         for parent in parents {
             if !checked.contains(parent) {

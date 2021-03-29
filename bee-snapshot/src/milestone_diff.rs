@@ -111,7 +111,7 @@ impl Packable for MilestoneDiff {
                 output_id,
                 (
                     CreatedOutput::new(message_id, output),
-                    ConsumedOutput::new(target, milestone.essence().index().into()),
+                    ConsumedOutput::new(target, milestone.essence().index()),
                 ),
             );
         }

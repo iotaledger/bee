@@ -39,7 +39,7 @@ pub trait Hooks<T> {
     /// Insert a new approver for a given message.
     async fn insert_approver(&self, message_id: MessageId, approver: MessageId) -> Result<(), Self::Error>;
     /// Update the approvers list for a given message.
-    async fn update_approvers(&self, message_id: MessageId, approvers: &Vec<MessageId>) -> Result<(), Self::Error>;
+    async fn update_approvers(&self, message_id: MessageId, approvers: &[MessageId]) -> Result<(), Self::Error>;
 }
 
 /// Phoney default hooks that do nothing.
@@ -71,7 +71,7 @@ impl<T: Send + Sync> Hooks<T> for NullHooks<T> {
         Ok(())
     }
 
-    async fn update_approvers(&self, _message_id: MessageId, _approvers: &Vec<MessageId>) -> Result<(), Self::Error> {
+    async fn update_approvers(&self, _message_id: MessageId, _approvers: &[MessageId]) -> Result<(), Self::Error> {
         Ok(())
     }
 }
@@ -136,7 +136,7 @@ where
 
     async fn insert_inner(&self, message_id: MessageId, message: Message, metadata: T) -> Option<MessageRef> {
         let mut vertices = self.vertices.write().await;
-        let vtx = vertices.entry(message_id).or_insert_with(|| Vertex::empty());
+        let vtx = vertices.entry(message_id).or_insert_with(Vertex::empty);
 
         let msg = if vtx.message().is_some() {
             None
@@ -150,7 +150,7 @@ where
 
             // Insert children for parents
             for &parent in parents.iter() {
-                let children = vertices.entry(parent).or_insert_with(|| Vertex::empty());
+                let children = vertices.entry(parent).or_insert_with(Vertex::empty);
                 children.add_child(message_id);
 
                 // Insert cache queue entry to track eviction priority
@@ -332,7 +332,7 @@ where
                 };
 
                 let mut vertices = self.vertices.write().await;
-                let v = vertices.entry(*message_id).or_insert_with(|| Vertex::empty());
+                let v = vertices.entry(*message_id).or_insert_with(Vertex::empty);
 
                 // We've just fetched approvers from the database, so we have all the information available to us now.
                 // Therefore, the approvers list is exhaustive (i.e: it contains all knowledge we have).

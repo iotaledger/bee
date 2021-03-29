@@ -41,10 +41,7 @@ fn new_invalid_not_unique() {
     let mut inner = rand_message_ids(7);
     inner.push(*inner.last().unwrap());
 
-    assert!(matches!(
-        Parents::new(inner.clone()),
-        Err(Error::ParentsNotUniqueSorted)
-    ));
+    assert!(matches!(Parents::new(inner), Err(Error::ParentsNotUniqueSorted)));
 }
 
 #[test]

@@ -10,21 +10,21 @@ fn score() {
         0xaa, 0xaa, 0xaa,
     ];
 
-    assert_eq!(compute_pow_score(&message), 937.2857142857143);
+    assert!((compute_pow_score(&message) - 937.2857142857143).abs() < f64::EPSILON);
 
     let message: [u8; 8] = [0, 0, 0, 0, 0, 0, 0, 0];
 
-    assert_eq!(compute_pow_score(&message), 3u128.pow(1) as f64 / 8_f64);
+    assert!((compute_pow_score(&message) - 3u128.pow(1) as f64 / 8_f64).abs() < f64::EPSILON);
 
     let message: [u8; 8] = [203, 124, 2, 0, 0, 0, 0, 0];
 
-    assert_eq!(compute_pow_score(&message), 3u128.pow(10) as f64 / 8_f64);
+    assert!((compute_pow_score(&message) - 3u128.pow(10) as f64 / 8_f64).abs() < f64::EPSILON);
 
     let message: [u8; 8] = [65, 235, 119, 85, 85, 85, 85, 85];
 
-    assert_eq!(compute_pow_score(&message), 3u128.pow(14) as f64 / 8_f64);
+    assert!((compute_pow_score(&message) - 3u128.pow(14) as f64 / 8_f64).abs() < f64::EPSILON);
 
     let message: [u8; 10000] = [0; 10000];
 
-    assert_eq!(compute_pow_score(&message), 3u128.pow(0) as f64 / 10000_f64);
+    assert!((compute_pow_score(&message) - 3u128.pow(0) as f64 / 10000_f64).abs() < f64::EPSILON);
 }

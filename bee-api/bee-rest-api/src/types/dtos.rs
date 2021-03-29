@@ -334,7 +334,8 @@ impl TryFrom<&MessageDto> for Message {
         if let Some(p) = value.payload.as_ref() {
             builder = builder.with_payload(p.try_into()?);
         }
-        Ok(builder.finish().map_err(|e| format!("invalid message: {}", e))?)
+
+        builder.finish().map_err(|e| format!("invalid message: {}", e))
     }
 }
 
@@ -403,9 +404,9 @@ impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
             .with_essence((&value.essence).try_into()?)
             .with_unlock_blocks(UnlockBlocks::new(unlock_blocks).map_err(|e| e.to_string())?);
 
-        Ok(builder
+        builder
             .finish()
-            .map_err(|e| format!("invalid transaction payload: {}", e))?)
+            .map_err(|e| format!("invalid transaction payload: {}", e))
     }
 }
 
@@ -483,9 +484,9 @@ impl TryFrom<&RegularEssenceDto> for RegularEssence {
             }
         }
 
-        Ok(builder
+        builder
             .finish()
-            .map_err(|e| format!("invalid transaction essence: {}", e))?)
+            .map_err(|e| format!("invalid transaction essence: {}", e))
     }
 }
 
@@ -623,12 +624,12 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
     type Error = String;
 
     fn try_from(value: &Ed25519AddressDto) -> Result<Self, Self::Error> {
-        Ok(value.address.parse::<Ed25519Address>().map_err(|_| {
+        value.address.parse::<Ed25519Address>().map_err(|_| {
             format!(
                 "invalid Ed25519 address: expected a hex-string of length {}",
                 ED25519_ADDRESS_LENGTH * 2
             )
-        })?)
+        })
     }
 }
 
@@ -667,13 +668,13 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
             UnlockBlockDto::Signature(s) => match &s.signature {
                 SignatureDto::Ed25519(ed) => {
                     let mut public_key = [0u8; 32];
-                    hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(
-                        |_| "invalid public key in signature unlock block: expected a hex-string of length 64",
-                    )?; // TODO access ED25519_PUBLIC_KEY_LENGTH when available
+                    hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(|_| {
+                        "invalid public key in signature unlock block: expected a hex-string of length 64"
+                    })?; // TODO access ED25519_PUBLIC_KEY_LENGTH when available
                     let signature = hex::decode(&ed.signature)
-                        .map_err(
-                            |_| "invalid signature in signature unlock block: expected a hex-string of length 128",
-                        )? // TODO access ED25519_SIGNATURE_LENGTH when available
+                        .map_err(|_| {
+                            "invalid signature in signature unlock block: expected a hex-string of length 128"
+                        })? // TODO access ED25519_SIGNATURE_LENGTH when available
                         .into_boxed_slice();
                     Ok(UnlockBlock::Signature(SignatureUnlock::Ed25519(Ed25519Signature::new(
                         public_key, signature,
@@ -774,7 +775,8 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
                     .into_boxed_slice(),
             )
         }
-        Ok(MilestonePayload::new(essence, signatures).map_err(|e| e.to_string())?)
+
+        MilestonePayload::new(essence, signatures).map_err(|e| e.to_string())
     }
 }
 
@@ -794,13 +796,13 @@ impl TryFrom<&IndexationPayloadDto> for IndexationPayload {
     type Error = String;
 
     fn try_from(value: &IndexationPayloadDto) -> Result<Self, Self::Error> {
-        Ok(IndexationPayload::new(
+        IndexationPayload::new(
             &hex::decode(value.index.clone())
                 .map_err(|_| "invalid index in indexation payload: expected a hex-string")?,
             &hex::decode(value.data.clone())
                 .map_err(|_| "invalid data in indexation payload: expected a hex-string")?,
         )
-        .map_err(|e| format!("invalid indexation payload: {}", e))?)
+        .map_err(|e| format!("invalid indexation payload: {}", e))
     }
 }
 
@@ -900,8 +902,9 @@ impl TryFrom<&TreasuryTransactionPayloadDto> for TreasuryTransactionPayload {
         let output: Output = (&value.output)
             .try_into()
             .map_err(|_| "invalid output in treasury transaction payload: expected a treasury output")?;
-        Ok(TreasuryTransactionPayload::new(input, output)
-            .map_err(|e| format!("invalid treasury transaction payload: {}", e))?)
+
+        TreasuryTransactionPayload::new(input, output)
+            .map_err(|e| format!("invalid treasury transaction payload: {}", e))
     }
 }
 

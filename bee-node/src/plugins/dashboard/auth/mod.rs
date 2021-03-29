@@ -31,13 +31,13 @@ pub(crate) async fn auth(
         let jwt = JsonWebToken::from(
             jwt_json
                 .as_str()
-                .ok_or_else(|| reject::custom(CustomRejection::InvalidJWT))?
+                .ok_or_else(|| reject::custom(CustomRejection::InvalidJwt))?
                 .to_owned(),
         );
         if jwt.validate(node_id, config.user().to_owned(), AUDIENCE_CLAIM.to_owned()) {
             return Ok(warp::reply::json(&AuthResponse { jwt: jwt.to_string() }));
         } else {
-            return Err(reject::custom(CustomRejection::InvalidJWT));
+            return Err(reject::custom(CustomRejection::InvalidJwt));
         }
     }
 

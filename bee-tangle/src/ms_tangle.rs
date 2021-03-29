@@ -58,7 +58,7 @@ impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
         self.storage.insert(&(msg, approver), &()).await
     }
 
-    async fn update_approvers(&self, msg: MessageId, approvers: &Vec<MessageId>) -> Result<(), Self::Error> {
+    async fn update_approvers(&self, msg: MessageId, approvers: &[MessageId]) -> Result<(), Self::Error> {
         trace!("Attempted to update approvers for message {:?}", msg);
         // self.storage.insert(&msg, approvers).await
         for approver in approvers {
@@ -228,7 +228,9 @@ impl<B: StorageBackend> MsTangle<B> {
         self.solid_milestone_index.store(*new_index, Ordering::Relaxed);
 
         // TODO: Formalise this a little better
-        let new_len = ((1000.0 + self.get_sync_threshold() as f32 * 500.0) as usize).min(DEFAULT_CACHE_LEN).max(8192);
+        let new_len = ((1000.0 + self.get_sync_threshold() as f32 * 500.0) as usize)
+            .min(DEFAULT_CACHE_LEN)
+            .max(8192);
         self.inner.resize(new_len);
     }
 
@@ -291,7 +293,7 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 
     pub async fn get_solid_entry_point_index(&self, sep: &SolidEntryPoint) -> Option<MilestoneIndex> {
-        self.solid_entry_points.lock().await.get(sep).map(|i| *i)
+        self.solid_entry_points.lock().await.get(sep).copied()
     }
 
     pub async fn add_solid_entry_point(&self, sep: SolidEntryPoint, index: MilestoneIndex) {

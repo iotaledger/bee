@@ -50,7 +50,7 @@ impl WsUser {
     pub(crate) fn send(&self, event: WsEvent) {
         match serde_json::to_string(&event) {
             Ok(as_text) => {
-                if let Err(_) = self.tx.send(Ok(Message::text(as_text.clone()))) {
+                if let Err(_) = self.tx.send(Ok(Message::text(as_text))) {
                     // The tx is disconnected, our `user_disconnected` code should be happening in another task, nothing
                     // more to do here.
                 }
@@ -123,7 +123,7 @@ async fn user_message<B: StorageBackend>(
     users: &WsUsers,
     tangle: &MsTangle<B>,
     storage: &B,
-    node_id: &String,
+    node_id: &str,
     auth_config: &DashboardAuthConfig,
 ) {
     if !msg.is_binary() {
@@ -166,7 +166,7 @@ async fn user_message<B: StorageBackend>(
                         }
                     });
                     if !jwt.validate(
-                        node_id.clone(),
+                        node_id.to_owned(),
                         auth_config.user().to_owned(),
                         AUDIENCE_CLAIM.to_owned(),
                     ) {

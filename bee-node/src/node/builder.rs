@@ -12,7 +12,6 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_network;
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder, NodeInfo},

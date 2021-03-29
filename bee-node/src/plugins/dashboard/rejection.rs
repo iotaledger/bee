@@ -4,7 +4,7 @@
 #[derive(Debug, Clone)]
 pub(crate) enum CustomRejection {
     InvalidCredentials,
-    InvalidJWT,
+    InvalidJwt,
     InternalError,
     Forbidden,
     BadRequest(&'static str),

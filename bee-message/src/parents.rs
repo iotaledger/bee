@@ -24,6 +24,7 @@ impl Deref for Parents {
     }
 }
 
+#[allow(clippy::len_without_is_empty)]
 impl Parents {
     pub fn new(inner: Vec<MessageId>) -> Result<Self, Error> {
         if !MESSAGE_PARENTS_RANGE.contains(&inner.len()) {
