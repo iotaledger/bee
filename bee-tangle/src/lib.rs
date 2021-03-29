@@ -13,6 +13,7 @@ pub mod storage;
 pub mod traversal;
 pub mod unconfirmed_message;
 pub mod urts;
+pub mod vec_set;
 pub mod worker;
 
 pub(crate) mod pruning;
@@ -24,6 +25,8 @@ pub use ms_tangle::MsTangle;
 pub use tangle::{Hooks, Tangle};
 pub use urts::BELOW_MAX_DEPTH;
 pub use worker::TangleWorker;
+
+use crate::vec_set::VecSet;
 
 use bee_message::Message;
 use bee_runtime::node::{Node, NodeBuilder};
