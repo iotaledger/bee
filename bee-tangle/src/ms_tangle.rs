@@ -228,9 +228,7 @@ impl<B: StorageBackend> MsTangle<B> {
         self.solid_milestone_index.store(*new_index, Ordering::Relaxed);
 
         // TODO: Formalise this a little better
-        let new_len = ((1000.0 + self.get_sync_threshold() as f32 * 500.0) as usize)
-            .min(DEFAULT_CACHE_LEN)
-            .max(8192);
+        let new_len = ((1000.0 + self.get_sync_threshold() as f32 * 500.0) as usize).min(DEFAULT_CACHE_LEN);
         self.inner.resize(new_len);
     }
 
