@@ -20,6 +20,9 @@ pub enum Error {
     /// Error when packing bee-message components.
     #[error(transparent)]
     MessageError(#[from] bee_message::Error),
+    /// Node not found in registry.
+    #[error("Node ID {0} not found")]
+    NodeNotFound(String),
     /// Vote context has no `OpinionGiver`s available.
     #[error("No opinion givers are available")]
     NoOpinionGivers,

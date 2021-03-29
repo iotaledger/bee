@@ -40,3 +40,7 @@ pub(crate) fn random_id_string() -> String {
         .map(char::from)
         .collect()
 }
+
+pub(crate) fn random_id_bytes() -> [u8; 32] {
+    thread_rng().gen::<[u8; 32]>()
+}
