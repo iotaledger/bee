@@ -41,6 +41,10 @@ pub enum Error {
     InvalidLedgerBalanceState(u64),
     #[error("Invalid ledger dust state: {0:?} {1:?}")]
     InvalidLedgerDustState(Address, Balance),
+    #[error("Consumed amount overflow: tried to add {0} and {1}.")]
+    ConsumedAmountOverflow(u64, u64),
+    #[error("Created amount overflow: tried to add {0} and {1}.")]
+    CreatedAmountOverflow(u64, u64),
     #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
 }

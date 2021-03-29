@@ -75,7 +75,9 @@ async fn validate_regular_essence<B: StorageBackend>(
 
         match consumed_output.inner() {
             Output::SignatureLockedSingle(output) => {
-                consumed_amount = consumed_amount.saturating_add(output.amount());
+                consumed_amount = consumed_amount
+                    .checked_add(output.amount())
+                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_output_dec(*output.address());
@@ -90,7 +92,9 @@ async fn validate_regular_essence<B: StorageBackend>(
                 }
             }
             Output::SignatureLockedDustAllowance(output) => {
-                consumed_amount = consumed_amount.saturating_add(output.amount());
+                consumed_amount = consumed_amount
+                    .checked_add(output.amount())
+                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 balance_diffs.dust_allowance_sub(*output.address(), output.amount());
                 if !match unlock_blocks.get(index) {
@@ -111,14 +115,18 @@ async fn validate_regular_essence<B: StorageBackend>(
     for created_output in essence.outputs() {
         match created_output {
             Output::SignatureLockedSingle(output) => {
-                created_amount = created_amount.saturating_add(output.amount());
+                created_amount = created_amount
+                    .checked_add(output.amount())
+                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount, output.amount()))?;
                 balance_diffs.amount_add(*output.address(), output.amount());
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_output_inc(*output.address());
                 }
             }
             Output::SignatureLockedDustAllowance(output) => {
-                created_amount = created_amount.saturating_add(output.amount());
+                created_amount = created_amount
+                    .checked_add(output.amount())
+                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount, output.amount()))?;
                 balance_diffs.amount_add(*output.address(), output.amount());
                 balance_diffs.dust_allowance_add(*output.address(), output.amount());
             }
@@ -132,13 +140,11 @@ async fn validate_regular_essence<B: StorageBackend>(
 
     for (address, diff) in balance_diffs.iter() {
         if diff.is_dust_mutating() {
-            let mut balance = storage::fetch_balance_or_default(storage.deref(), &address).await?;
+            let mut balance = storage::fetch_balance_or_default(storage.deref(), &address).await? + diff;
 
             if let Some(diff) = metadata.balance_diffs.get(&address) {
                 balance = balance + diff;
             }
-
-            balance = balance + diff;
 
             if balance.dust_output() as usize > dust_outputs_max(balance.dust_allowance()) {
                 return Ok(ConflictReason::InvalidDustAllowance);
