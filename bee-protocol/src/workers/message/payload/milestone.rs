@@ -55,7 +55,7 @@ async fn validate(
     milestone
         .validate(
             &key_manager
-                .get_public_keys(milestone.essence().index().into())
+                .get_public_keys(milestone.essence().index())
                 .into_iter()
                 .collect::<Vec<String>>(),
             key_manager.min_threshold(),

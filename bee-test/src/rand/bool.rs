@@ -4,9 +4,5 @@
 use rand::Rng;
 
 pub fn rand_bool() -> bool {
-    if rand::thread_rng().gen::<f64>() < 0.5 {
-        false
-    } else {
-        true
-    }
+    rand::thread_rng().gen::<f64>() < 0.5
 }

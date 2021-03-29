@@ -16,7 +16,7 @@ use bee_storage::{
     access::{AsStream, Exist, Fetch},
     backend::StorageBackend,
 };
-use bee_storage_rocksdb::{config::RocksDBConfigBuilder, error::Error as BackendError, storage::*, system::System};
+use bee_storage_rocksdb::{config::RocksDbConfigBuilder, error::Error as BackendError, storage::*, system::System};
 use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
 
 use futures::{executor, stream::StreamExt};
@@ -54,7 +54,7 @@ pub struct RocksdbTool {
 }
 
 async fn exec_inner(tool: &RocksdbTool) -> Result<(), RocksdbError> {
-    let config = RocksDBConfigBuilder::default().with_path(tool.path.clone()).finish();
+    let config = RocksDbConfigBuilder::default().with_path(tool.path.clone()).finish();
     let storage = Storage::start(config).await?;
 
     match &tool.column_family[..] {

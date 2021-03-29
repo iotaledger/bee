@@ -6,7 +6,7 @@ use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend::StorageBackend,
 };
-use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
+use bee_storage_rocksdb::{config::RocksDbConfigBuilder, storage::Storage};
 use bee_test::rand::message::{rand_indexation, rand_message_id};
 
 use futures::stream::StreamExt;
@@ -19,7 +19,7 @@ const DB_DIRECTORY: &str = "./tests/database/index_to_message_id";
 async fn access() {
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 
-    let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
+    let config = RocksDbConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
     let (index, message_id) = (rand_indexation().hash(), rand_message_id());

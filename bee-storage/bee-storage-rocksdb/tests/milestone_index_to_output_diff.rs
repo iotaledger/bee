@@ -8,7 +8,7 @@ use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend::StorageBackend,
 };
-use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
+use bee_storage_rocksdb::{config::RocksDbConfigBuilder, storage::Storage};
 use bee_test::rand::{milestone::rand_milestone_index, output_diff::rand_output_diff};
 
 use futures::stream::StreamExt;
@@ -21,7 +21,7 @@ const DB_DIRECTORY: &str = "./tests/database/milestone_index_to_output_diff";
 async fn access() {
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 
-    let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
+    let config = RocksDbConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
     let (index, output_diff) = (rand_milestone_index(), rand_output_diff());

@@ -226,10 +226,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
         Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(
             storage,
             &mut batch,
-            &(
-                migration.receipt().inner().migrated_at().into(),
-                migration.receipt().clone(),
-            ),
+            &(migration.receipt().inner().migrated_at(), migration.receipt().clone()),
             &(),
         )
         .map_err(|e| Error::Storage(Box::new(e)))?;

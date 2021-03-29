@@ -97,7 +97,7 @@ where
 
     let migration = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
         let milestone_id = milestone.id();
-        let receipt = Receipt::new(receipt.as_ref().clone(), milestone.essence().index().into());
+        let receipt = Receipt::new(receipt.as_ref().clone(), milestone.essence().index());
         let consumed_treasury = storage::fetch_unspent_treasury_output(storage).await?;
 
         // TODO check that the treasuryTransaction input matches the fetched unspent treasury output ?
@@ -141,7 +141,7 @@ where
     .await?;
 
     *index = LedgerIndex(milestone.essence().index());
-    tangle.update_confirmed_milestone_index(milestone.essence().index().into());
+    tangle.update_confirmed_milestone_index(milestone.essence().index());
 
     for message_id in metadata.excluded_no_transaction_messages.iter() {
         tangle
@@ -181,7 +181,7 @@ where
 
     bus.dispatch(MilestoneConfirmed {
         id: message_id,
-        index: milestone.essence().index().into(),
+        index: milestone.essence().index(),
         timestamp: milestone.essence().timestamp(),
         referenced_messages: metadata.num_referenced_messages,
         excluded_no_transaction_messages: metadata.excluded_no_transaction_messages,
@@ -318,7 +318,7 @@ where
                             .await
                             .unwrap();
                     }
-                    _ => return Err(Error::UnexpectedDiffIndex(index.into())),
+                    _ => return Err(Error::UnexpectedDiffIndex(index)),
                 }
             }
             Ok(())

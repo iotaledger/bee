@@ -8,7 +8,7 @@ use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend::StorageBackend,
 };
-use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
+use bee_storage_rocksdb::{config::RocksDbConfigBuilder, storage::Storage};
 use bee_test::rand::{address::rand_address, balance::rand_balance};
 
 use futures::stream::StreamExt;
@@ -21,7 +21,7 @@ const DB_DIRECTORY: &str = "./tests/database/address_to_balance";
 async fn access() {
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 
-    let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
+    let config = RocksDbConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
     let (address, balance) = (rand_address(), rand_balance());

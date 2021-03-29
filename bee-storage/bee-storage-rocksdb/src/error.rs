@@ -7,8 +7,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("RocksDB error: {0}.")]
-    RocksDB(#[from] rocksdb::Error),
+    #[error("RocksDb error: {0}.")]
+    RocksDb(#[from] rocksdb::Error),
     #[error("Unknown column family {0}.")]
     UnknownCf(&'static str),
     #[error("Storage version mismatch ({0:?} != {1:?}), remove the storage and restart.")]
