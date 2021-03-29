@@ -53,7 +53,7 @@ pub(crate) async fn milestone_utxo_changes<B: StorageBackend>(
         None => {
             return Err(reject::custom(CustomRejection::NotFound(
                 "can not find Utxo changes for given milestone index".to_string(),
-            )))
+            )));
         }
     };
     Ok(warp::reply::json(&SuccessBody::new(MilestoneUtxoChangesResponse {

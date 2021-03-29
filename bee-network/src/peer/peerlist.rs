@@ -172,11 +172,7 @@ impl PeerList {
         self.0.read().await.iter().fold(
             0,
             |count, (_, (info, state))| {
-                if predicate(info, state) {
-                    count + 1
-                } else {
-                    count
-                }
+                if predicate(info, state) { count + 1 } else { count }
             },
         )
     }

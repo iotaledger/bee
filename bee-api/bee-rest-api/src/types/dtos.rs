@@ -452,7 +452,7 @@ impl TryFrom<&RegularEssence> for RegularEssenceDto {
             payload: match value.payload() {
                 Some(Payload::Indexation(i)) => Some(PayloadDto::Indexation(Box::new(i.as_ref().into()))),
                 Some(_) => {
-                    return Err("invalid transaction essence: expected an optional indexation-payload".to_string())
+                    return Err("invalid transaction essence: expected an optional indexation-payload".to_string());
                 }
                 None => None,
             },
@@ -667,13 +667,13 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
             UnlockBlockDto::Signature(s) => match &s.signature {
                 SignatureDto::Ed25519(ed) => {
                     let mut public_key = [0u8; 32];
-                    hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(|_| {
-                        "invalid public key in signature unlock block: expected a hex-string of length 64"
-                    })?; // TODO access ED25519_PUBLIC_KEY_LENGTH when available
+                    hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(
+                        |_| "invalid public key in signature unlock block: expected a hex-string of length 64",
+                    )?; // TODO access ED25519_PUBLIC_KEY_LENGTH when available
                     let signature = hex::decode(&ed.signature)
-                        .map_err(|_| {
-                            "invalid signature in signature unlock block: expected a hex-string of length 128"
-                        })? // TODO access ED25519_SIGNATURE_LENGTH when available
+                        .map_err(
+                            |_| "invalid signature in signature unlock block: expected a hex-string of length 128",
+                        )? // TODO access ED25519_SIGNATURE_LENGTH when available
                         .into_boxed_slice();
                     Ok(UnlockBlock::Signature(SignatureUnlock::Ed25519(Ed25519Signature::new(
                         public_key, signature,

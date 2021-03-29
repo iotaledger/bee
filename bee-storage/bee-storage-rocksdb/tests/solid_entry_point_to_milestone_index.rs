@@ -24,21 +24,27 @@ async fn access() {
 
     let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
 
-    assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist(&storage, &sep)
-        .await
-        .unwrap());
-    assert!(Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(&storage, &sep)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<SolidEntryPoint, MilestoneIndex>::exist(&storage, &sep)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(&storage, &sep)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     Insert::<SolidEntryPoint, MilestoneIndex>::insert(&storage, &sep, &index)
         .await
         .unwrap();
 
-    assert!(Exist::<SolidEntryPoint, MilestoneIndex>::exist(&storage, &sep)
-        .await
-        .unwrap());
+    assert!(
+        Exist::<SolidEntryPoint, MilestoneIndex>::exist(&storage, &sep)
+            .await
+            .unwrap()
+    );
     assert_eq!(
         Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(&storage, &sep)
             .await
@@ -51,13 +57,17 @@ async fn access() {
         .await
         .unwrap();
 
-    assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist(&storage, &sep)
-        .await
-        .unwrap());
-    assert!(Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(&storage, &sep)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<SolidEntryPoint, MilestoneIndex>::exist(&storage, &sep)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(&storage, &sep)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     let mut batch = Storage::batch_begin();
 
