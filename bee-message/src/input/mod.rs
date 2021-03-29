@@ -18,7 +18,6 @@ use bee_common::packable::{Packable, Read, Write};
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[allow(clippy::upper_case_acronyms)]
 pub enum Input {
     Utxo(UtxoInput),
     Treasury(TreasuryInput),

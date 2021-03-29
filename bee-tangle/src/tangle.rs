@@ -139,7 +139,6 @@ where
         let vtx = vertices.entry(message_id).or_insert_with(|| Vertex::empty());
 
         let msg = if vtx.message().is_some() {
-            drop(vertices);
             None
         } else {
             let parents = message.parents().clone();
@@ -161,10 +160,10 @@ where
             // Insert cache queue entry to track eviction priority
             cache_queue.put(message_id, ());
 
-            drop(vertices);
-
             msg
         };
+
+        drop(vertices);
 
         self.perform_eviction().await;
 
