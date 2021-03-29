@@ -44,7 +44,7 @@ impl Add<&BalanceDiff> for Balance {
         let dust_allowance = self.dust_allowance() as i64 + other.dust_allowance();
         let dust_output = self.dust_output as i64 + other.dust_output();
 
-        // Given the nature of UTXO, this is never supposed to happen.
+        // Given the nature of Utxo, this is never supposed to happen.
         assert!(amount >= 0);
         assert!(dust_allowance >= 0);
         assert!(dust_output >= 0);

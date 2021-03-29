@@ -5,7 +5,7 @@ mod treasury;
 mod utxo;
 
 pub use treasury::TreasuryInput;
-pub use utxo::UTXOInput;
+pub use utxo::UtxoInput;
 
 use crate::Error;
 
@@ -19,22 +19,22 @@ use bee_common::packable::{Packable, Read, Write};
     serde(tag = "type", content = "data")
 )]
 pub enum Input {
-    UTXO(UTXOInput),
+    Utxo(UtxoInput),
     Treasury(TreasuryInput),
 }
 
 impl Input {
     pub fn kind(&self) -> u8 {
         match self {
-            Self::UTXO(_) => UTXOInput::KIND,
+            Self::Utxo(_) => UtxoInput::KIND,
             Self::Treasury(_) => TreasuryInput::KIND,
         }
     }
 }
 
-impl From<UTXOInput> for Input {
-    fn from(input: UTXOInput) -> Self {
-        Self::UTXO(input)
+impl From<UtxoInput> for Input {
+    fn from(input: UtxoInput) -> Self {
+        Self::Utxo(input)
     }
 }
 
@@ -49,15 +49,15 @@ impl Packable for Input {
 
     fn packed_len(&self) -> usize {
         match self {
-            Self::UTXO(input) => UTXOInput::KIND.packed_len() + input.packed_len(),
+            Self::Utxo(input) => UtxoInput::KIND.packed_len() + input.packed_len(),
             Self::Treasury(input) => TreasuryInput::KIND.packed_len() + input.packed_len(),
         }
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         match self {
-            Self::UTXO(input) => {
-                UTXOInput::KIND.pack(writer)?;
+            Self::Utxo(input) => {
+                UtxoInput::KIND.pack(writer)?;
                 input.pack(writer)?;
             }
             Self::Treasury(input) => {
@@ -71,7 +71,7 @@ impl Packable for Input {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
-            UTXOInput::KIND => UTXOInput::unpack(reader)?.into(),
+            UtxoInput::KIND => UtxoInput::unpack(reader)?.into(),
             TreasuryInput::KIND => TreasuryInput::unpack(reader)?.into(),
             k => return Err(Self::Error::InvalidInputKind(k)),
         })

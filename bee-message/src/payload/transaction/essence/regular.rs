@@ -157,7 +157,7 @@ impl RegularEssenceBuilder {
 
         for input in self.inputs.iter() {
             match input {
-                Input::UTXO(_) => {
+                Input::Utxo(_) => {
                     // Every combination of Transaction ID + Transaction Output Index must be unique in the inputs set.
                     if self.inputs.iter().filter(|i| *i == input).count() > 1 {
                         return Err(Error::DuplicateError);

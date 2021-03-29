@@ -50,22 +50,22 @@ async fn validate_regular_essence<B: StorageBackend>(
 
     for (index, input) in essence.inputs().iter().enumerate() {
         let (output_id, consumed_output) = match input {
-            Input::UTXO(input) => {
+            Input::Utxo(input) => {
                 let output_id = input.output_id();
 
                 if metadata.consumed_outputs.contains_key(output_id) {
-                    return Ok(ConflictReason::InputUTXOAlreadySpentInThisMilestone);
+                    return Ok(ConflictReason::InputUtxoAlreadySpentInThisMilestone);
                 }
 
                 if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
                     (output_id, output)
                 } else if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
                     if !storage::is_output_unspent(storage.deref(), output_id).await? {
-                        return Ok(ConflictReason::InputUTXOAlreadySpent);
+                        return Ok(ConflictReason::InputUtxoAlreadySpent);
                     }
                     (output_id, output)
                 } else {
-                    return Ok(ConflictReason::InputUTXONotFound);
+                    return Ok(ConflictReason::InputUtxoNotFound);
                 }
             }
             input => {

@@ -4,7 +4,7 @@
 use bee_ledger::types::Receipt;
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
-    input::{Input, TreasuryInput, UTXOInput},
+    input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
     output::{Output, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput},
     payload::{
@@ -76,12 +76,12 @@ pub struct RegularEssenceDto {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum InputDto {
-    UTXO(UTXOInputDto),
+    Utxo(UtxoInputDto),
     Treasury(TreasuryInputDto),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct UTXOInputDto {
+pub struct UtxoInputDto {
     #[serde(rename = "type")]
     pub kind: u8,
     #[serde(rename = "transactionId")]
@@ -495,8 +495,8 @@ impl TryFrom<&Input> for InputDto {
 
     fn try_from(value: &Input) -> Result<Self, Self::Error> {
         match value {
-            Input::UTXO(u) => Ok(InputDto::UTXO(UTXOInputDto {
-                kind: UTXOInput::KIND,
+            Input::Utxo(u) => Ok(InputDto::Utxo(UtxoInputDto {
+                kind: UtxoInput::KIND,
                 transaction_id: u.output_id().transaction_id().to_string(),
                 transaction_output_index: u.output_id().index(),
             })),
@@ -515,8 +515,8 @@ impl TryFrom<&InputDto> for Input {
 
     fn try_from(value: &InputDto) -> Result<Self, Self::Error> {
         match value {
-            InputDto::UTXO(i) => Ok(Input::UTXO(
-                UTXOInput::new(
+            InputDto::Utxo(i) => Ok(Input::Utxo(
+                UtxoInput::new(
                     i.transaction_id.parse::<TransactionId>().map_err(|_| {
                         format!(
                             "invalid transaction id: expected a hex-string of length {}",
