@@ -176,22 +176,6 @@ impl VoteContext {
         self.object
     }
 
-    pub fn transaction_id(&self) -> Option<TransactionId> {
-        if let VoteObject::Conflict(id) = self.object {
-            Some(id)
-        } else {
-            None
-        }
-    }
-
-    pub fn message_id(&self) -> Option<MessageId> {
-        if let VoteObject::Timestamp(id) = self.object {
-            Some(id)
-        } else {
-            None
-        }
-    }
-
     /// Resturns the percentage of `OpinionGiver`s that liked the item on the last query.
     pub fn liked(&self) -> f64 {
         self.liked

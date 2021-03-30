@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Helper functionality for registry entries.
+
 use super::opinion::{Opinion, Opinions};
 
 use core::{

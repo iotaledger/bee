@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Conlict statement.
+
 use super::{
     entry::EntryType,
     opinion::{Opinion, OPINION_STATEMENT_LENGTH},

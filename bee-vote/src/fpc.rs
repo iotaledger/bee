@@ -298,6 +298,7 @@ where
         let mut to_remove = vec![];
 
         for (object, context) in context_guard.iter() {
+            // Check for a finalized vote, and send an event.
             if context.finalized(self.cooling_off_period, self.finalization_threshold) {
                 self.tx
                     .send(Event::Finalized(OpinionEvent {
@@ -311,6 +312,7 @@ where
                 continue;
             }
 
+            // Check for a failed vote, and send an event.
             if context.rounds() >= self.max_rounds_per_vote_context {
                 self.tx
                     .send(Event::Failed(OpinionEvent {
@@ -324,6 +326,7 @@ where
             }
         }
 
+        // Remove any finalized/failed votes.
         for object in to_remove {
             context_guard.remove(&object);
         }
@@ -366,21 +369,21 @@ where
     /// Select a number of `OpinionGiver`s and query them for opinions.
     async fn query_opinions(&self) -> Result<Vec<QueriedOpinions>, Error> {
         let mut rng = thread_rng();
-        let query_ids = self.vote_context_ids().await;
+        let dist = rand::distributions::Uniform::new(0, opinion_givers.len());
 
+        let query_ids = self.vote_context_ids().await;
         if query_ids.conflict_objects.is_empty() && query_ids.timestamp_objects.is_empty() {
             return Ok(vec![]);
         }
 
+        // Create opinion givers.
         let mut opinion_givers = (self.opinion_giver_fn)()?;
-
         if opinion_givers.is_empty() {
             return Err(Error::NoOpinionGivers);
         }
 
-        let dist = rand::distributions::Uniform::new(0, opinion_givers.len());
+        // Select queries.
         let mut queries = vec![0u32; opinion_givers.len()];
-
         for _ in 0..self.query_sample_size {
             let index = rng.sample(dist);
 
@@ -391,15 +394,14 @@ where
 
         let vote_map = Arc::new(RwLock::new(HashMap::<VoteObject, Opinions>::new()));
         let all_queried_opinions = Arc::new(RwLock::new(Vec::<QueriedOpinions>::new()));
-
-        let mut futures = vec![];
+        let mut queries = vec![];
 
         for (i, opinion_giver) in opinion_givers.iter_mut().enumerate() {
             // This should never panic, since `queries.len()` == `opinion_givers.len()`
             let selected_count = queries.get(i).unwrap();
 
             if *selected_count > 0 {
-                futures.push(timeout(
+                queries.push(timeout(
                     self.query_timeout,
                     Self::do_query(
                         &query_ids,
@@ -412,11 +414,13 @@ where
             }
         }
 
-        futures::future::join_all(futures).await;
+        // Perform all queries.
+        futures::future::join_all(queries).await;
 
         let mut contexts_guard = self.contexts.write().await;
         let votes_guard = vote_map.read().await;
 
+        // Calculate liked percentage for each vote context.
         for (object, votes) in votes_guard.iter() {
             let mut liked_sum = 0.0;
             let mut voted_count = votes.len() as f64;
@@ -451,9 +455,9 @@ where
         opinion_giver: &mut Box<dyn OpinionGiver>,
         selected_count: u32,
     ) {
-        let opinions = opinion_giver.query(query_ids);
-
-        let opinions = if let Ok(opinions) = opinions {
+        // Get opinions from the `OpinionGiver`.
+        let opinions = if let Ok(opinions) = opinion_giver.query(query_ids) {
+            // Sanity check.
             if opinions.len() != query_ids.conflict_objects.len() + query_ids.timestamp_objects.len() {
                 return;
             } else {
@@ -471,6 +475,7 @@ where
 
         let mut vote_map_guard = vote_map.write().await;
 
+        // Get opinions on a voting object and add to vote map.
         let mut query_voting_objects = |objects: &Vec<VoteObject>| {
             for (i, object) in objects.iter().enumerate() {
                 let mut votes = vote_map_guard.get(object).map_or(Opinions::new(vec![]), |opt| opt.clone());

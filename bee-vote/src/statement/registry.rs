@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Registry for storing opinions on voting objects.
+
 use super::{
     conflict::Conflict,
     entry::{Entry, EntryMap},
