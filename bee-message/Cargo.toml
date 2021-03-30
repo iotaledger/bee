@@ -13,8 +13,10 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-pow = { path = "../bee-pow" }
+bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = ["serde1"] }
 
 bech32 = "0.8"
+bytemuck = "1.5"
 digest = "0.9"
 hex = "0.4"
 iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "c3bf565eba62d0b81144174c2ff917bfde282e49", features = ["ed25519", "blake2b"] }

@@ -13,7 +13,7 @@ use bee_message::{
             MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH,
             MILESTONE_SIGNATURE_LENGTH,
         },
-        receipt::{MigratedFundsEntry, ReceiptPayload},
+        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
         transaction::{Essence, RegularEssence, TransactionId, TransactionPayload, TRANSACTION_ID_LENGTH},
         treasury::TreasuryTransactionPayload,
         Payload,
@@ -852,7 +852,7 @@ impl TryFrom<&MigratedFundsEntry> for MigratedFundsEntryDto {
 
     fn try_from(value: &MigratedFundsEntry) -> Result<Self, Self::Error> {
         Ok(MigratedFundsEntryDto {
-            tail_transaction_hash: Box::new(*value.tail_transaction_hash()),
+            tail_transaction_hash: value.tail_transaction_hash().as_ref().into(),
             address: value.output().address().try_into()?,
             amount: value.output().amount(),
         })
@@ -865,11 +865,14 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
 
     fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
         let entry = MigratedFundsEntry::new(
-            value
-                .tail_transaction_hash
-                .as_ref()
-                .try_into()
-                .map_err(|e| format!("invalid tail transaction hash: {}", e))?,
+            TailTransactionHash::new(
+                value
+                    .tail_transaction_hash
+                    .as_ref()
+                    .try_into()
+                    .map_err(|e| format!("invalid tail transaction hash: {}", e))?,
+            )
+            .map_err(|e| format!("invalid tail transaction hash: {}", e))?,
             SignatureLockedSingleOutput::new((&value.address).try_into()?, value.amount)
                 .map_err(|e| format!("invalid address or amount: {}", e))?,
         )

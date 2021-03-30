@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod migrated_funds_entry;
+mod tail_transaction_hash;
 
 pub use migrated_funds_entry::{MigratedFundsEntry, MIGRATED_FUNDS_ENTRY_AMOUNT};
+pub use tail_transaction_hash::{TailTransactionHash, TAIL_TRANSACTION_HASH_LEN};
 
 use crate::{
     milestone::MilestoneIndex,
@@ -56,7 +58,7 @@ impl ReceiptPayload {
         // TODO could be merged with the lexicographic check ?
         let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
         for (index, funds) in funds.iter().enumerate() {
-            if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash(), index) {
+            if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash().as_ref(), index) {
                 return Err(Error::TailTransactionHashNotUnique(previous, index));
             }
         }

@@ -20,6 +20,7 @@ bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-tangle = { path = "../bee-tangle" }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
+bytemuck = "1.5"
 futures = "0.3"
 num_cpus = "1.12"
 rand = "0.8"

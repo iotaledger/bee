@@ -49,6 +49,7 @@ pub enum Error {
     TailTransactionHashNotUnique(usize, usize),
     SignaturePublicKeyMismatch(String, String),
     InvalidSignature,
+    InvalidTailTransactionHash,
 }
 
 impl std::error::Error for Error {}
@@ -156,6 +157,7 @@ impl fmt::Display for Error {
                 )
             }
             Error::InvalidSignature => write!(f, "Invalid signature provided."),
+            Error::InvalidTailTransactionHash => write!(f, "Invalid tail transaction hash."),
         }
     }
 }
