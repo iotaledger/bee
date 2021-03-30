@@ -68,17 +68,9 @@ impl UrtsTipPool {
         if let Score::NonLazy = self.tip_score::<B>(tangle, &message_id).await {
             self.non_lazy_tips.insert(message_id);
             self.tips.insert(message_id, TipMetadata::new());
-            self.link_parents_with_child(&message_id, &parents);
-            self.check_retention_rules_for_parents(&parents);
-        }
-    }
-
-    fn link_parents_with_child(&mut self, child: &MessageId, parents: &[MessageId]) {
-        let mut linked = Vec::new();
-        for parent in parents {
-            if !linked.contains(parent) {
-                self.add_child(*parent, *child);
-                linked.push(*parent);
+            for parent in parents.iter() {
+                self.add_child(*parent, message_id);
+                self.check_retention_rules_for_parent(parent);
             }
         }
     }
@@ -97,16 +89,6 @@ impl UrtsTipPool {
                 metadata.children.insert(child);
                 metadata.time_first_child = Some(Instant::now());
                 entry.insert(metadata);
-            }
-        }
-    }
-
-    fn check_retention_rules_for_parents(&mut self, parents: &[MessageId]) {
-        let mut checked = Vec::new();
-        for parent in parents {
-            if !checked.contains(parent) {
-                self.check_retention_rules_for_parent(parent);
-                checked.push(*parent);
             }
         }
     }
