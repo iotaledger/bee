@@ -60,7 +60,12 @@ impl MilestonePayload {
     }
 
     pub fn id(&self) -> MilestoneId {
-        MilestoneId::new(Blake2b256::digest(&self.pack_new()).into())
+        let mut hasher = Blake2b256::new();
+
+        hasher.update(Self::KIND.to_le_bytes());
+        hasher.update(self.pack_new());
+
+        MilestoneId::new(hasher.finalize().into())
     }
 
     pub fn essence(&self) -> &MilestonePayloadEssence {
