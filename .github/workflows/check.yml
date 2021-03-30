@@ -45,7 +45,7 @@ jobs:
         path: target
         key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-target-${{ hashFiles('**/Cargo.toml') }}
 
-    - name: Build
+    - name: Check
       uses: actions-rs/cargo@v1
       with:
         command: check
