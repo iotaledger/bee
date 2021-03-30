@@ -20,7 +20,7 @@ use bee_message::{
     ledger_index::LedgerIndex,
     milestone::MilestoneIndex,
     output::{self, CreatedOutput, Output, OutputId},
-    payload::{transaction::TransactionId, Payload},
+    payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
@@ -40,6 +40,31 @@ pub struct LedgerWorkerEvent(pub MessageId);
 
 pub struct LedgerWorker {
     pub tx: mpsc::UnboundedSender<LedgerWorkerEvent>,
+}
+
+async fn migration_from_milestone(
+    milestone_index: MilestoneIndex,
+    milestone_id: MilestoneId,
+    receipt: &ReceiptPayload,
+    consumed_treasury: TreasuryOutput,
+) -> Result<Migration, Error> {
+    let receipt = Receipt::new(receipt.clone(), milestone_index);
+
+    // TODO check that the treasuryTransaction input matches the fetched unspent treasury output ?
+    receipt.validate(&consumed_treasury)?;
+
+    let created_treasury = TreasuryOutput::new(
+        match receipt.inner().transaction() {
+            Payload::TreasuryTransaction(treasury) => match treasury.output() {
+                Output::Treasury(output) => output.clone(),
+                output => return Err(Error::UnsupportedOutputKind(output.kind())),
+            },
+            payload => return Err(Error::UnsupportedPayloadKind(payload.kind())),
+        },
+        milestone_id,
+    );
+
+    Ok(Migration::new(receipt, created_treasury, consumed_treasury))
 }
 
 async fn confirm<N: Node>(
@@ -84,16 +109,11 @@ where
 
     let migration = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
         let milestone_id = milestone.id();
-        let receipt = Receipt::new(receipt.as_ref().clone(), milestone.essence().index());
-        let consumed_treasury = storage::fetch_unspent_treasury_output(storage).await?;
-
-        // TODO check that the treasuryTransaction input matches the fetched unspent treasury output ?
-        receipt.validate(&consumed_treasury)?;
 
         // Safe to unwrap since sizes are known to be the same
         let transaction_id = TransactionId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
 
-        for (index, funds) in receipt.inner().funds().iter().enumerate() {
+        for (index, funds) in receipt.funds().iter().enumerate() {
             metadata.created_outputs.insert(
                 // Safe to unwrap because indexes are known to be valid at this point.
                 OutputId::new(transaction_id, index as u16).unwrap(),
@@ -101,18 +121,15 @@ where
             );
         }
 
-        let created_treasury = TreasuryOutput::new(
-            match receipt.inner().transaction() {
-                Payload::TreasuryTransaction(treasury) => match treasury.output() {
-                    Output::Treasury(output) => output.clone(),
-                    output => return Err(Error::UnsupportedOutputKind(output.kind())),
-                },
-                payload => return Err(Error::UnsupportedPayloadKind(payload.kind())),
-            },
-            milestone_id,
-        );
-
-        Some(Migration::new(receipt, created_treasury, consumed_treasury))
+        Some(
+            migration_from_milestone(
+                milestone.essence().index(),
+                milestone_id,
+                receipt,
+                storage::fetch_unspent_treasury_output(storage).await?,
+            )
+            .await?,
+        )
     } else {
         None
     };
@@ -292,10 +309,27 @@ where
                     consumed.insert(*output_id, (*consumed_output).clone());
                 }
 
+                let migration = if let Some(Payload::Receipt(receipt)) = diff.milestone().essence().receipt() {
+                    // There should be a consumed treasury if there is a receipt.
+                    let consumed_treasury = diff.consumed_treasury().unwrap().clone();
+
+                    Some(
+                        migration_from_milestone(
+                            index,
+                            diff.milestone().id(),
+                            receipt,
+                            TreasuryOutput::new(consumed_treasury.0, consumed_treasury.1),
+                        )
+                        .await?,
+                    )
+                } else {
+                    None
+                };
+
                 match index {
                     index if index == MilestoneIndex(ledger_index + 1) => {
                         // TODO unwrap until we merge both crates
-                        apply_outputs_diff(&*storage, index, diff.created(), &consumed, &balance_diffs, &None)
+                        apply_outputs_diff(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)
                             .await
                             .unwrap();
                     }

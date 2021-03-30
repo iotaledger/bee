@@ -7,7 +7,7 @@ use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
-    output::{ConsumedOutput, CreatedOutput, Output, OutputId},
+    output::{ConsumedOutput, CreatedOutput, Output, OutputId, TreasuryOutput},
     payload::{
         milestone::{MilestoneId, MilestonePayload},
         transaction::TransactionId,
@@ -22,7 +22,7 @@ pub struct MilestoneDiff {
     milestone: MilestonePayload,
     created: HashMap<OutputId, CreatedOutput>,
     consumed: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
-    consumed_treasury: Option<(MilestoneId, u64)>,
+    consumed_treasury: Option<(TreasuryOutput, MilestoneId)>,
 }
 
 impl MilestoneDiff {
@@ -38,8 +38,8 @@ impl MilestoneDiff {
         &self.consumed
     }
 
-    pub fn consumed_treasury(&self) -> &Option<(MilestoneId, u64)> {
-        &self.consumed_treasury
+    pub fn consumed_treasury(&self) -> Option<&(TreasuryOutput, MilestoneId)> {
+        self.consumed_treasury.as_ref()
     }
 }
 
@@ -82,7 +82,9 @@ impl Packable for MilestoneDiff {
         if milestone_len != milestone.packed_len() {}
 
         let consumed_treasury = if milestone.essence().receipt().is_some() {
-            Some((MilestoneId::unpack(reader)?, u64::unpack(reader)?))
+            let milestone_id = MilestoneId::unpack(reader)?;
+            let amount = u64::unpack(reader)?;
+            Some((TreasuryOutput::new(amount)?, milestone_id))
         } else {
             None
         };
