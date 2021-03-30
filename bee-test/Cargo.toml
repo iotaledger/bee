@@ -11,7 +11,7 @@ keywords = ["iota", "tangle", "bee", "framework", "test"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-ternary = { version = "0.4.1-alpha", features = [ "serde1" ], path = "../bee-ternary" }
+bee-ternary = { version = "0.4.2-alpha", features = [ "serde1" ], path = "../bee-ternary" }
 
 rand = "0.8"
 
