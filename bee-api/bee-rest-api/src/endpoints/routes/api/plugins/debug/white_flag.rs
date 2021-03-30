@@ -12,7 +12,7 @@ use crate::{
     types::{body::SuccessBody, responses::WhiteFlagResponse},
 };
 
-use bee_ledger::consensus::{metadata::WhiteFlagMetadata, validation};
+use bee_ledger::consensus::{self, metadata::WhiteFlagMetadata};
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
@@ -103,7 +103,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
 
     let mut metadata = WhiteFlagMetadata::new(index);
 
-    validation::traversal::<B>(&tangle, &storage, parents, &mut metadata)
+    consensus::white_flag::<B>(&tangle, &storage, parents, &mut metadata)
         .await
         .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
 

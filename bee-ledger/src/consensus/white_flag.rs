@@ -224,14 +224,13 @@ async fn validate_message<B: StorageBackend>(
 }
 
 // TODO make it a tangle method ?
-pub async fn traversal<B: StorageBackend>(
+async fn traversal<B: StorageBackend>(
     tangle: &MsTangle<B>,
     storage: &B,
     mut messages_ids: Vec<MessageId>,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
     let mut visited = HashSet::new();
-    messages_ids = messages_ids.into_iter().rev().collect();
 
     // TODO Tangle get message AND meta at the same time
 
@@ -287,6 +286,43 @@ pub async fn traversal<B: StorageBackend>(
     }
 
     metadata.merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
+
+    Ok(())
+}
+
+pub async fn white_flag<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    storage: &B,
+    mut messages_ids: Vec<MessageId>,
+    metadata: &mut WhiteFlagMetadata,
+) -> Result<(), Error> {
+    messages_ids = messages_ids.into_iter().rev().collect();
+
+    traversal(tangle, storage, messages_ids, metadata).await?;
+
+    metadata.merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
+
+    if metadata.num_referenced_messages
+        != metadata.excluded_no_transaction_messages.len()
+            + metadata.excluded_conflicting_messages.len()
+            + metadata.included_messages.len()
+    {
+        return Err(Error::InvalidMessagesCount(
+            metadata.num_referenced_messages,
+            metadata.excluded_no_transaction_messages.len(),
+            metadata.excluded_conflicting_messages.len(),
+            metadata.included_messages.len(),
+        ));
+    }
+
+    let diff_sum = metadata
+        .balance_diffs
+        .iter()
+        .fold(0, |acc, (_, diff)| acc + diff.amount());
+
+    if diff_sum != 0 {
+        return Err(Error::NonZeroBalanceDiffSum(diff_sum));
+    }
 
     Ok(())
 }

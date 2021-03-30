@@ -11,7 +11,7 @@ use crate::{
         storage::{
             self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend,
         },
-        validation,
+        white_flag,
     },
     types::{BalanceDiffs, ConflictReason, Migration, Receipt, TreasuryOutput},
 };
@@ -69,11 +69,7 @@ where
 
     drop(message);
 
-    validation::traversal::<N::Backend>(tangle, storage, parents, &mut metadata).await?;
-
-    // Account for the milestone itself.
-    metadata.num_referenced_messages += 1;
-    metadata.excluded_no_transaction_messages.push(message_id);
+    white_flag::<N::Backend>(tangle, storage, parents, &mut metadata).await?;
 
     if !metadata.merkle_proof.eq(&milestone.essence().merkle_proof()) {
         return Err(Error::MerkleProofMismatch(
@@ -82,18 +78,9 @@ where
         ));
     }
 
-    if metadata.num_referenced_messages
-        != metadata.excluded_no_transaction_messages.len()
-            + metadata.excluded_conflicting_messages.len()
-            + metadata.included_messages.len()
-    {
-        return Err(Error::InvalidMessagesCount(
-            metadata.num_referenced_messages,
-            metadata.excluded_no_transaction_messages.len(),
-            metadata.excluded_conflicting_messages.len(),
-            metadata.included_messages.len(),
-        ));
-    }
+    // Account for the milestone itself.
+    metadata.num_referenced_messages += 1;
+    metadata.excluded_no_transaction_messages.push(message_id);
 
     let migration = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
         let milestone_id = milestone.id();

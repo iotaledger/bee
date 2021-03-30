@@ -45,6 +45,8 @@ pub enum Error {
     ConsumedAmountOverflow(u64, u64),
     #[error("Created amount overflow: tried to add {0} and {1}.")]
     CreatedAmountOverflow(u64, u64),
+    #[error("Non zero balance diff sum: {0}.")]
+    NonZeroBalanceDiffSum(i64),
     #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
 }

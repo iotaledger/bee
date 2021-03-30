@@ -9,10 +9,11 @@ pub mod merkle_hasher;
 pub mod metadata;
 pub mod state;
 pub mod storage;
-pub mod validation;
+pub mod white_flag;
 pub mod worker;
 
 pub use storage::StorageBackend;
+pub use white_flag::white_flag;
 pub use worker::{LedgerWorker, LedgerWorkerEvent};
 
 use bee_runtime::node::{Node, NodeBuilder};
