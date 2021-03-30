@@ -13,6 +13,7 @@ use crate::{
 };
 
 use bee_message::{payload::transaction::TransactionId, MessageId};
+use bee_network::PeerId;
 
 use tokio::sync::RwLock;
 
@@ -26,7 +27,7 @@ use std::{
 #[derive(Debug)]
 pub struct View {
     /// ID of the node.
-    node_id: String,
+    node_id: PeerId,
     /// Opinions held on transaction conflicts.
     conflicts: EntryMap<TransactionId, Conflict>,
     /// Opinions held on message timestamps.
@@ -35,7 +36,7 @@ pub struct View {
 
 impl View {
     /// Create a new, empty `View` given a node ID.
-    pub fn new(node_id: String) -> Self {
+    pub fn new(node_id: PeerId) -> Self {
         Self {
             node_id,
             conflicts: EntryMap::new(),
@@ -44,7 +45,7 @@ impl View {
     }
 
     /// Get the node ID of the `View`.
-    pub fn id(&self) -> &str {
+    pub fn id(&self) -> &PeerId {
         &self.node_id
     }
 
@@ -115,33 +116,33 @@ impl View {
 /// Stores the opinions of nodes across the voting pool on all voting objects.
 #[derive(Default)]
 pub struct Registry {
-    views: RwLock<HashMap<String, View>>,
+    views: RwLock<HashMap<PeerId, View>>,
 }
 
 impl Registry {
     /// Modify an existing `View` through a closure, or create a new `View` for the given node.
-    pub async fn write_view(&self, node_id: &String, f: impl FnOnce(&mut View)) {
+    pub async fn write_view(&self, node_id: PeerId, f: impl FnOnce(&mut View)) {
         let mut guard = self.views.write().await;
 
-        if !guard.contains_key(node_id) {
+        if !guard.contains_key(&node_id) {
             guard.insert(
-                node_id.to_string(),
+                node_id,
                 View {
-                    node_id: node_id.to_string(),
+                    node_id: node_id,
                     conflicts: EntryMap::new(),
                     timestamps: EntryMap::new(),
                 },
             );
         }
 
-        f(guard.get_mut(node_id).unwrap());
+        f(guard.get_mut(&node_id).unwrap());
     }
 
     /// Pass a shared reference to a `View` to a closure, given a node ID.
     /// If this node cannot be found, return an error.
-    pub async fn read_view(&self, node_id: &String, f: impl FnOnce(&View)) -> Result<(), Error> {
+    pub async fn read_view(&self, node_id: PeerId, f: impl FnOnce(&View)) -> Result<(), Error> {
         let guard = self.views.read().await;
-        let view = guard.get(node_id).ok_or(Error::NodeNotFound(node_id.to_string()))?;
+        let view = guard.get(&node_id).ok_or(Error::NodeNotFound(node_id))?;
         f(view);
         Ok(())
     }

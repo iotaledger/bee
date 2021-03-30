@@ -6,6 +6,9 @@ use bee_vote::{
     opinion::{OpinionGiver, Opinions, QueryIds},
 };
 
+use bee_message::{{payload::transaction::TransactionId}, MessageId};
+use bee_network::PeerId;
+
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
 /// Mock opinion giver struct for instantiation in testing.
@@ -33,6 +36,18 @@ impl OpinionGiver for MockOpinionGiver {
     }
 }
 
+pub(crate) fn rand_message_id() -> MessageId {
+    MessageId::new(random_id_bytes())
+}
+
+pub(crate) fn rand_transaction_id() -> TransactionId {
+    TransactionId::new(random_id_bytes())
+}
+
+pub(crate) fn rand_node_id() -> PeerId {
+    PeerId::random()
+}
+
 pub(crate) fn random_id_string() -> String {
     thread_rng()
         .sample_iter(&Alphanumeric)
@@ -41,6 +56,6 @@ pub(crate) fn random_id_string() -> String {
         .collect()
 }
 
-pub(crate) fn random_id_bytes() -> [u8; 32] {
+fn random_id_bytes() -> [u8; 32] {
     thread_rng().gen::<[u8; 32]>()
 }

@@ -22,7 +22,7 @@ pub enum Error {
     MessageError(#[from] bee_message::Error),
     /// Node not found in registry.
     #[error("Node ID {0} not found")]
-    NodeNotFound(String),
+    NodeNotFound(bee_network::PeerId),
     /// Vote context has no `OpinionGiver`s available.
     #[error("No opinion givers are available")]
     NoOpinionGivers,
