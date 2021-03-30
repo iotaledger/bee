@@ -8,7 +8,7 @@ use bee_vote::{
     events::Event,
     fpc::{self, FpcBuilder},
     opinion::{Opinion, OpinionGiver, Opinions},
-    ObjectType,
+    VoteObject,
 };
 
 #[tokio::test]
@@ -22,18 +22,17 @@ async fn prohibit_multiple_votes() {
         .build()
         .unwrap();
 
-    let id = "test".to_string();
+    let tx_id = mock::rand_transaction_id();
     assert!(voter
-        .vote(id.clone(), ObjectType::Conflict, Opinion::Like)
+        .vote(VoteObject::Conflict(tx_id), Opinion::Like)
         .await
         .is_ok());
     assert!(matches!(
-        voter.vote(id.clone(), ObjectType::Conflict, Opinion::Like).await,
+        voter.vote(VoteObject::Conflict(tx_id), Opinion::Like).await,
         Err(Error::VoteOngoing(_))
     ));
 
-    let id = "test_2".to_string();
-    assert!(voter.vote(id, ObjectType::Conflict, Opinion::Like).await.is_ok());
+    assert!(voter.vote(VoteObject::Conflict(mock::rand_transaction_id()), Opinion::Like).await.is_ok());
 }
 
 #[tokio::test]
@@ -57,7 +56,7 @@ async fn finalized_event() {
         .build()
         .unwrap();
 
-    assert!(voter.vote(id, ObjectType::Conflict, Opinion::Like).await.is_ok());
+    assert!(voter.vote(VoteObject::Conflict(mock::rand_transaction_id()), Opinion::Like).await.is_ok());
 
     for _ in 0..5 {
         futures::executor::block_on(voter.do_round(0.5)).unwrap();
@@ -97,7 +96,7 @@ async fn failed_event() {
         .build()
         .unwrap();
 
-    assert!(voter.vote(id, ObjectType::Conflict, Opinion::Like).await.is_ok());
+    assert!(voter.vote(VoteObject::Conflict(mock::rand_transaction_id()), Opinion::Like).await.is_ok());
 
     for _ in 0..4 {
         futures::executor::block_on(voter.do_round(0.5)).unwrap();
@@ -146,7 +145,7 @@ async fn multiple_opinion_givers() {
             .unwrap();
 
         assert!(voter
-            .vote("test".to_string(), ObjectType::Conflict, init_opinions[i])
+            .vote(VoteObject::Conflict(mock::rand_transaction_id()), init_opinions[i])
             .await
             .is_ok());
 

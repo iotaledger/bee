@@ -8,7 +8,7 @@ use super::{
     timestamp::Timestamp,
 };
 use crate::{
-    opinion::{self, QueryIds},
+    opinion::{self, QueryObjects},
     Error,
 };
 
@@ -17,7 +17,6 @@ use bee_network::PeerId;
 
 use tokio::sync::RwLock;
 
-use core::str::FromStr;
 use std::{
     collections::HashMap,
     time::{Duration, SystemTime, UNIX_EPOCH},
@@ -80,11 +79,11 @@ impl View {
     }
 
     /// Query a `View` for the node's opinions on a range of entry IDs.
-    pub fn query(&mut self, query_ids: &QueryIds) -> Result<opinion::Opinions, Error> {
+    pub fn query(&mut self, query_ids: &QueryObjects) -> Result<opinion::Opinions, Error> {
         let mut opinions = opinion::Opinions::new(vec![]);
 
-        for id in query_ids.conflict_ids.iter() {
-            if let Some(conflict_opinions) = self.get_conflict_opinions(TransactionId::from_str(id)?) {
+        for object in query_ids.conflict_objects.iter() {
+            if let Some(conflict_opinions) = self.get_conflict_opinions(object.transaction_id().unwrap()) {
                 if !conflict_opinions.is_empty() {
                     // This will never fail.
                     opinions.push(conflict_opinions.last().unwrap().opinion);
@@ -96,8 +95,8 @@ impl View {
             };
         }
 
-        for id in query_ids.timestamp_ids.iter() {
-            if let Some(timestamp_opinions) = self.get_timestamp_opinions(MessageId::from_str(id)?) {
+        for object in query_ids.timestamp_objects.iter() {
+            if let Some(timestamp_opinions) = self.get_timestamp_opinions(object.message_id().unwrap()) {
                 if !timestamp_opinions.is_empty() {
                     // This will never fail.
                     opinions.push(timestamp_opinions.last().unwrap().opinion);

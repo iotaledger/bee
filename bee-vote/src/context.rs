@@ -8,29 +8,66 @@ use crate::{
     opinion::{Opinion, Opinions},
 };
 
+use bee_message::{{payload::transaction::TransactionId}, MessageId};
+
+use std::fmt;
+
 /// Initial "liked" value for a new `Context`.
 pub const LIKED_INITIAL: f64 = -1.0;
 
 /// Object type of a vote.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ObjectType {
-    Conflict,
-    Timestamp,
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum VoteObject {
+    /// Conflict type and related transaction ID.
+    Conflict(TransactionId),
+    /// Timestamp type and related message ID.
+    Timestamp(MessageId),
+}
+
+impl fmt::Display for VoteObject {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Self::Conflict(id) => write!(f, "Conflict({})", id),
+            Self::Timestamp(id) => write!(f, "Timestamp({})", id),
+        }
+    }
+}
+
+impl VoteObject {
+    /// Get a `MessageId` if this is a Timestamp object.
+    /// Returns `Some(id)` if this is the case, `None` if not.
+    pub fn message_id(&self) -> Option<MessageId> {
+        if let Self::Timestamp(id) = *self {
+            Some(id)
+        } else {
+            None
+        }
+    }
+
+    /// Get a `TransactionId` if this is a Conflict object.
+    /// Returns `Some(id)` if this is the canse, `None` if not.
+    pub fn transaction_id(&self) -> Option<TransactionId> {
+        if let Self::Conflict(id) = *self {
+            Some(id)
+        } else {
+            None
+        }
+    }
 }
 
 /// Builder pattern struct for instantiating a `VoteContext`.
 pub struct VoteContextBuilder {
-    id: String,
-    object_type: ObjectType,
+    /// Object of the voting (conflict or timestamp), and associated ID.
+    object: VoteObject,
+    /// Opinions held by this context on the vote object.
     opinions: Option<Opinions>,
 }
 
 impl VoteContextBuilder {
     /// Create a new `VoteContextBuilder`, defining an ID and an `ObjectType` (voting object).
-    pub fn new(id: String, object_type: ObjectType) -> Self {
+    pub fn new(object: VoteObject) -> Self {
         Self {
-            id,
-            object_type,
+            object,
             opinions: None,
         }
     }
@@ -51,8 +88,7 @@ impl VoteContextBuilder {
     /// Note: this will panic if no initial opinions have been provided.
     pub fn build(self) -> Result<VoteContext, Error> {
         Ok(VoteContext {
-            id: self.id,
-            object_type: self.object_type,
+            object: self.object,
             liked: LIKED_INITIAL,
             rounds: 0,
             opinions: self.opinions.ok_or(Error::NoInitialOpinions)?,
@@ -63,10 +99,8 @@ impl VoteContextBuilder {
 /// Voting context.
 #[derive(Debug, Clone)]
 pub struct VoteContext {
-    /// Voter ID.
-    id: String,
-    /// Object type of the vote.
-    object_type: ObjectType,
+    /// Object type of the vote and related object ID.
+    object: VoteObject,
     /// The percentage of `OpinionGiver`s who liked this item on the last query.
     liked: f64,
     /// The number of voting rounds performed so far.
@@ -78,10 +112,9 @@ pub struct VoteContext {
 
 impl VoteContext {
     /// Constructs a new `VoteContext`.
-    pub(crate) fn new(id: String, object_type: ObjectType, initial_opinion: Opinion) -> Self {
+    pub(crate) fn new(object: VoteObject, initial_opinion: Opinion) -> Self {
         Self {
-            id,
-            object_type,
+            object,
             liked: LIKED_INITIAL,
             rounds: 0,
             opinions: Opinions::new(vec![initial_opinion]),
@@ -138,14 +171,25 @@ impl VoteContext {
         self.rounds == 1
     }
 
-    /// Returns the ID of the `VoteContext`
-    pub fn id(&self) -> String {
-        self.id.clone()
+    /// Returns the object of the voting.
+    pub fn object(&self) -> VoteObject {
+        self.object
     }
 
-    /// Returns the object of the voting.
-    pub fn object_type(&self) -> ObjectType {
-        self.object_type
+    pub fn transaction_id(&self) -> Option<TransactionId> {
+        if let VoteObject::Conflict(id) = self.object {
+            Some(id)
+        } else {
+            None
+        }
+    }
+
+    pub fn message_id(&self) -> Option<MessageId> {
+        if let VoteObject::Timestamp(id) = self.object {
+            Some(id)
+        } else {
+            None
+        }
     }
 
     /// Resturns the percentage of `OpinionGiver`s that liked the item on the last query.

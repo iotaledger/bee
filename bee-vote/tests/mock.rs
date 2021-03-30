@@ -3,7 +3,7 @@
 
 use bee_vote::{
     error::Error,
-    opinion::{OpinionGiver, Opinions, QueryIds},
+    opinion::{OpinionGiver, Opinions, QueryObjects},
 };
 
 use bee_message::{{payload::transaction::TransactionId}, MessageId};
@@ -20,7 +20,7 @@ pub(crate) struct MockOpinionGiver {
 }
 
 impl OpinionGiver for MockOpinionGiver {
-    fn query(&mut self, _: &QueryIds) -> Result<Opinions, Error> {
+    fn query(&mut self, _: &QueryObjects) -> Result<Opinions, Error> {
         if self.round as usize >= self.round_replies.len() {
             return Ok(self.round_replies.last().unwrap().clone());
         }

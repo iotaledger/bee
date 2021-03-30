@@ -3,11 +3,7 @@
 
 //! Events that can occur during the vote process, to be transmitted through a channel.
 
-use crate::{
-    context::VoteContext,
-    error,
-    opinion::{Opinion, QueriedOpinions},
-};
+use crate::{VoteObject, context::VoteContext, error, opinion::{Opinion, QueriedOpinions}};
 
 use std::{collections::HashMap, time::Duration};
 
@@ -33,7 +29,7 @@ pub struct RoundStats {
     pub rand_used: f64,
     /// Active vote contexts.
     /// Note: this does not contain any contexts that were finalized or failed during the round.
-    pub vote_contexts: HashMap<String, VoteContext>,
+    pub vote_contexts: HashMap<VoteObject, VoteContext>,
     /// Opinions queried during the round.
     pub queried_opinions: Vec<QueriedOpinions>,
 }
@@ -41,8 +37,8 @@ pub struct RoundStats {
 /// Information to be passed on a Failed or Finalized event.
 #[derive(Debug)]
 pub struct OpinionEvent {
-    /// ID of the conflict being voted on.
-    pub id: String,
+    /// Object of the voting, and related ID.
+    pub object: VoteObject,
     /// The opinion of the conflict.
     pub opinion: Opinion,
     /// Context of the conflict.

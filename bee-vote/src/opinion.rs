@@ -3,7 +3,7 @@
 
 //! Functionality for handling opinions.
 
-use crate::Error;
+use crate::{Error, VoteObject};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -12,18 +12,18 @@ use std::{collections::HashMap, fmt, ops};
 /// Gives `Opinion`s about the given IDs.
 pub trait OpinionGiver {
     /// Queries the `OpinionGiver` for its opinions of given IDs.
-    fn query(&mut self, ids: &QueryIds) -> Result<Opinions, Error>;
+    fn query(&mut self, objects: &QueryObjects) -> Result<Opinions, Error>;
 
     /// The ID of the `OpinionGiver`.
     fn id(&self) -> &str;
 }
 
 /// Collection of IDs to query for opinions.
-pub struct QueryIds {
+pub struct QueryObjects {
     /// IDs that have opinions on conflicts.
-    pub conflict_ids: Vec<String>,
+    pub conflict_objects: Vec<VoteObject>,
     /// IDs that have opinions on timestamps.
-    pub timestamp_ids: Vec<String>,
+    pub timestamp_objects: Vec<VoteObject>,
 }
 
 #[derive(Debug)]
@@ -32,7 +32,7 @@ pub struct QueriedOpinions {
     /// ID of the `OpinionGiver`.
     pub opinion_giver_id: String,
     /// Map of IDs to `Opinion`s.
-    pub opinions: HashMap<String, Opinion>,
+    pub opinions: HashMap<VoteObject, Opinion>,
     /// The amount of times the `OpinionGiver`'s opinion has been counted.
     /// Usually this number is 1, but due to randomisation of the queried `OpinionGiver`s,
     /// the same `OpinionGiver`'s opinions might be counted multiple times.

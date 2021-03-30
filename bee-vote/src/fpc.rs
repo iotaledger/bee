@@ -4,10 +4,10 @@
 //! Functionality for performing an FPC vote.
 
 use crate::{
-    context::{ObjectType, VoteContext},
+    context::{VoteContext, VoteObject},
     error::Error,
     events::{Event, OpinionEvent, RoundStats},
-    opinion::{Opinion, OpinionGiver, Opinions, QueriedOpinions, QueryIds},
+    opinion::{Opinion, OpinionGiver, Opinions, QueriedOpinions, QueryObjects},
 };
 
 use flume::Sender;
@@ -32,7 +32,7 @@ struct Queue {
     /// Queue of all `VoteContext`s
     queue: VecDeque<VoteContext>,
     /// `HashSet` of IDs, for quick lookup.
-    queue_set: HashSet<String>,
+    queue_set: HashSet<VoteObject>,
 }
 
 impl Queue {
@@ -45,20 +45,20 @@ impl Queue {
     }
 
     /// Look up a `VoteContext` ID and determine if it is in the queue.
-    pub fn contains(&self, value: &str) -> bool {
+    pub fn contains(&self, value: &VoteObject) -> bool {
         self.queue_set.contains(value)
     }
 
     /// Push a new `VoteContext` to the end of the queue.
     pub fn push(&mut self, context: VoteContext) {
-        self.queue_set.insert(context.id());
+        self.queue_set.insert(context.object());
         self.queue.push_back(context);
     }
 
     /// Pop a `VoteContext` from the front of the queue.
     pub fn pop(&mut self) -> Option<VoteContext> {
         let context = self.queue.pop_front()?;
-        self.queue_set.remove(&context.id());
+        self.queue_set.remove(&context.object());
 
         Some(context)
     }
@@ -201,7 +201,7 @@ where
     queue: RwLock<Queue>,
     /// Map of `VoteContext` IDs to contexts.
     /// Contains all `VoteContext`s that are participating in this voting round.
-    contexts: RwLock<HashMap<String, VoteContext>>,
+    contexts: RwLock<HashMap<VoteObject, VoteContext>>,
     /// Indicates whether the last round completed without error or other failure.
     /// These will be indicated through `Error` or `Failed` events.
     last_round_successful: AtomicBool,
@@ -230,27 +230,27 @@ impl<F> Fpc<F>
 where
     F: Fn() -> Result<Vec<Box<dyn OpinionGiver>>, Error>,
 {
-    /// Add a `VoteContext` to the queue for the next round, providing a vote ID, `ObjectType` and an initial opinion
+    /// Add a `VoteContext` to the queue for the next round, providing a voting object and an initial opinion
     /// of the context.
     /// This can fail if there is already a vote ongoing for this ID.
-    pub async fn vote(&self, id: String, object_type: ObjectType, initial_opinion: Opinion) -> Result<(), Error> {
+    pub async fn vote(&self, object: VoteObject, initial_opinion: Opinion) -> Result<(), Error> {
         let mut queue_guard = self.queue.write().await;
         let context_guard = self.contexts.read().await;
 
-        if queue_guard.contains(&id) {
-            return Err(Error::VoteOngoing(id));
+        if queue_guard.contains(&object) {
+            return Err(Error::VoteOngoing(object));
         }
 
-        if context_guard.contains_key(&id) {
-            return Err(Error::VoteOngoing(id));
+        if context_guard.contains_key(&object) {
+            return Err(Error::VoteOngoing(object));
         }
 
-        queue_guard.push(VoteContext::new(id, object_type, initial_opinion));
+        queue_guard.push(VoteContext::new(object, initial_opinion));
         Ok(())
     }
 
     /// Return the most recent opinion on the given ID. If a `VoteContext` with the ID does not exist, returns None.
-    pub async fn intermediate_opinion(&self, id: String) -> Option<Opinion> {
+    pub async fn intermediate_opinion(&self, id: VoteObject) -> Option<Opinion> {
         if let Some(context) = self.contexts.read().await.get(&id) {
             context.last_opinion()
         } else {
@@ -264,7 +264,7 @@ where
         let mut context_guard = self.contexts.write().await;
 
         while let Some(context) = queue_guard.pop() {
-            context_guard.insert(context.id(), context);
+            context_guard.insert(context.object(), context);
         }
     }
 
@@ -294,41 +294,38 @@ where
     /// Check if any `VoteContext`s have finalized opinions.
     /// If a context has finalized on an opinion, send an event down the channel and remove it from the voting pool.
     async fn finalize_opinions(&self) -> Result<(), Error> {
-        let context_guard = self.contexts.read().await;
+        let mut context_guard = self.contexts.write().await;
         let mut to_remove = vec![];
 
-        for (id, context) in context_guard.iter() {
+        for (object, context) in context_guard.iter() {
             if context.finalized(self.cooling_off_period, self.finalization_threshold) {
                 self.tx
                     .send(Event::Finalized(OpinionEvent {
-                        id: id.clone(),
+                        object: object.clone(),
                         opinion: context.last_opinion().ok_or(Error::Unknown("No opinions found"))?,
                         context: context.clone(),
                     }))
                     .or(Err(Error::SendError))?;
 
-                to_remove.push(id.clone());
+                to_remove.push(object.clone());
                 continue;
             }
 
             if context.rounds() >= self.max_rounds_per_vote_context {
                 self.tx
                     .send(Event::Failed(OpinionEvent {
-                        id: id.clone(),
+                        object: object.clone(),
                         opinion: context.last_opinion().ok_or(Error::Unknown("No opinions found"))?,
                         context: context.clone(),
                     }))
                     .or(Err(Error::SendError))?;
 
-                to_remove.push(id.clone());
+                to_remove.push(object.clone());
             }
         }
-        drop(context_guard);
 
-        let mut context_guard = self.contexts.write().await;
-
-        for id in to_remove {
-            context_guard.remove(&id);
+        for object in to_remove {
+            context_guard.remove(&object);
         }
 
         Ok(())
@@ -371,7 +368,7 @@ where
         let mut rng = thread_rng();
         let query_ids = self.vote_context_ids().await;
 
-        if query_ids.conflict_ids.is_empty() && query_ids.timestamp_ids.is_empty() {
+        if query_ids.conflict_objects.is_empty() && query_ids.timestamp_objects.is_empty() {
             return Ok(vec![]);
         }
 
@@ -392,7 +389,7 @@ where
             }
         }
 
-        let vote_map = Arc::new(RwLock::new(HashMap::<String, Opinions>::new()));
+        let vote_map = Arc::new(RwLock::new(HashMap::<VoteObject, Opinions>::new()));
         let all_queried_opinions = Arc::new(RwLock::new(Vec::<QueriedOpinions>::new()));
 
         let mut futures = vec![];
@@ -420,7 +417,7 @@ where
         let mut contexts_guard = self.contexts.write().await;
         let votes_guard = vote_map.read().await;
 
-        for (id, votes) in votes_guard.iter() {
+        for (object, votes) in votes_guard.iter() {
             let mut liked_sum = 0.0;
             let mut voted_count = votes.len() as f64;
 
@@ -433,13 +430,13 @@ where
             }
 
             // This should never happen – there should always be a context for a given vote.
-            contexts_guard.get_mut(id).unwrap().round_completed();
+            contexts_guard.get_mut(object).unwrap().round_completed();
 
             if voted_count == 0.0 {
                 continue;
             }
 
-            contexts_guard.get_mut(id).unwrap().set_liked(liked_sum / voted_count);
+            contexts_guard.get_mut(object).unwrap().set_liked(liked_sum / voted_count);
         }
 
         // This should never fail – all futures are completed, so only one reference remains.
@@ -448,8 +445,8 @@ where
 
     /// Run a query on a given `OpinionGiver`, to generate opinions on the voting object.
     async fn do_query(
-        query_ids: &QueryIds,
-        vote_map: Arc<RwLock<HashMap<String, Opinions>>>,
+        query_ids: &QueryObjects,
+        vote_map: Arc<RwLock<HashMap<VoteObject, Opinions>>>,
         all_queried_opinions: Arc<RwLock<Vec<QueriedOpinions>>>,
         opinion_giver: &mut Box<dyn OpinionGiver>,
         selected_count: u32,
@@ -457,7 +454,7 @@ where
         let opinions = opinion_giver.query(query_ids);
 
         let opinions = if let Ok(opinions) = opinions {
-            if opinions.len() != query_ids.conflict_ids.len() + query_ids.timestamp_ids.len() {
+            if opinions.len() != query_ids.conflict_objects.len() + query_ids.timestamp_objects.len() {
                 return;
             } else {
                 opinions
@@ -474,64 +471,48 @@ where
 
         let mut vote_map_guard = vote_map.write().await;
 
-        for (i, id) in query_ids.conflict_ids.iter().enumerate() {
-            let mut votes = vote_map_guard.get(id).map_or(Opinions::new(vec![]), |opt| opt.clone());
+        let mut query_voting_objects = |objects: &Vec<VoteObject>| {
+            for (i, object) in objects.iter().enumerate() {
+                let mut votes = vote_map_guard.get(object).map_or(Opinions::new(vec![]), |opt| opt.clone());
+            
+                for _ in 0..selected_count {
+                    votes.push(opinions[i]);
+                }
 
-            for _ in 0..selected_count {
-                votes.push(opinions[i]);
+                queried_opinions.opinions.insert(*object, opinions[i]);
+
+                if vote_map_guard.contains_key(object) {
+                    *vote_map_guard.get_mut(object).unwrap() = votes;
+                } else {
+                    vote_map_guard.insert(*object, votes);
+                }
             }
+        };
 
-            queried_opinions.opinions.insert(id.to_string(), opinions[i]);
-
-            if vote_map_guard.contains_key(id) {
-                // This will never fail – the key exists.
-                *vote_map_guard.get_mut(id).unwrap() = votes;
-            } else {
-                vote_map_guard.insert(id.to_string(), votes);
-            }
-        }
-
-        for (i, id) in query_ids.timestamp_ids.iter().enumerate() {
-            let mut votes = vote_map_guard.get(id).map_or(Opinions::new(vec![]), |opt| opt.clone());
-
-            for _ in 0..selected_count {
-                votes.push(opinions[i]);
-            }
-
-            queried_opinions.opinions.insert(id.to_string(), opinions[i]);
-
-            if vote_map_guard.contains_key(id) {
-                // This will never fail - the key exists.
-                *vote_map_guard.get_mut(id).unwrap() = votes;
-            } else {
-                vote_map_guard.insert(id.to_string(), votes);
-            }
-        }
+        query_voting_objects(&query_ids.conflict_objects);
+        query_voting_objects(&query_ids.timestamp_objects);
 
         all_queried_opinions.write().await.push(queried_opinions);
     }
 
     /// Get the IDs of all `VoteContext`s currently in the voting pool.
-    async fn vote_context_ids(&self) -> QueryIds {
+    async fn vote_context_ids(&self) -> QueryObjects {
         let context_guard = self.contexts.read().await;
-        let mut conflict_ids = vec![];
-        let mut timestamp_ids = vec![];
+        let mut conflict_objects = vec![];
+        let mut timestamp_objects = vec![];
 
-        for (id, context) in context_guard.iter() {
-            match context.object_type() {
-                ObjectType::Conflict => {
-                    conflict_ids.push(id.clone());
+        for (_, context) in context_guard.iter() {
+            match context.object() {
+                VoteObject::Conflict(_) => {
+                    conflict_objects.push(context.object());
                 }
-                ObjectType::Timestamp => {
-                    timestamp_ids.push(id.clone());
+                VoteObject::Timestamp(_) => {
+                    timestamp_objects.push(context.object());
                 }
             }
         }
 
-        QueryIds {
-            conflict_ids,
-            timestamp_ids,
-        }
+        QueryObjects { conflict_objects, timestamp_objects }
     }
 
     fn rand_uniform_threshold(&self, rand: f64, lower_bound: f64, upper_bound: f64) -> f64 {

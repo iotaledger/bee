@@ -47,7 +47,7 @@ pub mod fpc;
 pub mod opinion;
 pub mod statement;
 
-pub use context::ObjectType;
+pub use context::VoteObject;
 pub use error::Error;
 pub use events::Event;
 pub use fpc::{Fpc, FpcBuilder};
