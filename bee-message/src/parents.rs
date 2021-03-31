@@ -16,7 +16,7 @@ pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 ///
 /// There must be between 1 and 8 parents, and they must be sorted and unique.
 ///
-/// Spec: #protocol-rfc-draft https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md
+/// Spec: #iota-protocol-rfc-draft https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Parents(Vec<MessageId>);
