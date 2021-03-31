@@ -14,6 +14,11 @@ use core::ops::Deref;
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SolidEntryPoint(MessageId);
 
+/// A SolidEntryPoint is a [MessageId] of a message even if we do not have them
+/// or their past in the database. The often come from a snapshot file and
+/// allow a node to solidify without needing the full tangle history.assert_eq!
+///
+/// Spec: #iota-protocol-rfc https://github.com/iotaledger/protocol-rfcs/blob/master/text/0005-white-flag/0005-white-flag.md
 impl SolidEntryPoint {
     pub fn new(message_id: MessageId) -> Self {
         message_id.into()

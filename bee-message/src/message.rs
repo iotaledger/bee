@@ -16,12 +16,20 @@ use std::sync::{atomic::AtomicBool, Arc};
 pub const MESSAGE_LENGTH_MIN: usize = 53;
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
 
+/// A Message is the object that nodes gossip around the network.
+///
+/// Spec: #iota-protocol-rfc-draft https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
+    /// network_id specifies which network this message is meant for (mainnet, testnet, private net).
     network_id: u64,
+    /// parents are the [MessageId]s that this message directly approves.
+    /// The list contains between 1 and 8 sorted unique entries.
     parents: Parents,
+    /// The optional [Payload] of the message.
     payload: Option<Payload>,
+    /// The result of the Proof of Work (PoW) in order to be accepted into the tangle.
     nonce: u64,
 }
 
