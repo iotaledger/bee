@@ -57,7 +57,7 @@ where
                     let metrics = ConfirmedMilestoneMetrics {
                         ms_index: *event.index,
                         mps: new_msg_diff / time_diff,
-                        cmps: event.referenced_messages as u64 / time_diff,
+                        rmps: event.referenced_messages as u64 / time_diff,
                         referenced_rate,
                         time_since_last_ms: time_diff,
                     };
@@ -86,7 +86,7 @@ where
 pub struct ConfirmedMilestoneMetrics {
     pub ms_index: u32,
     pub mps: u64,
-    pub cmps: u64,
+    pub rmps: u64,
     pub referenced_rate: f64,
     pub time_since_last_ms: u64,
 }
