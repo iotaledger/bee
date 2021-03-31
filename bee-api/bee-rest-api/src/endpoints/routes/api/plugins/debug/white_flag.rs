@@ -54,21 +54,11 @@ pub(crate) async fn white_flag<B: StorageBackend>(
             "Invalid index: expected a MilestoneIndex".to_string(),
         )));
     } else {
-        MilestoneIndex(
-            index_json
-                .as_str()
-                .ok_or_else(|| {
-                    reject::custom(CustomRejection::BadRequest(
-                        "Invalid index: expected a MilestoneIndex".to_string(),
-                    ))
-                })?
-                .parse::<u32>()
-                .map_err(|_| {
-                    reject::custom(CustomRejection::BadRequest(
-                        "Invalid index: expected a MilestoneIndex".to_string(),
-                    ))
-                })?,
-        )
+        MilestoneIndex(index_json.as_u64().ok_or_else(|| {
+            reject::custom(CustomRejection::BadRequest(
+                "Invalid index: expected a MilestoneIndex".to_string(),
+            ))
+        })? as u32)
     };
 
     let parents: Vec<MessageId> = if parents_json.is_null() {
