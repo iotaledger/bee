@@ -146,7 +146,7 @@ async fn validate_regular_essence<B: StorageBackend>(
                 balance = balance + diff;
             }
 
-            if balance.dust_output() as usize > dust_outputs_max(balance.dust_allowance()) {
+            if balance.dust_output() > dust_outputs_max(balance.dust_allowance()) {
                 return Ok(ConflictReason::InvalidDustAllowance);
             }
         }

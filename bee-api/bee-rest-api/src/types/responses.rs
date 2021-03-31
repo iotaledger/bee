@@ -66,6 +66,8 @@ pub struct BalanceAddressResponse {
     // hex encoded address
     pub address: String,
     pub balance: u64,
+    #[serde(rename = "dustAllowed")]
+    pub dust_allowed: bool,
 }
 
 impl BodyInner for BalanceAddressResponse {}

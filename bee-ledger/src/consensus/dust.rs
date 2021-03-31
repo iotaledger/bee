@@ -14,6 +14,6 @@ pub const DUST_OUTPUTS_MAX: u64 = 100;
 /// The maximum number of allowed dust outputs on this address is `dust_allowance_sum` divided by
 /// `DUST_ALLOWANCE_DIVISOR` and rounded down, i.e. 10 outputs for each 1 Mi deposited.
 /// Regardless of `dust_allowance_sum`, the number of dust outputs must never exceed `DUST_OUTPUTS_MAX` per address.
-pub(crate) fn dust_outputs_max(dust_allowance_sum: u64) -> usize {
-    std::cmp::min(dust_allowance_sum / DUST_ALLOWANCE_DIVISOR, DUST_OUTPUTS_MAX) as usize
+pub fn dust_outputs_max(dust_allowance_sum: u64) -> u64 {
+    std::cmp::min(dust_allowance_sum / DUST_ALLOWANCE_DIVISOR, DUST_OUTPUTS_MAX)
 }
