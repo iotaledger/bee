@@ -20,6 +20,8 @@
 //! let (tx, rx) = flume::unbounded();
 //!
 //! // Create a voter (an instance of the `fpc::Fpc` struct)
+//! // Here, the variable `f` is a closure that generates a `Vec` of `OpinionGiver` trait objects:
+//! //  - `Fn() -> Vec<Box<dyn OpinionGiver>>`
 //! let voter = FpcBuilder::default()
 //!     .with_tx(tx)
 //!     .with_opinion_giver_fn(f)

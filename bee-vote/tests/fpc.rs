@@ -13,7 +13,7 @@ use bee_vote::{
 
 #[tokio::test]
 async fn prohibit_multiple_votes() {
-    let opinion_giver_fn = || Err(Error::NoOpinionGivers);
+    let opinion_giver_fn = || vec![];
     let (tx, _) = flume::unbounded();
 
     let voter = FpcBuilder::default()
@@ -45,7 +45,7 @@ async fn finalized_event() {
         round_replies: vec![Opinions::new(vec![Opinion::Like]); 4],
     };
 
-    let opinion_giver_fn = || -> Result<Vec<Box<dyn OpinionGiver>>, Error> { Ok(vec![Box::new(mock.clone())]) };
+    let opinion_giver_fn = || -> Vec<Box<dyn OpinionGiver>> { vec![Box::new(mock.clone())] };
 
     let (tx, rx) = flume::unbounded();
     let voter = FpcBuilder::default()
@@ -86,7 +86,7 @@ async fn failed_event() {
         round_replies: vec![Opinions::new(vec![Opinion::Dislike])],
     };
 
-    let opinion_giver_fn = || -> Result<Vec<Box<dyn OpinionGiver>>, Error> { Ok(vec![Box::new(mock.clone())]) };
+    let opinion_giver_fn = || -> Vec<Box<dyn OpinionGiver>> { vec![Box::new(mock.clone())] };
 
     let (tx, rx) = flume::unbounded();
     let voter = FpcBuilder::default()
@@ -127,7 +127,7 @@ async fn multiple_opinion_givers() {
     let num_tests = 2;
 
     for i in 0..num_tests {
-        let opinion_giver_fn = || -> Result<Vec<Box<dyn OpinionGiver>>, Error> {
+        let opinion_giver_fn = || -> Vec<Box<dyn OpinionGiver>> {
             let mut opinion_givers: Vec<Box<dyn OpinionGiver>> = vec![];
 
             for _ in 0..fpc::DEFAULT_SAMPLE_SIZE {
@@ -138,7 +138,7 @@ async fn multiple_opinion_givers() {
                 }));
             }
 
-            Ok(opinion_givers)
+            opinion_givers
         };
 
         let (tx, rx) = flume::unbounded();

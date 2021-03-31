@@ -67,7 +67,7 @@ impl Queue {
 /// Builder pattern struct for instantiating `Fpc`s.
 pub struct FpcBuilder<F>
 where
-    F: Fn() -> Result<Vec<Box<dyn OpinionGiver>>, Error>,
+    F: Fn() -> Vec<Box<dyn OpinionGiver>>,
 {
     tx: Option<Sender<Event>>,
     opinion_giver_fn: Option<F>,
@@ -87,7 +87,7 @@ where
 
 impl<F> Default for FpcBuilder<F>
 where
-    F: Fn() -> Result<Vec<Box<dyn OpinionGiver>>, Error>,
+    F: Fn() -> Vec<Box<dyn OpinionGiver>>,
 {
     /// Initialise with default parameters.
     /// Note that the `tx` and `opinion_giver_fn` fields still need to be set before building.
@@ -113,7 +113,7 @@ where
 
 impl<F> FpcBuilder<F>
 where
-    F: Fn() -> Result<Vec<Box<dyn OpinionGiver>>, Error>,
+    F: Fn() -> Vec<Box<dyn OpinionGiver>>,
 {
     /// Provide a `Sender<Event>` to the builder, so that the user may receive events as the voting proceeds.
     pub fn with_tx(mut self, tx: Sender<Event>) -> Self {
@@ -215,7 +215,7 @@ where
 #[derive(Debug)]
 pub struct Fpc<F>
 where
-    F: Fn() -> Result<Vec<Box<dyn OpinionGiver>>, Error>,
+    F: Fn() -> Vec<Box<dyn OpinionGiver>>,
 {
     /// `Sender` for transmitting voting events through a channel.
     tx: Sender<Event>,
@@ -258,7 +258,7 @@ where
 
 impl<F> Fpc<F>
 where
-    F: Fn() -> Result<Vec<Box<dyn OpinionGiver>>, Error>,
+    F: Fn() -> Vec<Box<dyn OpinionGiver>>,
 {
     /// Add a `VoteContext` to the queue for the next round, providing a voting object and an initial opinion
     /// of the context.
@@ -402,7 +402,7 @@ where
         }
 
         // Create opinion givers.
-        let mut opinion_givers = (self.opinion_giver_fn)()?;
+        let mut opinion_givers = (self.opinion_giver_fn)();
         if opinion_givers.is_empty() {
             return Err(Error::NoOpinionGivers);
         }
