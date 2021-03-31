@@ -224,10 +224,6 @@ impl VoteContext {
 mod tests {
     use super::*;
     
-    use bee_message::prelude::TransactionId;
-
-    use std::str::FromStr;
-
     #[test]
     fn had_fixed_round() {
         let ctx = VoteContextBuilder::new(VoteObject::Conflict(TransactionId::new([0u8; 32])))

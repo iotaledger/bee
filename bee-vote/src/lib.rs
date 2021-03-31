@@ -10,7 +10,7 @@
 //! # Example
 //! The following snippet creates a voter, and performs 5 voting rounds on a `Conflict` voting object:
 //!
-//! ```
+//! ```ignore
 //! // Imports
 //! use bee_vote::{Event, FpcBuilder, OpinionGiver};
 //! # use tests::MockOpinionGiver;

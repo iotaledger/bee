@@ -46,7 +46,6 @@ async fn finalized_event() {
     };
 
     let opinion_giver_fn = || -> Result<Vec<Box<dyn OpinionGiver>>, Error> { Ok(vec![Box::new(mock.clone())]) };
-    let id = String::from("test");
 
     let (tx, rx) = flume::unbounded();
     let voter = FpcBuilder::default()

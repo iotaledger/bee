@@ -328,13 +328,13 @@ where
             if context.finalized(self.cooling_off_period, self.total_rounds_finalization) {
                 self.tx
                     .send(Event::Finalized(OpinionEvent {
-                        object: object.clone(),
+                        object: *object,
                         opinion: context.last_opinion().ok_or(Error::Unknown("No opinions found"))?,
                         context: context.clone(),
                     }))
                     .or(Err(Error::SendError))?;
 
-                to_remove.push(object.clone());
+                to_remove.push(*object);
                 continue;
             }
 
@@ -342,13 +342,13 @@ where
             if context.rounds() >= self.max_rounds_per_vote_context {
                 self.tx
                     .send(Event::Failed(OpinionEvent {
-                        object: object.clone(),
+                        object: *object,
                         opinion: context.last_opinion().ok_or(Error::Unknown("No opinions found"))?,
                         context: context.clone(),
                     }))
                     .or(Err(Error::SendError))?;
 
-                to_remove.push(object.clone());
+                to_remove.push(*object);
             }
         }
 
