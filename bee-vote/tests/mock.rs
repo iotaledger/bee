@@ -6,7 +6,7 @@ use bee_vote::{
     opinion::{OpinionGiver, Opinions, QueryObjects},
 };
 
-use bee_message::{{payload::transaction::TransactionId}, MessageId};
+use bee_message::{payload::transaction::TransactionId, MessageId};
 use bee_network::PeerId;
 
 use rand::{distributions::Alphanumeric, thread_rng, Rng};

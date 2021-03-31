@@ -7,11 +7,11 @@ use crate::{error::Error, opinion};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use core::{
+use std::{
     cmp::{Ord, Ordering, PartialOrd},
-    ops::Deref,
+    collections::BinaryHeap,
+    ops::{Deref, DerefMut},
 };
-use std::{collections::BinaryHeap, ops::DerefMut};
 
 /// Length (in bytes) of this statement when serialized.
 pub const OPINION_STATEMENT_LENGTH: usize = 2;

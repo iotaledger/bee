@@ -7,7 +7,7 @@ use super::{
     entry::EntryType,
     opinion::{Opinion, OPINION_STATEMENT_LENGTH},
 };
-use crate::error::Error;
+use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::payload::transaction::{TransactionId, TRANSACTION_ID_LENGTH};

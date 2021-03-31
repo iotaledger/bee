@@ -3,7 +3,12 @@
 
 //! Events that can occur during the vote process, to be transmitted through a channel.
 
-use crate::{VoteObject, context::VoteContext, error, opinion::{Opinion, QueriedOpinions}};
+use crate::{
+    context::VoteContext,
+    error,
+    opinion::{Opinion, QueriedOpinions},
+    VoteObject,
+};
 
 use std::{collections::HashMap, time::Duration};
 

@@ -23,16 +23,18 @@ async fn prohibit_multiple_votes() {
         .unwrap();
 
     let tx_id = mock::rand_transaction_id();
-    assert!(voter
-        .vote(VoteObject::Conflict(tx_id), Opinion::Like)
-        .await
-        .is_ok());
+
+    assert!(voter.vote(VoteObject::Conflict(tx_id), Opinion::Like).await.is_ok());
+    
     assert!(matches!(
         voter.vote(VoteObject::Conflict(tx_id), Opinion::Like).await,
         Err(Error::VoteOngoing(_))
     ));
 
-    assert!(voter.vote(VoteObject::Conflict(mock::rand_transaction_id()), Opinion::Like).await.is_ok());
+    assert!(voter
+        .vote(VoteObject::Conflict(mock::rand_transaction_id()), Opinion::Like)
+        .await
+        .is_ok());
 }
 
 #[tokio::test]
@@ -56,7 +58,10 @@ async fn finalized_event() {
         .build()
         .unwrap();
 
-    assert!(voter.vote(VoteObject::Conflict(mock::rand_transaction_id()), Opinion::Like).await.is_ok());
+    assert!(voter
+        .vote(VoteObject::Conflict(mock::rand_transaction_id()), Opinion::Like)
+        .await
+        .is_ok());
 
     for _ in 0..5 {
         futures::executor::block_on(voter.do_round(0.5)).unwrap();
@@ -83,7 +88,6 @@ async fn failed_event() {
     };
 
     let opinion_giver_fn = || -> Result<Vec<Box<dyn OpinionGiver>>, Error> { Ok(vec![Box::new(mock.clone())]) };
-    let id = String::from("test");
 
     let (tx, rx) = flume::unbounded();
     let voter = FpcBuilder::default()
@@ -96,7 +100,10 @@ async fn failed_event() {
         .build()
         .unwrap();
 
-    assert!(voter.vote(VoteObject::Conflict(mock::rand_transaction_id()), Opinion::Like).await.is_ok());
+    assert!(voter
+        .vote(VoteObject::Conflict(mock::rand_transaction_id()), Opinion::Like)
+        .await
+        .is_ok());
 
     for _ in 0..4 {
         futures::executor::block_on(voter.do_round(0.5)).unwrap();

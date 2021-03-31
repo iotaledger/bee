@@ -5,13 +5,11 @@
 
 use super::opinion::{Opinion, Opinions};
 
-use core::{
+use std::{
+    collections::HashMap,
     hash::Hash,
     marker::PhantomData,
     ops::{Deref, DerefMut},
-};
-use std::{
-    collections::HashMap,
     time::{SystemTime, UNIX_EPOCH},
 };
 

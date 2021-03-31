@@ -6,15 +6,15 @@
 use super::{
     conflict::Conflict,
     entry::{Entry, EntryMap},
-    opinion::Opinions,
+    opinion::Opinions as OpinionStatements,
     timestamp::Timestamp,
 };
 use crate::{
-    opinion::{self, QueryObjects},
+    opinion::{Opinion, Opinions, QueryObjects},
     Error,
 };
 
-use bee_message::{payload::transaction::TransactionId, MessageId};
+use bee_message::prelude::{MessageId, TransactionId};
 use bee_network::PeerId;
 
 use tokio::sync::RwLock;
@@ -71,18 +71,18 @@ impl View {
     }
 
     /// Get the node's opinions on a given transaction conflict.
-    pub fn get_conflict_opinions(&self, id: TransactionId) -> Option<Opinions> {
+    pub fn get_conflict_opinions(&self, id: TransactionId) -> Option<OpinionStatements> {
         self.conflicts.get_entry_opinions(&id)
     }
 
     /// Get the node's opinions on a given message timestamp.
-    pub fn get_timestamp_opinions(&self, id: MessageId) -> Option<Opinions> {
+    pub fn get_timestamp_opinions(&self, id: MessageId) -> Option<OpinionStatements> {
         self.timestamps.get_entry_opinions(&id)
     }
 
     /// Query a `View` for the node's opinions on a range of entry IDs.
-    pub fn query(&mut self, query_ids: &QueryObjects) -> Result<opinion::Opinions, Error> {
-        let mut opinions = opinion::Opinions::new(vec![]);
+    pub fn query(&mut self, query_ids: &QueryObjects) -> Result<Opinions, Error> {
+        let mut opinions = Opinions::new(vec![]);
 
         for object in query_ids.conflict_objects.iter() {
             if let Some(conflict_opinions) = self.get_conflict_opinions(object.transaction_id().unwrap()) {
@@ -90,10 +90,10 @@ impl View {
                     // This will never fail.
                     opinions.push(conflict_opinions.last().unwrap().opinion);
                 } else {
-                    opinions.push(opinion::Opinion::Unknown);
+                    opinions.push(Opinion::Unknown);
                 }
             } else {
-                opinions.push(opinion::Opinion::Unknown);
+                opinions.push(Opinion::Unknown);
             };
         }
 
@@ -103,10 +103,10 @@ impl View {
                     // This will never fail.
                     opinions.push(timestamp_opinions.last().unwrap().opinion);
                 } else {
-                    opinions.push(opinion::Opinion::Unknown);
+                    opinions.push(Opinion::Unknown);
                 }
             } else {
-                opinions.push(opinion::Opinion::Unknown);
+                opinions.push(Opinion::Unknown);
             };
         }
 

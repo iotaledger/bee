@@ -369,7 +369,6 @@ where
     /// Select a number of `OpinionGiver`s and query them for opinions.
     async fn query_opinions(&self) -> Result<Vec<QueriedOpinions>, Error> {
         let mut rng = thread_rng();
-        let dist = rand::distributions::Uniform::new(0, opinion_givers.len());
 
         let query_ids = self.vote_context_ids().await;
         if query_ids.conflict_objects.is_empty() && query_ids.timestamp_objects.is_empty() {
@@ -381,6 +380,8 @@ where
         if opinion_givers.is_empty() {
             return Err(Error::NoOpinionGivers);
         }
+
+        let dist = rand::distributions::Uniform::new(0, opinion_givers.len());
 
         // Select queries.
         let mut queries = vec![0u32; opinion_givers.len()];
@@ -394,14 +395,14 @@ where
 
         let vote_map = Arc::new(RwLock::new(HashMap::<VoteObject, Opinions>::new()));
         let all_queried_opinions = Arc::new(RwLock::new(Vec::<QueriedOpinions>::new()));
-        let mut queries = vec![];
+        let mut query_futures = vec![];
 
         for (i, opinion_giver) in opinion_givers.iter_mut().enumerate() {
             // This should never panic, since `queries.len()` == `opinion_givers.len()`
             let selected_count = queries.get(i).unwrap();
 
             if *selected_count > 0 {
-                queries.push(timeout(
+                query_futures.push(timeout(
                     self.query_timeout,
                     Self::do_query(
                         &query_ids,
@@ -415,7 +416,7 @@ where
         }
 
         // Perform all queries.
-        futures::future::join_all(queries).await;
+        futures::future::join_all(query_futures).await;
 
         let mut contexts_guard = self.contexts.write().await;
         let votes_guard = vote_map.read().await;
@@ -440,7 +441,10 @@ where
                 continue;
             }
 
-            contexts_guard.get_mut(object).unwrap().set_liked(liked_sum / voted_count);
+            contexts_guard
+                .get_mut(object)
+                .unwrap()
+                .set_liked(liked_sum / voted_count);
         }
 
         // This should never fail – all futures are completed, so only one reference remains.
@@ -478,8 +482,10 @@ where
         // Get opinions on a voting object and add to vote map.
         let mut query_voting_objects = |objects: &Vec<VoteObject>| {
             for (i, object) in objects.iter().enumerate() {
-                let mut votes = vote_map_guard.get(object).map_or(Opinions::new(vec![]), |opt| opt.clone());
-            
+                let mut votes = vote_map_guard
+                    .get(object)
+                    .map_or(Opinions::new(vec![]), |opt| opt.clone());
+
                 for _ in 0..selected_count {
                     votes.push(opinions[i]);
                 }
@@ -517,7 +523,10 @@ where
             }
         }
 
-        QueryObjects { conflict_objects, timestamp_objects }
+        QueryObjects {
+            conflict_objects,
+            timestamp_objects,
+        }
     }
 
     fn rand_uniform_threshold(&self, rand: f64, lower_bound: f64, upper_bound: f64) -> f64 {

@@ -3,12 +3,9 @@
 
 //! Context information for the voting pool.
 
-use crate::{
-    error::Error,
-    opinion::{Opinion, Opinions},
-};
+use crate::{Error, Opinion, Opinions};
 
-use bee_message::{{payload::transaction::TransactionId}, MessageId};
+use bee_message::prelude::{MessageId, TransactionId};
 
 use std::fmt;
 
@@ -66,10 +63,7 @@ pub struct VoteContextBuilder {
 impl VoteContextBuilder {
     /// Create a new `VoteContextBuilder`, defining an ID and an `ObjectType` (voting object).
     pub fn new(object: VoteObject) -> Self {
-        Self {
-            object,
-            opinions: None,
-        }
+        Self { object, opinions: None }
     }
 
     /// Set a single initial `Opinion`.

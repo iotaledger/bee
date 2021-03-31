@@ -7,10 +7,10 @@ use super::{
     entry::EntryType,
     opinion::{Opinion, OPINION_STATEMENT_LENGTH},
 };
-use crate::error::Error;
+use crate::Error;
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::{MessageId, MESSAGE_ID_LENGTH};
+use bee_message::prelude::{MessageId, MESSAGE_ID_LENGTH};
 
 /// Holds a message ID and its timestamp opinion.
 #[derive(Debug)]
