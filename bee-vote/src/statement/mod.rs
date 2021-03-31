@@ -5,7 +5,12 @@
 
 mod entry;
 
-pub mod conflict;
-pub mod opinion;
-pub mod registry;
-pub mod timestamp;
+mod conflict;
+mod opinion;
+mod registry;
+mod timestamp;
+
+pub use conflict::Conflict;
+pub use opinion::{Opinion, Opinions, OPINION_STATEMENT_LENGTH};
+pub use registry::Registry;
+pub use timestamp::Timestamp;

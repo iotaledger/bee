@@ -27,8 +27,6 @@ use std::{
 /// View of all objects that a node has voted on.
 #[derive(Debug)]
 pub struct View {
-    /// ID of the node.
-    node_id: PeerId,
     /// Opinions held on transaction conflicts.
     conflicts: EntryMap<TransactionId, Conflict>,
     /// Opinions held on message timestamps.
@@ -36,18 +34,12 @@ pub struct View {
 }
 
 impl View {
-    /// Create a new, empty `View` given a node ID.
-    pub fn new(node_id: PeerId) -> Self {
+    /// Create a new, empty `View`.
+    pub fn new() -> Self {
         Self {
-            node_id,
             conflicts: EntryMap::new(),
             timestamps: EntryMap::new(),
         }
-    }
-
-    /// Get the node ID of the `View`.
-    pub fn id(&self) -> &PeerId {
-        &self.node_id
     }
 
     /// Add a conflict entry to the `View`.
@@ -129,7 +121,6 @@ impl Registry {
             guard.insert(
                 node_id,
                 View {
-                    node_id: node_id,
                     conflicts: EntryMap::new(),
                     timestamps: EntryMap::new(),
                 },

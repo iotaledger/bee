@@ -8,7 +8,7 @@ use bee_network::PeerId;
 use bee_vote::{
     error::Error,
     opinion,
-    statement::{conflict::Conflict, opinion::Opinion, timestamp::Timestamp},
+    statement::{Conflict, Opinion, Timestamp},
     Registry,
 };
 
