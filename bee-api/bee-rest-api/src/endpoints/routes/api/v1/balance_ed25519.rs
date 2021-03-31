@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_BALANCE_ED25519, filters::with_storage, path_params::ed25519_address, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend,
     },
-    types::{body::SuccessBody, responses::BalanceForAddressResponse},
+    types::{body::SuccessBody, responses::BalanceAddressResponse},
 };
 
 use bee_ledger::types::Balance;
@@ -49,7 +49,7 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
                 "can not fetch from storage".to_string(),
             ))
         })? {
-        Some(balance) => Ok(warp::reply::json(&SuccessBody::new(BalanceForAddressResponse {
+        Some(balance) => Ok(warp::reply::json(&SuccessBody::new(BalanceAddressResponse {
             address_type: 1,
             address: addr.to_string(),
             balance: balance.amount(),

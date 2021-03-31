@@ -59,7 +59,7 @@ impl BodyInner for AddPeerResponse {}
 
 /// Response of GET /api/v1/addresses/{address}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BalanceForAddressResponse {
+pub struct BalanceAddressResponse {
     // The type of the address (1=Ed25519).
     #[serde(rename = "addressType")]
     pub address_type: u8,
@@ -68,7 +68,7 @@ pub struct BalanceForAddressResponse {
     pub balance: u64,
 }
 
-impl BodyInner for BalanceForAddressResponse {}
+impl BodyInner for BalanceAddressResponse {}
 
 /// Response of GET /api/v1/info
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -147,7 +147,7 @@ impl BodyInner for MessageResponse {}
 
 /// Response of GET /api/v1/messages/{message_id}?index={INDEX}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MessagesForIndexResponse {
+pub struct MessagesFindResponse {
     pub index: String,
     #[serde(rename = "maxResults")]
     pub max_results: usize,
@@ -156,11 +156,11 @@ pub struct MessagesForIndexResponse {
     pub message_ids: Vec<String>,
 }
 
-impl BodyInner for MessagesForIndexResponse {}
+impl BodyInner for MessagesFindResponse {}
 
 /// Response of GET /api/v1/milestone/{milestone_index}/utxo-changes
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MilestoneUtxoChangesResponse {
+pub struct UtxoChangesResponse {
     pub index: u32,
     #[serde(rename = "createdOutputs")]
     pub created_outputs: Vec<String>,
@@ -168,7 +168,7 @@ pub struct MilestoneUtxoChangesResponse {
     pub consumed_outputs: Vec<String>,
 }
 
-impl BodyInner for MilestoneUtxoChangesResponse {}
+impl BodyInner for UtxoChangesResponse {}
 
 /// Response of GET /api/v1/milestone/{milestone_index}
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -200,7 +200,7 @@ impl BodyInner for OutputResponse {}
 
 /// Response of GET /api/v1/addresses/{address}/outputs
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct OutputsForAddressResponse {
+pub struct OutputsAddressResponse {
     // The type of the address (1=Ed25519).
     #[serde(rename = "addressType")]
     pub address_type: u8,
@@ -212,7 +212,7 @@ pub struct OutputsForAddressResponse {
     pub output_ids: Vec<String>,
 }
 
-impl BodyInner for OutputsForAddressResponse {}
+impl BodyInner for OutputsAddressResponse {}
 
 /// Response of GET /api/v1/peer/{peer_id}
 #[derive(Clone, Debug, Serialize, Deserialize)]

@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_MILESTONE_UTXO_CHANGES, filters::with_storage, path_params::milestone_index,
         permission::has_permission, rejection::CustomRejection, storage::StorageBackend,
     },
-    types::{body::SuccessBody, responses::MilestoneUtxoChangesResponse},
+    types::{body::SuccessBody, responses::UtxoChangesResponse},
 };
 
 use bee_ledger::types::OutputDiff;
@@ -56,7 +56,7 @@ pub(crate) async fn milestone_utxo_changes<B: StorageBackend>(
             )));
         }
     };
-    Ok(warp::reply::json(&SuccessBody::new(MilestoneUtxoChangesResponse {
+    Ok(warp::reply::json(&SuccessBody::new(UtxoChangesResponse {
         index: *index,
         created_outputs: fetched.created_outputs().iter().map(|id| id.to_string()).collect(),
         consumed_outputs: fetched.consumed_outputs().iter().map(|id| id.to_string()).collect(),

@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_MESSAGES_FIND, filters::with_storage, permission::has_permission, rejection::CustomRejection,
         storage::StorageBackend,
     },
-    types::{body::SuccessBody, responses::MessagesForIndexResponse},
+    types::{body::SuccessBody, responses::MessagesFindResponse},
 };
 
 use bee_message::{
@@ -67,7 +67,7 @@ pub(crate) async fn messages_find<B: StorageBackend>(
     let max_results = 1000;
     fetched.truncate(max_results);
 
-    Ok(warp::reply::json(&SuccessBody::new(MessagesForIndexResponse {
+    Ok(warp::reply::json(&SuccessBody::new(MessagesFindResponse {
         index,
         max_results,
         count,
