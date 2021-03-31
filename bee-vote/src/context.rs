@@ -126,13 +126,13 @@ impl VoteContext {
     }
 
     /// Describes whether this `VoteContext` has been finalized.
-    pub fn finalized(&self, cool_off_period: u32, finalization_threshold: u32) -> bool {
+    pub fn finalized(&self, cool_off_period: u32, total_rounds_finalization: u32) -> bool {
         // Check whether we have enough opinions to decide if the vote is finalised.
-        if self.opinions.len() - 1 < (cool_off_period + finalization_threshold) as usize {
+        if self.opinions.len() < (cool_off_period + total_rounds_finalization + 1) as usize {
             false
         } else {
             // Index of the opinion that needs to be held for `finalization_threshold` number of rounds.
-            let finalized_index = self.opinions.len() - finalization_threshold as usize;
+            let finalized_index = self.opinions.len() - total_rounds_finalization as usize;
 
             if self.opinions.len() < finalized_index + 1 {
                 return false;
@@ -165,6 +165,36 @@ impl VoteContext {
         self.rounds == 1
     }
 
+    pub(crate) fn had_fixed_round(
+        &self,
+        cool_off_period: u32,
+        total_rounds_finalization: u32,
+        total_rounds_fixed: u32,
+    ) -> bool {
+        let total_rounds_random_threshold = total_rounds_finalization as i32 - total_rounds_fixed as i32;
+
+        if self.opinions.len() < (cool_off_period as i32 + total_rounds_random_threshold + 1) as usize {
+            return false;
+        }
+
+        if self.opinions.len() < total_rounds_random_threshold as usize || total_rounds_random_threshold < 0 {
+            return false;
+        }
+
+        let candidate_idx = self.opinions.len() - total_rounds_random_threshold as usize;
+        let candidate_opinion = self.opinions[candidate_idx];
+
+        for i in candidate_idx..self.opinions.len() {
+            let subsequent_opinion = self.opinions[i];
+
+            if subsequent_opinion != candidate_opinion {
+                return false;
+            }
+        }
+
+        true
+    }
+
     /// Returns the object of the voting.
     pub fn object(&self) -> VoteObject {
         self.object
@@ -188,5 +218,39 @@ impl VoteContext {
     /// Indicate the completion of a voting round for this item.
     pub(crate) fn round_completed(&mut self) {
         self.rounds += 1;
+    }
+}
+
+mod tests {
+    use super::*;
+    
+    use bee_message::prelude::TransactionId;
+
+    use std::str::FromStr;
+
+    #[test]
+    fn had_fixed_round() {
+        let ctx = VoteContextBuilder::new(VoteObject::Conflict(TransactionId::new([0u8; 32])))
+            .with_initial_opinions(Opinions::new(vec![Opinion::Like; 5]))
+            .build()
+            .unwrap();
+
+        assert!(ctx.had_fixed_round(2, 4, 2));
+    }
+
+    #[test]
+    fn not_had_fixed_round() {
+        let ctx = VoteContextBuilder::new(VoteObject::Conflict(TransactionId::new([0u8; 32])))
+            .with_initial_opinions(Opinions::new(vec![
+                Opinion::Like,
+                Opinion::Like,
+                Opinion::Like,
+                Opinion::Like,
+                Opinion::Dislike
+            ]))
+            .build()
+            .unwrap();
+
+        assert!(!ctx.had_fixed_round(2, 4, 2));
     }
 }

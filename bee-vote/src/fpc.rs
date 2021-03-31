@@ -75,11 +75,14 @@ where
     first_round_upper_bound: f64,
     subsequent_rounds_lower_bound: f64,
     subsequent_rounds_upper_bound: f64,
+    ending_rounds_fixed_threshold: f64,
     query_sample_size: u32,
-    finalization_threshold: u32,
+    total_rounds_finalization: u32,
+    total_rounds_fixed: u32,
     cooling_off_period: u32,
     max_rounds_per_vote_context: u32,
     query_timeout: Duration,
+    min_opinions_received: u32,
 }
 
 impl<F> Default for FpcBuilder<F>
@@ -96,11 +99,14 @@ where
             first_round_upper_bound: 0.67,
             subsequent_rounds_lower_bound: 0.5,
             subsequent_rounds_upper_bound: 0.67,
+            ending_rounds_fixed_threshold: 0.5,
             query_sample_size: DEFAULT_SAMPLE_SIZE,
-            finalization_threshold: 10,
+            total_rounds_finalization: 10,
+            total_rounds_fixed: 3,
             cooling_off_period: 0,
             max_rounds_per_vote_context: 100,
-            query_timeout: Duration::from_millis(6500),
+            query_timeout: Duration::from_millis(1500),
+            min_opinions_received: 1,
         }
     }
 }
@@ -137,6 +143,11 @@ where
         self
     }
 
+    pub fn with_ending_rounds_fixed_threshold(mut self, threshold: f64) -> Self {
+        self.ending_rounds_fixed_threshold = threshold;
+        self
+    }
+
     /// Provide a query sample size.
     /// This is used to define the number of `Opinion`s to query on each voting round.
     pub fn with_query_sample_size(mut self, sample_size: u32) -> Self {
@@ -146,8 +157,13 @@ where
 
     /// Provide a finalization threshold.
     /// This is used to define the number of voting rounds in which a `VoteContext`s opinion must stay constant for.
-    pub fn with_finalization_threshold(mut self, threshold: u32) -> Self {
-        self.finalization_threshold = threshold;
+    pub fn with_finalization_rounds(mut self, rounds: u32) -> Self {
+        self.total_rounds_finalization = rounds;
+        self
+    }
+
+    pub fn with_fixed_rounds(mut self, rounds: u32) -> Self {
+        self.total_rounds_fixed = rounds;
         self
     }
 
@@ -164,6 +180,11 @@ where
         self
     }
 
+    pub fn with_min_opinions_received(mut self, min_opinions_received: u32) -> Self {
+        self.min_opinions_received = min_opinions_received;
+        self
+    }
+
     /// Instantiate a new `Fpc` struct using parameters given by the `FpcBuilder`.
     /// Note: this will panic if `tx` or `opinion_giver_fn` are not defined.
     pub fn build(self) -> Result<Fpc<F>, Error> {
@@ -177,11 +198,14 @@ where
             first_round_upper_bound: self.first_round_lower_bound,
             subsequent_rounds_lower_bound: self.subsequent_rounds_lower_bound,
             subsequent_rounds_upper_bound: self.subsequent_rounds_upper_bound,
+            ending_rounds_fixed_threshold: self.ending_rounds_fixed_threshold,
             query_sample_size: self.query_sample_size,
-            finalization_threshold: self.finalization_threshold,
+            total_rounds_finalization: self.total_rounds_finalization,
+            total_rounds_fixed: self.total_rounds_fixed,
             cooling_off_period: self.cooling_off_period,
             max_rounds_per_vote_context: self.max_rounds_per_vote_context,
             query_timeout: Duration::from_millis(6500),
+            min_opinions_received: self.min_opinions_received,
         })
     }
 }
@@ -214,16 +238,22 @@ where
     subsequent_rounds_lower_bound: f64,
     /// Upper bound for random opinion forming threshold, used on subsequent voting rounds.
     subsequent_rounds_upper_bound: f64,
+    /// Fixed threshold used in the ending rounds of a vote (defined by `total_rounds_fixed`).
+    ending_rounds_fixed_threshold: f64,
     /// Number of `Opinion`s to query on each voting round.
     query_sample_size: u32,
     /// Number of voting rounds in which a `VoteContext`s opinion must stay constant for.
-    finalization_threshold: u32,
+    total_rounds_finalization: u32,
+    /// Number of rounds at the end of the vote that use the fixed threshold (rather than random).
+    total_rounds_fixed: u32,
     /// Number of voting rounds in which to skip any finalization checks.
     cooling_off_period: u32,
     /// Maximum number of rounds to execute before aborting the vote (if not finalized).
     max_rounds_per_vote_context: u32,
     /// Maximum time before aborting a query.
     query_timeout: Duration,
+    /// Minimum opinions to receive in order to consider a voting round valid.
+    min_opinions_received: u32,
 }
 
 impl<F> Fpc<F>
@@ -277,11 +307,7 @@ where
                 continue;
             }
 
-            let (lower_bound, upper_bound) = if context.had_first_round() {
-                (self.first_round_lower_bound, self.first_round_upper_bound)
-            } else {
-                (self.subsequent_rounds_lower_bound, self.subsequent_rounds_upper_bound)
-            };
+            let (lower_bound, upper_bound) = self.round_thresholds(&context);
 
             if context.liked() >= self.rand_uniform_threshold(rand, lower_bound, upper_bound) {
                 context.add_opinion(Opinion::Like);
@@ -299,7 +325,7 @@ where
 
         for (object, context) in context_guard.iter() {
             // Check for a finalized vote, and send an event.
-            if context.finalized(self.cooling_off_period, self.finalization_threshold) {
+            if context.finalized(self.cooling_off_period, self.total_rounds_finalization) {
                 self.tx
                     .send(Event::Finalized(OpinionEvent {
                         object: object.clone(),
@@ -424,11 +450,11 @@ where
         // Calculate liked percentage for each vote context.
         for (object, votes) in votes_guard.iter() {
             let mut liked_sum = 0.0;
-            let mut voted_count = votes.len() as f64;
+            let mut voted_count = votes.len() as u32;
 
             for vote in votes.iter() {
                 match vote {
-                    Opinion::Unknown => voted_count -= 1.0,
+                    Opinion::Unknown => voted_count -= 1,
                     Opinion::Like => liked_sum += 1.0,
                     _ => {}
                 }
@@ -437,14 +463,15 @@ where
             // This should never happen – there should always be a context for a given vote.
             contexts_guard.get_mut(object).unwrap().round_completed();
 
-            if voted_count == 0.0 {
+            // Make sure enough opinions were received for the round to be considered valid.
+            if voted_count < self.min_opinions_received {
                 continue;
             }
 
             contexts_guard
                 .get_mut(object)
                 .unwrap()
-                .set_liked(liked_sum / voted_count);
+                .set_liked(liked_sum / voted_count as f64);
         }
 
         // This should never fail – all futures are completed, so only one reference remains.
@@ -526,6 +553,20 @@ where
         QueryObjects {
             conflict_objects,
             timestamp_objects,
+        }
+    }
+
+    fn round_thresholds(&self, ctx: &VoteContext) -> (f64, f64) {
+        if ctx.had_first_round() {
+            (self.first_round_lower_bound, self.first_round_upper_bound)
+        } else if ctx.had_fixed_round(
+            self.cooling_off_period, 
+            self.total_rounds_finalization, 
+            self.total_rounds_fixed,
+        ) {
+            (self.ending_rounds_fixed_threshold, self.ending_rounds_fixed_threshold)
+        } else {
+            (self.subsequent_rounds_lower_bound, self.subsequent_rounds_upper_bound)
         }
     }
 
