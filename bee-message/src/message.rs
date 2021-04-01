@@ -13,7 +13,11 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use std::sync::{atomic::AtomicBool, Arc};
 
+/// The minimum number of bytes in a message.
 pub const MESSAGE_LENGTH_MIN: usize = 53;
+
+/// The maximum number of bytes in a message (1024*32).
+/// https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md#message-validation
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
 
 /// A Message is the object that nodes gossip around the network.
@@ -34,11 +38,14 @@ pub struct Message {
 }
 
 impl Message {
+    /// Create a new [Message] builder.
     pub fn builder() -> MessageBuilder {
         MessageBuilder::new()
     }
 
-    // TODO should not return bytes anymore ?
+    /// Calculate and return the the ID of the message.
+    ///
+    /// TODO should not return bytes anymore ?
     pub fn id(&self) -> (MessageId, Vec<u8>) {
         let bytes = self.pack_new();
         let id = Blake2b256::digest(&bytes);
@@ -46,18 +53,22 @@ impl Message {
         (MessageId::new(id.into()), bytes)
     }
 
+    /// Return the ID of the network this message belongs to.
     pub fn network_id(&self) -> u64 {
         self.network_id
     }
 
+    /// Return the set of transactions that this message directly approves (the parents).
     pub fn parents(&self) -> &Parents {
         &self.parents
     }
 
+    /// Return the (optional) payload this message contains.
     pub fn payload(&self) -> &Option<Payload> {
         &self.payload
     }
 
+    // Return the PoW nonce for this message.
     pub fn nonce(&self) -> u64 {
         self.nonce
     }

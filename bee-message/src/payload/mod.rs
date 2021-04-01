@@ -1,6 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! The payload module defines the core data types for representing message payloads.
+
 pub mod indexation;
 pub mod milestone;
 pub mod receipt;

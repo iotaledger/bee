@@ -26,6 +26,7 @@ impl MessageId {
         bytes.into()
     }
 
+    /// Create a null message ID (all zeros).
     pub fn null() -> Self {
         Self([0u8; MESSAGE_ID_LENGTH])
     }
