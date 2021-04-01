@@ -141,7 +141,7 @@ impl RestApiConfigBuilder {
                 Protocol::Ip6(ip) => Some(IpAddr::V6(ip)),
                 _ => None,
             })
-            .unwrap_or_else(|| panic!("Unsupported address"));
+            .expect("Unsupported address");
 
         let port = multi_addr
             .iter()
