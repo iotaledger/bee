@@ -10,7 +10,7 @@ const DEFAULT_SESSION_TIMEOUT: u64 = 86400;
 const DEFAULT_USER: &str = "admin";
 const DEFAULT_PASSWORD_SALT: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 const DEFAULT_PASSWORD_HASH: &str = "0000000000000000000000000000000000000000000000000000000000000000";
-const DEFAULT_BIND_ADDRESSES: &str = "/ip4/0.0.0.0/tcp/8081";
+const DEFAULT_BIND_ADDRESS: &str = "/ip4/0.0.0.0/tcp/8081";
 
 #[derive(Default, Deserialize)]
 pub struct DashboardAuthConfigBuilder {
@@ -67,7 +67,7 @@ impl DashboardAuthConfig {
 
 #[derive(Default, Deserialize)]
 pub struct DashboardConfigBuilder {
-    bind_addresses: Option<Multiaddr>,
+    bind_address: Option<Multiaddr>,
     auth: Option<DashboardAuthConfigBuilder>,
 }
 
@@ -78,9 +78,9 @@ impl DashboardConfigBuilder {
 
     pub fn finish(self) -> DashboardConfig {
         let multi_addr = self
-            .bind_addresses
+            .bind_address
             //We made sure that the default value is valid and therefore parseable.
-            .unwrap_or_else(|| DEFAULT_BIND_ADDRESSES.parse().unwrap());
+            .unwrap_or_else(|| DEFAULT_BIND_ADDRESS.parse().unwrap());
         let address = multi_addr
             .iter()
             .find_map(|x| match x {

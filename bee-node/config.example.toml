@@ -44,7 +44,7 @@ status_interval       = 10
 milestone_sync_count  = 200
 
 [rest_api]
-bind_addresses        = "/ip4/0.0.0.0/tcp/14265"
+bind_address          = "/ip4/0.0.0.0/tcp/14265"
 feature_proof_of_work = true
 public_routes         = [
     "/health",
@@ -97,7 +97,7 @@ below_max_depth = 15
 address = "tcp://localhost:1883"
 
 [dashboard]
-bind_addresses  = "/ip4/0.0.0.0/tcp/8081"
+bind_address    = "/ip4/0.0.0.0/tcp/8081"
 [dashboard.auth]
 session_timeout = 86400
 user            = "admin"

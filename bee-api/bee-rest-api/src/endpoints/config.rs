@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, ToSocketAddrs};
 
-pub(crate) const DEFAULT_BIND_ADDRESSES: &str = "/ip4/0.0.0.0/tcp/14265";
+pub(crate) const DEFAULT_BIND_ADDRESS: &str = "/ip4/0.0.0.0/tcp/14265";
 
 // all available routes
 pub(crate) const ROUTE_ADD_PEER: &str = "/api/v1/peers";
@@ -70,7 +70,7 @@ pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: u64 = 2;
 /// REST API configuration builder.
 #[derive(Default, Deserialize)]
 pub struct RestApiConfigBuilder {
-    bind_addresses: Option<Multiaddr>,
+    bind_address: Option<Multiaddr>,
     public_routes: Option<Vec<String>>,
     allowed_ips: Option<Vec<IpAddr>>,
     feature_proof_of_work: Option<bool>,
@@ -84,10 +84,10 @@ impl RestApiConfigBuilder {
     }
 
     /// Sets the binding address for the REST API.
-    pub fn bind_addresses(mut self, addr: &str) -> Self {
+    pub fn bind_address(mut self, addr: &str) -> Self {
         match addr.parse() {
             Ok(addr) => {
-                self.bind_addresses.replace(addr);
+                self.bind_address.replace(addr);
             }
             Err(e) => panic!("Error parsing IP address: {:?}", e),
         }
@@ -121,9 +121,9 @@ impl RestApiConfigBuilder {
     /// Builds the REST API config.
     pub fn finish(self) -> RestApiConfig {
         let multi_addr = self
-            .bind_addresses
+            .bind_address
             //We made sure that the default value is valid and therefore parseable.
-            .unwrap_or_else(|| DEFAULT_BIND_ADDRESSES.parse().unwrap());
+            .unwrap_or_else(|| DEFAULT_BIND_ADDRESS.parse().unwrap());
         let address = multi_addr
             .iter()
             .find_map(|x| match x {
