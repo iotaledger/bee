@@ -9,24 +9,24 @@ use core::{convert::TryInto, str::FromStr};
 
 /// The length of the BLAKE2b-256 hash output.
 ///
-/// See https://www.blake2.net/ for more information.
+/// See <https://www.blake2.net/> for more information.
 pub const MESSAGE_ID_LENGTH: usize = 32;
 
 /// The BLAKE2b-256 hash of the byte contents of the message.
 ///
-/// Use crypto::hashes::Blake2b256::digest() to produce the hashed value.
+/// Use `crypto::hashes::Blake2b256::digest` to produce the hashed value.
 ///
-/// See https://www.blake2.net/ for more information.
+/// See <https://www.blake2.net/> for more information.
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct MessageId([u8; MESSAGE_ID_LENGTH]);
 
 impl MessageId {
-    /// Construct a new MessageId from the BLAKE2b-256 hash of a message.
+    /// Construct a new `MessageId` from the BLAKE2b-256 hash of a message.
     pub fn new(bytes: [u8; MESSAGE_ID_LENGTH]) -> Self {
         bytes.into()
     }
 
-    /// Create a null message ID (all zeros).
+    /// Create a null `MessageId` (all zeros).
     pub fn null() -> Self {
         Self([0u8; MESSAGE_ID_LENGTH])
     }

@@ -20,9 +20,10 @@ pub const MESSAGE_LENGTH_MIN: usize = 53;
 /// https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md#message-validation
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
 
-/// A Message is the object that nodes gossip around the network.
+/// A `Message` is the object that nodes gossip around the network.
 ///
-/// Spec: #iota-protocol-rfc-draft https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md
+/// Spec: #iota-protocol-rfc-draft
+/// <https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md>
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
@@ -38,7 +39,7 @@ pub struct Message {
 }
 
 impl Message {
-    /// Create a new [Message] builder.
+    /// Create a new [MessageBuilder], the only way to construct an instance of a `Message`.
     pub fn builder() -> MessageBuilder {
         MessageBuilder::new()
     }
@@ -132,6 +133,7 @@ impl Packable for Message {
     }
 }
 
+/// A `MessageBuilder` is how you construct a [Message].
 pub struct MessageBuilder<P: Provider = Miner> {
     network_id: Option<u64>,
     parents: Option<Parents>,

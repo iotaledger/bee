@@ -12,31 +12,32 @@ use ref_cast::RefCast;
 
 use core::ops::Deref;
 
-/// A SolidEntryPoint is a [MessageId] of a message even if we do not have them
-/// or their past in the database. The often come from a snapshot file and
-/// allow a node to solidify without needing the full tangle history.
+/// A SolidEntryPoint is a [`MessageId`](crate::MessageId) of a message even if we do not have them
+/// or their past in the database. The often come from a snapshot file and allow a node to solidify
+/// without needing the full tangle history.
 ///
-/// This is a type wrapper around a [MessageId] to differentiate it from
-/// a non-solidified message.
+/// This is a type wrapper around a [`MessageId`](crate::MessageId) to differentiate it from a
+/// non-solidified message.
 ///
-/// Spec: #iota-protocol-rfc https://github.com/iotaledger/protocol-rfcs/blob/master/text/0005-white-flag/0005-white-flag.md
+/// Spec: #iota-protocol-rfc
+/// <https://github.com/iotaledger/protocol-rfcs/blob/master/text/0005-white-flag/0005-white-flag.md>
 #[derive(RefCast)]
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SolidEntryPoint(MessageId);
 
 impl SolidEntryPoint {
-    /// Create a SolidEntryPoint from an existing [MessageId].
+    /// Create a `SolidEntryPoint` from an existing `MessageId`.
     pub fn new(message_id: MessageId) -> Self {
         message_id.into()
     }
 
-    /// Create a null SolidEntryPoint (the zero-message).
+    /// Create a null `SolidEntryPoint` (the zero-message).
     pub fn null() -> Self {
         Self(MessageId::null())
     }
 
-    /// Returns the underlying [MessageId].
+    /// Returns the underlying `MessageId`.
     pub fn message_id(&self) -> &MessageId {
         &self.0
     }
