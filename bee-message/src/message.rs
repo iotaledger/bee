@@ -17,7 +17,7 @@ use std::sync::{atomic::AtomicBool, Arc};
 pub const MESSAGE_LENGTH_MIN: usize = 53;
 
 /// The maximum number of bytes in a message (1024*32).
-/// https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md#message-validation
+/// <https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md#message-validation>
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
 
 /// A `Message` is the object that nodes gossip around the network.
