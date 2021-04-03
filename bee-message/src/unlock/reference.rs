@@ -7,11 +7,12 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::convert::TryFrom;
 
-/// A ReferenceUnlock is an UnlockBlock that refers to a SignatureUnlock.
+/// A `ReferenceUnlock` is an [`UnlockBlock`](crate::unlock::UnlockBlock) that refers to a
+/// [`SignatureUnlock`](crate::unlock::SignatureUnlock).
 ///
-/// It consists of an index to a previous UnlockBlock which MUST be a
-/// SignatureUnlock. Referring to another ReferenceUnlock is invalid and
-/// will be rejected by the node.
+/// It consists of an index to a previous `UnlockBlock` which **must** be a `SignatureUnlock`.
+/// Referring to another `ReferenceUnlock` is invalid and will be rejected by the node's protocol
+/// validation.
 ///
 /// Spec: #iota-protocol-rfc-draft
 /// <https://github.com/luca-moser/protocol-rfcs/blob/signed-tx-payload/text/0000-transaction-payload/0000-transaction-payload.md#reference-unlock-block>
@@ -20,16 +21,16 @@ use core::convert::TryFrom;
 pub struct ReferenceUnlock(u16);
 
 impl ReferenceUnlock {
-    /// The kind of UnlockBlock, defined by the protocol.
+    /// The kind of UnlockBlock: `1` as defined by the protocol.
     pub const KIND: u8 = 1;
 
-    /// Create a new ReferenceUnlock from an index.
+    /// Create a new `ReferenceUnlock` from an index.
     ///
-    /// The index must within the range of valid indices as defined by the protocol.
+    /// The index must within the range of valid indices as defined by the protocol, and must refer
+    /// to a *previous* unlock block (not a later one).
     ///
-    /// Validation that the referenced block does not refer to another ReferenceUnlock is not
-    /// performed at this point, thus it is the responsibility of the caller to ensure that
-    /// the reference is semantically valid.
+    /// The caller is responsible for validating that the referenced block is a previous
+    /// `SignatureUnlock` block.
     pub fn new(index: u16) -> Result<Self, Error> {
         if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
             return Err(Error::InvalidReferenceIndex(index));
@@ -38,7 +39,7 @@ impl ReferenceUnlock {
         Ok(Self(index))
     }
 
-    /// Return the underlying UnlockBlock index that this ReferenceUnlock refers to.
+    /// Return the underlying UnlockBlock index that this `ReferenceUnlock` refers to.
     pub fn index(&self) -> u16 {
         self.0
     }

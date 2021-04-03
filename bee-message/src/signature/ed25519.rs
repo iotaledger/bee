@@ -19,9 +19,10 @@ pub struct Ed25519Signature {
 }
 
 impl Ed25519Signature {
-    /// The kind of unlock signature, defined by the protocol.
+    /// The kind of unlock signature: `0` as defined by the protocol.
     pub const KIND: u8 = 0;
 
+    /// Construct a signature from it's public key and signature.
     pub fn new(public_key: [u8; ED25519_PUBLIC_KEY_LENGTH], signature: Box<[u8]>) -> Self {
         Self { public_key, signature }
     }

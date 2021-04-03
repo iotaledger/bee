@@ -16,6 +16,13 @@ use bee_common::{
 
 use alloc::{boxed::Box, vec::Vec};
 
+/// A regular transaction. It includes:
+/// * inputs
+/// * outputs
+/// * (optional) payload
+///
+/// Spec: #iota-protocol-rfc-draft
+/// <https://github.com/luca-moser/protocol-rfcs/blob/signed-tx-payload/text/0000-transaction-payload/0000-transaction-payload.md#serialized-layout>
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RegularEssence {
@@ -25,20 +32,25 @@ pub struct RegularEssence {
 }
 
 impl RegularEssence {
+    /// The kind of essence: `0` as defined by the protocol.
     pub const KIND: u8 = 0;
 
+    /// Create a new builder for constructing a `RegularEssence`.
     pub fn builder() -> RegularEssenceBuilder {
         RegularEssenceBuilder::new()
     }
 
+    /// Return the inputs to the transaction.
     pub fn inputs(&self) -> &[Input] {
         &self.inputs
     }
 
+    /// Return the outputs from the transaction.
     pub fn outputs(&self) -> &[Output] {
         &self.outputs
     }
 
+    /// Return the (optional) payload from the transaction.
     pub fn payload(&self) -> &Option<Payload> {
         &self.payload
     }

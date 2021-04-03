@@ -31,10 +31,11 @@ pub enum SignatureUnlock {
 }
 
 impl SignatureUnlock {
-    /// The kind of unlock block used to unlock an input (defined by spec).
+    /// The kind of unlock block used to unlock an input: `0` as defined by the protocol.
     pub const KIND: u8 = 0;
 
-    /// The kind of the signature used to unlock a transaction input.
+    /// The kind of the signature used to unlock a transaction input. Defined by the underlying
+    /// signature type.
     pub fn kind(&self) -> u8 {
         match self {
             Self::Ed25519(_) => Ed25519Signature::KIND,
