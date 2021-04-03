@@ -7,13 +7,29 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::convert::TryFrom;
 
+/// A ReferenceUnlock is an UnlockBlock that refers to a SignatureUnlock.
+///
+/// It consists of an index to a previous UnlockBlock which MUST be a
+/// SignatureUnlock. Referring to another ReferenceUnlock is invalid and
+/// will be rejected by the node.
+///
+/// Spec: #iota-protocol-rfc-draft
+/// <https://github.com/luca-moser/protocol-rfcs/blob/signed-tx-payload/text/0000-transaction-payload/0000-transaction-payload.md#reference-unlock-block>
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReferenceUnlock(u16);
 
 impl ReferenceUnlock {
+    /// The kind of UnlockBlock, defined by the protocol.
     pub const KIND: u8 = 1;
 
+    /// Create a new ReferenceUnlock from an index.
+    ///
+    /// The index must within the range of valid indices as defined by the protocol.
+    ///
+    /// Validation that the referenced block does not refer to another ReferenceUnlock is not
+    /// performed at this point, thus it is the responsibility of the caller to ensure that
+    /// the reference is semantically valid.
     pub fn new(index: u16) -> Result<Self, Error> {
         if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
             return Err(Error::InvalidReferenceIndex(index));
@@ -22,6 +38,7 @@ impl ReferenceUnlock {
         Ok(Self(index))
     }
 
+    /// Return the underlying UnlockBlock index that this ReferenceUnlock refers to.
     pub fn index(&self) -> u16 {
         self.0
     }
