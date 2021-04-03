@@ -46,7 +46,9 @@ impl Message {
 
     /// Calculate and return the the ID of the message.
     ///
-    /// TODO should not return bytes anymore ?
+    /// The ID is obtained by taking the Blake2b256 hash of the message contents.
+    ///
+    /// TODO: should not return bytes anymore ?
     pub fn id(&self) -> (MessageId, Vec<u8>) {
         let bytes = self.pack_new();
         let id = Blake2b256::digest(&bytes);
@@ -55,6 +57,8 @@ impl Message {
     }
 
     /// Return the ID of the network this message belongs to.
+    ///
+    /// This is used to indicate if the message is for the mainnet, testnet, or a private net.
     pub fn network_id(&self) -> u64 {
         self.network_id
     }
@@ -69,7 +73,7 @@ impl Message {
         &self.payload
     }
 
-    // Return the PoW nonce for this message.
+    /// Return the PoW nonce for this message.
     pub fn nonce(&self) -> u64 {
         self.nonce
     }
