@@ -46,7 +46,9 @@ fn new_invalid_not_unique() {
 
 #[test]
 fn packed_len() {
-    assert_eq!(Parents::new(rand_message_ids(5)).unwrap().packed_len(), 1 + 5 * 32);
+    let parents = Parents::new(rand_message_ids(5)).unwrap();
+    assert_eq!(parents.packed_len(), 1 + 5 * 32);
+    assert_eq!(parents.packed_len(), parents.pack_new().len());
 }
 
 #[test]
