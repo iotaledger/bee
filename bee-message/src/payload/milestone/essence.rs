@@ -28,6 +28,8 @@ pub struct MilestonePayloadEssence {
     timestamp: u64,
     parents: Parents,
     merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
+    next_pow_score: u32,
+    next_pow_score_milestone_index: u32,
     public_keys: Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>,
     receipt: Option<Payload>,
 }
@@ -38,9 +40,20 @@ impl MilestonePayloadEssence {
         timestamp: u64,
         parents: Parents,
         merkle_proof: [u8; MILESTONE_MERKLE_PROOF_LENGTH],
+        next_pow_score: u32,
+        next_pow_score_milestone_index: u32,
         public_keys: Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]>,
         receipt: Option<Payload>,
     ) -> Result<Self, Error> {
+        if next_pow_score == 0 && next_pow_score_milestone_index != 0
+            || next_pow_score != 0 && next_pow_score_milestone_index <= *index
+        {
+            return Err(Error::InvalidPowScoreValues(
+                next_pow_score,
+                next_pow_score_milestone_index,
+            ));
+        }
+
         if !MILESTONE_PUBLIC_KEY_COUNT_RANGE.contains(&public_keys.len()) {
             return Err(Error::MilestoneInvalidPublicKeyCount(public_keys.len()));
         }
@@ -59,6 +72,8 @@ impl MilestonePayloadEssence {
             timestamp,
             parents,
             merkle_proof,
+            next_pow_score,
+            next_pow_score_milestone_index,
             public_keys,
             receipt,
         })
@@ -78,6 +93,14 @@ impl MilestonePayloadEssence {
 
     pub fn merkle_proof(&self) -> &[u8] {
         &self.merkle_proof
+    }
+
+    pub fn next_pow_score(&self) -> u32 {
+        self.next_pow_score
+    }
+
+    pub fn next_pow_score_milestone_index(&self) -> u32 {
+        self.next_pow_score_milestone_index
     }
 
     pub fn public_keys(&self) -> &Vec<[u8; MILESTONE_PUBLIC_KEY_LENGTH]> {
@@ -101,6 +124,8 @@ impl Packable for MilestonePayloadEssence {
             + self.timestamp.packed_len()
             + self.parents.packed_len()
             + MILESTONE_MERKLE_PROOF_LENGTH
+            + self.next_pow_score.packed_len()
+            + self.next_pow_score_milestone_index.packed_len()
             + 0u8.packed_len()
             + self.public_keys.len() * MILESTONE_PUBLIC_KEY_LENGTH
             + option_payload_packed_len(self.receipt.as_ref())
@@ -111,6 +136,8 @@ impl Packable for MilestonePayloadEssence {
         self.timestamp.pack(writer)?;
         self.parents.pack(writer)?;
         writer.write_all(&self.merkle_proof)?;
+        self.next_pow_score.pack(writer)?;
+        self.next_pow_score_milestone_index.pack(writer)?;
         (self.public_keys.len() as u8).pack(writer)?;
         for public_key in &self.public_keys {
             writer.write_all(public_key)?;
@@ -128,6 +155,9 @@ impl Packable for MilestonePayloadEssence {
         let mut merkle_proof = [0u8; MILESTONE_MERKLE_PROOF_LENGTH];
         reader.read_exact(&mut merkle_proof)?;
 
+        let next_pow_score = u32::unpack(reader)?;
+        let next_pow_score_milestone_index = u32::unpack(reader)?;
+
         let public_keys_len = u8::unpack(reader)? as usize;
         let mut public_keys = Vec::with_capacity(public_keys_len);
         for _ in 0..public_keys_len {
@@ -140,6 +170,15 @@ impl Packable for MilestonePayloadEssence {
 
         // TODO builder ?
 
-        Self::new(index, timestamp, parents, merkle_proof, public_keys, receipt)
+        Self::new(
+            index,
+            timestamp,
+            parents,
+            merkle_proof,
+            next_pow_score,
+            next_pow_score_milestone_index,
+            public_keys,
+            receipt,
+        )
     }
 }

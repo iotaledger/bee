@@ -236,6 +236,10 @@ pub struct MilestonePayloadDto {
     pub parents: Vec<String>,
     #[serde(rename = "inclusionMerkleProof")]
     pub inclusion_merkle_proof: String,
+    #[serde(rename = "nextPowScore")]
+    pub next_pow_score: u32,
+    #[serde(rename = "nextPowScoreMilestoneIndex")]
+    pub next_pow_score_milestone_index: u32,
     #[serde(rename = "publicKeys")]
     pub public_keys: Vec<String>,
     pub receipt: Option<PayloadDto>,
@@ -699,6 +703,8 @@ impl TryFrom<&MilestonePayload> for MilestonePayloadDto {
             timestamp: value.essence().timestamp(),
             parents: value.essence().parents().iter().map(|p| p.to_string()).collect(),
             inclusion_merkle_proof: hex::encode(value.essence().merkle_proof()),
+            next_pow_score: value.essence().next_pow_score(),
+            next_pow_score_milestone_index: value.essence().next_pow_score_milestone_index(),
             public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
             receipt: value.essence().receipt().map(TryInto::try_into).transpose()?,
             signatures: value.signatures().iter().map(hex::encode).collect(),
@@ -733,6 +739,8 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
                 })?;
                 buf
             };
+            let next_pow_score = value.next_pow_score;
+            let next_pow_score_milestone_index = value.next_pow_score_milestone_index;
             let mut public_keys = Vec::new();
             for v in &value.public_keys {
                 let key = {
@@ -757,6 +765,8 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
                 timestamp,
                 Parents::new(parent_ids).map_err(|e| e.to_string())?,
                 merkle_proof,
+                next_pow_score,
+                next_pow_score_milestone_index,
                 public_keys,
                 receipt,
             )

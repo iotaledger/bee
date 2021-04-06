@@ -50,6 +50,7 @@ pub enum Error {
     SignaturePublicKeyMismatch(String, String),
     InvalidSignature,
     InvalidTailTransactionHash,
+    InvalidPowScoreValues(u32, u32),
 }
 
 impl std::error::Error for Error {}
@@ -158,6 +159,11 @@ impl fmt::Display for Error {
             }
             Error::InvalidSignature => write!(f, "Invalid signature provided."),
             Error::InvalidTailTransactionHash => write!(f, "Invalid tail transaction hash."),
+            Error::InvalidPowScoreValues(nps, npsmi) => write!(
+                f,
+                "Invalid pow score values: next pow score {} and next pow score milestone index {}.",
+                nps, npsmi
+            ),
         }
     }
 }
