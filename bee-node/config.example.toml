@@ -91,6 +91,7 @@ interval_unsynced = 1000
 path = "./storage/alphanet"
 
 [tangle]
+below_max_depth = 15
 [tangle.pruning]
 enabled = true
 delay   = 60480

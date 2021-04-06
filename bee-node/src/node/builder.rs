@@ -198,7 +198,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         .await;
 
         info!("Initializing tangle...");
-        let this = bee_tangle::init::<BeeNode<B>>(&config.snapshot, &config.tangle.pruning(), this);
+        let this = bee_tangle::init::<BeeNode<B>>(&config.snapshot, &config.tangle, this);
 
         let mut this = this.with_worker::<VersionChecker>();
         this = this.with_worker_cfg::<Mqtt>(config.mqtt);

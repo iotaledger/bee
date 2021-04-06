@@ -23,7 +23,6 @@ mod vertex;
 
 pub use ms_tangle::MsTangle;
 pub use tangle::{Hooks, Tangle};
-pub use urts::BELOW_MAX_DEPTH;
 pub use worker::TangleWorker;
 
 use crate::vec_set::VecSet;
@@ -48,13 +47,13 @@ impl Deref for MessageRef {
 
 pub fn init<N: Node>(
     snapshot_config: &SnapshotConfig,
-    pruning_config: &pruning::PruningConfig,
+    tangle_config: &config::TangleConfig,
     node_builder: N::Builder,
 ) -> N::Builder
 where
     N::Backend: storage::StorageBackend,
 {
     node_builder
-        .with_worker::<TangleWorker>()
-        .with_worker_cfg::<pruning::PrunerWorker>((snapshot_config.clone(), pruning_config.clone()))
+        .with_worker_cfg::<TangleWorker>(tangle_config.clone())
+        .with_worker_cfg::<pruning::PrunerWorker>((snapshot_config.clone(), tangle_config.pruning().clone()))
 }

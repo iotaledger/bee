@@ -131,15 +131,15 @@ impl UrtsTipPool {
         debug!("Non-lazy tips {}", self.non_lazy_tips.len());
     }
 
-    async fn tip_score<B: StorageBackend>(&self, tangle: &MsTangle<B>, hash: &MessageId) -> Score {
+    async fn tip_score<B: StorageBackend>(&self, tangle: &MsTangle<B>, message_id: &MessageId) -> Score {
         // in case the tip was pruned by the node, consider tip as lazy
-        if !tangle.contains(hash).await {
+        if !tangle.contains(message_id).await {
             return Score::Lazy;
         }
 
         let smi = *tangle.get_solid_milestone_index();
-        let omrsi = *tangle.omrsi(&hash).await.unwrap().index();
-        let ymrsi = *tangle.ymrsi(&hash).await.unwrap().index();
+        let omrsi = *tangle.omrsi(&message_id).await.unwrap().index();
+        let ymrsi = *tangle.ymrsi(&message_id).await.unwrap().index();
 
         if (smi - ymrsi) > YMRSI_DELTA {
             return Score::Lazy;

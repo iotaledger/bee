@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    config::TangleConfig,
     metadata::{IndexId, MessageMetadata},
     storage::StorageBackend,
     tangle::{Hooks, Tangle, DEFAULT_CACHE_LEN},
@@ -83,6 +84,7 @@ impl<B: StorageBackend> StorageHooks<B> {
 
 /// Milestone-based Tangle.
 pub struct MsTangle<B> {
+    config: TangleConfig,
     pub(crate) inner: Tangle<MessageMetadata, StorageHooks<B>>,
     milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
     pub(crate) solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
@@ -104,8 +106,9 @@ impl<B> Deref for MsTangle<B> {
 }
 
 impl<B: StorageBackend> MsTangle<B> {
-    pub fn new(storage: ResourceHandle<B>) -> Self {
+    pub fn new(config: TangleConfig, storage: ResourceHandle<B>) -> Self {
         Self {
+            config,
             inner: Tangle::new(StorageHooks { storage }),
             milestones: Default::default(),
             solid_entry_points: Default::default(),
@@ -121,6 +124,10 @@ impl<B: StorageBackend> MsTangle<B> {
 
     pub async fn shutdown(self) {
         // TODO: Write back changes by calling self.inner.shutdown().await
+    }
+
+    pub fn config(&self) -> &TangleConfig {
+        &self.config
     }
 
     pub async fn insert(&self, message: Message, hash: MessageId, metadata: MessageMetadata) -> Option<MessageRef> {
