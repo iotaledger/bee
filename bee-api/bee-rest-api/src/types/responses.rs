@@ -83,6 +83,16 @@ pub struct InfoResponse {
     pub network_id: String,
     #[serde(rename = "bech32HRP")]
     pub bech32_hrp: String,
+    #[serde(rename = "minPowScore")]
+    pub min_pow_score: f64,
+    #[serde(rename = "messagesPerSecond")]
+    pub messages_per_second: f64,
+    #[serde(rename = "referencedMessagesPerSecond")]
+    pub referenced_messages_per_second: f64,
+    #[serde(rename = "referencedRate")]
+    pub referenced_rate: f64,
+    #[serde(rename = "latestMilestoneTimestamp")]
+    pub latest_milestone_timestamp: u64,
     #[serde(rename = "latestMilestoneIndex")]
     pub latest_milestone_index: u32,
     #[serde(rename = "confirmedMilestoneIndex")]
@@ -90,8 +100,6 @@ pub struct InfoResponse {
     #[serde(rename = "pruningIndex")]
     pub pruning_index: u32,
     pub features: Vec<String>,
-    #[serde(rename = "minPowScore")]
-    pub min_pow_score: f64,
 }
 
 impl BodyInner for InfoResponse {}
