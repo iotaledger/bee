@@ -7,8 +7,9 @@ mod bct;
 mod bct_curlp;
 
 use crate::ternary::sponge::{CurlP, CurlPRounds, Sponge, HASH_LENGTH};
-use bct::{BCTrit, BCTritBuf};
-use bct_curlp::BCTCurlP;
+
+use bct::{BcTrit, BcTritBuf};
+use bct_curlp::BctCurlP;
 
 use bee_ternary::{
     raw::{RawEncoding, RawEncodingBuf},
@@ -28,13 +29,13 @@ pub struct BatchHasher<B: RawEncodingBuf> {
     /// The trits of the inputs before being interleaved.
     trit_inputs: Vec<TritBuf<B>>,
     /// An interleaved representation of the input trits.
-    bct_inputs: BCTritBuf,
+    bct_inputs: BcTritBuf,
     /// An interleaved representation of the output trits.
-    bct_hashes: BCTritBuf,
+    bct_hashes: BcTritBuf,
     /// A buffer for demultiplexing.
     buf_demux: TritBuf,
     /// The CurlP hasher for binary coded trits.
-    bct_curlp: BCTCurlP,
+    bct_curlp: BctCurlP,
     /// The regular CurlP hasher.
     curlp: CurlP,
 }
@@ -51,10 +52,10 @@ where
     pub fn new(input_length: usize, rounds: CurlPRounds) -> Self {
         Self {
             trit_inputs: Vec::with_capacity(BATCH_SIZE),
-            bct_inputs: BCTritBuf::zeros(input_length),
-            bct_hashes: BCTritBuf::zeros(HASH_LENGTH),
+            bct_inputs: BcTritBuf::zeros(input_length),
+            bct_hashes: BcTritBuf::zeros(HASH_LENGTH),
             buf_demux: TritBuf::zeros(HASH_LENGTH),
-            bct_curlp: BCTCurlP::new(rounds),
+            bct_curlp: BctCurlP::new(rounds),
             curlp: CurlP::new(rounds),
         }
     }
@@ -100,7 +101,7 @@ where
         let count = self.trit_inputs.len();
         for i in 0..self.bct_inputs.len() {
             // This is safe because `i < self.bct_inputs.len()`.
-            let BCTrit(lo, hi) = unsafe { self.bct_inputs.get_unchecked_mut(i) };
+            let BcTrit(lo, hi) = unsafe { self.bct_inputs.get_unchecked_mut(i) };
 
             for j in 0..count {
                 // this is safe because `j < self.trit_inputs.len()` and
