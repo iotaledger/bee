@@ -6,6 +6,7 @@
 // #![warn(missing_docs)]
 
 pub mod config;
+pub mod event;
 pub mod flags;
 pub mod metadata;
 pub mod ms_tangle;

@@ -10,8 +10,7 @@ use crate::{
 };
 
 use bee_ledger::consensus::event::MilestoneConfirmed;
-use bee_protocol::workers::event::LatestMilestoneChanged;
-use bee_tangle::MsTangle;
+use bee_tangle::{event::LatestMilestoneChanged, MsTangle};
 
 use serde::Serialize;
 

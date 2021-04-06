@@ -10,8 +10,8 @@ use config::MqttConfig;
 use manager::MqttManager;
 use topics::*;
 
-use bee_protocol::workers::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;

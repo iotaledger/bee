@@ -4,9 +4,9 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        event::LatestSolidMilestoneChanged, helper, peer::PeerManager, storage::StorageBackend, IndexUpdaterWorker,
-        IndexUpdaterWorkerEvent, MessageRequesterWorker, MetricsWorker, MilestoneRequesterWorker, PeerManagerResWorker,
-        RequestedMessages, RequestedMilestones,
+        helper, peer::PeerManager, storage::StorageBackend, IndexUpdaterWorker, IndexUpdaterWorkerEvent,
+        MessageRequesterWorker, MetricsWorker, MilestoneRequesterWorker, PeerManagerResWorker, RequestedMessages,
+        RequestedMilestones,
     },
 };
 
@@ -16,7 +16,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{traversal, MsTangle, TangleWorker};
+use bee_tangle::{event::LatestSolidMilestoneChanged, traversal, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::StreamExt;

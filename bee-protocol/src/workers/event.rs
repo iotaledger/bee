@@ -1,22 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
-    MessageId,
-};
-
-#[derive(Clone)]
-pub struct LatestMilestoneChanged {
-    pub index: MilestoneIndex,
-    pub milestone: Milestone,
-}
-
-#[derive(Clone)]
-pub struct LatestSolidMilestoneChanged {
-    pub index: MilestoneIndex,
-    pub milestone: Milestone,
-}
+use bee_message::MessageId;
 
 #[derive(Clone)]
 pub struct MessageProcessed(pub MessageId);
