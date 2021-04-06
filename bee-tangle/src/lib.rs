@@ -10,14 +10,13 @@ pub mod event;
 pub mod flags;
 pub mod metadata;
 pub mod ms_tangle;
+pub mod pruning;
 pub mod storage;
 pub mod traversal;
 pub mod unconfirmed_message;
 pub mod urts;
 pub mod vec_set;
 pub mod worker;
-
-pub(crate) mod pruning;
 
 mod tangle;
 mod vertex;
@@ -31,6 +30,7 @@ use crate::vec_set::VecSet;
 
 use bee_message::Message;
 use bee_runtime::node::{Node, NodeBuilder};
+use bee_snapshot::config::SnapshotConfig;
 
 use std::{ops::Deref, sync::Arc};
 
@@ -46,9 +46,15 @@ impl Deref for MessageRef {
     }
 }
 
-pub fn init<N: Node>(node_builder: N::Builder) -> N::Builder
+pub fn init<N: Node>(
+    snapshot_config: &SnapshotConfig,
+    pruning_config: &pruning::PruningConfig,
+    node_builder: N::Builder,
+) -> N::Builder
 where
     N::Backend: storage::StorageBackend,
 {
-    node_builder.with_worker::<TangleWorker>()
+    node_builder
+        .with_worker::<TangleWorker>()
+        .with_worker_cfg::<pruning::PrunerWorker>((snapshot_config.clone(), pruning_config.clone()))
 }

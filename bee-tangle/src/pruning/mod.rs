@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod config;
+mod constants;
+mod worker;
 
 pub use config::{PruningConfig, PruningConfigBuilder};
-
-// use crate::constants::{ADDITIONAL_PRUNING_THRESHOLD, SOLID_ENTRY_POINT_CHECK_THRESHOLD_PAST};
+pub use worker::{PrunerWorker, PrunerWorkerEvent};
 
 // use bee_protocol::{
 //     tangle::{helper, MsTangle},
