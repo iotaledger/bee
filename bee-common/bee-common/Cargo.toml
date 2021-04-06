@@ -14,8 +14,13 @@ homepage = "https://www.iota.org"
 chrono = "0.4"
 fern = { version = "0.6", features = ["colored"] }
 log = { version = "0.4", features = ["serde"] }
+rand = { version = "0.8", optional = true }
+rust-argon2 = { version = "0.8", optional = true }
 serde = { version = "1.0", features = ["derive" ] }
 thiserror = "1.0"
 
 [build-dependencies]
 autocfg = "1.0"
+
+[features]
+password = [ "rand", "rust-argon2" ]

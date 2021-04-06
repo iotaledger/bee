@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `impl<const N: usize> Packable for [u8; N]`;
 - `Packable::unpack_inner`;
 - `Packable::unpack_unchecked`;
+- `password` module;
 
 ### Changed
 
