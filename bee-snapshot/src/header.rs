@@ -110,23 +110,30 @@ impl Packable for SnapshotHeader {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let version = u8::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let version = u8::unpack_inner::<R, CHECK>(reader)?;
 
-        if SNAPSHOT_VERSION != version {
+        if CHECK && SNAPSHOT_VERSION != version {
             return Err(Self::Error::UnsupportedVersion(SNAPSHOT_VERSION, version));
         }
 
-        let kind = Kind::unpack(reader)?;
-        let timestamp = u64::unpack(reader)?;
-        let network_id = u64::unpack(reader)?;
-        let sep_index = MilestoneIndex::unpack(reader)?;
-        let ledger_index = MilestoneIndex::unpack(reader)?;
-        let sep_count = u64::unpack(reader)?;
-        let output_count = if kind == Kind::Full { u64::unpack(reader)? } else { 0 };
-        let milestone_diff_count = u64::unpack(reader)?;
+        let kind = Kind::unpack_inner::<R, CHECK>(reader)?;
+        let timestamp = u64::unpack_inner::<R, CHECK>(reader)?;
+        let network_id = u64::unpack_inner::<R, CHECK>(reader)?;
+        let sep_index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let ledger_index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let sep_count = u64::unpack_inner::<R, CHECK>(reader)?;
+        let output_count = if kind == Kind::Full {
+            u64::unpack_inner::<R, CHECK>(reader)?
+        } else {
+            0
+        };
+        let milestone_diff_count = u64::unpack_inner::<R, CHECK>(reader)?;
         let (treasury_output_milestone_id, treasury_output_amount) = if kind == Kind::Full {
-            (MilestoneId::unpack(reader)?, u64::unpack(reader)?)
+            (
+                MilestoneId::unpack_inner::<R, CHECK>(reader)?,
+                u64::unpack_inner::<R, CHECK>(reader)?,
+            )
         } else {
             (MilestoneId::null(), 0)
         };

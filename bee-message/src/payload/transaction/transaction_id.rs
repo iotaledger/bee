@@ -71,7 +71,7 @@ impl Packable for TransactionId {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let mut bytes = [0u8; TRANSACTION_ID_LENGTH];
         reader.read_exact(&mut bytes)?;
 

@@ -16,7 +16,7 @@ use std::collections::HashMap;
 const DB_DIRECTORY: &str = "./tests/database/solid_entry_point_to_milestone_index";
 
 #[tokio::test]
-async fn access() {
+async fn solid_entry_point_to_milestone_index_access() {
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 
     let config = RocksDbConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
@@ -24,27 +24,21 @@ async fn access() {
 
     let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
 
-    assert!(
-        !Exist::<SolidEntryPoint, MilestoneIndex>::exist(&storage, &sep)
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(&storage, &sep)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist(&storage, &sep)
+        .await
+        .unwrap());
+    assert!(Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(&storage, &sep)
+        .await
+        .unwrap()
+        .is_none());
 
     Insert::<SolidEntryPoint, MilestoneIndex>::insert(&storage, &sep, &index)
         .await
         .unwrap();
 
-    assert!(
-        Exist::<SolidEntryPoint, MilestoneIndex>::exist(&storage, &sep)
-            .await
-            .unwrap()
-    );
+    assert!(Exist::<SolidEntryPoint, MilestoneIndex>::exist(&storage, &sep)
+        .await
+        .unwrap());
     assert_eq!(
         Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(&storage, &sep)
             .await
@@ -57,17 +51,13 @@ async fn access() {
         .await
         .unwrap();
 
-    assert!(
-        !Exist::<SolidEntryPoint, MilestoneIndex>::exist(&storage, &sep)
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(&storage, &sep)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist(&storage, &sep)
+        .await
+        .unwrap());
+    assert!(Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(&storage, &sep)
+        .await
+        .unwrap()
+        .is_none());
 
     let mut batch = Storage::batch_begin();
 

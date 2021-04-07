@@ -48,7 +48,7 @@ impl Packable for Ed25519Signature {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let mut public_key_bytes = [0u8; ED25519_PUBLIC_KEY_LENGTH];
         reader.read_exact(&mut public_key_bytes)?;
 

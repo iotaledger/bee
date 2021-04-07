@@ -108,7 +108,7 @@ impl Packable for Ed25519Address {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let mut bytes = [0u8; ED25519_ADDRESS_LENGTH];
         reader.read_exact(&mut bytes)?;
 

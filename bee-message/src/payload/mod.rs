@@ -116,13 +116,13 @@ impl Packable for Payload {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u32::unpack(reader)? {
-            TransactionPayload::KIND => TransactionPayload::unpack(reader)?.into(),
-            MilestonePayload::KIND => MilestonePayload::unpack(reader)?.into(),
-            IndexationPayload::KIND => IndexationPayload::unpack(reader)?.into(),
-            ReceiptPayload::KIND => ReceiptPayload::unpack(reader)?.into(),
-            TreasuryTransactionPayload::KIND => TreasuryTransactionPayload::unpack(reader)?.into(),
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(match u32::unpack_inner::<R, CHECK>(reader)? {
+            TransactionPayload::KIND => TransactionPayload::unpack_inner::<R, CHECK>(reader)?.into(),
+            MilestonePayload::KIND => MilestonePayload::unpack_inner::<R, CHECK>(reader)?.into(),
+            IndexationPayload::KIND => IndexationPayload::unpack_inner::<R, CHECK>(reader)?.into(),
+            ReceiptPayload::KIND => ReceiptPayload::unpack_inner::<R, CHECK>(reader)?.into(),
+            TreasuryTransactionPayload::KIND => TreasuryTransactionPayload::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidPayloadKind(k)),
         })
     }
@@ -143,11 +143,13 @@ pub fn option_payload_pack<W: Write>(writer: &mut W, payload: Option<&Payload>) 
     Ok(())
 }
 
-pub fn option_payload_unpack<R: Read + ?Sized>(reader: &mut R) -> Result<(usize, Option<Payload>), Error> {
-    let payload_len = u32::unpack(reader)? as usize;
+pub fn option_payload_unpack<R: Read + ?Sized, const CHECK: bool>(
+    reader: &mut R,
+) -> Result<(usize, Option<Payload>), Error> {
+    let payload_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
 
     if payload_len > 0 {
-        let payload = Payload::unpack(reader)?;
+        let payload = Payload::unpack_inner::<R, CHECK>(reader)?;
         if payload_len != payload.packed_len() {
             Err(Error::InvalidPayloadLength(payload_len, payload.packed_len()))
         } else {

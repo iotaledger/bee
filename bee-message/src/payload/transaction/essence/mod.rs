@@ -60,9 +60,9 @@ impl Packable for Essence {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack(reader)? {
-            RegularEssence::KIND => RegularEssence::unpack(reader)?.into(),
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
+            RegularEssence::KIND => RegularEssence::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidEssenceKind(k)),
         })
     }

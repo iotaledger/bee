@@ -18,7 +18,7 @@ use std::collections::HashMap;
 const DB_DIRECTORY: &str = "./tests/database/message_id_to_metadata";
 
 #[tokio::test]
-async fn access() {
+async fn message_id_to_metadata_access() {
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 
     let config = RocksDbConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();

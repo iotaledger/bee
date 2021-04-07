@@ -16,7 +16,7 @@ use std::collections::HashMap;
 const DB_DIRECTORY: &str = "./tests/database/spent_to_treasury_output";
 
 #[tokio::test]
-async fn access() {
+async fn spent_to_treasury_output_access() {
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 
     let config = RocksDbConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
@@ -29,13 +29,11 @@ async fn access() {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<bool, Vec<TreasuryOutput>>::fetch(&storage, &spent)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<bool, Vec<TreasuryOutput>>::fetch(&storage, &spent)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     Insert::<(bool, TreasuryOutput), ()>::insert(&storage, &(spent, treasury_output.clone()), &())
         .await
@@ -63,13 +61,11 @@ async fn access() {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<bool, Vec<TreasuryOutput>>::fetch(&storage, &spent)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<bool, Vec<TreasuryOutput>>::fetch(&storage, &spent)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     let mut batch = Storage::batch_begin();
 

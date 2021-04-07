@@ -25,8 +25,8 @@ impl Packable for StorageHealth {
         (*self as u8).pack(writer)
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack(reader)? {
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
             0 => StorageHealth::Healthy,
             1 => StorageHealth::Unhealthy,
             _ => panic!("Unhandled"),
