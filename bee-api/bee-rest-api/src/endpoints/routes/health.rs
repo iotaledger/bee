@@ -20,8 +20,8 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-const HEALTH_CONFIRMED_THRESHOLD: u32 = 2;
-const HEALTH_MILESTONE_MAX_AGE: u64 = 5 * 60;
+const HEALTH_CONFIRMED_THRESHOLD: u32 = 2; // in milestones
+const HEALTH_MILESTONE_AGE_MAX: u64 = 5 * 60; // in seconds
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     warp::path("health").and(warp::path::end())
@@ -68,7 +68,7 @@ pub async fn is_healthy<B: StorageBackend>(tangle: &MsTangle<B>, peer_manager: &
                 .expect("Clock may have gone backwards")
                 .as_secs() as u64)
                 .saturating_sub(milestone.timestamp())
-                <= HEALTH_MILESTONE_MAX_AGE
+                <= HEALTH_MILESTONE_AGE_MAX
         }
         None => false,
     }
