@@ -6,7 +6,7 @@ mod constants;
 mod worker;
 
 pub use config::{PruningConfig, PruningConfigBuilder};
-pub use worker::{PrunerWorker, PrunerWorkerEvent};
+pub use worker::PrunerWorker;
 
 // use bee_protocol::{
 //     tangle::{helper, MsTangle},

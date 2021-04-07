@@ -3,13 +3,13 @@
 
 use bee_message::milestone::{Milestone, MilestoneIndex};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct LatestMilestoneChanged {
     pub index: MilestoneIndex,
     pub milestone: Milestone,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct LatestSolidMilestoneChanged {
     pub index: MilestoneIndex,
     pub milestone: Milestone,

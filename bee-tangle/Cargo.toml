@@ -20,8 +20,8 @@ bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 async-trait = "0.1"
 bitflags = "1.2"
 dashmap = "4.0"
-flume = "0.10"
 futures = "0.3"
+hashbrown = "0.11"
 log = "0.4"
 lru = "0.6"
 rand = "0.8"
@@ -29,4 +29,4 @@ ref-cast = "1.0"
 serde = { version = "1.0", features = ["derive" ] }
 thiserror = "1.0"
 tokio = { version = "1.4", features = ["sync"] }
-hashbrown = "0.11"
+tokio-stream = "0.1.5"

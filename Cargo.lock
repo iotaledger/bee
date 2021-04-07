@@ -503,7 +503,6 @@ dependencies = [
  "bee-storage",
  "bitflags",
  "dashmap",
- "flume",
  "futures",
  "hashbrown 0.11.2",
  "log",
@@ -513,6 +512,7 @@ dependencies = [
  "serde",
  "thiserror",
  "tokio",
+ "tokio-stream",
 ]
 
 [[package]]
