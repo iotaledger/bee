@@ -75,9 +75,9 @@ pub(crate) async fn info<B: StorageBackend>(
         network_id: network_id.0,
         bech32_hrp,
         min_pow_score: protocol_config.minimum_pow_score(),
-        messages_per_second: 0f64,            //TODO
-        referenced_messages_per_second: 0f64, //TODO
-        referenced_rate: 0f64,                //TODO
+        messages_per_second: 0f64,            // TODO
+        referenced_messages_per_second: 0f64, // TODO
+        referenced_rate: 0f64,                // TODO
         latest_milestone_timestamp,
         latest_milestone_index: *latest_milestone_index,
         confirmed_milestone_index: *tangle.get_confirmed_milestone_index(),
