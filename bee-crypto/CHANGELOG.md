@@ -19,12 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-<!-- ## 0.2.1-alpha - 2020-08-28
+## 0.2.1-alpha - 2021-04-07
 
 ### Changed
 
 - Transpose binary encoded trit representation to be more performant;
-- Make `BatchedHasher` generic over the trit encoding; -->
+- Make `BatchedHasher` generic over the trit encoding;
+- Rename types to have them compliant with Rust naming conventions;
 
 ## 0.2.0-alpha - 2020-08-20
 
