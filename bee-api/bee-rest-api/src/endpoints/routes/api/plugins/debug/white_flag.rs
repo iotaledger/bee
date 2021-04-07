@@ -61,7 +61,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
         })? as u32)
     };
 
-    let parents: Vec<MessageId> = if parents_json.is_null() {
+    let parents = if parents_json.is_null() {
         return Err(reject::custom(CustomRejection::BadRequest(
             "Invalid parents: expected an array of MessageId".to_string(),
         )));

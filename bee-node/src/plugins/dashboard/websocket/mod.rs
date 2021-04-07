@@ -84,7 +84,7 @@ pub(crate) async fn user_connected<B: StorageBackend>(
     let (shutdown_tx, shutdown_rx) = oneshot::channel();
     let receiver = ShutdownStream::new(shutdown_rx, UnboundedReceiverStream::new(rx));
 
-    tokio::task::spawn(receiver.forward(ws_tx).map(|result| {
+    let task = tokio::task::spawn(receiver.forward(ws_tx).map(|result| {
         if let Err(e) = result {
             error!("websocket send error: {}", e);
         }
@@ -115,6 +115,8 @@ pub(crate) async fn user_connected<B: StorageBackend>(
     // ws_rx stream will keep processing as long as the user stays
     // connected. Once they disconnect, then...
     user_disconnected(user_id, &users).await;
+
+    let _ = task.await;
 }
 
 async fn user_message<B: StorageBackend>(

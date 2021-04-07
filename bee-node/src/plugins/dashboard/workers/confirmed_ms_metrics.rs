@@ -76,9 +76,10 @@ where
     });
 
     bus.add_listener::<Dashboard, _, _>(move |event: &MilestoneConfirmed| {
-        if tx.send((*event).clone()).is_err() {
-            warn!("Sending event to `confirmed_ms_metrics_worker` failed.");
-        }
+        // The lifetime of the listeners is tied to the lifetime of the Dashboard worker so they are removed together.
+        // However, topic handlers are shutdown as soon as the signal is received, causing this send to potentially
+        // fail and spam the output. The return is then ignored as not being essential.
+        let _ = tx.send((*event).clone());
     });
 }
 
