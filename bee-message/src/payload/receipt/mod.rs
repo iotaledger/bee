@@ -98,7 +98,7 @@ impl Packable for ReceiptPayload {
     fn packed_len(&self) -> usize {
         self.migrated_at.packed_len()
             + self.last.packed_len()
-            + 0u16.packed_len()
+            + 0u8.packed_len()
             + self.funds.iter().map(Packable::packed_len).sum::<usize>()
             + option_payload_packed_len(Some(&self.transaction))
     }
@@ -106,7 +106,7 @@ impl Packable for ReceiptPayload {
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.migrated_at.pack(writer)?;
         self.last.pack(writer)?;
-        (self.funds.len() as u16).pack(writer)?;
+        (self.funds.len() as u8).pack(writer)?;
         for fund in self.funds.iter() {
             fund.pack(writer)?;
         }
