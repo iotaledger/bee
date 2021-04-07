@@ -19,12 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-<!-- ## 0.4.0 - 2021-XX-XX
+## 0.4.0 - 2021-04-07
 
 ### Added
 
 - `ord::is_unique_sorted`;
-- `ord::is_sorted`; -->
+- `ord::is_sorted`;
+- `impl<const N: usize> Packable for [u8; N]`;
+- `Packable::unpack_inner`;
+- `Packable::unpack_unchecked`;
+
+### Changed
+
+- `Packable::unpack` is now a default implementation to `Self::unpack_inner::<R, true>`;
 
 ## 0.3.1-alpha - 2021-02-15
 
@@ -84,13 +91,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ShutdownStream` helper to join a shutdown receiver and a regular stream;
 - Shutdown mechanism to deal with the graceful shutdown of asynchronous workers;
 - Worker `Error`;
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
