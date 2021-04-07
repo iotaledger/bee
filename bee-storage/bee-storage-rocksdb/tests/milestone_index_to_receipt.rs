@@ -17,7 +17,7 @@ use std::collections::HashMap;
 const DB_DIRECTORY: &str = "./tests/database/milestone_index_to_receipt";
 
 #[tokio::test]
-async fn access() {
+async fn milestone_index_to_receipt_access() {
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 
     let config = RocksDbConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
@@ -30,13 +30,11 @@ async fn access() {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &index)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &index)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     Insert::<(MilestoneIndex, Receipt), ()>::insert(&storage, &(index, receipt.clone()), &())
         .await
@@ -64,13 +62,11 @@ async fn access() {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &index)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &index)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     let mut batch = Storage::batch_begin();
 

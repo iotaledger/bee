@@ -18,7 +18,7 @@ use std::collections::HashMap;
 const DB_DIRECTORY: &str = "./tests/database/milestone_index_to_output_diff";
 
 #[tokio::test]
-async fn access() {
+async fn milestone_index_to_output_diff_access() {
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 
     let config = RocksDbConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
@@ -26,27 +26,21 @@ async fn access() {
 
     let (index, output_diff) = (rand_milestone_index(), rand_output_diff());
 
-    assert!(
-        !Exist::<MilestoneIndex, OutputDiff>::exist(&storage, &index)
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<MilestoneIndex, OutputDiff>::fetch(&storage, &index)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(!Exist::<MilestoneIndex, OutputDiff>::exist(&storage, &index)
+        .await
+        .unwrap());
+    assert!(Fetch::<MilestoneIndex, OutputDiff>::fetch(&storage, &index)
+        .await
+        .unwrap()
+        .is_none());
 
     Insert::<MilestoneIndex, OutputDiff>::insert(&storage, &index, &output_diff)
         .await
         .unwrap();
 
-    assert!(
-        Exist::<MilestoneIndex, OutputDiff>::exist(&storage, &index)
-            .await
-            .unwrap()
-    );
+    assert!(Exist::<MilestoneIndex, OutputDiff>::exist(&storage, &index)
+        .await
+        .unwrap());
     assert_eq!(
         Fetch::<MilestoneIndex, OutputDiff>::fetch(&storage, &index)
             .await
@@ -60,17 +54,13 @@ async fn access() {
         .await
         .unwrap();
 
-    assert!(
-        !Exist::<MilestoneIndex, OutputDiff>::exist(&storage, &index)
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<MilestoneIndex, OutputDiff>::fetch(&storage, &index)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(!Exist::<MilestoneIndex, OutputDiff>::exist(&storage, &index)
+        .await
+        .unwrap());
+    assert!(Fetch::<MilestoneIndex, OutputDiff>::fetch(&storage, &index)
+        .await
+        .unwrap()
+        .is_none());
 
     let mut batch = Storage::batch_begin();
 
