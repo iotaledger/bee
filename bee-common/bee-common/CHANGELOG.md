@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.4.0 - 2021-25-03
+## 0.4.0 - 2021-04-07
 
 ### Added
 
@@ -91,13 +91,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ShutdownStream` helper to join a shutdown receiver and a regular stream;
 - Shutdown mechanism to deal with the graceful shutdown of asynchronous workers;
 - Worker `Error`;
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
