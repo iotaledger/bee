@@ -162,6 +162,9 @@ where
         self
     }
 
+    /// Provide a number of fixed rounds.
+    /// "Fixed rounds" are performed in the last `n` rounds of a vote, and consist of a fixed opinion threshold, rather
+    /// than a random number between two bounds.
     pub fn with_fixed_rounds(mut self, rounds: u32) -> Self {
         self.total_rounds_fixed = rounds;
         self
@@ -180,6 +183,7 @@ where
         self
     }
 
+    /// Define the minimum number of opinions received in a voting round for it to be considered valid.
     pub fn with_min_opinions_received(mut self, min_opinions_received: u32) -> Self {
         self.min_opinions_received = min_opinions_received;
         self
@@ -204,7 +208,7 @@ where
             total_rounds_fixed: self.total_rounds_fixed,
             cooling_off_period: self.cooling_off_period,
             max_rounds_per_vote_context: self.max_rounds_per_vote_context,
-            query_timeout: Duration::from_millis(6500),
+            query_timeout: Duration::from_millis(1500),
             min_opinions_received: self.min_opinions_received,
         })
     }

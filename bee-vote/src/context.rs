@@ -126,12 +126,14 @@ impl VoteContext {
     }
 
     /// Describes whether this `VoteContext` has been finalized.
+    /// This is determined by checking that an opinion has remained the same for `total_rounds_finalization` number of rounds.
+    /// It is therefore implied that the opinion will not change in the future, and we have determined a final value.
     pub fn finalized(&self, cool_off_period: u32, total_rounds_finalization: u32) -> bool {
         // Check whether we have enough opinions to decide if the vote is finalised.
         if self.opinions.len() < (cool_off_period + total_rounds_finalization + 1) as usize {
             false
         } else {
-            // Index of the opinion that needs to be held for `finalization_threshold` number of rounds.
+            // Index of the opinion that needs to be held for `total_rounds_finalization` number of rounds.
             let finalized_index = self.opinions.len() - total_rounds_finalization as usize;
 
             if self.opinions.len() < finalized_index + 1 {
@@ -160,11 +162,13 @@ impl VoteContext {
         self.liked.is_none()
     }
 
-    /// Described whether the `VoteContext` has *just* finished its first round.
+    /// Describes whether the `VoteContext` has *just* finished its first round.
     pub(crate) fn had_first_round(&self) -> bool {
         self.rounds == 1
     }
 
+    /// Describes whether the `VoteContext` has *just* held a fixed round.
+    /// A "fixed" round takes place in the last rounds of a vote, given by `total_rounds_fixed`, and uses a fixed random threshold.
     pub(crate) fn had_fixed_round(
         &self,
         cool_off_period: u32,
