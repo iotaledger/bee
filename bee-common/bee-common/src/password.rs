@@ -3,8 +3,11 @@
 
 //! A module that provides password utilities.
 
-use argon2::{self, Config, Error};
+use argon2::{self, Config};
 use rand::Rng;
+
+/// Error occurring when hashing/verifying passwords.
+pub type Error = argon2::Error;
 
 /// Generates a salt to be used for password hashing.
 pub fn generate_salt() -> [u8; 32] {
