@@ -3,7 +3,7 @@
 
 //! A module that provides password utilities.
 
-use argon2::{self, Config};
+use argon2::{self, Config, Error};
 use rand::Rng;
 
 /// Generates a salt to be used for password hashing.
@@ -12,11 +12,11 @@ pub fn generate_salt() -> [u8; 32] {
 }
 
 /// Hashes a password together with a salt.
-pub fn password_hash(password: &[u8], salt: &[u8]) -> Result<Vec<u8>, String> {
-    argon2::hash_raw(password, salt, &Config::default()).map_err(|e| e.to_string())
+pub fn password_hash(password: &[u8], salt: &[u8]) -> Result<Vec<u8>, Error> {
+    argon2::hash_raw(password, salt, &Config::default())
 }
 
 /// Verifies if a password/salt pair matches a password hash.
-pub fn password_verify(password: &[u8], salt: &[u8], hash: &[u8]) -> Result<bool, String> {
+pub fn password_verify(password: &[u8], salt: &[u8], hash: &[u8]) -> Result<bool, Error> {
     Ok(hash == password_hash(password, salt)?)
 }
