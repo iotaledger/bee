@@ -9,3 +9,5 @@
 pub mod logger;
 pub mod ord;
 pub mod packable;
+#[cfg(feature = "password")]
+pub mod password;
