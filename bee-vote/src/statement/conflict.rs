@@ -5,7 +5,7 @@
 
 use super::{
     entry::EntryType,
-    opinion::{Opinion, OPINION_STATEMENT_LENGTH},
+    opinion::{OpinionStatement, OPINION_STATEMENT_LENGTH},
 };
 use crate::Error;
 
@@ -18,7 +18,7 @@ pub struct Conflict {
     /// Conflicting transaction ID.
     pub id: TransactionId,
     /// Opinion of the conflict.
-    pub opinion: Opinion,
+    pub opinion: OpinionStatement,
 }
 
 impl EntryType for Conflict {
@@ -28,7 +28,7 @@ impl EntryType for Conflict {
         &self.id
     }
 
-    fn opinion(&self) -> &Opinion {
+    fn opinion(&self) -> &OpinionStatement {
         &self.opinion
     }
 }
@@ -49,7 +49,7 @@ impl Packable for Conflict {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let transaction_id = TransactionId::unpack(reader)?;
-        let opinion = Opinion::unpack(reader)?;
+        let opinion = OpinionStatement::unpack(reader)?;
 
         Ok(Self {
             id: transaction_id,

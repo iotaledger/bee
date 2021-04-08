@@ -11,6 +11,6 @@ mod registry;
 mod timestamp;
 
 pub use conflict::Conflict;
-pub use opinion::{Opinion, Opinions, OPINION_STATEMENT_LENGTH};
+pub use opinion::{OpinionStatement, OpinionStatements, OPINION_STATEMENT_LENGTH};
 pub use registry::Registry;
 pub use timestamp::Timestamp;

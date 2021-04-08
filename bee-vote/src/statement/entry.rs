@@ -3,7 +3,7 @@
 
 //! Helper functionality for registry entries.
 
-use super::opinion::{Opinion, Opinions};
+use super::opinion::{OpinionStatement, OpinionStatements};
 
 use std::{
     collections::HashMap,
@@ -17,7 +17,7 @@ use std::{
 #[derive(Debug, Clone)]
 pub(super) struct Entry {
     /// Opinions held on the voting object.
-    pub opinions: Opinions,
+    pub opinions: OpinionStatements,
     /// Time at which the entry was created.
     pub timestamp: u64,
 }
@@ -30,7 +30,7 @@ pub(super) trait EntryType {
     /// Returns the ID of the entry.
     fn id(&self) -> &Self::Id;
     /// Returns the opinion to be added to the registry `Entry`.
-    fn opinion(&self) -> &Opinion;
+    fn opinion(&self) -> &OpinionStatement;
 }
 
 /// `HashMap` of entries, indexed by IDs.
@@ -79,7 +79,7 @@ where
     /// If an `Entry` with this ID already exists, add the opinion of the given `EntryType` to its stored opinions.
     pub(super) fn add_entry(&mut self, entry: T) {
         if !self.contains_key(entry.id()) {
-            let mut opinions = Opinions::new();
+            let mut opinions = OpinionStatements::new();
             opinions.push(*entry.opinion());
 
             self.insert(
@@ -107,7 +107,7 @@ where
     }
 
     /// Get all the opinions on a given `Entry`.
-    pub(super) fn get_entry_opinions(&self, id: &I) -> Option<Opinions> {
+    pub(super) fn get_entry_opinions(&self, id: &I) -> Option<OpinionStatements> {
         self.deref().get(id).map(|entry| entry.opinions.clone())
     }
 }

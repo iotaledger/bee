@@ -6,9 +6,9 @@ mod mock;
 use bee_message::{payload::transaction::TransactionId, MessageId};
 use bee_network::PeerId;
 use bee_vote::{
+    Opinion,
     error::Error,
-    opinion,
-    statement::{Conflict, Opinion, Timestamp},
+    statement::{Conflict, OpinionStatement, Timestamp},
     Registry,
 };
 
@@ -19,22 +19,22 @@ async fn registry(node_id: PeerId, tx_id: TransactionId, msg_id: MessageId) -> R
         .write_view(node_id, |view| {
             view.add_conflict(Conflict {
                 id: tx_id,
-                opinion: Opinion {
-                    opinion: opinion::Opinion::Like,
+                opinion: OpinionStatement {
+                    opinion: Opinion::Like,
                     round: 1,
                 },
             });
             view.add_conflict(Conflict {
                 id: tx_id,
-                opinion: Opinion {
-                    opinion: opinion::Opinion::Like,
+                opinion: OpinionStatement {
+                    opinion: Opinion::Like,
                     round: 2,
                 },
             });
             view.add_timestamp(Timestamp {
                 id: msg_id,
-                opinion: Opinion {
-                    opinion: opinion::Opinion::Like,
+                opinion: OpinionStatement {
+                    opinion: Opinion::Like,
                     round: 1,
                 },
             });
@@ -74,8 +74,8 @@ async fn last_entry() {
             let conflict_opinions = view.get_conflict_opinions(tx_id).unwrap();
             assert_eq!(
                 *conflict_opinions.last().unwrap(),
-                Opinion {
-                    opinion: opinion::Opinion::Like,
+                OpinionStatement {
+                    opinion: Opinion::Like,
                     round: 2
                 }
             );

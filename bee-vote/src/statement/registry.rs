@@ -6,7 +6,7 @@
 use super::{
     conflict::Conflict,
     entry::{Entry, EntryMap},
-    opinion::Opinions as OpinionStatements,
+    opinion::OpinionStatements,
     timestamp::Timestamp,
 };
 use crate::{

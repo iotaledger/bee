@@ -5,7 +5,7 @@
 
 use super::{
     entry::EntryType,
-    opinion::{Opinion, OPINION_STATEMENT_LENGTH},
+    opinion::{OpinionStatement, OPINION_STATEMENT_LENGTH},
 };
 use crate::Error;
 
@@ -18,7 +18,7 @@ pub struct Timestamp {
     /// Message ID.
     pub id: MessageId,
     /// Opinion of the message timestamp.
-    pub opinion: Opinion,
+    pub opinion: OpinionStatement,
 }
 
 impl EntryType for Timestamp {
@@ -28,7 +28,7 @@ impl EntryType for Timestamp {
         &self.id
     }
 
-    fn opinion(&self) -> &Opinion {
+    fn opinion(&self) -> &OpinionStatement {
         &self.opinion
     }
 }
@@ -49,7 +49,7 @@ impl Packable for Timestamp {
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
         let message_id = MessageId::unpack(reader)?;
-        let opinion = Opinion::unpack(reader)?;
+        let opinion = OpinionStatement::unpack(reader)?;
 
         Ok(Self {
             id: message_id,

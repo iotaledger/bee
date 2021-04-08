@@ -1,9 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Opinion statement.
+//! OpinionStatement statement.
 
-use crate::{error::Error, opinion};
+use crate::{error::Error, Opinion};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -16,28 +16,28 @@ use std::{
 /// Length (in bytes) of this statement when serialized.
 pub const OPINION_STATEMENT_LENGTH: usize = 2;
 
-/// Opinion registry statement.
+/// OpinionStatement registry statement.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct Opinion {
-    /// The opinion of the voting object.
-    pub opinion: opinion::Opinion,
-    /// The round in which this opinion was formed.
+pub struct OpinionStatement {
+    /// The `Opinion` of the voting object.
+    pub opinion: Opinion,
+    /// The round in which this OpinionStatement was formed.
     pub round: u8,
 }
 
-impl Ord for Opinion {
+impl Ord for OpinionStatement {
     fn cmp(&self, other: &Self) -> Ordering {
         self.round.cmp(&other.round)
     }
 }
 
-impl PartialOrd for Opinion {
+impl PartialOrd for OpinionStatement {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Packable for Opinion {
+impl Packable for OpinionStatement {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -52,33 +52,33 @@ impl Packable for Opinion {
     }
 
     fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let opinion = opinion::Opinion::unpack(reader)?;
+        let opinion = Opinion::unpack(reader)?;
         let round = <u8>::unpack(reader)?;
 
         Ok(Self { opinion, round })
     }
 }
 
-/// Wrapper struct for a collection of `Opinion` statements.
+/// Wrapper struct for a collection of `OpinionStatement` statements.
 #[derive(Debug, Clone)]
-pub struct Opinions(BinaryHeap<Opinion>);
+pub struct OpinionStatements(BinaryHeap<OpinionStatement>);
 
-impl Deref for Opinions {
-    type Target = BinaryHeap<Opinion>;
+impl Deref for OpinionStatements {
+    type Target = BinaryHeap<OpinionStatement>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl DerefMut for Opinions {
+impl DerefMut for OpinionStatements {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl Opinions {
-    /// Create a new, empty `Opinions` collection.
+impl OpinionStatements {
+    /// Create a new, empty `OpinionStatements` collection.
     pub fn new() -> Self {
         Self(BinaryHeap::new())
     }
@@ -91,12 +91,12 @@ impl Opinions {
         self.0.is_empty()
     }
 
-    /// Get the `Opinion` that was formed on the most recent round.
-    pub fn last(&self) -> Option<&Opinion> {
+    /// Get the `OpinionStatement` that was formed on the most recent round.
+    pub fn last(&self) -> Option<&OpinionStatement> {
         self.0.peek()
     }
 
-    /// Check that the `Opinion` at a given index is finalized.
+    /// Check that the `OpinionStatement` at a given index is finalized.
     pub fn finalized(&self, idx: usize) -> bool {
         if idx > self.len() {
             return false;
@@ -104,10 +104,10 @@ impl Opinions {
 
         let last = self.last();
 
-        // Check for identical consecutive `Opinion`s after the given index.
+        // Check for identical consecutive `OpinionStatement`s after the given index.
         if let Some(last) = last {
-            for (i, opinion) in self.0.iter().enumerate() {
-                if i >= idx && opinion != last {
+            for (i, opinion_statement) in self.0.iter().enumerate() {
+                if i >= idx && opinion_statement != last {
                     return false;
                 }
             }
