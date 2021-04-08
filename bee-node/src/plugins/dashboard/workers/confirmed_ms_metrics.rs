@@ -15,7 +15,7 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 
 use bee_protocol::types::metrics::NodeMetrics;
 use futures::StreamExt;
-use log::{debug, error, warn};
+use log::{debug, error};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 

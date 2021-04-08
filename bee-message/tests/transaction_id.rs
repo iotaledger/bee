@@ -50,6 +50,7 @@ fn packed_len() {
 fn pack_unpack_valid() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
     let packed_transaction_id = transaction_id.pack_new();
+
     assert_eq!(
         transaction_id,
         Packable::unpack(&mut packed_transaction_id.as_slice()).unwrap()

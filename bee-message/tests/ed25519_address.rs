@@ -74,6 +74,7 @@ fn packed_len() {
 fn pack_unpack_valid() {
     let address = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
     let packed_address = address.pack_new();
+
     assert_eq!(packed_address.len(), address.packed_len());
     assert_eq!(address, Packable::unpack(&mut packed_address.as_slice()).unwrap());
 }
@@ -81,5 +82,6 @@ fn pack_unpack_valid() {
 #[test]
 fn try_into() {
     let addr = Address::Ed25519(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
+
     assert_eq!(addr, addr.to_bech32("atoi").try_into().unwrap());
 }

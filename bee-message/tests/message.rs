@@ -97,6 +97,7 @@ fn pack_unpack_valid() {
         .finish()
         .unwrap();
     let packed_message = message.pack_new();
+
     assert_eq!(packed_message.len(), message.packed_len());
     assert_eq!(message, Packable::unpack(&mut packed_message.as_slice()).unwrap());
 }

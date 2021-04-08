@@ -52,6 +52,7 @@ fn from_to_str() {
 #[test]
 fn packed_len() {
     let msgid = MessageId::from_str(MESSAGE_ID).unwrap();
+
     assert_eq!(msgid.packed_len(), 32);
     assert_eq!(msgid.pack_new().len(), 32);
 }
@@ -61,6 +62,7 @@ fn packed_len() {
 fn pack_unpack_valid() {
     let msgid = MessageId::from_str(MESSAGE_ID).unwrap();
     let packed_msgid = msgid.pack_new();
+
     assert_eq!(packed_msgid.len(), msgid.packed_len());
     assert_eq!(msgid, Packable::unpack(&mut packed_msgid.as_slice()).unwrap());
 }

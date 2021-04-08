@@ -20,6 +20,7 @@ fn kind() {
 #[test]
 fn builder_no_essence_error() {
     let builder = TransactionPayload::builder();
+
     assert!(matches!(builder.finish(), Err(Error::MissingField("essence"))));
 }
 
@@ -43,6 +44,7 @@ fn builder_no_essence_no_unlock_blocks() {
 
     // Initialize the builder but do not set `with_output_block()`.
     let builder = TransactionPayload::builder().with_essence(essence);
+
     assert!(matches!(builder.finish(), Err(Error::MissingField("unlock_blocks"))));
 }
 
@@ -76,6 +78,7 @@ fn builder_no_essence_too_few_unlock_blocks() {
     let builder = TransactionPayload::builder()
         .with_essence(essence)
         .with_unlock_blocks(unlock_blocks);
+
     assert!(matches!(
             builder.finish(),
             Err(Error::InputUnlockBlockCountMismatch(input_len, unlock_blocks_len))
@@ -113,6 +116,7 @@ fn builder_no_essence_too_many_unlock_blocks() {
     let builder = TransactionPayload::builder()
         .with_essence(essence)
         .with_unlock_blocks(unlock_blocks);
+
     assert!(matches!(
             builder.finish(),
             Err(Error::InputUnlockBlockCountMismatch(input_len, unlock_blocks_len))
@@ -152,6 +156,7 @@ fn pack_unpack_valid() {
         .finish()
         .unwrap();
     let packed_tx_payload = tx_payload.pack_new();
+
     assert_eq!(packed_tx_payload.len(), tx_payload.packed_len());
     assert_eq!(tx_payload, Packable::unpack(&mut packed_tx_payload.as_slice()).unwrap());
 }
