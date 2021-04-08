@@ -81,7 +81,7 @@ where
     total_rounds_fixed: u32,
     cooling_off_period: u32,
     max_rounds_per_vote_context: u32,
-    query_timeout: Duration,
+    query_timeout_ms: u64,
     min_opinions_received: u32,
 }
 
@@ -105,7 +105,7 @@ where
             total_rounds_fixed: 3,
             cooling_off_period: 0,
             max_rounds_per_vote_context: 100,
-            query_timeout: Duration::from_millis(1500),
+            query_timeout_ms: 1500,
             min_opinions_received: 1,
         }
     }
@@ -189,6 +189,12 @@ where
         self
     }
 
+    /// Provide a timeout in which to query an opinion giver. If the query does not complete, an error will occur.
+    pub fn with_query_timeout_ms(mut self, query_timeout_ms: u64) -> Self {
+        self.query_timeout_ms = query_timeout_ms;
+        self
+    }
+
     /// Instantiate a new `Fpc` struct using parameters given by the `FpcBuilder`.
     /// Note: this will panic if `tx` or `opinion_giver_fn` are not defined.
     pub fn build(self) -> Result<Fpc<F>, Error> {
@@ -208,7 +214,7 @@ where
             total_rounds_fixed: self.total_rounds_fixed,
             cooling_off_period: self.cooling_off_period,
             max_rounds_per_vote_context: self.max_rounds_per_vote_context,
-            query_timeout: Duration::from_millis(1500),
+            query_timeout: Duration::from_millis(self.query_timeout_ms),
             min_opinions_received: self.min_opinions_received,
         })
     }
