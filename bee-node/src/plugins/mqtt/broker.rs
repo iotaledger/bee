@@ -3,7 +3,7 @@
 
 use super::event::*;
 
-use bee_protocol::workers::event::{MessageConfirmed, MessageProcessed};
+use bee_protocol::workers::event::{IndexationMessage, MessageConfirmed, MessageProcessed};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
 
@@ -57,7 +57,7 @@ impl<N: Node> Worker<N> for MqttBroker {
             messages_referenced_tx,
         } = config;
 
-        spawn_topic_handler(
+        spawn_static_topic_handler(
             node,
             milestones_latest_tx,
             TOPIC_MILESTONES_LATEST,
@@ -73,7 +73,7 @@ impl<N: Node> Worker<N> for MqttBroker {
             },
         );
 
-        spawn_topic_handler(
+        spawn_static_topic_handler(
             node,
             milestones_confirmed_tx,
             TOPIC_MILESTONES_CONFIRMED,
@@ -89,13 +89,13 @@ impl<N: Node> Worker<N> for MqttBroker {
             },
         );
 
-        spawn_topic_handler(node, messages_tx, TOPIC_MESSAGES, |event: MessageProcessed| {
+        spawn_static_topic_handler(node, messages_tx, TOPIC_MESSAGES, |event: MessageProcessed| {
             // Message in byte-serialized form
             let msg_bytes = event.1;
             (TOPIC_MESSAGES, msg_bytes)
         });
 
-        spawn_topic_handler(
+        spawn_static_topic_handler(
             node,
             messages_referenced_tx,
             TOPIC_MESSAGES_REFERENCED,
@@ -117,13 +117,20 @@ impl<N: Node> Worker<N> for MqttBroker {
             },
         );
 
+        // spawn_dynamic_topic_handler(node, "indexation", |event: IndexationMessage| {
+        //     let index = hex::encode(event.index);
+        //     let bytes = event.bytes;
+
+        //     (&format!("{}/{}", TOPIC_MESSAGES_INDEXATION, index), bytes)
+        // });
+
         info!("MQTT broker started.");
 
         Ok(Self::default())
     }
 }
 
-fn spawn_topic_handler<N: Node, E, T, P, F>(node: &mut N, mut tx: LinkTx, topic: &'static str, f: F)
+fn spawn_static_topic_handler<N: Node, E, T, P, F>(node: &mut N, mut tx: LinkTx, topic: &'static str, f: F)
 where
     E: Any + Clone + Send + Sync,
     T: Into<String> + Send,
@@ -154,3 +161,38 @@ where
         }
     });
 }
+
+// fn spawn_dynamic_topic_handler<N: Node, E, T, P, F>(node: &mut N, topic: &'static str, f: F)
+// where
+//     E: Any + Clone + Send + Sync,
+//     T: Into<String> + Send,
+//     P: Into<Vec<u8>> + Send,
+//     F: Fn(E) -> (T, P) + Send + Sync + 'static,
+// {
+//     let event_bus = node.bus();
+//     let (event_tx, event_rx) = mpsc::unbounded_channel();
+
+//     node.spawn::<MqttBroker, _, _>(|shutdown| async move {
+//         debug!("MQTT '{}' topic handler running.", topic);
+
+//         let mut events = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(event_rx));
+
+//         while let Some(event) = events.next().await {
+//             let (topic, payload) = f(event);
+
+//             if let Some(tx) = senders.entry(topic).or_insert(broker.link(&format!("{}/{}", topic,))) {}
+
+//             if let Err(e) = tx.publish(topic, false, payload) {
+//                 warn!("Publishing MQTT message failed. Cause: {:?}", e);
+//             }
+//         }
+
+//         debug!("MQTT '{}' topic handler stopped.", topic);
+//     });
+
+//     event_bus.add_listener::<MqttBroker, _, _>(move |event: &E| {
+//         if event_tx.send(event.clone()).is_err() {
+//             warn!("Sending event to MQTT '{}' topic handler failed.", topic)
+//         }
+//     });
+// }

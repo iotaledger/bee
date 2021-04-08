@@ -3,14 +3,14 @@
 
 use crate::{
     types::metrics::NodeMetrics,
-    workers::{storage::StorageBackend, MetricsWorker},
+    workers::{event::IndexationMessage, storage::StorageBackend, MetricsWorker},
 };
 
 use bee_message::{
     payload::{indexation::HashedIndex, transaction::Essence, Payload},
     MessageId,
 };
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_storage::access::Insert;
 use bee_tangle::{MsTangle, TangleWorker};
 
@@ -29,7 +29,13 @@ pub(crate) struct IndexationPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
 }
 
-async fn process<B: StorageBackend>(tangle: &MsTangle<B>, storage: &B, metrics: &NodeMetrics, message_id: MessageId) {
+async fn process<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    storage: &B,
+    metrics: &NodeMetrics,
+    message_id: MessageId,
+    bus: &Bus<'static>,
+) {
     if let Some(message) = tangle.get(&message_id).await.map(|m| (*m).clone()) {
         let indexation = match message.payload() {
             Some(Payload::Indexation(indexation)) => indexation,
@@ -50,6 +56,11 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, storage: &B, metrics: 
         metrics.indexation_payload_inc(1);
 
         let hash = indexation.hash();
+
+        // Relevant for MQTT
+        let index = indexation.index().to_vec();
+        let (_, bytes) = message.id();
+        bus.dispatch(IndexationMessage { index, bytes });
 
         if let Err(e) = Insert::<(HashedIndex, MessageId), ()>::insert(&*storage, &(hash, message_id), &()).await {
             error!("Inserting indexation payload failed: {:?}.", e);
@@ -77,6 +88,7 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
         let metrics = node.resource::<NodeMetrics>();
+        let bus = node.bus();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -84,7 +96,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(IndexationPayloadWorkerEvent(message_id)) = receiver.next().await {
-                process(&tangle, &storage, &metrics, message_id).await;
+                process(&tangle, &storage, &metrics, message_id, &bus).await;
             }
 
             // Before the worker completely stops, the receiver needs to be drained for indexation payloads to be
@@ -94,7 +106,7 @@ where
             let mut count: usize = 0;
 
             while let Some(Some(IndexationPayloadWorkerEvent(message_id))) = receiver.next().now_or_never() {
-                process(&tangle, &storage, &metrics, message_id).await;
+                process(&tangle, &storage, &metrics, message_id, &bus).await;
                 count += 1;
             }
 

@@ -18,6 +18,12 @@ pub struct MessageConfirmed {
 }
 
 #[derive(Clone)]
+pub struct IndexationMessage {
+    pub index: Vec<u8>, // hex-encoded
+    pub bytes: Vec<u8>,
+}
+
+#[derive(Clone)]
 pub struct MpsMetricsUpdated {
     pub incoming: u64,
     pub new: u64,
