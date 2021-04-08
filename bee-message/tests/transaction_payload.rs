@@ -23,7 +23,7 @@ fn builder_no_essence_error() {
     assert!(matches!(builder.finish(), Err(Error::MissingField("essence"))));
 }
 
-// Validate that attempting to construct a `TransactionPayload` with unlock blocks is an error.
+// Validate that attempting to construct a `TransactionPayload` with no unlock blocks is an error.
 #[test]
 fn builder_no_essence_no_unlock_blocks() {
     // Construct a transaction essence with one input and one output.
