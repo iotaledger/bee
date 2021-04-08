@@ -7,10 +7,7 @@ use bee_message::{Message, MessageId};
 
 use async_trait::async_trait;
 // use dashmap::{mapref::entry::Entry, DashMap};
-use hashbrown::{
-    hash_map::{DefaultHashBuilder, Entry},
-    HashMap, HashSet,
-};
+use hashbrown::{hash_map::DefaultHashBuilder, HashMap};
 use log::info;
 use lru::LruCache;
 use tokio::sync::{Mutex, RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard};
@@ -42,7 +39,7 @@ pub trait Hooks<T> {
     /// Insert a new approver for a given message.
     async fn insert_approver(&self, message_id: MessageId, approver: MessageId) -> Result<(), Self::Error>;
     /// Update the approvers list for a given message.
-    async fn update_approvers(&self, message_id: MessageId, approvers: &Vec<MessageId>) -> Result<(), Self::Error>;
+    async fn update_approvers(&self, message_id: MessageId, approvers: &[MessageId]) -> Result<(), Self::Error>;
 }
 
 /// Phoney default hooks that do nothing.
@@ -74,7 +71,7 @@ impl<T: Send + Sync> Hooks<T> for NullHooks<T> {
         Ok(())
     }
 
-    async fn update_approvers(&self, _message_id: MessageId, _approvers: &Vec<MessageId>) -> Result<(), Self::Error> {
+    async fn update_approvers(&self, _message_id: MessageId, _approvers: &[MessageId]) -> Result<(), Self::Error> {
         Ok(())
     }
 }
@@ -86,7 +83,6 @@ where
 {
     // Global Tangle Lock. Remove this as and when it is deemed correct to do so.
     vertices: TRwLock<HashMap<MessageId, Vertex<T>>>,
-    children: TRwLock<HashMap<MessageId, (HashSet<MessageId>, bool)>>,
 
     pub(crate) cache_queue: Mutex<LruCache<MessageId, (), DefaultHashBuilder>>,
     max_len: AtomicUsize,
@@ -112,7 +108,6 @@ where
     pub fn new(hooks: H) -> Self {
         Self {
             vertices: TRwLock::new(HashMap::new()),
-            children: TRwLock::new(HashMap::new()),
 
             cache_queue: Mutex::new(LruCache::unbounded_with_hasher(DefaultHashBuilder::default())),
             max_len: AtomicUsize::new(DEFAULT_CACHE_LEN),
@@ -140,64 +135,72 @@ where
     }
 
     async fn insert_inner(&self, message_id: MessageId, message: Message, metadata: T) -> Option<MessageRef> {
-        let r = match self.vertices.write().await.entry(message_id) {
-            Entry::Occupied(_) => None,
-            Entry::Vacant(entry) => {
-                for parent in message.parents().iter() {
-                    self.add_child_inner(*parent, message_id).await;
-                }
-                let vtx = Vertex::new(message, metadata);
-                let tx = vtx.message().clone();
-                entry.insert(vtx);
+        let mut vertices = self.vertices.write().await;
+        let vtx = vertices.entry(message_id).or_insert_with(Vertex::empty);
+
+        let msg = if vtx.message().is_some() {
+            None
+        } else {
+            let parents = message.parents().clone();
+
+            vtx.insert_message_and_metadata(message, metadata);
+            let msg = vtx.message().cloned();
+
+            let mut cache_queue = self.cache_queue.lock().await;
+
+            // Insert children for parents
+            for &parent in parents.iter() {
+                let children = vertices.entry(parent).or_insert_with(Vertex::empty);
+                children.add_child(message_id);
 
                 // Insert cache queue entry to track eviction priority
-                self.cache_queue.lock().await.put(message_id, ());
-
-                Some(tx)
+                cache_queue.put(parent, ());
             }
+
+            // Insert cache queue entry to track eviction priority
+            cache_queue.put(message_id, ());
+
+            msg
         };
+
+        drop(vertices);
 
         self.perform_eviction().await;
 
-        r
+        msg
     }
 
     /// Inserts a message, and returns a thread-safe reference to it in case it didn't already exist.
     pub async fn insert(&self, message_id: MessageId, message: Message, metadata: T) -> Option<MessageRef> {
-        if self.contains_inner(&message_id).await {
-            None
-        } else {
+        self.pull_message(&message_id).await;
+
+        let msg = self.insert_inner(message_id, message.clone(), metadata.clone()).await;
+
+        if msg.is_some() {
+            // Write parents to DB
+            for &parent in message.parents().iter() {
+                self.hooks
+                    .insert_approver(parent, message_id)
+                    .await
+                    .unwrap_or_else(|e| info!("Failed to update approvers for message {:?}", e));
+            }
+
             // Insert into backend using hooks
             self.hooks
-                .insert(message_id, message.clone(), metadata.clone())
+                .insert(message_id, message, metadata.clone())
                 .await
                 .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
-
-            self.insert_inner(message_id, message, metadata).await
         }
-    }
 
-    #[inline]
-    async fn add_child_inner(&self, parent: MessageId, child: MessageId) {
-        let mut children_map = self.children.write().await;
-        let children = children_map
-            .entry(parent)
-            .or_insert_with(|| (HashSet::default(), false));
-        children.0.insert(child);
-        drop(children_map);
-        self.hooks
-            .insert_approver(parent, child)
-            .await
-            .unwrap_or_else(|e| info!("Failed to update approvers for message {:?}", e));
+        msg
     }
 
     async fn get_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex<T>> + '_> {
         let res = TRwLockReadGuard::try_map(self.vertices.read().await, |m| m.get(message_id)).ok();
 
         if res.is_some() {
-            let mut cache_queue = self.cache_queue.lock().await;
             // Update message_id priority
-            cache_queue.put(*message_id, ());
+            self.cache_queue.lock().await.put(*message_id, ());
         }
 
         res
@@ -207,11 +210,15 @@ where
     pub async fn get(&self, message_id: &MessageId) -> Option<MessageRef> {
         self.pull_message(message_id).await;
 
-        self.get_inner(message_id).await.map(|v| v.message().clone())
+        self.get_inner(message_id).await.and_then(|v| v.message().cloned())
     }
 
     async fn contains_inner(&self, message_id: &MessageId) -> bool {
-        self.vertices.read().await.contains_key(message_id)
+        self.vertices
+            .read()
+            .await
+            .get(message_id)
+            .map_or(false, |v| v.message().is_some())
     }
 
     /// Returns whether the message is stored in the Tangle.
@@ -226,9 +233,9 @@ where
         self.get_metadata_maybe(message_id).await
     }
 
-    /// Get the metadata of a vertex associated with the given `message_id`, if it's in the cahce.
+    /// Get the metadata of a vertex associated with the given `message_id`, if it's in the cache.
     pub async fn get_metadata_maybe(&self, message_id: &MessageId) -> Option<T> {
-        self.get_inner(message_id).await.map(|v| v.metadata().clone())
+        self.get_inner(message_id).await.and_then(|v| v.metadata().cloned())
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
@@ -240,30 +247,33 @@ where
 
     /// Updates the metadata of a particular vertex.
     pub async fn set_metadata(&self, message_id: &MessageId, metadata: T) {
-        self.pull_message(message_id).await;
-        if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
-            *vtx.metadata_mut() = metadata;
-            self.hooks
-                .insert(*message_id, (&**vtx.message()).clone(), vtx.metadata().clone())
-                .await
-                .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
-        }
+        self.update_metadata(message_id, |m| *m = metadata).await;
     }
 
     /// Updates the metadata of a vertex.
-    pub async fn update_metadata<R, Update>(&self, message_id: &MessageId, mut update: Update) -> Option<R>
+    pub async fn update_metadata<R, Update>(&self, message_id: &MessageId, update: Update) -> Option<R>
     where
-        Update: FnMut(&mut T) -> R,
+        Update: FnOnce(&mut T) -> R,
     {
         self.pull_message(message_id).await;
-        if let Some(vtx) = self.vertices.write().await.get_mut(message_id) {
-            let r = update(vtx.metadata_mut());
-            self.hooks
-                .insert(*message_id, (&**vtx.message()).clone(), vtx.metadata().clone())
-                .await
-                .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
+        let mut vertices = self.vertices.write().await;
+        if let Some(vtx) = vertices.get_mut(message_id) {
+            let r = vtx.metadata_mut().map(|m| update(m));
+            if let Some((msg, meta)) = vtx.message_and_metadata() {
+                let (msg, meta) = ((&**msg).clone(), meta.clone());
 
-            Some(r)
+                // Insert cache queue entry to track eviction priority
+                self.cache_queue.lock().await.put(*message_id, ());
+
+                drop(vertices);
+
+                self.hooks
+                    .insert(*message_id, msg, meta)
+                    .await
+                    .unwrap_or_else(|e| info!("Failed to update metadata for message {:?}", e));
+            }
+
+            r
         } else {
             None
         }
@@ -280,30 +290,38 @@ where
         self.len().await == 0
     }
 
-    async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = HashSet<MessageId>> + '_> {
+    async fn children_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vec<MessageId>> + '_> {
         struct Wrapper<'a> {
-            children: HashSet<MessageId>,
+            children: Vec<MessageId>,
             phantom: PhantomData<&'a ()>,
         }
 
         impl<'a> Deref for Wrapper<'a> {
-            type Target = HashSet<MessageId>;
+            type Target = Vec<MessageId>;
 
             fn deref(&self) -> &Self::Target {
                 &self.children
             }
         }
 
-        let children_map = self.children.read().await;
-        let children = children_map
+        let vertices = self.vertices.read().await;
+        let v = vertices
             .get(message_id)
             // Skip approver lists that are not exhaustive
-            .filter(|children| children.1);
+            .filter(|v| v.children_exhaustive());
 
-        let children = match children {
-            Some(children) => children.0.clone(),
+        let children = match v {
+            Some(v) => {
+                // Insert cache queue entry to track eviction priority
+                self.cache_queue.lock().await.put(*message_id, ());
+                let children = v.children().to_vec();
+                drop(vertices);
+                children
+            }
             None => {
-                drop(children_map);
+                // Insert cache queue entry to track eviction priority
+                self.cache_queue.lock().await.put(*message_id, ());
+                drop(vertices);
                 let to_insert = match self.hooks.fetch_approvers(message_id).await {
                     Err(e) => {
                         info!("Failed to update approvers for message message {:?}", e);
@@ -313,23 +331,20 @@ where
                     Ok(Some(approvers)) => approvers,
                 };
 
-                self.children
-                    .write()
-                    .await
-                    .insert(*message_id, (to_insert.into_iter().collect(), true));
+                let mut vertices = self.vertices.write().await;
+                let v = vertices.entry(*message_id).or_insert_with(Vertex::empty);
 
-                self.children
-                    .read()
-                    .await
-                    .get(message_id)
-                    .expect("Approver list inserted and immediately evicted")
-                    .0
-                    .clone()
+                // We've just fetched approvers from the database, so we have all the information available to us now.
+                // Therefore, the approvers list is exhaustive (i.e: it contains all knowledge we have).
+                v.set_exhaustive();
+
+                for child in to_insert {
+                    v.add_child(child);
+                }
+
+                v.children().to_vec()
             }
         };
-
-        // Insert cache queue entry to track eviction priority
-        self.cache_queue.lock().await.put(*message_id, ());
 
         Some(Wrapper {
             children,
@@ -338,7 +353,7 @@ where
     }
 
     /// Returns the children of a vertex, if we know about them.
-    pub async fn get_children(&self, message_id: &MessageId) -> Option<HashSet<MessageId>> {
+    pub async fn get_children(&self, message_id: &MessageId) -> Option<Vec<MessageId>> {
         // Effectively atomic
         self.children_inner(message_id).await.map(|approvers| approvers.clone())
     }
@@ -354,36 +369,39 @@ where
     #[cfg(test)]
     pub async fn clear(&mut self) {
         self.vertices.write().await.clear();
-        self.children.write().await.clear();
     }
 
     // Attempts to pull the message from the storage, returns true if successful.
     async fn pull_message(&self, message_id: &MessageId) -> bool {
         // If the tangle already contains the tx, do no more work
-        if self.vertices.read().await.contains_key(message_id) {
+        if self.contains_inner(message_id).await {
+            // Insert cache queue entry to track eviction priority
+            self.cache_queue.lock().await.put(*message_id, ());
+
+            true
+        } else if let Ok(Some((tx, metadata))) = self.hooks.get(message_id).await {
+            // Insert cache queue entry to track eviction priority
+            self.cache_queue.lock().await.put(*message_id, ());
+
+            self.insert_inner(*message_id, tx, metadata).await;
+
             true
         } else {
-            if let Ok(Some((tx, metadata))) = self.hooks.get(message_id).await {
-                self.insert_inner(*message_id, tx, metadata).await;
-                true
-            } else {
-                false
-            }
+            false
         }
     }
 
     async fn perform_eviction(&self) {
         let max_len = self.max_len.load(Ordering::Relaxed);
-        if self.vertices.read().await.len() > max_len {
+        let len = self.vertices.read().await.len();
+        if len > max_len {
             let mut vertices = self.vertices.write().await;
-            let mut children = self.children.write().await;
             let mut cache_queue = self.cache_queue.lock().await;
             while vertices.len() > ((1.0 - CACHE_THRESHOLD_FACTOR) * max_len as f64) as usize {
                 let remove = cache_queue.pop_lru().map(|(id, _)| id);
 
                 if let Some(message_id) = remove {
                     vertices.remove(&message_id);
-                    children.remove(&message_id);
                 } else {
                     break;
                 }

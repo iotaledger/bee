@@ -3,10 +3,9 @@
 
 use super::event::*;
 
-use bee_protocol::workers::event::{
-    LatestMilestoneChanged, LatestSolidMilestoneChanged, MessageConfirmed, MessageProcessed,
-};
+use bee_protocol::workers::event::{MessageConfirmed, MessageProcessed};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_tangle::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
 
 use async_trait::async_trait;
 use librumqttd as mqtt;

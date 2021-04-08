@@ -38,14 +38,9 @@ impl Receipt {
         };
 
         for funds in self.inner().funds() {
-            migrated_amount = match migrated_amount.checked_add(funds.output().amount()) {
-                Some(amount) => amount,
-                None => {
-                    return Err(Error::InvalidMigratedFundsAmount(
-                        migrated_amount + funds.output().amount(),
-                    ))
-                }
-            }
+            migrated_amount = migrated_amount
+                .checked_add(funds.output().amount())
+                .ok_or_else(|| Error::InvalidMigratedFundsAmount(migrated_amount + funds.output().amount()))?;
         }
 
         if migrated_amount > IOTA_SUPPLY {
@@ -57,14 +52,13 @@ impl Receipt {
             output => return Err(Error::UnsupportedOutputKind(output.kind())),
         };
 
-        let created_amount = match consumed_treasury_output.inner().amount().checked_sub(migrated_amount) {
-            Some(amount) => amount,
-            None => {
-                return Err(Error::InvalidMigratedFundsAmount(
-                    consumed_treasury_output.inner().amount() - migrated_amount,
-                ))
-            }
-        };
+        let created_amount = consumed_treasury_output
+            .inner()
+            .amount()
+            .checked_sub(migrated_amount)
+            .ok_or_else(|| {
+                Error::InvalidMigratedFundsAmount(consumed_treasury_output.inner().amount() - migrated_amount)
+            })?;
 
         if created_amount != created_treasury_output.amount() {
             return Err(Error::TreasuryAmountMismatch(
@@ -91,10 +85,10 @@ impl Packable for Receipt {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(
-            ReceiptPayload::unpack(reader)?,
-            MilestoneIndex::unpack(reader)?,
-        ))
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let inner = ReceiptPayload::unpack_inner::<R, CHECK>(reader)?;
+        let included_in = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+
+        Ok(Self::new(inner, included_in))
     }
 }

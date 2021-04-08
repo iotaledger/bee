@@ -7,7 +7,7 @@ use crate::workers::{
 
 use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker, BELOW_MAX_DEPTH};
+use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -163,7 +163,7 @@ where
 
                         // NOTE: That diff is always okay, because of the invariant: SMI <= LMI or 0 <= (LMI - SMI)
                         if (tangle.get_latest_milestone_index() - tangle.get_solid_milestone_index())
-                            <= (BELOW_MAX_DEPTH + SAFETY_THRESHOLD).into()
+                            <= (tangle.config().below_max_depth() + SAFETY_THRESHOLD).into()
                         {
                             tangle.insert_tip(message_id, parents).await;
                         }

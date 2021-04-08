@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use crate::{
-    address::{Address, Bech32Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
+    address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     constants::IOTA_SUPPLY,
-    input::{Input, TreasuryInput, UTXOInput},
+    input::{Input, TreasuryInput, UtxoInput},
     milestone::{MilestoneIndex, MilestoneKeyRange},
     output::{
         ConsumedOutput, CreatedOutput, Output, OutputId, SignatureLockedDustAllowanceOutput,
@@ -16,7 +16,7 @@ pub use crate::{
             MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH,
             MILESTONE_SIGNATURE_LENGTH,
         },
-        receipt::{MigratedFundsEntry, ReceiptPayload},
+        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash, TAIL_TRANSACTION_HASH_LEN},
         transaction::{
             Essence, RegularEssence, RegularEssenceBuilder, TransactionId, TransactionPayload,
             TransactionPayloadBuilder, TRANSACTION_ID_LENGTH,

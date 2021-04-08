@@ -50,22 +50,22 @@ async fn validate_regular_essence<B: StorageBackend>(
 
     for (index, input) in essence.inputs().iter().enumerate() {
         let (output_id, consumed_output) = match input {
-            Input::UTXO(input) => {
+            Input::Utxo(input) => {
                 let output_id = input.output_id();
 
                 if metadata.consumed_outputs.contains_key(output_id) {
-                    return Ok(ConflictReason::InputUTXOAlreadySpentInThisMilestone);
+                    return Ok(ConflictReason::InputUtxoAlreadySpentInThisMilestone);
                 }
 
                 if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
                     (output_id, output)
                 } else if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
                     if !storage::is_output_unspent(storage.deref(), output_id).await? {
-                        return Ok(ConflictReason::InputUTXOAlreadySpent);
+                        return Ok(ConflictReason::InputUtxoAlreadySpent);
                     }
                     (output_id, output)
                 } else {
-                    return Ok(ConflictReason::InputUTXONotFound);
+                    return Ok(ConflictReason::InputUtxoNotFound);
                 }
             }
             input => {
@@ -75,7 +75,9 @@ async fn validate_regular_essence<B: StorageBackend>(
 
         match consumed_output.inner() {
             Output::SignatureLockedSingle(output) => {
-                consumed_amount = consumed_amount.saturating_add(output.amount());
+                consumed_amount = consumed_amount
+                    .checked_add(output.amount())
+                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_output_dec(*output.address());
@@ -90,7 +92,9 @@ async fn validate_regular_essence<B: StorageBackend>(
                 }
             }
             Output::SignatureLockedDustAllowance(output) => {
-                consumed_amount = consumed_amount.saturating_add(output.amount());
+                consumed_amount = consumed_amount
+                    .checked_add(output.amount())
+                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 balance_diffs.dust_allowance_sub(*output.address(), output.amount());
                 if !match unlock_blocks.get(index) {
@@ -111,14 +115,18 @@ async fn validate_regular_essence<B: StorageBackend>(
     for created_output in essence.outputs() {
         match created_output {
             Output::SignatureLockedSingle(output) => {
-                created_amount = created_amount.saturating_add(output.amount());
+                created_amount = created_amount
+                    .checked_add(output.amount())
+                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount, output.amount()))?;
                 balance_diffs.amount_add(*output.address(), output.amount());
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_output_inc(*output.address());
                 }
             }
             Output::SignatureLockedDustAllowance(output) => {
-                created_amount = created_amount.saturating_add(output.amount());
+                created_amount = created_amount
+                    .checked_add(output.amount())
+                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount, output.amount()))?;
                 balance_diffs.amount_add(*output.address(), output.amount());
                 balance_diffs.dust_allowance_add(*output.address(), output.amount());
             }
@@ -132,15 +140,13 @@ async fn validate_regular_essence<B: StorageBackend>(
 
     for (address, diff) in balance_diffs.iter() {
         if diff.is_dust_mutating() {
-            let mut balance = storage::fetch_balance_or_default(storage.deref(), &address).await?;
+            let mut balance = storage::fetch_balance_or_default(storage.deref(), &address).await? + diff;
 
             if let Some(diff) = metadata.balance_diffs.get(&address) {
                 balance = balance + diff;
             }
 
-            balance = balance + diff;
-
-            if balance.dust_output() as usize > dust_outputs_max(balance.dust_allowance()) {
+            if balance.dust_output() > dust_outputs_max(balance.dust_allowance()) {
                 return Ok(ConflictReason::InvalidDustAllowance);
             }
         }
@@ -218,14 +224,13 @@ async fn validate_message<B: StorageBackend>(
 }
 
 // TODO make it a tangle method ?
-pub async fn traversal<B: StorageBackend>(
+async fn traversal<B: StorageBackend>(
     tangle: &MsTangle<B>,
     storage: &B,
     mut messages_ids: Vec<MessageId>,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
     let mut visited = HashSet::new();
-    messages_ids = messages_ids.into_iter().rev().collect();
 
     // TODO Tangle get message AND meta at the same time
 
@@ -243,7 +248,7 @@ pub async fn traversal<B: StorageBackend>(
             }
         };
 
-        if meta.flags().is_confirmed() {
+        if meta.flags().is_referenced() {
             visited.insert(*message_id);
             messages_ids.pop();
             continue;
@@ -281,6 +286,43 @@ pub async fn traversal<B: StorageBackend>(
     }
 
     metadata.merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
+
+    Ok(())
+}
+
+pub async fn white_flag<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    storage: &B,
+    mut messages_ids: Vec<MessageId>,
+    metadata: &mut WhiteFlagMetadata,
+) -> Result<(), Error> {
+    messages_ids = messages_ids.into_iter().rev().collect();
+
+    traversal(tangle, storage, messages_ids, metadata).await?;
+
+    metadata.merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
+
+    if metadata.num_referenced_messages
+        != metadata.excluded_no_transaction_messages.len()
+            + metadata.excluded_conflicting_messages.len()
+            + metadata.included_messages.len()
+    {
+        return Err(Error::InvalidMessagesCount(
+            metadata.num_referenced_messages,
+            metadata.excluded_no_transaction_messages.len(),
+            metadata.excluded_conflicting_messages.len(),
+            metadata.included_messages.len(),
+        ));
+    }
+
+    let diff_sum = metadata
+        .balance_diffs
+        .iter()
+        .fold(0, |acc, (_, diff)| acc + diff.amount());
+
+    if diff_sum != 0 {
+        return Err(Error::NonZeroBalanceDiffSum(diff_sum));
+    }
 
     Ok(())
 }

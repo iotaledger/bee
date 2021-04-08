@@ -59,16 +59,18 @@ impl BodyInner for AddPeerResponse {}
 
 /// Response of GET /api/v1/addresses/{address}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BalanceForAddressResponse {
+pub struct BalanceAddressResponse {
     // The type of the address (1=Ed25519).
     #[serde(rename = "addressType")]
     pub address_type: u8,
     // hex encoded address
     pub address: String,
     pub balance: u64,
+    #[serde(rename = "dustAllowed")]
+    pub dust_allowed: bool,
 }
 
-impl BodyInner for BalanceForAddressResponse {}
+impl BodyInner for BalanceAddressResponse {}
 
 /// Response of GET /api/v1/info
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -81,6 +83,16 @@ pub struct InfoResponse {
     pub network_id: String,
     #[serde(rename = "bech32HRP")]
     pub bech32_hrp: String,
+    #[serde(rename = "minPowScore")]
+    pub min_pow_score: f64,
+    #[serde(rename = "messagesPerSecond")]
+    pub messages_per_second: f64,
+    #[serde(rename = "referencedMessagesPerSecond")]
+    pub referenced_messages_per_second: f64,
+    #[serde(rename = "referencedRate")]
+    pub referenced_rate: f64,
+    #[serde(rename = "latestMilestoneTimestamp")]
+    pub latest_milestone_timestamp: u64,
     #[serde(rename = "latestMilestoneIndex")]
     pub latest_milestone_index: u32,
     #[serde(rename = "confirmedMilestoneIndex")]
@@ -88,8 +100,6 @@ pub struct InfoResponse {
     #[serde(rename = "pruningIndex")]
     pub pruning_index: u32,
     pub features: Vec<String>,
-    #[serde(rename = "minPowScore")]
-    pub min_pow_score: f64,
 }
 
 impl BodyInner for InfoResponse {}
@@ -147,7 +157,7 @@ impl BodyInner for MessageResponse {}
 
 /// Response of GET /api/v1/messages/{message_id}?index={INDEX}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MessagesForIndexResponse {
+pub struct MessagesFindResponse {
     pub index: String,
     #[serde(rename = "maxResults")]
     pub max_results: usize,
@@ -156,11 +166,11 @@ pub struct MessagesForIndexResponse {
     pub message_ids: Vec<String>,
 }
 
-impl BodyInner for MessagesForIndexResponse {}
+impl BodyInner for MessagesFindResponse {}
 
 /// Response of GET /api/v1/milestone/{milestone_index}/utxo-changes
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MilestoneUtxoChangesResponse {
+pub struct UtxoChangesResponse {
     pub index: u32,
     #[serde(rename = "createdOutputs")]
     pub created_outputs: Vec<String>,
@@ -168,7 +178,7 @@ pub struct MilestoneUtxoChangesResponse {
     pub consumed_outputs: Vec<String>,
 }
 
-impl BodyInner for MilestoneUtxoChangesResponse {}
+impl BodyInner for UtxoChangesResponse {}
 
 /// Response of GET /api/v1/milestone/{milestone_index}
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -200,7 +210,7 @@ impl BodyInner for OutputResponse {}
 
 /// Response of GET /api/v1/addresses/{address}/outputs
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct OutputsForAddressResponse {
+pub struct OutputsAddressResponse {
     // The type of the address (1=Ed25519).
     #[serde(rename = "addressType")]
     pub address_type: u8,
@@ -212,7 +222,7 @@ pub struct OutputsForAddressResponse {
     pub output_ids: Vec<String>,
 }
 
-impl BodyInner for OutputsForAddressResponse {}
+impl BodyInner for OutputsAddressResponse {}
 
 /// Response of GET /api/v1/peer/{peer_id}
 #[derive(Clone, Debug, Serialize, Deserialize)]

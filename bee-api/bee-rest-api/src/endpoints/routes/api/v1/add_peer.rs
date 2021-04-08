@@ -68,7 +68,7 @@ pub(crate) async fn add_peer(
             return Err(reject::custom(CustomRejection::BadRequest(
                 "Invalid peer descriptor. The multi address did not have a valid peer id as its last segment."
                     .to_string(),
-            )))
+            )));
         }
     };
 

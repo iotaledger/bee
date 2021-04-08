@@ -50,7 +50,7 @@ impl WsUser {
     pub(crate) fn send(&self, event: WsEvent) {
         match serde_json::to_string(&event) {
             Ok(as_text) => {
-                if let Err(_) = self.tx.send(Ok(Message::text(as_text.clone()))) {
+                if let Err(_) = self.tx.send(Ok(Message::text(as_text))) {
                     // The tx is disconnected, our `user_disconnected` code should be happening in another task, nothing
                     // more to do here.
                 }
@@ -84,7 +84,7 @@ pub(crate) async fn user_connected<B: StorageBackend>(
     let (shutdown_tx, shutdown_rx) = oneshot::channel();
     let receiver = ShutdownStream::new(shutdown_rx, UnboundedReceiverStream::new(rx));
 
-    tokio::task::spawn(receiver.forward(ws_tx).map(|result| {
+    let task = tokio::task::spawn(receiver.forward(ws_tx).map(|result| {
         if let Err(e) = result {
             error!("websocket send error: {}", e);
         }
@@ -115,6 +115,8 @@ pub(crate) async fn user_connected<B: StorageBackend>(
     // ws_rx stream will keep processing as long as the user stays
     // connected. Once they disconnect, then...
     user_disconnected(user_id, &users).await;
+
+    let _ = task.await;
 }
 
 async fn user_message<B: StorageBackend>(
@@ -123,7 +125,7 @@ async fn user_message<B: StorageBackend>(
     users: &WsUsers,
     tangle: &MsTangle<B>,
     storage: &B,
-    node_id: &String,
+    node_id: &str,
     auth_config: &DashboardAuthConfig,
 ) {
     if !msg.is_binary() {
@@ -166,7 +168,7 @@ async fn user_message<B: StorageBackend>(
                         }
                     });
                     if !jwt.validate(
-                        node_id.clone(),
+                        node_id.to_owned(),
                         auth_config.user().to_owned(),
                         AUDIENCE_CLAIM.to_owned(),
                     ) {

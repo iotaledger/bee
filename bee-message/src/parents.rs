@@ -24,6 +24,7 @@ impl Deref for Parents {
     }
 }
 
+#[allow(clippy::len_without_is_empty)]
 impl Parents {
     pub fn new(inner: Vec<MessageId>) -> Result<Self, Error> {
         if !MESSAGE_PARENTS_RANGE.contains(&inner.len()) {
@@ -63,16 +64,16 @@ impl Packable for Parents {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let parents_len = u8::unpack(reader)? as usize;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let parents_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
 
-        if !MESSAGE_PARENTS_RANGE.contains(&parents_len) {
+        if CHECK && !MESSAGE_PARENTS_RANGE.contains(&parents_len) {
             return Err(Error::InvalidParentsCount(parents_len));
         }
 
         let mut inner = Vec::with_capacity(parents_len);
         for _ in 0..parents_len {
-            inner.push(MessageId::unpack(reader)?);
+            inner.push(MessageId::unpack_inner::<R, CHECK>(reader)?);
         }
 
         Self::new(inner)

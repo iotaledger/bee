@@ -5,13 +5,11 @@ use crate::{unlock::Ed25519Signature, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use bech32::{self, ToBase32, Variant};
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
     signatures::ed25519::{PublicKey, Signature},
 };
 
-use alloc::{string::String, vec};
 use core::{convert::TryInto, str::FromStr};
 
 pub const ED25519_ADDRESS_LENGTH: usize = 32;
@@ -32,13 +30,6 @@ impl Ed25519Address {
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
-    }
-
-    // TODO we should probably not have this method, only go through the enum's one (because of the type byte).
-    pub fn to_bech32(&self, hrp: &str) -> String {
-        let mut serialized = vec![Self::KIND];
-        serialized.extend_from_slice(&self.0);
-        bech32::encode(hrp, serialized.to_base32(), Variant::Bech32).expect("Valid Ed25519 address required.")
     }
 
     pub fn verify(&self, msg: &[u8], signature: &Ed25519Signature) -> Result<(), Error> {
@@ -117,7 +108,7 @@ impl Packable for Ed25519Address {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let mut bytes = [0u8; ED25519_ADDRESS_LENGTH];
         reader.read_exact(&mut bytes)?;
 

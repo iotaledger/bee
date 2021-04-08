@@ -4,7 +4,7 @@
 use bee_common::packable::{Packable, Read, Write};
 
 pub(crate) const STORAGE_VERSION_KEY: u8 = 0;
-pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(3);
+pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(4);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct StorageVersion(pub u16);
@@ -20,7 +20,7 @@ impl Packable for StorageVersion {
         self.0.pack(writer)
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(u16::unpack(reader)?))
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(Self(u16::unpack_inner::<R, CHECK>(reader)?))
     }
 }

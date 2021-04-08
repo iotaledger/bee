@@ -15,7 +15,7 @@ use serde::Serialize;
 pub(crate) struct ConfirmedMilestoneMetricsResponse {
     ms_index: u32,
     mps: u64,
-    cmps: u64,
+    rmps: u64,
     referenced_rate: f64,
     time_since_last_ms: u64,
 }
@@ -38,7 +38,7 @@ impl From<ConfirmedMilestoneMetrics> for ConfirmedMilestoneMetricsResponse {
         Self {
             ms_index: val.ms_index,
             mps: val.mps,
-            cmps: val.cmps,
+            rmps: val.rmps,
             referenced_rate: val.referenced_rate,
             time_since_last_ms: val.time_since_last_ms,
         }

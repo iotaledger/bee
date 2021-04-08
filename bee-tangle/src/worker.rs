@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{storage::StorageBackend, MsTangle};
+use crate::{config::TangleConfig, storage::StorageBackend, MsTangle};
 
 use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 use bee_runtime::{node::Node, worker::Worker};
@@ -25,16 +25,16 @@ impl<N: Node> Worker<N> for TangleWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = ();
+    type Config = TangleConfig;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
         vec![TypeId::of::<SnapshotWorker>()].leak()
     }
 
-    async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
+    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         // TODO unwraps
-        let tangle = MsTangle::<N::Backend>::new(node.storage());
+        let tangle = MsTangle::<N::Backend>::new(config, node.storage());
         node.register_resource(tangle);
         let storage = node.storage();
         let tangle = node.resource::<MsTangle<N::Backend>>();
@@ -61,10 +61,6 @@ where
                 .await
                 .unwrap();
         }
-
-        tangle
-            .add_solid_entry_point(SolidEntryPoint::null(), MilestoneIndex(0))
-            .await;
 
         // This needs to be done after the streams are emptied.
 

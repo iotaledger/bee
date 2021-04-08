@@ -78,10 +78,10 @@ pub(crate) fn filter<B: StorageBackend>(
         allowed_ips.clone(),
         tangle.clone(),
         network_id.clone(),
-        bech32_hrp.clone(),
+        bech32_hrp,
         rest_api_config.clone(),
         protocol_config.clone(),
-        node_info.clone(),
+        node_info,
         peer_manager.clone(),
     ))
     .or(message::filter(
@@ -139,11 +139,7 @@ pub(crate) fn filter<B: StorageBackend>(
         allowed_ips.clone(),
         peer_manager.clone(),
     ))
-    .or(peers::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        peer_manager.clone(),
-    ))
+    .or(peers::filter(public_routes.clone(), allowed_ips.clone(), peer_manager))
     .or(receipts::filter(
         public_routes.clone(),
         allowed_ips.clone(),
@@ -157,22 +153,22 @@ pub(crate) fn filter<B: StorageBackend>(
     .or(remove_peer::filter(
         public_routes.clone(),
         allowed_ips.clone(),
-        network_controller.clone(),
+        network_controller,
     ))
     .or(submit_message::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),
         message_submitter.clone(),
-        network_id.clone(),
-        rest_api_config.clone(),
-        protocol_config.clone(),
+        network_id,
+        rest_api_config,
+        protocol_config,
     ))
     .or(submit_message_raw::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),
-        message_submitter.clone(),
+        message_submitter,
     ))
     .or(tips::filter(public_routes.clone(), allowed_ips.clone(), tangle.clone()))
     .or(treasury::filter(
@@ -181,9 +177,9 @@ pub(crate) fn filter<B: StorageBackend>(
         storage.clone(),
     ))
     .or(transaction_included_message::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        storage.clone(),
-        tangle.clone(),
+        public_routes,
+        allowed_ips,
+        storage,
+        tangle,
     ))
 }

@@ -20,7 +20,7 @@ pub struct MessageMetadata {
     milestone_index: Option<MilestoneIndex>,
     arrival_timestamp: u64,
     solidification_timestamp: u64,
-    confirmation_timestamp: u64,
+    reference_timestamp: u64,
     omrsi: Option<IndexId>,
     ymrsi: Option<IndexId>,
     conflict: u8,
@@ -33,7 +33,7 @@ impl MessageMetadata {
         milestone_index: Option<MilestoneIndex>,
         arrival_timestamp: u64,
         solidification_timestamp: u64,
-        confirmation_timestamp: u64,
+        reference_timestamp: u64,
         omrsi: Option<IndexId>,
         ymrsi: Option<IndexId>,
         conflict: u8,
@@ -43,7 +43,7 @@ impl MessageMetadata {
             milestone_index,
             arrival_timestamp,
             solidification_timestamp,
-            confirmation_timestamp,
+            reference_timestamp,
             omrsi,
             ymrsi,
             conflict,
@@ -100,8 +100,8 @@ impl MessageMetadata {
         self.ymrsi = Some(ymrsi);
     }
 
-    pub fn confirmation_timestamp(&self) -> u64 {
-        self.confirmation_timestamp
+    pub fn reference_timestamp(&self) -> u64 {
+        self.reference_timestamp
     }
 
     pub fn solidify(&mut self) {
@@ -112,9 +112,9 @@ impl MessageMetadata {
             .as_millis() as u64;
     }
 
-    pub fn confirm(&mut self, timestamp: u64) {
-        self.flags.set_confirmed(true);
-        self.confirmation_timestamp = timestamp;
+    pub fn reference(&mut self, timestamp: u64) {
+        self.flags.set_referenced(true);
+        self.reference_timestamp = timestamp;
     }
 
     pub fn conflict(&self) -> u8 {
@@ -159,7 +159,7 @@ impl Packable for MessageMetadata {
             + self.milestone_index.packed_len()
             + self.arrival_timestamp.packed_len()
             + self.solidification_timestamp.packed_len()
-            + self.confirmation_timestamp.packed_len()
+            + self.reference_timestamp.packed_len()
             + self.omrsi.packed_len()
             + self.ymrsi.packed_len()
             + self.conflict.packed_len()
@@ -170,7 +170,7 @@ impl Packable for MessageMetadata {
         self.milestone_index.pack(writer)?;
         self.arrival_timestamp.pack(writer)?;
         self.solidification_timestamp.pack(writer)?;
-        self.confirmation_timestamp.pack(writer)?;
+        self.reference_timestamp.pack(writer)?;
         self.omrsi.pack(writer)?;
         self.ymrsi.pack(writer)?;
         self.conflict.pack(writer)?;
@@ -178,16 +178,16 @@ impl Packable for MessageMetadata {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self {
-            flags: Flags::unpack(reader)?,
-            milestone_index: Option::<MilestoneIndex>::unpack(reader)?,
-            arrival_timestamp: u64::unpack(reader)?,
-            solidification_timestamp: u64::unpack(reader)?,
-            confirmation_timestamp: u64::unpack(reader)?,
-            omrsi: Option::<IndexId>::unpack(reader)?,
-            ymrsi: Option::<IndexId>::unpack(reader)?,
-            conflict: u8::unpack(reader)?,
+            flags: Flags::unpack_inner::<R, CHECK>(reader)?,
+            milestone_index: Option::<MilestoneIndex>::unpack_inner::<R, CHECK>(reader)?,
+            arrival_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
+            solidification_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
+            reference_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
+            omrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
+            ymrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
+            conflict: u8::unpack_inner::<R, CHECK>(reader)?,
         })
     }
 }
@@ -220,6 +220,7 @@ impl Ord for IndexId {
         self.0.cmp(&other.0)
     }
 }
+
 impl PartialOrd for IndexId {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.0.partial_cmp(&other.0)
@@ -227,6 +228,7 @@ impl PartialOrd for IndexId {
 }
 
 impl Eq for IndexId {}
+
 impl PartialEq for IndexId {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
@@ -247,8 +249,11 @@ impl Packable for IndexId {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(MilestoneIndex::unpack(reader)?, MessageId::unpack(reader)?))
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let id = MessageId::unpack_inner::<R, CHECK>(reader)?;
+
+        Ok(Self(index, id))
     }
 }
 

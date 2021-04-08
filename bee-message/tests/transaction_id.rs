@@ -45,3 +45,14 @@ fn from_to_str() {
 fn packed_len() {
     assert_eq!(TransactionId::from_str(TRANSACTION_ID).unwrap().packed_len(), 32);
 }
+
+#[test]
+fn pack_unpack_valid() {
+    let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
+    let packed_transaction_id = transaction_id.pack_new();
+
+    assert_eq!(
+        transaction_id,
+        Packable::unpack(&mut packed_transaction_id.as_slice()).unwrap()
+    );
+}

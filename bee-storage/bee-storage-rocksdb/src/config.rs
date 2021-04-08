@@ -61,18 +61,18 @@ impl StorageConfigBuilder {
 }
 
 #[derive(Default, Deserialize)]
-pub struct RocksDBEnvConfigBuilder {
+pub struct RocksDbEnvConfigBuilder {
     set_background_threads: Option<i32>,
     set_high_priority_background_threads: Option<i32>,
 }
 
-impl RocksDBEnvConfigBuilder {
+impl RocksDbEnvConfigBuilder {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn finish(self) -> RocksDBEnvConfig {
-        RocksDBEnvConfig {
+    pub fn finish(self) -> RocksDbEnvConfig {
+        RocksDbEnvConfig {
             set_background_threads: self.set_background_threads.unwrap_or(num_cpus::get() as i32),
             set_high_priority_background_threads: self
                 .set_high_priority_background_threads
@@ -82,7 +82,7 @@ impl RocksDBEnvConfigBuilder {
 }
 
 #[derive(Default, Deserialize)]
-pub struct RocksDBConfigBuilder {
+pub struct RocksDbConfigBuilder {
     storage: Option<StorageConfigBuilder>,
     path: Option<String>,
     create_if_missing: Option<bool>,
@@ -107,10 +107,10 @@ pub struct RocksDBConfigBuilder {
     set_compression_type: Option<CompressionType>,
     set_unordered_write: Option<bool>,
     set_use_direct_io_for_flush_and_compaction: Option<bool>,
-    env: Option<RocksDBEnvConfigBuilder>,
+    env: Option<RocksDbEnvConfigBuilder>,
 }
 
-impl RocksDBConfigBuilder {
+impl RocksDbConfigBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -120,14 +120,14 @@ impl RocksDBConfigBuilder {
         self
     }
 
-    pub fn finish(self) -> RocksDBConfig {
-        RocksDBConfig::from(self)
+    pub fn finish(self) -> RocksDbConfig {
+        RocksDbConfig::from(self)
     }
 }
 
-impl From<RocksDBConfigBuilder> for RocksDBConfig {
-    fn from(builder: RocksDBConfigBuilder) -> Self {
-        RocksDBConfig {
+impl From<RocksDbConfigBuilder> for RocksDbConfig {
+    fn from(builder: RocksDbConfigBuilder) -> Self {
+        RocksDbConfig {
             storage: builder.storage.unwrap_or_default().finish(),
             path: PathBuf::from(builder.path.unwrap_or_else(|| DEFAULT_PATH.to_string())),
             create_if_missing: builder.create_if_missing.unwrap_or(DEFAULT_CREATE_IF_MISSING),
@@ -188,13 +188,13 @@ pub struct StorageConfig {
 }
 
 #[derive(Clone)]
-pub struct RocksDBEnvConfig {
+pub struct RocksDbEnvConfig {
     pub(crate) set_background_threads: i32,
     pub(crate) set_high_priority_background_threads: i32,
 }
 
 #[derive(Clone)]
-pub struct RocksDBConfig {
+pub struct RocksDbConfig {
     pub(crate) storage: StorageConfig,
     pub(crate) path: PathBuf,
     pub(crate) create_if_missing: bool,
@@ -219,5 +219,5 @@ pub struct RocksDBConfig {
     pub(crate) set_compression_type: CompressionType,
     pub(crate) set_unordered_write: bool,
     pub(crate) set_use_direct_io_for_flush_and_compaction: bool,
-    pub(crate) env: RocksDBEnvConfig,
+    pub(crate) env: RocksDbEnvConfig,
 }

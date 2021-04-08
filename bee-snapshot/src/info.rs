@@ -74,12 +74,12 @@ impl Packable for SnapshotInfo {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let network_id = u64::unpack(reader)?;
-        let snapshot_index = MilestoneIndex::unpack(reader)?;
-        let entry_point_index = MilestoneIndex::unpack(reader)?;
-        let pruning_index = MilestoneIndex::unpack(reader)?;
-        let timestamp = u64::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let network_id = u64::unpack_inner::<R, CHECK>(reader)?;
+        let snapshot_index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let entry_point_index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let pruning_index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let timestamp = u64::unpack_inner::<R, CHECK>(reader)?;
 
         Ok(Self {
             network_id,

@@ -12,7 +12,7 @@ use crate::{
     types::{body::SuccessBody, responses::WhiteFlagResponse},
 };
 
-use bee_ledger::consensus::{metadata::WhiteFlagMetadata, validation};
+use bee_ledger::consensus::{self, metadata::WhiteFlagMetadata};
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
@@ -54,24 +54,14 @@ pub(crate) async fn white_flag<B: StorageBackend>(
             "Invalid index: expected a MilestoneIndex".to_string(),
         )));
     } else {
-        MilestoneIndex(
-            index_json
-                .as_str()
-                .ok_or_else(|| {
-                    reject::custom(CustomRejection::BadRequest(
-                        "Invalid index: expected a MilestoneIndex".to_string(),
-                    ))
-                })?
-                .parse::<u32>()
-                .map_err(|_| {
-                    reject::custom(CustomRejection::BadRequest(
-                        "Invalid index: expected a MilestoneIndex".to_string(),
-                    ))
-                })?,
-        )
+        MilestoneIndex(index_json.as_u64().ok_or_else(|| {
+            reject::custom(CustomRejection::BadRequest(
+                "Invalid index: expected a MilestoneIndex".to_string(),
+            ))
+        })? as u32)
     };
 
-    let parents: Vec<MessageId> = if parents_json.is_null() {
+    let parents = if parents_json.is_null() {
         return Err(reject::custom(CustomRejection::BadRequest(
             "Invalid parents: expected an array of MessageId".to_string(),
         )));
@@ -103,7 +93,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
 
     let mut metadata = WhiteFlagMetadata::new(index);
 
-    validation::traversal::<B>(&tangle, &storage, parents, &mut metadata)
+    consensus::white_flag::<B>(&tangle, &storage, parents, &mut metadata)
         .await
         .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
 

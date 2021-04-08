@@ -60,7 +60,12 @@ impl MilestonePayload {
     }
 
     pub fn id(&self) -> MilestoneId {
-        MilestoneId::new(Blake2b256::digest(&self.pack_new()).into())
+        let mut hasher = Blake2b256::new();
+
+        hasher.update(Self::KIND.to_le_bytes());
+        hasher.update(self.pack_new());
+
+        MilestoneId::new(hasher.finalize().into())
     }
 
     pub fn essence(&self) -> &MilestonePayloadEssence {
@@ -143,9 +148,9 @@ impl Packable for MilestonePayload {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let essence = MilestonePayloadEssence::unpack(reader)?;
-        let signatures_len = u8::unpack(reader)? as usize;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let essence = MilestonePayloadEssence::unpack_inner::<R, CHECK>(reader)?;
+        let signatures_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut signatures = Vec::with_capacity(signatures_len);
         for _ in 0..signatures_len {
             let mut signature = vec![0u8; MILESTONE_SIGNATURE_LENGTH];

@@ -6,12 +6,12 @@
 pub enum ConflictReason {
     /// The message has no conflict.
     None = 0,
-    /// The referenced UTXO was already spent.
-    InputUTXOAlreadySpent = 1,
-    /// The referenced UTXO was already spent while confirming this milestone.
-    InputUTXOAlreadySpentInThisMilestone = 2,
-    /// The referenced UTXO cannot be found.
-    InputUTXONotFound = 3,
+    /// The referenced Utxo was already spent.
+    InputUtxoAlreadySpent = 1,
+    /// The referenced Utxo was already spent while confirming this milestone.
+    InputUtxoAlreadySpentInThisMilestone = 2,
+    /// The referenced Utxo cannot be found.
+    InputUtxoNotFound = 3,
     /// The sum of the inputs and output values does not match.
     InputOutputSumMismatch = 4,
     /// The unlock block signature is invalid.

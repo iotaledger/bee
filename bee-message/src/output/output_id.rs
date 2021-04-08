@@ -101,9 +101,9 @@ impl Packable for OutputId {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let transaction_id = TransactionId::unpack(reader)?;
-        let index = u16::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let transaction_id = TransactionId::unpack_inner::<R, CHECK>(reader)?;
+        let index = u16::unpack_inner::<R, CHECK>(reader)?;
 
         Self::new(transaction_id, index)
     }

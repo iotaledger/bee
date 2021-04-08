@@ -8,9 +8,9 @@ use bee_common::packable::{Packable, Read, Write};
 use core::{convert::From, str::FromStr};
 
 #[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub struct UTXOInput(OutputId);
+pub struct UtxoInput(OutputId);
 
-impl UTXOInput {
+impl UtxoInput {
     pub const KIND: u8 = 0;
 
     pub fn new(id: TransactionId, index: u16) -> Result<Self, Error> {
@@ -23,35 +23,35 @@ impl UTXOInput {
 }
 
 #[cfg(feature = "serde")]
-string_serde_impl!(UTXOInput);
+string_serde_impl!(UtxoInput);
 
-impl From<OutputId> for UTXOInput {
+impl From<OutputId> for UtxoInput {
     fn from(id: OutputId) -> Self {
-        UTXOInput(id)
+        UtxoInput(id)
     }
 }
 
-impl FromStr for UTXOInput {
+impl FromStr for UtxoInput {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(UTXOInput(OutputId::from_str(s)?))
+        Ok(UtxoInput(OutputId::from_str(s)?))
     }
 }
 
-impl core::fmt::Display for UTXOInput {
+impl core::fmt::Display for UtxoInput {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-impl core::fmt::Debug for UTXOInput {
+impl core::fmt::Debug for UtxoInput {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "UTXOInput({})", self.0)
+        write!(f, "UtxoInput({})", self.0)
     }
 }
 
-impl Packable for UTXOInput {
+impl Packable for UtxoInput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -62,7 +62,7 @@ impl Packable for UTXOInput {
         self.0.pack(writer)
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(OutputId::unpack(reader)?))
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(Self(OutputId::unpack_inner::<R, CHECK>(reader)?))
     }
 }

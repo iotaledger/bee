@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod migrated_funds_entry;
+mod tail_transaction_hash;
 
 pub use migrated_funds_entry::{MigratedFundsEntry, MIGRATED_FUNDS_ENTRY_AMOUNT};
+pub use tail_transaction_hash::{TailTransactionHash, TAIL_TRANSACTION_HASH_LEN};
 
 use crate::{
     milestone::MilestoneIndex,
@@ -56,7 +58,7 @@ impl ReceiptPayload {
         // TODO could be merged with the lexicographic check ?
         let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
         for (index, funds) in funds.iter().enumerate() {
-            if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash(), index) {
+            if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash().as_ref(), index) {
                 return Err(Error::TailTransactionHashNotUnique(previous, index));
             }
         }
@@ -113,15 +115,17 @@ impl Packable for ReceiptPayload {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let migrated_at = MilestoneIndex::unpack(reader)?;
-        let last = bool::unpack(reader)?;
-        let funds_len = u8::unpack(reader)? as usize;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let migrated_at = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let last = bool::unpack_inner::<R, CHECK>(reader)?;
+        let funds_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut funds = Vec::with_capacity(funds_len);
         for _ in 0..funds_len {
-            funds.push(MigratedFundsEntry::unpack(reader)?);
+            funds.push(MigratedFundsEntry::unpack_inner::<R, CHECK>(reader)?);
         }
-        let transaction = option_payload_unpack(reader)?.1.ok_or(Self::Error::MissingPayload)?;
+        let transaction = option_payload_unpack::<R, CHECK>(reader)?
+            .1
+            .ok_or(Self::Error::MissingPayload)?;
 
         Self::new(migrated_at, last, funds, transaction)
     }

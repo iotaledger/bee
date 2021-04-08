@@ -11,7 +11,7 @@ use crate::{
         storage::{
             self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend,
         },
-        validation,
+        white_flag,
     },
     types::{BalanceDiffs, ConflictReason, Migration, Receipt, TreasuryOutput},
 };
@@ -20,7 +20,7 @@ use bee_message::{
     ledger_index::LedgerIndex,
     milestone::MilestoneIndex,
     output::{self, CreatedOutput, Output, OutputId},
-    payload::{transaction::TransactionId, Payload},
+    payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
@@ -40,6 +40,31 @@ pub struct LedgerWorkerEvent(pub MessageId);
 
 pub struct LedgerWorker {
     pub tx: mpsc::UnboundedSender<LedgerWorkerEvent>,
+}
+
+async fn migration_from_milestone(
+    milestone_index: MilestoneIndex,
+    milestone_id: MilestoneId,
+    receipt: &ReceiptPayload,
+    consumed_treasury: TreasuryOutput,
+) -> Result<Migration, Error> {
+    let receipt = Receipt::new(receipt.clone(), milestone_index);
+
+    // TODO check that the treasuryTransaction input matches the fetched unspent treasury output ?
+    receipt.validate(&consumed_treasury)?;
+
+    let created_treasury = TreasuryOutput::new(
+        match receipt.inner().transaction() {
+            Payload::TreasuryTransaction(treasury) => match treasury.output() {
+                Output::Treasury(output) => output.clone(),
+                output => return Err(Error::UnsupportedOutputKind(output.kind())),
+            },
+            payload => return Err(Error::UnsupportedPayloadKind(payload.kind())),
+        },
+        milestone_id,
+    );
+
+    Ok(Migration::new(receipt, created_treasury, consumed_treasury))
 }
 
 async fn confirm<N: Node>(
@@ -69,11 +94,7 @@ where
 
     drop(message);
 
-    validation::traversal::<N::Backend>(tangle, storage, parents, &mut metadata).await?;
-
-    // Account for the milestone itself.
-    metadata.num_referenced_messages += 1;
-    metadata.excluded_no_transaction_messages.push(message_id);
+    white_flag::<N::Backend>(tangle, storage, parents, &mut metadata).await?;
 
     if !metadata.merkle_proof.eq(&milestone.essence().merkle_proof()) {
         return Err(Error::MerkleProofMismatch(
@@ -82,52 +103,33 @@ where
         ));
     }
 
-    if metadata.num_referenced_messages
-        != metadata.excluded_no_transaction_messages.len()
-            + metadata.excluded_conflicting_messages.len()
-            + metadata.included_messages.len()
-    {
-        return Err(Error::InvalidMessagesCount(
-            metadata.num_referenced_messages,
-            metadata.excluded_no_transaction_messages.len(),
-            metadata.excluded_conflicting_messages.len(),
-            metadata.included_messages.len(),
-        ));
-    }
+    // Account for the milestone itself.
+    metadata.num_referenced_messages += 1;
+    metadata.excluded_no_transaction_messages.push(message_id);
 
     let migration = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
         let milestone_id = milestone.id();
-        let receipt = Receipt::new(receipt.as_ref().clone(), milestone.essence().index().into());
-        let consumed_treasury = storage::fetch_unspent_treasury_output(storage).await?;
-
-        // TODO check that the treasuryTransaction input matches the fetched unspent treasury output ?
-        receipt.validate(&consumed_treasury)?;
 
         // Safe to unwrap since sizes are known to be the same
-        let fake_transaction_id = TransactionId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
-        // Safe to unwrap since sizes are known to be the same
-        let fake_message_id = MessageId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
+        let transaction_id = TransactionId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
 
-        for (index, funds) in receipt.inner().funds().iter().enumerate() {
+        for (index, funds) in receipt.funds().iter().enumerate() {
             metadata.created_outputs.insert(
                 // Safe to unwrap because indexes are known to be valid at this point.
-                OutputId::new(fake_transaction_id, index as u16).unwrap(),
-                CreatedOutput::new(fake_message_id, Output::from(funds.output().clone())),
+                OutputId::new(transaction_id, index as u16).unwrap(),
+                CreatedOutput::new(message_id, Output::from(funds.output().clone())),
             );
         }
 
-        let created_treasury = TreasuryOutput::new(
-            match receipt.inner().transaction() {
-                Payload::TreasuryTransaction(treasury) => match treasury.output() {
-                    Output::Treasury(output) => output.clone(),
-                    output => return Err(Error::UnsupportedOutputKind(output.kind())),
-                },
-                payload => return Err(Error::UnsupportedPayloadKind(payload.kind())),
-            },
-            milestone_id,
-        );
-
-        Some(Migration::new(receipt, created_treasury, consumed_treasury))
+        Some(
+            migration_from_milestone(
+                milestone.essence().index(),
+                milestone_id,
+                receipt,
+                storage::fetch_unspent_treasury_output(storage).await?,
+            )
+            .await?,
+        )
     } else {
         None
     };
@@ -143,13 +145,13 @@ where
     .await?;
 
     *index = LedgerIndex(milestone.essence().index());
-    tangle.update_confirmed_milestone_index(milestone.essence().index().into());
+    tangle.update_confirmed_milestone_index(milestone.essence().index());
 
     for message_id in metadata.excluded_no_transaction_messages.iter() {
         tangle
             .update_metadata(message_id, |message_metadata| {
                 message_metadata.set_conflict(ConflictReason::None as u8);
-                message_metadata.confirm(milestone.essence().timestamp());
+                message_metadata.reference(milestone.essence().timestamp());
             })
             .await;
     }
@@ -158,7 +160,7 @@ where
         tangle
             .update_metadata(message_id, |message_metadata| {
                 message_metadata.set_conflict(*conflict as u8);
-                message_metadata.confirm(milestone.essence().timestamp());
+                message_metadata.reference(milestone.essence().timestamp());
             })
             .await;
     }
@@ -167,7 +169,7 @@ where
         tangle
             .update_metadata(message_id, |message_metadata| {
                 message_metadata.set_conflict(ConflictReason::None as u8);
-                message_metadata.confirm(milestone.essence().timestamp());
+                message_metadata.reference(milestone.essence().timestamp());
             })
             .await;
     }
@@ -183,7 +185,7 @@ where
 
     bus.dispatch(MilestoneConfirmed {
         id: message_id,
-        index: milestone.essence().index().into(),
+        index: milestone.essence().index(),
         timestamp: milestone.essence().timestamp(),
         referenced_messages: metadata.num_referenced_messages,
         excluded_no_transaction_messages: metadata.excluded_no_transaction_messages,
@@ -307,10 +309,27 @@ where
                     consumed.insert(*output_id, (*consumed_output).clone());
                 }
 
+                let migration = if let Some(Payload::Receipt(receipt)) = diff.milestone().essence().receipt() {
+                    // There should be a consumed treasury if there is a receipt.
+                    let consumed_treasury = diff.consumed_treasury().unwrap().clone();
+
+                    Some(
+                        migration_from_milestone(
+                            index,
+                            diff.milestone().id(),
+                            receipt,
+                            TreasuryOutput::new(consumed_treasury.0, consumed_treasury.1),
+                        )
+                        .await?,
+                    )
+                } else {
+                    None
+                };
+
                 match index {
                     index if index == MilestoneIndex(ledger_index + 1) => {
                         // TODO unwrap until we merge both crates
-                        apply_outputs_diff(&*storage, index, diff.created(), &consumed, &balance_diffs, &None)
+                        apply_outputs_diff(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)
                             .await
                             .unwrap();
                     }
@@ -320,7 +339,7 @@ where
                             .await
                             .unwrap();
                     }
-                    _ => return Err(Error::UnexpectedDiffIndex(index.into())),
+                    _ => return Err(Error::UnexpectedDiffIndex(index)),
                 }
             }
             Ok(())

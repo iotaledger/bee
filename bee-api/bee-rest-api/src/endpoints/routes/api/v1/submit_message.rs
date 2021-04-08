@@ -142,11 +142,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
                     "invalid nonce: expected an u64-string".to_string(),
                 ))
             })?;
-        if parsed == 0 {
-            None
-        } else {
-            Some(parsed)
-        }
+        if parsed == 0 { None } else { Some(parsed) }
     };
 
     let message = if let Some(nonce) = nonce {

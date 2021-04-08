@@ -44,7 +44,7 @@ impl Add<&BalanceDiff> for Balance {
         let dust_allowance = self.dust_allowance() as i64 + other.dust_allowance();
         let dust_output = self.dust_output as i64 + other.dust_output();
 
-        // Given the nature of UTXO, this is never supposed to happen.
+        // Given the nature of Utxo, this is never supposed to happen.
         assert!(amount >= 0);
         assert!(dust_allowance >= 0);
         assert!(dust_output >= 0);
@@ -72,11 +72,11 @@ impl Packable for Balance {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Balance::new(
-            u64::unpack(reader)?,
-            u64::unpack(reader)?,
-            u64::unpack(reader)?,
-        ))
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let amount = u64::unpack_inner::<R, CHECK>(reader)?;
+        let dust_allowance = u64::unpack_inner::<R, CHECK>(reader)?;
+        let dust_output = u64::unpack_inner::<R, CHECK>(reader)?;
+
+        Ok(Balance::new(amount, dust_allowance, dust_output))
     }
 }

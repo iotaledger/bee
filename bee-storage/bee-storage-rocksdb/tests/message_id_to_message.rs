@@ -7,7 +7,7 @@ use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend::StorageBackend,
 };
-use bee_storage_rocksdb::{config::RocksDBConfigBuilder, storage::Storage};
+use bee_storage_rocksdb::{config::RocksDbConfigBuilder, storage::Storage};
 use bee_test::rand::message::{rand_message, rand_message_id};
 
 use futures::stream::StreamExt;
@@ -17,19 +17,21 @@ use std::collections::HashMap;
 const DB_DIRECTORY: &str = "./tests/database/message_id_to_message";
 
 #[tokio::test]
-async fn access() {
+async fn message_id_to_message_access() {
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 
-    let config = RocksDBConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
+    let config = RocksDbConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();
     let storage = Storage::start(config).await.unwrap();
 
     let (message_id, message) = (rand_message_id(), rand_message());
 
     assert!(!Exist::<MessageId, Message>::exist(&storage, &message_id).await.unwrap());
-    assert!(Fetch::<MessageId, Message>::fetch(&storage, &message_id)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<MessageId, Message>::fetch(&storage, &message_id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     Insert::<MessageId, Message>::insert(&storage, &message_id, &message)
         .await
@@ -50,10 +52,12 @@ async fn access() {
         .unwrap();
 
     assert!(!Exist::<MessageId, Message>::exist(&storage, &message_id).await.unwrap());
-    assert!(Fetch::<MessageId, Message>::fetch(&storage, &message_id)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<MessageId, Message>::fetch(&storage, &message_id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     let mut batch = Storage::batch_begin();
 

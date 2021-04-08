@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    config::TangleConfig,
     metadata::{IndexId, MessageMetadata},
     storage::StorageBackend,
     tangle::{Hooks, Tangle, DEFAULT_CACHE_LEN},
@@ -58,7 +59,7 @@ impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
         self.storage.insert(&(msg, approver), &()).await
     }
 
-    async fn update_approvers(&self, msg: MessageId, approvers: &Vec<MessageId>) -> Result<(), Self::Error> {
+    async fn update_approvers(&self, msg: MessageId, approvers: &[MessageId]) -> Result<(), Self::Error> {
         trace!("Attempted to update approvers for message {:?}", msg);
         // self.storage.insert(&msg, approvers).await
         for approver in approvers {
@@ -83,6 +84,7 @@ impl<B: StorageBackend> StorageHooks<B> {
 
 /// Milestone-based Tangle.
 pub struct MsTangle<B> {
+    config: TangleConfig,
     pub(crate) inner: Tangle<MessageMetadata, StorageHooks<B>>,
     milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
     pub(crate) solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
@@ -104,8 +106,9 @@ impl<B> Deref for MsTangle<B> {
 }
 
 impl<B: StorageBackend> MsTangle<B> {
-    pub fn new(storage: ResourceHandle<B>) -> Self {
+    pub fn new(config: TangleConfig, storage: ResourceHandle<B>) -> Self {
         Self {
+            config,
             inner: Tangle::new(StorageHooks { storage }),
             milestones: Default::default(),
             solid_entry_points: Default::default(),
@@ -121,6 +124,10 @@ impl<B: StorageBackend> MsTangle<B> {
 
     pub async fn shutdown(self) {
         // TODO: Write back changes by calling self.inner.shutdown().await
+    }
+
+    pub fn config(&self) -> &TangleConfig {
+        &self.config
     }
 
     pub async fn insert(&self, message: Message, hash: MessageId, metadata: MessageMetadata) -> Option<MessageRef> {
@@ -182,8 +189,12 @@ impl<B: StorageBackend> MsTangle<B> {
         }
     }
 
+    pub async fn get_milestone(&self, index: MilestoneIndex) -> Option<Milestone> {
+        self.milestones.lock().await.get(&index).cloned()
+    }
+
     // TODO: use combinator instead of match
-    pub async fn get_milestone(&self, index: MilestoneIndex) -> Option<MessageRef> {
+    pub async fn get_milestone_message(&self, index: MilestoneIndex) -> Option<MessageRef> {
         match self.get_milestone_message_id(index).await {
             None => None,
             Some(ref hash) => self.get(hash).await,
@@ -224,7 +235,9 @@ impl<B: StorageBackend> MsTangle<B> {
         self.solid_milestone_index.store(*new_index, Ordering::Relaxed);
 
         // TODO: Formalise this a little better
-        let new_len = ((1000.0 + self.get_sync_threshold() as f32 * 500.0) as usize).min(DEFAULT_CACHE_LEN);
+        let new_len = ((1000.0 + self.get_sync_threshold() as f32 * 500.0) as usize)
+            .min(DEFAULT_CACHE_LEN)
+            .max(8192);
         self.inner.resize(new_len);
     }
 
@@ -276,8 +289,18 @@ impl<B: StorageBackend> MsTangle<B> {
         *self.get_solid_milestone_index() >= self.get_latest_milestone_index().saturating_sub(threshold)
     }
 
+    // TODO reduce to one atomic value ?
+    pub fn is_confirmed(&self) -> bool {
+        self.is_confirmed_threshold(0)
+    }
+
+    // TODO reduce to one atomic value ?
+    pub fn is_confirmed_threshold(&self, threshold: u32) -> bool {
+        *self.get_confirmed_milestone_index() >= self.get_latest_milestone_index().saturating_sub(threshold)
+    }
+
     pub async fn get_solid_entry_point_index(&self, sep: &SolidEntryPoint) -> Option<MilestoneIndex> {
-        self.solid_entry_points.lock().await.get(sep).map(|i| *i)
+        self.solid_entry_points.lock().await.get(sep).copied()
     }
 
     pub async fn add_solid_entry_point(&self, sep: SolidEntryPoint, index: MilestoneIndex) {

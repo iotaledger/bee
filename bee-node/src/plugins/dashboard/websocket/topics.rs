@@ -11,7 +11,7 @@ pub(crate) enum WsTopic {
     SyncStatus = 0,
     PublicNodeStatus = 1,
     NodeStatus = 2,
-    MPSMetrics = 3,
+    MpsMetrics = 3,
     TipSelectionMetrics = 4,
     Milestone = 5,
     PeerMetrics = 6,
@@ -35,7 +35,7 @@ impl TryFrom<u8> for WsTopic {
             0 => Ok(WsTopic::SyncStatus),
             1 => Ok(WsTopic::PublicNodeStatus),
             2 => Ok(WsTopic::NodeStatus),
-            3 => Ok(WsTopic::MPSMetrics),
+            3 => Ok(WsTopic::MpsMetrics),
             4 => Ok(WsTopic::TipSelectionMetrics),
             5 => Ok(WsTopic::Milestone),
             6 => Ok(WsTopic::PeerMetrics),
@@ -60,7 +60,7 @@ impl WsTopic {
             self,
             WsTopic::SyncStatus
                 | WsTopic::PublicNodeStatus
-                | WsTopic::MPSMetrics
+                | WsTopic::MpsMetrics
                 | WsTopic::Milestone
                 | WsTopic::ConfirmedMilestoneMetrics
                 | WsTopic::Vertex

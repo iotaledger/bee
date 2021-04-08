@@ -27,7 +27,7 @@ fn new_valid() {
 
 #[test]
 fn new_invalid_input() {
-    let input = Input::from(UTXOInput::from_str(UTXO_INPUT).unwrap());
+    let input = Input::from(UtxoInput::from_str(UTXO_INPUT).unwrap());
     let output = Output::from(TreasuryOutput::new(1_000).unwrap());
 
     assert!(matches!(

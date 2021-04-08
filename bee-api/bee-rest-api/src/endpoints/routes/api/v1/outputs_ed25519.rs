@@ -6,7 +6,7 @@ use crate::{
         config::ROUTE_OUTPUTS_ED25519, filters::with_storage, path_params::ed25519_address, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend,
     },
-    types::{body::SuccessBody, responses::OutputsForAddressResponse},
+    types::{body::SuccessBody, responses::OutputsAddressResponse},
 };
 
 use bee_message::{address::Ed25519Address, output::OutputId};
@@ -57,7 +57,7 @@ pub(crate) async fn outputs_ed25519<B: StorageBackend>(
     let max_results = 1000;
     fetched.truncate(max_results);
 
-    Ok(warp::reply::json(&SuccessBody::new(OutputsForAddressResponse {
+    Ok(warp::reply::json(&SuccessBody::new(OutputsAddressResponse {
         address_type: 1,
         address: addr.to_string(),
         max_results,

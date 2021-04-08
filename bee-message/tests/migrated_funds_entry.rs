@@ -3,6 +3,7 @@
 
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_test::rand::receipt::rand_tail_transaction_hash;
 
 use core::str::FromStr;
 
@@ -10,13 +11,13 @@ const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7
 
 #[test]
 fn new_valid() {
-    let tth = [42; 49];
+    let tth = rand_tail_transaction_hash();
     let output = SignatureLockedSingleOutput::new(
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         42424242,
     )
     .unwrap();
-    let mfe = MigratedFundsEntry::new(tth, output.clone()).unwrap();
+    let mfe = MigratedFundsEntry::new(tth.clone(), output.clone()).unwrap();
 
     assert_eq!(mfe.tail_transaction_hash(), &tth);
     assert_eq!(*mfe.output(), output);
@@ -26,7 +27,7 @@ fn new_valid() {
 fn new_invalid_amount() {
     assert!(matches!(
         MigratedFundsEntry::new(
-            [42; 49],
+            rand_tail_transaction_hash(),
             SignatureLockedSingleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 42)
                 .unwrap()
         ),
@@ -38,7 +39,7 @@ fn new_invalid_amount() {
 fn packed_len() {
     assert_eq!(
         MigratedFundsEntry::new(
-            [42; 49],
+            rand_tail_transaction_hash(),
             SignatureLockedSingleOutput::new(
                 Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                 42424242,
@@ -54,7 +55,7 @@ fn packed_len() {
 #[test]
 fn pack_unpack_valid() {
     let mfe_1 = MigratedFundsEntry::new(
-        [42; 49],
+        rand_tail_transaction_hash(),
         SignatureLockedSingleOutput::new(
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             42424242,

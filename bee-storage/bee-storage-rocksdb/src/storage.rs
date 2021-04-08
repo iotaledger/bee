@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
-    config::{RocksDBConfig, RocksDBConfigBuilder, StorageConfig},
+    config::{RocksDbConfig, RocksDbConfigBuilder, StorageConfig},
     error::Error,
     system::{System, STORAGE_VERSION, STORAGE_VERSION_KEY},
 };
@@ -45,7 +45,7 @@ pub struct Storage {
 }
 
 impl Storage {
-    pub fn try_new(config: RocksDBConfig) -> Result<DB, Error> {
+    pub fn try_new(config: RocksDbConfig) -> Result<DB, Error> {
         let cf_system = ColumnFamilyDescriptor::new(CF_SYSTEM, Options::default());
 
         let cf_message_id_to_message = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE, Options::default());
@@ -165,11 +165,11 @@ impl Storage {
 
 #[async_trait]
 impl StorageBackend for Storage {
-    type ConfigBuilder = RocksDBConfigBuilder;
-    type Config = RocksDBConfig;
+    type ConfigBuilder = RocksDbConfigBuilder;
+    type Config = RocksDbConfig;
     type Error = Error;
 
-    /// It starts RocksDB instance and then initializes the required column familes.
+    /// It starts RocksDb instance and then initializes the required column familes.
     async fn start(config: Self::Config) -> Result<Self, Self::Error> {
         let storage = Storage {
             config: config.storage.clone(),
@@ -191,7 +191,7 @@ impl StorageBackend for Storage {
         Ok(storage)
     }
 
-    /// It shutdowns RocksDB instance.
+    /// It shutdowns RocksDb instance.
     /// Note: the shutdown is done through flush method and then droping the storage object.
     async fn shutdown(self) -> Result<(), Self::Error> {
         Ok(self.inner.flush()?)

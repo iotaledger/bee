@@ -346,7 +346,7 @@ fn send_gossip(peer_id: PeerId, gossip_out: GossipSender, shutdown_rx: oneshot::
             IntervalStream::new(tokio::time::interval(Duration::from_secs(5))),
         );
 
-        while let Some(_) = shutdown_stream.next().await {
+        while shutdown_stream.next().await.is_some() {
             let message = i.to_string();
 
             println!("Sending message to peer *{} (\"{}\").", alias!(peer_id), message);

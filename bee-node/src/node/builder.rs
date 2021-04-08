@@ -12,7 +12,6 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_network;
 use bee_runtime::{
     event::Bus,
     node::{Node, NodeBuilder, NodeInfo},
@@ -199,7 +198,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         .await;
 
         info!("Initializing tangle...");
-        let this = bee_tangle::init::<BeeNode<B>>(this);
+        let this = bee_tangle::init::<BeeNode<B>>(&config.snapshot, &config.tangle, this);
 
         // MQTT core plugin
         info!("Initializing MQTT core plugin...");

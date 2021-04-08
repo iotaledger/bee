@@ -18,6 +18,8 @@ fn new_invalid_no_signature() {
                 0,
                 rand_parents(),
                 [0; MILESTONE_MERKLE_PROOF_LENGTH],
+                0,
+                0,
                 vec![[0; 32]],
                 None,
             )
@@ -37,6 +39,8 @@ fn new_invalid_too_many_signatures() {
                 0,
                 rand_parents(),
                 [0; MILESTONE_MERKLE_PROOF_LENGTH],
+                0,
+                0,
                 vec![[0; 32]],
                 None,
             )
@@ -56,6 +60,8 @@ fn new_invalid_public_keys_sgnatures_count_mismatch() {
                 0,
                 rand_parents(),
                 [0; MILESTONE_MERKLE_PROOF_LENGTH],
+                0,
+                0,
                 vec![[0; 32], [1; 32]],
                 None,
             )

@@ -162,6 +162,11 @@ where
                             continue;
                         }
 
+                        // Send the propagation event ASAP to allow the propagator to do its thing
+                        if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
+                            error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
+                        }
+
                         let bytes = message_packet.bytes.to_vec();
                         bus.dispatch(MessageProcessed(message_id, bytes));
 
@@ -176,10 +181,6 @@ where
                             is_tip: false,
                             is_selected: false,
                         });
-
-                        if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
-                            error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
-                        }
 
                         metrics.new_messages_inc();
 

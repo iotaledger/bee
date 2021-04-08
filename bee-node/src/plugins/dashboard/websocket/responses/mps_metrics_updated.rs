@@ -24,7 +24,7 @@ pub(crate) struct MpsMetricsUpdatedDto {
 
 impl From<MpsMetricsUpdated> for WsEvent {
     fn from(val: MpsMetricsUpdated) -> Self {
-        Self::new(WsTopic::MPSMetrics, WsEventInner::MpsMetricsUpdated(val.into()))
+        Self::new(WsTopic::MpsMetrics, WsEventInner::MpsMetricsUpdated(val.into()))
     }
 }
 

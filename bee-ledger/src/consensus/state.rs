@@ -52,7 +52,7 @@ async fn check_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u6
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     while let Some((address, balance)) = stream.next().await {
-        if balance.dust_output() as usize > dust_outputs_max(balance.dust_allowance()) {
+        if balance.dust_output() > dust_outputs_max(balance.dust_allowance()) {
             return Err(Error::InvalidLedgerDustState(address, balance));
         }
         supply += balance.amount();

@@ -25,10 +25,7 @@ fn new_invalid_more_than_max() {
         inner.sort();
     }
 
-    assert!(matches!(
-        Parents::new(inner.clone()),
-        Err(Error::InvalidParentsCount(9))
-    ));
+    assert!(matches!(Parents::new(inner), Err(Error::InvalidParentsCount(9))));
 }
 
 #[test]
@@ -36,10 +33,7 @@ fn new_invalid_not_sorted() {
     let mut inner = rand_message_ids(8);
     inner.reverse();
 
-    assert!(matches!(
-        Parents::new(inner.clone()),
-        Err(Error::ParentsNotUniqueSorted)
-    ));
+    assert!(matches!(Parents::new(inner), Err(Error::ParentsNotUniqueSorted)));
 }
 
 #[test]
@@ -47,21 +41,20 @@ fn new_invalid_not_unique() {
     let mut inner = rand_message_ids(7);
     inner.push(*inner.last().unwrap());
 
-    assert!(matches!(
-        Parents::new(inner.clone()),
-        Err(Error::ParentsNotUniqueSorted)
-    ));
+    assert!(matches!(Parents::new(inner), Err(Error::ParentsNotUniqueSorted)));
 }
 
 #[test]
 fn packed_len() {
-    assert_eq!(Parents::new(rand_message_ids(5)).unwrap().packed_len(), 1 + 5 * 32);
+    let parents = Parents::new(rand_message_ids(5)).unwrap();
+
+    assert_eq!(parents.packed_len(), 1 + 5 * 32);
+    assert_eq!(parents.packed_len(), parents.pack_new().len());
 }
 
 #[test]
 fn pack_unpack_valid() {
-    let inner = rand_message_ids(8);
-    let parents_1 = Parents::new(inner.clone()).unwrap();
+    let parents_1 = Parents::new(rand_message_ids(8)).unwrap();
     let parents_2 = Parents::unpack(&mut parents_1.pack_new().as_slice()).unwrap();
 
     assert_eq!(parents_1, parents_2);

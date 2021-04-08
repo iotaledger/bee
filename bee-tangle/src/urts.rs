@@ -68,17 +68,9 @@ impl UrtsTipPool {
         if let Score::NonLazy = self.tip_score::<B>(tangle, &message_id).await {
             self.non_lazy_tips.insert(message_id);
             self.tips.insert(message_id, TipMetadata::new());
-            self.link_parents_with_child(&message_id, &parents);
-            self.check_retention_rules_for_parents(&parents);
-        }
-    }
-
-    fn link_parents_with_child(&mut self, child: &MessageId, parents: &Vec<MessageId>) {
-        let mut linked = Vec::new();
-        for parent in parents {
-            if !linked.contains(parent) {
-                self.add_child(*parent, *child);
-                linked.push(*parent);
+            for parent in parents.iter() {
+                self.add_child(*parent, message_id);
+                self.check_retention_rules_for_parent(parent);
             }
         }
     }
@@ -97,16 +89,6 @@ impl UrtsTipPool {
                 metadata.children.insert(child);
                 metadata.time_first_child = Some(Instant::now());
                 entry.insert(metadata);
-            }
-        }
-    }
-
-    fn check_retention_rules_for_parents(&mut self, parents: &Vec<MessageId>) {
-        let mut checked = Vec::new();
-        for parent in parents {
-            if !checked.contains(parent) {
-                self.check_retention_rules_for_parent(parent);
-                checked.push(*parent);
             }
         }
     }
@@ -149,15 +131,15 @@ impl UrtsTipPool {
         debug!("Non-lazy tips {}", self.non_lazy_tips.len());
     }
 
-    async fn tip_score<B: StorageBackend>(&self, tangle: &MsTangle<B>, hash: &MessageId) -> Score {
+    async fn tip_score<B: StorageBackend>(&self, tangle: &MsTangle<B>, message_id: &MessageId) -> Score {
         // in case the tip was pruned by the node, consider tip as lazy
-        if !tangle.contains(hash).await {
+        if !tangle.contains(message_id).await {
             return Score::Lazy;
         }
 
         let smi = *tangle.get_solid_milestone_index();
-        let omrsi = *tangle.omrsi(&hash).await.unwrap().index();
-        let ymrsi = *tangle.ymrsi(&hash).await.unwrap().index();
+        let omrsi = *tangle.omrsi(&message_id).await.unwrap().index();
+        let ymrsi = *tangle.ymrsi(&message_id).await.unwrap().index();
 
         if (smi - ymrsi) > YMRSI_DELTA {
             return Score::Lazy;

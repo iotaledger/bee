@@ -6,7 +6,7 @@ use crate::plugins::dashboard::websocket::{
     topics::WsTopic,
 };
 
-use bee_protocol::workers::event::LatestMilestoneChanged;
+use bee_tangle::event::LatestMilestoneChanged;
 
 use serde::Serialize;
 

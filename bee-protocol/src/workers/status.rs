@@ -46,22 +46,27 @@ where
 
             while ticker.next().await.is_some() {
                 let snapshot_index = *tangle.get_snapshot_index();
+                let confirmed_milestone_index = *tangle.get_confirmed_milestone_index();
                 let solid_milestone_index = *tangle.get_solid_milestone_index();
                 let latest_milestone_index = *tangle.get_latest_milestone_index();
 
-                // TODO Threshold
-                // TODO use tangle synced method
-                let status = if solid_milestone_index == latest_milestone_index {
-                    format!("Synchronized at {}", latest_milestone_index)
+                let status = if confirmed_milestone_index == latest_milestone_index {
+                    format!("Synchronized and confirmed at {}", latest_milestone_index)
                 } else {
-                    let progress = ((solid_milestone_index - snapshot_index) as f32 * 100.0
-                        / (latest_milestone_index - snapshot_index) as f32) as u8;
+                    let confirmed_progress = ((confirmed_milestone_index - snapshot_index) as f64 * 100.0
+                        / (latest_milestone_index - snapshot_index) as f64)
+                        as u8;
+                    let solid_progress = ((solid_milestone_index - snapshot_index) as f32 * 100.0
+                        / (latest_milestone_index - snapshot_index) as f32)
+                        as u8;
                     format!(
-                        "Synchronizing {}..{}..{} ({}%) - Requested {}",
+                        "Synchronizing from {} to {}: confirmed {} ({}%) and solid {} ({}%) - Requested {}",
                         snapshot_index,
-                        solid_milestone_index,
                         latest_milestone_index,
-                        progress,
+                        confirmed_milestone_index,
+                        confirmed_progress,
+                        solid_milestone_index,
+                        solid_progress,
                         requested_messages.len().await,
                     )
                 };

@@ -61,13 +61,25 @@ pub(crate) async fn info<B: StorageBackend>(
     node_info: ResourceHandle<NodeInfo>,
     peer_manager: ResourceHandle<PeerManager>,
 ) -> Result<impl Reply, Infallible> {
+    let latest_milestone_index = tangle.get_latest_milestone_index();
+    let latest_milestone_timestamp = tangle
+        .get_milestone(latest_milestone_index)
+        .await
+        .map(|m| m.timestamp())
+        .unwrap_or_default();
+
     Ok(warp::reply::json(&SuccessBody::new(InfoResponse {
         name: node_info.name.clone(),
         version: node_info.version.clone(),
         is_healthy: health::is_healthy(&tangle, &peer_manager).await,
         network_id: network_id.0,
         bech32_hrp,
-        latest_milestone_index: *tangle.get_latest_milestone_index(),
+        min_pow_score: protocol_config.minimum_pow_score(),
+        messages_per_second: 0f64,            // TODO
+        referenced_messages_per_second: 0f64, // TODO
+        referenced_rate: 0f64,                // TODO
+        latest_milestone_timestamp,
+        latest_milestone_index: *latest_milestone_index,
         confirmed_milestone_index: *tangle.get_confirmed_milestone_index(),
         pruning_index: *tangle.get_pruning_index(),
         features: {
@@ -77,6 +89,5 @@ pub(crate) async fn info<B: StorageBackend>(
             }
             features
         },
-        min_pow_score: protocol_config.minimum_pow_score(),
     })))
 }

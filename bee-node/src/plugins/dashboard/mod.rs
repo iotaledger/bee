@@ -30,9 +30,9 @@ use crate::{
 };
 
 use bee_ledger::consensus::event::MilestoneConfirmed;
-use bee_protocol::workers::{event::LatestMilestoneChanged, MetricsWorker, PeerManagerResWorker};
+use bee_protocol::workers::{MetricsWorker, PeerManagerResWorker};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::{event::LatestMilestoneChanged, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;

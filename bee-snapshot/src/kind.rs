@@ -29,8 +29,8 @@ impl Packable for Kind {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack(reader)? {
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
             0 => Kind::Full,
             1 => Kind::Delta,
             k => return Err(Self::Error::InvalidKind(k)),

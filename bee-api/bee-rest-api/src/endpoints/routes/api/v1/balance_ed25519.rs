@@ -6,10 +6,10 @@ use crate::{
         config::ROUTE_BALANCE_ED25519, filters::with_storage, path_params::ed25519_address, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend,
     },
-    types::{body::SuccessBody, responses::BalanceForAddressResponse},
+    types::{body::SuccessBody, responses::BalanceAddressResponse},
 };
 
-use bee_ledger::types::Balance;
+use bee_ledger::{consensus::dust::dust_outputs_max, types::Balance};
 use bee_message::address::{Address, Ed25519Address};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
@@ -49,10 +49,11 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
                 "can not fetch from storage".to_string(),
             ))
         })? {
-        Some(balance) => Ok(warp::reply::json(&SuccessBody::new(BalanceForAddressResponse {
+        Some(balance) => Ok(warp::reply::json(&SuccessBody::new(BalanceAddressResponse {
             address_type: 1,
             address: addr.to_string(),
             balance: balance.amount(),
+            dust_allowed: balance.dust_output() < dust_outputs_max(balance.dust_allowance()),
         }))),
         None => Err(reject::custom(CustomRejection::NotFound(
             "balance not found".to_string(),

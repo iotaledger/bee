@@ -15,7 +15,7 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 
 use bee_protocol::types::metrics::NodeMetrics;
 use futures::StreamExt;
-use log::{debug, error, warn};
+use log::{debug, error};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -38,10 +38,10 @@ where
         let mut prev_new_message_count = 0;
 
         while let Some(event) = receiver.next().await {
-            if prev_event.is_some() {
+            if let Some(prev_event) = prev_event {
 
                 // unwrap is safe since of the condition above
-                let time_diff = event.timestamp - prev_event.unwrap().timestamp;
+                let time_diff = event.timestamp - prev_event.timestamp;
 
                 let new_msg_count = metrics.new_messages();
                 let new_msg_diff = new_msg_count - prev_new_message_count;
@@ -57,7 +57,7 @@ where
                     let metrics = ConfirmedMilestoneMetrics {
                         ms_index: *event.index,
                         mps: new_msg_diff / time_diff,
-                        cmps: event.referenced_messages as u64 / time_diff,
+                        rmps: event.referenced_messages as u64 / time_diff,
                         referenced_rate,
                         time_since_last_ms: time_diff,
                     };
@@ -76,9 +76,10 @@ where
     });
 
     bus.add_listener::<Dashboard, _, _>(move |event: &MilestoneConfirmed| {
-        if tx.send((*event).clone()).is_err() {
-            warn!("Sending event to `confirmed_ms_metrics_worker` failed.");
-        }
+        // The lifetime of the listeners is tied to the lifetime of the Dashboard worker so they are removed together.
+        // However, topic handlers are shutdown as soon as the signal is received, causing this send to potentially
+        // fail and spam the output. The return is then ignored as not being essential.
+        let _ = tx.send((*event).clone());
     });
 }
 
@@ -86,7 +87,7 @@ where
 pub struct ConfirmedMilestoneMetrics {
     pub ms_index: u32,
     pub mps: u64,
-    pub cmps: u64,
+    pub rmps: u64,
     pub referenced_rate: f64,
     pub time_since_last_ms: u64,
 }
