@@ -229,6 +229,8 @@ dependencies = [
  "chrono",
  "fern",
  "log",
+ "rand 0.8.3",
+ "rust-argon2",
  "serde",
  "thiserror",
 ]
@@ -341,7 +343,6 @@ dependencies = [
  "paho-mqtt",
  "rand 0.8.3",
  "rpassword",
- "rust-argon2",
  "rust-embed",
  "serde",
  "serde_json",
