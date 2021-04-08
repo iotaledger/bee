@@ -11,7 +11,7 @@ keywords = ["iota", "tangle", "bee", "framework", "node"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = [ "password" ] }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-ledger = { path = "../bee-ledger", features = ["consensus"] }
 bee-message = { path = "../bee-message" }
@@ -39,7 +39,6 @@ rand = "0.8"
 rpassword = "5.0"
 rumqttd = "0.5.0"
 rumqttlog = "0.5.0"
-rust-argon2 = "0.8"
 rust-embed = { version = "5.7", features = ["interpolate-folder-path"], optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

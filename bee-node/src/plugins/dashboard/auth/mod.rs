@@ -8,7 +8,8 @@ use jwt::JsonWebToken;
 
 use crate::plugins::dashboard::{config::DashboardAuthConfig, rejection::CustomRejection};
 
-use argon2::{self, Config};
+use bee_common::password;
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use warp::{reject, Rejection, Reply};
@@ -65,17 +66,13 @@ pub(crate) async fn auth(
             .ok_or_else(|| reject::custom(CustomRejection::BadRequest("Invalid password provided")))?
     };
 
-    let hash = hex::encode(
-        argon2::hash_raw(
-            password.as_bytes(),
-            // Unwrap is fine, salt comes from the config and has already been verified
-            &hex::decode(config.password_salt()).unwrap(),
-            &Config::default(),
-        )
-        .map_err(|_| reject::custom(CustomRejection::InternalError))?,
-    );
-
-    if hash != config.password_hash() {
+    if !password::password_verify(
+        password.as_bytes(),
+        &hex::decode(config.password_salt()).unwrap(),
+        &hex::decode(config.password_hash()).unwrap(),
+    )
+    .map_err(|_| reject::custom(CustomRejection::InternalError))?
+    {
         return Err(reject::custom(CustomRejection::InvalidCredentials));
     }
 

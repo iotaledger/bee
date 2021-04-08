@@ -307,6 +307,8 @@ dependencies = [
  "chrono",
  "fern",
  "log",
+ "rand 0.8.3",
+ "rust-argon2",
  "serde",
  "thiserror",
 ]
@@ -420,7 +422,6 @@ dependencies = [
  "rpassword",
  "rumqttd",
  "rumqttlog",
- "rust-argon2",
  "rust-embed",
  "serde",
  "serde_json",
