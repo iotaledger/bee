@@ -4,6 +4,7 @@
 mod broker;
 pub mod config;
 mod error;
+mod event;
 
 use bee_runtime::node::{Node, NodeBuilder};
 
@@ -78,28 +79,38 @@ pub async fn init<N: Node>(config: MqttConfig, mut node_builder: N::Builder) -> 
 
     let mut broker = mqtt::Broker::new(config);
 
-    let mut latest_tx = broker.link("latest").expect("linking mqtt sender failed");
-    let mut confirmed_tx = broker.link("confirmed").expect("linking mqtt sender failed");
+    let mut milestones_latest_tx = broker.link("milestones/latest").expect("linking mqtt sender failed");
+    let mut milestones_confirmed_tx = broker.link("milestones/confirmed").expect("linking mqtt sender failed");
+    let mut messages_tx = broker.link("messages").expect("linking mqtt sender failed");
+    let mut messages_referenced_tx = broker.link("messages/referenced").expect("linking mqtt sender failed");
 
     thread::spawn(move || {
-        // **Note**: 'start' creates a custom tokio runtime and blocks until ctrl-c is detected.
-        // This is not really integrating well into our own architecture which already uses its own tokio runtime!!
         broker.start().expect("error starting broker");
     });
 
-    // **Note**: we are only interested in puplishing.
+    // **Note**: we are only interested in puplishing, hence ignore the returned receiver.
 
-    let _ = latest_tx
+    let _ = milestones_latest_tx
         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
         .expect("mqtt connect error");
 
-    let _ = confirmed_tx
+    let _ = milestones_confirmed_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
+
+    let _ = messages_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
+
+    let _ = messages_referenced_tx
         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
         .expect("mqtt connect error");
 
     let broker_config = MqttBrokerConfig {
-        latest_tx,
-        confirmed_tx,
+        milestones_latest_tx,
+        milestones_confirmed_tx,
+        messages_tx,
+        messages_referenced_tx,
     };
 
     node_builder = node_builder.with_worker_cfg::<MqttBroker>(broker_config);

@@ -1,7 +1,11 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_protocol::workers::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
+use super::event::*;
+
+use bee_protocol::workers::event::{
+    LatestMilestoneChanged, LatestSolidMilestoneChanged, MessageConfirmed, MessageProcessed,
+};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;
@@ -19,17 +23,19 @@ use std::{
 
 pub(crate) const TOPIC_MILESTONES_LATEST: &str = "milestones/latest";
 pub(crate) const TOPIC_MILESTONES_CONFIRMED: &str = "milestones/confirmed";
-pub(crate) const _TOPIC_MESSAGES: &str = "messages";
-pub(crate) const _TOPIC_MESSAGES_REFERENCED: &str = "messages/referenced";
-pub(crate) const _TOPIC_MESSAGES_INDEXATION: &str = "messages/indexation/{index}";
-pub(crate) const _TOPIC_MESSAGES_METADATA: &str = "messages/{messageId}/metadata";
-pub(crate) const _TOPIC_OUTPUTS: &str = "outputs/{outputId}";
-pub(crate) const _TOPIC_ADDRESSES_OUTPUTS: &str = "addresses/{address}/outputs";
-pub(crate) const _TOPIC_ADDRESSES_ED25519_OUTPUT: &str = "addresses/ed25519/{address}/outputs";
+pub(crate) const TOPIC_MESSAGES: &str = "messages";
+pub(crate) const TOPIC_MESSAGES_REFERENCED: &str = "messages/referenced";
+pub(crate) const TOPIC_MESSAGES_INDEXATION: &str = "messages/indexation/{index}";
+pub(crate) const TOPIC_MESSAGES_METADATA: &str = "messages/{messageId}/metadata";
+pub(crate) const TOPIC_OUTPUTS: &str = "outputs/{outputId}";
+pub(crate) const TOPIC_ADDRESSES_OUTPUTS: &str = "addresses/{address}/outputs";
+pub(crate) const TOPIC_ADDRESSES_ED25519_OUTPUT: &str = "addresses/ed25519/{address}/outputs";
 
 pub struct MqttBrokerConfig {
-    pub latest_tx: LinkTx,
-    pub confirmed_tx: LinkTx,
+    pub milestones_latest_tx: LinkTx,
+    pub milestones_confirmed_tx: LinkTx,
+    pub messages_tx: LinkTx,
+    pub messages_referenced_tx: LinkTx,
 }
 
 #[derive(Default)]
@@ -46,22 +52,70 @@ impl<N: Node> Worker<N> for MqttBroker {
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let MqttBrokerConfig {
-            latest_tx,
-            confirmed_tx,
+            milestones_latest_tx,
+            milestones_confirmed_tx,
+            messages_tx,
+            messages_referenced_tx,
         } = config;
 
         spawn_topic_handler(
             node,
-            latest_tx,
+            milestones_latest_tx,
             TOPIC_MILESTONES_LATEST,
-            |event: LatestMilestoneChanged| (TOPIC_MILESTONES_LATEST, format!("{}", event.index)),
+            |event: LatestMilestoneChanged| {
+                // MilestonePayload as JSON
+                let ms_payload_json = serde_json::to_string(&MilestonePayload {
+                    index: *event.index,
+                    timestamp: event.milestone.timestamp(),
+                })
+                .expect("error serializing to json");
+
+                (TOPIC_MILESTONES_LATEST, ms_payload_json)
+            },
         );
 
         spawn_topic_handler(
             node,
-            confirmed_tx,
+            milestones_confirmed_tx,
             TOPIC_MILESTONES_CONFIRMED,
-            |event: LatestSolidMilestoneChanged| (TOPIC_MILESTONES_CONFIRMED, format!("{}", event.index)),
+            |event: LatestSolidMilestoneChanged| {
+                // MilestonePayload as JSON
+                let ms_payload_json = serde_json::to_string(&MilestonePayload {
+                    index: *event.index,
+                    timestamp: event.milestone.timestamp(),
+                })
+                .expect("error serializing to json");
+
+                (TOPIC_MILESTONES_CONFIRMED, ms_payload_json)
+            },
+        );
+
+        spawn_topic_handler(node, messages_tx, TOPIC_MESSAGES, |event: MessageProcessed| {
+            // Message in byte-serialized form
+            let msg_bytes = event.1;
+            (TOPIC_MESSAGES, msg_bytes)
+        });
+
+        spawn_topic_handler(
+            node,
+            messages_referenced_tx,
+            TOPIC_MESSAGES_REFERENCED,
+            |event: MessageConfirmed| {
+                // MessageMetadata as JSON
+                let msg_metadata_json = serde_json::to_string(&MessageMetadata {
+                    message_id: event.message_id.to_string(),
+                    parent_message_ids: event.parents.iter().map(|msg_id| msg_id.to_string()).collect(),
+                    is_solid: event.is_solid,
+                    referenced_by_milestone_index: *event.milestone_index,
+                    // TODO: set proper ledger inclusion state
+                    ledger_inclusion_state: LedgerInclusionState::NoTransaction,
+                    should_promote: false,
+                    should_reattach: false,
+                })
+                .expect("error serializing to json");
+
+                (TOPIC_MESSAGES_REFERENCED, msg_metadata_json)
+            },
         );
 
         info!("MQTT broker started.");

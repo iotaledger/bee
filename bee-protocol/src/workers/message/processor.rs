@@ -162,7 +162,8 @@ where
                             continue;
                         }
 
-                        bus.dispatch(MessageProcessed(message_id));
+                        let bytes = message_packet.bytes.to_vec();
+                        bus.dispatch(MessageProcessed(message_id, bytes));
 
                         // TODO: boolean values are false at this point in time? trigger event from another location?
                         bus.dispatch(NewVertex {

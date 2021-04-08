@@ -19,10 +19,18 @@ pub struct LatestSolidMilestoneChanged {
 }
 
 #[derive(Clone)]
-pub struct MessageProcessed(pub MessageId);
+pub struct MessageProcessed(pub MessageId, pub Vec<u8>);
 
 #[derive(Clone)]
 pub struct MessageSolidified(pub MessageId);
+
+#[derive(Clone)]
+pub struct MessageConfirmed {
+    pub message_id: MessageId,
+    pub parents: Vec<MessageId>,
+    pub is_solid: bool,
+    pub milestone_index: MilestoneIndex,
+}
 
 #[derive(Clone)]
 pub struct MpsMetricsUpdated {

@@ -1,13 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::workers::storage::StorageBackend;
+use crate::workers::{event::MessageConfirmed, storage::StorageBackend};
 
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     MessageId,
 };
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker, BELOW_MAX_DEPTH};
 
 use async_trait::async_trait;
@@ -41,6 +41,7 @@ where
         let (tx, rx) = mpsc::unbounded_channel();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
+        let bus = node.bus();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("xMRSI updater started.");
@@ -48,7 +49,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(IndexUpdaterWorkerEvent(index, milestone)) = receiver.next().await {
-                process(&tangle, milestone, index).await;
+                process(&tangle, milestone, index, &bus).await;
             }
 
             // Before the worker completely stops, the receiver needs to be drained for milestone cones to be updated.
@@ -58,7 +59,7 @@ where
             let mut count: usize = 0;
 
             while let Some(Some(IndexUpdaterWorkerEvent(index, milestone))) = receiver.next().now_or_never() {
-                process(&tangle, milestone, index).await;
+                process(&tangle, milestone, index, &bus).await;
                 count += 1;
             }
 
@@ -71,7 +72,12 @@ where
     }
 }
 
-async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, index: MilestoneIndex) {
+async fn process<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    milestone: Milestone,
+    index: MilestoneIndex,
+    bus: &Bus<'static>,
+) {
     let message_id = milestone.message_id();
 
     if let Some(parents) = tangle
@@ -80,7 +86,7 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, 
         .map(|message| message.parents().iter().copied().collect())
     {
         // Update the past cone of this milestone by setting its milestone index, and return them.
-        let roots = update_past_cone(tangle, parents, index).await;
+        let roots = update_past_cone(tangle, parents, index, bus).await;
 
         // Note: For tip-selection only the most recent tangle is relevent. That means that during
         // synchronization we do not need to update xMRSI values or tip scores before (LMI - BELOW_MAX_DEPTH).
@@ -97,6 +103,7 @@ async fn update_past_cone<B: StorageBackend>(
     tangle: &MsTangle<B>,
     mut parents: Vec<MessageId>,
     index: MilestoneIndex,
+    bus: &Bus<'static>,
 ) -> HashSet<MessageId> {
     let mut updated = HashSet::new();
 
@@ -119,6 +126,7 @@ async fn update_past_cone<B: StorageBackend>(
             continue;
         }
 
+        let mut is_solid = false;
         tangle
             .update_metadata(&parent_id, |metadata| {
                 metadata.set_milestone_index(index);
@@ -126,16 +134,29 @@ async fn update_past_cone<B: StorageBackend>(
                 // but probably isn't the case in the now asynchronous scenario. Investigate!
                 metadata.set_omrsi(IndexId::new(index, parent_id));
                 metadata.set_ymrsi(IndexId::new(index, parent_id));
+
+                is_solid = metadata.flags().is_solid();
             })
             .await;
 
-        if let Some(mut grand_parents) = tangle
+        let mut grand_parents = if let Some(grand_parents) = tangle
             .get(&parent_id)
             .await
             .map(|parent| parent.parents().iter().copied().collect())
         {
-            parents.append(&mut grand_parents);
-        }
+            grand_parents
+        } else {
+            Vec::new()
+        };
+
+        bus.dispatch(MessageConfirmed {
+            message_id: parent_id,
+            parents: grand_parents.clone(),
+            is_solid,
+            milestone_index: index,
+        });
+
+        parents.append(&mut grand_parents);
 
         // Preferably we would only collect the 'root messages/transactions'. They are defined as being confirmed by
         // a milestone, but at least one of their children is not confirmed yet. One can think of them as an attachment

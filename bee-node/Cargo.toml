@@ -35,7 +35,6 @@ iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "c3bf565e
 jsonwebtoken = { version = "7.2", optional = true }
 log = "0.4"
 mime_guess = { version = "2.0", optional = true }
-#paho-mqtt = { version = "0.9", default-features = false, features = ["bundled"]}
 rand = "0.8"
 rpassword = "5.0"
 rumqttd = "0.5.0"
