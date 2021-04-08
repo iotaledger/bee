@@ -309,7 +309,8 @@ where
 
             let (lower_bound, upper_bound) = self.round_thresholds(&context);
 
-            if context.liked() >= self.rand_uniform_threshold(rand, lower_bound, upper_bound) {
+            // This will never fail, since we skip this loop if the context is new.
+            if context.liked().unwrap() >= self.rand_uniform_threshold(rand, lower_bound, upper_bound) {
                 context.add_opinion(Opinion::Like);
             } else {
                 context.add_opinion(Opinion::Dislike);

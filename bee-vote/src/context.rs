@@ -83,7 +83,7 @@ impl VoteContextBuilder {
     pub fn build(self) -> Result<VoteContext, Error> {
         Ok(VoteContext {
             object: self.object,
-            liked: LIKED_INITIAL,
+            liked: None,
             rounds: 0,
             opinions: self.opinions.ok_or(Error::NoInitialOpinions)?,
         })
@@ -96,7 +96,7 @@ pub struct VoteContext {
     /// Object type of the vote and related object ID.
     object: VoteObject,
     /// The percentage of `OpinionGiver`s who liked this item on the last query.
-    liked: f64,
+    liked: Option<f64>,
     /// The number of voting rounds performed so far.
     rounds: u32,
     /// List of opinions formed at the end of each voting round.
@@ -109,7 +109,7 @@ impl VoteContext {
     pub(crate) fn new(object: VoteObject, initial_opinion: Opinion) -> Self {
         Self {
             object,
-            liked: LIKED_INITIAL,
+            liked: None,
             rounds: 0,
             opinions: Opinions::new(vec![initial_opinion]),
         }
@@ -157,7 +157,7 @@ impl VoteContext {
 
     /// Describes whether the `VoteContext` is new (has not participated in a vote).
     pub(crate) fn is_new(&self) -> bool {
-        self.liked == LIKED_INITIAL
+        self.liked.is_none()
     }
 
     /// Described whether the `VoteContext` has *just* finished its first round.
@@ -201,13 +201,13 @@ impl VoteContext {
     }
 
     /// Resturns the percentage of `OpinionGiver`s that liked the item on the last query.
-    pub fn liked(&self) -> f64 {
+    pub fn liked(&self) -> Option<f64> {
         self.liked
     }
 
     /// Update the `liked` value of a `VoteContext` when new opinions are formed.
     pub(crate) fn set_liked(&mut self, liked: f64) {
-        self.liked = liked;
+        self.liked = Some(liked);
     }
 
     /// Number of voting rounds completed for this item.
