@@ -8,7 +8,7 @@ use rand::Rng;
 
 /// Generates a salt to be used for password hashing.
 pub fn generate_salt() -> [u8; 32] {
-    rand::thread_rng().gen::<[u8; 32]>()
+    rand::rngs::OsRng::default().gen()
 }
 
 /// Hashes a password together with a salt.
