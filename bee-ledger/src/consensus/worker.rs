@@ -350,7 +350,7 @@ where
 
         check_ledger_state(&*storage).await?;
 
-        // bus.add_listener::<Self, LatestSolidMilestoneChanged, _>(move |event| {
+        // bus.add_listener::<Self, SolidMilestoneChanged, _>(move |event| {
         //     if let Err(e) = tx.send(*event.milestone.message_id()) {
         //         warn!(
         //             "Sending solid milestone {} {} to confirmation failed: {:?}.",

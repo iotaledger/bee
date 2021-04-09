@@ -16,7 +16,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{event::LatestSolidMilestoneChanged, traversal, MsTangle, TangleWorker};
+use bee_tangle::{event::SolidMilestoneChanged, traversal, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::StreamExt;
@@ -88,7 +88,7 @@ async fn solidify<B: StorageBackend>(
 
     helper::broadcast_heartbeat(&peer_manager, &metrics, &tangle).await;
 
-    bus.dispatch(LatestSolidMilestoneChanged {
+    bus.dispatch(SolidMilestoneChanged {
         index,
         // TODO get MS
         milestone: Milestone::new(id, 0),

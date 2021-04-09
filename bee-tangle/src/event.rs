@@ -10,7 +10,7 @@ pub struct LatestMilestoneChanged {
 }
 
 #[derive(Clone)]
-pub struct LatestSolidMilestoneChanged {
+pub struct SolidMilestoneChanged {
     pub index: MilestoneIndex,
     pub milestone: Milestone,
 }
