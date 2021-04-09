@@ -1,6 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! The payload module defines the core data types for representing message payloads.
+
 pub mod indexation;
 pub mod milestone;
 pub mod receipt;
@@ -19,6 +21,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use alloc::boxed::Box;
 
+/// The payload of a message on the tangle.
 #[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(
