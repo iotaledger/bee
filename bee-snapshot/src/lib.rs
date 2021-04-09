@@ -3,8 +3,6 @@
 
 mod download;
 
-pub(crate) mod constants;
-
 pub mod config;
 pub mod error;
 pub mod header;
