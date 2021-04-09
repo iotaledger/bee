@@ -16,12 +16,14 @@ fn jwt_valid() {
     )
     .unwrap();
 
-    assert!(jwt.validate(
-        String::from("issuer"),
-        String::from("subject"),
-        String::from("audience"),
-        b"secret"
-    ));
+    assert!(jwt
+        .validate(
+            String::from("issuer"),
+            String::from("subject"),
+            String::from("audience"),
+            b"secret"
+        )
+        .is_ok());
 }
 
 #[test]
@@ -39,12 +41,14 @@ fn jwt_to_str_from_str_valid() {
         .to_string(),
     );
 
-    assert!(jwt.validate(
-        String::from("issuer"),
-        String::from("subject"),
-        String::from("audience"),
-        b"secret"
-    ));
+    assert!(jwt
+        .validate(
+            String::from("issuer"),
+            String::from("subject"),
+            String::from("audience"),
+            b"secret"
+        )
+        .is_ok());
 }
 
 #[test]
@@ -59,12 +63,14 @@ fn jwt_invalid_issuer() {
     )
     .unwrap();
 
-    assert!(!jwt.validate(
-        String::from("Issuer"),
-        String::from("subject"),
-        String::from("audience"),
-        b"secret"
-    ));
+    assert!(jwt
+        .validate(
+            String::from("Issuer"),
+            String::from("subject"),
+            String::from("audience"),
+            b"secret"
+        )
+        .is_err());
 }
 
 #[test]
@@ -79,12 +85,14 @@ fn jwt_invalid_subject() {
     )
     .unwrap();
 
-    assert!(!jwt.validate(
-        String::from("issuer"),
-        String::from("Subject"),
-        String::from("audience"),
-        b"secret"
-    ));
+    assert!(jwt
+        .validate(
+            String::from("issuer"),
+            String::from("Subject"),
+            String::from("audience"),
+            b"secret"
+        )
+        .is_err());
 }
 
 #[test]
@@ -99,12 +107,14 @@ fn jwt_invalid_audience() {
     )
     .unwrap();
 
-    assert!(!jwt.validate(
-        String::from("issuer"),
-        String::from("subject"),
-        String::from("Audience"),
-        b"secret"
-    ));
+    assert!(jwt
+        .validate(
+            String::from("issuer"),
+            String::from("subject"),
+            String::from("Audience"),
+            b"secret"
+        )
+        .is_err());
 }
 
 #[test]
@@ -119,12 +129,14 @@ fn jwt_invalid_secret() {
     )
     .unwrap();
 
-    assert!(!jwt.validate(
-        String::from("issuer"),
-        String::from("subject"),
-        String::from("audience"),
-        b"Secret"
-    ));
+    assert!(jwt
+        .validate(
+            String::from("issuer"),
+            String::from("subject"),
+            String::from("audience"),
+            b"Secret"
+        )
+        .is_err());
 }
 
 #[test]
@@ -141,10 +153,12 @@ fn jwt_invalid_expired() {
 
     std::thread::sleep(std::time::Duration::from_secs(1));
 
-    assert!(!jwt.validate(
-        String::from("issuer"),
-        String::from("subject"),
-        String::from("audience"),
-        b"secret"
-    ));
+    assert!(jwt
+        .validate(
+            String::from("issuer"),
+            String::from("subject"),
+            String::from("audience"),
+            b"secret"
+        )
+        .is_err());
 }

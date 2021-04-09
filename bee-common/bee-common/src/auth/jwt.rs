@@ -3,13 +3,14 @@
 
 //! A module that provides JSON Web Token utilities.
 
-use jsonwebtoken::{decode, encode, errors, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+pub use jsonwebtoken::{
+    errors::{Error, ErrorKind},
+    TokenData,
+};
 use serde::{Deserialize, Serialize};
 
 use std::time::{SystemTime, UNIX_EPOCH};
-
-/// Error occurring when creating JWTs.
-pub type Error = errors::Error;
 
 /// Represents registered JSON Web Token Claims.
 /// https://tools.ietf.org/html/rfc7519#section-4.1
@@ -100,7 +101,13 @@ impl JsonWebToken {
     }
 
     /// Validates a JSON Web Token.
-    pub fn validate(&self, issuer: String, subject: String, audience: String, secret: &[u8]) -> bool {
+    pub fn validate(
+        &self,
+        issuer: String,
+        subject: String,
+        audience: String,
+        secret: &[u8],
+    ) -> Result<TokenData<Claims>, Error> {
         let mut validation = Validation {
             iss: Some(issuer),
             sub: Some(subject),
@@ -108,6 +115,6 @@ impl JsonWebToken {
         };
         validation.set_audience(&[audience]);
 
-        decode::<Claims>(&self.0, &DecodingKey::from_secret(secret), &validation).is_ok()
+        decode::<Claims>(&self.0, &DecodingKey::from_secret(secret), &validation)
     }
 }
