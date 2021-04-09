@@ -8,7 +8,7 @@
 // };
 
 use crate::{
-    event::SolidMilestoneChanged,
+    event::ConfirmedMilestoneChanged,
     pruning::{
         config::PruningConfig,
         constants::{PRUNING_THRESHOLD, SOLID_ENTRY_POINT_THRESHOLD_FUTURE, SOLID_ENTRY_POINT_THRESHOLD_PAST},
@@ -27,7 +27,7 @@ use log::{info, warn};
 
 use std::{any::TypeId, convert::Infallible};
 
-pub struct PrunerWorkerEvent(pub(crate) SolidMilestoneChanged);
+pub struct PrunerWorkerEvent(pub(crate) ConfirmedMilestoneChanged);
 
 pub struct PrunerWorker {}
 
@@ -156,7 +156,7 @@ where
             info!("Stopped.");
         });
 
-        bus.add_listener::<Self, _, _>(move |event: &SolidMilestoneChanged| {
+        bus.add_listener::<Self, _, _>(move |event: &ConfirmedMilestoneChanged| {
             if let Err(e) = tx.send(PrunerWorkerEvent(event.clone())) {
                 warn!("Failed to send milestone {} to snapshot worker: {:?}.", event.index, e)
             }
