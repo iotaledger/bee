@@ -4,7 +4,7 @@
 use crate::{
     plugins::dashboard::{
         asset::Asset,
-        auth::{auth, jwt::JsonWebToken, AUDIENCE_CLAIM},
+        auth::{auth, AUDIENCE_CLAIM},
         config::DashboardAuthConfig,
         rejection::CustomRejection,
         websocket::{user_connected, WsUsers},
@@ -12,6 +12,7 @@ use crate::{
     storage::StorageBackend,
 };
 
+use bee_common::auth::jwt::JsonWebToken;
 use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
@@ -154,12 +155,15 @@ pub fn auth_filter(
 
                 let jwt = JsonWebToken::from(auth_header.trim_start_matches(BEARER).to_owned());
 
-                if !jwt.validate(
-                    node_id.clone(),
-                    auth_config.user().to_owned(),
-                    AUDIENCE_CLAIM.to_owned(),
-                    b"secret",
-                ) {
+                if jwt
+                    .validate(
+                        node_id.clone(),
+                        auth_config.user().to_owned(),
+                        AUDIENCE_CLAIM.to_owned(),
+                        b"secret",
+                    )
+                    .is_err()
+                {
                     return Err(reject::custom(CustomRejection::Forbidden));
                 }
 

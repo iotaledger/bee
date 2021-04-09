@@ -1,14 +1,9 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod claims;
-pub mod jwt;
-
-use jwt::JsonWebToken;
-
 use crate::plugins::dashboard::{config::DashboardAuthConfig, rejection::CustomRejection};
 
-use bee_common::password;
+use bee_common::auth::{jwt::JsonWebToken, password};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
@@ -35,11 +30,10 @@ pub(crate) async fn auth(
                 .ok_or_else(|| reject::custom(CustomRejection::InvalidJwt))?
                 .to_owned(),
         );
-        if jwt.validate(node_id, config.user().to_owned(), AUDIENCE_CLAIM.to_owned(), b"secret") {
-            return Ok(warp::reply::json(&AuthResponse { jwt: jwt.to_string() }));
-        } else {
-            return Err(reject::custom(CustomRejection::InvalidJwt));
-        }
+        return match jwt.validate(node_id, config.user().to_owned(), AUDIENCE_CLAIM.to_owned(), b"secret") {
+            Ok(_) => Ok(warp::reply::json(&AuthResponse { jwt: jwt.to_string() })),
+            Err(_) => Err(reject::custom(CustomRejection::InvalidJwt)),
+        };
     }
 
     let user_json = &body["user"];
