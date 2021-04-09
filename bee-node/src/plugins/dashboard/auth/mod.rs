@@ -35,7 +35,7 @@ pub(crate) async fn auth(
                 .ok_or_else(|| reject::custom(CustomRejection::InvalidJwt))?
                 .to_owned(),
         );
-        if jwt.validate(node_id, config.user().to_owned(), AUDIENCE_CLAIM.to_owned()) {
+        if jwt.validate(node_id, config.user().to_owned(), AUDIENCE_CLAIM.to_owned(), b"secret") {
             return Ok(warp::reply::json(&AuthResponse { jwt: jwt.to_string() }));
         } else {
             return Err(reject::custom(CustomRejection::InvalidJwt));
@@ -81,6 +81,7 @@ pub(crate) async fn auth(
         config.user().to_owned(),
         AUDIENCE_CLAIM.to_owned(),
         config.session_timeout(),
+        b"secret",
     )
     .map_err(|_| reject::custom(CustomRejection::InternalError))?;
 

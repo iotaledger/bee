@@ -7,9 +7,6 @@ use jsonwebtoken::{decode, encode, errors::Error, DecodingKey, EncodingKey, Head
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
-// TODO replace with actual private key
-const SECRET: &[u8] = b"secret";
-
 #[derive(Clone, Debug)]
 pub struct JsonWebToken(String);
 
@@ -26,18 +23,24 @@ impl std::fmt::Display for JsonWebToken {
 }
 
 impl JsonWebToken {
-    pub fn new(issuer: String, subject: String, audience: String, session_timeout: u64) -> Result<Self, Error> {
+    pub fn new(
+        issuer: String,
+        subject: String,
+        audience: String,
+        session_timeout: u64,
+        secret: &[u8],
+    ) -> Result<Self, Error> {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Clock may have gone backwards")
             .as_secs() as u64;
         let claims = Claims::new(issuer, subject, audience, now + session_timeout, now);
-        let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(SECRET))?;
+        let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(secret))?;
 
         Ok(Self(token))
     }
 
-    pub fn validate(&self, issuer: String, subject: String, audience: String) -> bool {
+    pub fn validate(&self, issuer: String, subject: String, audience: String, secret: &[u8]) -> bool {
         let mut validation = Validation {
             leeway: 60,
             iss: Some(issuer),
@@ -46,6 +49,6 @@ impl JsonWebToken {
         };
         validation.set_audience(&[audience]);
 
-        decode::<Claims>(&self.0, &DecodingKey::from_secret(SECRET), &validation).is_ok()
+        decode::<Claims>(&self.0, &DecodingKey::from_secret(secret), &validation).is_ok()
     }
 }

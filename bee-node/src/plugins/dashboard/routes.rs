@@ -158,6 +158,7 @@ pub fn auth_filter(
                     node_id.clone(),
                     auth_config.user().to_owned(),
                     AUDIENCE_CLAIM.to_owned(),
+                    b"secret",
                 ) {
                     return Err(reject::custom(CustomRejection::Forbidden));
                 }

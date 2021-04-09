@@ -171,6 +171,7 @@ async fn user_message<B: StorageBackend>(
                         node_id.to_owned(),
                         auth_config.user().to_owned(),
                         AUDIENCE_CLAIM.to_owned(),
+                        b"secret",
                     ) {
                         return;
                     }
