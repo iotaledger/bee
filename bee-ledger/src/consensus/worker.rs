@@ -5,7 +5,7 @@ use crate::{
     consensus::{
         dust::DUST_THRESHOLD,
         error::Error,
-        event::{MilestoneConfirmed, NewConsumedOutput, NewCreatedOutput},
+        event::{MilestoneConfirmed, OutputConsumed, OutputCreated},
         metadata::WhiteFlagMetadata,
         state::check_ledger_state,
         storage::{
@@ -196,11 +196,11 @@ where
     });
 
     for (_, output) in metadata.created_outputs {
-        bus.dispatch(NewCreatedOutput(output));
+        bus.dispatch(OutputCreated(output));
     }
 
     for (_, spent) in metadata.consumed_outputs {
-        bus.dispatch(NewConsumedOutput(spent));
+        bus.dispatch(OutputConsumed(spent));
     }
 
     Ok(())

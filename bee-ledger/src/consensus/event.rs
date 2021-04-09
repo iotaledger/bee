@@ -23,6 +23,6 @@ pub struct MilestoneConfirmed {
     pub consumed_outputs: usize,
 }
 
-pub struct NewConsumedOutput(pub ConsumedOutput);
+pub struct OutputConsumed(pub ConsumedOutput);
 
-pub struct NewCreatedOutput(pub CreatedOutput);
+pub struct OutputCreated(pub CreatedOutput);
