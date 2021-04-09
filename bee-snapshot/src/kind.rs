@@ -20,7 +20,7 @@ impl Packable for Kind {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0u8.packed_len()
+        (*self as u8).packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
