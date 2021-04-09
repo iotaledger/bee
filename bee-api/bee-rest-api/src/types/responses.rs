@@ -83,7 +83,7 @@ pub struct InfoResponse {
     pub network_id: String,
     #[serde(rename = "bech32HRP")]
     pub bech32_hrp: String,
-    #[serde(rename = "minPowScore")]
+    #[serde(rename = "minPoWScore")]
     pub min_pow_score: f64,
     #[serde(rename = "messagesPerSecond")]
     pub messages_per_second: f64,
