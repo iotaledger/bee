@@ -17,8 +17,6 @@ pub enum Error {
     UnsupportedVersion(u8, u8),
     #[error("Unexpected snapshot kind: expected {0:?}, read {1:?}")]
     UnexpectedKind(Kind, Kind),
-    #[error("Unsupported output kind: {0}")]
-    UnsupportedOutputKind(u8),
     #[error("No snapshot download source available")]
     NoDownloadSourceAvailable,
     #[error("Invalid snapshot path: {0}")]
