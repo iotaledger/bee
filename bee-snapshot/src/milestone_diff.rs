@@ -75,7 +75,7 @@ impl Packable for MilestoneDiff {
         let milestone_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
         let milestone = match Payload::unpack_inner::<R, CHECK>(reader)? {
             Payload::Milestone(milestone) => milestone,
-            _ => return Err(Error::InvalidPayloadKind),
+            payload => return Err(Error::InvalidPayloadKind(payload.kind())),
         };
 
         // TODO
