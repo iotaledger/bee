@@ -1,6 +1,6 @@
 [package]
 name = "bee-common"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "Common utilities used across the bee framework"
@@ -13,6 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 chrono = "0.4"
 fern = { version = "0.6", features = ["colored"] }
+jsonwebtoken = { version = "7.2", optional = true }
 log = { version = "0.4", features = ["serde"] }
 rand = { version = "0.8", optional = true }
 rust-argon2 = { version = "0.8", optional = true }
@@ -23,4 +24,4 @@ thiserror = "1.0"
 autocfg = "1.0"
 
 [features]
-password = [ "rand", "rust-argon2" ]
+auth = [ "jsonwebtoken", "rand", "rust-argon2" ]
