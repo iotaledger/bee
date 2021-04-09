@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.4.1 - 2021-04-09
+
+### Added
+
+- `auth` module;
+- `auth::jwt` module;
+
+### Changed
+
+- `password` module has been moved to `auth` module;
+
 ## 0.4.0 - 2021-04-08
 
 ### Added
