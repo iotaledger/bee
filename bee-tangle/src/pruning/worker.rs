@@ -1,12 +1,6 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// use crate::{
-//     config::SnapshotConfig,
-//     pruning::prune_database,
-//     snapshot,
-// };
-
 use crate::{
     event::ConfirmedMilestoneChanged,
     pruning::{
@@ -113,32 +107,32 @@ where
         let bus = node.bus();
         let (snapshot_config, pruning_config) = config;
 
+        let depth = if snapshot_config.depth() < SOLID_ENTRY_POINT_THRESHOLD_FUTURE {
+            warn!(
+                "Configuration value for \"depth\" is too low ({}), value changed to {}.",
+                snapshot_config.depth(),
+                SOLID_ENTRY_POINT_THRESHOLD_FUTURE
+            );
+            SOLID_ENTRY_POINT_THRESHOLD_FUTURE
+        } else {
+            snapshot_config.depth()
+        };
+        let delay_min = snapshot_config.depth() + SOLID_ENTRY_POINT_THRESHOLD_PAST + PRUNING_THRESHOLD + 1;
+        let delay = if pruning_config.delay() < delay_min {
+            warn!(
+                "Configuration value for \"delay\" is too low ({}), value changed to {}.",
+                pruning_config.delay(),
+                delay_min
+            );
+            delay_min
+        } else {
+            pruning_config.delay()
+        };
+
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
-
-            let depth = if snapshot_config.depth() < SOLID_ENTRY_POINT_THRESHOLD_FUTURE {
-                warn!(
-                    "Configuration value for \"depth\" is too low ({}), value changed to {}.",
-                    snapshot_config.depth(),
-                    SOLID_ENTRY_POINT_THRESHOLD_FUTURE
-                );
-                SOLID_ENTRY_POINT_THRESHOLD_FUTURE
-            } else {
-                snapshot_config.depth()
-            };
-            let delay_min = snapshot_config.depth() + SOLID_ENTRY_POINT_THRESHOLD_PAST + PRUNING_THRESHOLD + 1;
-            let delay = if pruning_config.delay() < delay_min {
-                warn!(
-                    "Configuration value for \"delay\" is too low ({}), value changed to {}.",
-                    pruning_config.delay(),
-                    delay_min
-                );
-                delay_min
-            } else {
-                pruning_config.delay()
-            };
 
             while let Some(PrunerWorkerEvent(event)) = receiver.next().await {
                 if should_snapshot(&tangle, event.index, depth, &snapshot_config) {
