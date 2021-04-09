@@ -7,7 +7,6 @@ pub(crate) mod constants;
 
 pub mod config;
 pub mod error;
-pub mod event;
 pub mod header;
 pub mod info;
 pub mod kind;
