@@ -3,7 +3,7 @@
 
 // TODO review this file
 
-use crate::Error;
+use crate::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{

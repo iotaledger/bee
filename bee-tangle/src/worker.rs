@@ -5,7 +5,7 @@ use crate::{config::TangleConfig, storage::StorageBackend, MsTangle};
 
 use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 use bee_runtime::{node::Node, worker::Worker};
-use bee_snapshot::{SnapshotInfo, SnapshotWorker};
+use bee_snapshot::{info::SnapshotInfo, worker::SnapshotWorker};
 use bee_storage::access::{Fetch, Insert};
 
 use async_trait::async_trait;

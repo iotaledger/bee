@@ -12,11 +12,6 @@ pub mod milestone_diff;
 pub mod storage;
 pub mod worker;
 
-pub use error::Error;
-pub use header::SnapshotHeader;
-pub use info::SnapshotInfo;
-pub use worker::SnapshotWorker;
-
 use bee_runtime::node::{Node, NodeBuilder};
 
 pub async fn init<N: Node>(config: &config::SnapshotConfig, network_id: u64, node_builder: N::Builder) -> N::Builder

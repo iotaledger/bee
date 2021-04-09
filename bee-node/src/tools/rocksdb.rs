@@ -11,7 +11,7 @@ use bee_message::{
     solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
-use bee_snapshot::SnapshotInfo;
+use bee_snapshot::info::SnapshotInfo;
 use bee_storage::{
     access::{AsStream, Exist, Fetch},
     backend::StorageBackend,

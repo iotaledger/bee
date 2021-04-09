@@ -24,7 +24,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_snapshot::{milestone_diff::MilestoneDiff, SnapshotWorker};
+use bee_snapshot::{milestone_diff::MilestoneDiff, worker::SnapshotWorker};
 use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
