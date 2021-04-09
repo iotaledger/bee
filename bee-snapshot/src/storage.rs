@@ -3,30 +3,18 @@
 
 use crate::info::SnapshotInfo;
 
-use bee_message::{ledger_index::LedgerIndex, milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
+use bee_message::ledger_index::LedgerIndex;
 use bee_storage::{
-    access::{Fetch, Insert, Truncate},
+    access::{Fetch, Insert},
     backend,
 };
 
 pub trait StorageBackend:
-    backend::StorageBackend
-    + Fetch<(), SnapshotInfo>
-    + Fetch<(), LedgerIndex>
-    + Insert<SolidEntryPoint, MilestoneIndex>
-    + Insert<(), LedgerIndex>
-    + Insert<(), SnapshotInfo>
-    + Truncate<SolidEntryPoint, MilestoneIndex>
+    backend::StorageBackend + Fetch<(), SnapshotInfo> + Insert<(), LedgerIndex> + Insert<(), SnapshotInfo>
 {
 }
 
 impl<T> StorageBackend for T where
-    T: backend::StorageBackend
-        + Fetch<(), SnapshotInfo>
-        + Fetch<(), LedgerIndex>
-        + Insert<SolidEntryPoint, MilestoneIndex>
-        + Insert<(), LedgerIndex>
-        + Insert<(), SnapshotInfo>
-        + Truncate<SolidEntryPoint, MilestoneIndex>
+    T: backend::StorageBackend + Fetch<(), SnapshotInfo> + Insert<(), LedgerIndex> + Insert<(), SnapshotInfo>
 {
 }

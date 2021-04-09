@@ -5,6 +5,7 @@ use crate::metadata::MessageMetadata;
 
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
+    solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
 use bee_snapshot::storage::StorageBackend as SnapshotStorageBackend;
@@ -19,6 +20,7 @@ pub trait StorageBackend:
     + Insert<MessageId, MessageMetadata>
     + Insert<(MessageId, MessageId), ()>
     + Insert<MilestoneIndex, Milestone>
+    + Insert<SolidEntryPoint, MilestoneIndex>
     + Fetch<MessageId, Message>
     + Fetch<MessageId, MessageMetadata>
     + Fetch<MessageId, Vec<MessageId>>
@@ -33,6 +35,7 @@ impl<T> StorageBackend for T where
         + Insert<MessageId, MessageMetadata>
         + Insert<(MessageId, MessageId), ()>
         + Insert<MilestoneIndex, Milestone>
+        + Insert<SolidEntryPoint, MilestoneIndex>
         + Fetch<MessageId, Message>
         + Fetch<MessageId, MessageMetadata>
         + Fetch<MessageId, Vec<MessageId>>
