@@ -104,7 +104,7 @@ where
     }
 
     // Account for the milestone itself.
-    metadata.num_referenced_messages += 1;
+    metadata.referenced_messages += 1;
     metadata.excluded_no_transaction_messages.push(message_id);
 
     let migration = if let Some(Payload::Receipt(receipt)) = milestone.essence().receipt() {
@@ -177,7 +177,7 @@ where
     info!(
         "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}.",
         milestone.essence().index(),
-        metadata.num_referenced_messages,
+        metadata.referenced_messages,
         metadata.excluded_no_transaction_messages.len(),
         metadata.excluded_conflicting_messages.len(),
         metadata.included_messages.len()
@@ -187,7 +187,7 @@ where
         id: message_id,
         index: milestone.essence().index(),
         timestamp: milestone.essence().timestamp(),
-        referenced_messages: metadata.num_referenced_messages,
+        referenced_messages: metadata.referenced_messages,
         excluded_no_transaction_messages: metadata.excluded_no_transaction_messages,
         excluded_conflicting_messages: metadata.excluded_conflicting_messages,
         included_messages: metadata.included_messages,
