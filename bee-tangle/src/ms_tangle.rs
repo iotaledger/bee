@@ -28,6 +28,9 @@ use std::{
     sync::atomic::{AtomicU32, Ordering},
 };
 
+const SYNCED_THRESHOLD: u32 = 2;
+const CONFIRMED_THRESHOLD: u32 = 2;
+
 pub struct StorageHooks<B> {
     #[allow(dead_code)]
     storage: ResourceHandle<B>,
@@ -275,7 +278,7 @@ impl<B: StorageBackend> MsTangle<B> {
 
     // TODO reduce to one atomic value ?
     pub fn is_synced(&self) -> bool {
-        self.is_synced_threshold(0)
+        self.is_synced_threshold(SYNCED_THRESHOLD)
     }
 
     // TODO reduce to one atomic value ?
@@ -291,7 +294,7 @@ impl<B: StorageBackend> MsTangle<B> {
 
     // TODO reduce to one atomic value ?
     pub fn is_confirmed(&self) -> bool {
-        self.is_confirmed_threshold(0)
+        self.is_confirmed_threshold(CONFIRMED_THRESHOLD)
     }
 
     // TODO reduce to one atomic value ?

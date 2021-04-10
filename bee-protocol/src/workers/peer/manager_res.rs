@@ -120,7 +120,7 @@ impl PeerManager {
 
     pub async fn synced_peers(&self) -> u8 {
         self.peers.read().await.iter().fold(0, |acc, (_, (peer, ctx))| {
-            acc + (ctx.is_some() && peer.is_synced_threshold(2)) as u8
+            acc + (ctx.is_some() && peer.is_synced()) as u8
         })
     }
 }

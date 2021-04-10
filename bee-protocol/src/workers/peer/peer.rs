@@ -161,7 +161,7 @@ impl PeerWorker {
                 self.peer.set_synced_peers(packet.synced_peers);
                 self.peer.set_heartbeat_received_timestamp();
 
-                if !tangle.is_synced_threshold(2)
+                if !tangle.is_synced()
                     && !self
                         .peer
                         .has_data(MilestoneIndex(*tangle.get_solid_milestone_index() + 1))

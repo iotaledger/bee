@@ -4,7 +4,7 @@
 use crate::{
     endpoints::{
         config::ROUTE_TIPS, filters::with_tangle, permission::has_permission, rejection::CustomRejection,
-        storage::StorageBackend, IS_SYNCED_THRESHOLD,
+        storage::StorageBackend, CONFIRMED_THRESHOLD,
     },
     types::{body::SuccessBody, responses::TipsResponse},
 };
@@ -33,7 +33,7 @@ pub(crate) fn filter<B: StorageBackend>(
 }
 
 pub(crate) async fn tips<B: StorageBackend>(tangle: ResourceHandle<MsTangle<B>>) -> Result<impl Reply, Rejection> {
-    if !tangle.is_synced_threshold(IS_SYNCED_THRESHOLD) {
+    if !tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
         return Err(reject::custom(CustomRejection::ServiceUnavailable(
             "the node is not synchronized".to_string(),
         )));

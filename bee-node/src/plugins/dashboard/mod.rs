@@ -47,12 +47,12 @@ use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
 };
 
-const SYNCED_THRESHOLD: u32 = 5;
+const CONFIRMED_THRESHOLD: u32 = 5;
 
 #[derive(Default)]
 pub struct Dashboard {}
 
-fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, require_node_synced: bool, f: F)
+fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, require_node_confirmed: bool, f: F)
 where
     N: Node,
     N::Backend: StorageBackend,
@@ -70,8 +70,8 @@ where
         let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
         while let Some(event) = receiver.next().await {
-            if require_node_synced {
-                if tangle.is_synced_threshold(SYNCED_THRESHOLD) {
+            if require_node_confirmed {
+                if tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
                     broadcast(f(event), &users).await;
                 }
             } else {
