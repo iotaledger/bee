@@ -2,11 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    plugins::dashboard::{
-        broadcast,
-        websocket::{responses::database_size_metrics, WsUsers},
-        Dashboard,
-    },
+    plugins::dashboard::{broadcast, websocket::WsUsers, Dashboard},
     storage::StorageBackend,
 };
 
@@ -43,7 +39,7 @@ where
                 total: storage.size().await.unwrap().unwrap() as u64,
                 ts: 0, // replace with appropriate storage function
             };
-            broadcast(database_size_metrics::forward(metrics), &users).await;
+            broadcast(metrics.into(), &users).await;
         }
 
         debug!("Ws DatabaseSizeMetrics topic handler stopped.");

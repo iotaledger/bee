@@ -17,10 +17,6 @@ pub(crate) struct ConfirmedInfoResponse {
     excluded_ids: Vec<String>,
 }
 
-pub(crate) fn forward(message: MilestoneConfirmed) -> WsEvent {
-    message.into()
-}
-
 impl From<MilestoneConfirmed> for WsEvent {
     fn from(val: MilestoneConfirmed) -> Self {
         Self::new(WsTopic::ConfirmedInfo, WsEventInner::ConfirmedInfo(val.into()))

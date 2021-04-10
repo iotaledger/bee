@@ -20,10 +20,6 @@ pub(crate) struct ConfirmedMilestoneMetricsResponse {
     time_since_last_ms: u64,
 }
 
-pub(crate) fn forward(message: ConfirmedMilestoneMetrics) -> WsEvent {
-    message.into()
-}
-
 impl From<ConfirmedMilestoneMetrics> for WsEvent {
     fn from(val: ConfirmedMilestoneMetrics) -> Self {
         Self::new(
