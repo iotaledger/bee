@@ -77,7 +77,7 @@ async fn validate_regular_essence<B: StorageBackend>(
             Output::SignatureLockedSingle(output) => {
                 consumed_amount = consumed_amount
                     .checked_add(output.amount())
-                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
+                    .ok_or(Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_output_dec(*output.address());
@@ -94,7 +94,7 @@ async fn validate_regular_essence<B: StorageBackend>(
             Output::SignatureLockedDustAllowance(output) => {
                 consumed_amount = consumed_amount
                     .checked_add(output.amount())
-                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
+                    .ok_or(Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 balance_diffs.dust_allowance_sub(*output.address(), output.amount());
                 if !match unlock_blocks.get(index) {
@@ -117,7 +117,7 @@ async fn validate_regular_essence<B: StorageBackend>(
             Output::SignatureLockedSingle(output) => {
                 created_amount = created_amount
                     .checked_add(output.amount())
-                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount, output.amount()))?;
+                    .ok_or(Error::CreatedAmountOverflow(created_amount, output.amount()))?;
                 balance_diffs.amount_add(*output.address(), output.amount());
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_output_inc(*output.address());
@@ -126,7 +126,7 @@ async fn validate_regular_essence<B: StorageBackend>(
             Output::SignatureLockedDustAllowance(output) => {
                 created_amount = created_amount
                     .checked_add(output.amount())
-                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount, output.amount()))?;
+                    .ok_or(Error::CreatedAmountOverflow(created_amount, output.amount()))?;
                 balance_diffs.amount_add(*output.address(), output.amount());
                 balance_diffs.dust_allowance_add(*output.address(), output.amount());
             }
