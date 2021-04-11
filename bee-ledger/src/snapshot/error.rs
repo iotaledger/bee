@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::kind::Kind;
+use crate::snapshot::kind::Kind;
 
 use bee_message::{milestone::MilestoneIndex, Error as MessageError};
 
@@ -29,12 +29,18 @@ pub enum Error {
     LedgerSepIndexesInconsistency(MilestoneIndex, MilestoneIndex),
     #[error("Invalid milestone diffs count: expected {0}, read {1}")]
     InvalidMilestoneDiffsCount(usize, usize),
+    #[error("Invalid payload kind: {0}")]
+    InvalidPayloadKind(u32),
+    #[error("")]
+    UnsupportedOutputKind(u8),
     #[error(
         "Only a delta snapshot file exists, without a full snapshot file. Remove the delta snapshot file and restart"
     )]
-    OnlyDeltaFileExists,
-    #[error("Invalid payload kind: {0}")]
-    InvalidPayloadKind(u32),
+    OnlyDeltaSnapshotFileExists,
+    #[error("Unexpected milestine diff index: {0:?}")]
+    UnexpectedDiffIndex(MilestoneIndex),
     #[error("Storage operation failed: {0}")]
     StorageBackend(Box<dyn std::error::Error + Send + 'static>),
+    #[error("")]
+    Consumer(Box<dyn std::error::Error + Send + 'static>),
 }

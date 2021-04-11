@@ -18,10 +18,12 @@ pub use worker::{LedgerWorker, LedgerWorkerEvent};
 
 use bee_runtime::node::{Node, NodeBuilder};
 
-pub fn init<N>(node_builder: N::Builder) -> N::Builder
+use crate::snapshot::config::SnapshotConfig;
+
+pub fn init<N>(node_builder: N::Builder, network_id: u64, snapshot_config: SnapshotConfig) -> N::Builder
 where
     N: Node,
     N::Backend: StorageBackend,
 {
-    node_builder.with_worker::<LedgerWorker>()
+    node_builder.with_worker_cfg::<LedgerWorker>((network_id, snapshot_config))
 }

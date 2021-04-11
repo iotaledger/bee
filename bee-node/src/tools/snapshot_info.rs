@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_snapshot::{
+use bee_ledger::snapshot::{
     error::Error as SnapshotError,
     header::{DeltaSnapshotHeader, FullSnapshotHeader, SnapshotHeader},
     kind::Kind,

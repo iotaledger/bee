@@ -3,38 +3,36 @@
 
 use crate::{
     consensus::{
-        dust::DUST_THRESHOLD,
         error::Error,
         event::{MilestoneConfirmed, OutputConsumed, OutputCreated},
         metadata::WhiteFlagMetadata,
         state::check_ledger_state,
-        storage::{
-            self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend,
-        },
+        storage::{self, StorageBackend},
         white_flag,
     },
-    types::{BalanceDiffs, ConflictReason, Migration, Receipt, TreasuryOutput},
+    snapshot::{config::SnapshotConfig, error::Error as SnapshotError, import::import_snapshots},
+    types::{ConflictReason, Migration, Receipt, TreasuryOutput},
 };
 
 use bee_message::{
     ledger_index::LedgerIndex,
     milestone::MilestoneIndex,
-    output::{self, CreatedOutput, Output, OutputId},
+    output::{CreatedOutput, Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_snapshot::{milestone_diff::MilestoneDiff, worker::SnapshotWorker};
 use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 
+use chrono::{offset::TimeZone, Utc};
 use futures::stream::StreamExt;
 use log::{error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-use std::{any::TypeId, collections::HashMap, convert::TryInto};
+use std::{any::TypeId, convert::TryInto};
 
 pub struct LedgerWorkerEvent(pub MessageId);
 
@@ -42,7 +40,7 @@ pub struct LedgerWorker {
     pub tx: mpsc::UnboundedSender<LedgerWorkerEvent>,
 }
 
-async fn migration_from_milestone(
+pub(crate) async fn migration_from_milestone(
     milestone_index: MilestoneIndex,
     milestone_id: MilestoneId,
     receipt: &ReceiptPayload,
@@ -211,159 +209,54 @@ impl<N: Node> Worker<N> for LedgerWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = ();
+    type Config = (u64, SnapshotConfig);
     type Error = Error;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<SnapshotWorker>(), TypeId::of::<TangleWorker>()].leak()
+        vec![TypeId::of::<TangleWorker>()].leak()
     }
 
-    async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
+    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+        let (network_id, snapshot_config) = config;
+
         let (tx, rx) = mpsc::unbounded_channel();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
         let bus = node.bus();
 
-        let treasury_output_rx = node.worker::<SnapshotWorker>().unwrap().treasury_output_rx.clone();
-        let output_rx = node.worker::<SnapshotWorker>().unwrap().output_rx.clone();
-        let full_diff_rx = node.worker::<SnapshotWorker>().unwrap().full_diff_rx.clone();
-        let delta_diff_rx = node.worker::<SnapshotWorker>().unwrap().delta_diff_rx.clone();
-
-        // TODO handle Err
-        if let Ok((milestone_id, amount)) = treasury_output_rx.recv_async().await {
-            storage::store_unspent_treasury_output(
-                &*storage,
-                &TreasuryOutput::new(output::TreasuryOutput::new(amount)?, milestone_id),
-            )
-            .await?
-        }
-
-        let mut balance_diffs = BalanceDiffs::new();
-
-        while let Ok((output_id, output)) = output_rx.recv_async().await {
-            // TODO handle unwrap
-            // TODO batch
-            create_output(&*storage, &output_id, &output).await.unwrap();
-            match output.inner() {
-                Output::SignatureLockedSingle(output) => {
-                    balance_diffs.amount_add(*output.address(), output.amount());
-                    if output.amount() < DUST_THRESHOLD {
-                        balance_diffs.dust_output_inc(*output.address());
-                    }
+        match storage::fetch_snapshot_info(&*storage).await? {
+            None => {
+                import_snapshots(&*storage, &*tangle, network_id, snapshot_config).await?;
+            }
+            Some(info) => {
+                if info.network_id() != network_id {
+                    return Err(Error::Snapshot(SnapshotError::NetworkIdMismatch(
+                        info.network_id(),
+                        network_id,
+                    )));
                 }
-                Output::SignatureLockedDustAllowance(output) => {
-                    balance_diffs.amount_add(*output.address(), output.amount());
-                    balance_diffs.dust_allowance_add(*output.address(), output.amount());
-                }
-                output => return Err(Error::UnsupportedOutputKind(output.kind())),
+
+                info!(
+                    "Loaded snapshot from {} with snapshot index {}, entry point index {} and pruning index {}.",
+                    Utc.timestamp(info.timestamp() as i64, 0).format("%d-%m-%Y %H:%M:%S"),
+                    *info.snapshot_index(),
+                    *info.entry_point_index(),
+                    *info.pruning_index(),
+                );
             }
         }
-
-        store_balance_diffs(&*storage, &balance_diffs).await?;
-
-        async fn read_diffs<B: StorageBackend>(
-            storage: &B,
-            diff_rx: flume::Receiver<MilestoneDiff>,
-        ) -> Result<(), Error> {
-            while let Ok(diff) = diff_rx.recv_async().await {
-                let index = diff.milestone().essence().index();
-                // Unwrap is fine because we just inserted the ledger index.
-                // TODO unwrap
-                let ledger_index = *storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
-
-                let mut balance_diffs = BalanceDiffs::new();
-
-                for (_, output) in diff.created().iter() {
-                    match output.inner() {
-                        Output::SignatureLockedSingle(output) => {
-                            balance_diffs.amount_add(*output.address(), output.amount());
-                            if output.amount() < DUST_THRESHOLD {
-                                balance_diffs.dust_output_inc(*output.address());
-                            }
-                        }
-                        Output::SignatureLockedDustAllowance(output) => {
-                            balance_diffs.amount_add(*output.address(), output.amount());
-                            balance_diffs.dust_allowance_add(*output.address(), output.amount());
-                        }
-                        output => return Err(Error::UnsupportedOutputKind(output.kind())),
-                    }
-                }
-
-                let mut consumed = HashMap::new();
-
-                for (output_id, (created_output, consumed_output)) in diff.consumed().iter() {
-                    match created_output.inner() {
-                        Output::SignatureLockedSingle(output) => {
-                            balance_diffs.amount_sub(*output.address(), output.amount());
-                            if output.amount() < DUST_THRESHOLD {
-                                balance_diffs.dust_output_dec(*output.address());
-                            }
-                        }
-                        Output::SignatureLockedDustAllowance(output) => {
-                            balance_diffs.amount_sub(*output.address(), output.amount());
-                            balance_diffs.dust_allowance_sub(*output.address(), output.amount());
-                        }
-                        output => return Err(Error::UnsupportedOutputKind(output.kind())),
-                    }
-                    consumed.insert(*output_id, (*consumed_output).clone());
-                }
-
-                let migration = if let Some(Payload::Receipt(receipt)) = diff.milestone().essence().receipt() {
-                    // There should be a consumed treasury if there is a receipt.
-                    let consumed_treasury = diff.consumed_treasury().unwrap().clone();
-
-                    Some(
-                        migration_from_milestone(
-                            index,
-                            diff.milestone().id(),
-                            receipt,
-                            TreasuryOutput::new(consumed_treasury.0, consumed_treasury.1),
-                        )
-                        .await?,
-                    )
-                } else {
-                    None
-                };
-
-                match index {
-                    index if index == MilestoneIndex(ledger_index + 1) => {
-                        // TODO unwrap until we merge both crates
-                        apply_outputs_diff(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)
-                            .await
-                            .unwrap();
-                    }
-                    index if index == MilestoneIndex(ledger_index) => {
-                        // TODO unwrap until we merge both crates
-                        rollback_outputs_diff(&*storage, index, diff.created(), &consumed)
-                            .await
-                            .unwrap();
-                    }
-                    _ => return Err(Error::UnexpectedDiffIndex(index)),
-                }
-            }
-            Ok(())
-        }
-
-        read_diffs(&*storage, full_diff_rx).await?;
-        read_diffs(&*storage, delta_diff_rx).await?;
 
         check_ledger_state(&*storage).await?;
-
-        // bus.add_listener::<Self, SolidMilestoneChanged, _>(move |event| {
-        //     if let Err(e) = tx.send(*event.milestone.message_id()) {
-        //         warn!(
-        //             "Sending solid milestone {} {} to confirmation failed: {:?}.",
-        //             *event.index,
-        //             event.milestone.message_id(),
-        //             e
-        //         )
-        //     }
-        // });
 
         // Unwrap is fine because we just inserted the ledger index.
         // TODO unwrap
         let mut ledger_index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
+        let snapshot_info = storage::fetch_snapshot_info(&*storage).await?.unwrap();
+
+        tangle.update_latest_milestone_index(snapshot_info.snapshot_index());
+        tangle.update_snapshot_index(snapshot_info.snapshot_index());
+        tangle.update_pruning_index(snapshot_info.pruning_index());
         tangle.update_solid_milestone_index(MilestoneIndex(*ledger_index));
         tangle.update_confirmed_milestone_index(MilestoneIndex(*ledger_index));
 

@@ -1,11 +1,11 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod config;
+pub mod config;
+
 mod constants;
 mod worker;
 
-pub use config::{PruningConfig, PruningConfigBuilder};
 pub use worker::{PrunerWorker, PrunerWorkerEvent};
 
 // use bee_protocol::{

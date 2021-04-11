@@ -3,6 +3,7 @@
 
 use crate::{
     consensus::error::Error,
+    snapshot::info::SnapshotInfo,
     types::{Balance, BalanceDiffs, Migration, OutputDiff, Receipt, TreasuryDiff, TreasuryOutput, Unspent},
 };
 
@@ -41,11 +42,13 @@ pub trait StorageBackend:
     + Exist<OutputId, ConsumedOutput>
     + Exist<Unspent, ()>
     + Exist<(), LedgerIndex>
+    + Fetch<(), SnapshotInfo>
     + Fetch<OutputId, CreatedOutput>
     + Fetch<OutputId, ConsumedOutput>
     + Fetch<(), LedgerIndex>
     + Fetch<Address, Balance>
     + Fetch<bool, Vec<TreasuryOutput>>
+    + Insert<(), SnapshotInfo>
     + Insert<OutputId, CreatedOutput>
     + Insert<OutputId, ConsumedOutput>
     + Insert<Unspent, ()>
@@ -77,11 +80,13 @@ impl<T> StorageBackend for T where
         + Exist<OutputId, ConsumedOutput>
         + Exist<Unspent, ()>
         + Exist<(), LedgerIndex>
+        + Fetch<(), SnapshotInfo>
         + Fetch<OutputId, CreatedOutput>
         + Fetch<OutputId, ConsumedOutput>
         + Fetch<(), LedgerIndex>
         + Fetch<Address, Balance>
         + Fetch<bool, Vec<TreasuryOutput>>
+        + Insert<(), SnapshotInfo>
         + Insert<OutputId, CreatedOutput>
         + Insert<OutputId, ConsumedOutput>
         + Insert<Unspent, ()>
@@ -311,9 +316,23 @@ pub(crate) async fn fetch_balance_or_default<B: StorageBackend>(
     Ok(fetch_balance(storage, address).await?.unwrap_or_default())
 }
 
-#[allow(dead_code)]
 pub(crate) async fn insert_ledger_index<B: StorageBackend>(storage: &B, index: &LedgerIndex) -> Result<(), Error> {
     Insert::<(), LedgerIndex>::insert(storage, &(), index)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub(crate) async fn insert_snapshot_info<B: StorageBackend>(
+    storage: &B,
+    snapshot_info: &SnapshotInfo,
+) -> Result<(), Error> {
+    Insert::<(), SnapshotInfo>::insert(&*storage, &(), snapshot_info)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub(crate) async fn fetch_snapshot_info<B: StorageBackend>(storage: &B) -> Result<Option<SnapshotInfo>, Error> {
+    Fetch::<(), SnapshotInfo>::fetch(storage, &())
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }

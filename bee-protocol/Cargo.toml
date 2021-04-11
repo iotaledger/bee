@@ -13,11 +13,10 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
-bee-ledger = { path = "../bee-ledger", features = ["consensus"], optional = true }
+bee-ledger = { path = "../bee-ledger", features = [ "consensus", "snapshot" ], optional = true }
 bee-message = { path = "../bee-message", features = ["serde"] }
 bee-network = { path = "../bee-network", default-features = false }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
-bee-snapshot = { path = "../bee-snapshot", optional = true }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-tangle = { path = "../bee-tangle", optional = true }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
@@ -49,7 +48,6 @@ workers = [
   "bee-ledger",
   "bee-network/node",
   "bee-runtime",
-  "bee-snapshot",
   "bee-storage",
   "bee-tangle",
   "bee-ternary",

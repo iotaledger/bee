@@ -2,18 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    event::ConfirmedMilestoneChanged,
     pruning::{
         config::PruningConfig,
         constants::{PRUNING_THRESHOLD, SOLID_ENTRY_POINT_THRESHOLD_FUTURE, SOLID_ENTRY_POINT_THRESHOLD_PAST},
     },
-    storage::StorageBackend,
-    MsTangle, TangleWorker,
+    snapshot::config::SnapshotConfig,
 };
 
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_snapshot::config::SnapshotConfig;
+
+use bee_tangle::{event::ConfirmedMilestoneChanged, storage::StorageBackend, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;

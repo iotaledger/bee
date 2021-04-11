@@ -3,7 +3,10 @@
 
 use crate::{error::Error, storage::*};
 
-use bee_ledger::types::{Balance, OutputDiff, Receipt, TreasuryOutput, Unspent};
+use bee_ledger::{
+    snapshot::info::SnapshotInfo,
+    types::{Balance, OutputDiff, Receipt, TreasuryOutput, Unspent},
+};
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     ledger_index::LedgerIndex,
@@ -13,7 +16,6 @@ use bee_message::{
     solid_entry_point::SolidEntryPoint,
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
-use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Truncate;
 use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
 

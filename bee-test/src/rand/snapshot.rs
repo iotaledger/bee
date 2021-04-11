@@ -3,7 +3,7 @@
 
 use crate::rand::{integer::rand_integer, milestone::rand_milestone_index};
 
-use bee_snapshot::info::SnapshotInfo;
+use bee_ledger::snapshot::info::SnapshotInfo;
 
 pub fn rand_snapshot_info() -> SnapshotInfo {
     SnapshotInfo::new(

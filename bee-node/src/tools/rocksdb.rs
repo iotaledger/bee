@@ -1,7 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::types::{Balance, OutputDiff, Receipt, TreasuryOutput, Unspent};
+use bee_ledger::{
+    snapshot::info::SnapshotInfo,
+    types::{Balance, OutputDiff, Receipt, TreasuryOutput, Unspent},
+};
 use bee_message::{
     address::{Address, Ed25519Address},
     ledger_index::LedgerIndex,
@@ -11,7 +14,6 @@ use bee_message::{
     solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
-use bee_snapshot::info::SnapshotInfo;
 use bee_storage::{
     access::{AsStream, Exist, Fetch},
     backend::StorageBackend,
