@@ -672,13 +672,13 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
             UnlockBlockDto::Signature(s) => match &s.signature {
                 SignatureDto::Ed25519(ed) => {
                     let mut public_key = [0u8; 32];
-                    hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(
-                        |_| "invalid public key in signature unlock block: expected a hex-string of length 64",
-                    )?; // TODO access ED25519_PUBLIC_KEY_LENGTH when available
+                    hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(|_| {
+                        "invalid public key in signature unlock block: expected a hex-string of length 64"
+                    })?; // TODO access ED25519_PUBLIC_KEY_LENGTH when available
                     let signature = hex::decode(&ed.signature)
-                        .map_err(
-                            |_| "invalid signature in signature unlock block: expected a hex-string of length 128",
-                        )? // TODO access ED25519_SIGNATURE_LENGTH when available
+                        .map_err(|_| {
+                            "invalid signature in signature unlock block: expected a hex-string of length 128"
+                        })? // TODO access ED25519_SIGNATURE_LENGTH when available
                         .into_boxed_slice();
                     Ok(UnlockBlock::Signature(SignatureUnlock::Ed25519(Ed25519Signature::new(
                         public_key, signature,
@@ -926,9 +926,11 @@ pub struct PeerDto {
     pub id: String,
     #[serde(rename = "multiAddresses")]
     pub multi_addresses: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub alias: Option<String>,
     pub relation: RelationDto,
     pub connected: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub gossip: Option<GossipDto>,
 }
 
