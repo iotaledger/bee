@@ -9,6 +9,7 @@ use crate::{
     info::SnapshotInfo,
     kind::Kind,
     milestone_diff::MilestoneDiff,
+    reader::snapshot_reader,
     storage::StorageBackend,
 };
 
@@ -29,7 +30,7 @@ use chrono::{offset::TimeZone, Utc};
 use log::info;
 use tokio::task;
 
-use std::{fs::OpenOptions, io::BufReader, path::Path};
+use std::path::Path;
 
 pub struct SnapshotWorker {
     pub treasury_output_rx: flume::Receiver<(MilestoneId, u64)>,
@@ -180,7 +181,7 @@ async fn import_full_snapshot<B: StorageBackend>(
 ) -> Result<(), Error> {
     info!("Importing full snapshot file {}...", &path.to_string_lossy());
 
-    let mut reader = BufReader::new(OpenOptions::new().read(true).open(path).map_err(Error::Io)?);
+    let mut reader = snapshot_reader(path)?;
 
     let header = SnapshotHeader::unpack(&mut reader)?;
 
@@ -245,7 +246,7 @@ async fn import_delta_snapshot<B: StorageBackend>(
 ) -> Result<(), Error> {
     info!("Importing delta snapshot file {}...", &path.to_string_lossy());
 
-    let mut reader = BufReader::new(OpenOptions::new().read(true).open(path).map_err(Error::Io)?);
+    let mut reader = snapshot_reader(path)?;
 
     let header = SnapshotHeader::unpack(&mut reader)?;
 

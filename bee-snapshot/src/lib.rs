@@ -9,6 +9,7 @@ pub mod header;
 pub mod info;
 pub mod kind;
 pub mod milestone_diff;
+pub mod reader;
 pub mod storage;
 pub mod worker;
 
