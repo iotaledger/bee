@@ -135,11 +135,16 @@ where
             let mut receiver = ShutdownStream::new(shutdown, rx.into_stream());
 
             while let Some(PrunerWorkerEvent(event)) = receiver.next().await {
+                if !tangle.is_confirmed() {
+                    continue;
+                }
+
                 if should_snapshot(&tangle, event.index, depth, &snapshot_config) {
                     // if let Err(e) = snapshot(snapshot_config.path(), event.index - depth) {
                     //     error!("Failed to create snapshot: {:?}.", e);
                     // }
                 }
+
                 if should_prune(&tangle, event.index, delay, &pruning_config) {
                     // if let Err(e) = prune_database(&tangle, MilestoneIndex(*event.index - delay)) {
                     //     error!("Failed to prune database: {:?}.", e);
