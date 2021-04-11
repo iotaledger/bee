@@ -4,12 +4,13 @@
 use crate::{
     consensus::error::Error,
     snapshot::info::SnapshotInfo,
-    types::{Balance, BalanceDiffs, Migration, OutputDiff, Receipt, TreasuryDiff, TreasuryOutput, Unspent},
+    types::{
+        Balance, BalanceDiffs, LedgerIndex, Migration, OutputDiff, Receipt, TreasuryDiff, TreasuryOutput, Unspent,
+    },
 };
 
 use bee_message::{
     address::{Address, Ed25519Address},
-    ledger_index::LedgerIndex,
     milestone::MilestoneIndex,
     output::{ConsumedOutput, CreatedOutput, Output, OutputId},
 };

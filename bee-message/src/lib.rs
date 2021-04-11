@@ -13,7 +13,6 @@ mod message_id;
 pub mod address;
 pub mod constants;
 pub mod input;
-pub mod ledger_index;
 pub mod milestone;
 pub mod output;
 pub mod parents;
