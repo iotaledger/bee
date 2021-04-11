@@ -84,7 +84,7 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, 
 
         // Note: For tip-selection only the most recent tangle is relevent. That means that during
         // synchronization we do not need to update xMRSI values or tip scores before (LMI - BELOW_MAX_DEPTH).
-        if index > tangle.get_latest_milestone_index() - tangle.config().below_max_depth().into() {
+        if index > tangle.get_latest_milestone_index() - tangle.config().below_max_depth() {
             update_future_cone(tangle, roots).await;
 
             // Update tip pool after all values got updated.
