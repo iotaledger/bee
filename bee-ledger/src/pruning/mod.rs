@@ -3,10 +3,8 @@
 
 pub mod config;
 
-mod constants;
-mod worker;
-
-pub use worker::{PrunerWorker, PrunerWorkerEvent};
+pub(crate) mod condition;
+pub(crate) mod constants;
 
 // use bee_protocol::{
 //     tangle::{helper, MsTangle},

@@ -358,7 +358,7 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
     storage: &B,
     tangle: &MsTangle<B>,
     network_id: u64,
-    config: SnapshotConfig,
+    config: &SnapshotConfig,
 ) -> Result<(), Error> {
     let full_exists = config.full_path().exists();
     let delta_exists = config.delta_path().exists();

@@ -10,6 +10,11 @@ use crate::{
         storage::{self, StorageBackend},
         white_flag,
     },
+    pruning::{
+        condition::{should_prune, should_snapshot},
+        config::PruningConfig,
+        constants::{PRUNING_THRESHOLD, SOLID_ENTRY_POINT_THRESHOLD_FUTURE, SOLID_ENTRY_POINT_THRESHOLD_PAST},
+    },
     snapshot::{config::SnapshotConfig, error::Error as SnapshotError, import::import_snapshots},
     types::{ConflictReason, Migration, Receipt, TreasuryOutput},
 };
@@ -28,7 +33,7 @@ use async_trait::async_trait;
 
 use chrono::{offset::TimeZone, Utc};
 use futures::stream::StreamExt;
-use log::{error, info};
+use log::{error, info, warn};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -209,7 +214,7 @@ impl<N: Node> Worker<N> for LedgerWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = (u64, SnapshotConfig);
+    type Config = (u64, SnapshotConfig, PruningConfig);
     type Error = Error;
 
     fn dependencies() -> &'static [TypeId] {
@@ -217,7 +222,7 @@ where
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let (network_id, snapshot_config) = config;
+        let (network_id, snapshot_config, pruning_config) = config;
 
         let (tx, rx) = mpsc::unbounded_channel();
 
@@ -227,7 +232,7 @@ where
 
         match storage::fetch_snapshot_info(&*storage).await? {
             None => {
-                import_snapshots(&*storage, &*tangle, network_id, snapshot_config).await?;
+                import_snapshots(&*storage, &*tangle, network_id, &snapshot_config).await?;
             }
             Some(info) => {
                 if info.network_id() != network_id {
@@ -260,6 +265,29 @@ where
         tangle.update_solid_milestone_index(MilestoneIndex(*ledger_index));
         tangle.update_confirmed_milestone_index(MilestoneIndex(*ledger_index));
 
+        // TODO should be done in config directly ?
+        let depth = if snapshot_config.depth() < SOLID_ENTRY_POINT_THRESHOLD_FUTURE {
+            warn!(
+                "Configuration value for \"depth\" is too low ({}), value changed to {}.",
+                snapshot_config.depth(),
+                SOLID_ENTRY_POINT_THRESHOLD_FUTURE
+            );
+            SOLID_ENTRY_POINT_THRESHOLD_FUTURE
+        } else {
+            snapshot_config.depth()
+        };
+        let delay_min = snapshot_config.depth() + SOLID_ENTRY_POINT_THRESHOLD_PAST + PRUNING_THRESHOLD + 1;
+        let delay = if pruning_config.delay() < delay_min {
+            warn!(
+                "Configuration value for \"delay\" is too low ({}), value changed to {}.",
+                pruning_config.delay(),
+                delay_min
+            );
+            delay_min
+        } else {
+            pruning_config.delay()
+        };
+
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
@@ -269,6 +297,22 @@ where
                 if let Err(e) = confirm::<N>(&tangle, &storage, &bus, message_id, &mut ledger_index).await {
                     error!("Confirmation error on {}: {}.", message_id, e);
                     panic!("Aborting due to unexpected ledger error.");
+                }
+
+                if !tangle.is_confirmed() {
+                    continue;
+                }
+
+                if should_snapshot(&tangle, MilestoneIndex(*ledger_index), depth, &snapshot_config) {
+                    // if let Err(e) = snapshot(snapshot_config.path(), event.index - depth) {
+                    //     error!("Failed to create snapshot: {:?}.", e);
+                    // }
+                }
+
+                if should_prune(&tangle, MilestoneIndex(*ledger_index), delay, &pruning_config) {
+                    // if let Err(e) = prune_database(&tangle, MilestoneIndex(*event.index - delay)) {
+                    //     error!("Failed to prune database: {:?}.", e);
+                    // }
                 }
             }
 
