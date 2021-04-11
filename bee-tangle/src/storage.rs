@@ -1,13 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::metadata::MessageMetadata;
+use crate::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
-    solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
+
 use bee_storage::{
     access::{Fetch, Insert},
     backend,

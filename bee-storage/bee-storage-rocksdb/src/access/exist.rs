@@ -13,11 +13,12 @@ use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     output::{ConsumedOutput, CreatedOutput, OutputId},
     payload::indexation::HashedIndex,
-    solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
 use bee_storage::access::Exist;
-use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
+use bee_tangle::{
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+};
 
 #[async_trait::async_trait]
 impl Exist<MessageId, Message> for Storage {

@@ -18,7 +18,6 @@ pub mod output;
 pub mod parents;
 pub mod payload;
 pub mod prelude;
-pub mod solid_entry_point;
 pub mod unlock;
 
 pub use error::Error;

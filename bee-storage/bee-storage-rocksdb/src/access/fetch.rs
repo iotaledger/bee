@@ -13,11 +13,12 @@ use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     output::{ConsumedOutput, CreatedOutput, OutputId, OUTPUT_ID_LENGTH},
     payload::indexation::{HashedIndex, HASHED_INDEX_LENGTH},
-    solid_entry_point::SolidEntryPoint,
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
 use bee_storage::access::Fetch;
-use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
+use bee_tangle::{
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+};
 
 use std::convert::{TryFrom, TryInto};
 

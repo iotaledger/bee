@@ -4,9 +4,8 @@
 //! The solid_entry_point module defined the [SolidEntryPoint] type which represents
 //! an already solidified message in the tangle.
 
-use crate::MessageId;
-
 use bee_common::packable::{Packable, Read, Write};
+use bee_message::MessageId;
 
 use ref_cast::RefCast;
 

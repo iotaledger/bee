@@ -4,6 +4,7 @@
 use crate::{
     config::TangleConfig,
     metadata::{IndexId, MessageMetadata},
+    solid_entry_point::SolidEntryPoint,
     storage::StorageBackend,
     tangle::{Hooks, Tangle, DEFAULT_CACHE_LEN},
     urts::UrtsTipPool,
@@ -12,7 +13,6 @@ use crate::{
 
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
-    solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
 use bee_runtime::resource::ResourceHandle;

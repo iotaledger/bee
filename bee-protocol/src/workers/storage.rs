@@ -5,14 +5,15 @@ use bee_ledger::{consensus::storage::StorageBackend as LedgerStorageBackend, sna
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     payload::indexation::HashedIndex,
-    solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
 use bee_storage::{
     access::{AsStream, Batch, Fetch, Insert},
     backend,
 };
-use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
+use bee_tangle::{
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+};
 
 pub trait StorageBackend:
     backend::StorageBackend

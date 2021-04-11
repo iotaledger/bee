@@ -10,7 +10,6 @@ use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     output::{ConsumedOutput, CreatedOutput, OutputId},
     payload::indexation::{HashedIndex, IndexationPayload},
-    solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
 use bee_storage::{
@@ -18,7 +17,9 @@ use bee_storage::{
     backend::StorageBackend,
 };
 use bee_storage_rocksdb::{config::RocksDbConfigBuilder, error::Error as BackendError, storage::*, system::System};
-use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
+use bee_tangle::{
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+};
 
 use futures::{executor, stream::StreamExt};
 use structopt::StructOpt;

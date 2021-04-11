@@ -26,11 +26,10 @@ use bee_message::{
     milestone::MilestoneIndex,
     output::{self, CreatedOutput, Output, OutputId},
     payload::Payload,
-    solid_entry_point::SolidEntryPoint,
     MessageId,
 };
 use bee_storage::access::{Insert, Truncate};
-use bee_tangle::MsTangle;
+use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle};
 
 use chrono::{offset::TimeZone, Utc};
 use log::info;

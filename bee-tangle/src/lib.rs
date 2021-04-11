@@ -10,6 +10,7 @@ pub mod event;
 pub mod flags;
 pub mod metadata;
 pub mod ms_tangle;
+pub mod solid_entry_point;
 pub mod storage;
 pub mod traversal;
 pub mod unconfirmed_message;
