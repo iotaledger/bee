@@ -13,9 +13,10 @@ use bee_message::{
     address::{Address, Ed25519Address},
     milestone::MilestoneIndex,
     output::{ConsumedOutput, CreatedOutput, Output, OutputId},
+    solid_entry_point::SolidEntryPoint,
 };
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
 
@@ -55,6 +56,7 @@ pub trait StorageBackend:
     + Insert<Unspent, ()>
     + Insert<(), LedgerIndex>
     + Insert<(bool, TreasuryOutput), ()>
+    + Truncate<SolidEntryPoint, MilestoneIndex>
     + for<'a> AsStream<'a, Unspent, ()>
     + for<'a> AsStream<'a, Address, Balance>
     + bee_tangle::storage::StorageBackend
@@ -93,6 +95,7 @@ impl<T> StorageBackend for T where
         + Insert<Unspent, ()>
         + Insert<(), LedgerIndex>
         + Insert<(bool, TreasuryOutput), ()>
+        + Truncate<SolidEntryPoint, MilestoneIndex>
         + for<'a> AsStream<'a, Unspent, ()>
         + for<'a> AsStream<'a, Address, Balance>
         + bee_tangle::storage::StorageBackend

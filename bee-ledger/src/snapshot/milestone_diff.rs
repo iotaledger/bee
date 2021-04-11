@@ -91,7 +91,7 @@ impl Packable for MilestoneDiff {
         };
 
         let created_count = u64::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut created = HashMap::new();
+        let mut created = HashMap::with_capacity(created_count);
 
         for _ in 0..created_count {
             let message_id = MessageId::unpack_inner::<R, CHECK>(reader)?;
@@ -102,7 +102,7 @@ impl Packable for MilestoneDiff {
         }
 
         let consumed_count = u64::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut consumed = HashMap::new();
+        let mut consumed = HashMap::with_capacity(consumed_count);
 
         for _ in 0..consumed_count {
             let message_id = MessageId::unpack_inner::<R, CHECK>(reader)?;

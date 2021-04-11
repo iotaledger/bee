@@ -29,7 +29,7 @@ use bee_message::{
     solid_entry_point::SolidEntryPoint,
     MessageId,
 };
-use bee_storage::access::Insert;
+use bee_storage::access::{Insert, Truncate};
 use bee_tangle::MsTangle;
 
 use chrono::{offset::TimeZone, Utc};
@@ -55,6 +55,10 @@ async fn import_solid_entry_points<R: Read, B: StorageBackend>(
     sep_count: u64,
     index: MilestoneIndex,
 ) -> Result<(), Error> {
+    // TODO also clear tangle SEPs
+    Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage)
+        .await
+        .unwrap();
     for _ in 0..sep_count {
         let sep = SolidEntryPoint::unpack(reader)?;
         tangle.add_solid_entry_point(sep, index).await;
@@ -227,6 +231,16 @@ async fn import_full_snapshot<B: StorageBackend>(
         ));
     }
 
+    storage::store_unspent_treasury_output(
+        &*storage,
+        &TreasuryOutput::new(
+            output::TreasuryOutput::new(full_header.treasury_output_amount())?,
+            *full_header.treasury_output_milestone_id(),
+        ),
+    )
+    .await
+    .map_err(|e| Error::Consumer(Box::new(e)))?;
+
     storage::insert_ledger_index(storage, &header.ledger_index().into())
         .await
         .map_err(|e| Error::Consumer(Box::new(e)))?;
@@ -238,16 +252,6 @@ async fn import_full_snapshot<B: StorageBackend>(
             header.sep_index(),
             header.sep_index(),
             header.timestamp(),
-        ),
-    )
-    .await
-    .map_err(|e| Error::Consumer(Box::new(e)))?;
-
-    storage::store_unspent_treasury_output(
-        &*storage,
-        &TreasuryOutput::new(
-            output::TreasuryOutput::new(full_header.treasury_output_amount())?,
-            *full_header.treasury_output_milestone_id(),
         ),
     )
     .await
@@ -374,10 +378,6 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
 
     // Load delta file only if both full and delta files already existed or if they have just been downloaded.
     if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
-        // TODO
-        // Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(&*storage)
-        //     .await
-        //     .unwrap();
         import_delta_snapshot(storage, tangle, config.delta_path(), network_id).await?;
     }
 
