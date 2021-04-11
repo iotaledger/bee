@@ -29,7 +29,6 @@ use std::{
 };
 
 pub struct StorageHooks<B> {
-    #[allow(dead_code)]
     storage: ResourceHandle<B>,
 }
 
@@ -37,33 +36,37 @@ pub struct StorageHooks<B> {
 impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
     type Error = B::Error;
 
-    async fn get(&self, msg: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
-        trace!("Attempted to fetch message {:?}", msg);
-        Ok(self.storage.fetch(msg).await?.zip(self.storage.fetch(msg).await?))
+    async fn get(&self, message_id: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
+        trace!("Attempted to fetch message {:?}", message_id);
+        Ok(self
+            .storage
+            .fetch(message_id)
+            .await?
+            .zip(self.storage.fetch(message_id).await?))
     }
 
-    async fn insert(&self, msg: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
-        trace!("Attempted to insert message {:?}", msg);
-        self.storage.insert(&msg, &tx).await?;
-        self.storage.insert(&msg, &metadata).await?;
+    async fn insert(&self, message_id: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
+        trace!("Attempted to insert message {:?}", message_id);
+        self.storage.insert(&message_id, &tx).await?;
+        self.storage.insert(&message_id, &metadata).await?;
         Ok(())
     }
 
-    async fn fetch_approvers(&self, msg: &MessageId) -> Result<Option<Vec<MessageId>>, Self::Error> {
-        trace!("Attempted to fetch approvers for message {:?}", msg);
-        self.storage.fetch(msg).await
+    async fn fetch_approvers(&self, message_id: &MessageId) -> Result<Option<Vec<MessageId>>, Self::Error> {
+        trace!("Attempted to fetch approvers for message {:?}", message_id);
+        self.storage.fetch(message_id).await
     }
 
-    async fn insert_approver(&self, msg: MessageId, approver: MessageId) -> Result<(), Self::Error> {
-        trace!("Attempted to insert approver for message {:?}", msg);
-        self.storage.insert(&(msg, approver), &()).await
+    async fn insert_approver(&self, message_id: MessageId, approver: MessageId) -> Result<(), Self::Error> {
+        trace!("Attempted to insert approver for message {:?}", message_id);
+        self.storage.insert(&(message_id, approver), &()).await
     }
 
-    async fn update_approvers(&self, msg: MessageId, approvers: &[MessageId]) -> Result<(), Self::Error> {
-        trace!("Attempted to update approvers for message {:?}", msg);
-        // self.storage.insert(&msg, approvers).await
+    async fn update_approvers(&self, message_id: MessageId, approvers: &[MessageId]) -> Result<(), Self::Error> {
+        trace!("Attempted to update approvers for message {:?}", message_id);
+        // self.storage.insert(&message_id, approvers).await
         for approver in approvers {
-            self.storage.insert(&(msg, *approver), &()).await?;
+            self.storage.insert(&(message_id, *approver), &()).await?;
         }
         Ok(())
     }
@@ -79,6 +82,14 @@ impl<B: StorageBackend> StorageHooks<B> {
         trace!("Attempted to insert milestone {:?}", idx);
         self.storage.insert(&idx, milestone).await?;
         Ok(())
+    }
+}
+
+impl<B: StorageBackend> Deref for StorageHooks<B> {
+    type Target = ResourceHandle<B>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.storage
     }
 }
 
@@ -314,6 +325,13 @@ impl<B: StorageBackend> MsTangle<B> {
 
     pub async fn clear_solid_entry_points(&self) {
         self.solid_entry_points.lock().await.clear();
+    }
+
+    /// Replaces old solid entry points with new ones.
+    pub async fn replace_solid_entry_points(&self, new_seps: HashMap<SolidEntryPoint, MilestoneIndex>) {
+        let mut seps = self.solid_entry_points.lock().await;
+        *seps = new_seps;
+        drop(seps);
     }
 
     /// Returns whether the message associated with `sep` is a solid entry point.

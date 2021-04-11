@@ -1,14 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::{error::Error, prune::prune};
+
 use crate::{
-    event::LatestSolidMilestoneChanged,
-    pruning::{
-        config::PruningConfig,
-        constants::{PRUNING_THRESHOLD, SEP_THRESHOLD_FUTURE, SEP_THRESHOLD_PAST},
-    },
-    storage::StorageBackend,
-    MsTangle, TangleWorker,
+    event::LatestSolidMilestoneChanged, pruning::config::PruningConfig, storage::StorageBackend, MsTangle, TangleWorker,
 };
 
 use bee_message::milestone::MilestoneIndex;
@@ -16,76 +12,20 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_snapshot::config::SnapshotConfig;
 
 use async_trait::async_trait;
-use log::{info, warn};
+use log::{error, info, warn};
 use tokio::sync::mpsc;
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
 
-use std::{any::TypeId, convert::Infallible};
+use std::{any::TypeId, convert::Infallible, path::Path};
+
+// pub(crate) const PAST_CONE_THRESHOLD: u32 = 5;
+pub(crate) const SNAPSHOT_DEPTH_MIN: u32 = 5;
+pub(crate) const PRUNING_INTERVAL: u32 = 50;
 
 #[derive(Debug)]
 pub struct PrunerWorkerInput(pub(crate) LatestSolidMilestoneChanged);
 
 pub struct PrunerWorker {}
-
-fn should_snapshot<B: StorageBackend>(
-    tangle: &MsTangle<B>,
-    index: MilestoneIndex,
-    depth: u32,
-    config: &SnapshotConfig,
-) -> bool {
-    let solid_index = *index;
-    let snapshot_index = *tangle.get_snapshot_index();
-    let pruning_index = *tangle.get_pruning_index();
-    let snapshot_interval = if tangle.is_synced() {
-        config.interval_synced()
-    } else {
-        config.interval_unsynced()
-    };
-
-    if (solid_index < depth + snapshot_interval) || (solid_index - depth) < pruning_index + 1 + SEP_THRESHOLD_PAST {
-        // Not enough history to calculate solid entry points.
-        return false;
-    }
-
-    solid_index - (depth + snapshot_interval) >= snapshot_index
-}
-
-fn should_prune<B: StorageBackend>(
-    tangle: &MsTangle<B>,
-    mut index: MilestoneIndex,
-    delay: u32,
-    config: &PruningConfig,
-) -> bool {
-    if !config.enabled() {
-        return false;
-    }
-
-    if *index <= delay {
-        return false;
-    }
-
-    // Pruning happens after creating the snapshot so the metadata should provide the latest index.
-    if *tangle.get_snapshot_index() < SEP_THRESHOLD_PAST + PRUNING_THRESHOLD + 1 {
-        return false;
-    }
-
-    let target_index_max = MilestoneIndex(*tangle.get_snapshot_index() - SEP_THRESHOLD_PAST - PRUNING_THRESHOLD - 1);
-
-    if index > target_index_max {
-        index = target_index_max;
-    }
-
-    if tangle.get_pruning_index() >= index {
-        return false;
-    }
-
-    // We prune in "PRUNING_THRESHOLD" steps to recalculate the solid_entry_points.
-    if *tangle.get_entry_point_index() + PRUNING_THRESHOLD + 1 > *index {
-        return false;
-    }
-
-    true
-}
 
 #[async_trait]
 impl<N: Node> Worker<N> for PrunerWorker
@@ -101,7 +41,6 @@ where
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
-
         let tangle = node.resource::<MsTangle<N::Backend>>().clone();
         let bus = node.bus();
         let (snapshot_config, pruning_config) = config;
@@ -111,47 +50,53 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            //
-
-            let depth = if snapshot_config.depth() < SEP_THRESHOLD_FUTURE {
+            // Change misconfigured snapshot `depth`s.
+            let snapshot_depth = if snapshot_config.depth() < SNAPSHOT_DEPTH_MIN {
                 warn!(
                     "Configuration value for \"depth\" is too low ({}), value changed to {}.",
                     snapshot_config.depth(),
-                    SEP_THRESHOLD_FUTURE
+                    SNAPSHOT_DEPTH_MIN
                 );
-                SEP_THRESHOLD_FUTURE
+                SNAPSHOT_DEPTH_MIN
             } else {
                 snapshot_config.depth()
             };
 
-            let delay_min = snapshot_config.depth() + SEP_THRESHOLD_PAST + PRUNING_THRESHOLD + 1;
-            let delay = if pruning_config.delay() < delay_min {
+            // Change misconfigured pruning `delay`s.
+            let pruning_delay_min = 2 * snapshot_depth + PRUNING_INTERVAL;
+            let pruning_delay = if pruning_config.delay() < pruning_delay_min {
                 warn!(
                     "Configuration value for \"delay\" is too low ({}), value changed to {}.",
                     pruning_config.delay(),
-                    delay_min
+                    pruning_delay_min
                 );
-                delay_min
+                pruning_delay_min
             } else {
                 pruning_config.delay()
             };
 
+            // Ensure that `pruning_delay` >> `snapshot_depth` is an invariant.
+            debug_assert!(pruning_delay > snapshot_depth);
+
+            // The following event-loop runs whenever a new milestone has been solidified, i.e.
+            // event `LatestSolidMilestoneChanged` occurred.
             while let Some(PrunerWorkerInput(lsms)) = receiver.next().await {
-                if should_snapshot(&tangle, lsms.index, depth, &snapshot_config) {
-                    // if let Err(e) = snapshot(snapshot_config.path(), event.index - depth) {
-                    //     error!("Failed to create snapshot: {:?}.", e);
-                    // }
+                if let Some(snapshot_index) = should_snapshot(&tangle, lsms.index, snapshot_depth, &snapshot_config) {
+                    if let Err(e) = snapshot(snapshot_config.full_path(), snapshot_index) {
+                        error!("Failed to create snapshot: {:?}.", e);
+                    }
                 }
-                if should_prune(&tangle, lsms.index, delay, &pruning_config) {
-                    // if let Err(e) = prune_database(&tangle, MilestoneIndex(*event.index - delay)) {
-                    //     error!("Failed to prune database: {:?}.", e);
-                    // }
+                if let Some(pruning_target_index) = should_prune(&tangle, lsms.index, pruning_delay, &pruning_config) {
+                    if let Err(e) = prune(&tangle, pruning_target_index).await {
+                        error!("Failed to prune database: {:?}.", e);
+                    }
                 }
             }
 
             info!("Stopped.");
         });
 
+        // Subscribe to the `LatestSolidMilestoneChanged` event.
         bus.add_listener::<Self, _, _>(move |lsms: &LatestSolidMilestoneChanged| {
             if let Err(e) = tx.send(PrunerWorkerInput(lsms.clone())) {
                 warn!("Failed to send milestone {} to snapshot worker: {:?}.", lsms.index, e)
@@ -160,4 +105,72 @@ where
 
         Ok(Self {})
     }
+}
+
+fn should_snapshot<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    index: MilestoneIndex,
+    depth: u32,
+    config: &SnapshotConfig,
+) -> Option<MilestoneIndex> {
+    let current_solid_index = *index;
+
+    let snapshot_index = *tangle.get_snapshot_index();
+    if current_solid_index <= snapshot_index {
+        return None;
+    }
+    debug_assert!(current_solid_index > snapshot_index);
+
+    // If the node is unsync we snapshot less often.
+    let snapshot_interval = if tangle.is_synced() {
+        config.interval_synced()
+    } else {
+        config.interval_unsynced()
+    };
+
+    // Do not snapshot without enough depth. This will only happen for a freshly started node.
+    if current_solid_index < snapshot_index + depth {
+        return None;
+    }
+
+    // Do not snapshot out of interval.
+    if current_solid_index % snapshot_interval != 0 {
+        return None;
+    }
+
+    Some(MilestoneIndex(current_solid_index - depth))
+}
+
+fn should_prune<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    index: MilestoneIndex,
+    delay: u32,
+    config: &PruningConfig,
+) -> Option<MilestoneIndex> {
+    // Do not prune if pruning is disabled in the config.
+    if !config.enabled() {
+        return None;
+    }
+
+    let current_solid_index = *index;
+    let last_pruning_index = *tangle.get_pruning_index();
+
+    // Do not prune if there isn't old enough data to prune yet. This will only happen for a freshly started node.
+    if current_solid_index < last_pruning_index + delay {
+        return None;
+    }
+
+    // Do not prune out of interval.
+    if current_solid_index % PRUNING_INTERVAL != 0 {
+        return None;
+    }
+
+    // Return the `target_index`, i.e. the `MilestoneIndex` up to which the database can be savely pruned.
+    Some(MilestoneIndex(current_solid_index - delay))
+}
+
+fn snapshot(_path: &Path, _snapshot_index: MilestoneIndex) -> Result<(), Error> {
+    info!("Snapshotting...");
+    // TODO
+    Ok(())
 }
