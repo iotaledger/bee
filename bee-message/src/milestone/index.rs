@@ -44,11 +44,27 @@ impl Add for MilestoneIndex {
     }
 }
 
+impl Add<u32> for MilestoneIndex {
+    type Output = Self;
+
+    fn add(self, other: u32) -> Self {
+        Self(*self + other)
+    }
+}
+
 impl Sub for MilestoneIndex {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
         Self(*self - *other)
+    }
+}
+
+impl Sub<u32> for MilestoneIndex {
+    type Output = Self;
+
+    fn sub(self, other: u32) -> Self {
+        Self(*self - other)
     }
 }
 
