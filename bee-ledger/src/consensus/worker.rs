@@ -258,11 +258,11 @@ where
         let mut ledger_index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
         let snapshot_info = storage::fetch_snapshot_info(&*storage).await?.unwrap();
 
-        tangle.update_latest_milestone_index(snapshot_info.snapshot_index());
         tangle.update_snapshot_index(snapshot_info.snapshot_index());
         tangle.update_pruning_index(snapshot_info.pruning_index());
         tangle.update_solid_milestone_index(MilestoneIndex(*ledger_index));
         tangle.update_confirmed_milestone_index(MilestoneIndex(*ledger_index));
+        tangle.update_latest_milestone_index(MilestoneIndex(*ledger_index));
 
         // TODO should be done in config directly ?
         let depth = if snapshot_config.depth() < SOLID_ENTRY_POINT_THRESHOLD_FUTURE {
