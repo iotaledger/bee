@@ -10,8 +10,8 @@ use bee_message::{
     payload::{
         indexation::IndexationPayload,
         milestone::{
-            MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH,
-            MILESTONE_SIGNATURE_LENGTH,
+            MilestoneId, MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH,
+            MILESTONE_PUBLIC_KEY_LENGTH, MILESTONE_SIGNATURE_LENGTH,
         },
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
         transaction::{Essence, RegularEssence, TransactionId, TransactionPayload, TRANSACTION_ID_LENGTH},
@@ -96,7 +96,7 @@ pub struct TreasuryInputDto {
     #[serde(rename = "type")]
     pub kind: u8,
     #[serde(rename = "milestoneId")]
-    pub message_id: String,
+    pub milestone_id: String,
 }
 
 #[derive(Clone, Debug)]
@@ -511,7 +511,7 @@ impl TryFrom<&Input> for InputDto {
             })),
             Input::Treasury(t) => Ok(InputDto::Treasury(TreasuryInputDto {
                 kind: TreasuryInput::KIND,
-                message_id: t.message_id().to_string(),
+                milestone_id: t.milestone_id().to_string(),
             })),
             _ => Err("input type not supported".to_string()),
         }
@@ -537,8 +537,8 @@ impl TryFrom<&InputDto> for Input {
                 .map_err(|e| format!("invalid input: {}", e))?,
             )),
             InputDto::Treasury(t) => Ok(Input::Treasury(
-                t.message_id
-                    .parse::<MessageId>()
+                t.milestone_id
+                    .parse::<MilestoneId>()
                     .map_err(|e| format!("invalid treasury input: {}", e))?
                     .into(),
             )),

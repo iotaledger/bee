@@ -38,12 +38,9 @@ impl Receipt {
         };
 
         for funds in self.inner().funds() {
-            migrated_amount =
-                migrated_amount
-                    .checked_add(funds.output().amount())
-                    .ok_or_else(|| Error::InvalidMigratedFundsAmount(
-                        migrated_amount + funds.output().amount(),
-                    ))?;
+            migrated_amount = migrated_amount
+                .checked_add(funds.output().amount())
+                .ok_or_else(|| Error::InvalidMigratedFundsAmount(migrated_amount + funds.output().amount()))?;
         }
 
         if migrated_amount > IOTA_SUPPLY {
@@ -59,9 +56,9 @@ impl Receipt {
             .inner()
             .amount()
             .checked_sub(migrated_amount)
-            .ok_or_else(|| Error::InvalidMigratedFundsAmount(
-                consumed_treasury_output.inner().amount() - migrated_amount,
-            ))?;
+            .ok_or_else(|| {
+                Error::InvalidMigratedFundsAmount(consumed_treasury_output.inner().amount() - migrated_amount)
+            })?;
 
         if created_amount != created_treasury_output.amount() {
             return Err(Error::TreasuryAmountMismatch(

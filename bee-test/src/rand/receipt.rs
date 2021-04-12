@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::rand::{
-    address::rand_address, bool::rand_bool, integer::rand_integer_range, message::rand_message_id,
-    milestone::rand_milestone_index, string::rand_string_charset,
+    address::rand_address,
+    bool::rand_bool,
+    integer::rand_integer_range,
+    milestone::{rand_milestone_id, rand_milestone_index},
+    string::rand_string_charset,
 };
 
 use bee_ledger::types::Receipt;
@@ -24,7 +27,7 @@ use std::convert::{TryFrom, TryInto};
 
 // TODO move
 pub fn rand_treasury_input() -> Input {
-    TreasuryInput::new(rand_message_id()).into()
+    TreasuryInput::new(rand_milestone_id()).into()
 }
 
 // TODO move
