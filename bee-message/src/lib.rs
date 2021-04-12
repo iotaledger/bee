@@ -1,6 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Core data types for messages in the tangle.
+//!
+//! This crate defines the core data types used by the Bee node to process
+//! messages and transactions in the tangle.
+
 extern crate alloc;
 
 #[cfg(feature = "serde")]

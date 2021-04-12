@@ -21,7 +21,7 @@ use bee_tangle::MsTangle;
 
 use warp::{reject, Filter, Rejection, Reply};
 
-use std::{net::IpAddr, ops::Deref};
+use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (TransactionId,), Error = Rejection> + Clone {
     super::path()
@@ -57,7 +57,7 @@ pub(crate) async fn transaction_included_message<B: StorageBackend>(
     // Safe to unwrap since 0 is a valid index;
     let output_id = OutputId::new(transaction_id, 0).unwrap();
 
-    match Fetch::<OutputId, CreatedOutput>::fetch(storage.deref(), &output_id)
+    match Fetch::<OutputId, CreatedOutput>::fetch(&*storage, &output_id)
         .await
         .map_err(|_| {
             reject::custom(CustomRejection::ServiceUnavailable(

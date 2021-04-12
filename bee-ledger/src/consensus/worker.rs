@@ -72,7 +72,7 @@ pub(crate) async fn migration_from_milestone(
         milestone_id,
     );
 
-    Ok(Migration::new(receipt, created_treasury, consumed_treasury))
+    Ok(Migration::new(receipt, consumed_treasury, created_treasury))
 }
 
 async fn confirm<N: Node>(
