@@ -23,7 +23,8 @@ use std::{
 };
 
 const DEFAULT_NUM_WORKERS: usize = 1;
-/// https://oeis.org/A002391
+// Precomputed natural logarithm of 3 for performance reasons.
+// See https://oeis.org/A002391.
 const LN_3: f64 = 1.098_612_288_668_109_8;
 
 /// Errors occurring when computing nonces with the `Miner` nonce provider.
@@ -42,7 +43,7 @@ pub struct MinerBuilder {
 impl MinerBuilder {
     /// Sets the desired number of workers for the `Miner` nonce provider.
     pub fn with_num_workers(mut self, num_workers: usize) -> Self {
-        self.num_workers = Some(num_workers);
+        self.num_workers.replace(num_workers);
         self
     }
 }

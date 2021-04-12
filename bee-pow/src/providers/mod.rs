@@ -23,7 +23,7 @@ pub trait NonceProviderBuilder: Default + Sized {
     fn finish(self) -> Self::Provider;
 }
 
-/// A trait descriving how a nonce is provided.
+/// A trait describing how a nonce is provided.
 pub trait NonceProvider: Sized {
     /// The type of the nonce provider builder.
     type Builder: NonceProviderBuilder<Provider = Self>;
