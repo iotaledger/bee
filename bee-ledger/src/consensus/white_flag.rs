@@ -13,6 +13,7 @@ use crate::{
 };
 
 use bee_message::{
+    address::Address,
     input::Input,
     output::{ConsumedOutput, CreatedOutput, Output, OutputId},
     payload::{
@@ -26,10 +27,14 @@ use bee_tangle::MsTangle;
 
 use crypto::hashes::blake2b::Blake2b256;
 
-use std::{
-    collections::{HashMap, HashSet},
-    ops::Deref,
-};
+use std::collections::HashSet;
+
+fn verify_signature(address: &Address, unlock_blocks: &UnlockBlocks, index: usize, essence_hash: &[u8; 32]) -> bool {
+    match unlock_blocks.get(index) {
+        Some(UnlockBlock::Signature(signature)) => address.verify(essence_hash, signature).is_ok(),
+        _ => false,
+    }
+}
 
 async fn apply_regular_essence<B: StorageBackend>(
     storage: &B,
@@ -39,10 +44,11 @@ async fn apply_regular_essence<B: StorageBackend>(
     unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
-    let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
+    let mut consumed_outputs = Vec::with_capacity(essence.inputs().len());
     let mut balance_diffs = BalanceDiffs::new();
-    let mut created_amount: u64 = 0;
     let mut consumed_amount: u64 = 0;
+    let mut created_amount: u64 = 0;
+
     // TODO avoid clone
     let essence_hash = Essence::from(essence.clone()).hash();
 
@@ -59,8 +65,8 @@ async fn apply_regular_essence<B: StorageBackend>(
 
                 if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
                     (output_id, output)
-                } else if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
-                    if !storage::is_output_unspent(storage.deref(), output_id).await? {
+                } else if let Some(output) = storage::fetch_output(storage, output_id).await? {
+                    if !storage::is_output_unspent(storage, output_id).await? {
                         return Ok(ConflictReason::InputUtxoAlreadySpent);
                     }
                     (output_id, output)
@@ -82,12 +88,8 @@ async fn apply_regular_essence<B: StorageBackend>(
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_output_dec(*output.address());
                 }
-                if !match unlock_blocks.get(index) {
-                    Some(UnlockBlock::Signature(signature)) => {
-                        output.address().verify(&essence_hash, signature).is_ok()
-                    }
-                    _ => false,
-                } {
+
+                if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
                     return Ok(ConflictReason::InvalidSignature);
                 }
             }
@@ -97,19 +99,15 @@ async fn apply_regular_essence<B: StorageBackend>(
                     .ok_or(Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 balance_diffs.dust_allowance_sub(*output.address(), output.amount());
-                if !match unlock_blocks.get(index) {
-                    Some(UnlockBlock::Signature(signature)) => {
-                        output.address().verify(&essence_hash, signature).is_ok()
-                    }
-                    _ => false,
-                } {
+
+                if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
                     return Ok(ConflictReason::InvalidSignature);
                 }
             }
             output => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
 
-        consumed_outputs.insert(*output_id, consumed_output);
+        consumed_outputs.push(output_id);
     }
 
     for created_output in essence.outputs() {
@@ -140,7 +138,7 @@ async fn apply_regular_essence<B: StorageBackend>(
 
     for (address, diff) in balance_diffs.iter() {
         if diff.is_dust_mutating() {
-            let mut balance = storage::fetch_balance_or_default(storage.deref(), &address).await? + diff;
+            let mut balance = storage::fetch_balance_or_default(storage, &address).await? + diff;
 
             if let Some(diff) = metadata.balance_diffs.get(&address) {
                 balance = balance + diff;
@@ -152,7 +150,11 @@ async fn apply_regular_essence<B: StorageBackend>(
         }
     }
 
-    metadata.balance_diffs.merge(balance_diffs);
+    for output_id in consumed_outputs {
+        metadata
+            .consumed_outputs
+            .insert(*output_id, ConsumedOutput::new(*transaction_id, metadata.index));
+    }
 
     for (index, output) in essence.outputs().iter().enumerate() {
         metadata.created_outputs.insert(
@@ -162,12 +164,7 @@ async fn apply_regular_essence<B: StorageBackend>(
         );
     }
 
-    // TODO output ?
-    for (output_id, _) in consumed_outputs {
-        metadata
-            .consumed_outputs
-            .insert(output_id, ConsumedOutput::new(*transaction_id, metadata.index));
-    }
+    metadata.balance_diffs.merge(balance_diffs);
 
     Ok(ConflictReason::None)
 }
@@ -190,7 +187,7 @@ async fn apply_transaction<B: StorageBackend>(
             )
             .await
         }
-        essence => return Err(Error::UnsupportedTransactionEssenceKind(essence.kind())),
+        essence => Err(Error::UnsupportedTransactionEssenceKind(essence.kind())),
     }
 }
 

@@ -16,7 +16,7 @@ use bee_storage::access::Fetch;
 
 use warp::{reject, Filter, Rejection, Reply};
 
-use std::{net::IpAddr, ops::Deref};
+use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (Ed25519Address,), Error = warp::Rejection> + Clone {
     super::path()
@@ -42,7 +42,7 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
     addr: Ed25519Address,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    match Fetch::<Address, Balance>::fetch(storage.deref(), &Address::Ed25519(addr))
+    match Fetch::<Address, Balance>::fetch(&*storage, &Address::Ed25519(addr))
         .await
         .map_err(|_| {
             reject::custom(CustomRejection::ServiceUnavailable(
