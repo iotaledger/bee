@@ -3,6 +3,10 @@
 
 use bee_pow::score::compute_pow_score;
 
+// Tests are from:
+// https://github.com/Wollac/protocol-rfcs/blob/message-pow/text/0024-message-pow/0024-message-pow.md#example
+// https://github.com/Wollac/iota-crypto-demo/blob/master/pkg/pow/pow_test.go#L26
+
 #[test]
 fn score() {
     let message: [u8; 21] = [

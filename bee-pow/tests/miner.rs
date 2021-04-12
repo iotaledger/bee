@@ -8,7 +8,7 @@ use bee_pow::{
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]
-fn miner() {
+fn miner_provide() {
     let miner = MinerBuilder::new().with_num_workers(4).finish();
     let mut bytes = rand_bytes(256);
 
