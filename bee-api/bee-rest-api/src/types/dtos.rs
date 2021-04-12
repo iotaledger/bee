@@ -95,7 +95,7 @@ pub struct UtxoInputDto {
 pub struct TreasuryInputDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    #[serde(rename = "transactionId")]
+    #[serde(rename = "milestoneId")]
     pub message_id: String,
 }
 
@@ -117,6 +117,7 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
             SignatureLockedDustAllowanceOutput::KIND => OutputDto::SignatureLockedDustAllowance(
                 SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap(),
             ),
+            TreasuryOutput::KIND => OutputDto::Treasury(TreasuryOutputDto::deserialize(value).unwrap()),
             type_ => panic!("unsupported type {:?}", type_),
         })
     }
@@ -261,16 +262,18 @@ pub struct ReceiptPayloadDto {
     pub kind: u32,
     #[serde(rename = "migratedAt")]
     pub migrated_at: u32,
-    pub last: bool,
     pub funds: Vec<MigratedFundsEntryDto>,
     pub transaction: PayloadDto,
+    #[serde(rename = "final")]
+    pub last: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MigratedFundsEntryDto {
-    pub tail_transaction_hash: Box<[u8]>,
+    #[serde(rename = "tailTransactionHash")]
+    pub tail_transaction_hash: String,
     pub address: AddressDto,
-    pub amount: u64,
+    pub deposit: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -863,9 +866,9 @@ impl TryFrom<&MigratedFundsEntry> for MigratedFundsEntryDto {
 
     fn try_from(value: &MigratedFundsEntry) -> Result<Self, Self::Error> {
         Ok(MigratedFundsEntryDto {
-            tail_transaction_hash: value.tail_transaction_hash().as_ref().into(),
+            tail_transaction_hash: hex::encode(value.tail_transaction_hash().as_ref()),
             address: value.output().address().try_into()?,
-            amount: value.output().amount(),
+            deposit: value.output().amount(),
         })
     }
 }
@@ -877,14 +880,13 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
     fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
         let entry = MigratedFundsEntry::new(
             TailTransactionHash::new(
-                value
-                    .tail_transaction_hash
-                    .as_ref()
+                hex::decode(value.tail_transaction_hash.clone())
+                    .map_err(|e| format!("invalid tail transaction hash: {:?}", e))?
                     .try_into()
-                    .map_err(|e| format!("invalid tail transaction hash: {}", e))?,
+                    .map_err(|e| format!("invalid tail transaction hash: {:?}", e))?,
             )
             .map_err(|e| format!("invalid tail transaction hash: {}", e))?,
-            SignatureLockedSingleOutput::new((&value.address).try_into()?, value.amount)
+            SignatureLockedSingleOutput::new((&value.address).try_into()?, value.deposit)
                 .map_err(|e| format!("invalid address or amount: {}", e))?,
         )
         .map_err(|e| format!("invalid migrated funds entry: {}", e))?;

@@ -41,7 +41,7 @@ impl Receipt {
             migrated_amount =
                 migrated_amount
                     .checked_add(funds.output().amount())
-                    .ok_or(Error::InvalidMigratedFundsAmount(
+                    .ok_or_else(|| Error::InvalidMigratedFundsAmount(
                         migrated_amount + funds.output().amount(),
                     ))?;
         }
@@ -59,7 +59,7 @@ impl Receipt {
             .inner()
             .amount()
             .checked_sub(migrated_amount)
-            .ok_or(Error::InvalidMigratedFundsAmount(
+            .ok_or_else(|| Error::InvalidMigratedFundsAmount(
                 consumed_treasury_output.inner().amount() - migrated_amount,
             ))?;
 
