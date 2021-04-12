@@ -79,21 +79,9 @@ dependencies = [
 name = "bee-crypto"
 version = "0.2.1-alpha"
 dependencies = [
- "bee-ternary 0.4.2-alpha",
+ "bee-ternary",
  "byteorder",
  "criterion",
- "lazy_static",
- "thiserror",
- "tiny-keccak",
-]
-
-[[package]]
-name = "bee-crypto"
-version = "0.2.1-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#7d8898550fa05ed8949d7af074507b8fd87c2502"
-dependencies = [
- "bee-ternary 0.4.2-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "byteorder",
  "lazy_static",
  "thiserror",
  "tiny-keccak",
@@ -103,8 +91,8 @@ dependencies = [
 name = "bee-pow"
 version = "0.1.0"
 dependencies = [
- "bee-crypto 0.2.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bee-ternary 0.4.2-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-crypto",
+ "bee-ternary",
  "bee-test",
  "iota-crypto",
  "thiserror",
@@ -127,8 +115,8 @@ name = "bee-signing"
 version = "0.1.1-alpha"
 dependencies = [
  "bee-common-derive",
- "bee-crypto 0.2.1-alpha",
- "bee-ternary 0.4.2-alpha",
+ "bee-crypto",
+ "bee-ternary",
  "rand",
  "sha3",
  "thiserror",
@@ -154,19 +142,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-ternary"
-version = "0.4.2-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#7d8898550fa05ed8949d7af074507b8fd87c2502"
-dependencies = [
- "autocfg",
- "num-traits",
-]
-
-[[package]]
 name = "bee-test"
 version = "0.1.0-alpha"
 dependencies = [
- "bee-ternary 0.4.2-alpha",
+ "bee-ternary",
  "hex",
  "rand",
  "serde",
@@ -593,8 +572,9 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "iota-crypto"
-version = "0.3.0"
-source = "git+https://github.com/iotaledger/crypto.rs?rev=c3bf565eba62d0b81144174c2ff917bfde282e49#c3bf565eba62d0b81144174c2ff917bfde282e49"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "558466ca403e13e2b849f6b1aa0ec98a602dd21a49421a24d69aa265261c2290"
 dependencies = [
  "blake2",
  "digest",
