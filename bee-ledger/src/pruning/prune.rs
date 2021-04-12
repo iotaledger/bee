@@ -16,13 +16,15 @@ use bee_storage::access::{Batch, Fetch};
 use bee_tangle::{
     metadata::MessageMetadata, ms_tangle::StorageHooks, unconfirmed_message::UnconfirmedMessage, MsTangle,
 };
-use log::info;
+use log::{debug, info};
 
 pub async fn prune<B: StorageBackend>(tangle: &MsTangle<B>, target_index: MilestoneIndex) -> Result<(), Error> {
     info!("Pruning database...");
 
     // Collect the data that can be safely pruned.
     let (confirmed, edges, new_seps, indexes) = collect_confirmed_data(tangle, target_index).await?;
+
+    debug!("Determined {} new solid entry points.", new_seps.len());
 
     // Replace SEPs in the Tangle.
     tangle.replace_solid_entry_points(new_seps).await;
@@ -36,6 +38,13 @@ pub async fn prune<B: StorageBackend>(tangle: &MsTangle<B>, target_index: Milest
     // Get access to the storage backend of the Tangle.
     let storage = tangle.hooks();
 
+    debug!(
+        "Pruning {} confirmed messages, {} edges, {} indexation payloads.",
+        confirmed.len(),
+        edges.len(),
+        indexes.len()
+    );
+
     prune_messages(storage, confirmed).await?;
     prune_indexes(storage, indexes).await?;
     prune_edges(storage, edges).await?;
@@ -43,6 +52,8 @@ pub async fn prune<B: StorageBackend>(tangle: &MsTangle<B>, target_index: Milest
     prune_unconfirmed(storage, start_index, target_index).await?;
 
     tangle.update_pruning_index(target_index);
+
+    debug!("Pruning index now at {}.", target_index);
 
     Ok(())
 }
@@ -52,6 +63,7 @@ async fn prune_messages<B: StorageBackend, M: IntoIterator<Item = MessageId>>(
     messages: M,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
+    let mut num_pruned = 0;
 
     for message_id in messages.into_iter() {
         // "&StorageHooks(ResourceHandle(B))": *** => B
@@ -60,12 +72,16 @@ async fn prune_messages<B: StorageBackend, M: IntoIterator<Item = MessageId>>(
 
         Batch::<MessageId, MessageMetadata>::batch_delete(&***storage, &mut batch, &message_id)
             .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+        num_pruned += 1;
     }
 
     storage
         .batch_commit(batch, true)
         .await
         .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+    debug!("Pruned {} messages.", num_pruned);
 
     Ok(())
 }
@@ -75,16 +91,21 @@ async fn prune_indexes<B: StorageBackend, I: IntoIterator<Item = (HashedIndex, M
     indexes: I,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
+    let mut num_pruned = 0;
 
     for (index, message_id) in indexes.into_iter() {
         Batch::<(HashedIndex, MessageId), ()>::batch_delete(&***storage, &mut batch, &(index, message_id))
             .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+        num_pruned += 1;
     }
 
     storage
         .batch_commit(batch, true)
         .await
         .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+    debug!("Pruned {} indexes.", num_pruned);
 
     Ok(())
 }
@@ -94,16 +115,21 @@ async fn prune_edges<B: StorageBackend, E: IntoIterator<Item = Edge>>(
     edges: E,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
+    let mut num_pruned = 0;
 
     for (from, to) in edges.into_iter().map(|edge| (edge.from, edge.to)) {
         Batch::<(MessageId, MessageId), ()>::batch_delete(&***storage, &mut batch, &(from, to))
             .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+        num_pruned += 1;
     }
 
     storage
         .batch_commit(batch, true)
         .await
         .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+    debug!("Pruned {} edges.", num_pruned);
 
     Ok(())
 }
@@ -114,16 +140,21 @@ async fn prune_milestones<B: StorageBackend>(
     target_index: MilestoneIndex,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
+    let mut num_pruned = 0;
 
     for milestone_index in *start_index..*target_index {
         Batch::<MilestoneIndex, Milestone>::batch_delete(&***storage, &mut batch, &milestone_index.into())
             .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+        num_pruned += 1;
     }
 
     storage
         .batch_commit(batch, true)
         .await
         .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+    debug!("Pruned {} milestones.", num_pruned);
 
     Ok(())
 }
@@ -137,6 +168,7 @@ async fn prune_unconfirmed<B: StorageBackend>(
     let mut unconfirmed = Vec::default();
     let mut indexes = Vec::default();
     let mut edges = Vec::default();
+    let mut num_pruned = 0;
 
     for milestone_index in *start_index..*target_index {
         // Get the unconfirmed/unreferenced messages.
@@ -180,6 +212,8 @@ async fn prune_unconfirmed<B: StorageBackend>(
                     to: *unconfirmed_message.message_id(),
                 });
             }
+
+            num_pruned += 1;
         }
     }
 
@@ -188,6 +222,8 @@ async fn prune_unconfirmed<B: StorageBackend>(
         .batch_commit(batch, true)
         .await
         .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+    debug!("Pruned {} unconfirmed messages.", num_pruned);
 
     prune_messages(storage, unconfirmed).await?;
     prune_indexes(storage, indexes).await?;
