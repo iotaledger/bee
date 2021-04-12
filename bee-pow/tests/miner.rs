@@ -34,11 +34,12 @@ fn miner_abort() {
 
     let now = std::time::Instant::now();
 
-    std::thread::spawn(move || miner.nonce(&bytes[0..248], 100000f64).unwrap());
+    let handle = std::thread::spawn(move || miner.nonce(&bytes[0..248], 100000f64).unwrap());
 
     std::thread::sleep(std::time::Duration::from_secs(1));
 
     signal.store(true, Ordering::Relaxed);
 
     assert!(now.elapsed().as_secs() < 2);
+    assert!(matches!(handle.join(), Ok(0)));
 }
