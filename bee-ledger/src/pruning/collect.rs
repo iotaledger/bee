@@ -35,8 +35,8 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
     let target_index = *target_index;
     debug_assert!(target_index > start_index);
 
-    for current_index in start_index..target_index {
-        process_pastcone_by_index(
+    for current_index in start_index..=target_index {
+        process_past_cone_by_index(
             tangle,
             current_index,
             &mut messages,
@@ -50,8 +50,8 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
     Ok((messages, edges, seps, indexes))
 }
 
-/// Processes the pastcone of a particular milestone given by its index.
-async fn process_pastcone_by_index<B: StorageBackend>(
+/// Processes the past cone of a particular milestone given by its index.
+async fn process_past_cone_by_index<B: StorageBackend>(
     tangle: &MsTangle<B>,
     current_index: u32,
     messages: &mut Messages,

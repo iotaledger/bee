@@ -21,7 +21,7 @@ use log::{debug, info};
 pub async fn prune<B: StorageBackend>(tangle: &MsTangle<B>, target_index: MilestoneIndex) -> Result<(), Error> {
     info!("Pruning database...");
 
-    // Start pruning from the last pruning index.
+    // Start pruning from the last pruning index + 1.
     let start_index = tangle.get_pruning_index() + 1;
 
     // Collect the data that can be safely pruned.
@@ -142,7 +142,7 @@ async fn prune_milestones<B: StorageBackend>(
     let mut batch = B::batch_begin();
     let mut num_pruned = 0;
 
-    for milestone_index in *start_index..*target_index {
+    for milestone_index in *start_index..=*target_index {
         Batch::<MilestoneIndex, Milestone>::batch_delete(&***storage, &mut batch, &milestone_index.into())
             .map_err(|e| Error::StorageError(Box::new(e)))?;
 
@@ -170,7 +170,7 @@ async fn prune_unconfirmed<B: StorageBackend>(
     let mut edges = Vec::default();
     let mut num_pruned = 0;
 
-    for milestone_index in *start_index..*target_index {
+    for milestone_index in *start_index..=*target_index {
         // Get the unconfirmed/unreferenced messages.
         let unconfirmed_messages =
             Fetch::<MilestoneIndex, Vec<UnconfirmedMessage>>::fetch(&***storage, &milestone_index.into())
@@ -194,6 +194,7 @@ async fn prune_unconfirmed<B: StorageBackend>(
                 .await
                 .map_err(|e| Error::StorageError(Box::new(e)))?
                 .map(|m| (m.payload().clone(), m.parents().iter().copied().collect::<Vec<_>>()))
+                // TODO: explain why that `unwrap` is safe? Why do we know that the `Fetch` must find that message?
                 .unwrap();
 
             unconfirmed.push(*unconfirmed_message.message_id());
