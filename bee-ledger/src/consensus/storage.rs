@@ -203,7 +203,7 @@ pub async fn store_balance_diffs_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub async fn apply_outputs_diff<B: StorageBackend>(
+pub async fn apply_output_diffs<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
@@ -264,7 +264,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub async fn rollback_outputs_diff<B: StorageBackend>(
+pub async fn rollback_output_diffs<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,

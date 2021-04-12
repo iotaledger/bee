@@ -136,7 +136,7 @@ where
         None
     };
 
-    storage::apply_outputs_diff(
+    storage::apply_output_diffs(
         &*storage,
         metadata.index,
         &metadata.created_outputs,

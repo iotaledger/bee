@@ -5,7 +5,7 @@ use crate::{
     consensus::{
         dust::DUST_THRESHOLD,
         storage::{
-            self, apply_outputs_diff, create_output, rollback_outputs_diff, store_balance_diffs, StorageBackend,
+            self, apply_output_diffs, create_output, rollback_output_diffs, store_balance_diffs, StorageBackend,
         },
         worker::migration_from_milestone,
     },
@@ -178,13 +178,13 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
         match index {
             index if index == MilestoneIndex(ledger_index + 1) => {
                 // TODO unwrap until we merge both crates
-                apply_outputs_diff(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)
+                apply_output_diffs(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)
                     .await
                     .unwrap();
             }
             index if index == MilestoneIndex(ledger_index) => {
                 // TODO unwrap until we merge both crates
-                rollback_outputs_diff(&*storage, index, diff.created(), &consumed)
+                rollback_output_diffs(&*storage, index, diff.created(), &consumed)
                     .await
                     .unwrap();
             }
