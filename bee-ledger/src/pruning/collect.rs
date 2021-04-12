@@ -13,6 +13,7 @@ use bee_message::{
 use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle};
 
 use hashbrown::{HashMap, HashSet};
+use ref_cast::RefCast;
 
 pub type Messages = HashSet<MessageId>;
 pub type Edges = HashSet<Edge>;
@@ -110,7 +111,31 @@ async fn process_past_cone_by_index<B: StorageBackend>(
             parents.append(&mut current_parents);
 
             let _ = messages.insert(current_id);
-            let _ = seps.insert(current_id.into(), current_milestone_index);
+
+            // We only add this as a new SEP if it has at least one unconfirmed aprover.
+            let approvers = tangle.get_children(&current_id).await.unwrap();
+
+            // If all approvers are part of the current SEP list, then we can this potential SEP is redundant.
+            if approvers
+                .iter()
+                .all(|approver_id| seps.contains_key(SolidEntryPoint::ref_cast(approver_id)))
+            {
+                continue;
+            }
+
+            // This message becomes a new SEP if at least one of its approvers is not confirmed yet.
+            for approver_id in approvers {
+                if tangle
+                    .get_metadata(&approver_id)
+                    .await
+                    .unwrap()
+                    .milestone_index()
+                    .is_none()
+                {
+                    let _ = seps.insert(current_id.into(), current_milestone_index);
+                    break;
+                }
+            }
         }
     }
 

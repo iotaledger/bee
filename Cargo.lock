@@ -268,6 +268,7 @@ dependencies = [
  "iota-crypto",
  "log",
  "rand 0.8.3",
+ "ref-cast",
  "reqwest",
  "serde",
  "thiserror",
