@@ -79,12 +79,35 @@ dependencies = [
 name = "bee-crypto"
 version = "0.2.1-alpha"
 dependencies = [
- "bee-ternary",
+ "bee-ternary 0.4.2-alpha",
  "byteorder",
  "criterion",
  "lazy_static",
  "thiserror",
  "tiny-keccak",
+]
+
+[[package]]
+name = "bee-crypto"
+version = "0.2.1-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#7d8898550fa05ed8949d7af074507b8fd87c2502"
+dependencies = [
+ "bee-ternary 0.4.2-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "byteorder",
+ "lazy_static",
+ "thiserror",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "bee-pow"
+version = "0.1.0-alpha"
+dependencies = [
+ "bee-crypto 0.2.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-ternary 0.4.2-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-test",
+ "iota-crypto",
+ "thiserror",
 ]
 
 [[package]]
@@ -104,8 +127,8 @@ name = "bee-signing"
 version = "0.1.1-alpha"
 dependencies = [
  "bee-common-derive",
- "bee-crypto",
- "bee-ternary",
+ "bee-crypto 0.2.1-alpha",
+ "bee-ternary 0.4.2-alpha",
  "rand",
  "sha3",
  "thiserror",
@@ -131,10 +154,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-ternary"
+version = "0.4.2-alpha"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#7d8898550fa05ed8949d7af074507b8fd87c2502"
+dependencies = [
+ "autocfg",
+ "num-traits",
+]
+
+[[package]]
 name = "bee-test"
 version = "0.1.0-alpha"
 dependencies = [
- "bee-ternary",
+ "bee-ternary 0.4.2-alpha",
  "hex",
  "rand",
  "serde",
@@ -146,6 +178,17 @@ name = "bitflags"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
+
+[[package]]
+name = "blake2"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10a5720225ef5daecf08657f23791354e1685a8c91a4c60c7f3d3b2892f978f4"
+dependencies = [
+ "crypto-mac",
+ "digest",
+ "opaque-debug",
+]
 
 [[package]]
 name = "blake2b_simd"
@@ -348,6 +391,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
+name = "crypto-mac"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b584a330336237c1eecd3e94266efb216c56ed91225d634cb2991c5f3fd1aeab"
+dependencies = [
+ "generic-array",
+ "subtle",
+]
+
+[[package]]
 name = "csv"
 version = "1.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -537,6 +590,15 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+
+[[package]]
+name = "iota-crypto"
+version = "0.3.0"
+source = "git+https://github.com/iotaledger/crypto.rs?rev=c3bf565eba62d0b81144174c2ff917bfde282e49#c3bf565eba62d0b81144174c2ff917bfde282e49"
+dependencies = [
+ "blake2",
+ "digest",
+]
 
 [[package]]
 name = "itertools"
@@ -1009,6 +1071,12 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "subtle"
+version = "2.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e81da0851ada1f3e9d4312c704aa4f8806f0f9d69faaf8df2f3464b4a9437c2"
 
 [[package]]
 name = "syn"
