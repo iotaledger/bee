@@ -5,7 +5,7 @@ pub use crate::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     constants::IOTA_SUPPLY,
     input::{Input, TreasuryInput, UtxoInput},
-    milestone::{MilestoneIndex, MilestoneKeyRange},
+    milestone::MilestoneIndex,
     output::{
         ConsumedOutput, CreatedOutput, Output, OutputId, SignatureLockedDustAllowanceOutput,
         SignatureLockedSingleOutput, TreasuryOutput, OUTPUT_ID_LENGTH,

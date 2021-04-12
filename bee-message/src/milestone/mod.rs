@@ -4,10 +4,8 @@
 use crate::Error;
 
 mod index;
-mod key_range;
 
 pub use index::MilestoneIndex;
-pub use key_range::MilestoneKeyRange;
 
 use crate::MessageId;
 
