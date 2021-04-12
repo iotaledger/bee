@@ -22,27 +22,23 @@ pub(crate) struct VertexResponse {
     is_selected: bool,
 }
 
-pub(crate) fn forward(message: NewVertex) -> WsEvent {
-    message.into()
-}
-
 impl From<NewVertex> for WsEvent {
-    fn from(val: NewVertex) -> Self {
-        Self::new(WsTopic::Vertex, WsEventInner::Vertex(val.into()))
+    fn from(event: NewVertex) -> Self {
+        Self::new(WsTopic::Vertex, WsEventInner::Vertex(event.into()))
     }
 }
 
 impl From<NewVertex> for VertexResponse {
-    fn from(val: NewVertex) -> Self {
+    fn from(event: NewVertex) -> Self {
         Self {
-            id: val.id,
-            parents: val.parent_ids,
-            is_solid: val.is_solid,
-            is_referenced: val.is_referenced,
-            is_conflicting: val.is_conflicting,
-            is_milestone: val.is_milestone,
-            is_tip: val.is_tip,
-            is_selected: val.is_selected,
+            id: event.id,
+            parents: event.parent_ids,
+            is_solid: event.is_solid,
+            is_referenced: event.is_referenced,
+            is_conflicting: event.is_conflicting,
+            is_milestone: event.is_milestone,
+            is_tip: event.is_tip,
+            is_selected: event.is_selected,
         }
     }
 }

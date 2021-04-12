@@ -178,16 +178,16 @@ impl Packable for MessageMetadata {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(Self {
-            flags: Flags::unpack(reader)?,
-            milestone_index: Option::<MilestoneIndex>::unpack(reader)?,
-            arrival_timestamp: u64::unpack(reader)?,
-            solidification_timestamp: u64::unpack(reader)?,
-            reference_timestamp: u64::unpack(reader)?,
-            omrsi: Option::<IndexId>::unpack(reader)?,
-            ymrsi: Option::<IndexId>::unpack(reader)?,
-            conflict: u8::unpack(reader)?,
+            flags: Flags::unpack_inner::<R, CHECK>(reader)?,
+            milestone_index: Option::<MilestoneIndex>::unpack_inner::<R, CHECK>(reader)?,
+            arrival_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
+            solidification_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
+            reference_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
+            omrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
+            ymrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
+            conflict: u8::unpack_inner::<R, CHECK>(reader)?,
         })
     }
 }
@@ -220,6 +220,7 @@ impl Ord for IndexId {
         self.0.cmp(&other.0)
     }
 }
+
 impl PartialOrd for IndexId {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.0.partial_cmp(&other.0)
@@ -227,6 +228,7 @@ impl PartialOrd for IndexId {
 }
 
 impl Eq for IndexId {}
+
 impl PartialEq for IndexId {
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
@@ -247,8 +249,11 @@ impl Packable for IndexId {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(MilestoneIndex::unpack(reader)?, MessageId::unpack(reader)?))
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let id = MessageId::unpack_inner::<R, CHECK>(reader)?;
+
+        Ok(Self(index, id))
     }
 }
 

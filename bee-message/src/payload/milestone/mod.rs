@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 mod essence;
@@ -148,9 +148,9 @@ impl Packable for MilestonePayload {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let essence = MilestonePayloadEssence::unpack(reader)?;
-        let signatures_len = u8::unpack(reader)? as usize;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let essence = MilestonePayloadEssence::unpack_inner::<R, CHECK>(reader)?;
+        let signatures_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut signatures = Vec::with_capacity(signatures_len);
         for _ in 0..signatures_len {
             let mut signature = vec![0u8; MILESTONE_SIGNATURE_LENGTH];

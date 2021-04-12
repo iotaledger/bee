@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{address::Address, constants::IOTA_SUPPLY, Error};
@@ -50,9 +50,9 @@ impl Packable for SignatureLockedDustAllowanceOutput {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let address = Address::unpack(reader)?;
-        let amount = u64::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let address = Address::unpack_inner::<R, CHECK>(reader)?;
+        let amount = u64::unpack_inner::<R, CHECK>(reader)?;
 
         Self::new(address, amount)
     }

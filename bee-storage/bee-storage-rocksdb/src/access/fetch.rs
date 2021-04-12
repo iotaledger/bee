@@ -4,19 +4,21 @@
 use crate::{error::Error, storage::*, system::System};
 
 use bee_common::packable::Packable;
-use bee_ledger::types::{Balance, OutputDiff, Receipt, TreasuryOutput};
+use bee_ledger::{
+    snapshot::info::SnapshotInfo,
+    types::{Balance, LedgerIndex, OutputDiff, Receipt, TreasuryOutput},
+};
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
-    ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     output::{ConsumedOutput, CreatedOutput, OutputId, OUTPUT_ID_LENGTH},
     payload::indexation::{HashedIndex, HASHED_INDEX_LENGTH},
-    solid_entry_point::SolidEntryPoint,
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
-use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::Fetch;
-use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
+use bee_tangle::{
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+};
 
 use std::convert::{TryFrom, TryInto};
 
@@ -27,7 +29,7 @@ impl Fetch<u8, System> for Storage {
 
         if let Some(res) = self.inner.get_cf(&cf, [*key])? {
             // Unpacking from storage is fine.
-            Ok(Some(System::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(System::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }
@@ -44,7 +46,7 @@ impl Fetch<MessageId, Message> for Storage {
 
         if let Some(res) = self.inner.get_cf(&cf, message_id)? {
             // Unpacking from storage is fine.
-            Ok(Some(Message::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(Message::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }
@@ -61,7 +63,7 @@ impl Fetch<MessageId, MessageMetadata> for Storage {
 
         if let Some(res) = self.inner.get_cf(&cf, message_id)? {
             // Unpacking from storage is fine.
-            Ok(Some(MessageMetadata::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(MessageMetadata::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }
@@ -124,7 +126,7 @@ impl Fetch<OutputId, CreatedOutput> for Storage {
 
         if let Some(res) = self.inner.get_cf(&cf, output_id.pack_new())? {
             // Unpacking from storage is fine.
-            Ok(Some(CreatedOutput::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(CreatedOutput::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }
@@ -141,7 +143,7 @@ impl Fetch<OutputId, ConsumedOutput> for Storage {
 
         if let Some(res) = self.inner.get_cf(&cf, output_id.pack_new())? {
             // Unpacking from storage is fine.
-            Ok(Some(ConsumedOutput::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(ConsumedOutput::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }
@@ -180,7 +182,7 @@ impl Fetch<(), LedgerIndex> for Storage {
 
         if let Some(res) = self.inner.get_cf(&cf, [0x00u8])? {
             // Unpacking from storage is fine.
-            Ok(Some(LedgerIndex::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(LedgerIndex::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }
@@ -197,7 +199,7 @@ impl Fetch<MilestoneIndex, Milestone> for Storage {
 
         if let Some(res) = self.inner.get_cf(&cf, index.pack_new())? {
             // Unpacking from storage is fine.
-            Ok(Some(Milestone::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(Milestone::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }
@@ -214,7 +216,7 @@ impl Fetch<(), SnapshotInfo> for Storage {
 
         if let Some(res) = self.inner.get_cf(&cf, [0x00u8])? {
             // Unpacking from storage is fine.
-            Ok(Some(SnapshotInfo::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(SnapshotInfo::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }
@@ -231,7 +233,7 @@ impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
 
         if let Some(res) = self.inner.get_cf(&cf, sep.pack_new())? {
             // Unpacking from storage is fine.
-            Ok(Some(MilestoneIndex::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(MilestoneIndex::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }
@@ -248,7 +250,7 @@ impl Fetch<MilestoneIndex, OutputDiff> for Storage {
 
         if let Some(res) = self.inner.get_cf(&cf, index.pack_new())? {
             // Unpacking from storage is fine.
-            Ok(Some(OutputDiff::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(OutputDiff::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }
@@ -265,7 +267,7 @@ impl Fetch<Address, Balance> for Storage {
 
         if let Some(res) = self.inner.get_cf(&cf, address.pack_new())? {
             // Unpacking from storage is fine.
-            Ok(Some(Balance::unpack(&mut res.as_slice()).unwrap()))
+            Ok(Some(Balance::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
             Ok(None)
         }
@@ -311,7 +313,7 @@ impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
                 .map(|(mut key, _)| {
                     let (_, receipt) = key.split_at_mut(std::mem::size_of::<MilestoneIndex>());
                     // Unpacking from storage is fine.
-                    Receipt::unpack(&mut receipt.as_ref()).unwrap()
+                    Receipt::unpack_unchecked(&mut receipt.as_ref()).unwrap()
                 })
                 .collect(),
         ))
@@ -332,7 +334,7 @@ impl Fetch<bool, Vec<TreasuryOutput>> for Storage {
                 .map(|(mut key, _)| {
                     let (_, output) = key.split_at_mut(std::mem::size_of::<bool>());
                     // Unpacking from storage is fine.
-                    TreasuryOutput::unpack(&mut output.as_ref()).unwrap()
+                    TreasuryOutput::unpack_unchecked(&mut output.as_ref()).unwrap()
                 })
                 .collect(),
         ))

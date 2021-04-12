@@ -1,13 +1,16 @@
+// Copyright 2020 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use super::error::Error;
 
-use crate::{storage::StorageBackend, MsTangle};
+use crate::consensus::StorageBackend;
 
 use bee_message::{
     payload::Payload,
     prelude::{HashedIndex, MilestoneIndex},
-    solid_entry_point::SolidEntryPoint,
     MessageId,
 };
+use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle};
 
 use hashbrown::{HashMap, HashSet};
 

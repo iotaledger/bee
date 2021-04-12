@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{output::OutputId, payload::transaction::TransactionId, Error};
@@ -62,7 +62,7 @@ impl Packable for UtxoInput {
         self.0.pack(writer)
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(OutputId::unpack(reader)?))
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(Self(OutputId::unpack_inner::<R, CHECK>(reader)?))
     }
 }

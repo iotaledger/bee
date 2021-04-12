@@ -4,7 +4,7 @@
 use crate::{
     endpoints::{
         config::ROUTE_MESSAGE_METADATA, filters::with_tangle, path_params::message_id, permission::has_permission,
-        rejection::CustomRejection, storage::StorageBackend, IS_SYNCED_THRESHOLD,
+        rejection::CustomRejection, storage::StorageBackend, CONFIRMED_THRESHOLD,
     },
     types::{body::SuccessBody, dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
 };
@@ -42,7 +42,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    if !tangle.is_synced_threshold(IS_SYNCED_THRESHOLD) {
+    if !tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
         return Err(reject::custom(CustomRejection::ServiceUnavailable(
             "the node is not synchronized".to_string(),
         )));

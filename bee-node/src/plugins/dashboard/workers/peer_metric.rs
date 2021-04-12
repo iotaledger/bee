@@ -2,11 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    plugins::dashboard::{
-        broadcast,
-        websocket::{responses::peer_metric, WsUsers},
-        Dashboard,
-    },
+    plugins::dashboard::{broadcast, websocket::WsUsers, Dashboard},
     storage::StorageBackend,
 };
 
@@ -45,7 +41,7 @@ where
             for peer in peer_manager.get_all().await {
                 peers_dtos.push(PeerDto::from(peer.as_ref()));
             }
-            broadcast(peer_metric::forward(PeersResponse(peers_dtos)), &users).await;
+            broadcast(PeersResponse(peers_dtos).into(), &users).await;
         }
 
         debug!("Ws PeerMetrics topic handler stopped.");

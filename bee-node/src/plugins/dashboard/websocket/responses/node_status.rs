@@ -14,10 +14,6 @@ use serde::Serialize;
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct NodeStatusResponse(pub NodeStatus);
 
-pub(crate) fn forward(event: NodeStatus) -> WsEvent {
-    event.into()
-}
-
 impl From<NodeStatus> for WsEvent {
     fn from(val: NodeStatus) -> Self {
         Self::new(WsTopic::NodeStatus, WsEventInner::NodeStatus(val.into()))

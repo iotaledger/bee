@@ -72,11 +72,11 @@ impl Packable for Balance {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Balance::new(
-            u64::unpack(reader)?,
-            u64::unpack(reader)?,
-            u64::unpack(reader)?,
-        ))
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let amount = u64::unpack_inner::<R, CHECK>(reader)?;
+        let dust_allowance = u64::unpack_inner::<R, CHECK>(reader)?;
+        let dust_output = u64::unpack_inner::<R, CHECK>(reader)?;
+
+        Ok(Balance::new(amount, dust_allowance, dust_output))
     }
 }

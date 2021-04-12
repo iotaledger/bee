@@ -3,7 +3,7 @@
 identity   = ""
 alias      = "bee"
 bech32_hrp = "atoi"
-network_id = "testnet6"
+network_id = "testnet7"
 
 [logger]
 color_enabled = true
@@ -87,15 +87,16 @@ depth             = 50
 interval_synced   = 50
 interval_unsynced = 1000
 
+[pruning]
+enabled         = true
+delay           = 60480
+prune_receipts  = false
+
 [storage]
 path = "./storage/alphanet"
 
 [tangle]
 below_max_depth = 15
-[tangle.pruning]
-enabled         = true
-delay           = 60480
-prune_receipts  = false
 
 [mqtt]
 address = "tcp://localhost:1883"

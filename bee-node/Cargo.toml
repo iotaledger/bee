@@ -11,15 +11,14 @@ keywords = ["iota", "tangle", "bee", "framework", "node"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = [ "auth" ] }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-ledger = { path = "../bee-ledger", features = ["consensus"] }
+bee-ledger = { path = "../bee-ledger", features = [ "consensus", "snapshot", "pruning" ] }
 bee-message = { path = "../bee-message" }
 bee-network = { path = "../bee-network" }
 bee-protocol = { path = "../bee-protocol" }
 bee-rest-api = { path = "../bee-api/bee-rest-api", features = ["endpoints"] }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-snapshot = { path = "../bee-snapshot" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage-rocksdb = { path = "../bee-storage/bee-storage-rocksdb" }
 bee-tangle = { path = "../bee-tangle" }
@@ -38,7 +37,6 @@ mime_guess = { version = "2.0", optional = true }
 paho-mqtt = { version = "0.9", default-features = false, features = ["bundled"]}
 rand = "0.8"
 rpassword = "5.0"
-rust-argon2 = "0.8"
 rust-embed = { version = "5.7", features = ["interpolate-folder-path"], optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

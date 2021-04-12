@@ -42,10 +42,10 @@ impl Packable for TreasuryOutput {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(
-            output::TreasuryOutput::unpack(reader)?,
-            MilestoneId::unpack(reader)?,
-        ))
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let inner = output::TreasuryOutput::unpack_inner::<R, CHECK>(reader)?;
+        let milestone_id = MilestoneId::unpack_inner::<R, CHECK>(reader)?;
+
+        Ok(Self::new(inner, milestone_id))
     }
 }

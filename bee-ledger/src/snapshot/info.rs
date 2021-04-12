@@ -1,18 +1,18 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use crate::snapshot::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::milestone::MilestoneIndex;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SnapshotInfo {
-    pub(crate) network_id: u64,
-    pub(crate) snapshot_index: MilestoneIndex,
-    pub(crate) entry_point_index: MilestoneIndex,
-    pub(crate) pruning_index: MilestoneIndex,
-    pub(crate) timestamp: u64,
+    network_id: u64,
+    snapshot_index: MilestoneIndex,
+    entry_point_index: MilestoneIndex,
+    pruning_index: MilestoneIndex,
+    timestamp: u64,
 }
 
 impl SnapshotInfo {
@@ -74,12 +74,12 @@ impl Packable for SnapshotInfo {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let network_id = u64::unpack(reader)?;
-        let snapshot_index = MilestoneIndex::unpack(reader)?;
-        let entry_point_index = MilestoneIndex::unpack(reader)?;
-        let pruning_index = MilestoneIndex::unpack(reader)?;
-        let timestamp = u64::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let network_id = u64::unpack_inner::<R, CHECK>(reader)?;
+        let snapshot_index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let entry_point_index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let pruning_index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;
+        let timestamp = u64::unpack_inner::<R, CHECK>(reader)?;
 
         Ok(Self {
             network_id,

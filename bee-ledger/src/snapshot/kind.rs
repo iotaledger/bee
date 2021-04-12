@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use crate::snapshot::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -20,7 +20,7 @@ impl Packable for Kind {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        0u8.packed_len()
+        (*self as u8).packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -29,8 +29,8 @@ impl Packable for Kind {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack(reader)? {
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
             0 => Kind::Full,
             1 => Kind::Delta,
             k => return Err(Self::Error::InvalidKind(k)),

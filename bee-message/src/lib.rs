@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 extern crate alloc;
@@ -13,13 +13,12 @@ mod message_id;
 pub mod address;
 pub mod constants;
 pub mod input;
-pub mod ledger_index;
 pub mod milestone;
 pub mod output;
 pub mod parents;
 pub mod payload;
 pub mod prelude;
-pub mod solid_entry_point;
+pub mod signature;
 pub mod unlock;
 
 pub use error::Error;

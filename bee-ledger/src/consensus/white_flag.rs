@@ -31,7 +31,7 @@ use std::{
     ops::Deref,
 };
 
-async fn validate_regular_essence<B: StorageBackend>(
+async fn apply_regular_essence<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
     transaction_id: &TransactionId,
@@ -77,7 +77,7 @@ async fn validate_regular_essence<B: StorageBackend>(
             Output::SignatureLockedSingle(output) => {
                 consumed_amount = consumed_amount
                     .checked_add(output.amount())
-                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
+                    .ok_or(Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_output_dec(*output.address());
@@ -94,7 +94,7 @@ async fn validate_regular_essence<B: StorageBackend>(
             Output::SignatureLockedDustAllowance(output) => {
                 consumed_amount = consumed_amount
                     .checked_add(output.amount())
-                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
+                    .ok_or(Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 balance_diffs.dust_allowance_sub(*output.address(), output.amount());
                 if !match unlock_blocks.get(index) {
@@ -117,7 +117,7 @@ async fn validate_regular_essence<B: StorageBackend>(
             Output::SignatureLockedSingle(output) => {
                 created_amount = created_amount
                     .checked_add(output.amount())
-                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount, output.amount()))?;
+                    .ok_or(Error::CreatedAmountOverflow(created_amount, output.amount()))?;
                 balance_diffs.amount_add(*output.address(), output.amount());
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_output_inc(*output.address());
@@ -126,7 +126,7 @@ async fn validate_regular_essence<B: StorageBackend>(
             Output::SignatureLockedDustAllowance(output) => {
                 created_amount = created_amount
                     .checked_add(output.amount())
-                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount, output.amount()))?;
+                    .ok_or(Error::CreatedAmountOverflow(created_amount, output.amount()))?;
                 balance_diffs.amount_add(*output.address(), output.amount());
                 balance_diffs.dust_allowance_add(*output.address(), output.amount());
             }
@@ -172,20 +172,18 @@ async fn validate_regular_essence<B: StorageBackend>(
     Ok(ConflictReason::None)
 }
 
-async fn validate_transaction<B: StorageBackend>(
+async fn apply_transaction<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
     transaction: &TransactionPayload,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
-    let transaction_id = transaction.id();
-
     match transaction.essence() {
         Essence::Regular(essence) => {
-            validate_regular_essence(
+            apply_regular_essence(
                 storage,
                 message_id,
-                &transaction_id,
+                &transaction.id(),
                 essence,
                 transaction.unlock_blocks(),
                 metadata,
@@ -196,17 +194,17 @@ async fn validate_transaction<B: StorageBackend>(
     }
 }
 
-async fn validate_message<B: StorageBackend>(
+async fn apply_message<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
     message: &Message,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
-    metadata.num_referenced_messages += 1;
+    metadata.referenced_messages += 1;
 
     let conflict = match message.payload() {
         Some(Payload::Transaction(transaction)) => {
-            validate_transaction(storage, message_id, transaction, metadata).await?
+            apply_transaction(storage, message_id, transaction, metadata).await?
         }
         _ => {
             metadata.excluded_no_transaction_messages.push(*message_id);
@@ -214,10 +212,10 @@ async fn validate_message<B: StorageBackend>(
         }
     };
 
-    if conflict != ConflictReason::None {
-        metadata.excluded_conflicting_messages.push((*message_id, conflict));
-    } else {
+    if conflict == ConflictReason::None {
         metadata.included_messages.push(*message_id);
+    } else {
+        metadata.excluded_conflicting_messages.push((*message_id, conflict));
     }
 
     Ok(())
@@ -268,7 +266,7 @@ async fn traversal<B: StorageBackend>(
                 match next {
                     Some(next) => messages_ids.push(*next),
                     None => {
-                        validate_message(storage, message_id, &message, metadata).await?;
+                        apply_message(storage, message_id, &message, metadata).await?;
                         visited.insert(*message_id);
                         messages_ids.pop();
                     }
@@ -302,13 +300,13 @@ pub async fn white_flag<B: StorageBackend>(
 
     metadata.merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
 
-    if metadata.num_referenced_messages
+    if metadata.referenced_messages
         != metadata.excluded_no_transaction_messages.len()
             + metadata.excluded_conflicting_messages.len()
             + metadata.included_messages.len()
     {
         return Err(Error::InvalidMessagesCount(
-            metadata.num_referenced_messages,
+            metadata.referenced_messages,
             metadata.excluded_no_transaction_messages.len(),
             metadata.excluded_conflicting_messages.len(),
             metadata.included_messages.len(),

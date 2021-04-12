@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_snapshot::info::SnapshotInfo;
+use bee_ledger::snapshot::info::SnapshotInfo;
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend::StorageBackend,
@@ -14,7 +14,7 @@ use futures::stream::StreamExt;
 const DB_DIRECTORY: &str = "./tests/database/snapshot_info";
 
 #[tokio::test]
-async fn access() {
+async fn snapshot_info_access() {
     let _ = std::fs::remove_dir_all(DB_DIRECTORY);
 
     let config = RocksDbConfigBuilder::default().with_path(DB_DIRECTORY.into()).finish();

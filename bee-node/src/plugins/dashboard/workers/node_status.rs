@@ -3,14 +3,7 @@
 
 use crate::{
     config::NodeConfig,
-    plugins::dashboard::{
-        broadcast,
-        websocket::{
-            responses::{node_status, public_node_status},
-            WsUsers,
-        },
-        Dashboard,
-    },
+    plugins::dashboard::{broadcast, websocket::WsUsers, Dashboard},
     storage::StorageBackend,
 };
 
@@ -117,8 +110,8 @@ where
                 },
             };
 
-            broadcast(node_status::forward(node_status), &users).await;
-            broadcast(public_node_status::forward(public_node_status), &users).await;
+            broadcast(node_status.into(), &users).await;
+            broadcast(public_node_status.into(), &users).await;
         }
 
         debug!("Ws PublicNodeStatus/NodeStatus topics handler stopped.");

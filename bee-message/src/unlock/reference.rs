@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{constants::INPUT_OUTPUT_INDEX_RANGE, Error};
@@ -48,7 +48,7 @@ impl Packable for ReferenceUnlock {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::new(u16::unpack(reader)?)
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Self::new(u16::unpack_inner::<R, CHECK>(reader)?)
     }
 }

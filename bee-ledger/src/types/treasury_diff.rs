@@ -40,10 +40,10 @@ impl Packable for TreasuryDiff {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self {
-            created: MilestoneId::unpack(reader)?,
-            consumed: MilestoneId::unpack(reader)?,
-        })
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let created = MilestoneId::unpack_inner::<R, CHECK>(reader)?;
+        let consumed = MilestoneId::unpack_inner::<R, CHECK>(reader)?;
+
+        Ok(Self { created, consumed })
     }
 }

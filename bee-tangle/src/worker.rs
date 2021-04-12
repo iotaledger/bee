@@ -3,17 +3,13 @@
 
 use crate::{config::TangleConfig, storage::StorageBackend, MsTangle};
 
-use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
 use bee_runtime::{node::Node, worker::Worker};
-use bee_snapshot::{SnapshotInfo, SnapshotWorker};
-use bee_storage::access::{Fetch, Insert};
 
 use async_trait::async_trait;
 use log::{error, warn};
 use tokio::time::interval;
 
 use std::{
-    any::TypeId,
     convert::Infallible,
     time::{Duration, Instant},
 };
@@ -28,49 +24,8 @@ where
     type Config = TangleConfig;
     type Error = Infallible;
 
-    fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<SnapshotWorker>()].leak()
-    }
-
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        // TODO unwraps
-        let tangle = MsTangle::<N::Backend>::new(config, node.storage());
-        node.register_resource(tangle);
-        let storage = node.storage();
-        let tangle = node.resource::<MsTangle<N::Backend>>();
-
-        let full_sep_rx = node.worker::<SnapshotWorker>().unwrap().full_sep_rx.clone();
-        let delta_sep_rx = node.worker::<SnapshotWorker>().unwrap().delta_sep_rx.clone();
-
-        // TODO batch ?
-
-        while let Ok((sep, index)) = full_sep_rx.recv_async().await {
-            tangle.add_solid_entry_point(sep, index).await;
-            Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &sep, &index)
-                .await
-                .unwrap();
-        }
-
-        // TODO
-        // Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(&*storage)
-        //     .await
-        //     .unwrap();
-        while let Ok((sep, index)) = delta_sep_rx.recv_async().await {
-            tangle.add_solid_entry_point(sep, index).await;
-            Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &sep, &index)
-                .await
-                .unwrap();
-        }
-
-        // This needs to be done after the streams are emptied.
-
-        let snapshot_info = Fetch::<(), SnapshotInfo>::fetch(&*storage, &()).await.unwrap().unwrap();
-
-        tangle.update_latest_milestone_index(snapshot_info.snapshot_index());
-        tangle.update_snapshot_index(snapshot_info.snapshot_index());
-        tangle.update_pruning_index(snapshot_info.pruning_index());
-        // TODO
-        // tangle.add_milestone(config.sep_index().into(), *config.sep_id());
+        node.register_resource(MsTangle::<N::Backend>::new(config, node.storage()));
 
         Ok(Self)
     }

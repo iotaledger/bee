@@ -4,6 +4,7 @@
 use crate::{
     config::TangleConfig,
     metadata::{IndexId, MessageMetadata},
+    solid_entry_point::SolidEntryPoint,
     storage::StorageBackend,
     tangle::{Hooks, Tangle, DEFAULT_CACHE_LEN},
     urts::UrtsTipPool,
@@ -12,7 +13,6 @@ use crate::{
 
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
-    solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
 use bee_runtime::resource::ResourceHandle;
@@ -27,6 +27,9 @@ use std::{
     ops::Deref,
     sync::atomic::{AtomicU32, Ordering},
 };
+
+const SYNCED_THRESHOLD: u32 = 2;
+const CONFIRMED_THRESHOLD: u32 = 2;
 
 pub struct StorageHooks<B> {
     storage: ResourceHandle<B>,
@@ -286,7 +289,7 @@ impl<B: StorageBackend> MsTangle<B> {
 
     // TODO reduce to one atomic value ?
     pub fn is_synced(&self) -> bool {
-        self.is_synced_threshold(0)
+        self.is_synced_threshold(SYNCED_THRESHOLD)
     }
 
     // TODO reduce to one atomic value ?
@@ -302,7 +305,7 @@ impl<B: StorageBackend> MsTangle<B> {
 
     // TODO reduce to one atomic value ?
     pub fn is_confirmed(&self) -> bool {
-        self.is_confirmed_threshold(0)
+        self.is_confirmed_threshold(CONFIRMED_THRESHOLD)
     }
 
     // TODO reduce to one atomic value ?

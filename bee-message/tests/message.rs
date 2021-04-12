@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
@@ -88,4 +88,18 @@ fn unpack_invalid_remaining_bytes() {
         ),
         Err(Error::RemainingBytesAfterMessage)
     ))
+}
+
+// Validate that a `unpack` ∘ `pack` round-trip results in the original message.
+#[test]
+fn pack_unpack_valid() {
+    let message = MessageBuilder::<Miner>::new()
+        .with_network_id(0)
+        .with_parents(Parents::new(rand_message_ids(2)).unwrap())
+        .finish()
+        .unwrap();
+    let packed_message = message.pack_new();
+
+    assert_eq!(packed_message.len(), message.packed_len());
+    assert_eq!(message, Packable::unpack(&mut packed_message.as_slice()).unwrap());
 }

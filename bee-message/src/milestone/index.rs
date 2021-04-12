@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::{Packable, Read, Write};
@@ -44,11 +44,27 @@ impl Add for MilestoneIndex {
     }
 }
 
+impl Add<u32> for MilestoneIndex {
+    type Output = Self;
+
+    fn add(self, other: u32) -> Self {
+        Self(*self + other)
+    }
+}
+
 impl Sub for MilestoneIndex {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
         Self(*self - *other)
+    }
+}
+
+impl Sub<u32> for MilestoneIndex {
+    type Output = Self;
+
+    fn sub(self, other: u32) -> Self {
+        Self(*self - other)
     }
 }
 
@@ -63,7 +79,7 @@ impl Packable for MilestoneIndex {
         self.0.pack(writer)
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(u32::unpack(reader)?))
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(Self(u32::unpack_inner::<R, CHECK>(reader)?))
     }
 }

@@ -1,9 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::milestone::MilestoneIndex;
-
 use bee_common::packable::{Packable, Read, Write};
+use bee_message::milestone::MilestoneIndex;
 
 use core::ops::Deref;
 
@@ -43,7 +42,7 @@ impl Packable for LedgerIndex {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(MilestoneIndex::unpack(reader)?))
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(Self(MilestoneIndex::unpack_inner::<R, CHECK>(reader)?))
     }
 }

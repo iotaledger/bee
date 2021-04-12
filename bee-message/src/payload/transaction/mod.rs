@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 mod essence;
@@ -59,9 +59,9 @@ impl Packable for TransactionPayload {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let essence = Essence::unpack(reader)?;
-        let unlock_blocks = UnlockBlocks::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let essence = Essence::unpack_inner::<R, CHECK>(reader)?;
+        let unlock_blocks = UnlockBlocks::unpack_inner::<R, CHECK>(reader)?;
 
         Self::builder()
             .with_essence(essence)

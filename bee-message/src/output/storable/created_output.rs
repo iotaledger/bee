@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{error::Error, output::Output, MessageId};
@@ -49,9 +49,9 @@ impl Packable for CreatedOutput {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let message_id = MessageId::unpack(reader)?;
-        let inner = Output::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let message_id = MessageId::unpack_inner::<R, CHECK>(reader)?;
+        let inner = Output::unpack_inner::<R, CHECK>(reader)?;
 
         Ok(Self { message_id, inner })
     }

@@ -11,6 +11,8 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+const SYNCED_THRESHOLD: u32 = 2;
+
 pub struct Peer {
     id: PeerId,
     info: PeerInfo,
@@ -142,7 +144,7 @@ impl Peer {
 
     // TODO reduce to one atomic value ?
     pub fn is_synced(&self) -> bool {
-        self.is_synced_threshold(0)
+        self.is_synced_threshold(SYNCED_THRESHOLD)
     }
 
     // TODO reduce to one atomic value ?

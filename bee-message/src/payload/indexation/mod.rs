@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 mod hash;
@@ -71,19 +71,19 @@ impl Packable for IndexationPayload {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let index_len = u16::unpack(reader)? as usize;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let index_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
 
-        if !INDEX_LENGTH_RANGE.contains(&index_len) {
+        if CHECK && !INDEX_LENGTH_RANGE.contains(&index_len) {
             return Err(Error::InvalidIndexationIndexLength(index_len));
         }
 
         let mut index = vec![0u8; index_len];
         reader.read_exact(&mut index)?;
 
-        let data_len = u32::unpack(reader)? as usize;
+        let data_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
 
-        if data_len > MESSAGE_LENGTH_MAX {
+        if CHECK && data_len > MESSAGE_LENGTH_MAX {
             return Err(Error::InvalidIndexationDataLength(data_len));
         }
 

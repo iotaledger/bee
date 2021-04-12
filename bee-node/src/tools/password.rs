@@ -1,8 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use argon2::{self, Config};
-use rand::Rng;
+use bee_common::auth::password::{self, Error as GeneratorError};
+
 use rpassword::read_password_from_tty;
 use structopt::StructOpt;
 use thiserror::Error;
@@ -12,9 +12,11 @@ pub enum PasswordError {
     #[error("{0}")]
     Io(#[from] std::io::Error),
     #[error("{0}")]
-    Argon(#[from] argon2::Error),
+    Generator(#[from] GeneratorError),
     #[error("Re-entered password doesn't match")]
     NonMatching,
+    #[error("Password verification failed")]
+    VerificationFailed,
 }
 
 #[derive(Clone, Debug, StructOpt)]
@@ -26,8 +28,12 @@ pub fn exec(_tool: &PasswordTool) -> Result<(), PasswordError> {
     if password != password_reenter {
         return Err(PasswordError::NonMatching);
     }
-    let salt = rand::thread_rng().gen::<[u8; 32]>();
-    let hash = argon2::hash_raw(password.as_bytes(), &salt, &Config::default())?;
+    let salt = password::generate_salt();
+    let hash = password::password_hash(password.as_bytes(), &salt)?;
+
+    if !password::password_verify(password.as_bytes(), &salt, &hash)? {
+        return Err(PasswordError::VerificationFailed);
+    }
 
     println!("Password salt: {}", hex::encode(salt));
     println!("Password hash: {}", hex::encode(hash));

@@ -8,10 +8,6 @@ use crate::plugins::dashboard::websocket::{
 
 use bee_rest_api::types::responses::PeersResponse;
 
-pub(crate) fn forward(event: PeersResponse) -> WsEvent {
-    event.into()
-}
-
 impl From<PeersResponse> for WsEvent {
     fn from(val: PeersResponse) -> Self {
         Self::new(WsTopic::PeerMetrics, WsEventInner::PeerMetric(val))

@@ -10,7 +10,7 @@ use topics::WsTopic;
 
 use crate::{
     plugins::dashboard::{
-        auth::{jwt::JsonWebToken, AUDIENCE_CLAIM},
+        auth::AUDIENCE_CLAIM,
         config::DashboardAuthConfig,
         websocket::responses::{
             database_size_metrics::DatabaseSizeMetricsResponse, sync_status::SyncStatusResponse, WsEvent, WsEventInner,
@@ -19,6 +19,7 @@ use crate::{
     storage::StorageBackend,
 };
 
+use bee_common::auth::jwt::JsonWebToken;
 use bee_runtime::{resource::ResourceHandle, shutdown_stream::ShutdownStream};
 use bee_tangle::MsTangle;
 
@@ -84,7 +85,7 @@ pub(crate) async fn user_connected<B: StorageBackend>(
     let (shutdown_tx, shutdown_rx) = oneshot::channel();
     let receiver = ShutdownStream::new(shutdown_rx, UnboundedReceiverStream::new(rx));
 
-    tokio::task::spawn(receiver.forward(ws_tx).map(|result| {
+    let task = tokio::task::spawn(receiver.forward(ws_tx).map(|result| {
         if let Err(e) = result {
             error!("websocket send error: {}", e);
         }
@@ -115,6 +116,8 @@ pub(crate) async fn user_connected<B: StorageBackend>(
     // ws_rx stream will keep processing as long as the user stays
     // connected. Once they disconnect, then...
     user_disconnected(user_id, &users).await;
+
+    let _ = task.await;
 }
 
 async fn user_message<B: StorageBackend>(
@@ -165,11 +168,15 @@ async fn user_message<B: StorageBackend>(
                             return;
                         }
                     });
-                    if !jwt.validate(
-                        node_id.to_owned(),
-                        auth_config.user().to_owned(),
-                        AUDIENCE_CLAIM.to_owned(),
-                    ) {
+                    if jwt
+                        .validate(
+                            node_id.to_owned(),
+                            auth_config.user().to_owned(),
+                            AUDIENCE_CLAIM.to_owned(),
+                            b"secret",
+                        )
+                        .is_err()
+                    {
                         return;
                     }
                 }

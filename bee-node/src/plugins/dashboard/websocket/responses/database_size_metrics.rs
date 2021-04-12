@@ -34,7 +34,3 @@ impl From<DatabaseSizeMetrics> for DatabaseSizeMetricsResponse {
         }
     }
 }
-
-pub(crate) fn forward(metrics: DatabaseSizeMetrics) -> WsEvent {
-    metrics.into()
-}

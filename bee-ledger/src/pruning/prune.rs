@@ -1,9 +1,9 @@
+// Copyright 2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use super::{collect::*, error::Error};
 
-use crate::{
-    metadata::MessageMetadata, ms_tangle::StorageHooks, storage::StorageBackend,
-    unconfirmed_message::UnconfirmedMessage, MsTangle,
-};
+use crate::consensus::StorageBackend;
 
 use bee_message::{
     milestone::Milestone,
@@ -13,6 +13,9 @@ use bee_message::{
 };
 
 use bee_storage::access::{Batch, Fetch};
+use bee_tangle::{
+    metadata::MessageMetadata, ms_tangle::StorageHooks, unconfirmed_message::UnconfirmedMessage, MsTangle,
+};
 use log::info;
 
 pub async fn prune<B: StorageBackend>(tangle: &MsTangle<B>, target_index: MilestoneIndex) -> Result<(), Error> {
@@ -52,7 +55,6 @@ async fn prune_messages<B: StorageBackend, M: IntoIterator<Item = MessageId>>(
 
     for message_id in messages.into_iter() {
         // "&StorageHooks(ResourceHandle(B))": *** => B
-        // B                                 : &   => &B
         Batch::<MessageId, Message>::batch_delete(&***storage, &mut batch, &message_id)
             .map_err(|e| Error::StorageError(Box::new(e)))?;
 

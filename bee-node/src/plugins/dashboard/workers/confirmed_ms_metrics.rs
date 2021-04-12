@@ -2,11 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    plugins::dashboard::{
-        broadcast,
-        websocket::{responses::confirmed_milestone_metrics, WsUsers},
-        Dashboard,
-    },
+    plugins::dashboard::{broadcast, websocket::WsUsers, Dashboard},
     storage::StorageBackend,
 };
 
@@ -15,7 +11,7 @@ use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 
 use bee_protocol::types::metrics::NodeMetrics;
 use futures::StreamExt;
-use log::{debug, error, warn};
+use log::{debug, error};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -61,7 +57,7 @@ where
                         referenced_rate,
                         time_since_last_ms: time_diff,
                     };
-                    broadcast(confirmed_milestone_metrics::forward(metrics), &users).await;
+                    broadcast(metrics.into(), &users).await;
                 }  else {
                     error!("Can not calculate milestone confirmation metrics since the time difference between milestone {} and milestone {} is zero.", *event.index - 1, *event.index)
                 }
@@ -76,9 +72,10 @@ where
     });
 
     bus.add_listener::<Dashboard, _, _>(move |event: &MilestoneConfirmed| {
-        if tx.send((*event).clone()).is_err() {
-            warn!("Sending event to `confirmed_ms_metrics_worker` failed.");
-        }
+        // The lifetime of the listeners is tied to the lifetime of the Dashboard worker so they are removed together.
+        // However, topic handlers are shutdown as soon as the signal is received, causing this send to potentially
+        // fail and spam the output. The return is then ignored as not being essential.
+        let _ = tx.send((*event).clone());
     });
 }
 

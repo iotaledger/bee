@@ -1,13 +1,11 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 mod reference;
-mod signature;
 
 pub use reference::ReferenceUnlock;
-pub use signature::{Ed25519Signature, SignatureUnlock};
 
-use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, Error};
+use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, signature::SignatureUnlock, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -73,10 +71,10 @@ impl Packable for UnlockBlock {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack(reader)? {
-            SignatureUnlock::KIND => SignatureUnlock::unpack(reader)?.into(),
-            ReferenceUnlock::KIND => ReferenceUnlock::unpack(reader)?.into(),
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
+            SignatureUnlock::KIND => SignatureUnlock::unpack_inner::<R, CHECK>(reader)?.into(),
+            ReferenceUnlock::KIND => ReferenceUnlock::unpack_inner::<R, CHECK>(reader)?.into(),
             k => return Err(Self::Error::InvalidUnlockBlockKind(k)),
         })
     }
@@ -148,16 +146,16 @@ impl Packable for UnlockBlocks {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let unlock_blocks_len = u16::unpack(reader)? as usize;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let unlock_blocks_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
 
-        if !UNLOCK_BLOCK_COUNT_RANGE.contains(&unlock_blocks_len) {
+        if CHECK && !UNLOCK_BLOCK_COUNT_RANGE.contains(&unlock_blocks_len) {
             return Err(Error::InvalidUnlockBlockCount(unlock_blocks_len));
         }
 
         let mut unlock_blocks = Vec::with_capacity(unlock_blocks_len);
         for _ in 0..unlock_blocks_len {
-            unlock_blocks.push(UnlockBlock::unpack(reader)?);
+            unlock_blocks.push(UnlockBlock::unpack_inner::<R, CHECK>(reader)?);
         }
 
         Self::new(unlock_blocks)

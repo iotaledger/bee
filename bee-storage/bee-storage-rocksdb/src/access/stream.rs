@@ -4,19 +4,21 @@
 use crate::{error::Error, storage::*, system::System};
 
 use bee_common::packable::Packable;
-use bee_ledger::types::{Balance, OutputDiff, Receipt, TreasuryOutput, Unspent};
+use bee_ledger::{
+    snapshot::info::SnapshotInfo,
+    types::{Balance, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent},
+};
 use bee_message::{
     address::{Address, Ed25519Address},
-    ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     output::{ConsumedOutput, CreatedOutput, OutputId},
     payload::indexation::{HashedIndex, HASHED_INDEX_LENGTH},
-    solid_entry_point::SolidEntryPoint,
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
-use bee_snapshot::info::SnapshotInfo;
 use bee_storage::access::AsStream;
-use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
+use bee_tangle::{
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+};
 
 use futures::{
     stream::Stream,
@@ -100,9 +102,9 @@ impl<'a> StorageStream<'a, u8, System> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (u8, System) {
         (
             // Unpacking from storage is fine.
-            u8::unpack(&mut key).unwrap(),
+            u8::unpack_unchecked(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            System::unpack(&mut value).unwrap(),
+            System::unpack_unchecked(&mut value).unwrap(),
         )
     }
 }
@@ -111,9 +113,9 @@ impl<'a> StorageStream<'a, MessageId, Message> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MessageId, Message) {
         (
             // Unpacking from storage is fine.
-            MessageId::unpack(&mut key).unwrap(),
+            MessageId::unpack_unchecked(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            Message::unpack(&mut value).unwrap(),
+            Message::unpack_unchecked(&mut value).unwrap(),
         )
     }
 }
@@ -122,9 +124,9 @@ impl<'a> StorageStream<'a, MessageId, MessageMetadata> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MessageId, MessageMetadata) {
         (
             // Unpacking from storage is fine.
-            MessageId::unpack(&mut key).unwrap(),
+            MessageId::unpack_unchecked(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            MessageMetadata::unpack(&mut value).unwrap(),
+            MessageMetadata::unpack_unchecked(&mut value).unwrap(),
         )
     }
 }
@@ -136,9 +138,9 @@ impl<'a> StorageStream<'a, (MessageId, MessageId), ()> {
         (
             (
                 // Unpacking from storage is fine.
-                MessageId::unpack(&mut parent).unwrap(),
+                MessageId::unpack_unchecked(&mut parent).unwrap(),
                 // Unpacking from storage is fine.
-                MessageId::unpack(&mut child).unwrap(),
+                MessageId::unpack_unchecked(&mut child).unwrap(),
             ),
             (),
         )
@@ -154,7 +156,10 @@ impl<'a> StorageStream<'a, (HashedIndex, MessageId), ()> {
 
         (
             // Unpacking from storage is fine.
-            (HashedIndex::new(index), MessageId::unpack(&mut message_id).unwrap()),
+            (
+                HashedIndex::new(index),
+                MessageId::unpack_unchecked(&mut message_id).unwrap(),
+            ),
             (),
         )
     }
@@ -164,9 +169,9 @@ impl<'a> StorageStream<'a, OutputId, CreatedOutput> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, CreatedOutput) {
         (
             // Unpacking from storage is fine.
-            OutputId::unpack(&mut key).unwrap(),
+            OutputId::unpack_unchecked(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            CreatedOutput::unpack(&mut value).unwrap(),
+            CreatedOutput::unpack_unchecked(&mut value).unwrap(),
         )
     }
 }
@@ -175,9 +180,9 @@ impl<'a> StorageStream<'a, OutputId, ConsumedOutput> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, ConsumedOutput) {
         (
             // Unpacking from storage is fine.
-            OutputId::unpack(&mut key).unwrap(),
+            OutputId::unpack_unchecked(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            ConsumedOutput::unpack(&mut value).unwrap(),
+            ConsumedOutput::unpack_unchecked(&mut value).unwrap(),
         )
     }
 }
@@ -186,7 +191,7 @@ impl<'a> StorageStream<'a, Unspent, ()> {
     fn unpack_key_value(mut key: &[u8], _: &[u8]) -> (Unspent, ()) {
         (
             // Unpacking from storage is fine.
-            Unspent::unpack(&mut key).unwrap(),
+            Unspent::unpack_unchecked(&mut key).unwrap(),
             (),
         )
     }
@@ -199,9 +204,9 @@ impl<'a> StorageStream<'a, (Ed25519Address, OutputId), ()> {
         (
             (
                 // Unpacking from storage is fine.
-                Ed25519Address::unpack(&mut address).unwrap(),
+                Ed25519Address::unpack_unchecked(&mut address).unwrap(),
                 // Unpacking from storage is fine.
-                OutputId::unpack(&mut output_id).unwrap(),
+                OutputId::unpack_unchecked(&mut output_id).unwrap(),
             ),
             (),
         )
@@ -213,7 +218,7 @@ impl<'a> StorageStream<'a, (), LedgerIndex> {
         (
             (),
             // Unpacking from storage is fine.
-            LedgerIndex::unpack(&mut value).unwrap(),
+            LedgerIndex::unpack_unchecked(&mut value).unwrap(),
         )
     }
 }
@@ -222,9 +227,9 @@ impl<'a> StorageStream<'a, MilestoneIndex, Milestone> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneIndex, Milestone) {
         (
             // Unpacking from storage is fine.
-            MilestoneIndex::unpack(&mut key).unwrap(),
+            MilestoneIndex::unpack_unchecked(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            Milestone::unpack(&mut value).unwrap(),
+            Milestone::unpack_unchecked(&mut value).unwrap(),
         )
     }
 }
@@ -234,7 +239,7 @@ impl<'a> StorageStream<'a, (), SnapshotInfo> {
         (
             (),
             // Unpacking from storage is fine.
-            SnapshotInfo::unpack(&mut value).unwrap(),
+            SnapshotInfo::unpack_unchecked(&mut value).unwrap(),
         )
     }
 }
@@ -243,9 +248,9 @@ impl<'a> StorageStream<'a, SolidEntryPoint, MilestoneIndex> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (SolidEntryPoint, MilestoneIndex) {
         (
             // Unpacking from storage is fine.
-            SolidEntryPoint::unpack(&mut key).unwrap(),
+            SolidEntryPoint::unpack_unchecked(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            MilestoneIndex::unpack(&mut value).unwrap(),
+            MilestoneIndex::unpack_unchecked(&mut value).unwrap(),
         )
     }
 }
@@ -254,9 +259,9 @@ impl<'a> StorageStream<'a, MilestoneIndex, OutputDiff> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneIndex, OutputDiff) {
         (
             // Unpacking from storage is fine.
-            MilestoneIndex::unpack(&mut key).unwrap(),
+            MilestoneIndex::unpack_unchecked(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            OutputDiff::unpack(&mut value).unwrap(),
+            OutputDiff::unpack_unchecked(&mut value).unwrap(),
         )
     }
 }
@@ -265,9 +270,9 @@ impl<'a> StorageStream<'a, Address, Balance> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (Address, Balance) {
         (
             // Unpacking from storage is fine.
-            Address::unpack(&mut key).unwrap(),
+            Address::unpack_unchecked(&mut key).unwrap(),
             // Unpacking from storage is fine.
-            Balance::unpack(&mut value).unwrap(),
+            Balance::unpack_unchecked(&mut value).unwrap(),
         )
     }
 }
@@ -279,9 +284,9 @@ impl<'a> StorageStream<'a, (MilestoneIndex, UnconfirmedMessage), ()> {
         (
             (
                 // Unpacking from storage is fine.
-                MilestoneIndex::unpack(&mut index).unwrap(),
+                MilestoneIndex::unpack_unchecked(&mut index).unwrap(),
                 // Unpacking from storage is fine.
-                UnconfirmedMessage::unpack(&mut unconfirmed_message).unwrap(),
+                UnconfirmedMessage::unpack_unchecked(&mut unconfirmed_message).unwrap(),
             ),
             (),
         )
@@ -295,9 +300,9 @@ impl<'a> StorageStream<'a, (MilestoneIndex, Receipt), ()> {
         (
             (
                 // Unpacking from storage is fine.
-                MilestoneIndex::unpack(&mut index).unwrap(),
+                MilestoneIndex::unpack_unchecked(&mut index).unwrap(),
                 // Unpacking from storage is fine.
-                Receipt::unpack(&mut receipt).unwrap(),
+                Receipt::unpack_unchecked(&mut receipt).unwrap(),
             ),
             (),
         )
@@ -311,9 +316,9 @@ impl<'a> StorageStream<'a, (bool, TreasuryOutput), ()> {
         (
             (
                 // Unpacking from storage is fine.
-                bool::unpack(&mut index).unwrap(),
+                bool::unpack_unchecked(&mut index).unwrap(),
                 // Unpacking from storage is fine.
-                TreasuryOutput::unpack(&mut receipt).unwrap(),
+                TreasuryOutput::unpack_unchecked(&mut receipt).unwrap(),
             ),
             (),
         )

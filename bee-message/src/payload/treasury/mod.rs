@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{input::Input, output::Output, Error};
@@ -50,9 +50,9 @@ impl Packable for TreasuryTransactionPayload {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let input = Input::unpack(reader)?;
-        let output = Output::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let input = Input::unpack_inner::<R, CHECK>(reader)?;
+        let output = Output::unpack_inner::<R, CHECK>(reader)?;
 
         Self::new(input, output)
     }

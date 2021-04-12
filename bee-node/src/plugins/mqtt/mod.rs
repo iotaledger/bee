@@ -11,7 +11,7 @@ use manager::MqttManager;
 use topics::*;
 
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
+use bee_tangle::event::{LatestMilestoneChanged, SolidMilestoneChanged};
 
 use async_trait::async_trait;
 use futures::stream::StreamExt;
@@ -70,7 +70,7 @@ impl<N: Node> Worker<N> for Mqtt {
                 topic_handler(node, TOPIC_MILESTONES_LATEST, |_event: &LatestMilestoneChanged| {
                     (TOPIC_MILESTONES_LATEST, "")
                 });
-                topic_handler(node, TOPIC_MILESTONES_SOLID, |_event: &LatestSolidMilestoneChanged| {
+                topic_handler(node, TOPIC_MILESTONES_SOLID, |_event: &SolidMilestoneChanged| {
                     (TOPIC_MILESTONES_SOLID, "")
                 });
                 // topic_handler(node, _TOPIC_MESSAGES, |_event: &_| (_TOPIC_MESSAGES, ""));

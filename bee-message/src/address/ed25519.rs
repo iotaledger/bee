@@ -1,7 +1,7 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{unlock::Ed25519Signature, Error};
+use crate::{signature::Ed25519Signature, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -108,7 +108,7 @@ impl Packable for Ed25519Address {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let mut bytes = [0u8; ED25519_ADDRESS_LENGTH];
         reader.read_exact(&mut bytes)?;
 
