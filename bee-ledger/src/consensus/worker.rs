@@ -177,12 +177,14 @@ where
     }
 
     info!(
-        "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}.",
+        "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}, outputs consumed {}, outputs created {}.",
         milestone.essence().index(),
         metadata.referenced_messages,
         metadata.excluded_no_transaction_messages.len(),
         metadata.excluded_conflicting_messages.len(),
-        metadata.included_messages.len()
+        metadata.included_messages.len(),
+        metadata.consumed_outputs.len(),
+        metadata.created_outputs.len()
     );
 
     bus.dispatch(MilestoneConfirmed {
@@ -193,8 +195,8 @@ where
         excluded_no_transaction_messages: metadata.excluded_no_transaction_messages,
         excluded_conflicting_messages: metadata.excluded_conflicting_messages,
         included_messages: metadata.included_messages,
-        created_outputs: metadata.created_outputs.len(),
         consumed_outputs: metadata.consumed_outputs.len(),
+        created_outputs: metadata.created_outputs.len(),
     });
 
     for (_, output) in metadata.created_outputs {
