@@ -21,8 +21,11 @@ use log::{debug, info};
 pub async fn prune<B: StorageBackend>(tangle: &MsTangle<B>, target_index: MilestoneIndex) -> Result<(), Error> {
     info!("Pruning database...");
 
+    // Start pruning from the last pruning index.
+    let start_index = tangle.get_pruning_index() + 1;
+
     // Collect the data that can be safely pruned.
-    let (confirmed, edges, new_seps, indexes) = collect_confirmed_data(tangle, target_index).await?;
+    let (confirmed, edges, new_seps, indexes) = collect_confirmed_data(tangle, start_index, target_index).await?;
 
     debug!("Determined {} new solid entry points.", new_seps.len());
 
@@ -31,9 +34,6 @@ pub async fn prune<B: StorageBackend>(tangle: &MsTangle<B>, target_index: Milest
 
     // Remember up to which index we determined SEPs.
     tangle.update_entry_point_index(target_index);
-
-    // Start pruning from the last pruning index.
-    let start_index = tangle.get_pruning_index();
 
     // Get access to the storage backend of the Tangle.
     let storage = tangle.hooks();

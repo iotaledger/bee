@@ -22,6 +22,7 @@ pub type Indexes = Vec<(HashedIndex, MessageId)>;
 /// Collects all prunable nodes/vertices and edges of the Tangle up to the `target_index`.
 pub async fn collect_confirmed_data<B: StorageBackend>(
     tangle: &MsTangle<B>,
+    start_index: MilestoneIndex,
     target_index: MilestoneIndex,
 ) -> Result<(Messages, Edges, Seps, Indexes), Error> {
     let mut messages = Messages::default();
@@ -30,7 +31,7 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
     let mut indexes = Indexes::default();
 
     // We start collecting at the current pruning index.
-    let start_index = *tangle.get_pruning_index();
+    let start_index = *start_index;
     let target_index = *target_index;
     debug_assert!(target_index > start_index);
 
