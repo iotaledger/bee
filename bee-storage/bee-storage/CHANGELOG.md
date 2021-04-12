@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.3.0 - 2021-04-13
+
+### Added
+
+- `StorageHealth` type;
+- `StorageBackend::get_health()` method;
+- `StorageBackend::set_health()` method;
+
 ## 0.2.0-alpha - 2021-01-11
 
 ### Added
