@@ -116,9 +116,6 @@ fn should_snapshot<B: StorageBackend>(
     let current_solid_index = *index;
 
     let snapshot_index = *tangle.get_snapshot_index();
-    if current_solid_index <= snapshot_index {
-        return None;
-    }
     debug_assert!(current_solid_index > snapshot_index);
 
     // If the node is unsync we snapshot less often.
@@ -129,7 +126,7 @@ fn should_snapshot<B: StorageBackend>(
     };
 
     // Do not snapshot without enough depth. This will only happen for a freshly started node.
-    if current_solid_index < snapshot_index + depth {
+    if current_solid_index < depth {
         return None;
     }
 
@@ -142,7 +139,7 @@ fn should_snapshot<B: StorageBackend>(
 }
 
 fn should_prune<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+    _tangle: &MsTangle<B>,
     index: MilestoneIndex,
     delay: u32,
     config: &PruningConfig,
@@ -153,10 +150,9 @@ fn should_prune<B: StorageBackend>(
     }
 
     let current_solid_index = *index;
-    let last_pruning_index = *tangle.get_pruning_index();
 
     // Do not prune if there isn't old enough data to prune yet. This will only happen for a freshly started node.
-    if current_solid_index < last_pruning_index + delay {
+    if current_solid_index < delay {
         return None;
     }
 
