@@ -7,16 +7,26 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::{convert::From, str::FromStr};
 
+/// An `UtxoInput` represents an input block within a transaction payload, and references
+/// the output from a previous transaction.
+///
+/// It is part of the transaction [Essense](crate::payload::transaction::Essence).
+///
+/// Spec: #iota-protocol-rfc-draft
+/// <https://github.com/luca-moser/protocol-rfcs/blob/signed-tx-payload/text/0000-transaction-payload/0000-transaction-payload.md#serialized-layout>
 #[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct UtxoInput(OutputId);
 
 impl UtxoInput {
+    /// The kind of transaction input: `0` as defined by the protocol.
     pub const KIND: u8 = 0;
 
+    /// Construct an `UtxoInput` from a previous transaction ID, and the index of the output block.
     pub fn new(id: TransactionId, index: u16) -> Result<Self, Error> {
         Ok(Self(OutputId::new(id, index)?))
     }
 
+    /// Return the underlying `OutputId` that this `UtxoInput` references.
     pub fn output_id(&self) -> &OutputId {
         &self.0
     }
