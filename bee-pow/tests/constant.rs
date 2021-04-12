@@ -8,7 +8,7 @@ use bee_test::rand::bytes::rand_bytes;
 fn constant_provide() {
     let bytes = rand_bytes(256);
     let constant = ConstantBuilder::new().with_value(42).finish();
-    let nonce = constant.nonce(&bytes[0..248], 4000f64, None).unwrap();
+    let nonce = constant.nonce(&bytes[0..248], 4000f64).unwrap();
 
     assert_eq!(nonce, 42);
 }

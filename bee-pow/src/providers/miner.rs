@@ -38,12 +38,19 @@ pub enum Error {
 #[derive(Default)]
 pub struct MinerBuilder {
     num_workers: Option<usize>,
+    signal: Option<Arc<AtomicBool>>,
 }
 
 impl MinerBuilder {
     /// Sets the desired number of workers for the `Miner` nonce provider.
     pub fn with_num_workers(mut self, num_workers: usize) -> Self {
         self.num_workers.replace(num_workers);
+        self
+    }
+
+    /// Sets a signal to abort the `Miner` nonce provider.
+    pub fn with_signal(mut self, signal: Arc<AtomicBool>) -> Self {
+        self.signal.replace(signal);
         self
     }
 }
@@ -58,6 +65,7 @@ impl NonceProviderBuilder for MinerBuilder {
     fn finish(self) -> Miner {
         Miner {
             num_workers: self.num_workers.unwrap_or(DEFAULT_NUM_WORKERS),
+            signal: self.signal.unwrap_or_else(|| Arc::new(AtomicBool::new(false))),
         }
     }
 }
@@ -65,11 +73,12 @@ impl NonceProviderBuilder for MinerBuilder {
 /// A nonce provider that mine nonces.
 pub struct Miner {
     num_workers: usize,
+    signal: Arc<AtomicBool>,
 }
 
 impl Miner {
     fn worker(
-        done: Arc<AtomicBool>,
+        signal: Arc<AtomicBool>,
         pow_digest: TritBuf<T1B1Buf>,
         start_nonce: u64,
         target_zeros: usize,
@@ -86,7 +95,7 @@ impl Miner {
             buffers.push(buffer);
         }
 
-        while !done.load(Ordering::Relaxed) {
+        while !signal.load(Ordering::Relaxed) {
             for (i, buffer) in buffers.iter_mut().enumerate() {
                 let nonce_trits = b1t6::encode::<T1B1Buf>(&(nonce + i as u64).to_le_bytes());
                 buffer[pow_digest.len()..pow_digest.len() + nonce_trits.len()].copy_from(&nonce_trits);
@@ -97,7 +106,7 @@ impl Miner {
                 let trailing_zeros = hash.iter().rev().take_while(|t| *t == Btrit::Zero).count();
 
                 if trailing_zeros >= target_zeros {
-                    done.store(true, Ordering::Relaxed);
+                    signal.store(true, Ordering::Relaxed);
                     return Ok(nonce + i as u64);
                 }
             }
@@ -113,10 +122,11 @@ impl NonceProvider for Miner {
     type Builder = MinerBuilder;
     type Error = Error;
 
-    fn nonce(&self, bytes: &[u8], target_score: f64, done: Option<Arc<AtomicBool>>) -> Result<u64, Self::Error> {
+    fn nonce(&self, bytes: &[u8], target_score: f64) -> Result<u64, Self::Error> {
+        self.signal.store(false, Ordering::Relaxed);
+
         let mut nonce = 0;
         let mut pow_digest = TritBuf::<T1B1Buf>::new();
-        let done = done.unwrap_or_else(|| Arc::new(AtomicBool::new(false)));
         let target_zeros =
             (((bytes.len() + std::mem::size_of::<u64>()) as f64 * target_score).ln() / LN_3).ceil() as usize;
         let worker_width = u64::MAX / self.num_workers as u64;
@@ -127,11 +137,11 @@ impl NonceProvider for Miner {
 
         for i in 0..self.num_workers {
             let start_nonce = i as u64 * worker_width;
-            let _done = done.clone();
+            let _signal = self.signal.clone();
             let _pow_digest = pow_digest.clone();
 
             workers.push(thread::spawn(move || {
-                Miner::worker(_done, _pow_digest, start_nonce, target_zeros)
+                Miner::worker(_signal, _pow_digest, start_nonce, target_zeros)
             }));
         }
 

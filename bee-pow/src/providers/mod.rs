@@ -9,8 +9,6 @@ mod miner;
 pub use constant::{Constant, ConstantBuilder};
 pub use miner::{Miner, MinerBuilder};
 
-use std::sync::{atomic::AtomicBool, Arc};
-
 /// A trait to build nonce providers.
 pub trait NonceProviderBuilder: Default + Sized {
     /// The type of the built nonce provider.
@@ -36,5 +34,5 @@ pub trait NonceProvider: Sized {
     }
 
     /// Provides a nonce given bytes and a target score.
-    fn nonce(&self, bytes: &[u8], target_score: f64, done: Option<Arc<AtomicBool>>) -> Result<u64, Self::Error>;
+    fn nonce(&self, bytes: &[u8], target_score: f64) -> Result<u64, Self::Error>;
 }

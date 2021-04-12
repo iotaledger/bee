@@ -5,8 +5,6 @@
 
 use crate::providers::{NonceProvider, NonceProviderBuilder};
 
-use std::sync::{atomic::AtomicBool, Arc};
-
 const DEFAULT_VALUE: u64 = 0;
 
 /// Builder for the `Constant` nonce provider.
@@ -46,7 +44,7 @@ impl NonceProvider for Constant {
     type Builder = ConstantBuilder;
     type Error = std::convert::Infallible;
 
-    fn nonce(&self, _: &[u8], _: f64, _: Option<Arc<AtomicBool>>) -> Result<u64, Self::Error> {
+    fn nonce(&self, _: &[u8], _: f64) -> Result<u64, Self::Error> {
         Ok(self.value)
     }
 }
