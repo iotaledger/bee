@@ -101,7 +101,7 @@ dependencies = [
 
 [[package]]
 name = "bee-pow"
-version = "0.1.0-alpha"
+version = "0.1.0"
 dependencies = [
  "bee-crypto 0.2.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
  "bee-ternary 0.4.2-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
