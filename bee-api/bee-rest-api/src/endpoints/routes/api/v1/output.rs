@@ -15,7 +15,7 @@ use bee_storage::access::Fetch;
 
 use warp::{reject, Filter, Rejection, Reply};
 
-use std::{convert::TryInto, net::IpAddr, ops::Deref};
+use std::{convert::TryInto, net::IpAddr};
 
 fn path() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Clone {
     super::path()
@@ -40,14 +40,14 @@ pub(crate) async fn output<B: StorageBackend>(
     output_id: OutputId,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    let output = Fetch::<OutputId, CreatedOutput>::fetch(storage.deref(), &output_id)
+    let output = Fetch::<OutputId, CreatedOutput>::fetch(&*storage, &output_id)
         .await
         .map_err(|_| {
             reject::custom(CustomRejection::ServiceUnavailable(
                 "can not fetch from storage".to_string(),
             ))
         })?;
-    let is_spent = Fetch::<OutputId, ConsumedOutput>::fetch(storage.deref(), &output_id)
+    let is_spent = Fetch::<OutputId, ConsumedOutput>::fetch(&*storage, &output_id)
         .await
         .map_err(|_| {
             reject::custom(CustomRejection::ServiceUnavailable(

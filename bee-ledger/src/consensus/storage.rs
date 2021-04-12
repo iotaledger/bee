@@ -3,19 +3,22 @@
 
 use crate::{
     consensus::error::Error,
-    types::{Balance, BalanceDiffs, Migration, OutputDiff, Receipt, TreasuryDiff, TreasuryOutput, Unspent},
+    snapshot::info::SnapshotInfo,
+    types::{
+        Balance, BalanceDiffs, LedgerIndex, Migration, OutputDiff, Receipt, TreasuryDiff, TreasuryOutput, Unspent,
+    },
 };
 
 use bee_message::{
     address::{Address, Ed25519Address},
-    ledger_index::LedgerIndex,
     milestone::MilestoneIndex,
     output::{ConsumedOutput, CreatedOutput, Output, OutputId},
 };
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert},
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
+use bee_tangle::solid_entry_point::SolidEntryPoint;
 
 use std::collections::HashMap;
 
@@ -41,16 +44,19 @@ pub trait StorageBackend:
     + Exist<OutputId, ConsumedOutput>
     + Exist<Unspent, ()>
     + Exist<(), LedgerIndex>
+    + Fetch<(), SnapshotInfo>
     + Fetch<OutputId, CreatedOutput>
     + Fetch<OutputId, ConsumedOutput>
     + Fetch<(), LedgerIndex>
     + Fetch<Address, Balance>
     + Fetch<bool, Vec<TreasuryOutput>>
+    + Insert<(), SnapshotInfo>
     + Insert<OutputId, CreatedOutput>
     + Insert<OutputId, ConsumedOutput>
     + Insert<Unspent, ()>
     + Insert<(), LedgerIndex>
     + Insert<(bool, TreasuryOutput), ()>
+    + Truncate<SolidEntryPoint, MilestoneIndex>
     + for<'a> AsStream<'a, Unspent, ()>
     + for<'a> AsStream<'a, Address, Balance>
     + bee_tangle::storage::StorageBackend
@@ -77,16 +83,19 @@ impl<T> StorageBackend for T where
         + Exist<OutputId, ConsumedOutput>
         + Exist<Unspent, ()>
         + Exist<(), LedgerIndex>
+        + Fetch<(), SnapshotInfo>
         + Fetch<OutputId, CreatedOutput>
         + Fetch<OutputId, ConsumedOutput>
         + Fetch<(), LedgerIndex>
         + Fetch<Address, Balance>
         + Fetch<bool, Vec<TreasuryOutput>>
+        + Insert<(), SnapshotInfo>
         + Insert<OutputId, CreatedOutput>
         + Insert<OutputId, ConsumedOutput>
         + Insert<Unspent, ()>
         + Insert<(), LedgerIndex>
         + Insert<(bool, TreasuryOutput), ()>
+        + Truncate<SolidEntryPoint, MilestoneIndex>
         + for<'a> AsStream<'a, Unspent, ()>
         + for<'a> AsStream<'a, Address, Balance>
         + bee_tangle::storage::StorageBackend
@@ -194,7 +203,7 @@ pub async fn store_balance_diffs_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub async fn apply_outputs_diff<B: StorageBackend>(
+pub async fn apply_output_diffs<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
@@ -255,7 +264,7 @@ pub async fn apply_outputs_diff<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub async fn rollback_outputs_diff<B: StorageBackend>(
+pub async fn rollback_output_diffs<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
@@ -311,9 +320,23 @@ pub(crate) async fn fetch_balance_or_default<B: StorageBackend>(
     Ok(fetch_balance(storage, address).await?.unwrap_or_default())
 }
 
-#[allow(dead_code)]
 pub(crate) async fn insert_ledger_index<B: StorageBackend>(storage: &B, index: &LedgerIndex) -> Result<(), Error> {
     Insert::<(), LedgerIndex>::insert(storage, &(), index)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub(crate) async fn insert_snapshot_info<B: StorageBackend>(
+    storage: &B,
+    snapshot_info: &SnapshotInfo,
+) -> Result<(), Error> {
+    Insert::<(), SnapshotInfo>::insert(&*storage, &(), snapshot_info)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub(crate) async fn fetch_snapshot_info<B: StorageBackend>(storage: &B) -> Result<Option<SnapshotInfo>, Error> {
+    Fetch::<(), SnapshotInfo>::fetch(storage, &())
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }

@@ -5,16 +5,16 @@ use crate::types::{Receipt, TreasuryOutput};
 
 pub struct Migration {
     receipt: Receipt,
-    created_treasury: TreasuryOutput,
     consumed_treasury: TreasuryOutput,
+    created_treasury: TreasuryOutput,
 }
 
 impl Migration {
-    pub fn new(receipt: Receipt, created_treasury: TreasuryOutput, consumed_treasury: TreasuryOutput) -> Self {
+    pub fn new(receipt: Receipt, consumed_treasury: TreasuryOutput, created_treasury: TreasuryOutput) -> Self {
         Self {
             receipt,
-            created_treasury,
             consumed_treasury,
+            created_treasury,
         }
     }
 
@@ -22,11 +22,11 @@ impl Migration {
         &self.receipt
     }
 
-    pub fn created_treasury(&self) -> &TreasuryOutput {
-        &self.created_treasury
-    }
-
     pub fn consumed_treasury(&self) -> &TreasuryOutput {
         &self.consumed_treasury
+    }
+
+    pub fn created_treasury(&self) -> &TreasuryOutput {
+        &self.created_treasury
     }
 }

@@ -15,11 +15,13 @@ pub(crate) struct SolidInfoResponse {
     id: String,
 }
 
-pub(crate) fn forward(message_solidified: MessageSolidified) -> WsEvent {
-    WsEvent::new(
-        WsTopic::SolidInfo,
-        WsEventInner::SolidInfo(SolidInfoResponse {
-            id: message_solidified.0.to_string(),
-        }),
-    )
+impl From<MessageSolidified> for WsEvent {
+    fn from(event: MessageSolidified) -> Self {
+        Self::new(
+            WsTopic::SolidInfo,
+            WsEventInner::SolidInfo(SolidInfoResponse {
+                id: event.0.to_string(),
+            }),
+        )
+    }
 }

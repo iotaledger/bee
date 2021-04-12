@@ -18,7 +18,7 @@ use bee_storage::access::Fetch;
 
 use warp::{reject, Filter, Rejection, Reply};
 
-use std::{collections::HashMap, net::IpAddr, ops::Deref};
+use std::{collections::HashMap, net::IpAddr};
 
 fn path() -> impl Filter<Extract = (), Error = Rejection> + Clone {
     super::path().and(warp::path("messages")).and(warp::path::end())
@@ -52,7 +52,7 @@ pub(crate) async fn messages_find<B: StorageBackend>(
         .map_err(|_| reject::custom(CustomRejection::BadRequest("Invalid index".to_owned())))?;
     let hashed_index = IndexationPayload::new(&index_bytes, &[]).unwrap().hash();
 
-    let mut fetched = match Fetch::<HashedIndex, Vec<MessageId>>::fetch(storage.deref(), &hashed_index)
+    let mut fetched = match Fetch::<HashedIndex, Vec<MessageId>>::fetch(&*storage, &hashed_index)
         .await
         .map_err(|_| {
             reject::custom(CustomRejection::ServiceUnavailable(

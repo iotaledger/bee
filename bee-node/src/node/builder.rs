@@ -178,11 +178,13 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         let this = this.with_resource(ctrl_c_listener());
 
-        info!("Initializing snapshot handler...");
-        let this = bee_snapshot::init::<BeeNode<B>>(&config.snapshot, network_id, this).await;
-
         info!("Initializing ledger...");
-        let this = bee_ledger::consensus::init::<BeeNode<B>>(this);
+        let this = bee_ledger::consensus::init::<BeeNode<B>>(
+            this,
+            network_id,
+            config.snapshot.clone(),
+            config.pruning.clone(),
+        );
 
         info!("Initializing protocol layer...");
         let this = bee_protocol::workers::init::<BeeNode<B>>(config.protocol.clone(), network_id, events, this);
@@ -198,7 +200,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         .await;
 
         info!("Initializing tangle...");
-        let this = bee_tangle::init::<BeeNode<B>>(&config.snapshot, &config.tangle, this);
+        let this = bee_tangle::init::<BeeNode<B>>(&config.tangle, this);
 
         // MQTT core plugin
         info!("Initializing MQTT core plugin...");

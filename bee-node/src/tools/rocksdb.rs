@@ -1,23 +1,25 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::types::{Balance, OutputDiff, Receipt, TreasuryOutput, Unspent};
+use bee_ledger::{
+    snapshot::info::SnapshotInfo,
+    types::{Balance, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent},
+};
 use bee_message::{
     address::{Address, Ed25519Address},
-    ledger_index::LedgerIndex,
     milestone::{Milestone, MilestoneIndex},
     output::{ConsumedOutput, CreatedOutput, OutputId},
     payload::indexation::{HashedIndex, IndexationPayload},
-    solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
-use bee_snapshot::SnapshotInfo;
 use bee_storage::{
     access::{AsStream, Exist, Fetch},
     backend::StorageBackend,
 };
 use bee_storage_rocksdb::{config::RocksDbConfigBuilder, error::Error as BackendError, storage::*, system::System};
-use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
+use bee_tangle::{
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+};
 
 use futures::{executor, stream::StreamExt};
 use structopt::StructOpt;

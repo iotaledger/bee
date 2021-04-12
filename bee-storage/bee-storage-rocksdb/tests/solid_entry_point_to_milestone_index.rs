@@ -1,12 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint};
+use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend::StorageBackend,
 };
 use bee_storage_rocksdb::{config::RocksDbConfigBuilder, storage::Storage};
+use bee_tangle::solid_entry_point::SolidEntryPoint;
 use bee_test::rand::{milestone::rand_milestone_index, solid_entry_point::rand_solid_entry_point};
 
 use futures::stream::StreamExt;

@@ -3,7 +3,7 @@
 
 // TODO review this file
 
-use crate::Error;
+use crate::snapshot::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
@@ -75,7 +75,7 @@ impl Packable for MilestoneDiff {
         let milestone_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
         let milestone = match Payload::unpack_inner::<R, CHECK>(reader)? {
             Payload::Milestone(milestone) => milestone,
-            _ => return Err(Error::InvalidPayloadKind),
+            payload => return Err(Error::InvalidPayloadKind(payload.kind())),
         };
 
         // TODO
@@ -91,7 +91,7 @@ impl Packable for MilestoneDiff {
         };
 
         let created_count = u64::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut created = HashMap::new();
+        let mut created = HashMap::with_capacity(created_count);
 
         for _ in 0..created_count {
             let message_id = MessageId::unpack_inner::<R, CHECK>(reader)?;
@@ -102,7 +102,7 @@ impl Packable for MilestoneDiff {
         }
 
         let consumed_count = u64::unpack_inner::<R, CHECK>(reader)? as usize;
-        let mut consumed = HashMap::new();
+        let mut consumed = HashMap::with_capacity(consumed_count);
 
         for _ in 0..consumed_count {
             let message_id = MessageId::unpack_inner::<R, CHECK>(reader)?;

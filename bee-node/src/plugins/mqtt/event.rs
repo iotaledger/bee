@@ -39,7 +39,9 @@ pub struct MessageMetadata {
 
 pub enum LedgerInclusionState {
     NoTransaction,
+    #[allow(dead_code)]
     Conflicting,
+    #[allow(dead_code)]
     Included,
 }
 

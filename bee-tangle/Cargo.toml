@@ -14,13 +14,11 @@ homepage = "https://www.iota.org"
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-message = { path = "../bee-message", features = ["serde"] }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-snapshot = { path = "../bee-snapshot" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 async-trait = "0.1"
 bitflags = "1.2"
 dashmap = "4.0"
-flume = "0.10"
 futures = "0.3"
 log = "0.4"
 lru = "0.6"

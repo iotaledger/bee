@@ -1,19 +1,19 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::consensus::storage::StorageBackend as LedgerStorageBackend;
+use bee_ledger::{consensus::storage::StorageBackend as LedgerStorageBackend, snapshot::info::SnapshotInfo};
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     payload::indexation::HashedIndex,
-    solid_entry_point::SolidEntryPoint,
     Message, MessageId,
 };
-use bee_snapshot::info::SnapshotInfo;
 use bee_storage::{
     access::{AsStream, Batch, Fetch, Insert},
     backend,
 };
-use bee_tangle::{metadata::MessageMetadata, unconfirmed_message::UnconfirmedMessage};
+use bee_tangle::{
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+};
 
 pub trait StorageBackend:
     backend::StorageBackend

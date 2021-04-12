@@ -1,7 +1,7 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{unlock::Ed25519Signature, Error};
+use crate::{signature::Ed25519Signature, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -12,6 +12,8 @@ use crypto::{
 
 use core::{convert::TryInto, str::FromStr};
 
+/// The number of bytes in an Ed25519 address.
+/// See <https://en.wikipedia.org/wiki/EdDSA#Ed25519> for more information.
 pub const ED25519_ADDRESS_LENGTH: usize = 32;
 
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]

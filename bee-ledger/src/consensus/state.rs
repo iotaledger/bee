@@ -15,8 +15,6 @@ use bee_storage::access::AsStream;
 
 use futures::StreamExt;
 
-// TODO saturating operations ?
-
 async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
     let mut supply: u64 = 0;
     let mut stream = AsStream::<Unspent, ()>::stream(storage)
@@ -29,16 +27,24 @@ async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u6
 
         match output.inner() {
             output::Output::SignatureLockedSingle(output) => {
-                supply += output.amount();
+                supply = supply
+                    .checked_add(output.amount())
+                    .ok_or(Error::LedgerStateOverflow(supply, output.amount()))?;
             }
             output::Output::SignatureLockedDustAllowance(output) => {
-                supply += output.amount();
+                supply = supply
+                    .checked_add(output.amount())
+                    .ok_or(Error::LedgerStateOverflow(supply, output.amount()))?;
             }
             output => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
     }
 
-    if supply + treasury != IOTA_SUPPLY {
+    if supply
+        .checked_add(treasury)
+        .ok_or(Error::LedgerStateOverflow(supply, treasury))?
+        != IOTA_SUPPLY
+    {
         return Err(Error::InvalidLedgerUnspentState(supply));
     }
 
@@ -46,7 +52,7 @@ async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u6
 }
 
 async fn check_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
-    let mut supply = 0;
+    let mut supply: u64 = 0;
     let mut stream = AsStream::<Address, Balance>::stream(storage)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))?;
@@ -55,10 +61,16 @@ async fn check_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u6
         if balance.dust_output() > dust_outputs_max(balance.dust_allowance()) {
             return Err(Error::InvalidLedgerDustState(address, balance));
         }
-        supply += balance.amount();
+        supply = supply
+            .checked_add(balance.amount())
+            .ok_or(Error::LedgerStateOverflow(supply, balance.amount()))?;
     }
 
-    if supply + treasury != IOTA_SUPPLY {
+    if supply
+        .checked_add(treasury)
+        .ok_or(Error::LedgerStateOverflow(supply, treasury))?
+        != IOTA_SUPPLY
+    {
         return Err(Error::InvalidLedgerBalanceState(supply));
     }
 

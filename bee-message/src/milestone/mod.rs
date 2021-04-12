@@ -1,13 +1,11 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::Error;
 
 mod index;
-mod key_range;
 
 pub use index::MilestoneIndex;
-pub use key_range::MilestoneKeyRange;
 
 use crate::MessageId;
 

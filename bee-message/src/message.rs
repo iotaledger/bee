@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -13,24 +13,42 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use std::sync::{atomic::AtomicBool, Arc};
 
+/// The minimum number of bytes in a message.
 pub const MESSAGE_LENGTH_MIN: usize = 53;
+
+/// The maximum number of bytes in a message (1024*32).
+/// <https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md#message-validation>
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
 
+/// A `Message` is the object that nodes gossip around the network.
+///
+/// Spec: #iota-protocol-rfc-draft
+/// <https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md>
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
+    /// network_id specifies which network this message is meant for (mainnet, testnet, private net).
     network_id: u64,
+    /// parents are the [MessageId]s that this message directly approves.
+    /// The list contains between 1 and 8 sorted unique entries.
     parents: Parents,
+    /// The optional [Payload] of the message.
     payload: Option<Payload>,
+    /// The result of the Proof of Work (PoW) in order to be accepted into the tangle.
     nonce: u64,
 }
 
 impl Message {
+    /// Create a new [MessageBuilder], the only way to construct an instance of a `Message`.
     pub fn builder() -> MessageBuilder {
         MessageBuilder::new()
     }
 
-    // TODO should not return bytes anymore ?
+    /// Calculate and return the the ID of the message.
+    ///
+    /// The ID is obtained by taking the Blake2b256 hash of the message contents.
+    ///
+    /// TODO: should not return bytes anymore ?
     pub fn id(&self) -> (MessageId, Vec<u8>) {
         let bytes = self.pack_new();
         let id = Blake2b256::digest(&bytes);
@@ -38,18 +56,24 @@ impl Message {
         (MessageId::new(id.into()), bytes)
     }
 
+    /// Return the ID of the network this message belongs to.
+    ///
+    /// This is used to indicate if the message is for the mainnet, testnet, or a private net.
     pub fn network_id(&self) -> u64 {
         self.network_id
     }
 
+    /// Return the set of transactions that this message directly approves (the parents).
     pub fn parents(&self) -> &Parents {
         &self.parents
     }
 
+    /// Return the (optional) payload this message contains.
     pub fn payload(&self) -> &Option<Payload> {
         &self.payload
     }
 
+    /// Return the PoW nonce for this message.
     pub fn nonce(&self) -> u64 {
         self.nonce
     }
@@ -115,6 +139,7 @@ impl Packable for Message {
     }
 }
 
+/// A `MessageBuilder` is how you construct a [Message].
 pub struct MessageBuilder<P: Provider = Miner> {
     network_id: Option<u64>,
     parents: Option<Parents>,

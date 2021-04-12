@@ -13,6 +13,7 @@ use crate::{
 };
 
 use bee_message::{
+    address::Address,
     input::Input,
     output::{ConsumedOutput, CreatedOutput, Output, OutputId},
     payload::{
@@ -26,12 +27,16 @@ use bee_tangle::MsTangle;
 
 use crypto::hashes::blake2b::Blake2b256;
 
-use std::{
-    collections::{HashMap, HashSet},
-    ops::Deref,
-};
+use std::collections::HashSet;
 
-async fn validate_regular_essence<B: StorageBackend>(
+fn verify_signature(address: &Address, unlock_blocks: &UnlockBlocks, index: usize, essence_hash: &[u8; 32]) -> bool {
+    match unlock_blocks.get(index) {
+        Some(UnlockBlock::Signature(signature)) => address.verify(essence_hash, signature).is_ok(),
+        _ => false,
+    }
+}
+
+async fn apply_regular_essence<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
     transaction_id: &TransactionId,
@@ -39,10 +44,11 @@ async fn validate_regular_essence<B: StorageBackend>(
     unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
-    let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
+    let mut consumed_outputs = Vec::with_capacity(essence.inputs().len());
     let mut balance_diffs = BalanceDiffs::new();
-    let mut created_amount: u64 = 0;
     let mut consumed_amount: u64 = 0;
+    let mut created_amount: u64 = 0;
+
     // TODO avoid clone
     let essence_hash = Essence::from(essence.clone()).hash();
 
@@ -59,8 +65,8 @@ async fn validate_regular_essence<B: StorageBackend>(
 
                 if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
                     (output_id, output)
-                } else if let Some(output) = storage::fetch_output(storage.deref(), output_id).await? {
-                    if !storage::is_output_unspent(storage.deref(), output_id).await? {
+                } else if let Some(output) = storage::fetch_output(storage, output_id).await? {
+                    if !storage::is_output_unspent(storage, output_id).await? {
                         return Ok(ConflictReason::InputUtxoAlreadySpent);
                     }
                     (output_id, output)
@@ -77,39 +83,31 @@ async fn validate_regular_essence<B: StorageBackend>(
             Output::SignatureLockedSingle(output) => {
                 consumed_amount = consumed_amount
                     .checked_add(output.amount())
-                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
+                    .ok_or(Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_output_dec(*output.address());
                 }
-                if !match unlock_blocks.get(index) {
-                    Some(UnlockBlock::Signature(signature)) => {
-                        output.address().verify(&essence_hash, signature).is_ok()
-                    }
-                    _ => false,
-                } {
+
+                if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
                     return Ok(ConflictReason::InvalidSignature);
                 }
             }
             Output::SignatureLockedDustAllowance(output) => {
                 consumed_amount = consumed_amount
                     .checked_add(output.amount())
-                    .ok_or_else(|| Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
+                    .ok_or(Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
                 balance_diffs.amount_sub(*output.address(), output.amount());
                 balance_diffs.dust_allowance_sub(*output.address(), output.amount());
-                if !match unlock_blocks.get(index) {
-                    Some(UnlockBlock::Signature(signature)) => {
-                        output.address().verify(&essence_hash, signature).is_ok()
-                    }
-                    _ => false,
-                } {
+
+                if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
                     return Ok(ConflictReason::InvalidSignature);
                 }
             }
             output => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
 
-        consumed_outputs.insert(*output_id, consumed_output);
+        consumed_outputs.push(output_id);
     }
 
     for created_output in essence.outputs() {
@@ -117,7 +115,7 @@ async fn validate_regular_essence<B: StorageBackend>(
             Output::SignatureLockedSingle(output) => {
                 created_amount = created_amount
                     .checked_add(output.amount())
-                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount, output.amount()))?;
+                    .ok_or(Error::CreatedAmountOverflow(created_amount, output.amount()))?;
                 balance_diffs.amount_add(*output.address(), output.amount());
                 if output.amount() < DUST_THRESHOLD {
                     balance_diffs.dust_output_inc(*output.address());
@@ -126,7 +124,7 @@ async fn validate_regular_essence<B: StorageBackend>(
             Output::SignatureLockedDustAllowance(output) => {
                 created_amount = created_amount
                     .checked_add(output.amount())
-                    .ok_or_else(|| Error::CreatedAmountOverflow(created_amount, output.amount()))?;
+                    .ok_or(Error::CreatedAmountOverflow(created_amount, output.amount()))?;
                 balance_diffs.amount_add(*output.address(), output.amount());
                 balance_diffs.dust_allowance_add(*output.address(), output.amount());
             }
@@ -140,7 +138,7 @@ async fn validate_regular_essence<B: StorageBackend>(
 
     for (address, diff) in balance_diffs.iter() {
         if diff.is_dust_mutating() {
-            let mut balance = storage::fetch_balance_or_default(storage.deref(), &address).await? + diff;
+            let mut balance = storage::fetch_balance_or_default(storage, &address).await? + diff;
 
             if let Some(diff) = metadata.balance_diffs.get(&address) {
                 balance = balance + diff;
@@ -152,7 +150,11 @@ async fn validate_regular_essence<B: StorageBackend>(
         }
     }
 
-    metadata.balance_diffs.merge(balance_diffs);
+    for output_id in consumed_outputs {
+        metadata
+            .consumed_outputs
+            .insert(*output_id, ConsumedOutput::new(*transaction_id, metadata.index));
+    }
 
     for (index, output) in essence.outputs().iter().enumerate() {
         metadata.created_outputs.insert(
@@ -162,51 +164,44 @@ async fn validate_regular_essence<B: StorageBackend>(
         );
     }
 
-    // TODO output ?
-    for (output_id, _) in consumed_outputs {
-        metadata
-            .consumed_outputs
-            .insert(output_id, ConsumedOutput::new(*transaction_id, metadata.index));
-    }
+    metadata.balance_diffs.merge(balance_diffs);
 
     Ok(ConflictReason::None)
 }
 
-async fn validate_transaction<B: StorageBackend>(
+async fn apply_transaction<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
     transaction: &TransactionPayload,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
-    let transaction_id = transaction.id();
-
     match transaction.essence() {
         Essence::Regular(essence) => {
-            validate_regular_essence(
+            apply_regular_essence(
                 storage,
                 message_id,
-                &transaction_id,
+                &transaction.id(),
                 essence,
                 transaction.unlock_blocks(),
                 metadata,
             )
             .await
         }
-        essence => return Err(Error::UnsupportedTransactionEssenceKind(essence.kind())),
+        essence => Err(Error::UnsupportedTransactionEssenceKind(essence.kind())),
     }
 }
 
-async fn validate_message<B: StorageBackend>(
+async fn apply_message<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
     message: &Message,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
-    metadata.num_referenced_messages += 1;
+    metadata.referenced_messages += 1;
 
     let conflict = match message.payload() {
         Some(Payload::Transaction(transaction)) => {
-            validate_transaction(storage, message_id, transaction, metadata).await?
+            apply_transaction(storage, message_id, transaction, metadata).await?
         }
         _ => {
             metadata.excluded_no_transaction_messages.push(*message_id);
@@ -214,10 +209,10 @@ async fn validate_message<B: StorageBackend>(
         }
     };
 
-    if conflict != ConflictReason::None {
-        metadata.excluded_conflicting_messages.push((*message_id, conflict));
-    } else {
+    if conflict == ConflictReason::None {
         metadata.included_messages.push(*message_id);
+    } else {
+        metadata.excluded_conflicting_messages.push((*message_id, conflict));
     }
 
     Ok(())
@@ -268,7 +263,7 @@ async fn traversal<B: StorageBackend>(
                 match next {
                     Some(next) => messages_ids.push(*next),
                     None => {
-                        validate_message(storage, message_id, &message, metadata).await?;
+                        apply_message(storage, message_id, &message, metadata).await?;
                         visited.insert(*message_id);
                         messages_ids.pop();
                     }
@@ -302,13 +297,13 @@ pub async fn white_flag<B: StorageBackend>(
 
     metadata.merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
 
-    if metadata.num_referenced_messages
+    if metadata.referenced_messages
         != metadata.excluded_no_transaction_messages.len()
             + metadata.excluded_conflicting_messages.len()
             + metadata.included_messages.len()
     {
         return Err(Error::InvalidMessagesCount(
-            metadata.num_referenced_messages,
+            metadata.referenced_messages,
             metadata.excluded_no_transaction_messages.len(),
             metadata.excluded_conflicting_messages.len(),
             metadata.included_messages.len(),

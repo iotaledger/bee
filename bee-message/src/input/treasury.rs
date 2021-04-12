@@ -1,23 +1,23 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{Error, MessageId};
+use crate::{payload::milestone::MilestoneId, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
 use core::{convert::From, ops::Deref, str::FromStr};
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub struct TreasuryInput(MessageId);
+pub struct TreasuryInput(MilestoneId);
 
 impl TreasuryInput {
     pub const KIND: u8 = 1;
 
-    pub fn new(id: MessageId) -> Self {
+    pub fn new(id: MilestoneId) -> Self {
         Self(id)
     }
 
-    pub fn message_id(&self) -> &MessageId {
+    pub fn milestone_id(&self) -> &MilestoneId {
         &self.0
     }
 }
@@ -26,15 +26,15 @@ impl TreasuryInput {
 string_serde_impl!(TreasuryInput);
 
 impl Deref for TreasuryInput {
-    type Target = MessageId;
+    type Target = MilestoneId;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl From<MessageId> for TreasuryInput {
-    fn from(id: MessageId) -> Self {
+impl From<MilestoneId> for TreasuryInput {
+    fn from(id: MilestoneId) -> Self {
         TreasuryInput(id)
     }
 }
@@ -43,7 +43,7 @@ impl FromStr for TreasuryInput {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(TreasuryInput(MessageId::from_str(s)?))
+        Ok(TreasuryInput(MilestoneId::from_str(s)?))
     }
 }
 
@@ -71,6 +71,6 @@ impl Packable for TreasuryInput {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(MessageId::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self(MilestoneId::unpack_inner::<R, CHECK>(reader)?))
     }
 }

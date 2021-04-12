@@ -2,11 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    plugins::dashboard::{
-        broadcast,
-        websocket::{responses::confirmed_milestone_metrics, WsUsers},
-        Dashboard,
-    },
+    plugins::dashboard::{broadcast, websocket::WsUsers, Dashboard},
     storage::StorageBackend,
 };
 
@@ -61,7 +57,7 @@ where
                         referenced_rate,
                         time_since_last_ms: time_diff,
                     };
-                    broadcast(confirmed_milestone_metrics::forward(metrics), &users).await;
+                    broadcast(metrics.into(), &users).await;
                 }  else {
                     error!("Can not calculate milestone confirmation metrics since the time difference between milestone {} and milestone {} is zero.", *event.index - 1, *event.index)
                 }

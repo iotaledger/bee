@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 mod regular;
@@ -11,6 +11,9 @@ use bee_common::packable::{Packable, Read, Write};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
+/// The essence of a transaction describes the data making up the transaction.
+///
+/// See enum entries for specific types of transaction essences.
 #[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(
@@ -19,16 +22,19 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
     serde(tag = "type", content = "data")
 )]
 pub enum Essence {
+    /// A regular transaction essence.
     Regular(RegularEssence),
 }
 
 impl Essence {
+    /// The kind of transaction essence, defined by the underlying essence type.
     pub fn kind(&self) -> u8 {
         match self {
             Self::Regular(_) => RegularEssence::KIND,
         }
     }
 
+    /// Return the Blake2b hash of the essence.
     pub fn hash(&self) -> [u8; 32] {
         Blake2b256::digest(&self.pack_new()).into()
     }

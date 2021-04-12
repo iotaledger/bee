@@ -15,10 +15,7 @@ use crate::{
     plugins::dashboard::{
         config::DashboardConfig,
         websocket::{
-            responses::{
-                confirmed_info, milestone, milestone_info, mps_metrics_updated, solid_info, sync_status, tip_info,
-                vertex, WsEvent,
-            },
+            responses::{milestone, milestone_info, sync_status, WsEvent},
             WsUsers,
         },
         workers::{
@@ -30,7 +27,10 @@ use crate::{
 };
 
 use bee_ledger::consensus::event::MilestoneConfirmed;
-use bee_protocol::workers::{MetricsWorker, PeerManagerResWorker};
+use bee_protocol::workers::{
+    event::{MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded, TipRemoved},
+    MetricsWorker, PeerManagerResWorker,
+};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{event::LatestMilestoneChanged, MsTangle, TangleWorker};
 
@@ -47,12 +47,12 @@ use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
 };
 
-const SYNCED_THRESHOLD: u32 = 5;
+const CONFIRMED_THRESHOLD: u32 = 5;
 
 #[derive(Default)]
 pub struct Dashboard {}
 
-fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, require_node_synced: bool, f: F)
+fn topic_handler<N, E, F>(node: &mut N, topic: &'static str, users: &WsUsers, require_node_confirmed: bool, f: F)
 where
     N: Node,
     N::Backend: StorageBackend,
@@ -70,8 +70,8 @@ where
         let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
         while let Some(event) = receiver.next().await {
-            if require_node_synced {
-                if tangle.is_synced_threshold(SYNCED_THRESHOLD) {
+            if require_node_confirmed {
+                if tangle.is_confirmed_threshold(CONFIRMED_THRESHOLD) {
                     broadcast(f(event), &users).await;
                 }
             } else {
@@ -134,14 +134,32 @@ where
                 sync_status::forward_confirmed_milestone_changed(&event, &tangle)
             });
         }
-        topic_handler(node, "MpsMetricsUpdated", &users, false, mps_metrics_updated::forward);
+        topic_handler(
+            node,
+            "MpsMetricsUpdated",
+            &users,
+            false,
+            <WsEvent as From<MpsMetricsUpdated>>::from,
+        );
         topic_handler(node, "Milestone", &users, false, milestone::forward);
-        topic_handler(node, "SolidInfo", &users, true, solid_info::forward);
+        topic_handler(
+            node,
+            "SolidInfo",
+            &users,
+            true,
+            <WsEvent as From<MessageSolidified>>::from,
+        );
         topic_handler(node, "MilestoneInfo", &users, false, milestone_info::forward);
-        topic_handler(node, "Vertex", &users, true, vertex::forward);
-        topic_handler(node, "MilestoneConfirmed", &users, false, confirmed_info::forward);
-        topic_handler(node, "TipInfo", &users, true, tip_info::forward_tip_added);
-        topic_handler(node, "TipInfo", &users, true, tip_info::forward_tip_removed);
+        topic_handler(node, "Vertex", &users, true, <WsEvent as From<NewVertex>>::from);
+        topic_handler(
+            node,
+            "MilestoneConfirmed",
+            &users,
+            false,
+            <WsEvent as From<MilestoneConfirmed>>::from,
+        );
+        topic_handler(node, "TipInfo", &users, true, <WsEvent as From<TipAdded>>::from);
+        topic_handler(node, "TipInfo", &users, true, <WsEvent as From<TipRemoved>>::from);
 
         // run sub-workers
         confirmed_ms_metrics_worker(node, &users);

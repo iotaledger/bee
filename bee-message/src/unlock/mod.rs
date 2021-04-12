@@ -1,13 +1,11 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 mod reference;
-mod signature;
 
 pub use reference::ReferenceUnlock;
-pub use signature::{Ed25519Signature, SignatureUnlock};
 
-use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, Error};
+use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, signature::SignatureUnlock, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 
@@ -15,6 +13,19 @@ use core::ops::Deref;
 // TODO no_std
 use std::collections::HashSet;
 
+/// An UnlockBlock defines the mechanism by which a transaction input is
+/// validated for spending.
+///
+/// Unlock blocks are the mechanism by which the inputs to a transaction are
+/// verified. There are two types of unlock blocks:
+/// * [SignatureUnlock] - The signature of the address which owns an input UTXO to
+///   the transaction, validating that the UTXO can be spent in this transaction.
+/// * [ReferenceUnlock] - A reference (via index) to a previous [SignatureUnlock]
+///   if the same unlock can be used for multiple inputs (removing duplication
+///   in the protocol).
+///
+/// Spec: #iota-protocol-rfc-draft
+/// <https://github.com/luca-moser/protocol-rfcs/blob/signed-tx-payload/text/0000-transaction-payload/0000-transaction-payload.md>
 #[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(
@@ -23,11 +34,14 @@ use std::collections::HashSet;
     serde(tag = "type", content = "data")
 )]
 pub enum UnlockBlock {
+    /// The signature of the address which 'owns' an input UTXO.
     Signature(SignatureUnlock),
+    /// A reference (via index) to a previous [SignatureUnlock].
     Reference(ReferenceUnlock),
 }
 
 impl UnlockBlock {
+    /// The kind of unlock block, as defined by the protocol.
     pub fn kind(&self) -> u8 {
         match self {
             Self::Signature(_) => SignatureUnlock::KIND,

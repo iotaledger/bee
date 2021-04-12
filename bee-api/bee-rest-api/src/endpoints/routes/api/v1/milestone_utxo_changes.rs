@@ -16,7 +16,7 @@ use bee_storage::access::Fetch;
 
 use warp::{reject, Filter, Rejection, Reply};
 
-use std::{net::IpAddr, ops::Deref};
+use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
     super::path()
@@ -42,7 +42,7 @@ pub(crate) async fn milestone_utxo_changes<B: StorageBackend>(
     index: MilestoneIndex,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    let fetched = match Fetch::<MilestoneIndex, OutputDiff>::fetch(storage.deref(), &index)
+    let fetched = match Fetch::<MilestoneIndex, OutputDiff>::fetch(&*storage, &index)
         .await
         .map_err(|_| {
             reject::custom(CustomRejection::ServiceUnavailable(

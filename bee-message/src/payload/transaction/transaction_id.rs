@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::Error;
@@ -7,12 +7,18 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::{convert::TryInto, str::FromStr};
 
+/// The number of bytes used to represent a [TransactionId].
+///
+/// IDs are computed by taking the Blake2b256 hash which is 256 bits (32 bytes).
 pub const TRANSACTION_ID_LENGTH: usize = 32;
 
+/// A `TransactionId` is the Blacke2b256 of a
+/// [`TransactionPayload`](crate::payload::transaction::TransactionPayload).
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
 pub struct TransactionId([u8; TRANSACTION_ID_LENGTH]);
 
 impl TransactionId {
+    /// Construct a `TransactionId` from a hash value.
     pub fn new(bytes: [u8; TRANSACTION_ID_LENGTH]) -> Self {
         bytes.into()
     }

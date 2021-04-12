@@ -3,9 +3,9 @@
 
 use super::event::*;
 
-use bee_protocol::workers::event::{IndexationMessage, MessageConfirmed, MessageProcessed};
+use bee_protocol::workers::event::{MessageConfirmed, MessageProcessed};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::event::{LatestMilestoneChanged, LatestSolidMilestoneChanged};
+use bee_tangle::event::{ConfirmedMilestoneChanged, LatestMilestoneChanged};
 
 use async_trait::async_trait;
 use librumqttd as mqtt;
@@ -24,11 +24,11 @@ pub(crate) const TOPIC_MILESTONES_LATEST: &str = "milestones/latest";
 pub(crate) const TOPIC_MILESTONES_CONFIRMED: &str = "milestones/confirmed";
 pub(crate) const TOPIC_MESSAGES: &str = "messages";
 pub(crate) const TOPIC_MESSAGES_REFERENCED: &str = "messages/referenced";
-pub(crate) const TOPIC_MESSAGES_INDEXATION: &str = "messages/indexation/{index}";
-pub(crate) const TOPIC_MESSAGES_METADATA: &str = "messages/{messageId}/metadata";
-pub(crate) const TOPIC_OUTPUTS: &str = "outputs/{outputId}";
-pub(crate) const TOPIC_ADDRESSES_OUTPUTS: &str = "addresses/{address}/outputs";
-pub(crate) const TOPIC_ADDRESSES_ED25519_OUTPUT: &str = "addresses/ed25519/{address}/outputs";
+pub(crate) const _TOPIC_MESSAGES_INDEXATION: &str = "messages/indexation/{index}";
+pub(crate) const _TOPIC_MESSAGES_METADATA: &str = "messages/{messageId}/metadata";
+pub(crate) const _TOPIC_OUTPUTS: &str = "outputs/{outputId}";
+pub(crate) const _TOPIC_ADDRESSES_OUTPUTS: &str = "addresses/{address}/outputs";
+pub(crate) const _TOPIC_ADDRESSES_ED25519_OUTPUT: &str = "addresses/ed25519/{address}/outputs";
 
 pub struct MqttBrokerConfig {
     pub milestones_latest_tx: LinkTx,
@@ -77,7 +77,7 @@ impl<N: Node> Worker<N> for MqttBroker {
             node,
             milestones_confirmed_tx,
             TOPIC_MILESTONES_CONFIRMED,
-            |event: LatestSolidMilestoneChanged| {
+            |event: ConfirmedMilestoneChanged| {
                 // MilestonePayload as JSON
                 let ms_payload_json = serde_json::to_string(&MilestonePayload {
                     index: *event.index,

@@ -16,22 +16,26 @@ pub(crate) struct TipInfoResponse {
     is_tip: bool,
 }
 
-pub(crate) fn forward_tip_added(event: TipAdded) -> WsEvent {
-    WsEvent::new(
-        WsTopic::TipInfo,
-        WsEventInner::TipInfo(TipInfoResponse {
-            id: event.0.to_string(),
-            is_tip: true,
-        }),
-    )
+impl From<TipAdded> for WsEvent {
+    fn from(event: TipAdded) -> Self {
+        Self::new(
+            WsTopic::TipInfo,
+            WsEventInner::TipInfo(TipInfoResponse {
+                id: event.0.to_string(),
+                is_tip: true,
+            }),
+        )
+    }
 }
 
-pub(crate) fn forward_tip_removed(event: TipRemoved) -> WsEvent {
-    WsEvent::new(
-        WsTopic::TipInfo,
-        WsEventInner::TipInfo(TipInfoResponse {
-            id: event.0.to_string(),
-            is_tip: false,
-        }),
-    )
+impl From<TipRemoved> for WsEvent {
+    fn from(event: TipRemoved) -> Self {
+        Self::new(
+            WsTopic::TipInfo,
+            WsEventInner::TipInfo(TipInfoResponse {
+                id: event.0.to_string(),
+                is_tip: false,
+            }),
+        )
+    }
 }

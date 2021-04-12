@@ -23,29 +23,25 @@ pub(crate) struct MpsMetricsUpdatedDto {
 }
 
 impl From<MpsMetricsUpdated> for WsEvent {
-    fn from(val: MpsMetricsUpdated) -> Self {
-        Self::new(WsTopic::MpsMetrics, WsEventInner::MpsMetricsUpdated(val.into()))
+    fn from(event: MpsMetricsUpdated) -> Self {
+        Self::new(WsTopic::MpsMetrics, WsEventInner::MpsMetricsUpdated(event.into()))
     }
 }
 
 impl From<MpsMetricsUpdated> for MpsMetricsUpdatedResponse {
-    fn from(val: MpsMetricsUpdated) -> Self {
-        Self(val.into())
+    fn from(event: MpsMetricsUpdated) -> Self {
+        Self(event.into())
     }
 }
 
 impl From<MpsMetricsUpdated> for MpsMetricsUpdatedDto {
-    fn from(val: MpsMetricsUpdated) -> Self {
+    fn from(event: MpsMetricsUpdated) -> Self {
         MpsMetricsUpdatedDto {
-            incoming: val.incoming,
-            new: val.new,
-            known: val.known,
-            invalid: val.invalid,
-            outgoing: val.outgoing,
+            incoming: event.incoming,
+            new: event.new,
+            known: event.known,
+            invalid: event.invalid,
+            outgoing: event.outgoing,
         }
     }
-}
-
-pub(crate) fn forward(metrics: MpsMetricsUpdated) -> WsEvent {
-    metrics.into()
 }

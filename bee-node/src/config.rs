@@ -7,11 +7,14 @@ use crate::plugins::dashboard::config::{DashboardConfig, DashboardConfigBuilder}
 use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
 
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
-use bee_ledger::consensus::config::{LedgerConfig, LedgerConfigBuilder};
+use bee_ledger::{
+    consensus::config::{LedgerConfig, LedgerConfigBuilder},
+    pruning::config::{PruningConfig, PruningConfigBuilder},
+    snapshot::config::{SnapshotConfig, SnapshotConfigBuilder},
+};
 use bee_network::{Keypair, NetworkConfig, NetworkConfigBuilder, PeerId, PublicKey};
 use bee_protocol::workers::config::{ProtocolConfig, ProtocolConfigBuilder};
 use bee_rest_api::endpoints::config::{RestApiConfig, RestApiConfigBuilder};
-use bee_snapshot::config::{SnapshotConfig, SnapshotConfigBuilder};
 use bee_storage::backend::StorageBackend;
 use bee_tangle::config::{TangleConfig, TangleConfigBuilder};
 
@@ -44,6 +47,7 @@ pub struct NodeConfigBuilder<B: StorageBackend> {
     pub(crate) protocol: Option<ProtocolConfigBuilder>,
     pub(crate) rest_api: Option<RestApiConfigBuilder>,
     pub(crate) snapshot: Option<SnapshotConfigBuilder>,
+    pub(crate) pruning: Option<PruningConfigBuilder>,
     pub(crate) storage: Option<B::ConfigBuilder>,
     pub(crate) tangle: Option<TangleConfigBuilder>,
     pub(crate) ledger: Option<LedgerConfigBuilder>,
@@ -97,6 +101,7 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
             protocol: self.protocol.unwrap_or_default().finish(),
             rest_api: self.rest_api.unwrap_or_default().finish(),
             snapshot: self.snapshot.unwrap_or_default().finish(),
+            pruning: self.pruning.unwrap_or_default().finish(),
             storage: self.storage.unwrap_or_default().into(),
             tangle: self.tangle.unwrap_or_default().finish(),
             ledger: self.ledger.unwrap_or_default().finish(),
@@ -125,6 +130,7 @@ pub struct NodeConfig<B: StorageBackend> {
     pub protocol: ProtocolConfig,
     pub rest_api: RestApiConfig,
     pub snapshot: SnapshotConfig,
+    pub pruning: PruningConfig,
     pub storage: B::Config,
     pub tangle: TangleConfig,
     pub ledger: LedgerConfig,
@@ -146,6 +152,7 @@ impl<B: StorageBackend> Clone for NodeConfig<B> {
             protocol: self.protocol.clone(),
             rest_api: self.rest_api.clone(),
             snapshot: self.snapshot.clone(),
+            pruning: self.pruning.clone(),
             storage: self.storage.clone(),
             tangle: self.tangle.clone(),
             ledger: self.ledger.clone(),

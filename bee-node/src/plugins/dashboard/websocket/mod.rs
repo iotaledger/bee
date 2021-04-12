@@ -10,7 +10,7 @@ use topics::WsTopic;
 
 use crate::{
     plugins::dashboard::{
-        auth::{jwt::JsonWebToken, AUDIENCE_CLAIM},
+        auth::AUDIENCE_CLAIM,
         config::DashboardAuthConfig,
         websocket::responses::{
             database_size_metrics::DatabaseSizeMetricsResponse, sync_status::SyncStatusResponse, WsEvent, WsEventInner,
@@ -19,6 +19,7 @@ use crate::{
     storage::StorageBackend,
 };
 
+use bee_common::auth::jwt::JsonWebToken;
 use bee_runtime::{resource::ResourceHandle, shutdown_stream::ShutdownStream};
 use bee_tangle::MsTangle;
 
@@ -167,11 +168,15 @@ async fn user_message<B: StorageBackend>(
                             return;
                         }
                     });
-                    if !jwt.validate(
-                        node_id.to_owned(),
-                        auth_config.user().to_owned(),
-                        AUDIENCE_CLAIM.to_owned(),
-                    ) {
+                    if jwt
+                        .validate(
+                            node_id.to_owned(),
+                            auth_config.user().to_owned(),
+                            AUDIENCE_CLAIM.to_owned(),
+                            b"secret",
+                        )
+                        .is_err()
+                    {
                         return;
                     }
                 }

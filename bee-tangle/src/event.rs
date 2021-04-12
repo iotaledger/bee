@@ -10,7 +10,19 @@ pub struct LatestMilestoneChanged {
 }
 
 #[derive(Clone)]
-pub struct LatestSolidMilestoneChanged {
+pub struct SolidMilestoneChanged {
     pub index: MilestoneIndex,
     pub milestone: Milestone,
 }
+
+#[derive(Clone)]
+pub struct ConfirmedMilestoneChanged {
+    pub index: MilestoneIndex,
+    pub milestone: Milestone,
+}
+
+#[derive(Clone)]
+pub struct SnapshotMilestoneIndexChanged(pub MilestoneIndex);
+
+#[derive(Clone)]
+pub struct PruningMilestoneIndexChanged(pub MilestoneIndex);

@@ -5,9 +5,9 @@ use crate::workers::{
     event::MessageSolidified, storage::StorageBackend, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
 };
 
-use bee_message::{milestone::MilestoneIndex, solid_entry_point::SolidEntryPoint, MessageId};
+use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{metadata::IndexId, MsTangle, TangleWorker};
+use bee_tangle::{metadata::IndexId, solid_entry_point::SolidEntryPoint, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};

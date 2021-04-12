@@ -1,18 +1,18 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use crate::snapshot::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::milestone::MilestoneIndex;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SnapshotInfo {
-    pub(crate) network_id: u64,
-    pub(crate) snapshot_index: MilestoneIndex,
-    pub(crate) entry_point_index: MilestoneIndex,
-    pub(crate) pruning_index: MilestoneIndex,
-    pub(crate) timestamp: u64,
+    network_id: u64,
+    snapshot_index: MilestoneIndex,
+    entry_point_index: MilestoneIndex,
+    pruning_index: MilestoneIndex,
+    timestamp: u64,
 }
 
 impl SnapshotInfo {

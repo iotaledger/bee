@@ -10,15 +10,16 @@ use bee_message::{
     payload::{
         indexation::IndexationPayload,
         milestone::{
-            MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH, MILESTONE_PUBLIC_KEY_LENGTH,
-            MILESTONE_SIGNATURE_LENGTH,
+            MilestoneId, MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH,
+            MILESTONE_PUBLIC_KEY_LENGTH, MILESTONE_SIGNATURE_LENGTH,
         },
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
         transaction::{Essence, RegularEssence, TransactionId, TransactionPayload, TRANSACTION_ID_LENGTH},
         treasury::TreasuryTransactionPayload,
         Payload,
     },
-    unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
+    signature::{Ed25519Signature, SignatureUnlock},
+    unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
     Message, MessageBuilder, MessageId, Parents, MESSAGE_ID_LENGTH,
 };
 use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
@@ -94,8 +95,8 @@ pub struct UtxoInputDto {
 pub struct TreasuryInputDto {
     #[serde(rename = "type")]
     pub kind: u8,
-    #[serde(rename = "transactionId")]
-    pub message_id: String,
+    #[serde(rename = "milestoneId")]
+    pub milestone_id: String,
 }
 
 #[derive(Clone, Debug)]
@@ -116,6 +117,7 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
             SignatureLockedDustAllowanceOutput::KIND => OutputDto::SignatureLockedDustAllowance(
                 SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap(),
             ),
+            TreasuryOutput::KIND => OutputDto::Treasury(TreasuryOutputDto::deserialize(value).unwrap()),
             type_ => panic!("unsupported type {:?}", type_),
         })
     }
@@ -236,9 +238,9 @@ pub struct MilestonePayloadDto {
     pub parents: Vec<String>,
     #[serde(rename = "inclusionMerkleProof")]
     pub inclusion_merkle_proof: String,
-    #[serde(rename = "nextPowScore")]
+    #[serde(rename = "nextPoWScore")]
     pub next_pow_score: u32,
-    #[serde(rename = "nextPowScoreMilestoneIndex")]
+    #[serde(rename = "nextPoWScoreMilestoneIndex")]
     pub next_pow_score_milestone_index: u32,
     #[serde(rename = "publicKeys")]
     pub public_keys: Vec<String>,
@@ -260,16 +262,18 @@ pub struct ReceiptPayloadDto {
     pub kind: u32,
     #[serde(rename = "migratedAt")]
     pub migrated_at: u32,
-    pub last: bool,
     pub funds: Vec<MigratedFundsEntryDto>,
     pub transaction: PayloadDto,
+    #[serde(rename = "final")]
+    pub last: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MigratedFundsEntryDto {
-    pub tail_transaction_hash: Box<[u8]>,
+    #[serde(rename = "tailTransactionHash")]
+    pub tail_transaction_hash: String,
     pub address: AddressDto,
-    pub amount: u64,
+    pub deposit: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -507,7 +511,7 @@ impl TryFrom<&Input> for InputDto {
             })),
             Input::Treasury(t) => Ok(InputDto::Treasury(TreasuryInputDto {
                 kind: TreasuryInput::KIND,
-                message_id: t.message_id().to_string(),
+                milestone_id: t.milestone_id().to_string(),
             })),
             _ => Err("input type not supported".to_string()),
         }
@@ -533,8 +537,8 @@ impl TryFrom<&InputDto> for Input {
                 .map_err(|e| format!("invalid input: {}", e))?,
             )),
             InputDto::Treasury(t) => Ok(Input::Treasury(
-                t.message_id
-                    .parse::<MessageId>()
+                t.milestone_id
+                    .parse::<MilestoneId>()
                     .map_err(|e| format!("invalid treasury input: {}", e))?
                     .into(),
             )),
@@ -862,9 +866,9 @@ impl TryFrom<&MigratedFundsEntry> for MigratedFundsEntryDto {
 
     fn try_from(value: &MigratedFundsEntry) -> Result<Self, Self::Error> {
         Ok(MigratedFundsEntryDto {
-            tail_transaction_hash: value.tail_transaction_hash().as_ref().into(),
+            tail_transaction_hash: hex::encode(value.tail_transaction_hash().as_ref()),
             address: value.output().address().try_into()?,
-            amount: value.output().amount(),
+            deposit: value.output().amount(),
         })
     }
 }
@@ -876,14 +880,13 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
     fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
         let entry = MigratedFundsEntry::new(
             TailTransactionHash::new(
-                value
-                    .tail_transaction_hash
-                    .as_ref()
+                hex::decode(value.tail_transaction_hash.clone())
+                    .map_err(|e| format!("invalid tail transaction hash: {:?}", e))?
                     .try_into()
-                    .map_err(|e| format!("invalid tail transaction hash: {}", e))?,
+                    .map_err(|e| format!("invalid tail transaction hash: {:?}", e))?,
             )
             .map_err(|e| format!("invalid tail transaction hash: {}", e))?,
-            SignatureLockedSingleOutput::new((&value.address).try_into()?, value.amount)
+            SignatureLockedSingleOutput::new((&value.address).try_into()?, value.deposit)
                 .map_err(|e| format!("invalid address or amount: {}", e))?,
         )
         .map_err(|e| format!("invalid migrated funds entry: {}", e))?;
@@ -926,9 +929,11 @@ pub struct PeerDto {
     pub id: String,
     #[serde(rename = "multiAddresses")]
     pub multi_addresses: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub alias: Option<String>,
     pub relation: RelationDto,
     pub connected: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub gossip: Option<GossipDto>,
 }
 
