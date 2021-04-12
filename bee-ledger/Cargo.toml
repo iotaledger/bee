@@ -22,7 +22,6 @@ bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev", o
 async-trait = { version = "0.1", optional = true }
 chrono = { version = "0.4", optional = true }
 digest = { version = "0.9", optional = true }
-flume = { version = "0.10", optional = true }
 futures = { version = "0.3", optional = true }
 hex = { version = "0.4", optional = true }
 iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "c3bf565eba62d0b81144174c2ff917bfde282e49", features = ["blake2b"], optional = true }
@@ -45,7 +44,6 @@ consensus = [
   "bee-ternary",
   "async-trait",
   "digest",
-  "flume",
   "futures",
   "hex",
   "iota-crypto",
@@ -57,7 +55,6 @@ consensus = [
 snapshot = [
   "async-trait",
   "chrono",
-  "flume",
   "futures",
   "log",
   "reqwest",

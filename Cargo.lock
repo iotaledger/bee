@@ -262,7 +262,6 @@ dependencies = [
  "bee-ternary",
  "chrono",
  "digest 0.9.0",
- "flume",
  "futures",
  "hex",
  "iota-crypto",
@@ -483,7 +482,6 @@ dependencies = [
  "bee-storage",
  "bitflags",
  "dashmap",
- "flume",
  "futures",
  "hashbrown 0.11.2",
  "log",
@@ -1051,19 +1049,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37ab347416e802de484e4d03c7316c48f1ecb56574dfd4a46a80f173ce1de04d"
 
 [[package]]
-name = "flume"
-version = "0.10.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "859e0fa5d4a9b5f73671712ce3e400fa17133c9b9faac607ada8e469f0b6be6c"
-dependencies = [
- "futures-core",
- "futures-sink",
- "nanorand",
- "pin-project 1.0.6",
- "spinning_top",
-]
-
-[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1239,10 +1224,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c9495705279e7140bf035dde1f6e750c162df8b625267cd52cc44e0b156732c8"
 dependencies = [
  "cfg-if 1.0.0",
- "js-sys",
  "libc",
  "wasi 0.10.2+wasi-snapshot-preview1",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -2004,15 +1987,6 @@ dependencies = [
  "pin-project 1.0.6",
  "smallvec",
  "unsigned-varint 0.7.0",
-]
-
-[[package]]
-name = "nanorand"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac1378b66f7c93a1c0f8464a19bf47df8795083842e5090f4b7305973d5a22d0"
-dependencies = [
- "getrandom 0.2.2",
 ]
 
 [[package]]
@@ -3036,15 +3010,6 @@ name = "spin"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b87bbf98cb81332a56c1ee8929845836f85e8ddd693157c30d76660196014478"
-dependencies = [
- "lock_api",
-]
-
-[[package]]
-name = "spinning_top"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bd0ab6b8c375d2d963503b90d3770010d95bc3b5f98036f948dee24bf4e8879"
 dependencies = [
  "lock_api",
 ]
