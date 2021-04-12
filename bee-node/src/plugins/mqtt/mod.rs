@@ -14,6 +14,7 @@ use self::{
 };
 
 use librumqttd as mqtt;
+use log::debug;
 use rumqttlog::Config as RouterSettings;
 
 use std::{collections::HashMap, thread};
@@ -85,7 +86,12 @@ pub async fn init<N: Node>(config: MqttConfig, mut node_builder: N::Builder) -> 
     let mut messages_referenced_tx = broker.link("messages/referenced").expect("linking mqtt sender failed");
 
     thread::spawn(move || {
+        debug!("Starting MQTT broker.");
+
+        // **NOTE**: That's a blocking call until the end of the program.
         broker.start().expect("error starting broker");
+
+        debug!("MQTT broker stopped.");
     });
 
     // **Note**: we are only interested in puplishing, hence ignore the returned receiver.
@@ -114,6 +120,5 @@ pub async fn init<N: Node>(config: MqttConfig, mut node_builder: N::Builder) -> 
     };
 
     node_builder = node_builder.with_worker_cfg::<MqttBroker>(broker_config);
-
     node_builder
 }

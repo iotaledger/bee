@@ -3,7 +3,7 @@
 
 use crate::{
     types::metrics::NodeMetrics,
-    workers::{event::IndexationMessage, storage::StorageBackend, MetricsWorker},
+    workers::{storage::StorageBackend, MetricsWorker},
 };
 
 use bee_message::{
@@ -34,7 +34,7 @@ async fn process<B: StorageBackend>(
     storage: &B,
     metrics: &NodeMetrics,
     message_id: MessageId,
-    bus: &Bus<'static>,
+    _bus: &Bus<'static>,
 ) {
     if let Some(message) = tangle.get(&message_id).await.map(|m| (*m).clone()) {
         let indexation = match message.payload() {
@@ -57,10 +57,10 @@ async fn process<B: StorageBackend>(
 
         let hash = indexation.hash();
 
-        // Relevant for MQTT
-        let index = indexation.index().to_vec();
-        let (_, bytes) = message.id();
-        bus.dispatch(IndexationMessage { index, bytes });
+        // // Relevant for MQTT
+        // let index = indexation.index().to_vec();
+        // let (_, bytes) = message.id();
+        // bus.dispatch(IndexationMessage { index, bytes });
 
         if let Err(e) = Insert::<(HashedIndex, MessageId), ()>::insert(&*storage, &(hash, message_id), &()).await {
             error!("Inserting indexation payload failed: {:?}.", e);

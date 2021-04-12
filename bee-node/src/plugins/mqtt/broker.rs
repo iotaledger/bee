@@ -117,20 +117,13 @@ impl<N: Node> Worker<N> for MqttBroker {
             },
         );
 
-        // spawn_dynamic_topic_handler(node, "indexation", |event: IndexationMessage| {
-        //     let index = hex::encode(event.index);
-        //     let bytes = event.bytes;
-
-        //     (&format!("{}/{}", TOPIC_MESSAGES_INDEXATION, index), bytes)
-        // });
-
-        info!("MQTT broker started.");
+        info!("MQTT worker started.");
 
         Ok(Self::default())
     }
 }
 
-fn spawn_static_topic_handler<N: Node, E, T, P, F>(node: &mut N, mut tx: LinkTx, topic: &'static str, f: F)
+fn spawn_static_topic_handler<N: Node, E, T, P, F>(node: &mut N, mut tx: LinkTx, topic: &'static str, into_mqtt: F)
 where
     E: Any + Clone + Send + Sync,
     T: Into<String> + Send,
@@ -143,10 +136,12 @@ where
     node.spawn::<MqttBroker, _, _>(|shutdown| async move {
         debug!("MQTT '{}' topic handler running.", topic);
 
-        let mut events = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(event_rx));
+        let mut event_rx = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(event_rx));
 
-        while let Some(event) = events.next().await {
-            let (topic, payload) = f(event);
+        while let Some(event) = event_rx.next().await {
+            // Turn the received event bound to this handler into MQTT data as specified in the Node Events API.
+            let (topic, payload) = into_mqtt(event);
+
             if let Err(e) = tx.publish(topic, false, payload) {
                 warn!("Publishing MQTT message failed. Cause: {:?}", e);
             }
@@ -161,38 +156,3 @@ where
         }
     });
 }
-
-// fn spawn_dynamic_topic_handler<N: Node, E, T, P, F>(node: &mut N, topic: &'static str, f: F)
-// where
-//     E: Any + Clone + Send + Sync,
-//     T: Into<String> + Send,
-//     P: Into<Vec<u8>> + Send,
-//     F: Fn(E) -> (T, P) + Send + Sync + 'static,
-// {
-//     let event_bus = node.bus();
-//     let (event_tx, event_rx) = mpsc::unbounded_channel();
-
-//     node.spawn::<MqttBroker, _, _>(|shutdown| async move {
-//         debug!("MQTT '{}' topic handler running.", topic);
-
-//         let mut events = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(event_rx));
-
-//         while let Some(event) = events.next().await {
-//             let (topic, payload) = f(event);
-
-//             if let Some(tx) = senders.entry(topic).or_insert(broker.link(&format!("{}/{}", topic,))) {}
-
-//             if let Err(e) = tx.publish(topic, false, payload) {
-//                 warn!("Publishing MQTT message failed. Cause: {:?}", e);
-//             }
-//         }
-
-//         debug!("MQTT '{}' topic handler stopped.", topic);
-//     });
-
-//     event_bus.add_listener::<MqttBroker, _, _>(move |event: &E| {
-//         if event_tx.send(event.clone()).is_err() {
-//             warn!("Sending event to MQTT '{}' topic handler failed.", topic)
-//         }
-//     });
-// }
