@@ -30,10 +30,12 @@ fn generator_valid() {
         WotsSecurityLevel::High,
     ];
     for security in security_levels {
-        assert!(WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
-            .with_security_level(security)
-            .build()
-            .is_ok(),);
+        assert!(
+            WotsSpongePrivateKeyGeneratorBuilder::<Kerl>::default()
+                .with_security_level(security)
+                .build()
+                .is_ok(),
+        );
     }
 }
 
