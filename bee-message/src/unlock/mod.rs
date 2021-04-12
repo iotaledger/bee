@@ -2,12 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod reference;
-mod signature;
 
 pub use reference::ReferenceUnlock;
-pub use signature::{Ed25519Signature, SignatureUnlock};
 
-use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, Error};
+use crate::{constants::UNLOCK_BLOCK_COUNT_RANGE, signature::SignatureUnlock, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 

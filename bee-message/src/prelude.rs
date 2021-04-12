@@ -24,6 +24,7 @@ pub use crate::{
         treasury::TreasuryTransactionPayload,
         Payload,
     },
-    unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
+    signature::{Ed25519Signature, SignatureUnlock},
+    unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
     Error, Message, MessageBuilder, MessageId, Parents, MESSAGE_ID_LENGTH, MESSAGE_LENGTH_MAX, MESSAGE_LENGTH_MIN,
 };

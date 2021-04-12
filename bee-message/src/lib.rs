@@ -18,6 +18,7 @@ pub mod output;
 pub mod parents;
 pub mod payload;
 pub mod prelude;
+pub mod signature;
 pub mod unlock;
 
 pub use error::Error;

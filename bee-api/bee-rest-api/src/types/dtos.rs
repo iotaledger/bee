@@ -18,7 +18,8 @@ use bee_message::{
         treasury::TreasuryTransactionPayload,
         Payload,
     },
-    unlock::{Ed25519Signature, ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
+    signature::{Ed25519Signature, SignatureUnlock},
+    unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
     Message, MessageBuilder, MessageId, Parents, MESSAGE_ID_LENGTH,
 };
 use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
