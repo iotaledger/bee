@@ -38,9 +38,12 @@ pub fn pow_hash(bytes: &[u8]) -> TritBuf<T1B1Buf> {
     curl.digest(&pow_input).unwrap()
 }
 
+/// Returns the number of trailing zeros of a Proof of Work hash.
+pub fn count_trailing_zeros(pow_hash: &Trits<T1B1>) -> usize {
+    pow_hash.iter().rev().take_while(|t| *t == Btrit::Zero).count()
+}
+
 /// Returns the Proof of Work score of a Proof of Work hash.
 pub fn pow_score(pow_hash: &Trits<T1B1>, len: usize) -> f64 {
-    let zeros = pow_hash.iter().rev().take_while(|t| *t == Btrit::Zero).count() as u32;
-
-    3u128.pow(zeros) as f64 / len as f64
+    3u128.pow(count_trailing_zeros(pow_hash) as u32) as f64 / len as f64
 }
