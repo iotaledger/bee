@@ -115,6 +115,7 @@ async fn process_past_cone_by_index<B: StorageBackend>(
             let _ = messages.insert(current_id);
 
             // We only add this as a new SEP if it has at least one unconfirmed aprover.
+            // `Unwrap` should be safe, because the current message has been confirmed, and hence must have approvers.
             let approvers = tangle.get_children(&current_id).await.unwrap();
 
             // If all approvers are part of the current SEP list, then we can assume this potential SEP is redundant.
