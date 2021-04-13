@@ -83,8 +83,8 @@ pub async fn prune<B: StorageBackend>(
             index, num_messages, num_edges, num_indexations,
         );
 
-        tangle.update_pruning_index(target_index);
-        debug!("Pruning index now at {}.", target_index);
+        tangle.update_pruning_index(index);
+        debug!("Pruning index now at {}.", index);
 
         bus.dispatch(PrunedIndex(index));
     }
