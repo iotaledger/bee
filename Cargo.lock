@@ -114,11 +114,13 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "0.2.0-alpha"
+version = "0.3.0"
 dependencies = [
  "async-trait",
+ "bee-common",
  "futures",
  "serde",
+ "thiserror",
 ]
 
 [[package]]

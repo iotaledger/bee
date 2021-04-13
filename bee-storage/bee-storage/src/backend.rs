@@ -1,6 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! This module forms the backend layer which holds the contracts of starting and shutting down the backend, as well as
+//! accessing backend properties.
+
+use crate::health::StorageHealth;
+
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 
@@ -21,6 +26,15 @@ pub trait StorageBackend: Send + Sized + Sync + 'static {
     /// Shutdowns the backend.
     async fn shutdown(self) -> Result<(), Self::Error>;
 
-    /// Size of the database in bytes. Not all backends may be able to provide it, hence the option.
+    /// Returns the size of the database in bytes.
+    /// Not all backends may be able to provide this operation.
     async fn size(&self) -> Result<Option<usize>, Self::Error>;
+
+    /// Returns the health status of the database.
+    /// Not all backends may be able to provide this operation.
+    async fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error>;
+
+    /// Sets the health status of the database.
+    /// Not all backends may be able to provide this operation.
+    async fn set_health(&self, health: StorageHealth) -> Result<(), Self::Error>;
 }
