@@ -18,7 +18,7 @@ pub fn compute_pow_score(bytes: &[u8]) -> f64 {
 
 /// Returns the Proof of Work hash of given bytes.
 pub fn pow_hash(bytes: &[u8]) -> TritBuf<T1B1Buf> {
-    assert!(bytes.len() >= std::mem::size_of::<u8>());
+    debug_assert!(bytes.len() >= std::mem::size_of::<u8>());
 
     let mut curl = CurlP81::new();
     let length = bytes.len() - std::mem::size_of::<u64>();
