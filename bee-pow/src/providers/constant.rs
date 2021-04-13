@@ -24,10 +24,6 @@ impl ConstantBuilder {
 impl NonceProviderBuilder for ConstantBuilder {
     type Provider = Constant;
 
-    fn new() -> Self {
-        Self::default()
-    }
-
     fn finish(self) -> Constant {
         Constant {
             value: self.value.unwrap_or(DEFAULT_NONCE_VALUE),

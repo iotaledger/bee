@@ -12,7 +12,9 @@ pub trait NonceProviderBuilder: Default + Sized {
     type Provider: NonceProvider<Builder = Self>;
 
     /// Creates a new nonce provider builder.
-    fn new() -> Self;
+    fn new() -> Self {
+        Self::default()
+    }
 
     /// Constructs the nonce provider from the builder.
     fn finish(self) -> Self::Provider;

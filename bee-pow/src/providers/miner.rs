@@ -85,10 +85,6 @@ impl MinerBuilder {
 impl NonceProviderBuilder for MinerBuilder {
     type Provider = Miner;
 
-    fn new() -> Self {
-        Self::default()
-    }
-
     fn finish(self) -> Miner {
         Miner {
             num_workers: self.num_workers.unwrap_or(DEFAULT_NUM_WORKERS),
