@@ -5,7 +5,7 @@
 
 use crate::providers::{NonceProvider, NonceProviderBuilder};
 
-const DEFAULT_VALUE: u64 = 0;
+const DEFAULT_NONCE_VALUE: u64 = 0;
 
 /// Builder for the `Constant` nonce provider.
 #[derive(Default)]
@@ -30,7 +30,7 @@ impl NonceProviderBuilder for ConstantBuilder {
 
     fn finish(self) -> Constant {
         Constant {
-            value: self.value.unwrap_or(DEFAULT_VALUE),
+            value: self.value.unwrap_or(DEFAULT_NONCE_VALUE),
         }
     }
 }
