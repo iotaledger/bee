@@ -26,12 +26,15 @@ pub trait StorageBackend: Send + Sized + Sync + 'static {
     /// Shutdowns the backend.
     async fn shutdown(self) -> Result<(), Self::Error>;
 
-    /// Returns the size of the database in bytes. Not all backends may be able to provide it, hence the option.
+    /// Returns the size of the database in bytes.
+    /// Not all backends may be able to provide this operation.
     async fn size(&self) -> Result<Option<usize>, Self::Error>;
 
     /// Returns the health status of the database.
+    /// Not all backends may be able to provide this operation.
     async fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error>;
 
     /// Sets the health status of the database.
+    /// Not all backends may be able to provide this operation.
     async fn set_health(&self, health: StorageHealth) -> Result<(), Self::Error>;
 }
