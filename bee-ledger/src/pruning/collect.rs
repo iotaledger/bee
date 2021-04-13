@@ -15,6 +15,8 @@ use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle};
 use hashbrown::{HashMap, HashSet};
 use ref_cast::RefCast;
 
+use std::collections::VecDeque;
+
 pub type Messages = HashSet<MessageId>;
 pub type Edges = HashSet<Edge>;
 pub type Seps = HashMap<SolidEntryPoint, MilestoneIndex>;
@@ -65,9 +67,9 @@ async fn process_past_cone_by_index<B: StorageBackend>(
         .await
         .ok_or(Error::MilestoneNotFoundInTangle(current_index))?;
 
-    let mut parents = vec![current_id];
+    let mut parents: VecDeque<_> = vec![current_id].into_iter().collect();
 
-    while let Some(current_id) = parents.pop() {
+    while let Some(current_id) = parents.pop_front() {
         // Stop conditions:
         // (1) already seen
         // (2) SEP
@@ -83,7 +85,7 @@ async fn process_past_cone_by_index<B: StorageBackend>(
                 // `unwrap` should be safe since we traverse the past of a confirmed milestone!
                 .unwrap();
 
-            let (payload, mut current_parents) = tangle
+            let (payload, current_parents) = tangle
                 .get(&current_id)
                 .await
                 .map(|current| {
@@ -108,14 +110,17 @@ async fn process_past_cone_by_index<B: StorageBackend>(
                 });
             }
 
-            parents.append(&mut current_parents);
+            parents.append(&mut current_parents.into_iter().collect());
 
             let _ = messages.insert(current_id);
 
             // We only add this as a new SEP if it has at least one unconfirmed aprover.
             let approvers = tangle.get_children(&current_id).await.unwrap();
 
-            // If all approvers are part of the current SEP list, then we can this potential SEP is redundant.
+            // If all approvers are part of the current SEP list, then we can assume this potential SEP is redundant.
+            // Since we traverse the past-cone breadth-first we can be sure that approvers are visited before their
+            // respective approvees, and the following `continue` is triggered often. This allows use to prevent
+            // fetching the approvers from the tangle.
             if approvers
                 .iter()
                 .all(|approver_id| seps.contains_key(SolidEntryPoint::ref_cast(approver_id)))
@@ -123,19 +128,21 @@ async fn process_past_cone_by_index<B: StorageBackend>(
                 continue;
             }
 
-            // This message becomes a new SEP if at least one of its approvers is not confirmed yet.
-            for approver_id in approvers {
-                if tangle
-                    .get_metadata(&approver_id)
-                    .await
-                    .unwrap()
-                    .milestone_index()
-                    .is_none()
-                {
-                    let _ = seps.insert(current_id.into(), current_milestone_index);
-                    break;
-                }
-            }
+            let _ = seps.insert(current_id.into(), current_milestone_index);
+
+            // // This message becomes a new SEP if at least one of its approvers is not confirmed yet.
+            // for approver_id in approvers {
+            //     if tangle
+            //         .get_metadata(&approver_id)
+            //         .await
+            //         .unwrap()
+            //         .milestone_index()
+            //         .is_none()
+            //     {
+            //         let _ = seps.insert(current_id.into(), current_milestone_index);
+            //         break;
+            //     }
+            // }
         }
     }
 
