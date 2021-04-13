@@ -5,7 +5,6 @@ members = [
 	"bee-message",
 	"bee-network",
 	"bee-node",
-	"bee-pow",
 	"bee-protocol",
 	"bee-storage/bee-storage-rocksdb",
 	"bee-tangle",

@@ -22,7 +22,6 @@ use bee_message::{
     unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
     Message, MessageBuilder, MessageId, Parents, MESSAGE_ID_LENGTH,
 };
-use bee_pow::providers::{ConstantBuilder, ProviderBuilder};
 use bee_protocol::types::peer::Peer;
 
 use serde::{Deserialize, Serialize, Serializer};
@@ -328,16 +327,11 @@ impl TryFrom<&MessageDto> for Message {
                 .map_err(|e| e.to_string())?,
             )
             .with_nonce_provider(
-                ConstantBuilder::new()
-                    .with_value(
-                        value
-                            .nonce
-                            .parse::<u64>()
-                            .map_err(|_| "invalid nonce: expected an u64-string".to_string())?,
-                    )
-                    .finish(),
+                value
+                    .nonce
+                    .parse::<u64>()
+                    .map_err(|_| "invalid nonce: expected an u64-string".to_string())?,
                 0f64,
-                None,
             );
         if let Some(p) = value.payload.as_ref() {
             builder = builder.with_payload(p.try_into()?);

@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_storage::backend::StorageBackend;
+use bee_storage::{backend::StorageBackend, health::StorageHealth};
 
 use std::{convert::Infallible, error::Error};
 
@@ -37,5 +37,13 @@ impl StorageBackend for DummyBackend {
 
     async fn size(&self) -> Result<Option<usize>, Self::Error> {
         Ok(None)
+    }
+
+    async fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error> {
+        Ok(None)
+    }
+
+    async fn set_health(&self, _: StorageHealth) -> Result<(), Self::Error> {
+        Ok(())
     }
 }

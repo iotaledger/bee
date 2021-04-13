@@ -14,7 +14,7 @@ use crate::{
 };
 
 use bee_message::{payload::Payload, Message, MessageBuilder, MessageId, Parents};
-use bee_pow::providers::{ConstantBuilder, MinerBuilder, ProviderBuilder};
+use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
@@ -151,7 +151,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
             .with_parents(
                 Parents::new(parents).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?,
             )
-            .with_nonce_provider(ConstantBuilder::new().with_value(nonce).finish(), 0f64, None);
+            .with_nonce_provider(nonce, 0f64);
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)
         }
@@ -172,7 +172,6 @@ pub(crate) async fn submit_message<B: StorageBackend>(
             .with_nonce_provider(
                 MinerBuilder::new().with_num_workers(num_cpus::get()).finish(),
                 protocol_config.minimum_pow_score(),
-                None,
             );
         if let Some(payload) = payload {
             builder = builder.with_payload(payload)

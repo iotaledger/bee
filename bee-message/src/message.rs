@@ -7,11 +7,9 @@ use crate::{
 };
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_pow::providers::{Miner, Provider, ProviderBuilder};
+use bee_pow::providers::{miner::Miner, NonceProvider, NonceProviderBuilder};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
-
-use std::sync::{atomic::AtomicBool, Arc};
 
 /// The minimum number of bytes in a message.
 pub const MESSAGE_LENGTH_MIN: usize = 53;
@@ -140,14 +138,14 @@ impl Packable for Message {
 }
 
 /// A `MessageBuilder` is how you construct a [Message].
-pub struct MessageBuilder<P: Provider = Miner> {
+pub struct MessageBuilder<P: NonceProvider = Miner> {
     network_id: Option<u64>,
     parents: Option<Parents>,
     payload: Option<Payload>,
-    nonce_provider: Option<(P, f64, Option<Arc<AtomicBool>>)>,
+    nonce_provider: Option<(P, f64)>,
 }
 
-impl<P: Provider> Default for MessageBuilder<P> {
+impl<P: NonceProvider> Default for MessageBuilder<P> {
     fn default() -> Self {
         Self {
             network_id: None,
@@ -158,7 +156,7 @@ impl<P: Provider> Default for MessageBuilder<P> {
     }
 }
 
-impl<P: Provider> MessageBuilder<P> {
+impl<P: NonceProvider> MessageBuilder<P> {
     pub fn new() -> Self {
         Default::default()
     }
@@ -178,8 +176,8 @@ impl<P: Provider> MessageBuilder<P> {
         self
     }
 
-    pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: f64, done: Option<Arc<AtomicBool>>) -> Self {
-        self.nonce_provider = Some((nonce_provider, target_score, done));
+    pub fn with_nonce_provider(mut self, nonce_provider: P, target_score: f64) -> Self {
+        self.nonce_provider = Some((nonce_provider, target_score));
         self
     }
 
@@ -209,15 +207,12 @@ impl<P: Provider> MessageBuilder<P> {
             return Err(Error::InvalidMessageLength(message_bytes.len()));
         }
 
-        let (nonce_provider, target_score, done) =
-            self.nonce_provider
-                .unwrap_or((P::Builder::new().finish(), 4000f64, None));
+        let (nonce_provider, target_score) = self.nonce_provider.unwrap_or((P::Builder::new().finish(), 4000f64));
 
         message.nonce = nonce_provider
             .nonce(
                 &message_bytes[..message_bytes.len() - std::mem::size_of::<u64>()],
                 target_score,
-                done,
             )
             .unwrap_or(0);
 
