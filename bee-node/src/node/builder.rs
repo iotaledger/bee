@@ -70,7 +70,7 @@ fn unix_signal_shutdown(signal_kind: SignalKind) -> oneshot::Receiver<()> {
             Ok(stream) => stream,
         };
 
-        if let None = signal_stream.recv().await {
+        if signal_stream.recv().await.is_none() {
             panic!("Failed to intercept shutdown signal.");
         }
 
