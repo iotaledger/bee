@@ -18,11 +18,10 @@ use std::collections::HashSet;
 ///
 /// Unlock blocks are the mechanism by which the inputs to a transaction are
 /// verified. There are two types of unlock blocks:
-/// * [SignatureUnlock] - The signature of the address which owns an input UTXO to
-///   the transaction, validating that the UTXO can be spent in this transaction.
-/// * [ReferenceUnlock] - A reference (via index) to a previous [SignatureUnlock]
-///   if the same unlock can be used for multiple inputs (removing duplication
-///   in the protocol).
+/// * [SignatureUnlock] - The signature of the address which owns an input UTXO to the transaction, validating that the
+///   UTXO can be spent in this transaction.
+/// * [ReferenceUnlock] - A reference (via index) to a previous [SignatureUnlock] if the same unlock can be used for
+///   multiple inputs (removing duplication in the protocol).
 ///
 /// Spec: #iota-protocol-rfc-draft
 /// <https://github.com/luca-moser/protocol-rfcs/blob/signed-tx-payload/text/0000-transaction-payload/0000-transaction-payload.md>

@@ -26,6 +26,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_storage::{backend::StorageBackend as _, health::StorageHealth};
 use bee_tangle::{MsTangle, TangleWorker};
 
 use async_trait::async_trait;
@@ -233,7 +234,13 @@ where
 
         match storage::fetch_snapshot_info(&*storage).await? {
             None => {
-                import_snapshots(&*storage, &*tangle, network_id, &snapshot_config).await?;
+                if let Err(e) = import_snapshots(&*storage, &*tangle, network_id, &snapshot_config).await {
+                    (*storage)
+                        .set_health(StorageHealth::Corrupted)
+                        .await
+                        .map_err(|e| Error::Storage(Box::new(e)))?;
+                    Err(e)?;
+                }
             }
             Some(info) => {
                 if info.network_id() != network_id {

@@ -21,10 +21,10 @@ use crypto::hashes::{blake2b::Blake2b256, Digest};
 ///
 /// As of April 2021 (RFC draft stage) the possible input and output types are:
 /// * [`UtxoInput`](crate::input::UtxoInput) - the output block from a previous transaction
-/// * [`SignatureLockedSingleOutput`](crate::output::SignatureLockedSingleOutput) - deposit to a
-///   single address which is unlocked via a signature
-/// * [`SignatureLockedDustAllowanceOutput`](crate::output::SignatureLockedDustAllowanceOutput) -
-///   deposit to a single address which also alters the dust allowance of the target address
+/// * [`SignatureLockedSingleOutput`](crate::output::SignatureLockedSingleOutput) - deposit to a single address which is
+///   unlocked via a signature
+/// * [`SignatureLockedDustAllowanceOutput`](crate::output::SignatureLockedDustAllowanceOutput) - deposit to a single
+///   address which also alters the dust allowance of the target address
 ///
 /// And there are two types of unlock blocks:
 /// * [`SignatureUnlock`](crate::unlock::SignatureUnlock)
