@@ -74,14 +74,14 @@ pub async fn prune<B: StorageBackend>(
         let mut batch = B::batch_begin();
 
         // ... the confirmed data,
-        let mut num_messages = prune_messages(storage, &mut batch, confirmed).await?;
+        let mut num_messages = 0; //prune_messages(storage, &mut batch, confirmed).await?;
         let mut num_edges = prune_edges(storage, &mut batch, edges).await?;
         let mut num_indexations = prune_indexations(storage, &mut batch, indexations).await?;
 
         // ... and the unconfirmed data,
         // num_messages += prune_unconfirmed_messages(storage, &mut batch, index, unconfirmed).await?;
-        // num_edges += prune_edges(storage, &mut batch, unconfirmed_edges).await?;
-        // num_indexations += prune_indexations(storage, &mut batch, unconfirmed_indexations).await?;
+        num_edges += prune_edges(storage, &mut batch, unconfirmed_edges).await?;
+        num_indexations += prune_indexations(storage, &mut batch, unconfirmed_indexations).await?;
 
         // ... and the milestone data itself.
         prune_milestone(storage, &mut batch, index).await?;
