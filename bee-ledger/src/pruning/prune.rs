@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{collect::*, error::Error};
+use super::{collect::*, error::Error, PruningConfig};
 
 use crate::{
     consensus::{event::PrunedIndex, StorageBackend},
@@ -25,12 +25,17 @@ pub async fn prune<B: StorageBackend>(
     tangle: &MsTangle<B>,
     bus: &Bus<'_>,
     target_index: MilestoneIndex,
+    config: &PruningConfig,
 ) -> Result<(), Error> {
     info!("Pruning...");
 
     // Start pruning from the last pruning index + 1.
     let start_index = tangle.get_pruning_index() + 1;
     debug_assert!(target_index > start_index);
+
+    // Batch size
+    // let batch_size = config.batch_size() as u32;
+    // let mut batch_idx = 1;
 
     // Get access to the storage backend of the Tangle.
     let storage = tangle.hooks();
@@ -41,7 +46,7 @@ pub async fn prune<B: StorageBackend>(
         // Collect the data that can be safely pruned.
         let (confirmed, edges, new_seps, indexations) = collect_confirmed_data(tangle, index).await?;
         let (unconfirmed, unconfirmed_edges, unconfirmed_indexations) =
-            collect_unconfirmed_data(storage, index.into()).await?;
+            collect_unconfirmed_data(storage, index).await?;
 
         debug!(
             "New entry point index {}. (Selected {} new solid entry points).",
@@ -73,10 +78,18 @@ pub async fn prune<B: StorageBackend>(
         // prune_receipt(storage, &mut batch, index).await?;
         prune_output_diff(storage, &mut batch, index).await?;
 
+        // if batch_idx % batch_size == 0 {
         storage
             .batch_commit(batch, true)
             .await
             .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+        //     is_dirty = false;
+        // } else {
+        //     is_dirty = true;
+        // }
+
+        // batch_idx += 1;
 
         debug!(
             "Pruned milestone {} consisting of {} messages, {} edges, {} indexations.",
@@ -86,6 +99,13 @@ pub async fn prune<B: StorageBackend>(
         tangle.update_pruning_index(index);
         debug!("Pruning index now at {}.", index);
     }
+
+    // if is_dirty {
+    //     storage
+    //         .batch_commit(batch, true)
+    //         .await
+    //         .map_err(|e| Error::StorageError(Box::new(e)))?;
+    // }
 
     bus.dispatch(PrunedIndex(target_index));
 

@@ -8,6 +8,8 @@ const DEFAULT_DELAY: u32 = 60480;
 const DEFAULT_PRUNE_RECEIPTS: bool = false;
 const DEFAULT_BATCH_SIZE: usize = 1;
 
+const MIN_BATCH_SIZE: usize = 1;
+
 #[derive(Default, Deserialize)]
 pub struct PruningConfigBuilder {
     enabled: Option<bool>,
@@ -37,7 +39,7 @@ impl PruningConfigBuilder {
     }
 
     pub fn batch_size(mut self, batch_size: usize) -> Self {
-        self.batch_size.replace(batch_size);
+        self.batch_size.replace(batch_size.max(MIN_BATCH_SIZE));
         self
     }
 
