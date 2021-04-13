@@ -38,28 +38,28 @@ pub enum Error {
     InvalidPowScore(f64, usize),
 }
 
-/// A type to signal the `Miner` nonce provider to abort operations.
+/// A type to cancel the `Miner` nonce provider to abort operations.
 #[derive(Default, Clone)]
-pub struct MinerSignal(Arc<AtomicBool>);
+pub struct MinerCancel(Arc<AtomicBool>);
 
-impl MinerSignal {
-    /// Creates a new `MinerSignal`.
+impl MinerCancel {
+    /// Creates a new `MinerCancel`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Triggers the signal.
-    pub fn signal(&self) {
+    /// Cancels the `Miner` nonce provider.
+    pub fn trigger(&self) {
         self.0.store(true, Ordering::Relaxed);
     }
 
-    /// Checks if the signal has been triggered.
-    pub fn is_signaled(&self) -> bool {
+    /// Checks if cancellation has been triggered.
+    pub fn is_cancelled(&self) -> bool {
         self.0.load(Ordering::Relaxed)
     }
 
-    /// Reset the signal.
-    pub fn reset(&self) {
+    /// Reset the cancel flag.
+    fn reset(&self) {
         self.0.store(false, Ordering::Relaxed);
     }
 }
@@ -68,7 +68,7 @@ impl MinerSignal {
 #[derive(Default)]
 pub struct MinerBuilder {
     num_workers: Option<usize>,
-    signal: Option<MinerSignal>,
+    cancel: Option<MinerCancel>,
 }
 
 impl MinerBuilder {
@@ -78,9 +78,9 @@ impl MinerBuilder {
         self
     }
 
-    /// Sets a signal to abort the `Miner` nonce provider.
-    pub fn with_signal(mut self, signal: MinerSignal) -> Self {
-        self.signal.replace(signal);
+    /// Sets a `MinerCancel to abort the `Miner` nonce provider.
+    pub fn with_cancel(mut self, cancel: MinerCancel) -> Self {
+        self.cancel.replace(cancel);
         self
     }
 }
@@ -91,7 +91,7 @@ impl NonceProviderBuilder for MinerBuilder {
     fn finish(self) -> Miner {
         Miner {
             num_workers: self.num_workers.unwrap_or(DEFAULT_NUM_WORKERS),
-            signal: self.signal.unwrap_or_else(MinerSignal::new),
+            cancel: self.cancel.unwrap_or_else(MinerCancel::new),
         }
     }
 }
@@ -99,12 +99,12 @@ impl NonceProviderBuilder for MinerBuilder {
 /// A nonce provider that mine nonces.
 pub struct Miner {
     num_workers: usize,
-    signal: MinerSignal,
+    cancel: MinerCancel,
 }
 
 impl Miner {
     fn worker(
-        signal: MinerSignal,
+        cancel: MinerCancel,
         pow_digest: TritBuf<T1B1Buf>,
         start_nonce: u64,
         target_zeros: usize,
@@ -119,7 +119,7 @@ impl Miner {
             buffers.push(buffer);
         }
 
-        while !signal.is_signaled() {
+        while !cancel.is_cancelled() {
             for (i, buffer) in buffers.iter_mut().enumerate() {
                 let nonce_trits = b1t6::encode::<T1B1Buf>(&(nonce + i as u64).to_le_bytes());
                 buffer[pow_digest.len()..pow_digest.len() + nonce_trits.len()].copy_from(&nonce_trits);
@@ -130,7 +130,7 @@ impl Miner {
                 let trailing_zeros = hash.iter().rev().take_while(|t| *t == Btrit::Zero).count();
 
                 if trailing_zeros >= target_zeros {
-                    signal.signal();
+                    cancel.trigger();
                     return Ok(nonce + i as u64);
                 }
             }
@@ -147,7 +147,7 @@ impl NonceProvider for Miner {
     type Error = Error;
 
     fn nonce(&self, bytes: &[u8], target_score: f64) -> Result<u64, Self::Error> {
-        self.signal.reset();
+        self.cancel.reset();
 
         let mut nonce = 0;
         let mut pow_digest = TritBuf::<T1B1Buf>::new();
@@ -166,11 +166,11 @@ impl NonceProvider for Miner {
 
         for i in 0..self.num_workers {
             let start_nonce = i as u64 * worker_width;
-            let _signal = self.signal.clone();
+            let _cancel = self.cancel.clone();
             let _pow_digest = pow_digest.clone();
 
             workers.push(thread::spawn(move || {
-                Miner::worker(_signal, _pow_digest, start_nonce, target_zeros)
+                Miner::worker(_cancel, _pow_digest, start_nonce, target_zeros)
             }));
         }
 

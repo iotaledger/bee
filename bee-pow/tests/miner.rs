@@ -3,7 +3,7 @@
 
 use bee_pow::{
     providers::{
-        miner::{MinerBuilder, MinerSignal},
+        miner::{MinerBuilder, MinerCancel},
         NonceProvider, NonceProviderBuilder,
     },
     score::compute_pow_score,
@@ -23,10 +23,10 @@ fn miner_provide() {
 
 #[test]
 fn miner_abort() {
-    let signal = MinerSignal::new();
+    let cancel = MinerCancel::new();
     let miner = MinerBuilder::new()
         .with_num_workers(4)
-        .with_signal(signal.clone())
+        .with_cancel(cancel.clone())
         .finish();
     let bytes = rand_bytes(256);
 
@@ -36,7 +36,7 @@ fn miner_abort() {
 
     std::thread::sleep(std::time::Duration::from_secs(1));
 
-    signal.signal();
+    cancel.trigger();
 
     assert!(now.elapsed().as_secs() < 2);
     assert!(matches!(handle.join(), Ok(0)));
