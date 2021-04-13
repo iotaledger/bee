@@ -25,7 +25,7 @@ pub type UnconfirmedMessages = Vec<UnconfirmedMessage>;
 /// Collects all prunable nodes/vertices and edges of the Tangle for the specified index.
 pub async fn collect_confirmed_data<B: StorageBackend>(
     tangle: &MsTangle<B>,
-    current_index: u32,
+    current_index: MilestoneIndex,
 ) -> Result<(Messages, Edges, Seps, Indexations), Error> {
     let mut messages = Messages::default();
     let mut edges = Edges::default();
@@ -33,9 +33,9 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
     let mut indexations = Indexations::default();
 
     let current_id = tangle
-        .get_milestone_message_id(current_index.into())
+        .get_milestone_message_id(current_index)
         .await
-        .ok_or(Error::MilestoneNotFoundInTangle(current_index))?;
+        .ok_or(Error::MilestoneNotFoundInTangle(*current_index))?;
 
     let mut parents: VecDeque<_> = vec![current_id].into_iter().collect();
 

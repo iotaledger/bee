@@ -3,17 +3,19 @@
 
 use super::{collect::*, error::Error};
 
-use crate::consensus::{event::PrunedIndex, StorageBackend};
+use crate::{
+    consensus::{event::PrunedIndex, StorageBackend},
+    types::OutputDiff,
+};
 
 use bee_message::{
     milestone::Milestone,
-    payload::Payload,
     prelude::{HashedIndex, MilestoneIndex},
     Message, MessageId,
 };
 
 use bee_runtime::event::Bus;
-use bee_storage::access::{Batch, Fetch};
+use bee_storage::access::Batch;
 use bee_tangle::{
     metadata::MessageMetadata, ms_tangle::StorageHooks, unconfirmed_message::UnconfirmedMessage, MsTangle,
 };
@@ -34,6 +36,8 @@ pub async fn prune<B: StorageBackend>(
     let storage = tangle.hooks();
 
     for index in *start_index..=*target_index {
+        let index: MilestoneIndex = index.into();
+
         // Collect the data that can be safely pruned.
         let (confirmed, edges, new_seps, indexations) = collect_confirmed_data(tangle, index).await?;
         let (unconfirmed, unconfirmed_edges, unconfirmed_indexations) =
@@ -49,7 +53,7 @@ pub async fn prune<B: StorageBackend>(
         tangle.replace_solid_entry_points(new_seps).await;
 
         // Remember up to which index we determined SEPs.
-        tangle.update_entry_point_index(index.into());
+        tangle.update_entry_point_index(index);
 
         // Prepare a batch of ...
         let mut batch = B::batch_begin();
@@ -60,12 +64,14 @@ pub async fn prune<B: StorageBackend>(
         let mut num_indexations = prune_indexations(storage, &mut batch, indexations).await?;
 
         // ... and the unconfirmed data,
-        num_messages += prune_unconfirmed_messages(storage, &mut batch, index.into(), unconfirmed).await?;
+        num_messages += prune_unconfirmed_messages(storage, &mut batch, index, unconfirmed).await?;
         num_edges += prune_edges(storage, &mut batch, unconfirmed_edges).await?;
         num_indexations += prune_indexations(storage, &mut batch, unconfirmed_indexations).await?;
 
         // ... and the milestone data itself.
-        prune_milestone(storage, &mut batch, index.into()).await?;
+        prune_milestone(storage, &mut batch, index).await?;
+        // prune_receipt(storage, &mut batch, index).await?;
+        prune_output_diff(storage, &mut batch, index).await?;
 
         storage
             .batch_commit(batch, true)
@@ -77,12 +83,11 @@ pub async fn prune<B: StorageBackend>(
             index, num_messages, num_edges, num_indexations,
         );
 
-        bus.dispatch(PrunedIndex(index.into()));
+        tangle.update_pruning_index(target_index);
+        debug!("Pruning index now at {}.", target_index);
+
+        bus.dispatch(PrunedIndex(index));
     }
-
-    tangle.update_pruning_index(target_index);
-
-    debug!("Pruning index now at {}.", target_index);
 
     Ok(())
 }
@@ -182,3 +187,25 @@ async fn prune_milestone<B: StorageBackend>(
 
     Ok(())
 }
+
+async fn prune_output_diff<B: StorageBackend>(
+    storage: &StorageHooks<B>,
+    batch: &mut B::Batch,
+    index: MilestoneIndex,
+) -> Result<(), Error> {
+    Batch::<MilestoneIndex, OutputDiff>::batch_delete(&***storage, batch, &index)
+        .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+    Ok(())
+}
+
+// async fn prune_receipt<B: StorageBackend>(
+//     storage: &StorageHooks<B>,
+//     batch: &mut B::Batch,
+//     index: MilestoneIndex,
+// ) -> Result<(), Error> {
+//     Batch::<MilestoneIndex, Receipt>::batch_delete(&***storage, batch, &index)
+//         .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+//     Ok(())
+// }
