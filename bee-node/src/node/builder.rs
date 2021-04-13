@@ -24,6 +24,9 @@ use futures::{channel::oneshot, future::Future};
 use fxhash::FxBuildHasher;
 use log::{debug, info, warn};
 
+#[cfg(unix)]
+use tokio::signal::unix::{signal, SignalKind};
+
 use std::{
     any::{type_name, Any, TypeId},
     collections::{HashMap, HashSet},
@@ -35,6 +38,14 @@ type WorkerStart<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output
 type WorkerStop<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> + Send;
 type ResourceRegister<N> = dyn for<'a> FnOnce(&'a mut N);
 
+fn shutdown_procedure(sender: oneshot::Sender<()>) {
+    warn!("Gracefully shutting down the node, this may take some time.");
+
+    if let Err(e) = sender.send(()) {
+        panic!("Failed to send the shutdown signal: {:?}", e);
+    }
+}
+
 fn ctrl_c_listener() -> oneshot::Receiver<()> {
     let (sender, receiver) = oneshot::channel();
 
@@ -43,11 +54,27 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
             panic!("Failed to intercept CTRL-C: {:?}.", e);
         }
 
-        warn!("Gracefully shutting down the node, this may take some time.");
+        shutdown_procedure(sender);
+    });
 
-        if let Err(e) = sender.send(()) {
-            panic!("Failed to send the shutdown signal: {:?}.", e);
+    receiver
+}
+
+#[cfg(unix)]
+fn unix_signal_shutdown(signal_kind: SignalKind) -> oneshot::Receiver<()> {
+    let (sender, receiver) = oneshot::channel();
+
+    tokio::spawn(async move {
+        let mut signal_stream = match signal(signal_kind) {
+            Err(e) => panic!("Failed to initialize signal stream: {:?}", e),
+            Ok(stream) => stream,
+        };
+
+        if let None = signal_stream.recv().await {
+            panic!("Failed to intercept shutdown signal.");
         }
+
+        shutdown_procedure(sender);
     });
 
     receiver
@@ -176,7 +203,12 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         info!("Initializing network layer...");
         let (this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
 
-        let this = this.with_resource(ctrl_c_listener());
+        let this = if cfg!(unix) {
+            this.with_resource(ctrl_c_listener())
+                .with_resource(unix_signal_shutdown(SignalKind::terminate()))
+        } else {
+            this.with_resource(ctrl_c_listener())
+        };
 
         info!("Initializing ledger...");
         let this = bee_ledger::consensus::init::<BeeNode<B>>(
