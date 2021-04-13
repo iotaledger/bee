@@ -13,7 +13,7 @@ pub enum Error {
     Io(#[from] std::io::Error),
     /// Unknown storage health variant.
     #[error("Unknown storage health variant: {0}")]
-    UnknownHealthVariant(u8),
+    UnknownHealth(u8),
 }
 
 /// Represents different health states for a `StorageBackend`.
@@ -46,7 +46,7 @@ impl Packable for StorageHealth {
             0 => Ok(StorageHealth::Healthy),
             1 => Ok(StorageHealth::Idle),
             2 => Ok(StorageHealth::Corrupted),
-            h => Err(Error::UnknownHealthVariant(h)),
+            h => Err(Error::UnknownHealth(h)),
         }
     }
 }
