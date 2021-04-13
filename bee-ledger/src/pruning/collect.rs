@@ -26,6 +26,7 @@ pub type UnconfirmedMessages = Vec<UnconfirmedMessage>;
 pub async fn collect_confirmed_data<B: StorageBackend>(
     tangle: &MsTangle<B>,
     current_index: MilestoneIndex,
+    previous_seps: &HashSet<MessageId>,
 ) -> Result<(Messages, Edges, Seps, Indexations), Error> {
     let mut messages = Messages::default();
     let mut edges = Edges::default();
@@ -43,7 +44,10 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
         // Stop conditions:
         // (1) already seen
         // (2) SEP
-        if messages.contains(&current_id) || tangle.is_solid_entry_point(&current_id).await {
+        if messages.contains(&current_id)
+            || previous_seps.contains(&current_id)
+            || tangle.is_solid_entry_point(&current_id).await
+        {
             continue;
         } else {
             let current_milestone_index = tangle

@@ -19,6 +19,8 @@ use bee_storage::access::Batch;
 use bee_tangle::{
     metadata::MessageMetadata, ms_tangle::StorageHooks, unconfirmed_message::UnconfirmedMessage, MsTangle,
 };
+
+use hashbrown::HashSet;
 use log::{debug, info};
 
 pub async fn prune<B: StorageBackend>(
@@ -40,11 +42,13 @@ pub async fn prune<B: StorageBackend>(
     // Get access to the storage backend of the Tangle.
     let storage = tangle.hooks();
 
+    let mut previous_seps = HashSet::default();
+
     for index in *start_index..=*target_index {
         let index: MilestoneIndex = index.into();
 
         // Collect the data that can be safely pruned.
-        let (confirmed, edges, new_seps, indexations) = collect_confirmed_data(tangle, index).await?;
+        let (confirmed, edges, new_seps, indexations) = collect_confirmed_data(tangle, index, &previous_seps).await?;
         let (unconfirmed, unconfirmed_edges, unconfirmed_indexations) =
             collect_unconfirmed_data(storage, index).await?;
 
@@ -53,6 +57,12 @@ pub async fn prune<B: StorageBackend>(
             index,
             new_seps.len()
         );
+
+        // TEMP
+        previous_seps.clear();
+        for (sep, _) in &new_seps {
+            previous_seps.insert(*sep.message_id());
+        }
 
         // Replace SEPs in the Tangle.
         tangle.replace_solid_entry_points(new_seps).await;
