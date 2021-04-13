@@ -25,7 +25,7 @@ use std::{
 const DEFAULT_NUM_WORKERS: usize = 1;
 // Precomputed natural logarithm of 3 for performance reasons.
 // See https://oeis.org/A002391.
-const LN_3: f64 = 1.098_612_288_668_109_8;
+const LN_3: f64 = 1.098_612_288_668_109_7;
 
 /// Errors occurring when computing nonces with the `Miner` nonce provider.
 #[derive(Error, Debug)]
