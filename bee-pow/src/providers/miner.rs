@@ -33,6 +33,9 @@ pub enum Error {
     /// The worker has been cancelled.
     #[error("The worker has been cancelled.")]
     Cancelled,
+    /// Invalid proof of work score.
+    #[error("Invalid proof of work score {0}, requiring {} trailing zeros.")]
+    InvalidPowScore(f64, usize),
 }
 
 /// A type to signal the `Miner` nonce provider to abort operations.
@@ -106,8 +109,6 @@ impl Miner {
         start_nonce: u64,
         target_zeros: usize,
     ) -> Result<u64, Error> {
-        assert!(target_zeros <= HASH_LENGTH);
-
         let mut nonce = start_nonce;
         let mut hasher = BatchHasher::<T1B1Buf>::new(HASH_LENGTH, CurlPRounds::Rounds81);
         let mut buffers = Vec::<TritBuf<T1B1Buf>>::with_capacity(BATCH_SIZE);
@@ -152,6 +153,11 @@ impl NonceProvider for Miner {
         let mut pow_digest = TritBuf::<T1B1Buf>::new();
         let target_zeros =
             (((bytes.len() + std::mem::size_of::<u64>()) as f64 * target_score).ln() / LN_3).ceil() as usize;
+
+        if target_zeros > HASH_LENGTH {
+            return Err(Self::Error::InvalidPowScore(target_score, target_zeros));
+        }
+
         let worker_width = u64::MAX / self.num_workers as u64;
         let mut workers = Vec::with_capacity(self.num_workers);
         let hash = Blake2b256::digest(&bytes);
