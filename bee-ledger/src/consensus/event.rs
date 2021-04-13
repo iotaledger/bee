@@ -26,3 +26,7 @@ pub struct MilestoneConfirmed {
 pub struct OutputConsumed(pub ConsumedOutput);
 
 pub struct OutputCreated(pub CreatedOutput);
+
+pub struct SnapshottedIndex(pub MilestoneIndex);
+
+pub struct PrunedIndex(pub MilestoneIndex);
