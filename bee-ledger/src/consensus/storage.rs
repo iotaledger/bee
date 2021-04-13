@@ -56,6 +56,7 @@ pub trait StorageBackend:
     + Insert<Unspent, ()>
     + Insert<(), LedgerIndex>
     + Insert<(bool, TreasuryOutput), ()>
+    + Insert<SolidEntryPoint, MilestoneIndex>
     + Truncate<SolidEntryPoint, MilestoneIndex>
     + for<'a> AsStream<'a, Unspent, ()>
     + for<'a> AsStream<'a, Address, Balance>
@@ -95,6 +96,7 @@ impl<T> StorageBackend for T where
         + Insert<Unspent, ()>
         + Insert<(), LedgerIndex>
         + Insert<(bool, TreasuryOutput), ()>
+        + Insert<SolidEntryPoint, MilestoneIndex>
         + Truncate<SolidEntryPoint, MilestoneIndex>
         + for<'a> AsStream<'a, Unspent, ()>
         + for<'a> AsStream<'a, Address, Balance>

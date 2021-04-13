@@ -33,6 +33,9 @@ pub struct NodeMetrics {
     transaction_payload: AtomicU64,
     milestone_payload: AtomicU64,
     indexation_payload: AtomicU64,
+
+    snapshots: AtomicU64,
+    prunings: AtomicU64,
 }
 
 impl NodeMetrics {
@@ -217,6 +220,22 @@ impl NodeMetrics {
     pub fn indexation_payload_inc(&self, value: u64) -> u64 {
         self.indexation_payload.fetch_add(value, Ordering::SeqCst)
     }
+
+    pub fn snapshots(&self) -> u64 {
+        self.snapshots.load(Ordering::Relaxed)
+    }
+
+    pub fn snapshots_inc(&self, value: u64) -> u64 {
+        self.snapshots.fetch_add(value, Ordering::SeqCst)
+    }
+
+    pub fn prunings(&self) -> u64 {
+        self.prunings.load(Ordering::Relaxed)
+    }
+
+    pub fn prunings_inc(&self, value: u64) -> u64 {
+        self.prunings.fetch_add(value, Ordering::SeqCst)
+    }
 }
 
 #[cfg(test)]
@@ -250,6 +269,8 @@ mod tests {
         assert_eq!(metrics.transaction_payload(), 0);
         assert_eq!(metrics.milestone_payload(), 0);
         assert_eq!(metrics.indexation_payload(), 0);
+        assert_eq!(metrics.snapshots(), 0);
+        assert_eq!(metrics.prunings(), 0);
 
         metrics.invalid_packets_inc();
         metrics.milestone_requests_received_inc();
@@ -273,6 +294,8 @@ mod tests {
         metrics.transaction_payload_inc(1);
         metrics.milestone_payload_inc(1);
         metrics.indexation_payload_inc(1);
+        metrics.snapshots_inc(1);
+        metrics.prunings_inc(1);
 
         assert_eq!(metrics.invalid_packets(), 1);
         assert_eq!(metrics.milestone_requests_received(), 1);
@@ -296,5 +319,7 @@ mod tests {
         assert_eq!(metrics.transaction_payload(), 1);
         assert_eq!(metrics.milestone_payload(), 1);
         assert_eq!(metrics.indexation_payload(), 1);
+        assert_eq!(metrics.snapshots(), 1);
+        assert_eq!(metrics.prunings(), 1);
     }
 }
