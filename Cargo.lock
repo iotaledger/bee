@@ -120,6 +120,7 @@ dependencies = [
  "bee-common",
  "futures",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
