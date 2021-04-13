@@ -3,8 +3,8 @@
 
 //! Contains nonce providers for Proof of Work.
 
-pub mod constant;
 pub mod miner;
+pub mod u64;
 
 /// A trait to build nonce providers.
 pub trait NonceProviderBuilder: Default + Sized {
