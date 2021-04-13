@@ -19,11 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.1.0 - 2021-04-12
+## 0.1.0 - 2021-04-13
 
 ### Added
 
 - Proof of Work scoring functions;
 - NonceProviderBuilder/NonceProvider traits;
 - MinerBuilder/Miner nonce provider;
-- ConstantBuilder/Constant nonce provider;
+- u64 nonce provider;
