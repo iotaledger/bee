@@ -12,11 +12,15 @@ use bee_ternary::{b1t6, Btrit, T1B1Buf, TritBuf, Trits, T1B1};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 /// Computes the Proof of Work score of given bytes.
+/// Panic: expects at least 8 bytes.
 pub fn compute_pow_score(bytes: &[u8]) -> f64 {
+    debug_assert!(bytes.len() >= std::mem::size_of::<u8>());
+
     pow_score(&pow_hash(bytes), bytes.len())
 }
 
 /// Returns the Proof of Work hash of given bytes.
+/// Panic: expects at least 8 bytes.
 pub fn pow_hash(bytes: &[u8]) -> TritBuf<T1B1Buf> {
     debug_assert!(bytes.len() >= std::mem::size_of::<u8>());
 
