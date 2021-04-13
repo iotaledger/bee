@@ -20,11 +20,11 @@ pub enum Error {
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum StorageHealth {
-    /// Healthy backend state.
+    /// The storage is in a healthy state.
     Healthy = 0,
-    /// Idle backend state.
+    /// The storage is running and the health status is idle.
     Idle = 1,
-    /// Corrupted backend state.
+    /// The storage has been corrupted.
     Corrupted = 2,
 }
 
