@@ -119,8 +119,8 @@ async fn process_past_cone_by_index<B: StorageBackend>(
 
             // If all approvers are part of the current SEP list, then we can assume this potential SEP is redundant.
             // Since we traverse the past-cone breadth-first we can be sure that approvers are visited before their
-            // respective approvees, and the following `continue` is triggered often. This allows use to prevent
-            // fetching the approvers from the tangle.
+            // respective approvees, and the following `continue` is triggered often. This allows us to not having to
+            // fetch the metadata for all of its approvers from the Tangle.
             if approvers
                 .iter()
                 .all(|approver_id| seps.contains_key(SolidEntryPoint::ref_cast(approver_id)))
@@ -129,20 +129,6 @@ async fn process_past_cone_by_index<B: StorageBackend>(
             }
 
             let _ = seps.insert(current_id.into(), current_milestone_index);
-
-            // // This message becomes a new SEP if at least one of its approvers is not confirmed yet.
-            // for approver_id in approvers {
-            //     if tangle
-            //         .get_metadata(&approver_id)
-            //         .await
-            //         .unwrap()
-            //         .milestone_index()
-            //         .is_none()
-            //     {
-            //         let _ = seps.insert(current_id.into(), current_milestone_index);
-            //         break;
-            //     }
-            // }
         }
     }
 
