@@ -30,15 +30,42 @@ const LN_3: f64 = 1.098_612_288_668_109;
 /// Errors occurring when computing nonces with the `Miner` nonce provider.
 #[derive(Error, Debug)]
 pub enum Error {
+    /// The worker has been cancelled.
     #[error("The worker has been cancelled.")]
     Cancelled,
+}
+
+/// A type to signal the `Miner` nonce provider to abort operations.
+#[derive(Default, Clone)]
+pub struct MinerSignal(Arc<AtomicBool>);
+
+impl MinerSignal {
+    /// Creates a new `MinerSignal`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Triggers the signal.
+    pub fn signal(&self) {
+        self.0.store(true, Ordering::Relaxed);
+    }
+
+    /// Checks if the signal has been triggered.
+    pub fn is_signaled(&self) -> bool {
+        self.0.load(Ordering::Relaxed)
+    }
+
+    /// Reset the signal.
+    pub fn reset(&self) {
+        self.0.store(false, Ordering::Relaxed);
+    }
 }
 
 /// Builder for the `Miner` nonce provider.
 #[derive(Default)]
 pub struct MinerBuilder {
     num_workers: Option<usize>,
-    signal: Option<Arc<AtomicBool>>,
+    signal: Option<MinerSignal>,
 }
 
 impl MinerBuilder {
@@ -49,7 +76,7 @@ impl MinerBuilder {
     }
 
     /// Sets a signal to abort the `Miner` nonce provider.
-    pub fn with_signal(mut self, signal: Arc<AtomicBool>) -> Self {
+    pub fn with_signal(mut self, signal: MinerSignal) -> Self {
         self.signal.replace(signal);
         self
     }
@@ -65,7 +92,7 @@ impl NonceProviderBuilder for MinerBuilder {
     fn finish(self) -> Miner {
         Miner {
             num_workers: self.num_workers.unwrap_or(DEFAULT_NUM_WORKERS),
-            signal: self.signal.unwrap_or_else(|| Arc::new(AtomicBool::new(false))),
+            signal: self.signal.unwrap_or_else(MinerSignal::new),
         }
     }
 }
@@ -73,12 +100,12 @@ impl NonceProviderBuilder for MinerBuilder {
 /// A nonce provider that mine nonces.
 pub struct Miner {
     num_workers: usize,
-    signal: Arc<AtomicBool>,
+    signal: MinerSignal,
 }
 
 impl Miner {
     fn worker(
-        signal: Arc<AtomicBool>,
+        signal: MinerSignal,
         pow_digest: TritBuf<T1B1Buf>,
         start_nonce: u64,
         target_zeros: usize,
@@ -95,7 +122,7 @@ impl Miner {
             buffers.push(buffer);
         }
 
-        while !signal.load(Ordering::Relaxed) {
+        while !signal.is_signaled() {
             for (i, buffer) in buffers.iter_mut().enumerate() {
                 let nonce_trits = b1t6::encode::<T1B1Buf>(&(nonce + i as u64).to_le_bytes());
                 buffer[pow_digest.len()..pow_digest.len() + nonce_trits.len()].copy_from(&nonce_trits);
@@ -106,7 +133,7 @@ impl Miner {
                 let trailing_zeros = hash.iter().rev().take_while(|t| *t == Btrit::Zero).count();
 
                 if trailing_zeros >= target_zeros {
-                    signal.store(true, Ordering::Relaxed);
+                    signal.signal();
                     return Ok(nonce + i as u64);
                 }
             }
@@ -123,7 +150,7 @@ impl NonceProvider for Miner {
     type Error = Error;
 
     fn nonce(&self, bytes: &[u8], target_score: f64) -> Result<u64, Self::Error> {
-        self.signal.store(false, Ordering::Relaxed);
+        self.signal.reset();
 
         let mut nonce = 0;
         let mut pow_digest = TritBuf::<T1B1Buf>::new();

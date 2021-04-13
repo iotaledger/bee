@@ -2,15 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_pow::{
-    providers::{MinerBuilder, NonceProvider, NonceProviderBuilder},
+    providers::{
+        miner::{MinerBuilder, MinerSignal},
+        NonceProvider, NonceProviderBuilder,
+    },
     score::compute_pow_score,
 };
 use bee_test::rand::bytes::rand_bytes;
-
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
-};
 
 #[test]
 fn miner_provide() {
@@ -25,7 +23,7 @@ fn miner_provide() {
 
 #[test]
 fn miner_abort() {
-    let signal = Arc::new(AtomicBool::new(false));
+    let signal = MinerSignal::new();
     let miner = MinerBuilder::new()
         .with_num_workers(4)
         .with_signal(signal.clone())
@@ -38,7 +36,7 @@ fn miner_abort() {
 
     std::thread::sleep(std::time::Duration::from_secs(1));
 
-    signal.store(true, Ordering::Relaxed);
+    signal.signal();
 
     assert!(now.elapsed().as_secs() < 2);
     assert!(matches!(handle.join(), Ok(0)));

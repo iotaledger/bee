@@ -3,11 +3,8 @@
 
 //! Contains nonce providers for Proof of Work.
 
-mod constant;
-mod miner;
-
-pub use constant::{Constant, ConstantBuilder};
-pub use miner::{Miner, MinerBuilder};
+pub mod constant;
+pub mod miner;
 
 /// A trait to build nonce providers.
 pub trait NonceProviderBuilder: Default + Sized {
