@@ -6,12 +6,14 @@ use serde::Deserialize;
 const DEFAULT_ENABLED: bool = true;
 const DEFAULT_DELAY: u32 = 60480;
 const DEFAULT_PRUNE_RECEIPTS: bool = false;
+const DEFAULT_BATCH_SIZE: usize = 1;
 
 #[derive(Default, Deserialize)]
 pub struct PruningConfigBuilder {
     enabled: Option<bool>,
     delay: Option<u32>,
     prune_receipts: Option<bool>,
+    batch_size: Option<usize>,
 }
 
 impl PruningConfigBuilder {
@@ -34,11 +36,17 @@ impl PruningConfigBuilder {
         self
     }
 
+    pub fn batch_size(mut self, batch_size: usize) -> Self {
+        self.batch_size.replace(batch_size);
+        self
+    }
+
     pub fn finish(self) -> PruningConfig {
         PruningConfig {
             enabled: self.enabled.unwrap_or(DEFAULT_ENABLED),
             delay: self.delay.unwrap_or(DEFAULT_DELAY),
             prune_receipts: self.prune_receipts.unwrap_or(DEFAULT_PRUNE_RECEIPTS),
+            batch_size: self.batch_size.unwrap_or(DEFAULT_BATCH_SIZE),
         }
     }
 }
@@ -48,6 +56,7 @@ pub struct PruningConfig {
     enabled: bool,
     delay: u32,
     prune_receipts: bool,
+    batch_size: usize,
 }
 
 impl PruningConfig {
@@ -65,5 +74,9 @@ impl PruningConfig {
 
     pub fn prune_receipts(&self) -> bool {
         self.prune_receipts
+    }
+
+    pub fn batch_size(&self) -> usize {
+        self.batch_size
     }
 }

@@ -5,12 +5,11 @@ use super::error::Error;
 
 use crate::consensus::StorageBackend;
 
-use bee_message::{
-    payload::Payload,
-    prelude::{HashedIndex, MilestoneIndex},
-    MessageId,
+use bee_message::prelude::{Essence, HashedIndex, IndexationPayload, Message, MessageId, MilestoneIndex, Payload};
+use bee_storage::access::Fetch;
+use bee_tangle::{
+    ms_tangle::StorageHooks, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage, MsTangle,
 };
-use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle};
 
 use hashbrown::{HashMap, HashSet};
 use ref_cast::RefCast;
@@ -20,48 +19,19 @@ use std::collections::VecDeque;
 pub type Messages = HashSet<MessageId>;
 pub type Edges = HashSet<Edge>;
 pub type Seps = HashMap<SolidEntryPoint, MilestoneIndex>;
-pub type Indexes = Vec<(HashedIndex, MessageId)>;
+pub type Indexations = Vec<(HashedIndex, MessageId)>;
+pub type UnconfirmedMessages = Vec<UnconfirmedMessage>;
 
-/// Collects all prunable nodes/vertices and edges of the Tangle up to the `target_index`.
+/// Collects all prunable nodes/vertices and edges of the Tangle for the specified index.
 pub async fn collect_confirmed_data<B: StorageBackend>(
     tangle: &MsTangle<B>,
-    start_index: MilestoneIndex,
-    target_index: MilestoneIndex,
-) -> Result<(Messages, Edges, Seps, Indexes), Error> {
+    current_index: u32,
+) -> Result<(Messages, Edges, Seps, Indexations), Error> {
     let mut messages = Messages::default();
     let mut edges = Edges::default();
     let mut seps = Seps::default();
-    let mut indexes = Indexes::default();
+    let mut indexations = Indexations::default();
 
-    // We start collecting at the current pruning index.
-    let start_index = *start_index;
-    let target_index = *target_index;
-    debug_assert!(target_index > start_index);
-
-    for current_index in start_index..=target_index {
-        process_past_cone_by_index(
-            tangle,
-            current_index,
-            &mut messages,
-            &mut edges,
-            &mut seps,
-            &mut indexes,
-        )
-        .await?;
-    }
-
-    Ok((messages, edges, seps, indexes))
-}
-
-/// Processes the past cone of a particular milestone given by its index.
-async fn process_past_cone_by_index<B: StorageBackend>(
-    tangle: &MsTangle<B>,
-    current_index: u32,
-    messages: &mut Messages,
-    edges: &mut Edges,
-    seps: &mut Seps,
-    indexes: &mut Indexes,
-) -> Result<(), Error> {
     let current_id = tangle
         .get_milestone_message_id(current_index.into())
         .await
@@ -85,7 +55,7 @@ async fn process_past_cone_by_index<B: StorageBackend>(
                 // `unwrap` should be safe since we traverse the past of a confirmed milestone!
                 .unwrap();
 
-            let (payload, current_parents) = tangle
+            let (maybe_payload, current_parents) = tangle
                 .get(&current_id)
                 .await
                 .map(|current| {
@@ -97,12 +67,14 @@ async fn process_past_cone_by_index<B: StorageBackend>(
                 // `Unwrap` should be safe since we traverse the past of a confirmed milestone!
                 .unwrap();
 
-            // Handle indexation payload
-            if let Some(Payload::Indexation(payload)) = payload {
-                let index = payload.hash();
-                indexes.push((index, current_id));
+            // Collect possible indexation payloads
+            if let Some(indexation) = unwrap_indexation(maybe_payload) {
+                let hashed_index = indexation.hash();
+
+                indexations.push((hashed_index, current_id));
             }
 
+            // Collect edges
             for parent_id in &current_parents {
                 let _ = edges.insert(Edge {
                     from: *parent_id,
@@ -133,7 +105,7 @@ async fn process_past_cone_by_index<B: StorageBackend>(
         }
     }
 
-    Ok(())
+    Ok((messages, edges, seps, indexations))
 }
 
 #[derive(Eq, PartialEq, Hash)]
@@ -142,9 +114,73 @@ pub struct Edge {
     pub to: MessageId,
 }
 
+/// Get the unconfirmed/unreferenced messages.
+pub async fn collect_unconfirmed_data<B: StorageBackend>(
+    storage: &StorageHooks<B>,
+    index: MilestoneIndex,
+) -> Result<(UnconfirmedMessages, Edges, Indexations), Error> {
+    let mut edges = Edges::default();
+    let mut indexations = Indexations::default();
+
+    let unconfirmed = Fetch::<MilestoneIndex, Vec<UnconfirmedMessage>>::fetch(&***storage, &index)
+        .await
+        .map_err(|e| Error::StorageError(Box::new(e)))?
+        // TODO: explain why there are always unconfirmed messages per each milestone
+        .unwrap();
+
+    if unconfirmed.is_empty() {
+        return Ok((unconfirmed, edges, indexations));
+    }
+
+    for unconfirmed_message_id in unconfirmed.iter().map(|msg| msg.message_id()) {
+        let (maybe_payload, parents) = Fetch::<MessageId, Message>::fetch(&***storage, &unconfirmed_message_id)
+            .await
+            .map_err(|e| Error::StorageError(Box::new(e)))?
+            .map(|m| (m.payload().clone(), m.parents().iter().copied().collect::<Vec<_>>()))
+            // TODO: explain why that `unwrap` is safe? Why do we know that the `Fetch` must find that message?
+            .unwrap();
+
+        // Collect possible indexation payloads
+        if let Some(indexation) = unwrap_indexation(maybe_payload) {
+            let hashed_index = indexation.hash();
+            let message_id = *unconfirmed_message_id;
+
+            indexations.push((hashed_index, message_id));
+        }
+
+        // Collect edges
+        for parent in parents.iter() {
+            edges.insert(Edge {
+                from: *parent,
+                to: *unconfirmed_message_id,
+            });
+        }
+    }
+
+    Ok((unconfirmed, edges, indexations))
+}
+
+fn unwrap_indexation(maybe_payload: Option<Payload>) -> Option<Box<IndexationPayload>> {
+    match maybe_payload {
+        Some(Payload::Indexation(indexation)) => Some(indexation),
+        Some(Payload::Transaction(transaction)) => {
+            if let Essence::Regular(essence) = transaction.essence() {
+                if let Some(Payload::Indexation(indexation)) = essence.payload() {
+                    Some(indexation.clone())
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
 /// Collects unconfirmed messages by walking the future cones of all confirmed messages by a particular milestone.
 #[allow(dead_code)]
-pub async fn collect_unconfirmed_data<B: StorageBackend>(
+pub async fn collect_unconfirmed_data_improved<B: StorageBackend>(
     _tangle: &MsTangle<B>,
     _target_index: MilestoneIndex,
 ) -> Result<(Messages, Edges, Seps), Error> {

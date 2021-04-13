@@ -326,7 +326,7 @@ where
                 if let Some(pruning_target_index) =
                     should_prune(&tangle, (*ledger_index).into(), pruning_delay, &pruning_config)
                 {
-                    if let Err(e) = prune(&tangle, pruning_target_index).await {
+                    if let Err(e) = prune(&tangle, &bus, pruning_target_index).await {
                         error!("Failed to prune database: {:?}.", e);
                     }
                 }
