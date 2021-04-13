@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Backend module which form the backend layer of the backend which holds the contract of starting and shutting down
-//! the backend.
+//! This module forms the backend layer which holds the contracts of starting and shutting down the backend, as well as
+//! accessing backend properties.
 
 use crate::health::StorageHealth;
 
