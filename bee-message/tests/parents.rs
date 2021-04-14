@@ -49,7 +49,7 @@ fn packed_len() {
     let parents = Parents::new(rand_message_ids(5)).unwrap();
 
     assert_eq!(parents.packed_len(), 1 + 5 * 32);
-    assert_eq!(parents.packed_len(), parents.pack_new().len());
+    assert_eq!(parents.pack_new().len(), 1 + 5 * 32);
 }
 
 #[test]

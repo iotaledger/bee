@@ -55,15 +55,14 @@ fn new_invalid_output() {
 
 #[test]
 fn packed_len() {
-    assert_eq!(
-        TreasuryTransactionPayload::new(
-            Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap()),
-            Output::from(TreasuryOutput::new(1_000).unwrap()),
-        )
-        .unwrap()
-        .packed_len(),
-        1 + 32 + 1 + 8
-    );
+    let treasury_transaction = TreasuryTransactionPayload::new(
+        Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap()),
+        Output::from(TreasuryOutput::new(1_000).unwrap()),
+    )
+    .unwrap();
+
+    assert_eq!(treasury_transaction.packed_len(), 1 + 32 + 1 + 8);
+    assert_eq!(treasury_transaction.pack_new().len(), 1 + 32 + 1 + 8);
 }
 
 #[test]

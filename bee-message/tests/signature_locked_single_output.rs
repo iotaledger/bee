@@ -52,12 +52,11 @@ fn new_invalid_more_than_max_amount() {
 
 #[test]
 fn packed_len() {
-    assert_eq!(
-        SignatureLockedSingleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 1)
-            .unwrap()
-            .packed_len(),
-        1 + 32 + 8
-    );
+    let output =
+        SignatureLockedSingleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 1).unwrap();
+
+    assert_eq!(output.packed_len(), 1 + 32 + 8);
+    assert_eq!(output.pack_new().len(), 1 + 32 + 8);
 }
 
 #[test]

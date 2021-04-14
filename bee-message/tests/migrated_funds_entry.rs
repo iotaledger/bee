@@ -37,19 +37,18 @@ fn new_invalid_amount() {
 
 #[test]
 fn packed_len() {
-    assert_eq!(
-        MigratedFundsEntry::new(
-            rand_tail_transaction_hash(),
-            SignatureLockedSingleOutput::new(
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                42424242,
-            )
-            .unwrap(),
+    let mge = MigratedFundsEntry::new(
+        rand_tail_transaction_hash(),
+        SignatureLockedSingleOutput::new(
+            Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+            42424242,
         )
-        .unwrap()
-        .packed_len(),
-        49 + 1 + 32 + 8
-    );
+        .unwrap(),
+    )
+    .unwrap();
+
+    assert_eq!(mge.packed_len(), 49 + 1 + 32 + 8);
+    assert_eq!(mge.pack_new().len(), 49 + 1 + 32 + 8);
 }
 
 #[test]

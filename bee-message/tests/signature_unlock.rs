@@ -24,10 +24,10 @@ fn from_ed25519() {
 
 #[test]
 fn packed_len() {
-    assert_eq!(
-        SignatureUnlock::from(Ed25519Signature::new(rand_bytes_32(), rand_bytes(64).into())).packed_len(),
-        1 + 32 + 64
-    );
+    let signature = SignatureUnlock::from(Ed25519Signature::new(rand_bytes_32(), rand_bytes(64).into()));
+
+    assert_eq!(signature.packed_len(), 1 + 32 + 64);
+    assert_eq!(signature.pack_new().len(), 1 + 32 + 64);
 }
 
 #[test]

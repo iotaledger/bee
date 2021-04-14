@@ -44,7 +44,10 @@ fn try_from_invalid() {
 
 #[test]
 fn packed_len() {
-    assert_eq!(ReferenceUnlock::new(0).unwrap().packed_len(), 2);
+    let reference = ReferenceUnlock::new(0).unwrap();
+
+    assert_eq!(reference.packed_len(), 2);
+    assert_eq!(reference.pack_new().len(), 2);
 }
 
 #[test]

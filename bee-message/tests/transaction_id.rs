@@ -43,7 +43,10 @@ fn from_to_str() {
 
 #[test]
 fn packed_len() {
-    assert_eq!(TransactionId::from_str(TRANSACTION_ID).unwrap().packed_len(), 32);
+    let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
+
+    assert_eq!(transaction_id.packed_len(), 32);
+    assert_eq!(transaction_id.pack_new().len(), 32);
 }
 
 #[test]

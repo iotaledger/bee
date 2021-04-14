@@ -52,6 +52,7 @@ fn packed_len() {
             .packed_len(),
         32 + 2
     );
+    assert_eq!(output_id.pack_new().len(), 32 + 2);
 }
 
 #[test]
