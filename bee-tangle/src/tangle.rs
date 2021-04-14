@@ -412,8 +412,12 @@ where
         let contains_now = if prevent_eviction {
             self.vertices.write().await
                 .get_mut(message_id)
-                .map(|v| v.prevent_eviction())
-                .is_some()
+                .map_or(false, |v| if v.message().is_some() {
+                    v.prevent_eviction();
+                    true
+                } else {
+                    false
+                })
         } else {
             self.contains_inner(message_id).await
         };
