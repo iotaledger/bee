@@ -1,0 +1,30 @@
+[package]
+name = "bee-message"
+version = "0.1.0"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = "Implementation of the Message RFC"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "bee", "framework", "message"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-common = { version = "0.4.1", path = "../bee-common/bee-common" }
+bee-pow = { version = "0.1.0", path = "../bee-pow" }
+bee-ternary = { version = "0.4.2-alpha", path = "../bee-ternary", features = ["serde1"] }
+
+bech32 = "0.8"
+bytemuck = "1.5"
+digest = "0.9"
+hex = "0.4"
+iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "c3bf565eba62d0b81144174c2ff917bfde282e49", features = ["ed25519", "blake2b"] }
+ref-cast = "1.0"
+serde = { version = "1.0", optional = true }
+thiserror = "1.0"
+
+[dev-dependencies]
+bee-test = { path = "../bee-test" }
+
+num_cpus = "1.13"
