@@ -5,24 +5,16 @@ use crate::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, uncon
 
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
-    prelude::HashedIndex,
     Message, MessageId,
 };
 
 use bee_storage::{
-    access::{Batch, BatchBuilder, Fetch, Insert},
+    access::{Fetch, Insert},
     backend,
 };
 
 pub trait StorageBackend:
     backend::StorageBackend
-    + BatchBuilder
-    + Batch<MessageId, Message>
-    + Batch<MessageId, MessageMetadata>
-    + Batch<(MessageId, MessageId), ()>
-    + Batch<MilestoneIndex, Milestone>
-    + Batch<(MilestoneIndex, UnconfirmedMessage), ()>
-    + Batch<(HashedIndex, MessageId), ()>
     + Insert<MessageId, Message>
     + Insert<MessageId, MessageMetadata>
     + Insert<(MessageId, MessageId), ()>
@@ -38,13 +30,6 @@ pub trait StorageBackend:
 
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
-        + BatchBuilder
-        + Batch<MessageId, Message>
-        + Batch<MessageId, MessageMetadata>
-        + Batch<(MessageId, MessageId), ()>
-        + Batch<MilestoneIndex, Milestone>
-        + Batch<(MilestoneIndex, UnconfirmedMessage), ()>
-        + Batch<(HashedIndex, MessageId), ()>
         + Insert<MessageId, Message>
         + Insert<MessageId, MessageMetadata>
         + Insert<(MessageId, MessageId), ()>

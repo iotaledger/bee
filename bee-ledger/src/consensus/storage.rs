@@ -11,14 +11,17 @@ use crate::{
 
 use bee_message::{
     address::{Address, Ed25519Address},
-    milestone::MilestoneIndex,
+    milestone::{Milestone, MilestoneIndex},
     output::{ConsumedOutput, CreatedOutput, Output, OutputId},
+    prelude::{HashedIndex, Message, MessageId},
 };
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
-use bee_tangle::solid_entry_point::SolidEntryPoint;
+use bee_tangle::{
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+};
 
 use std::collections::HashMap;
 
@@ -27,6 +30,12 @@ use std::collections::HashMap;
 pub trait StorageBackend:
     backend::StorageBackend
     + BatchBuilder
+    + Batch<MessageId, Message>
+    + Batch<MessageId, MessageMetadata>
+    + Batch<(MessageId, MessageId), ()>
+    + Batch<MilestoneIndex, Milestone>
+    + Batch<(MilestoneIndex, UnconfirmedMessage), ()>
+    + Batch<(HashedIndex, MessageId), ()>
     + Batch<OutputId, CreatedOutput>
     + Batch<OutputId, ConsumedOutput>
     + Batch<Unspent, ()>
@@ -50,6 +59,7 @@ pub trait StorageBackend:
     + Fetch<(), LedgerIndex>
     + Fetch<Address, Balance>
     + Fetch<bool, Vec<TreasuryOutput>>
+    + Fetch<MilestoneIndex, Vec<Receipt>>
     + Insert<(), SnapshotInfo>
     + Insert<OutputId, CreatedOutput>
     + Insert<OutputId, ConsumedOutput>
@@ -67,6 +77,12 @@ pub trait StorageBackend:
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + BatchBuilder
+        + Batch<MessageId, Message>
+        + Batch<MessageId, MessageMetadata>
+        + Batch<(MessageId, MessageId), ()>
+        + Batch<MilestoneIndex, Milestone>
+        + Batch<(MilestoneIndex, UnconfirmedMessage), ()>
+        + Batch<(HashedIndex, MessageId), ()>
         + Batch<OutputId, CreatedOutput>
         + Batch<OutputId, ConsumedOutput>
         + Batch<Unspent, ()>
@@ -90,6 +106,7 @@ impl<T> StorageBackend for T where
         + Fetch<(), LedgerIndex>
         + Fetch<Address, Balance>
         + Fetch<bool, Vec<TreasuryOutput>>
+        + Fetch<MilestoneIndex, Vec<Receipt>>
         + Insert<(), SnapshotInfo>
         + Insert<OutputId, CreatedOutput>
         + Insert<OutputId, ConsumedOutput>

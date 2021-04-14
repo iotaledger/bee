@@ -63,6 +63,8 @@ async fn propagate<B: StorageBackend>(
 
             for parent in parents.iter() {
                 let (parent_omrsi, parent_ymrsi) = match tangle
+                    // **NOTE**: We don't really need the actual SEP index, i.e. its confirming milestone. All we care
+                    // about is whether `parent` is a solid entry point, and hence we can just use the `target_index`.
                     .get_solid_entry_point_index(SolidEntryPoint::ref_cast(&parent))
                     .await
                 {

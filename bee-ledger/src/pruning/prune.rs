@@ -5,7 +5,7 @@ use super::{collect::*, error::Error, PruningConfig};
 
 use crate::{
     consensus::{event::PrunedIndex, StorageBackend},
-    types::OutputDiff,
+    types::{OutputDiff, Receipt},
 };
 
 use bee_message::{
@@ -20,7 +20,6 @@ use bee_tangle::{
     metadata::MessageMetadata, ms_tangle::StorageHooks, unconfirmed_message::UnconfirmedMessage, MsTangle,
 };
 
-use hashbrown::HashSet;
 use log::{debug, info};
 
 pub async fn prune<B: StorageBackend>(
@@ -35,87 +34,69 @@ pub async fn prune<B: StorageBackend>(
     let start_index = tangle.get_pruning_index() + 1;
     debug_assert!(target_index > start_index);
 
-    // Batch size
-    // let batch_size = config.batch_size() as u32;
-    // let mut batch_idx = 1;
-
     // Get access to the storage backend of the Tangle.
     let storage = tangle.hooks();
 
-    let mut previous_seps = HashSet::default();
+    // Collect the data that can be safely pruned. In order to find the correct set of SEPs during this pruning we need
+    // to walk the past-cone from the `target_index` backwards, and not step-by-step from `start_index` to
+    // `target_index` as this would require additional logic to remove redundant SEPs again. If memory or performance
+    // becomes an issue, reduce the `pruning_interval` in the config.
+    let (confirmed, edges, new_seps, indexations) = collect_confirmed_data(tangle, target_index).await?;
+    let (unconfirmed, unconfirmed_edges, unconfirmed_indexations) =
+        collect_unconfirmed_data(storage, start_index, target_index).await?;
 
-    for index in *start_index..=*target_index {
-        let index: MilestoneIndex = index.into();
+    // Prepare a batch of delete operations on the database.
+    let mut batch = B::batch_begin();
 
-        // Collect the data that can be safely pruned.
-        let (confirmed, edges, new_seps, indexations) = collect_confirmed_data(tangle, index, &previous_seps).await?;
-        let (unconfirmed, unconfirmed_edges, unconfirmed_indexations) =
-            collect_unconfirmed_data(storage, index).await?;
+    // Add the confirmed data to the batch.
+    let mut num_messages = prune_messages(storage, &mut batch, confirmed).await?;
+    let mut num_edges = prune_edges(storage, &mut batch, edges).await?;
+    let mut num_indexations = prune_indexations(storage, &mut batch, indexations).await?;
 
-        debug!(
-            "New entry point index {}. (Selected {} new solid entry points).",
-            index,
-            new_seps.len()
-        );
+    // Add the unconfirmed data to the batch.
+    num_messages += prune_unconfirmed_messages(storage, &mut batch, unconfirmed).await?;
+    num_edges += prune_edges(storage, &mut batch, unconfirmed_edges).await?;
+    num_indexations += prune_indexations(storage, &mut batch, unconfirmed_indexations).await?;
 
-        // TEMP
-        previous_seps.clear();
-        for (sep, _) in &new_seps {
-            previous_seps.insert(*sep.message_id());
-        }
+    // Add milestone related data to the batch.
+    prune_milestones(storage, &mut batch, start_index, target_index).await?;
+    prune_output_diffs(storage, &mut batch, start_index, target_index).await?;
 
-        // Replace SEPs in the Tangle.
-        tangle.replace_solid_entry_points(new_seps).await;
-
-        // Remember up to which index we determined SEPs.
-        tangle.update_entry_point_index(index);
-
-        // Prepare a batch of ...
-        let mut batch = B::batch_begin();
-
-        // ... the confirmed data,
-        let mut num_messages = 0; //prune_messages(storage, &mut batch, confirmed).await?;
-        let mut num_edges = 0; // prune_edges(storage, &mut batch, edges).await?;
-        let mut num_indexations = 0; // prune_indexations(storage, &mut batch, indexations).await?;
-
-        // ... and the unconfirmed data,
-        num_messages += 0; // prune_unconfirmed_messages(storage, &mut batch, index, unconfirmed).await?;
-        num_edges += 0; //prune_edges(storage, &mut batch, unconfirmed_edges).await?;
-        num_indexations += 0; // prune_indexations(storage, &mut batch, unconfirmed_indexations).await?;
-
-        // ... and the milestone data itself.
-        // prune_milestone(storage, &mut batch, index).await?;
-        // prune_receipt(storage, &mut batch, index).await?;
-        // prune_output_diff(storage, &mut batch, index).await?;
-
-        // if batch_idx % batch_size == 0 {
-        storage
-            .batch_commit(batch, true)
-            .await
-            .map_err(|e| Error::StorageError(Box::new(e)))?;
-
-        //     is_dirty = false;
-        // } else {
-        //     is_dirty = true;
-        // }
-
-        // batch_idx += 1;
-
-        debug!(
-            "Pruned milestone {} consisting of {} messages, {} edges, {} indexations.",
-            index, num_messages, num_edges, num_indexations,
-        );
-
-        tangle.update_pruning_index(index);
-        debug!("Pruning index now at {}.", index);
+    // Add receipts optionally.
+    if config.prune_receipts() {
+        let receipts = collect_receipts(storage, start_index, target_index).await?;
+        prune_receipts(storage, &mut batch, receipts).await?;
     }
 
-    // if is_dirty {
-    //     storage
-    //         .batch_commit(batch, true)
-    //         .await
-    //         .map_err(|e| Error::StorageError(Box::new(e)))?;
-    // }
+    storage
+        .batch_commit(batch, true)
+        .await
+        // If that error actually happens we set the database to 'corrupted'!
+        .map_err(|e| Error::BatchCommitError(Box::new(e)))?;
+
+    info!("Milestones from {} to {} have been pruned.", start_index, target_index);
+
+    let diff = *target_index - *start_index;
+    debug!(
+        "{} milestones, {} messages, {} edges, {} indexations, {} output_diffs have been successfully pruned.",
+        diff, num_messages, num_edges, num_indexations, diff
+    );
+
+    // Replace SEPs in the Tangle. We do this **AFTER** we commited the batch and it returned no error. This way we
+    // allow the database to be reset to its previous state, and repeat the pruning.
+    let num_new_seps = new_seps.len();
+    tangle.replace_solid_entry_points(new_seps).await;
+
+    // Remember up to which index we determined SEPs.
+    tangle.update_entry_point_index(target_index);
+
+    info!(
+        "Entry point index now at {}. (Selected {} new solid entry points).",
+        target_index, num_new_seps,
+    );
+
+    tangle.update_pruning_index(target_index);
+    info!("Pruning index now at {}.", target_index);
 
     bus.dispatch(PrunedIndex(target_index));
 
@@ -167,7 +148,7 @@ async fn prune_edges<B: StorageBackend, E: IntoIterator<Item = Edge>>(
 ) -> Result<usize, Error> {
     let mut num_pruned = 0;
 
-    for (from, to) in edges.into_iter().map(|edge| (edge.from, edge.to)) {
+    for (from, to) in edges.into_iter().map(|edge| (edge.from_parent, edge.to_child)) {
         Batch::<(MessageId, MessageId), ()>::batch_delete(&***storage, batch, &(from, to))
             .map_err(|e| Error::StorageError(Box::new(e)))?;
 
@@ -177,15 +158,14 @@ async fn prune_edges<B: StorageBackend, E: IntoIterator<Item = Edge>>(
     Ok(num_pruned)
 }
 
-async fn prune_unconfirmed_messages<B: StorageBackend, M: IntoIterator<Item = UnconfirmedMessage>>(
+async fn prune_unconfirmed_messages<B: StorageBackend, M: IntoIterator<Item = (MilestoneIndex, UnconfirmedMessage)>>(
     storage: &StorageHooks<B>,
     batch: &mut B::Batch,
-    index: MilestoneIndex,
     messages: M,
 ) -> Result<usize, Error> {
     let mut num_pruned = 0;
 
-    for unconfirmed_message in messages.into_iter() {
+    for (index, unconfirmed_message) in messages.into_iter() {
         Batch::<(MilestoneIndex, UnconfirmedMessage), ()>::batch_delete(
             &***storage,
             batch,
@@ -207,35 +187,54 @@ async fn prune_unconfirmed_messages<B: StorageBackend, M: IntoIterator<Item = Un
     Ok(num_pruned)
 }
 
-async fn prune_milestone<B: StorageBackend>(
+async fn prune_milestones<B: StorageBackend>(
     storage: &StorageHooks<B>,
     batch: &mut B::Batch,
-    index: MilestoneIndex,
-) -> Result<(), Error> {
-    Batch::<MilestoneIndex, Milestone>::batch_delete(&***storage, batch, &index)
-        .map_err(|e| Error::StorageError(Box::new(e)))?;
+    start_index: MilestoneIndex,
+    target_index: MilestoneIndex,
+) -> Result<usize, Error> {
+    let mut num_pruned = 0;
 
-    Ok(())
+    for index in *start_index..=*target_index {
+        Batch::<MilestoneIndex, Milestone>::batch_delete(&***storage, batch, &index.into())
+            .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+        num_pruned += 1;
+    }
+
+    Ok(num_pruned)
 }
 
-async fn prune_output_diff<B: StorageBackend>(
+async fn prune_output_diffs<B: StorageBackend>(
     storage: &StorageHooks<B>,
     batch: &mut B::Batch,
-    index: MilestoneIndex,
-) -> Result<(), Error> {
-    Batch::<MilestoneIndex, OutputDiff>::batch_delete(&***storage, batch, &index)
-        .map_err(|e| Error::StorageError(Box::new(e)))?;
+    start_index: MilestoneIndex,
+    target_index: MilestoneIndex,
+) -> Result<usize, Error> {
+    let mut num_pruned = 0;
 
-    Ok(())
+    for index in *start_index..=*target_index {
+        Batch::<MilestoneIndex, OutputDiff>::batch_delete(&***storage, batch, &index.into())
+            .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+        num_pruned += 1;
+    }
+    Ok(num_pruned)
 }
 
-// async fn prune_receipt<B: StorageBackend>(
-//     storage: &StorageHooks<B>,
-//     batch: &mut B::Batch,
-//     index: MilestoneIndex,
-// ) -> Result<(), Error> {
-//     Batch::<MilestoneIndex, Receipt>::batch_delete(&***storage, batch, &index)
-//         .map_err(|e| Error::StorageError(Box::new(e)))?;
+async fn prune_receipts<B: StorageBackend, R: IntoIterator<Item = (MilestoneIndex, Receipt)>>(
+    storage: &StorageHooks<B>,
+    batch: &mut B::Batch,
+    receipts: R,
+) -> Result<usize, Error> {
+    let mut num_pruned = 0;
 
-//     Ok(())
-// }
+    for (index, receipt) in receipts.into_iter() {
+        Batch::<(MilestoneIndex, Receipt), ()>::batch_delete(&***storage, batch, &(index, receipt))
+            .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+        num_pruned += 1;
+    }
+
+    Ok(num_pruned)
+}

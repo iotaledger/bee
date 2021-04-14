@@ -7,4 +7,6 @@ pub enum Error {
     MilestoneNotFoundInTangle(u32),
     #[error("{:?}", .0)]
     StorageError(Box<dyn std::error::Error + Send>),
+    #[error("{:?}", .0)]
+    BatchCommitError(Box<dyn std::error::Error + Send>),
 }

@@ -10,11 +10,7 @@ use crate::{
         storage::{self, StorageBackend},
         white_flag,
     },
-    pruning::{
-        condition::{should_prune, PRUNING_INTERVAL},
-        config::PruningConfig,
-        prune::prune,
-    },
+    pruning::{condition::should_prune, config::PruningConfig, prune::prune},
     snapshot::{
         condition::{should_snapshot, SNAPSHOT_DEPTH_MIN},
         config::SnapshotConfig,
@@ -285,7 +281,7 @@ where
         };
 
         // Change misconfigured pruning `delay`s.
-        let pruning_delay_min = 2 * snapshot_depth + PRUNING_INTERVAL;
+        let pruning_delay_min = snapshot_depth + pruning_config.interval();
         let pruning_delay = if pruning_config.delay() < pruning_delay_min {
             warn!(
                 "Configuration value for \"delay\" is too low ({}), value changed to {}.",
@@ -327,6 +323,11 @@ where
                     should_prune(&tangle, (*ledger_index).into(), pruning_delay, &pruning_config)
                 {
                     if let Err(e) = prune(&tangle, &bus, pruning_target_index, &pruning_config).await {
+                        // TODO: change storage health to "corrupted"
+                        // (*storage)
+                        //     .set_health(StorageHealth::Corrupted)
+                        //     .await
+                        //     .map_err(|e| Error::Storage(Box::new(e)))?;
                         error!("Failed to prune database: {:?}.", e);
                     }
                 }

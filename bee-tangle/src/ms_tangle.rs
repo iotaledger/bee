@@ -330,11 +330,21 @@ impl<B: StorageBackend> MsTangle<B> {
         self.solid_entry_points.lock().await.clear();
     }
 
-    /// Replaces old solid entry points with new ones.
+    /// Replaces old solid entry points with new ones. This is a required API for the pruning logic, which finds the
+    /// new SEPs after a certain pruning interval, and then invalidates the previous set of SEPs all at once. Replacing
+    /// the whole datastructure is more efficient then going through the `clear_solid_entry_points` and
+    /// `add_solid_entry_point` API.
     pub async fn replace_solid_entry_points(&self, new_seps: HashMap<SolidEntryPoint, MilestoneIndex>) {
         let mut seps = self.solid_entry_points.lock().await;
         *seps = new_seps;
         drop(seps);
+    }
+
+    /// Returns a copy of the current set of SEPs. This is a required API for the pruning logic, and also an
+    /// optimization, that allows us to reduce Tangle queries during the execution of the pruning algorithm.
+    pub async fn get_all_solid_entry_points(&self) -> HashMap<SolidEntryPoint, MilestoneIndex> {
+        let seps = self.solid_entry_points.lock().await;
+        seps.clone()
     }
 
     /// Returns whether the message associated with `sep` is a solid entry point.

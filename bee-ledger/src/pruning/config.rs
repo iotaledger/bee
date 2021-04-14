@@ -3,19 +3,23 @@
 
 use serde::Deserialize;
 
+/// Pruning is enabled by default.
 const DEFAULT_ENABLED: bool = true;
+/// Pruning by default happens for milestones `DEFAULT_DELAY` indexes ago.
 const DEFAULT_DELAY: u32 = 60480;
+/// Pruning by default happens every `DEFAULT_INTERVAL` indexes.
+const DEFAULT_INTERVAL: u32 = 50;
+/// Pruning can only happen in at least `MIN_INTERVAL` steps.
+const MIN_INTERVAL: u32 = 1;
+/// Receipts are not pruned by default.
 const DEFAULT_PRUNE_RECEIPTS: bool = false;
-const DEFAULT_BATCH_SIZE: usize = 1;
-
-const MIN_BATCH_SIZE: usize = 1;
 
 #[derive(Default, Deserialize)]
 pub struct PruningConfigBuilder {
     enabled: Option<bool>,
     delay: Option<u32>,
+    interval: Option<u32>,
     prune_receipts: Option<bool>,
-    batch_size: Option<usize>,
 }
 
 impl PruningConfigBuilder {
@@ -33,13 +37,14 @@ impl PruningConfigBuilder {
         self
     }
 
-    pub fn prune_receipts(mut self, prune_receipts: bool) -> Self {
-        self.prune_receipts.replace(prune_receipts);
+    pub fn interval(mut self, interval: u32) -> Self {
+        // We do not allow any number below `MIN_INTERVAL`.
+        self.interval.replace(interval.max(MIN_INTERVAL));
         self
     }
 
-    pub fn batch_size(mut self, batch_size: usize) -> Self {
-        self.batch_size.replace(batch_size.max(MIN_BATCH_SIZE));
+    pub fn prune_receipts(mut self, prune_receipts: bool) -> Self {
+        self.prune_receipts.replace(prune_receipts);
         self
     }
 
@@ -48,7 +53,7 @@ impl PruningConfigBuilder {
             enabled: self.enabled.unwrap_or(DEFAULT_ENABLED),
             delay: self.delay.unwrap_or(DEFAULT_DELAY),
             prune_receipts: self.prune_receipts.unwrap_or(DEFAULT_PRUNE_RECEIPTS),
-            batch_size: self.batch_size.unwrap_or(DEFAULT_BATCH_SIZE),
+            interval: self.interval.unwrap_or(DEFAULT_INTERVAL),
         }
     }
 }
@@ -57,8 +62,8 @@ impl PruningConfigBuilder {
 pub struct PruningConfig {
     enabled: bool,
     delay: u32,
+    interval: u32,
     prune_receipts: bool,
-    batch_size: usize,
 }
 
 impl PruningConfig {
@@ -74,11 +79,11 @@ impl PruningConfig {
         self.delay
     }
 
-    pub fn prune_receipts(&self) -> bool {
-        self.prune_receipts
+    pub fn interval(&self) -> u32 {
+        self.interval
     }
 
-    pub fn batch_size(&self) -> usize {
-        self.batch_size
+    pub fn prune_receipts(&self) -> bool {
+        self.prune_receipts
     }
 }
