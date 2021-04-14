@@ -12,6 +12,7 @@ use bee_tangle::{
 };
 
 use hashbrown::{HashMap, HashSet};
+use log::error;
 use ref_cast::RefCast;
 
 use std::collections::VecDeque;
@@ -197,8 +198,10 @@ async fn collect_unconfirmed_data_by_index<B: StorageBackend>(
                 });
             }
         } else {
-            println!("{}", unconfirmed_message_id);
-            panic!("Fetching unconfirmed message content failed");
+            error!(
+                "Fetching message data for unconfirmed_message {} failed. Due to that pruning is incomplete, and will cause the database to steadily increase. This is a bug.",
+                unconfirmed_message_id
+            );
         }
     }
 

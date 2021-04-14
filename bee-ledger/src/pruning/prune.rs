@@ -51,9 +51,16 @@ pub async fn prune<B: StorageBackend>(
         let sep_approvers = tangle.get_children(sep_id).await.unwrap();
         'inner: for approver in &sep_approvers {
             // only SEPs are relevant that still have an unconfirmed approver
-            if tangle.get_metadata(approver).await.unwrap().milestone_index().is_none() {
-                num_relevant_seps += 1;
-                break 'inner;
+            match tangle.get_metadata(approver).await.unwrap().milestone_index() {
+                None => {
+                    num_relevant_seps += 1;
+                    break 'inner;
+                }
+                Some(ms_index) if ms_index == target_index + 1 => {
+                    num_relevant_seps += 1;
+                    break 'inner;
+                }
+                Some(_) => {}
             }
         }
     }
