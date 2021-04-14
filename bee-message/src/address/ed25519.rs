@@ -20,6 +20,7 @@ pub const ED25519_ADDRESS_LENGTH: usize = 32;
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Ed25519Address([u8; ED25519_ADDRESS_LENGTH]);
 
+#[allow(clippy::len_without_is_empty)]
 impl Ed25519Address {
     /// The address kind of an Ed25519 address.
     pub const KIND: u8 = 0;
@@ -30,7 +31,6 @@ impl Ed25519Address {
     }
 
     /// Returns the length of an Ed25519 address.
-    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         ED25519_ADDRESS_LENGTH
     }

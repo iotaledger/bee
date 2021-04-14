@@ -163,7 +163,7 @@ impl RegularEssenceBuilder {
         }
 
         if !matches!(self.payload, None | Some(Payload::Indexation(_))) {
-            // Unwrap is fine because we just checked the Option is not None.
+            // Unwrap is fine because we just checked that the Option is not None.
             return Err(Error::InvalidPayloadKind(self.payload.unwrap().kind()));
         }
 
@@ -172,7 +172,6 @@ impl RegularEssenceBuilder {
         for input in self.inputs.iter() {
             match input {
                 Input::Utxo(_) => {
-                    // Every combination of Transaction ID + Transaction Output Index must be unique in the inputs set.
                     if self.inputs.iter().filter(|i| *i == input).count() > 1 {
                         return Err(Error::DuplicateError);
                     }
@@ -195,7 +194,7 @@ impl RegularEssenceBuilder {
         for output in self.outputs.iter() {
             match output {
                 Output::SignatureLockedSingle(single) => {
-                    // The address must be unique in the set of SigLockedSingleDeposits.
+                    // The addresses must be unique in the set of SignatureLockedSingleOutputs.
                     if self
                         .outputs
                         .iter()
@@ -211,7 +210,7 @@ impl RegularEssenceBuilder {
                         .ok_or_else(|| Error::InvalidAccumulatedOutput((total + single.amount()) as u128))?;
                 }
                 Output::SignatureLockedDustAllowance(dust_allowance) => {
-                    // The address must be unique in the set of SignatureLockedDustAllowances.
+                    // The addresses must be unique in the set of SignatureLockedDustAllowanceOutputs.
                     if self
                         .outputs
                         .iter()
