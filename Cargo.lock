@@ -332,6 +332,7 @@ dependencies = [
  "bee-storage-rocksdb",
  "bee-tangle",
  "cap",
+ "cfg-if 1.0.0",
  "chrono",
  "futures",
  "fxhash",

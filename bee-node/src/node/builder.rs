@@ -20,12 +20,15 @@ use bee_runtime::{
 
 use anymap::Map;
 use async_trait::async_trait;
+use cfg_if::cfg_if;
 use futures::{channel::oneshot, future::Future};
 use fxhash::FxBuildHasher;
 use log::{debug, info, warn};
 
 #[cfg(unix)]
-use tokio::signal::unix::{signal, SignalKind};
+use futures::future::select_all;
+#[cfg(unix)]
+use tokio::signal::unix::{signal, Signal, SignalKind};
 
 use std::{
     any::{type_name, Any, TypeId},
@@ -46,36 +49,33 @@ fn shutdown_procedure(sender: oneshot::Sender<()>) {
     }
 }
 
-fn ctrl_c_listener() -> oneshot::Receiver<()> {
+fn shutdown_listener(#[cfg(unix)] signals: Vec<SignalKind>) -> oneshot::Receiver<()> {
     let (sender, receiver) = oneshot::channel();
 
-    tokio::spawn(async move {
-        if let Err(e) = tokio::signal::ctrl_c().await {
-            panic!("Failed to intercept CTRL-C: {:?}.", e);
+    cfg_if! {
+        if #[cfg(unix)] {
+            tokio::spawn(async move {
+                let mut signals = signals.iter().map(|kind| signal(*kind).unwrap()).collect::<Vec<Signal>>();
+                let signal_futures = signals.iter_mut().map(|signal| Box::pin(signal.recv()));
+
+                let (signal_event, _, _) = select_all(signal_futures).await;
+
+                if signal_event.is_none() {
+                    panic!("Shutdown signal stream failed, channel may have closed.");
+                }
+
+                shutdown_procedure(sender);
+            });
+        } else {
+            tokio::spawn(async move {
+                if let Err(e) = tokio::signal::ctrl_c().await {
+                    panic!("Failed to intercept CTRL-C: {:?}.", e);
+                }
+
+                shutdown_procedure(sender);
+            });
         }
-
-        shutdown_procedure(sender);
-    });
-
-    receiver
-}
-
-#[cfg(unix)]
-fn unix_signal_shutdown(signal_kind: SignalKind) -> oneshot::Receiver<()> {
-    let (sender, receiver) = oneshot::channel();
-
-    tokio::spawn(async move {
-        let mut signal_stream = match signal(signal_kind) {
-            Err(e) => panic!("Failed to initialize signal stream: {:?}", e),
-            Ok(stream) => stream,
-        };
-
-        if signal_stream.recv().await.is_none() {
-            panic!("Failed to intercept shutdown signal.");
-        }
-
-        shutdown_procedure(sender);
-    });
+    }
 
     receiver
 }
@@ -201,13 +201,14 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let this = self.with_resource(config.clone()); // TODO: Remove clone
 
         info!("Initializing network layer...");
-        let (this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
+        let (mut this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
 
-        let this = if cfg!(unix) {
-            this.with_resource(ctrl_c_listener())
-                .with_resource(unix_signal_shutdown(SignalKind::terminate()))
-        } else {
-            this.with_resource(ctrl_c_listener())
+        cfg_if! {
+            if #[cfg(unix)] {
+                this = this.with_resource(shutdown_listener(vec![SignalKind::interrupt(), SignalKind::terminate()]));
+            } else {
+                this = this.with_resource(shutdown_listener());
+            }
         };
 
         info!("Initializing ledger...");
