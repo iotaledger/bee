@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module describing the indexation payload.
+
 mod hash;
 
 pub use hash::{HashedIndex, HASHED_INDEX_LENGTH};

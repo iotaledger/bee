@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module describing the treasury payload.
+
 use crate::{input::Input, output::Output, Error};
 
 use bee_common::packable::{Packable, Read, Write};

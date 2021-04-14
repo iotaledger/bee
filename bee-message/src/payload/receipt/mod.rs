@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module describing the receipt payload.
+
 mod migrated_funds_entry;
 mod tail_transaction_hash;
 
