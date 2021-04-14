@@ -12,7 +12,7 @@ use core::{convert::From, ops::Deref, str::FromStr};
 pub struct TreasuryInput(MilestoneId);
 
 impl TreasuryInput {
-    /// The kind of a `TreasuryInput`.
+    /// The input kind of a `TreasuryInput`.
     pub const KIND: u8 = 1;
 
     /// Creates a new `TreasuryInput`.

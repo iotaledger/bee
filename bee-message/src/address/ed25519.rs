@@ -21,7 +21,7 @@ pub const ED25519_ADDRESS_LENGTH: usize = 32;
 pub struct Ed25519Address([u8; ED25519_ADDRESS_LENGTH]);
 
 impl Ed25519Address {
-    /// The kind of an Ed25519 address.
+    /// The address kind of an Ed25519 address.
     pub const KIND: u8 = 0;
 
     /// Creates a new Ed25519 address.

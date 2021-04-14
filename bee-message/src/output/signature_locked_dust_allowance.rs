@@ -19,7 +19,7 @@ pub struct SignatureLockedDustAllowanceOutput {
 }
 
 impl SignatureLockedDustAllowanceOutput {
-    /// The kind of a `SignatureLockedDustAllowanceOutput`.
+    /// The output kind of a `SignatureLockedDustAllowanceOutput`.
     pub const KIND: u8 = 1;
 
     /// Creates a new `SignatureLockedDustAllowanceOutput`.

@@ -14,7 +14,7 @@ pub struct TreasuryTransactionPayload {
 }
 
 impl TreasuryTransactionPayload {
-    /// The kind of a `TreasuryTransaction`.
+    /// The payload kind of a `TreasuryTransaction`.
     pub const KIND: u32 = 4;
 
     /// Creates a new `TreasuryTransaction`.

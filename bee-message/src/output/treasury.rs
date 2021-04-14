@@ -18,7 +18,7 @@ pub struct TreasuryOutput {
 }
 
 impl TreasuryOutput {
-    /// The kind of a `TreasuryOutput`.
+    /// The output kind of a `TreasuryOutput`.
     pub const KIND: u8 = 2;
 
     /// Creates a new `TreasuryOutput`.

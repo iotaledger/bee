@@ -20,7 +20,7 @@ pub struct Ed25519Signature {
 }
 
 impl Ed25519Signature {
-    /// The kind of an `Ed25519Signature`.
+    /// The signature kind of an `Ed25519Signature`.
     pub const KIND: u8 = 0;
 
     /// Creates a new `Ed25519Signature`.

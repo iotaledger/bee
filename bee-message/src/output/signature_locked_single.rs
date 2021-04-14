@@ -18,7 +18,7 @@ pub struct SignatureLockedSingleOutput {
 }
 
 impl SignatureLockedSingleOutput {
-    /// The kind of a `SignatureLockedSingleOutput`.
+    /// The output kind of a `SignatureLockedSingleOutput`.
     pub const KIND: u8 = 0;
 
     /// Creates a new `SignatureLockedSingleOutput`.

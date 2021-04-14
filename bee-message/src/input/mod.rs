@@ -27,7 +27,7 @@ pub enum Input {
 }
 
 impl Input {
-    /// Returns the kind of the input.
+    /// Returns the input kind of an `Input`.
     pub fn kind(&self) -> u8 {
         match self {
             Self::Utxo(_) => UtxoInput::KIND,

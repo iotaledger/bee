@@ -35,7 +35,7 @@ pub struct ReceiptPayload {
 }
 
 impl ReceiptPayload {
-    /// The kind of a `ReceiptPayload`.
+    /// The payload kind of a `ReceiptPayload`.
     pub const KIND: u32 = 3;
 
     /// Creates a new `ReceiptPayload`.

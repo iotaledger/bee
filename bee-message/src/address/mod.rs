@@ -28,7 +28,7 @@ pub enum Address {
 }
 
 impl Address {
-    /// Returns the kind of the address.
+    /// Returns the address kind of an `Address`.
     pub fn kind(&self) -> u8 {
         match self {
             Self::Ed25519(_) => Ed25519Address::KIND,
