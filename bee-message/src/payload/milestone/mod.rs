@@ -38,6 +38,12 @@ pub enum MilestoneValidationError {
     Crypto(CryptoError),
 }
 
+impl From<CryptoError> for MilestoneValidationError {
+    fn from(error: CryptoError) -> Self {
+        MilestoneValidationError::Crypto(error)
+    }
+}
+
 /// A payload which defines the inclusion set of other messages in the Tangle.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
