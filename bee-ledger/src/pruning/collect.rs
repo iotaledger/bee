@@ -174,27 +174,31 @@ async fn collect_unconfirmed_data_by_index<B: StorageBackend>(
     }
 
     for unconfirmed_message_id in fetched.iter().map(|msg| msg.message_id()) {
-        let (maybe_payload, parents) = Fetch::<MessageId, Message>::fetch(&***storage, &unconfirmed_message_id)
+        if let Some((maybe_payload, parents)) = Fetch::<MessageId, Message>::fetch(&***storage, &unconfirmed_message_id)
             .await
             .map_err(|e| Error::StorageError(Box::new(e)))?
             .map(|m| (m.payload().clone(), m.parents().iter().copied().collect::<Vec<_>>()))
-            // TODO: explain why that `unwrap` is safe? Why do we know that the `Fetch` must find that message?
-            .unwrap();
+        // TODO: explain why that `unwrap` is safe? Why do we know that the `Fetch` must find that message?
+        // .unwrap();
+        {
+            // Collect possible indexation payloads
+            if let Some(indexation) = unwrap_indexation(maybe_payload) {
+                let hashed_index = indexation.hash();
+                let message_id = *unconfirmed_message_id;
 
-        // Collect possible indexation payloads
-        if let Some(indexation) = unwrap_indexation(maybe_payload) {
-            let hashed_index = indexation.hash();
-            let message_id = *unconfirmed_message_id;
+                indexations.push((hashed_index, message_id));
+            }
 
-            indexations.push((hashed_index, message_id));
-        }
-
-        // Collect edges
-        for parent in parents.iter() {
-            edges.insert(Edge {
-                from_parent: *parent,
-                to_child: *unconfirmed_message_id,
-            });
+            // Collect edges
+            for parent in parents.iter() {
+                edges.insert(Edge {
+                    from_parent: *parent,
+                    to_child: *unconfirmed_message_id,
+                });
+            }
+        } else {
+            println!("{}", unconfirmed_message_id);
+            panic!("Fetching unconfirmed message content failed");
         }
     }
 
