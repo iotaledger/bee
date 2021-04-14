@@ -10,12 +10,12 @@ use async_trait::async_trait;
 use hashbrown::{hash_map::DefaultHashBuilder, HashMap};
 use log::info;
 use lru::LruCache;
-use tokio::sync::{Mutex, RwLock as TRwLock, RwLockReadGuard as TRwLockReadGuard};
+use tokio::sync::{Mutex, RwLock as TRwLock, RwLockWriteGuard as TRwLockWriteGuard};
 
 use std::{
     fmt::Debug,
     marker::PhantomData,
-    ops::Deref,
+    ops::{Deref, DerefMut},
     sync::atomic::{AtomicUsize, Ordering},
 };
 
@@ -134,9 +134,13 @@ where
         &self.hooks
     }
 
-    async fn insert_inner(&self, message_id: MessageId, message: Message, metadata: T) -> Option<MessageRef> {
+    async fn insert_inner(&self, message_id: MessageId, message: Message, metadata: T, prevent_eviction: bool) -> Option<MessageRef> {
         let mut vertices = self.vertices.write().await;
         let vtx = vertices.entry(message_id).or_insert_with(Vertex::empty);
+
+        if prevent_eviction {
+            vtx.prevent_eviction();
+        }
 
         let msg = if vtx.message().is_some() {
             None
@@ -172,9 +176,16 @@ where
 
     /// Inserts a message, and returns a thread-safe reference to it in case it didn't already exist.
     pub async fn insert(&self, message_id: MessageId, message: Message, metadata: T) -> Option<MessageRef> {
-        self.pull_message(&message_id).await;
+        let exists = self.pull_message(&message_id, true).await;
 
-        let msg = self.insert_inner(message_id, message.clone(), metadata.clone()).await;
+        let msg = self.insert_inner(message_id, message.clone(), metadata.clone(), !exists).await;
+
+        self.vertices
+            .write()
+            .await
+            .get_mut(&message_id)
+            .expect("Just-inserted message is missing")
+            .allow_eviction();
 
         if msg.is_some() {
             // Write parents to DB
@@ -195,8 +206,8 @@ where
         msg
     }
 
-    async fn get_inner(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex<T>> + '_> {
-        let res = TRwLockReadGuard::try_map(self.vertices.read().await, |m| m.get(message_id)).ok();
+    async fn get_inner(&self, message_id: &MessageId) -> Option<impl DerefMut<Target = Vertex<T>> + '_> {
+        let res = TRwLockWriteGuard::try_map(self.vertices.write().await, |m| m.get_mut(message_id)).ok();
 
         if res.is_some() {
             // Update message_id priority
@@ -207,10 +218,23 @@ where
     }
 
     /// Get the data of a vertex associated with the given `message_id`.
-    pub async fn get(&self, message_id: &MessageId) -> Option<MessageRef> {
-        self.pull_message(message_id).await;
+    pub async fn get_with<R>(&self, message_id: &MessageId, f: impl FnOnce(&mut Vertex<T>) -> Option<R>) -> Option<R> {
+        let exists = self.pull_message(message_id, true).await;
 
-        self.get_inner(message_id).await.and_then(|v| v.message().cloned())
+        self
+            .get_inner(message_id)
+            .await
+            .and_then(|mut v| {
+                if exists {
+                    v.allow_eviction();
+                }
+                f(&mut v)
+            })
+    }
+
+    /// Get the data of a vertex associated with the given `message_id`.
+    pub async fn get(&self, message_id: &MessageId) -> Option<MessageRef> {
+        self.get_with(message_id, |v| v.message().cloned()).await
     }
 
     async fn contains_inner(&self, message_id: &MessageId) -> bool {
@@ -223,14 +247,12 @@ where
 
     /// Returns whether the message is stored in the Tangle.
     pub async fn contains(&self, message_id: &MessageId) -> bool {
-        self.contains_inner(message_id).await || self.pull_message(message_id).await
+        self.contains_inner(message_id).await || self.pull_message(message_id, false).await
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`.
     pub async fn get_metadata(&self, message_id: &MessageId) -> Option<T> {
-        self.pull_message(message_id).await;
-
-        self.get_metadata_maybe(message_id).await
+        self.get_with(message_id, |v| v.metadata().cloned()).await
     }
 
     /// Get the metadata of a vertex associated with the given `message_id`, if it's in the cache.
@@ -240,9 +262,17 @@ where
 
     /// Get the metadata of a vertex associated with the given `message_id`.
     pub async fn get_vertex(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex<T>> + '_> {
-        self.pull_message(message_id).await;
+        let exists = self.pull_message(message_id, true).await;
 
-        self.get_inner(message_id).await
+        self
+            .get_inner(message_id)
+            .await
+            .map(|mut v| {
+                if exists {
+                    v.allow_eviction();
+                }
+                v
+            })
     }
 
     /// Updates the metadata of a particular vertex.
@@ -255,10 +285,16 @@ where
     where
         Update: FnOnce(&mut T) -> R,
     {
-        self.pull_message(message_id).await;
+        let exists = self.pull_message(message_id, true).await;
         let mut vertices = self.vertices.write().await;
         if let Some(vtx) = vertices.get_mut(message_id) {
+            // If we previously blocked eviction, allow it again
+            if exists {
+                vtx.allow_eviction();
+            }
+
             let r = vtx.metadata_mut().map(|m| update(m));
+
             if let Some((msg, meta)) = vtx.message_and_metadata() {
                 let (msg, meta) = ((&**msg).clone(), meta.clone());
 
@@ -372,9 +408,18 @@ where
     }
 
     // Attempts to pull the message from the storage, returns true if successful.
-    async fn pull_message(&self, message_id: &MessageId) -> bool {
+    async fn pull_message(&self, message_id: &MessageId, prevent_eviction: bool) -> bool {
+        let contains_now = if prevent_eviction {
+            self.vertices.write().await
+                .get_mut(message_id)
+                .map(|v| v.prevent_eviction())
+                .is_some()
+        } else {
+            self.contains_inner(message_id).await
+        };
+
         // If the tangle already contains the tx, do no more work
-        if self.contains_inner(message_id).await {
+        if contains_now {
             // Insert cache queue entry to track eviction priority
             self.cache_queue.lock().await.put(*message_id, ());
 
@@ -383,7 +428,7 @@ where
             // Insert cache queue entry to track eviction priority
             self.cache_queue.lock().await.put(*message_id, ());
 
-            self.insert_inner(*message_id, tx, metadata).await;
+            self.insert_inner(*message_id, tx, metadata, prevent_eviction).await;
 
             true
         } else {
@@ -401,7 +446,13 @@ where
                 let remove = cache_queue.pop_lru().map(|(id, _)| id);
 
                 if let Some(message_id) = remove {
-                    vertices.remove(&message_id);
+                    if let Some(v) = vertices.remove(&message_id) {
+                        if !v.can_evict() {
+                            // Reinsert it if we're not permitted to evict it yet (because something is using it)
+                            vertices.insert(message_id, v);
+                            cache_queue.put(message_id, ());
+                        }
+                    }
                 } else {
                     break;
                 }
