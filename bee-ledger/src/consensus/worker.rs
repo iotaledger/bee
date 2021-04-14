@@ -26,8 +26,8 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_storage::{backend::StorageBackend as _, health::StorageHealth};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_storage::{access::AsStream, backend::StorageBackend as _, health::StorageHealth};
+use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 
@@ -234,7 +234,7 @@ where
 
         match storage::fetch_snapshot_info(&*storage).await? {
             None => {
-                if let Err(e) = import_snapshots(&*storage, &*tangle, network_id, &snapshot_config).await {
+                if let Err(e) = import_snapshots(&*storage, network_id, &snapshot_config).await {
                     (*storage)
                         .set_health(StorageHealth::Corrupted)
                         .await
@@ -261,6 +261,16 @@ where
         }
 
         check_ledger_state(&*storage).await?;
+
+        {
+            let mut solid_entry_points = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&*storage)
+                .await
+                .map_err(|e| Error::Storage(Box::new(e)))?;
+
+            while let Some((sep, index)) = solid_entry_points.next().await {
+                tangle.add_solid_entry_point(sep, index).await;
+            }
+        }
 
         // Unwrap is fine because we just inserted the ledger index.
         // TODO unwrap

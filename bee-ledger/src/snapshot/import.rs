@@ -29,7 +29,7 @@ use bee_message::{
     MessageId,
 };
 use bee_storage::access::{Insert, Truncate};
-use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle};
+use bee_tangle::solid_entry_point::SolidEntryPoint;
 
 use chrono::{offset::TimeZone, Utc};
 use log::info;
@@ -50,7 +50,6 @@ fn snapshot_reader(path: &Path) -> Result<BufReader<File>, Error> {
 async fn import_solid_entry_points<R: Read, B: StorageBackend>(
     reader: &mut R,
     storage: &B,
-    tangle: &MsTangle<B>,
     sep_count: u64,
     index: MilestoneIndex,
 ) -> Result<(), Error> {
@@ -59,10 +58,7 @@ async fn import_solid_entry_points<R: Read, B: StorageBackend>(
         .await
         .unwrap();
     for _ in 0..sep_count {
-        let sep = SolidEntryPoint::unpack(reader)?;
-        tangle.add_solid_entry_point(sep, index).await;
-        // TODO somewhere else ?
-        Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &sep, &index)
+        Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &SolidEntryPoint::unpack(reader)?, &index)
             .await
             .unwrap();
     }
@@ -195,12 +191,7 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
     Ok(())
 }
 
-async fn import_full_snapshot<B: StorageBackend>(
-    storage: &B,
-    tangle: &MsTangle<B>,
-    path: &Path,
-    network_id: u64,
-) -> Result<(), Error> {
+async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
     info!("Importing full snapshot file {}...", &path.to_string_lossy());
 
     let mut reader = snapshot_reader(path)?;
@@ -256,14 +247,7 @@ async fn import_full_snapshot<B: StorageBackend>(
     .await
     .map_err(|e| Error::Consumer(Box::new(e)))?;
 
-    import_solid_entry_points(
-        &mut reader,
-        storage,
-        tangle,
-        full_header.sep_count(),
-        header.sep_index(),
-    )
-    .await?;
+    import_solid_entry_points(&mut reader, storage, full_header.sep_count(), header.sep_index()).await?;
     import_outputs(&mut reader, storage, full_header.output_count()).await?;
     import_milestone_diffs(&mut reader, storage, full_header.milestone_diff_count()).await?;
 
@@ -282,12 +266,7 @@ async fn import_full_snapshot<B: StorageBackend>(
     Ok(())
 }
 
-async fn import_delta_snapshot<B: StorageBackend>(
-    storage: &B,
-    tangle: &MsTangle<B>,
-    path: &Path,
-    network_id: u64,
-) -> Result<(), Error> {
+async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
     info!("Importing delta snapshot file {}...", &path.to_string_lossy());
 
     let mut reader = snapshot_reader(path)?;
@@ -333,14 +312,7 @@ async fn import_delta_snapshot<B: StorageBackend>(
     .await
     .map_err(|e| Error::Consumer(Box::new(e)))?;
 
-    import_solid_entry_points(
-        &mut reader,
-        storage,
-        tangle,
-        delta_header.sep_count(),
-        header.sep_index(),
-    )
-    .await?;
+    import_solid_entry_points(&mut reader, storage, delta_header.sep_count(), header.sep_index()).await?;
     import_milestone_diffs(&mut reader, storage, delta_header.milestone_diff_count()).await?;
 
     // TODO check nothing left
@@ -359,7 +331,6 @@ async fn import_delta_snapshot<B: StorageBackend>(
 
 pub(crate) async fn import_snapshots<B: StorageBackend>(
     storage: &B,
-    tangle: &MsTangle<B>,
     network_id: u64,
     config: &SnapshotConfig,
 ) -> Result<(), Error> {
@@ -373,11 +344,11 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
         download_snapshot_file(config.delta_path(), config.download_urls()).await?;
     }
 
-    import_full_snapshot(storage, tangle, config.full_path(), network_id).await?;
+    import_full_snapshot(storage, config.full_path(), network_id).await?;
 
     // Load delta file only if both full and delta files already existed or if they have just been downloaded.
     if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
-        import_delta_snapshot(storage, tangle, config.delta_path(), network_id).await?;
+        import_delta_snapshot(storage, config.delta_path(), network_id).await?;
     }
 
     Ok(())
