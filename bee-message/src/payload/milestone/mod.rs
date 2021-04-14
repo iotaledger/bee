@@ -16,6 +16,7 @@ use bee_common::packable::{Packable, Read, Write};
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
     signatures::ed25519,
+    Error as CryptoError,
 };
 
 use alloc::{boxed::Box, vec::Vec};
@@ -34,6 +35,7 @@ pub enum MilestoneValidationError {
     InsufficientApplicablePublicKeys(usize, usize),
     UnapplicablePublicKey(String),
     InvalidSignature(usize, String),
+    Crypto(CryptoError),
 }
 
 /// A payload which defines the inclusion set of other messages in the Tangle.
@@ -125,9 +127,9 @@ impl MilestonePayload {
                 return Err(MilestoneValidationError::UnapplicablePublicKey(hex::encode(public_key)));
             }
 
-            // TODO unwrap
-            let ed25519_public_key = ed25519::PublicKey::from_compressed_bytes(*public_key).unwrap();
-            // TODO unwrap
+            let ed25519_public_key =
+                ed25519::PublicKey::from_compressed_bytes(*public_key).map_err(MilestoneValidationError::Crypto)?;
+            // This unwrap is fine as the length of the signature has already been verified.
             let ed25519_signature = ed25519::Signature::from_bytes(signature.as_ref().try_into().unwrap());
 
             if !ed25519_public_key.verify(&ed25519_signature, &essence_hash) {

@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crypto::Error as CryptoError;
+
 use core::fmt;
 
 /// Error occurring when creating/parsing/validating messages.
@@ -53,6 +55,7 @@ pub enum Error {
     InvalidSignature,
     InvalidTailTransactionHash,
     InvalidPowScoreValues(u32, u32),
+    CryptoError(CryptoError),
 }
 
 impl std::error::Error for Error {}
@@ -166,6 +169,7 @@ impl fmt::Display for Error {
                 "Invalid pow score values: next pow score {} and next pow score milestone index {}.",
                 nps, npsmi
             ),
+            Error::CryptoError(e) => write!(f, "Cryptographic error: {}", e),
         }
     }
 }
@@ -173,5 +177,11 @@ impl fmt::Display for Error {
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Self {
         Error::Io(error)
+    }
+}
+
+impl From<CryptoError> for Error {
+    fn from(error: CryptoError) -> Self {
+        Error::CryptoError(error)
     }
 }

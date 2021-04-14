@@ -46,10 +46,8 @@ impl Ed25519Address {
             ));
         }
 
-        // TODO unwraps are temporary until we use crypto.rs types as internals.
-
-        if !PublicKey::from_compressed_bytes(*signature.public_key())
-            .unwrap()
+        if !PublicKey::from_compressed_bytes(*signature.public_key())?
+            // This unwrap is fine as the length of the signature has already been verified.
             .verify(&Signature::from_bytes(signature.signature().try_into().unwrap()), msg)
         {
             return Err(Error::InvalidSignature);
