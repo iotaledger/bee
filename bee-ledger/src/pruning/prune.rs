@@ -45,6 +45,24 @@ pub async fn prune<B: StorageBackend>(
     let (unconfirmed, unconfirmed_edges, unconfirmed_indexations) =
         collect_unconfirmed_data(storage, start_index, target_index).await?;
 
+    // TEMPORARLY CHECK ALL SEPS
+    let mut num_relevant_seps = 0;
+    for sep_id in new_seps.iter().map(|(sep, _)| sep.message_id()) {
+        let sep_approvers = tangle.get_children(sep_id).await.unwrap();
+        'inner: for approver in &sep_approvers {
+            // only SEPs are relevant that still have an unconfirmed approver
+            if tangle.get_metadata(approver).await.unwrap().milestone_index().is_none() {
+                num_relevant_seps += 1;
+                break 'inner;
+            }
+        }
+    }
+    info!(
+        "Collected {}, but only {} are relevant.",
+        new_seps.len(),
+        num_relevant_seps
+    );
+
     // Prepare a batch of delete operations on the database.
     let mut batch = B::batch_begin();
 
