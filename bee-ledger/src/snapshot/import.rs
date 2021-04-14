@@ -335,20 +335,29 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
     config: &SnapshotConfig,
 ) -> Result<(), Error> {
     let full_exists = config.full_path().exists();
-    let delta_exists = config.delta_path().exists();
+    let delta_exists = config.delta_path().map_or(false, Path::exists);
 
     if !full_exists && delta_exists {
         return Err(Error::OnlyDeltaSnapshotFileExists);
-    } else if !full_exists && !delta_exists {
+    }
+
+    if !full_exists {
         download_snapshot_file(config.full_path(), config.download_urls()).await?;
-        download_snapshot_file(config.delta_path(), config.download_urls()).await?;
+    }
+
+    if let Some(path) = config.delta_path() {
+        if !delta_exists {
+            download_snapshot_file(path, config.download_urls()).await?;
+        }
     }
 
     import_full_snapshot(storage, config.full_path(), network_id).await?;
 
-    // Load delta file only if both full and delta files already existed or if they have just been downloaded.
-    if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
-        import_delta_snapshot(storage, config.delta_path(), network_id).await?;
+    if let Some(path) = config.delta_path() {
+        // Load delta file only if both full and delta files already existed or if they have just been downloaded.
+        if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
+            import_delta_snapshot(storage, path, network_id).await?;
+        }
     }
 
     Ok(())
