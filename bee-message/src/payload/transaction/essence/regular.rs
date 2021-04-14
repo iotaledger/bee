@@ -111,9 +111,9 @@ impl Packable for RegularEssence {
 /// A builder to build a `RegularEssence`.
 #[derive(Debug, Default)]
 pub struct RegularEssenceBuilder {
-    pub(crate) inputs: Vec<Input>,
-    pub(crate) outputs: Vec<Output>,
-    pub(crate) payload: Option<Payload>,
+    inputs: Vec<Input>,
+    outputs: Vec<Output>,
+    payload: Option<Payload>,
 }
 
 impl RegularEssenceBuilder {
