@@ -59,8 +59,8 @@ pub async fn prune<B: StorageBackend>(
     num_indexations += prune_indexations(storage, &mut batch, unconfirmed_indexations).await?;
 
     // Add milestone related data to the batch.
-    prune_milestones(storage, &mut batch, start_index, target_index).await?;
-    prune_output_diffs(storage, &mut batch, start_index, target_index).await?;
+    let num_milestones = prune_milestones(storage, &mut batch, start_index, target_index).await?;
+    let num_output_diffs = prune_output_diffs(storage, &mut batch, start_index, target_index).await?;
 
     // Add receipts optionally.
     if config.prune_receipts() {
@@ -76,10 +76,9 @@ pub async fn prune<B: StorageBackend>(
 
     info!("Milestones from {} to {} have been pruned.", start_index, target_index);
 
-    let diff = *target_index - *start_index;
     debug!(
         "{} milestones, {} messages, {} edges, {} indexations, {} output_diffs have been successfully pruned.",
-        diff, num_messages, num_edges, num_indexations, diff
+        num_milestones, num_messages, num_edges, num_indexations, num_output_diffs
     );
 
     // Replace SEPs in the Tangle. We do this **AFTER** we commited the batch and it returned no error. This way we
