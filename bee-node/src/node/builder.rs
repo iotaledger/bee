@@ -24,6 +24,11 @@ use futures::{channel::oneshot, future::Future};
 use fxhash::FxBuildHasher;
 use log::{debug, info, warn};
 
+#[cfg(unix)]
+use futures::future::select_all;
+#[cfg(unix)]
+use tokio::signal::unix::{signal, Signal, SignalKind};
+
 use std::{
     any::{type_name, Any, TypeId},
     collections::{HashMap, HashSet},
@@ -35,7 +40,36 @@ type WorkerStart<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output
 type WorkerStop<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> + Send;
 type ResourceRegister<N> = dyn for<'a> FnOnce(&'a mut N);
 
-fn ctrl_c_listener() -> oneshot::Receiver<()> {
+fn shutdown_procedure(sender: oneshot::Sender<()>) {
+    warn!("Gracefully shutting down the node, this may take some time.");
+
+    if let Err(e) = sender.send(()) {
+        panic!("Failed to send the shutdown signal: {:?}", e);
+    }
+}
+
+#[cfg(unix)]
+fn shutdown_listener(signals: Vec<SignalKind>) -> oneshot::Receiver<()> {
+    let (sender, receiver) = oneshot::channel();
+
+    tokio::spawn(async move {
+        let mut signals = signals.iter().map(|kind| signal(*kind).unwrap()).collect::<Vec<Signal>>();
+        let signal_futures = signals.iter_mut().map(|signal| Box::pin(signal.recv()));
+
+        let (signal_event, _, _) = select_all(signal_futures).await;
+
+        if signal_event.is_none() {
+            panic!("Shutdown signal stream failed, channel may have closed.");
+        }
+
+        shutdown_procedure(sender);
+    });
+
+    receiver
+}
+
+#[cfg(not(unix))]
+fn shutdown_listener() -> oneshot::Receiver<()> {
     let (sender, receiver) = oneshot::channel();
 
     tokio::spawn(async move {
@@ -43,11 +77,7 @@ fn ctrl_c_listener() -> oneshot::Receiver<()> {
             panic!("Failed to intercept CTRL-C: {:?}.", e);
         }
 
-        warn!("Gracefully shutting down the node, this may take some time.");
-
-        if let Err(e) = sender.send(()) {
-            panic!("Failed to send the shutdown signal: {:?}.", e);
-        }
+        shutdown_procedure(sender);
     });
 
     receiver
@@ -176,7 +206,10 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         info!("Initializing network layer...");
         let (this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
 
-        let this = this.with_resource(ctrl_c_listener());
+        #[cfg(unix)]
+        let this = this.with_resource(shutdown_listener(vec![SignalKind::interrupt(), SignalKind::terminate()]));
+        #[cfg(not(unix))]
+        let this = this.with_resource(shutdown_listener());
 
         info!("Initializing ledger...");
         let this = bee_ledger::consensus::init::<BeeNode<B>>(
