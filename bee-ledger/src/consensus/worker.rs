@@ -178,14 +178,15 @@ where
     }
 
     info!(
-        "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}, outputs consumed {}, outputs created {}.",
+        "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}, consumed {}, created {}, receipt {}.",
         milestone.essence().index(),
         metadata.referenced_messages,
         metadata.excluded_no_transaction_messages.len(),
         metadata.excluded_conflicting_messages.len(),
         metadata.included_messages.len(),
         metadata.consumed_outputs.len(),
-        metadata.created_outputs.len()
+        metadata.created_outputs.len(),
+        milestone.essence().receipt().is_some()
     );
 
     bus.dispatch(MilestoneConfirmed {
