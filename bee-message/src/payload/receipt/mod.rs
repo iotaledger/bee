@@ -98,7 +98,7 @@ impl Packable for ReceiptPayload {
     fn packed_len(&self) -> usize {
         self.migrated_at.packed_len()
             + self.last.packed_len()
-            + 016.packed_len()
+            + 0u16.packed_len()
             + self.funds.iter().map(Packable::packed_len).sum::<usize>()
             + option_payload_packed_len(Some(&self.transaction))
     }
