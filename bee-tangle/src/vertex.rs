@@ -14,6 +14,7 @@ where
 {
     message: Option<(MessageRef, T)>,
     children: (VecSet<MessageId>, bool), // Exhaustive flag
+    eviction_blocks: isize,
 }
 
 impl<T> Vertex<T>
@@ -24,6 +25,7 @@ where
         Self {
             message: None,
             children: (VecSet::default(), false),
+            eviction_blocks: 0,
         }
     }
 
@@ -31,6 +33,7 @@ where
         Self {
             message: Some((MessageRef(Arc::new(message)), metadata)),
             children: (VecSet::default(), false),
+            eviction_blocks: 0,
         }
     }
 
@@ -73,6 +76,19 @@ where
 
     pub(crate) fn insert_message_and_metadata(&mut self, msg: Message, meta: T) {
         self.message = Some((MessageRef(Arc::new(msg)), meta));
+    }
+
+    pub(crate) fn prevent_eviction(&mut self) {
+        self.eviction_blocks += 1;
+    }
+
+    pub(crate) fn allow_eviction(&mut self) {
+        self.eviction_blocks -= 1;
+        assert!(self.eviction_blocks >= 0);
+    }
+
+    pub(crate) fn can_evict(&self) -> bool {
+        self.eviction_blocks == 0
     }
 }
 
