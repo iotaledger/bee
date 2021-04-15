@@ -7,7 +7,10 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::RangeInclusive;
 
-const SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1_000_000..=IOTA_SUPPLY;
+/// Amount of tokens below which an output is considered a dust output.
+pub const DUST_THRESHOLD: u64 = 1_000_000;
+
+const SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT: RangeInclusive<u64> = DUST_THRESHOLD..=IOTA_SUPPLY;
 
 /// A `SignatureLockedDustAllowanceOutput` functions like a `SignatureLockedSingleOutput` but as a special property it
 /// is used to increase the allowance/amount of dust outputs on a given address.

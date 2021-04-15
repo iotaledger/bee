@@ -15,14 +15,12 @@ use core::ops::{Deref, RangeInclusive};
 /// The range representing the valid number of parents.
 pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 
-/// A [`Message`](crate::Message)'s `Parents` are the [`MessageId`]s of the messages it directly approves.
+/// A [`Message`]'s `Parents` are the [`MessageId`]s of the messages it directly approves.
 ///
 /// Parents must be:
 /// * in the `MESSAGE_PARENTS_RANGE` range;
 /// * lexicographically sorted;
 /// * unique;
-///
-/// RFC: <https://github.com/GalRogozinski/protocol-rfcs/blob/message/text/0017-message/0017-message.md>
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Parents(Vec<MessageId>);

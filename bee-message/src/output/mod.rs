@@ -8,7 +8,7 @@ mod storable;
 mod treasury;
 
 pub use output_id::{OutputId, OUTPUT_ID_LENGTH};
-pub use signature_locked_dust_allowance::SignatureLockedDustAllowanceOutput;
+pub use signature_locked_dust_allowance::{SignatureLockedDustAllowanceOutput, DUST_THRESHOLD};
 pub use signature_locked_single::SignatureLockedSingleOutput;
 pub use storable::{ConsumedOutput, CreatedOutput};
 pub use treasury::{TreasuryOutput, TREASURY_OUTPUT_AMOUNT};

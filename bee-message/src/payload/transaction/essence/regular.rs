@@ -167,8 +167,6 @@ impl RegularEssenceBuilder {
             return Err(Error::InvalidPayloadKind(self.payload.unwrap().kind()));
         }
 
-        // Inputs validation
-
         for input in self.inputs.iter() {
             match input {
                 Input::Utxo(_) => {
@@ -185,12 +183,9 @@ impl RegularEssenceBuilder {
             return Err(Error::TransactionInputsNotSorted);
         }
 
-        // Outputs validation
-
         let mut total: u64 = 0;
 
         // TODO iteration-based or memory-based ?
-
         for output in self.outputs.iter() {
             match output {
                 Output::SignatureLockedSingle(single) => {
@@ -223,9 +218,9 @@ impl RegularEssenceBuilder {
                         return Err(Error::DuplicateError);
                     }
 
-                    total = total
-                        .checked_add(dust_allowance.amount())
-                        .ok_or_else(|| Error::InvalidAccumulatedOutput((total + dust_allowance.amount()) as u128))?;
+                    total = total.checked_add(dust_allowance.amount()).ok_or_else(|| {
+                        Error::InvalidAccumulatedOutput(total as u128 + dust_allowance.amount() as u128)
+                    })?;
                 }
                 _ => return Err(Error::InvalidOutputKind(output.kind())),
             }
