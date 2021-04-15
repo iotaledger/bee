@@ -134,7 +134,13 @@ where
         &self.hooks
     }
 
-    async fn insert_inner(&self, message_id: MessageId, message: Message, metadata: T, prevent_eviction: bool) -> Option<MessageRef> {
+    async fn insert_inner(
+        &self,
+        message_id: MessageId,
+        message: Message,
+        metadata: T,
+        prevent_eviction: bool,
+    ) -> Option<MessageRef> {
         let mut vertices = self.vertices.write().await;
         let vtx = vertices.entry(message_id).or_insert_with(Vertex::empty);
 
@@ -178,7 +184,9 @@ where
     pub async fn insert(&self, message_id: MessageId, message: Message, metadata: T) -> Option<MessageRef> {
         let exists = self.pull_message(&message_id, true).await;
 
-        let msg = self.insert_inner(message_id, message.clone(), metadata.clone(), !exists).await;
+        let msg = self
+            .insert_inner(message_id, message.clone(), metadata.clone(), !exists)
+            .await;
 
         self.vertices
             .write()
@@ -221,15 +229,12 @@ where
     pub async fn get_with<R>(&self, message_id: &MessageId, f: impl FnOnce(&mut Vertex<T>) -> Option<R>) -> Option<R> {
         let exists = self.pull_message(message_id, true).await;
 
-        self
-            .get_inner(message_id)
-            .await
-            .and_then(|mut v| {
-                if exists {
-                    v.allow_eviction();
-                }
-                f(&mut v)
-            })
+        self.get_inner(message_id).await.and_then(|mut v| {
+            if exists {
+                v.allow_eviction();
+            }
+            f(&mut v)
+        })
     }
 
     /// Get the data of a vertex associated with the given `message_id`.
@@ -264,15 +269,12 @@ where
     pub async fn get_vertex(&self, message_id: &MessageId) -> Option<impl Deref<Target = Vertex<T>> + '_> {
         let exists = self.pull_message(message_id, true).await;
 
-        self
-            .get_inner(message_id)
-            .await
-            .map(|mut v| {
-                if exists {
-                    v.allow_eviction();
-                }
-                v
-            })
+        self.get_inner(message_id).await.map(|mut v| {
+            if exists {
+                v.allow_eviction();
+            }
+            v
+        })
     }
 
     /// Updates the metadata of a particular vertex.
@@ -410,14 +412,14 @@ where
     // Attempts to pull the message from the storage, returns true if successful.
     async fn pull_message(&self, message_id: &MessageId, prevent_eviction: bool) -> bool {
         let contains_now = if prevent_eviction {
-            self.vertices.write().await
-                .get_mut(message_id)
-                .map_or(false, |v| if v.message().is_some() {
+            self.vertices.write().await.get_mut(message_id).map_or(false, |v| {
+                if v.message().is_some() {
                     v.prevent_eviction();
                     true
                 } else {
                     false
-                })
+                }
+            })
         } else {
             self.contains_inner(message_id).await
         };
