@@ -5,7 +5,7 @@ use crate::rand::{address::rand_address, integer::rand_integer_range, string::ra
 
 use bee_message::{
     output::SignatureLockedSingleOutput,
-    payload::receipt::{MigratedFundsEntry, TailTransactionHash, MIGRATED_FUNDS_ENTRY_AMOUNT},
+    payload::receipt::{MigratedFundsEntry, TailTransactionHash, VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS},
 };
 use bee_ternary::{T5B1Buf, Tryte, TryteBuf};
 
@@ -30,7 +30,8 @@ pub fn rand_tail_transaction_hash() -> TailTransactionHash {
 pub fn rand_migrated_funds_entry() -> MigratedFundsEntry {
     MigratedFundsEntry::new(
         rand_tail_transaction_hash(),
-        SignatureLockedSingleOutput::new(rand_address(), rand_integer_range(MIGRATED_FUNDS_ENTRY_AMOUNT)).unwrap(),
+        SignatureLockedSingleOutput::new(rand_address(), rand_integer_range(VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS))
+            .unwrap(),
     )
     .unwrap()
 }

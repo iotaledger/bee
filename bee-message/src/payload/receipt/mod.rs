@@ -6,7 +6,7 @@
 mod migrated_funds_entry;
 mod tail_transaction_hash;
 
-pub use migrated_funds_entry::{MigratedFundsEntry, MIGRATED_FUNDS_ENTRY_AMOUNT};
+pub use migrated_funds_entry::{MigratedFundsEntry, VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS};
 pub use tail_transaction_hash::{TailTransactionHash, TAIL_TRANSACTION_HASH_LEN};
 
 use crate::{
