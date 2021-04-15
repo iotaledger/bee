@@ -15,31 +15,11 @@ use bee_common::packable::{Packable, Read, Write};
 
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
-/// A transaction message on the tangle.
-///
-/// A transaction consists of two parts:
-/// 1. The transaction essence (inputs, outputs, optional payload)
-/// 2. Unlock blocks, which unlock the input UTXOs consumed by the transaction
-///
-/// As of April 2021 (RFC draft stage) the possible input and output types are:
-/// * [`UtxoInput`](crate::input::UtxoInput) - the output block from a previous transaction
-/// * [`SignatureLockedSingleOutput`](crate::output::SignatureLockedSingleOutput) - deposit to a single address which is
-///   unlocked via a signature
-/// * [`SignatureLockedDustAllowanceOutput`](crate::output::SignatureLockedDustAllowanceOutput) - deposit to a single
-///   address which also alters the dust allowance of the target address
-///
-/// And there are two types of unlock blocks:
-/// * [`SignatureUnlock`](crate::unlock::SignatureUnlock)
-/// * [`ReferenceUnlock`](crate::unlock::ReferenceUnlock)
-///
-/// Spec: #iota-protocol-rfc-draft
-/// <https://github.com/luca-moser/protocol-rfcs/blob/signed-tx-payload/text/0000-transaction-payload/0000-transaction-payload.md>
+/// A transaction to move funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionPayload {
-    /// The inputs, outputs, and an optional embedded payload.
     essence: Essence,
-    /// Unlocks the `essence`'s inputs.
     unlock_blocks: UnlockBlocks,
 }
 
