@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::rand::{address::rand_address, integer::rand_integer_range, string::rand_string_charset};
+use crate::rand::{address::rand_address, number::rand_number_range, string::rand_string_charset};
 
 use bee_message::{
     output::SignatureLockedSingleOutput,
@@ -30,7 +30,7 @@ pub fn rand_tail_transaction_hash() -> TailTransactionHash {
 pub fn rand_migrated_funds_entry() -> MigratedFundsEntry {
     MigratedFundsEntry::new(
         rand_tail_transaction_hash(),
-        SignatureLockedSingleOutput::new(rand_address(), rand_integer_range(VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS))
+        SignatureLockedSingleOutput::new(rand_address(), rand_number_range(VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS))
             .unwrap(),
     )
     .unwrap()

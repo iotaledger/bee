@@ -5,5 +5,5 @@ use rand::Rng;
 
 /// Generates a random boolean.
 pub fn rand_bool() -> bool {
-    rand::thread_rng().gen::<f64>() < 0.5
+    rand::thread_rng().gen::<bool>()
 }

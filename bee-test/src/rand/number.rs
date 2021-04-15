@@ -9,16 +9,16 @@ use rand::{
     Rng,
 };
 
-/// Generates a random integer.
-pub fn rand_integer<T>() -> T
+/// Generates a random number.
+pub fn rand_number<T>() -> T
 where
     Standard: Distribution<T>,
 {
     rand::thread_rng().gen()
 }
 
-/// Generates a random integer within a given range.
-pub fn rand_integer_range<T, R>(range: R) -> T
+/// Generates a random number within a given range.
+pub fn rand_number_range<T, R>(range: R) -> T
 where
     T: SampleUniform + PartialOrd,
     R: SampleRange<T>,

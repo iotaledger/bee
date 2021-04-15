@@ -9,12 +9,12 @@ pub mod bool;
 pub mod bytes;
 /// Module providing random input generation utilities.
 pub mod input;
-/// Module providing random integer generation utilities.
-pub mod integer;
 /// Module providing random message generation utilities.
 pub mod message;
 /// Module providing random milestone generation utilities.
 pub mod milestone;
+/// Module providing random number generation utilities.
+pub mod number;
 /// Module providing random output generation utilities.
 pub mod output;
 /// Module providing random parents generation utilities.
