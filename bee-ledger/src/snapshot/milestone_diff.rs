@@ -78,8 +78,9 @@ impl Packable for MilestoneDiff {
             payload => return Err(Error::InvalidPayloadKind(payload.kind())),
         };
 
-        // TODO
-        if milestone_len != milestone.packed_len() {}
+        if milestone_len != milestone.packed_len() + MilestonePayload::KIND as usize {
+            // TODO
+        }
 
         let consumed_treasury = if milestone.essence().receipt().is_some() {
             let milestone_id = MilestoneId::unpack_inner::<R, CHECK>(reader)?;
