@@ -9,8 +9,8 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::RangeInclusive;
 
-/// Range of allowed amount for migrated funds entries.
-pub const MIGRATED_FUNDS_ENTRY_AMOUNT: RangeInclusive<u64> = 1_000_000..=IOTA_SUPPLY;
+/// Range of valid amounts for migrated funds entries.
+pub const VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS: RangeInclusive<u64> = 1_000_000..=IOTA_SUPPLY;
 
 /// Describes funds which were migrated from a legacy network.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -23,7 +23,7 @@ pub struct MigratedFundsEntry {
 impl MigratedFundsEntry {
     /// Creates a new `MigratedFundsEntry`.
     pub fn new(tail_transaction_hash: TailTransactionHash, output: SignatureLockedSingleOutput) -> Result<Self, Error> {
-        if !MIGRATED_FUNDS_ENTRY_AMOUNT.contains(&output.amount()) {
+        if !VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS.contains(&output.amount()) {
             return Err(Error::InvalidMigratedFundsEntryAmount(output.amount()));
         }
 

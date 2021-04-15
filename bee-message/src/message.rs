@@ -18,13 +18,16 @@ pub const MESSAGE_LENGTH_MIN: usize = 53;
 /// The maximum number of bytes in a message.
 pub const MESSAGE_LENGTH_MAX: usize = 32768;
 
+const DEFAULT_POW_SCORE: f64 = 4000f64;
+const DEFAULT_NONCE: u64 = 0;
+
 /// Represent the object that nodes gossip around the network.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
     /// Specifies which network this message is meant for.
     network_id: u64,
-    /// The [MessageId]s that this message directly approves.
+    /// The [`MessageId`]s that this message directly approves.
     parents: Parents,
     /// The optional [Payload] of the message.
     payload: Option<Payload>,
@@ -33,7 +36,7 @@ pub struct Message {
 }
 
 impl Message {
-    /// Create a new `MessageBuilder` to construct an instance of a `Message`.
+    /// Creates a new `MessageBuilder` to construct an instance of a `Message`.
     pub fn builder() -> MessageBuilder {
         MessageBuilder::new()
     }
@@ -46,22 +49,22 @@ impl Message {
         (MessageId::new(id.into()), bytes)
     }
 
-    /// Return the network id of a `Message`.
+    /// Returns the network id of a `Message`.
     pub fn network_id(&self) -> u64 {
         self.network_id
     }
 
-    /// Return the parents of a `Message`.
+    /// Returns the parents of a `Message`.
     pub fn parents(&self) -> &Parents {
         &self.parents
     }
 
-    /// Return the optional payload of a `Message`.
+    /// Returns the optional payload of a `Message`.
     pub fn payload(&self) -> &Option<Payload> {
         &self.payload
     }
 
-    /// Return the nonce of a `Message`.
+    /// Returns the nonce of a `Message`.
     pub fn nonce(&self) -> u64 {
         self.nonce
     }
@@ -164,7 +167,7 @@ impl<P: NonceProvider> MessageBuilder<P> {
         self
     }
 
-    /// Add a payload to a `MessageBuilder`.
+    /// Adds a payload to a `MessageBuilder`.
     pub fn with_payload(mut self, payload: Payload) -> Self {
         self.payload = Some(payload);
         self
@@ -203,14 +206,16 @@ impl<P: NonceProvider> MessageBuilder<P> {
             return Err(Error::InvalidMessageLength(message_bytes.len()));
         }
 
-        let (nonce_provider, target_score) = self.nonce_provider.unwrap_or((P::Builder::new().finish(), 4000f64));
+        let (nonce_provider, target_score) = self
+            .nonce_provider
+            .unwrap_or((P::Builder::new().finish(), DEFAULT_POW_SCORE));
 
         message.nonce = nonce_provider
             .nonce(
                 &message_bytes[..message_bytes.len() - std::mem::size_of::<u64>()],
                 target_score,
             )
-            .unwrap_or(0);
+            .unwrap_or(DEFAULT_NONCE);
 
         Ok(message)
     }

@@ -46,12 +46,12 @@ impl Address {
         }
     }
 
-    /// Encodes an `Address` to a Bech32 string.
+    /// Encodes this address to a Bech32 string with the hrp (human readable part) argument as prefix.
     pub fn to_bech32(&self, hrp: &str) -> String {
         bech32::encode(hrp, self.pack_new().to_base32(), Variant::Bech32).expect("Invalid address.")
     }
 
-    /// Verifies a `SignatureUnlock` for a message against the `Address`.
+    /// Verifies a [`SignatureUnlock`] for a message against the [`Address`].
     pub fn verify(&self, msg: &[u8], signature: &SignatureUnlock) -> Result<(), Error> {
         match self {
             Address::Ed25519(address) => {

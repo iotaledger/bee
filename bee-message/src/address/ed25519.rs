@@ -35,7 +35,7 @@ impl Ed25519Address {
         ED25519_ADDRESS_LENGTH
     }
 
-    /// Verifies a `Ed25519Signature` for a message against the `Ed25519Address`.
+    /// Verifies a [`Ed25519Signature`] for a message against the [`Ed25519Address`].
     pub fn verify(&self, msg: &[u8], signature: &Ed25519Signature) -> Result<(), Error> {
         let address = Blake2b256::digest(signature.public_key());
 
@@ -47,7 +47,7 @@ impl Ed25519Address {
         }
 
         if !PublicKey::from_compressed_bytes(*signature.public_key())?
-            // This unwrap is fine as the length of the signature has already been verified.
+            // This unwrap is fine as the length of the signature has already been verified at construction.
             .verify(&Signature::from_bytes(signature.signature().try_into().unwrap()), msg)
         {
             return Err(Error::InvalidSignature);

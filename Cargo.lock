@@ -105,7 +105,7 @@ dependencies = [
  "bytemuck",
  "digest",
  "hex",
- "iota-crypto 0.3.0",
+ "iota-crypto",
  "num_cpus",
  "serde",
  "thiserror",
@@ -118,7 +118,7 @@ dependencies = [
  "bee-crypto",
  "bee-ternary",
  "bee-test",
- "iota-crypto 0.4.2",
+ "iota-crypto",
  "thiserror",
 ]
 
@@ -649,22 +649,13 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "iota-crypto"
-version = "0.3.0"
-source = "git+https://github.com/iotaledger/crypto.rs?rev=c3bf565eba62d0b81144174c2ff917bfde282e49#c3bf565eba62d0b81144174c2ff917bfde282e49"
-dependencies = [
- "blake2",
- "digest",
- "ed25519-zebra",
-]
-
-[[package]]
-name = "iota-crypto"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "558466ca403e13e2b849f6b1aa0ec98a602dd21a49421a24d69aa265261c2290"
 dependencies = [
  "blake2",
  "digest",
+ "ed25519-zebra",
 ]
 
 [[package]]
