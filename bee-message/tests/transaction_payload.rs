@@ -71,7 +71,7 @@ fn builder_no_essence_too_few_unlock_blocks() {
     // Construct a list with a single unlock block, whereas we have 2 tx inputs.
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PULIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
-    let signature = Ed25519Signature::new(pub_key_bytes, Box::new(sig_bytes));
+    let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block]).unwrap();
 
@@ -107,7 +107,7 @@ fn builder_no_essence_too_many_unlock_blocks() {
     // Construct a list of two unlock blocks, whereas we only have 1 tx input.
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PULIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
-    let signature = Ed25519Signature::new(pub_key_bytes, Box::new(sig_bytes));
+    let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
 
@@ -145,7 +145,7 @@ fn pack_unpack_valid() {
     // Construct a list of two unlock blocks, whereas we only have 1 tx input.
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PULIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
-    let signature = Ed25519Signature::new(pub_key_bytes, Box::new(sig_bytes));
+    let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();

@@ -45,7 +45,7 @@ fn new_invalid_too_many_signatures() {
                 None,
             )
             .unwrap(),
-            vec![Box::new([0u8; 64]); 300],
+            vec![[0u8; 64]; 300],
         ),
         Err(Error::MilestoneInvalidSignatureCount(300))
     ));
@@ -66,7 +66,7 @@ fn new_invalid_public_keys_sgnatures_count_mismatch() {
                 None,
             )
             .unwrap(),
-            vec![Box::new([0; 64]), Box::new([1; 64]), Box::new([3; 64])],
+            vec![[0; 64], [1; 64], [3; 64]],
         ),
         Err(Error::MilestonePublicKeysSignaturesCountMismatch(2, 3))
     ));

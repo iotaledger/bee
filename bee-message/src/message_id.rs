@@ -75,15 +75,12 @@ impl Packable for MessageId {
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        writer.write_all(&self.0)?;
+        self.0.pack(writer)?;
 
         Ok(())
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let mut bytes = [0u8; MESSAGE_ID_LENGTH];
-        reader.read_exact(&mut bytes)?;
-
-        Ok(Self(bytes))
+        Ok(Self(<[u8; MESSAGE_ID_LENGTH]>::unpack_inner::<R, CHECK>(reader)?))
     }
 }

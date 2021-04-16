@@ -49,7 +49,6 @@ impl From<CryptoError> for MilestoneValidationError {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestonePayload {
     essence: MilestonePayloadEssence,
-    // TODO Change when serde supports const generics.
     signatures: Vec<Box<[u8]>>,
 }
 
@@ -58,7 +57,10 @@ impl MilestonePayload {
     pub const KIND: u32 = 1;
 
     /// Creates a new `MilestonePayload`.
-    pub fn new(essence: MilestonePayloadEssence, signatures: Vec<Box<[u8]>>) -> Result<Self, Error> {
+    pub fn new(
+        essence: MilestonePayloadEssence,
+        signatures: Vec<[u8; MILESTONE_SIGNATURE_LENGTH]>,
+    ) -> Result<Self, Error> {
         if !MILESTONE_SIGNATURE_COUNT_RANGE.contains(&signatures.len()) {
             return Err(Error::MilestoneInvalidSignatureCount(signatures.len()));
         }
@@ -70,9 +72,15 @@ impl MilestonePayload {
             ));
         }
 
-        // TODO check signature length
-
-        Ok(Self { essence, signatures })
+        Ok(Self {
+            essence,
+            signatures: vec![signatures
+                .iter()
+                .map(|s| std::array::IntoIter::new(*s))
+                .flatten()
+                .collect::<Vec<u8>>()
+                .into_boxed_slice()],
+        })
     }
 
     /// Computes the identifier of a `MilestonePayload`.
@@ -128,7 +136,6 @@ impl MilestonePayload {
             .zip(self.signatures.iter())
             .enumerate()
         {
-            // TODO use concrete ED25 types
             if !applicable_public_keys.contains(&hex::encode(public_key)) {
                 return Err(MilestoneValidationError::UnapplicablePublicKey(hex::encode(public_key)));
             }
@@ -173,9 +180,7 @@ impl Packable for MilestonePayload {
         let signatures_len = u8::unpack_inner::<R, CHECK>(reader)? as usize;
         let mut signatures = Vec::with_capacity(signatures_len);
         for _ in 0..signatures_len {
-            let mut signature = vec![0u8; MILESTONE_SIGNATURE_LENGTH];
-            reader.read_exact(&mut signature)?;
-            signatures.push(signature.into_boxed_slice());
+            signatures.push(<[u8; MILESTONE_SIGNATURE_LENGTH]>::unpack_inner::<R, CHECK>(reader)?);
         }
 
         Self::new(essence, signatures)

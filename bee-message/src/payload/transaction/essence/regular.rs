@@ -169,9 +169,9 @@ impl RegularEssenceBuilder {
 
         for input in self.inputs.iter() {
             match input {
-                Input::Utxo(_) => {
+                Input::Utxo(u) => {
                     if self.inputs.iter().filter(|i| *i == input).count() > 1 {
-                        return Err(Error::DuplicateError);
+                        return Err(Error::DuplicateUtxo(u.clone()));
                     }
                 }
                 _ => return Err(Error::InvalidInputKind(input.kind())),
@@ -185,7 +185,6 @@ impl RegularEssenceBuilder {
 
         let mut total: u64 = 0;
 
-        // TODO iteration-based or memory-based ?
         for output in self.outputs.iter() {
             match output {
                 Output::SignatureLockedSingle(single) => {
@@ -197,7 +196,7 @@ impl RegularEssenceBuilder {
                         .count()
                         > 1
                     {
-                        return Err(Error::DuplicateError);
+                        return Err(Error::DuplicateAddress(*single.address()));
                     }
 
                     total = total
@@ -215,7 +214,7 @@ impl RegularEssenceBuilder {
                         .count()
                         > 1
                     {
-                        return Err(Error::DuplicateError);
+                        return Err(Error::DuplicateAddress(*dust_allowance.address()));
                     }
 
                     total = total.checked_add(dust_allowance.amount()).ok_or_else(|| {

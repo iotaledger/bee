@@ -5,6 +5,8 @@ use bee_common::packable::Packable;
 use bee_message::prelude::*;
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_32};
 
+use std::convert::TryInto;
+
 #[test]
 fn kind() {
     assert_eq!(SignatureUnlock::KIND, 0);
@@ -13,7 +15,7 @@ fn kind() {
 #[test]
 fn from_ed25519() {
     let public_key_bytes = rand_bytes_32();
-    let signature_bytes: Box<[u8]> = rand_bytes(64).into();
+    let signature_bytes: [u8; 64] = rand_bytes(64).try_into().unwrap();
     let signature = SignatureUnlock::from(Ed25519Signature::new(public_key_bytes, signature_bytes.clone()));
 
     assert!(matches!(signature, SignatureUnlock::Ed25519(signature)
@@ -24,7 +26,10 @@ fn from_ed25519() {
 
 #[test]
 fn packed_len() {
-    let signature = SignatureUnlock::from(Ed25519Signature::new(rand_bytes_32(), rand_bytes(64).into()));
+    let signature = SignatureUnlock::from(Ed25519Signature::new(
+        rand_bytes_32(),
+        rand_bytes(64).try_into().unwrap(),
+    ));
 
     assert_eq!(signature.packed_len(), 1 + 32 + 64);
     assert_eq!(signature.pack_new().len(), 1 + 32 + 64);
@@ -32,7 +37,10 @@ fn packed_len() {
 
 #[test]
 fn pack_unpack_valid_ed25519() {
-    let signature_1 = SignatureUnlock::from(Ed25519Signature::new(rand_bytes_32(), rand_bytes(64).into()));
+    let signature_1 = SignatureUnlock::from(Ed25519Signature::new(
+        rand_bytes_32(),
+        rand_bytes(64).try_into().unwrap(),
+    ));
     let signature_bytes = signature_1.pack_new();
     let signature_2 = SignatureUnlock::unpack(&mut signature_bytes.as_slice()).unwrap();
 

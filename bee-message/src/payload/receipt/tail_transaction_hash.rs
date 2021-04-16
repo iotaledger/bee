@@ -69,9 +69,6 @@ impl Packable for TailTransactionHash {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let mut tail_transaction_hash = [0u8; TAIL_TRANSACTION_HASH_LEN];
-        reader.read_exact(&mut tail_transaction_hash)?;
-
-        Self::new(tail_transaction_hash)
+        Self::new(<[u8; TAIL_TRANSACTION_HASH_LEN]>::unpack_inner::<R, CHECK>(reader)?)
     }
 }

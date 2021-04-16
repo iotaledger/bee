@@ -10,6 +10,7 @@ pub use migrated_funds_entry::{MigratedFundsEntry, VALID_MIGRATED_FUNDS_ENTRY_AM
 pub use tail_transaction_hash::{TailTransactionHash, TAIL_TRANSACTION_HASH_LEN};
 
 use crate::{
+    constants::INPUT_OUTPUT_COUNT_RANGE,
     milestone::MilestoneIndex,
     payload::{option_payload_pack, option_payload_packed_len, option_payload_unpack, Payload},
     Error,
@@ -23,8 +24,7 @@ use bee_common::{
 use core::ops::RangeInclusive;
 use std::collections::HashMap;
 
-// TODO use input/output range ?
-const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = 1..=127;
+const MIGRATED_FUNDS_ENTRY_RANGE: RangeInclusive<usize> = INPUT_OUTPUT_COUNT_RANGE;
 
 /// Receipt is a listing of migrated funds.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -60,7 +60,6 @@ impl ReceiptPayload {
             return Err(Error::TransactionOutputsNotSorted);
         }
 
-        // TODO could be merged with the lexicographic check ?
         let mut tail_transaction_hashes = HashMap::with_capacity(funds.len());
         for (index, funds) in funds.iter().enumerate() {
             if let Some(previous) = tail_transaction_hashes.insert(funds.tail_transaction_hash().as_ref(), index) {

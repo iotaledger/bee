@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::{address::Address, input::UtxoInput};
+
 use crypto::Error as CryptoError;
 
 use core::fmt;
@@ -10,8 +12,9 @@ use core::fmt;
 #[allow(missing_docs)]
 pub enum Error {
     CryptoError(CryptoError),
-    DuplicateError,
+    DuplicateAddress(Address),
     DuplicateSignature(usize),
+    DuplicateUtxo(UtxoInput),
     InputUnlockBlockCountMismatch(usize, usize),
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
@@ -63,8 +66,9 @@ impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::CryptoError(e) => write!(f, "Cryptographic error: {}", e),
-            Error::DuplicateError => write!(f, "The object in the set must be unique."),
+            Error::CryptoError(e) => write!(f, "Cryptographic error: {}.", e),
+            Error::DuplicateAddress(address) => write!(f, "Duplicate address {:?} in outputs of same kind.", address),
+            Error::DuplicateUtxo(utxo) => write!(f, "Duplicate UTXO {:?} in inputs.", utxo),
             Error::DuplicateSignature(index) => {
                 write!(f, "Duplicate signature at index: {0}", index)
             }
