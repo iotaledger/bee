@@ -73,6 +73,10 @@ pub async fn prune<B: StorageBackend>(
             removal_list.insert(*confirmed_id);
         }
     }
+    println!(
+        "len(confirmed_removal_list) = {}",
+        confirmed_removal_list().lock().unwrap().len()
+    );
 
     for unconfirmed_id in unconfirmed.iter().map(|(_, b)| b.message_id()) {
         let mut removal_list = unconfirmed_removal_list().lock().unwrap();
@@ -82,6 +86,10 @@ pub async fn prune<B: StorageBackend>(
             removal_list.insert(*unconfirmed_id);
         }
     }
+    println!(
+        "len(unconfirmed_removal_list) = {}",
+        unconfirmed_removal_list().lock().unwrap().len()
+    );
 
     // TEMPORARILY CHECK ALL SEPS
     let mut num_relevant_seps = 0;
