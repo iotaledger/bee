@@ -41,7 +41,7 @@ pub async fn prune<B: StorageBackend>(
     // to walk the past-cone from the `target_index` backwards, and not step-by-step from `start_index` to
     // `target_index` as this would require additional logic to remove redundant SEPs again. If memory or performance
     // becomes an issue, reduce the `pruning_interval` in the config.
-    let (confirmed, edges, new_seps, indexations) = collect_confirmed_data(tangle, target_index).await?;
+    let (confirmed, edges, mut new_seps, indexations) = collect_confirmed_data(tangle, target_index).await?;
     let (unconfirmed, unconfirmed_edges, unconfirmed_indexations) =
         collect_unconfirmed_data(storage, start_index, target_index).await?;
 
@@ -109,7 +109,10 @@ pub async fn prune<B: StorageBackend>(
     // Replace SEPs in the Tangle. We do this **AFTER** we commited the batch and it returned no error. This way we
     // allow the database to be reset to its previous state, and repeat the pruning.
     let num_new_seps = new_seps.len();
-    tangle.replace_solid_entry_points(new_seps).await;
+    // tangle.replace_solid_entry_points(new_seps).await;
+    for (sep, index) in new_seps.drain() {
+        tangle.add_solid_entry_point(sep, index).await;
+    }
 
     // Remember up to which index we determined SEPs.
     tangle.update_entry_point_index(target_index);
