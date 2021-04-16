@@ -148,7 +148,7 @@ where
             vtx.prevent_eviction();
         }
 
-        let msg = if vtx.message().is_some() && false {
+        let msg = if vtx.message().is_some() {
             None
         } else {
             let parents = message.parents().clone();
@@ -195,7 +195,7 @@ where
             .expect("Just-inserted message is missing")
             .allow_eviction();
 
-        if msg.is_some() {
+        if msg.is_some() || true {
             // Write parents to DB
             for &parent in message.parents().iter() {
                 self.hooks
