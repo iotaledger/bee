@@ -133,12 +133,12 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
                 //
                 // This is an efficient method to find the "surface" of a confirmed past-cone, that is all confirmed
                 // messages, that have at least one child not confirmed by this milestone.
-                if approvers
-                    .iter()
-                    .all(|approver_id| new_seps.contains_key(SolidEntryPoint::ref_cast(approver_id)))
-                {
-                    continue;
-                }
+                // if approvers
+                //     .iter()
+                //     .all(|approver_id| new_seps.contains_key(SolidEntryPoint::ref_cast(approver_id)))
+                // {
+                //     continue;
+                // }
             } else {
                 error!(
                     "Fetching approvers for confirmed_message {} failed. This is a bug!",
