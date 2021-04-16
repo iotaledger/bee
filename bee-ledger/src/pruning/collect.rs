@@ -59,6 +59,7 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
     // We get us a clone of the current SEP set. We are the only ones that make changes to that tangle state, so we can
     // be sure it can't be invalidated in the meantime while we do the past-cone traversal.
     let old_seps = tangle.get_all_solid_entry_points().await;
+    println!("COLLECT: len(old_seps) = {}", old_seps.len());
 
     // We use a `VecDeque` here to traverse the past-cone in breadth-first manner. This gives use the necessary
     // guarantee that we "see" the children before any of their parents. We can use this guarantee to decide whether
