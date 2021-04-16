@@ -41,7 +41,7 @@ pub async fn prune<B: StorageBackend>(
     // to walk the past-cone from the `target_index` backwards, and not step-by-step from `start_index` to
     // `target_index` as this would require additional logic to remove redundant SEPs again. If memory or performance
     // becomes an issue, reduce the `pruning_interval` in the config.
-    let (confirmed, edges, mut new_seps, indexations) = collect_confirmed_data(tangle, target_index).await?;
+    let (confirmed, edges, mut new_seps, indexations) = collect_confirmed_data(tangle, &storage, target_index).await?;
     let (unconfirmed, unconfirmed_edges, unconfirmed_indexations) =
         collect_unconfirmed_data(storage, start_index, target_index).await?;
 
