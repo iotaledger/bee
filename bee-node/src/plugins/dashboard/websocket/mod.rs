@@ -45,6 +45,7 @@ pub(crate) struct WsUser {
     pub(crate) tx: mpsc::UnboundedSender<Result<Message, warp::Error>>,
     pub(crate) shutdown: Option<oneshot::Sender<()>>,
     pub(crate) topics: HashSet<WsTopic>,
+    pub(crate) shutdown_ready: Option<oneshot::Receiver<()>>,
 }
 
 impl WsUser {
@@ -90,6 +91,7 @@ pub(crate) async fn user_connected<B: StorageBackend>(
             error!("websocket send error: {}", e);
         }
     }));
+    let (shutdown_ready_tx, shutdown_ready_rx) = oneshot::channel();
 
     // Save the sender in our list of connected users.
     users.write().await.insert(
@@ -98,6 +100,7 @@ pub(crate) async fn user_connected<B: StorageBackend>(
             tx,
             shutdown: Some(shutdown_tx),
             topics: HashSet::new(),
+            shutdown_ready: Some(shutdown_ready_rx),
         },
     );
 
@@ -118,6 +121,7 @@ pub(crate) async fn user_connected<B: StorageBackend>(
     user_disconnected(user_id, &users).await;
 
     let _ = task.await;
+    let _ = shutdown_ready_tx.send(());
 }
 
 async fn user_message<B: StorageBackend>(

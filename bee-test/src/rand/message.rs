@@ -11,7 +11,6 @@ use bee_message::{
     payload::{indexation::IndexationPayload, Payload},
     Message, MessageBuilder, MessageId, Parents,
 };
-use bee_pow::providers::{Constant, ConstantBuilder, ProviderBuilder};
 
 pub fn rand_message_id() -> MessageId {
     MessageId::new(rand_bytes_32())
@@ -33,11 +32,11 @@ pub fn rand_payload() -> Payload {
 }
 
 pub fn rand_message_with_parents(parents: Parents) -> Message {
-    MessageBuilder::<Constant>::new()
+    MessageBuilder::<u64>::new()
         .with_network_id(rand_integer())
         .with_parents(parents)
         .with_payload(rand_payload())
-        .with_nonce_provider(ConstantBuilder::new().with_value(rand_integer()).finish(), 0f64, None)
+        .with_nonce_provider(rand_integer(), 0f64)
         .finish()
         .unwrap()
 }

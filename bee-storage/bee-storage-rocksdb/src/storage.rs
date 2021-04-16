@@ -4,12 +4,13 @@
 use super::{
     config::{RocksDbConfig, RocksDbConfigBuilder, StorageConfig},
     error::Error,
-    system::{System, STORAGE_VERSION, STORAGE_VERSION_KEY},
+    system::{System, STORAGE_HEALTH_KEY, STORAGE_VERSION, STORAGE_VERSION_KEY},
 };
 
 pub use bee_storage::{
     access::{Fetch, Insert},
     backend::StorageBackend,
+    health::StorageHealth,
 };
 
 use bee_message::{
@@ -18,7 +19,9 @@ use bee_message::{
 };
 
 use async_trait::async_trait;
-use rocksdb::{ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, Options, SliceTransform, DB};
+use rocksdb::{
+    ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, Options, SliceTransform, DB,
+};
 
 pub const CF_SYSTEM: &str = "system";
 pub const CF_MESSAGE_ID_TO_MESSAGE: &str = "message_id_to_message";
@@ -159,7 +162,14 @@ impl Storage {
             cf_spent_to_treasury,
         ];
 
-        Ok(DB::open_cf_descriptors(&opts, config.path, column_familes)?)
+        let db = DB::open_cf_descriptors(&opts, config.path, column_familes)?;
+
+        let mut flushopts = FlushOptions::new();
+        flushopts.set_wait(true);
+        db.flush_opt(&flushopts)?;
+        db.flush_cf_opt(db.cf_handle(CF_SYSTEM).unwrap(), &flushopts)?;
+
+        Ok(db)
     }
 }
 
@@ -188,12 +198,22 @@ impl StorageBackend for Storage {
             _ => panic!("Another system value was inserted on the version key."),
         }
 
+        if let Some(health) = storage.get_health().await? {
+            if health != StorageHealth::Healthy {
+                return Err(Self::Error::UnhealthyStorage(health));
+            }
+        }
+
+        storage.set_health(StorageHealth::Idle).await?;
+
         Ok(storage)
     }
 
     /// It shutdowns RocksDb instance.
     /// Note: the shutdown is done through flush method and then droping the storage object.
     async fn shutdown(self) -> Result<(), Self::Error> {
+        self.set_health(StorageHealth::Healthy).await?;
+
         Ok(self.inner.flush()?)
     }
 
@@ -206,5 +226,17 @@ impl StorageBackend for Storage {
         }
 
         Ok(Some(size))
+    }
+
+    async fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error> {
+        Ok(match Fetch::<u8, System>::fetch(self, &STORAGE_HEALTH_KEY).await? {
+            Some(System::Health(health)) => Some(health),
+            None => None,
+            _ => panic!("Another system value was inserted on the health key."),
+        })
+    }
+
+    async fn set_health(&self, health: StorageHealth) -> Result<(), Self::Error> {
+        Insert::<u8, System>::insert(self, &STORAGE_HEALTH_KEY, &System::Health(health)).await
     }
 }

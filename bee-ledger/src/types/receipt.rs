@@ -6,6 +6,7 @@ use crate::types::{error::Error, TreasuryOutput};
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
     constants::IOTA_SUPPLY,
+    input::Input,
     milestone::MilestoneIndex,
     output::Output,
     payload::{receipt::ReceiptPayload, Payload},
@@ -46,6 +47,18 @@ impl Receipt {
         if migrated_amount > IOTA_SUPPLY {
             return Err(Error::InvalidMigratedFundsAmount(migrated_amount));
         }
+
+        match transaction.input() {
+            Input::Treasury(input) => {
+                if input.milestone_id() != consumed_treasury_output.milestone_id() {
+                    return Err(Error::ConsumedTreasuryOutputMismatch(
+                        *input.milestone_id(),
+                        *consumed_treasury_output.milestone_id(),
+                    ));
+                }
+            }
+            input => return Err(Error::UnsupportedInputKind(input.kind())),
+        };
 
         let created_treasury_output = match transaction.output() {
             Output::Treasury(output) => output,

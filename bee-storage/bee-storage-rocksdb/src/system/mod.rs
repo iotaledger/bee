@@ -1,13 +1,24 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod health;
 mod version;
 
-pub(crate) use health::{StorageHealth, STORAGE_HEALTH_KEY};
 pub(crate) use version::{StorageVersion, STORAGE_VERSION, STORAGE_VERSION_KEY};
 
+pub(crate) const STORAGE_HEALTH_KEY: u8 = 1;
+
 use bee_common::packable::{Packable, Read, Write};
+use bee_storage::health::{Error as StorageHealthError, StorageHealth};
+
+#[derive(Debug, thiserror::Error)]
+pub enum SystemError {
+    #[error("I/O error happened: {0:?}")]
+    Io(#[from] std::io::Error),
+    #[error("")]
+    Health(#[from] StorageHealthError),
+    #[error("")]
+    UnknownSystem(u8),
+}
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum System {
@@ -16,7 +27,7 @@ pub enum System {
 }
 
 impl Packable for System {
-    type Error = std::io::Error;
+    type Error = SystemError;
 
     fn packed_len(&self) -> usize {
         match self {
@@ -41,10 +52,10 @@ impl Packable for System {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            STORAGE_VERSION_KEY => System::Version(StorageVersion::unpack_inner::<R, CHECK>(reader)?),
-            STORAGE_HEALTH_KEY => System::Health(StorageHealth::unpack_inner::<R, CHECK>(reader)?),
-            _ => panic!("Unhandled system type"),
-        })
+        match u8::unpack_inner::<R, CHECK>(reader)? {
+            STORAGE_VERSION_KEY => Ok(System::Version(StorageVersion::unpack_inner::<R, CHECK>(reader)?)),
+            STORAGE_HEALTH_KEY => Ok(System::Health(StorageHealth::unpack_inner::<R, CHECK>(reader)?)),
+            s => Err(SystemError::UnknownSystem(s)),
+        }
     }
 }

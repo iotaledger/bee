@@ -70,6 +70,7 @@ pub trait StorageBackend:
     + Truncate<SolidEntryPoint, MilestoneIndex>
     + for<'a> AsStream<'a, Unspent, ()>
     + for<'a> AsStream<'a, Address, Balance>
+    + for<'a> AsStream<'a, SolidEntryPoint, MilestoneIndex>
     + bee_tangle::storage::StorageBackend
 {
 }
@@ -117,6 +118,7 @@ impl<T> StorageBackend for T where
         + Truncate<SolidEntryPoint, MilestoneIndex>
         + for<'a> AsStream<'a, Unspent, ()>
         + for<'a> AsStream<'a, Address, Balance>
+        + for<'a> AsStream<'a, SolidEntryPoint, MilestoneIndex>
         + bee_tangle::storage::StorageBackend
 {
 }

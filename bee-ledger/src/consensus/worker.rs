@@ -28,7 +28,8 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_storage::{access::AsStream, backend::StorageBackend as _, health::StorageHealth};
+use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 
@@ -179,14 +180,15 @@ where
     }
 
     info!(
-        "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}, outputs consumed {}, outputs created {}.",
+        "Confirmed milestone {}: referenced {}, no transaction {}, conflicting {}, included {}, consumed {}, created {}, receipt {}.",
         milestone.essence().index(),
         metadata.referenced_messages,
         metadata.excluded_no_transaction_messages.len(),
         metadata.excluded_conflicting_messages.len(),
         metadata.included_messages.len(),
         metadata.consumed_outputs.len(),
-        metadata.created_outputs.len()
+        metadata.created_outputs.len(),
+        milestone.essence().receipt().is_some()
     );
 
     bus.dispatch(MilestoneConfirmed {
@@ -235,7 +237,13 @@ where
 
         match storage::fetch_snapshot_info(&*storage).await? {
             None => {
-                import_snapshots(&*storage, &*tangle, network_id, &snapshot_config).await?;
+                if let Err(e) = import_snapshots(&*storage, network_id, &snapshot_config).await {
+                    (*storage)
+                        .set_health(StorageHealth::Corrupted)
+                        .await
+                        .map_err(|e| Error::Storage(Box::new(e)))?;
+                    Err(e)?;
+                }
             }
             Some(info) => {
                 if info.network_id() != network_id {
@@ -256,6 +264,16 @@ where
         }
 
         check_ledger_state(&*storage).await?;
+
+        {
+            let mut solid_entry_points = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&*storage)
+                .await
+                .map_err(|e| Error::Storage(Box::new(e)))?;
+
+            while let Some((sep, index)) = solid_entry_points.next().await {
+                tangle.add_solid_entry_point(sep, index).await;
+            }
+        }
 
         // Unwrap is fine because we just inserted the ledger index.
         // TODO unwrap
