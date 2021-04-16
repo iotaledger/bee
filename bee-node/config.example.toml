@@ -99,7 +99,7 @@ path = "./storage/alphanet"
 below_max_depth = 15
 
 [mqtt]
-address = "tcp://localhost:1883"
+port = 1883
 
 [dashboard]
 port  = 8081
