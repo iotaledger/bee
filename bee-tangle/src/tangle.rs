@@ -148,7 +148,7 @@ where
             vtx.prevent_eviction();
         }
 
-        let msg = if vtx.message().is_some() {
+        let msg = if vtx.message().is_some() && false {
             None
         } else {
             let parents = message.parents().clone();

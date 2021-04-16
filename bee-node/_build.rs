@@ -9,6 +9,7 @@ enum BuildError {
 }
 
 fn main() -> Result<(), BuildError> {
+    println!("build.rs running");
     match Command::new("git").args(&["rev-parse", "HEAD"]).output() {
         Ok(output) => {
             println!(
