@@ -48,7 +48,13 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
         // `unwrap` should be safe since we can assume at this point the underlying db is not corrupted.
         // alternative:
         // .ok_or(Error::MilestoneNotFoundInTangle(*current_index))?;
-        .unwrap();
+        .unwrap_or_else(|| {
+            error!(
+                "Fetching milestone id for target index {} failed. This is a bug!",
+                target_index
+            );
+            panic!("Fetching milestone id");
+        });
 
     // We get us a clone of the current SEP set. We are the only ones that make changes to that tangle state, so we can
     // be sure it can't be invalidated in the meantime while we do the past-cone traversal.
@@ -81,53 +87,62 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
             // );
 
             // We must be able to get its parents (unless the db is corrupt)
-            let (maybe_payload, current_parents) = tangle
-                .get(&current_id)
-                .await
-                .map(|current| {
-                    (
-                        current.payload().clone(),
-                        current.parents().iter().copied().collect::<Vec<_>>(),
-                    )
-                })
-                // `Unwrap` should be safe since we traverse the past of a confirmed milestone!
-                .unwrap();
+            if let Some((maybe_payload, current_parents)) = tangle.get(&current_id).await.map(|current| {
+                (
+                    current.payload().clone(),
+                    current.parents().iter().copied().collect::<Vec<_>>(),
+                )
+            })
+            // `Unwrap` should be safe since we traverse the past of a confirmed milestone!
+            // .unwrap();
+            {
+                // Collect possible indexation payloads.
+                if let Some(indexation) = unwrap_indexation(maybe_payload) {
+                    let hashed_index = indexation.hash();
 
-            // Collect possible indexation payloads.
-            if let Some(indexation) = unwrap_indexation(maybe_payload) {
-                let hashed_index = indexation.hash();
+                    indexations.push((hashed_index, current_id));
+                }
 
-                indexations.push((hashed_index, current_id));
+                // Collect edges.
+                for parent_id in &current_parents {
+                    let _ = edges.insert(Edge {
+                        from_parent: *parent_id,
+                        to_child: current_id,
+                    });
+                }
+
+                parents.append(&mut current_parents.into_iter().collect());
+            } else {
+                error!(
+                    "Fetching message data for confirmed_message {} failed. This is a bug!",
+                    current_id
+                );
             }
-
-            // Collect edges.
-            for parent_id in &current_parents {
-                let _ = edges.insert(Edge {
-                    from_parent: *parent_id,
-                    to_child: current_id,
-                });
-            }
-
-            parents.append(&mut current_parents.into_iter().collect());
 
             let _ = collected_messages.insert(current_id);
 
             // We only add this as a new SEP if it has at least one unconfirmed aprover.
             // `Unwrap` should be safe, because the current message has been confirmed, and hence must have approvers.
-            let approvers = tangle.get_children(&current_id).await.unwrap();
-
-            // If all approvers are part of the `new_seps` list already, then we can assume that this potential SEP is
-            // redundant. Since we traverse the past-cone breadth-first we can be sure that approvers are
-            // visited before their respective approvees, and the following skip condition is triggered often.
-            // This allows us to not having to fetch the metadata for all of its approvers from the Tangle.
-            //
-            // This is an efficient method to find the "surface" of a confirmed past-cone, that is all confirmed
-            // messages, that have at least one child not confirmed by this milestone.
-            if approvers
-                .iter()
-                .all(|approver_id| new_seps.contains_key(SolidEntryPoint::ref_cast(approver_id)))
-            {
-                continue;
+            if let Some(approvers) = tangle.get_children(&current_id).await {
+                // If all approvers are part of the `new_seps` list already, then we can assume that this potential SEP
+                // is redundant. Since we traverse the past-cone breadth-first we can be sure that
+                // approvers are visited before their respective approvees, and the following skip
+                // condition is triggered often. This allows us to not having to fetch the metadata for
+                // all of its approvers from the Tangle.
+                //
+                // This is an efficient method to find the "surface" of a confirmed past-cone, that is all confirmed
+                // messages, that have at least one child not confirmed by this milestone.
+                if approvers
+                    .iter()
+                    .all(|approver_id| new_seps.contains_key(SolidEntryPoint::ref_cast(approver_id)))
+                {
+                    continue;
+                }
+            } else {
+                error!(
+                    "Fetching approvers for confirmed_message {} failed. This is a bug!",
+                    current_id
+                );
             }
 
             // WE don't care for the actual milestone index that actually confirmed that SEP, so we forget about it, and
@@ -199,7 +214,7 @@ async fn collect_unconfirmed_data_by_index<B: StorageBackend>(
             }
         } else {
             error!(
-                "Fetching message data for unconfirmed_message {} failed. Due to that pruning is incomplete, and will cause the database to steadily increase. This is a bug.",
+                "Fetching message data for unconfirmed_message {} failed. This is a bug!",
                 unconfirmed_message_id
             );
         }
