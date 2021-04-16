@@ -16,7 +16,7 @@ fn kind() {
 fn from_ed25519() {
     let public_key_bytes = rand_bytes_32();
     let signature_bytes: [u8; 64] = rand_bytes(64).try_into().unwrap();
-    let signature = SignatureUnlock::from(Ed25519Signature::new(public_key_bytes, signature_bytes.clone()));
+    let signature = SignatureUnlock::from(Ed25519Signature::new(public_key_bytes, signature_bytes));
 
     assert!(matches!(signature, SignatureUnlock::Ed25519(signature)
         if signature.public_key() == &public_key_bytes
