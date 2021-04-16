@@ -20,7 +20,26 @@ use bee_tangle::{
     metadata::MessageMetadata, ms_tangle::StorageHooks, unconfirmed_message::UnconfirmedMessage, MsTangle,
 };
 
-use log::{debug, info};
+use log::{debug, error, info};
+use once_cell::sync::OnceCell;
+
+use std::{collections::HashSet, sync::Mutex};
+
+fn confirmed_removal_list() -> &'static Mutex<HashSet<MessageId>> {
+    static INSTANCE: OnceCell<Mutex<HashSet<MessageId>>> = OnceCell::new();
+    INSTANCE.get_or_init(|| {
+        let m = HashSet::default();
+        Mutex::new(m)
+    })
+}
+
+fn unconfirmed_removal_list() -> &'static Mutex<HashSet<MessageId>> {
+    static INSTANCE: OnceCell<Mutex<HashSet<MessageId>>> = OnceCell::new();
+    INSTANCE.get_or_init(|| {
+        let m = HashSet::default();
+        Mutex::new(m)
+    })
+}
 
 pub async fn prune<B: StorageBackend>(
     tangle: &MsTangle<B>,
@@ -32,7 +51,7 @@ pub async fn prune<B: StorageBackend>(
 
     // Start pruning from the last pruning index + 1.
     let start_index = tangle.get_pruning_index() + 1;
-    debug_assert!(target_index > start_index);
+    debug_assert!(target_index >= start_index);
 
     // Get access to the storage backend of the Tangle.
     let storage = tangle.hooks();
@@ -45,7 +64,26 @@ pub async fn prune<B: StorageBackend>(
     let (unconfirmed, unconfirmed_edges, unconfirmed_indexations) =
         collect_unconfirmed_data(storage, start_index, target_index).await?;
 
-    // TEMPORARLY CHECK ALL SEPS
+    // TEMPORARILY ADD TO REMOVAL LIST
+    for confirmed_id in &confirmed {
+        let mut removal_list = confirmed_removal_list().lock().unwrap();
+        if removal_list.contains(confirmed_id) {
+            error!("double removal of a confirmed message");
+        } else {
+            removal_list.insert(*confirmed_id);
+        }
+    }
+
+    for unconfirmed_id in unconfirmed.iter().map(|(_, b)| b.message_id()) {
+        let mut removal_list = unconfirmed_removal_list().lock().unwrap();
+        if removal_list.contains(unconfirmed_id) {
+            error!("double removal of a unconfirmed message");
+        } else {
+            removal_list.insert(*unconfirmed_id);
+        }
+    }
+
+    // TEMPORARILY CHECK ALL SEPS
     let mut num_relevant_seps = 0;
     for sep_id in new_seps.iter().map(|(sep, _)| sep.message_id()) {
         let sep_approvers = tangle.get_children(sep_id).await.unwrap();
