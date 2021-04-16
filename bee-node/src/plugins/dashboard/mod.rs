@@ -191,11 +191,16 @@ where
 
             server.await;
 
+            let mut readies = Vec::new();
+
             for (_, user) in users.write().await.iter_mut() {
                 if let Some(shutdown) = user.shutdown.take() {
                     let _ = shutdown.send(());
+                    readies.push(user.shutdown_ready.take().unwrap());
                 }
             }
+
+            futures::future::join_all(readies).await;
 
             info!("Stopped.");
         });
