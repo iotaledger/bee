@@ -13,7 +13,7 @@ use crate::{
     types::{body::SuccessBody, dtos::PayloadDto, responses::SubmitMessageResponse},
 };
 
-use bee_message::{payload::Payload, Message, MessageBuilder, MessageId, Parents};
+use bee_message::{payload::Payload, Message, MessageBuilder, MessageId, parents::Parents};
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
 use bee_runtime::resource::ResourceHandle;

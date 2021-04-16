@@ -1,8 +1,6 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO here or in bee-message ?
-
 use crate::types::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
