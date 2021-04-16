@@ -19,7 +19,7 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-pub const DEFAULT_CACHE_LEN: usize = 100_000;
+pub const DEFAULT_CACHE_LEN: usize = 1_000;
 const CACHE_THRESHOLD_FACTOR: f64 = 0.1;
 
 /// A trait used to provide hooks for a tangle. The tangle acts as an in-memory cache and will use hooks to extend its
