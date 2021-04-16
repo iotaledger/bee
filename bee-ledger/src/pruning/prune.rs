@@ -125,9 +125,9 @@ pub async fn prune<B: StorageBackend>(
     let mut num_indexations = prune_indexations(storage, &mut batch, indexations).await?;
 
     // Add the unconfirmed data to the batch.
-    num_messages += prune_unconfirmed_messages(storage, &mut batch, unconfirmed).await?;
-    num_edges += prune_edges(storage, &mut batch, unconfirmed_edges).await?;
-    num_indexations += prune_indexations(storage, &mut batch, unconfirmed_indexations).await?;
+    // num_messages += prune_unconfirmed_messages(storage, &mut batch, unconfirmed).await?;
+    // num_edges += prune_edges(storage, &mut batch, unconfirmed_edges).await?;
+    // num_indexations += prune_indexations(storage, &mut batch, unconfirmed_indexations).await?;
 
     // Add milestone related data to the batch.
     let num_milestones = prune_milestones(storage, &mut batch, start_index, target_index).await?;
