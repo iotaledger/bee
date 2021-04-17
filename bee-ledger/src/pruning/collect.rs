@@ -222,10 +222,12 @@ async fn collect_unconfirmed_data_by_index<B: StorageBackend>(
                 });
             }
         } else {
-            error!(
-                "Fetching message data for unconfirmed_message {} failed. This is a bug!",
-                unconfirmed_message_id
-            );
+            // Already deleted because it became confirmed.
+
+            // error!(
+            //     "Fetching message data for unconfirmed_message {} failed. This is a bug!",
+            //     unconfirmed_message_id
+            // );
         }
     }
 
