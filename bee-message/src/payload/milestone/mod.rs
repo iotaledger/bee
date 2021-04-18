@@ -70,18 +70,14 @@ impl MilestonePayload {
                 essence.public_keys().len(),
                 signatures.len(),
             ));
-        }
+        };
 
         Ok(Self {
             essence,
-            signatures: vec![
-                signatures
-                    .iter()
-                    .map(|s| std::array::IntoIter::new(*s))
-                    .flatten()
-                    .collect::<Vec<u8>>()
-                    .into_boxed_slice(),
-            ],
+            signatures: signatures
+                .iter()
+                .map(|s| s.to_vec().into_boxed_slice())
+                .collect::<Vec<Box<[u8]>>>(),
         })
     }
 
