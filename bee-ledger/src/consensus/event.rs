@@ -1,13 +1,9 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::ConflictReason;
+use crate::types::{ConflictReason, ConsumedOutput, CreatedOutput};
 
-use bee_message::{
-    milestone::MilestoneIndex,
-    output::{ConsumedOutput, CreatedOutput},
-    MessageId,
-};
+use bee_message::{milestone::MilestoneIndex, MessageId};
 
 // TODO why do we need to full vectors here ?
 #[derive(Clone)]

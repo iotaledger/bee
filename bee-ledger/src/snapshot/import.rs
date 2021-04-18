@@ -18,13 +18,13 @@ use crate::{
         kind::Kind,
         milestone_diff::MilestoneDiff,
     },
-    types::{BalanceDiffs, TreasuryOutput},
+    types::{BalanceDiffs, CreatedOutput, TreasuryOutput},
 };
 
 use bee_common::packable::{Packable, Read};
 use bee_message::{
     milestone::MilestoneIndex,
-    output::{self, CreatedOutput, Output, OutputId},
+    output::{self, Output, OutputId},
     payload::Payload,
     MessageId,
 };

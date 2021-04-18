@@ -3,12 +3,12 @@
 
 use bee_ledger::{
     snapshot::info::SnapshotInfo,
-    types::{Balance, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent},
+    types::{Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent},
 };
 use bee_message::{
     address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
-    output::{ConsumedOutput, CreatedOutput, OutputId},
+    output::OutputId,
     payload::indexation::{HashedIndex, IndexationPayload},
     Message, MessageId,
 };

@@ -3,11 +3,14 @@
 
 // TODO review this file
 
-use crate::snapshot::error::Error;
+use crate::{
+    snapshot::error::Error,
+    types::{ConsumedOutput, CreatedOutput},
+};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{
-    output::{ConsumedOutput, CreatedOutput, Output, OutputId, TreasuryOutput},
+    output::{Output, OutputId, TreasuryOutput},
     payload::{
         milestone::{MilestoneId, MilestonePayload},
         transaction::TransactionId,

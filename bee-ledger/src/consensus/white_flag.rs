@@ -9,13 +9,13 @@ use crate::{
         metadata::WhiteFlagMetadata,
         storage::{self, StorageBackend},
     },
-    types::{BalanceDiffs, ConflictReason},
+    types::{BalanceDiffs, ConflictReason, ConsumedOutput, CreatedOutput},
 };
 
 use bee_message::{
     address::Address,
     input::Input,
-    output::{ConsumedOutput, CreatedOutput, Output, OutputId},
+    output::{Output, OutputId},
     payload::{
         transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
         Payload,

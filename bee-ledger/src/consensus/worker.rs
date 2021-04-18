@@ -16,12 +16,12 @@ use crate::{
         constants::{PRUNING_THRESHOLD, SOLID_ENTRY_POINT_THRESHOLD_FUTURE, SOLID_ENTRY_POINT_THRESHOLD_PAST},
     },
     snapshot::{config::SnapshotConfig, error::Error as SnapshotError, import::import_snapshots},
-    types::{ConflictReason, LedgerIndex, Migration, Receipt, TreasuryOutput},
+    types::{ConflictReason, CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
 };
 
 use bee_message::{
     milestone::MilestoneIndex,
-    output::{CreatedOutput, Output, OutputId},
+    output::{Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
     MessageId,
 };

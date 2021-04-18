@@ -5,12 +5,12 @@ use crate::{error::Error, storage::*};
 
 use bee_ledger::{
     snapshot::info::SnapshotInfo,
-    types::{Balance, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent},
+    types::{Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent},
 };
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     milestone::{Milestone, MilestoneIndex},
-    output::{ConsumedOutput, CreatedOutput, OutputId, OUTPUT_ID_LENGTH},
+    output::{OutputId, OUTPUT_ID_LENGTH},
     payload::indexation::{HashedIndex, HASHED_INDEX_LENGTH},
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
