@@ -49,7 +49,9 @@ use std::{collections::HashSet, sync::Mutex};
 /// [LMI(X)..LMI(X)+BMD*UNCONFIRMED_PRUNING_DELAY_FACTOR] within which a message *MUST* be confirmed, i.e. contains
 /// CMI(X), so it basically relies on the Coordinator node to not confirm a message anytime later than that, otherwise
 /// traversing the about-to-be-pruned past-cone of a milestone to determine the new SEP set would fail.
-const UNCONFIRMED_PRUNING_DELAY_FACTOR: u32 = 2; // Pruning (if still unconf.) happens 60 milestones after its LMI(X)
+///
+/// Pruning (if still unconf.) happens x-BMD milestones after its LMI(X)
+const UNCONFIRMED_PRUNING_DELAY_FACTOR: u32 = 2;
 
 fn confirmed_removal_list() -> &'static Mutex<HashSet<MessageId>> {
     static INSTANCE: OnceCell<Mutex<HashSet<MessageId>>> = OnceCell::new();
@@ -184,7 +186,7 @@ pub async fn prune<B: StorageBackend>(
         let unconfirmed_target_index = target_index - unconfirmed_additional_pruning_delay;
 
         assert!(unconfirmed_target_index < target_index);
-        assert!(unconfirmed_start_index < unconfirmed_target_index);
+        assert!(unconfirmed_target_index >= unconfirmed_start_index);
 
         info!(
             "Pruning unconfirmed messages until milestone {}...",
