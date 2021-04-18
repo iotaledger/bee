@@ -78,6 +78,7 @@ where
         let peer_manager = node.resource::<PeerManager>();
         let network_controller = node.resource::<NetworkServiceController>();
         let node_info = node.info();
+        let bus = node.bus();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -95,6 +96,7 @@ where
                 peer_manager,
                 network_controller,
                 node_info,
+                bus,
             )
             .recover(handle_rejection);
 

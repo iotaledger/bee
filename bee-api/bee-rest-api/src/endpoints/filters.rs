@@ -5,7 +5,7 @@ use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp
 
 use bee_network::NetworkServiceController;
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
-use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
+use bee_runtime::{event::Bus, node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
 use tokio::sync::mpsc;
@@ -70,4 +70,10 @@ pub(crate) fn with_node_info(
     node_info: ResourceHandle<NodeInfo>,
 ) -> impl Filter<Extract = (ResourceHandle<NodeInfo>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || node_info.clone())
+}
+
+pub(crate) fn with_bus(
+    bus: ResourceHandle<Bus>,
+) -> impl Filter<Extract = (ResourceHandle<Bus>,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || bus.clone())
 }

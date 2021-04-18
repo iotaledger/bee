@@ -4,7 +4,7 @@
 use crate::{
     endpoints::{
         config::ROUTE_WHITE_FLAG,
-        filters::{with_storage, with_tangle},
+        filters::{with_bus, with_storage, with_tangle},
         permission::has_permission,
         rejection::CustomRejection,
         storage::StorageBackend,
@@ -14,13 +14,23 @@ use crate::{
 
 use bee_ledger::consensus::{self, metadata::WhiteFlagMetadata};
 use bee_message::{milestone::MilestoneIndex, MessageId};
-use bee_runtime::resource::ResourceHandle;
+use bee_protocol::workers::event::MessageSolidified;
+use bee_runtime::{event::Bus, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
+use futures::channel::oneshot;
 use serde_json::Value as JsonValue;
+use tokio::time::timeout;
 use warp::{reject, Filter, Rejection, Reply};
 
-use std::net::IpAddr;
+use std::{
+    any::TypeId,
+    collections::HashSet,
+    iter::FromIterator,
+    net::IpAddr,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("whiteflag")).and(warp::path::end())
@@ -31,6 +41,7 @@ pub(crate) fn filter<B: StorageBackend>(
     allowed_ips: Vec<IpAddr>,
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<MsTangle<B>>,
+    bus: ResourceHandle<Bus<'static>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::post())
@@ -38,6 +49,7 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::body::json())
         .and(with_storage(storage))
         .and(with_tangle(tangle))
+        .and(with_bus(bus))
         .and_then(white_flag)
 }
 
@@ -45,6 +57,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     body: JsonValue,
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<MsTangle<B>>,
+    bus: ResourceHandle<Bus<'static>>,
 ) -> Result<impl Reply, Rejection> {
     let index_json = &body["index"];
     let parents_json = &body["parentMessageIds"];
@@ -91,13 +104,74 @@ pub(crate) async fn white_flag<B: StorageBackend>(
         message_ids
     };
 
+    // TODO check parents
+
+    // White flag is usually called on solid milestones; however, this endpoint's purpose is to provide the coordinator
+    // with the node's perception of a milestone candidate before issuing it. Within this endpoint, there is then no
+    // guarantee that the provided parents are solid so the node needs to solidify them before calling white flag or
+    // aborting if it took too long. This is done by requesting all missing parents then listening for their
+    // solidification event or aborting if the allowed time passed.
+
+    let to_solidify = Arc::new(Mutex::new(HashSet::<MessageId>::from_iter(parents.iter().copied())));
+    let (sender, receiver) = oneshot::channel::<()>();
+    let sender = Arc::new(Mutex::new(Some(sender)));
+
+    // Start listening to solidification events to check if the parents are getting solid.
+    let _to_solidify = to_solidify.clone();
+    let _sender = sender.clone();
+    struct Static;
+    bus.add_listener::<Static, _, _>(move |event: &MessageSolidified| {
+        if let Ok(mut to_solidify) = to_solidify.lock() {
+            if to_solidify.remove(&event.0) {
+                if to_solidify.is_empty() {
+                    let _ = sender.lock().map(|mut s| s.take().map(|s| s.send(())));
+                }
+            }
+        }
+    });
+    let to_solidify = _to_solidify;
+    let sender = _sender;
+
+    for parent in parents.iter() {
+        if tangle.is_solid_message(parent).await {
+            if let Ok(mut to_solidify) = to_solidify.lock() {
+                to_solidify.remove(parent);
+            }
+        } else {
+            // TODO request
+        }
+    }
+
+    if let Ok(to_solidify) = to_solidify.lock() {
+        if to_solidify.is_empty() {
+            let _ = sender.lock().map(|mut s| s.take().map(|s| s.send(())));
+        }
+    }
+
     let mut metadata = WhiteFlagMetadata::new(index);
 
-    consensus::white_flag::<B>(&tangle, &storage, parents, &mut metadata)
-        .await
-        .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
+    // Wait for either all parents to get solid or the timeout to expire.
+    let response = match timeout(Duration::from_millis(10000), receiver).await {
+        Ok(_) => {
+            // Did not timeout, parents are solid and white flag can happen.
+            consensus::white_flag::<B>(&tangle, &storage, parents, &mut metadata)
+                .await
+                .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
 
-    Ok(warp::reply::json(&SuccessBody::new(WhiteFlagResponse {
-        merkle_tree_hash: hex::encode(metadata.merkle_proof()),
-    })))
+            Ok(warp::reply::json(&SuccessBody::new(WhiteFlagResponse {
+                merkle_tree_hash: hex::encode(metadata.merkle_proof()),
+            })))
+        }
+        Err(_) => {
+            // Did timeout, parents are not solid and white flag can not happen.
+            Err(reject::custom(CustomRejection::ServiceUnavailable(
+                "parents not solid".to_string(),
+            )))
+        }
+    };
+
+    // Stop listening to the solidification event.
+    bus.remove_listeners_by_id(TypeId::of::<Static>());
+
+    response
 }

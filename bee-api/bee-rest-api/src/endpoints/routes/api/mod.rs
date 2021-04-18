@@ -8,7 +8,7 @@ use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp
 
 use bee_network::NetworkServiceController;
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
-use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
+use bee_runtime::{event::Bus, node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
 use tokio::sync::mpsc;
@@ -33,6 +33,7 @@ pub(crate) fn filter<B: StorageBackend>(
     peer_manager: ResourceHandle<PeerManager>,
     network_controller: ResourceHandle<NetworkServiceController>,
     node_info: ResourceHandle<NodeInfo>,
+    bus: ResourceHandle<Bus<'static>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     v1::filter(
         public_routes.clone(),
@@ -48,5 +49,5 @@ pub(crate) fn filter<B: StorageBackend>(
         network_controller,
         node_info,
     )
-    .or(plugins::filter(public_routes, allowed_ips, storage, tangle))
+    .or(plugins::filter(public_routes, allowed_ips, storage, tangle, bus))
 }
