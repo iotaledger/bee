@@ -29,7 +29,7 @@ use bee_message::{
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_storage::{access::AsStream, backend::StorageBackend as _, health::StorageHealth};
-use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle, TangleWorker};
+use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle, TangleConfig, TangleWorker};
 
 use async_trait::async_trait;
 
@@ -232,6 +232,7 @@ where
         let (tx, rx) = mpsc::unbounded_channel();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle_config = node.resource::<TangleConfig>();
         let storage = node.storage();
         let bus = node.bus();
 
@@ -337,15 +338,15 @@ where
                     }
                 }
 
-                if let Some((confirmed_target_index, unconfirmed_target_index)) =
+                if let Some(target_index) =
                     should_prune(&tangle, (*ledger_index).into(), pruning_delay, &pruning_config)
                 {
                     if let Err(e) = prune(
                         &tangle,
                         &bus,
-                        confirmed_target_index,
-                        unconfirmed_target_index,
+                        target_index,
                         &pruning_config,
+                        tangle_config.below_max_depth(),
                     )
                     .await
                     {

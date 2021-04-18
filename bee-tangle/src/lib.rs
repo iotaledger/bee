@@ -21,6 +21,7 @@ pub mod worker;
 mod tangle;
 mod vertex;
 
+pub use config::TangleConfig;
 pub use ms_tangle::MsTangle;
 pub use tangle::{Hooks, Tangle};
 pub use worker::TangleWorker;
@@ -48,5 +49,7 @@ pub fn init<N: Node>(tangle_config: &config::TangleConfig, node_builder: N::Buil
 where
     N::Backend: storage::StorageBackend,
 {
-    node_builder.with_worker_cfg::<TangleWorker>(tangle_config.clone())
+    node_builder
+        .with_worker_cfg::<TangleWorker>(tangle_config.clone())
+        .with_resource(tangle_config.clone())
 }

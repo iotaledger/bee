@@ -25,6 +25,32 @@ use once_cell::sync::OnceCell;
 
 use std::{collections::HashSet, sync::Mutex};
 
+// **NOTE**: In order to ensure that everything that entered the database gets pruned eventually the following mechanism
+// is used:
+// (1) Incoming messages immediatedly get assigned the LMI (current latest milestone index known by the node)
+// (2) Most of them will get confirmed eventually, and are referencable by a particular CMI (the closest future
+// milestone that references them)
+// However, that means that for a given message X LMI(X) <= CMI(X) may not be true. That is certainly the case for
+// requested messages, that are required to solidify an older milestone. When the message comes in it gets assigned the
+// current LMI, while its confirming milestone might be several milestone indexes ago already. So that would mean that
+// when we try to prune LMI(X) (as unconfirmed) it would fail, because it would have been pruned already at CMI(X).
+//
+// The other way of failure is also possible: A message X was pruned at LMI(X), but when CMI(X) is about to pruned it
+// can't be used to fully traverse the past-cone of that particular milestone, and hence will make it impossible to
+// determine new SEP set.
+//
+// CASE A: CMI < LMI (requested message)        => pruning at CMI problematic for unconfirmed messages
+//      Solution: just ignore the failure, and assume that the message has been pruned already at CMI, because it was
+// confirmed CASE B: CMI > LMI (regular gossip message)   => pruning at LMI problematic
+//      Solution: use `ADDITIONAL_DELAY` such that CMI < LMI + UNCONFIRMED_PRUNING_DELAY_FACTOR
+//
+
+/// Determines how many BMDs we delay pruning of still unconfirmed messages. It basically determines the range to be:
+/// [LMI(X)..LMI(X)+BMD*UNCONFIRMED_PRUNING_DELAY_FACTOR] within which a message *MUST* be confirmed, i.e. contains
+/// CMI(X), so it basically relies on the Coordinator node to not confirm a message anytime later than that, otherwise
+/// traversing the about-to-be-pruned past-cone of a milestone to determine the new SEP set would fail.
+const UNCONFIRMED_PRUNING_DELAY_FACTOR: u32 = 4; // Pruning (if still unconf.) happens 60 milestones after its LMI(X)
+
 fn confirmed_removal_list() -> &'static Mutex<HashSet<MessageId>> {
     static INSTANCE: OnceCell<Mutex<HashSet<MessageId>>> = OnceCell::new();
     INSTANCE.get_or_init(|| {
@@ -44,18 +70,29 @@ fn unconfirmed_removal_list() -> &'static Mutex<HashSet<MessageId>> {
 pub async fn prune<B: StorageBackend>(
     tangle: &MsTangle<B>,
     bus: &Bus<'_>,
-    confirmed_target_index: MilestoneIndex,
-    unconfirmed_target_index: MilestoneIndex,
+    target_index: MilestoneIndex,
     config: &PruningConfig,
+    below_max_depth: u32,
 ) -> Result<(), Error> {
     info!("Pruning...");
 
-    dbg!(confirmed_target_index, unconfirmed_target_index);
+    let unconfirmed_pruning_delay = below_max_depth * UNCONFIRMED_PRUNING_DELAY_FACTOR;
+
+    let unconfirmed_target_index = target_index - unconfirmed_pruning_delay;
+    dbg!(target_index, unconfirmed_target_index);
 
     // Start pruning from the last pruning index + 1.
     let start_index = tangle.get_pruning_index() + 1;
-    debug_assert!(confirmed_target_index >= start_index);
-    debug_assert!(unconfirmed_target_index < confirmed_target_index);
+
+    // If `start_index == 1` (lowest possible start index), we need to deactivate "unconfirmed" pruning.
+    let unconfirmed_start_index = if *start_index >= unconfirmed_pruning_delay {
+        Some(start_index - unconfirmed_pruning_delay)
+    } else {
+        None
+    };
+
+    debug_assert!(target_index >= start_index);
+    debug_assert!(unconfirmed_target_index < target_index);
 
     // Get access to the storage backend of the Tangle.
     let storage = tangle.hooks();
@@ -67,10 +104,9 @@ pub async fn prune<B: StorageBackend>(
     // to walk the past-cone from the `target_index` backwards, and not step-by-step from `start_index` to
     // `target_index` as this would require additional logic to remove redundant SEPs again. If memory or performance
     // becomes an issue, reduce the `pruning_interval` in the config.
-    let (confirmed, edges, mut new_seps, indexations) =
-        collect_confirmed_data(tangle, &storage, confirmed_target_index).await?;
+    let (confirmed, edges, mut new_seps, indexations) = collect_confirmed_data(tangle, &storage, target_index).await?;
 
-    // TEMPORARILY ADD TO REMOVAL LIST
+    // TEMP: make sure, that the collect process doesn't yield duplicate message ids.
     {
         let mut removal_list = confirmed_removal_list().lock().unwrap();
         for confirmed_id in &confirmed {
@@ -96,7 +132,7 @@ pub async fn prune<B: StorageBackend>(
                     num_relevant_seps += 1;
                     break 'inner;
                 }
-                Some(ms_index) if ms_index == confirmed_target_index + 1 => {
+                Some(ms_index) if ms_index == target_index + 1 => {
                     num_relevant_seps += 1;
                     break 'inner;
                 }
@@ -120,7 +156,7 @@ pub async fn prune<B: StorageBackend>(
     }
 
     // Remember up to which index we determined SEPs.
-    tangle.update_entry_point_index(confirmed_target_index);
+    tangle.update_entry_point_index(target_index);
 
     // Add the confirmed data to the batch.
     let mut num_messages = prune_messages(storage, &mut batch, confirmed).await?;
@@ -128,9 +164,9 @@ pub async fn prune<B: StorageBackend>(
     let mut num_indexations = prune_indexations(storage, &mut batch, indexations).await?;
 
     // Handling of remaining still unconfirmed messages
-    if unconfirmed_target_index >= start_index {
+    if let Some(unconfirmed_start_index) = unconfirmed_start_index {
         let (still_unconfirmed, unconfirmed_edges, unconfirmed_indexations) =
-            collect_received_data(storage, start_index, unconfirmed_target_index).await?;
+            collect_still_unconfirmed_data(storage, unconfirmed_start_index, unconfirmed_target_index).await?;
 
         {
             // TEMPORARILY ADD TO REMOVAL LIST
@@ -154,12 +190,12 @@ pub async fn prune<B: StorageBackend>(
     }
 
     // Add milestone related data to the batch.
-    let num_milestones = prune_milestones(storage, &mut batch, start_index, confirmed_target_index).await?;
-    let num_output_diffs = prune_output_diffs(storage, &mut batch, start_index, confirmed_target_index).await?;
+    let num_milestones = prune_milestones(storage, &mut batch, start_index, target_index).await?;
+    let num_output_diffs = prune_output_diffs(storage, &mut batch, start_index, target_index).await?;
 
     // Add receipts optionally.
     if config.prune_receipts() {
-        let receipts = collect_receipts(storage, start_index, confirmed_target_index).await?;
+        let receipts = collect_receipts(storage, start_index, target_index).await?;
         prune_receipts(storage, &mut batch, receipts).await?;
     }
 
@@ -169,10 +205,7 @@ pub async fn prune<B: StorageBackend>(
         // If that error actually happens we set the database to 'corrupted'!
         .map_err(|e| Error::BatchCommitError(Box::new(e)))?;
 
-    info!(
-        "Milestones from {} to {} have been pruned.",
-        start_index, confirmed_target_index
-    );
+    info!("Milestones from {} to {} have been pruned.", start_index, target_index);
 
     debug!(
         "{} milestones, {} messages, {} edges, {} indexations, {} output_diffs have been successfully pruned.",
@@ -181,13 +214,13 @@ pub async fn prune<B: StorageBackend>(
 
     info!(
         "Entry point index now at {}. (Selected {} new solid entry points).",
-        confirmed_target_index, num_new_seps,
+        target_index, num_new_seps,
     );
 
-    tangle.update_pruning_index(confirmed_target_index);
-    info!("Pruning index now at {}.", confirmed_target_index);
+    tangle.update_pruning_index(target_index);
+    info!("Pruning index now at {}.", target_index);
 
-    bus.dispatch(PrunedIndex(confirmed_target_index));
+    bus.dispatch(PrunedIndex(target_index));
 
     Ok(())
 }
