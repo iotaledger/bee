@@ -63,6 +63,7 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
     // within one past-cone of a milestone a message would be a redundant SEP, because all of its children/approvers are
     // already confirmed by the same or another milestone, and hence can be ignored.
     let mut parents: VecDeque<_> = vec![target_id].into_iter().collect();
+    let mut num_redundant: usize = 0;
 
     // Each new milestone cone fully contains the previous cone. That means, that
 
@@ -129,6 +130,7 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
                 .iter()
                 .all(|approver_id| collected_messages.contains(approver_id))
             {
+                num_redundant += 1;
                 continue;
             } else {
                 // We know now that some message of a future cone must reference it, and hence, we need to keep it.
@@ -136,6 +138,8 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
             }
         }
     }
+
+    dbg!(num_redundant, new_seps.len(), collected_messages.len());
 
     Ok((collected_messages, edges, new_seps, indexations))
 }
@@ -172,6 +176,7 @@ async fn collect_unconfirmed_data_by_index<B: StorageBackend>(
         .unwrap();
 
     if fetched.is_empty() {
+        println!("No unconfirmed messages in the storage");
         return Ok(());
     }
 

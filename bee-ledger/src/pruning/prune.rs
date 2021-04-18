@@ -182,17 +182,20 @@ pub async fn prune<B: StorageBackend>(
     // Handling of remaining still unconfirmed messages
     if let Some(unconfirmed_start_index) = unconfirmed_start_index {
         let unconfirmed_target_index = target_index - unconfirmed_additional_pruning_delay;
+
+        assert!(unconfirmed_target_index < target_index);
+        assert!(unconfirmed_start_index < unconfirmed_target_index);
+
         info!(
             "Pruning unconfirmed messages until milestone {}...",
             unconfirmed_target_index
         );
-        assert!(unconfirmed_target_index < target_index);
 
         let (still_unconfirmed, unconfirmed_edges, unconfirmed_indexations) =
             collect_still_unconfirmed_data(storage, unconfirmed_start_index, unconfirmed_target_index).await?;
 
+        // TEMPORARILY ADD TO REMOVAL LIST
         {
-            // TEMPORARILY ADD TO REMOVAL LIST
             let mut removal_list = unconfirmed_removal_list().lock().unwrap();
             for unconfirmed_id in still_unconfirmed.iter().map(|(_, b)| b.message_id()) {
                 if removal_list.contains(unconfirmed_id) {
