@@ -95,7 +95,7 @@ dependencies = [
 
 [[package]]
 name = "bee-message"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bech32",
  "bee-common",

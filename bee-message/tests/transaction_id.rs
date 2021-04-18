@@ -11,6 +11,14 @@ const TRANSACTION_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c7
 const TRANSACTION_ID_INVALID_LEN: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6";
 
 #[test]
+fn debug_impl() {
+    assert_eq!(
+        format!("{:?}", TransactionId::from_str(TRANSACTION_ID).unwrap()),
+        "TransactionId(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+    );
+}
+
+#[test]
 fn from_str_valid() {
     TransactionId::from_str(TRANSACTION_ID).unwrap();
 }

@@ -14,6 +14,14 @@ fn kind() {
 }
 
 #[test]
+fn debug_impl() {
+    assert_eq!(
+        format!("{:?}", UtxoInput::from_str(OUTPUT_ID).unwrap()),
+        "UtxoInput(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00)"
+    );
+}
+
+#[test]
 fn new_valid() {
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
     let input = UtxoInput::new(*output_id.transaction_id(), output_id.index()).unwrap();

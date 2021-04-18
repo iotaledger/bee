@@ -13,6 +13,14 @@ const HASH_BYTES: [u8; 49] = [
 ];
 
 #[test]
+fn debug_impl() {
+    assert_eq!(
+        format!("{:?}", TailTransactionHash::new(HASH_BYTES).unwrap()),
+        "TailTransactionHash(TZTXLMTAURX9DYQICXZEUMCDBPNXVOHNBBZDSSVCNCTWKSMUALAYPMHUCKGOGSTBUHSQIMSY9HQEP9AXJ)"
+    );
+}
+
+#[test]
 fn new_valid() {
     assert!(TailTransactionHash::new(HASH_BYTES).is_ok());
 }

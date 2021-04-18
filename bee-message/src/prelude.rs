@@ -14,7 +14,7 @@ pub use crate::{
     payload::{
         indexation::{HashedIndex, IndexationPayload, HASHED_INDEX_LENGTH},
         milestone::{
-            MilestoneId, MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH,
+            MilestoneId, MilestonePayload, MilestonePayloadEssence, MILESTONE_ID_LENGTH, MILESTONE_MERKLE_PROOF_LENGTH,
             MILESTONE_PUBLIC_KEY_LENGTH, MILESTONE_SIGNATURE_LENGTH,
         },
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash, TAIL_TRANSACTION_HASH_LEN},
