@@ -17,7 +17,10 @@ use storage::StorageBackend;
 use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
 use bee_network::NetworkServiceController;
-use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorker, PeerManager, PeerManagerResWorker};
+use bee_protocol::workers::{
+    config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorker, PeerManager, PeerManagerResWorker,
+    RequestedMessages,
+};
 use bee_runtime::{
     node::{Node, NodeBuilder},
     worker::{Error as WorkerError, Worker},
@@ -75,6 +78,8 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
         let message_submitter = node.worker::<MessageSubmitterWorker>().unwrap().tx.clone();
+        let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();
+        let requested_messages = node.resource::<RequestedMessages>();
         let peer_manager = node.resource::<PeerManager>();
         let network_controller = node.resource::<NetworkServiceController>();
         let node_info = node.info();
@@ -97,6 +102,8 @@ where
                 network_controller,
                 node_info,
                 bus,
+                message_requester,
+                requested_messages,
             )
             .recover(handle_rejection);
 

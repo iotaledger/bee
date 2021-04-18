@@ -7,7 +7,9 @@ pub mod health;
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
 use bee_network::NetworkServiceController;
-use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
+use bee_protocol::workers::{
+    config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorkerEvent, PeerManager, RequestedMessages,
+};
 use bee_runtime::{event::Bus, node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
@@ -30,6 +32,8 @@ pub(crate) fn filter_all<B: StorageBackend>(
     network_controller: ResourceHandle<NetworkServiceController>,
     node_info: ResourceHandle<NodeInfo>,
     bus: ResourceHandle<Bus<'static>>,
+    message_requester: MessageRequesterWorker,
+    requested_messages: ResourceHandle<RequestedMessages>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     api::filter(
         public_routes.clone(),
@@ -45,6 +49,8 @@ pub(crate) fn filter_all<B: StorageBackend>(
         network_controller,
         node_info,
         bus,
+        message_requester,
+        requested_messages,
     )
     .or(health::filter(public_routes, allowed_ips, tangle, peer_manager))
 }

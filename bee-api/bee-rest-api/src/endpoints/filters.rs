@@ -4,7 +4,9 @@
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
 use bee_network::NetworkServiceController;
-use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
+use bee_protocol::workers::{
+    config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorkerEvent, PeerManager, RequestedMessages,
+};
 use bee_runtime::{event::Bus, node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
@@ -76,4 +78,16 @@ pub(crate) fn with_bus(
     bus: ResourceHandle<Bus>,
 ) -> impl Filter<Extract = (ResourceHandle<Bus>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || bus.clone())
+}
+
+pub(crate) fn with_message_requester(
+    message_requester: MessageRequesterWorker,
+) -> impl Filter<Extract = (MessageRequesterWorker,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || message_requester.clone())
+}
+
+pub(crate) fn with_requested_messages(
+    requested_messages: ResourceHandle<RequestedMessages>,
+) -> impl Filter<Extract = (ResourceHandle<RequestedMessages>,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || requested_messages.clone())
 }

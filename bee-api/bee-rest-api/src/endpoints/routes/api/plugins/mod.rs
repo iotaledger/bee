@@ -5,6 +5,7 @@ mod debug;
 
 use crate::endpoints::storage::StorageBackend;
 
+use bee_protocol::workers::{MessageRequesterWorker, RequestedMessages};
 use bee_runtime::{event::Bus, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
@@ -22,6 +23,16 @@ pub(crate) fn filter<B: StorageBackend>(
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<MsTangle<B>>,
     bus: ResourceHandle<Bus<'static>>,
+    message_requester: MessageRequesterWorker,
+    requested_messages: ResourceHandle<RequestedMessages>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    debug::filter(public_routes, allowed_ips, storage, tangle, bus)
+    debug::filter(
+        public_routes,
+        allowed_ips,
+        storage,
+        tangle,
+        bus,
+        message_requester,
+        requested_messages,
+    )
 }

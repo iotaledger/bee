@@ -33,7 +33,7 @@ use std::{
 const RETRY_INTERVAL_MS: u64 = 2500;
 
 #[derive(Default)]
-pub(crate) struct RequestedMessages(RwLock<HashMap<MessageId, (MilestoneIndex, Instant), FxBuildHasher>>);
+pub struct RequestedMessages(RwLock<HashMap<MessageId, (MilestoneIndex, Instant), FxBuildHasher>>);
 
 impl RequestedMessages {
     pub async fn contains(&self, message_id: &MessageId) -> bool {
@@ -55,7 +55,7 @@ impl RequestedMessages {
 }
 
 #[derive(Eq, PartialEq)]
-pub(crate) struct MessageRequesterWorkerEvent(pub(crate) MessageId, pub(crate) MilestoneIndex);
+pub struct MessageRequesterWorkerEvent(pub(crate) MessageId, pub(crate) MilestoneIndex);
 
 impl Ord for MessageRequesterWorkerEvent {
     fn cmp(&self, other: &Self) -> Ordering {
@@ -70,7 +70,7 @@ impl PartialOrd for MessageRequesterWorkerEvent {
 }
 
 #[derive(Clone)]
-pub(crate) struct MessageRequesterWorker {
+pub struct MessageRequesterWorker {
     req_queue: Arc<PriorityQueue<MessageRequesterWorkerEvent>>,
 }
 

@@ -4,7 +4,7 @@
 use crate::{
     endpoints::{
         config::ROUTE_WHITE_FLAG,
-        filters::{with_bus, with_storage, with_tangle},
+        filters::{with_bus, with_message_requester, with_requested_messages, with_storage, with_tangle},
         permission::has_permission,
         rejection::CustomRejection,
         storage::StorageBackend,
@@ -14,7 +14,7 @@ use crate::{
 
 use bee_ledger::consensus::{self, metadata::WhiteFlagMetadata};
 use bee_message::{milestone::MilestoneIndex, MessageId};
-use bee_protocol::workers::event::MessageSolidified;
+use bee_protocol::workers::{event::MessageSolidified, helper, MessageRequesterWorker, RequestedMessages};
 use bee_runtime::{event::Bus, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
@@ -42,6 +42,8 @@ pub(crate) fn filter<B: StorageBackend>(
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<MsTangle<B>>,
     bus: ResourceHandle<Bus<'static>>,
+    message_requester: MessageRequesterWorker,
+    requested_messages: ResourceHandle<RequestedMessages>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::post())
@@ -50,6 +52,8 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(with_storage(storage))
         .and(with_tangle(tangle))
         .and(with_bus(bus))
+        .and(with_message_requester(message_requester))
+        .and(with_requested_messages(requested_messages))
         .and_then(white_flag)
 }
 
@@ -58,6 +62,8 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<MsTangle<B>>,
     bus: ResourceHandle<Bus<'static>>,
+    message_requester: MessageRequesterWorker,
+    requested_messages: ResourceHandle<RequestedMessages>,
 ) -> Result<impl Reply, Rejection> {
     let index_json = &body["index"];
     let parents_json = &body["parentMessageIds"];
@@ -138,7 +144,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 to_solidify.remove(parent);
             }
         } else {
-            // TODO request
+            helper::request_message(&*tangle, &message_requester, &*requested_messages, *parent, index).await;
         }
     }
 
