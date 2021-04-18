@@ -3,7 +3,7 @@
 
 mod debug;
 
-use crate::endpoints::storage::StorageBackend;
+use crate::endpoints::{config::RestApiConfig, storage::StorageBackend};
 
 use bee_protocol::workers::{MessageRequesterWorker, RequestedMessages};
 use bee_runtime::{event::Bus, resource::ResourceHandle};
@@ -25,6 +25,7 @@ pub(crate) fn filter<B: StorageBackend>(
     bus: ResourceHandle<Bus<'static>>,
     message_requester: MessageRequesterWorker,
     requested_messages: ResourceHandle<RequestedMessages>,
+    rest_api_config: RestApiConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     debug::filter(
         public_routes,
@@ -34,5 +35,6 @@ pub(crate) fn filter<B: StorageBackend>(
         bus,
         message_requester,
         requested_messages,
+        rest_api_config,
     )
 }

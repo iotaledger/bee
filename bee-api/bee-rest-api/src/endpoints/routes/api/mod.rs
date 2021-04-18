@@ -47,7 +47,7 @@ pub(crate) fn filter<B: StorageBackend>(
         message_submitter,
         network_id,
         bech32_hrp,
-        rest_api_config,
+        rest_api_config.clone(),
         protocol_config,
         peer_manager,
         network_controller,
@@ -61,5 +61,6 @@ pub(crate) fn filter<B: StorageBackend>(
         bus,
         message_requester,
         requested_messages,
+        rest_api_config,
     ))
 }

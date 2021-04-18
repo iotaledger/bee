@@ -3,8 +3,10 @@
 
 use crate::{
     endpoints::{
-        config::ROUTE_WHITE_FLAG,
-        filters::{with_bus, with_message_requester, with_requested_messages, with_storage, with_tangle},
+        config::{RestApiConfig, ROUTE_WHITE_FLAG},
+        filters::{
+            with_bus, with_message_requester, with_requested_messages, with_rest_api_config, with_storage, with_tangle,
+        },
         permission::has_permission,
         rejection::CustomRejection,
         storage::StorageBackend,
@@ -44,6 +46,7 @@ pub(crate) fn filter<B: StorageBackend>(
     bus: ResourceHandle<Bus<'static>>,
     message_requester: MessageRequesterWorker,
     requested_messages: ResourceHandle<RequestedMessages>,
+    rest_api_config: RestApiConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::post())
@@ -54,6 +57,7 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(with_bus(bus))
         .and(with_message_requester(message_requester))
         .and(with_requested_messages(requested_messages))
+        .and(with_rest_api_config(rest_api_config))
         .and_then(white_flag)
 }
 
@@ -64,6 +68,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     bus: ResourceHandle<Bus<'static>>,
     message_requester: MessageRequesterWorker,
     requested_messages: ResourceHandle<RequestedMessages>,
+    rest_api_config: RestApiConfig,
 ) -> Result<impl Reply, Rejection> {
     let index_json = &body["index"];
     let parents_json = &body["parentMessageIds"];
@@ -157,7 +162,12 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     let mut metadata = WhiteFlagMetadata::new(index);
 
     // Wait for either all parents to get solid or the timeout to expire.
-    let response = match timeout(Duration::from_millis(10000), receiver).await {
+    let response = match timeout(
+        Duration::from_secs(rest_api_config.white_flag_solidification_timeout()),
+        receiver,
+    )
+    .await
+    {
         Ok(_) => {
             // Did not timeout, parents are solid and white flag can happen.
             consensus::white_flag::<B>(&tangle, &storage, parents, &mut metadata)
