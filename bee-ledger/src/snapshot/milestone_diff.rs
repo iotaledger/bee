@@ -55,20 +55,29 @@ impl Packable for MilestoneDiff {
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        // TODO finish
+        (self.milestone.packed_len() as u32 + MilestonePayload::KIND).pack(writer)?;
+        MilestonePayload::KIND.pack(writer)?;
         self.milestone.pack(writer)?;
 
+        if self.milestone.essence().receipt().is_some() {
+            // TODO unwrap
+            self.consumed_treasury.as_ref().unwrap().1.pack(writer)?;
+            self.consumed_treasury.as_ref().unwrap().0.pack(writer)?;
+        }
+
         (self.created.len() as u64).pack(writer)?;
-        for (output_id, output) in self.created.iter() {
-            output.message_id().pack(writer)?;
+        for (output_id, created) in self.created.iter() {
+            created.message_id().pack(writer)?;
             output_id.pack(writer)?;
-            output.pack(writer)?;
+            created.pack(writer)?;
         }
 
         (self.consumed.len() as u64).pack(writer)?;
-        for (_output_id, _spent) in self.consumed.iter() {
-            // TODO finish
-            // spent.pack(writer)?;
+        for (output_id, (created, consumed)) in self.consumed.iter() {
+            created.message_id().pack(writer)?;
+            output_id.pack(writer)?;
+            created.inner().pack(writer)?;
+            consumed.target().pack(writer)?;
         }
 
         Ok(())
