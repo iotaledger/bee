@@ -7,8 +7,8 @@ pub use crate::{
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
     output::{
-        ConsumedOutput, CreatedOutput, Output, OutputId, SignatureLockedDustAllowanceOutput,
-        SignatureLockedSingleOutput, TreasuryOutput, OUTPUT_ID_LENGTH,
+        Output, OutputId, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput,
+        OUTPUT_ID_LENGTH,
     },
     parents::{Parents, MESSAGE_PARENTS_RANGE},
     payload::{
