@@ -105,8 +105,9 @@ pub async fn prune<B: StorageBackend>(
     // to walk the past-cone from the `target_index` backwards, and not step-by-step from `start_index` to
     // `target_index` as this would require additional logic to remove redundant SEPs again. If memory or performance
     // becomes an issue, reduce the `pruning_interval` in the config.
-    let (confirmed, edges, mut new_seps, indexations) =
+    let (confirmed, edges, collected_seps, indexations) =
         collect_confirmed_data(tangle, &storage, target_index, &old_seps).await?;
+    let num_collected_seps = collected_seps.len();
 
     // TEMP: make sure, that the collect process doesn't yield duplicate message ids.
     {
@@ -123,37 +124,27 @@ pub async fn prune<B: StorageBackend>(
         drop(removal_list);
     }
 
-    // // TEMPORARILY CHECK ALL NEW SEPS
-    // // We can still do this as long as they're not pruned.
-    // let mut num_relevant_seps = 0;
-    // for sep_id in new_seps.iter().map(|(sep, _)| sep.message_id()) {
-    //     let sep_approvers = tangle.get_children(sep_id).await.unwrap();
-    //     'inner: for sep_approver in &sep_approvers {
-    //         // Only SEPs are considered relevant that:
-    //         // (a) still have an unconfirmed approver, or
-    //         // (b) are referenced by *directly* by confirmed messages of the following ms beyond `target_index`
-    //         match tangle.get_metadata(sep_approver).await.unwrap().milestone_index() {
-    //             None => {
-    //                 num_relevant_seps += 1;
-    //                 break 'inner;
-    //             }
-    //             // Some(ms_index) if ms_index == target_index + 1 => {
-    //             //     num_relevant_seps += 1;
-    //             //     break 'inner;
-    //             // }
-    //             Some(_) => {
-    //                 num_relevant_seps += 1;
-    //                 break 'inner;
-
-    //             }
-    //         }
-    //     }
-    // }
-    // dbg!(new_seps.len(), num_relevant_seps);
+    // We can still do this as long as they're not pruned.
+    let mut new_seps = Seps::default();
+    for (sep, index) in collected_seps.into_iter().map(|(sep, index)| (sep, index)) {
+        let sep_approvers = tangle.get_children(sep.message_id()).await.unwrap();
+        'inner: for sep_approver in &sep_approvers {
+            if tangle
+                .get_metadata(sep_approver)
+                .await
+                .unwrap()
+                .milestone_index()
+                .is_none()
+            {
+                new_seps.insert(sep, index);
+                break 'inner;
+            }
+        }
+    }
+    let num_collected_seps_kept = new_seps.len();
 
     // Move all young enough old SEPs to the new set
-    let num_collected_seps = new_seps.len();
-    let num_old_seps = old_seps.len();
+    // let num_old_seps = old_seps.len();
     let mut num_old_seps_kept = 0usize;
 
     for (old_sep, index) in old_seps {
@@ -166,7 +157,12 @@ pub async fn prune<B: StorageBackend>(
 
     let num_new_seps = new_seps.len();
 
-    dbg!(num_collected_seps, num_old_seps, num_old_seps_kept, num_new_seps);
+    dbg!(
+        num_collected_seps,
+        num_collected_seps_kept,
+        num_old_seps_kept,
+        num_new_seps
+    );
 
     tangle.replace_solid_entry_points(new_seps).await;
     // for (sep, index) in new_seps.drain() {
@@ -177,7 +173,7 @@ pub async fn prune<B: StorageBackend>(
     tangle.update_entry_point_index(target_index);
     info!(
         "Entry point index now at {}. (Selected {} new solid entry points).",
-        target_index, num_new_seps,
+        target_index, num_collected_seps_kept,
     );
 
     // Add the confirmed data to the batch.
