@@ -176,7 +176,6 @@ async fn collect_unconfirmed_data_by_index<B: StorageBackend>(
         .unwrap();
 
     if fetched.is_empty() {
-        println!("No unconfirmed messages in the storage");
         return Ok(());
     }
 

@@ -152,14 +152,22 @@ pub async fn prune<B: StorageBackend>(
     // dbg!(new_seps.len(), num_relevant_seps);
 
     // Move all young enough old SEPs to the new set
+    let num_collected_seps = new_seps.len();
+    let num_old_seps = old_seps.len();
+    let mut num_old_seps_kept = 0usize;
+
     for (old_sep, index) in old_seps {
         // Keep the old SEP as long as there might be unconfirmed messages referencing it.
         if index + unconfirmed_additional_pruning_delay > target_index {
             new_seps.insert(old_sep, index);
+            num_old_seps_kept += 1;
         }
     }
 
-    let num_new_seps = dbg!(new_seps.len());
+    let num_new_seps = new_seps.len();
+
+    dbg!(num_collected_seps, num_old_seps, num_old_seps_kept, num_new_seps);
+
     tangle.replace_solid_entry_points(new_seps).await;
     // for (sep, index) in new_seps.drain() {
     //     tangle.add_solid_entry_point(sep, index).await;
