@@ -35,6 +35,7 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
     tangle: &MsTangle<B>,
     storage: &StorageHooks<B>,
     target_index: MilestoneIndex,
+    old_seps: &Seps,
 ) -> Result<(Messages, Edges, Seps, Indexations), Error> {
     let mut collected_messages = Messages::default();
     let mut edges = Edges::default();
@@ -57,16 +58,13 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
             panic!("Fetching milestone id");
         });
 
-    // We get us a clone of the current SEP set. We are the only ones that make changes to that tangle state, so we can
-    // be sure it can't be invalidated in the meantime while we do the past-cone traversal.
-    let old_seps = tangle.get_all_solid_entry_points().await;
-    dbg!(old_seps.len());
-
     // We use a `VecDeque` here to traverse the past-cone in breadth-first manner. This gives use the necessary
     // guarantee that we "see" the children before any of their parents. We can use this guarantee to decide whether
     // within one past-cone of a milestone a message would be a redundant SEP, because all of its children/approvers are
     // already confirmed by the same or another milestone, and hence can be ignored.
     let mut parents: VecDeque<_> = vec![target_id].into_iter().collect();
+
+    // Each new milestone cone fully contains the previous cone. That means, that
 
     while let Some(current_id) = parents.pop_front() {
         // Skip conditions that will make the traversal terminate eventually:
@@ -75,35 +73,12 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
         if collected_messages.contains(&current_id) || old_seps.contains_key(SolidEntryPoint::ref_cast(&current_id)) {
             continue;
         } else {
-            // // The message we are looking at was confirmed by the root index.
-            // debug_assert_eq!(
-            //     root_index,
-            //     tangle
-            //         .get_metadata(&current_id)
-            //         .await
-            //         // `unwrap` should be safe since we traverse the past of a milestone that has been solidified!
-            //         .unwrap()
-            //         .milestone_index()
-            //         // `unwrap` should be safe since we traverse the past of a confirmed milestone!
-            //         .unwrap()
-            // );
-
             // We must be able to get its parents (unless the db is corrupt)
             if let Some((maybe_payload, current_parents)) = Fetch::<MessageId, Message>::fetch(&***storage, &current_id)
                 .await
                 .map_err(|e| Error::StorageError(Box::new(e)))?
-                .map(|m| (m.payload().clone(), m.parents().iter().copied().collect::<Vec<_>>()))
-            // TODO: explain why that `unwrap` is safe? Why do we know that the `Fetch` must find that message?
-            // .unwrap();
-
-            // if let Some((maybe_payload, current_parents)) = tangle.get(&current_id).await.map(|current| {
-            //     (
-            //         current.payload().clone(),
-            //         current.parents().iter().copied().collect::<Vec<_>>(),
-            //     )
-            // })
-            // `Unwrap` should be safe since we traverse the past of a confirmed milestone!
-            // .unwrap();
+                // TODO: removing Copying/Cloning
+                .map(|msg| (msg.payload().clone(), msg.parents().iter().copied().collect::<Vec<_>>()))
             {
                 // Collect possible indexation payloads.
                 if let Some(indexation) = unwrap_indexation(maybe_payload) {
@@ -122,6 +97,9 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
 
                 parents.append(&mut current_parents.into_iter().collect());
             } else {
+                // This error should never happen, because we made sure, that pruning of still "unconfirmed" messages
+                // happens at a much later point in time, so it should not ever interfere with the pruning of
+                // "confirmed" messages.
                 error!(
                     "Fetching message data for confirmed_message {} failed. This is a bug!",
                     current_id
@@ -131,32 +109,31 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
             let _ = collected_messages.insert(current_id);
 
             // We only add this as a new SEP if it has at least one unconfirmed aprover.
-            // `Unwrap` should be safe, because the current message has been confirmed, and hence must have approvers.
-            // if let Some(approvers) = tangle.get_children(&current_id).await {
-            // If all approvers are part of the `new_seps` list already, then we can assume that this potential SEP
-            // is redundant. Since we traverse the past-cone breadth-first we can be sure that
-            // approvers are visited before their respective approvees, and the following skip
-            // condition is triggered often. This allows us to not having to fetch the metadata for
-            // all of its approvers from the Tangle.
+            //
+            // TODO: Replace with "direct storage access" to not pull them all into the cache again.
+            //
+            // `unwrap` should be safe, because the current message has been confirmed, and hence must have
+            // approvers.
+            let approvers = tangle.get_children(&current_id).await.unwrap();
+
+            // If all approvers are part of the `collected_messages` set already, then we can assume that this
+            // message is redundant for our new SEP set, because there is no path to it without visiting its also
+            // confirmed children. Since we traverse the past-cone breadth-first we can be sure that its
+            // children are visited before, and the following skip condition is triggered often. This allows
+            // us to not having to fetch the metadata for all of its approvers from the Tangle.
             //
             // This is an efficient method to find the "surface" of a confirmed past-cone, that is all confirmed
-            // messages, that have at least one child not confirmed by this milestone.
-            // if approvers
-            //     .iter()
-            //     .all(|approver_id| new_seps.contains_key(SolidEntryPoint::ref_cast(approver_id)))
-            // {
-            //     continue;
-            // }
-            // } else {
-            //     error!(
-            //         "Fetching approvers for confirmed_message {} failed. This is a bug!",
-            //         current_id
-            //     );
-            // }
-
-            // WE don't care for the actual milestone index that actually confirmed that SEP, so we forget about it, and
-            // just set it to the `target_index`.
-            let _ = new_seps.insert(current_id.into(), target_index);
+            // messages, that have at least one child not confirmed by this milestone (target_index + x).
+            //
+            if approvers
+                .iter()
+                .all(|approver_id| collected_messages.contains(approver_id))
+            {
+                continue;
+            } else {
+                // We know now that some message of a future cone must reference it, and hence, we need to keep it.
+                let _ = new_seps.insert(current_id.into(), target_index);
+            }
         }
     }
 
