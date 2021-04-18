@@ -163,7 +163,7 @@ pub async fn collect_confirmed_data<B: StorageBackend>(
     Ok((collected_messages, edges, new_seps, indexations))
 }
 
-pub async fn collect_unconfirmed_data<B: StorageBackend>(
+pub async fn collect_received_data<B: StorageBackend>(
     storage: &StorageHooks<B>,
     start_index: MilestoneIndex,
     target_index: MilestoneIndex,

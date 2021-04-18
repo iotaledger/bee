@@ -337,10 +337,18 @@ where
                     }
                 }
 
-                if let Some(pruning_target_index) =
+                if let Some((confirmed_target_index, unconfirmed_target_index)) =
                     should_prune(&tangle, (*ledger_index).into(), pruning_delay, &pruning_config)
                 {
-                    if let Err(e) = prune(&tangle, &bus, pruning_target_index, &pruning_config).await {
+                    if let Err(e) = prune(
+                        &tangle,
+                        &bus,
+                        confirmed_target_index,
+                        unconfirmed_target_index,
+                        &pruning_config,
+                    )
+                    .await
+                    {
                         // TODO: change storage health to "corrupted"
                         // (*storage)
                         //     .set_health(StorageHealth::Corrupted)
