@@ -12,21 +12,23 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(MilestonePayload::new(
-        MilestonePayloadEssence::new(
-            MilestoneIndex(0),
-            0,
-            rand_parents(),
-            [0; MILESTONE_MERKLE_PROOF_LENGTH],
-            0,
-            0,
-            vec![[0; 32]],
-            None,
+    assert!(
+        MilestonePayload::new(
+            MilestonePayloadEssence::new(
+                MilestoneIndex(0),
+                0,
+                rand_parents(),
+                [0; MILESTONE_MERKLE_PROOF_LENGTH],
+                0,
+                0,
+                vec![[0; 32]],
+                None,
+            )
+            .unwrap(),
+            vec![[0; 64]],
         )
-        .unwrap(),
-        vec![[0; 64]],
-    )
-    .is_ok());
+        .is_ok()
+    );
 }
 
 #[test]
