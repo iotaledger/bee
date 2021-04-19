@@ -28,7 +28,7 @@ futures = { version = "0.3", optional = true }
 futures-util = { version = "0.3", optional = true }
 fxhash = { version = "0.2", optional = true }
 hex = { version = "0.4", optional = true }
-iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "c3bf565eba62d0b81144174c2ff917bfde282e49", features = ["blake2b", "ed25519"], optional = true }
+iota-crypto = { version = "0.5.0", features = ["blake2b", "ed25519"], optional = true }
 log = { version = "0.4", optional = true }
 num_cpus = { version = "1.13", optional = true }
 pin-project = { version = "1.0", optional = true }

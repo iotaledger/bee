@@ -24,7 +24,7 @@ chrono = { version = "0.4", optional = true }
 digest = { version = "0.9", optional = true }
 futures = { version = "0.3", optional = true }
 hex = { version = "0.4", optional = true }
-iota-crypto = { git = "https://github.com/iotaledger/crypto.rs", rev = "c3bf565eba62d0b81144174c2ff917bfde282e49", features = ["blake2b"], optional = true }
+iota-crypto = { version = "0.5.0", features = ["blake2b"], optional = true }
 log = { version = "0.4", optional = true }
 reqwest = { version = "0.11", features = ["stream"], optional = true }
 serde = { version = "1.0", features = ["derive" ], optional = true }
