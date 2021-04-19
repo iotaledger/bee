@@ -8,282 +8,165 @@ use bee_ledger::{
     types::{Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent},
 };
 use bee_message::{
-    address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
+    address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
-    output::{OutputId, OUTPUT_ID_LENGTH},
-    payload::indexation::{HashedIndex, HASHED_INDEX_LENGTH},
-    Message, MessageId, MESSAGE_ID_LENGTH,
+    output::OutputId,
+    payload::indexation::HashedIndex,
+    Message, MessageId,
 };
 use bee_storage::access::Truncate;
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
 };
 
+fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as StorageBackend>::Error> {
+    let cf_handle = storage.inner.cf_handle(cf_str).ok_or(Error::UnknownCf(cf_str))?;
+
+    let mut iter = storage.inner.raw_iterator_cf(cf_handle);
+
+    // Seek to the first key.
+    iter.seek_to_first();
+    // Grab the first key, if it exists.
+    let first = if let Some(first) = iter.key() {
+        first.to_vec()
+    } else {
+        // There are no keys to remove.
+        return Ok(());
+    };
+
+    iter.seek_to_last();
+    // Grab the last key, if it exists.
+    let last = if let Some(last) = iter.key() {
+        let mut last = last.to_vec();
+        // `delete_range_cf` excludes the last key in the range, so we add an extra byte to be sure
+        // we include the last key.
+        last.push(u8::MAX);
+        last
+    } else {
+        // There are no keys to remove.
+        return Ok(());
+    };
+
+    storage.inner.delete_range_cf(cf_handle, first, last)?;
+
+    Ok(())
+}
+
 #[async_trait::async_trait]
 impl Truncate<MessageId, Message> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE))?;
-
-        self.inner
-            .delete_range_cf(cf, [0x00u8; MESSAGE_ID_LENGTH], [0xffu8; MESSAGE_ID_LENGTH])?;
-
-        Ok(())
+        truncate(self, CF_MESSAGE_ID_TO_MESSAGE)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<MessageId, MessageMetadata> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_MESSAGE_ID_TO_METADATA)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_METADATA))?;
-
-        self.inner
-            .delete_range_cf(cf, [0x00u8; MESSAGE_ID_LENGTH], [0xffu8; MESSAGE_ID_LENGTH])?;
-
-        Ok(())
+        truncate(self, CF_MESSAGE_ID_TO_METADATA)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<(MessageId, MessageId), ()> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE_ID))?;
-
-        self.inner
-            .delete_range_cf(cf, [0x00u8; 2 * MESSAGE_ID_LENGTH], [0xffu8; 2 * MESSAGE_ID_LENGTH])?;
-
-        Ok(())
+        truncate(self, CF_MESSAGE_ID_TO_MESSAGE_ID)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<(HashedIndex, MessageId), ()> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_INDEX_TO_MESSAGE_ID)
-            .ok_or(Error::UnknownCf(CF_INDEX_TO_MESSAGE_ID))?;
-
-        self.inner.delete_range_cf(
-            cf,
-            [0x00u8; HASHED_INDEX_LENGTH + MESSAGE_ID_LENGTH],
-            [0xffu8; HASHED_INDEX_LENGTH + MESSAGE_ID_LENGTH],
-        )?;
-
-        Ok(())
+        truncate(self, CF_INDEX_TO_MESSAGE_ID)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<OutputId, CreatedOutput> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
-
-        self.inner
-            .delete_range_cf(cf, [0x00u8; OUTPUT_ID_LENGTH], [0xffu8; OUTPUT_ID_LENGTH])?;
-
-        Ok(())
+        truncate(self, CF_OUTPUT_ID_TO_CREATED_OUTPUT)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<OutputId, ConsumedOutput> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
-
-        self.inner
-            .delete_range_cf(cf, [0x00u8; OUTPUT_ID_LENGTH], [0xffu8; OUTPUT_ID_LENGTH])?;
-
-        Ok(())
+        truncate(self, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<Unspent, ()> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_OUTPUT_ID_UNSPENT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_UNSPENT))?;
-
-        self.inner
-            .delete_range_cf(cf, [0x00u8; OUTPUT_ID_LENGTH], [0xffu8; OUTPUT_ID_LENGTH])?;
-
-        Ok(())
+        truncate(self, CF_OUTPUT_ID_UNSPENT)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<(Ed25519Address, OutputId), ()> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)
-            .ok_or(Error::UnknownCf(CF_ED25519_ADDRESS_TO_OUTPUT_ID))?;
-
-        self.inner.delete_range_cf(
-            cf,
-            [0x00u8; ED25519_ADDRESS_LENGTH + OUTPUT_ID_LENGTH],
-            [0xffu8; ED25519_ADDRESS_LENGTH + OUTPUT_ID_LENGTH],
-        )?;
-
-        Ok(())
+        truncate(self, CF_ED25519_ADDRESS_TO_OUTPUT_ID)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<(), LedgerIndex> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_LEDGER_INDEX)
-            .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
-
-        self.inner.delete_range_cf(cf, [0x00u8], [0xffu8])?;
-
-        Ok(())
+        truncate(self, CF_LEDGER_INDEX)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<MilestoneIndex, Milestone> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_MILESTONE))?;
-
-        self.inner.delete_range_cf(
-            cf,
-            [0x00u8; std::mem::size_of::<MilestoneIndex>()],
-            [0xffu8; std::mem::size_of::<MilestoneIndex>()],
-        )?;
-
-        Ok(())
+        truncate(self, CF_MILESTONE_INDEX_TO_MILESTONE)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<(), SnapshotInfo> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_SNAPSHOT_INFO)
-            .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
-
-        self.inner.delete_range_cf(cf, [0x00u8], [0xffu8])?;
-
-        Ok(())
+        truncate(self, CF_SNAPSHOT_INFO)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<SolidEntryPoint, MilestoneIndex> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
-            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
-
-        self.inner
-            .delete_range_cf(cf, [0x00u8; MESSAGE_ID_LENGTH], [0xffu8; MESSAGE_ID_LENGTH])?;
-
-        Ok(())
+        truncate(self, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<MilestoneIndex, OutputDiff> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
-
-        self.inner.delete_range_cf(
-            cf,
-            [0x00u8; std::mem::size_of::<MilestoneIndex>()],
-            [0xffu8; std::mem::size_of::<MilestoneIndex>()],
-        )?;
-
-        Ok(())
+        truncate(self, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<Address, Balance> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_ADDRESS_TO_BALANCE)
-            .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
-
-        // TODO check that this is fine
-        self.inner.delete_range_cf(cf, [0x00u8; 1], [0xffu8; 1])?;
-
-        Ok(())
+        truncate(self, CF_ADDRESS_TO_BALANCE)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
-
-        // TODO check that this is fine
-        self.inner.delete_range_cf(
-            cf,
-            [0x00u8; std::mem::size_of::<MilestoneIndex>() + MESSAGE_ID_LENGTH],
-            [0xffu8; std::mem::size_of::<MilestoneIndex>() + MESSAGE_ID_LENGTH],
-        )?;
-
-        Ok(())
+        truncate(self, CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<(MilestoneIndex, Receipt), ()> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_RECEIPT))?;
-
-        // TODO check that this is fine
-        self.inner.delete_range_cf(cf, [0x00u8; 1], [0xffu8; 1])?;
-
-        Ok(())
+        truncate(self, CF_MILESTONE_INDEX_TO_RECEIPT)
     }
 }
 
 #[async_trait::async_trait]
 impl Truncate<(bool, TreasuryOutput), ()> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        let cf = self
-            .inner
-            .cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_SPENT_TO_TREASURY_OUTPUT))?;
-
-        // TODO check that this is fine
-        self.inner.delete_range_cf(cf, [0x00u8; 1], [0xffu8; 1])?;
-
-        Ok(())
+        truncate(self, CF_SPENT_TO_TREASURY_OUTPUT)
     }
 }
