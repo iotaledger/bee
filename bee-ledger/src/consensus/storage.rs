@@ -5,14 +5,15 @@ use crate::{
     consensus::error::Error,
     snapshot::info::SnapshotInfo,
     types::{
-        Balance, BalanceDiffs, LedgerIndex, Migration, OutputDiff, Receipt, TreasuryDiff, TreasuryOutput, Unspent,
+        Balance, BalanceDiffs, ConsumedOutput, CreatedOutput, LedgerIndex, Migration, OutputDiff, Receipt,
+        TreasuryDiff, TreasuryOutput, Unspent,
     },
 };
 
 use bee_message::{
     address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
-    output::{ConsumedOutput, CreatedOutput, Output, OutputId},
+    output::{Output, OutputId},
     prelude::{HashedIndex, Message, MessageId},
 };
 use bee_storage::{

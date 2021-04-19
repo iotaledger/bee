@@ -65,6 +65,7 @@ pub(crate) const DEFAULT_ALLOWED_IPS: [IpAddr; 2] = [
     IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)),
 ];
 pub(crate) const DEFAULT_FEATURE_PROOF_OF_WORK: bool = true;
+pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: u64 = 2;
 
 /// REST API configuration builder.
 #[derive(Default, Deserialize)]
@@ -74,6 +75,7 @@ pub struct RestApiConfigBuilder {
     public_routes: Option<Vec<String>>,
     allowed_ips: Option<Vec<IpAddr>>,
     feature_proof_of_work: Option<bool>,
+    white_flag_solidification_timeout: Option<u64>,
 }
 
 impl RestApiConfigBuilder {
@@ -117,6 +119,12 @@ impl RestApiConfigBuilder {
         self
     }
 
+    /// Sets the while flag solidification timeout.
+    pub fn white_flag_solidification_timeout(mut self, timeout: u64) -> Self {
+        self.white_flag_solidification_timeout.replace(timeout);
+        self
+    }
+
     /// Builds the REST API config.
     pub fn finish(self) -> RestApiConfig {
         let binding_socket_addr = match self.binding_ip_addr.unwrap_or(DEFAULT_BINDING_IP_ADDR) {
@@ -128,12 +136,16 @@ impl RestApiConfigBuilder {
             .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|s| s.to_string()).collect());
         let allowed_ips = self.allowed_ips.unwrap_or_else(|| DEFAULT_ALLOWED_IPS.to_vec());
         let feature_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
+        let white_flag_solidification_timeout = self
+            .white_flag_solidification_timeout
+            .unwrap_or(DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT);
 
         RestApiConfig {
             binding_socket_addr,
             public_routes,
             allowed_ips,
             feature_proof_of_work,
+            white_flag_solidification_timeout,
         }
     }
 }
@@ -145,6 +157,7 @@ pub struct RestApiConfig {
     pub(crate) public_routes: Vec<String>,
     pub(crate) allowed_ips: Vec<IpAddr>,
     pub(crate) feature_proof_of_work: bool,
+    pub(crate) white_flag_solidification_timeout: u64,
 }
 
 impl RestApiConfig {
@@ -152,20 +165,29 @@ impl RestApiConfig {
     pub fn build() -> RestApiConfigBuilder {
         RestApiConfigBuilder::new()
     }
+
     /// Returns the binding address.
     pub fn binding_socket_addr(&self) -> SocketAddr {
         self.binding_socket_addr
     }
+
     /// Returns all the routes that are available for public use.
     pub fn public_routes(&self) -> &Vec<String> {
         &self.public_routes
     }
+
     /// Returns the IP addresses that are allowed to access all the routes.
     pub fn allowed_ips(&self) -> &Vec<IpAddr> {
         &self.allowed_ips
     }
-    /// Returns if feature "Proof-of-Work" is enabled or not
+
+    /// Returns if feature "Proof-of-Work" is enabled or not.
     pub fn feature_proof_of_work(&self) -> bool {
         self.feature_proof_of_work
+    }
+
+    /// Returns the white flag solidification timeout.
+    pub fn white_flag_solidification_timeout(&self) -> u64 {
+        self.white_flag_solidification_timeout
     }
 }

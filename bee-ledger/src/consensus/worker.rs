@@ -18,12 +18,12 @@ use crate::{
         error::Error as SnapshotError,
         import::import_snapshots,
     },
-    types::{ConflictReason, LedgerIndex, Migration, Receipt, TreasuryOutput},
+    types::{ConflictReason, CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
 };
 
 use bee_message::{
     milestone::MilestoneIndex,
-    output::{CreatedOutput, Output, OutputId},
+    output::{Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
     MessageId,
 };

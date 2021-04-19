@@ -14,7 +14,7 @@ use bee_message::{
     input::{Input, TreasuryInput},
     output::{Output, SignatureLockedSingleOutput, TreasuryOutput, TREASURY_OUTPUT_AMOUNT},
     payload::{
-        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash, MIGRATED_FUNDS_ENTRY_AMOUNT},
+        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash, VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS},
         treasury::TreasuryTransactionPayload,
         Payload,
     },
@@ -59,7 +59,8 @@ pub fn rand_tail_transaction_hash() -> TailTransactionHash {
 pub fn rand_migrated_funds_entry() -> MigratedFundsEntry {
     MigratedFundsEntry::new(
         rand_tail_transaction_hash(),
-        SignatureLockedSingleOutput::new(rand_address(), rand_integer_range(MIGRATED_FUNDS_ENTRY_AMOUNT)).unwrap(),
+        SignatureLockedSingleOutput::new(rand_address(), rand_integer_range(VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS))
+            .unwrap(),
     )
     .unwrap()
 }

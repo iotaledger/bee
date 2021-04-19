@@ -7,6 +7,7 @@ use bee_message::{
     input::{Input, TreasuryInput, UtxoInput},
     milestone::MilestoneIndex,
     output::{Output, SignatureLockedDustAllowanceOutput, SignatureLockedSingleOutput, TreasuryOutput},
+    parents::Parents,
     payload::{
         indexation::IndexationPayload,
         milestone::{
@@ -20,7 +21,7 @@ use bee_message::{
     },
     signature::{Ed25519Signature, SignatureUnlock},
     unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
-    Message, MessageBuilder, MessageId, Parents, MESSAGE_ID_LENGTH,
+    Message, MessageBuilder, MessageId, MESSAGE_ID_LENGTH,
 };
 use bee_protocol::types::peer::Peer;
 
@@ -673,13 +674,12 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
                     hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(
                         |_| "invalid public key in signature unlock block: expected a hex-string of length 64",
                     )?; // TODO access ED25519_PUBLIC_KEY_LENGTH when available
-                    let signature = hex::decode(&ed.signature)
-                        .map_err(
-                            |_| "invalid signature in signature unlock block: expected a hex-string of length 128",
-                        )? // TODO access ED25519_SIGNATURE_LENGTH when available
-                        .into_boxed_slice();
+                    let signature = hex::decode(&ed.signature).map_err(
+                        |_| "invalid signature in signature unlock block: expected a hex-string of length 128",
+                    )?; // TODO access ED25519_SIGNATURE_LENGTH when available
                     Ok(UnlockBlock::Signature(SignatureUnlock::Ed25519(Ed25519Signature::new(
-                        public_key, signature,
+                        public_key,
+                        signature.try_into().map_err(|_| "Invalid signature")?,
                     ))))
                 }
             },
@@ -780,7 +780,8 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
                             MILESTONE_SIGNATURE_LENGTH * 2
                         )
                     })?
-                    .into_boxed_slice(),
+                    .try_into()
+                    .map_err(|_| "Invalid signatures".to_string())?,
             )
         }
 

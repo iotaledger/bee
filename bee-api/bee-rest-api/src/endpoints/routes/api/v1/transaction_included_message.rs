@@ -11,10 +11,8 @@ use crate::endpoints::{
     storage::StorageBackend,
 };
 
-use bee_message::{
-    output::{CreatedOutput, OutputId},
-    payload::transaction::TransactionId,
-};
+use bee_ledger::types::CreatedOutput;
+use bee_message::{output::OutputId, payload::transaction::TransactionId};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 use bee_tangle::MsTangle;

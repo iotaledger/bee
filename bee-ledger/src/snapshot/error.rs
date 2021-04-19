@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::snapshot::kind::Kind;
+use crate::{snapshot::kind::Kind, types::Error as TypeError};
 
 use bee_message::{milestone::MilestoneIndex, Error as MessageError};
 
@@ -23,6 +23,8 @@ pub enum Error {
     InvalidFilePath(String),
     #[error("Message error: {0}")]
     Message(#[from] MessageError),
+    #[error("Type error: {0}")]
+    Type(#[from] TypeError),
     #[error("Network id mismatch between configuration and snapshot: {0} != {1}")]
     NetworkIdMismatch(u64, u64),
     #[error("Inconsistency between ledger index {0} and sep index {1}")]

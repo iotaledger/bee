@@ -6,12 +6,12 @@ use crate::{error::Error, storage::*};
 use bee_common::packable::Packable;
 use bee_ledger::{
     snapshot::info::SnapshotInfo,
-    types::{Balance, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent},
+    types::{Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent},
 };
 use bee_message::{
     address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
-    output::{ConsumedOutput, CreatedOutput, OutputId},
+    output::OutputId,
     payload::indexation::HashedIndex,
     Message, MessageId,
 };
@@ -59,7 +59,7 @@ impl Batch<MessageId, Message> for Storage {
         // Packing to bytes can't fail.
         message.pack(&mut batch.value_buf).unwrap();
 
-        batch.inner.put_cf(&cf, message_id, &batch.value_buf);
+        batch.inner.put_cf(cf, message_id, &batch.value_buf);
 
         Ok(())
     }
@@ -74,7 +74,7 @@ impl Batch<MessageId, Message> for Storage {
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
             .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE))?;
 
-        batch.inner.delete_cf(&cf, message_id);
+        batch.inner.delete_cf(cf, message_id);
 
         Ok(())
     }
@@ -96,7 +96,7 @@ impl Batch<MessageId, MessageMetadata> for Storage {
         // Packing to bytes can't fail.
         metadata.pack(&mut batch.value_buf).unwrap();
 
-        batch.inner.put_cf(&cf, message_id, &batch.value_buf);
+        batch.inner.put_cf(cf, message_id, &batch.value_buf);
 
         Ok(())
     }
@@ -111,7 +111,7 @@ impl Batch<MessageId, MessageMetadata> for Storage {
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
             .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_METADATA))?;
 
-        batch.inner.delete_cf(&cf, message_id);
+        batch.inner.delete_cf(cf, message_id);
 
         Ok(())
     }
@@ -133,7 +133,7 @@ impl Batch<(MessageId, MessageId), ()> for Storage {
         batch.key_buf.extend_from_slice(parent.as_ref());
         batch.key_buf.extend_from_slice(child.as_ref());
 
-        batch.inner.put_cf(&cf, &batch.key_buf, []);
+        batch.inner.put_cf(cf, &batch.key_buf, []);
 
         Ok(())
     }
@@ -152,7 +152,7 @@ impl Batch<(MessageId, MessageId), ()> for Storage {
         batch.key_buf.extend_from_slice(parent.as_ref());
         batch.key_buf.extend_from_slice(child.as_ref());
 
-        batch.inner.delete_cf(&cf, &batch.key_buf);
+        batch.inner.delete_cf(cf, &batch.key_buf);
 
         Ok(())
     }
@@ -174,7 +174,7 @@ impl Batch<(HashedIndex, MessageId), ()> for Storage {
         batch.key_buf.extend_from_slice(index.as_ref());
         batch.key_buf.extend_from_slice(message_id.as_ref());
 
-        batch.inner.put_cf(&cf, &batch.key_buf, []);
+        batch.inner.put_cf(cf, &batch.key_buf, []);
 
         Ok(())
     }
@@ -193,7 +193,7 @@ impl Batch<(HashedIndex, MessageId), ()> for Storage {
         batch.key_buf.extend_from_slice(index.as_ref());
         batch.key_buf.extend_from_slice(message_id.as_ref());
 
-        batch.inner.delete_cf(&cf, &batch.key_buf);
+        batch.inner.delete_cf(cf, &batch.key_buf);
 
         Ok(())
     }
@@ -218,7 +218,7 @@ impl Batch<OutputId, CreatedOutput> for Storage {
         // Packing to bytes can't fail.
         output.pack(&mut batch.value_buf).unwrap();
 
-        batch.inner.put_cf(&cf, &batch.key_buf, &batch.value_buf);
+        batch.inner.put_cf(cf, &batch.key_buf, &batch.value_buf);
 
         Ok(())
     }
@@ -237,7 +237,7 @@ impl Batch<OutputId, CreatedOutput> for Storage {
         // Packing to bytes can't fail.
         output_id.pack(&mut batch.key_buf).unwrap();
 
-        batch.inner.delete_cf(&cf, &batch.key_buf);
+        batch.inner.delete_cf(cf, &batch.key_buf);
 
         Ok(())
     }
@@ -262,7 +262,7 @@ impl Batch<OutputId, ConsumedOutput> for Storage {
         // Packing to bytes can't fail.
         output.pack(&mut batch.value_buf).unwrap();
 
-        batch.inner.put_cf(&cf, &batch.key_buf, &batch.value_buf);
+        batch.inner.put_cf(cf, &batch.key_buf, &batch.value_buf);
 
         Ok(())
     }
@@ -281,7 +281,7 @@ impl Batch<OutputId, ConsumedOutput> for Storage {
         // Packing to bytes can't fail.
         output_id.pack(&mut batch.key_buf).unwrap();
 
-        batch.inner.delete_cf(&cf, &batch.key_buf);
+        batch.inner.delete_cf(cf, &batch.key_buf);
 
         Ok(())
     }
@@ -298,7 +298,7 @@ impl Batch<Unspent, ()> for Storage {
         // Packing to bytes can't fail.
         unspent.pack(&mut batch.key_buf).unwrap();
 
-        batch.inner.put_cf(&cf, &batch.key_buf, []);
+        batch.inner.put_cf(cf, &batch.key_buf, []);
 
         Ok(())
     }
@@ -313,7 +313,7 @@ impl Batch<Unspent, ()> for Storage {
         // Packing to bytes can't fail.
         unspent.pack(&mut batch.key_buf).unwrap();
 
-        batch.inner.delete_cf(&cf, &batch.key_buf);
+        batch.inner.delete_cf(cf, &batch.key_buf);
 
         Ok(())
     }
@@ -335,7 +335,7 @@ impl Batch<(Ed25519Address, OutputId), ()> for Storage {
         batch.key_buf.extend_from_slice(address.as_ref());
         batch.key_buf.extend_from_slice(&output_id.pack_new());
 
-        batch.inner.put_cf(&cf, &batch.key_buf, []);
+        batch.inner.put_cf(cf, &batch.key_buf, []);
 
         Ok(())
     }
@@ -354,7 +354,7 @@ impl Batch<(Ed25519Address, OutputId), ()> for Storage {
         batch.key_buf.extend_from_slice(address.as_ref());
         batch.key_buf.extend_from_slice(&output_id.pack_new());
 
-        batch.inner.delete_cf(&cf, &batch.key_buf);
+        batch.inner.delete_cf(cf, &batch.key_buf);
 
         Ok(())
     }
@@ -376,7 +376,7 @@ impl Batch<(), LedgerIndex> for Storage {
         // Packing to bytes can't fail.
         index.pack(&mut batch.value_buf).unwrap();
 
-        batch.inner.put_cf(&cf, [0x00u8], &batch.value_buf);
+        batch.inner.put_cf(cf, [0x00u8], &batch.value_buf);
 
         Ok(())
     }
@@ -387,7 +387,7 @@ impl Batch<(), LedgerIndex> for Storage {
             .cf_handle(CF_LEDGER_INDEX)
             .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
 
-        batch.inner.delete_cf(&cf, [0x00u8]);
+        batch.inner.delete_cf(cf, [0x00u8]);
 
         Ok(())
     }
@@ -412,7 +412,7 @@ impl Batch<MilestoneIndex, Milestone> for Storage {
         // Packing to bytes can't fail.
         milestone.pack(&mut batch.value_buf).unwrap();
 
-        batch.inner.put_cf(&cf, &batch.key_buf, &batch.value_buf);
+        batch.inner.put_cf(cf, &batch.key_buf, &batch.value_buf);
 
         Ok(())
     }
@@ -431,7 +431,7 @@ impl Batch<MilestoneIndex, Milestone> for Storage {
         // Packing to bytes can't fail.
         index.pack(&mut batch.key_buf).unwrap();
 
-        batch.inner.delete_cf(&cf, &batch.key_buf);
+        batch.inner.delete_cf(cf, &batch.key_buf);
 
         Ok(())
     }
@@ -453,7 +453,7 @@ impl Batch<(), SnapshotInfo> for Storage {
         // Packing to bytes can't fail.
         info.pack(&mut batch.value_buf).unwrap();
 
-        batch.inner.put_cf(&cf, [0x00u8], &batch.value_buf);
+        batch.inner.put_cf(cf, [0x00u8], &batch.value_buf);
 
         Ok(())
     }
@@ -464,7 +464,7 @@ impl Batch<(), SnapshotInfo> for Storage {
             .cf_handle(CF_SNAPSHOT_INFO)
             .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
 
-        batch.inner.delete_cf(&cf, [0x00u8]);
+        batch.inner.delete_cf(cf, [0x00u8]);
 
         Ok(())
     }
@@ -489,7 +489,7 @@ impl Batch<SolidEntryPoint, MilestoneIndex> for Storage {
         // Packing to bytes can't fail.
         index.pack(&mut batch.value_buf).unwrap();
 
-        batch.inner.put_cf(&cf, &batch.key_buf, &batch.value_buf);
+        batch.inner.put_cf(cf, &batch.key_buf, &batch.value_buf);
 
         Ok(())
     }
@@ -504,7 +504,7 @@ impl Batch<SolidEntryPoint, MilestoneIndex> for Storage {
         // Packing to bytes can't fail.
         sep.pack(&mut batch.key_buf).unwrap();
 
-        batch.inner.delete_cf(&cf, &batch.key_buf);
+        batch.inner.delete_cf(cf, &batch.key_buf);
 
         Ok(())
     }
@@ -529,7 +529,7 @@ impl Batch<MilestoneIndex, OutputDiff> for Storage {
         // Packing to bytes can't fail.
         diff.pack(&mut batch.value_buf).unwrap();
 
-        batch.inner.put_cf(&cf, &batch.key_buf, &batch.value_buf);
+        batch.inner.put_cf(cf, &batch.key_buf, &batch.value_buf);
 
         Ok(())
     }
@@ -548,7 +548,7 @@ impl Batch<MilestoneIndex, OutputDiff> for Storage {
         // Packing to bytes can't fail.
         index.pack(&mut batch.key_buf).unwrap();
 
-        batch.inner.delete_cf(&cf, &batch.key_buf);
+        batch.inner.delete_cf(cf, &batch.key_buf);
 
         Ok(())
     }
@@ -566,7 +566,7 @@ impl Batch<Address, Balance> for Storage {
             .cf_handle(CF_ADDRESS_TO_BALANCE)
             .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
 
-        batch.inner.put_cf(&cf, address.pack_new(), balance.pack_new());
+        batch.inner.put_cf(cf, address.pack_new(), balance.pack_new());
 
         Ok(())
     }
@@ -577,7 +577,7 @@ impl Batch<Address, Balance> for Storage {
             .cf_handle(CF_ADDRESS_TO_BALANCE)
             .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
 
-        batch.inner.delete_cf(&cf, address.pack_new());
+        batch.inner.delete_cf(cf, address.pack_new());
 
         Ok(())
     }
@@ -599,7 +599,7 @@ impl Batch<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
         batch.key_buf.extend_from_slice(&index.pack_new());
         batch.key_buf.extend_from_slice(unconfirmed_message.as_ref());
 
-        batch.inner.put_cf(&cf, &batch.key_buf, []);
+        batch.inner.put_cf(cf, &batch.key_buf, []);
 
         Ok(())
     }
@@ -618,7 +618,7 @@ impl Batch<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
         batch.key_buf.extend_from_slice(&index.pack_new());
         batch.key_buf.extend_from_slice(unconfirmed_message.as_ref());
 
-        batch.inner.delete_cf(&cf, &batch.key_buf);
+        batch.inner.delete_cf(cf, &batch.key_buf);
 
         Ok(())
     }
@@ -640,7 +640,7 @@ impl Batch<(MilestoneIndex, Receipt), ()> for Storage {
         batch.key_buf.extend_from_slice(&index.pack_new());
         batch.key_buf.extend_from_slice(&receipt.pack_new());
 
-        batch.inner.put_cf(&cf, &batch.key_buf, []);
+        batch.inner.put_cf(cf, &batch.key_buf, []);
 
         Ok(())
     }
@@ -659,7 +659,7 @@ impl Batch<(MilestoneIndex, Receipt), ()> for Storage {
         batch.key_buf.extend_from_slice(&index.pack_new());
         batch.key_buf.extend_from_slice(&receipt.pack_new());
 
-        batch.inner.delete_cf(&cf, &batch.key_buf);
+        batch.inner.delete_cf(cf, &batch.key_buf);
 
         Ok(())
     }
@@ -681,7 +681,7 @@ impl Batch<(bool, TreasuryOutput), ()> for Storage {
         batch.key_buf.extend_from_slice(&spent.pack_new());
         batch.key_buf.extend_from_slice(&output.pack_new());
 
-        batch.inner.put_cf(&cf, &batch.key_buf, []);
+        batch.inner.put_cf(cf, &batch.key_buf, []);
 
         Ok(())
     }
@@ -700,7 +700,7 @@ impl Batch<(bool, TreasuryOutput), ()> for Storage {
         batch.key_buf.extend_from_slice(&spent.pack_new());
         batch.key_buf.extend_from_slice(&output.pack_new());
 
-        batch.inner.delete_cf(&cf, &batch.key_buf);
+        batch.inner.delete_cf(cf, &batch.key_buf);
 
         Ok(())
     }

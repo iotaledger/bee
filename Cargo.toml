@@ -2,7 +2,6 @@
 members = [
 	"bee-api/bee-rest-api",
 	"bee-ledger",
-	"bee-message",
 	"bee-network",
 	"bee-node",
 	"bee-protocol",
@@ -10,3 +9,9 @@ members = [
 	"bee-tangle",
 	"bee-test",
 ]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"

@@ -53,7 +53,10 @@ fn shutdown_listener(signals: Vec<SignalKind>) -> oneshot::Receiver<()> {
     let (sender, receiver) = oneshot::channel();
 
     tokio::spawn(async move {
-        let mut signals = signals.iter().map(|kind| signal(*kind).unwrap()).collect::<Vec<Signal>>();
+        let mut signals = signals
+            .iter()
+            .map(|kind| signal(*kind).unwrap())
+            .collect::<Vec<Signal>>();
         let signal_futures = signals.iter_mut().map(|signal| Box::pin(signal.recv()));
 
         let (signal_event, _, _) = select_all(signal_futures).await;
@@ -207,7 +210,10 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let (this, events) = bee_network::init::<BeeNode<B>>(network_config, local_keys, network_id, this).await;
 
         #[cfg(unix)]
-        let this = this.with_resource(shutdown_listener(vec![SignalKind::interrupt(), SignalKind::terminate()]));
+        let this = this.with_resource(shutdown_listener(vec![
+            SignalKind::interrupt(),
+            SignalKind::terminate(),
+        ]));
         #[cfg(not(unix))]
         let this = this.with_resource(shutdown_listener());
 

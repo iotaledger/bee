@@ -45,7 +45,7 @@ pub(crate) async fn request_latest_milestone<B: StorageBackend>(
 
 // MessageRequest
 
-pub(crate) async fn request_message<B: StorageBackend>(
+pub async fn request_message<B: StorageBackend>(
     tangle: &MsTangle<B>,
     message_requester: &MessageRequesterWorker,
     requested_messages: &RequestedMessages,

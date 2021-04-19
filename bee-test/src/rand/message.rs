@@ -8,8 +8,9 @@ use crate::rand::{
 };
 
 use bee_message::{
+    parents::Parents,
     payload::{indexation::IndexationPayload, Payload},
-    Message, MessageBuilder, MessageId, Parents,
+    Message, MessageBuilder, MessageId,
 };
 
 pub fn rand_message_id() -> MessageId {

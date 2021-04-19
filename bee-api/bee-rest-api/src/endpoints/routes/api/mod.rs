@@ -7,8 +7,10 @@ pub mod v1;
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
 use bee_network::NetworkServiceController;
-use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
-use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
+use bee_protocol::workers::{
+    config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorkerEvent, PeerManager, RequestedMessages,
+};
+use bee_runtime::{event::Bus, node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
 use tokio::sync::mpsc;
@@ -33,6 +35,9 @@ pub(crate) fn filter<B: StorageBackend>(
     peer_manager: ResourceHandle<PeerManager>,
     network_controller: ResourceHandle<NetworkServiceController>,
     node_info: ResourceHandle<NodeInfo>,
+    bus: ResourceHandle<Bus<'static>>,
+    message_requester: MessageRequesterWorker,
+    requested_messages: ResourceHandle<RequestedMessages>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     v1::filter(
         public_routes.clone(),
@@ -42,11 +47,20 @@ pub(crate) fn filter<B: StorageBackend>(
         message_submitter,
         network_id,
         bech32_hrp,
-        rest_api_config,
+        rest_api_config.clone(),
         protocol_config,
         peer_manager,
         network_controller,
         node_info,
     )
-    .or(plugins::filter(public_routes, allowed_ips, storage, tangle))
+    .or(plugins::filter(
+        public_routes,
+        allowed_ips,
+        storage,
+        tangle,
+        bus,
+        message_requester,
+        requested_messages,
+        rest_api_config,
+    ))
 }

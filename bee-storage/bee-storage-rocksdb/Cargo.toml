@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-ledger = { path = "../../bee-ledger", features = [ "snapshot" ] }
-bee-message = { path = "../../bee-message" }
+bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-tangle = { path = "../../bee-tangle" }
 
@@ -22,7 +22,7 @@ async-trait = "0.1"
 futures = "0.3"
 num_cpus = "1.13"
 pin-project = "1.0"
-rocksdb = { version = "0.15", default-features = false }
+rocksdb = { version = "0.16", default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0"
 

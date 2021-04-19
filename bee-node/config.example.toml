@@ -76,6 +76,7 @@ allowed_ips = [
     "127.0.0.1",
     "::1"
 ]
+white_flag_solidification_timeout = 2
 
 [snapshot]
 full_path         = "./snapshots/alphanet/full_snapshot.bin"

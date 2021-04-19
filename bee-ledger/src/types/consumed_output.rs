@@ -1,10 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, milestone::MilestoneIndex, payload::transaction::TransactionId};
+//! Module providing means to represent the consumption of an output.
+
+use crate::types::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
+use bee_message::{milestone::MilestoneIndex, payload::transaction::TransactionId};
 
+/// Represents a newly consumed output.
 #[derive(Clone, Debug)]
 pub struct ConsumedOutput {
     target: TransactionId,
@@ -12,14 +16,17 @@ pub struct ConsumedOutput {
 }
 
 impl ConsumedOutput {
+    /// Creates a new `ConsumedOutput`.
     pub fn new(target: TransactionId, index: MilestoneIndex) -> Self {
         Self { target, index }
     }
 
+    /// Returns the target transaction of a `ConsumedOutput`.
     pub fn target(&self) -> &TransactionId {
         &self.target
     }
 
+    /// Returns the milestone index of a `ConsumedOutput`.
     pub fn index(&self) -> MilestoneIndex {
         self.index
     }

@@ -1,12 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, output::Output, MessageId};
+//! Module providing means to represent the creation of an output.
+
+use crate::types::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
+use bee_message::{output::Output, MessageId};
 
 use core::ops::Deref;
 
+/// Represents a newly created output.
 #[derive(Clone, Debug)]
 pub struct CreatedOutput {
     message_id: MessageId,
@@ -14,14 +18,17 @@ pub struct CreatedOutput {
 }
 
 impl CreatedOutput {
+    /// Creates a `CreatedOutput`.
     pub fn new(message_id: MessageId, inner: Output) -> Self {
         Self { message_id, inner }
     }
 
+    /// Returns the message id of a `CreatedOutput`.
     pub fn message_id(&self) -> &MessageId {
         &self.message_id
     }
 
+    /// Returns the inner output of a `CreatedOutput`.
     pub fn inner(&self) -> &Output {
         &self.inner
     }

@@ -6,12 +6,12 @@ use crate::{error::Error, storage::*, system::System};
 use bee_common::packable::Packable;
 use bee_ledger::{
     snapshot::info::SnapshotInfo,
-    types::{Balance, LedgerIndex, OutputDiff, Receipt, TreasuryOutput},
+    types::{Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput},
 };
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     milestone::{Milestone, MilestoneIndex},
-    output::{ConsumedOutput, CreatedOutput, OutputId, OUTPUT_ID_LENGTH},
+    output::{OutputId, OUTPUT_ID_LENGTH},
     payload::indexation::{HashedIndex, HASHED_INDEX_LENGTH},
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
@@ -27,7 +27,7 @@ impl Fetch<u8, System> for Storage {
     async fn fetch(&self, key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {
         let cf = self.inner.cf_handle(CF_SYSTEM).ok_or(Error::UnknownCf(CF_SYSTEM))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, [*key])? {
+        if let Some(res) = self.inner.get_cf(cf, [*key])? {
             // Unpacking from storage is fine.
             Ok(Some(System::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
@@ -44,7 +44,7 @@ impl Fetch<MessageId, Message> for Storage {
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
             .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, message_id)? {
+        if let Some(res) = self.inner.get_cf(cf, message_id)? {
             // Unpacking from storage is fine.
             Ok(Some(Message::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
@@ -61,7 +61,7 @@ impl Fetch<MessageId, MessageMetadata> for Storage {
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
             .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_METADATA))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, message_id)? {
+        if let Some(res) = self.inner.get_cf(cf, message_id)? {
             // Unpacking from storage is fine.
             Ok(Some(MessageMetadata::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
@@ -80,7 +80,7 @@ impl Fetch<MessageId, Vec<MessageId>> for Storage {
 
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(&cf, parent)
+                .prefix_iterator_cf(cf, parent)
                 .map(|(key, _)| {
                     let (_, child) = key.split_at(MESSAGE_ID_LENGTH);
                     // Unpacking from storage is fine.
@@ -103,7 +103,7 @@ impl Fetch<HashedIndex, Vec<MessageId>> for Storage {
 
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(&cf, index)
+                .prefix_iterator_cf(cf, index)
                 .map(|(key, _)| {
                     let (_, message_id) = key.split_at(HASHED_INDEX_LENGTH);
                     // Unpacking from storage is fine.
@@ -124,7 +124,7 @@ impl Fetch<OutputId, CreatedOutput> for Storage {
             .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
             .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, output_id.pack_new())? {
+        if let Some(res) = self.inner.get_cf(cf, output_id.pack_new())? {
             // Unpacking from storage is fine.
             Ok(Some(CreatedOutput::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
@@ -141,7 +141,7 @@ impl Fetch<OutputId, ConsumedOutput> for Storage {
             .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
             .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, output_id.pack_new())? {
+        if let Some(res) = self.inner.get_cf(cf, output_id.pack_new())? {
             // Unpacking from storage is fine.
             Ok(Some(ConsumedOutput::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
@@ -160,7 +160,7 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
 
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(&cf, address)
+                .prefix_iterator_cf(cf, address)
                 .map(|(key, _)| {
                     let (_, output_id) = key.split_at(ED25519_ADDRESS_LENGTH);
                     // Unpacking from storage is fine.
@@ -180,7 +180,7 @@ impl Fetch<(), LedgerIndex> for Storage {
             .cf_handle(CF_LEDGER_INDEX)
             .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, [0x00u8])? {
+        if let Some(res) = self.inner.get_cf(cf, [0x00u8])? {
             // Unpacking from storage is fine.
             Ok(Some(LedgerIndex::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
@@ -197,7 +197,7 @@ impl Fetch<MilestoneIndex, Milestone> for Storage {
             .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
             .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_MILESTONE))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, index.pack_new())? {
+        if let Some(res) = self.inner.get_cf(cf, index.pack_new())? {
             // Unpacking from storage is fine.
             Ok(Some(Milestone::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
@@ -214,7 +214,7 @@ impl Fetch<(), SnapshotInfo> for Storage {
             .cf_handle(CF_SNAPSHOT_INFO)
             .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, [0x00u8])? {
+        if let Some(res) = self.inner.get_cf(cf, [0x00u8])? {
             // Unpacking from storage is fine.
             Ok(Some(SnapshotInfo::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
@@ -231,7 +231,7 @@ impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
             .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
             .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, sep.pack_new())? {
+        if let Some(res) = self.inner.get_cf(cf, sep.pack_new())? {
             // Unpacking from storage is fine.
             Ok(Some(MilestoneIndex::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
@@ -248,7 +248,7 @@ impl Fetch<MilestoneIndex, OutputDiff> for Storage {
             .cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
             .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, index.pack_new())? {
+        if let Some(res) = self.inner.get_cf(cf, index.pack_new())? {
             // Unpacking from storage is fine.
             Ok(Some(OutputDiff::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
@@ -265,7 +265,7 @@ impl Fetch<Address, Balance> for Storage {
             .cf_handle(CF_ADDRESS_TO_BALANCE)
             .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
 
-        if let Some(res) = self.inner.get_cf(&cf, address.pack_new())? {
+        if let Some(res) = self.inner.get_cf(cf, address.pack_new())? {
             // Unpacking from storage is fine.
             Ok(Some(Balance::unpack_unchecked(&mut res.as_slice()).unwrap()))
         } else {
@@ -287,7 +287,7 @@ impl Fetch<MilestoneIndex, Vec<UnconfirmedMessage>> for Storage {
 
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(&cf, index.pack_new())
+                .prefix_iterator_cf(cf, index.pack_new())
                 .map(|(key, _)| {
                     let (_, unconfirmed_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
                     // Unpacking from storage is fine.
@@ -309,7 +309,7 @@ impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
 
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(&cf, index.pack_new())
+                .prefix_iterator_cf(cf, index.pack_new())
                 .map(|(mut key, _)| {
                     let (_, receipt) = key.split_at_mut(std::mem::size_of::<MilestoneIndex>());
                     // Unpacking from storage is fine.
@@ -330,7 +330,7 @@ impl Fetch<bool, Vec<TreasuryOutput>> for Storage {
 
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(&cf, spent.pack_new())
+                .prefix_iterator_cf(cf, spent.pack_new())
                 .map(|(mut key, _)| {
                     let (_, output) = key.split_at_mut(std::mem::size_of::<bool>());
                     // Unpacking from storage is fine.
