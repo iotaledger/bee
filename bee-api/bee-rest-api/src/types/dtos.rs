@@ -30,6 +30,7 @@ use serde_json::Value;
 
 use std::convert::{TryFrom, TryInto};
 
+/// The message object that nodes gossip around in the network.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
     #[serde(rename = "networkId")]
@@ -40,6 +41,7 @@ pub struct MessageDto {
     pub nonce: String,
 }
 
+/// Describes all the different payload types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PayloadDto {
@@ -50,6 +52,7 @@ pub enum PayloadDto {
     TreasuryTransaction(Box<TreasuryTransactionPayloadDto>),
 }
 
+/// The payload type to define a value transaction.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionPayloadDto {
     #[serde(rename = "type")]
@@ -59,12 +62,14 @@ pub struct TransactionPayloadDto {
     pub unlock_blocks: Vec<UnlockBlockDto>,
 }
 
+/// Describes all the different essence types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum EssenceDto {
     Regular(RegularEssenceDto),
 }
 
+/// Describes the essence data making up a transaction by defining its inputs and outputs and an optional payload.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RegularEssenceDto {
     #[serde(rename = "type")]
@@ -74,6 +79,7 @@ pub struct RegularEssenceDto {
     pub payload: Option<PayloadDto>,
 }
 
+/// Describes all the different input types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum InputDto {
@@ -81,6 +87,7 @@ pub enum InputDto {
     Treasury(TreasuryInputDto),
 }
 
+/// Describes an input which references an unspent transaction output to consume.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UtxoInputDto {
     #[serde(rename = "type")]
@@ -91,6 +98,7 @@ pub struct UtxoInputDto {
     pub transaction_output_index: u16,
 }
 
+/// Describes an input which references an unspent treasury output to consume.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TreasuryInputDto {
     #[serde(rename = "type")]
@@ -99,6 +107,7 @@ pub struct TreasuryInputDto {
     pub milestone_id: String,
 }
 
+/// Describes all the different output types.
 #[derive(Clone, Debug)]
 pub enum OutputDto {
     SignatureLockedSingle(SignatureLockedSingleOutputDto),
@@ -155,6 +164,7 @@ impl Serialize for OutputDto {
     }
 }
 
+/// Describes a deposit to a single address which is unlocked via a signature.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedSingleOutputDto {
     #[serde(rename = "type")]
@@ -163,6 +173,7 @@ pub struct SignatureLockedSingleOutputDto {
     pub amount: u64,
 }
 
+/// Output type for deposits that enables an address to receive dust outputs. It can be consumed as an input like a regular SigLockedSingleOutput.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedDustAllowanceOutputDto {
     #[serde(rename = "type")]
@@ -171,12 +182,14 @@ pub struct SignatureLockedDustAllowanceOutputDto {
     pub amount: u64,
 }
 
+/// Describes all the different address types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AddressDto {
     Ed25519(Ed25519AddressDto),
 }
 
+/// Describes an Ed25519 address.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Ed25519AddressDto {
     #[serde(rename = "type")]
@@ -184,6 +197,7 @@ pub struct Ed25519AddressDto {
     pub address: String,
 }
 
+/// Describes a treasury output.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TreasuryOutputDto {
     #[serde(rename = "type")]
@@ -191,6 +205,7 @@ pub struct TreasuryOutputDto {
     pub amount: u64,
 }
 
+/// Describes all the different unlock types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum UnlockBlockDto {
@@ -198,6 +213,7 @@ pub enum UnlockBlockDto {
     Reference(ReferenceUnlockDto),
 }
 
+/// Defines an unlock block containing signature(s) unlocking input(s).
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureUnlockDto {
     #[serde(rename = "type")]
@@ -205,12 +221,14 @@ pub struct SignatureUnlockDto {
     pub signature: SignatureDto,
 }
 
+/// Describes all the different signature types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SignatureDto {
     Ed25519(Ed25519SignatureDto),
 }
 
+/// Defines an Ed25519 signature.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Ed25519SignatureDto {
     #[serde(rename = "type")]
@@ -220,6 +238,7 @@ pub struct Ed25519SignatureDto {
     pub signature: String,
 }
 
+/// References a previous unlock block in order to substitute the duplication of the same unlock block data for inputs which unlock through the same data.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReferenceUnlockDto {
     #[serde(rename = "type")]
@@ -228,6 +247,7 @@ pub struct ReferenceUnlockDto {
     pub index: u16,
 }
 
+/// The payload type to define a milestone.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MilestonePayloadDto {
     #[serde(rename = "type")]
@@ -248,6 +268,7 @@ pub struct MilestonePayloadDto {
     pub signatures: Vec<String>,
 }
 
+/// The payload type to define a indexation payload.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IndexationPayloadDto {
     #[serde(rename = "type")]
@@ -256,6 +277,7 @@ pub struct IndexationPayloadDto {
     pub data: String,
 }
 
+/// The payload type to define a receipt.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceiptPayloadDto {
     #[serde(rename = "type")]
@@ -276,6 +298,7 @@ pub struct MigratedFundsEntryDto {
     pub deposit: u64,
 }
 
+/// The payload type to define a treasury transaction.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TreasuryTransactionPayloadDto {
     #[serde(rename = "type")]

@@ -3,9 +3,10 @@
 
 use serde::Serialize;
 
-/// Marker trait
+/// Represents the data that can be included into "SuccessBody" and "ErrorBody".
 pub trait BodyInner {}
 
+/// Describes the response body of a successful HTTP response.
 #[derive(Clone, Debug, Serialize)]
 pub struct SuccessBody<T: BodyInner> {
     pub data: T,
@@ -17,6 +18,7 @@ impl<T: BodyInner> SuccessBody<T> {
     }
 }
 
+/// Describes the response body of a unsuccessful HTTP response.
 #[derive(Clone, Debug, Serialize)]
 pub struct ErrorBody<T: BodyInner> {
     pub error: T,
@@ -28,6 +30,7 @@ impl<T: BodyInner> ErrorBody<T> {
     }
 }
 
+/// Describes the default error format.
 #[derive(Clone, Debug, Serialize)]
 pub struct DefaultErrorResponse {
     pub code: String,
