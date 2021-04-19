@@ -144,10 +144,8 @@ impl BodyInner for OutputResponse {}
 /// Returns information about an address.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BalanceAddressResponse {
-    // The type of the address.
     #[serde(rename = "addressType")]
     pub address_type: u8,
-    // hex encoded address
     pub address: String,
     pub balance: u64,
     #[serde(rename = "dustAllowed")]
@@ -160,7 +158,6 @@ impl BodyInner for BalanceAddressResponse {}
 /// Returns the outputs of an address.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OutputsAddressResponse {
-    // The type of the address (1=Ed25519).
     #[serde(rename = "addressType")]
     pub address_type: u8,
     pub address: String,
@@ -173,15 +170,15 @@ pub struct OutputsAddressResponse {
 
 impl BodyInner for OutputsAddressResponse {}
 
-/// Response of GET /api/v1/receipts/{milestone_index} and /api/v1/receipts.
-/// In case of GET /api/v1/receipts/{milestone_index} it will return all stored receipts for the given milestone index.
-/// GET /api/v1/receipts will return all stored receipts, independent of a milestone index.
+/// Response of:
+/// * GET /api/v1/receipts/{milestone_index}, returns all stored receipts for the given milestone index.
+/// * GET /api/v1/receipts, returns all stored receipts, independent of a milestone index.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceiptsResponse(pub Vec<ReceiptDto>);
 
 impl BodyInner for ReceiptsResponse {}
 
-/// Response of GET /api/v1/treasury
+/// Response of GET /api/v1/treasury.
 /// Returns all information about the treasury.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TreasuryResponse {
@@ -240,6 +237,7 @@ pub struct PeerResponse(pub PeerDto);
 impl BodyInner for PeerResponse {}
 
 /// Response of GET /api/plugins/debug/whiteflag.
+/// Returns the computed merkle tree hash for the given white flag traversal.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WhiteFlagResponse {
     #[serde(rename = "merkleTreeHash")]
