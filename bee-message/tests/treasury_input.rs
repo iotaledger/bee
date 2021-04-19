@@ -15,6 +15,14 @@ fn kind() {
 }
 
 #[test]
+fn debug_impl() {
+    assert_eq!(
+        format!("{:?}", TreasuryInput::from_str(MILESTONE_ID_VALID).unwrap()),
+        "TreasuryInput(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+    );
+}
+
+#[test]
 fn new_valid() {
     let milestone_id = MilestoneId::from_str(MILESTONE_ID_VALID).unwrap();
     let input = TreasuryInput::new(milestone_id);

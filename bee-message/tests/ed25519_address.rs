@@ -17,6 +17,14 @@ fn kind() {
 }
 
 #[test]
+fn debug_impl() {
+    assert_eq!(
+        format!("{:?}", Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+        "Ed25519Address(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+    );
+}
+
+#[test]
 fn generate_address() {
     match Address::from(Ed25519Address::new([1; 32])) {
         Address::Ed25519(a) => assert_eq!(a.len(), 32),
