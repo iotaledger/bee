@@ -123,7 +123,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     } else {
         let payload_dto = serde_json::from_value::<PayloadDto>(payload_v.clone())
             .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
-        Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(CustomRejection::BadRequest(e)))?)
+        Some(Payload::try_from(&payload_dto).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?)
     };
 
     let nonce = if nonce_v.is_null() {

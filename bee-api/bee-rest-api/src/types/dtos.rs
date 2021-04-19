@@ -1,6 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::types::error::Error;
+
 use bee_ledger::types::Receipt;
 use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
@@ -12,16 +14,16 @@ use bee_message::{
         indexation::IndexationPayload,
         milestone::{
             MilestoneId, MilestonePayload, MilestonePayloadEssence, MILESTONE_MERKLE_PROOF_LENGTH,
-            MILESTONE_PUBLIC_KEY_LENGTH, MILESTONE_SIGNATURE_LENGTH,
+            MILESTONE_PUBLIC_KEY_LENGTH,
         },
-        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash},
-        transaction::{Essence, RegularEssence, TransactionId, TransactionPayload, TRANSACTION_ID_LENGTH},
+        receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash, TAIL_TRANSACTION_HASH_LEN},
+        transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
         treasury::TreasuryTransactionPayload,
         Payload,
     },
     signature::{Ed25519Signature, SignatureUnlock},
     unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
-    Message, MessageBuilder, MessageId, MESSAGE_ID_LENGTH,
+    Message, MessageBuilder, MessageId,
 };
 use bee_protocol::types::peer::Peer;
 
@@ -53,7 +55,7 @@ impl From<&Message> for MessageDto {
 }
 
 impl TryFrom<&MessageDto> for Message {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &MessageDto) -> Result<Self, Self::Error> {
         let mut builder = MessageBuilder::new()
@@ -61,37 +63,30 @@ impl TryFrom<&MessageDto> for Message {
                 value
                     .network_id
                     .parse::<u64>()
-                    .map_err(|_| "invalid network id: expected an u64-string")?,
+                    .map_err(|_| Error::InvalidSyntaxField("networkId"))?,
             )
-            .with_parents(
-                Parents::new(
-                    value
-                        .parents
-                        .iter()
-                        .map(|m| {
-                            m.parse::<MessageId>().map_err(|_| {
-                                format!(
-                                    "invalid parent: expected a hex-string of length {}",
-                                    MESSAGE_ID_LENGTH * 2
-                                )
-                            })
-                        })
-                        .collect::<Result<Vec<MessageId>, String>>()?,
-                )
-                .map_err(|e| e.to_string())?,
-            )
+            .with_parents(Parents::new(
+                value
+                    .parents
+                    .iter()
+                    .map(|m| {
+                        m.parse::<MessageId>()
+                            .map_err(|_| Error::InvalidSyntaxField("parentMessageIds"))
+                    })
+                    .collect::<Result<Vec<MessageId>, Error>>()?,
+            )?)
             .with_nonce_provider(
                 value
                     .nonce
                     .parse::<u64>()
-                    .map_err(|_| "invalid nonce: expected an u64-string".to_string())?,
+                    .map_err(|_| Error::InvalidSyntaxField("nonce"))?,
                 0f64,
             );
         if let Some(p) = value.payload.as_ref() {
             builder = builder.with_payload(p.try_into()?);
         }
 
-        builder.finish().map_err(|e| format!("invalid message: {}", e))
+        Ok(builder.finish()?)
     }
 }
 
@@ -118,7 +113,7 @@ impl From<&Payload> for PayloadDto {
 }
 
 impl TryFrom<&PayloadDto> for Payload {
-    type Error = String;
+    type Error = Error;
     fn try_from(value: &PayloadDto) -> Result<Self, Self::Error> {
         Ok(match value {
             PayloadDto::Transaction(t) => Payload::Transaction(Box::new(TransactionPayload::try_from(t.as_ref())?)),
@@ -153,7 +148,7 @@ impl From<&TransactionPayload> for TransactionPayloadDto {
 }
 
 impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &TransactionPayloadDto) -> Result<Self, Self::Error> {
         let mut unlock_blocks = Vec::new();
@@ -162,11 +157,9 @@ impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
         }
         let builder = TransactionPayload::builder()
             .with_essence((&value.essence).try_into()?)
-            .with_unlock_blocks(UnlockBlocks::new(unlock_blocks).map_err(|e| e.to_string())?);
+            .with_unlock_blocks(UnlockBlocks::new(unlock_blocks)?);
 
-        builder
-            .finish()
-            .map_err(|e| format!("invalid transaction payload: {}", e))
+        Ok(builder.finish()?)
     }
 }
 
@@ -187,7 +180,7 @@ impl From<&Essence> for EssenceDto {
 }
 
 impl TryFrom<&EssenceDto> for Essence {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &EssenceDto) -> Result<Self, Self::Error> {
         match value {
@@ -222,7 +215,7 @@ impl From<&RegularEssence> for RegularEssenceDto {
 }
 
 impl TryFrom<&RegularEssenceDto> for RegularEssence {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &RegularEssenceDto) -> Result<Self, Self::Error> {
         let mut builder = RegularEssence::builder();
@@ -239,13 +232,11 @@ impl TryFrom<&RegularEssenceDto> for RegularEssence {
             if let PayloadDto::Indexation(i) = p {
                 builder = builder.with_payload(Payload::Indexation(Box::new((i.as_ref()).try_into()?)));
             } else {
-                return Err("invalid transaction essence: expected an optional indexation-payload".to_string());
+                return Err(Error::InvalidSemanticField("payload"));
             }
         }
 
-        builder
-            .finish()
-            .map_err(|e| format!("invalid transaction essence: {}", e))
+        Ok(builder.finish()?)
     }
 }
 
@@ -275,26 +266,20 @@ impl From<&Input> for InputDto {
 }
 
 impl TryFrom<&InputDto> for Input {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &InputDto) -> Result<Self, Self::Error> {
         match value {
-            InputDto::Utxo(i) => Ok(Input::Utxo(
-                UtxoInput::new(
-                    i.transaction_id.parse::<TransactionId>().map_err(|_| {
-                        format!(
-                            "invalid transaction id: expected a hex-string of length {}",
-                            TRANSACTION_ID_LENGTH * 2
-                        )
-                    })?,
-                    i.transaction_output_index,
-                )
-                .map_err(|e| format!("invalid input: {}", e))?,
-            )),
+            InputDto::Utxo(i) => Ok(Input::Utxo(UtxoInput::new(
+                i.transaction_id
+                    .parse::<TransactionId>()
+                    .map_err(|_| Error::InvalidSyntaxField("transactionId"))?,
+                i.transaction_output_index,
+            )?)),
             InputDto::Treasury(t) => Ok(Input::Treasury(
                 t.milestone_id
                     .parse::<MilestoneId>()
-                    .map_err(|e| format!("invalid treasury input: {}", e))?
+                    .map_err(|_| Error::InvalidSyntaxField("milestoneId"))?
                     .into(),
             )),
         }
@@ -350,25 +335,18 @@ impl From<&Output> for OutputDto {
 }
 
 impl TryFrom<&OutputDto> for Output {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &OutputDto) -> Result<Self, Self::Error> {
         match value {
-            OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(
-                SignatureLockedSingleOutput::new((&s.address).try_into()?, s.amount)
-                    // TODO unwrap
-                    .unwrap(),
-            )),
+            OutputDto::SignatureLockedSingle(s) => Ok(Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(
+                (&s.address).try_into()?,
+                s.amount,
+            )?)),
             OutputDto::SignatureLockedDustAllowance(s) => Ok(Output::SignatureLockedDustAllowance(
-                SignatureLockedDustAllowanceOutput::new((&s.address).try_into()?, s.amount)
-                    // TODO unwrap
-                    .unwrap(),
+                SignatureLockedDustAllowanceOutput::new((&s.address).try_into()?, s.amount)?,
             )),
-            OutputDto::Treasury(t) => Ok(Output::Treasury(
-                TreasuryOutput::new(t.amount)
-                    // TODO unwrap
-                    .unwrap(),
-            )),
+            OutputDto::Treasury(t) => Ok(Output::Treasury(TreasuryOutput::new(t.amount)?)),
         }
     }
 }
@@ -458,7 +436,7 @@ impl From<&Address> for AddressDto {
 }
 
 impl TryFrom<&AddressDto> for Address {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &AddressDto) -> Result<Self, Self::Error> {
         match value {
@@ -485,15 +463,13 @@ impl From<&Ed25519Address> for Ed25519AddressDto {
 }
 
 impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &Ed25519AddressDto) -> Result<Self, Self::Error> {
-        value.address.parse::<Ed25519Address>().map_err(|_| {
-            format!(
-                "invalid Ed25519 address: expected a hex-string of length {}",
-                ED25519_ADDRESS_LENGTH * 2
-            )
-        })
+        value
+            .address
+            .parse::<Ed25519Address>()
+            .map_err(|_| Error::InvalidSyntaxField("address"))
     }
 }
 
@@ -537,28 +513,25 @@ impl From<&UnlockBlock> for UnlockBlockDto {
 }
 
 impl TryFrom<&UnlockBlockDto> for UnlockBlock {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &UnlockBlockDto) -> Result<Self, Self::Error> {
         match value {
             UnlockBlockDto::Signature(s) => match &s.signature {
                 SignatureDto::Ed25519(ed) => {
-                    let mut public_key = [0u8; 32];
-                    hex::decode_to_slice(&ed.public_key, &mut public_key).map_err(|_| {
-                        "invalid public key in signature unlock block: expected a hex-string of length 64"
-                    })?; // TODO access ED25519_PUBLIC_KEY_LENGTH when available
-                    let signature = hex::decode(&ed.signature).map_err(|_| {
-                        "invalid signature in signature unlock block: expected a hex-string of length 128"
-                    })?; // TODO access ED25519_SIGNATURE_LENGTH when available
+                    let mut public_key = [0u8; ED25519_ADDRESS_LENGTH];
+                    hex::decode_to_slice(&ed.public_key, &mut public_key)
+                        .map_err(|_| Error::InvalidSyntaxField("publicKey"))?;
+                    // TODO const
+                    let mut signature = [0u8; 64];
+                    hex::decode_to_slice(&ed.signature, &mut signature)
+                        .map_err(|_| Error::InvalidSyntaxField("signature"))?;
                     Ok(UnlockBlock::Signature(SignatureUnlock::Ed25519(Ed25519Signature::new(
-                        public_key,
-                        signature.try_into().map_err(|_| "Invalid signature")?,
+                        public_key, signature,
                     ))))
                 }
             },
-            UnlockBlockDto::Reference(r) => Ok(UnlockBlock::Reference(
-                ReferenceUnlock::new(r.index).map_err(|e| format!("invalid reference unlock block: {}", e))?,
-            )),
+            UnlockBlockDto::Reference(r) => Ok(UnlockBlock::Reference(ReferenceUnlock::new(r.index)?)),
         }
     }
 }
@@ -637,7 +610,7 @@ impl From<&MilestonePayload> for MilestonePayloadDto {
 }
 
 impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &MilestonePayloadDto) -> Result<Self, Self::Error> {
         let essence = {
@@ -645,21 +618,16 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
             let timestamp = value.timestamp;
             let mut parent_ids = Vec::new();
             for msg_id in &value.parents {
-                parent_ids.push(msg_id.parse::<MessageId>().map_err(|_| {
-                    format!(
-                        "invalid parent in milestone essence: expected a hex-string of length {}",
-                        MESSAGE_ID_LENGTH * 2
-                    )
-                })?);
+                parent_ids.push(
+                    msg_id
+                        .parse::<MessageId>()
+                        .map_err(|_| Error::InvalidSyntaxField("parentMessageIds"))?,
+                );
             }
             let merkle_proof = {
                 let mut buf = [0u8; MILESTONE_MERKLE_PROOF_LENGTH];
-                hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf).map_err(|_| {
-                    format!(
-                        "invalid merkle proof in milestone essence: expected a hex-string of length {}",
-                        MILESTONE_MERKLE_PROOF_LENGTH * 2
-                    )
-                })?;
+                hex::decode_to_slice(&value.inclusion_merkle_proof, &mut buf)
+                    .map_err(|_| Error::InvalidSyntaxField("inclusionMerkleProof"))?;
                 buf
             };
             let next_pow_score = value.next_pow_score;
@@ -668,12 +636,7 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
             for v in &value.public_keys {
                 let key = {
                     let mut buf = [0u8; MILESTONE_PUBLIC_KEY_LENGTH];
-                    hex::decode_to_slice(v, &mut buf).map_err(|_| {
-                        format!(
-                            "invalid public key in milestone essence: expected a hex-string of length {}",
-                            MILESTONE_PUBLIC_KEY_LENGTH * 2
-                        )
-                    })?;
+                    hex::decode_to_slice(v, &mut buf).map_err(|_| Error::InvalidSyntaxField("publicKeys"))?;
                     buf
                 };
                 public_keys.push(key);
@@ -686,31 +649,25 @@ impl TryFrom<&MilestonePayloadDto> for MilestonePayload {
             MilestonePayloadEssence::new(
                 MilestoneIndex(index),
                 timestamp,
-                Parents::new(parent_ids).map_err(|e| e.to_string())?,
+                Parents::new(parent_ids)?,
                 merkle_proof,
                 next_pow_score,
                 next_pow_score_milestone_index,
                 public_keys,
                 receipt,
-            )
-            .map_err(|e| e.to_string())?
+            )?
         };
         let mut signatures = Vec::new();
         for v in &value.signatures {
             signatures.push(
                 hex::decode(v)
-                    .map_err(|_| {
-                        format!(
-                            "invalid signature: expected a hex-string of length {}",
-                            MILESTONE_SIGNATURE_LENGTH * 2
-                        )
-                    })?
+                    .map_err(|_| Error::InvalidSyntaxField("signatures"))?
                     .try_into()
-                    .map_err(|_| "Invalid signatures".to_string())?,
+                    .map_err(|_| Error::InvalidSyntaxField("signatures"))?,
             )
         }
 
-        MilestonePayload::new(essence, signatures).map_err(|e| e.to_string())
+        Ok(MilestonePayload::new(essence, signatures)?)
     }
 }
 
@@ -734,16 +691,13 @@ impl From<&IndexationPayload> for IndexationPayloadDto {
 }
 
 impl TryFrom<&IndexationPayloadDto> for IndexationPayload {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &IndexationPayloadDto) -> Result<Self, Self::Error> {
-        IndexationPayload::new(
-            &hex::decode(value.index.clone())
-                .map_err(|_| "invalid index in indexation payload: expected a hex-string")?,
-            &hex::decode(value.data.clone())
-                .map_err(|_| "invalid data in indexation payload: expected a hex-string")?,
-        )
-        .map_err(|e| format!("invalid indexation payload: {}", e))
+        Ok(IndexationPayload::new(
+            &hex::decode(value.index.clone()).map_err(|_| Error::InvalidSyntaxField("index"))?,
+            &hex::decode(value.data.clone()).map_err(|_| Error::InvalidSyntaxField("data"))?,
+        )?)
     }
 }
 
@@ -777,10 +731,10 @@ impl From<&ReceiptPayload> for ReceiptPayloadDto {
 }
 
 impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &ReceiptPayloadDto) -> Result<Self, Self::Error> {
-        let receipt = ReceiptPayload::new(
+        Ok(ReceiptPayload::new(
             MilestoneIndex(value.migrated_at),
             value.last,
             value
@@ -789,10 +743,7 @@ impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
                 .map(|m| m.try_into())
                 .collect::<Result<Vec<MigratedFundsEntry>, _>>()?,
             (&value.transaction).try_into()?,
-        )
-        .map_err(|e| format!("invalid receipt payload: {}", e))?;
-
-        Ok(receipt)
+        )?)
     }
 }
 
@@ -815,22 +766,16 @@ impl From<&MigratedFundsEntry> for MigratedFundsEntryDto {
 }
 
 impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &MigratedFundsEntryDto) -> Result<Self, Self::Error> {
-        let entry = MigratedFundsEntry::new(
-            TailTransactionHash::new(
-                hex::decode(value.tail_transaction_hash.clone())
-                    .map_err(|e| format!("invalid tail transaction hash: {:?}", e))?
-                    .try_into()
-                    .map_err(|e| format!("invalid tail transaction hash: {:?}", e))?,
-            )
-            .map_err(|e| format!("invalid tail transaction hash: {}", e))?,
-            SignatureLockedSingleOutput::new((&value.address).try_into()?, value.deposit)
-                .map_err(|e| format!("invalid address or amount: {}", e))?,
-        )
-        .map_err(|e| format!("invalid migrated funds entry: {}", e))?;
-        Ok(entry)
+        let mut tail_transaction_hash = [0u8; TAIL_TRANSACTION_HASH_LEN];
+        hex::decode_to_slice(&value.tail_transaction_hash, &mut tail_transaction_hash)
+            .map_err(|_| Error::InvalidSyntaxField("tailTransactionHash"))?;
+        Ok(MigratedFundsEntry::new(
+            TailTransactionHash::new(tail_transaction_hash)?,
+            SignatureLockedSingleOutput::new((&value.address).try_into()?, value.deposit)?,
+        )?)
     }
 }
 
@@ -854,18 +799,13 @@ impl From<&TreasuryTransactionPayload> for TreasuryTransactionPayloadDto {
 }
 
 impl TryFrom<&TreasuryTransactionPayloadDto> for TreasuryTransactionPayload {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(value: &TreasuryTransactionPayloadDto) -> Result<Self, Self::Error> {
-        let input: Input = (&value.input)
-            .try_into()
-            .map_err(|_| "invalid input in treasury transaction payload: expected a treasury input")?;
-        let output: Output = (&value.output)
-            .try_into()
-            .map_err(|_| "invalid output in treasury transaction payload: expected a treasury output")?;
-
-        TreasuryTransactionPayload::new(input, output)
-            .map_err(|e| format!("invalid treasury transaction payload: {}", e))
+        Ok(TreasuryTransactionPayload::new(
+            Input::try_from(&value.input)?,
+            Output::try_from(&value.output)?,
+        )?)
     }
 }
 
