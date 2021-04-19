@@ -899,6 +899,7 @@ impl TryFrom<&TreasuryTransactionPayloadDto> for TreasuryTransactionPayload {
     }
 }
 
+/// Describes a peer.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PeerDto {
     pub id: String,
@@ -912,12 +913,14 @@ pub struct PeerDto {
     pub gossip: Option<GossipDto>,
 }
 
+/// Returns all information about the gossip stream with the peer.
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct GossipDto {
     pub heartbeat: HeartbeatDto,
     pub metrics: MetricsDto,
 }
 
+/// Describes the relation with the peer.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum RelationDto {
     #[serde(rename = "known")]
@@ -928,6 +931,7 @@ pub enum RelationDto {
     Discovered,
 }
 
+/// Describes the heartbeat of a node.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct HeartbeatDto {
     #[serde(rename = "solidMilestoneIndex")]
@@ -942,6 +946,7 @@ pub struct HeartbeatDto {
     pub synced_neighbors: u8,
 }
 
+/// Describes metrics of a gossip stream.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct MetricsDto {
     #[serde(rename = "newMessages")]
@@ -968,6 +973,7 @@ pub struct MetricsDto {
     pub dropped_packets: u64,
 }
 
+/// &Peer -> PeerDto
 impl From<&Peer> for PeerDto {
     fn from(peer: &Peer) -> Self {
         PeerDto {
@@ -1010,6 +1016,7 @@ impl From<&Peer> for PeerDto {
     }
 }
 
+/// Describes a receipt.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceiptDto {
     pub receipt: ReceiptPayloadDto,
@@ -1017,6 +1024,7 @@ pub struct ReceiptDto {
     pub milestone_index: u32,
 }
 
+/// &Receipt -> ReceiptDto
 impl From<Receipt> for ReceiptDto {
     fn from(value: Receipt) -> Self {
         ReceiptDto {
@@ -1026,6 +1034,7 @@ impl From<Receipt> for ReceiptDto {
     }
 }
 
+/// Describes the ledger inclusion state of a transaction.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum LedgerInclusionStateDto {
     #[serde(rename = "conflicting")]
