@@ -95,19 +95,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-common"
-version = "0.4.1"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#2a0be9db39b19ede223642c5bed0588d9c3272b1"
-dependencies = [
- "autocfg",
- "chrono",
- "fern",
- "log",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "bee-common-derive"
 version = "0.1.1-alpha"
 dependencies = [
@@ -119,21 +106,9 @@ dependencies = [
 name = "bee-crypto"
 version = "0.2.1-alpha"
 dependencies = [
- "bee-ternary 0.4.2-alpha",
+ "bee-ternary",
  "byteorder",
  "criterion",
- "lazy_static",
- "thiserror",
- "tiny-keccak",
-]
-
-[[package]]
-name = "bee-crypto"
-version = "0.2.1-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#2a0be9db39b19ede223642c5bed0588d9c3272b1"
-dependencies = [
- "bee-ternary 0.4.2-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "byteorder",
  "lazy_static",
  "thiserror",
  "tiny-keccak",
@@ -143,12 +118,8 @@ dependencies = [
 name = "bee-ledger"
 version = "0.1.0"
 dependencies = [
- "bee-common 0.4.1 (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bee-crypto 0.2.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bee-message 0.1.2 (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bee-runtime 0.1.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bee-storage 0.3.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bee-ternary 0.4.2-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-common",
+ "bee-message",
  "thiserror",
 ]
 
@@ -157,9 +128,9 @@ name = "bee-message"
 version = "0.1.2"
 dependencies = [
  "bech32",
- "bee-common 0.4.1",
- "bee-pow 0.1.0",
- "bee-ternary 0.4.2-alpha",
+ "bee-common",
+ "bee-pow",
+ "bee-ternary",
  "bee-test",
  "bytemuck",
  "digest 0.9.0",
@@ -171,6 +142,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 <<<<<<< HEAD
 name = "bee-network"
 version = "0.1.0"
@@ -194,17 +166,20 @@ dependencies = [
 ]
 
 [[package]]
+=======
+>>>>>>> bab4367... Remove udeps
 name = "bee-pow"
 version = "0.1.0"
 dependencies = [
- "bee-crypto 0.2.1-alpha",
- "bee-ternary 0.4.2-alpha",
+ "bee-crypto",
+ "bee-ternary",
  "bee-test",
  "iota-crypto",
  "thiserror",
 ]
 
 [[package]]
+<<<<<<< HEAD
 <<<<<<< HEAD
 name = "bee-protocol"
 version = "0.1.0"
@@ -224,27 +199,17 @@ dependencies = [
 ]
 
 [[package]]
+=======
+>>>>>>> bab4367... Remove udeps
 name = "bee-runtime"
 version = "0.1.1-alpha"
 dependencies = [
  "async-trait",
- "bee-storage 0.3.0",
+ "bee-storage",
  "dashmap",
  "futures",
  "log",
  "tokio",
-]
-
-[[package]]
-name = "bee-runtime"
-version = "0.1.1-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#2a0be9db39b19ede223642c5bed0588d9c3272b1"
-dependencies = [
- "async-trait",
- "bee-storage 0.3.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "dashmap",
- "futures",
- "log",
 ]
 
 [[package]]
@@ -253,12 +218,17 @@ version = "0.1.1-alpha"
 dependencies = [
  "bee-common-derive",
 <<<<<<< HEAD
+<<<<<<< HEAD
  "bee-crypto",
  "bee-ternary",
  "rand 0.8.3",
 =======
  "bee-crypto 0.2.1-alpha",
  "bee-ternary 0.4.2-alpha",
+=======
+ "bee-crypto",
+ "bee-ternary",
+>>>>>>> bab4367... Remove udeps
  "rand",
 >>>>>>> bbb5635... Add ledger types
  "sha3",
@@ -271,19 +241,7 @@ name = "bee-storage"
 version = "0.3.0"
 dependencies = [
  "async-trait",
- "bee-common 0.4.1",
- "futures",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "bee-storage"
-version = "0.3.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#2a0be9db39b19ede223642c5bed0588d9c3272b1"
-dependencies = [
- "async-trait",
- "bee-common 0.4.1 (git+https://github.com/iotaledger/bee.git?branch=dev)",
+ "bee-common",
  "futures",
  "serde",
  "thiserror",
@@ -292,16 +250,6 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.4.2-alpha"
-dependencies = [
- "autocfg",
- "num-traits",
- "serde",
-]
-
-[[package]]
-name = "bee-ternary"
-version = "0.4.2-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#2a0be9db39b19ede223642c5bed0588d9c3272b1"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -312,8 +260,8 @@ dependencies = [
 name = "bee-test"
 version = "0.1.0-alpha"
 dependencies = [
- "bee-message 0.1.2",
- "bee-ternary 0.4.2-alpha",
+ "bee-message",
+ "bee-ternary",
  "bytemuck",
  "hex",
  "rand 0.8.3",
