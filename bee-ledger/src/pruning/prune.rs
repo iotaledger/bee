@@ -129,13 +129,10 @@ pub async fn prune<B: StorageBackend>(
     for (sep, index) in collected_seps.into_iter().map(|(sep, index)| (sep, index)) {
         let sep_approvers = tangle.get_children(sep.message_id()).await.unwrap();
         'inner: for sep_approver in &sep_approvers {
-            if tangle
-                .get_metadata(sep_approver)
-                .await
-                .unwrap()
-                .milestone_index()
-                .is_none()
-            {
+            if matches!(
+                tangle.get_metadata(sep_approver).await.unwrap().milestone_index(),
+                Some(milestone_index) if milestone_index > target_index
+            ) {
                 new_seps.insert(sep, index);
                 break 'inner;
             }
