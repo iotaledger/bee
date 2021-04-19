@@ -8,7 +8,8 @@ use crate::{consensus::StorageBackend, types::Receipt};
 use bee_message::prelude::{Essence, HashedIndex, IndexationPayload, Message, MessageId, MilestoneIndex, Payload};
 use bee_storage::access::Fetch;
 use bee_tangle::{
-    ms_tangle::StorageHooks, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage, MsTangle,
+    ms_tangle::StorageHooks, solid_entry_point::SolidEntryPoint,
+    unconfirmed_message::UnconfirmedMessage as ReceivedMessageId, MsTangle,
 };
 
 use hashbrown::{HashMap, HashSet};
@@ -21,7 +22,7 @@ pub type Messages = HashSet<MessageId>;
 pub type Edges = HashSet<Edge>;
 pub type Seps = HashMap<SolidEntryPoint, MilestoneIndex>;
 pub type Indexations = Vec<(HashedIndex, MessageId)>;
-pub type UnconfirmedMessages = Vec<(MilestoneIndex, UnconfirmedMessage)>;
+pub type ReceivedMessageIds = Vec<(MilestoneIndex, ReceivedMessageId)>;
 pub type Receipts = Vec<(MilestoneIndex, Receipt)>;
 
 #[derive(Eq, PartialEq, Hash)]
@@ -148,49 +149,65 @@ pub async fn collect_still_unconfirmed_data<B: StorageBackend>(
     storage: &StorageHooks<B>,
     start_index: MilestoneIndex,
     target_index: MilestoneIndex,
-) -> Result<(UnconfirmedMessages, Edges, Indexations), Error> {
-    let mut unconfirmed = UnconfirmedMessages::default();
+) -> Result<(ReceivedMessageIds, Messages, Edges, Indexations), Error> {
+    let mut received = ReceivedMessageIds::default();
+    let mut messages = Messages::default();
     let mut edges = Edges::default();
     let mut indexations = Indexations::default();
 
     for index in *start_index..=*target_index {
-        collect_unconfirmed_data_by_index(storage, index.into(), &mut unconfirmed, &mut edges, &mut indexations)
-            .await?;
+        collect_unconfirmed_data_by_index(
+            storage,
+            index.into(),
+            &mut received,
+            &mut messages,
+            &mut edges,
+            &mut indexations,
+        )
+        .await?;
     }
 
-    Ok((unconfirmed, edges, indexations))
+    Ok((received, messages, edges, indexations))
 }
 
 /// Get the unconfirmed/unreferenced messages.
 async fn collect_unconfirmed_data_by_index<B: StorageBackend>(
     storage: &StorageHooks<B>,
     index: MilestoneIndex,
-    unconfirmed: &mut UnconfirmedMessages,
+    received: &mut ReceivedMessageIds,
+    messages: &mut Messages,
     edges: &mut Edges,
     indexations: &mut Indexations,
 ) -> Result<(), Error> {
-    let fetched = Fetch::<MilestoneIndex, Vec<UnconfirmedMessage>>::fetch(&***storage, &index)
+    let fetched = Fetch::<MilestoneIndex, Vec<ReceivedMessageId>>::fetch(&***storage, &index)
         .await
         .map_err(|e| Error::StorageError(Box::new(e)))?
-        // TODO: explain why there are always unconfirmed messages per each milestone
+        // `unwrap` is safe, because the value returned is a `Vec`, hence if nothing can be fetched the result will be
+        // `Some(vec![])`
         .unwrap();
 
     if fetched.is_empty() {
         return Ok(());
     }
 
-    for unconfirmed_message_id in fetched.iter().map(|msg| msg.message_id()) {
-        if let Some((maybe_payload, parents)) = Fetch::<MessageId, Message>::fetch(&***storage, &unconfirmed_message_id)
+    for received_message_id in fetched.iter().map(|msg| msg.message_id()) {
+        // **NOTE**: It is very often the case, that the `Fetch` will not succeed, because the data has been deleted
+        // already from the database via a previous pruning run. So this here is just to prune the unconfirmed, and
+        // hence untraversed remnants.
+
+        if let Some((maybe_payload, parents)) = Fetch::<MessageId, Message>::fetch(&***storage, &received_message_id)
             .await
             .map_err(|e| Error::StorageError(Box::new(e)))?
+            // TODO: remove the Clone/Copy
             .map(|m| (m.payload().clone(), m.parents().iter().copied().collect::<Vec<_>>()))
-        // TODO: explain why that `unwrap` is safe? Why do we know that the `Fetch` must find that message?
-        // .unwrap();
         {
+            // Collect messages (or rather the message ids pointing to still existing messages)
+            messages.insert(*received_message_id);
+
             // Collect possible indexation payloads
             if let Some(indexation) = unwrap_indexation(maybe_payload) {
                 let hashed_index = indexation.hash();
-                let message_id = *unconfirmed_message_id;
+                let message_id = *received_message_id;
 
                 indexations.push((hashed_index, message_id));
             }
@@ -199,21 +216,14 @@ async fn collect_unconfirmed_data_by_index<B: StorageBackend>(
             for parent in parents.iter() {
                 edges.insert(Edge {
                     from_parent: *parent,
-                    to_child: *unconfirmed_message_id,
+                    to_child: *received_message_id,
                 });
             }
-        } else {
-            // Already deleted because it became confirmed.
-
-            // error!(
-            //     "Fetching message data for unconfirmed_message {} failed. This is a bug!",
-            //     unconfirmed_message_id
-            // );
         }
     }
 
     // Unconfirmed messages associated with their milestone index, which we need for the batch operation.
-    unconfirmed.extend(std::iter::repeat(index).zip(fetched.into_iter()));
+    received.extend(std::iter::repeat(index).zip(fetched.into_iter()));
 
     Ok(())
 }

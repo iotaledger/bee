@@ -17,13 +17,14 @@ use bee_message::{
 use bee_runtime::event::Bus;
 use bee_storage::access::Batch;
 use bee_tangle::{
-    metadata::MessageMetadata, ms_tangle::StorageHooks, unconfirmed_message::UnconfirmedMessage, MsTangle,
+    metadata::MessageMetadata, ms_tangle::StorageHooks, unconfirmed_message::UnconfirmedMessage as ReceivedMessageId,
+    MsTangle,
 };
 
 use log::{error, info};
 use once_cell::sync::OnceCell;
 
-use std::{collections::HashSet, sync::Mutex};
+use std::{collections::HashMap, sync::Mutex};
 
 // **NOTE**: In order to ensure that everything that entered the database gets pruned eventually the following mechanism
 // is used:
@@ -53,20 +54,18 @@ use std::{collections::HashSet, sync::Mutex};
 /// Pruning (if still unconf.) happens x-BMD milestones after its LMI(X)
 const UNCONFIRMED_PRUNING_DELAY_FACTOR: u32 = 2;
 
-fn confirmed_removal_list() -> &'static Mutex<HashSet<MessageId>> {
-    static INSTANCE: OnceCell<Mutex<HashSet<MessageId>>> = OnceCell::new();
-    INSTANCE.get_or_init(|| {
-        let m = HashSet::default();
-        Mutex::new(m)
-    })
+// For debugging: This checklist ensures, that no confirmed message will be collected twice by the past-cone traversal
+// of 'target_index'.
+fn unique_confirmed_checklist() -> &'static Mutex<HashMap<MessageId, MilestoneIndex>> {
+    static INSTANCE1: OnceCell<Mutex<HashMap<MessageId, MilestoneIndex>>> = OnceCell::new();
+    INSTANCE1.get_or_init(|| Mutex::new(HashMap::default()))
 }
 
-fn unconfirmed_removal_list() -> &'static Mutex<HashSet<MessageId>> {
-    static INSTANCE: OnceCell<Mutex<HashSet<MessageId>>> = OnceCell::new();
-    INSTANCE.get_or_init(|| {
-        let m = HashSet::default();
-        Mutex::new(m)
-    })
+// For debugging: This checklist ensures, that no unconfirmed message is referenced under two different milestone
+// indexes.
+fn unique_unconfirmed_checklist() -> &'static Mutex<HashMap<MessageId, MilestoneIndex>> {
+    static INSTANCE2: OnceCell<Mutex<HashMap<MessageId, MilestoneIndex>>> = OnceCell::new();
+    INSTANCE2.get_or_init(|| Mutex::new(HashMap::default()))
 }
 
 pub async fn prune<B: StorageBackend>(
@@ -96,8 +95,9 @@ pub async fn prune<B: StorageBackend>(
     // Prepare a batch of delete operations on the database.
     let mut batch = B::batch_begin();
 
-    // We get us a clone of the current SEP set. We are the only ones that make changes to that tangle state, so we can
-    // be sure it can't be invalidated in the meantime while we do the past-cone traversal.
+    // We get us a clone of the current SEP set. We are the only ones that make changes to that particular tangle state,
+    // so we can be sure it can't be invalidated in the meantime while we do the past-cone traversal to find the new
+    // set.
     let old_seps = tangle.get_all_solid_entry_points().await;
     let num_old_seps = old_seps.len();
 
@@ -110,18 +110,21 @@ pub async fn prune<B: StorageBackend>(
     let num_collected_seps = collected_seps.len();
 
     // TEMP: make sure, that the collect process doesn't yield duplicate message ids.
+    // **NOTE**: For some reason the enclosing block is necessary in async function despet the manual drop.
     {
-        let mut removal_list = confirmed_removal_list().lock().unwrap();
+        let mut removal_list = unique_confirmed_checklist().lock().unwrap();
         for confirmed_id in &confirmed {
-            if removal_list.contains(confirmed_id) {
-                error!("double removal of a confirmed message");
+            if let Some(index) = removal_list.get(confirmed_id) {
+                error!(
+                    "Collected confirmed message {} twice. First added during {}, now at {}. This is a bug!",
+                    confirmed_id, index, target_index
+                );
             } else {
-                removal_list.insert(*confirmed_id);
+                removal_list.insert(*confirmed_id, target_index);
             }
         }
-        // println!("len(confirmed_removal_list) = {}", removal_list.len());
-        dbg!(removal_list.len());
-        drop(removal_list);
+        // dbg!(removal_list.len());
+        drop(removal_list); // just here to be explicit about it
     }
 
     // We can still do this as long as they're not pruned.
@@ -159,6 +162,7 @@ pub async fn prune<B: StorageBackend>(
     let mut num_unconf_messages = 0;
     let mut num_unconf_edges = 0;
     let mut num_unconf_indexations = 0;
+    let mut num_received_ids = 0;
 
     // Handling of remaining still unconfirmed messages
     if let Some(unconfirmed_start_index) = unconfirmed_start_index {
@@ -172,28 +176,32 @@ pub async fn prune<B: StorageBackend>(
             unconfirmed_target_index
         );
 
-        let (still_unconfirmed, unconfirmed_edges, unconfirmed_indexations) =
+        let (received, unconfirmed_messages, unconfirmed_edges, unconfirmed_indexations) =
             collect_still_unconfirmed_data(storage, unconfirmed_start_index, unconfirmed_target_index).await?;
 
         // TEMPORARILY ADD TO REMOVAL LIST
         {
-            let mut removal_list = unconfirmed_removal_list().lock().unwrap();
-            for unconfirmed_id in still_unconfirmed.iter().map(|(_, b)| b.message_id()) {
-                if removal_list.contains(unconfirmed_id) {
-                    error!("double removal of a unconfirmed message");
+            let mut removal_list = unique_unconfirmed_checklist().lock().unwrap();
+            for unconfirmed_id in received.iter().map(|(_, b)| b.message_id()) {
+                if let Some(index) = removal_list.get(unconfirmed_id) {
+                    error!(
+                        "Collected UNconfirmed message {} twice. First added during {}, now at {}. This is a bug!",
+                        unconfirmed_id, index, target_index
+                    );
                 } else {
-                    removal_list.insert(*unconfirmed_id);
+                    removal_list.insert(*unconfirmed_id, target_index);
                 }
             }
-            // println!("len(unconfirmed_removal_list) = {}", removal_list.len());
-            dbg!(removal_list.len());
-            drop(removal_list);
+            // dbg!(removal_list.len());
+            drop(removal_list); // just here to be explicit about it
         }
 
         // Add the unconfirmed data to the batch.
-        num_unconf_messages += prune_received_messages(storage, &mut batch, still_unconfirmed).await?;
-        num_unconf_edges += prune_edges(storage, &mut batch, unconfirmed_edges).await?;
-        num_unconf_indexations += prune_indexations(storage, &mut batch, unconfirmed_indexations).await?;
+        num_unconf_messages = prune_messages(storage, &mut batch, unconfirmed_messages).await?;
+        num_unconf_edges = prune_edges(storage, &mut batch, unconfirmed_edges).await?;
+        num_unconf_indexations = prune_indexations(storage, &mut batch, unconfirmed_indexations).await?;
+
+        num_received_ids = prune_received_ids(storage, &mut batch, received).await?;
     }
 
     // Add milestone related data to the batch.
@@ -214,16 +222,16 @@ pub async fn prune<B: StorageBackend>(
         .map_err(|e| Error::BatchCommitError(Box::new(e)))?;
 
     info!(
-        "PRUNING SUMMARY: \n{} milestones, {}/{} un/confirmed messages, {}/{} un/confirmed edges, {}/{} un/confirmed indexations, {} output_diffs, {} receipts",
-        num_milestones,
-        num_unconf_messages,
-        num_messages,
-        num_unconf_edges,
-        num_edges,
-        num_unconf_indexations,
-        num_indexations,
-        num_output_diffs,
-        num_receipts,
+        "Pruned {} milestones, {} output diffs, {} receipts.",
+        num_milestones, num_output_diffs, num_receipts
+    );
+    info!(
+        "Pruned {} confirmed messages including {} edges, {} indexations.",
+        num_messages, num_edges, num_indexations
+    );
+    info!(
+        "Pruned {} received ids, including {} messages, {} edges, {} indexations.",
+        num_received_ids, num_unconf_messages, num_unconf_edges, num_unconf_indexations
     );
 
     tangle.update_pruning_index(target_index);
@@ -289,28 +297,20 @@ async fn prune_edges<B: StorageBackend, E: IntoIterator<Item = Edge>>(
     Ok(num_pruned)
 }
 
-async fn prune_received_messages<B: StorageBackend, M: IntoIterator<Item = (MilestoneIndex, UnconfirmedMessage)>>(
+async fn prune_received_ids<B: StorageBackend, M: IntoIterator<Item = (MilestoneIndex, ReceivedMessageId)>>(
     storage: &StorageHooks<B>,
     batch: &mut B::Batch,
-    messages: M,
+    received: M,
 ) -> Result<usize, Error> {
     let mut num_pruned = 0;
 
-    for (index, unconfirmed_message) in messages.into_iter() {
-        Batch::<(MilestoneIndex, UnconfirmedMessage), ()>::batch_delete(
+    for (received_at, received_message_id) in received.into_iter() {
+        Batch::<(MilestoneIndex, ReceivedMessageId), ()>::batch_delete(
             &***storage,
             batch,
-            &(index, unconfirmed_message),
+            &(received_at, received_message_id),
         )
         .map_err(|e| Error::StorageError(Box::new(e)))?;
-
-        // Message
-        Batch::<MessageId, Message>::batch_delete(&***storage, batch, &unconfirmed_message.message_id())
-            .map_err(|e| Error::StorageError(Box::new(e)))?;
-
-        // MessageMetadata
-        Batch::<MessageId, MessageMetadata>::batch_delete(&***storage, batch, &unconfirmed_message.message_id())
-            .map_err(|e| Error::StorageError(Box::new(e)))?;
 
         num_pruned += 1;
     }
