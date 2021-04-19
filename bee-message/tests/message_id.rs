@@ -25,6 +25,14 @@ fn from_str_valid() {
 }
 
 #[test]
+fn null() {
+    assert_eq!(
+        format!("{:?}", MessageId::null()),
+        "MessageId(0000000000000000000000000000000000000000000000000000000000000000)"
+    );
+}
+
+#[test]
 fn from_str_invalid_hex() {
     assert!(matches!(
         MessageId::from_str(MESSAGE_ID_INVALID_HEX),
