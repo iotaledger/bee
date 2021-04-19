@@ -34,7 +34,7 @@ impl Packable for TreasuryOutput {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.inner.packed_len() + self.inner.packed_len() + self.milestone_id.packed_len()
+        self.inner.packed_len() + self.milestone_id.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
