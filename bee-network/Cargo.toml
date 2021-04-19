@@ -12,5 +12,9 @@ license = "Apache-2.0"
 keywords = ["iota", "tangle", "bee", "framework", "network", "libp2p"]
 homepage = "https://www.iota.org"
 
+[features]
+default = ["node"]
+node = []
+
 [dependencies]
 libp2p = { version = "0.37", default-features = false }
