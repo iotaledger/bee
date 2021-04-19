@@ -99,7 +99,7 @@ pub async fn prune<B: StorageBackend>(
     // We get us a clone of the current SEP set. We are the only ones that make changes to that tangle state, so we can
     // be sure it can't be invalidated in the meantime while we do the past-cone traversal.
     let old_seps = tangle.get_all_solid_entry_points().await;
-    dbg!(old_seps.len());
+    let num_old_seps = old_seps.len();
 
     // Collect the data that can be safely pruned. In order to find the correct set of SEPs during this pruning we need
     // to walk the past-cone from the `target_index` backwards, and not step-by-step from `start_index` to
@@ -138,39 +138,17 @@ pub async fn prune<B: StorageBackend>(
             }
         }
     }
-    let num_collected_seps_kept = new_seps.len();
-
-    // Move all young enough old SEPs to the new set
-    // let num_old_seps = old_seps.len();
-    let mut num_old_seps_kept = 0usize;
-
-    for (old_sep, index) in old_seps {
-        // Keep the old SEP as long as there might be unconfirmed messages referencing it.
-        if index + unconfirmed_additional_pruning_delay > target_index {
-            new_seps.insert(old_sep, index);
-            num_old_seps_kept += 1;
-        }
-    }
-
     let num_new_seps = new_seps.len();
 
-    dbg!(
-        num_collected_seps,
-        num_collected_seps_kept,
-        num_old_seps_kept,
-        num_new_seps
-    );
+    dbg!(num_old_seps, num_collected_seps, num_new_seps);
 
     tangle.replace_solid_entry_points(new_seps).await;
-    // for (sep, index) in new_seps.drain() {
-    //     tangle.add_solid_entry_point(sep, index).await;
-    // }
 
     // Remember up to which index we determined SEPs.
     tangle.update_entry_point_index(target_index);
     info!(
         "Entry point index now at {}. (Selected {} new solid entry points).",
-        target_index, num_collected_seps_kept,
+        target_index, num_new_seps,
     );
 
     // Add the confirmed data to the batch.
