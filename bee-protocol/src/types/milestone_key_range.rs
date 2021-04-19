@@ -11,9 +11,10 @@ use core::cmp::Ordering;
 #[derive(Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MilestoneKeyRange {
-    // TODO ED25 pk
     public_key: String,
+    // Inclusive bound.
     start: MilestoneIndex,
+    // Inclusive bound.
     end: MilestoneIndex,
 }
 

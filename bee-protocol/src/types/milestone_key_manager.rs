@@ -3,7 +3,7 @@
 
 //! A module that provides a milestone key range manager type.
 
-use crate::types::key_range::MilestoneKeyRange;
+use crate::types::milestone_key_range::MilestoneKeyRange;
 
 use bee_message::milestone::MilestoneIndex;
 
@@ -53,30 +53,36 @@ impl MilestoneKeyManager {
     }
 }
 
-#[test]
-fn key_manager_is_sorted() {
-    let krs = vec![
-        MilestoneKeyRange::new("kr1".to_string(), 42.into(), 1000.into()),
-        MilestoneKeyRange::new("kr2".to_string(), 21.into(), 1000.into()),
-        MilestoneKeyRange::new("kr3".to_string(), 84.into(), 1000.into()),
-        MilestoneKeyRange::new("kr4".to_string(), 0.into(), 1000.into()),
-    ];
+#[cfg(test)]
+mod tests {
 
-    let km = MilestoneKeyManager::new(0, krs.into_boxed_slice());
+    use super::*;
 
-    assert_eq!(km.key_ranges[0].public_key(), "kr4");
-    assert_eq!(km.key_ranges[0].start(), 0.into());
-    assert_eq!(km.key_ranges[0].end(), 1000.into());
+    #[test]
+    fn key_manager_is_sorted() {
+        let krs = vec![
+            MilestoneKeyRange::new("kr1".to_string(), 42.into(), 1000.into()),
+            MilestoneKeyRange::new("kr2".to_string(), 21.into(), 1000.into()),
+            MilestoneKeyRange::new("kr3".to_string(), 84.into(), 1000.into()),
+            MilestoneKeyRange::new("kr4".to_string(), 0.into(), 1000.into()),
+        ];
 
-    assert_eq!(km.key_ranges[1].public_key(), "kr2");
-    assert_eq!(km.key_ranges[1].start(), 21.into());
-    assert_eq!(km.key_ranges[1].end(), 1000.into());
+        let km = MilestoneKeyManager::new(0, krs.into_boxed_slice());
 
-    assert_eq!(km.key_ranges[2].public_key(), "kr1");
-    assert_eq!(km.key_ranges[2].start(), 42.into());
-    assert_eq!(km.key_ranges[2].end(), 1000.into());
+        assert_eq!(km.key_ranges[0].public_key(), "kr4");
+        assert_eq!(km.key_ranges[0].start(), 0.into());
+        assert_eq!(km.key_ranges[0].end(), 1000.into());
 
-    assert_eq!(km.key_ranges[3].public_key(), "kr3");
-    assert_eq!(km.key_ranges[3].start(), 84.into());
-    assert_eq!(km.key_ranges[3].end(), 1000.into());
+        assert_eq!(km.key_ranges[1].public_key(), "kr2");
+        assert_eq!(km.key_ranges[1].start(), 21.into());
+        assert_eq!(km.key_ranges[1].end(), 1000.into());
+
+        assert_eq!(km.key_ranges[2].public_key(), "kr1");
+        assert_eq!(km.key_ranges[2].start(), 42.into());
+        assert_eq!(km.key_ranges[2].end(), 1000.into());
+
+        assert_eq!(km.key_ranges[3].public_key(), "kr3");
+        assert_eq!(km.key_ranges[3].start(), 84.into());
+        assert_eq!(km.key_ranges[3].end(), 1000.into());
+    }
 }

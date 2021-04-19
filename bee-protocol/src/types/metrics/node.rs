@@ -43,7 +43,7 @@ pub struct NodeMetrics {
 }
 
 impl NodeMetrics {
-    /// Creates a new `NodeMetrics`/
+    /// Creates a new `NodeMetrics`.
     pub fn new() -> Self {
         Self::default()
     }
