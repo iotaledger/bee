@@ -44,13 +44,13 @@ impl Receipt {
         };
 
         for funds in self.inner().funds() {
-            migrated_amount = migrated_amount
-                .checked_add(funds.output().amount())
-                .ok_or_else(|| Error::InvalidMigratedFundsAmount(migrated_amount + funds.output().amount()))?;
+            migrated_amount = migrated_amount.checked_add(funds.output().amount()).ok_or_else(|| {
+                Error::InvalidMigratedFundsAmount(migrated_amount as u128 + funds.output().amount() as u128)
+            })?;
         }
 
         if migrated_amount > IOTA_SUPPLY {
-            return Err(Error::InvalidMigratedFundsAmount(migrated_amount));
+            return Err(Error::InvalidMigratedFundsAmount(migrated_amount as u128));
         }
 
         match transaction.input() {
@@ -75,7 +75,9 @@ impl Receipt {
             .amount()
             .checked_sub(migrated_amount)
             .ok_or_else(|| {
-                Error::InvalidMigratedFundsAmount(consumed_treasury_output.inner().amount() - migrated_amount)
+                Error::InvalidMigratedFundsAmount(
+                    consumed_treasury_output.inner().amount() as u128 - migrated_amount as u128,
+                )
             })?;
 
         if created_amount != created_treasury_output.amount() {
@@ -93,7 +95,7 @@ impl Packable for Receipt {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.inner.packed_len() + self.inner.packed_len() + self.included_in.packed_len()
+        self.inner.packed_len() + self.included_in.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
