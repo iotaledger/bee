@@ -7,6 +7,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use std::ops::Add;
 
+/// Holds the balance of an address.
 #[derive(Debug, Default)]
 pub struct Balance {
     amount: u64,

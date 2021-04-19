@@ -8,6 +8,7 @@ use std::collections::{
     HashMap,
 };
 
+/// Records a balance difference to apply to an address.
 #[derive(Debug, Default)]
 pub struct BalanceDiff {
     amount: i64,
@@ -48,6 +49,7 @@ impl BalanceDiff {
     }
 }
 
+/// Records a balance differences to apply to addresses.
 #[derive(Debug, Default)]
 pub struct BalanceDiffs(HashMap<Address, BalanceDiff>);
 

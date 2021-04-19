@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! A module providing all types required to compute and maintain the ledger state.
+
 mod balance;
 mod balance_diff;
 mod conflict;

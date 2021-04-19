@@ -6,6 +6,7 @@ use crate::types::error::Error;
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::payload::milestone::MilestoneId;
 
+/// Wraps together the identifiers of the milestones that created and consumed treasury outputs.
 #[derive(Debug)]
 pub struct TreasuryDiff {
     created: MilestoneId,

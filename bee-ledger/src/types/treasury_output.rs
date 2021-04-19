@@ -6,6 +6,7 @@ use crate::types::error::Error;
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{output, payload::milestone::MilestoneId};
 
+/// Records the creation of a treasury output.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TreasuryOutput {
     inner: output::TreasuryOutput,
