@@ -173,7 +173,8 @@ pub struct SignatureLockedSingleOutputDto {
     pub amount: u64,
 }
 
-/// Output type for deposits that enables an address to receive dust outputs. It can be consumed as an input like a regular SigLockedSingleOutput.
+/// Output type for deposits that enables an address to receive dust outputs. It can be consumed as an input like a
+/// regular SigLockedSingleOutput.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedDustAllowanceOutputDto {
     #[serde(rename = "type")]
@@ -238,7 +239,8 @@ pub struct Ed25519SignatureDto {
     pub signature: String,
 }
 
-/// References a previous unlock block in order to substitute the duplication of the same unlock block data for inputs which unlock through the same data.
+/// References a previous unlock block in order to substitute the duplication of the same unlock block data for inputs
+/// which unlock through the same data.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReferenceUnlockDto {
     #[serde(rename = "type")]
@@ -367,12 +369,8 @@ impl TryFrom<&MessageDto> for Message {
 impl From<&Payload> for PayloadDto {
     fn from(value: &Payload) -> Self {
         match value {
-            Payload::Transaction(t) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(
-                t.as_ref(),
-            ))),
-            Payload::Milestone(m) => PayloadDto::Milestone(Box::new(MilestonePayloadDto::from(
-                m.as_ref(),
-            ))),
+            Payload::Transaction(t) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(t.as_ref()))),
+            Payload::Milestone(m) => PayloadDto::Milestone(Box::new(MilestonePayloadDto::from(m.as_ref()))),
             Payload::Indexation(i) => PayloadDto::Indexation(Box::new(IndexationPayloadDto::from(i.as_ref()))),
             _ => unimplemented!(),
         }
@@ -401,11 +399,7 @@ impl From<&TransactionPayload> for TransactionPayloadDto {
         TransactionPayloadDto {
             kind: TransactionPayload::KIND,
             essence: value.essence().into(),
-            unlock_blocks: value
-                .unlock_blocks()
-                .iter()
-                .map(|u| u.into())
-                .collect::<Vec<_>>(),
+            unlock_blocks: value.unlock_blocks().iter().map(|u| u.into()).collect::<Vec<_>>(),
         }
     }
 }
@@ -455,16 +449,8 @@ impl From<&RegularEssence> for RegularEssenceDto {
     fn from(value: &RegularEssence) -> Self {
         RegularEssenceDto {
             kind: RegularEssence::KIND,
-            inputs: value
-                .inputs()
-                .iter()
-                .map(|i| i.into())
-                .collect::<Vec<_>>(),
-            outputs: value
-                .outputs()
-                .iter()
-                .map(|o| o.into())
-                .collect::<Vec<_>>(),
+            inputs: value.inputs().iter().map(|i| i.into()).collect::<Vec<_>>(),
+            outputs: value.outputs().iter().map(|o| o.into()).collect::<Vec<_>>(),
             payload: match value.payload() {
                 Some(Payload::Indexation(i)) => Some(PayloadDto::Indexation(Box::new(i.as_ref().into()))),
                 Some(_) => unimplemented!(),
@@ -516,7 +502,7 @@ impl From<&Input> for InputDto {
                 kind: TreasuryInput::KIND,
                 milestone_id: t.milestone_id().to_string(),
             }),
-            _ => unimplemented!()
+            _ => unimplemented!(),
         }
     }
 }
@@ -558,13 +544,13 @@ impl From<&Output> for OutputDto {
                 address: s.address().into(),
                 amount: s.amount(),
             }),
-            Output::SignatureLockedDustAllowance(s) => OutputDto::SignatureLockedDustAllowance(
-                SignatureLockedDustAllowanceOutputDto {
+            Output::SignatureLockedDustAllowance(s) => {
+                OutputDto::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto {
                     kind: SignatureLockedDustAllowanceOutput::KIND,
                     address: s.address().into(),
                     amount: s.amount(),
-                },
-            ),
+                })
+            }
             _ => unimplemented!(),
         }
     }
