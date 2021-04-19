@@ -3,7 +3,7 @@ name = "bee-protocol"
 version = "0.1.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = ""
+description = "All types and workers enabling the IOTA protocol"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
@@ -11,10 +11,5 @@ keywords = ["iota", "tangle", "bee", "framework", "protocol"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
-bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
-bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = ["serde"] }
-bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "chrysalis-pt-2", default-features = false }
-bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
-bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
-bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-message = { version = "0.1.2", path = "../bee-message", features = ["serde"] }
+bee-network = { version = "0.1.0", path = "../bee-network", default-features = false }
