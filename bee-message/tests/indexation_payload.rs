@@ -5,9 +5,24 @@ use bee_common::packable::Packable;
 use bee_message::prelude::*;
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_32};
 
+use std::convert::TryInto;
+
+const HASHED_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+
 #[test]
 fn kind() {
     assert_eq!(IndexationPayload::KIND, 2);
+}
+
+#[test]
+fn debug_impl() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            HashedIndex::new(hex::decode(HASHED_INDEX).unwrap().try_into().unwrap())
+        ),
+        "HashedIndex(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+    );
 }
 
 #[test]

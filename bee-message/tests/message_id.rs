@@ -12,8 +12,24 @@ const MESSAGE_ID_INVALID_LEN_TOO_SHORT: &str = "52fdfc072182654f163f5f0f9a621d72
 const MESSAGE_ID_INVALID_LEN_TOO_LONG: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64900";
 
 #[test]
+fn debug_impl() {
+    assert_eq!(
+        format!("{:?}", MessageId::from_str(MESSAGE_ID).unwrap()),
+        "MessageId(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+    );
+}
+
+#[test]
 fn from_str_valid() {
     MessageId::from_str(MESSAGE_ID).unwrap();
+}
+
+#[test]
+fn null() {
+    assert_eq!(
+        format!("{:?}", MessageId::null()),
+        "MessageId(0000000000000000000000000000000000000000000000000000000000000000)"
+    );
 }
 
 #[test]

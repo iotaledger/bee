@@ -8,8 +8,20 @@ use bee_test::rand::bytes::{rand_bytes, rand_bytes_32};
 use std::convert::TryInto;
 
 #[test]
-fn kind() {
+fn unlock_kind() {
     assert_eq!(SignatureUnlock::KIND, 0);
+}
+
+#[test]
+fn signature_kind() {
+    assert_eq!(
+        SignatureUnlock::from(Ed25519Signature::new(
+            rand_bytes_32(),
+            rand_bytes(64).try_into().unwrap()
+        ))
+        .kind(),
+        0
+    );
 }
 
 #[test]

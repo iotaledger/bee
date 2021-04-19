@@ -5,14 +5,24 @@ use bee_common::packable::Packable;
 use bee_message::prelude::*;
 use bee_test::rand::message::{rand_message_id, rand_message_ids};
 
+use std::ops::Deref;
+
 #[test]
-fn new_valid() {
+fn new_valid_iter() {
     let inner = rand_message_ids(8);
     let parents = Parents::new(inner.clone()).unwrap();
 
     let parents_vec = parents.iter().copied().collect::<Vec<MessageId>>();
 
     assert_eq!(inner, parents_vec[0..].to_vec());
+}
+
+#[test]
+fn new_valid_deref() {
+    let inner = rand_message_ids(8);
+    let parents = Parents::new(inner.clone()).unwrap();
+
+    assert_eq!(parents.deref(), &inner);
 }
 
 #[test]
