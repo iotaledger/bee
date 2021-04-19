@@ -26,11 +26,11 @@ pub enum PeerRelation {
 impl PeerRelation {
     /// Returns whether the peer is known.
     pub fn is_known(&self) -> bool {
-        self.eq(&Self::Known)
+        matches!(self, Self::Known)
     }
 
     /// Returns whether the peer is unknown.
     pub fn is_unknown(&self) -> bool {
-        self.eq(&Self::Unknown)
+        matches!(self, Self::Unknown)
     }
 }

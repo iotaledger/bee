@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Types exposed to clients libraries;
+- Types exposed to client libraries;
   - `PeerInfo` type;
   - `PeerRelation` type;
 
