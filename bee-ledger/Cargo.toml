@@ -1,0 +1,21 @@
+[package]
+name = "bee-ledger"
+version = "0.1.0"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = ""
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "bee", "framework", "ledger"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+
+thiserror = { version = "1.0" }
