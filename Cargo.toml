@@ -4,6 +4,7 @@ members = [
 	"bee-common/bee-common-derive",
 	"bee-crypto",
 	"bee-message",
+	"bee-network",
 	"bee-pow",
 	"bee-runtime",
 	"bee-signing",

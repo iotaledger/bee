@@ -1,0 +1,20 @@
+[package]
+name = "bee-network"
+version = "0.1.0"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = """
+Networking functionality and types for nodes and clients participating in the IOTA protocol built on top of `libp2p`.
+"""
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "bee", "framework", "network", "libp2p"]
+homepage = "https://www.iota.org"
+
+[features]
+default = ["node"]
+node = []
+
+[dependencies]
+libp2p = { version = "0.37", default-features = false }
