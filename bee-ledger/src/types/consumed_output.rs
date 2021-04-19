@@ -21,12 +21,12 @@ impl ConsumedOutput {
         Self { target, index }
     }
 
-    /// Returns the target transaction of a `ConsumedOutput`.
+    /// Returns the target transaction of the `ConsumedOutput`.
     pub fn target(&self) -> &TransactionId {
         &self.target
     }
 
-    /// Returns the milestone index of a `ConsumedOutput`.
+    /// Returns the milestone index of the `ConsumedOutput`.
     pub fn index(&self) -> MilestoneIndex {
         self.index
     }

@@ -15,6 +15,7 @@ pub struct Balance {
 }
 
 impl Balance {
+    /// Creates a new `Balance`.
     pub fn new(amount: u64, dust_allowance: u64, dust_output: u64) -> Self {
         Self {
             amount,
@@ -23,14 +24,17 @@ impl Balance {
         }
     }
 
+    /// Returns the amount of the `Balance`.
     pub fn amount(&self) -> u64 {
         self.amount
     }
 
+    /// Returns the dust allowance of the `Balance`.
     pub fn dust_allowance(&self) -> u64 {
         self.dust_allowance
     }
 
+    /// Returns the dust output of the `Balance`.
     pub fn dust_output(&self) -> u64 {
         self.dust_output
     }

@@ -13,14 +13,17 @@ pub struct TreasuryOutput {
 }
 
 impl TreasuryOutput {
+    /// Creates a new `TreasuryOutput`.
     pub fn new(inner: output::TreasuryOutput, milestone_id: MilestoneId) -> Self {
         Self { inner, milestone_id }
     }
 
+    /// Returns the inner output of a `TreasuryOutput`.
     pub fn inner(&self) -> &output::TreasuryOutput {
         &self.inner
     }
 
+    /// Returns the id of the milestone that created the `TreasuryOutput`.
     pub fn milestone_id(&self) -> &MilestoneId {
         &self.milestone_id
     }

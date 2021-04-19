@@ -18,17 +18,17 @@ pub struct CreatedOutput {
 }
 
 impl CreatedOutput {
-    /// Creates a `CreatedOutput`.
+    /// Creates a new `CreatedOutput`.
     pub fn new(message_id: MessageId, inner: Output) -> Self {
         Self { message_id, inner }
     }
 
-    /// Returns the message id of a `CreatedOutput`.
+    /// Returns the message id of the `CreatedOutput`.
     pub fn message_id(&self) -> &MessageId {
         &self.message_id
     }
 
-    /// Returns the inner output of a `CreatedOutput`.
+    /// Returns the inner output of the `CreatedOutput`.
     pub fn inner(&self) -> &Output {
         &self.inner
     }

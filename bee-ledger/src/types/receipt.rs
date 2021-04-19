@@ -12,6 +12,7 @@ use bee_message::{
     payload::{receipt::ReceiptPayload, Payload},
 };
 
+/// A type that wraps a receipt and the index of the milestone in which it was included.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Receipt {
     inner: ReceiptPayload,
@@ -19,18 +20,22 @@ pub struct Receipt {
 }
 
 impl Receipt {
+    /// Creates a new `Receipt`.
     pub fn new(inner: ReceiptPayload, included_in: MilestoneIndex) -> Self {
         Self { inner, included_in }
     }
 
+    /// Returns the inner receipt of the `Receipt`.
     pub fn inner(&self) -> &ReceiptPayload {
         &self.inner
     }
 
+    /// Returns the index of the milestone in which the `Receipt` was included.
     pub fn included_in(&self) -> &MilestoneIndex {
         &self.included_in
     }
 
+    /// Semantically validates the `Receipt`.
     pub fn validate(&self, consumed_treasury_output: &TreasuryOutput) -> Result<(), Error> {
         let mut migrated_amount: u64 = 0;
         let transaction = match self.inner().transaction() {

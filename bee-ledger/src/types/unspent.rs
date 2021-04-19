@@ -8,6 +8,7 @@ use bee_message::output::OutputId;
 
 use std::ops::Deref;
 
+/// Represents an output id as unspent.
 #[derive(Debug)]
 pub struct Unspent(OutputId);
 
@@ -26,10 +27,12 @@ impl Deref for Unspent {
 }
 
 impl Unspent {
+    /// Creates a new `Unspent`.
     pub fn new(output_id: OutputId) -> Self {
         output_id.into()
     }
 
+    /// Returns the identifier of an `Unspent`.
     pub fn id(&self) -> &OutputId {
         &self.0
     }
