@@ -30,6 +30,7 @@ use serde_json::Value;
 
 use std::convert::{TryFrom, TryInto};
 
+/// The message object that nodes gossip around in the network.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageDto {
     #[serde(rename = "networkId")]
@@ -40,6 +41,7 @@ pub struct MessageDto {
     pub nonce: String,
 }
 
+/// Describes all the different payload types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PayloadDto {
@@ -50,6 +52,7 @@ pub enum PayloadDto {
     TreasuryTransaction(Box<TreasuryTransactionPayloadDto>),
 }
 
+/// The payload type to define a value transaction.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionPayloadDto {
     #[serde(rename = "type")]
@@ -59,12 +62,14 @@ pub struct TransactionPayloadDto {
     pub unlock_blocks: Vec<UnlockBlockDto>,
 }
 
+/// Describes all the different essence types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum EssenceDto {
     Regular(RegularEssenceDto),
 }
 
+/// Describes the essence data making up a transaction by defining its inputs and outputs and an optional payload.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RegularEssenceDto {
     #[serde(rename = "type")]
@@ -74,6 +79,7 @@ pub struct RegularEssenceDto {
     pub payload: Option<PayloadDto>,
 }
 
+/// Describes all the different input types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum InputDto {
@@ -81,6 +87,7 @@ pub enum InputDto {
     Treasury(TreasuryInputDto),
 }
 
+/// Describes an input which references an unspent transaction output to consume.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UtxoInputDto {
     #[serde(rename = "type")]
@@ -91,6 +98,7 @@ pub struct UtxoInputDto {
     pub transaction_output_index: u16,
 }
 
+/// Describes an input which references an unspent treasury output to consume.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TreasuryInputDto {
     #[serde(rename = "type")]
@@ -99,6 +107,7 @@ pub struct TreasuryInputDto {
     pub milestone_id: String,
 }
 
+/// Describes all the different output types.
 #[derive(Clone, Debug)]
 pub enum OutputDto {
     SignatureLockedSingle(SignatureLockedSingleOutputDto),
@@ -155,6 +164,7 @@ impl Serialize for OutputDto {
     }
 }
 
+/// Describes a deposit to a single address which is unlocked via a signature.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedSingleOutputDto {
     #[serde(rename = "type")]
@@ -163,6 +173,8 @@ pub struct SignatureLockedSingleOutputDto {
     pub amount: u64,
 }
 
+/// Output type for deposits that enables an address to receive dust outputs. It can be consumed as an input like a
+/// regular SigLockedSingleOutput.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureLockedDustAllowanceOutputDto {
     #[serde(rename = "type")]
@@ -171,12 +183,14 @@ pub struct SignatureLockedDustAllowanceOutputDto {
     pub amount: u64,
 }
 
+/// Describes all the different address types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AddressDto {
     Ed25519(Ed25519AddressDto),
 }
 
+/// Describes an Ed25519 address.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Ed25519AddressDto {
     #[serde(rename = "type")]
@@ -184,6 +198,7 @@ pub struct Ed25519AddressDto {
     pub address: String,
 }
 
+/// Describes a treasury output.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TreasuryOutputDto {
     #[serde(rename = "type")]
@@ -191,6 +206,7 @@ pub struct TreasuryOutputDto {
     pub amount: u64,
 }
 
+/// Describes all the different unlock types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum UnlockBlockDto {
@@ -198,6 +214,7 @@ pub enum UnlockBlockDto {
     Reference(ReferenceUnlockDto),
 }
 
+/// Defines an unlock block containing signature(s) unlocking input(s).
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignatureUnlockDto {
     #[serde(rename = "type")]
@@ -205,12 +222,14 @@ pub struct SignatureUnlockDto {
     pub signature: SignatureDto,
 }
 
+/// Describes all the different signature types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SignatureDto {
     Ed25519(Ed25519SignatureDto),
 }
 
+/// Defines an Ed25519 signature.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Ed25519SignatureDto {
     #[serde(rename = "type")]
@@ -220,6 +239,8 @@ pub struct Ed25519SignatureDto {
     pub signature: String,
 }
 
+/// References a previous unlock block in order to substitute the duplication of the same unlock block data for inputs
+/// which unlock through the same data.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReferenceUnlockDto {
     #[serde(rename = "type")]
@@ -228,6 +249,7 @@ pub struct ReferenceUnlockDto {
     pub index: u16,
 }
 
+/// The payload type to define a milestone.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MilestonePayloadDto {
     #[serde(rename = "type")]
@@ -248,6 +270,7 @@ pub struct MilestonePayloadDto {
     pub signatures: Vec<String>,
 }
 
+/// The payload type to define a indexation payload.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IndexationPayloadDto {
     #[serde(rename = "type")]
@@ -256,6 +279,7 @@ pub struct IndexationPayloadDto {
     pub data: String,
 }
 
+/// The payload type to define a receipt.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceiptPayloadDto {
     #[serde(rename = "type")]
@@ -276,6 +300,7 @@ pub struct MigratedFundsEntryDto {
     pub deposit: u64,
 }
 
+/// The payload type to define a treasury transaction.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TreasuryTransactionPayloadDto {
     #[serde(rename = "type")]
@@ -285,16 +310,14 @@ pub struct TreasuryTransactionPayloadDto {
 }
 
 // &Message -> MessageDto
-impl TryFrom<&Message> for MessageDto {
-    type Error = String;
-
-    fn try_from(value: &Message) -> Result<Self, Self::Error> {
-        Ok(MessageDto {
+impl From<&Message> for MessageDto {
+    fn from(value: &Message) -> Self {
+        MessageDto {
             network_id: value.network_id().to_string(),
             parents: value.parents().iter().map(|p| p.to_string()).collect(),
-            payload: value.payload().as_ref().map(TryInto::try_into).transpose()?,
+            payload: value.payload().as_ref().map(Into::into),
             nonce: value.nonce().to_string(),
-        })
+        }
     }
 }
 
@@ -343,19 +366,13 @@ impl TryFrom<&MessageDto> for Message {
 }
 
 // &Payload -> PayloadDto
-impl TryFrom<&Payload> for PayloadDto {
-    type Error = String;
-
-    fn try_from(value: &Payload) -> Result<Self, Self::Error> {
+impl From<&Payload> for PayloadDto {
+    fn from(value: &Payload) -> Self {
         match value {
-            Payload::Transaction(t) => Ok(PayloadDto::Transaction(Box::new(TransactionPayloadDto::try_from(
-                t.as_ref(),
-            )?))),
-            Payload::Milestone(m) => Ok(PayloadDto::Milestone(Box::new(MilestonePayloadDto::try_from(
-                m.as_ref(),
-            )?))),
-            Payload::Indexation(i) => Ok(PayloadDto::Indexation(Box::new(IndexationPayloadDto::from(i.as_ref())))),
-            _ => Err("payload type not supported".to_string()),
+            Payload::Transaction(t) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(t.as_ref()))),
+            Payload::Milestone(m) => PayloadDto::Milestone(Box::new(MilestonePayloadDto::from(m.as_ref()))),
+            Payload::Indexation(i) => PayloadDto::Indexation(Box::new(IndexationPayloadDto::from(i.as_ref()))),
+            _ => unimplemented!(),
         }
     }
 }
@@ -363,7 +380,6 @@ impl TryFrom<&Payload> for PayloadDto {
 // &PayloadDto -> Payload
 impl TryFrom<&PayloadDto> for Payload {
     type Error = String;
-
     fn try_from(value: &PayloadDto) -> Result<Self, Self::Error> {
         Ok(match value {
             PayloadDto::Transaction(t) => Payload::Transaction(Box::new(TransactionPayload::try_from(t.as_ref())?)),
@@ -378,19 +394,13 @@ impl TryFrom<&PayloadDto> for Payload {
 }
 
 // &TransactionPayload -> TransactionPayloadDto
-impl TryFrom<&TransactionPayload> for TransactionPayloadDto {
-    type Error = String;
-
-    fn try_from(value: &TransactionPayload) -> Result<Self, Self::Error> {
-        Ok(TransactionPayloadDto {
+impl From<&TransactionPayload> for TransactionPayloadDto {
+    fn from(value: &TransactionPayload) -> Self {
+        TransactionPayloadDto {
             kind: TransactionPayload::KIND,
-            essence: value.essence().try_into()?,
-            unlock_blocks: value
-                .unlock_blocks()
-                .iter()
-                .map(|u| u.try_into())
-                .collect::<Result<Vec<_>, _>>()?,
-        })
+            essence: value.essence().into(),
+            unlock_blocks: value.unlock_blocks().iter().map(|u| u.into()).collect::<Vec<_>>(),
+        }
     }
 }
 
@@ -414,13 +424,11 @@ impl TryFrom<&TransactionPayloadDto> for TransactionPayload {
 }
 
 // &Essence -> EssenceDto
-impl TryFrom<&Essence> for EssenceDto {
-    type Error = String;
-
-    fn try_from(value: &Essence) -> Result<Self, Self::Error> {
+impl From<&Essence> for EssenceDto {
+    fn from(value: &Essence) -> Self {
         match value {
-            Essence::Regular(r) => Ok(EssenceDto::Regular(r.try_into()?)),
-            _ => Err("essence type not supported".to_string()),
+            Essence::Regular(r) => EssenceDto::Regular(r.into()),
+            _ => unimplemented!(),
         }
     }
 }
@@ -437,30 +445,18 @@ impl TryFrom<&EssenceDto> for Essence {
 }
 
 // &RegularEssence -> RegularEssenceDto
-impl TryFrom<&RegularEssence> for RegularEssenceDto {
-    type Error = String;
-
-    fn try_from(value: &RegularEssence) -> Result<Self, Self::Error> {
-        Ok(RegularEssenceDto {
+impl From<&RegularEssence> for RegularEssenceDto {
+    fn from(value: &RegularEssence) -> Self {
+        RegularEssenceDto {
             kind: RegularEssence::KIND,
-            inputs: value
-                .inputs()
-                .iter()
-                .map(|i| i.try_into())
-                .collect::<Result<Vec<_>, _>>()?,
-            outputs: value
-                .outputs()
-                .iter()
-                .map(|o| o.try_into())
-                .collect::<Result<Vec<_>, _>>()?,
+            inputs: value.inputs().iter().map(|i| i.into()).collect::<Vec<_>>(),
+            outputs: value.outputs().iter().map(|o| o.into()).collect::<Vec<_>>(),
             payload: match value.payload() {
                 Some(Payload::Indexation(i)) => Some(PayloadDto::Indexation(Box::new(i.as_ref().into()))),
-                Some(_) => {
-                    return Err("invalid transaction essence: expected an optional indexation-payload".to_string());
-                }
+                Some(_) => unimplemented!(),
                 None => None,
             },
-        })
+        }
     }
 }
 
@@ -494,21 +490,19 @@ impl TryFrom<&RegularEssenceDto> for RegularEssence {
 }
 
 // &Input -> InputDto
-impl TryFrom<&Input> for InputDto {
-    type Error = String;
-
-    fn try_from(value: &Input) -> Result<Self, Self::Error> {
+impl From<&Input> for InputDto {
+    fn from(value: &Input) -> Self {
         match value {
-            Input::Utxo(u) => Ok(InputDto::Utxo(UtxoInputDto {
+            Input::Utxo(u) => InputDto::Utxo(UtxoInputDto {
                 kind: UtxoInput::KIND,
                 transaction_id: u.output_id().transaction_id().to_string(),
                 transaction_output_index: u.output_id().index(),
-            })),
-            Input::Treasury(t) => Ok(InputDto::Treasury(TreasuryInputDto {
+            }),
+            Input::Treasury(t) => InputDto::Treasury(TreasuryInputDto {
                 kind: TreasuryInput::KIND,
                 milestone_id: t.milestone_id().to_string(),
-            })),
-            _ => Err("input type not supported".to_string()),
+            }),
+            _ => unimplemented!(),
         }
     }
 }
@@ -542,24 +536,22 @@ impl TryFrom<&InputDto> for Input {
 }
 
 // &Output -> OutputDto
-impl TryFrom<&Output> for OutputDto {
-    type Error = String;
-
-    fn try_from(value: &Output) -> Result<Self, Self::Error> {
+impl From<&Output> for OutputDto {
+    fn from(value: &Output) -> Self {
         match value {
-            Output::SignatureLockedSingle(s) => Ok(OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
+            Output::SignatureLockedSingle(s) => OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto {
                 kind: SignatureLockedSingleOutput::KIND,
-                address: s.address().try_into()?,
+                address: s.address().into(),
                 amount: s.amount(),
-            })),
-            Output::SignatureLockedDustAllowance(s) => Ok(OutputDto::SignatureLockedDustAllowance(
-                SignatureLockedDustAllowanceOutputDto {
+            }),
+            Output::SignatureLockedDustAllowance(s) => {
+                OutputDto::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutputDto {
                     kind: SignatureLockedDustAllowanceOutput::KIND,
-                    address: s.address().try_into()?,
+                    address: s.address().into(),
                     amount: s.amount(),
-                },
-            )),
-            _ => Err("output type not supported".to_string()),
+                })
+            }
+            _ => unimplemented!(),
         }
     }
 }
@@ -590,13 +582,11 @@ impl TryFrom<&OutputDto> for Output {
 }
 
 // &Address -> AddressDto
-impl TryFrom<&Address> for AddressDto {
-    type Error = String;
-
-    fn try_from(value: &Address) -> Result<Self, Self::Error> {
+impl From<&Address> for AddressDto {
+    fn from(value: &Address) -> Self {
         match value {
-            Address::Ed25519(ed) => Ok(AddressDto::Ed25519(ed.into())),
-            _ => Err("address type not supported".to_string()),
+            Address::Ed25519(ed) => AddressDto::Ed25519(ed.into()),
+            _ => unimplemented!(),
         }
     }
 }
@@ -637,27 +627,25 @@ impl TryFrom<&Ed25519AddressDto> for Ed25519Address {
 }
 
 // &UnlockBlock -> UnlockBlockDto
-impl TryFrom<&UnlockBlock> for UnlockBlockDto {
-    type Error = String;
-
-    fn try_from(value: &UnlockBlock) -> Result<Self, Self::Error> {
+impl From<&UnlockBlock> for UnlockBlockDto {
+    fn from(value: &UnlockBlock) -> Self {
         match value {
             UnlockBlock::Signature(s) => match s {
-                SignatureUnlock::Ed25519(ed) => Ok(UnlockBlockDto::Signature(SignatureUnlockDto {
+                SignatureUnlock::Ed25519(ed) => UnlockBlockDto::Signature(SignatureUnlockDto {
                     kind: SignatureUnlock::KIND,
                     signature: SignatureDto::Ed25519(Ed25519SignatureDto {
                         kind: Ed25519Signature::KIND,
                         public_key: hex::encode(ed.public_key()),
                         signature: hex::encode(ed.signature()),
                     }),
-                })),
-                _ => Err("signature unlock type not supported".to_string()),
+                }),
+                _ => unimplemented!(),
             },
-            UnlockBlock::Reference(r) => Ok(UnlockBlockDto::Reference(ReferenceUnlockDto {
+            UnlockBlock::Reference(r) => UnlockBlockDto::Reference(ReferenceUnlockDto {
                 kind: ReferenceUnlock::KIND,
                 index: r.index(),
-            })),
-            _ => Err("unlock block type not supported".to_string()),
+            }),
+            _ => unimplemented!(),
         }
     }
 }
@@ -691,11 +679,9 @@ impl TryFrom<&UnlockBlockDto> for UnlockBlock {
 }
 
 // MilestonePayload -> MilestonePayloadDto
-impl TryFrom<&MilestonePayload> for MilestonePayloadDto {
-    type Error = String;
-
-    fn try_from(value: &MilestonePayload) -> Result<Self, Self::Error> {
-        Ok(MilestonePayloadDto {
+impl From<&MilestonePayload> for MilestonePayloadDto {
+    fn from(value: &MilestonePayload) -> Self {
+        MilestonePayloadDto {
             kind: MilestonePayload::KIND,
             index: *value.essence().index(),
             timestamp: value.essence().timestamp(),
@@ -704,9 +690,9 @@ impl TryFrom<&MilestonePayload> for MilestonePayloadDto {
             next_pow_score: value.essence().next_pow_score(),
             next_pow_score_milestone_index: value.essence().next_pow_score_milestone_index(),
             public_keys: value.essence().public_keys().iter().map(hex::encode).collect(),
-            receipt: value.essence().receipt().map(TryInto::try_into).transpose()?,
+            receipt: value.essence().receipt().map(Into::into),
             signatures: value.signatures().iter().map(hex::encode).collect(),
-        })
+        }
     }
 }
 
@@ -816,21 +802,19 @@ impl TryFrom<&IndexationPayloadDto> for IndexationPayload {
 }
 
 // &ReceiptPayload -> ReceiptPayloadDto
-impl TryFrom<&ReceiptPayload> for ReceiptPayloadDto {
-    type Error = String;
-
-    fn try_from(value: &ReceiptPayload) -> Result<Self, Self::Error> {
-        Ok(ReceiptPayloadDto {
+impl From<&ReceiptPayload> for ReceiptPayloadDto {
+    fn from(value: &ReceiptPayload) -> Self {
+        ReceiptPayloadDto {
             kind: ReceiptPayload::KIND,
             migrated_at: *value.migrated_at(),
             last: value.last(),
             funds: value
                 .funds()
                 .iter()
-                .map(|m| m.try_into())
-                .collect::<Result<Vec<MigratedFundsEntryDto>, _>>()?,
-            transaction: value.transaction().try_into()?,
-        })
+                .map(|m| m.into())
+                .collect::<Vec<MigratedFundsEntryDto>>(),
+            transaction: value.transaction().into(),
+        }
     }
 }
 
@@ -856,15 +840,13 @@ impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
 }
 
 // &MigratedFundsEntry -> MigratedFundsEntryDto
-impl TryFrom<&MigratedFundsEntry> for MigratedFundsEntryDto {
-    type Error = String;
-
-    fn try_from(value: &MigratedFundsEntry) -> Result<Self, Self::Error> {
-        Ok(MigratedFundsEntryDto {
+impl From<&MigratedFundsEntry> for MigratedFundsEntryDto {
+    fn from(value: &MigratedFundsEntry) -> Self {
+        MigratedFundsEntryDto {
             tail_transaction_hash: hex::encode(value.tail_transaction_hash().as_ref()),
-            address: value.output().address().try_into()?,
+            address: value.output().address().into(),
             deposit: value.output().amount(),
-        })
+        }
     }
 }
 
@@ -890,15 +872,13 @@ impl TryFrom<&MigratedFundsEntryDto> for MigratedFundsEntry {
 }
 
 // &TreasuryTransactionPayload -> TreasuryTransactionPayloadDto
-impl TryFrom<&TreasuryTransactionPayload> for TreasuryTransactionPayloadDto {
-    type Error = String;
-
-    fn try_from(value: &TreasuryTransactionPayload) -> Result<Self, Self::Error> {
-        Ok(TreasuryTransactionPayloadDto {
+impl From<&TreasuryTransactionPayload> for TreasuryTransactionPayloadDto {
+    fn from(value: &TreasuryTransactionPayload) -> Self {
+        TreasuryTransactionPayloadDto {
             kind: TreasuryTransactionPayload::KIND,
-            input: value.input().try_into()?,
-            output: value.output().try_into()?,
-        })
+            input: value.input().into(),
+            output: value.output().into(),
+        }
     }
 }
 
@@ -919,6 +899,7 @@ impl TryFrom<&TreasuryTransactionPayloadDto> for TreasuryTransactionPayload {
     }
 }
 
+/// Describes a peer.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PeerDto {
     pub id: String,
@@ -932,12 +913,14 @@ pub struct PeerDto {
     pub gossip: Option<GossipDto>,
 }
 
+/// Returns all information about the gossip stream with the peer.
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct GossipDto {
     pub heartbeat: HeartbeatDto,
     pub metrics: MetricsDto,
 }
 
+/// Describes the relation with the peer.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum RelationDto {
     #[serde(rename = "known")]
@@ -948,6 +931,7 @@ pub enum RelationDto {
     Discovered,
 }
 
+/// Describes the heartbeat of a node.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct HeartbeatDto {
     #[serde(rename = "solidMilestoneIndex")]
@@ -962,6 +946,7 @@ pub struct HeartbeatDto {
     pub synced_neighbors: u8,
 }
 
+/// Describes metrics of a gossip stream.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct MetricsDto {
     #[serde(rename = "newMessages")]
@@ -988,6 +973,7 @@ pub struct MetricsDto {
     pub dropped_packets: u64,
 }
 
+/// &Peer -> PeerDto
 impl From<&Peer> for PeerDto {
     fn from(peer: &Peer) -> Self {
         PeerDto {
@@ -1030,6 +1016,7 @@ impl From<&Peer> for PeerDto {
     }
 }
 
+/// Describes a receipt.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReceiptDto {
     pub receipt: ReceiptPayloadDto,
@@ -1037,17 +1024,17 @@ pub struct ReceiptDto {
     pub milestone_index: u32,
 }
 
-impl TryFrom<Receipt> for ReceiptDto {
-    type Error = String;
-
-    fn try_from(value: Receipt) -> Result<Self, Self::Error> {
-        Ok(ReceiptDto {
-            receipt: value.inner().try_into().map_err(|_| "Invalid receipt".to_owned())?,
+/// &Receipt -> ReceiptDto
+impl From<Receipt> for ReceiptDto {
+    fn from(value: Receipt) -> Self {
+        ReceiptDto {
+            receipt: value.inner().into(),
             milestone_index: **value.included_in(),
-        })
+        }
     }
 }
 
+/// Describes the ledger inclusion state of a transaction.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum LedgerInclusionStateDto {
     #[serde(rename = "conflicting")]
