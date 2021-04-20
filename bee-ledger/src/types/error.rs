@@ -24,9 +24,12 @@ pub enum Error {
     /// Treasury amount mismatch.
     #[error("Treasury amount mismatch: {0} != {1}")]
     TreasuryAmountMismatch(u64, u64),
+    /// Migrated funds amount overflow.
+    #[error("Migrated funds amount overflow: {0}")]
+    MigratedFundsAmountOverflow(u128),
     /// Invalid migrated funds amount.
     #[error("Invalid migrated funds amount: {0}")]
-    InvalidMigratedFundsAmount(u128),
+    InvalidMigratedFundsAmount(u64),
     /// Consumed treasury output mismatch.
     #[error("Consumed treasury output mismatch: {0} != {1}")]
     ConsumedTreasuryOutputMismatch(MilestoneId, MilestoneId),

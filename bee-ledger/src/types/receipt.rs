@@ -45,12 +45,12 @@ impl Receipt {
 
         for funds in self.inner().funds() {
             migrated_amount = migrated_amount.checked_add(funds.output().amount()).ok_or_else(|| {
-                Error::InvalidMigratedFundsAmount(migrated_amount as u128 + funds.output().amount() as u128)
+                Error::MigratedFundsAmountOverflow(migrated_amount as u128 + funds.output().amount() as u128)
             })?;
         }
 
         if migrated_amount > IOTA_SUPPLY {
-            return Err(Error::InvalidMigratedFundsAmount(migrated_amount as u128));
+            return Err(Error::InvalidMigratedFundsAmount(migrated_amount));
         }
 
         match transaction.input() {
@@ -75,7 +75,7 @@ impl Receipt {
             .amount()
             .checked_sub(migrated_amount)
             .ok_or_else(|| {
-                Error::InvalidMigratedFundsAmount(
+                Error::MigratedFundsAmountOverflow(
                     (consumed_treasury_output.inner().amount() as i128 - migrated_amount as i128) as u128,
                 )
             })?;
