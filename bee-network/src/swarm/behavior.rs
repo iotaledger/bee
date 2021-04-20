@@ -9,7 +9,7 @@ use crate::{
 
 use futures::AsyncReadExt;
 use libp2p::{
-    identify::{Identify, IdentifyEvent},
+    identify::{Identify, IdentifyConfig, IdentifyEvent},
     identity::PublicKey,
     swarm::NetworkBehaviourEventProcess,
     NetworkBehaviour,
@@ -31,12 +31,11 @@ impl SwarmBehavior {
         internal_sender: InternalEventSender,
         origin_rx: mpsc::UnboundedReceiver<Origin>,
     ) -> Self {
+        let protocol_version = "iota/0.1.0".to_string();
+        let config = IdentifyConfig::new(protocol_version, local_public_key);
+
         Self {
-            identify: Identify::new(
-                "iota/0.1.0".to_string(),
-                "github.com/iotaledger/bee".to_string(),
-                local_public_key,
-            ),
+            identify: Identify::new(config),
             gossip: Gossip::new(origin_rx),
             internal_sender,
         }
@@ -48,19 +47,18 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
         trace!("Behavior received identify event.");
 
         match event {
-            IdentifyEvent::Received {
-                peer_id,
-                info: _,
-                observed_addr,
-            } => {
+            IdentifyEvent::Received { peer_id, info } => {
                 trace!(
-                    "Received Identify request from {}. Observed addresses: {:?}.",
+                    "Received Identify request from {}. Observed address: {:?}.",
                     peer_id,
-                    observed_addr
+                    info.observed_addr,
                 );
             }
             IdentifyEvent::Sent { peer_id } => {
                 trace!("Sent Identify request to {}.", peer_id);
+            }
+            IdentifyEvent::Pushed { peer_id } => {
+                trace!("Pushed Identify request to {}.", peer_id);
             }
             IdentifyEvent::Error { peer_id, error } => {
                 warn!("Identification error with {}: Cause: {:?}.", peer_id, error);
