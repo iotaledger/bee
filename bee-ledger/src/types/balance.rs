@@ -10,16 +10,16 @@ use bee_common::packable::{Packable, Read, Write};
 pub struct Balance {
     amount: u64,
     dust_allowance: u64,
-    dust_output: u64,
+    dust_outputs: u64,
 }
 
 impl Balance {
     /// Creates a new `Balance`.
-    pub fn new(amount: u64, dust_allowance: u64, dust_output: u64) -> Self {
+    pub fn new(amount: u64, dust_allowance: u64, dust_outputs: u64) -> Self {
         Self {
             amount,
             dust_allowance,
-            dust_output,
+            dust_outputs,
         }
     }
 
@@ -33,9 +33,9 @@ impl Balance {
         self.dust_allowance
     }
 
-    /// Returns the dust output of the `Balance`.
-    pub fn dust_output(&self) -> u64 {
-        self.dust_output
+    /// Returns the number of dust outputs of the `Balance`.
+    pub fn dust_outputs(&self) -> u64 {
+        self.dust_outputs
     }
 
     /// Safely applies a `BalanceDiff` to the `Balance`.
@@ -48,11 +48,12 @@ impl Balance {
             .ok_or(Error::BalanceOverflow(
                 self.dust_allowance() as i128 + diff.dust_allowance() as i128,
             ))?;
-        let dust_output = (self.dust_output as i64)
-            .checked_add(diff.dust_output())
-            .ok_or(Error::BalanceOverflow(
-                self.dust_output as i128 + diff.dust_output() as i128,
-            ))?;
+        let dust_outputs =
+            (self.dust_outputs as i64)
+                .checked_add(diff.dust_outputs())
+                .ok_or(Error::BalanceOverflow(
+                    self.dust_outputs as i128 + diff.dust_outputs() as i128,
+                ))?;
 
         // Given the nature of Utxo, this is not supposed to happen.
         if amount < 0 {
@@ -61,14 +62,14 @@ impl Balance {
         if dust_allowance < 0 {
             return Err(Error::NegativeBalance(dust_allowance));
         }
-        if dust_output < 0 {
-            return Err(Error::NegativeBalance(dust_output));
+        if dust_outputs < 0 {
+            return Err(Error::NegativeBalance(dust_outputs));
         }
 
         Ok(Self {
             amount: amount as u64,
             dust_allowance: dust_allowance as u64,
-            dust_output: dust_output as u64,
+            dust_outputs: dust_outputs as u64,
         })
     }
 }
@@ -77,13 +78,13 @@ impl Packable for Balance {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.amount.packed_len() + self.dust_allowance.packed_len() + self.dust_output.packed_len()
+        self.amount.packed_len() + self.dust_allowance.packed_len() + self.dust_outputs.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
         self.amount.pack(writer)?;
         self.dust_allowance.pack(writer)?;
-        self.dust_output.pack(writer)?;
+        self.dust_outputs.pack(writer)?;
 
         Ok(())
     }
@@ -91,8 +92,8 @@ impl Packable for Balance {
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let amount = u64::unpack_inner::<R, CHECK>(reader)?;
         let dust_allowance = u64::unpack_inner::<R, CHECK>(reader)?;
-        let dust_output = u64::unpack_inner::<R, CHECK>(reader)?;
+        let dust_outputs = u64::unpack_inner::<R, CHECK>(reader)?;
 
-        Ok(Balance::new(amount, dust_allowance, dust_output))
+        Ok(Balance::new(amount, dust_allowance, dust_outputs))
     }
 }

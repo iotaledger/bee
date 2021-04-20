@@ -36,6 +36,9 @@ pub enum Error {
     /// Balance overflow.
     #[error("Balance overflow: {0}")]
     BalanceOverflow(i128),
+    /// Balance diff overflow.
+    #[error("Balance diff overflow: {0}")]
+    BalanceDiffOverflow(i128),
     /// Option error happened
     #[error("Option error happened")]
     Option,
