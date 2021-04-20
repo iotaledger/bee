@@ -5,8 +5,6 @@ use crate::types::{error::Error, BalanceDiff};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use std::ops::Add;
-
 /// Holds the balance of an address.
 #[derive(Debug, Default)]
 pub struct Balance {
@@ -39,26 +37,39 @@ impl Balance {
     pub fn dust_output(&self) -> u64 {
         self.dust_output
     }
-}
 
-impl Add<&BalanceDiff> for Balance {
-    type Output = Self;
+    /// Safely applies a `BalanceDiff` to the `Balance`.
+    pub fn apply_diff(self, diff: &BalanceDiff) -> Result<Self, Error> {
+        let amount = (self.amount as i64)
+            .checked_add(diff.amount())
+            .ok_or(Error::BalanceOverflow(self.amount as i128 + diff.amount() as i128))?;
+        let dust_allowance = (self.dust_allowance() as i64)
+            .checked_add(diff.dust_allowance())
+            .ok_or(Error::BalanceOverflow(
+                self.dust_allowance() as i128 + diff.dust_allowance() as i128,
+            ))?;
+        let dust_output = (self.dust_output as i64)
+            .checked_add(diff.dust_output())
+            .ok_or(Error::BalanceOverflow(
+                self.dust_output as i128 + diff.dust_output() as i128,
+            ))?;
 
-    fn add(self, other: &BalanceDiff) -> Self {
-        let amount = self.amount as i64 + other.amount();
-        let dust_allowance = self.dust_allowance() as i64 + other.dust_allowance();
-        let dust_output = self.dust_output as i64 + other.dust_output();
+        // Given the nature of Utxo, this is not supposed to happen.
+        if amount < 0 {
+            return Err(Error::NegativeBalance(amount));
+        }
+        if dust_allowance < 0 {
+            return Err(Error::NegativeBalance(dust_allowance));
+        }
+        if dust_output < 0 {
+            return Err(Error::NegativeBalance(dust_output));
+        }
 
-        // Given the nature of Utxo, this is never supposed to happen.
-        assert!(amount >= 0);
-        assert!(dust_allowance >= 0);
-        assert!(dust_output >= 0);
-
-        Self {
+        Ok(Self {
             amount: amount as u64,
             dust_allowance: dust_allowance as u64,
             dust_output: dust_output as u64,
-        }
+        })
     }
 }
 

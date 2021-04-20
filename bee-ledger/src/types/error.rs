@@ -30,6 +30,12 @@ pub enum Error {
     /// Consumed treasury output mismatch.
     #[error("Consumed treasury output mismatch: {0} != {1}")]
     ConsumedTreasuryOutputMismatch(MilestoneId, MilestoneId),
+    /// Negative balance.
+    #[error("Negative balance: {0}")]
+    NegativeBalance(i64),
+    /// Balance overflow.
+    #[error("Balance overflow: {0}")]
+    BalanceOverflow(i128),
     /// Option error happened
     #[error("Option error happened")]
     Option,
