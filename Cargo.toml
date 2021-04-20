@@ -6,6 +6,7 @@ members = [
 	"bee-message",
 	"bee-network",
 	"bee-pow",
+	"bee-protocol",
 	"bee-runtime",
 	"bee-signing",
 	"bee-storage/bee-storage",
