@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.1.1 - 2021-04-20
+
+### Changed
+
+- Re-Exports:
+  - `libp2p-core::multiaddr::Protocol` type;
+  - `libp2p-core::Multiaddr` type;
+  - `libp2p-core::PeerId` type;
+
 ## 0.1.0 - 2021-04-19
 
 ### Added

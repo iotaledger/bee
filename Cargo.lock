@@ -143,9 +143,10 @@ dependencies = [
 
 [[package]]
 name = "bee-network"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "libp2p",
+ "libp2p-core",
 ]
 
 [[package]]

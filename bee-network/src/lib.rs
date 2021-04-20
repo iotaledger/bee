@@ -12,12 +12,12 @@ mod peer;
 pub use self::peer::{PeerInfo, PeerRelation};
 
 // Re-Exports
+#[cfg(feature = "node")]
 #[doc(inline)]
-pub use libp2p::{
-    core::identity::{ed25519::Keypair, PublicKey},
-    multiaddr::Protocol,
-    Multiaddr, PeerId,
-};
+pub use libp2p::core::identity::{ed25519::Keypair, PublicKey};
+
+#[doc(inline)]
+pub use libp2p_core::{multiaddr::Protocol, Multiaddr, PeerId};
 
 /// Creates a (shorter) peer alias from a peer id.
 #[macro_export]
