@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::types::{error::Error, TreasuryOutput};
@@ -12,6 +12,7 @@ use bee_message::{
     payload::{receipt::ReceiptPayload, Payload},
 };
 
+/// A type that wraps a receipt and the index of the milestone in which it was included.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Receipt {
     inner: ReceiptPayload,
@@ -19,18 +20,22 @@ pub struct Receipt {
 }
 
 impl Receipt {
+    /// Creates a new `Receipt`.
     pub fn new(inner: ReceiptPayload, included_in: MilestoneIndex) -> Self {
         Self { inner, included_in }
     }
 
+    /// Returns the inner receipt of the `Receipt`.
     pub fn inner(&self) -> &ReceiptPayload {
         &self.inner
     }
 
+    /// Returns the index of the milestone in which the `Receipt` was included.
     pub fn included_in(&self) -> &MilestoneIndex {
         &self.included_in
     }
 
+    /// Semantically validates the `Receipt`.
     pub fn validate(&self, consumed_treasury_output: &TreasuryOutput) -> Result<(), Error> {
         let mut migrated_amount: u64 = 0;
         let transaction = match self.inner().transaction() {
@@ -39,9 +44,9 @@ impl Receipt {
         };
 
         for funds in self.inner().funds() {
-            migrated_amount = migrated_amount
-                .checked_add(funds.output().amount())
-                .ok_or_else(|| Error::InvalidMigratedFundsAmount(migrated_amount + funds.output().amount()))?;
+            migrated_amount = migrated_amount.checked_add(funds.output().amount()).ok_or_else(|| {
+                Error::MigratedFundsAmountOverflow(migrated_amount as u128 + funds.output().amount() as u128)
+            })?;
         }
 
         if migrated_amount > IOTA_SUPPLY {
@@ -70,7 +75,9 @@ impl Receipt {
             .amount()
             .checked_sub(migrated_amount)
             .ok_or_else(|| {
-                Error::InvalidMigratedFundsAmount(consumed_treasury_output.inner().amount() - migrated_amount)
+                Error::MigratedFundsAmountOverflow(
+                    (consumed_treasury_output.inner().amount() as i128 - migrated_amount as i128) as u128,
+                )
             })?;
 
         if created_amount != created_treasury_output.amount() {
@@ -88,7 +95,7 @@ impl Packable for Receipt {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
-        self.inner.packed_len() + self.inner.packed_len() + self.included_in.packed_len()
+        self.inner.packed_len() + self.included_in.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {

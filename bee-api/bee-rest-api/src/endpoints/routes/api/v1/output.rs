@@ -16,7 +16,7 @@ use bee_storage::access::Fetch;
 
 use warp::{reject, Filter, Rejection, Reply};
 
-use std::{net::IpAddr};
+use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Clone {
     super::path()
@@ -61,9 +61,7 @@ pub(crate) async fn output<B: StorageBackend>(
             transaction_id: output_id.transaction_id().to_string(),
             output_index: output_id.index(),
             is_spent: is_spent.is_some(),
-            output: output
-                .inner()
-                .into(),
+            output: output.inner().into(),
         }))),
         None => Err(reject::custom(CustomRejection::NotFound(
             "can not find output".to_string(),

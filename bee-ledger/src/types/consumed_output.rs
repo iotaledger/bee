@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Module providing means to represent the consumption of an output.
-
 use crate::types::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
@@ -21,12 +19,12 @@ impl ConsumedOutput {
         Self { target, index }
     }
 
-    /// Returns the target transaction of a `ConsumedOutput`.
+    /// Returns the target transaction of the `ConsumedOutput`.
     pub fn target(&self) -> &TransactionId {
         &self.target
     }
 
-    /// Returns the milestone index of a `ConsumedOutput`.
+    /// Returns the milestone index of the `ConsumedOutput`.
     pub fn index(&self) -> MilestoneIndex {
         self.index
     }

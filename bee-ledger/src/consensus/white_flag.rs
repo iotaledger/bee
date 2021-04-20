@@ -84,9 +84,9 @@ async fn apply_regular_essence<B: StorageBackend>(
                 consumed_amount = consumed_amount
                     .checked_add(output.amount())
                     .ok_or(Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
-                balance_diffs.amount_sub(*output.address(), output.amount());
+                balance_diffs.amount_sub(*output.address(), output.amount())?;
                 if output.amount() < DUST_THRESHOLD {
-                    balance_diffs.dust_output_dec(*output.address());
+                    balance_diffs.dust_outputs_dec(*output.address())?;
                 }
 
                 if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
@@ -97,8 +97,8 @@ async fn apply_regular_essence<B: StorageBackend>(
                 consumed_amount = consumed_amount
                     .checked_add(output.amount())
                     .ok_or(Error::ConsumedAmountOverflow(consumed_amount, output.amount()))?;
-                balance_diffs.amount_sub(*output.address(), output.amount());
-                balance_diffs.dust_allowance_sub(*output.address(), output.amount());
+                balance_diffs.amount_sub(*output.address(), output.amount())?;
+                balance_diffs.dust_allowance_sub(*output.address(), output.amount())?;
 
                 if !verify_signature(output.address(), unlock_blocks, index, &essence_hash) {
                     return Ok(ConflictReason::InvalidSignature);
@@ -116,17 +116,17 @@ async fn apply_regular_essence<B: StorageBackend>(
                 created_amount = created_amount
                     .checked_add(output.amount())
                     .ok_or(Error::CreatedAmountOverflow(created_amount, output.amount()))?;
-                balance_diffs.amount_add(*output.address(), output.amount());
+                balance_diffs.amount_add(*output.address(), output.amount())?;
                 if output.amount() < DUST_THRESHOLD {
-                    balance_diffs.dust_output_inc(*output.address());
+                    balance_diffs.dust_outputs_inc(*output.address())?;
                 }
             }
             Output::SignatureLockedDustAllowance(output) => {
                 created_amount = created_amount
                     .checked_add(output.amount())
                     .ok_or(Error::CreatedAmountOverflow(created_amount, output.amount()))?;
-                balance_diffs.amount_add(*output.address(), output.amount());
-                balance_diffs.dust_allowance_add(*output.address(), output.amount());
+                balance_diffs.amount_add(*output.address(), output.amount())?;
+                balance_diffs.dust_allowance_add(*output.address(), output.amount())?;
             }
             output => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
@@ -138,13 +138,15 @@ async fn apply_regular_essence<B: StorageBackend>(
 
     for (address, diff) in balance_diffs.iter() {
         if diff.is_dust_mutating() {
-            let mut balance = storage::fetch_balance_or_default(storage, &address).await? + diff;
+            let mut balance = storage::fetch_balance_or_default(storage, &address)
+                .await?
+                .apply_diff(diff)?;
 
             if let Some(diff) = metadata.balance_diffs.get(&address) {
-                balance = balance + diff;
+                balance = balance.apply_diff(diff)?;
             }
 
-            if balance.dust_output() > dust_outputs_max(balance.dust_allowance()) {
+            if balance.dust_outputs() > dust_outputs_max(balance.dust_allowance()) {
                 return Ok(ConflictReason::InvalidDustAllowance);
             }
         }
@@ -164,7 +166,7 @@ async fn apply_regular_essence<B: StorageBackend>(
         );
     }
 
-    metadata.balance_diffs.merge(balance_diffs);
+    metadata.balance_diffs.merge(balance_diffs)?;
 
     Ok(ConflictReason::None)
 }

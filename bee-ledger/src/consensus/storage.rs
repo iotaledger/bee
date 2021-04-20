@@ -194,7 +194,7 @@ pub async fn store_balance_diffs_batch<B: StorageBackend>(
     balance_diffs: &BalanceDiffs,
 ) -> Result<(), Error> {
     for (address, diff) in balance_diffs.iter() {
-        let balance = fetch_balance_or_default(storage, address).await? + diff;
+        let balance = fetch_balance_or_default(storage, address).await?.apply_diff(diff)?;
 
         if balance.amount() != 0 {
             Batch::<Address, Balance>::batch_insert(storage, batch, address, &balance)

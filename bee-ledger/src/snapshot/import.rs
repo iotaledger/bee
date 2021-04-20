@@ -84,14 +84,14 @@ async fn import_outputs<R: Read, B: StorageBackend>(
         create_output(&*storage, &output_id, &created_output).await.unwrap();
         match created_output.inner() {
             Output::SignatureLockedSingle(output) => {
-                balance_diffs.amount_add(*output.address(), output.amount());
+                balance_diffs.amount_add(*output.address(), output.amount())?;
                 if output.amount() < DUST_THRESHOLD {
-                    balance_diffs.dust_output_inc(*output.address());
+                    balance_diffs.dust_outputs_inc(*output.address())?;
                 }
             }
             Output::SignatureLockedDustAllowance(output) => {
-                balance_diffs.amount_add(*output.address(), output.amount());
-                balance_diffs.dust_allowance_add(*output.address(), output.amount());
+                balance_diffs.amount_add(*output.address(), output.amount())?;
+                balance_diffs.dust_allowance_add(*output.address(), output.amount())?;
             }
             output => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
@@ -121,14 +121,14 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
         for (_, output) in diff.created().iter() {
             match output.inner() {
                 Output::SignatureLockedSingle(output) => {
-                    balance_diffs.amount_add(*output.address(), output.amount());
+                    balance_diffs.amount_add(*output.address(), output.amount())?;
                     if output.amount() < DUST_THRESHOLD {
-                        balance_diffs.dust_output_inc(*output.address());
+                        balance_diffs.dust_outputs_inc(*output.address())?;
                     }
                 }
                 Output::SignatureLockedDustAllowance(output) => {
-                    balance_diffs.amount_add(*output.address(), output.amount());
-                    balance_diffs.dust_allowance_add(*output.address(), output.amount());
+                    balance_diffs.amount_add(*output.address(), output.amount())?;
+                    balance_diffs.dust_allowance_add(*output.address(), output.amount())?;
                 }
                 output => return Err(Error::UnsupportedOutputKind(output.kind())),
             }
@@ -139,14 +139,14 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
         for (output_id, (created_output, consumed_output)) in diff.consumed().iter() {
             match created_output.inner() {
                 Output::SignatureLockedSingle(output) => {
-                    balance_diffs.amount_sub(*output.address(), output.amount());
+                    balance_diffs.amount_sub(*output.address(), output.amount())?;
                     if output.amount() < DUST_THRESHOLD {
-                        balance_diffs.dust_output_dec(*output.address());
+                        balance_diffs.dust_outputs_dec(*output.address())?;
                     }
                 }
                 Output::SignatureLockedDustAllowance(output) => {
-                    balance_diffs.amount_sub(*output.address(), output.amount());
-                    balance_diffs.dust_allowance_sub(*output.address(), output.amount());
+                    balance_diffs.amount_sub(*output.address(), output.amount())?;
+                    balance_diffs.dust_allowance_sub(*output.address(), output.amount())?;
                 }
                 output => return Err(Error::UnsupportedOutputKind(output.kind())),
             }

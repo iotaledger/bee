@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::types::error::Error;
@@ -6,6 +6,7 @@ use crate::types::error::Error;
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::payload::milestone::MilestoneId;
 
+/// Wraps together the identifiers of the milestones that created and consumed treasury outputs.
 #[derive(Debug)]
 pub struct TreasuryDiff {
     created: MilestoneId,
@@ -13,14 +14,17 @@ pub struct TreasuryDiff {
 }
 
 impl TreasuryDiff {
+    /// Creates a new `TreasuryDiff`.
     pub fn new(created: MilestoneId, consumed: MilestoneId) -> Self {
         Self { created, consumed }
     }
 
+    /// Returns the id of the milestone that created the treasury output associated to the `TreasuryDiff`.
     pub fn created(&self) -> &MilestoneId {
         &self.created
     }
 
+    /// Returns the id of the milestone that consumed the treasury input associated to the `TreasuryDiff`.
     pub fn consumed(&self) -> &MilestoneId {
         &self.consumed
     }

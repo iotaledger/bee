@@ -1,6 +1,7 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+/// Represents the different reasons why a transaction can conflict with the ledger state.
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum ConflictReason {
@@ -18,6 +19,6 @@ pub enum ConflictReason {
     InvalidSignature = 5,
     /// The dust allowance for the address is invalid.
     InvalidDustAllowance = 6,
-    /// The semantic validation failed.
+    /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }

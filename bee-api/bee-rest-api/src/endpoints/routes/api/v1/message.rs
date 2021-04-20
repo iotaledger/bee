@@ -15,7 +15,7 @@ use bee_tangle::MsTangle;
 
 use warp::{reject, Filter, Rejection, Reply};
 
-use std::{ net::IpAddr};
+use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (MessageId,), Error = Rejection> + Clone {
     super::path()
@@ -41,9 +41,9 @@ pub(crate) async fn message<B: StorageBackend>(
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     match tangle.get(&message_id).await.map(|m| (*m).clone()) {
-        Some(message) => Ok(warp::reply::json(&SuccessBody::new(MessageResponse(
-            MessageDto::from(&message),
-        )))),
+        Some(message) => Ok(warp::reply::json(&SuccessBody::new(MessageResponse(MessageDto::from(
+            &message,
+        ))))),
         None => Err(reject::custom(CustomRejection::NotFound(
             "can not find message".to_string(),
         ))),

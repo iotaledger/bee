@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::types::{error::Error, TreasuryDiff};
@@ -6,6 +6,7 @@ use crate::types::{error::Error, TreasuryDiff};
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::output::OutputId;
 
+/// A type to record output and treasury changes that happened within a milestone.
 #[derive(Debug)]
 pub struct OutputDiff {
     created_outputs: Vec<OutputId>,
@@ -14,6 +15,7 @@ pub struct OutputDiff {
 }
 
 impl OutputDiff {
+    /// Creates a new `OutputDiff`.
     pub fn new(
         created_outputs: Vec<OutputId>,
         consumed_outputs: Vec<OutputId>,
@@ -26,14 +28,17 @@ impl OutputDiff {
         }
     }
 
+    /// Returns the created outputs of the `OutputDiff`.
     pub fn created_outputs(&self) -> &[OutputId] {
         &self.created_outputs
     }
 
+    /// Returns the consumed outputs of the `OutputDiff`.
     pub fn consumed_outputs(&self) -> &[OutputId] {
         &self.consumed_outputs
     }
 
+    /// Returns the treasury diff of the `OutputDiff`.
     pub fn treasury_diff(&self) -> Option<&TreasuryDiff> {
         self.treasury_diff.as_ref()
     }
@@ -57,7 +62,7 @@ impl Packable for OutputDiff {
             output.pack(writer)?;
         }
 
-        self.treasury_diff.pack(writer).map_err(|_| Error::Option)?;
+        self.treasury_diff.pack(writer).map_err(|_| Error::PackableOption)?;
 
         Ok(())
     }
@@ -75,7 +80,8 @@ impl Packable for OutputDiff {
             consumed_outputs.push(OutputId::unpack_inner::<R, CHECK>(reader)?);
         }
 
-        let treasury_diff = Option::<TreasuryDiff>::unpack_inner::<R, CHECK>(reader).map_err(|_| Error::Option)?;
+        let treasury_diff =
+            Option::<TreasuryDiff>::unpack_inner::<R, CHECK>(reader).map_err(|_| Error::PackableOption)?;
 
         Ok(Self {
             created_outputs,

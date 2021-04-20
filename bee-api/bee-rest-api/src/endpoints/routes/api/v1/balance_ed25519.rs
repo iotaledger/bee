@@ -53,7 +53,7 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
             address_type: 1,
             address: addr.to_string(),
             balance: balance.amount(),
-            dust_allowed: balance.dust_output() < dust_outputs_max(balance.dust_allowance()),
+            dust_allowed: balance.dust_outputs() < dust_outputs_max(balance.dust_allowance()),
         }))),
         None => Err(reject::custom(CustomRejection::NotFound(
             "balance not found".to_string(),

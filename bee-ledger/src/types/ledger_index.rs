@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::{Packable, Read, Write};
@@ -6,10 +6,12 @@ use bee_message::milestone::MilestoneIndex;
 
 use core::ops::Deref;
 
+/// A wrapper type to represent the current ledger index.
 #[derive(Debug, Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct LedgerIndex(pub MilestoneIndex);
 
 impl LedgerIndex {
+    /// Creates a new `LedgerIndex`.
     pub fn new(index: MilestoneIndex) -> Self {
         index.into()
     }
