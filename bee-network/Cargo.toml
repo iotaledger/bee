@@ -9,7 +9,7 @@ Networking functionality and types for nodes and clients participating in the IO
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "network", "libp2p"]
+keywords = ["iota", "bee", "framework", "network", "libp2p"]
 homepage = "https://www.iota.org"
 
 [features]

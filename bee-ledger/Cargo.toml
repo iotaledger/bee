@@ -1,0 +1,17 @@
+[package]
+name = "bee-ledger"
+version = "0.1.0"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = "All types and features required to compute and maintain the ledger state"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "bee", "framework", "ledger"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-common = { version = "0.4.1", path = "../bee-common/bee-common" }
+bee-message = { version = "0.1.2", path = "../bee-message" }
+
+thiserror = { version = "1.0" }
