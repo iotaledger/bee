@@ -142,32 +142,13 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
-<<<<<<< HEAD
 name = "bee-network"
 version = "0.1.0"
 dependencies = [
  "libp2p",
-=======
-name = "bee-message"
-version = "0.1.2"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#2a0be9db39b19ede223642c5bed0588d9c3272b1"
-dependencies = [
- "bech32",
- "bee-common 0.4.1 (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bee-pow 0.1.0 (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bee-ternary 0.4.2-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bytemuck",
- "digest",
- "hex",
- "iota-crypto",
- "thiserror",
->>>>>>> bbb5635... Add ledger types
 ]
 
 [[package]]
-=======
->>>>>>> bab4367... Remove udeps
 name = "bee-pow"
 version = "0.1.0"
 dependencies = [
@@ -179,28 +160,14 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
-<<<<<<< HEAD
 name = "bee-protocol"
 version = "0.1.0"
 dependencies = [
  "bee-message",
  "bee-network",
-=======
-name = "bee-pow"
-version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#2a0be9db39b19ede223642c5bed0588d9c3272b1"
-dependencies = [
- "bee-crypto 0.2.1-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "bee-ternary 0.4.2-alpha (git+https://github.com/iotaledger/bee.git?branch=dev)",
- "iota-crypto",
- "thiserror",
->>>>>>> bbb5635... Add ledger types
 ]
 
 [[package]]
-=======
->>>>>>> bab4367... Remove udeps
 name = "bee-runtime"
 version = "0.1.1-alpha"
 dependencies = [
@@ -217,20 +184,9 @@ name = "bee-signing"
 version = "0.1.1-alpha"
 dependencies = [
  "bee-common-derive",
-<<<<<<< HEAD
-<<<<<<< HEAD
  "bee-crypto",
  "bee-ternary",
  "rand 0.8.3",
-=======
- "bee-crypto 0.2.1-alpha",
- "bee-ternary 0.4.2-alpha",
-=======
- "bee-crypto",
- "bee-ternary",
->>>>>>> bab4367... Remove udeps
- "rand",
->>>>>>> bbb5635... Add ledger types
  "sha3",
  "thiserror",
  "zeroize",
