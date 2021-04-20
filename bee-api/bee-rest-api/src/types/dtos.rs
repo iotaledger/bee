@@ -723,7 +723,7 @@ impl From<&ReceiptPayload> for ReceiptPayloadDto {
                 .funds()
                 .iter()
                 .map(|m| m.into())
-                .collect::<Vec<MigratedFundsEntryDto>>(),
+                .collect::<_>(),
             transaction: value.transaction().into(),
         }
     }
@@ -740,7 +740,7 @@ impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
                 .funds
                 .iter()
                 .map(|m| m.try_into())
-                .collect::<Result<Vec<MigratedFundsEntry>, _>>()?,
+                .collect::<Result<_, _>>()?,
             (&value.transaction).try_into()?,
         )?)
     }

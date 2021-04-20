@@ -1,3 +1,3 @@
 # bee-api
 
-A REST API implementation for IOTA node software.
+The default REST API implementation for the IOTA Bee node software.

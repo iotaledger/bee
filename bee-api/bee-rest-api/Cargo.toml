@@ -3,11 +3,11 @@ name = "bee-rest-api"
 version = "0.1.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = "A REST API implementation for IOTA node software."
+description = "The default REST API implementation for the IOTA Bee node software."
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "api"]
+keywords = ["iota", "bee", "framework", "node", "api"]
 homepage = "https://www.iota.org"
 
 [dependencies]
