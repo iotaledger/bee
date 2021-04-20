@@ -354,16 +354,15 @@ impl TryFrom<&OutputDto> for Output {
 impl<'de> serde::Deserialize<'de> for OutputDto {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         let value = Value::deserialize(d)?;
-        Ok(match value.get("type").and_then(Value::as_u64).unwrap() as u8 {
-            // TODO: cover all cases + handle unwraps
+        Ok(match value.get("type").and_then(Value::as_u64).ok_or(serde::de::Error::custom("invalid output type"))? as u8 {
             SignatureLockedSingleOutput::KIND => {
-                OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).unwrap())
+                OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?)
             }
             SignatureLockedDustAllowanceOutput::KIND => OutputDto::SignatureLockedDustAllowance(
                 SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap(),
             ),
-            TreasuryOutput::KIND => OutputDto::Treasury(TreasuryOutputDto::deserialize(value).unwrap()),
-            type_ => panic!("unsupported type {:?}", type_),
+            TreasuryOutput::KIND => OutputDto::Treasury(TreasuryOutputDto::deserialize(value).map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?),
+            _ => unimplemented!(),
         })
     }
 }
