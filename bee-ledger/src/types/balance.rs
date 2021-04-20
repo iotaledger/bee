@@ -98,6 +98,6 @@ impl Packable for Balance {
         let dust_allowance = u64::unpack_inner::<R, CHECK>(reader)?;
         let dust_outputs = u64::unpack_inner::<R, CHECK>(reader)?;
 
-        Ok(Balance::new(amount, dust_allowance, dust_outputs)?)
+        Balance::new(amount, dust_allowance, dust_outputs)
     }
 }
