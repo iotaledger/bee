@@ -36,9 +36,15 @@ pub enum Error {
     /// Balance overflow.
     #[error("Balance overflow: {0}")]
     BalanceOverflow(i128),
+    /// Invalid balance.
+    #[error("Invalid balance: {0}")]
+    InvalidBalance(u64),
     /// Balance diff overflow.
     #[error("Balance diff overflow: {0}")]
     BalanceDiffOverflow(i128),
+    /// Invalid balance diff.
+    #[error("Invalid balance diff: {0}")]
+    InvalidBalanceDiff(i64),
     /// Packable option error happened.
     #[error("Packable option error happened")]
     PackableOption,

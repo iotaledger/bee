@@ -4,6 +4,7 @@
 use crate::types::Error;
 
 use bee_message::address::Address;
+use bee_message::constants::IOTA_SUPPLY;
 
 use std::collections::{
     hash_map::{IntoIter, Iter},
@@ -20,11 +21,19 @@ pub struct BalanceDiff {
 
 impl BalanceDiff {
     /// Creates a new `BalanceDiff`.
-    pub fn new(amount: i64, dust_allowance: i64, dust_outputs: i64) -> Self {
-        Self {
-            amount,
-            dust_allowance,
-            dust_outputs,
+    pub fn new(amount: i64, dust_allowance: i64, dust_outputs: i64) -> Result<Self, Error> {
+        if amount.abs() as u64 > IOTA_SUPPLY {
+            Err(Error::InvalidBalanceDiff(amount))
+        } else if dust_allowance.abs() as u64 > IOTA_SUPPLY {
+            Err(Error::InvalidBalanceDiff(dust_allowance))
+        } else if dust_outputs.abs() as u64 > IOTA_SUPPLY {
+            Err(Error::InvalidBalanceDiff(dust_outputs))
+        } else {
+            Ok(Self {
+                amount,
+                dust_allowance,
+                dust_outputs,
+            })
         }
     }
 

@@ -4,6 +4,7 @@
 use crate::types::{error::Error, BalanceDiff};
 
 use bee_common::packable::{Packable, Read, Write};
+use bee_message::constants::IOTA_SUPPLY;
 
 /// Holds the balance of an address.
 #[derive(Debug, Default)]
@@ -15,11 +16,19 @@ pub struct Balance {
 
 impl Balance {
     /// Creates a new `Balance`.
-    pub fn new(amount: u64, dust_allowance: u64, dust_outputs: u64) -> Self {
-        Self {
-            amount,
-            dust_allowance,
-            dust_outputs,
+    pub fn new(amount: u64, dust_allowance: u64, dust_outputs: u64) -> Result<Self, Error> {
+        if amount > IOTA_SUPPLY {
+            Err(Error::InvalidBalance(amount))
+        } else if dust_allowance > IOTA_SUPPLY {
+            Err(Error::InvalidBalance(dust_allowance))
+        } else if dust_outputs > IOTA_SUPPLY {
+            Err(Error::InvalidBalance(dust_outputs))
+        } else {
+            Ok(Self {
+                amount,
+                dust_allowance,
+                dust_outputs,
+            })
         }
     }
 
@@ -89,6 +98,6 @@ impl Packable for Balance {
         let dust_allowance = u64::unpack_inner::<R, CHECK>(reader)?;
         let dust_outputs = u64::unpack_inner::<R, CHECK>(reader)?;
 
-        Ok(Balance::new(amount, dust_allowance, dust_outputs))
+        Ok(Balance::new(amount, dust_allowance, dust_outputs)?)
     }
 }
