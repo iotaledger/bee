@@ -3,8 +3,7 @@
 
 use crate::types::Error;
 
-use bee_message::address::Address;
-use bee_message::constants::IOTA_SUPPLY;
+use bee_message::{address::Address, constants::IOTA_SUPPLY};
 
 use std::collections::{
     hash_map::{IntoIter, Iter},
