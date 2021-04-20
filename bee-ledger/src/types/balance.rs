@@ -42,18 +42,13 @@ impl Balance {
     pub fn apply_diff(self, diff: &BalanceDiff) -> Result<Self, Error> {
         let amount = (self.amount as i64)
             .checked_add(diff.amount())
-            .ok_or(Error::BalanceOverflow(self.amount as i128 + diff.amount() as i128))?;
+            .ok_or_else(|| Error::BalanceOverflow(self.amount as i128 + diff.amount() as i128))?;
         let dust_allowance = (self.dust_allowance() as i64)
             .checked_add(diff.dust_allowance())
-            .ok_or(Error::BalanceOverflow(
-                self.dust_allowance() as i128 + diff.dust_allowance() as i128,
-            ))?;
-        let dust_outputs =
-            (self.dust_outputs as i64)
-                .checked_add(diff.dust_outputs())
-                .ok_or(Error::BalanceOverflow(
-                    self.dust_outputs as i128 + diff.dust_outputs() as i128,
-                ))?;
+            .ok_or_else(|| Error::BalanceOverflow(self.dust_allowance() as i128 + diff.dust_allowance() as i128))?;
+        let dust_outputs = (self.dust_outputs as i64)
+            .checked_add(diff.dust_outputs())
+            .ok_or_else(|| Error::BalanceOverflow(self.dust_outputs as i128 + diff.dust_outputs() as i128))?;
 
         // Given the nature of Utxo, this is not supposed to happen.
         if amount < 0 {
