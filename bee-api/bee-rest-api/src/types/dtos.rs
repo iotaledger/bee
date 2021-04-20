@@ -354,16 +354,26 @@ impl TryFrom<&OutputDto> for Output {
 impl<'de> serde::Deserialize<'de> for OutputDto {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         let value = Value::deserialize(d)?;
-        Ok(match value.get("type").and_then(Value::as_u64).ok_or(serde::de::Error::custom("invalid output type"))? as u8 {
-            SignatureLockedSingleOutput::KIND => {
-                OutputDto::SignatureLockedSingle(SignatureLockedSingleOutputDto::deserialize(value).map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?)
-            }
-            SignatureLockedDustAllowanceOutput::KIND => OutputDto::SignatureLockedDustAllowance(
-                SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap(),
-            ),
-            TreasuryOutput::KIND => OutputDto::Treasury(TreasuryOutputDto::deserialize(value).map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?),
-            _ => unimplemented!(),
-        })
+        Ok(
+            match value
+                .get("type")
+                .and_then(Value::as_u64)
+                .ok_or(serde::de::Error::custom("invalid output type"))? as u8
+            {
+                SignatureLockedSingleOutput::KIND => OutputDto::SignatureLockedSingle(
+                    SignatureLockedSingleOutputDto::deserialize(value)
+                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
+                ),
+                SignatureLockedDustAllowanceOutput::KIND => OutputDto::SignatureLockedDustAllowance(
+                    SignatureLockedDustAllowanceOutputDto::deserialize(value).unwrap(),
+                ),
+                TreasuryOutput::KIND => OutputDto::Treasury(
+                    TreasuryOutputDto::deserialize(value)
+                        .map_err(|e| serde::de::Error::custom(format!("can not deserialize output: {}", e)))?,
+                ),
+                _ => unimplemented!(),
+            },
+        )
     }
 }
 
@@ -719,11 +729,7 @@ impl From<&ReceiptPayload> for ReceiptPayloadDto {
             kind: ReceiptPayload::KIND,
             migrated_at: *value.migrated_at(),
             last: value.last(),
-            funds: value
-                .funds()
-                .iter()
-                .map(|m| m.into())
-                .collect::<_>(),
+            funds: value.funds().iter().map(|m| m.into()).collect::<_>(),
             transaction: value.transaction().into(),
         }
     }
@@ -736,11 +742,7 @@ impl TryFrom<&ReceiptPayloadDto> for ReceiptPayload {
         Ok(ReceiptPayload::new(
             MilestoneIndex(value.migrated_at),
             value.last,
-            value
-                .funds
-                .iter()
-                .map(|m| m.try_into())
-                .collect::<Result<_, _>>()?,
+            value.funds.iter().map(|m| m.try_into()).collect::<Result<_, _>>()?,
             (&value.transaction).try_into()?,
         )?)
     }

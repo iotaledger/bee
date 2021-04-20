@@ -168,6 +168,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-rest-api"
+version = "0.1.0"
+dependencies = [
+ "bee-ledger",
+ "bee-message",
+ "bee-protocol",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "bee-runtime"
 version = "0.1.1-alpha"
 dependencies = [
