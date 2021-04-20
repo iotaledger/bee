@@ -18,3 +18,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security -->
+
+## 0.1.0 - 2021-04-20
+
+### Added
+
+- Ledger types;
+  - `BalanceDiff`;
+  - `BalanceDiffs`;
+  - `Balance`;
+  - `ConflictReason`;
+  - `ConsumedOutput`;
+  - `CreatedOutput`;
+  - `LedgerIndex`;
+  - `Migration`;
+  - `OutputDiff`;
+  - `Receipt`;
+  - `TreasuryDiff`;
+  - `TreasuryOutput`;
+  - `Unspent`;
