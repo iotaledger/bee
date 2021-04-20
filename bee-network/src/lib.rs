@@ -4,7 +4,7 @@
 //! Networking functionality and types for nodes and clients participating in the IOTA protocol built on top of
 //! `libp2p`.
 
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 mod peer;
 
