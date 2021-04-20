@@ -1,9 +1,9 @@
 [package]
 name = "bee-rest-api"
-version = "0.1.0-alpha"
+version = "0.1.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = ""
+description = "A REST API implementation for IOTA node software."
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
@@ -11,45 +11,10 @@ keywords = ["iota", "tangle", "bee", "framework", "api"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-ledger = { path = "../../bee-ledger" }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-network = { path = "../../bee-network", optional = true }
-bee-pow = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-protocol = { path = "../../bee-protocol" }
-bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true  }
-bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
-bee-tangle = { path = "../../bee-tangle", optional = true }
 
-async-trait = { version = "0.1", optional = true }
-bech32 = { version = "0.8", optional = true }
-digest = { version = "0.9", optional = true }
-futures = { version = "0.3", optional = true }
-hex = { version = "0.4" }
-iota-crypto = { version = "0.5.0", features = ["blake2b"], optional = true }
-log = { version = "0.4", optional = true }
-num_cpus = { version = "1.13", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
 thiserror = { version = "1.0" }
-tokio = { version = "1.4", features = [], optional = true }
-warp = { version = "0.3", optional = true }
-
-[features]
-endpoints = [
-  "bee-common",
-  "bee-network",
-  "bee-protocol/workers",
-  "bee-runtime",
-  "bee-storage",
-  "bee-tangle",
-  "async-trait",
-  "bech32",
-  "digest",
-  "futures",
-  "iota-crypto",
-  "log",
-  "num_cpus",
-  "tokio",
-  "warp",
-]
