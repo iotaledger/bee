@@ -358,7 +358,7 @@ impl<'de> serde::Deserialize<'de> for OutputDto {
             match value
                 .get("type")
                 .and_then(Value::as_u64)
-                .ok_or(serde::de::Error::custom("invalid output type"))? as u8
+                .ok_or_else(|| serde::de::Error::custom("invalid output type"))? as u8
             {
                 SignatureLockedSingleOutput::KIND => OutputDto::SignatureLockedSingle(
                     SignatureLockedSingleOutputDto::deserialize(value)
@@ -501,17 +501,14 @@ pub enum UnlockBlockDto {
 impl From<&UnlockBlock> for UnlockBlockDto {
     fn from(value: &UnlockBlock) -> Self {
         match value {
-            UnlockBlock::Signature(s) => match s {
-                SignatureUnlock::Ed25519(ed) => UnlockBlockDto::Signature(SignatureUnlockDto {
-                    kind: SignatureUnlock::KIND,
-                    signature: SignatureDto::Ed25519(Ed25519SignatureDto {
-                        kind: Ed25519Signature::KIND,
-                        public_key: hex::encode(ed.public_key()),
-                        signature: hex::encode(ed.signature()),
-                    }),
+            UnlockBlock::Signature(SignatureUnlock::Ed25519(ed)) => UnlockBlockDto::Signature(SignatureUnlockDto {
+                kind: SignatureUnlock::KIND,
+                signature: SignatureDto::Ed25519(Ed25519SignatureDto {
+                    kind: Ed25519Signature::KIND,
+                    public_key: hex::encode(ed.public_key()),
+                    signature: hex::encode(ed.signature()),
                 }),
-                _ => unimplemented!(),
-            },
+            }),
             UnlockBlock::Reference(r) => UnlockBlockDto::Reference(ReferenceUnlockDto {
                 kind: ReferenceUnlock::KIND,
                 index: r.index(),
