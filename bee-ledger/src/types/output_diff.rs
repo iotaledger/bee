@@ -62,7 +62,7 @@ impl Packable for OutputDiff {
             output.pack(writer)?;
         }
 
-        self.treasury_diff.pack(writer).map_err(|_| Error::Option)?;
+        self.treasury_diff.pack(writer).map_err(|_| Error::PackableOption)?;
 
         Ok(())
     }
@@ -80,7 +80,8 @@ impl Packable for OutputDiff {
             consumed_outputs.push(OutputId::unpack_inner::<R, CHECK>(reader)?);
         }
 
-        let treasury_diff = Option::<TreasuryDiff>::unpack_inner::<R, CHECK>(reader).map_err(|_| Error::Option)?;
+        let treasury_diff =
+            Option::<TreasuryDiff>::unpack_inner::<R, CHECK>(reader).map_err(|_| Error::PackableOption)?;
 
         Ok(Self {
             created_outputs,

@@ -19,6 +19,6 @@ pub enum ConflictReason {
     InvalidSignature = 5,
     /// The dust allowance for the address is invalid.
     InvalidDustAllowance = 6,
-    /// The semantic validation failed.
+    /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
 }
