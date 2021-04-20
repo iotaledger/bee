@@ -12,7 +12,7 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-ledger = { path = "../../bee-ledger" }
-bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-message = { path = "../../bee-message" }
 bee-protocol = { path = "../../bee-protocol" }
 
 serde = { version = "1.0", features = ["derive"] }
