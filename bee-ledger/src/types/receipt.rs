@@ -76,7 +76,7 @@ impl Receipt {
             .checked_sub(migrated_amount)
             .ok_or_else(|| {
                 Error::InvalidMigratedFundsAmount(
-                    consumed_treasury_output.inner().amount() as u128 - migrated_amount as u128,
+                    (consumed_treasury_output.inner().amount() as i128 - migrated_amount as i128) as u128,
                 )
             })?;
 
