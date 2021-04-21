@@ -5,6 +5,7 @@
 
 #![warn(missing_docs)]
 
+mod alias;
 mod config;
 mod init;
 mod network;
@@ -12,6 +13,7 @@ mod peer;
 mod service;
 mod swarm;
 mod types;
+mod util;
 
 // Re-Exports
 #[cfg(feature = "standalone")]
@@ -35,14 +37,3 @@ pub use crate::{
     service::{command::Command, controller::NetworkServiceController, event::Event, service::NetworkService},
     swarm::protocols::gossip::{GossipReceiver, GossipSender},
 };
-
-// TODO 1: A functional macro that ...
-// TODO 2: Allow to give it a length.
-// TODO 3: Consider moving it into its own module.
-/// Creates a (shorter) peer alias from a peer id.
-#[macro_export]
-macro_rules! alias {
-    ($peer_id:expr) => {
-        &$peer_id.to_base58()[46..]
-    };
-}
