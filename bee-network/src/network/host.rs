@@ -1,13 +1,23 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::Error;
+#![cfg(feature = "integrated")]
+
+use super::error::Error;
+
 use crate::{
     alias,
-    peer::{AddrBanlist, PeerBanlist, PeerInfo, PeerList},
-    service::{Command, CommandReceiver, InternalEventSender, NetworkService},
-    swarm,
-    swarm::{protocols::gossip::GOSSIP_ORIGIN, SwarmBehavior},
+    peer::{
+        ban::{AddrBanlist, PeerBanlist},
+        store::PeerList,
+    },
+    service::{
+        command::{Command, CommandReceiver},
+        event::InternalEventSender,
+        service::NetworkService,
+    },
+    swarm::{behavior::SwarmBehavior, builder::build_swarm, protocols::gossip::GOSSIP_ORIGIN},
+    types::PeerInfo,
 };
 
 use bee_runtime::{node::Node, worker::Worker};
@@ -22,6 +32,7 @@ use log::*;
 
 use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
 
+// TODO: move this to `config` module
 pub struct NetworkHostConfig {
     pub local_keys: Keypair,
     pub bind_multiaddr: Multiaddr,
@@ -60,7 +71,7 @@ impl<N: Node> Worker<N> for NetworkHost {
         let local_keys_clone = local_keys.clone();
         let internal_event_sender_clone = internal_event_sender.clone();
 
-        let mut swarm = swarm::build_swarm(&local_keys_clone, internal_event_sender_clone)
+        let mut swarm = build_swarm(&local_keys_clone, internal_event_sender_clone)
             .await
             .expect("Fatal error: creating transport layer failed.");
 
@@ -220,7 +231,7 @@ async fn dial_peer(
 
 async fn check_if_dialing_self(local_peer_id: &PeerId, remote_peer_id: &PeerId) -> Result<(), Error> {
     if remote_peer_id.eq(local_peer_id) {
-        Err(super::Error::DialedOwnPeerId(*remote_peer_id))
+        Err(Error::DialedOwnPeerId(*remote_peer_id))
     } else {
         Ok(())
     }

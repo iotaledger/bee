@@ -46,7 +46,6 @@ workers = [
   "bee-common",
   "bee-crypto",
   "bee-ledger",
-  "bee-network/node",
   "bee-runtime",
   "bee-storage",
   "bee-tangle",

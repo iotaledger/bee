@@ -1,7 +1,9 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::host::Origin;
+use super::behavior::SwarmBehavior;
+
+use crate::{network::meta::Origin, service::event::InternalEventSender};
 
 use libp2p::{
     core::{
@@ -14,10 +16,6 @@ use libp2p::{
 };
 
 use std::{io, time::Duration};
-
-use crate::service::InternalEventSender;
-
-use super::SwarmBehavior;
 
 const MAX_CONNECTIONS_PER_PEER: u32 = 1;
 const DEFAULT_CONNECTION_TIMEOUT_SECS: u64 = 10;

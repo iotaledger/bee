@@ -14,10 +14,8 @@ homepage = "https://www.iota.org"
 all-features = true
 
 [features]
-# By default we expose the full feature set.
-default = ["node"]
-node = [
-    "bee-runtime",
+default = ["integrated"]
+standalone = [
     "async-trait",
     "futures",
     "libp2p/dns-tokio",
@@ -33,6 +31,7 @@ node = [
     "tokio",
     "tokio-stream",
 ]
+integrated = ["standalone", "bee-runtime"]
 
 [dependencies]
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }

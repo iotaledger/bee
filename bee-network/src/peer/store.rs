@@ -1,7 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{node::MAX_UNKNOWN_PEERS, swarm::protocols::gossip::GossipSender};
+use super::{
+    error::{Error, InsertionFailure},
+    meta::PeerState,
+};
+
+use crate::{init::MAX_UNKNOWN_PEERS, swarm::protocols::gossip::GossipSender, types::PeerInfo};
 
 use libp2p::PeerId;
 use tokio::sync::RwLock;
@@ -10,8 +15,6 @@ use std::{
     collections::HashMap,
     sync::{atomic::Ordering, Arc},
 };
-
-use super::{error::InsertionFailure, Error, PeerInfo, PeerState};
 
 // TODO: check whether this is the right default value when used in production.
 const DEFAULT_PEERLIST_CAPACITY: usize = 8;

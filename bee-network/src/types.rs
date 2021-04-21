@@ -6,8 +6,8 @@ use libp2p_core::Multiaddr;
 /// Additional information about a peer.
 #[derive(Clone, Debug)]
 pub struct PeerInfo {
-    /// The peer's address.
     // TODO: rename to `multiaddr`
+    /// The peer's address.
     pub address: Multiaddr,
     /// The peer's alias.
     pub alias: String,
@@ -46,41 +46,6 @@ impl PeerRelation {
     pub fn downgrade(&mut self) {
         if self.is_known() {
             *self = Self::Unknown;
-        }
-    }
-}
-
-#[cfg(feature = "node")]
-pub(super) mod peerstate {
-
-    use crate::swarm::protocols::gossip::GossipSender;
-
-    #[derive(Clone, Debug, Default)]
-    pub struct PeerState(Option<GossipSender>);
-
-    impl PeerState {
-        pub fn connected(gossip_sender: GossipSender) -> Self {
-            Self(Some(gossip_sender))
-        }
-
-        pub fn disconnected() -> Self {
-            Self(None)
-        }
-
-        pub fn is_disconnected(&self) -> bool {
-            self.0.is_none()
-        }
-
-        pub fn is_connected(&self) -> bool {
-            self.0.is_some()
-        }
-
-        pub fn set_connected(&mut self, gossip_sender: GossipSender) {
-            self.0.replace(gossip_sender);
-        }
-
-        pub fn set_disconnected(&mut self) -> Option<GossipSender> {
-            self.0.take()
         }
     }
 }

@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use libp2p::{Multiaddr, PeerId};
+use libp2p_core::{Multiaddr, PeerId};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

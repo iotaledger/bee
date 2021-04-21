@@ -3,7 +3,6 @@
 
 #![cfg(feature = "standalone")]
 
-pub mod command;
-pub mod controller;
-pub mod event;
-pub mod service;
+pub mod error;
+pub mod host;
+pub mod meta;

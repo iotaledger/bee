@@ -1,17 +1,17 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use super::command::Command;
+
 use crate::{
-    host::ConnectionInfo,
-    peer,
-    peer::PeerInfo,
+    network::meta::ConnectionInfo,
+    peer::error::Error as PeerError,
     swarm::protocols::gossip::{GossipReceiver, GossipSender},
+    types::PeerInfo,
 };
 
 use libp2p::{Multiaddr, PeerId};
 use tokio::sync::mpsc;
-
-use super::commands::Command;
 
 pub type EventSender = mpsc::UnboundedSender<Event>;
 pub type InternalEventReceiver = mpsc::UnboundedReceiver<InternalEvent>;
@@ -75,7 +75,7 @@ pub enum Event {
         /// The command that failed.
         command: Command,
         /// The reason for the failure.
-        reason: peer::Error,
+        reason: PeerError,
     },
 }
 

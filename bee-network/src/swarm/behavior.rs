@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::protocols::gossip::{self, Gossip, GossipEvent};
+
 use crate::{
-    host::Origin,
-    service::{InternalEvent, InternalEventSender},
+    network::meta::Origin,
+    service::event::{InternalEvent, InternalEventSender},
 };
 
 use futures::AsyncReadExt;

@@ -22,6 +22,7 @@ pub enum Origin {
     Outbound,
 }
 
+// TODO: use `matches!`
 impl Origin {
     /// Returns whether the connection is inbound.
     pub fn is_inbound(&self) -> bool {

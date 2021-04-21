@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::service::commands::{Command, CommandSender};
+use crate::service::command::{Command, CommandSender};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

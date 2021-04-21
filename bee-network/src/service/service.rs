@@ -1,14 +1,23 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![cfg(feature = "integrated")]
+
 use super::{
-    commands::{Command, CommandReceiver, CommandSender},
-    events::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
+    command::{Command, CommandReceiver, CommandSender},
+    event::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
 };
+
+// TODO: introduce `service::error` module.
 use crate::{
     alias,
-    node::RECONNECT_INTERVAL_SECS,
-    peer::{self, AddrBanlist, InsertionFailure, PeerBanlist, PeerInfo, PeerList, PeerRelation},
+    init::RECONNECT_INTERVAL_SECS,
+    peer::{
+        ban::{AddrBanlist, PeerBanlist},
+        error::{Error as PeerError, InsertionFailure},
+        store::PeerList,
+    },
+    types::{PeerInfo, PeerRelation},
 };
 
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
@@ -176,7 +185,7 @@ async fn process_command(
     banned_peerlist: &PeerBanlist,
     event_sender: &EventSender,
     internal_command_sender: &CommandSender,
-) -> Result<(), peer::Error> {
+) -> Result<(), PeerError> {
     trace!("Received {:?}.", command);
 
     match command {
@@ -212,7 +221,7 @@ async fn process_command(
         }
         Command::BanAddress { address } => {
             if !banned_addrlist.insert(address.clone()).await {
-                return Err(peer::Error::AddressAlreadyBanned(address));
+                return Err(PeerError::AddressAlreadyBanned(address));
             }
             if event_sender.send(Event::AddressBanned { address }).is_err() {
                 trace!("Failed to send 'AddressBanned' event. (Shutting down?)")
@@ -220,7 +229,7 @@ async fn process_command(
         }
         Command::BanPeer { peer_id } => {
             if !banned_peerlist.insert(peer_id).await {
-                return Err(peer::Error::PeerAlreadyBanned(peer_id));
+                return Err(PeerError::PeerAlreadyBanned(peer_id));
             }
 
             if event_sender.send(Event::PeerBanned { peer_id }).is_err() {
@@ -229,12 +238,12 @@ async fn process_command(
         }
         Command::UnbanAddress { address } => {
             if !banned_addrlist.remove(&address).await {
-                return Err(peer::Error::AddressAlreadyUnbanned(address));
+                return Err(PeerError::AddressAlreadyUnbanned(address));
             }
         }
         Command::UnbanPeer { peer_id } => {
             if !banned_peerlist.remove(&peer_id).await {
-                return Err(peer::Error::PeerAlreadyUnbanned(peer_id));
+                return Err(PeerError::PeerAlreadyUnbanned(peer_id));
             }
         }
         Command::UpgradeRelation { peer_id } => {
@@ -260,7 +269,7 @@ async fn process_internal_event(
     event_sender: &EventSender,
     _internal_event_sender: &InternalEventSender,
     _internal_command_sender: &CommandSender,
-) -> Result<(), peer::Error> {
+) -> Result<(), PeerError> {
     match internal_event {
         InternalEvent::ProtocolEstablished {
             peer_id,
@@ -337,7 +346,7 @@ async fn add_peer(
     relation: PeerRelation,
     peerlist: &PeerList,
     event_sender: &EventSender,
-) -> Result<(), peer::Error> {
+) -> Result<(), PeerError> {
     let peer_info = PeerInfo {
         address,
         alias,
@@ -362,7 +371,7 @@ async fn add_peer(
             // manual peer manager, and hence, as unknown. In such a case we simply update to the correct
             // info (address, alias, relation).
 
-            if matches!(e, peer::Error::PeerAlreadyAdded(_))
+            if matches!(e, PeerError::PeerAlreadyAdded(_))
             // && peer_info.relation.is_known()
             {
                 match peerlist.update_info(&peer_id, peer_info.clone()).await {
@@ -394,7 +403,7 @@ async fn add_peer(
     }
 }
 
-async fn remove_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), peer::Error> {
+async fn remove_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), PeerError> {
     disconnect_peer(peer_id, peerlist, event_sender).await?;
 
     match peerlist.remove(&peer_id).await {
@@ -414,7 +423,7 @@ async fn remove_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventS
     }
 }
 
-async fn disconnect_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), peer::Error> {
+async fn disconnect_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &EventSender) -> Result<(), PeerError> {
     // NB: We sent the `PeerDisconnected` event *before* we sent the shutdown signal to the stream writer task, so
     // it can stop adding messages to the channel before we drop the receiver.
 

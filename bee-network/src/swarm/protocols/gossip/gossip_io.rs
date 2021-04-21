@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::service::{InternalEvent, InternalEventSender};
+use crate::service::event::{InternalEvent, InternalEventSender};
 
 use futures::{
     io::{ReadHalf, WriteHalf},
