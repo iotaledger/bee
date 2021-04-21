@@ -313,6 +313,7 @@ impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
                 .map(|(mut key, _)| {
                     let (_, receipt) = key.split_at_mut(std::mem::size_of::<MilestoneIndex>());
                     // Unpacking from storage is fine.
+                    #[allow(clippy::useless_asref)]
                     Receipt::unpack_unchecked(&mut receipt.as_ref()).unwrap()
                 })
                 .collect(),
@@ -334,6 +335,7 @@ impl Fetch<bool, Vec<TreasuryOutput>> for Storage {
                 .map(|(mut key, _)| {
                     let (_, output) = key.split_at_mut(std::mem::size_of::<bool>());
                     // Unpacking from storage is fine.
+                    #[allow(clippy::useless_asref)]
                     TreasuryOutput::unpack_unchecked(&mut output.as_ref()).unwrap()
                 })
                 .collect(),
