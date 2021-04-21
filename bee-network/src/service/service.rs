@@ -182,7 +182,7 @@ async fn process_command(
     match command {
         Command::AddPeer {
             peer_id,
-            address,
+            multiaddr,
             alias,
             relation,
         } => {
@@ -190,12 +190,12 @@ async fn process_command(
 
             // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
             if relation.is_known() {
-                add_peer(peer_id, address, alias, relation, peerlist, event_sender).await?;
+                add_peer(peer_id, multiaddr, alias, relation, peerlist, event_sender).await?;
 
                 // We automatically connect to such peers. Since we can connect concurrently, we spawn a task here.
                 let _ = internal_command_sender.send(Command::DialPeer { peer_id });
             } else {
-                add_peer(peer_id, address, alias, relation, peerlist, event_sender).await?;
+                add_peer(peer_id, multiaddr, alias, relation, peerlist, event_sender).await?;
             }
         }
         Command::RemovePeer { peer_id } => {
@@ -381,7 +381,7 @@ async fn add_peer(
             let _ = event_sender.send(Event::CommandFailed {
                 command: Command::AddPeer {
                     peer_id,
-                    address: peer_info.address,
+                    multiaddr: peer_info.address,
                     // NOTE: the returned failed command now has the default alias, if none was specified originally.
                     alias: Some(peer_info.alias),
                     relation: peer_info.relation,

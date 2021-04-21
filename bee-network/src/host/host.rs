@@ -24,7 +24,7 @@ use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
 
 pub struct NetworkHostConfig {
     pub local_keys: Keypair,
-    pub bind_addresses: Multiaddr,
+    pub bind_multiaddr: Multiaddr,
     pub peerlist: PeerList,
     pub banned_addrs: AddrBanlist,
     pub banned_peers: PeerBanlist,
@@ -49,7 +49,7 @@ impl<N: Node> Worker<N> for NetworkHost {
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let NetworkHostConfig {
             local_keys,
-            bind_addresses,
+            bind_multiaddr,
             peerlist,
             banned_addrs,
             banned_peers,
@@ -64,9 +64,9 @@ impl<N: Node> Worker<N> for NetworkHost {
             .await
             .expect("Fatal error: creating transport layer failed.");
 
-        info!("Binding address(es): {}", bind_addresses);
+        info!("Bind multiaddress: {}", bind_multiaddr);
 
-        let _ = Swarm::listen_on(&mut swarm, bind_addresses).expect("Fatal error: address binding failed.");
+        let _ = Swarm::listen_on(&mut swarm, bind_multiaddr).expect("Fatal error: address binding failed.");
 
         node.spawn::<Self, _, _>(|mut shutdown| async move {
 

@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use std::str::FromStr;
 
-const DEFAULT_BIND_ADDRESSES: &str = "/ip4/0.0.0.0/tcp/15600";
+const DEFAULT_BIND_MULTIADDR: &str = "/ip4/0.0.0.0/tcp/15600";
 
 pub const DEFAULT_RECONNECT_INTERVAL_SECS: u64 = 30;
 pub const DEFAULT_MAX_UNKOWN_PEERS: usize = 4;
@@ -15,7 +15,7 @@ pub const DEFAULT_MAX_UNKOWN_PEERS: usize = 4;
 #[derive(Clone)]
 pub struct NetworkConfig {
     /// Can represent a single or multiple ip addresses the network layer will try to bind to.
-    pub bind_addresses: Multiaddr,
+    pub bind_multiaddr: Multiaddr,
     /// The automatic reconnect interval in seconds for known peers.
     pub reconnect_interval_secs: u64,
     /// The maximum number of gossip connections with unknown peers.
@@ -33,7 +33,8 @@ impl NetworkConfig {
 /// A network configuration builder.
 #[derive(Default, Deserialize)]
 pub struct NetworkConfigBuilder {
-    bind_addresses: Option<Multiaddr>,
+    #[serde(rename = "bind_multiaddress")]
+    bind_multiaddr: Option<Multiaddr>,
     reconnect_interval_secs: Option<u64>,
     max_unknown_peers: Option<usize>,
     peering: PeeringConfigBuilder,
@@ -47,7 +48,7 @@ impl NetworkConfigBuilder {
 
     /// Specifies the bind addresses.
     pub fn bind_addresses(mut self, address: &str) -> Self {
-        self.bind_addresses
+        self.bind_multiaddr
             .replace(Multiaddr::from_str(address).unwrap_or_else(|e| panic!("Error parsing address: {:?}", e)));
         self
     }
@@ -67,9 +68,9 @@ impl NetworkConfigBuilder {
     /// Builds the network config.
     pub fn finish(self) -> NetworkConfig {
         NetworkConfig {
-            bind_addresses: self
-                .bind_addresses
-                .unwrap_or_else(|| Multiaddr::from_str(DEFAULT_BIND_ADDRESSES).unwrap()),
+            bind_multiaddr: self
+                .bind_multiaddr
+                .unwrap_or_else(|| Multiaddr::from_str(DEFAULT_BIND_MULTIADDR).unwrap()),
 
             reconnect_interval_secs: self.reconnect_interval_secs.unwrap_or(DEFAULT_RECONNECT_INTERVAL_SECS),
 
@@ -88,7 +89,7 @@ pub struct PeeringConfig {
 #[derive(Clone)]
 pub struct Peer {
     pub peer_id: PeerId,
-    pub address: Multiaddr,
+    pub multiaddr: Multiaddr,
     pub alias: Option<String>,
 }
 
@@ -105,10 +106,10 @@ impl PeeringConfigBuilder {
                  .into_iter()
                  .map(|pb| {
                      // **Note**: this Multiaddr comes with the '../p2p/XYZ' suffix.
-                     let mut p2p_addr = Multiaddr::from_str(&pb.address).expect("error parsing multiaddr.");
+                     let mut p2p_addr = Multiaddr::from_str(&pb.multiaddr).expect("error parsing multiaddr.");
 
                      // NOTE: `unwrap`ing should be fine here since it comes from the config.
-                     let (peer_id, address) = if let Protocol::P2p(multihash) = p2p_addr.pop().unwrap() {
+                     let (peer_id, multiaddr) = if let Protocol::P2p(multihash) = p2p_addr.pop().unwrap() {
                          let peer_id = PeerId::from_multihash(multihash).expect("Invalid Multiaddr.");
                          (peer_id, p2p_addr)
                      } else {
@@ -119,7 +120,7 @@ impl PeeringConfigBuilder {
 
                      Peer {
                          peer_id,
-                         address,
+                         multiaddr,
                          alias: pb.alias,
                      }
                  })
@@ -132,6 +133,7 @@ impl PeeringConfigBuilder {
 
 #[derive(Deserialize)]
 pub struct PeerBuilder {
-    address: String,
+    #[serde(rename = "multiaddress")]
+    multiaddr: String,
     alias: Option<String>,
 }

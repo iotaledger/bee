@@ -7,6 +7,7 @@ use libp2p_core::Multiaddr;
 #[derive(Clone, Debug)]
 pub struct PeerInfo {
     /// The peer's address.
+    // TODO: rename to `multiaddr`
     pub address: Multiaddr,
     /// The peer's alias.
     pub alias: String,

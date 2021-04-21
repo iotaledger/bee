@@ -23,7 +23,7 @@ pub enum Command {
         /// The peer's id.
         peer_id: PeerId,
         /// The peer's address.
-        address: Multiaddr,
+        multiaddr: Multiaddr,
         /// The peer's optional alias.
         alias: Option<String>,
         /// The relation with that peer.

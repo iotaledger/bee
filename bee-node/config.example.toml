@@ -15,16 +15,18 @@ name          = "error.log"
 level_filter  = "error"
 
 [network]
-bind_addresses           = "/ip4/0.0.0.0/tcp/15600"
-reconnect_interval_secs  = 30
-max_unknown_peers        = 4
+# https://docs.libp2p.io/concepts/addressing/
+bind_multiaddress       = "/ip4/0.0.0.0/tcp/15600"
+reconnect_interval_secs = 30
+max_unknown_peers       = 4
+
 [network.peering]
 #[[network.peering.peers]]
-#address = ""
-#alias   = ""
+#multiaddress = ""
+#alias        = ""
 #[[network.peering.peers]]
-#address = ""
-#alias   = ""
+#multiaddress = ""
+#alias        = ""
 
 [protocol]
 minimum_pow_score = 4000

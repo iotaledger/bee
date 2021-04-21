@@ -99,7 +99,7 @@ pub(crate) async fn add_peer(
 
             if let Err(e) = network_controller.send(AddPeer {
                 peer_id,
-                address: multi_address.clone(),
+                multiaddr: multi_address.clone(),
                 alias: alias.clone(),
                 relation: PeerRelation::Known,
             }) {
