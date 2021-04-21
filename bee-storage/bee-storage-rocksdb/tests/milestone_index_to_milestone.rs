@@ -24,27 +24,21 @@ async fn milestone_index_to_milestone_access() {
 
     let (index, milestone) = (rand_milestone_index(), rand_milestone());
 
-    assert!(
-        !Exist::<MilestoneIndex, Milestone>::exist(&storage, &index)
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<MilestoneIndex, Milestone>::fetch(&storage, &index)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(!Exist::<MilestoneIndex, Milestone>::exist(&storage, &index)
+        .await
+        .unwrap());
+    assert!(Fetch::<MilestoneIndex, Milestone>::fetch(&storage, &index)
+        .await
+        .unwrap()
+        .is_none());
 
     Insert::<MilestoneIndex, Milestone>::insert(&storage, &index, &milestone)
         .await
         .unwrap();
 
-    assert!(
-        Exist::<MilestoneIndex, Milestone>::exist(&storage, &index)
-            .await
-            .unwrap()
-    );
+    assert!(Exist::<MilestoneIndex, Milestone>::exist(&storage, &index)
+        .await
+        .unwrap());
     assert_eq!(
         Fetch::<MilestoneIndex, Milestone>::fetch(&storage, &index)
             .await
@@ -57,17 +51,13 @@ async fn milestone_index_to_milestone_access() {
         .await
         .unwrap();
 
-    assert!(
-        !Exist::<MilestoneIndex, Milestone>::exist(&storage, &index)
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<MilestoneIndex, Milestone>::fetch(&storage, &index)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(!Exist::<MilestoneIndex, Milestone>::exist(&storage, &index)
+        .await
+        .unwrap());
+    assert!(Fetch::<MilestoneIndex, Milestone>::fetch(&storage, &index)
+        .await
+        .unwrap()
+        .is_none());
 
     let mut batch = Storage::batch_begin();
 

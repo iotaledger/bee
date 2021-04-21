@@ -24,28 +24,22 @@ async fn message_id_to_message_id_access() {
 
     let (parent, child) = (rand_message_id(), rand_message_id());
 
-    assert!(
-        !Exist::<(MessageId, MessageId), ()>::exist(&storage, &(parent, child))
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<MessageId, Vec<MessageId>>::fetch(&storage, &parent)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(!Exist::<(MessageId, MessageId), ()>::exist(&storage, &(parent, child))
+        .await
+        .unwrap());
+    assert!(Fetch::<MessageId, Vec<MessageId>>::fetch(&storage, &parent)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     Insert::<(MessageId, MessageId), ()>::insert(&storage, &(parent, child), &())
         .await
         .unwrap();
 
-    assert!(
-        Exist::<(MessageId, MessageId), ()>::exist(&storage, &(parent, child))
-            .await
-            .unwrap()
-    );
+    assert!(Exist::<(MessageId, MessageId), ()>::exist(&storage, &(parent, child))
+        .await
+        .unwrap());
     assert_eq!(
         Fetch::<MessageId, Vec<MessageId>>::fetch(&storage, &parent)
             .await
@@ -58,18 +52,14 @@ async fn message_id_to_message_id_access() {
         .await
         .unwrap();
 
-    assert!(
-        !Exist::<(MessageId, MessageId), ()>::exist(&storage, &(parent, child))
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<MessageId, Vec<MessageId>>::fetch(&storage, &parent)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(!Exist::<(MessageId, MessageId), ()>::exist(&storage, &(parent, child))
+        .await
+        .unwrap());
+    assert!(Fetch::<MessageId, Vec<MessageId>>::fetch(&storage, &parent)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     let mut batch = Storage::batch_begin();
 
@@ -81,12 +71,15 @@ async fn message_id_to_message_id_access() {
         Batch::<(MessageId, MessageId), ()>::batch_delete(&storage, &mut batch, &(parent, child)).unwrap();
     }
 
-    let mut edges = HashMap::new();
+    let mut edges = HashMap::<MessageId, Vec<MessageId>>::new();
 
-    for _ in 0usize..10usize {
-        let (parent, child) = (rand_message_id(), rand_message_id());
-        Batch::<(MessageId, MessageId), ()>::batch_insert(&storage, &mut batch, &(parent, child), &()).unwrap();
-        edges.insert(parent, child);
+    for _ in 0usize..5usize {
+        let parent = rand_message_id();
+        for _ in 0usize..5usize {
+            let child = rand_message_id();
+            Batch::<(MessageId, MessageId), ()>::batch_insert(&storage, &mut batch, &(parent, child), &()).unwrap();
+            edges.entry(parent).or_default().push(child);
+        }
     }
 
     storage.batch_commit(batch, true).await.unwrap();
@@ -95,11 +88,11 @@ async fn message_id_to_message_id_access() {
     let mut count = 0;
 
     while let Some(((parent, child), _)) = stream.next().await {
-        assert_eq!(edges.get(&parent).unwrap(), &child);
+        assert!(edges.get(&parent).unwrap().contains(&child));
         count += 1;
     }
 
-    assert_eq!(count, edges.len());
+    assert_eq!(count, edges.iter().fold(0, |acc, v| acc + v.1.len()));
 
     Truncate::<(MessageId, MessageId), ()>::truncate(&storage)
         .await

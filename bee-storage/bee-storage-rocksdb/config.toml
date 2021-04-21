@@ -1,6 +1,0 @@
-# example of how to config rocksdb options, which 100% abstract rocksdb-rust
-# please make sure to move this to the main config
-path = "./dbfolder"
-create_if_missing = true
-create_missing_column_families = true
-set_atomic_flush = true

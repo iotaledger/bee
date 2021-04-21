@@ -29,13 +29,11 @@ async fn spent_to_treasury_output_access() {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<bool, Vec<TreasuryOutput>>::fetch(&storage, &spent)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<bool, Vec<TreasuryOutput>>::fetch(&storage, &spent)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     Insert::<(bool, TreasuryOutput), ()>::insert(&storage, &(spent, treasury_output.clone()), &())
         .await
@@ -63,13 +61,11 @@ async fn spent_to_treasury_output_access() {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<bool, Vec<TreasuryOutput>>::fetch(&storage, &spent)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<bool, Vec<TreasuryOutput>>::fetch(&storage, &spent)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     let mut batch = Storage::batch_begin();
 
@@ -84,7 +80,16 @@ async fn spent_to_treasury_output_access() {
     let mut treasury_outputs = HashMap::<bool, Vec<TreasuryOutput>>::new();
 
     for _ in 0usize..10usize {
-        let (spent, treasury_output) = (rand_bool(), rand_treasury_output());
+        let spent = false;
+        let treasury_output = rand_treasury_output();
+        Batch::<(bool, TreasuryOutput), ()>::batch_insert(&storage, &mut batch, &(spent, treasury_output.clone()), &())
+            .unwrap();
+        treasury_outputs.entry(spent).or_default().push(treasury_output);
+    }
+
+    for _ in 0usize..10usize {
+        let spent = true;
+        let treasury_output = rand_treasury_output();
         Batch::<(bool, TreasuryOutput), ()>::batch_insert(&storage, &mut batch, &(spent, treasury_output.clone()), &())
             .unwrap();
         treasury_outputs.entry(spent).or_default().push(treasury_output);
@@ -100,7 +105,7 @@ async fn spent_to_treasury_output_access() {
         count += 1;
     }
 
-    assert_eq!(count, 10);
+    assert_eq!(count, treasury_outputs.iter().fold(0, |acc, v| acc + v.1.len()));
 
     Truncate::<(bool, TreasuryOutput), ()>::truncate(&storage)
         .await

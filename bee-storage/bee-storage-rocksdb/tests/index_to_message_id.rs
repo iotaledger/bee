@@ -29,13 +29,11 @@ async fn index_to_message_id_access() {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<HashedIndex, Vec<MessageId>>::fetch(&storage, &index)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<HashedIndex, Vec<MessageId>>::fetch(&storage, &index)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     Insert::<(HashedIndex, MessageId), ()>::insert(&storage, &(index, message_id), &())
         .await
@@ -63,13 +61,11 @@ async fn index_to_message_id_access() {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<HashedIndex, Vec<MessageId>>::fetch(&storage, &index)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<HashedIndex, Vec<MessageId>>::fetch(&storage, &index)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     let mut batch = Storage::batch_begin();
 
@@ -81,12 +77,16 @@ async fn index_to_message_id_access() {
         Batch::<(HashedIndex, MessageId), ()>::batch_delete(&storage, &mut batch, &(index, message_id)).unwrap();
     }
 
-    let mut message_ids = HashMap::new();
+    let mut message_ids = HashMap::<HashedIndex, Vec<MessageId>>::new();
 
-    for _ in 0usize..10usize {
-        let (index, message_id) = (rand_indexation().hash(), rand_message_id());
-        Batch::<(HashedIndex, MessageId), ()>::batch_insert(&storage, &mut batch, &(index, message_id), &()).unwrap();
-        message_ids.insert(index, message_id);
+    for _ in 0usize..5usize {
+        let index = rand_indexation().hash();
+        for _ in 0usize..5usize {
+            let message_id = rand_message_id();
+            Batch::<(HashedIndex, MessageId), ()>::batch_insert(&storage, &mut batch, &(index, message_id), &())
+                .unwrap();
+            message_ids.entry(index).or_default().push(message_id);
+        }
     }
 
     storage.batch_commit(batch, true).await.unwrap();
@@ -97,11 +97,11 @@ async fn index_to_message_id_access() {
     let mut count = 0;
 
     while let Some(((index, message_id), _)) = stream.next().await {
-        assert_eq!(message_ids.get(&index).unwrap(), &message_id);
+        assert!(message_ids.get(&index).unwrap().contains(&message_id));
         count += 1;
     }
 
-    assert_eq!(count, message_ids.len());
+    assert_eq!(count, message_ids.iter().fold(0, |acc, v| acc + v.1.len()));
 
     Truncate::<(HashedIndex, MessageId), ()>::truncate(&storage)
         .await

@@ -87,18 +87,21 @@ async fn milestone_index_to_unconfirmed_message_access() {
         .unwrap();
     }
 
-    let mut unconfirmed_messages = HashMap::new();
+    let mut unconfirmed_messages = HashMap::<MilestoneIndex, Vec<UnconfirmedMessage>>::new();
 
-    for _ in 0usize..10usize {
-        let (index, unconfirmed_message) = (rand_milestone_index(), rand_unconfirmed_message());
-        Batch::<(MilestoneIndex, UnconfirmedMessage), ()>::batch_insert(
-            &storage,
-            &mut batch,
-            &(index, unconfirmed_message),
-            &(),
-        )
-        .unwrap();
-        unconfirmed_messages.insert(index, unconfirmed_message);
+    for _ in 0usize..5usize {
+        let index = rand_milestone_index();
+        for _ in 0usize..5usize {
+            let unconfirmed_message = rand_unconfirmed_message();
+            Batch::<(MilestoneIndex, UnconfirmedMessage), ()>::batch_insert(
+                &storage,
+                &mut batch,
+                &(index, unconfirmed_message),
+                &(),
+            )
+            .unwrap();
+            unconfirmed_messages.entry(index).or_default().push(unconfirmed_message);
+        }
     }
 
     storage.batch_commit(batch, true).await.unwrap();
@@ -109,11 +112,11 @@ async fn milestone_index_to_unconfirmed_message_access() {
     let mut count = 0;
 
     while let Some(((index, message_id), _)) = stream.next().await {
-        assert_eq!(unconfirmed_messages.get(&index).unwrap(), &message_id);
+        assert!(unconfirmed_messages.get(&index).unwrap().contains(&message_id));
         count += 1;
     }
 
-    assert_eq!(count, unconfirmed_messages.len());
+    assert_eq!(count, unconfirmed_messages.iter().fold(0, |acc, v| acc + v.1.len()));
 
     Truncate::<(MilestoneIndex, UnconfirmedMessage), ()>::truncate(&storage)
         .await

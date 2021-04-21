@@ -30,13 +30,11 @@ async fn milestone_index_to_receipt_access() {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &index)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &index)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     Insert::<(MilestoneIndex, Receipt), ()>::insert(&storage, &(index, receipt.clone()), &())
         .await
@@ -64,13 +62,11 @@ async fn milestone_index_to_receipt_access() {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &index)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&storage, &index)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     let mut batch = Storage::batch_begin();
 
@@ -82,13 +78,16 @@ async fn milestone_index_to_receipt_access() {
         Batch::<(MilestoneIndex, Receipt), ()>::batch_delete(&storage, &mut batch, &(index, receipt)).unwrap();
     }
 
-    let mut receipts = HashMap::new();
+    let mut receipts = HashMap::<MilestoneIndex, Vec<Receipt>>::new();
 
-    for _ in 0usize..10usize {
-        let (index, receipt) = (rand_milestone_index(), rand_receipt());
-        Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(&storage, &mut batch, &(index, receipt.clone()), &())
-            .unwrap();
-        receipts.insert(index, receipt);
+    for _ in 0usize..5usize {
+        let index = rand_milestone_index();
+        for _ in 0usize..5usize {
+            let receipt = rand_receipt();
+            Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(&storage, &mut batch, &(index, receipt.clone()), &())
+                .unwrap();
+            receipts.entry(index).or_default().push(receipt);
+        }
     }
 
     storage.batch_commit(batch, true).await.unwrap();
@@ -99,11 +98,11 @@ async fn milestone_index_to_receipt_access() {
     let mut count = 0;
 
     while let Some(((index, message_id), _)) = stream.next().await {
-        assert_eq!(receipts.get(&index).unwrap(), &message_id);
+        assert!(receipts.get(&index).unwrap().contains(&message_id));
         count += 1;
     }
 
-    assert_eq!(count, receipts.len());
+    assert_eq!(count, receipts.iter().fold(0, |acc, v| acc + v.1.len()));
 
     Truncate::<(MilestoneIndex, Receipt), ()>::truncate(&storage)
         .await
