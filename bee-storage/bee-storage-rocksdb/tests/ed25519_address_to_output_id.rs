@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{ address::Ed25519Address, output::OutputId};
+use bee_message::{address::Ed25519Address, output::OutputId};
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend::StorageBackend,
@@ -29,11 +29,13 @@ async fn ed25519_address_to_output_id_access() {
             .await
             .unwrap()
     );
-    assert!(Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&storage, &address)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&storage, &address)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     Insert::<(Ed25519Address, OutputId), ()>::insert(&storage, &(address, output_id), &())
         .await
@@ -61,11 +63,13 @@ async fn ed25519_address_to_output_id_access() {
             .await
             .unwrap()
     );
-    assert!(Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&storage, &address)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&storage, &address)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     let mut batch = Storage::batch_begin();
 

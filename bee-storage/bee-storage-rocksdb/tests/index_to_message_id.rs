@@ -29,11 +29,13 @@ async fn index_to_message_id_access() {
             .await
             .unwrap()
     );
-    assert!(Fetch::<HashedIndex, Vec<MessageId>>::fetch(&storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<HashedIndex, Vec<MessageId>>::fetch(&storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     Insert::<(HashedIndex, MessageId), ()>::insert(&storage, &(index, message_id), &())
         .await
@@ -61,11 +63,13 @@ async fn index_to_message_id_access() {
             .await
             .unwrap()
     );
-    assert!(Fetch::<HashedIndex, Vec<MessageId>>::fetch(&storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<HashedIndex, Vec<MessageId>>::fetch(&storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     let mut batch = Storage::batch_begin();
 
