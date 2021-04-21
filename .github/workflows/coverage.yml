@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - dev-message-coverage
       - stable
     paths:
       - '**.rs'
