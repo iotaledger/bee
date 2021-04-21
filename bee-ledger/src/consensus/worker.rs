@@ -137,7 +137,7 @@ where
         None
     };
 
-    storage::apply_output_diffs(
+    storage::apply_milestone(
         &*storage,
         metadata.index,
         &metadata.created_outputs,

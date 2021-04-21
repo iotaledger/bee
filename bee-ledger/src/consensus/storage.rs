@@ -208,7 +208,7 @@ pub async fn store_balance_diffs_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub async fn apply_output_diffs<B: StorageBackend>(
+pub async fn apply_milestone<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
@@ -269,11 +269,13 @@ pub async fn apply_output_diffs<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub async fn rollback_output_diffs<B: StorageBackend>(
+pub async fn rollback_milestone<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
+    _balance_diffs: &BalanceDiffs,
+    _migration: &Option<Migration>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
