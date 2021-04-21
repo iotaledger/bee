@@ -3,4 +3,6 @@
 
 // #![deny(missing_docs, warnings)]
 
+#[cfg(feature = "endpoints")]
+pub mod endpoints;
 pub mod types;
