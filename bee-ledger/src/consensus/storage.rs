@@ -275,11 +275,11 @@ pub async fn rollback_milestone<B: StorageBackend>(
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
     _balance_diffs: &BalanceDiffs,
-    _migration: &Option<Migration>,
+    migration: &Option<Migration>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &((index - MilestoneIndex(1)).into()))
+    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &((index - 1).into()))
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     for (output_id, _) in created_outputs.iter() {
@@ -296,10 +296,17 @@ pub async fn rollback_milestone<B: StorageBackend>(
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
+    if let Some(migration) = migration {
+        Batch::<(MilestoneIndex, Receipt), ()>::batch_delete(
+            storage,
+            &mut batch,
+            &(migration.receipt().inner().migrated_at(), migration.receipt().clone()),
+        )
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+    }
+
     Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, &mut batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
-
-    // TODO add receipts and treasury outputs
 
     storage
         .batch_commit(batch, true)
