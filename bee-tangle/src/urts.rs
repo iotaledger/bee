@@ -142,6 +142,10 @@ impl UrtsTipPool {
         }
 
         let smi = *tangle.get_solid_milestone_index();
+
+        // The tip pool only works with solid tips. Therefore, all tips added to the pool can be considered to solid.
+        // The solid flag will be set together with omrsi and ymrsi values. Therefore, when a message is solid, omrsi
+        // and ymrsi values are available. Therefore, unwrapping here is fine.
         let omrsi = *tangle.omrsi(&message_id).await.unwrap().index();
         let ymrsi = *tangle.ymrsi(&message_id).await.unwrap().index();
 

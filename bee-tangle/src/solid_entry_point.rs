@@ -1,8 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! The solid_entry_point module defined the [SolidEntryPoint] type which represents
-//! an already solidified message in the tangle.
+//! A SolidEntryPoint is a [`MessageId`](crate::MessageId) of a message even if we do not have them
+//! or their past in the database. They often come from a snapshot file and allow a node to solidify
+//! without needing the full tangle history.
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::MessageId;
@@ -12,7 +13,7 @@ use ref_cast::RefCast;
 use core::ops::Deref;
 
 /// A SolidEntryPoint is a [`MessageId`](crate::MessageId) of a message even if we do not have them
-/// or their past in the database. The often come from a snapshot file and allow a node to solidify
+/// or their past in the database. They often come from a snapshot file and allow a node to solidify
 /// without needing the full tangle history.
 ///
 /// This is a type wrapper around a [`MessageId`](crate::MessageId) to differentiate it from a

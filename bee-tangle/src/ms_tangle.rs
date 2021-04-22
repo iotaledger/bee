@@ -65,7 +65,6 @@ impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
 
     async fn update_approvers(&self, msg: MessageId, approvers: &[MessageId]) -> Result<(), Self::Error> {
         trace!("Attempted to update approvers for message {:?}", msg);
-        // self.storage.insert(&msg, approvers).await
         for approver in approvers {
             self.storage.insert(&(msg, *approver), &()).await?;
         }
@@ -89,9 +88,9 @@ impl<B: StorageBackend> StorageHooks<B> {
 /// A Tangle wrapper designed to encapsulate milestone state.
 pub struct MsTangle<B> {
     config: TangleConfig,
-    pub(crate) inner: Tangle<MessageMetadata, StorageHooks<B>>,
+    inner: Tangle<MessageMetadata, StorageHooks<B>>,
     milestones: Mutex<HashMap<MilestoneIndex, Milestone>>,
-    pub(crate) solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
+    solid_entry_points: Mutex<HashMap<SolidEntryPoint, MilestoneIndex>>,
     latest_milestone_index: AtomicU32,
     solid_milestone_index: AtomicU32,
     confirmed_milestone_index: AtomicU32,
@@ -171,7 +170,6 @@ impl<B: StorageBackend> MsTangle<B> {
             .insert_milestone(idx, &milestone)
             .await
             .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
-        // TODO can there be a race condition between 2 ops ?
         self.milestones.lock().await.insert(idx, milestone);
     }
 
