@@ -1,7 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::storage::*;
+use crate::{
+    column_families::*,
+    storage::{Storage, StorageBackend},
+};
 
 use bee_ledger::{
     snapshot::info::SnapshotInfo,

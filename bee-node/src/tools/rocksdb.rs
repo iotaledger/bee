@@ -16,7 +16,9 @@ use bee_storage::{
     access::{AsStream, Exist, Fetch},
     backend::StorageBackend,
 };
-use bee_storage_rocksdb::{config::RocksDbConfigBuilder, error::Error as BackendError, storage::*, system::System};
+use bee_storage_rocksdb::{
+    column_families::*, config::RocksDbConfigBuilder, error::Error as BackendError, storage::Storage, system::System,
+};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
 };
