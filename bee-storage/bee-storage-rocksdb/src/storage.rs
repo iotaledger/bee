@@ -38,14 +38,12 @@ impl Storage {
 
         let cf_message_id_to_metadata = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_METADATA, Options::default());
 
-        let prefix_extractor = SliceTransform::create_fixed_prefix(MESSAGE_ID_LENGTH);
         let mut options = Options::default();
-        options.set_prefix_extractor(prefix_extractor);
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(MESSAGE_ID_LENGTH));
         let cf_message_id_to_message_id = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE_ID, options);
 
-        let prefix_extractor = SliceTransform::create_fixed_prefix(INDEXATION_PADDED_INDEX_LENGTH);
         let mut options = Options::default();
-        options.set_prefix_extractor(prefix_extractor);
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(INDEXATION_PADDED_INDEX_LENGTH));
         let cf_index_to_message_id = ColumnFamilyDescriptor::new(CF_INDEX_TO_MESSAGE_ID, options);
 
         let cf_output_id_to_created_output =
@@ -56,9 +54,8 @@ impl Storage {
 
         let cf_output_id_unspent = ColumnFamilyDescriptor::new(CF_OUTPUT_ID_UNSPENT, Options::default());
 
-        let prefix_extractor = SliceTransform::create_fixed_prefix(ED25519_ADDRESS_LENGTH);
         let mut options = Options::default();
-        options.set_prefix_extractor(prefix_extractor);
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(ED25519_ADDRESS_LENGTH));
         let cf_ed25519_address_to_output_id = ColumnFamilyDescriptor::new(CF_ED25519_ADDRESS_TO_OUTPUT_ID, options);
 
         let cf_ledger_index = ColumnFamilyDescriptor::new(CF_LEDGER_INDEX, Options::default());
@@ -76,24 +73,24 @@ impl Storage {
 
         let cf_address_to_balance = ColumnFamilyDescriptor::new(CF_ADDRESS_TO_BALANCE, Options::default());
 
-        let prefix_extractor = SliceTransform::create_fixed_prefix(std::mem::size_of::<MilestoneIndex>());
         let mut options = Options::default();
-        options.set_prefix_extractor(prefix_extractor);
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(
+            std::mem::size_of::<MilestoneIndex>(),
+        ));
         let cf_milestone_index_to_unconfirmed_message =
             ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE, options);
 
-        let prefix_extractor = SliceTransform::create_fixed_prefix(std::mem::size_of::<MilestoneIndex>());
         let mut options = Options::default();
-        options.set_prefix_extractor(prefix_extractor);
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(
+            std::mem::size_of::<MilestoneIndex>(),
+        ));
         let cf_milestone_index_to_receipt = ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_RECEIPT, options);
 
-        let prefix_extractor = SliceTransform::create_fixed_prefix(std::mem::size_of::<bool>());
         let mut options = Options::default();
-        options.set_prefix_extractor(prefix_extractor);
+        options.set_prefix_extractor(SliceTransform::create_fixed_prefix(std::mem::size_of::<bool>()));
         let cf_spent_to_treasury = ColumnFamilyDescriptor::new(CF_SPENT_TO_TREASURY_OUTPUT, options);
 
         let mut opts = Options::default();
-
         opts.create_if_missing(config.create_if_missing);
         opts.create_missing_column_families(config.create_missing_column_families);
         if config.enable_statistics {
@@ -124,28 +121,30 @@ impl Storage {
         env.set_high_priority_background_threads(config.env.set_high_priority_background_threads);
         opts.set_env(&env);
 
-        let column_familes = vec![
-            cf_system,
-            cf_message_id_to_message,
-            cf_message_id_to_metadata,
-            cf_message_id_to_message_id,
-            cf_index_to_message_id,
-            cf_output_id_to_created_output,
-            cf_output_id_to_consumed_output,
-            cf_output_id_unspent,
-            cf_ed25519_address_to_output_id,
-            cf_ledger_index,
-            cf_milestone_index_to_milestone,
-            cf_snapshot_info,
-            cf_solid_entry_point_to_milestone_index,
-            cf_milestone_index_to_output_diff,
-            cf_address_to_balance,
-            cf_milestone_index_to_unconfirmed_message,
-            cf_milestone_index_to_receipt,
-            cf_spent_to_treasury,
-        ];
-
-        let db = DB::open_cf_descriptors(&opts, config.path, column_familes)?;
+        let db = DB::open_cf_descriptors(
+            &opts,
+            config.path,
+            vec![
+                cf_system,
+                cf_message_id_to_message,
+                cf_message_id_to_metadata,
+                cf_message_id_to_message_id,
+                cf_index_to_message_id,
+                cf_output_id_to_created_output,
+                cf_output_id_to_consumed_output,
+                cf_output_id_unspent,
+                cf_ed25519_address_to_output_id,
+                cf_ledger_index,
+                cf_milestone_index_to_milestone,
+                cf_snapshot_info,
+                cf_solid_entry_point_to_milestone_index,
+                cf_milestone_index_to_output_diff,
+                cf_address_to_balance,
+                cf_milestone_index_to_unconfirmed_message,
+                cf_milestone_index_to_receipt,
+                cf_spent_to_treasury,
+            ],
+        )?;
 
         let mut flushopts = FlushOptions::new();
         flushopts.set_wait(true);
@@ -166,7 +165,6 @@ impl StorageBackend for Storage {
     type Config = RocksDbConfig;
     type Error = Error;
 
-    /// It starts RocksDb instance and then initializes the required column familes.
     async fn start(config: Self::Config) -> Result<Self, Self::Error> {
         let storage = Storage {
             config: config.storage.clone(),
@@ -196,8 +194,6 @@ impl StorageBackend for Storage {
         Ok(storage)
     }
 
-    /// It shutdowns RocksDb instance.
-    /// Note: the shutdown is done through flush method and then droping the storage object.
     async fn shutdown(self) -> Result<(), Self::Error> {
         self.set_health(StorageHealth::Healthy).await?;
 
