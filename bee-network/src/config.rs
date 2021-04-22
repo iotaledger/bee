@@ -27,11 +27,42 @@ pub struct NetworkConfig {
 }
 
 impl NetworkConfig {
+    /// Creates a new `NetworkConfig`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Creates a new `NetworkConfig` with a specific port.
+    pub fn new_with_port(port: u16) -> Self {
+        let mut this = Self::default();
+        this.change_port(port);
+        this
+    }
+
     /// Returns a network config builder.
     pub fn build() -> NetworkConfigBuilder {
         NetworkConfigBuilder::new()
     }
+
+    /// Changes the port.
+    fn change_port(&mut self, port: u16) {
+        self.bind_multiaddr.pop().unwrap();
+        self.bind_multiaddr.push(Protocol::Tcp(port));
+    }
 }
+
+impl Default for NetworkConfig {
+    fn default() -> Self {
+        Self {
+            // `unwrap`ping the default never panics
+            bind_multiaddr: Multiaddr::from_str(DEFAULT_BIND_MULTIADDR).unwrap(),
+            reconnect_interval_secs: DEFAULT_RECONNECT_INTERVAL_SECS,
+            max_unknown_peers: DEFAULT_MAX_UNKOWN_PEERS,
+            peers: Vec::new(),
+        }
+    }
+}
+
 /// A network configuration builder.
 #[derive(Default, Deserialize)]
 pub struct NetworkConfigBuilder {

@@ -3,7 +3,7 @@
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
-use bee_network::NetworkServiceController;
+use bee_network::NetworkCommandSender;
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorkerEvent, PeerManager, RequestedMessages,
 };
@@ -62,10 +62,10 @@ pub(crate) fn with_peer_manager(
     warp::any().map(move || peer_manager.clone())
 }
 
-pub(crate) fn with_network_controller(
-    network_controller: ResourceHandle<NetworkServiceController>,
-) -> impl Filter<Extract = (ResourceHandle<NetworkServiceController>,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || network_controller.clone())
+pub(crate) fn with_network_command_sender(
+    command_sender: ResourceHandle<NetworkCommandSender>,
+) -> impl Filter<Extract = (ResourceHandle<NetworkCommandSender>,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || command_sender.clone())
 }
 
 pub(crate) fn with_node_info(

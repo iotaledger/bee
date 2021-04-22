@@ -24,6 +24,7 @@ pub enum PeerRelation {
     Unknown,
 }
 
+// TODO: use `matches!`
 impl PeerRelation {
     /// Returns whether the peer is known.
     pub fn is_known(&self) -> bool {

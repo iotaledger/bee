@@ -48,13 +48,13 @@ pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorker
 pub(crate) use status::StatusWorker;
 pub(crate) use tip_pool_cleaner::TipPoolCleanerWorker;
 
-use bee_network::NetworkListener;
+use bee_network::NetworkEventReceiver;
 use bee_runtime::node::{Node, NodeBuilder};
 
 pub fn init<N: Node>(
     config: config::ProtocolConfig,
     network_id: u64,
-    events: NetworkListener,
+    events: NetworkEventReceiver,
     node_builder: N::Builder,
 ) -> N::Builder
 where

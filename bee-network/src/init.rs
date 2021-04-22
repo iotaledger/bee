@@ -13,7 +13,7 @@ use super::{
     },
     service::{
         command::{command_channel, Command},
-        controller::NetworkServiceController,
+        controller::{NetworkCommandSender, NetworkEventReceiver},
         event::{event_channel, Event, InternalEvent},
         service::{NetworkService, NetworkServiceConfig},
     },
@@ -22,7 +22,6 @@ use super::{
 
 use libp2p::identity;
 use log::info;
-use tokio::sync::mpsc::UnboundedReceiver;
 
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
@@ -33,24 +32,25 @@ pub(crate) static RECONNECT_INTERVAL_SECS: AtomicU64 = AtomicU64::new(DEFAULT_RE
 pub(crate) static NETWORK_ID: AtomicU64 = AtomicU64::new(0);
 pub(crate) static MAX_UNKNOWN_PEERS: AtomicUsize = AtomicUsize::new(0);
 
-/// A type that receives any event published by the networking layer.
-pub type NetworkListener = UnboundedReceiver<Event>;
-
 /// Initializes the networking layer.
-#[cfg(feature = "standalone")]
-#[cfg(not(feature = "integrated"))]
-pub async fn init(config: NetworkConfig, local_keys: Keypair, network_id: u64) -> NetworkListener {
-    todo!("headleass init")
+// #[cfg(feature = "standalone")]
+// #[cfg(not(feature = "integrated"))]
+pub async fn __init(
+    config: NetworkConfig,
+    keys: Keypair,
+    network_id: u64,
+) -> (NetworkCommandSender, NetworkEventReceiver) {
+    todo!("standalone init")
 }
 
 /// Initializes the networking layer.
 #[cfg(feature = "integrated")]
 pub async fn init<N: Node>(
     config: NetworkConfig,
-    local_keys: Keypair,
+    keys: Keypair,
     network_id: u64,
     mut node_builder: N::Builder,
-) -> (N::Builder, NetworkListener) {
+) -> (N::Builder, NetworkEventReceiver) {
     let NetworkConfig {
         bind_multiaddr,
         reconnect_interval_secs,
@@ -62,7 +62,8 @@ pub async fn init<N: Node>(
     NETWORK_ID.swap(network_id, Ordering::Relaxed);
     MAX_UNKNOWN_PEERS.swap(max_unknown_peers, Ordering::Relaxed);
 
-    let local_keys = identity::Keypair::Ed25519(local_keys);
+    // TODO: Create event
+    let local_keys = identity::Keypair::Ed25519(keys);
     let local_peer_id = PeerId::from_public_key(local_keys.public());
     info!("Local peer id: {}", local_peer_id);
 
@@ -98,11 +99,12 @@ pub async fn init<N: Node>(
         internal_event_receiver,
     };
 
-    let network_service_controller = NetworkServiceController::new(command_sender);
+    let network_command_sender = NetworkCommandSender::new(command_sender);
+    let network_event_receiver = NetworkEventReceiver::new(event_receiver);
 
     // TODO: make this a closure that gets executed only when everything has been initialized!
     for peer in peers {
-        network_service_controller
+        network_command_sender
             .send(Command::AddPeer {
                 peer_id: peer.peer_id,
                 multiaddr: peer.multiaddr,
@@ -115,7 +117,7 @@ pub async fn init<N: Node>(
     node_builder = node_builder
         .with_worker_cfg::<NetworkService>(service_config)
         .with_worker_cfg::<NetworkHost>(host_config)
-        .with_resource(network_service_controller);
+        .with_resource(network_command_sender);
 
-    (node_builder, event_receiver)
+    (node_builder, network_event_receiver)
 }

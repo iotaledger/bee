@@ -16,7 +16,7 @@ use storage::StorageBackend;
 
 use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
-use bee_network::NetworkServiceController;
+use bee_network::NetworkCommandSender;
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorker, PeerManager, PeerManagerResWorker,
     RequestedMessages,
@@ -81,7 +81,7 @@ where
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();
         let requested_messages = node.resource::<RequestedMessages>();
         let peer_manager = node.resource::<PeerManager>();
-        let network_controller = node.resource::<NetworkServiceController>();
+        let network_controller = node.resource::<NetworkCommandSender>();
         let node_info = node.info();
         let bus = node.bus();
 

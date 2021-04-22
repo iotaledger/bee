@@ -13,7 +13,7 @@ mod peer;
 mod service;
 mod swarm;
 mod types;
-mod util;
+pub mod util;
 
 // Re-Exports
 #[cfg(feature = "standalone")]
@@ -32,8 +32,13 @@ pub use self::types::{PeerInfo, PeerRelation};
 #[cfg(feature = "standalone")]
 pub use crate::{
     config::{NetworkConfig, NetworkConfigBuilder},
-    init::{init, NetworkListener},
+    init::{__init, init},
     network::{host::NetworkHost, meta::Origin},
-    service::{command::Command, controller::NetworkServiceController, event::Event, service::NetworkService},
+    service::{
+        command::Command,
+        controller::{NetworkCommandSender, NetworkEventReceiver},
+        event::Event,
+        service::NetworkService,
+    },
     swarm::protocols::gossip::{GossipReceiver, GossipSender},
 };

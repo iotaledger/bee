@@ -14,6 +14,7 @@ use libp2p::{Multiaddr, PeerId};
 use tokio::sync::mpsc;
 
 pub type EventSender = mpsc::UnboundedSender<Event>;
+pub type EventReceiver = mpsc::UnboundedReceiver<Event>;
 pub type InternalEventReceiver = mpsc::UnboundedReceiver<InternalEvent>;
 pub type InternalEventSender = mpsc::UnboundedSender<InternalEvent>;
 
@@ -25,6 +26,16 @@ pub fn event_channel<T>() -> (mpsc::UnboundedSender<T>, mpsc::UnboundedReceiver<
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Event {
+    /// An address was bound.
+    AddressBound {
+        /// The assigned bind address.
+        address: Multiaddr,
+    },
+    /// The local peer was created.
+    PeerCreated {
+        /// The created peer id from the Ed25519 keypair.
+        peer_id: PeerId,
+    },
     /// A peer was added.
     PeerAdded {
         /// The peer's id.
@@ -63,6 +74,7 @@ pub enum Event {
         /// The peer's address.
         address: Multiaddr,
     },
+    // TODO: remove
     /// A new peer has been discovered.
     PeerDiscovered {
         /// The peer's id.

@@ -6,7 +6,7 @@ pub mod health;
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
-use bee_network::NetworkServiceController;
+use bee_network::NetworkCommandSender;
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorkerEvent, PeerManager, RequestedMessages,
 };
@@ -29,7 +29,7 @@ pub(crate) fn filter_all<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
     peer_manager: ResourceHandle<PeerManager>,
-    network_controller: ResourceHandle<NetworkServiceController>,
+    network_command_sender: ResourceHandle<NetworkCommandSender>,
     node_info: ResourceHandle<NodeInfo>,
     bus: ResourceHandle<Bus<'static>>,
     message_requester: MessageRequesterWorker,
@@ -46,7 +46,7 @@ pub(crate) fn filter_all<B: StorageBackend>(
         rest_api_config,
         protocol_config,
         peer_manager.clone(),
-        network_controller,
+        network_command_sender,
         node_info,
         bus,
         message_requester,

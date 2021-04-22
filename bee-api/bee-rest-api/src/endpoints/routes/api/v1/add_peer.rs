@@ -4,7 +4,7 @@
 use crate::{
     endpoints::{
         config::ROUTE_ADD_PEER,
-        filters::{with_network_controller, with_peer_manager},
+        filters::{with_network_command_sender, with_peer_manager},
         permission::has_permission,
         rejection::CustomRejection,
     },
@@ -15,7 +15,7 @@ use crate::{
     },
 };
 
-use bee_network::{Command::AddPeer, Multiaddr, NetworkServiceController, PeerId, PeerRelation, Protocol};
+use bee_network::{Command::AddPeer, Multiaddr, NetworkCommandSender, PeerId, PeerRelation, Protocol};
 use bee_protocol::workers::PeerManager;
 use bee_runtime::resource::ResourceHandle;
 
@@ -32,21 +32,21 @@ pub(crate) fn filter(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
     peer_manager: ResourceHandle<PeerManager>,
-    network_controller: ResourceHandle<NetworkServiceController>,
+    network_command_sender: ResourceHandle<NetworkCommandSender>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::post())
         .and(has_permission(ROUTE_ADD_PEER, public_routes, allowed_ips))
         .and(warp::body::json())
         .and(with_peer_manager(peer_manager))
-        .and(with_network_controller(network_controller))
+        .and(with_network_command_sender(network_command_sender))
         .and_then(add_peer)
 }
 
 pub(crate) async fn add_peer(
     value: JsonValue,
     peer_manager: ResourceHandle<PeerManager>,
-    network_controller: ResourceHandle<NetworkServiceController>,
+    network_controller: ResourceHandle<NetworkCommandSender>,
 ) -> Result<impl Reply, Rejection> {
     let multi_address_v = &value["multiAddress"];
     let alias_v = &value["alias"];
