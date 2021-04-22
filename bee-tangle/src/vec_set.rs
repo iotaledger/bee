@@ -1,7 +1,5 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
-#![allow(dead_code)]
 
 use std::{cmp::Eq, ops::Deref};
 
@@ -17,10 +15,6 @@ impl<T> Default for VecSet<T> {
 }
 
 impl<T> VecSet<T> {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     pub fn insert(&mut self, item: T) -> bool
     where
         T: Eq,

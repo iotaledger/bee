@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::flags::Flags;
@@ -117,8 +117,8 @@ impl MessageMetadata {
         self.reference_timestamp
     }
 
-    /// Solidify this message at the current system time.
-    pub fn solidify(&mut self) {
+    /// Mark this message as solid at the current system time.
+    pub fn mark_solid(&mut self) {
         self.flags.set_solid(true);
         self.solidification_timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -234,7 +234,7 @@ impl IndexId {
     }
 
     /// Update this `IndexId` with a new milestone index.
-    pub fn update(&mut self, index: MilestoneIndex) {
+    pub fn set_index(&mut self, index: MilestoneIndex) {
         self.0 = index;
     }
 }

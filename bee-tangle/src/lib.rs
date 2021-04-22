@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! A crate that contains foundational building blocks for the IOTA Tangle.
@@ -28,8 +28,8 @@ pub mod urts;
 /// The overall `TangleWorker` type. Used as part of the bee runtime in a node.
 pub mod worker;
 
-mod vec_set;
 mod tangle;
+mod vec_set;
 mod vertex;
 
 pub use ms_tangle::MsTangle;

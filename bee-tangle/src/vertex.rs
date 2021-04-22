@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{MessageRef, VecSet};
@@ -91,32 +91,3 @@ where
         self.eviction_blocks == 0
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use bee_test::transaction::create_random_tx;
-//
-//     #[test]
-//     fn create_new_vertex() {
-//         let (_, tx) = create_random_tx();
-//         let metadata = 0b0000_0001u8;
-//
-//         let vtx = Vertex::new(tx.clone(), metadata);
-//
-//         assert_eq!(tx.parent1(), vtx.parent1());
-//         assert_eq!(tx.parent2(), vtx.parent2());
-//         assert_eq!(tx, **vtx.message());
-//         assert_eq!(metadata, *vtx.metadata());
-//     }
-//
-//     #[test]
-//     fn update_vertex_meta() {
-//         let (_, tx) = create_random_tx();
-//
-//         let mut vtx = Vertex::new(tx, 0b0000_0001u8);
-//         *vtx.metadata_mut() = 0b1111_1110u8;
-//
-//         assert_eq!(0b1111_1110u8, *vtx.metadata());
-//     }
-// }

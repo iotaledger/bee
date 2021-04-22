@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::milestone::{Milestone, MilestoneIndex};
@@ -32,8 +32,14 @@ pub struct ConfirmedMilestoneChanged {
 
 /// An event that indicates that a snapshot milestone has had an index change.
 #[derive(Clone)]
-pub struct SnapshotMilestoneIndexChanged(pub MilestoneIndex);
+pub struct SnapshotMilestoneIndexChanged {
+    /// The index of the milestone
+    pub index: MilestoneIndex,
+}
 
 /// An event that indicates that a pruning milestone has had an index change.
 #[derive(Clone)]
-pub struct PruningMilestoneIndexChanged(pub MilestoneIndex);
+pub struct PruningMilestoneIndexChanged {
+    /// The index of the milestone
+    pub index: MilestoneIndex,
+}

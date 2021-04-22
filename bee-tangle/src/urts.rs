@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{ms_tangle::MsTangle, storage::StorageBackend};
@@ -95,8 +95,11 @@ impl UrtsTipPool {
     }
 
     fn check_retention_rules_for_parent(&mut self, parent: &MessageId) {
+        // For every tip we add to the pool we call `add_child()`. `add_child()` makes sure that the parents of the tip
+        // are present in the pool. Since `check_retention_rules_for_parent()` will be called after `add_child()` we
+        // can be sure that the parents do exist. Therefore, unwrapping the parents here is fine.
         if self.non_lazy_tips.len() > MAX_LIMIT_NON_LAZY as usize
-            || self.tips.get(parent).unwrap().children.len() as u8 > MAX_NUM_CHILDREN
+            || self.tips.get(parent).unwrap().children.len() > MAX_NUM_CHILDREN as usize
             || self
                 .tips
                 .get(parent)
@@ -104,8 +107,8 @@ impl UrtsTipPool {
                 .time_first_child
                 .unwrap()
                 .elapsed()
-                .as_secs() as u8
-                > MAX_AGE_SECONDS_AFTER_FIRST_CHILD
+                .as_secs()
+                > MAX_AGE_SECONDS_AFTER_FIRST_CHILD as u64
         {
             self.tips.remove(parent);
             self.non_lazy_tips.remove(parent);
@@ -184,7 +187,7 @@ impl UrtsTipPool {
         let mut to_remove = Vec::new();
         for (tip, metadata) in &self.tips {
             if let Some(age) = metadata.time_first_child {
-                if age.elapsed().as_secs() as u8 > MAX_AGE_SECONDS_AFTER_FIRST_CHILD {
+                if age.elapsed().as_secs() > MAX_AGE_SECONDS_AFTER_FIRST_CHILD as u64 {
                     to_remove.push(*tip);
                 }
             }
