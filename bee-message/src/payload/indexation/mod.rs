@@ -10,7 +10,8 @@ use bee_common::packable::{Packable, Read, Write};
 use alloc::boxed::Box;
 use core::ops::RangeInclusive;
 
-const INDEXATION_PADDED_INDEX_LENGTH: usize = 64;
+/// Length of an indexation padded index.
+pub const INDEXATION_PADDED_INDEX_LENGTH: usize = 64;
 const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=INDEXATION_PADDED_INDEX_LENGTH;
 
 /// A payload which holds an index and associated data.
