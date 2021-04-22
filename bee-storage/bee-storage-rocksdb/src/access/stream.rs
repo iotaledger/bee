@@ -56,10 +56,8 @@ macro_rules! impl_stream {
             type Stream = StorageStream<'a, $key, $value>;
 
             async fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
-                let cf = self.cf_handle($cf)?;
-
                 Ok(StorageStream::new(
-                    self.inner.iterator_cf(cf, IteratorMode::Start),
+                    self.inner.iterator_cf(self.cf_handle($cf)?, IteratorMode::Start),
                     self.config.iteration_budget,
                 ))
             }

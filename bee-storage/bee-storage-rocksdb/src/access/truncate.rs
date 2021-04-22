@@ -51,121 +51,35 @@ fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as S
     Ok(())
 }
 
-#[async_trait::async_trait]
-impl Truncate<MessageId, Message> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_MESSAGE_ID_TO_MESSAGE)
-    }
+macro_rules! impl_truncate {
+    ($key:ty, $value:ty, $cf:expr) => {
+        #[async_trait::async_trait]
+        impl Truncate<$key, $value> for Storage {
+            async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
+                truncate(self, $cf)
+            }
+        }
+    };
 }
 
-#[async_trait::async_trait]
-impl Truncate<MessageId, MessageMetadata> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_MESSAGE_ID_TO_METADATA)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<(MessageId, MessageId), ()> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_MESSAGE_ID_TO_MESSAGE_ID)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<(PaddedIndex, MessageId), ()> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_INDEX_TO_MESSAGE_ID)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<OutputId, CreatedOutput> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_OUTPUT_ID_TO_CREATED_OUTPUT)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<OutputId, ConsumedOutput> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<Unspent, ()> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_OUTPUT_ID_UNSPENT)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<(Ed25519Address, OutputId), ()> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_ED25519_ADDRESS_TO_OUTPUT_ID)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<(), LedgerIndex> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_LEDGER_INDEX)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<MilestoneIndex, Milestone> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_MILESTONE_INDEX_TO_MILESTONE)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<(), SnapshotInfo> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_SNAPSHOT_INFO)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<SolidEntryPoint, MilestoneIndex> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<MilestoneIndex, OutputDiff> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<Address, Balance> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_ADDRESS_TO_BALANCE)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<(MilestoneIndex, Receipt), ()> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_MILESTONE_INDEX_TO_RECEIPT)
-    }
-}
-
-#[async_trait::async_trait]
-impl Truncate<(bool, TreasuryOutput), ()> for Storage {
-    async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-        truncate(self, CF_SPENT_TO_TREASURY_OUTPUT)
-    }
-}
+impl_truncate!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
+impl_truncate!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
+impl_truncate!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
+impl_truncate!((PaddedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
+impl_truncate!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
+impl_truncate!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
+impl_truncate!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
+impl_truncate!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
+impl_truncate!((), LedgerIndex, CF_LEDGER_INDEX);
+impl_truncate!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
+impl_truncate!((), SnapshotInfo, CF_SNAPSHOT_INFO);
+impl_truncate!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
+impl_truncate!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
+impl_truncate!(Address, Balance, CF_ADDRESS_TO_BALANCE);
+impl_truncate!(
+    (MilestoneIndex, UnconfirmedMessage),
+    (),
+    CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE
+);
+impl_truncate!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
+impl_truncate!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
