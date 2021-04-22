@@ -3,20 +3,15 @@
 
 //! Module describing the indexation payload.
 
-mod hash;
-
-pub use hash::{HashedIndex, HASHED_INDEX_LENGTH};
-
 use crate::{Error, MESSAGE_LENGTH_MAX};
 
 use bee_common::packable::{Packable, Read, Write};
 
-use crypto::hashes::{blake2b::Blake2b256, Digest};
-
 use alloc::boxed::Box;
 use core::ops::RangeInclusive;
 
-const INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=64;
+const INDEXATION_PADDED_INDEX_LENGTH: usize = 64;
+const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=INDEXATION_PADDED_INDEX_LENGTH;
 
 /// A payload which holds an index and associated data.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -32,7 +27,7 @@ impl IndexationPayload {
 
     /// Creates a new `IndexationPayload`.
     pub fn new(index: &[u8], data: &[u8]) -> Result<Self, Error> {
-        if !INDEX_LENGTH_RANGE.contains(&index.len()) {
+        if !INDEXATION_INDEX_LENGTH_RANGE.contains(&index.len()) {
             return Err(Error::InvalidIndexationIndexLength(index.len()));
         }
 
@@ -51,14 +46,16 @@ impl IndexationPayload {
         &self.index
     }
 
+    /// Returns the padded index of an `IndexationPayload`.
+    pub fn padded_index(&self) -> [u8; INDEXATION_PADDED_INDEX_LENGTH] {
+        let mut padded_index = [0u8; INDEXATION_PADDED_INDEX_LENGTH];
+        padded_index[..self.index.len()].copy_from_slice(&self.index);
+        padded_index
+    }
+
     /// Returns the data of an `IndexationPayload`.
     pub fn data(&self) -> &[u8] {
         &self.data
-    }
-
-    /// Hashes an `IndexationPayload` into an `HashedIndex`.
-    pub fn hash(&self) -> HashedIndex {
-        HashedIndex::new(Blake2b256::digest(&self.index).into())
     }
 }
 
@@ -82,7 +79,7 @@ impl Packable for IndexationPayload {
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let index_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
 
-        if CHECK && !INDEX_LENGTH_RANGE.contains(&index_len) {
+        if CHECK && !INDEXATION_INDEX_LENGTH_RANGE.contains(&index_len) {
             return Err(Error::InvalidIndexationIndexLength(index_len));
         }
 

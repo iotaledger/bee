@@ -19,6 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.1.3 - 2021-04-22
+
+### Changed
+
+- `IndexationPayload::hash()` has been replaced by `IndexationPayload::padded_index()`;
+
+### Removed
+
+- `HashedIndex`;
+
 ## 0.1.2 - 2021-04-18
 
 ### Removed
