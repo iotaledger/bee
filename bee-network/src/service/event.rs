@@ -74,14 +74,6 @@ pub enum Event {
         /// The peer's address.
         address: Multiaddr,
     },
-    // TODO: remove
-    /// A new peer has been discovered.
-    PeerDiscovered {
-        /// The peer's id.
-        peer_id: PeerId,
-        /// The peer's address.
-        address: Multiaddr,
-    },
     /// A command failed.
     CommandFailed {
         /// The command that failed.
