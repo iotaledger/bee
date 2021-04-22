@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, storage::*, system::System};
+use crate::{storage::*, system::System};
 
 use bee_common::packable::Packable;
 use bee_ledger::{
@@ -26,10 +26,7 @@ fn insert<K: AsRef<[u8]>, V: AsRef<[u8]>>(
     key: K,
     value: V,
 ) -> Result<(), <Storage as StorageBackend>::Error> {
-    let cf = storage
-        .inner
-        .cf_handle(cf_str)
-        .ok_or(Error::UnknownColumnFamily(cf_str))?;
+    let cf = storage.cf_handle(cf_str)?;
 
     storage.inner.put_cf(cf, key, value)?;
 

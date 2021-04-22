@@ -20,7 +20,8 @@ use bee_message::{
 
 use async_trait::async_trait;
 use rocksdb::{
-    ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, Options, SliceTransform, DB,
+    ColumnFamily, ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, Options,
+    SliceTransform, DB,
 };
 
 pub const CF_SYSTEM: &str = "system";
@@ -170,6 +171,10 @@ impl Storage {
         db.flush_cf_opt(db.cf_handle(CF_SYSTEM).unwrap(), &flushopts)?;
 
         Ok(db)
+    }
+
+    pub(crate) fn cf_handle(&self, cf_str: &'static str) -> Result<&ColumnFamily, Error> {
+        self.inner.cf_handle(cf_str).ok_or(Error::UnknownColumnFamily(cf_str))
     }
 }
 

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, storage::*, system::System};
+use crate::{storage::*, system::System};
 
 use bee_common::packable::Packable;
 use bee_ledger::{
@@ -56,7 +56,7 @@ macro_rules! impl_stream {
             type Stream = StorageStream<'a, $key, $value>;
 
             async fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
-                let cf = self.inner.cf_handle($cf).ok_or(Error::UnknownColumnFamily($cf))?;
+                let cf = self.cf_handle($cf)?;
 
                 Ok(StorageStream::new(
                     self.inner.iterator_cf(cf, IteratorMode::Start),

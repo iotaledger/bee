@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, storage::*};
+use crate::storage::*;
 
 use bee_ledger::{
     snapshot::info::SnapshotInfo,
@@ -20,10 +20,8 @@ use bee_tangle::{
 };
 
 fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as StorageBackend>::Error> {
-    let cf_handle = storage
-        .inner
-        .cf_handle(cf_str)
-        .ok_or(Error::UnknownColumnFamily(cf_str))?;
+    let cf_handle = storage.cf_handle(cf_str)?;
+
     let mut iter = storage.inner.raw_iterator_cf(cf_handle);
 
     // Seek to the first key.

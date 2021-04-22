@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, storage::*};
+use crate::storage::*;
 
 use bee_common::packable::Packable;
 use bee_ledger::{
@@ -25,10 +25,7 @@ fn delete<K: AsRef<[u8]>>(
     cf_str: &'static str,
     key: K,
 ) -> Result<(), <Storage as StorageBackend>::Error> {
-    let cf = storage
-        .inner
-        .cf_handle(cf_str)
-        .ok_or(Error::UnknownColumnFamily(cf_str))?;
+    let cf = storage.cf_handle(cf_str)?;
 
     storage.inner.delete_cf(cf, key)?;
 
