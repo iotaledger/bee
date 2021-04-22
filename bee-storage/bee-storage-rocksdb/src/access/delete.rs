@@ -20,10 +20,10 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
 };
 
-fn delete<T: AsRef<[u8]>>(
+fn delete<K: AsRef<[u8]>>(
     storage: &Storage,
     cf_str: &'static str,
-    key: T,
+    key: K,
 ) -> Result<(), <Storage as StorageBackend>::Error> {
     let cf = storage
         .inner
@@ -145,7 +145,6 @@ impl Delete<MilestoneIndex, OutputDiff> for Storage {
 #[async_trait::async_trait]
 impl Delete<Address, Balance> for Storage {
     async fn delete(&self, address: &Address) -> Result<(), <Self as StorageBackend>::Error> {
-        // TODO as ref ?
         delete(self, CF_ADDRESS_TO_BALANCE, address.pack_new())
     }
 }
