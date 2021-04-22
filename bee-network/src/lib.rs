@@ -14,8 +14,6 @@ mod service;
 mod swarm;
 mod types;
 
-pub mod util;
-
 // Always exported
 pub use self::types::{PeerInfo, PeerRelation};
 #[doc(inline)]
@@ -25,6 +23,7 @@ pub use libp2p_core::{
 };
 
 // Exported only with "full" feature flag.
+// TODO: Do not restrict to Ed25519 keypairs
 #[cfg(feature = "full")]
 #[doc(inline)]
 pub use libp2p::core::identity::{ed25519::Keypair, PublicKey};
@@ -43,8 +42,10 @@ pub use crate::{
 
 // Exported only with "standalone" feature flag.
 #[cfg(feature = "standalone")]
-pub use crate::init::standalone_init as init;
+#[cfg(not(feature = "integrated"))]
+pub use crate::init::init;
 
 // Exported only with "integrated" feature flag.
 #[cfg(feature = "integrated")]
-pub use crate::{init::integrated_init as init, network::host::NetworkHost, service::service::NetworkService};
+#[cfg(not(feature = "standalone"))]
+pub use crate::{init::init, network::host::NetworkHost, service::service::NetworkService};

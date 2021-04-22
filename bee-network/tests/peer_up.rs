@@ -3,21 +3,25 @@
 
 #![cfg(feature = "standalone")]
 
-use bee_network::{init, util, Command, Event, Multiaddr, NetworkConfig, NetworkEventReceiver, PeerId, PeerRelation};
+mod common;
+use common::{keys_and_ids::*, network_config::*};
 
+use bee_network::{init, Command, Event, Multiaddr, NetworkConfig, NetworkEventReceiver, PeerId, PeerRelation};
+
+// TODO: rename to `add_peer`
+// TODO: write tests for all commands
 #[tokio::test]
 async fn peer_up() {
-    // TODO: use memory-address
-    let config1 = NetworkConfig::new_with_port(1337);
-    let keys1 = util::gen_random_keys();
+    let config1 = get_in_memory_network_config();
+    let keys1 = gen_random_keys();
 
-    let config2 = NetworkConfig::new_with_port(1338);
-    let keys2 = util::gen_random_keys();
+    let config2 = get_in_memory_network_config();
+    let keys2 = gen_random_keys();
 
-    let network_id = util::gen_random_net_id();
+    let network_id = gen_random_net_id();
 
-    let (tx1, rx1) = __init(config1, keys1, network_id).await;
-    let (tx2, rx2) = __init(config2, keys2, network_id).await;
+    let (tx1, mut rx1) = init(config1, keys1, network_id).await;
+    let (tx2, mut rx2) = init(config2, keys2, network_id).await;
 
     let _ = get_bind_address(&mut rx1).await;
 

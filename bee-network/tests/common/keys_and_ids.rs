@@ -1,15 +1,13 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![cfg(test)]
-
-use libp2p::identity::Keypair;
+use libp2p::identity::ed25519::Keypair;
 use libp2p_core::PeerId;
 
 use std::str::FromStr;
 
 pub fn gen_random_peer_id() -> PeerId {
-    PeerId::from_public_key(Keypair::generate_ed25519().public())
+    PeerId::from_public_key(libp2p_core::PublicKey::Ed25519(Keypair::generate().public()))
 }
 
 pub fn gen_deterministic_peer_id(generator: char) -> PeerId {
@@ -28,7 +26,7 @@ pub fn gen_constant_peer_id() -> PeerId {
 }
 
 pub fn gen_random_keys() -> Keypair {
-    Keypair::generate_ed25519()
+    Keypair::generate()
 }
 
 pub fn gen_constant_keys() -> Keypair {
@@ -41,4 +39,8 @@ pub fn gen_deterministic_keys() -> Keypair {
     //     .collect::<String>()[..];
     // let hex = hex::decode(&shex)
     todo!()
+}
+
+pub fn gen_random_net_id() -> u64 {
+    0
 }

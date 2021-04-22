@@ -5,7 +5,6 @@
 
 use super::{
     config::NetworkConfig,
-    network::host::{NetworkHost, NetworkHostConfig},
     peer::{
         ban::{AddrBanlist, PeerBanlist},
         store::PeerList,
@@ -14,7 +13,6 @@ use super::{
         command::{command_channel, Command},
         controller::{NetworkCommandSender, NetworkEventReceiver},
         event::{event_channel, Event, InternalEvent},
-        service::{NetworkService, NetworkServiceConfig},
     },
     Keypair, PeerId, PeerRelation,
 };
@@ -33,7 +31,8 @@ pub(crate) static MAX_UNKNOWN_PEERS: AtomicUsize = AtomicUsize::new(0);
 
 /// Initializes the networking service.
 #[cfg(feature = "standalone")]
-pub async fn standalone_init(
+#[cfg(not(feature = "integrated"))]
+pub async fn init(
     config: NetworkConfig,
     keys: Keypair,
     network_id: u64,
@@ -44,9 +43,16 @@ pub async fn standalone_init(
 #[cfg(feature = "integrated")]
 use bee_runtime::node::{Node, NodeBuilder};
 
+#[cfg(feature = "integrated")]
+use crate::{
+    network::host::{NetworkHost, NetworkHostConfig},
+    service::service::{NetworkService, NetworkServiceConfig},
+};
+
 /// Initializes the networking service.
 #[cfg(feature = "integrated")]
-pub async fn integrated_init<N: Node>(
+#[cfg(not(feature = "standalone"))]
+pub async fn init<N: Node>(
     config: NetworkConfig,
     keys: Keypair,
     network_id: u64,

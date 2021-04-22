@@ -36,10 +36,11 @@ impl NetworkCommandSender {
 pub struct NetworkEventReceiver(EventReceiver);
 
 impl NetworkEventReceiver {
-    pub fn new(inner: EventReceiver) -> Self {
+    pub(crate) fn new(inner: EventReceiver) -> Self {
         Self(inner)
     }
 
+    /// Waits for an event from the network.
     pub async fn recv(&mut self) -> Option<Event> {
         self.0.recv().await
     }

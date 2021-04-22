@@ -15,7 +15,7 @@ bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", fe
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-ledger = { path = "../bee-ledger", features = [ "consensus", "snapshot", "pruning" ] }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-network = { path = "../bee-network" }
+bee-network = { path = "../bee-network", features = ["integrated"] }
 bee-protocol = { path = "../bee-protocol" }
 bee-rest-api = { path = "../bee-api/bee-rest-api", features = ["endpoints"] }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }

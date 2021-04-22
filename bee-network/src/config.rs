@@ -32,22 +32,9 @@ impl NetworkConfig {
         Self::default()
     }
 
-    /// Creates a new `NetworkConfig` with a specific port.
-    pub fn new_with_port(port: u16) -> Self {
-        let mut this = Self::default();
-        this.change_port(port);
-        this
-    }
-
     /// Returns a network config builder.
     pub fn build() -> NetworkConfigBuilder {
         NetworkConfigBuilder::new()
-    }
-
-    /// Changes the port.
-    fn change_port(&mut self, port: u16) {
-        self.bind_multiaddr.pop().unwrap();
-        self.bind_multiaddr.push(Protocol::Tcp(port));
     }
 }
 

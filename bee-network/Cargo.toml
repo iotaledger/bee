@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 all-features = true
 
 [features]
-default = ["integrated"]
+default = []
 full = [
     "async-trait",
     "futures",

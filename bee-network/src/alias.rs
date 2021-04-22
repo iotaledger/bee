@@ -12,22 +12,3 @@ macro_rules! alias {
         &$peer_id.to_base58()[(52 - $len)..]
     };
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::util::gen_constant_peer_id;
-
-    #[test]
-    fn alias_default() {
-        let peer_id = gen_constant_peer_id();
-        let alias = alias!(peer_id);
-        assert_eq!(alias, "eF27st");
-    }
-
-    #[test]
-    fn alias_custom() {
-        let peer_id = gen_constant_peer_id();
-        let alias = alias!(peer_id, 10);
-        assert_eq!(alias, "WSUEeF27st");
-    }
-}
