@@ -12,7 +12,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::HashedIndex,
+    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::access::{Batch, BatchBuilder};
@@ -158,11 +158,11 @@ impl Batch<(MessageId, MessageId), ()> for Storage {
     }
 }
 
-impl Batch<(HashedIndex, MessageId), ()> for Storage {
+impl Batch<(PaddedIndex, MessageId), ()> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
-        (index, message_id): &(HashedIndex, MessageId),
+        (index, message_id): &(PaddedIndex, MessageId),
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
@@ -182,7 +182,7 @@ impl Batch<(HashedIndex, MessageId), ()> for Storage {
     fn batch_delete(
         &self,
         batch: &mut Self::Batch,
-        (index, message_id): &(HashedIndex, MessageId),
+        (index, message_id): &(PaddedIndex, MessageId),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner

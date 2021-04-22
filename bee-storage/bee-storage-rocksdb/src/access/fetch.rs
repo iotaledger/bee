@@ -12,7 +12,7 @@ use bee_message::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     milestone::{Milestone, MilestoneIndex},
     output::{OutputId, OUTPUT_ID_LENGTH},
-    payload::indexation::{HashedIndex, HASHED_INDEX_LENGTH},
+    payload::indexation::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH},
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
 use bee_storage::access::Fetch;
@@ -94,8 +94,8 @@ impl Fetch<MessageId, Vec<MessageId>> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Fetch<HashedIndex, Vec<MessageId>> for Storage {
-    async fn fetch(&self, index: &HashedIndex) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
+impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
+    async fn fetch(&self, index: &PaddedIndex) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
         let cf = self
             .inner
             .cf_handle(CF_INDEX_TO_MESSAGE_ID)
@@ -105,7 +105,7 @@ impl Fetch<HashedIndex, Vec<MessageId>> for Storage {
             self.inner
                 .prefix_iterator_cf(cf, index)
                 .map(|(key, _)| {
-                    let (_, message_id) = key.split_at(HASHED_INDEX_LENGTH);
+                    let (_, message_id) = key.split_at(INDEXATION_PADDED_INDEX_LENGTH);
                     // Unpacking from storage is fine.
                     let message_id: [u8; MESSAGE_ID_LENGTH] = message_id.try_into().unwrap();
                     MessageId::from(message_id)

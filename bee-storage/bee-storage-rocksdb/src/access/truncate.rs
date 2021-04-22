@@ -11,7 +11,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::HashedIndex,
+    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::access::Truncate;
@@ -74,7 +74,7 @@ impl Truncate<(MessageId, MessageId), ()> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Truncate<(HashedIndex, MessageId), ()> for Storage {
+impl Truncate<(PaddedIndex, MessageId), ()> for Storage {
     async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
         truncate(self, CF_INDEX_TO_MESSAGE_ID)
     }

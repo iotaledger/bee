@@ -12,7 +12,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::HashedIndex,
+    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::access::Delete;
@@ -66,10 +66,10 @@ impl Delete<(MessageId, MessageId), ()> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Delete<(HashedIndex, MessageId), ()> for Storage {
+impl Delete<(PaddedIndex, MessageId), ()> for Storage {
     async fn delete(
         &self,
-        (index, message_id): &(HashedIndex, MessageId),
+        (index, message_id): &(PaddedIndex, MessageId),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self
             .inner

@@ -9,7 +9,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::{HashedIndex, IndexationPayload},
+    payload::indexation::{IndexationPayload, PaddedIndex},
     Message, MessageId,
 };
 use bee_storage::{
@@ -127,13 +127,13 @@ async fn exec_inner(tool: &RocksdbTool) -> Result<(), RocksdbError> {
                     &[],
                 )
                 .map_err(|_| RocksdbError::InvalidKey(key.clone()))?
-                .hash();
-                let value = Fetch::<HashedIndex, Vec<MessageId>>::fetch(&storage, &key).await?;
+                .padded_index();
+                let value = Fetch::<PaddedIndex, Vec<MessageId>>::fetch(&storage, &key).await?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Stream => {
-                let mut stream = AsStream::<(HashedIndex, MessageId), ()>::stream(&storage).await?;
+                let mut stream = AsStream::<(PaddedIndex, MessageId), ()>::stream(&storage).await?;
 
                 while let Some((key, value)) = stream.next().await {
                     println!("Key: {:?}\nValue: {:?}\n", key, value);

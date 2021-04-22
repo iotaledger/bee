@@ -12,7 +12,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::HashedIndex,
+    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::access::Exist;
@@ -60,10 +60,10 @@ impl Exist<(MessageId, MessageId), ()> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Exist<(HashedIndex, MessageId), ()> for Storage {
+impl Exist<(PaddedIndex, MessageId), ()> for Storage {
     async fn exist(
         &self,
-        (index, message_id): &(HashedIndex, MessageId),
+        (index, message_id): &(PaddedIndex, MessageId),
     ) -> Result<bool, <Self as StorageBackend>::Error> {
         let cf = self
             .inner

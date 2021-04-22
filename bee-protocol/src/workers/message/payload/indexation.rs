@@ -7,7 +7,7 @@ use crate::{
 };
 
 use bee_message::{
-    payload::{indexation::HashedIndex, transaction::Essence, Payload},
+    payload::{indexation::PaddedIndex, transaction::Essence, Payload},
     MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
@@ -49,9 +49,9 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, storage: &B, metrics: 
 
         metrics.indexation_payload_inc(1);
 
-        let hash = indexation.hash();
+        let index = indexation.padded_index();
 
-        if let Err(e) = Insert::<(HashedIndex, MessageId), ()>::insert(&*storage, &(hash, message_id), &()).await {
+        if let Err(e) = Insert::<(PaddedIndex, MessageId), ()>::insert(&*storage, &(index, message_id), &()).await {
             error!("Inserting indexation payload failed: {:?}.", e);
         }
     } else {

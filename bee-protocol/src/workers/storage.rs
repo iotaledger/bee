@@ -4,7 +4,7 @@
 use bee_ledger::{consensus::storage::StorageBackend as LedgerStorageBackend, snapshot::info::SnapshotInfo};
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
-    payload::indexation::HashedIndex,
+    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{
@@ -22,7 +22,7 @@ pub trait StorageBackend:
     + Insert<MessageId, MessageMetadata>
     + Insert<(MessageId, MessageId), ()>
     + Insert<MilestoneIndex, Milestone>
-    + Insert<(HashedIndex, MessageId), ()>
+    + Insert<(PaddedIndex, MessageId), ()>
     + Insert<(MilestoneIndex, UnconfirmedMessage), ()>
     + Fetch<MessageId, Message>
     + Fetch<MessageId, MessageMetadata>
@@ -41,7 +41,7 @@ impl<T> StorageBackend for T where
         + Insert<MessageId, MessageMetadata>
         + Insert<(MessageId, MessageId), ()>
         + Insert<MilestoneIndex, Milestone>
-        + Insert<(HashedIndex, MessageId), ()>
+        + Insert<(PaddedIndex, MessageId), ()>
         + Insert<(MilestoneIndex, UnconfirmedMessage), ()>
         + Fetch<MessageId, Message>
         + Fetch<MessageId, MessageMetadata>

@@ -12,7 +12,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::HashedIndex,
+    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::access::Insert;
@@ -85,10 +85,10 @@ impl Insert<(MessageId, MessageId), ()> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Insert<(HashedIndex, MessageId), ()> for Storage {
+impl Insert<(PaddedIndex, MessageId), ()> for Storage {
     async fn insert(
         &self,
-        (index, message_id): &(HashedIndex, MessageId),
+        (index, message_id): &(PaddedIndex, MessageId),
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let cf = self

@@ -12,7 +12,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::{HashedIndex, HASHED_INDEX_LENGTH},
+    payload::indexation::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH},
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
 use bee_storage::access::AsStream;
@@ -147,17 +147,16 @@ impl<'a> StorageStream<'a, (MessageId, MessageId), ()> {
     }
 }
 
-impl<'a> StorageStream<'a, (HashedIndex, MessageId), ()> {
-    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((HashedIndex, MessageId), ()) {
-        let (index, mut message_id) = key.split_at(HASHED_INDEX_LENGTH);
-        // TODO review when we have fixed size index
+impl<'a> StorageStream<'a, (PaddedIndex, MessageId), ()> {
+    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((PaddedIndex, MessageId), ()) {
+        let (index, mut message_id) = key.split_at(INDEXATION_PADDED_INDEX_LENGTH);
         // Unpacking from storage is fine.
-        let index: [u8; HASHED_INDEX_LENGTH] = index.try_into().unwrap();
+        let index: [u8; INDEXATION_PADDED_INDEX_LENGTH] = index.try_into().unwrap();
 
         (
             // Unpacking from storage is fine.
             (
-                HashedIndex::new(index),
+                PaddedIndex::new(index),
                 MessageId::unpack_unchecked(&mut message_id).unwrap(),
             ),
             (),
@@ -329,7 +328,7 @@ impl_stream!(u8, System, CF_SYSTEM);
 impl_stream!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_stream!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_stream!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
-impl_stream!((HashedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
+impl_stream!((PaddedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
 impl_stream!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_stream!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_stream!(Unspent, (), CF_OUTPUT_ID_UNSPENT);

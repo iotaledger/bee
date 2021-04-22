@@ -4,7 +4,7 @@
 use bee_common::packable::{Packable, Read, Write};
 
 pub(crate) const STORAGE_VERSION_KEY: u8 = 0;
-pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(6);
+pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(7);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct StorageVersion(pub u16);
