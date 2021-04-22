@@ -139,6 +139,7 @@ version = "0.1.0"
 dependencies = [
  "bee-common",
  "bee-message",
+ "serde",
  "thiserror",
 ]
 
@@ -237,10 +238,11 @@ dependencies = [
 
 [[package]]
 name = "bee-tangle"
-version = "0.1.0-alpha"
+version = "0.1.0"
 dependencies = [
  "async-trait",
  "bee-common",
+ "bee-ledger",
  "bee-message",
  "bee-runtime",
  "bee-storage",

@@ -4,6 +4,7 @@
 use crate::flags::Flags;
 
 use bee_common::packable::{OptionError, Packable, Read, Write};
+use bee_ledger::types::ConflictReason;
 use bee_message::{milestone::MilestoneIndex, MessageId};
 
 use serde::Serialize;
@@ -23,7 +24,7 @@ pub struct MessageMetadata {
     reference_timestamp: u64,
     omrsi: Option<IndexId>,
     ymrsi: Option<IndexId>,
-    conflict: u8,
+    conflict: ConflictReason,
 }
 
 impl MessageMetadata {
@@ -37,7 +38,7 @@ impl MessageMetadata {
         reference_timestamp: u64,
         omrsi: Option<IndexId>,
         ymrsi: Option<IndexId>,
-        conflict: u8,
+        conflict: ConflictReason,
     ) -> Self {
         Self {
             flags,
@@ -133,12 +134,12 @@ impl MessageMetadata {
     }
 
     /// Get the conflict state of this message.
-    pub fn conflict(&self) -> u8 {
+    pub fn conflict(&self) -> ConflictReason {
         self.conflict
     }
 
     /// Set the conflict state of this message.
-    pub fn set_conflict(&mut self, conflict: u8) {
+    pub fn set_conflict(&mut self, conflict: ConflictReason) {
         self.conflict = conflict;
     }
 }
@@ -183,7 +184,7 @@ impl Packable for MessageMetadata {
             + self.reference_timestamp.packed_len()
             + self.omrsi.packed_len()
             + self.ymrsi.packed_len()
-            + self.conflict.packed_len()
+            + 0u8.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -194,7 +195,7 @@ impl Packable for MessageMetadata {
         self.reference_timestamp.pack(writer)?;
         self.omrsi.pack(writer)?;
         self.ymrsi.pack(writer)?;
-        self.conflict.pack(writer)?;
+        (self.conflict as u8).pack(writer)?;
 
         Ok(())
     }
@@ -208,7 +209,7 @@ impl Packable for MessageMetadata {
             reference_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
             omrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
             ymrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
-            conflict: u8::unpack_inner::<R, CHECK>(reader)?,
+            conflict: ConflictReason::unpack_inner::<R, CHECK>(reader)?,
         })
     }
 }
