@@ -4,7 +4,7 @@
 use super::{
     config::{RocksDbConfig, RocksDbConfigBuilder, StorageConfig},
     error::Error,
-    system::{System, STORAGE_HEALTH_KEY, STORAGE_VERSION, STORAGE_VERSION_KEY},
+    system::{System, STORAGE_VERSION, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
 
 pub use bee_storage::{
@@ -186,14 +186,14 @@ impl StorageBackend for Storage {
             inner: Self::new(config)?,
         };
 
-        match Fetch::<u8, System>::fetch(&storage, &STORAGE_VERSION_KEY).await? {
+        match Fetch::<u8, System>::fetch(&storage, &SYSTEM_VERSION_KEY).await? {
             Some(System::Version(version)) => {
                 if version != STORAGE_VERSION {
                     return Err(Error::VersionMismatch(version, STORAGE_VERSION));
                 }
             }
             None => {
-                Insert::<u8, System>::insert(&storage, &STORAGE_VERSION_KEY, &System::Version(STORAGE_VERSION)).await?
+                Insert::<u8, System>::insert(&storage, &SYSTEM_VERSION_KEY, &System::Version(STORAGE_VERSION)).await?
             }
             _ => panic!("Another system value was inserted on the version key."),
         }
@@ -229,7 +229,7 @@ impl StorageBackend for Storage {
     }
 
     async fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error> {
-        Ok(match Fetch::<u8, System>::fetch(self, &STORAGE_HEALTH_KEY).await? {
+        Ok(match Fetch::<u8, System>::fetch(self, &SYSTEM_HEALTH_KEY).await? {
             Some(System::Health(health)) => Some(health),
             None => None,
             _ => panic!("Another system value was inserted on the health key."),
@@ -237,6 +237,6 @@ impl StorageBackend for Storage {
     }
 
     async fn set_health(&self, health: StorageHealth) -> Result<(), Self::Error> {
-        Insert::<u8, System>::insert(self, &STORAGE_HEALTH_KEY, &System::Health(health)).await
+        Insert::<u8, System>::insert(self, &SYSTEM_HEALTH_KEY, &System::Health(health)).await
     }
 }

@@ -12,8 +12,8 @@ pub enum CompactionStyle {
 }
 
 impl From<CompactionStyle> for DBCompactionStyle {
-    fn from(compaction_style: CompactionStyle) -> Self {
-        match compaction_style {
+    fn from(compaction: CompactionStyle) -> Self {
+        match compaction {
             CompactionStyle::Level => DBCompactionStyle::Level,
             CompactionStyle::Universal => DBCompactionStyle::Universal,
             CompactionStyle::Fifo => DBCompactionStyle::Fifo,

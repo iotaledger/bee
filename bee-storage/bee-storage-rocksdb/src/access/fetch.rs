@@ -25,7 +25,10 @@ use std::convert::{TryFrom, TryInto};
 #[async_trait::async_trait]
 impl Fetch<u8, System> for Storage {
     async fn fetch(&self, key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {
-        let cf = self.inner.cf_handle(CF_SYSTEM).ok_or(Error::UnknownCf(CF_SYSTEM))?;
+        let cf = self
+            .inner
+            .cf_handle(CF_SYSTEM)
+            .ok_or(Error::UnknownColumnFamily(CF_SYSTEM))?;
 
         if let Some(res) = self.inner.get_cf(cf, [*key])? {
             // Unpacking from storage is fine.
@@ -42,7 +45,7 @@ impl Fetch<MessageId, Message> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MESSAGE_ID_TO_MESSAGE))?;
 
         if let Some(res) = self.inner.get_cf(cf, message_id)? {
             // Unpacking from storage is fine.
@@ -59,7 +62,7 @@ impl Fetch<MessageId, MessageMetadata> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_METADATA))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MESSAGE_ID_TO_METADATA))?;
 
         if let Some(res) = self.inner.get_cf(cf, message_id)? {
             // Unpacking from storage is fine.
@@ -76,7 +79,7 @@ impl Fetch<MessageId, Vec<MessageId>> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE_ID))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MESSAGE_ID_TO_MESSAGE_ID))?;
 
         Ok(Some(
             self.inner
@@ -99,7 +102,7 @@ impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_INDEX_TO_MESSAGE_ID)
-            .ok_or(Error::UnknownCf(CF_INDEX_TO_MESSAGE_ID))?;
+            .ok_or(Error::UnknownColumnFamily(CF_INDEX_TO_MESSAGE_ID))?;
 
         Ok(Some(
             self.inner
@@ -122,7 +125,7 @@ impl Fetch<OutputId, CreatedOutput> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
         if let Some(res) = self.inner.get_cf(cf, output_id.pack_new())? {
             // Unpacking from storage is fine.
@@ -139,7 +142,7 @@ impl Fetch<OutputId, ConsumedOutput> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
         if let Some(res) = self.inner.get_cf(cf, output_id.pack_new())? {
             // Unpacking from storage is fine.
@@ -156,7 +159,7 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)
-            .ok_or(Error::UnknownCf(CF_ED25519_ADDRESS_TO_OUTPUT_ID))?;
+            .ok_or(Error::UnknownColumnFamily(CF_ED25519_ADDRESS_TO_OUTPUT_ID))?;
 
         Ok(Some(
             self.inner
@@ -178,7 +181,7 @@ impl Fetch<(), LedgerIndex> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_LEDGER_INDEX)
-            .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
+            .ok_or(Error::UnknownColumnFamily(CF_LEDGER_INDEX))?;
 
         if let Some(res) = self.inner.get_cf(cf, [0x00u8])? {
             // Unpacking from storage is fine.
@@ -195,7 +198,7 @@ impl Fetch<MilestoneIndex, Milestone> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_MILESTONE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_MILESTONE))?;
 
         if let Some(res) = self.inner.get_cf(cf, index.pack_new())? {
             // Unpacking from storage is fine.
@@ -212,7 +215,7 @@ impl Fetch<(), SnapshotInfo> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_SNAPSHOT_INFO)
-            .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
+            .ok_or(Error::UnknownColumnFamily(CF_SNAPSHOT_INFO))?;
 
         if let Some(res) = self.inner.get_cf(cf, [0x00u8])? {
             // Unpacking from storage is fine.
@@ -229,7 +232,7 @@ impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
-            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
+            .ok_or(Error::UnknownColumnFamily(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
 
         if let Some(res) = self.inner.get_cf(cf, sep.pack_new())? {
             // Unpacking from storage is fine.
@@ -246,7 +249,7 @@ impl Fetch<MilestoneIndex, OutputDiff> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
 
         if let Some(res) = self.inner.get_cf(cf, index.pack_new())? {
             // Unpacking from storage is fine.
@@ -263,7 +266,7 @@ impl Fetch<Address, Balance> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_ADDRESS_TO_BALANCE)
-            .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_ADDRESS_TO_BALANCE))?;
 
         if let Some(res) = self.inner.get_cf(cf, address.pack_new())? {
             // Unpacking from storage is fine.
@@ -283,7 +286,7 @@ impl Fetch<MilestoneIndex, Vec<UnconfirmedMessage>> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
 
         Ok(Some(
             self.inner
@@ -305,7 +308,7 @@ impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_RECEIPT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_RECEIPT))?;
 
         Ok(Some(
             self.inner
@@ -327,7 +330,7 @@ impl Fetch<bool, Vec<TreasuryOutput>> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_SPENT_TO_TREASURY_OUTPUT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_SPENT_TO_TREASURY_OUTPUT))?;
 
         Ok(Some(
             self.inner

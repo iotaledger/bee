@@ -20,13 +20,15 @@ use bee_tangle::{
 };
 
 fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as StorageBackend>::Error> {
-    let cf_handle = storage.inner.cf_handle(cf_str).ok_or(Error::UnknownCf(cf_str))?;
-
+    let cf_handle = storage
+        .inner
+        .cf_handle(cf_str)
+        .ok_or(Error::UnknownColumnFamily(cf_str))?;
     let mut iter = storage.inner.raw_iterator_cf(cf_handle);
 
     // Seek to the first key.
     iter.seek_to_first();
-    // Grab the first key, if it exists.
+    // Grab the first key if it exists.
     let first = if let Some(first) = iter.key() {
         first.to_vec()
     } else {
@@ -35,11 +37,10 @@ fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as S
     };
 
     iter.seek_to_last();
-    // Grab the last key, if it exists.
+    // Grab the last key if it exists.
     let last = if let Some(last) = iter.key() {
         let mut last = last.to_vec();
-        // `delete_range_cf` excludes the last key in the range, so we add an extra byte to be sure
-        // we include the last key.
+        // `delete_range_cf` excludes the last key in the range so a byte is added to be sure the last key is included.
         last.push(u8::MAX);
         last
     } else {

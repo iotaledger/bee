@@ -3,11 +3,10 @@
 
 use bee_common::packable::{Packable, Read, Write};
 
-pub(crate) const STORAGE_VERSION_KEY: u8 = 0;
-pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(7);
+pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(8);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct StorageVersion(pub u16);
+pub struct StorageVersion(pub u64);
 
 impl Packable for StorageVersion {
     type Error = std::io::Error;
@@ -21,6 +20,6 @@ impl Packable for StorageVersion {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(u16::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self(u64::unpack_inner::<R, CHECK>(reader)?))
     }
 }

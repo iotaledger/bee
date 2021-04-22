@@ -56,7 +56,7 @@ macro_rules! impl_stream {
             type Stream = StorageStream<'a, $key, $value>;
 
             async fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
-                let cf = self.inner.cf_handle($cf).ok_or(Error::UnknownCf($cf))?;
+                let cf = self.inner.cf_handle($cf).ok_or(Error::UnknownColumnFamily($cf))?;
 
                 Ok(StorageStream::new(
                     self.inner.iterator_cf(cf, IteratorMode::Start),

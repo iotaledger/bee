@@ -16,8 +16,8 @@ pub enum CompressionType {
 }
 
 impl From<CompressionType> for DBCompressionType {
-    fn from(compression_type: CompressionType) -> Self {
-        match compression_type {
+    fn from(compression: CompressionType) -> Self {
+        match compression {
             CompressionType::None => DBCompressionType::None,
             CompressionType::Snappy => DBCompressionType::Snappy,
             CompressionType::Zlib => DBCompressionType::Zlib,

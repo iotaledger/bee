@@ -53,7 +53,7 @@ impl Batch<MessageId, Message> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MESSAGE_ID_TO_MESSAGE))?;
 
         batch.value_buf.clear();
         // Packing to bytes can't fail.
@@ -72,7 +72,7 @@ impl Batch<MessageId, Message> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MESSAGE_ID_TO_MESSAGE))?;
 
         batch.inner.delete_cf(cf, message_id);
 
@@ -90,7 +90,7 @@ impl Batch<MessageId, MessageMetadata> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_METADATA))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MESSAGE_ID_TO_METADATA))?;
 
         batch.value_buf.clear();
         // Packing to bytes can't fail.
@@ -109,7 +109,7 @@ impl Batch<MessageId, MessageMetadata> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_METADATA))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MESSAGE_ID_TO_METADATA))?;
 
         batch.inner.delete_cf(cf, message_id);
 
@@ -127,7 +127,7 @@ impl Batch<(MessageId, MessageId), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE_ID))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MESSAGE_ID_TO_MESSAGE_ID))?;
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(parent.as_ref());
@@ -146,7 +146,7 @@ impl Batch<(MessageId, MessageId), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE_ID))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MESSAGE_ID_TO_MESSAGE_ID))?;
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(parent.as_ref());
@@ -168,7 +168,7 @@ impl Batch<(PaddedIndex, MessageId), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_INDEX_TO_MESSAGE_ID)
-            .ok_or(Error::UnknownCf(CF_INDEX_TO_MESSAGE_ID))?;
+            .ok_or(Error::UnknownColumnFamily(CF_INDEX_TO_MESSAGE_ID))?;
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(index.as_ref());
@@ -187,7 +187,7 @@ impl Batch<(PaddedIndex, MessageId), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_INDEX_TO_MESSAGE_ID)
-            .ok_or(Error::UnknownCf(CF_INDEX_TO_MESSAGE_ID))?;
+            .ok_or(Error::UnknownColumnFamily(CF_INDEX_TO_MESSAGE_ID))?;
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(index.as_ref());
@@ -209,7 +209,7 @@ impl Batch<OutputId, CreatedOutput> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -231,7 +231,7 @@ impl Batch<OutputId, CreatedOutput> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -253,7 +253,7 @@ impl Batch<OutputId, ConsumedOutput> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -275,7 +275,7 @@ impl Batch<OutputId, ConsumedOutput> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -292,7 +292,7 @@ impl Batch<Unspent, ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_UNSPENT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_UNSPENT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_OUTPUT_ID_UNSPENT))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -307,7 +307,7 @@ impl Batch<Unspent, ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_UNSPENT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_UNSPENT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_OUTPUT_ID_UNSPENT))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -329,7 +329,7 @@ impl Batch<(Ed25519Address, OutputId), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)
-            .ok_or(Error::UnknownCf(CF_ED25519_ADDRESS_TO_OUTPUT_ID))?;
+            .ok_or(Error::UnknownColumnFamily(CF_ED25519_ADDRESS_TO_OUTPUT_ID))?;
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(address.as_ref());
@@ -348,7 +348,7 @@ impl Batch<(Ed25519Address, OutputId), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)
-            .ok_or(Error::UnknownCf(CF_ED25519_ADDRESS_TO_OUTPUT_ID))?;
+            .ok_or(Error::UnknownColumnFamily(CF_ED25519_ADDRESS_TO_OUTPUT_ID))?;
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(address.as_ref());
@@ -370,7 +370,7 @@ impl Batch<(), LedgerIndex> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_LEDGER_INDEX)
-            .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
+            .ok_or(Error::UnknownColumnFamily(CF_LEDGER_INDEX))?;
 
         batch.value_buf.clear();
         // Packing to bytes can't fail.
@@ -385,7 +385,7 @@ impl Batch<(), LedgerIndex> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_LEDGER_INDEX)
-            .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
+            .ok_or(Error::UnknownColumnFamily(CF_LEDGER_INDEX))?;
 
         batch.inner.delete_cf(cf, [0x00u8]);
 
@@ -403,7 +403,7 @@ impl Batch<MilestoneIndex, Milestone> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_MILESTONE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_MILESTONE))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -425,7 +425,7 @@ impl Batch<MilestoneIndex, Milestone> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_MILESTONE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_MILESTONE))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -447,7 +447,7 @@ impl Batch<(), SnapshotInfo> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_SNAPSHOT_INFO)
-            .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
+            .ok_or(Error::UnknownColumnFamily(CF_SNAPSHOT_INFO))?;
 
         batch.value_buf.clear();
         // Packing to bytes can't fail.
@@ -462,7 +462,7 @@ impl Batch<(), SnapshotInfo> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_SNAPSHOT_INFO)
-            .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
+            .ok_or(Error::UnknownColumnFamily(CF_SNAPSHOT_INFO))?;
 
         batch.inner.delete_cf(cf, [0x00u8]);
 
@@ -480,7 +480,7 @@ impl Batch<SolidEntryPoint, MilestoneIndex> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
-            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
+            .ok_or(Error::UnknownColumnFamily(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -498,7 +498,7 @@ impl Batch<SolidEntryPoint, MilestoneIndex> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
-            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
+            .ok_or(Error::UnknownColumnFamily(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -520,7 +520,7 @@ impl Batch<MilestoneIndex, OutputDiff> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -542,7 +542,7 @@ impl Batch<MilestoneIndex, OutputDiff> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
 
         batch.key_buf.clear();
         // Packing to bytes can't fail.
@@ -564,7 +564,7 @@ impl Batch<Address, Balance> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_ADDRESS_TO_BALANCE)
-            .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_ADDRESS_TO_BALANCE))?;
 
         batch.inner.put_cf(cf, address.pack_new(), balance.pack_new());
 
@@ -575,7 +575,7 @@ impl Batch<Address, Balance> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_ADDRESS_TO_BALANCE)
-            .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_ADDRESS_TO_BALANCE))?;
 
         batch.inner.delete_cf(cf, address.pack_new());
 
@@ -593,7 +593,7 @@ impl Batch<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&index.pack_new());
@@ -612,7 +612,7 @@ impl Batch<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&index.pack_new());
@@ -634,7 +634,7 @@ impl Batch<(MilestoneIndex, Receipt), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_RECEIPT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_RECEIPT))?;
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&index.pack_new());
@@ -653,7 +653,7 @@ impl Batch<(MilestoneIndex, Receipt), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_RECEIPT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_RECEIPT))?;
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&index.pack_new());
@@ -675,7 +675,7 @@ impl Batch<(bool, TreasuryOutput), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_SPENT_TO_TREASURY_OUTPUT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_SPENT_TO_TREASURY_OUTPUT))?;
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&spent.pack_new());
@@ -694,7 +694,7 @@ impl Batch<(bool, TreasuryOutput), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_SPENT_TO_TREASURY_OUTPUT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_SPENT_TO_TREASURY_OUTPUT))?;
 
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&spent.pack_new());

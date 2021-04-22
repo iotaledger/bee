@@ -26,7 +26,7 @@ impl Delete<MessageId, Message> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MESSAGE_ID_TO_MESSAGE))?;
 
         self.inner.delete_cf(cf, message_id)?;
 
@@ -40,7 +40,7 @@ impl Delete<MessageId, MessageMetadata> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_METADATA)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_METADATA))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MESSAGE_ID_TO_METADATA))?;
 
         self.inner.delete_cf(cf, message_id)?;
 
@@ -54,7 +54,7 @@ impl Delete<(MessageId, MessageId), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)
-            .ok_or(Error::UnknownCf(CF_MESSAGE_ID_TO_MESSAGE_ID))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MESSAGE_ID_TO_MESSAGE_ID))?;
 
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
@@ -74,7 +74,7 @@ impl Delete<(PaddedIndex, MessageId), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_INDEX_TO_MESSAGE_ID)
-            .ok_or(Error::UnknownCf(CF_INDEX_TO_MESSAGE_ID))?;
+            .ok_or(Error::UnknownColumnFamily(CF_INDEX_TO_MESSAGE_ID))?;
 
         let mut key = index.as_ref().to_vec();
         key.extend_from_slice(message_id.as_ref());
@@ -91,7 +91,7 @@ impl Delete<OutputId, CreatedOutput> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_OUTPUT_ID_TO_CREATED_OUTPUT))?;
 
         self.inner.delete_cf(cf, output_id.pack_new())?;
 
@@ -105,7 +105,7 @@ impl Delete<OutputId, ConsumedOutput> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT))?;
 
         self.inner.delete_cf(cf, output_id.pack_new())?;
 
@@ -119,7 +119,7 @@ impl Delete<Unspent, ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_OUTPUT_ID_UNSPENT)
-            .ok_or(Error::UnknownCf(CF_OUTPUT_ID_UNSPENT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_OUTPUT_ID_UNSPENT))?;
 
         self.inner.delete_cf(cf, unspent.pack_new())?;
 
@@ -136,7 +136,7 @@ impl Delete<(Ed25519Address, OutputId), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)
-            .ok_or(Error::UnknownCf(CF_ED25519_ADDRESS_TO_OUTPUT_ID))?;
+            .ok_or(Error::UnknownColumnFamily(CF_ED25519_ADDRESS_TO_OUTPUT_ID))?;
 
         let mut key = address.as_ref().to_vec();
         key.extend_from_slice(&output_id.pack_new());
@@ -153,7 +153,7 @@ impl Delete<(), LedgerIndex> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_LEDGER_INDEX)
-            .ok_or(Error::UnknownCf(CF_LEDGER_INDEX))?;
+            .ok_or(Error::UnknownColumnFamily(CF_LEDGER_INDEX))?;
 
         self.inner.delete_cf(cf, [0x00u8])?;
 
@@ -167,7 +167,7 @@ impl Delete<MilestoneIndex, Milestone> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_MILESTONE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_MILESTONE))?;
 
         self.inner.delete_cf(cf, index.pack_new())?;
 
@@ -181,7 +181,7 @@ impl Delete<(), SnapshotInfo> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_SNAPSHOT_INFO)
-            .ok_or(Error::UnknownCf(CF_SNAPSHOT_INFO))?;
+            .ok_or(Error::UnknownColumnFamily(CF_SNAPSHOT_INFO))?;
 
         self.inner.delete_cf(cf, [0x00u8])?;
 
@@ -195,7 +195,7 @@ impl Delete<SolidEntryPoint, MilestoneIndex> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)
-            .ok_or(Error::UnknownCf(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
+            .ok_or(Error::UnknownColumnFamily(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX))?;
 
         self.inner.delete_cf(cf, sep.pack_new())?;
 
@@ -209,7 +209,7 @@ impl Delete<MilestoneIndex, OutputDiff> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF))?;
 
         self.inner.delete_cf(cf, index.pack_new())?;
 
@@ -223,7 +223,7 @@ impl Delete<Address, Balance> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_ADDRESS_TO_BALANCE)
-            .ok_or(Error::UnknownCf(CF_ADDRESS_TO_BALANCE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_ADDRESS_TO_BALANCE))?;
 
         self.inner.delete_cf(cf, address.pack_new())?;
 
@@ -240,7 +240,7 @@ impl Delete<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE))?;
 
         let mut key = index.pack_new();
         key.extend_from_slice(unconfirmed_message.as_ref());
@@ -260,7 +260,7 @@ impl Delete<(MilestoneIndex, Receipt), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)
-            .ok_or(Error::UnknownCf(CF_MILESTONE_INDEX_TO_RECEIPT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_MILESTONE_INDEX_TO_RECEIPT))?;
 
         let mut key = index.pack_new();
         key.extend_from_slice(&receipt.pack_new());
@@ -277,7 +277,7 @@ impl Delete<(bool, TreasuryOutput), ()> for Storage {
         let cf = self
             .inner
             .cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)
-            .ok_or(Error::UnknownCf(CF_SPENT_TO_TREASURY_OUTPUT))?;
+            .ok_or(Error::UnknownColumnFamily(CF_SPENT_TO_TREASURY_OUTPUT))?;
 
         let mut key = spent.pack_new();
         key.extend_from_slice(&output.pack_new());
