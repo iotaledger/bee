@@ -25,53 +25,42 @@ use std::convert::{TryFrom, TryInto};
 #[async_trait::async_trait]
 impl Fetch<u8, System> for Storage {
     async fn fetch(&self, key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_SYSTEM)?;
-
-        if let Some(res) = self.inner.get_cf(cf, [*key])? {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_SYSTEM)?, [*key])?
             // Unpacking from storage is fine.
-            Ok(Some(System::unpack_unchecked(&mut res.as_slice()).unwrap()))
-        } else {
-            Ok(None)
-        }
+            .map(|v| System::unpack_unchecked(&mut v.as_slice()).unwrap()))
     }
 }
 
 #[async_trait::async_trait]
 impl Fetch<MessageId, Message> for Storage {
     async fn fetch(&self, message_id: &MessageId) -> Result<Option<Message>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?;
-
-        if let Some(res) = self.inner.get_cf(cf, message_id)? {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id)?
             // Unpacking from storage is fine.
-            Ok(Some(Message::unpack_unchecked(&mut res.as_slice()).unwrap()))
-        } else {
-            Ok(None)
-        }
+            .map(|v| Message::unpack_unchecked(&mut v.as_slice()).unwrap()))
     }
 }
 
 #[async_trait::async_trait]
 impl Fetch<MessageId, MessageMetadata> for Storage {
     async fn fetch(&self, message_id: &MessageId) -> Result<Option<MessageMetadata>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?;
-
-        if let Some(res) = self.inner.get_cf(cf, message_id)? {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?
             // Unpacking from storage is fine.
-            Ok(Some(MessageMetadata::unpack_unchecked(&mut res.as_slice()).unwrap()))
-        } else {
-            Ok(None)
-        }
+            .map(|v| MessageMetadata::unpack_unchecked(&mut v.as_slice()).unwrap()))
     }
 }
 
 #[async_trait::async_trait]
 impl Fetch<MessageId, Vec<MessageId>> for Storage {
     async fn fetch(&self, parent: &MessageId) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?;
-
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(cf, parent)
+                .prefix_iterator_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, parent)
                 .map(|(key, _)| {
                     let (_, child) = key.split_at(MESSAGE_ID_LENGTH);
                     // Unpacking from storage is fine.
@@ -87,11 +76,9 @@ impl Fetch<MessageId, Vec<MessageId>> for Storage {
 #[async_trait::async_trait]
 impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
     async fn fetch(&self, index: &PaddedIndex) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_INDEX_TO_MESSAGE_ID)?;
-
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(cf, index)
+                .prefix_iterator_cf(self.cf_handle(CF_INDEX_TO_MESSAGE_ID)?, index)
                 .map(|(key, _)| {
                     let (_, message_id) = key.split_at(INDEXATION_PADDED_INDEX_LENGTH);
                     // Unpacking from storage is fine.
@@ -107,39 +94,31 @@ impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
 #[async_trait::async_trait]
 impl Fetch<OutputId, CreatedOutput> for Storage {
     async fn fetch(&self, output_id: &OutputId) -> Result<Option<CreatedOutput>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?;
-
-        if let Some(res) = self.inner.get_cf(cf, output_id.pack_new())? {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?, output_id.pack_new())?
             // Unpacking from storage is fine.
-            Ok(Some(CreatedOutput::unpack_unchecked(&mut res.as_slice()).unwrap()))
-        } else {
-            Ok(None)
-        }
+            .map(|v| CreatedOutput::unpack_unchecked(&mut v.as_slice()).unwrap()))
     }
 }
 
 #[async_trait::async_trait]
 impl Fetch<OutputId, ConsumedOutput> for Storage {
     async fn fetch(&self, output_id: &OutputId) -> Result<Option<ConsumedOutput>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)?;
-
-        if let Some(res) = self.inner.get_cf(cf, output_id.pack_new())? {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)?, output_id.pack_new())?
             // Unpacking from storage is fine.
-            Ok(Some(ConsumedOutput::unpack_unchecked(&mut res.as_slice()).unwrap()))
-        } else {
-            Ok(None)
-        }
+            .map(|v| ConsumedOutput::unpack_unchecked(&mut v.as_slice()).unwrap()))
     }
 }
 
 #[async_trait::async_trait]
 impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
     async fn fetch(&self, address: &Ed25519Address) -> Result<Option<Vec<OutputId>>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)?;
-
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(cf, address)
+                .prefix_iterator_cf(self.cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)?, address)
                 .map(|(key, _)| {
                     let (_, output_id) = key.split_at(ED25519_ADDRESS_LENGTH);
                     // Unpacking from storage is fine.
@@ -154,84 +133,67 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
 #[async_trait::async_trait]
 impl Fetch<(), LedgerIndex> for Storage {
     async fn fetch(&self, (): &()) -> Result<Option<LedgerIndex>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_LEDGER_INDEX)?;
-
-        if let Some(res) = self.inner.get_cf(cf, [0x00u8])? {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_LEDGER_INDEX)?, [0x00u8])?
             // Unpacking from storage is fine.
-            Ok(Some(LedgerIndex::unpack_unchecked(&mut res.as_slice()).unwrap()))
-        } else {
-            Ok(None)
-        }
+            .map(|v| LedgerIndex::unpack_unchecked(&mut v.as_slice()).unwrap()))
     }
 }
 
 #[async_trait::async_trait]
 impl Fetch<MilestoneIndex, Milestone> for Storage {
     async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Milestone>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?;
-
-        if let Some(res) = self.inner.get_cf(cf, index.pack_new())? {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_new())?
             // Unpacking from storage is fine.
-            Ok(Some(Milestone::unpack_unchecked(&mut res.as_slice()).unwrap()))
-        } else {
-            Ok(None)
-        }
+            .map(|v| Milestone::unpack_unchecked(&mut v.as_slice()).unwrap()))
     }
 }
 
 #[async_trait::async_trait]
 impl Fetch<(), SnapshotInfo> for Storage {
     async fn fetch(&self, (): &()) -> Result<Option<SnapshotInfo>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_SNAPSHOT_INFO)?;
-
-        if let Some(res) = self.inner.get_cf(cf, [0x00u8])? {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_SNAPSHOT_INFO)?, [0x00u8])?
             // Unpacking from storage is fine.
-            Ok(Some(SnapshotInfo::unpack_unchecked(&mut res.as_slice()).unwrap()))
-        } else {
-            Ok(None)
-        }
+            .map(|v| SnapshotInfo::unpack_unchecked(&mut v.as_slice()).unwrap()))
     }
 }
 
 #[async_trait::async_trait]
 impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
     async fn fetch(&self, sep: &SolidEntryPoint) -> Result<Option<MilestoneIndex>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?;
-
-        if let Some(res) = self.inner.get_cf(cf, sep.pack_new())? {
+        Ok(self
+            .inner
+            // TODO SEP ASREF
+            .get_cf(self.cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?, sep.pack_new())?
             // Unpacking from storage is fine.
-            Ok(Some(MilestoneIndex::unpack_unchecked(&mut res.as_slice()).unwrap()))
-        } else {
-            Ok(None)
-        }
+            .map(|v| MilestoneIndex::unpack_unchecked(&mut v.as_slice()).unwrap()))
     }
 }
 
 #[async_trait::async_trait]
 impl Fetch<MilestoneIndex, OutputDiff> for Storage {
     async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<OutputDiff>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?;
-
-        if let Some(res) = self.inner.get_cf(cf, index.pack_new())? {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?, index.pack_new())?
             // Unpacking from storage is fine.
-            Ok(Some(OutputDiff::unpack_unchecked(&mut res.as_slice()).unwrap()))
-        } else {
-            Ok(None)
-        }
+            .map(|v| OutputDiff::unpack_unchecked(&mut v.as_slice()).unwrap()))
     }
 }
 
 #[async_trait::async_trait]
 impl Fetch<Address, Balance> for Storage {
     async fn fetch(&self, address: &Address) -> Result<Option<Balance>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_ADDRESS_TO_BALANCE)?;
-
-        if let Some(res) = self.inner.get_cf(cf, address.pack_new())? {
+        Ok(self
+            .inner
+            .get_cf(self.cf_handle(CF_ADDRESS_TO_BALANCE)?, address.pack_new())?
             // Unpacking from storage is fine.
-            Ok(Some(Balance::unpack_unchecked(&mut res.as_slice()).unwrap()))
-        } else {
-            Ok(None)
-        }
+            .map(|v| Balance::unpack_unchecked(&mut v.as_slice()).unwrap()))
     }
 }
 
@@ -241,11 +203,12 @@ impl Fetch<MilestoneIndex, Vec<UnconfirmedMessage>> for Storage {
         &self,
         index: &MilestoneIndex,
     ) -> Result<Option<Vec<UnconfirmedMessage>>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)?;
-
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(cf, index.pack_new())
+                .prefix_iterator_cf(
+                    self.cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)?,
+                    index.pack_new(),
+                )
                 .map(|(key, _)| {
                     let (_, unconfirmed_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
                     // Unpacking from storage is fine.
@@ -260,11 +223,9 @@ impl Fetch<MilestoneIndex, Vec<UnconfirmedMessage>> for Storage {
 #[async_trait::async_trait]
 impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
     async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Vec<Receipt>>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)?;
-
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(cf, index.pack_new())
+                .prefix_iterator_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)?, index.pack_new())
                 .map(|(mut key, _)| {
                     let (_, receipt) = key.split_at_mut(std::mem::size_of::<MilestoneIndex>());
                     // Unpacking from storage is fine.
@@ -279,11 +240,9 @@ impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
 #[async_trait::async_trait]
 impl Fetch<bool, Vec<TreasuryOutput>> for Storage {
     async fn fetch(&self, spent: &bool) -> Result<Option<Vec<TreasuryOutput>>, <Self as StorageBackend>::Error> {
-        let cf = self.cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)?;
-
         Ok(Some(
             self.inner
-                .prefix_iterator_cf(cf, spent.pack_new())
+                .prefix_iterator_cf(self.cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)?, spent.pack_new())
                 .map(|(mut key, _)| {
                     let (_, output) = key.split_at_mut(std::mem::size_of::<bool>());
                     // Unpacking from storage is fine.
