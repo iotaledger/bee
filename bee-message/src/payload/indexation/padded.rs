@@ -27,6 +27,14 @@ impl AsRef<[u8]> for PaddedIndex {
     }
 }
 
+impl std::ops::Deref for PaddedIndex {
+    type Target = [u8; INDEXATION_PADDED_INDEX_LENGTH];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl core::fmt::Display for PaddedIndex {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}", hex::encode(self.0))
