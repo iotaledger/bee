@@ -23,11 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `IndexationPayload::hash()` has been replaced by `IndexationPayload::padded_index()`;
-
-### Removed
-
-- `HashedIndex`;
+- `HashedIndex` replaced by `PaddedIndex`;
+- `IndexationPayload::hash()` replaced by `IndexationPayload::padded_index()`;
 
 ## 0.1.2 - 2021-04-18
 

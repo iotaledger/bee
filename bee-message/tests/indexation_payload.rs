@@ -5,9 +5,24 @@ use bee_common::packable::Packable;
 use bee_message::prelude::*;
 use bee_test::rand::bytes::{rand_bytes, rand_bytes_32};
 
+use std::convert::TryInto;
+
+const PADDED_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64952fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+
 #[test]
 fn kind() {
     assert_eq!(IndexationPayload::KIND, 2);
+}
+
+#[test]
+fn debug_impl() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            PaddedIndex::new(hex::decode(PADDED_INDEX).unwrap().try_into().unwrap())
+        ),
+        "PaddedIndex(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64952fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+    );
 }
 
 #[test]
@@ -17,7 +32,7 @@ fn new_valid() {
     let indexation = IndexationPayload::new(&index, &data).unwrap();
 
     assert_eq!(indexation.index(), &index);
-    assert_eq!(&indexation.padded_index(), index.as_slice());
+    assert_eq!(indexation.padded_index().as_ref(), index.as_slice());
     assert_eq!(indexation.data(), &data);
 }
 
@@ -28,7 +43,7 @@ fn new_valid_empty_data() {
     let indexation = IndexationPayload::new(&index, &data).unwrap();
 
     assert_eq!(indexation.index(), &index);
-    assert_eq!(&indexation.padded_index(), index.as_slice());
+    assert_eq!(indexation.padded_index().as_ref(), index.as_slice());
     assert_eq!(indexation.data(), &data);
 }
 
@@ -41,7 +56,7 @@ fn new_valid_padded() {
     let indexation = IndexationPayload::new(&index, &data).unwrap();
 
     assert_eq!(indexation.index(), &index);
-    assert_eq!(&indexation.padded_index(), padded_index.as_slice());
+    assert_eq!(indexation.padded_index().as_ref(), padded_index.as_slice());
     assert_eq!(indexation.data(), &data);
 }
 

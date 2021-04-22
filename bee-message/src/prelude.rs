@@ -12,7 +12,7 @@ pub use crate::{
     },
     parents::{Parents, MESSAGE_PARENTS_RANGE},
     payload::{
-        indexation::IndexationPayload,
+        indexation::{IndexationPayload, PaddedIndex},
         milestone::{
             MilestoneId, MilestonePayload, MilestonePayloadEssence, MILESTONE_ID_LENGTH, MILESTONE_MERKLE_PROOF_LENGTH,
             MILESTONE_PUBLIC_KEY_LENGTH, MILESTONE_SIGNATURE_LENGTH,
