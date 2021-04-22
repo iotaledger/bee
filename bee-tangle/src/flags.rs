@@ -10,13 +10,13 @@ bitflags! {
     /// Flags representing the state of a message.
     #[derive(Default, Serialize)]
     pub struct Flags: u8 {
-        /// The message is solid (confirmed)
+        /// The message is solid (confirmed).
         const SOLID = 0b0000_0001;
-        /// The message is a milestone
+        /// The message is a milestone.
         const MILESTONE = 0b0000_0010;
-        /// The message has been referenced by something
+        /// The message has been referenced by a milestone.
         const REFERENCED = 0b0000_0100;
-        /// The message is valid
+        /// The message is valid.
         const VALID = 0b0000_1000;
     }
 }

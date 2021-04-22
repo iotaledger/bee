@@ -69,7 +69,7 @@ impl UrtsTipPool {
         if let Score::NonLazy = self.tip_score::<B>(tangle, &message_id).await {
             self.non_lazy_tips.insert(message_id);
             self.tips.insert(message_id, TipMetadata::new());
-            for parent in parents.iter() {
+            for parent in &parents {
                 self.add_child(*parent, message_id);
                 self.check_retention_rules_for_parent(parent);
             }
@@ -138,41 +138,36 @@ impl UrtsTipPool {
     async fn tip_score<B: StorageBackend>(&self, tangle: &MsTangle<B>, message_id: &MessageId) -> Score {
         // in case the tip was pruned by the node, consider tip as lazy
         if !tangle.contains(message_id).await {
-            return Score::Lazy;
+            Score::Lazy
+        } else {
+            let smi = *tangle.get_solid_milestone_index();
+
+            // The tip pool only works with solid tips. Therefore, all tips added to the pool can be considered to
+            // solid. The solid flag will be set together with omrsi and ymrsi values. Therefore, when a
+            // message is solid, omrsi and ymrsi values are available. Therefore, unwrapping here is fine.
+            let omrsi = *tangle.omrsi(&message_id).await.unwrap().index();
+            let ymrsi = *tangle.ymrsi(&message_id).await.unwrap().index();
+
+            if smi > ymrsi + YMRSI_DELTA {
+                Score::Lazy
+            } else if smi > omrsi + BELOW_MAX_DEPTH {
+                Score::Lazy
+            } else if smi > omrsi + OMRSI_DELTA {
+                Score::SemiLazy
+            } else {
+                Score::NonLazy
+            }
         }
-
-        let smi = *tangle.get_solid_milestone_index();
-
-        // The tip pool only works with solid tips. Therefore, all tips added to the pool can be considered to solid.
-        // The solid flag will be set together with omrsi and ymrsi values. Therefore, when a message is solid, omrsi
-        // and ymrsi values are available. Therefore, unwrapping here is fine.
-        let omrsi = *tangle.omrsi(&message_id).await.unwrap().index();
-        let ymrsi = *tangle.ymrsi(&message_id).await.unwrap().index();
-
-        if (smi - ymrsi) > YMRSI_DELTA {
-            return Score::Lazy;
-        }
-
-        if (smi - omrsi) > BELOW_MAX_DEPTH {
-            return Score::Lazy;
-        }
-
-        if (smi - omrsi) > OMRSI_DELTA {
-            return Score::SemiLazy;
-        }
-
-        Score::NonLazy
     }
 
     pub fn two_non_lazy_tips(&self) -> Option<Vec<MessageId>> {
-        let non_lazy_tips = &self.non_lazy_tips;
-        if non_lazy_tips.is_empty() {
+        if self.non_lazy_tips.is_empty() {
             None
         } else {
-            Some(if non_lazy_tips.len() < self.optimal_num_tips() {
-                non_lazy_tips.iter().copied().collect()
+            Some(if self.non_lazy_tips.len() < self.optimal_num_tips() {
+                self.non_lazy_tips.iter().copied().collect()
             } else {
-                non_lazy_tips
+                self.non_lazy_tips
                     .iter()
                     .choose_multiple(&mut rand::thread_rng(), self.optimal_num_tips())
                     .iter()
@@ -188,17 +183,13 @@ impl UrtsTipPool {
     }
 
     pub(crate) fn reduce_tips(&mut self) {
-        let mut to_remove = Vec::new();
-        for (tip, metadata) in &self.tips {
-            if let Some(age) = metadata.time_first_child {
-                if age.elapsed().as_secs() > MAX_AGE_SECONDS_AFTER_FIRST_CHILD as u64 {
-                    to_remove.push(*tip);
-                }
-            }
-        }
-        for tip in to_remove {
-            self.tips.remove(&tip);
-            self.non_lazy_tips.remove(&tip);
-        }
+        let non_lazy_tips = &mut self.non_lazy_tips;
+        self.tips.retain(|tip, metadata| {
+            metadata
+                .time_first_child
+                .filter(|age| age.elapsed().as_secs() > MAX_AGE_SECONDS_AFTER_FIRST_CHILD as u64)
+                .map(|_| non_lazy_tips.remove(&tip))
+                .is_none()
+        });
     }
 }

@@ -10,9 +10,9 @@ use bee_message::MessageId;
 
 use ref_cast::RefCast;
 
-use core::ops::Deref;
+use core::{convert::AsRef, ops::Deref};
 
-/// A SolidEntryPoint is a [`MessageId`](crate::MessageId) of a message even if we do not have them
+/// A SolidEntryPoint is a [`MessageId`] of a message even if we do not have them
 /// or their past in the database. They often come from a snapshot file and allow a node to solidify
 /// without needing the full tangle history.
 ///
@@ -46,6 +46,12 @@ impl SolidEntryPoint {
 impl From<MessageId> for SolidEntryPoint {
     fn from(message_id: MessageId) -> Self {
         Self(message_id)
+    }
+}
+
+impl AsRef<MessageId> for SolidEntryPoint {
+    fn as_ref(&self) -> &MessageId {
+        &self.0
     }
 }
 

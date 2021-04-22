@@ -214,7 +214,8 @@ impl Packable for MessageMetadata {
     }
 }
 
-/// An identifier for message indices.
+/// A type used to associate two particular interesting Cone Root Indexes with a message in the Tangle, i.e. the Oldest
+/// Cone Root Index (OCRI), and the Youngest Cone Root Index (YCRI)
 #[derive(Clone, Copy, Debug, Serialize)]
 pub struct IndexId(MilestoneIndex, MessageId);
 

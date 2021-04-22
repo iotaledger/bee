@@ -43,7 +43,9 @@ impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
 
     async fn get(&self, msg: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
         trace!("Attempted to fetch message {:?}", msg);
-        Ok(self.storage.fetch(msg).await?.zip(self.storage.fetch(msg).await?))
+        let message = self.storage.fetch(msg).await?;
+        let meta = self.storage.fetch(msg).await?;
+        Ok(message.zip(meta))
     }
 
     async fn insert(&self, msg: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {

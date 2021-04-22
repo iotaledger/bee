@@ -1,3 +1,3 @@
 # `bee-tangle`
 
-The distributed DAG that sits at the heart of IOTA's Bee node.
+A distributed, directed, acyclic graph that underpins the DLT for IOTA's Bee node.
