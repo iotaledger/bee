@@ -107,7 +107,7 @@ impl<T> StorageBackend for T where
 {
 }
 
-pub fn create_address_output_relation_batch<B: StorageBackend>(
+pub fn insert_output_id_for_address_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     address: &Address,
@@ -124,7 +124,24 @@ pub fn create_address_output_relation_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub fn create_output_batch<B: StorageBackend>(
+pub fn delete_output_id_for_address_batch<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    address: &Address,
+    output_id: &OutputId,
+) -> Result<(), Error> {
+    match address {
+        Address::Ed25519(address) => {
+            Batch::<(Ed25519Address, OutputId), ()>::batch_delete(storage, batch, &(*address, *output_id))
+                .map_err(|e| Error::Storage(Box::new(e)))?;
+        }
+        address => return Err(Error::UnsupportedAddressKind(address.kind())),
+    }
+
+    Ok(())
+}
+
+pub fn insert_created_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
@@ -137,10 +154,34 @@ pub fn create_output_batch<B: StorageBackend>(
 
     match output.inner() {
         Output::SignatureLockedSingle(output) => {
-            create_address_output_relation_batch(storage, batch, output.address(), output_id)?
+            insert_output_id_for_address_batch(storage, batch, output.address(), output_id)?
         }
         Output::SignatureLockedDustAllowance(output) => {
-            create_address_output_relation_batch(storage, batch, output.address(), output_id)?
+            insert_output_id_for_address_batch(storage, batch, output.address(), output_id)?
+        }
+        output => return Err(Error::UnsupportedOutputKind(output.kind())),
+    }
+
+    Ok(())
+}
+
+pub fn delete_created_output_batch<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    output_id: &OutputId,
+    output: &CreatedOutput,
+) -> Result<(), Error> {
+    Batch::<OutputId, CreatedOutput>::batch_delete(storage, batch, output_id)
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+    Batch::<Unspent, ()>::batch_delete(storage, batch, &(*output_id).into())
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+
+    match output.inner() {
+        Output::SignatureLockedSingle(output) => {
+            delete_output_id_for_address_batch(storage, batch, output.address(), output_id)?
+        }
+        Output::SignatureLockedDustAllowance(output) => {
+            delete_output_id_for_address_batch(storage, batch, output.address(), output_id)?
         }
         output => return Err(Error::UnsupportedOutputKind(output.kind())),
     }
@@ -155,7 +196,7 @@ pub async fn create_output<B: StorageBackend>(
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    create_output_batch(storage, &mut batch, output_id, output)?;
+    insert_created_output_batch(storage, &mut batch, output_id, output)?;
 
     storage
         .batch_commit(batch, true)
@@ -163,7 +204,7 @@ pub async fn create_output<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub fn consume_output_batch<B: StorageBackend>(
+pub fn insert_consumed_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
@@ -172,6 +213,19 @@ pub fn consume_output_batch<B: StorageBackend>(
     Batch::<OutputId, ConsumedOutput>::batch_insert(storage, batch, output_id, output)
         .map_err(|e| Error::Storage(Box::new(e)))?;
     Batch::<Unspent, ()>::batch_delete(storage, batch, &(*output_id).into())
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+
+    Ok(())
+}
+
+pub fn delete_consumed_output_batch<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    output_id: &OutputId,
+) -> Result<(), Error> {
+    Batch::<OutputId, ConsumedOutput>::batch_delete(storage, batch, output_id)
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+    Batch::<Unspent, ()>::batch_insert(storage, batch, &(*output_id).into(), &())
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     Ok(())
@@ -221,30 +275,23 @@ pub async fn apply_milestone<B: StorageBackend>(
     let mut created_output_ids = Vec::with_capacity(created_outputs.len());
     let mut consumed_output_ids = Vec::with_capacity(consumed_outputs.len());
 
-    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &index.into())
-        .map_err(|e| Error::Storage(Box::new(e)))?;
+    insert_ledger_index_batch(storage, &mut batch, &index.into())?;
 
     for (output_id, output) in created_outputs.iter() {
-        create_output_batch(storage, &mut batch, output_id, output)?;
+        insert_created_output_batch(storage, &mut batch, output_id, output)?;
         created_output_ids.push(*output_id);
     }
 
     for (output_id, output) in consumed_outputs.iter() {
-        consume_output_batch(storage, &mut batch, output_id, output)?;
+        insert_consumed_output_batch(storage, &mut batch, output_id, output)?;
         consumed_output_ids.push(*output_id);
     }
 
     store_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
 
     let treasury_diff = if let Some(migration) = migration {
-        Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(
-            storage,
-            &mut batch,
-            &(migration.receipt().inner().migrated_at(), migration.receipt().clone()),
-            &(),
-        )
-        .map_err(|e| Error::Storage(Box::new(e)))?;
-        store_unspent_treasury_output_batch(storage, &mut batch, migration.created_treasury())?;
+        insert_receipt_batch(storage, &mut batch, migration.receipt())?;
+        insert_treasury_output_batch(storage, &mut batch, migration.created_treasury())?;
         spend_treasury_output_batch(storage, &mut batch, migration.consumed_treasury())?;
 
         Some(TreasuryDiff::new(
@@ -279,30 +326,20 @@ pub async fn rollback_milestone<B: StorageBackend>(
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    Batch::<(), LedgerIndex>::batch_insert(storage, &mut batch, &(), &((index - 1).into()))
-        .map_err(|e| Error::Storage(Box::new(e)))?;
+    insert_ledger_index_batch(storage, &mut batch, &((index - 1).into()))?;
 
-    for (output_id, _) in created_outputs.iter() {
-        Batch::<OutputId, CreatedOutput>::batch_delete(storage, &mut batch, output_id)
-            .map_err(|e| Error::Storage(Box::new(e)))?;
-        Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &(*output_id).into())
-            .map_err(|e| Error::Storage(Box::new(e)))?;
+    for (output_id, output) in created_outputs.iter() {
+        delete_created_output_batch(storage, &mut batch, output_id, output)?;
     }
 
     for (output_id, _spent) in consumed_outputs.iter() {
-        Batch::<OutputId, ConsumedOutput>::batch_delete(storage, &mut batch, output_id)
-            .map_err(|e| Error::Storage(Box::new(e)))?;
-        Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &(*output_id).into(), &())
-            .map_err(|e| Error::Storage(Box::new(e)))?;
+        delete_consumed_output_batch(storage, &mut batch, output_id)?;
     }
 
     if let Some(migration) = migration {
-        Batch::<(MilestoneIndex, Receipt), ()>::batch_delete(
-            storage,
-            &mut batch,
-            &(migration.receipt().inner().migrated_at(), migration.receipt().clone()),
-        )
-        .map_err(|e| Error::Storage(Box::new(e)))?;
+        delete_receipt_batch(storage, &mut batch, migration.receipt())?;
+        delete_treasury_output_batch(storage, &mut batch, migration.created_treasury())?;
+        unspend_treasury_output_batch(storage, &mut batch, migration.consumed_treasury())?;
     }
 
     Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, &mut batch, &index)
@@ -340,6 +377,41 @@ pub(crate) async fn insert_ledger_index<B: StorageBackend>(storage: &B, index: &
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
+pub(crate) fn insert_ledger_index_batch<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    index: &LedgerIndex,
+) -> Result<(), Error> {
+    Batch::<(), LedgerIndex>::batch_insert(storage, batch, &(), index).map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub(crate) fn insert_receipt_batch<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    receipt: &Receipt,
+) -> Result<(), Error> {
+    Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(
+        storage,
+        batch,
+        &(receipt.inner().migrated_at(), receipt.clone()),
+        &(),
+    )
+    .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub(crate) fn delete_receipt_batch<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    receipt: &Receipt,
+) -> Result<(), Error> {
+    Batch::<(MilestoneIndex, Receipt), ()>::batch_delete(
+        storage,
+        batch,
+        &(receipt.inner().migrated_at(), receipt.clone()),
+    )
+    .map_err(|e| Error::Storage(Box::new(e)))
+}
+
 pub(crate) async fn insert_snapshot_info<B: StorageBackend>(
     storage: &B,
     snapshot_info: &SnapshotInfo,
@@ -370,7 +442,7 @@ pub(crate) async fn is_output_unspent<B: StorageBackend>(storage: &B, output_id:
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub async fn store_unspent_treasury_output<B: StorageBackend>(
+pub async fn insert_treasury_output<B: StorageBackend>(
     storage: &B,
     treasury_output: &TreasuryOutput,
 ) -> Result<(), Error> {
@@ -379,12 +451,21 @@ pub async fn store_unspent_treasury_output<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub fn store_unspent_treasury_output_batch<B: StorageBackend>(
+pub fn insert_treasury_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     treasury_output: &TreasuryOutput,
 ) -> Result<(), Error> {
     Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, batch, &(false, treasury_output.clone()), &())
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub fn delete_treasury_output_batch<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    treasury_output: &TreasuryOutput,
+) -> Result<(), Error> {
+    Batch::<(bool, TreasuryOutput), ()>::batch_delete(storage, batch, &(false, treasury_output.clone()))
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
@@ -396,6 +477,17 @@ pub fn spend_treasury_output_batch<B: StorageBackend>(
     Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, batch, &(true, treasury_output.clone()), &())
         .map_err(|e| Error::Storage(Box::new(e)))?;
     Batch::<(bool, TreasuryOutput), ()>::batch_delete(storage, batch, &(false, treasury_output.clone()))
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub fn unspend_treasury_output_batch<B: StorageBackend>(
+    storage: &B,
+    batch: &mut <B as BatchBuilder>::Batch,
+    treasury_output: &TreasuryOutput,
+) -> Result<(), Error> {
+    Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, batch, &(false, treasury_output.clone()), &())
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+    Batch::<(bool, TreasuryOutput), ()>::batch_delete(storage, batch, &(true, treasury_output.clone()))
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
