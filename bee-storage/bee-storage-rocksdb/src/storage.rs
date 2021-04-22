@@ -48,7 +48,7 @@ pub struct Storage {
 }
 
 impl Storage {
-    pub fn try_new(config: RocksDbConfig) -> Result<DB, Error> {
+    fn new(config: RocksDbConfig) -> Result<DB, Error> {
         let cf_system = ColumnFamilyDescriptor::new(CF_SYSTEM, Options::default());
 
         let cf_message_id_to_message = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE, Options::default());
@@ -183,7 +183,7 @@ impl StorageBackend for Storage {
     async fn start(config: Self::Config) -> Result<Self, Self::Error> {
         let storage = Storage {
             config: config.storage.clone(),
-            inner: Self::try_new(config)?,
+            inner: Self::new(config)?,
         };
 
         match Fetch::<u8, System>::fetch(&storage, &STORAGE_VERSION_KEY).await? {
