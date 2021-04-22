@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![cfg(feature = "standalone")]
+#![cfg(feature = "full")]
 
 use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
 use serde::Deserialize;

@@ -1,8 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[cfg(feature = "integrated")]
-use bee_runtime::node::{Node, NodeBuilder};
+#![cfg(feature = "full")]
 
 use super::{
     config::NetworkConfig,
@@ -32,10 +31,9 @@ pub(crate) static RECONNECT_INTERVAL_SECS: AtomicU64 = AtomicU64::new(DEFAULT_RE
 pub(crate) static NETWORK_ID: AtomicU64 = AtomicU64::new(0);
 pub(crate) static MAX_UNKNOWN_PEERS: AtomicUsize = AtomicUsize::new(0);
 
-/// Initializes the networking layer.
-// #[cfg(feature = "standalone")]
-// #[cfg(not(feature = "integrated"))]
-pub async fn __init(
+/// Initializes the networking service.
+#[cfg(feature = "standalone")]
+pub async fn standalone_init(
     config: NetworkConfig,
     keys: Keypair,
     network_id: u64,
@@ -43,9 +41,12 @@ pub async fn __init(
     todo!("standalone init")
 }
 
-/// Initializes the networking layer.
 #[cfg(feature = "integrated")]
-pub async fn init<N: Node>(
+use bee_runtime::node::{Node, NodeBuilder};
+
+/// Initializes the networking service.
+#[cfg(feature = "integrated")]
+pub async fn integrated_init<N: Node>(
     config: NetworkConfig,
     keys: Keypair,
     network_id: u64,

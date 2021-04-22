@@ -1,8 +1,6 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![cfg(feature = "standalone")]
-
 use crate::swarm::protocols::gossip::GossipSender;
 
 #[derive(Clone, Debug, Default)]

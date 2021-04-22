@@ -15,7 +15,7 @@ all-features = true
 
 [features]
 default = ["integrated"]
-standalone = [
+full = [
     "async-trait",
     "futures",
     "libp2p/dns-tokio",
@@ -31,7 +31,8 @@ standalone = [
     "tokio",
     "tokio-stream",
 ]
-integrated = ["standalone", "bee-runtime"]
+standalone = ["full"]
+integrated = ["full", "bee-runtime"]
 
 [dependencies]
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
