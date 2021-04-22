@@ -3,7 +3,7 @@
 
 use crate::{
     consensus::{
-        dust::{dust_outputs_max, DUST_THRESHOLD},
+        dust::dust_outputs_max,
         error::Error,
         merkle_hasher::MerkleHasher,
         metadata::WhiteFlagMetadata,
@@ -15,7 +15,7 @@ use crate::{
 use bee_message::{
     address::Address,
     input::Input,
-    output::{Output, OutputId},
+    output::{Output, OutputId, DUST_THRESHOLD},
     payload::{
         transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
         Payload,

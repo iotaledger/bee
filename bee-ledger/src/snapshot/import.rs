@@ -3,7 +3,6 @@
 
 use crate::{
     consensus::{
-        dust::DUST_THRESHOLD,
         storage::{self, apply_milestone, create_output, rollback_milestone, store_balance_diffs, StorageBackend},
         worker::migration_from_milestone,
     },
@@ -22,7 +21,7 @@ use crate::{
 use bee_common::packable::{Packable, Read};
 use bee_message::{
     milestone::MilestoneIndex,
-    output::{self, Output, OutputId},
+    output::{self, Output, OutputId, DUST_THRESHOLD},
     payload::Payload,
     MessageId,
 };
@@ -219,7 +218,7 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
         ));
     }
 
-    storage::store_unspent_treasury_output(
+    storage::insert_treasury_output(
         &*storage,
         &TreasuryOutput::new(
             output::TreasuryOutput::new(full_header.treasury_output_amount())?,
