@@ -59,9 +59,7 @@ fn build_invalid_input_count_low() {
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
 
-    let essence = RegularEssence::builder()
-        .with_outputs(vec![output])
-        .finish();
+    let essence = RegularEssence::builder().with_outputs(vec![output]).finish();
 
     assert!(matches!(essence, Err(Error::InvalidInputOutputCount(0))));
 }
@@ -227,7 +225,8 @@ fn build_dust_allowance_output_duplicate_address() {
 
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
-    let output = Output::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput::new(address, amount).unwrap());
+    let output =
+        Output::SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput::new(address, amount).unwrap());
 
     let essence = RegularEssence::builder()
         .with_inputs(vec![input])

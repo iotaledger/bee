@@ -25,23 +25,21 @@ fn new_valid() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SignatureLockedSingleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    AMOUNT,
-                )
-                .unwrap()
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            SignatureLockedSingleOutput::new(
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                AMOUNT,
             )
-            .unwrap()
-        ],
+            .unwrap(),
+        )
+        .unwrap()],
         Payload::TreasuryTransaction(Box::new(
             TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())), 
-                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap())
+                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
+                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
             )
-            .unwrap()
+            .unwrap(),
         )),
     );
 
@@ -56,10 +54,10 @@ fn new_invalid_receipt_funds_count_low() {
         vec![],
         Payload::TreasuryTransaction(Box::new(
             TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())), 
-                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap())
+                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
+                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
             )
-            .unwrap()
+            .unwrap(),
         )),
     );
 
@@ -71,24 +69,25 @@ fn new_invalid_receipt_funds_count_high() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         false,
-        (0..128).map(|_| {
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SignatureLockedSingleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    AMOUNT,
+        (0..128)
+            .map(|_| {
+                MigratedFundsEntry::new(
+                    TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+                    SignatureLockedSingleOutput::new(
+                        Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                        AMOUNT,
+                    )
+                    .unwrap(),
                 )
                 .unwrap()
-            )
-            .unwrap()
-        })
-        .collect(),
+            })
+            .collect(),
         Payload::TreasuryTransaction(Box::new(
             TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())), 
-                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap())
+                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
+                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
             )
-            .unwrap()
+            .unwrap(),
         )),
     );
 
@@ -100,23 +99,22 @@ fn new_invalid_payload_kind() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SignatureLockedSingleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    AMOUNT,
-                )
-                .unwrap()
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            SignatureLockedSingleOutput::new(
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                AMOUNT,
             )
-            .unwrap()
-        ],
-        Payload::Indexation(Box::new(
-            IndexationPayload::new(&rand_bytes_32(), &[]).unwrap())
-        ),
+            .unwrap(),
+        )
+        .unwrap()],
+        Payload::Indexation(Box::new(IndexationPayload::new(&rand_bytes_32(), &[]).unwrap())),
     );
 
-    assert!(matches!(receipt, Err(Error::InvalidPayloadKind(IndexationPayload::KIND))));
+    assert!(matches!(
+        receipt,
+        Err(Error::InvalidPayloadKind(IndexationPayload::KIND))
+    ));
 }
 
 #[test]
@@ -131,7 +129,7 @@ fn new_invalid_transaction_outputs_not_sorted() {
                 Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                 AMOUNT,
             )
-            .unwrap()
+            .unwrap(),
         )
         .unwrap(),
         MigratedFundsEntry::new(
@@ -140,7 +138,7 @@ fn new_invalid_transaction_outputs_not_sorted() {
                 Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
                 AMOUNT,
             )
-            .unwrap()
+            .unwrap(),
         )
         .unwrap(),
     ];
@@ -151,10 +149,10 @@ fn new_invalid_transaction_outputs_not_sorted() {
         migrated_funds,
         Payload::TreasuryTransaction(Box::new(
             TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())), 
-                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap())
+                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
+                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
             )
-            .unwrap()
+            .unwrap(),
         )),
     );
 
@@ -169,7 +167,7 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
             Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
             AMOUNT,
         )
-        .unwrap()
+        .unwrap(),
     )
     .unwrap();
 
@@ -179,10 +177,10 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
         vec![migrated_funds; 2],
         Payload::TreasuryTransaction(Box::new(
             TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())), 
-                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap())
+                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
+                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
             )
-            .unwrap()
+            .unwrap(),
         )),
     );
 
@@ -194,23 +192,21 @@ fn pack_unpack_valid() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![
-            MigratedFundsEntry::new(
-                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-                SignatureLockedSingleOutput::new(
-                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                    AMOUNT,
-                )
-                .unwrap()
+        vec![MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            SignatureLockedSingleOutput::new(
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                AMOUNT,
             )
-            .unwrap()
-        ],
+            .unwrap(),
+        )
+        .unwrap()],
         Payload::TreasuryTransaction(Box::new(
             TreasuryTransactionPayload::new(
-                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())), 
-                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap())
+                Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
+                Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
             )
-            .unwrap()
+            .unwrap(),
         )),
     )
     .unwrap();

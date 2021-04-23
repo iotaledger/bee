@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_message::{prelude::*, milestone::Milestone};
+use bee_message::{milestone::Milestone, prelude::*};
 use bee_test::rand::{milestone::rand_milestone, number::rand_number};
 
 use std::str::FromStr;
@@ -20,16 +20,6 @@ fn debug_impl() {
 }
 
 #[test]
-fn new_getters() {
-    let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
-    let timestamp = rand_number::<u64>();
-    let milestone = Milestone::new(message_id, timestamp);
-
-    assert_eq!(message_id, *milestone.message_id());
-    assert_eq!(timestamp, milestone.timestamp());
-}
-
-#[test]
 fn packed_len() {
     let milestone = rand_milestone();
     assert_eq!(milestone.packed_len(), milestone.pack_new().len());
@@ -41,4 +31,14 @@ fn pack_unpack() {
     let packed = milestone.pack_new();
 
     assert_eq!(Milestone::unpack(&mut packed.as_slice()).unwrap(), milestone);
+}
+
+#[test]
+fn getters() {
+    let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
+    let timestamp = rand_number::<u64>();
+    let milestone = Milestone::new(message_id, timestamp);
+
+    assert_eq!(message_id, *milestone.message_id());
+    assert_eq!(timestamp, milestone.timestamp());
 }

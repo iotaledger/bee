@@ -32,7 +32,7 @@ fn essence_kind() {
 #[test]
 fn essence_unpack_invalid_kind() {
     assert!(matches!(
-        Essence::unpack(&mut vec![1u8; 32].as_slice()), 
+        Essence::unpack(&mut vec![1u8; 32].as_slice()),
         Err(Error::InvalidEssenceKind(1))
     ));
 }

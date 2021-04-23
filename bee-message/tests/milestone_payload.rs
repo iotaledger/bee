@@ -12,23 +12,21 @@ fn kind() {
 
 #[test]
 fn new_valid() {
-    assert!(
-        MilestonePayload::new(
-            MilestonePayloadEssence::new(
-                MilestoneIndex(0),
-                0,
-                rand_parents(),
-                [0; MILESTONE_MERKLE_PROOF_LENGTH],
-                0,
-                0,
-                vec![[0; 32]],
-                None,
-            )
-            .unwrap(),
-            vec![[0; 64]],
+    assert!(MilestonePayload::new(
+        MilestonePayloadEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_parents(),
+            [0; MILESTONE_MERKLE_PROOF_LENGTH],
+            0,
+            0,
+            vec![[0; 32]],
+            None,
         )
-        .is_ok()
-    );
+        .unwrap(),
+        vec![[0; 64]],
+    )
+    .is_ok());
 }
 
 #[test]
@@ -117,7 +115,7 @@ fn packed_len() {
 }
 
 #[test]
-fn new_valid_getters() {
+fn getters() {
     let essence = MilestonePayloadEssence::new(
         rand::milestone::rand_milestone_index(),
         rand::number::rand_number::<u64>(),
@@ -137,7 +135,7 @@ fn new_valid_getters() {
         signatures
             .iter()
             .map(|s| s.to_vec().into_boxed_slice())
-            .collect::<Vec<Box<[u8]>>>(), 
+            .collect::<Vec<Box<[u8]>>>(),
         *milestone.signatures()
-    );    
+    );
 }
