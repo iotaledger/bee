@@ -1,9 +1,9 @@
 [package]
-name = "bee-storage-rocksdb"
+name = "bee-storage-test"
 version = "0.1.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = "A bee-storage implementation for the rocksdb backend"
+description = "A crate to test storage implementation in a generic way"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
@@ -12,23 +12,11 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 # TODO clean
 bee-ledger = { path = "../../bee-ledger", features = [ "snapshot", "consensus", "pruning" ] }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-tangle = { path = "../../bee-tangle" }
-
-async-trait = "0.1"
-futures = "0.3"
-num_cpus = "1.13"
-pin-project = "1.0"
-rocksdb = { version = "0.16", default-features = false }
-serde = { version = "1.0", features = ["derive"] }
-thiserror = "1.0"
-
-[dev-dependencies]
-bee-storage-test = { path = "../bee-storage-test" }
 bee-test = { path = "../../bee-test" }
 
-tokio = { version = "1.4", features = ["macros"] }
+futures = "0.3"

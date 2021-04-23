@@ -13,6 +13,7 @@ members = [
 	"bee-signing",
 	"bee-storage/bee-storage",
 	"bee-storage/bee-storage-rocksdb",
+	"bee-storage/bee-storage-test",
 	"bee-tangle",
 	"bee-ternary",
 	"bee-test",
