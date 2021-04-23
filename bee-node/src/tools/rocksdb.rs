@@ -20,7 +20,7 @@ use bee_storage_rocksdb::{
     column_families::*, config::RocksDbConfigBuilder, error::Error as BackendError, storage::Storage, system::System,
 };
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
 use futures::{executor, stream::StreamExt};
@@ -284,15 +284,15 @@ async fn exec_inner(tool: &RocksdbTool) -> Result<(), RocksdbError> {
                 }
             }
         },
-        CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE => match &tool.command {
+        CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, Vec<UnconfirmedMessage>>::fetch(&storage, &key).await?;
+                let value = Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(&storage, &key).await?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
             RocksdbCommand::Stream => {
-                let mut stream = AsStream::<(MilestoneIndex, UnconfirmedMessage), ()>::stream(&storage).await?;
+                let mut stream = AsStream::<(MilestoneIndex, UnreferencedMessage), ()>::stream(&storage).await?;
 
                 while let Some((key, value)) = stream.next().await {
                     println!("Key: {:?}\nValue: {:?}\n", key, value);

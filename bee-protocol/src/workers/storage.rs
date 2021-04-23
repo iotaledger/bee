@@ -12,18 +12,18 @@ use bee_storage::{
     backend,
 };
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
 pub trait StorageBackend:
     backend::StorageBackend
-    + Batch<(MilestoneIndex, UnconfirmedMessage), ()>
+    + Batch<(MilestoneIndex, UnreferencedMessage), ()>
     + Insert<MessageId, Message>
     + Insert<MessageId, MessageMetadata>
     + Insert<(MessageId, MessageId), ()>
     + Insert<MilestoneIndex, Milestone>
     + Insert<(PaddedIndex, MessageId), ()>
-    + Insert<(MilestoneIndex, UnconfirmedMessage), ()>
+    + Insert<(MilestoneIndex, UnreferencedMessage), ()>
     + Fetch<MessageId, Message>
     + Fetch<MessageId, MessageMetadata>
     + Fetch<MessageId, Vec<MessageId>>
@@ -36,13 +36,13 @@ pub trait StorageBackend:
 
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
-        + Batch<(MilestoneIndex, UnconfirmedMessage), ()>
+        + Batch<(MilestoneIndex, UnreferencedMessage), ()>
         + Insert<MessageId, Message>
         + Insert<MessageId, MessageMetadata>
         + Insert<(MessageId, MessageId), ()>
         + Insert<MilestoneIndex, Milestone>
         + Insert<(PaddedIndex, MessageId), ()>
-        + Insert<(MilestoneIndex, UnconfirmedMessage), ()>
+        + Insert<(MilestoneIndex, UnreferencedMessage), ()>
         + Fetch<MessageId, Message>
         + Fetch<MessageId, MessageMetadata>
         + Fetch<MessageId, Vec<MessageId>>

@@ -44,10 +44,12 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     let (address, balance) = (rand_address(), rand_balance());
 
     assert!(!Exist::<Address, Balance>::exist(storage, &address).await.unwrap());
-    assert!(Fetch::<Address, Balance>::fetch(storage, &address)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<Address, Balance>::fetch(storage, &address)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     Insert::<Address, Balance>::insert(storage, &address, &balance)
         .await
@@ -66,10 +68,12 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     Delete::<Address, Balance>::delete(storage, &address).await.unwrap();
 
     assert!(!Exist::<Address, Balance>::exist(storage, &address).await.unwrap());
-    assert!(Fetch::<Address, Balance>::fetch(storage, &address)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<Address, Balance>::fetch(storage, &address)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     let mut batch = B::batch_begin();
 

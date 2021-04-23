@@ -20,7 +20,7 @@ use bee_message::{
 };
 use bee_storage::access::Exist;
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
 #[async_trait::async_trait]
@@ -176,17 +176,17 @@ impl Exist<Address, Balance> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Exist<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
+impl Exist<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
     async fn exist(
         &self,
-        (index, unconfirmed_message): &(MilestoneIndex, UnconfirmedMessage),
+        (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
     ) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = index.pack_new();
-        key.extend_from_slice(unconfirmed_message.as_ref());
+        key.extend_from_slice(unreferenced_message.as_ref());
 
         Ok(self
             .inner
-            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)?, key)?
+            .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?, key)?
             .is_some())
     }
 }

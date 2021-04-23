@@ -9,9 +9,10 @@ use crate::{
         metadata::WhiteFlagMetadata,
         storage::{self, StorageBackend},
     },
-    types::{BalanceDiffs, ConflictReason, ConsumedOutput, CreatedOutput},
+    types::{BalanceDiffs, ConsumedOutput, CreatedOutput},
 };
 
+use bee_ledger_types::types::ConflictReason;
 use bee_message::{
     address::Address,
     input::Input,

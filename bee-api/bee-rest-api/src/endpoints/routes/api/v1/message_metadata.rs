@@ -9,7 +9,7 @@ use crate::{
     types::{body::SuccessBody, dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse},
 };
 
-use bee_ledger::types::ConflictReason;
+use bee_ledger_types::types::ConflictReason;
 use bee_message::{payload::Payload, MessageId};
 use bee_runtime::resource::ResourceHandle;
 use bee_tangle::MsTangle;
@@ -87,7 +87,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                     }
 
                     ledger_inclusion_state = Some(if let Some(Payload::Transaction(_)) = message.payload() {
-                        if metadata.conflict() != ConflictReason::None as u8 {
+                        if metadata.conflict() != ConflictReason::None {
                             conflict_reason = Some(metadata.conflict());
                             LedgerInclusionStateDto::Conflicting
                         } else {
@@ -155,7 +155,7 @@ pub(crate) async fn message_metadata<B: StorageBackend>(
                 referenced_by_milestone_index,
                 milestone_index,
                 ledger_inclusion_state,
-                conflict_reason,
+                conflict_reason: conflict_reason.map(|c| c as u8),
                 should_promote,
                 should_reattach,
             })))

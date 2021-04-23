@@ -1,8 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{BalanceDiffs, ConflictReason, ConsumedOutput, CreatedOutput};
+use crate::types::{BalanceDiffs, ConsumedOutput, CreatedOutput};
 
+use bee_ledger_types::types::ConflictReason;
 use bee_message::{milestone::MilestoneIndex, output::OutputId, MessageId};
 
 use std::collections::HashMap;

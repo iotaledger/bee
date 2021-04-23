@@ -43,10 +43,12 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     let (message_id, message) = (rand_message_id(), rand_message());
 
     assert!(!Exist::<MessageId, Message>::exist(storage, &message_id).await.unwrap());
-    assert!(Fetch::<MessageId, Message>::fetch(storage, &message_id)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<MessageId, Message>::fetch(storage, &message_id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     Insert::<MessageId, Message>::insert(storage, &message_id, &message)
         .await
@@ -67,10 +69,12 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
         .unwrap();
 
     assert!(!Exist::<MessageId, Message>::exist(storage, &message_id).await.unwrap());
-    assert!(Fetch::<MessageId, Message>::fetch(storage, &message_id)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        Fetch::<MessageId, Message>::fetch(storage, &message_id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     let mut batch = B::batch_begin();
 

@@ -1,8 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{ConflictReason, ConsumedOutput, CreatedOutput};
+use crate::types::{ConsumedOutput, CreatedOutput};
 
+use bee_ledger_types::types::ConflictReason;
 use bee_message::{milestone::MilestoneIndex, MessageId};
 
 // TODO why do we need to full vectors here ?

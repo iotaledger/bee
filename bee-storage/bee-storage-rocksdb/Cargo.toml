@@ -17,7 +17,7 @@ bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-ledger = { path = "../../bee-ledger", features = [ "snapshot", "consensus", "pruning" ] }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-tangle = { path = "../../bee-tangle" }
+bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 async-trait = "0.1"
 futures = "0.3"

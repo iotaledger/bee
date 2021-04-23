@@ -10,7 +10,7 @@ use bee_runtime::{
     worker::{Error as WorkerError, Worker},
 };
 use bee_storage::access::{Batch, BatchBuilder, Insert};
-use bee_tangle::unconfirmed_message::UnconfirmedMessage;
+use bee_tangle::unreferenced_message::UnreferencedMessage;
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -18,16 +18,16 @@ use log::{debug, error, info};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-const UNCONFIRMED_MESSAGE_BATCH_SIZE: usize = 1000;
+const UNREFERENCED_MESSAGE_BATCH_SIZE: usize = 1000;
 
-pub struct UnconfirmedMessageInserterWorkerEvent(pub(crate) MessageId, pub(crate) MilestoneIndex);
+pub struct UnreferencedMessageInserterWorkerEvent(pub(crate) MessageId, pub(crate) MilestoneIndex);
 
-pub struct UnconfirmedMessageInserterWorker {
-    pub tx: mpsc::UnboundedSender<UnconfirmedMessageInserterWorkerEvent>,
+pub struct UnreferencedMessageInserterWorker {
+    pub tx: mpsc::UnboundedSender<UnreferencedMessageInserterWorkerEvent>,
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for UnconfirmedMessageInserterWorker
+impl<N: Node> Worker<N> for UnreferencedMessageInserterWorker
 where
     N::Backend: StorageBackend,
 {
@@ -46,20 +46,20 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(UnconfirmedMessageInserterWorkerEvent(message_id, index)) = receiver.next().await {
-                if let Err(e) = Batch::<(MilestoneIndex, UnconfirmedMessage), ()>::batch_insert(
+            while let Some(UnreferencedMessageInserterWorkerEvent(message_id, index)) = receiver.next().await {
+                if let Err(e) = Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_insert(
                     &*storage,
                     &mut batch,
-                    &(index, UnconfirmedMessage::from(message_id)),
+                    &(index, UnreferencedMessage::from(message_id)),
                     &(),
                 ) {
-                    error!("Batch inserting unconfirmed message failed: {:?}.", e);
+                    error!("Batch inserting unreferenced message failed: {:?}.", e);
                 }
 
                 counter += 1;
-                if counter == UNCONFIRMED_MESSAGE_BATCH_SIZE {
+                if counter == UNREFERENCED_MESSAGE_BATCH_SIZE {
                     if let Err(e) = storage.batch_commit(batch, true).await {
-                        error!("Committing unconfirmed message batch failed: {:?}.", e);
+                        error!("Committing unreferenced message batch failed: {:?}.", e);
                     }
                     batch = N::Backend::batch_begin();
                     counter = 0;
@@ -67,26 +67,26 @@ where
             }
 
             if let Err(e) = storage.batch_commit(batch, true).await {
-                error!("Committing unconfirmed message batch failed: {:?}.", e);
+                error!("Committing unreferenced message batch failed: {:?}.", e);
             }
 
-            // Before the worker completely stops, the receiver needs to be drained for unconfirmed messages to be
+            // Before the worker completely stops, the receiver needs to be drained for unreferenced messages to be
             // inserted. Otherwise, information would be lost and not easily recoverable.
 
             let (_, mut receiver) = receiver.split();
             counter = 0;
 
-            while let Some(Some(UnconfirmedMessageInserterWorkerEvent(message_id, index))) =
+            while let Some(Some(UnreferencedMessageInserterWorkerEvent(message_id, index))) =
                 receiver.next().now_or_never()
             {
-                if let Err(e) = Insert::<(MilestoneIndex, UnconfirmedMessage), ()>::insert(
+                if let Err(e) = Insert::<(MilestoneIndex, UnreferencedMessage), ()>::insert(
                     &*storage,
-                    &(index, UnconfirmedMessage::from(message_id)),
+                    &(index, UnreferencedMessage::from(message_id)),
                     &(),
                 )
                 .await
                 {
-                    error!("Inserting unconfirmed message failed: {:?}.", e);
+                    error!("Inserting unreferenced message failed: {:?}.", e);
                 }
                 counter += 1;
             }

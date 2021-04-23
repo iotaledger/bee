@@ -43,21 +43,27 @@ impl<T> StorageBackend for T where
 pub async fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     let (message_id, metadata) = (rand_message_id(), rand_metadata());
 
-    assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
-        .await
-        .unwrap());
-    assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     Insert::<MessageId, MessageMetadata>::insert(storage, &message_id, &metadata)
         .await
         .unwrap();
 
-    assert!(Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
-        .await
-        .unwrap());
+    assert!(
+        Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
+            .await
+            .unwrap()
+    );
     assert_eq!(
         Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
             .await
@@ -71,13 +77,17 @@ pub async fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         .await
         .unwrap();
 
-    assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
-        .await
-        .unwrap());
-    assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     let mut batch = B::batch_begin();
 

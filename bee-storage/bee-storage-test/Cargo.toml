@@ -16,7 +16,7 @@ bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-ledger = { path = "../../bee-ledger", features = [ "snapshot", "consensus", "pruning" ] }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-tangle = { path = "../../bee-tangle" }
+bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-test = { path = "../../bee-test" }
 
 futures = "0.3"
