@@ -128,7 +128,7 @@ fn __init(
 
     let banned_addrs = AddrBanlist::new();
     let banned_peers = PeerBanlist::new();
-    let peerlist = PeerList::new(); // TODO: PeerList::from_vec(peers);
+    let peerlist = PeerList::from_peers(peers);
 
     let host_config = NetworkHostConfig {
         local_keys: local_keys.clone(),
@@ -162,15 +162,3 @@ fn __init(
         network_event_receiver,
     )
 }
-
-// // TODO: Initialize the peerlist with the initial peers defined in the config.
-// for peer in peers {
-//     network_command_sender
-//         .send(Command::AddPeer {
-//             peer_id: peer.peer_id,
-//             multiaddr: peer.multiaddr,
-//             alias: peer.alias,
-//             relation: PeerRelation::Known,
-//         })
-//         .expect("network service command receiver dropped");
-// }

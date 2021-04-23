@@ -6,7 +6,13 @@ use super::{
     meta::PeerState,
 };
 
-use crate::{init::MAX_UNKNOWN_PEERS, swarm::protocols::gossip::GossipSender, types::PeerInfo};
+use crate::{
+    alias,
+    config::Peer,
+    init::MAX_UNKNOWN_PEERS,
+    swarm::protocols::gossip::GossipSender,
+    types::{PeerInfo, PeerRelation},
+};
 
 use libp2p::PeerId;
 use tokio::sync::RwLock;
@@ -25,6 +31,26 @@ pub struct PeerList(Arc<RwLock<HashMap<PeerId, (PeerInfo, PeerState)>>>);
 impl PeerList {
     pub fn new() -> Self {
         Self(Arc::new(RwLock::new(HashMap::with_capacity(DEFAULT_PEERLIST_CAPACITY))))
+    }
+
+    pub fn from_peers(peers: Vec<Peer>) -> Self {
+        let mut m = HashMap::with_capacity(DEFAULT_PEERLIST_CAPACITY);
+
+        m.extend(peers.into_iter().map(|peer| {
+            (
+                peer.peer_id,
+                (
+                    PeerInfo {
+                        address: peer.multiaddr,
+                        alias: peer.alias.unwrap_or(alias!(peer.peer_id).to_owned()),
+                        relation: PeerRelation::Known,
+                    },
+                    PeerState::disconnected(),
+                ),
+            )
+        }));
+
+        Self(Arc::new(RwLock::new(m)))
     }
 
     // If the insertion fails for some reason, we give it back to the caller.
