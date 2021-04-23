@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{ms_tangle::MsTangle, storage::StorageBackend};
+use crate::{config::TangleConfig, ms_tangle::MsTangle, storage::StorageBackend};
 
 use bee_message::MessageId;
 
@@ -23,10 +23,6 @@ const YMRSI_DELTA: u32 = 8;
 // C2: the maximum allowed delta value between OMRSI of a given message in relation to the current SMI before it
 // gets semi-lazy.
 const OMRSI_DELTA: u32 = 13;
-// M: the maximum allowed delta value between OMRSI of a given message in relation to the current SMI before it
-// gets lazy.
-/// The maximum permitted difference between a message's OMRSI and the current SMI before it is considered lazy.
-pub const BELOW_MAX_DEPTH: u32 = 15;
 // If the amount of non-lazy tips exceed this limit, remove the parent(s) of the inserted tip to compensate for the
 // excess. This rule helps to reduce the amount of tips in the network.
 const MAX_LIMIT_NON_LAZY: u8 = 100;
@@ -49,13 +45,21 @@ impl TipMetadata {
     }
 }
 
-#[derive(Default)]
 pub(crate) struct UrtsTipPool {
     tips: HashMap<MessageId, TipMetadata>,
     non_lazy_tips: HashSet<MessageId>,
+    below_max_depth: u32,
 }
 
 impl UrtsTipPool {
+    pub(crate) fn new(config: &TangleConfig) -> Self {
+        Self {
+            tips: HashMap::default(),
+            non_lazy_tips: HashSet::default(),
+            below_max_depth: config.below_max_depth(),
+        }
+    }
+
     pub(crate) fn non_lazy_tips(&self) -> &HashSet<MessageId> {
         &self.non_lazy_tips
     }
@@ -148,7 +152,7 @@ impl UrtsTipPool {
             let omrsi = *tangle.omrsi(&message_id).await.unwrap().index();
             let ymrsi = *tangle.ymrsi(&message_id).await.unwrap().index();
 
-            if smi > ymrsi + YMRSI_DELTA || smi > omrsi + BELOW_MAX_DEPTH {
+            if smi > ymrsi + YMRSI_DELTA || smi > omrsi + self.below_max_depth {
                 Score::Lazy
             } else if smi > omrsi + OMRSI_DELTA {
                 Score::SemiLazy

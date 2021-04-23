@@ -114,7 +114,6 @@ impl<B: StorageBackend> MsTangle<B> {
     /// Create a new `MsTangle` instance with the given configuration and storage handle.
     pub fn new(config: TangleConfig, storage: ResourceHandle<B>) -> Self {
         Self {
-            config,
             inner: Tangle::new(StorageHooks { storage }),
             milestones: Default::default(),
             solid_entry_points: Default::default(),
@@ -124,7 +123,8 @@ impl<B: StorageBackend> MsTangle<B> {
             snapshot_index: Default::default(),
             pruning_index: Default::default(),
             entry_point_index: Default::default(),
-            tip_pool: Mutex::new(UrtsTipPool::default()),
+            tip_pool: Mutex::new(UrtsTipPool::new(&config)),
+            config,
         }
     }
 
