@@ -34,7 +34,10 @@ pub async fn download_snapshot_file(file_path: &Path, download_urls: &[String]) 
                 },
                 Err(e) => warn!("Creating snapshot file failed: {:?}.", e),
             },
-            Err(e) => warn!("Downloading snapshot file failed: {:?}.", e),
+            Err(e) => match e.status() {
+                Some(status) => warn!("Downloading snapshot file failed with status code {}.", status),
+                None => warn!("Downloading snapshot file failed: {:?}.", e),
+            },
         }
     }
 
