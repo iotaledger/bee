@@ -123,7 +123,7 @@ fn new_invalid_payload_kind() {
 
 #[test]
 fn new_invalid_transaction_outputs_not_sorted() {
-    let mut new_tail_transaction_hash = TAIL_TRANSACTION_HASH_BYTES.clone();
+    let mut new_tail_transaction_hash = TAIL_TRANSACTION_HASH_BYTES;
     new_tail_transaction_hash[0] = 223;
 
     let migrated_funds = vec![
