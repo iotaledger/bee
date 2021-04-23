@@ -10,7 +10,7 @@ use bee_pow::{
     },
     score::compute_pow_score,
 };
-use bee_test::rand::{message::rand_message_ids, parents::rand_parents};
+use bee_test::rand::{input::rand_treasury_input, message::rand_message_ids, output::rand_treasury_output, parents::rand_parents, payload::rand_indexation};
 
 #[test]
 fn pow_default_provider() {
@@ -58,6 +58,23 @@ fn invalid_length() {
 }
 
 #[test]
+fn invalid_payload_kind() {
+    let res = MessageBuilder::<Miner>::new()
+        .with_network_id(0)
+        .with_parents(rand_parents())
+        .with_payload(Payload::TreasuryTransaction(Box::new(
+            TreasuryTransactionPayload::new(
+                rand_treasury_input(), 
+                rand_treasury_output(),
+            )
+            .unwrap()
+        )))
+        .finish();
+
+    assert!(matches!(res, Err(Error::InvalidPayloadKind(4))))
+}
+
+#[test]
 fn unpack_valid_no_remaining_bytes() {
     assert!(
         Message::unpack(
@@ -101,4 +118,21 @@ fn pack_unpack_valid() {
 
     assert_eq!(packed_message.len(), message.packed_len());
     assert_eq!(message, Packable::unpack(&mut packed_message.as_slice()).unwrap());
+}
+
+#[test]
+fn getters() {
+    let parents = rand_parents();
+    let payload: Payload = rand_indexation().into();
+
+    let message = Message::builder()
+        .with_network_id(1)
+        .with_parents(parents.clone())
+        .with_payload(payload.clone())
+        .finish()
+        .unwrap();
+
+    assert_eq!(message.network_id(), 1);
+    assert_eq!(*message.parents(), parents);
+    assert_eq!(*message.payload().as_ref().unwrap(), payload);
 }
