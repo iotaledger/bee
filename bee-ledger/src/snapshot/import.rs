@@ -29,7 +29,7 @@ use bee_storage::access::{Insert, Truncate};
 use bee_tangle::solid_entry_point::SolidEntryPoint;
 
 use chrono::{offset::TimeZone, Utc};
-use log::info;
+use log::{info, warn};
 
 use std::{
     collections::HashMap,
@@ -342,18 +342,18 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
         download_snapshot_file(config.full_path(), config.download_urls()).await?;
     }
 
-    if let Some(path) = config.delta_path() {
-        if !delta_exists {
-            download_snapshot_file(path, config.download_urls()).await?;
-        }
-    }
-
+    // We are sure that the full snapshot file exists from now on.
     import_full_snapshot(storage, config.full_path(), network_id).await?;
 
-    if let Some(path) = config.delta_path() {
-        // Load delta file only if both full and delta files already existed or if they have just been downloaded.
-        if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
-            import_delta_snapshot(storage, path, network_id).await?;
+    if let Some(delta_path) = config.delta_path() {
+        if !delta_exists {
+            if let Err(_) = download_snapshot_file(delta_path, config.download_urls()).await {
+                warn!("Could not download the delta snapshot file and it will not be imported.");
+            }
+        }
+
+        if Path::exists(delta_path) {
+            import_delta_snapshot(storage, delta_path, network_id).await?;
         }
     }
 
