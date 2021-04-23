@@ -25,15 +25,17 @@ fn new_valid() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![MigratedFundsEntry::new(
-            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-            SignatureLockedSingleOutput::new(
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
+        vec![
+            MigratedFundsEntry::new(
+                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+                SignatureLockedSingleOutput::new(
+                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                    AMOUNT,
+                )
+                .unwrap(),
             )
             .unwrap(),
-        )
-        .unwrap()],
+        ],
         Payload::from(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
@@ -99,15 +101,17 @@ fn new_invalid_payload_kind() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![MigratedFundsEntry::new(
-            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-            SignatureLockedSingleOutput::new(
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
+        vec![
+            MigratedFundsEntry::new(
+                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+                SignatureLockedSingleOutput::new(
+                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                    AMOUNT,
+                )
+                .unwrap(),
             )
             .unwrap(),
-        )
-        .unwrap()],
+        ],
         Payload::from(IndexationPayload::new(&rand_bytes_32(), &[]).unwrap()),
     );
 
@@ -192,15 +196,17 @@ fn pack_unpack_valid() {
     let receipt = ReceiptPayload::new(
         MilestoneIndex::new(0),
         true,
-        vec![MigratedFundsEntry::new(
-            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
-            SignatureLockedSingleOutput::new(
-                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-                AMOUNT,
+        vec![
+            MigratedFundsEntry::new(
+                TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+                SignatureLockedSingleOutput::new(
+                    Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                    AMOUNT,
+                )
+                .unwrap(),
             )
             .unwrap(),
-        )
-        .unwrap()],
+        ],
         Payload::from(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
