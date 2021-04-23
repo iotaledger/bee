@@ -11,7 +11,7 @@ use crate::{
     },
     service::{
         command::{Command, CommandReceiver},
-        event::InternalEventSender,
+        event::{InternalEvent, InternalEventSender},
     },
     swarm::{behavior::SwarmBehavior, builder::build_swarm, protocols::gossip::GOSSIP_ORIGIN},
     types::PeerInfo,
@@ -75,26 +75,25 @@ pub mod integrated {
             let mut swarm = start_swarm(local_keys.clone(), bind_multiaddr, internal_event_sender.clone()).await;
 
             node.spawn::<Self, _, _>(|mut shutdown| async move {
+                loop {
+                    let swarm_next_event = Swarm::next_event(&mut swarm);
+                    let recv_command = (&mut internal_command_receiver).recv();
 
-            loop {
-                let swarm_next_event = Swarm::next_event(&mut swarm);
-                let recv_command = (&mut internal_command_receiver).recv();
-
-                tokio::select! {
-                    _ = &mut shutdown => break,
-                    event = swarm_next_event => {
-                        process_swarm_event(event, &internal_event_sender);
-                    }
-                    command = recv_command => {
-                        if let Some(command) = command {
-                            process_command(command, &mut swarm, &local_keys, &peerlist, &banned_addrs, &banned_peers).await;
+                    tokio::select! {
+                        _ = &mut shutdown => break,
+                        event = swarm_next_event => {
+                            process_swarm_event(event, &internal_event_sender);
                         }
-                    },
+                        command = recv_command => {
+                            if let Some(command) = command {
+                                process_command(command, &mut swarm, &local_keys, &peerlist, &banned_addrs, &banned_peers).await;
+                            }
+                        },
+                    }
                 }
-            }
 
-            info!("Network Host stopped.");
-        });
+                info!("Network Host stopped.");
+            });
 
             info!("Network Host started.");
 
@@ -120,7 +119,6 @@ pub mod standalone {
         }
 
         pub async fn start(self, config: NetworkHostConfig) {
-            //
             let NetworkHost { mut shutdown } = self;
             let NetworkHostConfig {
                 local_keys,
@@ -169,17 +167,20 @@ async fn start_swarm(
         .await
         .expect("Fatal error: creating transport layer failed.");
 
-    info!("Bind Multiaddr: {}", bind_multiaddr);
+    info!("Trying to bind to: {}", bind_multiaddr);
 
-    let _ = Swarm::listen_on(&mut swarm, bind_multiaddr).expect("Fatal error: address binding failed.");
+    let _ = Swarm::listen_on(&mut swarm, bind_multiaddr).expect("Fatal error: binding address failed.");
 
     swarm
 }
 
-fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, _internal_event_sender: &InternalEventSender) {
+fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, internal_event_sender: &InternalEventSender) {
     match event {
-        SwarmEvent::NewListenAddr(_address) => {
+        SwarmEvent::NewListenAddr(address) => {
             // TODO: collect listen address to deny dialing it
+            internal_event_sender
+                .send(InternalEvent::AddressBound { address })
+                .expect("send error");
         }
         SwarmEvent::ConnectionEstablished { peer_id, .. } => {
             debug!("Negotiating protocol with '{}'.", alias!(peer_id));

@@ -32,7 +32,7 @@ pub enum Event {
         address: Multiaddr,
     },
     /// The local peer was created.
-    PeerCreated {
+    LocalCreated {
         /// The created peer id from the Ed25519 keypair.
         peer_id: PeerId,
     },
@@ -85,6 +85,11 @@ pub enum Event {
 
 #[derive(Debug)]
 pub enum InternalEvent {
+    /// An address was bound.
+    AddressBound {
+        /// The assigned bind address.
+        address: Multiaddr,
+    },
     ProtocolEstablished {
         peer_id: PeerId,
         peer_addr: Multiaddr,

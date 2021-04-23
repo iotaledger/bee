@@ -357,6 +357,9 @@ async fn process_internal_event(
     _internal_command_sender: &CommandSender,
 ) -> Result<(), PeerError> {
     match internal_event {
+        InternalEvent::AddressBound { address } => {
+            let _ = event_sender.send(Event::AddressBound { address });
+        }
         InternalEvent::ProtocolEstablished {
             peer_id,
             peer_addr,

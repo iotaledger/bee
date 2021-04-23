@@ -115,16 +115,20 @@ fn __init(
     NETWORK_ID.set(network_id).unwrap();
     MAX_UNKNOWN_PEERS.set(max_unknown_peers).unwrap();
 
-    // TODO: Create event
-    let local_keys = identity::Keypair::Ed25519(keys);
-    let local_peer_id = PeerId::from_public_key(local_keys.public());
-    info!("Local peer id: {}", local_peer_id);
-
     let (command_sender, command_receiver) = command_channel();
     let (internal_command_sender, internal_command_receiver) = command_channel();
 
     let (event_sender, event_receiver) = event_channel::<Event>();
     let (internal_event_sender, internal_event_receiver) = event_channel::<InternalEvent>();
+
+    let local_keys = identity::Keypair::Ed25519(keys);
+    let local_peer_id = PeerId::from_public_key(local_keys.public());
+
+    info!("Local Id: {}", local_peer_id);
+
+    event_sender
+        .send(Event::LocalCreated { peer_id: local_peer_id })
+        .expect("send error");
 
     let banned_addrs = AddrBanlist::new();
     let banned_peers = PeerBanlist::new();
