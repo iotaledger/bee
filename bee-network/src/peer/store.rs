@@ -16,6 +16,9 @@ use std::{collections::HashMap, sync::Arc};
 // TODO: check whether this is the right default value when used in production.
 const DEFAULT_PEERLIST_CAPACITY: usize = 8;
 
+// TODO: Merge with banned addr, peer_id
+// TODO: Initialize it with stuff from the config
+// TODO: Make it into global state so that we don't need to pass it around all the time
 #[derive(Clone, Default)]
 pub struct PeerList(Arc<RwLock<HashMap<PeerId, (PeerInfo, PeerState)>>>);
 

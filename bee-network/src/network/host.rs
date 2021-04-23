@@ -1,8 +1,6 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![cfg(feature = "integrated")]
-
 use super::error::Error;
 
 use crate::{
@@ -14,15 +12,11 @@ use crate::{
     service::{
         command::{Command, CommandReceiver},
         event::InternalEventSender,
-        service::NetworkService,
     },
     swarm::{behavior::SwarmBehavior, builder::build_swarm, protocols::gossip::GOSSIP_ORIGIN},
     types::PeerInfo,
 };
 
-use bee_runtime::{node::Node, worker::Worker};
-
-use async_trait::async_trait;
 use libp2p::{
     identity::{self, Keypair},
     swarm::SwarmEvent,
@@ -30,9 +24,8 @@ use libp2p::{
 };
 use log::*;
 
-use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
-
 // TODO: move this to `config` module
+// TODO: rename fields: keys, bind, peerlist, ...
 pub struct NetworkHostConfig {
     pub local_keys: Keypair,
     pub bind_multiaddr: Multiaddr,
@@ -43,60 +36,55 @@ pub struct NetworkHostConfig {
     pub internal_command_receiver: CommandReceiver,
 }
 
-/// A node worker, that deals with accepting and initiating connections with remote peers.
-/// NOTE: This type is only exported to be used as a worker dependency.
-#[derive(Default)]
-pub struct NetworkHost {}
+#[cfg(all(feature = "integrated", not(feature = "standalone")))]
+pub mod integrated {
+    use super::*;
+    use crate::service::service::integrated::NetworkService;
 
-#[async_trait]
-impl<N: Node> Worker<N> for NetworkHost {
-    type Config = NetworkHostConfig;
-    type Error = Infallible;
+    use bee_runtime::{node::Node, worker::Worker};
 
-    fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<NetworkService>()].leak()
-    }
+    use async_trait::async_trait;
 
-    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let NetworkHostConfig {
-            local_keys,
-            bind_multiaddr,
-            peerlist,
-            banned_addrs,
-            banned_peers,
-            internal_event_sender,
-            mut internal_command_receiver,
-        } = config;
+    use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
 
-        let local_keys_clone = local_keys.clone();
-        let internal_event_sender_clone = internal_event_sender.clone();
+    /// A node worker, that deals with accepting and initiating connections with remote peers.
+    /// NOTE: This type is only exported to be used as a worker dependency.
+    #[derive(Default)]
+    pub struct NetworkHost {}
 
-        let mut swarm = build_swarm(&local_keys_clone, internal_event_sender_clone)
-            .await
-            .expect("Fatal error: creating transport layer failed.");
+    #[async_trait]
+    impl<N: Node> Worker<N> for NetworkHost {
+        type Config = NetworkHostConfig;
+        type Error = Infallible;
 
-        info!("Bind multiaddress: {}", bind_multiaddr);
+        fn dependencies() -> &'static [TypeId] {
+            vec![TypeId::of::<NetworkService>()].leak()
+        }
 
-        let _ = Swarm::listen_on(&mut swarm, bind_multiaddr).expect("Fatal error: address binding failed.");
+        async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+            let NetworkHostConfig {
+                local_keys,
+                bind_multiaddr,
+                peerlist,
+                banned_addrs,
+                banned_peers,
+                internal_event_sender,
+                mut internal_command_receiver,
+            } = config;
 
-        node.spawn::<Self, _, _>(|mut shutdown| async move {
+            let mut swarm = start_swarm(local_keys.clone(), bind_multiaddr, internal_event_sender.clone()).await;
+
+            node.spawn::<Self, _, _>(|mut shutdown| async move {
 
             loop {
                 let swarm_next_event = Swarm::next_event(&mut swarm);
-                // let swarm_next = Swarm::next(&mut swarm);
                 let recv_command = (&mut internal_command_receiver).recv();
 
                 tokio::select! {
-                    // Break on shutdown signal
                     _ = &mut shutdown => break,
-                    // Process swarm event
                     event = swarm_next_event => {
                         process_swarm_event(event, &internal_event_sender);
                     }
-                    // _ = swarm_next => {
-                    //     unreachable!();
-                    // }
-                    // Process command
                     command = recv_command => {
                         if let Some(command) = command {
                             process_command(command, &mut swarm, &local_keys, &peerlist, &banned_addrs, &banned_peers).await;
@@ -108,10 +96,84 @@ impl<N: Node> Worker<N> for NetworkHost {
             info!("Network Host stopped.");
         });
 
-        info!("Network Host started.");
+            info!("Network Host started.");
 
-        Ok(Self::default())
+            Ok(Self::default())
+        }
     }
+}
+
+#[cfg(all(feature = "standalone", not(feature = "integrated")))]
+pub mod standalone {
+    use super::*;
+    use crate::service::service::standalone::NetworkService;
+
+    use futures::channel::oneshot;
+
+    pub struct NetworkHost {
+        pub shutdown: oneshot::Receiver<()>,
+    }
+
+    impl NetworkHost {
+        pub fn new(shutdown: oneshot::Receiver<()>) -> Self {
+            Self { shutdown }
+        }
+
+        pub async fn start(self, config: NetworkHostConfig) {
+            //
+            let NetworkHost { mut shutdown } = self;
+            let NetworkHostConfig {
+                local_keys,
+                bind_multiaddr,
+                peerlist,
+                banned_addrs,
+                banned_peers,
+                internal_event_sender,
+                mut internal_command_receiver,
+            } = config;
+
+            let mut swarm = start_swarm(local_keys.clone(), bind_multiaddr, internal_event_sender.clone()).await;
+
+            tokio::spawn(async move {
+                loop {
+                    let swarm_next_event = Swarm::next_event(&mut swarm);
+                    let recv_command = (&mut internal_command_receiver).recv();
+
+                    tokio::select! {
+                        _ = &mut shutdown => break,
+                        event = swarm_next_event => {
+                            process_swarm_event(event, &internal_event_sender);
+                        }
+                        command = recv_command => {
+                            if let Some(command) = command {
+                                process_command(command, &mut swarm, &local_keys, &peerlist, &banned_addrs, &banned_peers).await;
+                            }
+                        },
+                    }
+                }
+
+                info!("Network Host stopped.");
+            });
+
+            info!("Network Host started.");
+        }
+    }
+}
+
+async fn start_swarm(
+    local_keys: Keypair,
+    bind_multiaddr: Multiaddr,
+    internal_event_sender: InternalEventSender,
+) -> Swarm<SwarmBehavior> {
+    let mut swarm = build_swarm(&local_keys, internal_event_sender)
+        .await
+        .expect("Fatal error: creating transport layer failed.");
+
+    info!("Bind Multiaddr: {}", bind_multiaddr);
+
+    let _ = Swarm::listen_on(&mut swarm, bind_multiaddr).expect("Fatal error: address binding failed.");
+
+    swarm
 }
 
 fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, _internal_event_sender: &InternalEventSender) {
@@ -176,7 +238,7 @@ async fn dial_addr(
 
     info!("Dialing address {}.", address);
     //
-    GOSSIP_ORIGIN.store(true, Ordering::SeqCst);
+    GOSSIP_ORIGIN.store(true, std::sync::atomic::Ordering::SeqCst);
     Swarm::dial_addr(swarm, address.clone()).map_err(|_| Error::DialingFailed(address))?;
 
     Ok(())
@@ -215,7 +277,7 @@ async fn dial_peer(
 
     info!("Dialing peer {}.", alias);
 
-    GOSSIP_ORIGIN.store(true, Ordering::SeqCst);
+    GOSSIP_ORIGIN.store(true, std::sync::atomic::Ordering::SeqCst);
     Swarm::dial_addr(swarm, address.clone()).map_err(|_| Error::DialingFailed(address))?;
 
     // // Prevent connecting to dishonest peers or peers we have no up-to-date information about.

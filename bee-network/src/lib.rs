@@ -41,11 +41,11 @@ pub use crate::{
 };
 
 // Exported only with "standalone" feature flag.
-#[cfg(feature = "standalone")]
-#[cfg(not(feature = "integrated"))]
-pub use crate::init::init;
+#[cfg(all(feature = "standalone", not(feature = "integrated")))]
+pub use crate::init::standalone::init;
 
 // Exported only with "integrated" feature flag.
-#[cfg(feature = "integrated")]
-#[cfg(not(feature = "standalone"))]
-pub use crate::{init::init, network::host::NetworkHost, service::service::NetworkService};
+#[cfg(all(feature = "integrated", not(feature = "standalone")))]
+pub use crate::{
+    init::integrated::init, network::host::integrated::NetworkHost, service::service::integrated::NetworkService,
+};

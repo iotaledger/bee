@@ -1,8 +1,6 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![cfg(feature = "integrated")]
-
 use super::{
     command::{Command, CommandReceiver, CommandSender},
     event::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
@@ -20,22 +18,25 @@ use crate::{
     types::{PeerInfo, PeerRelation},
 };
 
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_runtime::shutdown_stream::ShutdownStream;
 
-use async_trait::async_trait;
-use futures::StreamExt;
+use futures::{channel::oneshot, StreamExt};
 use libp2p::{identity, Multiaddr, PeerId};
 use log::*;
 use rand::Rng;
 use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
-use std::{any::TypeId, convert::Infallible};
+// fn test() {
+//     let bus = Bus::<'static>::default();
+//     bus.add_listener::<NetworkConfig, (), _>(|e| {});
+//     bus.dispatch(());
+// }
 
-/// A node worker, that deals with processing user commands, and publishing events.
-/// NOTE: This type is only exported to be used as a worker dependency.
-#[derive(Default)]
-pub struct NetworkService {}
+// pub fn shutdown_bus() -> &'static Mutex<Bus<'static>> {
+//     static SHUTDOWN: OnceCell<Mutex<Bux<'static>>> = OnceCell::new();
+//     SHUTDOWN.get_or_init(|| Mutex::new(Bus::<'static>::default()))
+// }
 
 pub struct NetworkServiceConfig {
     pub local_keys: identity::Keypair,
@@ -49,134 +50,218 @@ pub struct NetworkServiceConfig {
     pub internal_event_receiver: InternalEventReceiver,
 }
 
-#[async_trait]
-impl<N: Node> Worker<N> for NetworkService {
-    type Config = NetworkServiceConfig;
-    type Error = Infallible;
+#[cfg(all(feature = "integrated", not(feature = "standalone")))]
+pub mod integrated {
+    use super::*;
 
-    fn dependencies() -> &'static [TypeId] {
-        vec![].leak()
+    use bee_runtime::{node::Node, worker::Worker};
+
+    use async_trait::async_trait;
+
+    use std::{any::TypeId, convert::Infallible};
+
+    /// A node worker, that deals with processing user commands, and publishing events.
+    /// NOTE: This type is only exported to be used as a worker dependency.
+    #[derive(Default)]
+    pub struct NetworkService {}
+
+    #[async_trait]
+    impl<N: Node> Worker<N> for NetworkService {
+        type Config = NetworkServiceConfig;
+        type Error = Infallible;
+
+        fn dependencies() -> &'static [TypeId] {
+            vec![].leak()
+        }
+
+        async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
+            let NetworkServiceConfig {
+                local_keys: _,
+                peerlist,
+                banned_addrs,
+                banned_peers,
+                event_sender,
+                internal_event_sender,
+                internal_command_sender,
+                command_receiver,
+                internal_event_receiver,
+            } = config;
+
+            let peerlist_clone = peerlist.clone();
+            let banned_addrlist_clone = banned_addrs.clone();
+            let banned_peerlist_clone = banned_peers.clone();
+            let event_sender_clone = event_sender.clone();
+            let internal_command_sender_clone = internal_command_sender.clone();
+
+            // Spawn command handler task
+            node.spawn::<Self, _, _>(|shutdown| command_processor(shutdown, command_receiver));
+
+            let peerlist_clone = peerlist.clone();
+            let internal_command_sender_clone = internal_command_sender.clone();
+
+            // Spawn internal event handler task
+            node.spawn::<Self, _, _>(|shutdown| event_processor(shutdown, internal_event_receiver));
+
+            // Spawn reconnecter task
+            node.spawn::<Self, _, _>(|shutdown| reconnect_processor(shutdown, internal_command_sender));
+
+            info!("Network service started.");
+
+            Ok(Self::default())
+        }
+    }
+}
+
+#[cfg(all(feature = "standalone", not(feature = "integrated")))]
+pub mod standalone {
+    use super::*;
+
+    pub struct NetworkService {
+        pub shutdown: oneshot::Receiver<()>,
     }
 
-    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let NetworkServiceConfig {
-            local_keys: _,
-            peerlist,
-            banned_addrs,
-            banned_peers,
-            event_sender,
-            internal_event_sender,
-            internal_command_sender,
-            command_receiver,
-            internal_event_receiver,
-        } = config;
+    impl NetworkService {
+        pub fn new(shutdown: oneshot::Receiver<()>) -> Self {
+            Self { shutdown }
+        }
 
-        let peerlist_clone = peerlist.clone();
-        let banned_addrlist_clone = banned_addrs.clone();
-        let banned_peerlist_clone = banned_peers.clone();
-        let event_sender_clone = event_sender.clone();
-        let internal_command_sender_clone = internal_command_sender.clone();
+        pub async fn start(self, config: NetworkServiceConfig) {
+            let NetworkService { mut shutdown } = self;
+            let NetworkServiceConfig {
+                local_keys: _,
+                peerlist,
+                banned_addrs,
+                banned_peers,
+                event_sender,
+                internal_event_sender,
+                internal_command_sender,
+                command_receiver,
+                internal_event_receiver,
+            } = config;
 
-        // Spawn command handler task
-        node.spawn::<Self, _, _>(|shutdown| async move {
-            debug!("Command handler running.");
+            let (shutdown_tx1, shutdown_rx1) = oneshot::channel::<()>();
+            let (shutdown_tx2, shutdown_rx2) = oneshot::channel::<()>();
+            let (shutdown_tx3, shutdown_rx3) = oneshot::channel::<()>();
 
-            let mut commands = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(command_receiver));
+            let peerlist_clone = peerlist.clone();
+            let banned_addrlist_clone = banned_addrs.clone();
+            let banned_peerlist_clone = banned_peers.clone();
+            let event_sender_clone = event_sender.clone();
+            let internal_command_sender_clone = internal_command_sender.clone();
 
-            while let Some(command) = commands.next().await {
-                if let Err(e) = process_command(
-                    command,
-                    &peerlist_clone,
-                    &banned_addrlist_clone,
-                    &banned_peerlist_clone,
-                    &event_sender_clone,
-                    &internal_command_sender_clone,
-                )
-                .await
-                {
-                    error!("Error processing command. Cause: {}", e);
-                    continue;
-                }
-            }
+            tokio::spawn(async move {
+                shutdown.await;
 
-            debug!("Command handler stopped.");
-        });
+                shutdown_tx1.send(());
+                shutdown_tx2.send(());
+                shutdown_tx3.send(());
+            });
 
-        let peerlist_clone = peerlist.clone();
-        let internal_command_sender_clone = internal_command_sender.clone();
+            // Spawn command handler task
+            tokio::spawn(command_processor(shutdown_rx1, command_receiver));
 
-        // Spawn internal event handler task
-        node.spawn::<Self, _, _>(|shutdown| async move {
-            debug!("Event handler running.");
+            let peerlist_clone = peerlist.clone();
+            let internal_command_sender_clone = internal_command_sender.clone();
 
-            let mut internal_events =
-                ShutdownStream::new(shutdown, UnboundedReceiverStream::new(internal_event_receiver));
+            // Spawn internal event handler task
+            tokio::spawn(event_processor(shutdown_rx2, internal_event_receiver));
 
-            while let Some(internal_event) = internal_events.next().await {
-                if let Err(e) = process_internal_event(
-                    internal_event,
-                    &peerlist_clone,
-                    &banned_addrs,
-                    &banned_peers,
-                    &event_sender,
-                    &internal_event_sender,
-                    &internal_command_sender_clone,
-                )
-                .await
-                {
-                    error!("Error processing internal event. Cause: {}", e);
-                    continue;
-                }
-            }
+            // Spawn reconnecter task
+            // TODO: implement exponential back-off
+            tokio::spawn(reconnect_processor(shutdown_rx3, internal_command_sender));
 
-            debug!("Event handler stopped.");
-        });
-
-        // Spawn reconnecter task
-        node.spawn::<Self, _, _>(|shutdown| async move {
-            // NOTE: we add a random amount of milliseconds to when the reconnector starts, so that even if 2 nodes
-            // go online at the same time the probablilty of them simultaneously dialing each other is reduced
-            // significantly.
-            // TODO: remove magic number
-            // `Unwrap`ping of the global variable is fine, because we made sure that it's set during initialization.
-            let randomized_delay = Duration::from_millis(
-                *RECONNECT_INTERVAL_SECS.get().unwrap() * 1000 + rand::thread_rng().gen_range(0u64..1000),
-            );
-            let start = Instant::now() + randomized_delay;
-
-            let mut connected_check_timer = ShutdownStream::new(
-                shutdown,
-                IntervalStream::new(time::interval_at(
-                    start,
-                    Duration::from_secs(*RECONNECT_INTERVAL_SECS.get().unwrap()),
-                )),
-            );
-
-            debug!("Reconnecter starting in {:?}.", randomized_delay);
-
-            while connected_check_timer.next().await.is_some() {
-                // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
-                // of those.
-                for (peer_id, alias) in peerlist
-                    .iter_if(|info, state| info.relation.is_known() && state.is_disconnected())
-                    .await
-                {
-                    info!("Reconnecting to {}.", alias);
-
-                    // Not being able to send something over this channel must be considered a bug.
-                    internal_command_sender
-                        .send(Command::DialPeer { peer_id })
-                        .expect("Reconnector failed to send 'DialPeer' command.")
-                }
-            }
-
-            debug!("Reconnecter stopped.");
-        });
-
-        info!("Network service started.");
-
-        Ok(Self::default())
+            info!("Network service started.");
+        }
     }
+}
+
+async fn command_processor(shutdown: oneshot::Receiver<()>, command_receiver: CommandReceiver) {
+    debug!("Command handler running.");
+
+    let mut commands = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(command_receiver));
+
+    while let Some(command) = commands.next().await {
+        // if let Err(e) = process_command(
+        //     command,
+        //     &peerlist_clone,
+        //     &banned_addrlist_clone,
+        //     &banned_peerlist_clone,
+        //     &event_sender_clone,
+        //     &internal_command_sender_clone,
+        // )
+        // .await
+        // {
+        //     error!("Error processing command. Cause: {}", e);
+        //     continue;
+        // }
+    }
+
+    debug!("Command handler stopped.");
+}
+
+async fn event_processor(shutdown: oneshot::Receiver<()>, internal_event_receiver: InternalEventReceiver) {
+    debug!("Event handler running.");
+
+    let mut internal_events = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(internal_event_receiver));
+
+    while let Some(internal_event) = internal_events.next().await {
+        // if let Err(e) = process_internal_event(
+        //     internal_event,
+        //     &peerlist_clone,
+        //     &banned_addrs,
+        //     &banned_peers,
+        //     &event_sender,
+        //     &internal_event_sender,
+        //     &internal_command_sender_clone,
+        // )
+        // .await
+        // {
+        //     error!("Error processing internal event. Cause: {}", e);
+        //     continue;
+        // }
+    }
+
+    debug!("Event handler stopped.");
+}
+
+async fn reconnect_processor(shutdown: oneshot::Receiver<()>, internal_command_sender: CommandSender) {
+    // NOTE: we add a random amount of milliseconds to when the reconnector starts, so that even if 2 nodes
+    // go online at the same time the probablilty of them simultaneously dialing each other is reduced
+    // significantly.
+    // TODO: remove magic number
+    // `Unwrap`ping of the global variable is fine, because we made sure that it's set during initialization.
+    let randomized_delay = Duration::from_millis(
+        *RECONNECT_INTERVAL_SECS.get().unwrap() * 1000 + rand::thread_rng().gen_range(0u64..1000),
+    );
+    let start = Instant::now() + randomized_delay;
+
+    let mut connected_check_timer = ShutdownStream::new(
+        shutdown,
+        IntervalStream::new(time::interval_at(
+            start,
+            Duration::from_secs(*RECONNECT_INTERVAL_SECS.get().unwrap()),
+        )),
+    );
+
+    debug!("Reconnecter starting in {:?}.", randomized_delay);
+
+    while connected_check_timer.next().await.is_some() {
+        // // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
+        // // of those.
+        // for (peer_id, alias) in peerlist
+        //     .iter_if(|info, state| info.relation.is_known() && state.is_disconnected())
+        //     .await
+        // {
+        //     info!("Reconnecting to {}.", alias);
+
+        //     // Not being able to send something over this channel must be considered a bug.
+        //     internal_command_sender
+        //         .send(Command::DialPeer { peer_id })
+        //         .expect("Reconnector failed to send 'DialPeer' command.")
+        // }
+    }
+
+    debug!("Reconnecter stopped.");
 }
 
 async fn process_command(
@@ -435,7 +520,7 @@ async fn disconnect_peer(peer_id: PeerId, peerlist: &PeerList, event_sender: &Ev
             let shutdown_msg = Vec::with_capacity(0);
 
             // In very weird situations where both peers disconnect from each other at almost the same time, we
-            // might not be able to send to this channel anylonger, so we ignore `SendError`s.
+            // might not be able to send to this channel any longer, so we ignore `SendError`s.
             let _ = gossip_sender.send(shutdown_msg);
 
             Ok(())
