@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::prelude::*;
-use bee_test::rand::bytes::rand_bytes_32;
+use bee_test::rand::{bytes::rand_bytes_32, payload::{rand_indexation, rand_treasury_transaction}};
 
 use std::convert::TryInto;
 
@@ -34,6 +34,26 @@ fn build_valid() {
 }
 
 #[test]
+fn build_valid_with_payload() {
+    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
+    let address = Address::from(Ed25519Address::new(bytes));
+    let amount = 1_000_000;
+    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
+    let payload = Payload::from(rand_indexation());
+
+    let essence = RegularEssence::builder()
+        .with_inputs(vec![input1, input2])
+        .with_outputs(vec![output])
+        .with_payload(payload)
+        .finish();
+
+    assert!(essence.is_ok()); 
+}
+
+#[test]
 fn build_valid_add_inputs_outputs() {
     let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
@@ -50,6 +70,26 @@ fn build_valid_add_inputs_outputs() {
         .finish();
 
     assert!(essence.is_ok());
+}
+
+#[test]
+fn build_invalid_payload_kind() {
+    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
+    let address = Address::from(Ed25519Address::new(bytes));
+    let amount = 1_000_000;
+    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
+    let payload = Payload::from(rand_treasury_transaction());
+
+    let essence = RegularEssence::builder()
+        .with_inputs(vec![input1, input2])
+        .with_outputs(vec![output])
+        .with_payload(payload)
+        .finish();
+
+    assert!(matches!(essence, Err(Error::InvalidPayloadKind(4)))); 
 }
 
 #[test]
