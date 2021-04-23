@@ -8,7 +8,7 @@ use core::convert::TryInto;
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const ED25519_PULIC_KEY: &str = "1DA5DDD11BA3F961ACAB68FAFEE3177D039875EAA94AC5FDBFF8B53F0C50BFB9";
+const ED25519_PUBLIC_KEY: &str = "1DA5DDD11BA3F961ACAB68FAFEE3177D039875EAA94AC5FDBFF8B53F0C50BFB9";
 const ED25519_SIGNATURE: &str = "c6a40edf9a089f42c18f4ebccb35fe4b578d93b879e99b87f63573324a710d3456b03fb6d1fcc027e6401cbd9581f790ee3ed7a3f68e9c225fcb9f1cd7b7110d";
 
 #[test]
@@ -69,7 +69,7 @@ fn builder_no_essence_too_few_unlock_blocks() {
     );
 
     // Construct a list with a single unlock block, whereas we have 2 tx inputs.
-    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PULIC_KEY).unwrap().try_into().unwrap();
+    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
@@ -105,7 +105,7 @@ fn builder_no_essence_too_many_unlock_blocks() {
     );
 
     // Construct a list of two unlock blocks, whereas we only have 1 tx input.
-    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PULIC_KEY).unwrap().try_into().unwrap();
+    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
@@ -143,7 +143,7 @@ fn pack_unpack_valid() {
     );
 
     // Construct a list of two unlock blocks, whereas we only have 1 tx input.
-    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PULIC_KEY).unwrap().try_into().unwrap();
+    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
