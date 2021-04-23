@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! A SolidEntryPoint is a [`MessageId`](crate::MessageId) of a message even if we do not have them
+//! A SolidEntryPoint is a [`MessageId`] of a message that is solid even if we do not have them
 //! or their past in the database. They often come from a snapshot file and allow a node to solidify
 //! without needing the full tangle history.
 
@@ -12,15 +12,9 @@ use ref_cast::RefCast;
 
 use core::{convert::AsRef, ops::Deref};
 
-/// A SolidEntryPoint is a [`MessageId`] of a message even if we do not have them
+/// A SolidEntryPoint is a [`MessageId`] of a message that is solid even if we do not have them
 /// or their past in the database. They often come from a snapshot file and allow a node to solidify
 /// without needing the full tangle history.
-///
-/// This is a type wrapper around a [`MessageId`](crate::MessageId) to differentiate it from a
-/// non-solidified message.
-///
-/// Spec: #iota-protocol-rfc
-/// <https://github.com/iotaledger/protocol-rfcs/blob/master/text/0005-white-flag/0005-white-flag.md>
 #[derive(RefCast)]
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]

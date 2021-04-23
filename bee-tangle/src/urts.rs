@@ -162,7 +162,7 @@ impl UrtsTipPool {
         }
     }
 
-    pub fn two_non_lazy_tips(&self) -> Option<Vec<MessageId>> {
+    pub fn choose_non_lazy_tips(&self) -> Option<Vec<MessageId>> {
         if self.non_lazy_tips.is_empty() {
             None
         } else {

@@ -41,34 +41,34 @@ pub struct StorageHooks<B> {
 impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
     type Error = B::Error;
 
-    async fn get(&self, msg: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
-        trace!("Attempted to fetch message {:?}", msg);
-        let message = self.storage.fetch(msg).await?;
-        let meta = self.storage.fetch(msg).await?;
-        Ok(message.zip(meta))
+    async fn get(&self, id: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
+        trace!("Attempted to fetch message {:?}", id);
+        let msg = self.storage.fetch(id).await?;
+        let meta = self.storage.fetch(id).await?;
+        Ok(msg.zip(meta))
     }
 
-    async fn insert(&self, msg: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
-        trace!("Attempted to insert message {:?}", msg);
-        self.storage.insert(&msg, &tx).await?;
-        self.storage.insert(&msg, &metadata).await?;
+    async fn insert(&self, id: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
+        trace!("Attempted to insert message {:?}", id);
+        self.storage.insert(&id, &tx).await?;
+        self.storage.insert(&id, &metadata).await?;
         Ok(())
     }
 
-    async fn fetch_approvers(&self, msg: &MessageId) -> Result<Option<Vec<MessageId>>, Self::Error> {
-        trace!("Attempted to fetch approvers for message {:?}", msg);
-        self.storage.fetch(msg).await
+    async fn fetch_approvers(&self, id: &MessageId) -> Result<Option<Vec<MessageId>>, Self::Error> {
+        trace!("Attempted to fetch approvers for message {:?}", id);
+        self.storage.fetch(id).await
     }
 
-    async fn insert_approver(&self, msg: MessageId, approver: MessageId) -> Result<(), Self::Error> {
-        trace!("Attempted to insert approver for message {:?}", msg);
-        self.storage.insert(&(msg, approver), &()).await
+    async fn insert_approver(&self, id: MessageId, approver: MessageId) -> Result<(), Self::Error> {
+        trace!("Attempted to insert approver for message {:?}", id);
+        self.storage.insert(&(id, approver), &()).await
     }
 
-    async fn update_approvers(&self, msg: MessageId, approvers: &[MessageId]) -> Result<(), Self::Error> {
-        trace!("Attempted to update approvers for message {:?}", msg);
+    async fn update_approvers(&self, id: MessageId, approvers: &[MessageId]) -> Result<(), Self::Error> {
+        trace!("Attempted to update approvers for message {:?}", id);
         for approver in approvers {
-            self.storage.insert(&(msg, *approver), &()).await?;
+            self.storage.insert(&(id, *approver), &()).await?;
         }
         Ok(())
     }
@@ -140,19 +140,6 @@ impl<B: StorageBackend> MsTangle<B> {
 
     /// Insert a message into the tangle.
     pub async fn insert(&self, message: Message, hash: MessageId, metadata: MessageMetadata) -> Option<MessageRef> {
-        // TODO this has been temporarily moved to the processor.
-        // Reason is that since the tangle is not a worker, it can't have access to the propagator tx.
-        // When the tangle is made a worker, this should be put back on.
-        // if opt.is_some() {
-        //     if let Err(e) = Protocol::get()
-        //         .propagator_worker
-        //         .unbounded_send(PropagatorWorkerEvent(hash))
-        //     {
-        //         error!("Failed to send hash to propagator: {:?}.", e);
-        //     }
-        // }
-        //
-        // opt
         self.inner.insert(hash, message, metadata).await
     }
 
@@ -406,7 +393,7 @@ impl<B: StorageBackend> MsTangle<B> {
 
     /// Return messages that require approving.
     pub async fn get_messages_to_approve(&self) -> Option<Vec<MessageId>> {
-        self.tip_pool.lock().await.two_non_lazy_tips()
+        self.tip_pool.lock().await.choose_non_lazy_tips()
     }
 
     /// Reduce tips.

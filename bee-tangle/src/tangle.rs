@@ -6,7 +6,6 @@ use crate::{vertex::Vertex, MessageRef};
 use bee_message::{Message, MessageId};
 
 use async_trait::async_trait;
-// use dashmap::{mapref::entry::Entry, DashMap};
 use hashbrown::{hash_map::DefaultHashBuilder, HashMap};
 use log::info;
 use lru::LruCache;
@@ -33,7 +32,7 @@ pub trait Hooks<T> {
     /// Fetch a message from some external storage medium.
     async fn get(&self, message_id: &MessageId) -> Result<Option<(Message, T)>, Self::Error>;
     /// Insert a message into some external storage medium.
-    async fn insert(&self, message_id: MessageId, tx: Message, metadata: T) -> Result<(), Self::Error>;
+    async fn insert(&self, message_id: MessageId, msg: Message, metadata: T) -> Result<(), Self::Error>;
     /// Fetch the approvers list for a given message.
     async fn fetch_approvers(&self, message_id: &MessageId) -> Result<Option<Vec<MessageId>>, Self::Error>;
     /// Insert a new approver for a given message.
@@ -59,7 +58,7 @@ impl<T: Send + Sync> Hooks<T> for NullHooks<T> {
         Ok(None)
     }
 
-    async fn insert(&self, _message_id: MessageId, _tx: Message, _metadata: T) -> Result<(), Self::Error> {
+    async fn insert(&self, _message_id: MessageId, _msg: Message, _metadata: T) -> Result<(), Self::Error> {
         Ok(())
     }
 
@@ -81,7 +80,6 @@ pub struct Tangle<T, H = NullHooks<T>>
 where
     T: Clone,
 {
-    // Global Tangle Lock. Remove this as and when it is deemed correct to do so.
     vertices: TRwLock<HashMap<MessageId, Vertex<T>>>,
 
     cache_queue: Mutex<LruCache<MessageId, (), DefaultHashBuilder>>,
@@ -142,19 +140,19 @@ where
         prevent_eviction: bool,
     ) -> Option<MessageRef> {
         let mut vertices = self.vertices.write().await;
-        let vtx = vertices.entry(message_id).or_insert_with(Vertex::empty);
+        let vertex = vertices.entry(message_id).or_insert_with(Vertex::empty);
 
         if prevent_eviction {
-            vtx.prevent_eviction();
+            vertex.prevent_eviction();
         }
 
-        let msg = if vtx.message().is_some() {
+        let msg = if vertex.message().is_some() {
             None
         } else {
             let parents = message.parents().clone();
 
-            vtx.insert_message_and_metadata(message, metadata);
-            let msg = vtx.message().cloned();
+            vertex.insert_message_and_metadata(message, metadata);
+            let msg = vertex.message().cloned();
 
             let mut cache_queue = self.cache_queue.lock().await;
 
@@ -289,15 +287,15 @@ where
     {
         let exists = self.pull_message(message_id, true).await;
         let mut vertices = self.vertices.write().await;
-        if let Some(vtx) = vertices.get_mut(message_id) {
+        if let Some(vertex) = vertices.get_mut(message_id) {
             // If we previously blocked eviction, allow it again
             if exists {
-                vtx.allow_eviction();
+                vertex.allow_eviction();
             }
 
-            let r = vtx.metadata_mut().map(|m| update(m));
+            let r = vertex.metadata_mut().map(|m| update(m));
 
-            if let Some((msg, meta)) = vtx.message_and_metadata() {
+            if let Some((msg, meta)) = vertex.message_and_metadata() {
                 let (msg, meta) = ((&**msg).clone(), meta.clone());
 
                 // Insert cache queue entry to track eviction priority
@@ -424,17 +422,17 @@ where
             self.contains_inner(message_id).await
         };
 
-        // If the tangle already contains the tx, do no more work
+        // If the tangle already contains the message, do no more work
         if contains_now {
             // Insert cache queue entry to track eviction priority
             self.cache_queue.lock().await.put(*message_id, ());
 
             true
-        } else if let Ok(Some((tx, metadata))) = self.hooks.get(message_id).await {
+        } else if let Ok(Some((msg, metadata))) = self.hooks.get(message_id).await {
             // Insert cache queue entry to track eviction priority
             self.cache_queue.lock().await.put(*message_id, ());
 
-            self.insert_inner(*message_id, tx, metadata, prevent_eviction).await;
+            self.insert_inner(*message_id, msg, metadata, prevent_eviction).await;
 
             true
         } else {
