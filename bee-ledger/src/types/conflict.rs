@@ -3,7 +3,8 @@
 
 use bee_common::packable::Packable;
 
-use std::io::{Error, ErrorKind, Read, Write};
+use super::Error;
+use std::io::{Read, Write};
 
 /// Represents the different reasons why a transaction can conflict with the ledger state.
 #[repr(u8)]
@@ -42,7 +43,7 @@ impl Packable for ConflictReason {
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (*self as u8).pack(writer)
+        Ok((*self as u8).pack(writer)?)
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
@@ -58,12 +59,7 @@ impl Packable for ConflictReason {
             5 => Self::InvalidSignature,
             6 => Self::InvalidDustAllowance,
             255 => Self::SemanticValidationFailed,
-            x => {
-                return Err(Error::new(
-                    ErrorKind::InvalidData,
-                    format!("Invalid conflict byte '{}'", x),
-                ));
-            }
+            x => return Err(Error::InvalidConflict(x)),
         })
     }
 }

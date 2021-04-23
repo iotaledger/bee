@@ -7,11 +7,11 @@
 
 /// Types used for tangle configuration.
 pub mod config;
-/// Types that represent milestone events.
+/// Types that represent tangle events.
 pub mod event;
-/// Milestone message flags.
+/// Message flags.
 pub mod flags;
-/// Milestone message data, including message flags.
+/// Message data, including message flags.
 pub mod metadata;
 /// Milestone-enabled tangle type.
 pub mod ms_tangle;
@@ -21,7 +21,7 @@ pub mod solid_entry_point;
 pub mod storage;
 /// Common tangle traversal functionality.
 pub mod traversal;
-/// Types used to represent unconfirmed (unsolid) messages.
+/// Types used to represent unconfirmed messages.
 pub mod unconfirmed_message;
 /// The URTS tips pool.
 pub mod urts;

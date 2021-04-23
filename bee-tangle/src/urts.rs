@@ -148,9 +148,7 @@ impl UrtsTipPool {
             let omrsi = *tangle.omrsi(&message_id).await.unwrap().index();
             let ymrsi = *tangle.ymrsi(&message_id).await.unwrap().index();
 
-            if smi > ymrsi + YMRSI_DELTA {
-                Score::Lazy
-            } else if smi > omrsi + BELOW_MAX_DEPTH {
+            if smi > ymrsi + YMRSI_DELTA || smi > omrsi + BELOW_MAX_DEPTH {
                 Score::Lazy
             } else if smi > omrsi + OMRSI_DELTA {
                 Score::SemiLazy

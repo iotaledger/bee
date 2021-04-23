@@ -153,6 +153,8 @@ pub enum MessageMetadataError {
     OptionIndex(<Option<MilestoneIndex> as Packable>::Error),
     /// A packing error occurred.
     OptionIndexId(<Option<IndexId> as Packable>::Error),
+    /// An error relating to a ledger type occurred.
+    Ledger(bee_ledger::types::Error),
 }
 
 impl From<std::io::Error> for MessageMetadataError {
@@ -209,7 +211,7 @@ impl Packable for MessageMetadata {
             reference_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
             omrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
             ymrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
-            conflict: ConflictReason::unpack_inner::<R, CHECK>(reader)?,
+            conflict: ConflictReason::unpack_inner::<R, CHECK>(reader).map_err(MessageMetadataError::Ledger)?,
         })
     }
 }

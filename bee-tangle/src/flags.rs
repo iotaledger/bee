@@ -10,7 +10,7 @@ bitflags! {
     /// Flags representing the state of a message.
     #[derive(Default, Serialize)]
     pub struct Flags: u8 {
-        /// The message is solid (confirmed).
+        /// The message is solid.
         const SOLID = 0b0000_0001;
         /// The message is a milestone.
         const MILESTONE = 0b0000_0010;

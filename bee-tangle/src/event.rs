@@ -12,7 +12,7 @@ pub struct LatestMilestoneChanged {
     pub milestone: Milestone,
 }
 
-/// An event that indicates that a solid milestone has changed.
+/// An event that indicates that the solid milestone has changed.
 #[derive(Clone)]
 pub struct SolidMilestoneChanged {
     /// The index of the milestone
@@ -21,7 +21,7 @@ pub struct SolidMilestoneChanged {
     pub milestone: Milestone,
 }
 
-/// An event that indicates that a confirmed milestone has changed.
+/// An event that indicates that the confirmed milestone has changed.
 #[derive(Clone)]
 pub struct ConfirmedMilestoneChanged {
     /// The index of the milestone
@@ -30,14 +30,14 @@ pub struct ConfirmedMilestoneChanged {
     pub milestone: Milestone,
 }
 
-/// An event that indicates that a snapshot milestone has had an index change.
+/// An event that indicates that the snapshot milestone has changed.
 #[derive(Clone)]
 pub struct SnapshotMilestoneIndexChanged {
     /// The index of the milestone
     pub index: MilestoneIndex,
 }
 
-/// An event that indicates that a pruning milestone has had an index change.
+/// An event that indicates that a pruning milestone has changed.
 #[derive(Clone)]
 pub struct PruningMilestoneIndexChanged {
     /// The index of the milestone
