@@ -7,7 +7,7 @@ use futures::{future, AsyncRead, AsyncWrite};
 use libp2p::{core::UpgradeInfo, InboundUpgrade, OutboundUpgrade};
 use log::trace;
 
-use std::{iter, sync::atomic::Ordering};
+use std::iter;
 
 /// Configuration for an upgrade to the `IotaGossip` protocol.
 #[derive(Debug, Clone, Default)]
@@ -19,7 +19,8 @@ impl UpgradeInfo for GossipUpgrade {
 
     fn protocol_info(&self) -> Self::InfoIter {
         iter::once(
-            format!("/iota-gossip/{}/1.0.0", NETWORK_ID.load(Ordering::Relaxed))
+            // `Unwrap`ping is global variable fine, because we made sure that its value is set during initialization.
+            format!("/iota-gossip/{}/1.0.0", NETWORK_ID.get().unwrap())
                 .as_bytes()
                 .to_vec(),
         )

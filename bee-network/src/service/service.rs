@@ -30,7 +30,7 @@ use rand::Rng;
 use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
-use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
+use std::{any::TypeId, convert::Infallible};
 
 /// A node worker, that deals with processing user commands, and publishing events.
 /// NOTE: This type is only exported to be used as a worker dependency.
@@ -138,8 +138,9 @@ impl<N: Node> Worker<N> for NetworkService {
             // go online at the same time the probablilty of them simultaneously dialing each other is reduced
             // significantly.
             // TODO: remove magic number
+            // `Unwrap`ping of the global variable is fine, because we made sure that it's set during initialization.
             let randomized_delay = Duration::from_millis(
-                RECONNECT_INTERVAL_SECS.load(Ordering::Relaxed) * 1000 + rand::thread_rng().gen_range(0u64..1000),
+                *RECONNECT_INTERVAL_SECS.get().unwrap() * 1000 + rand::thread_rng().gen_range(0u64..1000),
             );
             let start = Instant::now() + randomized_delay;
 
@@ -147,7 +148,7 @@ impl<N: Node> Worker<N> for NetworkService {
                 shutdown,
                 IntervalStream::new(time::interval_at(
                     start,
-                    Duration::from_secs(RECONNECT_INTERVAL_SECS.load(Ordering::Relaxed)),
+                    Duration::from_secs(*RECONNECT_INTERVAL_SECS.get().unwrap()),
                 )),
             );
 

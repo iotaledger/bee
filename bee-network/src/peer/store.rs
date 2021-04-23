@@ -11,10 +11,7 @@ use crate::{init::MAX_UNKNOWN_PEERS, swarm::protocols::gossip::GossipSender, typ
 use libp2p::PeerId;
 use tokio::sync::RwLock;
 
-use std::{
-    collections::HashMap,
-    sync::{atomic::Ordering, Arc},
-};
+use std::{collections::HashMap, sync::Arc};
 
 // TODO: check whether this is the right default value when used in production.
 const DEFAULT_PEERLIST_CAPACITY: usize = 8;
@@ -94,12 +91,11 @@ impl PeerList {
         }
 
         // Prevent inserting more peers than preconfigured.
+        // `Unwrap`ping the global variable is fine, because we made sure that its value is set during initialization.
         if peer_info.relation.is_unknown()
-            && self.count_if(|info, _| info.relation.is_unknown()).await >= MAX_UNKNOWN_PEERS.load(Ordering::Relaxed)
+            && self.count_if(|info, _| info.relation.is_unknown()).await >= *MAX_UNKNOWN_PEERS.get().unwrap()
         {
-            return Err(Error::UnknownPeerLimitReached(
-                MAX_UNKNOWN_PEERS.load(Ordering::Relaxed),
-            ));
+            return Err(Error::UnknownPeerLimitReached(*MAX_UNKNOWN_PEERS.get().unwrap()));
         }
         if self.0.read().await.contains_key(peer_id) {
             return Err(Error::PeerAlreadyAdded(*peer_id));

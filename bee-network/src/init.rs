@@ -19,15 +19,11 @@ use super::{
 
 use libp2p::identity;
 use log::info;
+use once_cell::sync::OnceCell;
 
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-
-use super::config::DEFAULT_RECONNECT_INTERVAL_SECS;
-
-// TODO: use OnceCell
-pub(crate) static RECONNECT_INTERVAL_SECS: AtomicU64 = AtomicU64::new(DEFAULT_RECONNECT_INTERVAL_SECS);
-pub(crate) static NETWORK_ID: AtomicU64 = AtomicU64::new(0);
-pub(crate) static MAX_UNKNOWN_PEERS: AtomicUsize = AtomicUsize::new(0);
+pub static RECONNECT_INTERVAL_SECS: OnceCell<u64> = OnceCell::new();
+pub static NETWORK_ID: OnceCell<u64> = OnceCell::new();
+pub static MAX_UNKNOWN_PEERS: OnceCell<usize> = OnceCell::new();
 
 /// Initializes the networking service.
 #[cfg(feature = "standalone")]
@@ -65,9 +61,10 @@ pub async fn init<N: Node>(
         peers,
     } = config;
 
-    RECONNECT_INTERVAL_SECS.swap(reconnect_interval_secs, Ordering::Relaxed);
-    NETWORK_ID.swap(network_id, Ordering::Relaxed);
-    MAX_UNKNOWN_PEERS.swap(max_unknown_peers, Ordering::Relaxed);
+    // `Unwrap`ping is fine, because we know they are not set at this point.
+    RECONNECT_INTERVAL_SECS.set(reconnect_interval_secs).unwrap();
+    NETWORK_ID.set(network_id).unwrap();
+    MAX_UNKNOWN_PEERS.set(max_unknown_peers).unwrap();
 
     // TODO: Create event
     let local_keys = identity::Keypair::Ed25519(keys);
