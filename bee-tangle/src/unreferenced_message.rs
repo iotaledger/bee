@@ -6,17 +6,17 @@ use bee_message::MessageId;
 
 use std::ops::Deref;
 
-/// A type representing an unconfirmed message.
+/// A type representing an unreferenced message.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct UnconfirmedMessage(MessageId);
+pub struct UnreferencedMessage(MessageId);
 
-impl From<MessageId> for UnconfirmedMessage {
+impl From<MessageId> for UnreferencedMessage {
     fn from(message_id: MessageId) -> Self {
         Self(message_id)
     }
 }
 
-impl Deref for UnconfirmedMessage {
+impl Deref for UnreferencedMessage {
     type Target = MessageId;
 
     fn deref(&self) -> &Self::Target {
@@ -24,19 +24,19 @@ impl Deref for UnconfirmedMessage {
     }
 }
 
-impl UnconfirmedMessage {
-    /// Create a new `UnconfirmedMessage`.
+impl UnreferencedMessage {
+    /// Create a new `UnreferencedMessage`.
     pub fn new(message_id: MessageId) -> Self {
         message_id.into()
     }
 
-    /// Get the message ID of this unconfirmed message.
+    /// Get the message ID of this unreferenced message.
     pub fn message_id(&self) -> &MessageId {
         &self.0
     }
 }
 
-impl Packable for UnconfirmedMessage {
+impl Packable for UnreferencedMessage {
     type Error = <MessageId as Packable>::Error;
 
     fn packed_len(&self) -> usize {

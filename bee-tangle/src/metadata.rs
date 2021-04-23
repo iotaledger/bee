@@ -186,7 +186,7 @@ impl Packable for MessageMetadata {
             + self.reference_timestamp.packed_len()
             + self.omrsi.packed_len()
             + self.ymrsi.packed_len()
-            + 0u8.packed_len()
+            + self.conflict.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -197,7 +197,7 @@ impl Packable for MessageMetadata {
         self.reference_timestamp.pack(writer)?;
         self.omrsi.pack(writer)?;
         self.ymrsi.pack(writer)?;
-        (self.conflict as u8).pack(writer)?;
+        self.conflict.pack(writer).map_err(MessageMetadataError::Ledger)?;
 
         Ok(())
     }

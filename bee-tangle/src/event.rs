@@ -37,7 +37,7 @@ pub struct SnapshotMilestoneIndexChanged {
     pub index: MilestoneIndex,
 }
 
-/// An event that indicates that a pruning milestone has changed.
+/// An event that indicates that the pruning milestone has changed.
 #[derive(Clone)]
 pub struct PruningMilestoneIndexChanged {
     /// The index of the milestone

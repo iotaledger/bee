@@ -21,8 +21,8 @@ pub mod solid_entry_point;
 pub mod storage;
 /// Common tangle traversal functionality.
 pub mod traversal;
-/// Types used to represent unconfirmed messages.
-pub mod unconfirmed_message;
+/// Types used to represent unreferenced messages.
+pub mod unreferenced_message;
 /// The URTS tips pool.
 pub mod urts;
 /// The overall `TangleWorker` type. Used as part of the bee runtime in a node.
