@@ -26,7 +26,7 @@ pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 pub struct Parents(Vec<MessageId>);
 
 impl Deref for Parents {
-    type Target = Vec<MessageId>;
+    type Target = [MessageId];
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -54,7 +54,7 @@ impl Parents {
     }
 
     /// Returns an iterator over the parents.
-    pub fn iter(&self) -> impl Iterator<Item = &MessageId> + '_ {
+    pub fn iter(&self) -> impl ExactSizeIterator<Item = &MessageId> + '_ {
         self.0.iter()
     }
 }

@@ -12,6 +12,7 @@ members = [
 	"bee-runtime",
 	"bee-signing",
 	"bee-storage/bee-storage",
+	"bee-tangle",
 	"bee-ternary",
 	"bee-test",
 ]

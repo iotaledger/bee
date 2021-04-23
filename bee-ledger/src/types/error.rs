@@ -51,4 +51,7 @@ pub enum Error {
     /// Packable option error happened.
     #[error("Packable option error happened")]
     PackableOption,
+    /// Invalid conflict byte.
+    #[error("Invalid conflict byte")]
+    InvalidConflict(u8),
 }

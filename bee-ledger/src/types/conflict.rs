@@ -1,9 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_common::packable::Packable;
+
+use super::Error;
+use std::io::{Read, Write};
+
 /// Represents the different reasons why a transaction can conflict with the ledger state.
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ConflictReason {
     /// The message has no conflict.
     None = 0,
@@ -21,4 +27,39 @@ pub enum ConflictReason {
     InvalidDustAllowance = 6,
     /// The semantic validation failed for a reason not covered by the previous variants.
     SemanticValidationFailed = 255,
+}
+
+impl Default for ConflictReason {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+impl Packable for ConflictReason {
+    type Error = Error;
+
+    fn packed_len(&self) -> usize {
+        (*self as u8).packed_len()
+    }
+
+    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+        Ok((*self as u8).pack(writer)?)
+    }
+
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
+    where
+        Self: Sized,
+    {
+        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
+            0 => Self::None,
+            1 => Self::InputUtxoAlreadySpent,
+            2 => Self::InputUtxoAlreadySpentInThisMilestone,
+            3 => Self::InputUtxoNotFound,
+            4 => Self::InputOutputSumMismatch,
+            5 => Self::InvalidSignature,
+            6 => Self::InvalidDustAllowance,
+            255 => Self::SemanticValidationFailed,
+            x => return Err(Error::InvalidConflict(x)),
+        })
+    }
 }
