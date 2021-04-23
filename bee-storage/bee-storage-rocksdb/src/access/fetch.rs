@@ -21,7 +21,7 @@ use bee_message::{
 };
 use bee_storage::access::Fetch;
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
 use std::convert::{TryFrom, TryInto};
@@ -202,22 +202,22 @@ impl Fetch<Address, Balance> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Fetch<MilestoneIndex, Vec<UnconfirmedMessage>> for Storage {
+impl Fetch<MilestoneIndex, Vec<UnreferencedMessage>> for Storage {
     async fn fetch(
         &self,
         index: &MilestoneIndex,
-    ) -> Result<Option<Vec<UnconfirmedMessage>>, <Self as StorageBackend>::Error> {
+    ) -> Result<Option<Vec<UnreferencedMessage>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .prefix_iterator_cf(
-                    self.cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)?,
+                    self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?,
                     index.pack_new(),
                 )
                 .map(|(key, _)| {
-                    let (_, unconfirmed_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
+                    let (_, unreferenced_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
                     // Unpacking from storage is fine.
-                    let unconfirmed_message: [u8; MESSAGE_ID_LENGTH] = unconfirmed_message.try_into().unwrap();
-                    UnconfirmedMessage::from(MessageId::from(unconfirmed_message))
+                    let unreferenced_message: [u8; MESSAGE_ID_LENGTH] = unreferenced_message.try_into().unwrap();
+                    UnreferencedMessage::from(MessageId::from(unreferenced_message))
                 })
                 .collect(),
         ))

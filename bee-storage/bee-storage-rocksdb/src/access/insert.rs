@@ -21,7 +21,7 @@ use bee_message::{
 };
 use bee_storage::access::Insert;
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
 #[async_trait::async_trait]
@@ -216,18 +216,18 @@ impl Insert<Address, Balance> for Storage {
 }
 
 #[async_trait::async_trait]
-impl Insert<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
+impl Insert<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
     async fn insert(
         &self,
-        (index, unconfirmed_message): &(MilestoneIndex, UnconfirmedMessage),
+        (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = index.pack_new();
-        key.extend_from_slice(unconfirmed_message.as_ref());
+        key.extend_from_slice(unreferenced_message.as_ref());
 
         Ok(self
             .inner
-            .put_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)?, key, [])?)
+            .put_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?, key, [])?)
     }
 }
 

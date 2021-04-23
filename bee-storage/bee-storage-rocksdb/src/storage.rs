@@ -77,8 +77,8 @@ impl Storage {
         options.set_prefix_extractor(SliceTransform::create_fixed_prefix(
             std::mem::size_of::<MilestoneIndex>(),
         ));
-        let cf_milestone_index_to_unconfirmed_message =
-            ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE, options);
+        let cf_milestone_index_to_unreferenced_message =
+            ColumnFamilyDescriptor::new(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE, options);
 
         let mut options = Options::default();
         options.set_prefix_extractor(SliceTransform::create_fixed_prefix(
@@ -140,7 +140,7 @@ impl Storage {
                 cf_solid_entry_point_to_milestone_index,
                 cf_milestone_index_to_output_diff,
                 cf_address_to_balance,
-                cf_milestone_index_to_unconfirmed_message,
+                cf_milestone_index_to_unreferenced_message,
                 cf_milestone_index_to_receipt,
                 cf_spent_to_treasury,
             ],

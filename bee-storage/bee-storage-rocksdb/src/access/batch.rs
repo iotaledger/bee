@@ -20,7 +20,7 @@ use bee_message::{
 };
 use bee_storage::access::{Batch, BatchBuilder};
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
 use rocksdb::{WriteBatch, WriteOptions};
@@ -454,19 +454,19 @@ impl Batch<Address, Balance> for Storage {
     }
 }
 
-impl Batch<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
+impl Batch<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
     fn batch_insert(
         &self,
         batch: &mut Self::Batch,
-        (index, unconfirmed_message): &(MilestoneIndex, UnconfirmedMessage),
+        (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
         (): &(),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&index.pack_new());
-        batch.key_buf.extend_from_slice(unconfirmed_message.as_ref());
+        batch.key_buf.extend_from_slice(unreferenced_message.as_ref());
 
         Ok(batch.inner.put_cf(
-            self.cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)?,
+            self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?,
             &batch.key_buf,
             [],
         ))
@@ -475,14 +475,14 @@ impl Batch<(MilestoneIndex, UnconfirmedMessage), ()> for Storage {
     fn batch_delete(
         &self,
         batch: &mut Self::Batch,
-        (index, unconfirmed_message): &(MilestoneIndex, UnconfirmedMessage),
+        (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
     ) -> Result<(), <Self as StorageBackend>::Error> {
         batch.key_buf.clear();
         batch.key_buf.extend_from_slice(&index.pack_new());
-        batch.key_buf.extend_from_slice(unconfirmed_message.as_ref());
+        batch.key_buf.extend_from_slice(unreferenced_message.as_ref());
 
         Ok(batch.inner.delete_cf(
-            self.cf_handle(CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE)?,
+            self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?,
             &batch.key_buf,
         ))
     }

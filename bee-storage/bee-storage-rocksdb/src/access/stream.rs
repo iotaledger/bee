@@ -21,7 +21,7 @@ use bee_message::{
 };
 use bee_storage::access::AsStream;
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
 use futures::{
@@ -278,16 +278,16 @@ impl<'a> StorageStream<'a, Address, Balance> {
     }
 }
 
-impl<'a> StorageStream<'a, (MilestoneIndex, UnconfirmedMessage), ()> {
-    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MilestoneIndex, UnconfirmedMessage), ()) {
-        let (mut index, mut unconfirmed_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
+impl<'a> StorageStream<'a, (MilestoneIndex, UnreferencedMessage), ()> {
+    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MilestoneIndex, UnreferencedMessage), ()) {
+        let (mut index, mut unreferenced_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
 
         (
             (
                 // Unpacking from storage is fine.
                 MilestoneIndex::unpack_unchecked(&mut index).unwrap(),
                 // Unpacking from storage is fine.
-                UnconfirmedMessage::unpack_unchecked(&mut unconfirmed_message).unwrap(),
+                UnreferencedMessage::unpack_unchecked(&mut unreferenced_message).unwrap(),
             ),
             (),
         )
@@ -342,9 +342,9 @@ impl_stream!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_
 impl_stream!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
 impl_stream!(Address, Balance, CF_ADDRESS_TO_BALANCE);
 impl_stream!(
-    (MilestoneIndex, UnconfirmedMessage),
+    (MilestoneIndex, UnreferencedMessage),
     (),
-    CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE
+    CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
 );
 impl_stream!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
 impl_stream!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);

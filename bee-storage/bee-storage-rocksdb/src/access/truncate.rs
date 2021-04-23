@@ -19,7 +19,7 @@ use bee_message::{
 };
 use bee_storage::access::Truncate;
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
 fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as StorageBackend>::Error> {
@@ -80,9 +80,9 @@ impl_truncate!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTON
 impl_truncate!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
 impl_truncate!(Address, Balance, CF_ADDRESS_TO_BALANCE);
 impl_truncate!(
-    (MilestoneIndex, UnconfirmedMessage),
+    (MilestoneIndex, UnreferencedMessage),
     (),
-    CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE
+    CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
 );
 impl_truncate!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
 impl_truncate!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
