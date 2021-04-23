@@ -65,9 +65,11 @@ fn invalid_payload_kind() {
     let res = MessageBuilder::<Miner>::new()
         .with_network_id(0)
         .with_parents(rand_parents())
-        .with_payload(Payload::TreasuryTransaction(Box::new(
-            TreasuryTransactionPayload::new(rand_treasury_input(), rand_treasury_output()).unwrap(),
-        )))
+        .with_payload(
+            TreasuryTransactionPayload::new(rand_treasury_input(), rand_treasury_output())
+                .unwrap()
+                .into(),
+        )
         .finish();
 
     assert!(matches!(res, Err(Error::InvalidPayloadKind(4))))

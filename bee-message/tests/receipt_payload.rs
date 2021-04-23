@@ -34,13 +34,13 @@ fn new_valid() {
             .unwrap(),
         )
         .unwrap()],
-        Payload::TreasuryTransaction(Box::new(
+        Payload::from(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
                 Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
             )
             .unwrap(),
-        )),
+        ),
     );
 
     assert!(receipt.is_ok());
@@ -52,13 +52,13 @@ fn new_invalid_receipt_funds_count_low() {
         MilestoneIndex::new(0),
         true,
         vec![],
-        Payload::TreasuryTransaction(Box::new(
+        Payload::from(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
                 Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
             )
             .unwrap(),
-        )),
+        ),
     );
 
     assert!(matches!(receipt, Err(Error::InvalidReceiptFundsCount(0))));
@@ -82,13 +82,13 @@ fn new_invalid_receipt_funds_count_high() {
                 .unwrap()
             })
             .collect(),
-        Payload::TreasuryTransaction(Box::new(
+        Payload::from(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
                 Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
             )
             .unwrap(),
-        )),
+        ),
     );
 
     assert!(matches!(receipt, Err(Error::InvalidReceiptFundsCount(128))));
@@ -108,7 +108,7 @@ fn new_invalid_payload_kind() {
             .unwrap(),
         )
         .unwrap()],
-        Payload::Indexation(Box::new(IndexationPayload::new(&rand_bytes_32(), &[]).unwrap())),
+        Payload::from(IndexationPayload::new(&rand_bytes_32(), &[]).unwrap()),
     );
 
     assert!(matches!(
@@ -147,13 +147,13 @@ fn new_invalid_transaction_outputs_not_sorted() {
         MilestoneIndex::new(0),
         true,
         migrated_funds,
-        Payload::TreasuryTransaction(Box::new(
+        Payload::from(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
                 Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
             )
             .unwrap(),
-        )),
+        ),
     );
 
     assert!(matches!(receipt, Err(Error::TransactionOutputsNotSorted)));
@@ -175,13 +175,13 @@ fn new_invalid_tail_transaction_hashes_not_unique() {
         MilestoneIndex::new(0),
         true,
         vec![migrated_funds; 2],
-        Payload::TreasuryTransaction(Box::new(
+        Payload::from(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
                 Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
             )
             .unwrap(),
-        )),
+        ),
     );
 
     assert!(matches!(receipt, Err(Error::TransactionOutputsNotSorted)));
@@ -201,13 +201,13 @@ fn pack_unpack_valid() {
             .unwrap(),
         )
         .unwrap()],
-        Payload::TreasuryTransaction(Box::new(
+        Payload::from(
             TreasuryTransactionPayload::new(
                 Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
                 Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
             )
             .unwrap(),
-        )),
+        ),
     )
     .unwrap();
 
