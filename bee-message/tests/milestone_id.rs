@@ -5,6 +5,7 @@ use bee_common::packable::Packable;
 use bee_message::prelude::*;
 
 use core::str::FromStr;
+use std::convert::TryInto;
 
 const MILESTONE_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const MILESTONE_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64x";
@@ -13,8 +14,10 @@ const MILESTONE_ID_INVALID_LEN_TOO_LONG: &str = "52fdfc072182654f163f5f0f9a621d7
 
 #[test]
 fn debug_impl() {
+    let id_bytes: [u8; 32] = hex::decode(MILESTONE_ID).unwrap().try_into().unwrap();
+
     assert_eq!(
-        format!("{:?}", MilestoneId::from_str(MILESTONE_ID).unwrap()),
+        format!("{:?}", MilestoneId::new(id_bytes)),
         "MilestoneId(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
     );
 }
