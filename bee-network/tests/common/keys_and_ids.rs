@@ -29,18 +29,7 @@ pub fn gen_random_keys() -> Keypair {
     Keypair::generate()
 }
 
-pub fn gen_constant_keys() -> Keypair {
-    todo!()
-}
-
-pub fn gen_deterministic_keys() -> Keypair {
-    // let shex = std::iter::repeat(generator.to_ascii_uppercase())
-    //     .take(120)
-    //     .collect::<String>()[..];
-    // let hex = hex::decode(&shex)
-    todo!()
-}
-
-pub fn gen_random_net_id() -> u64 {
-    0
+pub fn gen_constant_net_id() -> u64 {
+    // "testnet7"
+    14379272398717627559_u64
 }
