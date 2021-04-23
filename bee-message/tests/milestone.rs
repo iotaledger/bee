@@ -23,6 +23,7 @@ fn debug_impl() {
 fn packed_len() {
     let milestone = rand_milestone();
     assert_eq!(milestone.packed_len(), milestone.pack_new().len());
+    assert_eq!(milestone.packed_len(), 32 + 8);
 }
 
 #[test]
