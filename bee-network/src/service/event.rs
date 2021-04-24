@@ -31,8 +31,8 @@ pub enum Event {
         /// The assigned bind address.
         address: Multiaddr,
     },
-    /// The local peer was created.
-    LocalCreated {
+    /// The local peer id was created.
+    LocalIdCreated {
         /// The created peer id from the Ed25519 keypair.
         peer_id: PeerId,
     },

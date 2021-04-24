@@ -1,6 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![cfg(feature = "full")]
+
 use bee_network::{Multiaddr, NetworkConfig, Protocol};
 
 pub fn get_network_config_with_port(port: u16) -> NetworkConfig {
@@ -10,8 +12,8 @@ pub fn get_network_config_with_port(port: u16) -> NetworkConfig {
     this
 }
 
-pub fn get_in_memory_network_config() -> NetworkConfig {
+pub fn get_in_memory_network_config(port: u64) -> NetworkConfig {
     let mut this = NetworkConfig::default();
-    this.bind_multiaddr = Multiaddr::from(Protocol::Memory(0));
+    this.bind_multiaddr = Multiaddr::from(Protocol::Memory(port));
     this
 }

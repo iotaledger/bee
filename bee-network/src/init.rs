@@ -15,7 +15,7 @@ use super::{
 };
 
 use crate::{
-    network::host::{self, NetworkHostConfig},
+    network::host::NetworkHostConfig,
     service::service::{self, NetworkServiceConfig},
 };
 
@@ -47,7 +47,7 @@ pub mod standalone {
         config: NetworkConfig,
         keys: Keypair,
         network_id: u64,
-        shutdown: Pin<Box<dyn Future<Output = ()> + Send>>,
+        shutdown: Box<dyn Future<Output = ()> + Send + Unpin>,
     ) -> (NetworkCommandSender, NetworkEventReceiver) {
         let (network_config, service_config, network_command_sender, network_event_receiver) =
             __init(config, keys, network_id);
@@ -113,7 +113,10 @@ fn __init(
     } = config;
 
     // `Unwrap`ping is fine, because we know they are not set at this point.
-    RECONNECT_INTERVAL_SECS.set(reconnect_interval_secs).unwrap();
+    if let Err(e) = RECONNECT_INTERVAL_SECS.set(reconnect_interval_secs) {
+        println!("{}", e);
+    };
+
     NETWORK_ID.set(network_id).unwrap();
     MAX_UNKNOWN_PEERS.set(max_unknown_peers).unwrap();
 
@@ -129,8 +132,8 @@ fn __init(
     info!("Local Id: {}", local_id);
 
     event_sender
-        .send(Event::LocalCreated { peer_id: local_id })
-        .expect("send error");
+        .send(Event::LocalIdCreated { peer_id: local_id })
+        .expect("event send error");
 
     // TODO: Add optional banned peers and addresses
     let peerlist = PeerList::from_peers(local_id, peers);

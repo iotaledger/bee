@@ -118,6 +118,9 @@ pub mod standalone {
                 mut internal_command_receiver,
             } = config;
 
+            #[cfg(test)]
+            println!("I'm in a test!!");
+
             let mut swarm = start_swarm(local_keys.clone(), bind_multiaddr, internal_event_sender.clone()).await;
 
             tokio::spawn(async move {

@@ -3,5 +3,7 @@
 
 #![allow(dead_code)]
 
+pub mod await_events;
 pub mod keys_and_ids;
 pub mod network_config;
+pub mod shutdown;

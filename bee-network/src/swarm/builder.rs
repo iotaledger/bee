@@ -15,29 +15,35 @@ use libp2p::{
     tcp, yamux, Swarm, Transport,
 };
 
+#[cfg(feature = "tests")]
+use libp2p_core::transport::MemoryTransport;
+
 use std::{io, time::Duration};
 
 const MAX_CONNECTIONS_PER_PEER: u32 = 1;
 const DEFAULT_CONNECTION_TIMEOUT_SECS: u64 = 10;
 
+// TODO: should we return errors or just panic?
 pub async fn build_swarm(
     local_keys: &identity::Keypair,
     internal_sender: InternalEventSender,
 ) -> io::Result<Swarm<SwarmBehavior>> {
-    let local_public_key = local_keys.public();
-    let local_peer_id = local_public_key.clone().into_peer_id();
+    let local_pk = local_keys.public();
+    let local_id = local_pk.clone().into_peer_id();
 
-    // TODO: error propagation
     let noise_keys = noise::Keypair::<noise::X25519Spec>::new()
         .into_authentic(local_keys)
         .expect("error creating noise keys");
 
+    #[cfg(not(feature = "tests"))]
     let tcp_config = tcp::TokioTcpConfig::new().nodelay(true).port_reuse(true);
     let noi_config = noise::NoiseConfig::xx(noise_keys);
+    #[cfg(not(feature = "tests"))]
     let dns_config = dns::TokioDnsConfig::system(tcp_config)?;
     let mpx_config = mplex::MplexConfig::default();
     let ymx_config = yamux::YamuxConfig::default();
 
+    #[cfg(not(feature = "tests"))]
     let transport = dns_config
         .upgrade(upgrade::Version::V1)
         .authenticate(noi_config.into_authenticated())
@@ -45,11 +51,19 @@ pub async fn build_swarm(
         .timeout(Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))
         .boxed();
 
+    #[cfg(feature = "tests")]
+    let transport = MemoryTransport::default()
+        .upgrade(upgrade::Version::V1)
+        .authenticate(noi_config.into_authenticated())
+        .multiplex(SelectUpgrade::new(ymx_config, mpx_config))
+        .timeout(Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))
+        .boxed();
+
     let (_tx, rx) = tokio::sync::mpsc::unbounded_channel::<Origin>();
-    let behavior = SwarmBehavior::new(local_public_key, internal_sender, rx).await;
+    let behavior = SwarmBehavior::new(local_pk, internal_sender, rx).await;
     let limits = ConnectionLimits::default().with_max_established_per_peer(Some(MAX_CONNECTIONS_PER_PEER));
 
-    let swarm = SwarmBuilder::new(transport, behavior, local_peer_id)
+    let swarm = SwarmBuilder::new(transport, behavior, local_id)
         .connection_limits(limits)
         // We want the connection background tasks to be spawned
         // onto the tokio runtime.
