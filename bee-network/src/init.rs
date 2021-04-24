@@ -24,6 +24,7 @@ use log::info;
 use once_cell::sync::OnceCell;
 use tokio::sync::RwLock;
 
+// TODO: When testing 2 instances of the network using global statics becomes a problem!
 pub static RECONNECT_INTERVAL_SECS: OnceCell<u64> = OnceCell::new();
 pub static NETWORK_ID: OnceCell<u64> = OnceCell::new();
 pub static MAX_UNKNOWN_PEERS: OnceCell<usize> = OnceCell::new();
@@ -113,12 +114,9 @@ fn __init(
     } = config;
 
     // `Unwrap`ping is fine, because we know they are not set at this point.
-    if let Err(e) = RECONNECT_INTERVAL_SECS.set(reconnect_interval_secs) {
-        println!("{}", e);
-    };
-
-    NETWORK_ID.set(network_id).unwrap();
-    MAX_UNKNOWN_PEERS.set(max_unknown_peers).unwrap();
+    RECONNECT_INTERVAL_SECS.set(reconnect_interval_secs).expect("oncecell");
+    NETWORK_ID.set(network_id).expect("oncecell");
+    MAX_UNKNOWN_PEERS.set(max_unknown_peers).expect("oncecell");
 
     let (command_sender, command_receiver) = command_channel();
     let (internal_command_sender, internal_command_receiver) = command_channel();
@@ -135,7 +133,6 @@ fn __init(
         .send(Event::LocalIdCreated { peer_id: local_id })
         .expect("event send error");
 
-    // TODO: Add optional banned peers and addresses
     let peerlist = PeerList::from_peers(local_id, peers);
 
     // `Unwrap`ping can never panic, because is the first and only time `set` is called.

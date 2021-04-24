@@ -288,6 +288,7 @@ dependencies = [
  "bee-storage",
  "env_logger 0.8.3",
  "futures",
+ "hex",
  "libp2p",
  "libp2p-core",
  "log",
