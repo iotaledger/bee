@@ -131,7 +131,7 @@ pub mod standalone {
                     tokio::select! {
                         _ = &mut shutdown => break,
                         event = swarm_next_event => {
-                            process_swarm_event(event, &internal_event_sender);
+                            process_swarm_event(event, &internal_event_sender).await;
                         }
                         command = recv_command => {
                             if let Some(command) = command {
@@ -165,13 +165,25 @@ async fn start_swarm(
     swarm
 }
 
-fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, internal_event_sender: &InternalEventSender) {
+async fn process_swarm_event(
+    event: SwarmEvent<(), impl std::error::Error>,
+    internal_event_sender: &InternalEventSender,
+) {
     match event {
         SwarmEvent::NewListenAddr(address) => {
-            // TODO: collect listen address to deny dialing it
             internal_event_sender
-                .send(InternalEvent::AddressBound { address })
+                .send(InternalEvent::AddressBound {
+                    address: address.clone(),
+                })
                 .expect("send error");
+
+            PEER_LIST
+                .get()
+                .expect("peerlist get")
+                .write()
+                .await
+                .insert_local_addr(address)
+                .expect("insert_local_addr");
         }
         SwarmEvent::ConnectionEstablished { peer_id, .. } => {
             debug!("Negotiating protocol with '{}'.", alias!(peer_id));
