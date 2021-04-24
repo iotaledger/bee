@@ -4,7 +4,7 @@
 use bee_message::prelude::*;
 use bee_test::rand::{
     bytes::rand_bytes_32,
-    payload::{rand_indexation, rand_treasury_transaction},
+    payload::{rand_indexation_payload, rand_treasury_transaction_payload},
 };
 
 use std::convert::TryInto;
@@ -45,7 +45,7 @@ fn build_valid_with_payload() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-    let payload = Payload::from(rand_indexation());
+    let payload = Payload::from(rand_indexation_payload());
 
     let essence = RegularEssence::builder()
         .with_inputs(vec![input1, input2])
@@ -84,7 +84,7 @@ fn build_invalid_payload_kind() {
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-    let payload = rand_treasury_transaction();
+    let payload = rand_treasury_transaction_payload();
 
     let essence = RegularEssence::builder()
         .with_inputs(vec![input1, input2])

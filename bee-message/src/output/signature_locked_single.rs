@@ -7,7 +7,8 @@ use bee_common::packable::{Packable, Read, Write};
 
 use core::ops::RangeInclusive;
 
-const SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
+/// Valid amounts for a signature locked single output.
+pub const SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
 
 /// An output type which can be unlocked via a signature. It deposits onto one single address.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]

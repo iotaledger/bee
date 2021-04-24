@@ -11,8 +11,9 @@ use bee_pow::{
     score::compute_pow_score,
 };
 use bee_test::rand::{
-    input::rand_treasury_input, message::rand_message_ids, output::rand_treasury_output, parents::rand_parents,
-    payload::rand_indexation,
+    message::rand_message_ids,
+    parents::rand_parents,
+    payload::{rand_indexation_payload, rand_treasury_transaction_payload},
 };
 
 #[test]
@@ -65,11 +66,7 @@ fn invalid_payload_kind() {
     let res = MessageBuilder::<Miner>::new()
         .with_network_id(0)
         .with_parents(rand_parents())
-        .with_payload(
-            TreasuryTransactionPayload::new(rand_treasury_input(), rand_treasury_output())
-                .unwrap()
-                .into(),
-        )
+        .with_payload(rand_treasury_transaction_payload())
         .finish();
 
     assert!(matches!(res, Err(Error::InvalidPayloadKind(4))))
@@ -124,7 +121,7 @@ fn pack_unpack_valid() {
 #[test]
 fn getters() {
     let parents = rand_parents();
-    let payload: Payload = rand_indexation().into();
+    let payload: Payload = rand_indexation_payload().into();
 
     let message = Message::builder()
         .with_network_id(1)

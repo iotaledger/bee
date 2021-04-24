@@ -272,7 +272,9 @@ dependencies = [
 name = "bee-test"
 version = "0.1.0-alpha"
 dependencies = [
+ "bee-ledger",
  "bee-message",
+ "bee-tangle",
  "bee-ternary",
  "bytemuck",
  "hex",
