@@ -5,10 +5,7 @@ use super::error::Error;
 
 use crate::{
     alias,
-    peer::{
-        ban::{AddrBanlist, PeerBanlist},
-        store::PeerList,
-    },
+    init::PEER_LIST,
     service::{
         command::{Command, CommandReceiver},
         event::{InternalEvent, InternalEventSender},
@@ -29,9 +26,6 @@ use log::*;
 pub struct NetworkHostConfig {
     pub local_keys: Keypair,
     pub bind_multiaddr: Multiaddr,
-    pub peerlist: PeerList,
-    pub banned_addrs: AddrBanlist,
-    pub banned_peers: PeerBanlist,
     pub internal_event_sender: InternalEventSender,
     pub internal_command_receiver: CommandReceiver,
 }
@@ -65,9 +59,6 @@ pub mod integrated {
             let NetworkHostConfig {
                 local_keys,
                 bind_multiaddr,
-                peerlist,
-                banned_addrs,
-                banned_peers,
                 internal_event_sender,
                 mut internal_command_receiver,
             } = config;
@@ -86,7 +77,7 @@ pub mod integrated {
                         }
                         command = recv_command => {
                             if let Some(command) = command {
-                                process_command(command, &mut swarm, &local_keys, &peerlist, &banned_addrs, &banned_peers).await;
+                                process_command(command, &mut swarm, &local_keys).await;
                             }
                         },
                     }
@@ -123,9 +114,6 @@ pub mod standalone {
             let NetworkHostConfig {
                 local_keys,
                 bind_multiaddr,
-                peerlist,
-                banned_addrs,
-                banned_peers,
                 internal_event_sender,
                 mut internal_command_receiver,
             } = config;
@@ -144,7 +132,7 @@ pub mod standalone {
                         }
                         command = recv_command => {
                             if let Some(command) = command {
-                                process_command(command, &mut swarm, &local_keys, &peerlist, &banned_addrs, &banned_peers).await;
+                                process_command(command, &mut swarm, &local_keys).await;
                             }
                         },
                     }
@@ -167,7 +155,7 @@ async fn start_swarm(
         .await
         .expect("Fatal error: creating transport layer failed.");
 
-    info!("Trying to bind to: {}", bind_multiaddr);
+    info!("Binding to: {}", bind_multiaddr);
 
     let _ = Swarm::listen_on(&mut swarm, bind_multiaddr).expect("Fatal error: binding address failed.");
 
@@ -202,22 +190,15 @@ fn process_swarm_event(event: SwarmEvent<(), impl std::error::Error>, internal_e
     }
 }
 
-async fn process_command(
-    command: Command,
-    swarm: &mut Swarm<SwarmBehavior>,
-    local_keys: &Keypair,
-    peerlist: &PeerList,
-    banned_addrs: &AddrBanlist,
-    banned_peers: &PeerBanlist,
-) {
+async fn process_command(command: Command, swarm: &mut Swarm<SwarmBehavior>, local_keys: &Keypair) {
     match command {
         Command::DialPeer { peer_id } => {
-            if let Err(e) = dial_peer(swarm, local_keys, peer_id, &peerlist, &banned_addrs, &banned_peers).await {
+            if let Err(e) = dial_peer(swarm, local_keys, peer_id).await {
                 warn!("Failed to dial peer '...{}'. Cause: {}", alias!(peer_id), e);
             }
         }
         Command::DialAddress { address } => {
-            if let Err(e) = dial_addr(swarm, address.clone(), &banned_addrs).await {
+            if let Err(e) = dial_addr(swarm, address.clone()).await {
                 warn!("Failed to dial address '{}'. Cause: {}", address, e);
             }
         }
@@ -225,22 +206,18 @@ async fn process_command(
     }
 }
 
-async fn dial_addr(
-    swarm: &mut Swarm<SwarmBehavior>,
-    address: Multiaddr,
-    banned_addrs: &AddrBanlist,
-) -> Result<(), Error> {
-    // TODO
-    // Prevent dialing own listen addresses.
-    // check_if_dialing_own_addr(&address).await?;
+async fn dial_addr(swarm: &mut Swarm<SwarmBehavior>, addr: Multiaddr) -> Result<(), Error> {
+    if let Err(e) = PEER_LIST.get().unwrap().read().await.allows_dialing_addr(&addr) {
+        warn!("Dialing address {} denied. Cause: {:?}", addr, e);
+        return Err(Error::DialingAddressDenied(addr));
+    }
 
-    // Prevent dialing banned addresses.
-    check_if_banned_addr(&address, &banned_addrs).await?;
+    info!("Dialing address: {}.", addr);
 
-    info!("Dialing address {}.", address);
-    //
+    // FIXME
     GOSSIP_ORIGIN.store(true, std::sync::atomic::Ordering::SeqCst);
-    Swarm::dial_addr(swarm, address.clone()).map_err(|_| Error::DialingFailed(address))?;
+
+    Swarm::dial_addr(swarm, addr.clone()).map_err(|_| Error::DialingAddressFailed(addr))?;
 
     Ok(())
 }
@@ -248,94 +225,22 @@ async fn dial_addr(
 async fn dial_peer(
     swarm: &mut Swarm<SwarmBehavior>,
     local_keys: &identity::Keypair,
-    remote_peer_id: PeerId,
-    peerlist: &PeerList,
-    banned_addrs: &AddrBanlist,
-    banned_peers: &PeerBanlist,
+    peer_id: PeerId,
 ) -> Result<(), Error> {
-    let local_peer_id = local_keys.public().into_peer_id();
+    if let Err(e) = PEER_LIST.get().unwrap().read().await.allows_dialing_peer(&peer_id) {
+        warn!("Dialing peer {} denied. Cause: {:?}", alias!(peer_id), e);
+        return Err(Error::DialingPeerDenied(peer_id));
+    }
 
-    // Prevent dialing oneself.
-    check_if_dialing_self(&local_peer_id, &remote_peer_id).await?;
+    // `Unwrap`ing is safe, because we just verified that the peer is accepted.
+    let PeerInfo { address, alias, .. } = PEER_LIST.get().unwrap().read().await.info(&peer_id).unwrap();
 
-    // Prevent duplicate connections.
-    // NOTE: depending on the ConnectionLimit of the swarm libp2p can catch this as well, but
-    // it will be cheaper if we do it here already.
-    check_if_duplicate_conn(&remote_peer_id, &peerlist).await?;
+    info!("Dialing peer: {}.", alias);
 
-    // Prevent dialing banned peers.
-    check_if_banned_peer(&remote_peer_id, &banned_peers).await?;
-
-    // Prevent dialing unregistered peers.
-    let PeerInfo { address, alias, .. } = check_if_unregistered_or_get_info(&remote_peer_id, &peerlist).await?;
-
-    // TODO
-    // Prevent dialing own listen addresses.
-    // check_if_dialing_own_addr(&address).await?;
-
-    // Prevent dialing banned addresses.
-    check_if_banned_addr(&address, &banned_addrs).await?;
-
-    info!("Dialing peer {}.", alias);
-
+    // FIXME
     GOSSIP_ORIGIN.store(true, std::sync::atomic::Ordering::SeqCst);
-    Swarm::dial_addr(swarm, address.clone()).map_err(|_| Error::DialingFailed(address))?;
 
-    // // Prevent connecting to dishonest peers or peers we have no up-to-date information about.
-    // if received_peer_id != remote_peer_id {
-    //     return Err(Error::PeerIdMismatch {
-    //         expected: remote_peer_id,
-    //         received: received_peer_id,
-    //     });
-    // }
+    Swarm::dial_addr(swarm, address.clone()).map_err(|_| Error::DialingPeerFailed(peer_id))?;
 
     Ok(())
 }
-
-async fn check_if_dialing_self(local_peer_id: &PeerId, remote_peer_id: &PeerId) -> Result<(), Error> {
-    if remote_peer_id.eq(local_peer_id) {
-        Err(Error::DialedOwnPeerId(*remote_peer_id))
-    } else {
-        Ok(())
-    }
-}
-
-async fn check_if_duplicate_conn(remote_peer_id: &PeerId, peerlist: &PeerList) -> Result<(), Error> {
-    if let Ok(true) = peerlist.is(remote_peer_id, |_, state| state.is_connected()).await {
-        Err(Error::DuplicateConnection(*remote_peer_id))
-    } else {
-        Ok(())
-    }
-}
-
-async fn check_if_banned_peer(remote_peer_id: &PeerId, banned_peers: &PeerBanlist) -> Result<(), Error> {
-    if banned_peers.contains(remote_peer_id).await {
-        Err(Error::DialedBannedPeer(*remote_peer_id))
-    } else {
-        Ok(())
-    }
-}
-
-async fn check_if_unregistered_or_get_info(remote_peer_id: &PeerId, peerlist: &PeerList) -> Result<PeerInfo, Error> {
-    peerlist
-        .get_info(remote_peer_id)
-        .await
-        .map_err(|_| Error::DialedUnregisteredPeer(*remote_peer_id))
-}
-
-async fn check_if_banned_addr(addr: &Multiaddr, banned_addrs: &AddrBanlist) -> Result<(), Error> {
-    if banned_addrs.contains(addr).await {
-        Err(Error::DialedBannedAddress(addr.clone()))
-    } else {
-        Ok(())
-    }
-}
-
-// TODO: add LISTEN_ADDRESSES
-// async fn check_if_dialing_own_addr(addr: &Multiaddr) -> Result<(), Error> {
-//     if remote_peer_id.eq(local_peer_id) {
-//         Err(super::Error::DialedOwnPeerId(*remote_peer_id))
-//     } else {
-//         Ok(())
-//     }
-// }

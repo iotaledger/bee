@@ -3,7 +3,6 @@
 
 #![cfg(feature = "full")]
 
-pub mod ban;
 pub mod error;
+pub mod list;
 pub mod meta;
-pub mod store;

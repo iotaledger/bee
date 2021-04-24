@@ -7,11 +7,11 @@ use crate::swarm::protocols::gossip::GossipSender;
 pub struct PeerState(Option<GossipSender>);
 
 impl PeerState {
-    pub fn connected(gossip_sender: GossipSender) -> Self {
+    pub fn new_connected(gossip_sender: GossipSender) -> Self {
         Self(Some(gossip_sender))
     }
 
-    pub fn disconnected() -> Self {
+    pub fn new_disconnected() -> Self {
         Self(None)
     }
 
@@ -23,8 +23,8 @@ impl PeerState {
         self.0.is_some()
     }
 
-    pub fn set_connected(&mut self, gossip_sender: GossipSender) {
-        self.0.replace(gossip_sender);
+    pub fn set_connected(&mut self, gossip_sender: GossipSender) -> Option<GossipSender> {
+        self.0.replace(gossip_sender)
     }
 
     pub fn set_disconnected(&mut self) -> Option<GossipSender> {

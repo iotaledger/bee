@@ -5,10 +5,7 @@
 
 use super::{
     config::NetworkConfig,
-    peer::{
-        ban::{AddrBanlist, PeerBanlist},
-        store::PeerList,
-    },
+    peer::list::PeerList,
     service::{
         command::command_channel,
         controller::{NetworkCommandSender, NetworkEventReceiver},
@@ -17,15 +14,20 @@ use super::{
     Keypair, PeerId,
 };
 
-use crate::{network::host::NetworkHostConfig, service::service::NetworkServiceConfig};
+use crate::{
+    network::host::{self, NetworkHostConfig},
+    service::service::{self, NetworkServiceConfig},
+};
 
 use libp2p::identity;
 use log::info;
 use once_cell::sync::OnceCell;
+use tokio::sync::RwLock;
 
 pub static RECONNECT_INTERVAL_SECS: OnceCell<u64> = OnceCell::new();
 pub static NETWORK_ID: OnceCell<u64> = OnceCell::new();
 pub static MAX_UNKNOWN_PEERS: OnceCell<usize> = OnceCell::new();
+pub static PEER_LIST: OnceCell<RwLock<PeerList>> = OnceCell::new();
 
 /// Initializes the networking service.
 #[cfg(all(feature = "standalone", not(feature = "integrated")))]
@@ -122,38 +124,38 @@ fn __init(
     let (internal_event_sender, internal_event_receiver) = event_channel::<InternalEvent>();
 
     let local_keys = identity::Keypair::Ed25519(keys);
-    let local_peer_id = PeerId::from_public_key(local_keys.public());
+    let local_id = PeerId::from_public_key(local_keys.public());
 
-    info!("Local Id: {}", local_peer_id);
+    info!("Local Id: {}", local_id);
 
     event_sender
-        .send(Event::LocalCreated { peer_id: local_peer_id })
+        .send(Event::LocalCreated { peer_id: local_id })
         .expect("send error");
 
-    let banned_addrs = AddrBanlist::new();
-    let banned_peers = PeerBanlist::new();
-    let peerlist = PeerList::from_peers(peers);
+    // TODO: Add optional banned peers and addresses
+    let peerlist = PeerList::from_peers(local_id, peers);
+
+    // `Unwrap`ping can never panic, because is the first and only time `set` is called.
+    PEER_LIST.set(RwLock::new(peerlist)).unwrap();
 
     let host_config = NetworkHostConfig {
         local_keys: local_keys.clone(),
         bind_multiaddr,
-        peerlist: peerlist.clone(),
-        banned_addrs: banned_addrs.clone(),
-        banned_peers: banned_peers.clone(),
         internal_event_sender: internal_event_sender.clone(),
         internal_command_receiver,
     };
 
     let service_config = NetworkServiceConfig {
         local_keys,
-        peerlist,
-        banned_addrs,
-        banned_peers,
-        event_sender,
-        internal_event_sender,
-        internal_command_sender,
-        command_receiver,
-        internal_event_receiver,
+        senders: service::Senders {
+            events: event_sender,
+            internal_events: internal_event_sender,
+            internal_commands: internal_command_sender,
+        },
+        receivers: service::Receivers {
+            commands: command_receiver,
+            internal_events: internal_event_receiver,
+        },
     };
 
     let network_command_sender = NetworkCommandSender::new(command_sender);

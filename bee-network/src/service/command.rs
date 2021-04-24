@@ -78,6 +78,4 @@ pub enum Command {
         /// The peer's id.
         peer_id: PeerId,
     },
-    /// Discovers new peers.
-    DiscoverPeers,
 }
