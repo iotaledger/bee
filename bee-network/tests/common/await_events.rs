@@ -43,6 +43,24 @@ pub async fn get_local_id(rx: &mut NetworkEventReceiver) -> PeerId {
     }
 }
 
+pub async fn get_added_peer_id(rx: &mut NetworkEventReceiver) -> PeerId {
+    let timeout = time::sleep(Duration::from_secs(5));
+    tokio::pin!(timeout);
+
+    loop {
+        tokio::select! {
+            event = rx.recv() => {
+                if let Some(Event::PeerAdded { peer_id, .. }) = event {
+                    return peer_id;
+                }
+            },
+            () = &mut timeout => {
+                assert!(false, "timed out before receiving `PeerAdded` event");
+            }
+        }
+    }
+}
+
 pub async fn get_connected_peer_id(rx: &mut NetworkEventReceiver) -> PeerId {
     let timeout = time::sleep(Duration::from_secs(5));
     tokio::pin!(timeout);

@@ -5,7 +5,7 @@ use super::error::Error;
 
 use crate::{
     alias,
-    init::PEER_LIST,
+    init::global::peerlist,
     service::{
         command::{Command, CommandReceiver},
         event::{InternalEvent, InternalEventSender},
@@ -177,9 +177,7 @@ async fn process_swarm_event(
                 })
                 .expect("send error");
 
-            PEER_LIST
-                .get()
-                .expect("peerlist get")
+            peerlist()
                 .write()
                 .await
                 .insert_local_addr(address)
@@ -222,7 +220,7 @@ async fn process_command(command: Command, swarm: &mut Swarm<SwarmBehavior>, loc
 }
 
 async fn dial_addr(swarm: &mut Swarm<SwarmBehavior>, addr: Multiaddr) -> Result<(), Error> {
-    if let Err(e) = PEER_LIST.get().unwrap().read().await.allows_dialing_addr(&addr) {
+    if let Err(e) = peerlist().read().await.allows_dialing_addr(&addr) {
         warn!("Dialing address {} denied. Cause: {:?}", addr, e);
         return Err(Error::DialingAddressDenied(addr));
     }
@@ -242,13 +240,13 @@ async fn dial_peer(
     local_keys: &identity::Keypair,
     peer_id: PeerId,
 ) -> Result<(), Error> {
-    if let Err(e) = PEER_LIST.get().unwrap().read().await.allows_dialing_peer(&peer_id) {
+    if let Err(e) = peerlist().read().await.allows_dialing_peer(&peer_id) {
         warn!("Dialing peer {} denied. Cause: {:?}", alias!(peer_id), e);
         return Err(Error::DialingPeerDenied(peer_id));
     }
 
     // `Unwrap`ing is safe, because we just verified that the peer is accepted.
-    let PeerInfo { address, alias, .. } = PEER_LIST.get().unwrap().read().await.info(&peer_id).unwrap();
+    let PeerInfo { address, alias, .. } = peerlist().read().await.info(&peer_id).unwrap();
 
     info!("Dialing peer: {}.", alias);
 

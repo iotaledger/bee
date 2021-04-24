@@ -9,7 +9,7 @@ use common::{await_events::*, keys_and_ids::full::*, network_config::*, shutdown
 use bee_network::{init, Command, PeerRelation};
 
 #[tokio::test]
-async fn add_peer() {
+async fn connect_peer() {
     let config1 = get_in_memory_network_config(1337);
     let keys1 = gen_random_keys();
 
@@ -39,5 +39,5 @@ async fn add_peer() {
         peer_id: peer_id2,
     });
 
-    assert_eq!(get_added_peer_id(&mut rx1).await, peer_id2);
+    assert_eq!(get_connected_peer_id(&mut rx1).await, peer_id2);
 }

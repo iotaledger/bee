@@ -8,7 +8,7 @@ use super::{error::Error, meta::PeerState};
 use crate::{
     alias,
     config::Peer,
-    init::MAX_UNKNOWN_PEERS,
+    init::global::max_unknown_peers,
     swarm::protocols::gossip::GossipSender,
     types::{PeerInfo, PeerRelation},
 };
@@ -263,10 +263,9 @@ impl PeerList {
             return Err(Error::PeerIsConnected(*peer_id));
         }
 
-        if peer_info.relation.is_unknown()
-            && self.count_if(|info, _| info.relation.is_unknown()) >= *MAX_UNKNOWN_PEERS.get().unwrap()
+        if peer_info.relation.is_unknown() && self.count_if(|info, _| info.relation.is_unknown()) >= max_unknown_peers()
         {
-            return Err(Error::ExceedsUnknownPeerLimit(*MAX_UNKNOWN_PEERS.get().unwrap()));
+            return Err(Error::ExceedsUnknownPeerLimit(max_unknown_peers()));
         }
 
         // At this point we know that the candidate is/has:
@@ -307,10 +306,9 @@ impl PeerList {
             return Err(Error::AddressIsBanned(peer_info.address.clone()));
         }
 
-        if peer_info.relation.is_unknown()
-            && self.count_if(|info, _| info.relation.is_unknown()) >= *MAX_UNKNOWN_PEERS.get().unwrap()
+        if peer_info.relation.is_unknown() && self.count_if(|info, _| info.relation.is_unknown()) >= max_unknown_peers()
         {
-            return Err(Error::ExceedsUnknownPeerLimit(*MAX_UNKNOWN_PEERS.get().unwrap()));
+            return Err(Error::ExceedsUnknownPeerLimit(max_unknown_peers()));
         }
 
         // At this point we know that the candidate is/has:

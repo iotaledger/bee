@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::init::NETWORK_ID;
+use crate::init::global::network_id;
 
 use futures::{future, AsyncRead, AsyncWrite};
 use libp2p::{core::UpgradeInfo, InboundUpgrade, OutboundUpgrade};
@@ -18,12 +18,7 @@ impl UpgradeInfo for GossipUpgrade {
     type InfoIter = iter::Once<Self::Info>;
 
     fn protocol_info(&self) -> Self::InfoIter {
-        iter::once(
-            // `Unwrap`ping is global variable fine, because we made sure that its value is set during initialization.
-            format!("/iota-gossip/{}/1.0.0", NETWORK_ID.get().unwrap())
-                .as_bytes()
-                .to_vec(),
-        )
+        iter::once(format!("/iota-gossip/{}/1.0.0", network_id()).as_bytes().to_vec())
     }
 }
 

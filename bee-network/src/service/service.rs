@@ -9,7 +9,7 @@ use super::{
 // TODO: introduce `service::error` module.
 use crate::{
     alias,
-    init::{PEER_LIST, RECONNECT_INTERVAL_SECS},
+    init::global::{peerlist, reconnect_interval_secs},
     peer::{error::Error as PeerError, list::PeerList},
     types::{PeerInfo, PeerRelation},
 };
@@ -104,7 +104,7 @@ pub mod standalone {
         }
 
         pub async fn start(self, config: NetworkServiceConfig) {
-            let NetworkService { mut shutdown } = self;
+            let NetworkService { shutdown } = self;
             let NetworkServiceConfig {
                 local_keys: _,
                 senders,
@@ -178,14 +178,14 @@ async fn conn_checker(shutdown: Shutdown, senders: Senders) {
 
     let delay = Duration::from_millis(rand::thread_rng().gen_range(0u64..1000));
     let start = Instant::now() + delay;
-    let period = Duration::from_secs(*RECONNECT_INTERVAL_SECS.get().unwrap()); // `unwrap` is safe!
+    let period = Duration::from_secs(reconnect_interval_secs()); // `unwrap` is safe!
 
     let mut interval = ShutdownStream::new(shutdown, IntervalStream::new(time::interval_at(start, period)));
 
     // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
     // of those.
     while interval.next().await.is_some() {
-        let peerlist = PEER_LIST.get().unwrap().read().await;
+        let peerlist = peerlist().read().await;
 
         for (peer_id, alias) in peerlist.iter_if(|info, state| info.relation.is_known() && state.is_disconnected()) {
             info!("Trying to reconnect to: {}.", alias);
@@ -293,7 +293,7 @@ async fn process_internal_event(int_event: InternalEvent, senders: &Senders) -> 
             gossip_in,
             gossip_out,
         } => {
-            let mut peerlist = PEER_LIST.get().unwrap().write().await;
+            let mut peerlist = peerlist().write().await;
 
             // In case the peer doesn't exist yet, we create a `PeerInfo` for that peer on-the-fly.
             if !peerlist.contains(&peer_id) {
@@ -336,7 +336,7 @@ async fn process_internal_event(int_event: InternalEvent, senders: &Senders) -> 
         }
 
         InternalEvent::ProtocolDropped { peer_id } => {
-            let mut peerlist = PEER_LIST.get().unwrap().write().await;
+            let mut peerlist = peerlist().write().await;
 
             // Try to disconnect, but ignore errors in-case the peer was disconnected already.
             let _ = peerlist.update_state(&peer_id, |state| state.set_disconnected());
@@ -364,7 +364,7 @@ async fn add_peer(
         relation,
     };
 
-    let mut peerlist = PEER_LIST.get().unwrap().write().await;
+    let mut peerlist = peerlist().write().await;
 
     // If the insert fails for some reason, we get the peer data back, so it can be reused.
     match peerlist.insert_peer(peer_id, peer_info) {
@@ -419,7 +419,7 @@ async fn add_peer(
 async fn remove_peer(peer_id: PeerId, senders: &Senders) -> Result<(), PeerError> {
     disconnect_peer(peer_id, senders).await?;
 
-    let mut peerlist = PEER_LIST.get().unwrap().write().await;
+    let mut peerlist = peerlist().write().await;
 
     match peerlist.remove(&peer_id) {
         Ok(_peer_info) => {
@@ -439,7 +439,7 @@ async fn remove_peer(peer_id: PeerId, senders: &Senders) -> Result<(), PeerError
 }
 
 async fn disconnect_peer(peer_id: PeerId, senders: &Senders) -> Result<(), PeerError> {
-    let mut peerlist = PEER_LIST.get().unwrap().write().await;
+    let mut peerlist = peerlist().write().await;
 
     // NB: We sent the `PeerDisconnected` event *before* we sent the shutdown signal to the stream writer task, so
     // it can stop adding messages to the channel before we drop the receiver.
