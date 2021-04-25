@@ -3,7 +3,7 @@
 
 use crate::{
     consensus::{
-        storage::{self, apply_milestone, create_output, rollback_milestone, store_balance_diffs, StorageBackend},
+        storage::{self, apply_balance_diffs, apply_milestone, create_output, rollback_milestone, StorageBackend},
         worker::migration_from_milestone,
     },
     snapshot::{
@@ -94,7 +94,7 @@ async fn import_outputs<R: Read, B: StorageBackend>(
         }
     }
 
-    store_balance_diffs(&*storage, &balance_diffs)
+    apply_balance_diffs(&*storage, &balance_diffs)
         .await
         .map_err(|e| Error::Consumer(Box::new(e)))?;
 
