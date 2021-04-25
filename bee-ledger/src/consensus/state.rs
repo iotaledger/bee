@@ -29,12 +29,12 @@ async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u6
             output::Output::SignatureLockedSingle(output) => {
                 supply = supply
                     .checked_add(output.amount())
-                    .ok_or(Error::LedgerStateOverflow(supply, output.amount()))?;
+                    .ok_or(Error::LedgerStateOverflow(supply as u128 + output.amount() as u128))?;
             }
             output::Output::SignatureLockedDustAllowance(output) => {
                 supply = supply
                     .checked_add(output.amount())
-                    .ok_or(Error::LedgerStateOverflow(supply, output.amount()))?;
+                    .ok_or(Error::LedgerStateOverflow(supply as u128 + output.amount() as u128))?;
             }
             output => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
@@ -42,7 +42,7 @@ async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u6
 
     if supply
         .checked_add(treasury)
-        .ok_or(Error::LedgerStateOverflow(supply, treasury))?
+        .ok_or(Error::LedgerStateOverflow(supply as u128 + treasury as u128))?
         != IOTA_SUPPLY
     {
         return Err(Error::InvalidLedgerUnspentState(supply));
@@ -63,12 +63,12 @@ async fn check_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u6
         }
         supply = supply
             .checked_add(balance.amount())
-            .ok_or(Error::LedgerStateOverflow(supply, balance.amount()))?;
+            .ok_or(Error::LedgerStateOverflow(supply as u128 + balance.amount() as u128))?;
     }
 
     if supply
         .checked_add(treasury)
-        .ok_or(Error::LedgerStateOverflow(supply, treasury))?
+        .ok_or(Error::LedgerStateOverflow(supply as u128 + treasury as u128))?
         != IOTA_SUPPLY
     {
         return Err(Error::InvalidLedgerBalanceState(supply));

@@ -231,10 +231,10 @@ pub fn delete_consumed_output_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub async fn store_balance_diffs<B: StorageBackend>(storage: &B, balance_diffs: &BalanceDiffs) -> Result<(), Error> {
+pub async fn apply_balance_diffs<B: StorageBackend>(storage: &B, balance_diffs: &BalanceDiffs) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    store_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
+    apply_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
 
     storage
         .batch_commit(batch, true)
@@ -242,7 +242,7 @@ pub async fn store_balance_diffs<B: StorageBackend>(storage: &B, balance_diffs: 
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub async fn store_balance_diffs_batch<B: StorageBackend>(
+pub async fn apply_balance_diffs_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     balance_diffs: &BalanceDiffs,
@@ -287,7 +287,7 @@ pub async fn apply_milestone<B: StorageBackend>(
         consumed_output_ids.push(*output_id);
     }
 
-    store_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
+    apply_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
 
     let treasury_diff = if let Some(migration) = migration {
         insert_receipt_batch(storage, &mut batch, migration.receipt())?;
@@ -351,13 +351,6 @@ pub async fn rollback_milestone<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-#[allow(dead_code)]
-pub(crate) async fn fetch_ledger_index<B: StorageBackend>(storage: &B) -> Result<Option<LedgerIndex>, Error> {
-    Fetch::<(), LedgerIndex>::fetch(storage, &())
-        .await
-        .map_err(|e| Error::Storage(Box::new(e)))
-}
-
 pub(crate) async fn fetch_balance<B: StorageBackend>(storage: &B, address: &Address) -> Result<Option<Balance>, Error> {
     Fetch::<Address, Balance>::fetch(storage, address)
         .await
@@ -383,6 +376,12 @@ pub(crate) fn insert_ledger_index_batch<B: StorageBackend>(
     index: &LedgerIndex,
 ) -> Result<(), Error> {
     Batch::<(), LedgerIndex>::batch_insert(storage, batch, &(), index).map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub(crate) async fn fetch_ledger_index<B: StorageBackend>(storage: &B) -> Result<Option<LedgerIndex>, Error> {
+    Fetch::<(), LedgerIndex>::fetch(storage, &())
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn insert_receipt_batch<B: StorageBackend>(
