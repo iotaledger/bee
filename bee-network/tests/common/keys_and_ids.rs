@@ -3,7 +3,7 @@
 
 use libp2p_core::PeerId;
 
-use std::{iter::repeat, str::FromStr};
+use std::str::FromStr;
 
 pub fn gen_constant_peer_id() -> PeerId {
     PeerId::from_str("12D3KooWJWEKvSFbben74C7H4YtKjhPMTDxd7gP7zxWSUEeF27st").unwrap()
@@ -16,6 +16,7 @@ pub mod full {
         ed25519::{Keypair, SecretKey},
         PublicKey,
     };
+    use std::iter::repeat;
 
     pub fn gen_random_peer_id() -> PeerId {
         PeerId::from_public_key(libp2p_core::PublicKey::Ed25519(Keypair::generate().public()))

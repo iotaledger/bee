@@ -6,7 +6,6 @@ use libp2p_core::Multiaddr;
 /// Additional information about a peer.
 #[derive(Clone, Debug)]
 pub struct PeerInfo {
-    // TODO: rename to `multiaddr`
     /// The peer's address.
     pub address: Multiaddr,
     /// The peer's alias.
@@ -28,25 +27,38 @@ pub enum PeerRelation {
 impl PeerRelation {
     /// Returns whether the peer is known.
     pub fn is_known(&self) -> bool {
-        self.eq(&Self::Known)
+        matches!(self, Self::Known)
     }
 
     /// Returns whether the peer is unknown.
     pub fn is_unknown(&self) -> bool {
-        self.eq(&Self::Unknown)
+        matches!(self, Self::Unknown)
     }
 
-    /// Upgrades the peer relations.
-    pub fn upgrade(&mut self) {
-        if self.is_unknown() {
-            *self = Self::Known;
-        }
+    ///
+    pub fn set_known(&mut self) {
+        *self = Self::Known;
     }
 
-    /// Downgrades the peer relation.
-    pub fn downgrade(&mut self) {
-        if self.is_known() {
-            *self = Self::Unknown;
-        }
+    ///
+    pub fn set_unknown(&mut self) {
+        *self = Self::Unknown;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn is_and_set_api_works() {
+        let mut pr = PeerRelation::Unknown;
+        assert!(pr.is_unknown());
+
+        pr.set_known();
+        assert!(pr.is_known());
+
+        pr.set_unknown();
+        assert!(pr.is_unknown());
     }
 }
