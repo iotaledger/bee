@@ -36,6 +36,12 @@ pub enum Error {
     /// Negative balance.
     #[error("Negative balance: {0}")]
     NegativeBalance(i64),
+    /// Negative dust allowance.
+    #[error("Negative dust allowance: {0}")]
+    NegativeDustAllowance(i64),
+    /// Negative dust outputs.
+    #[error("Negative dust outputs: {0}")]
+    NegativeDustOutputs(i64),
     /// Balance overflow.
     #[error("Balance overflow: {0}")]
     BalanceOverflow(i128),

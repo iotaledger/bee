@@ -64,10 +64,10 @@ impl Balance {
             return Err(Error::NegativeBalance(amount));
         }
         if dust_allowance < 0 {
-            return Err(Error::NegativeBalance(dust_allowance));
+            return Err(Error::NegativeDustAllowance(dust_allowance));
         }
         if dust_outputs < 0 {
-            return Err(Error::NegativeBalance(dust_outputs));
+            return Err(Error::NegativeDustOutputs(dust_outputs));
         }
 
         Ok(Self {
