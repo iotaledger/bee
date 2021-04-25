@@ -52,6 +52,8 @@ pub enum Error {
     LedgerStateOverflow(u64, u64),
     #[error("Non zero balance diff sum: {0}.")]
     NonZeroBalanceDiffSum(i64),
+    #[error("Decreasing receipt migrated at index")]
+    DecreasingReceiptMigratedAtIndex,
     #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
 }

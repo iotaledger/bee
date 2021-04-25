@@ -54,7 +54,6 @@ pub(crate) async fn migration_from_milestone(
 ) -> Result<Migration, Error> {
     let receipt = Receipt::new(receipt.clone(), milestone_index);
 
-    // TODO check that the treasuryTransaction input matches the fetched unspent treasury output ?
     receipt.validate(&consumed_treasury)?;
 
     let created_treasury = TreasuryOutput::new(
@@ -76,7 +75,8 @@ async fn confirm<N: Node>(
     storage: &N::Backend,
     bus: &Bus<'static>,
     message_id: MessageId,
-    index: &mut LedgerIndex,
+    ledger_index: &mut LedgerIndex,
+    receipt_migrated_at: &mut MilestoneIndex,
 ) -> Result<(), Error>
 where
     N::Backend: StorageBackend,
@@ -88,8 +88,11 @@ where
         _ => return Err(Error::NoMilestonePayload),
     };
 
-    if milestone.essence().index() != MilestoneIndex(**index + 1) {
-        return Err(Error::NonContiguousMilestone(*milestone.essence().index(), **index));
+    if milestone.essence().index() != MilestoneIndex(**ledger_index + 1) {
+        return Err(Error::NonContiguousMilestone(
+            *milestone.essence().index(),
+            **ledger_index,
+        ));
     }
 
     let mut metadata = WhiteFlagMetadata::new(milestone.essence().index());
@@ -125,6 +128,16 @@ where
             );
         }
 
+        if receipt.migrated_at() < *receipt_migrated_at {
+            return Err(Error::DecreasingReceiptMigratedAtIndex);
+        } else {
+            *receipt_migrated_at = receipt.migrated_at();
+        }
+
+        if receipt.last() {
+            *receipt_migrated_at = *receipt_migrated_at + 1;
+        }
+
         Some(
             migration_from_milestone(
                 milestone.essence().index(),
@@ -148,7 +161,7 @@ where
     )
     .await?;
 
-    *index = LedgerIndex(milestone.essence().index());
+    *ledger_index = LedgerIndex(milestone.essence().index());
     tangle.update_confirmed_milestone_index(milestone.essence().index());
 
     for message_id in metadata.excluded_no_transaction_messages.iter() {
@@ -309,13 +322,24 @@ where
             pruning_config.delay()
         };
 
+        let mut receipt_migrated_at = MilestoneIndex(0);
+
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(LedgerWorkerEvent(message_id)) = receiver.next().await {
-                if let Err(e) = confirm::<N>(&tangle, &storage, &bus, message_id, &mut ledger_index).await {
+                if let Err(e) = confirm::<N>(
+                    &tangle,
+                    &storage,
+                    &bus,
+                    message_id,
+                    &mut ledger_index,
+                    &mut receipt_migrated_at,
+                )
+                .await
+                {
                     error!("Confirmation error on {}: {}.", message_id, e);
                     panic!("Aborting due to unexpected ledger error.");
                 }
