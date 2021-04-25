@@ -57,8 +57,8 @@ impl Packable for Ed25519Signature {
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let public_key = <[u8; ED25519_PUBLIC_KEY_LENGTH]>::unpack_inner::<R, CHECK>(reader)?;
-        let signature = Box::new(<[u8; ED25519_SIGNATURE_LENGTH]>::unpack_inner::<R, CHECK>(reader)?);
+        let signature = <[u8; ED25519_SIGNATURE_LENGTH]>::unpack_inner::<R, CHECK>(reader)?;
 
-        Ok(Self { public_key, signature })
+        Ok(Self::new(public_key, signature))
     }
 }

@@ -111,6 +111,8 @@ impl Packable for Ed25519Address {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(<[u8; ED25519_ADDRESS_LENGTH]>::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self::new(<[u8; ED25519_ADDRESS_LENGTH]>::unpack_inner::<R, CHECK>(
+            reader,
+        )?))
     }
 }

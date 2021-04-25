@@ -81,6 +81,6 @@ impl Packable for MessageId {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(<[u8; MESSAGE_ID_LENGTH]>::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self::new(<[u8; MESSAGE_ID_LENGTH]>::unpack_inner::<R, CHECK>(reader)?))
     }
 }

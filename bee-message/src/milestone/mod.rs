@@ -53,6 +53,6 @@ impl Packable for Milestone {
         let message_id = MessageId::unpack_inner::<R, CHECK>(reader)?;
         let timestamp = u64::unpack_inner::<R, CHECK>(reader)?;
 
-        Ok(Self { message_id, timestamp })
+        Ok(Self::new(message_id, timestamp))
     }
 }

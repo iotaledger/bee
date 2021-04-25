@@ -76,6 +76,8 @@ impl Packable for TransactionId {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(<[u8; TRANSACTION_ID_LENGTH]>::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self::new(<[u8; TRANSACTION_ID_LENGTH]>::unpack_inner::<R, CHECK>(
+            reader,
+        )?))
     }
 }
