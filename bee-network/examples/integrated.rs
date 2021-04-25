@@ -1,21 +1,5 @@
-// Copyright 2020 IOTA Stiftung
-// SPDX-License-Identifier: Apache-2.0
-
-//! This example shows how to create and run 2 TCP nodes using `bee_network`, that will
-//! automatically add eachother as peers and exchange the messages 'ping' and 'pong'
-//! respectively.
-//!
-//! You might want to run several instances of such a node in separate
-//! terminals and connect those instances by specifying commandline arguments.
-//!
-//! ```bash
-//! cargo r --example gossip -- --bind /ip4/127.0.0.1/tcp/1337 --peers /ip4/127.0.0.1/tcp/1338
-//! cargo r --example gossip -- --bind /ip4/127.0.0.1/tcp/1338 --peers /ip4/127.0.0.1/tcp/1337
-//! ```
-
-fn main() {
-    println!("42");
-}
+// // Copyright 2020 IOTA Stiftung
+// // SPDX-License-Identifier: Apache-2.0
 
 // #![cfg(feature = "integrated")]
 // #![allow(dead_code, unused_imports)]

@@ -6,7 +6,7 @@
 use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
 use serde::Deserialize;
 
-use std::str::FromStr;
+use std::{net::Ipv4Addr, str::FromStr};
 
 const DEFAULT_BIND_MULTIADDR: &str = "/ip4/0.0.0.0/tcp/15600";
 
@@ -35,6 +35,29 @@ impl NetworkConfig {
     /// Returns a network config builder.
     pub fn build() -> NetworkConfigBuilder {
         NetworkConfigBuilder::new()
+    }
+
+    /// Replaces the address, but keeps the port of the bind address.
+    pub fn replace_addr(&mut self, addr: Protocol) {
+        let port = self.bind_multiaddr.pop().expect("multiaddr pop");
+        let _ = self.bind_multiaddr.pop().expect("multiaddr pop");
+        self.bind_multiaddr.push(addr);
+        self.bind_multiaddr.push(port);
+    }
+
+    /// Replaces the port of the bind address.
+    pub fn replace_port(&mut self, port: u16) {
+        self.bind_multiaddr.pop();
+        self.bind_multiaddr.push(Protocol::Tcp(port));
+    }
+
+    /// Adds a static peer.
+    pub fn add_peer(&mut self, peer_id: PeerId, multiaddr: Multiaddr, alias: String) {
+        self.peers.push(Peer {
+            peer_id,
+            multiaddr,
+            alias: Some(alias),
+        });
     }
 }
 
@@ -67,9 +90,9 @@ impl NetworkConfigBuilder {
     }
 
     /// Specifies the bind addresses.
-    pub fn bind_addresses(mut self, address: &str) -> Self {
+    pub fn bind_multiaddr(mut self, multiaddr: &str) -> Self {
         self.bind_multiaddr
-            .replace(Multiaddr::from_str(address).unwrap_or_else(|e| panic!("Error parsing address: {:?}", e)));
+            .replace(Multiaddr::from_str(multiaddr).unwrap_or_else(|e| panic!("Error parsing Multiaddr: {:?}", e)));
         self
     }
 
@@ -91,11 +114,8 @@ impl NetworkConfigBuilder {
             bind_multiaddr: self
                 .bind_multiaddr
                 .unwrap_or_else(|| Multiaddr::from_str(DEFAULT_BIND_MULTIADDR).unwrap()),
-
             reconnect_interval_secs: self.reconnect_interval_secs.unwrap_or(DEFAULT_RECONNECT_INTERVAL_SECS),
-
             max_unknown_peers: self.max_unknown_peers.unwrap_or(DEFAULT_MAX_UNKOWN_PEERS),
-
             peers: self.peering.finish().peers,
         }
     }

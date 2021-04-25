@@ -23,14 +23,14 @@ async fn add_peer() {
 
     let peer_id1 = get_local_id(&mut rx1).await;
     let address1 = get_bind_address(&mut rx1).await;
-    println!("(1) Peer Id: {}", peer_id1);
-    println!("(1) Bound to: {}", address1);
+    // println!("(1) Peer Id: {}", peer_id1);
+    // println!("(1) Bound to: {}", address1);
 
     let peer_id2 = get_local_id(&mut rx2).await;
     let address2 = get_bind_address(&mut rx2).await;
 
-    println!("(2) Peer Id: {}", peer_id2);
-    println!("(2) Bound to: {}", address2);
+    // println!("(2) Peer Id: {}", peer_id2);
+    // println!("(2) Bound to: {}", address2);
 
     tx1.send(Command::AddPeer {
         alias: Some("2".into()),

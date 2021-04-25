@@ -18,6 +18,4 @@ pub enum Error {
 
     #[error("Dialing peer {} failed.", alias!(.0))]
     DialingPeerFailed(PeerId),
-    /* #[error("Peer identifies with {}, but we expected: {}", .received, .expected)]
-     * PeerIdMismatch { expected: PeerId, received: PeerId }, */
 }

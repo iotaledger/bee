@@ -62,7 +62,7 @@ pub async fn get_added_peer_id(rx: &mut NetworkEventReceiver) -> PeerId {
 }
 
 pub async fn get_connected_peer_id(rx: &mut NetworkEventReceiver) -> PeerId {
-    let timeout = time::sleep(Duration::from_secs(5));
+    let timeout = time::sleep(Duration::from_secs(60));
     tokio::pin!(timeout);
 
     loop {

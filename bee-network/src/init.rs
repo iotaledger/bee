@@ -26,6 +26,8 @@ use tokio::sync::RwLock;
 
 #[cfg(not(feature = "tests"))]
 pub mod global {
+    use super::*;
+
     static RECONNECT_INTERVAL_SECS: OnceCell<u64> = OnceCell::new();
     static NETWORK_ID: OnceCell<u64> = OnceCell::new();
     static MAX_UNKNOWN_PEERS: OnceCell<usize> = OnceCell::new();
@@ -50,7 +52,7 @@ pub mod global {
     pub fn set_network_id(network_id: u64) {
         NETWORK_ID.set(network_id).expect("oncecell set")
     }
-    pub fn reconnect_interval_secs() -> u64 {
+    pub fn network_id() -> u64 {
         *NETWORK_ID.get().expect("oncecell get")
     }
 

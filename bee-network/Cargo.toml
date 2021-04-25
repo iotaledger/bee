@@ -54,10 +54,7 @@ tokio-stream = { version = "0.1", optional = true }
 [dev-dependencies]
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
-anymap = "0.12"
 env_logger = "0.8"
+fern = "0.6"
 hex = "0.4.3"
-pretty_env_logger = "0.4"
-serde = { version = "1.0", features = ["derive" ] }
-structopt = "0.3"
-tokio = { version = "1.4", features = ["rt", "rt-multi-thread", "macros", "signal"] }
+tokio = { version = "1.4", features = ["rt", "rt-multi-thread", "macros", "signal", "time"] }
