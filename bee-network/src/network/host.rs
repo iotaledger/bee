@@ -5,7 +5,7 @@ use super::error::Error;
 
 use crate::{
     alias,
-    init::global::peerlist,
+    peer::list::PeerListWrapper as PeerList,
     service::{
         command::{Command, CommandReceiver},
         event::{InternalEvent, InternalEventSender},
@@ -28,6 +28,7 @@ pub struct NetworkHostConfig {
     pub bind_multiaddr: Multiaddr,
     pub internal_event_sender: InternalEventSender,
     pub internal_command_receiver: CommandReceiver,
+    pub peerlist: PeerList,
 }
 
 #[cfg(all(feature = "integrated", not(feature = "standalone")))]
@@ -61,6 +62,7 @@ pub mod integrated {
                 bind_multiaddr,
                 internal_event_sender,
                 mut internal_command_receiver,
+                peerlist,
             } = config;
 
             let mut swarm = start_swarm(local_keys.clone(), bind_multiaddr, internal_event_sender.clone()).await;
@@ -73,11 +75,11 @@ pub mod integrated {
                     tokio::select! {
                         _ = &mut shutdown => break,
                         event = swarm_next_event => {
-                            process_swarm_event(event, &internal_event_sender);
+                            process_swarm_event(event, &internal_event_sender, &peerlist);
                         }
                         command = recv_command => {
                             if let Some(command) = command {
-                                process_command(command, &mut swarm, &local_keys).await;
+                                process_command(command, &mut swarm, &local_keys, &peerlist).await;
                             }
                         },
                     }
@@ -116,10 +118,8 @@ pub mod standalone {
                 bind_multiaddr,
                 internal_event_sender,
                 mut internal_command_receiver,
+                peerlist,
             } = config;
-
-            #[cfg(test)]
-            println!("I'm in a test!!");
 
             let mut swarm = start_swarm(local_keys.clone(), bind_multiaddr, internal_event_sender.clone()).await;
 
@@ -131,11 +131,11 @@ pub mod standalone {
                     tokio::select! {
                         _ = &mut shutdown => break,
                         event = swarm_next_event => {
-                            process_swarm_event(event, &internal_event_sender).await;
+                            process_swarm_event(event, &internal_event_sender, &peerlist).await;
                         }
                         command = recv_command => {
                             if let Some(command) = command {
-                                process_command(command, &mut swarm, &local_keys).await;
+                                process_command(command, &mut swarm, &local_keys, &peerlist).await;
                             }
                         },
                     }
@@ -168,6 +168,7 @@ async fn start_swarm(
 async fn process_swarm_event(
     event: SwarmEvent<(), impl std::error::Error>,
     internal_event_sender: &InternalEventSender,
+    peerlist: &PeerList,
 ) {
     match event {
         SwarmEvent::NewListenAddr(address) => {
@@ -177,7 +178,8 @@ async fn process_swarm_event(
                 })
                 .expect("send error");
 
-            peerlist()
+            peerlist
+                .0
                 .write()
                 .await
                 .insert_local_addr(address)
@@ -203,15 +205,20 @@ async fn process_swarm_event(
     }
 }
 
-async fn process_command(command: Command, swarm: &mut Swarm<SwarmBehavior>, local_keys: &Keypair) {
+async fn process_command(
+    command: Command,
+    swarm: &mut Swarm<SwarmBehavior>,
+    local_keys: &Keypair,
+    peerlist: &PeerList,
+) {
     match command {
         Command::DialPeer { peer_id } => {
-            if let Err(e) = dial_peer(swarm, local_keys, peer_id).await {
+            if let Err(e) = dial_peer(swarm, local_keys, peer_id, peerlist).await {
                 warn!("Failed to dial peer '...{}'. Cause: {}", alias!(peer_id), e);
             }
         }
         Command::DialAddress { address } => {
-            if let Err(e) = dial_addr(swarm, address.clone()).await {
+            if let Err(e) = dial_addr(swarm, address.clone(), peerlist).await {
                 warn!("Failed to dial address '{}'. Cause: {}", address, e);
             }
         }
@@ -219,8 +226,8 @@ async fn process_command(command: Command, swarm: &mut Swarm<SwarmBehavior>, loc
     }
 }
 
-async fn dial_addr(swarm: &mut Swarm<SwarmBehavior>, addr: Multiaddr) -> Result<(), Error> {
-    if let Err(e) = peerlist().read().await.allows_dialing_addr(&addr) {
+async fn dial_addr(swarm: &mut Swarm<SwarmBehavior>, addr: Multiaddr, peerlist: &PeerList) -> Result<(), Error> {
+    if let Err(e) = peerlist.0.read().await.allows_dialing_addr(&addr) {
         warn!("Dialing address {} denied. Cause: {:?}", addr, e);
         return Err(Error::DialingAddressDenied(addr));
     }
@@ -239,14 +246,15 @@ async fn dial_peer(
     swarm: &mut Swarm<SwarmBehavior>,
     local_keys: &identity::Keypair,
     peer_id: PeerId,
+    peerlist: &PeerList,
 ) -> Result<(), Error> {
-    if let Err(e) = peerlist().read().await.allows_dialing_peer(&peer_id) {
+    if let Err(e) = peerlist.0.read().await.allows_dialing_peer(&peer_id) {
         warn!("Dialing peer {} denied. Cause: {:?}", alias!(peer_id), e);
         return Err(Error::DialingPeerDenied(peer_id));
     }
 
     // `Unwrap`ing is safe, because we just verified that the peer is accepted.
-    let PeerInfo { address, alias, .. } = peerlist().read().await.info(&peer_id).unwrap();
+    let PeerInfo { address, alias, .. } = peerlist.0.read().await.info(&peer_id).unwrap();
 
     info!("Dialing peer: {}.", alias);
 

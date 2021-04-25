@@ -14,11 +14,25 @@ use crate::{
 };
 
 use libp2p::{Multiaddr, PeerId};
+use tokio::sync::RwLock;
 
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 const REMOTE_PEERS_CAP: usize = 8;
 const LOCAL_ADDRS_CAP: usize = 4;
+
+/// A thread-safe wrapper around a [`PeerList`].
+#[derive(Debug, Clone)]
+pub struct PeerListWrapper(pub Arc<RwLock<PeerList>>);
+
+impl PeerListWrapper {
+    pub fn new(peerlist: PeerList) -> Self {
+        Self(Arc::new(RwLock::new(peerlist)))
+    }
+}
 
 #[derive(Debug)]
 pub struct PeerList {
@@ -171,11 +185,7 @@ impl PeerList {
         self.peers.iter().fold(
             0,
             |count, (_, (info, state))| {
-                if predicate(info, state) {
-                    count + 1
-                } else {
-                    count
-                }
+                if predicate(info, state) { count + 1 } else { count }
             },
         )
     }

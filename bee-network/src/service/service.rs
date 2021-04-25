@@ -9,8 +9,8 @@ use super::{
 // TODO: introduce `service::error` module.
 use crate::{
     alias,
-    init::global::{peerlist, reconnect_interval_secs},
-    peer::{error::Error as PeerError, list::PeerList},
+    init::global::reconnect_interval_secs,
+    peer::{error::Error as PeerError, list::PeerListWrapper as PeerList},
     types::{PeerInfo, PeerRelation},
 };
 
@@ -27,6 +27,7 @@ pub struct NetworkServiceConfig {
     pub local_keys: identity::Keypair,
     pub senders: Senders,
     pub receivers: Receivers,
+    pub peerlist: PeerList,
 }
 
 #[derive(Clone)]
@@ -72,6 +73,7 @@ pub mod integrated {
                 local_keys: _,
                 senders,
                 receivers,
+                peerlist,
             } = config;
 
             let Receivers {
@@ -79,9 +81,13 @@ pub mod integrated {
                 internal_events,
             } = receivers;
 
-            node.spawn::<Self, _, _>(|shutdown| command_processor(shutdown, commands, senders.clone()));
-            node.spawn::<Self, _, _>(|shutdown| event_processor(shutdown, internal_events, senders.clone()));
-            node.spawn::<Self, _, _>(|shutdown| conn_checker(shutdown, senders));
+            node.spawn::<Self, _, _>(|shutdown| {
+                command_processor(shutdown, commands, senders.clone(), peerlist.clone())
+            });
+            node.spawn::<Self, _, _>(|shutdown| {
+                event_processor(shutdown, internal_events, senders.clone(), peerlist.clone())
+            });
+            node.spawn::<Self, _, _>(|shutdown| peer_checker(shutdown, senders, peerlist));
 
             info!("Network service started.");
 
@@ -109,6 +115,7 @@ pub mod standalone {
                 local_keys: _,
                 senders,
                 receivers,
+                peerlist,
             } = config;
 
             let Receivers {
@@ -127,23 +134,32 @@ pub mod standalone {
                 shutdown_tx2.send(());
                 shutdown_tx3.send(());
             });
-
-            tokio::spawn(command_processor(shutdown_rx1, commands, senders.clone()));
-            tokio::spawn(event_processor(shutdown_rx2, internal_events, senders.clone()));
-            tokio::spawn(conn_checker(shutdown_rx3, senders));
+            tokio::spawn(command_processor(
+                shutdown_rx1,
+                commands,
+                senders.clone(),
+                peerlist.clone(),
+            ));
+            tokio::spawn(event_processor(
+                shutdown_rx2,
+                internal_events,
+                senders.clone(),
+                peerlist.clone(),
+            ));
+            tokio::spawn(peer_checker(shutdown_rx3, senders, peerlist));
 
             info!("Network service started.");
         }
     }
 }
 
-async fn command_processor(shutdown: Shutdown, commands: CommandReceiver, senders: Senders) {
+async fn command_processor(shutdown: Shutdown, commands: CommandReceiver, senders: Senders, peerlist: PeerList) {
     debug!("Command handler running.");
 
     let mut commands = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(commands));
 
     while let Some(command) = commands.next().await {
-        if let Err(e) = process_command(command, &senders).await {
+        if let Err(e) = process_command(command, &senders, &peerlist).await {
             error!("Error processing command. Cause: {}", e);
             continue;
         }
@@ -152,13 +168,13 @@ async fn command_processor(shutdown: Shutdown, commands: CommandReceiver, sender
     debug!("Command processor stopped.");
 }
 
-async fn event_processor(shutdown: Shutdown, int_events: InternalEventReceiver, senders: Senders) {
+async fn event_processor(shutdown: Shutdown, events: InternalEventReceiver, senders: Senders, peerlist: PeerList) {
     debug!("Event handler running.");
 
-    let mut int_events = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(int_events));
+    let mut int_events = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(events));
 
     while let Some(int_event) = int_events.next().await {
-        if let Err(e) = process_internal_event(int_event, &senders).await {
+        if let Err(e) = process_internal_event(int_event, &senders, &peerlist).await {
             error!("Error processing internal event. Cause: {}", e);
             continue;
         }
@@ -168,7 +184,9 @@ async fn event_processor(shutdown: Shutdown, int_events: InternalEventReceiver, 
 }
 
 // TODO: implement exponential back-off to not spam the peer with reconnect attempts.
-async fn conn_checker(shutdown: Shutdown, senders: Senders) {
+async fn peer_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerList) {
+    debug!("Peer checker running.");
+
     let Senders { internal_commands, .. } = senders;
 
     // NOTE:
@@ -185,7 +203,7 @@ async fn conn_checker(shutdown: Shutdown, senders: Senders) {
     // Check, if there are any disconnected known peers, and schedule a reconnect attempt for each
     // of those.
     while interval.next().await.is_some() {
-        let peerlist = peerlist().read().await;
+        let peerlist = peerlist.0.read().await;
 
         for (peer_id, alias) in peerlist.iter_if(|info, state| info.relation.is_known() && state.is_disconnected()) {
             info!("Trying to reconnect to: {}.", alias);
@@ -195,10 +213,10 @@ async fn conn_checker(shutdown: Shutdown, senders: Senders) {
         }
     }
 
-    debug!("Connection checker stopped.");
+    debug!("Peer checker stopped.");
 }
 
-async fn process_command(command: Command, senders: &Senders) -> Result<(), PeerError> {
+async fn process_command(command: Command, senders: &Senders, peerlist: &PeerList) -> Result<(), PeerError> {
     trace!("Received {:?}.", command);
 
     match command {
@@ -212,17 +230,17 @@ async fn process_command(command: Command, senders: &Senders) -> Result<(), Peer
 
             // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
             if relation.is_known() {
-                add_peer(peer_id, multiaddr, alias, relation, senders).await?;
+                add_peer(peer_id, multiaddr, alias, relation, senders, peerlist).await?;
 
                 // We automatically connect to such peers. Since we can connect concurrently, we spawn a task here.
                 let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
             } else {
-                add_peer(peer_id, multiaddr, alias, relation, senders).await?;
+                add_peer(peer_id, multiaddr, alias, relation, senders, peerlist).await?;
             }
         }
 
         Command::RemovePeer { peer_id } => {
-            remove_peer(peer_id, senders).await?;
+            remove_peer(peer_id, senders, peerlist).await?;
         }
 
         Command::DialPeer { peer_id } => {
@@ -234,7 +252,7 @@ async fn process_command(command: Command, senders: &Senders) -> Result<(), Peer
         }
 
         Command::DisconnectPeer { peer_id } => {
-            disconnect_peer(peer_id, senders).await?;
+            disconnect_peer(peer_id, senders, peerlist).await?;
         }
 
         Command::BanAddress { address } => {
@@ -280,7 +298,11 @@ async fn process_command(command: Command, senders: &Senders) -> Result<(), Peer
     Ok(())
 }
 
-async fn process_internal_event(int_event: InternalEvent, senders: &Senders) -> Result<(), PeerError> {
+async fn process_internal_event(
+    int_event: InternalEvent,
+    senders: &Senders,
+    peerlist: &PeerList,
+) -> Result<(), PeerError> {
     match int_event {
         InternalEvent::AddressBound { address } => {
             let _ = senders.events.send(Event::AddressBound { address });
@@ -293,7 +315,7 @@ async fn process_internal_event(int_event: InternalEvent, senders: &Senders) -> 
             gossip_in,
             gossip_out,
         } => {
-            let mut peerlist = peerlist().write().await;
+            let mut peerlist = peerlist.0.write().await;
 
             // In case the peer doesn't exist yet, we create a `PeerInfo` for that peer on-the-fly.
             if !peerlist.contains(&peer_id) {
@@ -336,7 +358,7 @@ async fn process_internal_event(int_event: InternalEvent, senders: &Senders) -> 
         }
 
         InternalEvent::ProtocolDropped { peer_id } => {
-            let mut peerlist = peerlist().write().await;
+            let mut peerlist = peerlist.0.write().await;
 
             // Try to disconnect, but ignore errors in-case the peer was disconnected already.
             let _ = peerlist.update_state(&peer_id, |state| state.set_disconnected());
@@ -357,6 +379,7 @@ async fn add_peer(
     alias: String,
     relation: PeerRelation,
     senders: &Senders,
+    peerlist: &PeerList,
 ) -> Result<(), PeerError> {
     let peer_info = PeerInfo {
         address,
@@ -364,7 +387,7 @@ async fn add_peer(
         relation,
     };
 
-    let mut peerlist = peerlist().write().await;
+    let mut peerlist = peerlist.0.write().await;
 
     // If the insert fails for some reason, we get the peer data back, so it can be reused.
     match peerlist.insert_peer(peer_id, peer_info) {
@@ -416,10 +439,10 @@ async fn add_peer(
     }
 }
 
-async fn remove_peer(peer_id: PeerId, senders: &Senders) -> Result<(), PeerError> {
-    disconnect_peer(peer_id, senders).await?;
+async fn remove_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList) -> Result<(), PeerError> {
+    disconnect_peer(peer_id, senders, peerlist).await?;
 
-    let mut peerlist = peerlist().write().await;
+    let mut peerlist = peerlist.0.write().await;
 
     match peerlist.remove(&peer_id) {
         Ok(_peer_info) => {
@@ -438,8 +461,8 @@ async fn remove_peer(peer_id: PeerId, senders: &Senders) -> Result<(), PeerError
     }
 }
 
-async fn disconnect_peer(peer_id: PeerId, senders: &Senders) -> Result<(), PeerError> {
-    let mut peerlist = peerlist().write().await;
+async fn disconnect_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList) -> Result<(), PeerError> {
+    let mut peerlist = peerlist.0.write().await;
 
     // NB: We sent the `PeerDisconnected` event *before* we sent the shutdown signal to the stream writer task, so
     // it can stop adding messages to the channel before we drop the receiver.

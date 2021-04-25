@@ -5,7 +5,7 @@
 
 use super::{
     config::NetworkConfig,
-    peer::list::PeerList,
+    peer::list::{PeerList, PeerListWrapper},
     service::{
         command::command_channel,
         controller::{NetworkCommandSender, NetworkEventReceiver},
@@ -22,124 +22,47 @@ use crate::{
 use libp2p::identity;
 use log::info;
 use once_cell::sync::OnceCell;
-use tokio::sync::RwLock;
 
-#[cfg(not(feature = "tests"))]
 pub mod global {
     use super::*;
 
     static RECONNECT_INTERVAL_SECS: OnceCell<u64> = OnceCell::new();
     static NETWORK_ID: OnceCell<u64> = OnceCell::new();
     static MAX_UNKNOWN_PEERS: OnceCell<usize> = OnceCell::new();
-    static PEER_LIST: OnceCell<RwLock<PeerList>> = OnceCell::new();
-
-    pub(super) fn set_peerlist(peerlist: PeerList) {
-        PEER_LIST.set(RwLock::new(peerlist)).expect("oncecell set");
-    }
-    pub fn peerlist() -> &'static RwLock<PeerList> {
-        PEER_LIST.get().expect("oncecell get")
-    }
 
     pub fn set_reconnect_interval_secs(reconnect_interval_secs: u64) {
-        RECONNECT_INTERVAL_SECS
-            .set(reconnect_interval_secs)
-            .expect("oncecell set")
+        if cfg!(feature = "integration_tests") {
+            let _ = RECONNECT_INTERVAL_SECS.set(reconnect_interval_secs);
+        } else {
+            RECONNECT_INTERVAL_SECS
+                .set(reconnect_interval_secs)
+                .expect("oncecell set");
+        }
     }
     pub fn reconnect_interval_secs() -> u64 {
         *RECONNECT_INTERVAL_SECS.get().expect("oncecell get")
     }
 
     pub fn set_network_id(network_id: u64) {
-        NETWORK_ID.set(network_id).expect("oncecell set")
+        if cfg!(feature = "integration_tests") {
+            let _ = NETWORK_ID.set(network_id);
+        } else {
+            NETWORK_ID.set(network_id).expect("oncecell set");
+        }
     }
     pub fn network_id() -> u64 {
         *NETWORK_ID.get().expect("oncecell get")
     }
 
     pub fn set_max_unknown_peers(max_unknown_peers: usize) {
-        MAX_UNKNOWN_PEERS.set(max_unknown_peers).expect("oncecell set")
+        if cfg!(feature = "integration_tests") {
+            let _ = MAX_UNKNOWN_PEERS.set(max_unknown_peers);
+        } else {
+            MAX_UNKNOWN_PEERS.set(max_unknown_peers).expect("oncecell set");
+        }
     }
     pub fn max_unknown_peers() -> usize {
         *MAX_UNKNOWN_PEERS.get().expect("oncecell get")
-    }
-}
-
-#[cfg(feature = "tests")]
-pub mod global {
-    use super::*;
-    use std::sync::atomic::{AtomicU8, Ordering};
-
-    pub(super) static NETWORK_INSTANCE_INDEX: AtomicU8 = AtomicU8::new(0);
-
-    static RECONNECT_INTERVAL_SECS: OnceCell<u64> = OnceCell::new();
-    static NETWORK_ID: OnceCell<u64> = OnceCell::new();
-    static MAX_UNKNOWN_PEERS: OnceCell<usize> = OnceCell::new();
-
-    static PEER_LIST1: OnceCell<RwLock<PeerList>> = OnceCell::new();
-    static PEER_LIST2: OnceCell<RwLock<PeerList>> = OnceCell::new();
-    static PEER_LIST3: OnceCell<RwLock<PeerList>> = OnceCell::new();
-
-    pub(super) fn set_peerlist(peerlist: PeerList) {
-        match NETWORK_INSTANCE_INDEX.load(Ordering::Relaxed) {
-            1 => PEER_LIST1.set(RwLock::new(peerlist)).expect("oncecell set"),
-            2 => PEER_LIST2.set(RwLock::new(peerlist)).expect("oncecell set"),
-            3 => PEER_LIST3.set(RwLock::new(peerlist)).expect("oncecell set"),
-            _ => panic!("Not more than 3 network instances allowed"),
-        }
-    }
-
-    pub fn peerlist() -> &'static RwLock<PeerList> {
-        match NETWORK_INSTANCE_INDEX.load(Ordering::Relaxed) {
-            1 => PEER_LIST1.get().expect("oncecell get"),
-            2 => PEER_LIST2.get().expect("oncecell get"),
-            3 => PEER_LIST3.get().expect("oncecell get"),
-            _ => panic!("Not more than 3 network instances allowed"),
-        }
-    }
-
-    pub(super) fn set_reconnect_interval_secs(secs: u64) {
-        match NETWORK_INSTANCE_INDEX.load(Ordering::Relaxed) {
-            1 => RECONNECT_INTERVAL_SECS.set(secs).expect("oncecell set"),
-            _ => (),
-        }
-    }
-
-    pub fn reconnect_interval_secs() -> u64 {
-        match NETWORK_INSTANCE_INDEX.load(Ordering::Relaxed) {
-            // NOTE: for now we just return the same value for all network instances. We might want to change that
-            // later.
-            _ => *RECONNECT_INTERVAL_SECS.get().expect("oncecell get"),
-        }
-    }
-
-    pub(super) fn set_network_id(network_id: u64) {
-        match NETWORK_INSTANCE_INDEX.load(Ordering::Relaxed) {
-            1 => NETWORK_ID.set(network_id).expect("oncecell set"),
-            _ => (),
-        }
-    }
-
-    pub fn network_id() -> u64 {
-        match NETWORK_INSTANCE_INDEX.load(Ordering::Relaxed) {
-            // NOTE: for now we just return the same value for all network instances. We might want to change that
-            // later.
-            _ => *NETWORK_ID.get().expect("oncecell get"),
-        }
-    }
-
-    pub(super) fn set_max_unknown_peers(max_unknown_peers: usize) {
-        match NETWORK_INSTANCE_INDEX.load(Ordering::Relaxed) {
-            1 => MAX_UNKNOWN_PEERS.set(max_unknown_peers).expect("oncecell set"),
-            _ => (),
-        }
-    }
-
-    pub fn max_unknown_peers() -> usize {
-        match NETWORK_INSTANCE_INDEX.load(Ordering::Relaxed) {
-            // NOTE: for now we just return the same value for all network instances. We might want to change that
-            // later.
-            _ => *MAX_UNKNOWN_PEERS.get().expect("oncecell get"),
-        }
     }
 }
 
@@ -162,11 +85,7 @@ pub mod standalone {
         keys: Keypair,
         network_id: u64,
         shutdown: Box<dyn Future<Output = ()> + Send + Unpin>,
-        #[cfg(feature = "tests")] network_index: u8,
     ) -> (NetworkCommandSender, NetworkEventReceiver) {
-        #[cfg(feature = "tests")]
-        global::NETWORK_INSTANCE_INDEX.store(network_index, std::sync::atomic::Ordering::Relaxed);
-
         let (network_config, service_config, network_command_sender, network_event_receiver) =
             __init(config, keys, network_id);
 
@@ -230,8 +149,6 @@ fn __init(
         static_peers: peers,
     } = config;
 
-    // `Unwrap`ping is fine, because we know they are not set at this point.
-    // TEMP:
     global::set_reconnect_interval_secs(reconnect_interval_secs);
     global::set_network_id(network_id);
     global::set_max_unknown_peers(max_unknown_peers);
@@ -251,13 +168,14 @@ fn __init(
         .send(Event::LocalIdCreated { peer_id: local_id })
         .expect("event send error");
 
-    global::set_peerlist(PeerList::from_peers(local_id, peers));
+    let peerlist = PeerListWrapper::new(PeerList::from_peers(local_id, peers));
 
     let host_config = NetworkHostConfig {
         local_keys: local_keys.clone(),
         bind_multiaddr,
         internal_event_sender: internal_event_sender.clone(),
         internal_command_receiver,
+        peerlist: peerlist.clone(),
     };
 
     let service_config = NetworkServiceConfig {
@@ -271,6 +189,7 @@ fn __init(
             commands: command_receiver,
             internal_events: internal_event_receiver,
         },
+        peerlist,
     };
 
     let network_command_sender = NetworkCommandSender::new(command_sender);

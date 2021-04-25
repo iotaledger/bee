@@ -15,7 +15,7 @@ use libp2p::{
     tcp, yamux, Swarm, Transport,
 };
 
-#[cfg(feature = "tests")]
+#[cfg(feature = "integration_tests")]
 use libp2p_core::transport::MemoryTransport;
 
 use std::{io, time::Duration};
@@ -35,15 +35,15 @@ pub async fn build_swarm(
         .into_authentic(local_keys)
         .expect("error creating noise keys");
 
-    #[cfg(not(feature = "tests"))]
+    #[cfg(not(feature = "integration_tests"))]
     let tcp_config = tcp::TokioTcpConfig::new().nodelay(true).port_reuse(true);
     let noi_config = noise::NoiseConfig::xx(noise_keys);
-    #[cfg(not(feature = "tests"))]
+    #[cfg(not(feature = "integration_tests"))]
     let dns_config = dns::TokioDnsConfig::system(tcp_config)?;
     let mpx_config = mplex::MplexConfig::default();
     let ymx_config = yamux::YamuxConfig::default();
 
-    #[cfg(not(feature = "tests"))]
+    #[cfg(not(feature = "integration_tests"))]
     let transport = dns_config
         .upgrade(upgrade::Version::V1)
         .authenticate(noi_config.into_authenticated())
@@ -51,7 +51,7 @@ pub async fn build_swarm(
         .timeout(Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))
         .boxed();
 
-    #[cfg(feature = "tests")]
+    #[cfg(feature = "integration_tests")]
     let transport = MemoryTransport::default()
         .upgrade(upgrade::Version::V1)
         .authenticate(noi_config.into_authenticated())

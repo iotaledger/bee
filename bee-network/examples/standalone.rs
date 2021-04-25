@@ -21,8 +21,7 @@ mod common;
 #[tokio::main]
 async fn main() {
     use bee_network::{init, Keypair, Multiaddr, NetworkConfig, PeerId, Protocol, PublicKey};
-    use common::keys_and_ids::full::{gen_constant_net_id, gen_deterministic_keys, gen_deterministic_peer_id};
-    use log::*;
+    use common::keys_and_ids::{gen_constant_net_id, gen_deterministic_keys, gen_deterministic_peer_id};
     use std::{env, net::Ipv4Addr};
     use tokio::signal::ctrl_c;
 
@@ -49,10 +48,10 @@ async fn main() {
 
     let mut config = NetworkConfig::default();
     config.replace_addr(bind_addr);
-    config.replace_port(bind_port);
-    config.add_peer(peer_id, peer_addr, peer_alias);
+    config.replace_port(Protocol::Tcp(bind_port));
+    config.add_static_peer(peer_id, peer_addr, peer_alias);
 
-    let config_bind_multiaddr = config.bind_multiaddr.clone();
+    let config_bind_multiaddr = config.bind_multiaddr().clone();
 
     let keys = gen_deterministic_keys(bind_port);
     let network_id = gen_constant_net_id();

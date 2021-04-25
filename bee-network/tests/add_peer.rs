@@ -18,8 +18,8 @@ async fn add_peer() {
 
     let network_id = gen_constant_net_id();
 
-    let (tx1, mut rx1) = init(config1, keys1, network_id, shutdown(10), 1).await;
-    let (tx2, mut rx2) = init(config2, keys2, network_id, shutdown(10), 2).await;
+    let (tx1, mut rx1) = init(config1, keys1, network_id, shutdown(10)).await;
+    let (_, mut rx2) = init(config2, keys2, network_id, shutdown(10)).await;
 
     let peer_id1 = get_local_id(&mut rx1).await;
     let address1 = get_bind_address(&mut rx1).await;
@@ -28,7 +28,6 @@ async fn add_peer() {
 
     let peer_id2 = get_local_id(&mut rx2).await;
     let address2 = get_bind_address(&mut rx2).await;
-
     // println!("(2) Peer Id: {}", peer_id2);
     // println!("(2) Bound to: {}", address2);
 
