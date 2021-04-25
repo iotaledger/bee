@@ -6,7 +6,6 @@ use crate::types::{ConsumedOutput, CreatedOutput};
 use bee_ledger_types::types::ConflictReason;
 use bee_message::{milestone::MilestoneIndex, MessageId};
 
-// TODO why do we need to full vectors here ?
 #[derive(Clone)]
 pub struct MilestoneConfirmed {
     pub id: MessageId,
@@ -18,6 +17,7 @@ pub struct MilestoneConfirmed {
     pub included_messages: Vec<MessageId>,
     pub consumed_outputs: usize,
     pub created_outputs: usize,
+    pub receipt: bool,
 }
 
 pub struct OutputConsumed(pub ConsumedOutput);

@@ -36,7 +36,6 @@ where
         while let Some(event) = receiver.next().await {
             if let Some(prev_event) = prev_event {
 
-                // unwrap is safe since of the condition above
                 let time_diff = event.timestamp - prev_event.timestamp;
 
                 let new_msg_count = metrics.new_messages();

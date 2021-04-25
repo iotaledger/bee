@@ -200,6 +200,7 @@ where
         included_messages: metadata.included_messages,
         consumed_outputs: metadata.consumed_outputs.len(),
         created_outputs: metadata.created_outputs.len(),
+        receipt: migration.is_some(),
     });
 
     for (_, output) in metadata.created_outputs {
