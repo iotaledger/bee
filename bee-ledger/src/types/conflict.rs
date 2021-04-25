@@ -1,10 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::types::Error;
+
 use bee_common::packable::Packable;
 
-use super::Error;
-use std::io::{Read, Write};
+use std::{
+    convert::{TryFrom, TryInto},
+    io::{Read, Write},
+};
 
 /// Represents the different reasons why a transaction can conflict with the ledger state.
 #[repr(u8)]
@@ -35,6 +39,24 @@ impl Default for ConflictReason {
     }
 }
 
+impl TryFrom<u8> for ConflictReason {
+    type Error = Error;
+
+    fn try_from(c: u8) -> Result<Self, Self::Error> {
+        Ok(match c {
+            0 => Self::None,
+            1 => Self::InputUtxoAlreadySpent,
+            2 => Self::InputUtxoAlreadySpentInThisMilestone,
+            3 => Self::InputUtxoNotFound,
+            4 => Self::InputOutputSumMismatch,
+            5 => Self::InvalidSignature,
+            6 => Self::InvalidDustAllowance,
+            255 => Self::SemanticValidationFailed,
+            x => return Err(Error::InvalidConflict(x)),
+        })
+    }
+}
+
 impl Packable for ConflictReason {
     type Error = Error;
 
@@ -50,16 +72,6 @@ impl Packable for ConflictReason {
     where
         Self: Sized,
     {
-        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            0 => Self::None,
-            1 => Self::InputUtxoAlreadySpent,
-            2 => Self::InputUtxoAlreadySpentInThisMilestone,
-            3 => Self::InputUtxoNotFound,
-            4 => Self::InputOutputSumMismatch,
-            5 => Self::InvalidSignature,
-            6 => Self::InvalidDustAllowance,
-            255 => Self::SemanticValidationFailed,
-            x => return Err(Error::InvalidConflict(x)),
-        })
+        u8::unpack_inner::<R, CHECK>(reader)?.try_into()
     }
 }

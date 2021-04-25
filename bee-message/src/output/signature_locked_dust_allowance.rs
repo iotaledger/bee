@@ -9,8 +9,8 @@ use core::ops::RangeInclusive;
 
 /// Amount of tokens below which an output is considered a dust output.
 pub const DUST_THRESHOLD: u64 = 1_000_000;
-
-const SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT: RangeInclusive<u64> = DUST_THRESHOLD..=IOTA_SUPPLY;
+/// Valid amounts for a signature locked dust allowance output.
+pub const SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT: RangeInclusive<u64> = DUST_THRESHOLD..=IOTA_SUPPLY;
 
 /// A `SignatureLockedDustAllowanceOutput` functions like a `SignatureLockedSingleOutput` but as a special property it
 /// is used to increase the allowance/amount of dust outputs on a given address.
