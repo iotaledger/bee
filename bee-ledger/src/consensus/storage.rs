@@ -321,7 +321,7 @@ pub async fn rollback_milestone<B: StorageBackend>(
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
     consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
-    _balance_diffs: &BalanceDiffs,
+    balance_diffs: &BalanceDiffs,
     migration: &Option<Migration>,
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
@@ -335,6 +335,10 @@ pub async fn rollback_milestone<B: StorageBackend>(
     for (output_id, _spent) in consumed_outputs.iter() {
         delete_consumed_output_batch(storage, &mut batch, output_id)?;
     }
+
+    let mut balance_diffs = balance_diffs.clone();
+    balance_diffs.negate();
+    apply_balance_diffs_batch(storage, &mut batch, &balance_diffs).await?;
 
     if let Some(migration) = migration {
         delete_receipt_batch(storage, &mut batch, migration.receipt())?;

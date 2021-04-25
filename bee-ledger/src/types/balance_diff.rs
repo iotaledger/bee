@@ -6,12 +6,12 @@ use crate::types::Error;
 use bee_message::{address::Address, constants::IOTA_SUPPLY};
 
 use std::collections::{
-    hash_map::{IntoIter, Iter},
+    hash_map::{IntoIter, Iter, IterMut},
     HashMap,
 };
 
 /// Records a balance difference to apply to an address.
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct BalanceDiff {
     amount: i64,
     dust_allowance: i64,
@@ -55,10 +55,17 @@ impl BalanceDiff {
     pub fn is_dust_mutating(&self) -> bool {
         self.dust_allowance < 0 || self.dust_outputs > 0
     }
+
+    /// Negates a `BalanceDiff`.
+    pub fn negate(&mut self) {
+        self.amount = -self.amount;
+        self.dust_allowance = -self.dust_allowance;
+        self.dust_outputs = -self.dust_outputs;
+    }
 }
 
 /// Records a balance differences to apply to addresses.
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct BalanceDiffs(HashMap<Address, BalanceDiff>);
 
 impl BalanceDiffs {
@@ -156,6 +163,18 @@ impl BalanceDiffs {
     /// Creates an iterator over the balance diffs.
     pub fn iter(&self) -> Iter<'_, Address, BalanceDiff> {
         self.0.iter()
+    }
+
+    /// Creates a mutable iterator over the balance diffs.
+    pub fn iter_mut(&mut self) -> IterMut<'_, Address, BalanceDiff> {
+        self.0.iter_mut()
+    }
+
+    /// Negates a `BalanceDiffs`.
+    pub fn negate(&mut self) {
+        for (_, diff) in self.iter_mut() {
+            diff.negate();
+        }
     }
 }
 
