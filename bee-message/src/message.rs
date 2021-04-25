@@ -181,7 +181,6 @@ impl<P: NonceProvider> MessageBuilder<P> {
 
     /// Finishes the `MessageBuilder` into a `Message`.
     pub fn finish(self) -> Result<Message, Error> {
-        // TODO harmonize unpack and finish
         let network_id = self.network_id.ok_or(Error::MissingField("network_id"))?;
         let parents = self.parents.ok_or(Error::MissingField("parents"))?;
 

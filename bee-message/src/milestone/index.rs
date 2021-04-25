@@ -82,6 +82,6 @@ impl Packable for MilestoneIndex {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(u32::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self::new(u32::unpack_inner::<R, CHECK>(reader)?))
     }
 }
