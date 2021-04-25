@@ -18,6 +18,8 @@ bitflags! {
         const REFERENCED = 0b0000_0100;
         /// The message is valid.
         const VALID = 0b0000_1000;
+        /// The message was requested.
+        const REQUESTED = 0b0001_0000;
     }
 }
 
@@ -60,6 +62,16 @@ impl Flags {
     /// Set the valid flag for this message.
     pub fn set_valid(&mut self, is_valid: bool) {
         self.set(Flags::VALID, is_valid);
+    }
+
+    /// Return whether the flags indicate that the message was requested.
+    pub fn was_requested(&self) -> bool {
+        self.contains(Flags::REQUESTED)
+    }
+
+    /// Set the valid flag for this message.
+    pub fn set_requested(&mut self, was_requested: bool) {
+        self.set(Flags::REQUESTED, was_requested);
     }
 }
 
