@@ -6,14 +6,17 @@
 use bee_network::{Multiaddr, NetworkConfig, Protocol};
 
 pub fn get_network_config_with_port(port: u16) -> NetworkConfig {
-    let mut this = NetworkConfig::default();
-    this.bind_multiaddr.pop().unwrap();
-    this.bind_multiaddr.push(Protocol::Tcp(port));
-    this
+    let mut config = NetworkConfig::default();
+    config.replace_port(Protocol::Tcp(port));
+    config
 }
 
 pub fn get_in_memory_network_config(port: u64) -> NetworkConfig {
-    let mut this = NetworkConfig::default();
-    this.bind_multiaddr = Multiaddr::from(Protocol::Memory(port));
-    this
+    NetworkConfig::build_in_memory()
+        .with_bind_multiaddr({
+            let mut m = Multiaddr::empty();
+            m.push(Protocol::Memory(port));
+            m
+        })
+        .finish()
 }

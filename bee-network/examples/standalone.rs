@@ -15,20 +15,17 @@
 //!
 //! Both
 
-#![cfg(feature = "standalone")]
-#![allow(dead_code, unused_imports)]
-
 mod common;
-use common::keys_and_ids::full::{gen_constant_net_id, gen_deterministic_keys, gen_deterministic_peer_id};
 
-use bee_network::{init, Keypair, Multiaddr, NetworkConfig, PeerId, Protocol, PublicKey};
-
-use log::*;
-use std::{env, net::Ipv4Addr};
-use tokio::signal::ctrl_c;
-
+#[cfg(feature = "standalone")]
 #[tokio::main]
 async fn main() {
+    use bee_network::{init, Keypair, Multiaddr, NetworkConfig, PeerId, Protocol, PublicKey};
+    use common::keys_and_ids::full::{gen_constant_net_id, gen_deterministic_keys, gen_deterministic_peer_id};
+    use log::*;
+    use std::{env, net::Ipv4Addr};
+    use tokio::signal::ctrl_c;
+
     fern::Dispatch::new()
         .level(log::LevelFilter::Trace)
         .chain(std::io::stdout())
@@ -69,3 +66,7 @@ async fn main() {
         println!("{:?}", event);
     }
 }
+
+// Examples **must** contain a main function in order to always compile for any compilation flag.
+#[cfg(not(feature = "standalone"))]
+fn main() {}

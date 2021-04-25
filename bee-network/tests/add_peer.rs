@@ -4,7 +4,7 @@
 #![cfg(feature = "standalone")]
 
 mod common;
-use common::{await_events::*, keys_and_ids::full::*, network_config::*, shutdown::*};
+use common::{await_events::*, keys_and_ids::*, network_config::*, shutdown::*};
 
 use bee_network::{init, Command, PeerRelation};
 

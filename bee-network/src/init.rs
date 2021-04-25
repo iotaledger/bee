@@ -83,7 +83,8 @@ pub mod global {
         match NETWORK_INSTANCE_INDEX.load(Ordering::Relaxed) {
             1 => PEER_LIST1.set(RwLock::new(peerlist)).expect("oncecell set"),
             2 => PEER_LIST2.set(RwLock::new(peerlist)).expect("oncecell set"),
-            _ => PEER_LIST3.set(RwLock::new(peerlist)).expect("oncecell set"),
+            3 => PEER_LIST3.set(RwLock::new(peerlist)).expect("oncecell set"),
+            _ => panic!("Not more than 3 network instances allowed"),
         }
     }
 
@@ -91,7 +92,8 @@ pub mod global {
         match NETWORK_INSTANCE_INDEX.load(Ordering::Relaxed) {
             1 => PEER_LIST1.get().expect("oncecell get"),
             2 => PEER_LIST2.get().expect("oncecell get"),
-            _ => PEER_LIST3.get().expect("oncecell get"),
+            3 => PEER_LIST3.get().expect("oncecell get"),
+            _ => panic!("Not more than 3 network instances allowed"),
         }
     }
 
@@ -225,7 +227,7 @@ fn __init(
         bind_multiaddr,
         reconnect_interval_secs,
         max_unknown_peers,
-        peers,
+        static_peers: peers,
     } = config;
 
     // `Unwrap`ping is fine, because we know they are not set at this point.

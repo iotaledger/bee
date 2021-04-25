@@ -1,16 +1,17 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(dead_code)]
+
 use libp2p_core::PeerId;
 
-use std::str::FromStr;
-
 pub fn gen_constant_peer_id() -> PeerId {
-    PeerId::from_str("12D3KooWJWEKvSFbben74C7H4YtKjhPMTDxd7gP7zxWSUEeF27st").unwrap()
+    "12D3KooWJWEKvSFbben74C7H4YtKjhPMTDxd7gP7zxWSUEeF27st".parse().unwrap()
 }
 
 #[cfg(feature = "full")]
-pub mod full {
+mod __full {
+
     use super::*;
     use libp2p::identity::{
         ed25519::{Keypair, SecretKey},
@@ -52,13 +53,6 @@ pub mod full {
         sk.into()
     }
 
-    // pub fn gen_deterministic_peer_id(gen: char) -> PeerId {
-    //     let mut peer_id = String::from("12D3Koo");
-    //     peer_id.push_str(&repeat(gen.to_ascii_uppercase()).take(45).collect::<String>()[..]);
-
-    //     PeerId::from_str(&peer_id[..]).unwrap()
-    // }
-
     pub fn get_constant_keys() -> Keypair {
         let identity_kp = "41dbc921b157fe001bcaf7f1f8b97f6eddf8f29e8888afc2ff089d544b9baf45bcd026f7900fd6efaa21958890bcfd05b7b738f724acc3bfa68ba3f33197aee1";
 
@@ -75,3 +69,6 @@ pub mod full {
         14379272398717627559_u64 // "testnet7"
     }
 }
+
+#[cfg(feature = "full")]
+pub use __full::*;

@@ -34,7 +34,6 @@ full = [
 ]
 standalone = ["full"]
 integrated = ["full"]
-tests = ["standalone"]
 
 [dependencies]
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
