@@ -21,6 +21,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Remove msys64
+      if: runner.os == 'Windows'
+      run: Remove-Item -LiteralPath "C:\msys64\" -Force -Recurse
+
+    - name: Install dependencies
+      if: runner.os == 'Windows'
+      run: choco install llvm -y
+
     - name: Install ${{ matrix.rust }}
       uses: actions-rs/toolchain@v1
       with:
