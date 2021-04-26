@@ -14,11 +14,7 @@ use crate::{
     types::PeerInfo,
 };
 
-use libp2p::{
-    identity::{self, Keypair},
-    swarm::SwarmEvent,
-    Multiaddr, PeerId, Swarm,
-};
+use libp2p::{identity::Keypair, swarm::SwarmEvent, Multiaddr, PeerId, Swarm};
 use log::*;
 
 // TODO: move this to `config` module
@@ -40,7 +36,7 @@ pub mod integrated {
 
     use async_trait::async_trait;
 
-    use std::{any::TypeId, convert::Infallible, sync::atomic::Ordering};
+    use std::{any::TypeId, convert::Infallible};
 
     /// A node worker, that deals with accepting and initiating connections with remote peers.
     /// NOTE: This type is only exported to be used as a worker dependency.
@@ -75,11 +71,11 @@ pub mod integrated {
                     tokio::select! {
                         _ = &mut shutdown => break,
                         event = swarm_next_event => {
-                            process_swarm_event(event, &internal_event_sender, &peerlist);
+                            process_swarm_event(event, &internal_event_sender, &peerlist).await;
                         }
                         command = recv_command => {
                             if let Some(command) = command {
-                                process_command(command, &mut swarm, &local_keys, &peerlist).await;
+                                process_command(command, &mut swarm, &peerlist).await;
                             }
                         },
                     }
@@ -135,7 +131,7 @@ pub mod standalone {
                         }
                         command = recv_command => {
                             if let Some(command) = command {
-                                process_command(command, &mut swarm, &local_keys, &peerlist).await;
+                                process_command(command, &mut swarm, &peerlist).await;
                             }
                         },
                     }
@@ -205,15 +201,10 @@ async fn process_swarm_event(
     }
 }
 
-async fn process_command(
-    command: Command,
-    swarm: &mut Swarm<SwarmBehavior>,
-    local_keys: &Keypair,
-    peerlist: &PeerList,
-) {
+async fn process_command(command: Command, swarm: &mut Swarm<SwarmBehavior>, peerlist: &PeerList) {
     match command {
         Command::DialPeer { peer_id } => {
-            if let Err(e) = dial_peer(swarm, local_keys, peer_id, peerlist).await {
+            if let Err(e) = dial_peer(swarm, peer_id, peerlist).await {
                 warn!("Failed to dial peer '...{}'. Cause: {}", alias!(peer_id), e);
             }
         }
@@ -242,12 +233,7 @@ async fn dial_addr(swarm: &mut Swarm<SwarmBehavior>, addr: Multiaddr, peerlist: 
     Ok(())
 }
 
-async fn dial_peer(
-    swarm: &mut Swarm<SwarmBehavior>,
-    local_keys: &identity::Keypair,
-    peer_id: PeerId,
-    peerlist: &PeerList,
-) -> Result<(), Error> {
+async fn dial_peer(swarm: &mut Swarm<SwarmBehavior>, peer_id: PeerId, peerlist: &PeerList) -> Result<(), Error> {
     if let Err(e) = peerlist.0.read().await.allows_dialing_peer(&peer_id) {
         warn!("Dialing peer {} denied. Cause: {:?}", alias!(peer_id), e);
         return Err(Error::DialingPeerDenied(peer_id));

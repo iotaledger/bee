@@ -255,7 +255,7 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
             disconnect_peer(peer_id, senders, peerlist).await?;
         }
 
-        Command::BanAddress { address } => {
+        Command::BanAddress { address: _ } => {
             // if !banned_addrlist.insert(address.clone()).await {
             //     return Err(PeerError::AddressAlreadyBanned(address));
             // }
@@ -264,7 +264,7 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
             // }
         }
 
-        Command::BanPeer { peer_id } => {
+        Command::BanPeer { peer_id: _ } => {
             // if !banned_peerlist.insert(peer_id).await {
             //     return Err(PeerError::PeerAlreadyBanned(peer_id));
             // }
@@ -274,23 +274,23 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
             // }
         }
 
-        Command::UnbanAddress { address } => {
+        Command::UnbanAddress { address: _ } => {
             // if !banned_addrlist.remove(&address).await {
             //     return Err(PeerError::AddressAlreadyUnbanned(address));
             // }
         }
 
-        Command::UnbanPeer { peer_id } => {
+        Command::UnbanPeer { peer_id: _ } => {
             // if !banned_peerlist.remove(&peer_id).await {
             //     return Err(PeerError::PeerAlreadyUnbanned(peer_id));
             // }
         }
 
-        Command::UpgradeRelation { peer_id } => {
+        Command::UpgradeRelation { peer_id: _ } => {
             // peerlist.upgrade_relation(&peer_id).await?;
         }
 
-        Command::DowngradeRelation { peer_id } => {
+        Command::DowngradeRelation { peer_id: _ } => {
             // peerlist.downgrade_relation(&peer_id).await?;
         }
     }
