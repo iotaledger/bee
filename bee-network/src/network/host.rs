@@ -167,10 +167,12 @@ async fn process_swarm_event(
     peerlist: &PeerList,
 ) {
     match event {
-        SwarmEvent::NewListenAddr(address) => {
+        SwarmEvent::NewListenAddr(multiaddr) => {
+            debug!("Swarm event: new listen address {}.", multiaddr);
+
             internal_event_sender
                 .send(InternalEvent::AddressBound {
-                    address: address.clone(),
+                    address: multiaddr.clone(),
                 })
                 .expect("send error");
 
@@ -178,24 +180,24 @@ async fn process_swarm_event(
                 .0
                 .write()
                 .await
-                .insert_local_addr(address)
+                .insert_local_addr(multiaddr)
                 .expect("insert_local_addr");
         }
         SwarmEvent::ConnectionEstablished { peer_id, .. } => {
-            debug!("Negotiating protocol with '{}'.", alias!(peer_id));
+            debug!("Swarm event: connection established with {}.", alias!(peer_id));
         }
         SwarmEvent::ConnectionClosed { peer_id, .. } => {
-            debug!("Stopped protocol with '{}'.", alias!(peer_id));
+            debug!("Swarm event: connection closed with {}.", alias!(peer_id));
         }
         SwarmEvent::ListenerError { error } => {
-            error!("Libp2p error: Cause: {}", error);
+            error!("Swarm event: listener error {}.", error);
         }
         SwarmEvent::Dialing(peer_id) => {
             // NB: strange, but this event is not actually fired when dialing. (open issue?)
-            debug!("Dialing '{}'.", alias!(peer_id));
+            debug!("Swarm event: dialing {}.", alias!(peer_id));
         }
         SwarmEvent::IncomingConnection { send_back_addr, .. } => {
-            debug!("Being dialed from {}.", send_back_addr);
+            debug!("Swarm event: being dialed from {}.", send_back_addr);
         }
         _ => {}
     }
