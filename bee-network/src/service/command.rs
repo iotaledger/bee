@@ -69,13 +69,10 @@ pub enum Command {
         address: Multiaddr,
     },
     /// Upgrades the relation with a peer.
-    UpgradeRelation {
+    ChangeRelation {
         /// The peer's id.
         peer_id: PeerId,
-    },
-    /// Downgrades the relation with a peer.
-    DowngradeRelation {
-        /// The peer's id.
-        peer_id: PeerId,
+        /// The peer's new relation.
+        to: PeerRelation,
     },
 }

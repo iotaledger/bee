@@ -286,12 +286,9 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
             // }
         }
 
-        Command::UpgradeRelation { peer_id: _ } => {
-            // peerlist.upgrade_relation(&peer_id).await?;
-        }
-
-        Command::DowngradeRelation { peer_id: _ } => {
-            // peerlist.downgrade_relation(&peer_id).await?;
+        Command::ChangeRelation { peer_id, to } => {
+            let mut peerlist = peerlist.0.write().await;
+            peerlist.update_info(&peer_id, |info| info.relation = to)?;
         }
     }
 
