@@ -2,14 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    consensus::{
-        dust::dust_outputs_max,
+    types::{BalanceDiffs, ConsumedOutput, CreatedOutput},
+    workers::{
+        consensus::{dust::dust_outputs_max, merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
         error::Error,
-        merkle_hasher::MerkleHasher,
-        metadata::WhiteFlagMetadata,
         storage::{self, StorageBackend},
     },
-    types::{BalanceDiffs, ConsumedOutput, CreatedOutput},
 };
 
 use bee_ledger_types::types::ConflictReason;

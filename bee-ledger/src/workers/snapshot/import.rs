@@ -2,20 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    consensus::{
+    types::{
+        snapshot::{
+            DeltaSnapshotHeader, FullSnapshotHeader, MilestoneDiff, SnapshotHeader, SnapshotInfo, SnapshotKind,
+        },
+        BalanceDiffs, CreatedOutput, TreasuryOutput,
+    },
+    workers::{
+        snapshot::{config::SnapshotConfig, download::download_snapshot_file, error::Error},
         storage::{self, apply_balance_diffs, apply_milestone, create_output, rollback_milestone, StorageBackend},
         worker::migration_from_milestone,
     },
-    snapshot::{
-        config::SnapshotConfig,
-        download::download_snapshot_file,
-        error::Error,
-        header::{DeltaSnapshotHeader, FullSnapshotHeader, SnapshotHeader},
-        info::SnapshotInfo,
-        kind::Kind,
-        milestone_diff::MilestoneDiff,
-    },
-    types::{BalanceDiffs, CreatedOutput, TreasuryOutput},
 };
 
 use bee_common::packable::{Packable, Read};
@@ -195,8 +192,8 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
 
     let header = SnapshotHeader::unpack(&mut reader)?;
 
-    if header.kind() != Kind::Full {
-        return Err(Error::UnexpectedKind(Kind::Full, header.kind()));
+    if header.kind() != SnapshotKind::Full {
+        return Err(Error::UnexpectedSnapshotKind(SnapshotKind::Full, header.kind()));
     }
 
     if header.network_id() != network_id {
@@ -270,8 +267,8 @@ async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, netw
 
     let header = SnapshotHeader::unpack(&mut reader)?;
 
-    if header.kind() != Kind::Delta {
-        return Err(Error::UnexpectedKind(Kind::Delta, header.kind()));
+    if header.kind() != SnapshotKind::Delta {
+        return Err(Error::UnexpectedSnapshotKind(SnapshotKind::Delta, header.kind()));
     }
 
     if header.network_id() != network_id {

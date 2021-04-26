@@ -51,4 +51,14 @@ pub enum Error {
     /// Packable option error happened.
     #[error("Packable option error happened")]
     PackableOption,
+    #[error("Invalid snapshot kind: {0}")]
+    InvalidSnapshotKind(u8),
+    #[error("Unsupported snapshot version: supports {0}, read {1}")]
+    UnsupportedVersion(u8, u8),
+    #[error("Invalid payload kind: {0}")]
+    InvalidPayloadKind(u32),
+    #[error("")]
+    MissingConsumedTreasury,
+    #[error("Milestone length mismatch: expected {0}, got {1}")]
+    MilestoneLengthMismatch(usize, usize),
 }

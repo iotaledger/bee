@@ -1,10 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    snapshot::error::Error,
-    types::{ConsumedOutput, CreatedOutput},
-};
+use crate::types::{ConsumedOutput, CreatedOutput, Error};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{

@@ -218,12 +218,8 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         let this = this.with_resource(shutdown_listener());
 
         info!("Initializing ledger...");
-        let this = bee_ledger::consensus::init::<BeeNode<B>>(
-            this,
-            network_id,
-            config.snapshot.clone(),
-            config.pruning.clone(),
-        );
+        let this =
+            bee_ledger::workers::init::<BeeNode<B>>(this, network_id, config.snapshot.clone(), config.pruning.clone());
 
         info!("Initializing protocol layer...");
         let this = bee_protocol::workers::init::<BeeNode<B>>(config.protocol.clone(), network_id, events, this);

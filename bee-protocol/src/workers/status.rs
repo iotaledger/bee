@@ -3,7 +3,7 @@
 
 use crate::workers::{storage::StorageBackend, MessageRequesterWorker, RequestedMessages};
 
-use bee_ledger::consensus::LedgerWorker;
+use bee_ledger::workers::LedgerWorker;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 

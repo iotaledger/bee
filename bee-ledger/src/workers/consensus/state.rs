@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    consensus::{
-        dust::dust_outputs_max,
+    types::{Balance, Unspent},
+    workers::{
+        consensus::dust::dust_outputs_max,
         error::Error,
         storage::{self, StorageBackend},
     },
-    types::{Balance, Unspent},
 };
 
 use bee_message::{address::Address, constants::IOTA_SUPPLY, output};

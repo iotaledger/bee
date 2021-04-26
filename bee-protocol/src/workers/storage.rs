@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_ledger::{consensus::storage::StorageBackend as LedgerStorageBackend, snapshot::info::SnapshotInfo};
+use bee_ledger::{types::snapshot::SnapshotInfo, workers::storage::StorageBackend as LedgerStorageBackend};
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     payload::indexation::PaddedIndex,

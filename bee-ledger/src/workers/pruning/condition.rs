@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
+use crate::workers::{
     pruning::{
         config::PruningConfig,
         constants::{PRUNING_THRESHOLD, SOLID_ENTRY_POINT_THRESHOLD_PAST},

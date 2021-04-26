@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-use bee_ledger::consensus::{LedgerWorker, LedgerWorkerEvent};
+use bee_ledger::workers::{LedgerWorker, LedgerWorkerEvent};
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     MessageId,

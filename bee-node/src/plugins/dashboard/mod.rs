@@ -26,7 +26,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_ledger::consensus::event::MilestoneConfirmed;
+use bee_ledger::workers::event::MilestoneConfirmed;
 use bee_protocol::workers::{
     event::{MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded, TipRemoved},
     MetricsWorker, PeerManagerResWorker,

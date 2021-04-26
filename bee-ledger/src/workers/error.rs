@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    snapshot::error::Error as SnapshotError,
     types::{Balance, Error as TypesError},
+    workers::snapshot::error::Error as SnapshotError,
 };
 
 use bee_message::{address::Address, MessageId};

@@ -9,7 +9,7 @@ use crate::{
     storage::StorageBackend,
 };
 
-use bee_ledger::consensus::event::MilestoneConfirmed;
+use bee_ledger::workers::event::MilestoneConfirmed;
 use bee_tangle::{event::LatestMilestoneChanged, MsTangle};
 
 use serde::Serialize;

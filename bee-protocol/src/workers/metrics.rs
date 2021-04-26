@@ -3,7 +3,7 @@
 
 use crate::types::metrics::NodeMetrics;
 
-use bee_ledger::consensus::event::{MilestoneConfirmed, PrunedIndex, SnapshottedIndex};
+use bee_ledger::workers::event::{MilestoneConfirmed, PrunedIndex, SnapshottedIndex};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 
 use async_trait::async_trait;

@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::Packable;
-use bee_ledger::snapshot::{
-    error::Error as SnapshotError,
-    header::{DeltaSnapshotHeader, FullSnapshotHeader, SnapshotHeader},
-    kind::Kind,
+use bee_ledger::types::{
+    snapshot::{DeltaSnapshotHeader, FullSnapshotHeader, SnapshotHeader, SnapshotKind},
+    Error as SnapshotError,
 };
 
 use chrono::{offset::TimeZone, Utc};
@@ -59,8 +58,8 @@ pub fn exec(tool: &SnapshotInfoTool) -> Result<(), SnapshotInfoError> {
     println!("Ledger index:\t\t\t{}", *header.ledger_index());
 
     match header.kind() {
-        Kind::Full => print_full_header(FullSnapshotHeader::unpack(&mut reader)?),
-        Kind::Delta => print_delta_header(DeltaSnapshotHeader::unpack(&mut reader)?),
+        SnapshotKind::Full => print_full_header(FullSnapshotHeader::unpack(&mut reader)?),
+        SnapshotKind::Delta => print_delta_header(DeltaSnapshotHeader::unpack(&mut reader)?),
     };
 
     Ok(())

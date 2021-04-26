@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    consensus::error::Error,
-    snapshot::info::SnapshotInfo,
     types::{
-        Balance, BalanceDiffs, ConsumedOutput, CreatedOutput, LedgerIndex, Migration, OutputDiff, Receipt,
-        TreasuryDiff, TreasuryOutput, Unspent,
+        snapshot::SnapshotInfo, Balance, BalanceDiffs, ConsumedOutput, CreatedOutput, LedgerIndex, Migration,
+        OutputDiff, Receipt, TreasuryDiff, TreasuryOutput, Unspent,
     },
+    workers::error::Error,
 };
 
 use bee_message::{

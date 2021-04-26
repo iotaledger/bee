@@ -9,7 +9,7 @@ use crate::{
     types::{body::SuccessBody, responses::BalanceAddressResponse},
 };
 
-use bee_ledger::{consensus::dust::dust_outputs_max, types::Balance};
+use bee_ledger::{types::Balance, workers::consensus::dust::dust_outputs_max};
 use bee_message::address::{Address, Ed25519Address};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;

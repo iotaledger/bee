@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::snapshot::{error::Error, kind::Kind};
+use crate::types::{error::Error, snapshot::SnapshotKind};
 
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::{milestone::MilestoneIndex, payload::milestone::MilestoneId};
@@ -10,7 +10,7 @@ const SNAPSHOT_VERSION: u8 = 1;
 
 #[derive(Clone)]
 pub struct SnapshotHeader {
-    kind: Kind,
+    kind: SnapshotKind,
     timestamp: u64,
     network_id: u64,
     sep_index: MilestoneIndex,
@@ -18,7 +18,7 @@ pub struct SnapshotHeader {
 }
 
 impl SnapshotHeader {
-    pub fn kind(&self) -> Kind {
+    pub fn kind(&self) -> SnapshotKind {
         self.kind
     }
 
@@ -69,7 +69,7 @@ impl Packable for SnapshotHeader {
             return Err(Self::Error::UnsupportedVersion(SNAPSHOT_VERSION, version));
         }
 
-        let kind = Kind::unpack_inner::<R, CHECK>(reader)?;
+        let kind = SnapshotKind::unpack_inner::<R, CHECK>(reader)?;
         let timestamp = u64::unpack_inner::<R, CHECK>(reader)?;
         let network_id = u64::unpack_inner::<R, CHECK>(reader)?;
         let sep_index = MilestoneIndex::unpack_inner::<R, CHECK>(reader)?;

@@ -2,21 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    consensus::{
+    types::{CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
+    workers::{
+        consensus::{metadata::WhiteFlagMetadata, state::check_ledger_state, white_flag},
         error::Error,
         event::{MilestoneConfirmed, OutputConsumed, OutputCreated},
-        metadata::WhiteFlagMetadata,
-        state::check_ledger_state,
+        pruning::{
+            condition::{should_prune, should_snapshot},
+            config::PruningConfig,
+            constants::{PRUNING_THRESHOLD, SOLID_ENTRY_POINT_THRESHOLD_FUTURE, SOLID_ENTRY_POINT_THRESHOLD_PAST},
+        },
+        snapshot::{config::SnapshotConfig, error::Error as SnapshotError, import::import_snapshots},
         storage::{self, StorageBackend},
-        white_flag,
     },
-    pruning::{
-        condition::{should_prune, should_snapshot},
-        config::PruningConfig,
-        constants::{PRUNING_THRESHOLD, SOLID_ENTRY_POINT_THRESHOLD_FUTURE, SOLID_ENTRY_POINT_THRESHOLD_PAST},
-    },
-    snapshot::{config::SnapshotConfig, error::Error as SnapshotError, import::import_snapshots},
-    types::{CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
 };
 
 use bee_ledger_types::types::ConflictReason;

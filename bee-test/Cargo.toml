@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 # // TODO remove
 bee_ledger_types = { git = "https://github.com/iotaledger/bee.git", branch = "dev", package = "bee-ledger" }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-ledger = { path = "../bee-ledger", features = [ "snapshot" ] }
+bee-ledger = { path = "../bee-ledger", features = [ ] }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-pow = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{snapshot::kind::Kind, types::Error as TypeError};
+use crate::types::{snapshot::SnapshotKind, Error as TypeError};
 
 use bee_message::{milestone::MilestoneIndex, Error as MessageError};
 
@@ -16,7 +16,7 @@ pub enum Error {
     #[error("Unsupported snapshot version: supports {0}, read {1}")]
     UnsupportedVersion(u8, u8),
     #[error("Unexpected snapshot kind: expected {0:?}, read {1:?}")]
-    UnexpectedKind(Kind, Kind),
+    UnexpectedSnapshotKind(SnapshotKind, SnapshotKind),
     #[error("No snapshot download source available")]
     NoDownloadSourceAvailable,
     #[error("Invalid snapshot path: {0}")]

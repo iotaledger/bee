@@ -3,10 +3,6 @@
 
 //#![warn(missing_docs)]
 
-#[cfg(feature = "consensus")]
-pub mod consensus;
-#[cfg(feature = "pruning")]
-pub mod pruning;
-#[cfg(feature = "snapshot")]
-pub mod snapshot;
 pub mod types;
+#[cfg(feature = "workers")]
+pub mod workers;

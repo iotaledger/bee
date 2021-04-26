@@ -38,28 +38,20 @@ tokio-stream = { version = "0.1", optional = true }
 rand = "0.8"
 
 [features]
-consensus = [
+workers = [
   "bee-runtime",
   "bee-storage",
   "bee-tangle",
   "bee-ternary",
   "async-trait",
+  "chrono",
   "digest",
   "futures",
   "hex",
   "iota-crypto",
   "log",
+  "reqwest",
   "serde",
   "tokio",
   "tokio-stream"
 ]
-snapshot = [
-  "async-trait",
-  "chrono",
-  "futures",
-  "log",
-  "reqwest",
-  "serde",
-  "tokio"
-]
-pruning = []

@@ -6,7 +6,7 @@ use crate::plugins::dashboard::websocket::{
     topics::WsTopic,
 };
 
-use bee_ledger::consensus::event::MilestoneConfirmed;
+use bee_ledger::workers::event::MilestoneConfirmed;
 use bee_message::MessageId;
 
 use serde::Serialize;

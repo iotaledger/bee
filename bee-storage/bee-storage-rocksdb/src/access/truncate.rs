@@ -6,9 +6,9 @@ use crate::{
     storage::{Storage, StorageBackend},
 };
 
-use bee_ledger::{
-    snapshot::info::SnapshotInfo,
-    types::{Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent},
+use bee_ledger::types::{
+    snapshot::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput,
+    Unspent,
 };
 use bee_message::{
     address::{Address, Ed25519Address},

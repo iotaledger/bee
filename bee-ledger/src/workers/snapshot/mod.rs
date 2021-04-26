@@ -5,8 +5,4 @@ pub(crate) mod download;
 
 pub mod config;
 pub mod error;
-pub mod header;
 pub mod import;
-pub mod info;
-pub mod kind;
-pub mod milestone_diff;

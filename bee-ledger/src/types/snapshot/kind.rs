@@ -1,14 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::snapshot::error::Error;
+use crate::types::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
 /// The kind of a snapshot.
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum Kind {
+pub enum SnapshotKind {
     /// Full is a snapshot which contains the full ledger entry for a given milestone plus the milestone diffs which
     /// subtracted to the ledger milestone reduce to the snapshot milestone ledger.
     Full = 0,
@@ -17,7 +17,7 @@ pub enum Kind {
     Delta = 1,
 }
 
-impl Packable for Kind {
+impl Packable for SnapshotKind {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
@@ -32,9 +32,9 @@ impl Packable for Kind {
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            0 => Kind::Full,
-            1 => Kind::Delta,
-            k => return Err(Self::Error::InvalidKind(k)),
+            0 => SnapshotKind::Full,
+            1 => SnapshotKind::Delta,
+            k => return Err(Self::Error::InvalidSnapshotKind(k)),
         })
     }
 }
