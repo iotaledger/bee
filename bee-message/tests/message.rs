@@ -12,6 +12,7 @@ use bee_pow::{
 };
 use bee_test::rand::{
     message::rand_message_ids,
+    number::rand_number,
     parents::rand_parents,
     payload::{rand_indexation_payload, rand_treasury_transaction_payload},
 };
@@ -122,15 +123,18 @@ fn pack_unpack_valid() {
 fn getters() {
     let parents = rand_parents();
     let payload: Payload = rand_indexation_payload().into();
+    let nonce: u64 = rand_number();
 
-    let message = Message::builder()
+    let message = MessageBuilder::new()
         .with_network_id(1)
         .with_parents(parents.clone())
         .with_payload(payload.clone())
+        .with_nonce_provider(nonce, 10000f64)
         .finish()
         .unwrap();
 
     assert_eq!(message.network_id(), 1);
     assert_eq!(*message.parents(), parents);
     assert_eq!(*message.payload().as_ref().unwrap(), payload);
+    assert_eq!(message.nonce(), nonce);
 }
