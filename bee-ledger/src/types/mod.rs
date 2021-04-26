@@ -3,6 +3,8 @@
 
 //! A module providing all types required to compute and maintain the ledger state.
 
+pub mod snapshot;
+
 mod balance;
 mod balance_diff;
 mod conflict;
