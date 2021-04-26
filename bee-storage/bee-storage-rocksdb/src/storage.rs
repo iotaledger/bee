@@ -152,7 +152,7 @@ impl Storage {
         db.flush_cf_opt(db.cf_handle(CF_SYSTEM).unwrap(), &flushopts)?;
 
         Ok(Storage {
-            config: config.storage.clone(),
+            config: config.storage,
             inner: db,
         })
     }
