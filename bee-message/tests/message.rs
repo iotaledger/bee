@@ -123,7 +123,7 @@ fn pack_unpack_valid() {
 fn getters() {
     let parents = rand_parents();
     let payload: Payload = rand_indexation_payload().into();
-    let nonce = rand_number();
+    let nonce: u64 = rand_number();
 
     let message = MessageBuilder::new()
         .with_network_id(1)
