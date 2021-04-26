@@ -95,10 +95,10 @@ impl Packable for MilestoneDiff {
             payload => return Err(Error::InvalidPayloadKind(payload.kind())),
         };
 
-        if milestone_len != milestone.packed_len() + MilestonePayload::KIND as usize {
+        if milestone_len != milestone.packed_len() + std::mem::size_of_val(&MilestonePayload::KIND) {
             return Err(Error::MilestoneLengthMismatch(
                 milestone_len,
-                milestone.packed_len() + MilestonePayload::KIND as usize,
+                milestone.packed_len() + std::mem::size_of_val(&MilestonePayload::KIND),
             ));
         }
 
