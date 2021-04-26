@@ -88,8 +88,8 @@ impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
         let (incoming_gossip_sender, incoming_gossip_receiver) = gossip::gossip_channel();
         let (outgoing_gossip_sender, outgoing_gossip_receiver) = gossip::gossip_channel();
 
-        gossip::spawn_gossip_in_task(peer_id, reader, incoming_gossip_sender, self.internal_sender.clone());
-        gossip::spawn_gossip_out_task(peer_id, writer, outgoing_gossip_receiver, self.internal_sender.clone());
+        gossip::spawn_gossip_in_processor(peer_id, reader, incoming_gossip_sender, self.internal_sender.clone());
+        gossip::spawn_gossip_out_processor(peer_id, writer, outgoing_gossip_receiver, self.internal_sender.clone());
 
         // TODO: retrieve the PeerInfo from the peer list
 
