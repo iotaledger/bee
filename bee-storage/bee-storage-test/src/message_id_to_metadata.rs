@@ -8,7 +8,7 @@ use bee_storage::{
     backend,
 };
 use bee_tangle::metadata::MessageMetadata;
-use bee_test::rand::{message::rand_message_id, metadata::rand_metadata};
+use bee_test::rand::{message::rand_message_id, metadata::rand_message_metadata};
 
 use futures::stream::StreamExt;
 
@@ -41,23 +41,29 @@ impl<T> StorageBackend for T where
 }
 
 pub async fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
-    let (message_id, metadata) = (rand_message_id(), rand_metadata());
+    let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
 
-    assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
-        .await
-        .unwrap());
-    assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     Insert::<MessageId, MessageMetadata>::insert(storage, &message_id, &metadata)
         .await
         .unwrap();
 
-    assert!(Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
-        .await
-        .unwrap());
+    assert!(
+        Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
+            .await
+            .unwrap()
+    );
     assert_eq!(
         Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
             .await
@@ -71,18 +77,22 @@ pub async fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         .await
         .unwrap();
 
-    assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
-        .await
-        .unwrap());
-    assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     let mut batch = B::batch_begin();
 
     for _ in 0usize..10usize {
-        let (message_id, metadata) = (rand_message_id(), rand_metadata());
+        let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
         Insert::<MessageId, MessageMetadata>::insert(storage, &message_id, &metadata)
             .await
             .unwrap();
@@ -92,7 +102,7 @@ pub async fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     let mut metadatas = HashMap::new();
 
     for _ in 0usize..10usize {
-        let (message_id, metadata) = (rand_message_id(), rand_metadata());
+        let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
         Batch::<MessageId, MessageMetadata>::batch_insert(storage, &mut batch, &message_id, &metadata).unwrap();
         metadatas.insert(message_id, metadata);
     }

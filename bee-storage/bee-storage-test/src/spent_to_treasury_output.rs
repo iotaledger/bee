@@ -6,7 +6,7 @@ use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
-use bee_test::rand::{bool::rand_bool, treasury_output::rand_treasury_output};
+use bee_test::rand::{bool::rand_bool, output::rand_ledger_treasury_output};
 
 use futures::stream::StreamExt;
 
@@ -39,18 +39,20 @@ impl<T> StorageBackend for T where
 }
 
 pub async fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
-    let (spent, treasury_output) = (rand_bool(), rand_treasury_output());
+    let (spent, treasury_output) = (rand_bool(), rand_ledger_treasury_output());
 
     assert!(
         !Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output.clone()))
             .await
             .unwrap()
     );
-    assert!(Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     Insert::<(bool, TreasuryOutput), ()>::insert(storage, &(spent, treasury_output.clone()), &())
         .await
@@ -78,16 +80,18 @@ pub async fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap()
     );
-    assert!(Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     let mut batch = B::batch_begin();
 
     for _ in 0usize..10usize {
-        let (spent, treasury_output) = (rand_bool(), rand_treasury_output());
+        let (spent, treasury_output) = (rand_bool(), rand_ledger_treasury_output());
         Insert::<(bool, TreasuryOutput), ()>::insert(storage, &(spent, treasury_output.clone()), &())
             .await
             .unwrap();
@@ -98,7 +102,7 @@ pub async fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0usize..10usize {
         let spent = false;
-        let treasury_output = rand_treasury_output();
+        let treasury_output = rand_ledger_treasury_output();
         Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, &mut batch, &(spent, treasury_output.clone()), &())
             .unwrap();
         treasury_outputs.entry(spent).or_default().push(treasury_output);
@@ -106,7 +110,7 @@ pub async fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0usize..10usize {
         let spent = true;
-        let treasury_output = rand_treasury_output();
+        let treasury_output = rand_ledger_treasury_output();
         Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, &mut batch, &(spent, treasury_output.clone()), &())
             .unwrap();
         treasury_outputs.entry(spent).or_default().push(treasury_output);

@@ -41,22 +41,28 @@ impl<T> StorageBackend for T where
 pub async fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
     let (parent, child) = (rand_message_id(), rand_message_id());
 
-    assert!(!Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child))
-        .await
-        .unwrap());
-    assert!(Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        !Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child))
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     Insert::<(MessageId, MessageId), ()>::insert(storage, &(parent, child), &())
         .await
         .unwrap();
 
-    assert!(Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child))
-        .await
-        .unwrap());
+    assert!(
+        Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child))
+            .await
+            .unwrap()
+    );
     assert_eq!(
         Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
             .await
@@ -69,14 +75,18 @@ pub async fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
         .await
         .unwrap();
 
-    assert!(!Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child))
-        .await
-        .unwrap());
-    assert!(Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        !Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child))
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     let mut batch = B::batch_begin();
 

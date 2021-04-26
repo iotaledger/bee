@@ -42,21 +42,27 @@ impl<T> StorageBackend for T where
 pub async fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
     let (output_id, consumed_output) = (rand_output_id(), rand_consumed_output());
 
-    assert!(!Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id)
-        .await
-        .unwrap());
-    assert!(Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     Insert::<OutputId, ConsumedOutput>::insert(storage, &output_id, &consumed_output)
         .await
         .unwrap();
 
-    assert!(Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id)
-        .await
-        .unwrap());
+    assert!(
+        Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id)
+            .await
+            .unwrap()
+    );
     assert_eq!(
         Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
             .await
@@ -69,13 +75,17 @@ pub async fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B)
         .await
         .unwrap();
 
-    assert!(!Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id)
-        .await
-        .unwrap());
-    assert!(Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 
     let mut batch = B::batch_begin();
 

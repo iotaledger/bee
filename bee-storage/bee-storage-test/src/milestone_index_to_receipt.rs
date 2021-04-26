@@ -7,7 +7,7 @@ use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
-use bee_test::rand::{milestone::rand_milestone_index, receipt::rand_receipt};
+use bee_test::rand::{milestone::rand_milestone_index, receipt::rand_ledger_receipt};
 
 use futures::stream::StreamExt;
 
@@ -40,18 +40,20 @@ impl<T> StorageBackend for T where
 }
 
 pub async fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
-    let (index, receipt) = (rand_milestone_index(), rand_receipt());
+    let (index, receipt) = (rand_milestone_index(), rand_ledger_receipt());
 
     assert!(
         !Exist::<(MilestoneIndex, Receipt), ()>::exist(storage, &(index, receipt.clone()))
             .await
             .unwrap()
     );
-    assert!(Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     Insert::<(MilestoneIndex, Receipt), ()>::insert(storage, &(index, receipt.clone()), &())
         .await
@@ -79,16 +81,18 @@ pub async fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap()
     );
-    assert!(Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     let mut batch = B::batch_begin();
 
     for _ in 0usize..10usize {
-        let (index, receipt) = (rand_milestone_index(), rand_receipt());
+        let (index, receipt) = (rand_milestone_index(), rand_ledger_receipt());
         Insert::<(MilestoneIndex, Receipt), ()>::insert(storage, &(index, receipt.clone()), &())
             .await
             .unwrap();
@@ -100,7 +104,7 @@ pub async fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
     for _ in 0usize..5usize {
         let index = rand_milestone_index();
         for _ in 0usize..5usize {
-            let receipt = rand_receipt();
+            let receipt = rand_ledger_receipt();
             Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(storage, &mut batch, &(index, receipt.clone()), &())
                 .unwrap();
             receipts.entry(index).or_default().push(receipt);

@@ -8,9 +8,9 @@ use crate::{
 };
 
 use bee_common::packable::Packable;
-use bee_ledger::{
-    snapshot::info::SnapshotInfo,
-    types::{Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt, TreasuryOutput, Unspent},
+use bee_ledger::types::{
+    snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
+    TreasuryOutput, Unspent,
 };
 use bee_message::{
     address::{Address, Ed25519Address},

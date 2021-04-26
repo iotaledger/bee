@@ -6,7 +6,7 @@ use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
-use bee_test::rand::message::{rand_indexation, rand_message_id};
+use bee_test::rand::{message::rand_message_id, payload::rand_indexation_payload};
 
 use futures::stream::StreamExt;
 
@@ -39,18 +39,20 @@ impl<T> StorageBackend for T where
 }
 
 pub async fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
-    let (index, message_id) = (rand_indexation().padded_index(), rand_message_id());
+    let (index, message_id) = (rand_indexation_payload().padded_index(), rand_message_id());
 
     assert!(
         !Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id))
             .await
             .unwrap()
     );
-    assert!(Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     Insert::<(PaddedIndex, MessageId), ()>::insert(storage, &(index, message_id), &())
         .await
@@ -78,16 +80,18 @@ pub async fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap()
     );
-    assert!(Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     let mut batch = B::batch_begin();
 
     for _ in 0usize..10usize {
-        let (index, message_id) = (rand_indexation().padded_index(), rand_message_id());
+        let (index, message_id) = (rand_indexation_payload().padded_index(), rand_message_id());
         Insert::<(PaddedIndex, MessageId), ()>::insert(storage, &(index, message_id), &())
             .await
             .unwrap();
@@ -97,7 +101,7 @@ pub async fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
     let mut message_ids = HashMap::<PaddedIndex, Vec<MessageId>>::new();
 
     for _ in 0usize..5usize {
-        let index = rand_indexation().padded_index();
+        let index = rand_indexation_payload().padded_index();
         for _ in 0usize..5usize {
             let message_id = rand_message_id();
             Batch::<(PaddedIndex, MessageId), ()>::batch_insert(storage, &mut batch, &(index, message_id), &())

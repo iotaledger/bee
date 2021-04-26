@@ -47,11 +47,13 @@ pub async fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(s
             .await
             .unwrap()
     );
-    assert!(Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     Insert::<(MilestoneIndex, UnreferencedMessage), ()>::insert(storage, &(index, unreferenced_message), &())
         .await
@@ -79,11 +81,13 @@ pub async fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(s
             .await
             .unwrap()
     );
-    assert!(Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     let mut batch = B::batch_begin();
 
@@ -113,7 +117,10 @@ pub async fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(s
                 &(),
             )
             .unwrap();
-            unreferenced_messages.entry(index).or_default().push(unreferenced_message);
+            unreferenced_messages
+                .entry(index)
+                .or_default()
+                .push(unreferenced_message);
         }
     }
 
