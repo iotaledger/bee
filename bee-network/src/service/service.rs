@@ -239,56 +239,53 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
             }
         }
 
-        Command::RemovePeer { peer_id } => {
-            remove_peer(peer_id, senders, peerlist).await?;
+        Command::BanAddress { address } => {
+            let mut peerlist = peerlist.0.write().await;
+            peerlist.ban_address(address.clone())?;
+
+            let _ = senders.events.send(Event::AddressBanned { address });
         }
 
-        Command::DialPeer { peer_id } => {
-            let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
+        Command::BanPeer { peer_id } => {
+            let mut peerlist = peerlist.0.write().await;
+            peerlist.ban_peer(peer_id)?;
+
+            let _ = senders.events.send(Event::PeerBanned { peer_id });
+        }
+
+        Command::ChangeRelation { peer_id, to } => {
+            let mut peerlist = peerlist.0.write().await;
+            peerlist.update_info(&peer_id, |info| info.relation = to)?;
         }
 
         Command::DialAddress { address } => {
             let _ = senders.internal_commands.send(Command::DialAddress { address });
         }
 
+        Command::DialPeer { peer_id } => {
+            let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
+        }
+
         Command::DisconnectPeer { peer_id } => {
             disconnect_peer(peer_id, senders, peerlist).await?;
         }
 
-        Command::BanAddress { address: _ } => {
-            // if !banned_addrlist.insert(address.clone()).await {
-            //     return Err(PeerError::AddressAlreadyBanned(address));
-            // }
-            // if event_sender.send(Event::AddressBanned { address }).is_err() {
-            //     trace!("Failed to send 'AddressBanned' event. (Shutting down?)")
-            // }
+        Command::RemovePeer { peer_id } => {
+            remove_peer(peer_id, senders, peerlist).await?;
         }
 
-        Command::BanPeer { peer_id: _ } => {
-            // if !banned_peerlist.insert(peer_id).await {
-            //     return Err(PeerError::PeerAlreadyBanned(peer_id));
-            // }
-
-            // if event_sender.send(Event::PeerBanned { peer_id }).is_err() {
-            //     trace!("Failed to send 'PeerBanned' event. (Shutting down?)")
-            // }
-        }
-
-        Command::UnbanAddress { address: _ } => {
-            // if !banned_addrlist.remove(&address).await {
-            //     return Err(PeerError::AddressAlreadyUnbanned(address));
-            // }
-        }
-
-        Command::UnbanPeer { peer_id: _ } => {
-            // if !banned_peerlist.remove(&peer_id).await {
-            //     return Err(PeerError::PeerAlreadyUnbanned(peer_id));
-            // }
-        }
-
-        Command::ChangeRelation { peer_id, to } => {
+        Command::UnbanAddress { address } => {
             let mut peerlist = peerlist.0.write().await;
-            peerlist.update_info(&peer_id, |info| info.relation = to)?;
+            peerlist.unban_address(&address)?;
+
+            let _ = senders.events.send(Event::AddressUnbanned { address });
+        }
+
+        Command::UnbanPeer { peer_id } => {
+            let mut peerlist = peerlist.0.write().await;
+            peerlist.unban_peer(&peer_id)?;
+
+            let _ = senders.events.send(Event::PeerUnbanned { peer_id });
         }
     }
 
@@ -303,6 +300,18 @@ async fn process_internal_event(
     match int_event {
         InternalEvent::AddressBound { address } => {
             let _ = senders.events.send(Event::AddressBound { address });
+        }
+
+        InternalEvent::ProtocolDropped { peer_id } => {
+            let mut peerlist = peerlist.0.write().await;
+
+            // Try to disconnect, but ignore errors in-case the peer was disconnected already.
+            let _ = peerlist.update_state(&peer_id, |state| state.set_disconnected());
+
+            // Try to remove unknown peers.
+            let _ = peerlist.remove_if(&peer_id, |peer_info, _| peer_info.relation.is_unknown());
+
+            let _ = senders.events.send(Event::PeerDisconnected { peer_id });
         }
 
         InternalEvent::ProtocolEstablished {
@@ -352,18 +361,6 @@ async fn process_internal_event(
                 gossip_in,
                 gossip_out,
             });
-        }
-
-        InternalEvent::ProtocolDropped { peer_id } => {
-            let mut peerlist = peerlist.0.write().await;
-
-            // Try to disconnect, but ignore errors in-case the peer was disconnected already.
-            let _ = peerlist.update_state(&peer_id, |state| state.set_disconnected());
-
-            // Try to remove unknown peers.
-            let _ = peerlist.remove_if(&peer_id, |peer_info, _| peer_info.relation.is_unknown());
-
-            let _ = senders.events.send(Event::PeerDisconnected { peer_id });
         }
     }
 

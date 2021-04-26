@@ -26,16 +26,38 @@ pub fn event_channel<T>() -> (mpsc::UnboundedSender<T>, mpsc::UnboundedReceiver<
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Event {
+    /// An address was banned.
+    AddressBanned {
+        /// The peer's address.
+        address: Multiaddr,
+    },
+
+    /// An address was unbanned.
+    AddressUnbanned {
+        /// The peer's address.
+        address: Multiaddr,
+    },
+
     /// An address was bound.
     AddressBound {
         /// The assigned bind address.
         address: Multiaddr,
     },
+
+    /// A command failed.
+    CommandFailed {
+        /// The command that failed.
+        command: Command,
+        /// The reason for the failure.
+        reason: PeerError,
+    },
+
     /// The local peer id was created.
     LocalIdCreated {
         /// The created peer id from the Ed25519 keypair.
         local_id: PeerId,
     },
+
     /// A peer was added.
     PeerAdded {
         /// The peer's id.
@@ -43,11 +65,13 @@ pub enum Event {
         /// The peer's info.
         info: PeerInfo,
     },
-    /// A peer was removed.
-    PeerRemoved {
+
+    /// A peer was banned.
+    PeerBanned {
         /// The peer's id.
         peer_id: PeerId,
     },
+
     /// A peer was connected.
     PeerConnected {
         /// The peer's id.
@@ -59,27 +83,23 @@ pub enum Event {
         /// The peer's message send channel.
         gossip_out: GossipSender,
     },
+
     /// A peer was disconnected.
     PeerDisconnected {
         /// The peer's id.
         peer_id: PeerId,
     },
-    /// A peer was banned.
-    PeerBanned {
+
+    /// A peer was removed.
+    PeerRemoved {
         /// The peer's id.
         peer_id: PeerId,
     },
-    /// An address was banned.
-    AddressBanned {
-        /// The peer's address.
-        address: Multiaddr,
-    },
-    /// A command failed.
-    CommandFailed {
-        /// The command that failed.
-        command: Command,
-        /// The reason for the failure.
-        reason: PeerError,
+
+    /// A peer was unbanned.
+    PeerUnbanned {
+        /// The peer's id.
+        peer_id: PeerId,
     },
 }
 
