@@ -3,7 +3,7 @@
 
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
-use bee_test::rand::{message::rand_message_ids, parents::rand_parents};
+use bee_test::rand::{self, message::rand_message_ids, parents::rand_parents};
 
 #[test]
 fn kind() {
@@ -114,4 +114,30 @@ fn packed_len() {
 
     assert_eq!(ms.packed_len(), 379);
     assert_eq!(ms.pack_new().len(), 379);
+}
+
+#[test]
+fn getters() {
+    let essence = MilestonePayloadEssence::new(
+        rand::milestone::rand_milestone_index(),
+        rand::number::rand_number::<u64>(),
+        rand_parents(),
+        [0; MILESTONE_MERKLE_PROOF_LENGTH],
+        0,
+        0,
+        vec![[0; 32]],
+        None,
+    )
+    .unwrap();
+    let signatures = vec![[0; 64]];
+    let milestone = MilestonePayload::new(essence.clone(), signatures.clone()).unwrap();
+
+    assert_eq!(essence, *milestone.essence());
+    assert_eq!(
+        signatures
+            .iter()
+            .map(|s| s.to_vec().into_boxed_slice())
+            .collect::<Vec<Box<[u8]>>>(),
+        *milestone.signatures()
+    );
 }

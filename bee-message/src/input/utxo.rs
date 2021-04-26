@@ -67,6 +67,6 @@ impl Packable for UtxoInput {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(OutputId::unpack_inner::<R, CHECK>(reader)?))
+        Ok(OutputId::unpack_inner::<R, CHECK>(reader)?.into())
     }
 }

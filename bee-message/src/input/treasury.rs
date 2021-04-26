@@ -75,6 +75,6 @@ impl Packable for TreasuryInput {
     }
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self(MilestoneId::unpack_inner::<R, CHECK>(reader)?))
+        Ok(Self::new(MilestoneId::unpack_inner::<R, CHECK>(reader)?))
     }
 }
