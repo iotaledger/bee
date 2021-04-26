@@ -6,8 +6,6 @@ members = [
 	"bee-node",
 	"bee-protocol",
 	"bee-storage/bee-storage-rocksdb",
-	"bee-storage/bee-storage-test",
-	"bee-test",
 ]
 
 [profile.dev]

@@ -201,7 +201,7 @@ checksum = "6c7f7096bc256f5e5cb960f60dfc4f4ef979ca65abe7fb9d5a4f77150d3783d4"
 [[package]]
 name = "bee-common"
 version = "0.4.1"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#d9bd5a0f59b1039a32faa83cdf8d679ea1b95454"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#129c5186d19ae5d4735929fec986958325ac996a"
 dependencies = [
  "autocfg",
  "chrono",
@@ -217,7 +217,7 @@ dependencies = [
 [[package]]
 name = "bee-crypto"
 version = "0.2.1-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#d9bd5a0f59b1039a32faa83cdf8d679ea1b95454"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#129c5186d19ae5d4735929fec986958325ac996a"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -232,7 +232,7 @@ version = "0.1.0-alpha"
 dependencies = [
  "async-trait",
  "bee-common",
- "bee-ledger 0.1.0",
+ "bee-ledger 0.2.0",
  "bee-message",
  "bee-runtime",
  "bee-storage",
@@ -254,8 +254,8 @@ dependencies = [
 
 [[package]]
 name = "bee-ledger"
-version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#d9bd5a0f59b1039a32faa83cdf8d679ea1b95454"
+version = "0.2.0"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#129c5186d19ae5d4735929fec986958325ac996a"
 dependencies = [
  "bee-common",
  "bee-message",
@@ -266,7 +266,7 @@ dependencies = [
 [[package]]
 name = "bee-message"
 version = "0.1.3"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#d9bd5a0f59b1039a32faa83cdf8d679ea1b95454"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#129c5186d19ae5d4735929fec986958325ac996a"
 dependencies = [
  "bech32",
  "bee-common",
@@ -347,7 +347,7 @@ dependencies = [
 [[package]]
 name = "bee-pow"
 version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#d9bd5a0f59b1039a32faa83cdf8d679ea1b95454"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#129c5186d19ae5d4735929fec986958325ac996a"
 dependencies = [
  "bee-crypto",
  "bee-ternary",
@@ -396,8 +396,8 @@ dependencies = [
  "async-trait",
  "bech32",
  "bee-common",
- "bee-ledger 0.1.0",
  "bee-ledger 0.1.0-alpha",
+ "bee-ledger 0.2.0",
  "bee-message",
  "bee-network",
  "bee-pow",
@@ -421,7 +421,7 @@ dependencies = [
 [[package]]
 name = "bee-runtime"
 version = "0.1.1-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#d9bd5a0f59b1039a32faa83cdf8d679ea1b95454"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#129c5186d19ae5d4735929fec986958325ac996a"
 dependencies = [
  "async-trait",
  "bee-storage",
@@ -433,7 +433,7 @@ dependencies = [
 [[package]]
 name = "bee-storage"
 version = "0.3.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#d9bd5a0f59b1039a32faa83cdf8d679ea1b95454"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#129c5186d19ae5d4735929fec986958325ac996a"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -452,39 +452,23 @@ dependencies = [
  "bee-ledger 0.1.0-alpha",
  "bee-message",
  "bee-storage",
- "bee-storage-test",
  "bee-tangle",
- "bee-test",
  "futures",
  "num_cpus",
  "pin-project 1.0.7",
  "rocksdb",
  "serde",
  "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "bee-storage-test"
-version = "0.1.0"
-dependencies = [
- "bee-common",
- "bee-ledger 0.1.0-alpha",
- "bee-message",
- "bee-storage",
- "bee-tangle",
- "bee-test",
- "futures",
 ]
 
 [[package]]
 name = "bee-tangle"
 version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#d9bd5a0f59b1039a32faa83cdf8d679ea1b95454"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#129c5186d19ae5d4735929fec986958325ac996a"
 dependencies = [
  "async-trait",
  "bee-common",
- "bee-ledger 0.1.0",
+ "bee-ledger 0.2.0",
  "bee-message",
  "bee-runtime",
  "bee-storage",
@@ -504,31 +488,11 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.4.2-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#d9bd5a0f59b1039a32faa83cdf8d679ea1b95454"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#129c5186d19ae5d4735929fec986958325ac996a"
 dependencies = [
  "autocfg",
  "num-traits",
  "serde",
-]
-
-[[package]]
-name = "bee-test"
-version = "0.1.0-alpha"
-dependencies = [
- "bee-crypto",
- "bee-ledger 0.1.0",
- "bee-ledger 0.1.0-alpha",
- "bee-message",
- "bee-pow",
- "bee-storage",
- "bee-tangle",
- "bee-ternary",
- "bytemuck",
- "futures",
- "num_cpus",
- "rand 0.8.3",
- "serde",
- "tokio",
 ]
 
 [[package]]
@@ -1588,9 +1552,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.93"
+version = "0.2.94"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9385f66bf6105b241aa65a61cb923ef20efc665cb9f9bb50ac2f0c4b7f378d41"
+checksum = "18794a8ad5b29321f790b55d93dfba91e125cb1a9edbd4f8e3150acc771c1a5e"
 
 [[package]]
 name = "libloading"
@@ -1630,9 +1594,9 @@ dependencies = [
 
 [[package]]
 name = "libp2p-core"
-version = "0.28.2"
+version = "0.28.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71dd51b562e14846e65bad00e5808d0644376e6588668c490d3c48e1dfeb4a9a"
+checksum = "554d3e7e9e65f939d66b75fd6a4c67f258fe250da61b91f46c545fc4a89b51d9"
 dependencies = [
  "asn1_der",
  "bs58",
