@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-use bee_network::{Event, NetworkListener, NetworkService};
+use bee_network::{Event, NetworkEventReceiver, NetworkService};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 
@@ -28,7 +28,7 @@ impl<N: Node> Worker<N> for PeerManagerWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = NetworkListener;
+    type Config = NetworkEventReceiver;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -59,7 +59,7 @@ where
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
-            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(config));
+            let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(config.into()));
 
             while let Some(event) = receiver.next().await {
                 trace!("Received event {:?}.", event);
@@ -79,7 +79,7 @@ where
                     }
                     Event::PeerConnected {
                         peer_id,
-                        address: _,
+                        info: _,
                         gossip_in: receiver,
                         gossip_out: sender,
                     } => {

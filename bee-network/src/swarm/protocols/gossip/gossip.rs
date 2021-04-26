@@ -3,7 +3,7 @@
 
 use super::GossipHandler;
 
-use crate::host::{ConnectionInfo, Origin};
+use crate::network::meta::{ConnectionInfo, Origin};
 
 use libp2p::{
     core::{connection::ConnectionId, ConnectedPoint},

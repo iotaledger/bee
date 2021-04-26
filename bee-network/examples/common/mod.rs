@@ -1,12 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod logger;
+#![allow(dead_code)]
 
-mod args;
-mod backend;
-mod config;
-
-pub use args::*;
-pub use backend::*;
-pub use config::*;
+pub mod keys_and_ids;

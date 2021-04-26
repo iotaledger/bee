@@ -1,7 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::service::{InternalEvent, InternalEventSender};
+use crate::{
+    alias,
+    service::event::{InternalEvent, InternalEventSender},
+};
 
 use futures::{
     io::{ReadHalf, WriteHalf},
@@ -25,7 +28,7 @@ pub fn gossip_channel() -> (GossipSender, GossipReceiver) {
     (sender, UnboundedReceiverStream::new(receiver))
 }
 
-pub fn spawn_gossip_in_task(
+pub fn spawn_gossip_in_processor(
     peer_id: PeerId,
     mut reader: ReadHalf<NegotiatedSubstream>,
     incoming_gossip_sender: GossipSender,
@@ -38,12 +41,14 @@ pub fn spawn_gossip_in_task(
         loop {
             if recv_valid_message(&mut reader, &mut msg_buf, &mut msg_len).await {
                 if incoming_gossip_sender.send(msg_buf[..msg_len].to_vec()).is_err() {
+                    debug!("gossip-in: receiver dropped locally.");
+
                     // The receiver of this channel was dropped, maybe due to a shutdown. There is nothing we can do to
                     // salvage this situation, hence we drop the connection.
                     break;
                 }
             } else {
-                trace!("Gossip-IO: Stream closed remotely.");
+                debug!("gossip-in: stream closed remotely.");
 
                 // NB: The network service will not shut down before it has received the `ProtocolDropped` event from
                 // all once connected peers, hence if the following send fails, then it must be
@@ -58,7 +63,11 @@ pub fn spawn_gossip_in_task(
             }
         }
 
-        trace!("Exiting incoming gossip event loop for {}", peer_id);
+        // Reasons why this task might end:
+        // (1) The remote dropped the TCP connection.
+        // (2) The local dropped the gossip_in receiver channel.
+
+        debug!("gossip-in: exiting gossip-in processor for {}.", alias!(peer_id));
     });
 }
 
@@ -78,7 +87,7 @@ where
     }
 }
 
-pub fn spawn_gossip_out_task(
+pub fn spawn_gossip_out_processor(
     peer_id: PeerId,
     mut writer: WriteHalf<NegotiatedSubstream>,
     outgoing_gossip_receiver: GossipReceiver,
@@ -96,7 +105,7 @@ pub fn spawn_gossip_out_task(
             // receives the `DisconnectPeer` command to enforce that the connection will be dropped.
 
             if msg_len == 0 {
-                trace!("Gossip-IO: Stream closing locally.");
+                debug!("gossip-out: received shutdown message.");
 
                 // NB: The network service will not shut down before it has received the `ConnectionDropped` event from
                 // all once connected peers, hence if the following send fails, then it must be
@@ -111,11 +120,16 @@ pub fn spawn_gossip_out_task(
 
             // If sending to the stream fails we end the connection.
             if !send_valid_message(&mut writer, &message).await {
+                debug!("gossip-out: stream closed remotely");
                 break;
             }
         }
 
-        trace!("Exiting outgoing gossip event loop for {}", peer_id);
+        // Reasons why this task might end:
+        // (1) The local send the shutdown message (len = 0)
+        // (2) The remote dropped the TCP connection.
+
+        debug!("gossip-out: exiting gossip-out processor for {}.", alias!(peer_id));
     });
 }
 

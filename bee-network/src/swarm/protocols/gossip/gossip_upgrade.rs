@@ -1,13 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::node::NETWORK_ID;
+use crate::init::global::network_id;
 
 use futures::{future, AsyncRead, AsyncWrite};
 use libp2p::{core::UpgradeInfo, InboundUpgrade, OutboundUpgrade};
 use log::trace;
 
-use std::{iter, sync::atomic::Ordering};
+use std::iter;
 
 /// Configuration for an upgrade to the `IotaGossip` protocol.
 #[derive(Debug, Clone, Default)]
@@ -18,11 +18,7 @@ impl UpgradeInfo for GossipUpgrade {
     type InfoIter = iter::Once<Self::Info>;
 
     fn protocol_info(&self) -> Self::InfoIter {
-        iter::once(
-            format!("/iota-gossip/{}/1.0.0", NETWORK_ID.load(Ordering::Relaxed))
-                .as_bytes()
-                .to_vec(),
-        )
+        iter::once(format!("/iota-gossip/{}/1.0.0", network_id()).as_bytes().to_vec())
     }
 }
 

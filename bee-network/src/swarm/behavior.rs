@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::protocols::gossip::{self, Gossip, GossipEvent};
+
 use crate::{
-    host::Origin,
-    service::{InternalEvent, InternalEventSender},
+    alias,
+    network::meta::Origin,
+    service::event::{InternalEvent, InternalEventSender},
 };
 
 use futures::AsyncReadExt;
@@ -17,6 +19,8 @@ use libp2p::{
 use log::*;
 use tokio::sync::mpsc;
 
+const IOTA_PROTOCOL_VERSION: &str = "iota/0.1.0";
+
 #[derive(NetworkBehaviour)]
 pub struct SwarmBehavior {
     identify: Identify,
@@ -27,12 +31,12 @@ pub struct SwarmBehavior {
 
 impl SwarmBehavior {
     pub async fn new(
-        local_public_key: PublicKey,
+        local_pk: PublicKey,
         internal_sender: InternalEventSender,
         origin_rx: mpsc::UnboundedReceiver<Origin>,
     ) -> Self {
-        let protocol_version = "iota/0.1.0".to_string();
-        let config = IdentifyConfig::new(protocol_version, local_public_key);
+        let protocol_version = IOTA_PROTOCOL_VERSION.to_string();
+        let config = IdentifyConfig::new(protocol_version, local_pk);
 
         Self {
             identify: Identify::new(config),
@@ -50,18 +54,18 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
             IdentifyEvent::Received { peer_id, info } => {
                 trace!(
                     "Received Identify request from {}. Observed address: {:?}.",
-                    peer_id,
+                    alias!(peer_id),
                     info.observed_addr,
                 );
             }
             IdentifyEvent::Sent { peer_id } => {
-                trace!("Sent Identify request to {}.", peer_id);
+                trace!("Sent Identify request to {}.", alias!(peer_id));
             }
             IdentifyEvent::Pushed { peer_id } => {
-                trace!("Pushed Identify request to {}.", peer_id);
+                trace!("Pushed Identify request to {}.", alias!(peer_id));
             }
             IdentifyEvent::Error { peer_id, error } => {
-                warn!("Identification error with {}: Cause: {:?}.", peer_id, error);
+                warn!("Identification error with {}: Cause: {:?}.", alias!(peer_id), error);
             }
         }
     }
@@ -78,15 +82,15 @@ impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
             conn_info,
         } = event;
 
-        debug!("New gossip stream with {} [conn_info: {:?}]", peer_id, conn_info);
+        debug!("New gossip stream with {}.", alias!(peer_id));
 
         let (reader, writer) = conn.split();
 
         let (incoming_gossip_sender, incoming_gossip_receiver) = gossip::gossip_channel();
         let (outgoing_gossip_sender, outgoing_gossip_receiver) = gossip::gossip_channel();
 
-        gossip::spawn_gossip_in_task(peer_id, reader, incoming_gossip_sender, self.internal_sender.clone());
-        gossip::spawn_gossip_out_task(peer_id, writer, outgoing_gossip_receiver, self.internal_sender.clone());
+        gossip::spawn_gossip_in_processor(peer_id, reader, incoming_gossip_sender, self.internal_sender.clone());
+        gossip::spawn_gossip_out_processor(peer_id, writer, outgoing_gossip_receiver, self.internal_sender.clone());
 
         // TODO: retrieve the PeerInfo from the peer list
 

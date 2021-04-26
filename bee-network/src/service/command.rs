@@ -1,10 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::peer::PeerRelation;
+use crate::types::PeerRelation;
 
 use libp2p::{Multiaddr, PeerId};
-
 use tokio::sync::mpsc;
 
 pub type CommandReceiver = mpsc::UnboundedReceiver<Command>;
@@ -23,7 +22,7 @@ pub enum Command {
         /// The peer's id.
         peer_id: PeerId,
         /// The peer's address.
-        address: Multiaddr,
+        multiaddr: Multiaddr,
         /// The peer's optional alias.
         alias: Option<String>,
         /// The relation with that peer.
@@ -70,15 +69,10 @@ pub enum Command {
         address: Multiaddr,
     },
     /// Upgrades the relation with a peer.
-    UpgradeRelation {
+    ChangeRelation {
         /// The peer's id.
         peer_id: PeerId,
+        /// The peer's new relation.
+        to: PeerRelation,
     },
-    /// Downgrades the relation with a peer.
-    DowngradeRelation {
-        /// The peer's id.
-        peer_id: PeerId,
-    },
-    /// Discovers new peers.
-    DiscoverPeers,
 }

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::GossipUpgrade;
-use crate::host::Origin;
+
+use crate::network::meta::Origin;
 
 use libp2p::{
     swarm::{
