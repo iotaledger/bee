@@ -206,7 +206,7 @@ async fn peer_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerList) 
         let peerlist = peerlist.0.read().await;
 
         for (peer_id, alias) in peerlist.iter_if(|info, state| info.relation.is_known() && state.is_disconnected()) {
-            info!("Trying to reconnect to: {}.", alias);
+            info!("Trying to reconnect to: {} ({}).", alias, alias!(peer_id));
 
             // Ignore if the command fails. We can always try another time.
             let _ = internal_commands.send(Command::DialPeer { peer_id });
@@ -351,8 +351,10 @@ async fn process_internal_event(
             let _ = peerlist.update_state(&peer_id, |state| state.set_connected(gossip_out.clone()));
 
             info!(
-                "Established ({}) protocol with '{}'.",
-                conn_info.origin, peer_info.alias
+                "Established ({}) protocol with {} ({}).",
+                conn_info.origin,
+                peer_info.alias,
+                alias!(peer_id)
             );
 
             let _ = senders.events.send(Event::PeerConnected {

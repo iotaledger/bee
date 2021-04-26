@@ -4,6 +4,7 @@
 use super::protocols::gossip::{self, Gossip, GossipEvent};
 
 use crate::{
+    alias,
     network::meta::Origin,
     service::event::{InternalEvent, InternalEventSender},
 };
@@ -53,18 +54,18 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
             IdentifyEvent::Received { peer_id, info } => {
                 trace!(
                     "Received Identify request from {}. Observed address: {:?}.",
-                    peer_id,
+                    alias!(peer_id),
                     info.observed_addr,
                 );
             }
             IdentifyEvent::Sent { peer_id } => {
-                trace!("Sent Identify request to {}.", peer_id);
+                trace!("Sent Identify request to {}.", alias!(peer_id));
             }
             IdentifyEvent::Pushed { peer_id } => {
-                trace!("Pushed Identify request to {}.", peer_id);
+                trace!("Pushed Identify request to {}.", alias!(peer_id));
             }
             IdentifyEvent::Error { peer_id, error } => {
-                warn!("Identification error with {}: Cause: {:?}.", peer_id, error);
+                warn!("Identification error with {}: Cause: {:?}.", alias!(peer_id), error);
             }
         }
     }
@@ -81,7 +82,7 @@ impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
             conn_info,
         } = event;
 
-        debug!("New gossip stream with {} [conn_info: {:?}]", peer_id, conn_info);
+        debug!("New gossip stream with {}.", alias!(peer_id));
 
         let (reader, writer) = conn.split();
 

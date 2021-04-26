@@ -242,10 +242,11 @@ async fn dial_peer(swarm: &mut Swarm<SwarmBehavior>, peer_id: PeerId, peerlist: 
         return Err(Error::DialingPeerDenied(peer_id));
     }
 
-    // `Unwrap`ing is safe, because we just verified that the peer is accepted.
+    // Unwrap:
+    // We just checked, that the peer is fine to be dialed.
     let PeerInfo { address, alias, .. } = peerlist.0.read().await.info(&peer_id).unwrap();
 
-    info!("Dialing peer: {}.", alias);
+    info!("Dialing peer: {} ({}).", alias, alias!(peer_id));
 
     // FIXME
     GOSSIP_ORIGIN.store(true, std::sync::atomic::Ordering::SeqCst);
