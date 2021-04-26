@@ -1,8 +1,6 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![cfg(feature = "standalone")]
-
 use tokio::time::{self, Duration};
 
 use std::future::Future;

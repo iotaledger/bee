@@ -27,7 +27,6 @@ pub struct NetworkHostConfig {
     pub peerlist: PeerList,
 }
 
-#[cfg(all(feature = "integrated", not(feature = "standalone")))]
 pub mod integrated {
     use super::*;
     use crate::service::service::integrated::NetworkService;
@@ -91,10 +90,8 @@ pub mod integrated {
     }
 }
 
-#[cfg(all(feature = "standalone", not(feature = "integrated")))]
 pub mod standalone {
     use super::*;
-    use crate::service::service::standalone::NetworkService;
 
     use futures::channel::oneshot;
 

@@ -5,12 +5,12 @@
 //!
 //! Terminal 1:
 //! ```bash
-//! cargo r --example chat --features standalone -- 1337 4242
+//! cargo r --example chat -- 1337 4242
 //! ```
 //!
 //! Terminal 2:
 //! ```bash
-//! cargo r --example chat --features standalone -- 4242 1337
+//! cargo r --example chat -- 4242 1337
 //! ```
 //!
 //! Both network instances will automatically connect to each other, and you can then
@@ -21,10 +21,9 @@
 
 mod common;
 
-#[cfg(feature = "standalone")]
 #[tokio::main]
 async fn main() {
-    use bee_network::{alias, init, Event, Multiaddr, NetworkConfig, PeerId, Protocol, PublicKey};
+    use bee_network::{alias, standalone::init, Event, Multiaddr, NetworkConfig, Protocol};
     use common::keys_and_ids::{gen_constant_net_id, gen_deterministic_keys, gen_deterministic_peer_id};
     use std::{
         env,
@@ -60,7 +59,7 @@ async fn main() {
     config.replace_port(Protocol::Tcp(bind_port));
     config.add_static_peer(peer_id, peer_addr, None);
 
-    let config_bind_multiaddr = config.bind_multiaddr().clone();
+    let _config_bind_multiaddr = config.bind_multiaddr().clone();
 
     let keys = gen_deterministic_keys(bind_port);
     let network_id = gen_constant_net_id();
@@ -68,15 +67,15 @@ async fn main() {
         let _ = ctrl_c().await;
     }));
 
-    let mut my_local_id = None;
-    let (tx, mut rx) = init(config, keys, network_id, shutdown).await;
+    let mut _my_local_id = None;
+    let (_tx, mut rx) = init(config, keys, network_id, shutdown).await;
 
     loop {
         if let Some(event) = rx.recv().await {
             println!("------> {:?}", event);
             match event {
                 Event::LocalIdCreated { local_id } => {
-                    my_local_id = Some(local_id);
+                    _my_local_id = Some(local_id);
                 }
                 Event::PeerConnected {
                     peer_id,
@@ -96,7 +95,7 @@ async fn main() {
                             stdin().read_line(&mut msg).unwrap();
                             let msg = msg.trim_end().to_string();
 
-                            gossip_out.send(msg.into_bytes());
+                            gossip_out.send(msg.into_bytes()).expect("send message");
                         }
                     });
 
@@ -116,7 +115,3 @@ async fn main() {
         }
     }
 }
-
-// Examples **must** contain a main function in order to always compile for any compilation flag.
-#[cfg(not(feature = "standalone"))]
-fn main() {}

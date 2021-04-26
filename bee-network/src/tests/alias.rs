@@ -1,10 +1,9 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod common;
-use common::keys_and_ids::gen_constant_peer_id;
+use super::common::keys_and_ids::gen_constant_peer_id;
 
-use bee_network::alias;
+use crate::alias;
 
 #[test]
 fn alias_default() {

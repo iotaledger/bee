@@ -3,7 +3,7 @@
 
 #![cfg(feature = "full")]
 
-use bee_network::{Multiaddr, NetworkConfig, Protocol};
+use crate::{Multiaddr, NetworkConfig, Protocol};
 
 pub fn get_network_config_with_port(port: u16) -> NetworkConfig {
     let mut config = NetworkConfig::default();

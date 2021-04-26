@@ -44,7 +44,6 @@ pub struct Receivers {
 
 type Shutdown = oneshot::Receiver<()>;
 
-#[cfg(all(feature = "integrated", not(feature = "standalone")))]
 pub mod integrated {
     use super::*;
 
@@ -96,7 +95,6 @@ pub mod integrated {
     }
 }
 
-#[cfg(all(feature = "standalone", not(feature = "integrated")))]
 pub mod standalone {
     use super::*;
 
@@ -128,11 +126,11 @@ pub mod standalone {
             let (shutdown_tx3, shutdown_rx3) = oneshot::channel::<()>();
 
             tokio::spawn(async move {
-                shutdown.await;
+                shutdown.await.expect("receiving shutdown signal");
 
-                shutdown_tx1.send(());
-                shutdown_tx2.send(());
-                shutdown_tx3.send(());
+                shutdown_tx1.send(()).expect("receiving shutdown signal");
+                shutdown_tx2.send(()).expect("receiving shutdown signal");
+                shutdown_tx3.send(()).expect("receiving shutdown signal");
             });
             tokio::spawn(command_processor(
                 shutdown_rx1,

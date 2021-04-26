@@ -1,9 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![allow(dead_code)]
-
-use libp2p_core::PeerId;
+use crate::PeerId;
 
 pub fn gen_constant_peer_id() -> PeerId {
     "12D3KooWJWEKvSFbben74C7H4YtKjhPMTDxd7gP7zxWSUEeF27st".parse().unwrap()
