@@ -266,7 +266,7 @@ pub async fn apply_milestone<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
-    consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
+    consumed_outputs: &HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
     balance_diffs: &BalanceDiffs,
     migration: &Option<Migration>,
 ) -> Result<(), Error> {
@@ -282,8 +282,8 @@ pub async fn apply_milestone<B: StorageBackend>(
         created_output_ids.push(*output_id);
     }
 
-    for (output_id, output) in consumed_outputs.iter() {
-        insert_consumed_output_batch(storage, &mut batch, output_id, output)?;
+    for (output_id, (_, consumed_output)) in consumed_outputs.iter() {
+        insert_consumed_output_batch(storage, &mut batch, output_id, consumed_output)?;
         consumed_output_ids.push(*output_id);
     }
 
@@ -320,7 +320,7 @@ pub async fn rollback_milestone<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
-    consumed_outputs: &HashMap<OutputId, ConsumedOutput>,
+    consumed_outputs: &HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
     balance_diffs: &BalanceDiffs,
     migration: &Option<Migration>,
 ) -> Result<(), Error> {
@@ -328,11 +328,12 @@ pub async fn rollback_milestone<B: StorageBackend>(
 
     insert_ledger_index_batch(storage, &mut batch, &((index - 1).into()))?;
 
-    for (output_id, output) in created_outputs.iter() {
-        delete_created_output_batch(storage, &mut batch, output_id, output)?;
+    for (output_id, created_output) in created_outputs.iter() {
+        delete_created_output_batch(storage, &mut batch, output_id, created_output)?;
     }
 
-    for (output_id, _spent) in consumed_outputs.iter() {
+    for (output_id, (created_output, _)) in consumed_outputs.iter() {
+        insert_created_output_batch(storage, &mut batch, output_id, created_output)?;
         delete_consumed_output_batch(storage, &mut batch, output_id)?;
     }
 

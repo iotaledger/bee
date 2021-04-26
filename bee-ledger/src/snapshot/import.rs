@@ -147,7 +147,7 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
                 }
                 output => return Err(Error::UnsupportedOutputKind(output.kind())),
             }
-            consumed.insert(*output_id, (*consumed_output).clone());
+            consumed.insert(*output_id, (created_output.clone(), consumed_output.clone()));
         }
 
         let migration = if let Some(Payload::Receipt(receipt)) = diff.milestone().essence().receipt() {

@@ -220,8 +220,8 @@ where
         bus.dispatch(OutputCreated(output));
     }
 
-    for (_, spent) in metadata.consumed_outputs {
-        bus.dispatch(OutputConsumed(spent));
+    for (_, (_, consumed_output)) in metadata.consumed_outputs {
+        bus.dispatch(OutputConsumed(consumed_output));
     }
 
     Ok(())

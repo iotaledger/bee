@@ -28,7 +28,7 @@ use bee_tangle::MsTangle;
 
 use crypto::hashes::blake2b::Blake2b256;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 fn verify_signature(address: &Address, unlock_blocks: &UnlockBlocks, index: usize, essence_hash: &[u8; 32]) -> bool {
     match unlock_blocks.get(index) {
@@ -45,7 +45,7 @@ async fn apply_regular_essence<B: StorageBackend>(
     unlock_blocks: &UnlockBlocks,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
-    let mut consumed_outputs = Vec::with_capacity(essence.inputs().len());
+    let mut consumed_outputs = HashMap::with_capacity(essence.inputs().len());
     let mut balance_diffs = BalanceDiffs::new();
     let mut consumed_amount: u64 = 0;
     let mut created_amount: u64 = 0;
@@ -108,7 +108,7 @@ async fn apply_regular_essence<B: StorageBackend>(
             output => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
 
-        consumed_outputs.push(output_id);
+        consumed_outputs.insert(*output_id, consumed_output);
     }
 
     for created_output in essence.outputs() {
@@ -153,10 +153,11 @@ async fn apply_regular_essence<B: StorageBackend>(
         }
     }
 
-    for output_id in consumed_outputs {
-        metadata
-            .consumed_outputs
-            .insert(*output_id, ConsumedOutput::new(*transaction_id, metadata.index));
+    for (output_id, created_output) in consumed_outputs {
+        metadata.consumed_outputs.insert(
+            output_id,
+            (created_output, ConsumedOutput::new(*transaction_id, metadata.index)),
+        );
     }
 
     for (index, output) in essence.outputs().iter().enumerate() {
