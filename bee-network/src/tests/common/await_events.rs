@@ -3,7 +3,7 @@
 
 #![cfg(feature = "full")]
 
-use bee_network::{Event, GossipReceiver, GossipSender, Multiaddr, NetworkEventReceiver, PeerId};
+use crate::{Event, GossipReceiver, GossipSender, Multiaddr, NetworkEventReceiver, PeerId};
 
 use tokio::time::{self, Duration};
 

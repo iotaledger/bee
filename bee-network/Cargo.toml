@@ -32,9 +32,6 @@ full = [
     "tokio",
     "tokio-stream",
 ]
-standalone = ["full"]
-integrated = ["full"]
-integration_tests = ["standalone"] # Required to run integration tests with `MemoryTransport` instead of regular.
 
 [dependencies]
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
@@ -56,5 +53,6 @@ bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 env_logger = "0.8"
 fern = "0.6"
-hex = "0.4.3"
+hex = "0.4"
+serial_test = "0.5"
 tokio = { version = "1.4", features = ["rt", "rt-multi-thread", "macros", "signal", "time", "io-std", "io-util"] }

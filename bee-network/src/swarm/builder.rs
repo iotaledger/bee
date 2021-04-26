@@ -36,7 +36,7 @@ pub async fn build_swarm(
     let mpx_config = mplex::MplexConfig::default();
     let ymx_config = yamux::YamuxConfig::default();
 
-    let transport = if cfg!(feature = "integration_tests") {
+    let transport = if cfg!(test) {
         use libp2p_core::transport::MemoryTransport;
 
         MemoryTransport::default()

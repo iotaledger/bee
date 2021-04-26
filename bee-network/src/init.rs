@@ -33,7 +33,7 @@ pub mod global {
     static MAX_UNKNOWN_PEERS: OnceCell<usize> = OnceCell::new();
 
     pub fn set_reconnect_interval_secs(reconnect_interval_secs: u64) {
-        if cfg!(feature = "integration_tests") {
+        if cfg!(test) {
             let _ = RECONNECT_INTERVAL_SECS.set(reconnect_interval_secs);
         } else {
             RECONNECT_INTERVAL_SECS
@@ -46,7 +46,7 @@ pub mod global {
     }
 
     pub fn set_network_id(network_id: u64) {
-        if cfg!(feature = "integration_tests") {
+        if cfg!(test) {
             let _ = NETWORK_ID.set(network_id);
         } else {
             NETWORK_ID.set(network_id).expect("oncecell set");
@@ -57,7 +57,7 @@ pub mod global {
     }
 
     pub fn set_max_unknown_peers(max_unknown_peers: usize) {
-        if cfg!(feature = "integration_tests") {
+        if cfg!(test) {
             let _ = MAX_UNKNOWN_PEERS.set(max_unknown_peers);
         } else {
             MAX_UNKNOWN_PEERS.set(max_unknown_peers).expect("oncecell set");
@@ -68,18 +68,14 @@ pub mod global {
     }
 }
 
-/// Initializes the networking service.
-#[cfg(all(feature = "standalone", not(feature = "integrated")))]
+/// Initializes a "standalone" version of the network layer.
 pub mod standalone {
     use super::*;
     use crate::{network::host::standalone::NetworkHost, service::service::standalone::NetworkService};
 
-    use bee_runtime::event::Bus;
-
     use futures::channel::oneshot;
-    use tokio::sync::Mutex;
 
-    use std::{future::Future, pin::Pin};
+    use std::future::Future;
 
     /// Initializes the network.
     pub async fn init(
@@ -97,8 +93,8 @@ pub mod standalone {
         tokio::spawn(async move {
             shutdown.await;
 
-            shutdown_signal_tx1.send(());
-            shutdown_signal_tx2.send(());
+            shutdown_signal_tx1.send(()).expect("sending shutdown signal");
+            shutdown_signal_tx2.send(()).expect("sending shutdown signal");
         });
 
         NetworkService::new(shutdown_signal_rx1).start(service_config).await;
@@ -108,7 +104,7 @@ pub mod standalone {
     }
 }
 
-#[cfg(all(feature = "integrated", not(feature = "standalone")))]
+/// Initializes an "integrated" version of the network layer, which is used in the Bee node.
 pub mod integrated {
     use super::*;
     use crate::{network::host::integrated::NetworkHost, service::service::integrated::NetworkService};

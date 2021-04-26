@@ -1,16 +1,12 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![cfg(feature = "standalone")]
+use super::common::{await_events::*, keys_and_ids::*, network_config::*, shutdown::*};
 
-mod common;
-use common::{await_events::*, keys_and_ids::*, network_config::*, shutdown::*};
-
-use bee_network::{init, PeerId};
-
-use std::str::FromStr;
+use crate::standalone::init;
 
 #[tokio::test]
+#[serial_test::serial]
 async fn initialize() {
     let config = get_in_memory_network_config(1337);
     let config_bind_multiaddr = config.bind_multiaddr().clone();
@@ -28,7 +24,9 @@ async fn initialize() {
 
     assert_eq!(
         local_id,
-        PeerId::from_str("12D3KooWNXQuYwdb9yjefEHf1cLKPihaUsLZ2biApnJcFrSEY5pc").expect("from_str")
+        "12D3KooWNXQuYwdb9yjefEHf1cLKPihaUsLZ2biApnJcFrSEY5pc"
+            .parse()
+            .expect("parse")
     );
     assert_eq!(bind_multiaddr, config_bind_multiaddr);
 }

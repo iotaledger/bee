@@ -441,18 +441,6 @@ mod tests {
         pl.accepts_incoming_peer(&peer_id, &peer_info).unwrap();
     }
 
-    #[test]
-    #[ignore]
-    fn deny_incoming_banned_peer() {
-        todo!()
-    }
-
-    #[test]
-    #[ignore]
-    fn deny_incoming_banned_addr() {
-        todo!()
-    }
-
     // =======================================================
     // utils
     // =======================================================
