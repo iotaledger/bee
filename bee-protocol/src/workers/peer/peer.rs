@@ -173,10 +173,7 @@ impl PeerWorker {
                         packet.pruned_index,
                         packet.solid_milestone_index
                     );
-                    // TODO drop if autopeered.
                 }
-
-                // Also drop connection if autopeered and we can't help it sync
 
                 self.peer.metrics().heartbeats_received_inc();
                 self.metrics.heartbeats_received_inc();
