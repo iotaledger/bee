@@ -201,14 +201,9 @@ impl StorageBackend for Storage {
     }
 
     async fn size(&self) -> Result<Option<usize>, Self::Error> {
-        let mut size = 0;
-        let files = self.inner.live_files()?;
-
-        for file in files {
-            size += file.size
-        }
-
-        Ok(Some(size))
+        Ok(Some(
+            self.inner.live_files()?.iter().fold(0 | acc, file | acc + file.size),
+        ))
     }
 
     async fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error> {

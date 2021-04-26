@@ -67,6 +67,7 @@ macro_rules! impl_stream {
             }
         }
 
+        /// A stream to iterate over all key-value pairs of a column family.
         impl<'a> Stream for StorageStream<'a, $key, $value> {
             type Item = ($key, $value);
 
