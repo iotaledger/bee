@@ -1,8 +1,9 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{BalanceDiffs, ConflictReason, ConsumedOutput, CreatedOutput};
+use crate::types::{BalanceDiffs, ConsumedOutput, CreatedOutput};
 
+use bee_ledger_types::types::ConflictReason;
 use bee_message::{milestone::MilestoneIndex, output::OutputId, MessageId};
 
 use std::collections::HashMap;
@@ -21,7 +22,7 @@ pub struct WhiteFlagMetadata {
     // The messages which mutate the ledger in the order in which they were applied.
     pub(crate) included_messages: Vec<MessageId>,
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
-    pub(crate) consumed_outputs: HashMap<OutputId, ConsumedOutput>,
+    pub(crate) consumed_outputs: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
     pub(crate) balance_diffs: BalanceDiffs,
     pub(crate) merkle_proof: Vec<u8>,
 }

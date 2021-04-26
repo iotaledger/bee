@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::MessageId;
@@ -11,8 +11,6 @@ use std::marker::PhantomData;
 const LEAF_HASH_PREFIX: u8 = 0x00;
 /// Node domain separation prefix.
 const NODE_HASH_PREFIX: u8 = 0x01;
-
-// TODO hasher re-creation or finalize_reset + hasher field ?
 
 /// Computes the largest power of two inferior to `n`.
 #[inline]

@@ -1,11 +1,11 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{ConflictReason, ConsumedOutput, CreatedOutput};
+use crate::types::{ConsumedOutput, CreatedOutput};
 
+use bee_ledger_types::types::ConflictReason;
 use bee_message::{milestone::MilestoneIndex, MessageId};
 
-// TODO why do we need to full vectors here ?
 #[derive(Clone)]
 pub struct MilestoneConfirmed {
     pub id: MessageId,
@@ -17,12 +17,21 @@ pub struct MilestoneConfirmed {
     pub included_messages: Vec<MessageId>,
     pub consumed_outputs: usize,
     pub created_outputs: usize,
+    pub receipt: bool,
 }
 
-pub struct OutputConsumed(pub ConsumedOutput);
+pub struct OutputConsumed {
+    pub output: ConsumedOutput,
+}
 
-pub struct OutputCreated(pub CreatedOutput);
+pub struct OutputCreated {
+    pub output: CreatedOutput,
+}
 
-pub struct SnapshottedIndex(pub MilestoneIndex);
+pub struct SnapshottedIndex {
+    pub index: MilestoneIndex,
+}
 
-pub struct PrunedIndex(pub MilestoneIndex);
+pub struct PrunedIndex {
+    pub index: MilestoneIndex,
+}

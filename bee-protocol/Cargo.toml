@@ -18,7 +18,7 @@ bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev", f
 bee-network = { path = "../bee-network" }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
-bee-tangle = { path = "../bee-tangle", optional = true }
+bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 
 async-channel = { version = "1.5", optional = true }

@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod config;
@@ -28,8 +28,8 @@ pub(crate) use heartbeater::HeartbeaterWorker;
 pub(crate) use index_updater::{IndexUpdaterWorker, IndexUpdaterWorkerEvent};
 pub(crate) use message::{
     HasherWorker, HasherWorkerEvent, IndexationPayloadWorker, IndexationPayloadWorkerEvent, MilestonePayloadWorker,
-    PayloadWorker, PayloadWorkerEvent, ProcessorWorker, TransactionPayloadWorker, UnconfirmedMessageInserterWorker,
-    UnconfirmedMessageInserterWorkerEvent,
+    PayloadWorker, PayloadWorkerEvent, ProcessorWorker, TransactionPayloadWorker, UnreferencedMessageInserterWorker,
+    UnreferencedMessageInserterWorkerEvent,
 };
 pub use message::{MessageSubmitterError, MessageSubmitterWorker, MessageSubmitterWorkerEvent};
 pub use metrics::MetricsWorker;
@@ -84,5 +84,5 @@ where
         .with_worker_cfg::<StatusWorker>(config.workers.status_interval)
         .with_worker::<HeartbeaterWorker>()
         .with_worker::<MessageSubmitterWorker>()
-        .with_worker::<UnconfirmedMessageInserterWorker>()
+        .with_worker::<UnreferencedMessageInserterWorker>()
 }

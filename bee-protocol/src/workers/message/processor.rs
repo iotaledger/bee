@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -12,7 +12,7 @@ use crate::{
         storage::StorageBackend,
         BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker, MessageSubmitterError, MetricsWorker,
         PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,
-        RequestedMessages, UnconfirmedMessageInserterWorker, UnconfirmedMessageInserterWorkerEvent,
+        RequestedMessages, UnreferencedMessageInserterWorker, UnreferencedMessageInserterWorkerEvent,
     },
 };
 
@@ -58,7 +58,7 @@ where
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<PayloadWorker>(),
-            TypeId::of::<UnconfirmedMessageInserterWorker>(),
+            TypeId::of::<UnreferencedMessageInserterWorker>(),
         ]
         .leak()
     }
@@ -70,7 +70,7 @@ where
         let broadcaster = node.worker::<BroadcasterWorker>().unwrap().tx.clone();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();
         let payload_worker = node.worker::<PayloadWorker>().unwrap().tx.clone();
-        let unconfirmed_inserted_worker = node.worker::<UnconfirmedMessageInserterWorker>().unwrap().tx.clone();
+        let unreferenced_inserted_worker = node.worker::<UnreferencedMessageInserterWorker>().unwrap().tx.clone();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
@@ -93,7 +93,7 @@ where
                 let broadcaster = broadcaster.clone();
                 let message_requester = message_requester.clone();
                 let payload_worker = payload_worker.clone();
-                let unconfirmed_inserted_worker = unconfirmed_inserted_worker.clone();
+                let unreferenced_inserted_worker = unreferenced_inserted_worker.clone();
                 let tangle = tangle.clone();
                 let requested_messages = requested_messages.clone();
                 let metrics = metrics.clone();
@@ -210,11 +210,13 @@ where
                                 }) {
                                     warn!("Broadcasting message failed: {}.", e);
                                 }
-                                if let Err(e) = unconfirmed_inserted_worker.send(UnconfirmedMessageInserterWorkerEvent(
-                                    message_id,
-                                    tangle.get_latest_milestone_index(),
-                                )) {
-                                    warn!("Sending message to unconfirmed inserter failed: {}.", e);
+                                if let Err(e) =
+                                    unreferenced_inserted_worker.send(UnreferencedMessageInserterWorkerEvent(
+                                        message_id,
+                                        tangle.get_latest_milestone_index(),
+                                    ))
+                                {
+                                    warn!("Sending message to unreferenced inserter failed: {}.", e);
                                 }
                             }
                         };

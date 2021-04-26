@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -6,12 +6,10 @@ use crate::{
     types::{Balance, Error as TypesError},
 };
 
-use bee_message::{address::Address, Error as MessageError, MessageId};
+use bee_message::{address::Address, MessageId};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("")]
-    Message(#[from] MessageError),
     #[error("")]
     Snapshot(#[from] SnapshotError),
     #[error("")]
@@ -48,10 +46,12 @@ pub enum Error {
     ConsumedAmountOverflow(u64, u64),
     #[error("Created amount overflow: tried to add {0} and {1}.")]
     CreatedAmountOverflow(u64, u64),
-    #[error("Ledger state overflow: tried to add {0} and {1}.")]
-    LedgerStateOverflow(u64, u64),
+    #[error("Ledger state overflow: {0}")]
+    LedgerStateOverflow(u128),
     #[error("Non zero balance diff sum: {0}.")]
     NonZeroBalanceDiffSum(i64),
+    #[error("Decreasing receipt migrated at index")]
+    DecreasingReceiptMigratedAtIndex,
     #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
 }

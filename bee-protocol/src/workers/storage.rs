@@ -1,10 +1,10 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_ledger::{consensus::storage::StorageBackend as LedgerStorageBackend, snapshot::info::SnapshotInfo};
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
-    payload::indexation::HashedIndex,
+    payload::indexation::PaddedIndex,
     Message, MessageId,
 };
 use bee_storage::{
@@ -12,18 +12,18 @@ use bee_storage::{
     backend,
 };
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
 pub trait StorageBackend:
     backend::StorageBackend
-    + Batch<(MilestoneIndex, UnconfirmedMessage), ()>
+    + Batch<(MilestoneIndex, UnreferencedMessage), ()>
     + Insert<MessageId, Message>
     + Insert<MessageId, MessageMetadata>
     + Insert<(MessageId, MessageId), ()>
     + Insert<MilestoneIndex, Milestone>
-    + Insert<(HashedIndex, MessageId), ()>
-    + Insert<(MilestoneIndex, UnconfirmedMessage), ()>
+    + Insert<(PaddedIndex, MessageId), ()>
+    + Insert<(MilestoneIndex, UnreferencedMessage), ()>
     + Fetch<MessageId, Message>
     + Fetch<MessageId, MessageMetadata>
     + Fetch<MessageId, Vec<MessageId>>
@@ -36,13 +36,13 @@ pub trait StorageBackend:
 
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
-        + Batch<(MilestoneIndex, UnconfirmedMessage), ()>
+        + Batch<(MilestoneIndex, UnreferencedMessage), ()>
         + Insert<MessageId, Message>
         + Insert<MessageId, MessageMetadata>
         + Insert<(MessageId, MessageId), ()>
         + Insert<MilestoneIndex, Milestone>
-        + Insert<(HashedIndex, MessageId), ()>
-        + Insert<(MilestoneIndex, UnconfirmedMessage), ()>
+        + Insert<(PaddedIndex, MessageId), ()>
+        + Insert<(MilestoneIndex, UnreferencedMessage), ()>
         + Fetch<MessageId, Message>
         + Fetch<MessageId, MessageMetadata>
         + Fetch<MessageId, Vec<MessageId>>

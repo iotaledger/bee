@@ -11,12 +11,14 @@ keywords = ["iota", "tangle", "bee", "framework", "ledger"]
 homepage = "https://www.iota.org"
 
 [dependencies]
+# // TODO remove
+bee_ledger_types = { git = "https://github.com/iotaledger/bee.git", branch = "dev", package = "bee-ledger" }
+
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
-bee-tangle = { path = "../bee-tangle", optional = true }
+bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-ternary = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 
 async-trait = { version = "0.1", optional = true }
@@ -37,7 +39,6 @@ rand = "0.8"
 
 [features]
 consensus = [
-  "bee-crypto",
   "bee-runtime",
   "bee-storage",
   "bee-tangle",

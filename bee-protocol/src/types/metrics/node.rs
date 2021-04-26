@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -29,6 +29,7 @@ pub struct NodeMetrics {
 
     created_outputs: AtomicU64,
     consumed_outputs: AtomicU64,
+    receipt: AtomicU64,
 
     transaction_payload: AtomicU64,
     milestone_payload: AtomicU64,
@@ -195,6 +196,14 @@ impl NodeMetrics {
 
     pub fn consumed_outputs_inc(&self, value: u64) -> u64 {
         self.consumed_outputs.fetch_add(value, Ordering::SeqCst)
+    }
+
+    pub fn receipt(&self) -> u64 {
+        self.receipt.load(Ordering::Relaxed)
+    }
+
+    pub fn receipt_inc(&self, value: u64) -> u64 {
+        self.receipt.fetch_add(value, Ordering::SeqCst)
     }
 
     pub fn transaction_payload(&self) -> u64 {

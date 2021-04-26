@@ -1,12 +1,9 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     consensus::{
-        dust::DUST_THRESHOLD,
-        storage::{
-            self, apply_output_diffs, create_output, rollback_output_diffs, store_balance_diffs, StorageBackend,
-        },
+        storage::{self, apply_balance_diffs, apply_milestone, create_output, rollback_milestone, StorageBackend},
         worker::migration_from_milestone,
     },
     snapshot::{
@@ -24,7 +21,7 @@ use crate::{
 use bee_common::packable::{Packable, Read};
 use bee_message::{
     milestone::MilestoneIndex,
-    output::{self, Output, OutputId},
+    output::{self, Output, OutputId, DUST_THRESHOLD},
     payload::Payload,
     MessageId,
 };
@@ -32,7 +29,7 @@ use bee_storage::access::{Insert, Truncate};
 use bee_tangle::solid_entry_point::SolidEntryPoint;
 
 use chrono::{offset::TimeZone, Utc};
-use log::info;
+use log::{info, warn};
 
 use std::{
     collections::HashMap,
@@ -97,7 +94,7 @@ async fn import_outputs<R: Read, B: StorageBackend>(
         }
     }
 
-    store_balance_diffs(&*storage, &balance_diffs)
+    apply_balance_diffs(&*storage, &balance_diffs)
         .await
         .map_err(|e| Error::Consumer(Box::new(e)))?;
 
@@ -150,7 +147,7 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
                 }
                 output => return Err(Error::UnsupportedOutputKind(output.kind())),
             }
-            consumed.insert(*output_id, (*consumed_output).clone());
+            consumed.insert(*output_id, (created_output.clone(), consumed_output.clone()));
         }
 
         let migration = if let Some(Payload::Receipt(receipt)) = diff.milestone().essence().receipt() {
@@ -174,13 +171,13 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
         match index {
             index if index == MilestoneIndex(ledger_index + 1) => {
                 // TODO unwrap until we merge both crates
-                apply_output_diffs(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)
+                apply_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)
                     .await
                     .unwrap();
             }
             index if index == MilestoneIndex(ledger_index) => {
                 // TODO unwrap until we merge both crates
-                rollback_output_diffs(&*storage, index, diff.created(), &consumed)
+                rollback_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)
                     .await
                     .unwrap();
             }
@@ -221,7 +218,7 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
         ));
     }
 
-    storage::store_unspent_treasury_output(
+    storage::insert_treasury_output(
         &*storage,
         &TreasuryOutput::new(
             output::TreasuryOutput::new(full_header.treasury_output_amount())?,
@@ -345,18 +342,18 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
         download_snapshot_file(config.full_path(), config.download_urls()).await?;
     }
 
-    if let Some(path) = config.delta_path() {
-        if !delta_exists {
-            download_snapshot_file(path, config.download_urls()).await?;
-        }
-    }
-
+    // We are sure that the full snapshot file exists from now on.
     import_full_snapshot(storage, config.full_path(), network_id).await?;
 
-    if let Some(path) = config.delta_path() {
-        // Load delta file only if both full and delta files already existed or if they have just been downloaded.
-        if (full_exists && delta_exists) || (!full_exists && !delta_exists) {
-            import_delta_snapshot(storage, path, network_id).await?;
+    if let Some(delta_path) = config.delta_path() {
+        if !delta_exists {
+            if let Err(_) = download_snapshot_file(delta_path, config.download_urls()).await {
+                warn!("Could not download the delta snapshot file and it will not be imported.");
+            }
+        }
+
+        if Path::exists(delta_path) {
+            import_delta_snapshot(storage, delta_path, network_id).await?;
         }
     }
 

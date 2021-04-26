@@ -1,7 +1,11 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, storage::*, system::System};
+use crate::{
+    column_families::*,
+    storage::{Storage, StorageBackend},
+    system::System,
+};
 
 use bee_common::packable::Packable;
 use bee_ledger::{
@@ -12,12 +16,12 @@ use bee_message::{
     address::{Address, Ed25519Address},
     milestone::{Milestone, MilestoneIndex},
     output::OutputId,
-    payload::indexation::{HashedIndex, HASHED_INDEX_LENGTH},
+    payload::indexation::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH},
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
 use bee_storage::access::AsStream;
 use bee_tangle::{
-    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unconfirmed_message::UnconfirmedMessage,
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
 use futures::{
@@ -56,10 +60,8 @@ macro_rules! impl_stream {
             type Stream = StorageStream<'a, $key, $value>;
 
             async fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
-                let cf = self.inner.cf_handle($cf).ok_or(Error::UnknownCf($cf))?;
-
                 Ok(StorageStream::new(
-                    self.inner.iterator_cf(cf, IteratorMode::Start),
+                    self.inner.iterator_cf(self.cf_handle($cf)?, IteratorMode::Start),
                     self.config.iteration_budget,
                 ))
             }
@@ -147,17 +149,16 @@ impl<'a> StorageStream<'a, (MessageId, MessageId), ()> {
     }
 }
 
-impl<'a> StorageStream<'a, (HashedIndex, MessageId), ()> {
-    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((HashedIndex, MessageId), ()) {
-        let (index, mut message_id) = key.split_at(HASHED_INDEX_LENGTH);
-        // TODO review when we have fixed size index
+impl<'a> StorageStream<'a, (PaddedIndex, MessageId), ()> {
+    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((PaddedIndex, MessageId), ()) {
+        let (index, mut message_id) = key.split_at(INDEXATION_PADDED_INDEX_LENGTH);
         // Unpacking from storage is fine.
-        let index: [u8; HASHED_INDEX_LENGTH] = index.try_into().unwrap();
+        let index: [u8; INDEXATION_PADDED_INDEX_LENGTH] = index.try_into().unwrap();
 
         (
             // Unpacking from storage is fine.
             (
-                HashedIndex::new(index),
+                PaddedIndex::new(index),
                 MessageId::unpack_unchecked(&mut message_id).unwrap(),
             ),
             (),
@@ -277,16 +278,16 @@ impl<'a> StorageStream<'a, Address, Balance> {
     }
 }
 
-impl<'a> StorageStream<'a, (MilestoneIndex, UnconfirmedMessage), ()> {
-    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MilestoneIndex, UnconfirmedMessage), ()) {
-        let (mut index, mut unconfirmed_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
+impl<'a> StorageStream<'a, (MilestoneIndex, UnreferencedMessage), ()> {
+    fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MilestoneIndex, UnreferencedMessage), ()) {
+        let (mut index, mut unreferenced_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
 
         (
             (
                 // Unpacking from storage is fine.
                 MilestoneIndex::unpack_unchecked(&mut index).unwrap(),
                 // Unpacking from storage is fine.
-                UnconfirmedMessage::unpack_unchecked(&mut unconfirmed_message).unwrap(),
+                UnreferencedMessage::unpack_unchecked(&mut unreferenced_message).unwrap(),
             ),
             (),
         )
@@ -329,7 +330,7 @@ impl_stream!(u8, System, CF_SYSTEM);
 impl_stream!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
 impl_stream!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
 impl_stream!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
-impl_stream!((HashedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
+impl_stream!((PaddedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
 impl_stream!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
 impl_stream!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
 impl_stream!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
@@ -341,9 +342,9 @@ impl_stream!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_
 impl_stream!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
 impl_stream!(Address, Balance, CF_ADDRESS_TO_BALANCE);
 impl_stream!(
-    (MilestoneIndex, UnconfirmedMessage),
+    (MilestoneIndex, UnreferencedMessage),
     (),
-    CF_MILESTONE_INDEX_TO_UNCONFIRMED_MESSAGE
+    CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
 );
 impl_stream!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
 impl_stream!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);

@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -10,7 +10,7 @@ use crate::{
 };
 
 use bee_message::{
-    payload::indexation::{HashedIndex, IndexationPayload},
+    payload::indexation::{IndexationPayload, PaddedIndex},
     MessageId,
 };
 use bee_runtime::resource::ResourceHandle;
@@ -50,9 +50,9 @@ pub(crate) async fn messages_find<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     let index_bytes = hex::decode(index.clone())
         .map_err(|_| reject::custom(CustomRejection::BadRequest("Invalid index".to_owned())))?;
-    let hashed_index = IndexationPayload::new(&index_bytes, &[]).unwrap().hash();
+    let hashed_index = IndexationPayload::new(&index_bytes, &[]).unwrap().padded_index();
 
-    let mut fetched = match Fetch::<HashedIndex, Vec<MessageId>>::fetch(&*storage, &hashed_index)
+    let mut fetched = match Fetch::<PaddedIndex, Vec<MessageId>>::fetch(&*storage, &hashed_index)
         .await
         .map_err(|_| {
             reject::custom(CustomRejection::ServiceUnavailable(

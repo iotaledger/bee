@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::workers::storage::StorageBackend;
@@ -43,7 +43,7 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
-            info!("xMRSI updater started.");
+            info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
@@ -64,7 +64,7 @@ where
 
             debug!("Drained {} milestones.", count);
 
-            info!("xMRSI updater stopped.");
+            info!("Stopped.");
         });
 
         Ok(Self { tx })

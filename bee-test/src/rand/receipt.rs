@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::rand::{
@@ -6,13 +6,14 @@ use crate::rand::{
     bool::rand_bool,
     integer::rand_integer_range,
     milestone::{rand_milestone_id, rand_milestone_index},
+    output::rand_treasury_output,
     string::rand_string_charset,
 };
 
 use bee_ledger::types::Receipt;
 use bee_message::{
     input::{Input, TreasuryInput},
-    output::{Output, SignatureLockedSingleOutput, TreasuryOutput, TREASURY_OUTPUT_AMOUNT},
+    output::SignatureLockedSingleOutput,
     payload::{
         receipt::{MigratedFundsEntry, ReceiptPayload, TailTransactionHash, VALID_MIGRATED_FUNDS_ENTRY_AMOUNTS},
         treasury::TreasuryTransactionPayload,
@@ -31,15 +32,8 @@ pub fn rand_treasury_input() -> Input {
 }
 
 // TODO move
-pub fn rand_treasury_output() -> Output {
-    TreasuryOutput::new(rand_integer_range(TREASURY_OUTPUT_AMOUNT))
-        .unwrap()
-        .into()
-}
-
-// TODO move
 pub fn rand_treasury_transaction() -> Payload {
-    TreasuryTransactionPayload::new(rand_treasury_input(), rand_treasury_output())
+    TreasuryTransactionPayload::new(rand_treasury_input(), rand_treasury_output().into())
         .unwrap()
         .into()
 }

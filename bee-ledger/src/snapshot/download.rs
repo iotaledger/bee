@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::snapshot::error::Error;
@@ -25,7 +25,7 @@ pub async fn download_snapshot_file(file_path: &Path, download_urls: &[String]) 
         let url = url.to_owned() + &file_name.to_string_lossy();
 
         info!("Downloading snapshot file {}...", url);
-        match reqwest::get(&url).await {
+        match reqwest::get(&url).await.and_then(|res| res.error_for_status()) {
             Ok(res) => match File::create(file_path) {
                 // TODO unwrap
                 Ok(mut file) => match copy(&mut res.bytes().await.unwrap().as_ref(), &mut file) {
@@ -34,7 +34,10 @@ pub async fn download_snapshot_file(file_path: &Path, download_urls: &[String]) 
                 },
                 Err(e) => warn!("Creating snapshot file failed: {:?}.", e),
             },
-            Err(e) => warn!("Downloading snapshot file failed: {:?}.", e),
+            Err(e) => match e.status() {
+                Some(status) => warn!("Downloading snapshot file failed with status code {}.", status),
+                None => warn!("Downloading snapshot file failed: {:?}.", e),
+            },
         }
     }
 

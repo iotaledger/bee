@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -29,12 +29,12 @@ async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u6
             output::Output::SignatureLockedSingle(output) => {
                 supply = supply
                     .checked_add(output.amount())
-                    .ok_or(Error::LedgerStateOverflow(supply, output.amount()))?;
+                    .ok_or(Error::LedgerStateOverflow(supply as u128 + output.amount() as u128))?;
             }
             output::Output::SignatureLockedDustAllowance(output) => {
                 supply = supply
                     .checked_add(output.amount())
-                    .ok_or(Error::LedgerStateOverflow(supply, output.amount()))?;
+                    .ok_or(Error::LedgerStateOverflow(supply as u128 + output.amount() as u128))?;
             }
             output => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
@@ -42,7 +42,7 @@ async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u6
 
     if supply
         .checked_add(treasury)
-        .ok_or(Error::LedgerStateOverflow(supply, treasury))?
+        .ok_or(Error::LedgerStateOverflow(supply as u128 + treasury as u128))?
         != IOTA_SUPPLY
     {
         return Err(Error::InvalidLedgerUnspentState(supply));
@@ -63,12 +63,12 @@ async fn check_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u6
         }
         supply = supply
             .checked_add(balance.amount())
-            .ok_or(Error::LedgerStateOverflow(supply, balance.amount()))?;
+            .ok_or(Error::LedgerStateOverflow(supply as u128 + balance.amount() as u128))?;
     }
 
     if supply
         .checked_add(treasury)
-        .ok_or(Error::LedgerStateOverflow(supply, treasury))?
+        .ok_or(Error::LedgerStateOverflow(supply as u128 + treasury as u128))?
         != IOTA_SUPPLY
     {
         return Err(Error::InvalidLedgerBalanceState(supply));
@@ -77,11 +77,9 @@ async fn check_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u6
     Ok(())
 }
 
-pub async fn check_ledger_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
+pub(crate) async fn check_ledger_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
     let treasury = storage::fetch_unspent_treasury_output(storage).await?.inner().amount();
 
     check_ledger_unspent_state(storage, treasury).await?;
-    check_ledger_balance_state(storage, treasury).await?;
-
-    Ok(())
+    check_ledger_balance_state(storage, treasury).await
 }
