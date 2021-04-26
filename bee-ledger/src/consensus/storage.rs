@@ -107,7 +107,7 @@ impl<T> StorageBackend for T where
 {
 }
 
-pub fn insert_output_id_for_address_batch<B: StorageBackend>(
+pub(crate) fn insert_output_id_for_address_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     address: &Address,
@@ -124,7 +124,7 @@ pub fn insert_output_id_for_address_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub fn delete_output_id_for_address_batch<B: StorageBackend>(
+pub(crate) fn delete_output_id_for_address_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     address: &Address,
@@ -141,7 +141,7 @@ pub fn delete_output_id_for_address_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub fn insert_created_output_batch<B: StorageBackend>(
+pub(crate) fn insert_created_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
@@ -165,7 +165,7 @@ pub fn insert_created_output_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub fn delete_created_output_batch<B: StorageBackend>(
+pub(crate) fn delete_created_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
@@ -189,7 +189,7 @@ pub fn delete_created_output_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub async fn create_output<B: StorageBackend>(
+pub(crate) async fn create_output<B: StorageBackend>(
     storage: &B,
     output_id: &OutputId,
     output: &CreatedOutput,
@@ -204,7 +204,7 @@ pub async fn create_output<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub fn insert_consumed_output_batch<B: StorageBackend>(
+pub(crate) fn insert_consumed_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
@@ -218,7 +218,7 @@ pub fn insert_consumed_output_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub fn delete_consumed_output_batch<B: StorageBackend>(
+pub(crate) fn delete_consumed_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     output_id: &OutputId,
@@ -231,7 +231,10 @@ pub fn delete_consumed_output_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub async fn apply_balance_diffs<B: StorageBackend>(storage: &B, balance_diffs: &BalanceDiffs) -> Result<(), Error> {
+pub(crate) async fn apply_balance_diffs<B: StorageBackend>(
+    storage: &B,
+    balance_diffs: &BalanceDiffs,
+) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
     apply_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
@@ -242,7 +245,7 @@ pub async fn apply_balance_diffs<B: StorageBackend>(storage: &B, balance_diffs: 
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub async fn apply_balance_diffs_batch<B: StorageBackend>(
+pub(crate) async fn apply_balance_diffs_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     balance_diffs: &BalanceDiffs,
@@ -262,7 +265,7 @@ pub async fn apply_balance_diffs_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub async fn apply_milestone<B: StorageBackend>(
+pub(crate) async fn apply_milestone<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
@@ -316,7 +319,7 @@ pub async fn apply_milestone<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub async fn rollback_milestone<B: StorageBackend>(
+pub(crate) async fn rollback_milestone<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
@@ -446,7 +449,7 @@ pub(crate) async fn is_output_unspent<B: StorageBackend>(storage: &B, output_id:
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub async fn insert_treasury_output<B: StorageBackend>(
+pub(crate) async fn insert_treasury_output<B: StorageBackend>(
     storage: &B,
     treasury_output: &TreasuryOutput,
 ) -> Result<(), Error> {
@@ -455,7 +458,7 @@ pub async fn insert_treasury_output<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub fn insert_treasury_output_batch<B: StorageBackend>(
+pub(crate) fn insert_treasury_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     treasury_output: &TreasuryOutput,
@@ -464,7 +467,7 @@ pub fn insert_treasury_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub fn delete_treasury_output_batch<B: StorageBackend>(
+pub(crate) fn delete_treasury_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     treasury_output: &TreasuryOutput,
@@ -473,7 +476,7 @@ pub fn delete_treasury_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub fn spend_treasury_output_batch<B: StorageBackend>(
+pub(crate) fn spend_treasury_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     treasury_output: &TreasuryOutput,
@@ -484,7 +487,7 @@ pub fn spend_treasury_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub fn unspend_treasury_output_batch<B: StorageBackend>(
+pub(crate) fn unspend_treasury_output_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     treasury_output: &TreasuryOutput,
@@ -502,12 +505,15 @@ pub async fn fetch_unspent_treasury_output<B: StorageBackend>(storage: &B) -> Re
     {
         Some(outputs) => {
             match outputs.len() {
+                // There has to be an unspent treasury output at all time.
                 0 => panic!("No unspent treasury output found"),
                 // Indexing is fine since length is known
                 1 => Ok(outputs[0].clone()),
+                // There should only be one and only one unspent treasury output at all time.
                 _ => panic!("More than one unspent treasury output found"),
             }
         }
+        // There has to be an unspent treasury output at all time.
         None => panic!("No unspent treasury output found"),
     }
 }
