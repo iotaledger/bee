@@ -8,10 +8,10 @@ use bee_network::Multiaddr;
 use futures::{
     channel::oneshot,
     future::{self, FutureExt},
-    select,
     stream::StreamExt,
 };
 use log::trace;
+use tokio::select;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 type EventRecv = UnboundedReceiverStream<Vec<u8>>;
@@ -153,7 +153,7 @@ impl EventHandler {
     ///
     /// This method returns `None` if a shutdown signal is received, otherwise it returns the
     /// requested bytes.
-    async fn fetch_bytes_or_shutdown(&mut self, mut shutdown: &mut ShutdownRecv, len: usize) -> Option<&'_ [u8]> {
+    async fn fetch_bytes_or_shutdown(&mut self, shutdown: &mut ShutdownRecv, len: usize) -> Option<&'_ [u8]> {
         select! {
             // Always select `shutdown` first, otherwise you can end with an infinite loop.
             _ = shutdown => None,

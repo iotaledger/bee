@@ -341,10 +341,10 @@ async fn process_internal_event(
                 });
             }
 
-            // TODO: `peerlist` might be dropped
-            debug_assert!(peerlist.contains(&peer_id));
+            assert!(peerlist.contains(&peer_id));
 
-            // We can now be sure to always get a `PeerInfo`.
+            // Unwrap:
+            // We made sure, that the peer exists.
             let peer_info = peerlist.info(&peer_id).unwrap();
 
             // We store a clone of the gossip send channel in order to send a shutdown signal.
