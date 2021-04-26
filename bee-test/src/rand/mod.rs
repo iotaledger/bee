@@ -31,6 +31,8 @@ pub mod parents;
 pub mod payload;
 /// Module providing random receipt generation utilities.
 pub mod receipt;
+/// Module providing random snapshot generation utilities.
+pub mod snapshot;
 /// Module providing random solid entry point generation utilities.
 pub mod solid_entry_point;
 /// Module providing random string generation utilities.
