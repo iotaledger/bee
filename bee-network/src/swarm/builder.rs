@@ -15,9 +15,6 @@ use libp2p::{
     tcp, yamux, Swarm, Transport,
 };
 
-#[cfg(feature = "integration_tests")]
-use libp2p_core::transport::MemoryTransport;
-
 use std::{io, time::Duration};
 
 const MAX_CONNECTIONS_PER_PEER: u32 = 1;
@@ -35,29 +32,30 @@ pub async fn build_swarm(
         .into_authentic(local_keys)
         .expect("error creating noise keys");
 
-    #[cfg(not(feature = "integration_tests"))]
-    let tcp_config = tcp::TokioTcpConfig::new().nodelay(true).port_reuse(true);
     let noi_config = noise::NoiseConfig::xx(noise_keys);
-    #[cfg(not(feature = "integration_tests"))]
-    let dns_config = dns::TokioDnsConfig::system(tcp_config)?;
     let mpx_config = mplex::MplexConfig::default();
     let ymx_config = yamux::YamuxConfig::default();
 
-    #[cfg(not(feature = "integration_tests"))]
-    let transport = dns_config
-        .upgrade(upgrade::Version::V1)
-        .authenticate(noi_config.into_authenticated())
-        .multiplex(SelectUpgrade::new(ymx_config, mpx_config))
-        .timeout(Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))
-        .boxed();
+    let transport = if cfg!(feature = "integration_tests") {
+        use libp2p_core::transport::MemoryTransport;
 
-    #[cfg(feature = "integration_tests")]
-    let transport = MemoryTransport::default()
-        .upgrade(upgrade::Version::V1)
-        .authenticate(noi_config.into_authenticated())
-        .multiplex(SelectUpgrade::new(ymx_config, mpx_config))
-        .timeout(Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))
-        .boxed();
+        MemoryTransport::default()
+            .upgrade(upgrade::Version::V1)
+            .authenticate(noi_config.into_authenticated())
+            .multiplex(SelectUpgrade::new(ymx_config, mpx_config))
+            .timeout(Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))
+            .boxed()
+    } else {
+        let tcp_config = tcp::TokioTcpConfig::new().nodelay(true).port_reuse(true);
+        let dns_config = dns::TokioDnsConfig::system(tcp_config)?;
+
+        dns_config
+            .upgrade(upgrade::Version::V1)
+            .authenticate(noi_config.into_authenticated())
+            .multiplex(SelectUpgrade::new(ymx_config, mpx_config))
+            .timeout(Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))
+            .boxed()
+    };
 
     let (_tx, rx) = tokio::sync::mpsc::unbounded_channel::<Origin>();
     let behavior = SwarmBehavior::new(local_pk, internal_sender, rx).await;
