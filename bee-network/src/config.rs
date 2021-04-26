@@ -134,7 +134,7 @@ impl Default for NetworkConfig {
 /// A network configuration builder.
 #[derive(Default, Deserialize)]
 pub struct NetworkConfigBuilder {
-    #[serde(rename = "bind_multiaddress")]
+    #[serde(rename = "bind_address")]
     bind_multiaddr: Option<Multiaddr>,
     reconnect_interval_secs: Option<u64>,
     max_unknown_peers: Option<usize>,
@@ -332,7 +332,7 @@ fn split_multiaddr(multiaddr: &str) -> (Multiaddr, PeerId) {
 
 #[derive(Deserialize)]
 pub struct PeerBuilder {
-    #[serde(rename = "multiaddress")]
+    #[serde(rename = "address")]
     multiaddr: String,
     alias: Option<String>,
 }
