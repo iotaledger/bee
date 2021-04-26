@@ -202,7 +202,7 @@ impl StorageBackend for Storage {
 
     async fn size(&self) -> Result<Option<usize>, Self::Error> {
         Ok(Some(
-            self.inner.live_files()?.iter().fold(0 | acc, file | acc + file.size),
+            self.inner.live_files()?.iter().fold(0, |acc, file| acc + file.size),
         ))
     }
 
