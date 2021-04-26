@@ -97,11 +97,11 @@ impl NetworkConfig {
     }
 
     /// Adds a static peer.
-    pub fn add_static_peer(&mut self, peer_id: PeerId, multiaddr: Multiaddr, alias: String) {
+    pub fn add_static_peer(&mut self, peer_id: PeerId, multiaddr: Multiaddr, alias: Option<String>) {
         self.static_peers.push(Peer {
             peer_id,
             multiaddr,
-            alias: Some(alias),
+            alias,
         });
     }
 }

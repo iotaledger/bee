@@ -57,4 +57,4 @@ bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 env_logger = "0.8"
 fern = "0.6"
 hex = "0.4.3"
-tokio = { version = "1.4", features = ["rt", "rt-multi-thread", "macros", "signal", "time"] }
+tokio = { version = "1.4", features = ["rt", "rt-multi-thread", "macros", "signal", "time", "io-std", "io-util"] }
