@@ -77,7 +77,7 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (address, balance) = (rand_address(), rand_balance());
         Insert::<Address, Balance>::insert(storage, &address, &balance)
             .await
@@ -87,7 +87,7 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     let mut balances = HashMap::new();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (address, balance) = (rand_address(), rand_balance());
         Batch::<Address, Balance>::batch_insert(storage, &mut batch, &address, &balance).unwrap();
         balances.insert(address, balance);

@@ -78,7 +78,7 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (message_id, message) = (rand_message_id(), rand_message());
         Insert::<MessageId, Message>::insert(storage, &message_id, &message)
             .await
@@ -88,7 +88,7 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     let mut messages = HashMap::new();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (message_id, message) = (rand_message_id(), rand_message());
         Batch::<MessageId, Message>::batch_insert(storage, &mut batch, &message_id, &message).unwrap();
         messages.insert(message_id, message);

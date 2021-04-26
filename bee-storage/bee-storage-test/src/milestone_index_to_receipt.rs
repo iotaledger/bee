@@ -91,7 +91,7 @@ pub async fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (index, receipt) = (rand_milestone_index(), rand_ledger_receipt());
         Insert::<(MilestoneIndex, Receipt), ()>::insert(storage, &(index, receipt.clone()), &())
             .await
@@ -101,9 +101,9 @@ pub async fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     let mut receipts = HashMap::<MilestoneIndex, Vec<Receipt>>::new();
 
-    for _ in 0usize..5usize {
+    for _ in 0..5 {
         let index = rand_milestone_index();
-        for _ in 0usize..5usize {
+        for _ in 0..5 {
             let receipt = rand_ledger_receipt();
             Batch::<(MilestoneIndex, Receipt), ()>::batch_insert(storage, &mut batch, &(index, receipt.clone()), &())
                 .unwrap();

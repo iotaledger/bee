@@ -89,7 +89,7 @@ pub async fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B)
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (output_id, consumed_output) = (rand_output_id(), rand_consumed_output());
         Insert::<OutputId, ConsumedOutput>::insert(storage, &output_id, &consumed_output)
             .await
@@ -99,7 +99,7 @@ pub async fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B)
 
     let mut consumed_outputs = HashMap::new();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (output_id, consumed_output) = (rand_output_id(), rand_consumed_output());
         Batch::<OutputId, ConsumedOutput>::batch_insert(storage, &mut batch, &output_id, &consumed_output).unwrap();
         consumed_outputs.insert(output_id, consumed_output);

@@ -91,7 +91,7 @@ pub async fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
         Insert::<MessageId, MessageMetadata>::insert(storage, &message_id, &metadata)
             .await
@@ -101,7 +101,7 @@ pub async fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     let mut metadatas = HashMap::new();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
         Batch::<MessageId, MessageMetadata>::batch_insert(storage, &mut batch, &message_id, &metadata).unwrap();
         metadatas.insert(message_id, metadata);

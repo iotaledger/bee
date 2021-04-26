@@ -49,7 +49,7 @@ pub async fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let unspent = rand_unspent_output_id();
         Insert::<Unspent, ()>::insert(storage, &unspent, &()).await.unwrap();
         Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &unspent).unwrap();
@@ -57,7 +57,7 @@ pub async fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
 
     let mut unspents = Vec::new();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let unspent = rand_unspent_output_id();
         Batch::<Unspent, ()>::batch_insert(storage, &mut batch, &unspent, &()).unwrap();
         unspents.push(unspent);

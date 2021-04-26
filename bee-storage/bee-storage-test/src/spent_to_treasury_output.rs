@@ -46,13 +46,11 @@ pub async fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     Insert::<(bool, TreasuryOutput), ()>::insert(storage, &(spent, treasury_output.clone()), &())
         .await
@@ -80,17 +78,15 @@ pub async fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (spent, treasury_output) = (rand_bool(), rand_ledger_treasury_output());
         Insert::<(bool, TreasuryOutput), ()>::insert(storage, &(spent, treasury_output.clone()), &())
             .await
@@ -100,7 +96,7 @@ pub async fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     let mut treasury_outputs = HashMap::<bool, Vec<TreasuryOutput>>::new();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let spent = false;
         let treasury_output = rand_ledger_treasury_output();
         Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, &mut batch, &(spent, treasury_output.clone()), &())
@@ -108,7 +104,7 @@ pub async fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
         treasury_outputs.entry(spent).or_default().push(treasury_output);
     }
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let spent = true;
         let treasury_output = rand_ledger_treasury_output();
         Batch::<(bool, TreasuryOutput), ()>::batch_insert(storage, &mut batch, &(spent, treasury_output.clone()), &())

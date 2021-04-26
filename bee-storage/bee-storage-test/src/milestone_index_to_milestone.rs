@@ -88,7 +88,7 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (index, milestone) = (rand_milestone_index(), rand_milestone());
         Insert::<MilestoneIndex, Milestone>::insert(storage, &index, &milestone)
             .await
@@ -98,7 +98,7 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
 
     let mut milestones = HashMap::new();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (index, milestone) = (rand_milestone_index(), rand_milestone());
         Batch::<MilestoneIndex, Milestone>::batch_insert(storage, &mut batch, &index, &milestone).unwrap();
         milestones.insert(index, milestone);

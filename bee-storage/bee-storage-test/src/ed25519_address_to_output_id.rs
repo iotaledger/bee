@@ -90,7 +90,7 @@ pub async fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B)
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (address, output_id) = (rand_ed25519_address(), rand_output_id());
         Insert::<(Ed25519Address, OutputId), ()>::insert(storage, &(address, output_id), &())
             .await
@@ -100,9 +100,9 @@ pub async fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B)
 
     let mut output_ids = HashMap::<Ed25519Address, Vec<OutputId>>::new();
 
-    for _ in 0usize..5usize {
+    for _ in 0..5 {
         let address = rand_ed25519_address();
-        for _ in 0usize..5usize {
+        for _ in 0..5 {
             let output_id = rand_output_id();
             Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, &mut batch, &(address, output_id), &())
                 .unwrap();

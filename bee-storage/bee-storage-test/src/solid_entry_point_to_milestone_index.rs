@@ -89,7 +89,7 @@ pub async fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(stor
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
         Insert::<SolidEntryPoint, MilestoneIndex>::insert(storage, &sep, &index)
             .await
@@ -99,7 +99,7 @@ pub async fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(stor
 
     let mut seps = HashMap::new();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
         Batch::<SolidEntryPoint, MilestoneIndex>::batch_insert(storage, &mut batch, &sep, &index).unwrap();
         seps.insert(sep, index);

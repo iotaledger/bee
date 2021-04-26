@@ -91,7 +91,7 @@ pub async fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(s
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (index, unreferenced_message) = (rand_milestone_index(), rand_unreferenced_message());
         Insert::<(MilestoneIndex, UnreferencedMessage), ()>::insert(storage, &(index, unreferenced_message), &())
             .await
@@ -106,9 +106,9 @@ pub async fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(s
 
     let mut unreferenced_messages = HashMap::<MilestoneIndex, Vec<UnreferencedMessage>>::new();
 
-    for _ in 0usize..5usize {
+    for _ in 0..5 {
         let index = rand_milestone_index();
-        for _ in 0usize..5usize {
+        for _ in 0..5 {
             let unreferenced_message = rand_unreferenced_message();
             Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_insert(
                 storage,

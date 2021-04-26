@@ -90,7 +90,7 @@ pub async fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (index, message_id) = (rand_indexation_payload().padded_index(), rand_message_id());
         Insert::<(PaddedIndex, MessageId), ()>::insert(storage, &(index, message_id), &())
             .await
@@ -100,9 +100,9 @@ pub async fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     let mut message_ids = HashMap::<PaddedIndex, Vec<MessageId>>::new();
 
-    for _ in 0usize..5usize {
+    for _ in 0..5 {
         let index = rand_indexation_payload().padded_index();
-        for _ in 0usize..5usize {
+        for _ in 0..5 {
             let message_id = rand_message_id();
             Batch::<(PaddedIndex, MessageId), ()>::batch_insert(storage, &mut batch, &(index, message_id), &())
                 .unwrap();

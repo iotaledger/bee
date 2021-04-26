@@ -91,7 +91,7 @@ pub async fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &
 
     let mut batch = B::batch_begin();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (index, output_diff) = (rand_milestone_index(), rand_output_diff());
         Insert::<MilestoneIndex, OutputDiff>::insert(storage, &index, &output_diff)
             .await
@@ -101,7 +101,7 @@ pub async fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &
 
     let mut output_diffs = HashMap::new();
 
-    for _ in 0usize..10usize {
+    for _ in 0..10 {
         let (index, output_diff) = (rand_milestone_index(), rand_output_diff());
         Batch::<MilestoneIndex, OutputDiff>::batch_insert(storage, &mut batch, &index, &output_diff).unwrap();
         output_diffs.insert(index, output_diff);
