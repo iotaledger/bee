@@ -27,7 +27,7 @@ jobs:
 
     - name: Install dependencies
       if: runner.os == 'Windows'
-      ‡run: choco install llvm -y
+      run: choco install llvm -y
 
     - name: Install ${{ matrix.rust }}
       uses: actions-rs/toolchain@v1
