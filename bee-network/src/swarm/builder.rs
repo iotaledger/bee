@@ -57,7 +57,9 @@ pub async fn build_swarm(
             .boxed()
     };
 
+    // FIXME
     let (_tx, rx) = tokio::sync::mpsc::unbounded_channel::<Origin>();
+
     let behavior = SwarmBehavior::new(local_pk, internal_sender, rx).await;
     let limits = ConnectionLimits::default().with_max_established_per_peer(Some(MAX_CONNECTIONS_PER_PEER));
 

@@ -3,7 +3,7 @@
 
 #![cfg(feature = "full")]
 
-use bee_network::{Event, Multiaddr, NetworkEventReceiver, PeerId};
+use bee_network::{Event, GossipReceiver, GossipSender, Multiaddr, NetworkEventReceiver, PeerId};
 
 use tokio::time::{self, Duration};
 
@@ -70,6 +70,24 @@ pub async fn get_connected_peer_id(rx: &mut NetworkEventReceiver) -> PeerId {
             event = rx.recv() => {
                 if let Some(Event::PeerConnected { peer_id, .. }) = event {
                     return peer_id;
+                }
+            },
+            () = &mut timeout => {
+                assert!(false, "timed out before receiving `PeerConnected` event");
+            }
+        }
+    }
+}
+
+pub async fn get_gossip_channels(rx: &mut NetworkEventReceiver) -> (GossipReceiver, GossipSender) {
+    let timeout = time::sleep(Duration::from_secs(20));
+    tokio::pin!(timeout);
+
+    loop {
+        tokio::select! {
+            event = rx.recv() => {
+                if let Some(Event::PeerConnected { gossip_in, gossip_out, .. }) = event {
+                    return (gossip_in, gossip_out);
                 }
             },
             () = &mut timeout => {

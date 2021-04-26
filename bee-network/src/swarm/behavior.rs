@@ -18,6 +18,8 @@ use libp2p::{
 use log::*;
 use tokio::sync::mpsc;
 
+const IOTA_PROTOCOL_VERSION: &str = "iota/0.1.0";
+
 #[derive(NetworkBehaviour)]
 pub struct SwarmBehavior {
     identify: Identify,
@@ -28,12 +30,12 @@ pub struct SwarmBehavior {
 
 impl SwarmBehavior {
     pub async fn new(
-        local_public_key: PublicKey,
+        local_pk: PublicKey,
         internal_sender: InternalEventSender,
         origin_rx: mpsc::UnboundedReceiver<Origin>,
     ) -> Self {
-        let protocol_version = "iota/0.1.0".to_string();
-        let config = IdentifyConfig::new(protocol_version, local_public_key);
+        let protocol_version = IOTA_PROTOCOL_VERSION.to_string();
+        let config = IdentifyConfig::new(protocol_version, local_pk);
 
         Self {
             identify: Identify::new(config),
