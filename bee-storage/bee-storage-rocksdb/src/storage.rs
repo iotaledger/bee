@@ -31,7 +31,7 @@ pub struct Storage {
 }
 
 impl Storage {
-    fn new(config: RocksDbConfig) -> Result<DB, Error> {
+    fn new(config: RocksDbConfig) -> Result<Self, Error> {
         let cf_system = ColumnFamilyDescriptor::new(CF_SYSTEM, Options::default());
 
         let cf_message_id_to_message = ColumnFamilyDescriptor::new(CF_MESSAGE_ID_TO_MESSAGE, Options::default());
@@ -151,7 +151,10 @@ impl Storage {
         db.flush_opt(&flushopts)?;
         db.flush_cf_opt(db.cf_handle(CF_SYSTEM).unwrap(), &flushopts)?;
 
-        Ok(db)
+        Ok(Storage {
+            config: config.storage.clone(),
+            inner: db,
+        })
     }
 
     pub(crate) fn cf_handle(&self, cf_str: &'static str) -> Result<&ColumnFamily, Error> {
@@ -166,10 +169,7 @@ impl StorageBackend for Storage {
     type Error = Error;
 
     async fn start(config: Self::Config) -> Result<Self, Self::Error> {
-        let storage = Storage {
-            config: config.storage.clone(),
-            inner: Self::new(config)?,
-        };
+        let storage = Self::new(config)?;
 
         match Fetch::<u8, System>::fetch(&storage, &SYSTEM_VERSION_KEY).await? {
             Some(System::Version(version)) => {
