@@ -1,8 +1,6 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO: Add banned PeerIds and Addresses from the config file.
-
 use super::{error::Error, meta::PeerState};
 
 use crate::{
@@ -273,7 +271,7 @@ impl PeerList {
             return Err(Error::AddressIsBanned(peer_info.address.clone()));
         }
 
-        if self.is(peer_id, |_, state| state.is_connected()).is_ok() {
+        if self.is(peer_id, |_, state| state.is_connected()).unwrap_or(false) {
             return Err(Error::PeerIsConnected(*peer_id));
         }
 
@@ -306,7 +304,7 @@ impl PeerList {
             return Err(Error::PeerIsBanned(*peer_id));
         }
 
-        if self.is(peer_id, |_, state| state.is_connected()).is_ok() {
+        if self.is(peer_id, |_, state| state.is_connected()).unwrap_or(false) {
             return Err(Error::PeerIsConnected(*peer_id));
         }
 
@@ -389,231 +387,104 @@ impl PeerList {
     // }
 }
 
-// // Copyright 2020 IOTA Stiftung
-// // SPDX-License-Identifier: Apache-2.0
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use libp2p::{identity::ed25519::Keypair, multiaddr::Protocol};
 
-// use super::{
-//     error::{Error, InsertionFailure},
-//     meta::PeerState,
-// };
+    #[test]
+    fn new_list() {
+        let pl = PeerList::new(gen_constant_peer_id());
 
-// use crate::{
-//     alias,
-//     config::Peer,
-//     init::MAX_UNKNOWN_PEERS,
-//     swarm::protocols::gossip::GossipSender,
-//     types::{PeerInfo, PeerRelation},
-// };
+        assert_eq!(pl.len(), 0);
+    }
 
-// use libp2p::PeerId;
-// use tokio::sync::RwLock;
+    #[test]
+    fn add_peers() {
+        let local_id = gen_constant_peer_id();
 
-// use std::{collections::HashMap, sync::Arc};
+        let mut pl = PeerList::new(local_id);
 
-// // TODO: check whether this is the right default value when used in production.
-// const DEFAULT_PEERLIST_CAPACITY: usize = 8;
+        for i in 1..=3 {
+            assert!(
+                pl.insert_peer(
+                    gen_random_peer_id(),
+                    gen_deterministic_peer_info(i, PeerRelation::Known)
+                )
+                .is_ok()
+            );
+            assert_eq!(pl.len(), i as usize);
+        }
+    }
 
-// // TODO: Merge with banned addr, peer_id
-// // TODO: Initialize it with stuff from the config
-// // TODO: Make it into global state so that we don't need to pass it around all the time
-// #[derive(Clone, Default)]
-// pub struct PeerList(Arc<RwLock<HashMap<PeerId, (PeerInfo, PeerState)>>>);
+    #[test]
+    fn deny_incoming_local_peer() {
+        let local_id = gen_constant_peer_id();
 
-// impl PeerList {
-//     pub fn new() -> Self {
-//         Self(Arc::new(RwLock::new(HashMap::with_capacity(DEFAULT_PEERLIST_CAPACITY))))
-//     }
+        let pl = PeerList::new(local_id);
 
-//     pub fn from_peers(peers: Vec<Peer>) -> Self {
-//         let mut m = HashMap::with_capacity(DEFAULT_PEERLIST_CAPACITY);
+        assert!(matches!(
+            pl.accepts_incoming_peer(&local_id, &gen_constant_peer_info()),
+            Err(Error::PeerIsLocal(_))
+        ));
+    }
 
-//         m.extend(peers.into_iter().map(|peer| {
-//             (
-//                 peer.peer_id,
-//                 (
-//                     PeerInfo {
-//                         address: peer.multiaddr,
-//                         alias: peer.alias.unwrap_or(alias!(peer.peer_id).to_owned()),
-//                         relation: PeerRelation::Known,
-//                     },
-//                     PeerState::disconnected(),
-//                 ),
-//             )
-//         }));
+    #[test]
+    fn allow_incoming_added_peer() {
+        let local_id = gen_constant_peer_id();
+        let peer_id = gen_random_peer_id();
+        let peer_info = gen_constant_peer_info();
 
-//         Self(Arc::new(RwLock::new(m)))
-//     }
+        let mut pl = PeerList::new(local_id);
 
-//     // If the insertion fails for some reason, we give it back to the caller.
-//     pub async fn insert(&self, peer_id: PeerId, peer_info: PeerInfo) -> Result<(), InsertionFailure> {
-//         if let Err(e) = self.accepts(&peer_id, &peer_info).await {
-//             Err(InsertionFailure(peer_id, peer_info, e))
-//         } else {
-//             // Since we already checked that such a `peer_id` is not yet present, the returned value is always
-// `None`.             let _ = self
-//                 .0
-//                 .write()
-//                 .await
-//                 .insert(peer_id, (peer_info, PeerState::disconnected()));
-//             Ok(())
-//         }
-//     }
+        pl.insert_peer(peer_id, peer_info.clone()).unwrap();
+        pl.accepts_incoming_peer(&peer_id, &peer_info).unwrap();
+    }
 
-//     pub async fn upgrade_relation(&self, peer_id: &PeerId) -> Result<(), Error> {
-//         let mut this = self.0.write().await;
-//         let (info, _) = this.get_mut(peer_id).ok_or_else(|| Error::PeerMissing(*peer_id))?;
+    #[test]
+    #[ignore]
+    fn deny_incoming_banned_peer() {
+        todo!()
+    }
 
-//         info.relation.upgrade();
+    #[test]
+    #[ignore]
+    fn deny_incoming_banned_addr() {
+        todo!()
+    }
 
-//         Ok(())
-//     }
+    // =======================================================
+    // utils
+    // =======================================================
 
-//     pub async fn downgrade_relation(&self, peer_id: &PeerId) -> Result<(), Error> {
-//         let mut this = self.0.write().await;
-//         let (info, _) = this.get_mut(peer_id).ok_or_else(|| Error::PeerMissing(*peer_id))?;
+    pub fn gen_constant_peer_id() -> PeerId {
+        "12D3KooWJWEKvSFbben74C7H4YtKjhPMTDxd7gP7zxWSUEeF27st".parse().unwrap()
+    }
 
-//         info.relation.downgrade();
+    pub fn gen_random_peer_id() -> PeerId {
+        PeerId::from_public_key(libp2p_core::PublicKey::Ed25519(Keypair::generate().public()))
+    }
 
-//         Ok(())
-//     }
+    pub fn gen_deterministic_peer_info(port: u16, relation: PeerRelation) -> PeerInfo {
+        PeerInfo {
+            address: gen_deterministic_addr(port),
+            alias: port.to_string(),
+            relation,
+        }
+    }
 
-//     pub async fn connect(&self, peer_id: &PeerId, gossip_sender: GossipSender) -> Result<(), Error> {
-//         let mut this = self.0.write().await;
-//         let (_, state) = this.get_mut(peer_id).ok_or_else(|| Error::PeerMissing(*peer_id))?;
+    pub fn gen_constant_peer_info() -> PeerInfo {
+        PeerInfo {
+            address: gen_deterministic_addr(1),
+            alias: String::new(),
+            relation: PeerRelation::Known,
+        }
+    }
 
-//         if state.is_connected() {
-//             Err(Error::PeerAlreadyConnected(*peer_id))
-//         } else {
-//             state.set_connected(gossip_sender);
-//             Ok(())
-//         }
-//     }
-
-//     pub async fn disconnect(&self, peer_id: &PeerId) -> Result<GossipSender, Error> {
-//         let mut this = self.0.write().await;
-//         let (_, state) = this.get_mut(peer_id).ok_or_else(|| Error::PeerMissing(*peer_id))?;
-
-//         if state.is_disconnected() {
-//             Err(Error::PeerAlreadyDisconnected(*peer_id))
-//         } else {
-//             // `unwrap` is safe, because we know we're connected.
-//             Ok(state.set_disconnected().unwrap())
-//         }
-//     }
-
-//     pub async fn contains(&self, peer_id: &PeerId) -> bool {
-//         self.0.read().await.contains_key(peer_id)
-//     }
-
-//     pub async fn accepts(&self, peer_id: &PeerId, peer_info: &PeerInfo) -> Result<(), Error> {
-//         if self.0.read().await.contains_key(peer_id) {
-//             return Err(Error::PeerAlreadyAdded(*peer_id));
-//         }
-
-//         // Prevent inserting more peers than preconfigured.
-//         // `Unwrap`ping the global variable is fine, because we made sure that its value is set during
-// initialization.         if peer_info.relation.is_unknown()
-//             && self.count_if(|info, _| info.relation.is_unknown()).await >= *MAX_UNKNOWN_PEERS.get().unwrap()
-//         {
-//             return Err(Error::UnknownPeerLimitReached(*MAX_UNKNOWN_PEERS.get().unwrap()));
-//         }
-//         if self.0.read().await.contains_key(peer_id) {
-//             return Err(Error::PeerAlreadyAdded(*peer_id));
-//         }
-
-//         Ok(())
-//     }
-
-//     pub async fn remove(&self, peer_id: &PeerId) -> Result<PeerInfo, Error> {
-//         let (info, _) = self
-//             .0
-//             .write()
-//             .await
-//             .remove(peer_id)
-//             .ok_or_else(|| Error::PeerMissing(*peer_id))?;
-
-//         Ok(info)
-//     }
-
-//     #[allow(dead_code)]
-//     pub async fn len(&self) -> usize {
-//         self.0.read().await.len()
-//     }
-
-//     // TODO: change return value to `Option<PeerInfo>`1
-//     pub async fn get_info(&self, peer_id: &PeerId) -> Result<PeerInfo, Error> {
-//         self.0
-//             .read()
-//             .await
-//             .get(peer_id)
-//             .ok_or_else(|| Error::PeerMissing(*peer_id))
-//             .map(|(peer_info, _)| peer_info.clone())
-//     }
-
-//     pub async fn update_info(&self, peer_id: &PeerId, peer_info: PeerInfo) -> Result<(), Error> {
-//         let mut this = self.0.write().await;
-//         let (info, _) = this.get_mut(peer_id).ok_or_else(|| Error::PeerMissing(*peer_id))?;
-
-//         *info = peer_info;
-
-//         Ok(())
-//     }
-
-//     pub async fn is(&self, peer_id: &PeerId, predicate: impl Fn(&PeerInfo, &PeerState) -> bool) -> Result<bool,
-// Error> {         self.0
-//             .read()
-//             .await
-//             .get(peer_id)
-//             .ok_or_else(|| Error::PeerMissing(*peer_id))
-//             .map(|(info, state)| predicate(info, state))
-//     }
-
-//     pub async fn iter_if(
-//         &self,
-//         predicate: impl Fn(&PeerInfo, &PeerState) -> bool,
-//     ) -> impl Iterator<Item = (PeerId, String)> {
-//         self.0
-//             .read()
-//             .await
-//             .iter()
-//             .filter_map(|(peer_id, (info, state))| {
-//                 if predicate(info, state) {
-//                     Some((*peer_id, info.alias.clone()))
-//                 } else {
-//                     None
-//                 }
-//             })
-//             .collect::<Vec<(PeerId, String)>>()
-//             .into_iter()
-//     }
-
-//     pub async fn count_if(&self, predicate: impl Fn(&PeerInfo, &PeerState) -> bool) -> usize {
-//         self.0.read().await.iter().fold(
-//             0,
-//             |count, (_, (info, state))| {
-//                 if predicate(info, state) { count + 1 } else { count }
-//             },
-//         )
-//     }
-
-//     pub async fn remove_if(&self, peer_id: &PeerId, predicate: impl Fn(&PeerInfo, &PeerState) -> bool) -> bool {
-//         // NB: We need to be very cautious here to not accidentally nest the requests for the lock!
-
-//         let can_remove = if let Some((info, state)) = self.0.read().await.get(peer_id) {
-//             predicate(info, state)
-//         } else {
-//             false
-//         };
-
-//         if can_remove {
-//             self.0.write().await.remove(peer_id).is_some()
-//         } else {
-//             false
-//         }
-//     }
-
-//     #[allow(dead_code)]
-//     pub async fn clear(&self) {
-//         self.0.write().await.clear();
-//     }
-// }
+    pub fn gen_deterministic_addr(port: u16) -> Multiaddr {
+        let mut addr = Multiaddr::empty();
+        addr.push(Protocol::Dns("localhost".into()));
+        addr.push(Protocol::Tcp(port));
+        addr
+    }
+}

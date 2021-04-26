@@ -34,7 +34,7 @@ pub enum Event {
     /// The local peer id was created.
     LocalIdCreated {
         /// The created peer id from the Ed25519 keypair.
-        peer_id: PeerId,
+        local_id: PeerId,
     },
     /// A peer was added.
     PeerAdded {
