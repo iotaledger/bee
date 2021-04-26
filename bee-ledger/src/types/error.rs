@@ -21,6 +21,9 @@ pub enum Error {
     /// Unsupported payload kind.
     #[error("Unsupported payload kind: {0}")]
     UnsupportedPayloadKind(u32),
+    /// Invalid payload kind.
+    #[error("Invalid payload kind: {0}")]
+    InvalidPayloadKind(u32),
     /// Treasury amount mismatch.
     #[error("Treasury amount mismatch: {0} != {1}")]
     TreasuryAmountMismatch(u64, u64),
@@ -60,4 +63,16 @@ pub enum Error {
     /// Invalid conflict byte.
     #[error("Invalid conflict byte")]
     InvalidConflict(u8),
+    /// Invalid snapshot kind.
+    #[error("Invalid snapshot kind: {0}")]
+    InvalidSnapshotKind(u8),
+    /// Unsupported snapshot version.
+    #[error("Unsupported snapshot version: supports {0}, read {1}")]
+    UnsupportedVersion(u8, u8),
+    /// Missing consumed treasury.
+    #[error("Missing consumed treasury")]
+    MissingConsumedTreasury,
+    /// Milestone length mismatch.
+    #[error("Milestone length mismatch: expected {0}, got {1}")]
+    MilestoneLengthMismatch(usize, usize),
 }

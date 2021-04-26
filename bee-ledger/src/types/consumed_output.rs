@@ -7,7 +7,7 @@ use bee_common::packable::{Packable, Read, Write};
 use bee_message::{milestone::MilestoneIndex, payload::transaction::TransactionId};
 
 /// Represents a newly consumed output.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ConsumedOutput {
     target: TransactionId,
     index: MilestoneIndex,

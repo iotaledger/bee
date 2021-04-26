@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.1.0 - 2021-04-20
+## 0.1.0 - 2021-04-26
 
 ### Added
 
@@ -37,3 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `TreasuryDiff`;
   - `TreasuryOutput`;
   - `Unspent`;
+- Snapshot types;
+  - `SnapshotHeader`;
+  - `FullSnapshotHeader`;
+  - `DeltaSnapshotHeader`;
+  - `SnapshotInfo`;
+  - `SnapshotKind`;
+  - `MilestoneDiff`;

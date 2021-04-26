@@ -9,7 +9,7 @@ use bee_message::{output::Output, MessageId};
 use core::ops::Deref;
 
 /// Represents a newly created output.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CreatedOutput {
     message_id: MessageId,
     inner: Output,
