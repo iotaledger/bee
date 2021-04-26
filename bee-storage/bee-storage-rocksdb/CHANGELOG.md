@@ -19,8 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.1.0 - 2021-04-22
+## 0.1.0 - 2021-04-27
 
 ### Added
 
-<!-- TODO -->
+- Implementation of `StorageBackend` for `RocksDB`;
+- Implementation of the following traits for all bee storable types:
+  - `Batch`;
+  - `Delete`;
+  - `Exist`;
+  - `Fetch`;
+  - `Insert`;
+  - `AsStream`;
+  - `Truncate`;
