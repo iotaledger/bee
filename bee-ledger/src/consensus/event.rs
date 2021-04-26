@@ -20,10 +20,18 @@ pub struct MilestoneConfirmed {
     pub receipt: bool,
 }
 
-pub struct OutputConsumed(pub ConsumedOutput);
+pub struct OutputConsumed {
+    pub output: ConsumedOutput,
+}
 
-pub struct OutputCreated(pub CreatedOutput);
+pub struct OutputCreated {
+    pub output: CreatedOutput,
+}
 
-pub struct SnapshottedIndex(pub MilestoneIndex);
+pub struct SnapshottedIndex {
+    pub index: MilestoneIndex,
+}
 
-pub struct PrunedIndex(pub MilestoneIndex);
+pub struct PrunedIndex {
+    pub index: MilestoneIndex,
+}

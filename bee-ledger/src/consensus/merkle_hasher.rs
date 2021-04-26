@@ -12,8 +12,6 @@ const LEAF_HASH_PREFIX: u8 = 0x00;
 /// Node domain separation prefix.
 const NODE_HASH_PREFIX: u8 = 0x01;
 
-// TODO hasher re-creation or finalize_reset + hasher field ?
-
 /// Computes the largest power of two inferior to `n`.
 #[inline]
 fn largest_power_of_two(n: u32) -> usize {

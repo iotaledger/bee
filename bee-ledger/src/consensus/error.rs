@@ -6,12 +6,10 @@ use crate::{
     types::{Balance, Error as TypesError},
 };
 
-use bee_message::{address::Address, Error as MessageError, MessageId};
+use bee_message::{address::Address, MessageId};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("")]
-    Message(#[from] MessageError),
     #[error("")]
     Snapshot(#[from] SnapshotError),
     #[error("")]

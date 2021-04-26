@@ -216,12 +216,14 @@ where
         receipt: migration.is_some(),
     });
 
-    for (_, output) in metadata.created_outputs {
-        bus.dispatch(OutputCreated(output));
+    for (_, created_output) in metadata.created_outputs {
+        bus.dispatch(OutputCreated { output: created_output });
     }
 
     for (_, (_, consumed_output)) in metadata.consumed_outputs {
-        bus.dispatch(OutputConsumed(consumed_output));
+        bus.dispatch(OutputConsumed {
+            output: consumed_output,
+        });
     }
 
     Ok(())

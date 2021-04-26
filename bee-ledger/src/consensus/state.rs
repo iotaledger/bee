@@ -77,11 +77,9 @@ async fn check_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u6
     Ok(())
 }
 
-pub async fn check_ledger_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
+pub(crate) async fn check_ledger_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
     let treasury = storage::fetch_unspent_treasury_output(storage).await?.inner().amount();
 
     check_ledger_unspent_state(storage, treasury).await?;
-    check_ledger_balance_state(storage, treasury).await?;
-
-    Ok(())
+    check_ledger_balance_state(storage, treasury).await
 }
