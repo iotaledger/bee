@@ -59,16 +59,19 @@ impl Packable for MilestoneDiff {
                 0
             }
             + 0u64.packed_len()
-            + self.created_outputs.iter().fold(0, |acc, (output_id, created_output)| {
-                acc + output_id.packed_len() + created_output.packed_len()
-            })
+            + self
+                .created_outputs
+                .iter()
+                .map(|(output_id, created_output)| output_id.packed_len() + created_output.packed_len())
+                .sum::<usize>()
             + 0u64.packed_len()
             + self
                 .consumed_outputs
                 .iter()
-                .fold(0, |acc, (output_id, (created_output, consumed_output))| {
-                    acc + output_id.packed_len() + created_output.packed_len() + consumed_output.target().packed_len()
+                .map(|(output_id, (created_output, consumed_output))| {
+                    output_id.packed_len() + created_output.packed_len() + consumed_output.target().packed_len()
                 })
+                .sum::<usize>()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
