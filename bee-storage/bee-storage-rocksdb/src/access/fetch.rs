@@ -172,8 +172,7 @@ impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
     async fn fetch(&self, sep: &SolidEntryPoint) -> Result<Option<MilestoneIndex>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            // TODO SEP ASREF
-            .get_cf(self.cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?, sep.pack_new())?
+            .get_cf(self.cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?, sep.as_ref())?
             // Unpacking from storage is fine.
             .map(|v| MilestoneIndex::unpack_unchecked(&mut v.as_slice()).unwrap()))
     }

@@ -27,20 +27,23 @@ use bee_tangle::{
 #[async_trait::async_trait]
 impl Insert<u8, System> for Storage {
     async fn insert(&self, key: &u8, value: &System) -> Result<(), <Self as StorageBackend>::Error> {
-        Ok(self
-            .inner
-            .put_cf(self.cf_handle(CF_SYSTEM)?, [*key], value.pack_new())?)
+        self.inner
+            .put_cf(self.cf_handle(CF_SYSTEM)?, [*key], value.pack_new())?;
+
+        Ok(())
     }
 }
 
 #[async_trait::async_trait]
 impl Insert<MessageId, Message> for Storage {
     async fn insert(&self, message_id: &MessageId, message: &Message) -> Result<(), <Self as StorageBackend>::Error> {
-        Ok(self.inner.put_cf(
+        self.inner.put_cf(
             self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?,
             message_id,
             message.pack_new(),
-        )?)
+        )?;
+
+        Ok(())
     }
 }
 
@@ -51,11 +54,13 @@ impl Insert<MessageId, MessageMetadata> for Storage {
         message_id: &MessageId,
         metadata: &MessageMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
-        Ok(self.inner.put_cf(
+        self.inner.put_cf(
             self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?,
             message_id,
             metadata.pack_new(),
-        )?)
+        )?;
+
+        Ok(())
     }
 }
 
@@ -69,9 +74,10 @@ impl Insert<(MessageId, MessageId), ()> for Storage {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
-        Ok(self
-            .inner
-            .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, key, [])?)
+        self.inner
+            .put_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, key, [])?;
+
+        Ok(())
     }
 }
 
@@ -85,7 +91,9 @@ impl Insert<(PaddedIndex, MessageId), ()> for Storage {
         let mut key = index.as_ref().to_vec();
         key.extend_from_slice(message_id.as_ref());
 
-        Ok(self.inner.put_cf(self.cf_handle(CF_INDEX_TO_MESSAGE_ID)?, key, [])?)
+        self.inner.put_cf(self.cf_handle(CF_INDEX_TO_MESSAGE_ID)?, key, [])?;
+
+        Ok(())
     }
 }
 
@@ -96,11 +104,13 @@ impl Insert<OutputId, CreatedOutput> for Storage {
         output_id: &OutputId,
         output: &CreatedOutput,
     ) -> Result<(), <Self as StorageBackend>::Error> {
-        Ok(self.inner.put_cf(
+        self.inner.put_cf(
             self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?,
             output_id.pack_new(),
             output.pack_new(),
-        )?)
+        )?;
+
+        Ok(())
     }
 }
 
@@ -111,20 +121,23 @@ impl Insert<OutputId, ConsumedOutput> for Storage {
         output_id: &OutputId,
         output: &ConsumedOutput,
     ) -> Result<(), <Self as StorageBackend>::Error> {
-        Ok(self.inner.put_cf(
+        self.inner.put_cf(
             self.cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)?,
             output_id.pack_new(),
             output.pack_new(),
-        )?)
+        )?;
+
+        Ok(())
     }
 }
 
 #[async_trait::async_trait]
 impl Insert<Unspent, ()> for Storage {
     async fn insert(&self, unspent: &Unspent, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
-        Ok(self
-            .inner
-            .put_cf(self.cf_handle(CF_OUTPUT_ID_UNSPENT)?, unspent.pack_new(), [])?)
+        self.inner
+            .put_cf(self.cf_handle(CF_OUTPUT_ID_UNSPENT)?, unspent.pack_new(), [])?;
+
+        Ok(())
     }
 }
 
@@ -138,18 +151,20 @@ impl Insert<(Ed25519Address, OutputId), ()> for Storage {
         let mut key = address.as_ref().to_vec();
         key.extend_from_slice(&output_id.pack_new());
 
-        Ok(self
-            .inner
-            .put_cf(self.cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)?, key, [])?)
+        self.inner
+            .put_cf(self.cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)?, key, [])?;
+
+        Ok(())
     }
 }
 
 #[async_trait::async_trait]
 impl Insert<(), LedgerIndex> for Storage {
     async fn insert(&self, (): &(), index: &LedgerIndex) -> Result<(), <Self as StorageBackend>::Error> {
-        Ok(self
-            .inner
-            .put_cf(self.cf_handle(CF_LEDGER_INDEX)?, [0x00u8], index.pack_new())?)
+        self.inner
+            .put_cf(self.cf_handle(CF_LEDGER_INDEX)?, [0x00u8], index.pack_new())?;
+
+        Ok(())
     }
 }
 
@@ -160,20 +175,23 @@ impl Insert<MilestoneIndex, Milestone> for Storage {
         index: &MilestoneIndex,
         milestone: &Milestone,
     ) -> Result<(), <Self as StorageBackend>::Error> {
-        Ok(self.inner.put_cf(
+        self.inner.put_cf(
             self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?,
             index.pack_new(),
             milestone.pack_new(),
-        )?)
+        )?;
+
+        Ok(())
     }
 }
 
 #[async_trait::async_trait]
 impl Insert<(), SnapshotInfo> for Storage {
     async fn insert(&self, (): &(), info: &SnapshotInfo) -> Result<(), <Self as StorageBackend>::Error> {
-        Ok(self
-            .inner
-            .put_cf(self.cf_handle(CF_SNAPSHOT_INFO)?, [0x00u8], info.pack_new())?)
+        self.inner
+            .put_cf(self.cf_handle(CF_SNAPSHOT_INFO)?, [0x00u8], info.pack_new())?;
+
+        Ok(())
     }
 }
 
@@ -184,34 +202,39 @@ impl Insert<SolidEntryPoint, MilestoneIndex> for Storage {
         sep: &SolidEntryPoint,
         index: &MilestoneIndex,
     ) -> Result<(), <Self as StorageBackend>::Error> {
-        // TODO SEP AS REF
-        Ok(self.inner.put_cf(
+        self.inner.put_cf(
             self.cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?,
-            sep.pack_new(),
+            sep.as_ref(),
             index.pack_new(),
-        )?)
+        )?;
+
+        Ok(())
     }
 }
 
 #[async_trait::async_trait]
 impl Insert<MilestoneIndex, OutputDiff> for Storage {
     async fn insert(&self, index: &MilestoneIndex, diff: &OutputDiff) -> Result<(), <Self as StorageBackend>::Error> {
-        Ok(self.inner.put_cf(
+        self.inner.put_cf(
             self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?,
             index.pack_new(),
             diff.pack_new(),
-        )?)
+        )?;
+
+        Ok(())
     }
 }
 
 #[async_trait::async_trait]
 impl Insert<Address, Balance> for Storage {
     async fn insert(&self, address: &Address, balance: &Balance) -> Result<(), <Self as StorageBackend>::Error> {
-        Ok(self.inner.put_cf(
+        self.inner.put_cf(
             self.cf_handle(CF_ADDRESS_TO_BALANCE)?,
             address.pack_new(),
             balance.pack_new(),
-        )?)
+        )?;
+
+        Ok(())
     }
 }
 
@@ -225,9 +248,10 @@ impl Insert<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
         let mut key = index.pack_new();
         key.extend_from_slice(unreferenced_message.as_ref());
 
-        Ok(self
-            .inner
-            .put_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?, key, [])?)
+        self.inner
+            .put_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?, key, [])?;
+
+        Ok(())
     }
 }
 
@@ -241,9 +265,10 @@ impl Insert<(MilestoneIndex, Receipt), ()> for Storage {
         let mut key = index.pack_new();
         key.extend_from_slice(&receipt.pack_new());
 
-        Ok(self
-            .inner
-            .put_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)?, key, [])?)
+        self.inner
+            .put_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)?, key, [])?;
+
+        Ok(())
     }
 }
 
@@ -257,8 +282,9 @@ impl Insert<(bool, TreasuryOutput), ()> for Storage {
         let mut key = spent.pack_new();
         key.extend_from_slice(&output.pack_new());
 
-        Ok(self
-            .inner
-            .put_cf(self.cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)?, key, [])?)
+        self.inner
+            .put_cf(self.cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)?, key, [])?;
+
+        Ok(())
     }
 }
