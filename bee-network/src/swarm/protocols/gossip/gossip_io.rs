@@ -40,8 +40,7 @@ pub fn spawn_gossip_in_processor(
 
         loop {
             if recv_valid_message(&mut reader, &mut msg_buf, &mut msg_len).await {
-                if let Err(e) = incoming_gossip_sender.send(msg_buf[..msg_len].to_vec()) {
-                    println!("{}", e);
+                if incoming_gossip_sender.send(msg_buf[..msg_len].to_vec()).is_err() {
                     debug!("gossip-in: receiver dropped locally.");
 
                     // The receiver of this channel was dropped, maybe due to a shutdown. There is nothing we can do to

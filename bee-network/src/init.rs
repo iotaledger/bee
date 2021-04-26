@@ -11,10 +11,12 @@ use super::{
         controller::{NetworkCommandSender, NetworkEventReceiver},
         event::{event_channel, Event, InternalEvent},
     },
+    types::{PeerInfo, PeerRelation},
     Keypair, PeerId,
 };
 
 use crate::{
+    alias,
     network::host::NetworkHostConfig,
     service::service::{self, NetworkServiceConfig},
 };
@@ -168,7 +170,21 @@ fn __init(
         .send(Event::LocalIdCreated { local_id })
         .expect("event send error");
 
-    let peerlist = PeerListWrapper::new(PeerList::from_peers(local_id, peers));
+    let peerlist = PeerListWrapper::new(PeerList::from_peers(local_id, peers.clone()));
+
+    for peer in peers {
+        let peer_id = peer.peer_id;
+        event_sender
+            .send(Event::PeerAdded {
+                peer_id,
+                info: PeerInfo {
+                    address: peer.multiaddr,
+                    alias: peer.alias.unwrap_or_else(|| alias!(peer_id).into()),
+                    relation: PeerRelation::Known,
+                },
+            })
+            .expect("event send error");
+    }
 
     let host_config = NetworkHostConfig {
         local_keys: local_keys.clone(),
