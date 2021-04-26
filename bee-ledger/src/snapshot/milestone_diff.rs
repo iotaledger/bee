@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO review this file
-
 use crate::{
     snapshot::error::Error,
     types::{ConsumedOutput, CreatedOutput},
@@ -23,14 +21,18 @@ use std::collections::HashMap;
 
 pub struct MilestoneDiff {
     milestone: MilestonePayload,
+    consumed_treasury: Option<(TreasuryOutput, MilestoneId)>,
     created: HashMap<OutputId, CreatedOutput>,
     consumed: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
-    consumed_treasury: Option<(TreasuryOutput, MilestoneId)>,
 }
 
 impl MilestoneDiff {
     pub fn milestone(&self) -> &MilestonePayload {
         &self.milestone
+    }
+
+    pub fn consumed_treasury(&self) -> Option<&(TreasuryOutput, MilestoneId)> {
+        self.consumed_treasury.as_ref()
     }
 
     pub fn created(&self) -> &HashMap<OutputId, CreatedOutput> {
@@ -40,18 +42,21 @@ impl MilestoneDiff {
     pub fn consumed(&self) -> &HashMap<OutputId, (CreatedOutput, ConsumedOutput)> {
         &self.consumed
     }
-
-    pub fn consumed_treasury(&self) -> Option<&(TreasuryOutput, MilestoneId)> {
-        self.consumed_treasury.as_ref()
-    }
 }
 
 impl Packable for MilestoneDiff {
     type Error = Error;
 
     fn packed_len(&self) -> usize {
+        self.milestone.packed_len()
+            + if let Some((treasury_output, milestone_id)) = self.consumed_treasury.as_ref() {
+                milestone_id.packed_len() + treasury_output.packed_len()
+            } else {
+                0
+            }
+            + 0u64.packed_len()
+            + 0u64.packed_len()
         // TODO finish
-        self.milestone.packed_len() + 0u64.packed_len() + 0u64.packed_len()
     }
 
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
@@ -60,9 +65,12 @@ impl Packable for MilestoneDiff {
         self.milestone.pack(writer)?;
 
         if self.milestone.essence().receipt().is_some() {
-            // TODO unwrap
-            self.consumed_treasury.as_ref().unwrap().1.pack(writer)?;
-            self.consumed_treasury.as_ref().unwrap().0.pack(writer)?;
+            if let Some((treasury_output, milestone_id)) = self.consumed_treasury.as_ref() {
+                milestone_id.pack(writer)?;
+                treasury_output.pack(writer)?;
+            } else {
+                return Err(Error::MissingConsumedTreasury);
+            }
         }
 
         (self.created.len() as u64).pack(writer)?;
@@ -91,7 +99,10 @@ impl Packable for MilestoneDiff {
         };
 
         if milestone_len != milestone.packed_len() + MilestonePayload::KIND as usize {
-            // TODO
+            return Err(Error::MilestoneLengthMismatch(
+                milestone_len,
+                milestone.packed_len() + MilestonePayload::KIND as usize,
+            ));
         }
 
         let consumed_treasury = if milestone.essence().receipt().is_some() {

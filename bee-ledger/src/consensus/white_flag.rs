@@ -50,10 +50,7 @@ async fn apply_regular_essence<B: StorageBackend>(
     let mut consumed_amount: u64 = 0;
     let mut created_amount: u64 = 0;
 
-    // TODO avoid clone
     let essence_hash = Essence::from(essence.clone()).hash();
-
-    // TODO saturating ? Overflowing ? Checked ?
 
     for (index, input) in essence.inputs().iter().enumerate() {
         let (output_id, consumed_output) = match input {

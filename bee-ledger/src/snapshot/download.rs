@@ -7,9 +7,7 @@ use log::{error, info, warn};
 
 use std::{fs::File, io::copy, path::Path};
 
-// TODO copy is not really streaming ?
-// TODO temporary file until fully downloaded ?
-pub async fn download_snapshot_file(file_path: &Path, download_urls: &[String]) -> Result<(), Error> {
+pub(crate) async fn download_snapshot_file(file_path: &Path, download_urls: &[String]) -> Result<(), Error> {
     let file_name = file_path
         .file_name()
         .ok_or_else(|| Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;

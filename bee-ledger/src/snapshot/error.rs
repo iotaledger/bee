@@ -35,6 +35,10 @@ pub enum Error {
     InvalidPayloadKind(u32),
     #[error("")]
     UnsupportedOutputKind(u8),
+    #[error("")]
+    MissingConsumedTreasury,
+    #[error("Milestone length mismatch: expected {0}, got {1}")]
+    MilestoneLengthMismatch(usize, usize),
     #[error(
         "Only a delta snapshot file exists, without a full snapshot file. Remove the delta snapshot file and restart"
     )]

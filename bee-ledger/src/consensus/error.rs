@@ -8,6 +8,7 @@ use crate::{
 
 use bee_message::{address::Address, MessageId};
 
+/// Errors occurring during consensus.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("")]

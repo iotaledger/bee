@@ -5,6 +5,7 @@ use crate::snapshot::error::Error;
 
 use bee_common::packable::{Packable, Read, Write};
 
+/// The kind of a snapshot.
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Kind {
