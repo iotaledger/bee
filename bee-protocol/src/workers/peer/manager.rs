@@ -65,24 +65,30 @@ where
                 trace!("Received event {:?}.", event);
 
                 match event {
-                    Event::PeerAdded { peer_id, info } => {
+                    // Event::PeerAdded { peer_id, info } => {
+                    //     // TODO check if not already added ?
+                    //     info!("Added peer {}.", info.alias);
+
+                    //     let peer = Arc::new(Peer::new(peer_id, info));
+                    //     peer_manager.add(peer).await;
+                    // }
+                    // Event::PeerRemoved { peer_id } => {
+                    //     if let Some(peer) = peer_manager.remove(&peer_id).await {
+                    //         info!("Removed peer {}.", peer.0.alias());
+                    //     }
+                    // }
+                    Event::PeerConnected {
+                        peer_id,
+                        info,
+                        gossip_in: receiver,
+                        gossip_out: sender,
+                    } => {
                         // TODO check if not already added ?
                         info!("Added peer {}.", info.alias);
 
                         let peer = Arc::new(Peer::new(peer_id, info));
                         peer_manager.add(peer).await;
-                    }
-                    Event::PeerRemoved { peer_id } => {
-                        if let Some(peer) = peer_manager.remove(&peer_id).await {
-                            info!("Removed peer {}.", peer.0.alias());
-                        }
-                    }
-                    Event::PeerConnected {
-                        peer_id,
-                        address: _,
-                        gossip_in: receiver,
-                        gossip_out: sender,
-                    } => {
+
                         // TODO write a get_mut peer manager method
                         if let Some(peer) = peer_manager.peers.write().await.get_mut(&peer_id) {
                             let (shutdown_tx, shutdown_rx) = oneshot::channel();
@@ -123,6 +129,10 @@ where
                                 }
                             }
                             info!("Disconnected peer {}.", peer.0.alias());
+                        }
+
+                        if let Some(peer) = peer_manager.remove(&peer_id).await {
+                            info!("Removed peer {}.", peer.0.alias());
                         }
                     }
                     _ => (), // Ignore all other events for now

@@ -359,7 +359,7 @@ async fn process_internal_event(
 
             let _ = senders.events.send(Event::PeerConnected {
                 peer_id,
-                address: peer_info.address,
+                info: peer_info,
                 gossip_in,
                 gossip_out,
             });

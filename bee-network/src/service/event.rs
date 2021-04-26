@@ -76,8 +76,8 @@ pub enum Event {
     PeerConnected {
         /// The peer's id.
         peer_id: PeerId,
-        /// The peer's address.
-        address: Multiaddr,
+        /// The peer's info.
+        info: PeerInfo,
         /// The peer's message recv channel.
         gossip_in: GossipReceiver,
         /// The peer's message send channel.
