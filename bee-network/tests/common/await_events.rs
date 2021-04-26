@@ -32,8 +32,8 @@ pub async fn get_local_id(rx: &mut NetworkEventReceiver) -> PeerId {
     loop {
         tokio::select! {
             event = rx.recv() => {
-                if let Some(Event::LocalIdCreated { peer_id }) = event {
-                    return peer_id;
+                if let Some(Event::LocalIdCreated { local_id }) = event {
+                    return local_id;
                 }
             },
             () = &mut timeout => {
