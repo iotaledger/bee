@@ -55,9 +55,11 @@ async fn main() {
     };
 
     let mut config = NetworkConfig::default();
-    config.replace_addr(bind_addr);
-    config.replace_port(Protocol::Tcp(bind_port));
-    config.add_static_peer(peer_id, peer_addr, None);
+    config.replace_addr(bind_addr).expect("invalid bind address");
+    config.replace_port(Protocol::Tcp(bind_port)).expect("invalid port");
+    config
+        .add_static_peer(peer_id, peer_addr, None)
+        .expect("invalid static peer");
 
     let _config_bind_multiaddr = config.bind_multiaddr().clone();
 

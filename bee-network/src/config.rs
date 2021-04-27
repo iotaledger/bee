@@ -3,10 +3,12 @@
 
 #![cfg(feature = "full")]
 
+use crate::alias;
+
 use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
 use serde::Deserialize;
 
-use std::{borrow::Cow, str::FromStr};
+use std::{borrow::Cow, collections::HashSet};
 
 const DEFAULT_BIND_MULTIADDR: &str = "/ip4/0.0.0.0/tcp/15600";
 
@@ -15,13 +17,36 @@ const MIN_RECONNECT_INTERVAL_SECS: u64 = 1;
 
 pub const DEFAULT_MAX_UNKOWN_PEERS: usize = 4;
 
+/// [`NetworkConfigBuilder`] errors.
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    /// The provided [`Multiaddr`] has too few protocols in it.
+    #[error("Multiaddr is underspecified.")]
+    MultiaddrUnderspecified,
+    /// The provided [`Multiaddr`] has too many protocols in it.
+    #[error("Multiaddr is overspecified.")]
+    MultiaddrOverspecified,
+    /// The provided [`Protocol`] is invalid.
+    #[error("Invalid Multiaddr protocol at {}.", .0)]
+    InvalidProtocol(usize),
+    /// The provided address is invalid.
+    #[error("Invalid address protocol.")]
+    InvalidAddressProtocol,
+    /// The provided port is invalid.
+    #[error("Invalid port protocol.")]
+    InvalidPortProtocol,
+    /// The peer was already added.
+    #[error("Static peer {} already added.", alias!(.0))]
+    DuplicateStaticPeer(PeerId),
+}
+
 /// The network configuration.
 #[derive(Clone)]
 pub struct NetworkConfig {
     pub(crate) bind_multiaddr: Multiaddr,
     pub(crate) reconnect_interval_secs: u64,
     pub(crate) max_unknown_peers: usize,
-    pub(crate) static_peers: Vec<Peer>,
+    pub(crate) static_peers: HashSet<Peer>,
 }
 
 impl NetworkConfig {
@@ -33,6 +58,70 @@ impl NetworkConfig {
     /// Returns a [`NetworkConfigBuilder`] to construct a [`NetworkConfig`] iteratively.
     pub fn build() -> NetworkConfigBuilder {
         NetworkConfigBuilder::new()
+    }
+
+    /// Replaces the address, but keeps the port of the bind address.
+    ///
+    /// The argument `addr` must be either the `Ip4`, `Ip6`, or `Dns` variant of [`Protocol`].
+    pub fn replace_addr(&mut self, mut addr: Protocol) -> Result<(), Error> {
+        if !matches!(addr, Protocol::Ip4(_) | Protocol::Ip6(_) | Protocol::Dns(_)) {
+            return Err(Error::InvalidAddressProtocol);
+        }
+
+        if let Protocol::Dns(dns) = addr {
+            addr = resolve_dns_multiaddr(dns);
+        }
+
+        // Panic:
+        // The builder ensures that the following unwraps are fine. However, since the builder can also be deserialized
+        // from a file panicking can still occur. But since it that case we want the deserialization process to panic,
+        // we provide additonal context messages.
+        let port = self
+            .bind_multiaddr
+            .pop()
+            .expect("Multiaddr is empty (contains no protocols).");
+
+        let _ = self
+            .bind_multiaddr
+            .pop()
+            .expect("Multiaddr is underspecified (missing a protocol).");
+
+        self.bind_multiaddr.push(addr);
+        self.bind_multiaddr.push(port);
+
+        Ok(())
+    }
+
+    /// Replaces the port of the bind address.
+    ///
+    /// The argument `port` must be the TCP variant of [`Protocol`].
+    pub fn replace_port(&mut self, port: Protocol) -> Result<(), Error> {
+        if !matches!(port, Protocol::Tcp(_)) {
+            return Err(Error::InvalidPortProtocol);
+        }
+
+        self.bind_multiaddr.pop();
+        self.bind_multiaddr.push(port);
+
+        Ok(())
+    }
+
+    /// Adds a static peer.
+    pub fn add_static_peer(
+        &mut self,
+        peer_id: PeerId,
+        multiaddr: Multiaddr,
+        alias: Option<String>,
+    ) -> Result<(), Error> {
+        if !self.static_peers.insert(Peer {
+            peer_id,
+            multiaddr,
+            alias,
+        }) {
+            return Err(Error::DuplicateStaticPeer(peer_id));
+        }
+
+        Ok(())
     }
 
     /// Returns the configured bind address as a [`Multiaddr`].
@@ -51,58 +140,16 @@ impl NetworkConfig {
     }
 
     /// Returns the statically configured peers.
-    pub fn static_peers(&self) -> &Vec<Peer> {
+    pub fn static_peers(&self) -> &HashSet<Peer> {
         &self.static_peers
     }
 }
 
-// NOTE:
-// This impl block is separated out because its mainly useful to simplify integration testing and examples.
-// In the future we may consider to put this block behind a special feature flag so it doesn't get compiled
-// into end-user binaries. Unfortunately we cannot expose it when attributed with `#[cfg(test)]`.
+#[cfg(test)]
 impl NetworkConfig {
     /// Returns an in-memory config builder to construct a [`NetworkConfig`] iteratively.
     pub fn build_in_memory() -> InMemoryNetworkConfigBuilder {
         InMemoryNetworkConfigBuilder::new()
-    }
-
-    /// Replaces the address, but keeps the port of the bind address.
-    ///
-    /// The argument `addr` must be either the `Ip4`, `Ip6`, or `Dns` variant of [`Protocol`].
-    pub fn replace_addr(&mut self, mut addr: Protocol) {
-        if !matches!(addr, Protocol::Ip4(_) | Protocol::Ip6(_) | Protocol::Dns(_)) {
-            panic!("Invalid addr");
-        }
-
-        if let Protocol::Dns(dns) = addr {
-            addr = resolve_dns_multiaddr(dns);
-        }
-
-        let port = self.bind_multiaddr.pop().expect("multiaddr pop");
-        let _ = self.bind_multiaddr.pop().expect("multiaddr pop");
-        self.bind_multiaddr.push(addr);
-        self.bind_multiaddr.push(port);
-    }
-
-    /// Replaces the port of the bind address.
-    ///
-    /// The argument `port` must be the TCP variant of [`Protocol`].
-    pub fn replace_port(&mut self, port: Protocol) {
-        if !matches!(port, Protocol::Tcp(_)) {
-            panic!("Invalid port");
-        }
-
-        self.bind_multiaddr.pop();
-        self.bind_multiaddr.push(port);
-    }
-
-    /// Adds a static peer.
-    pub fn add_static_peer(&mut self, peer_id: PeerId, multiaddr: Multiaddr, alias: Option<String>) {
-        self.static_peers.push(Peer {
-            peer_id,
-            multiaddr,
-            alias,
-        });
     }
 }
 
@@ -122,23 +169,13 @@ impl Default for NetworkConfig {
     fn default() -> Self {
         Self {
             // Panic:
-            // Unwrapping is fine, because we made sure that the default is parseable.
+            // Unwrapping is fine, because we made sure that the default is parsable.
             bind_multiaddr: DEFAULT_BIND_MULTIADDR.parse().unwrap(),
             reconnect_interval_secs: DEFAULT_RECONNECT_INTERVAL_SECS,
             max_unknown_peers: DEFAULT_MAX_UNKOWN_PEERS,
-            static_peers: Vec::new(),
+            static_peers: Default::default(),
         }
     }
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("Multiaddr too short")]
-    MultiaddrTooShort,
-    #[error("Multiaddr too long")]
-    MultiaddrTooLong,
-    #[error("Invalid Multiaddr protocol at {}.", .0)]
-    InvalidProtocol(usize),
 }
 
 /// A network configuration builder.
@@ -179,11 +216,11 @@ impl NetworkConfigBuilder {
                     }
                     valid = true;
                 }
-                _ => return Err(Error::MultiaddrTooLong),
+                _ => return Err(Error::MultiaddrOverspecified),
             }
         }
         if !valid {
-            return Err(Error::MultiaddrTooShort);
+            return Err(Error::MultiaddrUnderspecified);
         }
 
         if is_dns {
@@ -233,7 +270,9 @@ impl NetworkConfigBuilder {
         NetworkConfig {
             bind_multiaddr: self
                 .bind_multiaddr
-                .unwrap_or_else(|| Multiaddr::from_str(DEFAULT_BIND_MULTIADDR).unwrap()),
+                // Panic:
+                // We made sure that the default is parsable.
+                .unwrap_or_else(|| DEFAULT_BIND_MULTIADDR.parse().unwrap()),
             reconnect_interval_secs: self.reconnect_interval_secs.unwrap_or(DEFAULT_RECONNECT_INTERVAL_SECS),
             max_unknown_peers: self.max_unknown_peers.unwrap_or(DEFAULT_MAX_UNKOWN_PEERS),
             static_peers: self.peering.finish().peers,
@@ -241,15 +280,14 @@ impl NetworkConfigBuilder {
     }
 }
 
-// Note:
-// Ideally should be conditionally compiled, because there is hardly any use except for integration testing. See also
-// note above.
 /// An in-memory network config builder, that becomes useful as part of integration testing.
+#[cfg(test)]
 #[derive(Default)]
 pub struct InMemoryNetworkConfigBuilder {
     bind_multiaddr: Option<Multiaddr>,
 }
 
+#[cfg(test)]
 impl InMemoryNetworkConfigBuilder {
     /// Creates a new default builder.
     pub fn new() -> Self {
@@ -282,14 +320,14 @@ impl InMemoryNetworkConfigBuilder {
                 .unwrap_or_else(|| DEFAULT_BIND_MULTIADDR_MEM.parse().unwrap()),
             reconnect_interval_secs: DEFAULT_RECONNECT_INTERVAL_SECS,
             max_unknown_peers: DEFAULT_MAX_UNKOWN_PEERS,
-            static_peers: Vec::new(),
+            static_peers: Default::default(),
         }
     }
 }
 
 #[derive(Clone)]
 pub struct PeeringConfig {
-    pub peers: Vec<Peer>,
+    pub peers: HashSet<Peer>,
 }
 
 #[derive(Clone)]
@@ -297,6 +335,18 @@ pub struct Peer {
     pub peer_id: PeerId,
     pub multiaddr: Multiaddr,
     pub alias: Option<String>,
+}
+
+impl Eq for Peer {}
+impl PartialEq for Peer {
+    fn eq(&self, other: &Self) -> bool {
+        self.peer_id.eq(&other.peer_id)
+    }
+}
+impl std::hash::Hash for Peer {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.peer_id.hash(state)
+    }
 }
 
 #[derive(Default, Deserialize)]
@@ -307,7 +357,7 @@ pub struct PeeringConfigBuilder {
 impl PeeringConfigBuilder {
     pub fn finish(self) -> PeeringConfig {
         let peers = match self.peers {
-            None => Vec::new(),
+            None => Default::default(),
             Some(peer_builders) => peer_builders
                 .into_iter()
                 .map(|builder| {
@@ -318,7 +368,7 @@ impl PeeringConfigBuilder {
                         alias: builder.alias,
                     }
                 })
-                .collect(),
+                .collect::<HashSet<_>>(),
         };
 
         PeeringConfig { peers }

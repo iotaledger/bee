@@ -166,9 +166,9 @@ fn init(
         .send(Event::LocalIdCreated { local_id })
         .expect("event send error");
 
-    let peerlist = PeerListWrapper::new(PeerList::from_peers(local_id, peers.clone()));
+    let peerlist = PeerListWrapper::new(PeerList::from_peers(local_id, peers.iter().cloned().collect()));
 
-    for peer in peers {
+    for peer in peers.into_iter() {
         let peer_id = peer.peer_id;
         event_sender
             .send(Event::PeerAdded {

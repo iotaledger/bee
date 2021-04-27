@@ -7,7 +7,7 @@ use crate::{Multiaddr, NetworkConfig, Protocol};
 
 pub fn get_network_config_with_port(port: u16) -> NetworkConfig {
     let mut config = NetworkConfig::default();
-    config.replace_port(Protocol::Tcp(port));
+    config.replace_port(Protocol::Tcp(port)).unwrap();
     config
 }
 
