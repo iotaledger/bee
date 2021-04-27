@@ -133,7 +133,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     struct Static;
     bus.add_listener::<Static, _, _>(move |event: &MessageSolidified| {
         if let Ok(mut to_solidify) = to_solidify.lock() {
-            if to_solidify.remove(&event.0) {
+            if to_solidify.remove(&event.message_id) {
                 if to_solidify.is_empty() {
                     let _ = sender.lock().map(|mut s| s.take().map(|s| s.send(())));
                 }

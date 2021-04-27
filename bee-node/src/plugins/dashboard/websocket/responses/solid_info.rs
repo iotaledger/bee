@@ -20,7 +20,7 @@ impl From<MessageSolidified> for WsEvent {
         Self::new(
             WsTopic::SolidInfo,
             WsEventInner::SolidInfo(SolidInfoResponse {
-                id: event.0.to_string(),
+                id: event.message_id.to_string(),
             }),
         )
     }

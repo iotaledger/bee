@@ -16,7 +16,8 @@ use tokio_stream::wrappers::IntervalStream;
 
 use std::{any::TypeId, convert::Infallible, time::Duration};
 
-const MPS_INTERVAL_SEC: u64 = 1;
+// In seconds.
+const MPS_INTERVAL: u64 = 1;
 
 #[derive(Default)]
 pub(crate) struct MpsWorker {}
@@ -39,7 +40,7 @@ impl<N: Node> Worker<N> for MpsWorker {
 
             let mut ticker = ShutdownStream::new(
                 shutdown,
-                IntervalStream::new(interval(Duration::from_secs(MPS_INTERVAL_SEC))),
+                IntervalStream::new(interval(Duration::from_secs(MPS_INTERVAL))),
             );
 
             let mut total_incoming = 0u64;

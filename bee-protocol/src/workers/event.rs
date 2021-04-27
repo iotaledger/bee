@@ -4,10 +4,14 @@
 use bee_message::MessageId;
 
 #[derive(Clone)]
-pub struct MessageProcessed(pub MessageId);
+pub struct MessageProcessed {
+    pub message_id: MessageId,
+}
 
 #[derive(Clone)]
-pub struct MessageSolidified(pub MessageId);
+pub struct MessageSolidified {
+    pub message_id: MessageId,
+}
 
 #[derive(Clone)]
 pub struct MpsMetricsUpdated {
@@ -31,7 +35,11 @@ pub struct NewVertex {
 }
 
 #[derive(Clone)]
-pub struct TipAdded(pub MessageId);
+pub struct TipAdded {
+    pub tip: MessageId,
+}
 
 #[derive(Clone)]
-pub struct TipRemoved(pub MessageId);
+pub struct TipRemoved {
+    pub tip: MessageId,
+}

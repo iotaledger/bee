@@ -167,7 +167,7 @@ where
                             error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
                         }
 
-                        bus.dispatch(MessageProcessed(message_id));
+                        bus.dispatch(MessageProcessed { message_id });
 
                         // TODO: boolean values are false at this point in time? trigger event from another location?
                         bus.dispatch(NewVertex {
