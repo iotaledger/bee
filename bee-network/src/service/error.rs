@@ -4,9 +4,11 @@
 /// Errors that can occur during sending/receiving of [`Command`]s and [`Event`]s.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    /// A command could not be sent.
     #[error("Error sending command.")]
     CommandSendFailure,
 
+    /// An event could not been received.
     #[error("Error receiving event.")]
-    EventRecvFailure,
+    EventReceiveFailure,
 }

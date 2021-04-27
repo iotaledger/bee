@@ -22,7 +22,7 @@ pub fn event_channel<T>() -> (mpsc::UnboundedSender<T>, mpsc::UnboundedReceiver<
     mpsc::unbounded_channel()
 }
 
-/// Describes the events produced by the networking layer.
+/// Describes the public events produced by the networking layer.
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Event {
@@ -103,6 +103,7 @@ pub enum Event {
     },
 }
 
+/// Describes the internal events.
 #[derive(Debug)]
 pub enum InternalEvent {
     /// An address was bound.
@@ -110,14 +111,21 @@ pub enum InternalEvent {
         /// The assigned bind address.
         address: Multiaddr,
     },
+
+    /// The gossip protocol has been established with a peer.
     ProtocolEstablished {
+        /// The peer's id.
         peer_id: PeerId,
+        /// The peer's address.
         peer_addr: Multiaddr,
+        /// The associated connection info with that peer.
         conn_info: ConnectionInfo,
+        /// The gossip-in channel.
         gossip_in: GossipReceiver,
+        /// The gossip-out channel.
         gossip_out: GossipSender,
     },
-    ProtocolDropped {
-        peer_id: PeerId,
-    },
+
+    /// The gossip protocol has been dropped with a peer.
+    ProtocolDropped { peer_id: PeerId },
 }
