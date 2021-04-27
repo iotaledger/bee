@@ -12,7 +12,7 @@ const DEFAULT_FETCH_INDEX_LIMIT: usize = 1_000;
 const DEFAULT_FETCH_OUTPUT_ID_LIMIT: usize = 1_000;
 const DEFAULT_ITERATION_BUDGET: usize = 100;
 
-const DEFAULT_PATH: &str = "./database";
+const DEFAULT_PATH: &str = "./storage/mainnet";
 const DEFAULT_CREATE_IF_MISSING: bool = true;
 const DEFAULT_CREATE_MISSING_COLUMN_FAMILIES: bool = true;
 const DEFAULT_ENABLE_STATISTICS: bool = false;
