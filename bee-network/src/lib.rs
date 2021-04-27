@@ -1,28 +1,46 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Networking functionality and types for nodes and clients participating in the IOTA protocol built on top of
-//! `libp2p`.
+//! Networking layer for the Bee framework.
 
-#![deny(missing_docs, warnings)]
+#![warn(missing_docs)]
 
+mod alias;
+mod config;
+mod init;
+mod network;
 mod peer;
+mod service;
+mod swarm;
+mod types;
 
-// Exports
-pub use self::peer::{PeerInfo, PeerRelation};
+#[cfg(test)]
+mod tests;
 
-// Re-Exports
+// Always exported
+pub use self::types::{PeerInfo, PeerRelation};
 #[doc(inline)]
-pub use libp2p::{
-    core::identity::{ed25519::Keypair, PublicKey},
-    multiaddr::Protocol,
-    Multiaddr, PeerId,
+pub use libp2p_core::{
+    multiaddr::{Multiaddr, Protocol},
+    PeerId,
 };
 
-/// Creates a (shorter) peer alias from a peer id.
-#[macro_export]
-macro_rules! alias {
-    ($peer_id:expr) => {
-        &$peer_id.to_base58()[46..]
-    };
-}
+// Exported only with "full" feature flag.
+#[cfg(feature = "full")]
+#[doc(inline)]
+pub use libp2p::core::identity::{ed25519::Keypair, PublicKey};
+
+#[cfg(feature = "full")]
+pub use crate::{
+    config::{NetworkConfig, NetworkConfigBuilder},
+    init::{integrated, standalone},
+    network::host::integrated::NetworkHost,
+    network::meta::Origin,
+    service::{
+        command::Command,
+        controller::{NetworkCommandSender, NetworkEventReceiver},
+        event::Event,
+        service::integrated::NetworkService,
+    },
+    swarm::protocols::gossip::{GossipReceiver, GossipSender},
+};

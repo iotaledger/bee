@@ -19,6 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.2.0 - 2021-04-27
+
+- Types;
+  - `NetworkConfig` and `NetworkConfigBuilder` types;
+  - `Command` and `NetworkCommandSender` types;
+  - `Event` and `NetworkEventReceiver` types;
+  - `GossipReceiver` and `GossipSender` types;
+  - `Origin` type;
+
+- Modules;
+  - `integrated` module with static `init` function and `NetworkService` and `NetworkHost` types;
+  - `standalone` module with static `init` function;
+
 ## 0.1.0 - 2021-04-19
 
 ### Added

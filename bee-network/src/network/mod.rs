@@ -4,5 +4,5 @@
 #![cfg(feature = "full")]
 
 pub mod error;
-pub mod list;
+pub mod host;
 pub mod meta;
