@@ -118,12 +118,15 @@ where
         // Safe to unwrap since sizes are known to be the same
         let transaction_id = TransactionId::new(milestone_id.as_ref().to_vec().try_into().unwrap());
 
-        for (index, funds) in receipt.funds().iter().enumerate() {
+        for (index, fund) in receipt.funds().iter().enumerate() {
             metadata.created_outputs.insert(
                 // Safe to unwrap because indexes are known to be valid at this point.
                 OutputId::new(transaction_id, index as u16).unwrap(),
-                CreatedOutput::new(message_id, Output::from(funds.output().clone())),
+                CreatedOutput::new(message_id, Output::from(fund.output().clone())),
             );
+            metadata
+                .balance_diffs
+                .amount_add(*fund.output().address(), fund.output().amount())?;
         }
 
         if receipt.migrated_at() < *receipt_migrated_at {
