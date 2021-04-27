@@ -58,4 +58,5 @@ name = "bee"
 path = "src/main.rs"
 
 [features]
+# Enable the node's web-based dashboard on startup.
 dashboard = [ "cap", "mime_guess", "jsonwebtoken", "rust-embed", "serde_repr", "warp-reverse-proxy" ]

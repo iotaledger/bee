@@ -10,6 +10,7 @@ mod snapshot_info;
 use structopt::StructOpt;
 use thiserror::Error;
 
+/// A type representing possible node binary tools.
 #[non_exhaustive]
 #[derive(Clone, Debug, StructOpt)]
 pub enum Tool {
@@ -25,18 +26,24 @@ pub enum Tool {
     Password(password::PasswordTool),
 }
 
+/// A type representing node binary tools errors.
 #[derive(Debug, Error)]
 pub enum ToolError {
+    /// An ED25519 error occured.
     #[error("{0}")]
     Ed25519(#[from] ed25519::Ed25519Error),
+    /// A rocksdb error occured.
     #[error("{0}")]
     Rocksdb(#[from] rocksdb::RocksdbError),
+    /// A snapshot error occured.
     #[error("{0}")]
     SnapshotInfo(#[from] snapshot_info::SnapshotInfoError),
+    /// A password error occured.
     #[error("{0}")]
     Password(#[from] password::PasswordError),
 }
 
+/// Execute the given node binary tool.
 pub fn exec(tool: &Tool) -> Result<(), ToolError> {
     match tool {
         Tool::Ed25519(tool) => ed25519::exec(tool)?,

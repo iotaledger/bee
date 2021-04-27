@@ -26,6 +26,7 @@ use std::{
 
 type WorkerStop<N> = dyn for<'a> FnOnce(&'a mut N) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> + Send;
 
+/// The core node type.
 #[allow(clippy::type_complexity)]
 pub struct BeeNode<B> {
     workers: Map<dyn AnyMapAny + Send + Sync>,
@@ -55,10 +56,12 @@ impl<B: StorageBackend> BeeNode<B> {
             .unwrap_or_else(|| panic!("Failed to remove worker `{}`", type_name::<W>()))
     }
 
+    /// Return a reference to the node's configuration state.
     pub fn config(&self) -> impl Deref<Target = NodeConfig<B>> + Clone {
         self.resource()
     }
 
+    /// Begin execution of this node, consuming it in the process, returning `Ok` if shutdown occurred successfully.
     #[allow(missing_docs)]
     pub async fn run(mut self) -> Result<(), Error> {
         info!("Running.");

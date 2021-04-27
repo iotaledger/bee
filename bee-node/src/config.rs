@@ -28,6 +28,7 @@ const DEFAULT_ALIAS: &str = "bee";
 const DEFAULT_BECH32_HRP: &str = "iota";
 const DEFAULT_NETWORK_ID: &str = "c2-mainnet";
 
+/// An error that may be generated when reading configuration data.
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("Reading the specified config file failed: {0}.")]
@@ -36,6 +37,7 @@ pub enum Error {
     NodeConfigBuilderCreationFailure(#[from] toml::de::Error),
 }
 
+/// A builder type for creating node configuration data.
 #[derive(Default, Deserialize)]
 pub struct NodeConfigBuilder<B: StorageBackend> {
     pub(crate) identity: Option<String>,
@@ -65,6 +67,7 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
         }
     }
 
+    /// Finish using this node configuration builder, turning it into a node configuration.
     pub fn finish(self) -> NodeConfig<B> {
         let (identity, identity_string, new) = if let Some(identity_string) = self.identity {
             if identity_string.len() == 128 {
@@ -119,22 +122,38 @@ fn generate_random_identity() -> (Keypair, String, bool) {
     (identity, identity_string, true)
 }
 
+/// Represents the configuration state of a node.
 pub struct NodeConfig<B: StorageBackend> {
+    /// The node's cryptographic identity.
     pub identity: (Keypair, String, bool),
+    /// The node's peer ID.
     pub node_id: PeerId,
+    /// The node's alias (unchecked string).
     pub alias: String,
     pub bech32_hrp: String,
+    /// The node's network ID.
     pub network_id: (String, u64),
+    /// The node's logger configuration.
     pub logger: LoggerConfig,
+    /// The node's network configuration.
     pub network: NetworkConfig,
+    /// The node's protocol configuration.
     pub protocol: ProtocolConfig,
+    /// The node's ReST API configuration.
     pub rest_api: RestApiConfig,
+    /// The node's snapshot configuration.
     pub snapshot: SnapshotConfig,
+    /// The node's pruning configuration.
     pub pruning: PruningConfig,
+    /// The node's storage backend configuration.
     pub storage: B::Config,
+    /// The node's tangle configuration.
     pub tangle: TangleConfig,
+    /// The node's ledger configuration.
     pub ledger: LedgerConfig,
+    /// The node's MQTT configuration.
     pub mqtt: MqttConfig,
+    /// The node's dashboard configuration.
     #[cfg(feature = "dashboard")]
     pub dashboard: DashboardConfig,
 }

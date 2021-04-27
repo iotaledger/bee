@@ -8,7 +8,7 @@ use crate::{
     config::NodeConfig,
     constants::{BEE_GIT_COMMIT, BEE_VERSION},
     node::{BeeNode, Error},
-    plugins::{self, Mqtt, VersionChecker},
+    plugins::{self, Mqtt},
     storage::StorageBackend,
 };
 
@@ -86,6 +86,7 @@ fn shutdown_listener() -> oneshot::Receiver<()> {
     receiver
 }
 
+/// A type that allows precise configuration of a node using the builder pattern.
 pub struct BeeNodeBuilder<B: StorageBackend> {
     deps: HashMap<TypeId, &'static [TypeId], FxBuildHasher>,
     worker_starts: HashMap<TypeId, Box<WorkerStart<BeeNode<B>>>>,
@@ -96,10 +97,12 @@ pub struct BeeNodeBuilder<B: StorageBackend> {
 }
 
 impl<B: StorageBackend> BeeNodeBuilder<B> {
+    /// Get a reference to the node builder's configuration state.
     pub fn config(&self) -> &NodeConfig<B> {
         &self.config
     }
 
+    /// Specify that an instance of the plugin `P` should be built into the node, with default configuration.
     pub fn with_plugin<P: plugins::Plugin>(self) -> Self
     where
         P::Config: Default,
@@ -107,6 +110,7 @@ impl<B: StorageBackend> BeeNodeBuilder<B> {
         self.with_worker::<plugins::PluginWorker<P>>()
     }
 
+    /// Specify that an instance of the plugin `P` should be built into the node, with specified configuration.
     pub fn with_plugin_cfg<P: plugins::Plugin>(self, config: P::Config) -> Self {
         self.with_worker_cfg::<plugins::PluginWorker<P>>(config)
     }
@@ -236,9 +240,10 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         .await;
 
         info!("Initializing tangle...");
-        let this = bee_tangle::init::<BeeNode<B>>(&config.tangle, this);
+        let mut this = bee_tangle::init::<BeeNode<B>>(&config.tangle, this);
 
-        let mut this = this.with_worker::<VersionChecker>();
+        // TODO: Re-add this
+        // let mut this = this.with_worker::<VersionChecker>();
         this = this.with_worker_cfg::<Mqtt>(config.mqtt);
         #[cfg(feature = "dashboard")]
         {
