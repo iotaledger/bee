@@ -10,19 +10,18 @@ use crate::{
         command::{Command, CommandReceiver},
         event::{InternalEvent, InternalEventSender},
     },
-    swarm::{behavior::SwarmBehavior, builder::build_swarm, protocols::gossip::behavior::GOSSIP_ORIGIN},
+    swarm::{behavior::SwarmBehavior, protocols::gossip::behavior::GOSSIP_ORIGIN},
     types::PeerInfo,
 };
 
-use libp2p::{identity::Keypair, swarm::SwarmEvent, Multiaddr, PeerId, Swarm};
+use libp2p::{swarm::SwarmEvent, Multiaddr, PeerId, Swarm};
 use log::*;
 
 pub struct NetworkHostConfig {
-    pub local_keys: Keypair,
-    pub bind_multiaddr: Multiaddr,
     pub internal_event_sender: InternalEventSender,
     pub internal_command_receiver: CommandReceiver,
     pub peerlist: PeerList,
+    pub swarm: Swarm<SwarmBehavior>,
 }
 
 pub mod integrated {
@@ -52,14 +51,11 @@ pub mod integrated {
 
         async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
             let NetworkHostConfig {
-                local_keys,
-                bind_multiaddr,
                 internal_event_sender,
                 mut internal_command_receiver,
                 peerlist,
+                mut swarm,
             } = config;
-
-            let mut swarm = start_swarm(local_keys.clone(), bind_multiaddr, internal_event_sender.clone()).await;
 
             node.spawn::<Self, _, _>(|mut shutdown| async move {
                 loop {
@@ -106,14 +102,11 @@ pub mod standalone {
         pub async fn start(self, config: NetworkHostConfig) {
             let NetworkHost { mut shutdown } = self;
             let NetworkHostConfig {
-                local_keys,
-                bind_multiaddr,
                 internal_event_sender,
                 mut internal_command_receiver,
                 peerlist,
+                mut swarm,
             } = config;
-
-            let mut swarm = start_swarm(local_keys.clone(), bind_multiaddr, internal_event_sender.clone()).await;
 
             tokio::spawn(async move {
                 loop {
@@ -139,22 +132,6 @@ pub mod standalone {
             info!("Network Host started.");
         }
     }
-}
-
-async fn start_swarm(
-    local_keys: Keypair,
-    bind_multiaddr: Multiaddr,
-    internal_event_sender: InternalEventSender,
-) -> Swarm<SwarmBehavior> {
-    let mut swarm = build_swarm(&local_keys, internal_event_sender)
-        .await
-        .expect("Fatal error: creating transport layer failed.");
-
-    info!("Binding to: {}", bind_multiaddr);
-
-    let _ = Swarm::listen_on(&mut swarm, bind_multiaddr).expect("Fatal error: binding address failed.");
-
-    swarm
 }
 
 async fn process_swarm_event(

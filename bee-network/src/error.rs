@@ -13,4 +13,12 @@ pub enum Error {
     /// Publishing the list of static peers failed.
     #[error("Failed to announce static peers.")]
     StaticPeersAnnouncementFailed,
+
+    /// Creating transport layer failed.
+    #[error("Failed to create transport layer.")]
+    CreatingTransportFailed,
+
+    /// Binding to an address failed.
+    #[error("Failed to bind to an address.")]
+    BindingAddressFailed,
 }

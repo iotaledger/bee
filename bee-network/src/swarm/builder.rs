@@ -20,7 +20,7 @@ use std::time::Duration;
 const MAX_CONNECTIONS_PER_PEER: u32 = 1;
 const DEFAULT_CONNECTION_TIMEOUT_SECS: u64 = 10;
 
-pub async fn build_swarm(
+pub fn build_swarm(
     local_keys: &identity::Keypair,
     internal_sender: InternalEventSender,
 ) -> Result<Swarm<SwarmBehavior>, Error> {
@@ -56,7 +56,7 @@ pub async fn build_swarm(
             .boxed()
     };
 
-    let behavior = SwarmBehavior::new(local_pk, internal_sender).await;
+    let behavior = SwarmBehavior::new(local_pk, internal_sender);
     let limits = ConnectionLimits::default().with_max_established_per_peer(Some(MAX_CONNECTIONS_PER_PEER));
 
     let swarm = SwarmBuilder::new(transport, behavior, local_id)

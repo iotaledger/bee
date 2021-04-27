@@ -28,7 +28,7 @@ pub struct SwarmBehavior {
 }
 
 impl SwarmBehavior {
-    pub async fn new(local_pk: PublicKey, internal_sender: InternalEventSender) -> Self {
+    pub fn new(local_pk: PublicKey, internal_sender: InternalEventSender) -> Self {
         let protocol_version = IOTA_PROTOCOL_VERSION.to_string();
         let config = IdentifyConfig::new(protocol_version, local_pk);
 
