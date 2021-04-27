@@ -344,7 +344,10 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
 
     if let Some(delta_path) = config.delta_path() {
         if !delta_exists {
-            if let Err(_) = download_snapshot_file(delta_path, config.download_urls()).await {
+            if download_snapshot_file(delta_path, config.download_urls())
+                .await
+                .is_err()
+            {
                 warn!("Could not download the delta snapshot file and it will not be imported.");
             }
         }
