@@ -1,6 +1,6 @@
 [package]
 name = "bee-network"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = """
@@ -14,7 +14,10 @@ homepage = "https://www.iota.org"
 
 [features]
 default = ["node"]
-node = []
+node = [
+    "libp2p"
+]
 
 [dependencies]
-libp2p = { version = "0.37", default-features = false }
+libp2p = { version = "0.37", default-features = false, optional = true }
+libp2p-core = { version = "0.28" }
