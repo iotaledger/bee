@@ -225,14 +225,11 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
         } => {
             let alias = alias.unwrap_or_else(|| alias!(peer_id).to_string());
 
-            // Note: the control flow seems to violate DRY principle, but we only need to clone `id` in one branch.
-            if relation.is_known() {
-                add_peer(peer_id, multiaddr, alias, relation, senders, peerlist).await?;
+            add_peer(peer_id, multiaddr, alias, relation, senders, peerlist).await?;
 
-                // We automatically connect to such peers. Since we can connect concurrently, we spawn a task here.
+            if relation.is_known() {
+                // We automatically connect to such peers.
                 let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
-            } else {
-                add_peer(peer_id, multiaddr, alias, relation, senders, peerlist).await?;
             }
         }
 
