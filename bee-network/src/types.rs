@@ -23,7 +23,6 @@ pub enum PeerRelation {
     Unknown,
 }
 
-// TODO: use `matches!`
 impl PeerRelation {
     /// Returns whether the peer is known.
     pub fn is_known(&self) -> bool {
@@ -35,12 +34,12 @@ impl PeerRelation {
         matches!(self, Self::Unknown)
     }
 
-    ///
+    /// Sets the relation to `PeerRelation::Known`.
     pub fn set_known(&mut self) {
         *self = Self::Known;
     }
 
-    ///
+    /// Sets the relation to `PeerRelation::Unknown`.
     pub fn set_unknown(&mut self) {
         *self = Self::Unknown;
     }
