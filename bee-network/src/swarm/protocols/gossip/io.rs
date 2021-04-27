@@ -100,7 +100,7 @@ pub fn spawn_gossip_out_processor(
         while let Some(message) = outgoing_gossip_receiver.next().await {
             let msg_len = message.len();
 
-            // NB: Instead of polling another shutdown channel, we analogously use an empty message
+            // NB: Instead of polling another shutdown channel, we use an empty message
             // to signal that we want to end the connection. We use this "trick" whenever the network
             // receives the `DisconnectPeer` command to enforce that the connection will be dropped.
 

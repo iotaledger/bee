@@ -1,14 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod gossip;
-pub use gossip::*;
-
-mod gossip_handler;
-pub use gossip_handler::*;
-
-mod gossip_io;
-pub use gossip_io::*;
-
-mod gossip_upgrade;
-pub use gossip_upgrade::*;
+pub mod behavior;
+pub mod event;
+pub mod handler;
+pub mod io;
+pub mod upgrade;

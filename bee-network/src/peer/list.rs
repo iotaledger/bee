@@ -7,7 +7,7 @@ use crate::{
     alias,
     config::Peer,
     init::global::max_unknown_peers,
-    swarm::protocols::gossip::GossipSender,
+    swarm::protocols::gossip::io::GossipSender,
     types::{PeerInfo, PeerRelation},
 };
 

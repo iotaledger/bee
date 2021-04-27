@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::protocols::gossip::{self, Gossip, GossipEvent};
+use super::protocols::gossip::{self, behavior::Gossip, event::GossipEvent};
 
 use crate::{
     alias,
@@ -80,13 +80,11 @@ impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
 
         let (reader, writer) = conn.split();
 
-        let (incoming_gossip_sender, incoming_gossip_receiver) = gossip::gossip_channel();
-        let (outgoing_gossip_sender, outgoing_gossip_receiver) = gossip::gossip_channel();
+        let (incoming_gossip_sender, incoming_gossip_receiver) = gossip::io::gossip_channel();
+        let (outgoing_gossip_sender, outgoing_gossip_receiver) = gossip::io::gossip_channel();
 
-        gossip::spawn_gossip_in_processor(peer_id, reader, incoming_gossip_sender, self.internal_sender.clone());
-        gossip::spawn_gossip_out_processor(peer_id, writer, outgoing_gossip_receiver, self.internal_sender.clone());
-
-        // TODO: retrieve the PeerInfo from the peer list
+        gossip::io::spawn_gossip_in_processor(peer_id, reader, incoming_gossip_sender, self.internal_sender.clone());
+        gossip::io::spawn_gossip_out_processor(peer_id, writer, outgoing_gossip_receiver, self.internal_sender.clone());
 
         let _ = self
             .internal_sender

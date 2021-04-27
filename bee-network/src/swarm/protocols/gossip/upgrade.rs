@@ -49,6 +49,7 @@ where
     fn upgrade_outbound(self, stream: C, _: Self::Info) -> Self::Future {
         trace!("Upgrading outbound connection to gossip protocol.");
 
+        // Just return the stream.
         future::ok(stream)
     }
 }

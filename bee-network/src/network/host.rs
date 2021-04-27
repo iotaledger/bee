@@ -10,7 +10,7 @@ use crate::{
         command::{Command, CommandReceiver},
         event::{InternalEvent, InternalEventSender},
     },
-    swarm::{behavior::SwarmBehavior, builder::build_swarm, protocols::gossip::GOSSIP_ORIGIN},
+    swarm::{behavior::SwarmBehavior, builder::build_swarm, protocols::gossip::behavior::GOSSIP_ORIGIN},
     types::PeerInfo,
 };
 

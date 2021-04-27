@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::swarm::protocols::gossip::GossipSender;
+use crate::swarm::protocols::gossip::io::GossipSender;
 
 #[derive(Clone, Debug, Default)]
 pub struct PeerState(Option<GossipSender>);

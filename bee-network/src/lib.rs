@@ -42,5 +42,5 @@ pub use crate::{
         event::Event,
         service::integrated::NetworkService,
     },
-    swarm::protocols::gossip::{GossipReceiver, GossipSender},
+    swarm::protocols::gossip::io::{GossipReceiver, GossipSender},
 };

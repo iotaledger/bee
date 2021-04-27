@@ -6,7 +6,7 @@ use super::command::Command;
 use crate::{
     network::meta::ConnectionInfo,
     peer::error::Error as PeerError,
-    swarm::protocols::gossip::{GossipReceiver, GossipSender},
+    swarm::protocols::gossip::io::{GossipReceiver, GossipSender},
     types::PeerInfo,
 };
 

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::GossipUpgrade;
+use super::upgrade::GossipUpgrade;
 
 use crate::network::meta::Origin;
 
@@ -12,6 +12,7 @@ use libp2p::{
     },
     OutboundUpgrade,
 };
+use log::trace;
 
 use std::{io, task::Poll};
 
@@ -45,17 +46,17 @@ impl ProtocolsHandler for GossipHandler {
     }
 
     fn inject_fully_negotiated_inbound(&mut self, stream: NegotiatedSubstream, _: Self::InboundOpenInfo) {
-        // println!("HANDLER: negotiated inbound");
+        trace!("handler: negotiated inbound");
         self.stream.replace(stream);
     }
 
     fn inject_fully_negotiated_outbound(&mut self, stream: NegotiatedSubstream, _: Self::OutboundOpenInfo) {
-        // println!("HANDLER: negotiated outbound");
+        trace!("handler: negotiated outbound");
         self.stream.replace(stream);
     }
 
     fn inject_event(&mut self, event: Self::InEvent) {
-        // println!("HANDLER: in event: {}", event);
+        trace!("handler: in event: {}", event);
         self.origin = event;
     }
 
@@ -84,12 +85,12 @@ impl ProtocolsHandler for GossipHandler {
             let request_sent_event = ProtocolsHandlerEvent::OutboundSubstreamRequest {
                 protocol: SubstreamProtocol::new(GossipUpgrade::default(), ()),
             };
-            // println!("HANDLER: request sent event");
+            trace!("handler: request sent event");
             return Poll::Ready(request_sent_event);
         }
 
         if let Some(stream) = self.stream.take() {
-            // println!("HANDLER: stream result event");
+            trace!("handler: stream result event");
             Poll::Ready(ProtocolsHandlerEvent::Custom(stream))
         } else {
             Poll::Pending

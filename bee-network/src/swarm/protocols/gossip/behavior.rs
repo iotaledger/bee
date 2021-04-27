@@ -1,14 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::GossipHandler;
+use super::{
+    event::{GossipEvent, GossipEventBuilder},
+    handler::GossipHandler,
+};
 
 use crate::network::meta::{ConnectionInfo, Origin};
 
 use libp2p::{
     core::{connection::ConnectionId, ConnectedPoint},
     swarm::{NegotiatedSubstream, NetworkBehaviour, NetworkBehaviourAction, ProtocolsHandler},
-    Multiaddr, PeerId,
+    PeerId,
 };
 use log::trace;
 
@@ -25,9 +28,8 @@ struct Id(PeerId, ConnectionId);
 
 #[derive(Default)]
 pub struct Gossip {
-    // Gossip event builder per peer id
     builders: HashMap<PeerId, GossipEventBuilder>,
-    // Events produced by the 'GossipHandlers'
+    // events produced by gossip handlers
     events: VecDeque<GossipEvent>,
 }
 
@@ -98,54 +100,6 @@ impl NetworkBehaviour for Gossip {
             Poll::Ready(NetworkBehaviourAction::GenerateEvent(event))
         } else {
             Poll::Pending
-        }
-    }
-}
-
-pub struct GossipEvent {
-    pub peer_id: PeerId,
-    pub peer_addr: Multiaddr,
-    pub conn: NegotiatedSubstream,
-    pub conn_info: ConnectionInfo,
-}
-
-#[derive(Default)]
-struct GossipEventBuilder {
-    peer_id: Option<PeerId>,
-    peer_addr: Option<Multiaddr>,
-    conn: Option<NegotiatedSubstream>,
-    conn_info: Option<ConnectionInfo>,
-}
-
-impl GossipEventBuilder {
-    fn with_peer_id(mut self, peer_id: PeerId) -> Self {
-        self.peer_id.replace(peer_id);
-        self
-    }
-
-    fn with_peer_addr(mut self, peer_addr: Multiaddr) -> Self {
-        self.peer_addr.replace(peer_addr);
-        self
-    }
-
-    fn with_conn(mut self, conn: NegotiatedSubstream) -> Self {
-        self.conn.replace(conn);
-        self
-    }
-
-    fn with_conn_info(mut self, conn_info: ConnectionInfo) -> Self {
-        self.conn_info.replace(conn_info);
-        self
-    }
-
-    fn finish(self) -> GossipEvent {
-        // Panic:
-        // Unwrapping is fine at this point.
-        GossipEvent {
-            peer_id: self.peer_id.unwrap(),
-            peer_addr: self.peer_addr.unwrap(),
-            conn: self.conn.unwrap(),
-            conn_info: self.conn_info.unwrap(),
         }
     }
 }
