@@ -19,8 +19,8 @@ use std::{
     sync::Arc,
 };
 
-const REMOTE_PEERS_CAP: usize = 8;
-const LOCAL_ADDRS_CAP: usize = 4;
+const REMOTE_PEERS_INITIAL_CAP: usize = 8;
+const LOCAL_ADDRS_INITIAL_CAP: usize = 4;
 
 /// A thread-safe wrapper around a [`PeerList`].
 #[derive(Debug, Clone)]
@@ -45,15 +45,15 @@ impl PeerList {
     pub fn new(local_id: PeerId) -> Self {
         Self {
             local_id,
-            local_addrs: HashSet::with_capacity(LOCAL_ADDRS_CAP),
-            peers: HashMap::with_capacity(REMOTE_PEERS_CAP),
+            local_addrs: HashSet::with_capacity(LOCAL_ADDRS_INITIAL_CAP),
+            peers: HashMap::with_capacity(REMOTE_PEERS_INITIAL_CAP),
             banned_peers: HashSet::default(),
             banned_addrs: HashSet::default(),
         }
     }
 
     pub fn from_peers(local_id: PeerId, peers: Vec<Peer>) -> Self {
-        let mut p = HashMap::with_capacity(REMOTE_PEERS_CAP);
+        let mut p = HashMap::with_capacity(REMOTE_PEERS_INITIAL_CAP);
 
         p.extend(peers.into_iter().map(|peer| {
             (
@@ -71,7 +71,7 @@ impl PeerList {
 
         Self {
             local_id,
-            local_addrs: HashSet::with_capacity(LOCAL_ADDRS_CAP),
+            local_addrs: HashSet::with_capacity(LOCAL_ADDRS_INITIAL_CAP),
             peers: p,
             banned_peers: HashSet::default(),
             banned_addrs: HashSet::default(),
