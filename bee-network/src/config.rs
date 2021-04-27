@@ -131,6 +131,16 @@ impl Default for NetworkConfig {
     }
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Multiaddr too short")]
+    MultiaddrTooShort,
+    #[error("Multiaddr too long")]
+    MultiaddrTooLong,
+    #[error("Invalid Multiaddr protocol at {}.", .0)]
+    InvalidProtocol(usize),
+}
+
 /// A network configuration builder.
 #[derive(Default, Deserialize)]
 pub struct NetworkConfigBuilder {
@@ -148,7 +158,7 @@ impl NetworkConfigBuilder {
     }
 
     /// Specifies the bind addresses.
-    pub fn with_bind_multiaddr(mut self, mut multiaddr: Multiaddr) -> Self {
+    pub fn with_bind_multiaddr(mut self, mut multiaddr: Multiaddr) -> Result<Self, Error> {
         let mut valid = false;
         let mut is_dns = false;
 
@@ -156,7 +166,7 @@ impl NetworkConfigBuilder {
             match i {
                 0 => {
                     if !matches!(p, Protocol::Ip4(_) | Protocol::Ip6(_) | Protocol::Dns(_)) {
-                        panic!("Invalid Multiaddr: at index 0")
+                        return Err(Error::InvalidProtocol(0));
                     }
 
                     if matches!(p, Protocol::Dns(_)) {
@@ -165,15 +175,15 @@ impl NetworkConfigBuilder {
                 }
                 1 => {
                     if !matches!(p, Protocol::Tcp(_)) {
-                        panic!("Invalid Multiaddr: at index 1")
+                        return Err(Error::InvalidProtocol(1));
                     }
                     valid = true;
                 }
-                _ => panic!("Invalid Multiaddr: Too long"),
+                _ => return Err(Error::MultiaddrTooLong),
             }
         }
         if !valid {
-            panic!("Invalid Multiaddr: Too short");
+            return Err(Error::MultiaddrTooShort);
         }
 
         if is_dns {
@@ -202,7 +212,7 @@ impl NetworkConfigBuilder {
         }
 
         self.bind_multiaddr.replace(multiaddr);
-        self
+        Ok(self)
     }
 
     /// Specifies an interval in seconds for automatic reconnects.
@@ -356,6 +366,7 @@ mod tests {
     fn create_with_builder_and_too_short_bind_address() {
         let _config = NetworkConfig::build()
             .with_bind_multiaddr("/ip4/127.0.0.1".parse().unwrap())
+            .unwrap()
             .finish();
     }
 
@@ -368,6 +379,7 @@ mod tests {
                     .parse()
                     .unwrap(),
             )
+            .unwrap()
             .finish();
     }
 
@@ -375,6 +387,7 @@ mod tests {
     fn create_with_builder_and_valid_ip_bind_address() {
         let _config = NetworkConfig::build()
             .with_bind_multiaddr("/ip4/127.0.0.1/tcp/1337".parse().unwrap())
+            .unwrap()
             .finish();
     }
 
@@ -382,6 +395,7 @@ mod tests {
     fn create_with_builder_and_valid_dns_bind_address() {
         let _config = NetworkConfig::build()
             .with_bind_multiaddr("/dns/localhost/tcp/1337".parse().unwrap())
+            .unwrap()
             .finish();
     }
 
