@@ -3,20 +3,26 @@
 
 use libp2p::{Multiaddr, PeerId};
 
+/// [`PeerList`] errors.
 #[derive(Clone, Debug, thiserror::Error)]
 pub enum Error {
+    /// A failure due to an address being added twice.
     #[error("Already added that address: {}", .0)]
     AddressIsAdded(Multiaddr),
 
+    /// A failure due to an address being banned.
     #[error("Already banned that address: {}", .0)]
     AddressIsBanned(Multiaddr),
 
+    /// A failure due to an address being one of the bind addresses.
     #[error("Address is one of the local bind addresses: {}", .0)]
     AddressIsLocal(Multiaddr),
 
+    /// A failure due to an address being already unbanned.
     #[error("Already unbanned that address: {}", .0)]
     AddressIsUnbanned(Multiaddr),
 
+    /// A failure due to a peer id being equal to the local id.
     #[error("Peer matches the local Id: {}", .0)]
     PeerIsLocal(PeerId),
 

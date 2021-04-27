@@ -3,7 +3,7 @@
 
 #![cfg(feature = "full")]
 
-/// Errors during initialization.
+/// Errors during network initialization.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// Publishing the local (peer) id failed.
