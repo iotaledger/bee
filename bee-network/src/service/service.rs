@@ -63,7 +63,7 @@ pub mod integrated {
         type Error = Infallible;
 
         fn dependencies() -> &'static [TypeId] {
-            vec![].leak()
+            &[]
         }
 
         async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
