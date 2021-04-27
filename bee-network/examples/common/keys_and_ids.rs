@@ -23,25 +23,24 @@ pub fn gen_deterministic_peer_id(gen: impl ToString) -> PeerId {
 }
 
 pub fn gen_deterministic_keys(gen: impl ToString) -> Keypair {
-    let hex_chars = ('0'..'9').chain('a'..'f').collect::<Vec<_>>();
     let gen = gen.to_string();
-    let gen2 = gen.to_string();
-    let chars = gen2.chars();
-
-    for c in gen.chars() {
-        if !hex_chars.contains(&c) {
-            panic!("invalid generator");
+    gen.chars().for_each(|c| {
+        if !c.is_ascii_hexdigit() {
+            panic!("invalid generator string");
         }
-    }
+    });
 
     let div = 64 / gen.len();
     let rem = 64 % gen.len();
 
-    let identity_sk = repeat(gen)
+    let identity_sk = repeat(gen.clone())
         .take(div)
-        .chain(chars.into_iter().map(Into::into).take(rem))
+        .chain(gen.chars().map(Into::into).take(rem))
         .collect::<String>();
 
+    // Panic:
+    // The input consists only of valid hex chars and the length for the secret key
+    // is also correct. Hence, the `unwrap`s are fine.
     let mut hex_sk = hex::decode(identity_sk).unwrap();
     let sk = SecretKey::from_bytes(&mut hex_sk).unwrap();
     sk.into()
