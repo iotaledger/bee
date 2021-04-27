@@ -25,6 +25,7 @@ use bee_message::{
     unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
     Message, MessageBuilder, MessageId,
 };
+#[cfg(feature = "peer")]
 use bee_protocol::types::peer::Peer;
 
 use serde::{Deserialize, Serialize, Serializer};
@@ -810,6 +811,7 @@ impl TryFrom<&TreasuryTransactionPayloadDto> for TreasuryTransactionPayload {
 }
 
 /// Describes a peer.
+#[cfg(feature = "peer")]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PeerDto {
     pub id: String,
@@ -823,6 +825,7 @@ pub struct PeerDto {
     pub gossip: Option<GossipDto>,
 }
 
+#[cfg(feature = "peer")]
 impl From<&Peer> for PeerDto {
     fn from(peer: &Peer) -> Self {
         PeerDto {

@@ -3,8 +3,11 @@
 
 use crate::types::{
     body::BodyInner,
-    dtos::{LedgerInclusionStateDto, MessageDto, OutputDto, PeerDto, ReceiptDto},
+    dtos::{LedgerInclusionStateDto, MessageDto, OutputDto, ReceiptDto},
 };
+
+#[cfg(feature = "peer")]
+use crate::types::dtos::PeerDto;
 
 use serde::{Deserialize, Serialize};
 
@@ -217,23 +220,29 @@ impl BodyInner for UtxoChangesResponse {}
 
 /// Response of GET /api/v1/peers.
 /// Returns information about all peers of the node.
+#[cfg(feature = "peer")]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PeersResponse(pub Vec<PeerDto>);
 
+#[cfg(feature = "peer")]
 impl BodyInner for PeersResponse {}
 
 /// Response of POST /api/v1/peers.
 /// Returns information about the added peer.
+#[cfg(feature = "peer")]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AddPeerResponse(pub PeerDto);
 
+#[cfg(feature = "peer")]
 impl BodyInner for AddPeerResponse {}
 
 /// Response of GET /api/v1/peer/{peer_id}.
 /// Returns information about a specific peer of the node.
+#[cfg(feature = "peer")]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PeerResponse(pub PeerDto);
 
+#[cfg(feature = "peer")]
 impl BodyInner for PeerResponse {}
 
 /// Response of GET /api/plugins/debug/whiteflag.
