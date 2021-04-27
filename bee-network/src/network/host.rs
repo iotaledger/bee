@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use super::error::Error;
@@ -17,8 +17,6 @@ use crate::{
 use libp2p::{identity::Keypair, swarm::SwarmEvent, Multiaddr, PeerId, Swarm};
 use log::*;
 
-// TODO: move this to `config` module
-// TODO: rename fields: keys, bind, peerlist, ...
 pub struct NetworkHostConfig {
     pub local_keys: Keypair,
     pub bind_multiaddr: Multiaddr,

@@ -363,28 +363,6 @@ impl PeerList {
 
         None
     }
-
-    // pub fn connect(&self, peer_id: &PeerId, gossip_sender: GossipSender) -> Result<(), Error> {
-    //     let (_, state) = this.get_mut(peer_id).ok_or_else(|| Error::PeerMissing(*peer_id))?;
-
-    //     if state.is_connected() {
-    //         Err(Error::PeerAlreadyConnected(*peer_id))
-    //     } else {
-    //         state.set_connected(gossip_sender);
-    //         Ok(())
-    //     }
-    // }
-
-    // pub fn disconnect(&self, peer_id: &PeerId) -> Result<GossipSender, Error> {
-    //     let (_, state) = this.get_mut(peer_id).ok_or_else(|| Error::PeerMissing(*peer_id))?;
-
-    //     if state.is_disconnected() {
-    //         Err(Error::PeerAlreadyDisconnected(*peer_id))
-    //     } else {
-    //         // `unwrap` is safe, because we know we're connected.
-    //         Ok(state.set_disconnected().unwrap())
-    //     }
-    // }
 }
 
 #[cfg(test)]

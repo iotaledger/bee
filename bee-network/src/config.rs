@@ -212,7 +212,7 @@ impl NetworkConfigBuilder {
         self
     }
 
-    /// The maximum number of gossip connections with unknown peers.
+    /// Specifies the maximum number of gossip connections with unknown peers.
     pub fn with_max_unknown_peers(mut self, n: usize) -> Self {
         self.max_unknown_peers.replace(n);
         self
@@ -399,26 +399,4 @@ mod tests {
             .with_bind_multiaddr("/memory/1337".parse().unwrap())
             .finish();
     }
-
-    #[test]
-    fn create_with_peers() {
-        // let _config = NetworkConfig::build().with_static_peers().
-    }
-
-    //     #[test]
-    //     fn deserialize_config() {
-    //         let s = r"[network]
-    // # https://docs.libp2p.io/concepts/addressing/
-    // bind_multiaddress       = "/ip4/0.0.0.0/tcp/15600"
-    // reconnect_interval_secs = 30
-    // max_unknown_peers       = 4
-
-    // [network.peering]
-    // #[[network.peering.peers]]
-    // #multiaddress = ""
-    // #alias        = ""
-    // #[[network.peering.peers]]
-    // #multiaddress = ""
-    // #alias        = ""'
-    //     }
 }
