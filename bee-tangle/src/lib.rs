@@ -19,14 +19,16 @@ pub mod ms_tangle;
 pub mod solid_entry_point;
 /// Types used for interoperation with a node's storage layer.
 pub mod storage;
+/// The overall `TangleWorker` type. Used as part of the bee runtime in a node.
+pub mod tangle_worker;
+/// A worker that periodically cleans the tip pool.
+pub mod tip_pool_cleaner_worker;
 /// Common tangle traversal functionality.
 pub mod traversal;
 /// Types used to represent unreferenced messages.
 pub mod unreferenced_message;
 /// The URTS tips pool.
 pub mod urts;
-/// The overall `TangleWorker` type. Used as part of the bee runtime in a node.
-pub mod worker;
 
 mod tangle;
 mod vec_set;
@@ -34,7 +36,9 @@ mod vertex;
 
 pub use ms_tangle::MsTangle;
 pub use tangle::{Hooks, Tangle};
-pub use worker::TangleWorker;
+pub use tangle_worker::TangleWorker;
+
+use tip_pool_cleaner_worker::TipPoolCleanerWorker;
 
 use crate::vec_set::VecSet;
 
@@ -60,5 +64,7 @@ pub fn init<N: Node>(tangle_config: &config::TangleConfig, node_builder: N::Buil
 where
     N::Backend: storage::StorageBackend,
 {
-    node_builder.with_worker_cfg::<TangleWorker>(tangle_config.clone())
+    node_builder
+        .with_worker_cfg::<TangleWorker>(tangle_config.clone())
+        .with_worker::<TipPoolCleanerWorker>()
 }
