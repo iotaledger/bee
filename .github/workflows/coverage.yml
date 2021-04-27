@@ -5,6 +5,7 @@ on:
     branches:
       - dev
       - stable
+      - dev-message-coverage
     paths:
       - '**.rs'
       - '**.toml'
