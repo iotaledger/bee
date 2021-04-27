@@ -6,7 +6,6 @@ use super::{
     event::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
 };
 
-// TODO: introduce `service::error` module.
 use crate::{
     alias,
     init::global::reconnect_interval_secs,

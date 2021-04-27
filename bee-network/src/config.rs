@@ -61,7 +61,7 @@ impl NetworkConfig {
 // In the future we may consider to put this block behind a special feature flag so it doesn't get compiled
 // into end-user binaries. Unfortunately we cannot expose it when attributed with `#[cfg(test)]`.
 impl NetworkConfig {
-    /// Returns a [`InMemoryNetworkConfigBuilder`] to construct a [`NetworkConfig`] iteratively.
+    /// Returns an in-memory config builder to construct a [`NetworkConfig`] iteratively.
     pub fn build_in_memory() -> InMemoryNetworkConfigBuilder {
         InMemoryNetworkConfigBuilder::new()
     }

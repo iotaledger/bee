@@ -3,16 +3,9 @@
 
 use super::{
     command::{Command, CommandSender},
+    error::Error,
     event::{Event, EventReceiver},
 };
-
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("Error sending command.")]
-    CommandSendFailure,
-    #[error("Error receiving event.")]
-    EventRecvFailure,
-}
 
 /// Lets the user send [`Command`]s to the network layer.
 #[derive(Clone, Debug)]
