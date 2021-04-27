@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 use std::path::{Path, PathBuf};
 
-const DEFAULT_FULL_PATH: &str = "./snapshots/mainnet/full_snapshot.bin";
+const DEFAULT_FULL_PATH: &str = "./snapshots/mainnet/latest-full_snapshot.bin";
 const DEFAULT_DOWNLOAD_URLS: Vec<String> = Vec::new();
 const DEFAULT_DEPTH: u32 = 50;
 const DEFAULT_INTERVAL_SYNCED: u32 = 50;

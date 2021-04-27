@@ -25,8 +25,8 @@ use thiserror::Error;
 use std::{convert::TryInto, fs, path::Path};
 
 const DEFAULT_ALIAS: &str = "bee";
-const DEFAULT_BECH32_HRP: &str = "atoi";
-const DEFAULT_NETWORK_ID: &str = "testnet7";
+const DEFAULT_BECH32_HRP: &str = "iota";
+const DEFAULT_NETWORK_ID: &str = "c2-mainnet";
 
 #[derive(Debug, Error)]
 pub enum Error {

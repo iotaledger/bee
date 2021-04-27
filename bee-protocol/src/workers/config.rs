@@ -11,14 +11,14 @@ const DEFAULT_MINIMUM_POW_SCORE: f64 = 4000.0;
 const DEFAULT_COO_PUBLIC_KEY_COUNT: usize = 2;
 const DEFAULT_COO_PUBLIC_KEY_RANGES: [(&str, MilestoneIndex, MilestoneIndex); 2] = [
     (
-        "ed3c3f1a319ff4e909cf2771d79fece0ac9bd9fd2ee49ea6c0885c9cb3b1248c",
+        "a9b46fe743df783dedd00c954612428b34241f5913cf249d75bed3aafd65e4cd",
         MilestoneIndex(0),
-        MilestoneIndex(0),
+        MilestoneIndex(777600),
     ),
     (
-        "f6752f5f46a53364e2ee9c4d662d762a81efd51010282a75cd6bd03f28ef349c",
+        "365fb85e7568b9b32f7359d6cbafa9814472ad0ecbad32d77beaf5dd9e84c6ba",
         MilestoneIndex(0),
-        MilestoneIndex(0),
+        MilestoneIndex(1555200),
     ),
 ];
 const DEFAULT_MESSAGE_WORKER_CACHE: usize = 10000;
