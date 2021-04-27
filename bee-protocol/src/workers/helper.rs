@@ -16,8 +16,6 @@ use bee_tangle::MsTangle;
 use log::warn;
 use tokio::sync::mpsc;
 
-// TODO move some functions to workers
-
 // MilestoneRequest
 
 pub(crate) async fn request_milestone<B: StorageBackend>(

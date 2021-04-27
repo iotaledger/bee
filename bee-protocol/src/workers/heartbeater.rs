@@ -17,9 +17,9 @@ use tokio_stream::wrappers::IntervalStream;
 
 use std::{any::TypeId, convert::Infallible, time::Duration};
 
-const _HEARTBEAT_SEND_INTERVAL_SEC: u64 = 30;
-const _HEARTBEAT_RECEIVE_INTERVAL_SEC: u64 = 100;
-const CHECK_HEARTBEATS_INTERVAL_SEC: u64 = 5;
+const _HEARTBEAT_SEND_INTERVAL: u64 = 30; // In seconds.
+const _HEARTBEAT_RECEIVE_INTERVAL: u64 = 100; // In seconds.
+const CHECK_HEARTBEATS_INTERVAL: u64 = 5; // In seconds.
 
 #[derive(Default)]
 pub(crate) struct HeartbeaterWorker {}
@@ -51,7 +51,7 @@ where
 
             let mut ticker = ShutdownStream::new(
                 shutdown,
-                IntervalStream::new(interval(Duration::from_secs(CHECK_HEARTBEATS_INTERVAL_SEC))),
+                IntervalStream::new(interval(Duration::from_secs(CHECK_HEARTBEATS_INTERVAL))),
             );
 
             while ticker.next().await.is_some() {
