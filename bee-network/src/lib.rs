@@ -4,6 +4,7 @@
 //! Networking layer for the Bee framework.
 
 #![warn(missing_docs)]
+#![allow(clippy::module_inception)]
 
 mod alias;
 mod config;
