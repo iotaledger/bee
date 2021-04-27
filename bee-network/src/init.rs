@@ -82,7 +82,7 @@ pub mod standalone {
         config: NetworkConfig,
         keys: Keypair,
         network_id: u64,
-        shutdown: Box<dyn Future<Output = ()> + Send + Unpin>,
+        shutdown: impl Future + Send + Unpin + 'static,
     ) -> (NetworkCommandSender, NetworkEventReceiver) {
         let (network_config, service_config, network_command_sender, network_event_receiver) =
             super::init(config, keys, network_id);
