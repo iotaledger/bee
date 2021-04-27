@@ -192,13 +192,15 @@ impl PeerList {
     where
         P: Fn(&PeerInfo, &PeerState) -> bool,
     {
-        let can_remove = if let Some((info, state)) = self.peers.get(peer_id) {
-            predicate(info, state)
-        } else {
-            return false;
-        };
+        // NB: Since we drop a potential reference to `&(PeerInfo, PeerState)` this code won't create a deadlock in case
+        // we refactor `PeerList` in a way that `.remove` would only take a `&self`.
 
-        if can_remove {
+        if self
+            .peers
+            .get(peer_id)
+            .filter(|(info, state)| predicate(info, state))
+            .is_some()
+        {
             self.peers.remove(peer_id).is_some()
         } else {
             false
@@ -395,7 +397,7 @@ mod tests {
     }
 
     #[test]
-    fn double_insert() {
+    fn insert() {
         let local_id = gen_constant_peer_id();
         let mut pl = PeerList::new(local_id);
 
@@ -430,6 +432,24 @@ mod tests {
 
         pl.insert_peer(peer_id, peer_info.clone()).unwrap();
         pl.accepts_incoming_peer(&peer_id, &peer_info).unwrap();
+    }
+
+    #[test]
+    fn conditional_remove() {
+        let local_id = gen_constant_peer_id();
+        let mut pl = PeerList::new(local_id);
+
+        let peer_id = gen_random_peer_id();
+
+        pl.insert_peer(peer_id, gen_deterministic_peer_info(0, PeerRelation::Known))
+            .unwrap();
+        assert_eq!(1, pl.len());
+
+        pl.remove_if(&peer_id, |info, _| info.relation.is_unknown());
+        assert_eq!(1, pl.len());
+
+        pl.remove_if(&peer_id, |info, _| info.relation.is_known());
+        assert_eq!(0, pl.len());
     }
 
     // =======================================================

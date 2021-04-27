@@ -400,9 +400,11 @@ async fn add_peer(
             // manual peer manager, and hence, as unknown. In such a case we simply update to the correct
             // info (address, alias, relation).
 
-            if matches!(e, PeerError::PeerIsAdded(_))
-            // && peer_info.relation.is_known()
-            {
+            // TODO: Since we nowadays add static peers during initialization (`init`), the above mentioned edge case is
+            // impossible to happen, and hence this match case can probably be removed. But this needs to be tested
+            // thoroughly in a live setup to really be sure.
+
+            if matches!(e, PeerError::PeerIsAdded(_)) {
                 match peerlist.update_info(&peer_id, |info| *info = peer_info.clone()) {
                     Ok(()) => {
                         let _ = senders.events.send(Event::PeerAdded {

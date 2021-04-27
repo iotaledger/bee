@@ -44,14 +44,14 @@ impl NetworkBehaviour for Gossip {
     type OutEvent = GossipEvent;
 
     fn new_handler(&mut self) -> Self::ProtocolsHandler {
-        // FIXME
+        // FIXME:
         let origin = if GOSSIP_ORIGIN.swap(false, Ordering::SeqCst) {
             Origin::Outbound
         } else {
             Origin::Inbound
         };
 
-        trace!("GOSSIP: New_handler: {}", origin);
+        trace!("GOSSIP: new_handler: {}", origin);
         GossipHandler::new(origin)
     }
 
@@ -78,23 +78,18 @@ impl NetworkBehaviour for Gossip {
 
     fn inject_connected(&mut self, _peer_id: &libp2p::PeerId) {}
 
-    fn inject_event(
-        &mut self,
-        peer_id: PeerId,
-        _conn_id: ConnectionId,
-        conn: NegotiatedSubstream, //<GossipHandler as ProtocolsHandler>::OutEvent,
-    ) {
+    fn inject_event(&mut self, peer_id: PeerId, _: ConnectionId, conn: NegotiatedSubstream) {
         if let Some(builder) = self.builders.remove(&peer_id) {
             self.events.push_back(builder.with_conn(conn).finish());
         }
     }
 
-    fn inject_disconnected(&mut self, _peer_id: &libp2p::PeerId) {}
+    fn inject_disconnected(&mut self, _: &libp2p::PeerId) {}
 
     fn poll(
         &mut self,
-        _cx: &mut std::task::Context<'_>,
-        _params: &mut impl libp2p::swarm::PollParameters,
+        _: &mut std::task::Context<'_>,
+        _: &mut impl libp2p::swarm::PollParameters,
     ) -> Poll<NetworkBehaviourAction<<Self::ProtocolsHandler as ProtocolsHandler>::InEvent, Self::OutEvent>> {
         if let Some(event) = self.events.pop_front() {
             Poll::Ready(NetworkBehaviourAction::GenerateEvent(event))

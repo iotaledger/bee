@@ -137,13 +137,5 @@ async fn send_valid_message<S>(stream: &mut S, message: &[u8]) -> bool
 where
     S: AsyncWrite + Unpin,
 {
-    if stream.write_all(message).await.is_err() {
-        return false;
-    }
-
-    if stream.flush().await.is_err() {
-        return false;
-    }
-
-    true
+    stream.write_all(message).await.is_ok() && stream.flush().await.is_ok()
 }
