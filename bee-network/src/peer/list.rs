@@ -79,9 +79,9 @@ impl PeerList {
     }
 
     pub fn insert_peer(&mut self, peer_id: PeerId, peer_info: PeerInfo) -> Result<(), (PeerId, PeerInfo, Error)> {
-        // if let Err(e) = self.accepts_inserting_peer(&peer_id, &peer_info) {
-        //     return Err((peer_id, peer_info, e));
-        // }
+        if self.contains(&peer_id) {
+            return Err((peer_id, peer_info, Error::PeerIsAdded(peer_id)));
+        }
 
         // Since we already checked that such a `peer_id` is not yet present, the returned value is always `None`.
         let _ = self.peers.insert(peer_id, (peer_info, PeerState::new_disconnected()));
@@ -380,7 +380,6 @@ mod tests {
     #[test]
     fn add_peers() {
         let local_id = gen_constant_peer_id();
-
         let mut pl = PeerList::new(local_id);
 
         for i in 1..=3 {
@@ -393,6 +392,20 @@ mod tests {
             );
             assert_eq!(pl.len(), i as usize);
         }
+    }
+
+    #[test]
+    fn double_insert() {
+        let local_id = gen_constant_peer_id();
+        let mut pl = PeerList::new(local_id);
+
+        let peer_id = gen_constant_peer_id();
+
+        assert!(pl.insert_peer(peer_id, gen_constant_peer_info()).is_ok());
+        assert!(matches!(
+            pl.insert_peer(peer_id, gen_constant_peer_info()),
+            Err((_, _, Error::PeerIsAdded(_)))
+        ));
     }
 
     #[test]
