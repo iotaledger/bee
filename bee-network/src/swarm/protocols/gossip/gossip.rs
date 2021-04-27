@@ -10,7 +10,7 @@ use libp2p::{
     swarm::{NegotiatedSubstream, NetworkBehaviour, NetworkBehaviourAction, ProtocolsHandler},
     Multiaddr, PeerId,
 };
-use tokio::sync::mpsc;
+use log::trace;
 
 use std::{
     collections::{HashMap, VecDeque},
@@ -18,16 +18,13 @@ use std::{
     task::Poll,
 };
 
-// false == inbound
 pub static GOSSIP_ORIGIN: AtomicBool = AtomicBool::new(false);
 
 #[derive(Eq, PartialEq, Hash, Debug, Clone, Copy)]
 struct Id(PeerId, ConnectionId);
 
-// #[derive(Default)]
+#[derive(Default)]
 pub struct Gossip {
-    // Connection origins we are listening to
-    // origin_rx: mpsc::UnboundedReceiver<Origin>,
     // Gossip event builder per peer id
     builders: HashMap<PeerId, GossipEventBuilder>,
     // Events produced by the 'GossipHandlers'
@@ -35,40 +32,29 @@ pub struct Gossip {
 }
 
 impl Gossip {
-    pub fn new(_origin_rx: mpsc::UnboundedReceiver<Origin>) -> Self {
-        Self {
-            // origin_rx,
-            builders: HashMap::default(),
-            events: VecDeque::default(),
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 
 impl NetworkBehaviour for Gossip {
     type ProtocolsHandler = GossipHandler;
-    type OutEvent = GossipEvent; //<Self::ProtocolsHandler as ProtocolsHandler>::OutEvent;
+    type OutEvent = GossipEvent;
 
     fn new_handler(&mut self) -> Self::ProtocolsHandler {
-        // NB: it is very hackish how we solve this. There has to be a better way!
-
-        // let origin = if let Some(origin) = self.origin_rx.recv().now_or_never().flatten() {
-        //     origin
-        // } else {
-        //     Origin::Inbound
-        // };
-
+        // FIXME
         let origin = if GOSSIP_ORIGIN.swap(false, Ordering::SeqCst) {
             Origin::Outbound
         } else {
             Origin::Inbound
         };
 
-        // println!("GOSSIP: New_handler: {}", origin);
+        trace!("GOSSIP: New_handler: {}", origin);
         GossipHandler::new(origin)
     }
 
-    fn addresses_of_peer(&mut self, _peer_id: &libp2p::PeerId) -> Vec<libp2p::Multiaddr> {
-        // println!("Addresses of peer: {}", peer_id);
+    fn addresses_of_peer(&mut self, peer_id: &libp2p::PeerId) -> Vec<libp2p::Multiaddr> {
+        trace!("Addresses of peer: {}", peer_id);
         Vec::new()
     }
 
@@ -79,8 +65,6 @@ impl NetworkBehaviour for Gossip {
             ConnectedPoint::Dialer { address } => (address.clone(), Origin::Outbound),
             ConnectedPoint::Listener { send_back_addr, .. } => (send_back_addr.clone(), Origin::Inbound),
         };
-
-        // println!("GOSSIP: Connection ({}) established: {} [{}]", origin, peer_id, address);
 
         let builder = GossipEventBuilder::default()
             .with_peer_id(*peer_id)
@@ -99,7 +83,6 @@ impl NetworkBehaviour for Gossip {
         conn: NegotiatedSubstream, //<GossipHandler as ProtocolsHandler>::OutEvent,
     ) {
         if let Some(builder) = self.builders.remove(&peer_id) {
-            // println!("GOSSIP: finishing builder for {}", peer_id);
             self.events.push_back(builder.with_conn(conn).finish());
         }
     }
@@ -112,10 +95,8 @@ impl NetworkBehaviour for Gossip {
         _params: &mut impl libp2p::swarm::PollParameters,
     ) -> Poll<NetworkBehaviourAction<<Self::ProtocolsHandler as ProtocolsHandler>::InEvent, Self::OutEvent>> {
         if let Some(event) = self.events.pop_front() {
-            // println!("GOSSIP: POLL READY");
             Poll::Ready(NetworkBehaviourAction::GenerateEvent(event))
         } else {
-            // println!("GOSSIP: POLL PENDING");
             Poll::Pending
         }
     }
@@ -158,7 +139,8 @@ impl GossipEventBuilder {
     }
 
     fn finish(self) -> GossipEvent {
-        // If any 'unwrap' fails, then that's a programmer error!
+        // Panic:
+        // Unwrapping is fine at this point.
         GossipEvent {
             peer_id: self.peer_id.unwrap(),
             peer_addr: self.peer_addr.unwrap(),

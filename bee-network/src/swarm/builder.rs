@@ -3,7 +3,7 @@
 
 use super::behavior::SwarmBehavior;
 
-use crate::{network::meta::Origin, service::event::InternalEventSender};
+use crate::service::event::InternalEventSender;
 
 use libp2p::{
     core::{
@@ -57,10 +57,7 @@ pub async fn build_swarm(
             .boxed()
     };
 
-    // FIXME
-    let (_tx, rx) = tokio::sync::mpsc::unbounded_channel::<Origin>();
-
-    let behavior = SwarmBehavior::new(local_pk, internal_sender, rx).await;
+    let behavior = SwarmBehavior::new(local_pk, internal_sender).await;
     let limits = ConnectionLimits::default().with_max_established_per_peer(Some(MAX_CONNECTIONS_PER_PEER));
 
     let swarm = SwarmBuilder::new(transport, behavior, local_id)

@@ -5,7 +5,6 @@ use super::protocols::gossip::{self, Gossip, GossipEvent};
 
 use crate::{
     alias,
-    network::meta::Origin,
     service::event::{InternalEvent, InternalEventSender},
 };
 
@@ -17,7 +16,6 @@ use libp2p::{
     NetworkBehaviour,
 };
 use log::*;
-use tokio::sync::mpsc;
 
 const IOTA_PROTOCOL_VERSION: &str = "iota/0.1.0";
 
@@ -30,17 +28,13 @@ pub struct SwarmBehavior {
 }
 
 impl SwarmBehavior {
-    pub async fn new(
-        local_pk: PublicKey,
-        internal_sender: InternalEventSender,
-        origin_rx: mpsc::UnboundedReceiver<Origin>,
-    ) -> Self {
+    pub async fn new(local_pk: PublicKey, internal_sender: InternalEventSender) -> Self {
         let protocol_version = IOTA_PROTOCOL_VERSION.to_string();
         let config = IdentifyConfig::new(protocol_version, local_pk);
 
         Self {
             identify: Identify::new(config),
-            gossip: Gossip::new(origin_rx),
+            gossip: Gossip::new(),
             internal_sender,
         }
     }
