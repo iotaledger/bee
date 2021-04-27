@@ -8,7 +8,7 @@ pub fn gen_constant_peer_id() -> PeerId {
 }
 
 #[cfg(feature = "full")]
-mod __full {
+mod full {
 
     use super::*;
     use libp2p::identity::{
@@ -69,4 +69,4 @@ mod __full {
 }
 
 #[cfg(feature = "full")]
-pub use __full::*;
+pub use full::*;
