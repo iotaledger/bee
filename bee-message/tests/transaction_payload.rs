@@ -187,7 +187,7 @@ fn getters() {
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
-    let tx_payload = TransactionPayload::builder()
+    let tx_payload = TransactionPayloadBuilder::new()
         .with_essence(essence.clone())
         .with_unlock_blocks(unlock_blocks.clone())
         .finish()
