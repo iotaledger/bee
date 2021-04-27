@@ -53,6 +53,7 @@ pub mod integrated {
     use std::{any::TypeId, convert::Infallible};
 
     /// A node worker, that deals with processing user commands, and publishing events.
+    ///
     /// NOTE: This type is only exported to be used as a worker dependency.
     #[derive(Default)]
     pub struct NetworkService {}
@@ -151,7 +152,7 @@ pub mod standalone {
 }
 
 async fn command_processor(shutdown: Shutdown, commands: CommandReceiver, senders: Senders, peerlist: PeerList) {
-    debug!("Command handler running.");
+    debug!("Command processor running.");
 
     let mut commands = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(commands));
 
@@ -166,7 +167,7 @@ async fn command_processor(shutdown: Shutdown, commands: CommandReceiver, sender
 }
 
 async fn event_processor(shutdown: Shutdown, events: InternalEventReceiver, senders: Senders, peerlist: PeerList) {
-    debug!("Event handler running.");
+    debug!("Event processor running.");
 
     let mut int_events = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(events));
 

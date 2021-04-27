@@ -5,6 +5,7 @@
 
 use super::{
     config::NetworkConfig,
+    error::Error,
     peer::list::{PeerList, PeerListWrapper},
     service::{
         command::command_channel,
@@ -83,9 +84,9 @@ pub mod standalone {
         keys: Keypair,
         network_id: u64,
         shutdown: impl Future + Send + Unpin + 'static,
-    ) -> (NetworkCommandSender, NetworkEventReceiver) {
+    ) -> Result<(NetworkCommandSender, NetworkEventReceiver), Error> {
         let (network_config, service_config, network_command_sender, network_event_receiver) =
-            super::init(config, keys, network_id);
+            super::init(config, keys, network_id)?;
 
         let (shutdown_signal_tx1, shutdown_signal_rx1) = oneshot::channel::<()>();
         let (shutdown_signal_tx2, shutdown_signal_rx2) = oneshot::channel::<()>();
@@ -100,7 +101,7 @@ pub mod standalone {
         NetworkService::new(shutdown_signal_rx1).start(service_config).await;
         NetworkHost::new(shutdown_signal_rx2).start(network_config).await;
 
-        (network_command_sender, network_event_receiver)
+        Ok((network_command_sender, network_event_receiver))
     }
 }
 
@@ -117,16 +118,16 @@ pub mod integrated {
         keys: Keypair,
         network_id: u64,
         mut node_builder: N::Builder,
-    ) -> (N::Builder, NetworkEventReceiver) {
+    ) -> Result<(N::Builder, NetworkEventReceiver), Error> {
         let (host_config, service_config, network_command_sender, network_event_receiver) =
-            super::init(config, keys, network_id);
+            super::init(config, keys, network_id)?;
 
         node_builder = node_builder
             .with_worker_cfg::<NetworkHost>(host_config)
             .with_worker_cfg::<NetworkService>(service_config)
             .with_resource(network_command_sender);
 
-        (node_builder, network_event_receiver)
+        Ok((node_builder, network_event_receiver))
     }
 }
 
@@ -134,12 +135,15 @@ fn init(
     config: NetworkConfig,
     keys: Keypair,
     network_id: u64,
-) -> (
-    NetworkHostConfig,
-    NetworkServiceConfig,
-    NetworkCommandSender,
-    NetworkEventReceiver,
-) {
+) -> Result<
+    (
+        NetworkHostConfig,
+        NetworkServiceConfig,
+        NetworkCommandSender,
+        NetworkEventReceiver,
+    ),
+    Error,
+> {
     let NetworkConfig {
         bind_multiaddr,
         reconnect_interval_secs,
@@ -164,7 +168,7 @@ fn init(
 
     event_sender
         .send(Event::LocalIdCreated { local_id })
-        .expect("event send error");
+        .map_err(|_| Error::LocalIdAnnouncementFailed)?;
 
     let peerlist = PeerListWrapper::new(PeerList::from_peers(local_id, peers.iter().cloned().collect()));
 
@@ -179,7 +183,7 @@ fn init(
                     relation: PeerRelation::Known,
                 },
             })
-            .expect("event send error");
+            .map_err(|_| Error::StaticPeersAnnouncementFailed)?;
     }
 
     let host_config = NetworkHostConfig {
@@ -207,10 +211,10 @@ fn init(
     let network_command_sender = NetworkCommandSender::new(command_sender);
     let network_event_receiver = NetworkEventReceiver::new(event_receiver);
 
-    (
+    Ok((
         host_config,
         service_config,
         network_command_sender,
         network_event_receiver,
-    )
+    ))
 }

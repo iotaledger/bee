@@ -7,6 +7,7 @@
 
 mod alias;
 mod config;
+mod error;
 mod init;
 mod network;
 mod peer;
@@ -33,6 +34,7 @@ pub use libp2p::core::identity::{ed25519::Keypair, PublicKey};
 #[cfg(feature = "full")]
 pub use crate::{
     config::{NetworkConfig, NetworkConfigBuilder},
+    error::Error,
     init::{integrated, standalone},
     network::host::integrated::NetworkHost,
     network::meta::Origin,

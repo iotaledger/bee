@@ -36,6 +36,7 @@ pub mod integrated {
     use std::{any::TypeId, convert::Infallible};
 
     /// A node worker, that deals with accepting and initiating connections with remote peers.
+    ///
     /// NOTE: This type is only exported to be used as a worker dependency.
     #[derive(Default)]
     pub struct NetworkHost {}

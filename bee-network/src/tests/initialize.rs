@@ -14,7 +14,7 @@ async fn initialize() {
     let keys = get_constant_keys();
     let network_id = gen_constant_net_id();
 
-    let (_, mut rx) = init(config, keys, network_id, shutdown(10)).await;
+    let (_, mut rx) = init(config, keys, network_id, shutdown(10)).await.expect("init failed");
 
     let local_id = get_local_id(&mut rx).await;
     // println!("Local Id: {}", local_id);

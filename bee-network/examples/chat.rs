@@ -70,7 +70,7 @@ async fn main() {
     }));
 
     let mut _my_local_id = None;
-    let (_tx, mut rx) = init(config, keys, network_id, shutdown).await;
+    let (_tx, mut rx) = init(config, keys, network_id, shutdown).await.expect("init failed");
 
     loop {
         if let Some(event) = rx.recv().await {
