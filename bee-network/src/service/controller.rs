@@ -14,7 +14,7 @@ pub enum Error {
     EventRecvFailure,
 }
 
-/// A controller for the networking layer, that allows to issue various commands, e.g. sending a message to a peer.
+/// Lets the user send [`Command`]s to the network layer.
 #[derive(Clone, Debug)]
 pub struct NetworkCommandSender(CommandSender);
 
@@ -32,7 +32,7 @@ impl NetworkCommandSender {
     }
 }
 
-/// A type that receives any event published by the networking layer.
+/// Lets the user receive [`Event`]s published by the network layer.
 pub struct NetworkEventReceiver(EventReceiver);
 
 impl NetworkEventReceiver {
