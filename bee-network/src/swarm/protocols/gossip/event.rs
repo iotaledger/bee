@@ -42,7 +42,8 @@ impl GossipEventBuilder {
 
     pub fn finish(self) -> GossipEvent {
         // Panic:
-        // Unwrapping is fine at this point.
+        // Due to the design it is guaranteed that when this method is called all options have been replaced with valid
+        // values. Unwrapping is therefore fine at this point.
         GossipEvent {
             peer_id: self.peer_id.unwrap(),
             peer_addr: self.peer_addr.unwrap(),
