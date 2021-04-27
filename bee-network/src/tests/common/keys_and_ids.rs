@@ -46,6 +46,9 @@ mod full {
             .chain(chars.into_iter().map(Into::into).take(rem))
             .collect::<String>();
 
+        // Panic:
+        // The input consists only of valid hex chars and the length for the secret key
+        // is also correct. Hence, the `unwrap`s are fine.
         let mut hex_sk = hex::decode(identity_sk).unwrap();
         let sk = SecretKey::from_bytes(&mut hex_sk).unwrap();
         sk.into()
@@ -54,9 +57,11 @@ mod full {
     pub fn get_constant_keys() -> Keypair {
         let identity_kp = "41dbc921b157fe001bcaf7f1f8b97f6eddf8f29e8888afc2ff089d544b9baf45bcd026f7900fd6efaa21958890bcfd05b7b738f724acc3bfa68ba3f33197aee1";
 
-        let mut hex_kp = hex::decode(identity_kp).expect("hex decode");
+        // Panic:
+        // Unwraps below are fine because we checked `identity_kp` for its validity.
+        let mut hex_kp = hex::decode(identity_kp).unwrap();
 
-        Keypair::decode(&mut hex_kp[..]).expect("keypair decode")
+        Keypair::decode(&mut hex_kp[..]).unwrap()
     }
 
     pub fn gen_random_keys() -> Keypair {
