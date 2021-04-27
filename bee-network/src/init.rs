@@ -85,7 +85,7 @@ pub mod standalone {
         shutdown: Box<dyn Future<Output = ()> + Send + Unpin>,
     ) -> (NetworkCommandSender, NetworkEventReceiver) {
         let (network_config, service_config, network_command_sender, network_event_receiver) =
-            __init(config, keys, network_id);
+            super::init(config, keys, network_id);
 
         let (shutdown_signal_tx1, shutdown_signal_rx1) = oneshot::channel::<()>();
         let (shutdown_signal_tx2, shutdown_signal_rx2) = oneshot::channel::<()>();
@@ -119,7 +119,7 @@ pub mod integrated {
         mut node_builder: N::Builder,
     ) -> (N::Builder, NetworkEventReceiver) {
         let (host_config, service_config, network_command_sender, network_event_receiver) =
-            __init(config, keys, network_id);
+            super::init(config, keys, network_id);
 
         node_builder = node_builder
             .with_worker_cfg::<NetworkHost>(host_config)
@@ -130,7 +130,7 @@ pub mod integrated {
     }
 }
 
-fn __init(
+fn init(
     config: NetworkConfig,
     keys: Keypair,
     network_id: u64,
