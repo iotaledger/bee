@@ -359,11 +359,9 @@ impl PeerList {
     }
 
     fn find_peer_if_connected(&self, addr: &Multiaddr) -> Option<PeerId> {
-        for (peer_id, _) in self.iter_if(|info, state| state.is_connected() && info.address == *addr) {
-            return Some(peer_id);
-        }
-
-        None
+        self.iter_if(|info, state| state.is_connected() && info.address == *addr)
+            .next()
+            .map(|(peer_id, _)| peer_id)
     }
 }
 

@@ -171,7 +171,6 @@ async fn process_swarm_event(
                 })
                 .expect("send error");
 
-            // INVESTIGATE
             peerlist
                 .0
                 .write()
