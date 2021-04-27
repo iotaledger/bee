@@ -18,3 +18,9 @@ members = [
 	"bee-ternary",
 	"bee-test",
 ]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
