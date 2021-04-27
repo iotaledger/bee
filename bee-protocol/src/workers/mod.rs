@@ -21,7 +21,6 @@ mod responder;
 mod sender;
 mod solidifier;
 mod status;
-mod tip_pool_cleaner;
 
 pub(crate) use broadcaster::{BroadcasterWorker, BroadcasterWorkerEvent};
 pub(crate) use heartbeater::HeartbeaterWorker;
@@ -46,7 +45,6 @@ pub(crate) use responder::{
 };
 pub(crate) use solidifier::{MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent};
 pub(crate) use status::StatusWorker;
-pub(crate) use tip_pool_cleaner::TipPoolCleanerWorker;
 
 use bee_network::NetworkEventReceiver;
 use bee_runtime::node::{Node, NodeBuilder};
@@ -80,7 +78,6 @@ where
         .with_worker::<MpsWorker>()
         .with_worker_cfg::<MilestoneSolidifierWorker>(config.workers.ms_sync_count)
         .with_worker::<IndexUpdaterWorker>()
-        .with_worker::<TipPoolCleanerWorker>()
         .with_worker_cfg::<StatusWorker>(config.workers.status_interval)
         .with_worker::<HeartbeaterWorker>()
         .with_worker::<MessageSubmitterWorker>()
