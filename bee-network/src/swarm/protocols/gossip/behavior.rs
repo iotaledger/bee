@@ -21,6 +21,14 @@ use std::{
     task::Poll,
 };
 
+// FIXME: Due to limitations of the libp2p's `ProtocolHandler` necessary at the moment. Could cause a failed gossip
+// protocol negotiation with a peer due to a race condition. But due to the fact that peers can retry to connect to
+// eachother, the probability of not being able to peer with eachother becomes negligable. In fact, this code has
+// already shown that it is working as intended for all practical purposes. However, a perfect implementation would not
+// have even allow the theoretical chance of such a failure, which is why this needs to be fixed eventually. The purpose
+// of this atomic bool is to inject more state into the `Gossip` type which is instantiated by `libp2p`. This is
+// required because depending on that state the peers are supposed to act differently. By IOTAs convention the dialer
+// has to issue the protocol request, while the dialed one has to respond.
 pub static GOSSIP_ORIGIN: AtomicBool = AtomicBool::new(false);
 
 #[derive(Eq, PartialEq, Hash, Debug, Clone, Copy)]
