@@ -194,7 +194,7 @@ async fn peer_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerList) 
 
     let delay = Duration::from_millis(rand::thread_rng().gen_range(0u64..1000));
     let start = Instant::now() + delay;
-    let period = Duration::from_secs(reconnect_interval_secs()); // `unwrap` is safe!
+    let period = Duration::from_secs(reconnect_interval_secs());
 
     let mut interval = ShutdownStream::new(shutdown, IntervalStream::new(time::interval_at(start, period)));
 
@@ -235,22 +235,23 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
         }
 
         Command::BanAddress { address } => {
-            let mut peerlist = peerlist.0.write().await;
-            peerlist.ban_address(address.clone())?;
+            peerlist.0.write().await.ban_address(address.clone())?;
 
             let _ = senders.events.send(Event::AddressBanned { address });
         }
 
         Command::BanPeer { peer_id } => {
-            let mut peerlist = peerlist.0.write().await;
-            peerlist.ban_peer(peer_id)?;
+            peerlist.0.write().await.ban_peer(peer_id)?;
 
             let _ = senders.events.send(Event::PeerBanned { peer_id });
         }
 
         Command::ChangeRelation { peer_id, to } => {
-            let mut peerlist = peerlist.0.write().await;
-            peerlist.update_info(&peer_id, |info| info.relation = to)?;
+            peerlist
+                .0
+                .write()
+                .await
+                .update_info(&peer_id, |info| info.relation = to)?;
         }
 
         Command::DialAddress { address } => {
@@ -270,15 +271,13 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
         }
 
         Command::UnbanAddress { address } => {
-            let mut peerlist = peerlist.0.write().await;
-            peerlist.unban_address(&address)?;
+            peerlist.0.write().await.unban_address(&address)?;
 
             let _ = senders.events.send(Event::AddressUnbanned { address });
         }
 
         Command::UnbanPeer { peer_id } => {
-            let mut peerlist = peerlist.0.write().await;
-            peerlist.unban_peer(&peer_id)?;
+            peerlist.0.write().await.unban_peer(&peer_id)?;
 
             let _ = senders.events.send(Event::PeerUnbanned { peer_id });
         }
@@ -305,6 +304,9 @@ async fn process_internal_event(
 
             // Try to remove unknown peers.
             let _ = peerlist.filter_remove(&peer_id, |peer_info, _| peer_info.relation.is_unknown());
+
+            // We no longer need to hold the lock.
+            drop(peerlist);
 
             let _ = senders.events.send(Event::PeerDisconnected { peer_id });
         }
@@ -342,6 +344,9 @@ async fn process_internal_event(
 
             // We store a clone of the gossip send channel in order to send a shutdown signal.
             let _ = peerlist.update_state(&peer_id, |state| state.to_connected(gossip_out.clone()));
+
+            // We no longer need to hold the lock.
+            drop(peerlist);
 
             info!(
                 "Established ({}) protocol with {} ({}).",
@@ -381,11 +386,12 @@ async fn add_peer(
     // If the insert fails for some reason, we get the peer data back, so it can be reused.
     match peerlist.insert_peer(peer_id, peer_info) {
         Ok(()) => {
-            // NB: We could also make `insert` return the just inserted `PeerInfo`, but that would
-            // make for an unusual API.
-
-            // We just added it, so 'unwrap'ping is safe!
+            // Panic:
+            // We just added the peer_id so unwrapping here is fine.
             let info = peerlist.info(&peer_id).unwrap();
+
+            // We no longer need to hold the lock.
+            drop(peerlist);
 
             let _ = senders.events.send(Event::PeerAdded { peer_id, info });
 
@@ -403,6 +409,9 @@ async fn add_peer(
             if matches!(e, PeerError::PeerIsDuplicate(_)) {
                 match peerlist.update_info(&peer_id, |info| *info = peer_info.clone()) {
                     Ok(()) => {
+                        // We no longer need to hold the lock.
+                        drop(peerlist);
+
                         let _ = senders.events.send(Event::PeerAdded {
                             peer_id,
                             info: peer_info,
@@ -413,6 +422,9 @@ async fn add_peer(
                     Err(error) => e = error,
                 }
             }
+
+            // We no longer need to hold the lock.
+            drop(peerlist);
 
             let _ = senders.events.send(Event::CommandFailed {
                 command: Command::AddPeer {
@@ -433,15 +445,21 @@ async fn add_peer(
 async fn remove_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList) -> Result<(), PeerError> {
     disconnect_peer(peer_id, senders, peerlist).await?;
 
-    let mut peerlist = peerlist.0.write().await;
+    let peer_removal = peerlist.0.write().await.remove(&peer_id);
 
-    match peerlist.remove(&peer_id) {
+    match peer_removal {
         Ok(_peer_info) => {
+            // We no longer need to hold the lock.
+            drop(peerlist);
+
             let _ = senders.events.send(Event::PeerRemoved { peer_id });
 
             Ok(())
         }
         Err(e) => {
+            // We no longer need to hold the lock.
+            drop(peerlist);
+
             let _ = senders.events.send(Event::CommandFailed {
                 command: Command::RemovePeer { peer_id },
                 reason: e.clone(),
@@ -453,13 +471,17 @@ async fn remove_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList) ->
 }
 
 async fn disconnect_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList) -> Result<(), PeerError> {
-    let mut peerlist = peerlist.0.write().await;
+    let state_update = peerlist
+        .0
+        .write()
+        .await
+        .update_state(&peer_id, |state| state.to_disconnected());
 
-    // NB: We sent the `PeerDisconnected` event *before* we sent the shutdown signal to the stream writer task, so
-    // it can stop adding messages to the channel before we drop the receiver.
-
-    match peerlist.update_state(&peer_id, |state| state.to_disconnected()) {
+    match state_update {
         Ok(Some(gossip_sender)) => {
+            // We sent the `PeerDisconnected` event *before* we sent the shutdown signal to the stream writer task, so
+            // it can stop adding messages to the channel before we drop the receiver.
+
             let _ = senders.events.send(Event::PeerDisconnected { peer_id });
 
             // Try to send the shutdown signal. It has to be a Vec<u8>, but it doesn't have to allocate.
