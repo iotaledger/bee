@@ -9,18 +9,7 @@ use serde::Deserialize;
 
 const DEFAULT_MINIMUM_POW_SCORE: f64 = 4000.0;
 const DEFAULT_COO_PUBLIC_KEY_COUNT: usize = 2;
-const DEFAULT_COO_PUBLIC_KEY_RANGES: [(&str, MilestoneIndex, MilestoneIndex); 2] = [
-    (
-        "a9b46fe743df783dedd00c954612428b34241f5913cf249d75bed3aafd65e4cd",
-        MilestoneIndex(0),
-        MilestoneIndex(777600),
-    ),
-    (
-        "365fb85e7568b9b32f7359d6cbafa9814472ad0ecbad32d77beaf5dd9e84c6ba",
-        MilestoneIndex(0),
-        MilestoneIndex(1555200),
-    ),
-];
+const DEFAULT_COO_PUBLIC_KEY_RANGES: [(&str, MilestoneIndex, MilestoneIndex); 0] = [];
 const DEFAULT_MESSAGE_WORKER_CACHE: usize = 10000;
 const DEFAULT_STATUS_INTERVAL: u64 = 10;
 const DEFAULT_HANDSHAKE_WINDOW: u64 = 10;

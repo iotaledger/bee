@@ -3,7 +3,7 @@
 identity   = ""
 alias      = "bee"
 bech32_hrp = "iota"
-network_id = "chrysalis-mainnet"
+network_id = "iota"
 
 [logger]
 color_enabled = true
@@ -30,15 +30,15 @@ max_unknown_peers       = 4
 [protocol]
 minimum_pow_score = 4000
 [protocol.coordinator]
-public_key_count  = 2
-[[protocol.coordinator.public_key_ranges]]
-public_key  = "a9b46fe743df783dedd00c954612428b34241f5913cf249d75bed3aafd65e4cd"
-start       = 0
-end         = 777600
-[[protocol.coordinator.public_key_ranges]]
-public_key  = "365fb85e7568b9b32f7359d6cbafa9814472ad0ecbad32d77beaf5dd9e84c6ba"
-start       = 0
-end         = 1555200
+# public_key_count  = 2
+# [[protocol.coordinator.public_key_ranges]]
+# public_key  = ""
+# start       = 0
+# end         = 0
+# [[protocol.coordinator.public_key_ranges]]
+# public_key  = ""
+# start       = 0
+# end         = 0
 [protocol.workers]
 status_interval = 10
 ms_sync_count = 200
@@ -78,7 +78,6 @@ white_flag_solidification_timeout = 2
 full_path         = "./snapshots/mainnet/latest-full_snapshot.bin"
 delta_path        = "./snapshots/mainnet/latest-delta_snapshot.bin"
 download_urls     = [
-  "https://chrysalis-dbfiles.iota.org/snapshots/hornet/"
 ]
 depth             = 50
 interval_synced   = 50
