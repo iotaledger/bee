@@ -336,10 +336,8 @@ async fn process_internal_event(
                 });
             }
 
-            assert!(peerlist.contains(&peer_id));
-
-            // Unwrap:
-            // We made sure, that the peer exists.
+            // Panic:
+            // We made sure, that the peer id exists in the above if-branch, hence, unwrapping is fine.
             let peer_info = peerlist.info(&peer_id).unwrap();
 
             // We store a clone of the gossip send channel in order to send a shutdown signal.
