@@ -159,21 +159,17 @@ impl PeerList {
             .map(|(info, state)| predicate(info, state))
     }
 
-    pub fn iter_if<P>(&self, predicate: P) -> impl Iterator<Item = (PeerId, String)>
+    pub fn filter<'a, P: 'a>(&'a self, predicate: P) -> impl Iterator<Item = (PeerId, String)> + '_
     where
         P: Fn(&PeerInfo, &PeerState) -> bool,
     {
-        self.peers
-            .iter()
-            .filter_map(|(peer_id, (info, state))| {
-                if predicate(info, state) {
-                    Some((*peer_id, info.alias.clone()))
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>()
-            .into_iter()
+        self.peers.iter().filter_map(move |(peer_id, (info, state))| {
+            if predicate(info, state) {
+                Some((*peer_id, info.alias.clone()))
+            } else {
+                None
+            }
+        })
     }
 
     pub fn count_if<P>(&self, predicate: P) -> usize
@@ -359,7 +355,7 @@ impl PeerList {
     }
 
     fn find_peer_if_connected(&self, addr: &Multiaddr) -> Option<PeerId> {
-        self.iter_if(|info, state| state.is_connected() && info.address == *addr)
+        self.filter(|info, state| state.is_connected() && info.address == *addr)
             .next()
             .map(|(peer_id, _)| peer_id)
     }

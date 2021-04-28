@@ -203,7 +203,7 @@ async fn peer_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerList) 
     while interval.next().await.is_some() {
         let peerlist = peerlist.0.read().await;
 
-        for (peer_id, alias) in peerlist.iter_if(|info, state| info.relation.is_known() && state.is_disconnected()) {
+        for (peer_id, alias) in peerlist.filter(|info, state| info.relation.is_known() && state.is_disconnected()) {
             info!("Trying to reconnect to: {} ({}).", alias, alias!(peer_id));
 
             // Ignore if the command fails. We can always try another time.
