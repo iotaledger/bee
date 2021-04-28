@@ -305,7 +305,7 @@ dependencies = [
 
 [[package]]
 name = "bee-node"
-version = "0.1.0-alpha"
+version = "0.1.0-rc1"
 dependencies = [
  "anymap",
  "async-trait",

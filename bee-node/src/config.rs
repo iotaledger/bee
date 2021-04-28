@@ -26,7 +26,7 @@ use std::{convert::TryInto, fs, path::Path};
 
 const DEFAULT_ALIAS: &str = "bee";
 const DEFAULT_BECH32_HRP: &str = "iota";
-const DEFAULT_NETWORK_ID: &str = "c2-mainnet";
+const DEFAULT_NETWORK_ID: &str = "chrysalis-mainnet";
 
 #[derive(Debug, Error)]
 pub enum Error {

@@ -3,7 +3,7 @@
 identity   = ""
 alias      = "bee"
 bech32_hrp = "iota"
-network_id = "c2-mainnet"
+network_id = "chrysalis-mainnet"
 
 [logger]
 color_enabled = true
