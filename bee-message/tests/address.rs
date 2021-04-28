@@ -7,6 +7,7 @@ use bee_message::prelude::*;
 use core::convert::TryInto;
 
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
+const ED25519_ADDRESS_BAD: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64x";
 
 // The kind of an `Address` is the kind of the underlying address.
 #[test]
@@ -58,6 +59,12 @@ fn bech32_string_to_address() {
     } else {
         panic!("Expecting an Ed25519 address");
     }
+}
+
+#[test]
+fn invalid_bech32_string_to_address() {
+    let address = Address::try_from_bech32(ED25519_ADDRESS_BAD);
+    assert!(matches!(address, Err(Error::InvalidAddress)));
 }
 
 #[test]
