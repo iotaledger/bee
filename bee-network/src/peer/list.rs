@@ -330,7 +330,7 @@ impl PeerList {
             // Deny dialing an already connected peer (with that address).
             Err(Error::PeerIsConnected(peer_id))
         } else {
-            // All checks passed! Allow dialing that peer.
+            // All checks passed! Allow dialing that address.
             Ok(())
         }
     }

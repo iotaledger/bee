@@ -244,6 +244,7 @@ dependencies = [
  "env_logger",
  "fern",
  "futures",
+ "hashbrown 0.11.2",
  "hex",
  "libp2p",
  "libp2p-core",

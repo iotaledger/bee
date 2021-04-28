@@ -465,7 +465,7 @@ async fn disconnect_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList
             let _ = senders.events.send(Event::PeerDisconnected { peer_id });
 
             // Try to send the shutdown signal. It has to be a Vec<u8>, but it doesn't have to allocate.
-            let _ = gossip_sender.send(Vec::with_capacity(0));
+            let _ = gossip_sender.send(Vec::new());
 
             Ok(())
         }
