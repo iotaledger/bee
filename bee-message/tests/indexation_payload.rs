@@ -28,22 +28,26 @@ fn debug_impl() {
 #[test]
 fn new_valid() {
     let index = rand_bytes(64);
+    let index_array: [u8; 64] = index.as_slice().try_into().unwrap();
     let data = [0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2];
     let indexation = IndexationPayload::new(&index, &data).unwrap();
 
     assert_eq!(indexation.index(), &index);
     assert_eq!(indexation.padded_index().as_ref(), index.as_slice());
+    assert_eq!(*indexation.padded_index(), index_array);
     assert_eq!(indexation.data(), &data);
 }
 
 #[test]
 fn new_valid_empty_data() {
     let index = rand_bytes(64);
+    let index_array: [u8; 64] = index.as_slice().try_into().unwrap();
     let data = [];
     let indexation = IndexationPayload::new(&index, &data).unwrap();
 
     assert_eq!(indexation.index(), &index);
     assert_eq!(indexation.padded_index().as_ref(), index.as_slice());
+    assert_eq!(*indexation.padded_index(), index_array);
     assert_eq!(indexation.data(), &data);
 }
 
