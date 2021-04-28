@@ -245,13 +245,7 @@ fn getters() {
     .unwrap()
     .into();
 
-    let receipt = ReceiptPayload::new(
-        migrated_at,
-        last,
-        funds.clone(),
-        payload.clone(),
-    )
-    .unwrap();
+    let receipt = ReceiptPayload::new(migrated_at, last, funds.clone(), payload.clone()).unwrap();
 
     assert_eq!(receipt.migrated_at(), migrated_at);
     assert_eq!(receipt.last(), last);

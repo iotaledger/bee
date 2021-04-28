@@ -310,7 +310,9 @@ fn getters() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
     let amount = 1_000_000;
-    let outputs = vec![Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap())];
+    let outputs = vec![Output::SignatureLockedSingle(
+        SignatureLockedSingleOutput::new(address, amount).unwrap(),
+    )];
     let payload = Payload::from(rand_indexation_payload());
 
     let essence = RegularEssence::builder()

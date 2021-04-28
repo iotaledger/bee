@@ -43,8 +43,8 @@ fn transaction() {
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
     let tx_payload = TransactionPayloadBuilder::new()
-        .with_essence(essence.clone())
-        .with_unlock_blocks(unlock_blocks.clone())
+        .with_essence(essence)
+        .with_unlock_blocks(unlock_blocks)
         .finish()
         .unwrap();
 
@@ -123,7 +123,7 @@ fn receipt() {
     .into();
 
     let packed = payload.pack_new();
-    
+
     assert_eq!(payload.kind(), 3);
     assert_eq!(payload.packed_len(), packed.len());
     assert!(matches!(payload, Payload::Receipt(_)));
@@ -133,7 +133,7 @@ fn receipt() {
 #[test]
 fn treasury_transaction() {
     let payload: Payload = TreasuryTransactionPayload::new(
-        Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap()), 
+        Input::from(TreasuryInput::from_str(MESSAGE_ID).unwrap()),
         Output::from(TreasuryOutput::new(1_000_000).unwrap()),
     )
     .unwrap()
