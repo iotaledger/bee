@@ -98,13 +98,11 @@ pub fn spawn_gossip_out_processor(
 
         // If the gossip sender dropped we end the connection.
         while let Some(message) = outgoing_gossip_receiver.next().await {
-            let msg_len = message.len();
-
             // NB: Instead of polling another shutdown channel, we use an empty message
             // to signal that we want to end the connection. We use this "trick" whenever the network
             // receives the `DisconnectPeer` command to enforce that the connection will be dropped.
 
-            if msg_len == 0 {
+            if message.len() == 0 {
                 debug!("gossip-out: received shutdown message.");
 
                 // NB: The network service will not shut down before it has received the `ConnectionDropped` event from

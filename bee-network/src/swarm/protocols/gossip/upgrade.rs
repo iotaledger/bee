@@ -9,6 +9,9 @@ use log::trace;
 
 use std::iter;
 
+const PROTOCOL_INFO_IOTA_GOSSIP: &str = "iota-gossip";
+const PROTOCOL_INFO_VERSION: &str = "1.0.0";
+
 /// Configuration for an upgrade to the `IotaGossip` protocol.
 #[derive(Debug, Clone, Default)]
 pub struct GossipUpgrade;
@@ -18,7 +21,15 @@ impl UpgradeInfo for GossipUpgrade {
     type InfoIter = iter::Once<Self::Info>;
 
     fn protocol_info(&self) -> Self::InfoIter {
-        iter::once(format!("/iota-gossip/{}/1.0.0", network_id()).as_bytes().to_vec())
+        iter::once(
+            format!(
+                "/{}/{}/{}",
+                PROTOCOL_INFO_IOTA_GOSSIP,
+                network_id(),
+                PROTOCOL_INFO_VERSION
+            )
+            .into_bytes(),
+        )
     }
 }
 
