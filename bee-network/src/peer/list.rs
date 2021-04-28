@@ -149,7 +149,7 @@ impl PeerList {
         Ok(update(state))
     }
 
-    pub fn is<P>(&self, peer_id: &PeerId, predicate: P) -> Result<bool, Error>
+    pub fn satisfies<P>(&self, peer_id: &PeerId, predicate: P) -> Result<bool, Error>
     where
         P: Fn(&PeerInfo, &PeerState) -> bool,
     {
@@ -172,7 +172,7 @@ impl PeerList {
         })
     }
 
-    pub fn count_if<P>(&self, predicate: P) -> usize
+    pub fn filter_count<P>(&self, predicate: P) -> usize
     where
         P: Fn(&PeerInfo, &PeerState) -> bool,
     {
@@ -184,7 +184,7 @@ impl PeerList {
         )
     }
 
-    pub fn remove_if<P>(&mut self, peer_id: &PeerId, predicate: P) -> bool
+    pub fn filter_remove<P>(&mut self, peer_id: &PeerId, predicate: P) -> bool
     where
         P: Fn(&PeerInfo, &PeerState) -> bool,
     {
@@ -197,6 +197,7 @@ impl PeerList {
             .filter(|(info, state)| predicate(info, state))
             .is_some()
         {
+            // Should always return `true`, because we know it's there.
             self.peers.remove(peer_id).is_some()
         } else {
             false
@@ -269,11 +270,15 @@ impl PeerList {
             return Err(Error::AddressIsBanned(peer_info.address.clone()));
         }
 
-        if self.is(peer_id, |_, state| state.is_connected()).unwrap_or(false) {
+        if self
+            .satisfies(peer_id, |_, state| state.is_connected())
+            .unwrap_or(false)
+        {
             return Err(Error::PeerIsConnected(*peer_id));
         }
 
-        if peer_info.relation.is_unknown() && self.count_if(|info, _| info.relation.is_unknown()) >= max_unknown_peers()
+        if peer_info.relation.is_unknown()
+            && self.filter_count(|info, _| info.relation.is_unknown()) >= max_unknown_peers()
         {
             return Err(Error::ExceedsUnknownPeerLimit(max_unknown_peers()));
         }
@@ -302,7 +307,10 @@ impl PeerList {
             return Err(Error::PeerIsBanned(*peer_id));
         }
 
-        if self.is(peer_id, |_, state| state.is_connected()).unwrap_or(false) {
+        if self
+            .satisfies(peer_id, |_, state| state.is_connected())
+            .unwrap_or(false)
+        {
             return Err(Error::PeerIsConnected(*peer_id));
         }
 
@@ -316,7 +324,8 @@ impl PeerList {
             return Err(Error::AddressIsBanned(peer_info.address.clone()));
         }
 
-        if peer_info.relation.is_unknown() && self.count_if(|info, _| info.relation.is_unknown()) >= max_unknown_peers()
+        if peer_info.relation.is_unknown()
+            && self.filter_count(|info, _| info.relation.is_unknown()) >= max_unknown_peers()
         {
             return Err(Error::ExceedsUnknownPeerLimit(max_unknown_peers()));
         }
@@ -439,10 +448,10 @@ mod tests {
             .unwrap();
         assert_eq!(1, pl.len());
 
-        pl.remove_if(&peer_id, |info, _| info.relation.is_unknown());
+        pl.filter_remove(&peer_id, |info, _| info.relation.is_unknown());
         assert_eq!(1, pl.len());
 
-        pl.remove_if(&peer_id, |info, _| info.relation.is_known());
+        pl.filter_remove(&peer_id, |info, _| info.relation.is_known());
         assert_eq!(0, pl.len());
     }
 

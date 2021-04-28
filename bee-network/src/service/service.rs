@@ -304,7 +304,7 @@ async fn process_internal_event(
             let _ = peerlist.update_state(&peer_id, |state| state.set_disconnected());
 
             // Try to remove unknown peers.
-            let _ = peerlist.remove_if(&peer_id, |peer_info, _| peer_info.relation.is_unknown());
+            let _ = peerlist.filter_remove(&peer_id, |peer_info, _| peer_info.relation.is_unknown());
 
             let _ = senders.events.send(Event::PeerDisconnected { peer_id });
         }
