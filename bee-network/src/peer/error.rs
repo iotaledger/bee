@@ -8,7 +8,7 @@ use libp2p::{Multiaddr, PeerId};
 pub enum Error {
     /// A failure due to an address being added twice.
     #[error("Already added that address: {}", .0)]
-    AddressIsAdded(Multiaddr),
+    AddressIsDuplicate(Multiaddr),
 
     /// A failure due to an address being banned.
     #[error("Already banned that address: {}", .0)]
@@ -32,7 +32,7 @@ pub enum Error {
 
     /// A failure due to attempting to add a peer twice.
     #[error("Already added that peer: {}", .0)]
-    PeerIsAdded(PeerId),
+    PeerIsDuplicate(PeerId),
 
     /// A failure due to a peer id being in the peer-id banlist.
     #[error("Already banned that peer: {}", .0)]

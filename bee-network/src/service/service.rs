@@ -402,7 +402,7 @@ async fn add_peer(
             // impossible to happen, and hence this match case can probably be removed. But this needs to be tested
             // thoroughly in a live setup to really be sure.
 
-            if matches!(e, PeerError::PeerIsAdded(_)) {
+            if matches!(e, PeerError::PeerIsDuplicate(_)) {
                 match peerlist.update_info(&peer_id, |info| *info = peer_info.clone()) {
                     Ok(()) => {
                         let _ = senders.events.send(Event::PeerAdded {

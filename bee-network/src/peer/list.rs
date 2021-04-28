@@ -80,7 +80,7 @@ impl PeerList {
 
     pub fn insert_peer(&mut self, peer_id: PeerId, peer_info: PeerInfo) -> Result<(), (PeerId, PeerInfo, Error)> {
         if self.contains(&peer_id) {
-            return Err((peer_id, peer_info, Error::PeerIsAdded(peer_id)));
+            return Err((peer_id, peer_info, Error::PeerIsDuplicate(peer_id)));
         }
 
         // Since we already checked that such a `peer_id` is not yet present, the returned value is always `None`.
@@ -91,7 +91,7 @@ impl PeerList {
 
     pub fn insert_local_addr(&mut self, addr: Multiaddr) -> Result<(), (Multiaddr, Error)> {
         if self.local_addrs.contains(&addr) {
-            return Err((addr.clone(), Error::AddressIsAdded(addr)));
+            return Err((addr.clone(), Error::AddressIsDuplicate(addr)));
         }
 
         let _ = self.local_addrs.insert(addr);
@@ -407,9 +407,11 @@ mod tests {
         let peer_id = gen_constant_peer_id();
 
         assert!(pl.insert_peer(peer_id, gen_constant_peer_info()).is_ok());
+
+        // Do not allow inserting the same peer id twice.
         assert!(matches!(
             pl.insert_peer(peer_id, gen_constant_peer_info()),
-            Err((_, _, Error::PeerIsAdded(_)))
+            Err((_, _, Error::PeerIsDuplicate(_)))
         ));
     }
 
