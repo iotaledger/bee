@@ -3,31 +3,38 @@
 
 use crate::swarm::protocols::gossip::io::GossipSender;
 
-#[derive(Clone, Debug, Default)]
-pub struct PeerState(Option<GossipSender>);
+use std::mem::take;
+
+#[derive(Clone, Debug)]
+pub enum PeerState {
+    Disconnected,
+    Connected(GossipSender),
+}
+
+impl Default for PeerState {
+    fn default() -> Self {
+        Self::Disconnected
+    }
+}
 
 impl PeerState {
-    pub fn new_connected(gossip_sender: GossipSender) -> Self {
-        Self(Some(gossip_sender))
-    }
-
-    pub fn new_disconnected() -> Self {
-        Self(None)
-    }
-
     pub fn is_disconnected(&self) -> bool {
-        self.0.is_none()
+        matches!(self, Self::Disconnected)
     }
 
     pub fn is_connected(&self) -> bool {
-        self.0.is_some()
+        matches!(self, Self::Connected(_))
     }
 
     pub fn to_connected(&mut self, gossip_sender: GossipSender) -> Option<GossipSender> {
-        self.0.replace(gossip_sender)
+        *self = Self::Connected(gossip_sender);
+        None
     }
 
     pub fn to_disconnected(&mut self) -> Option<GossipSender> {
-        self.0.take()
+        match take(self) {
+            Self::Disconnected => None,
+            Self::Connected(sender) => Some(sender),
+        }
     }
 }

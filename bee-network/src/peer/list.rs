@@ -62,7 +62,7 @@ impl PeerList {
                         alias: peer.alias.unwrap_or(alias!(peer.peer_id).to_owned()),
                         relation: PeerRelation::Known,
                     },
-                    PeerState::new_disconnected(),
+                    PeerState::Disconnected,
                 ),
             )
         }));
@@ -82,7 +82,7 @@ impl PeerList {
         }
 
         // Since we already checked that such a `peer_id` is not yet present, the returned value is always `None`.
-        let _ = self.peers.insert(peer_id, (peer_info, PeerState::new_disconnected()));
+        let _ = self.peers.insert(peer_id, (peer_info, PeerState::Disconnected));
 
         Ok(())
     }
