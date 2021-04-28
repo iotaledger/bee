@@ -23,6 +23,14 @@ fn debug_impl() {
 }
 
 #[test]
+fn as_ref() {
+    let id_bytes = hex::decode(MILESTONE_ID).unwrap().try_into().unwrap();
+    let milestone = MilestoneId::new(id_bytes);
+
+    assert_eq!(milestone.as_ref(), &id_bytes);
+}
+
+#[test]
 fn from_str_valid() {
     MilestoneId::from_str(MILESTONE_ID).unwrap();
 }

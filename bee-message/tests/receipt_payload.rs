@@ -3,7 +3,7 @@
 
 use bee_common::packable::Packable;
 use bee_message::prelude::*;
-use bee_test::rand::bytes::rand_bytes_32;
+use bee_test::rand::{bytes::rand_bytes_32, number::rand_number};
 
 use std::str::FromStr;
 
@@ -221,4 +221,35 @@ fn pack_unpack_valid() {
 
     assert_eq!(packed_receipt.len(), receipt.packed_len());
     assert_eq!(receipt, Packable::unpack(&mut packed_receipt.as_slice()).unwrap());
+}
+
+#[test]
+fn getters() {
+    let migrated_at = MilestoneIndex::new(rand_number());
+    let last = true;
+    let funds = vec![
+        MigratedFundsEntry::new(
+            TailTransactionHash::new(TAIL_TRANSACTION_HASH_BYTES).unwrap(),
+            SignatureLockedSingleOutput::new(
+                Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+                AMOUNT,
+            )
+            .unwrap(),
+        )
+        .unwrap(),
+    ];
+    let payload: Payload = TreasuryTransactionPayload::new(
+        Input::Treasury(TreasuryInput::new(MilestoneId::from_str(MILESTONE_ID).unwrap())),
+        Output::Treasury(TreasuryOutput::new(AMOUNT).unwrap()),
+    )
+    .unwrap()
+    .into();
+
+    let receipt = ReceiptPayload::new(migrated_at, last, funds.clone(), payload.clone()).unwrap();
+
+    assert_eq!(receipt.migrated_at(), migrated_at);
+    assert_eq!(receipt.last(), last);
+    assert_eq!(receipt.funds(), funds.as_slice());
+    assert_eq!(*receipt.transaction(), payload);
+    assert_eq!(receipt.amount(), AMOUNT);
 }

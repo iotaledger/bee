@@ -117,6 +117,30 @@ fn packed_len() {
 }
 
 #[test]
+fn pack_unpack_valid() {
+    let payload = MilestonePayload::new(
+        MilestonePayloadEssence::new(
+            MilestoneIndex(0),
+            0,
+            rand_parents(),
+            [0; MILESTONE_MERKLE_PROOF_LENGTH],
+            0,
+            0,
+            vec![[0; 32]],
+            None,
+        )
+        .unwrap(),
+        vec![[0; 64]],
+    )
+    .unwrap();
+
+    let packed = payload.pack_new();
+
+    assert_eq!(payload.packed_len(), packed.len());
+    assert_eq!(payload, Packable::unpack(&mut packed.as_slice()).unwrap())
+}
+
+#[test]
 fn getters() {
     let essence = MilestonePayloadEssence::new(
         rand::milestone::rand_milestone_index(),

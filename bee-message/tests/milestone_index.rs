@@ -10,6 +10,11 @@ fn debug_impl() {
 }
 
 #[test]
+fn display_impl() {
+    assert_eq!(format!("{}", MilestoneIndex::new(0)), "0");
+}
+
+#[test]
 fn unpack() {
     let packed = 0u32.pack_new();
     assert_eq!(

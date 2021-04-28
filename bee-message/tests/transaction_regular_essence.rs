@@ -301,3 +301,27 @@ fn build_invalid_accumulated_output() {
 
     assert!(matches!(essence, Err(Error::InvalidAccumulatedOutput(_))));
 }
+
+#[test]
+fn getters() {
+    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
+    let address = Address::from(Ed25519Address::new(bytes));
+    let amount = 1_000_000;
+    let outputs = vec![Output::SignatureLockedSingle(
+        SignatureLockedSingleOutput::new(address, amount).unwrap(),
+    )];
+    let payload = Payload::from(rand_indexation_payload());
+
+    let essence = RegularEssence::builder()
+        .with_inputs(vec![input1, input2])
+        .with_outputs(outputs.clone())
+        .with_payload(payload.clone())
+        .finish()
+        .unwrap();
+
+    assert_eq!(essence.outputs(), outputs.as_slice());
+    assert_eq!(*essence.payload().as_ref().unwrap(), payload);
+}
