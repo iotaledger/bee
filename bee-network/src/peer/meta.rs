@@ -23,11 +23,11 @@ impl PeerState {
         self.0.is_some()
     }
 
-    pub fn set_connected(&mut self, gossip_sender: GossipSender) -> Option<GossipSender> {
+    pub fn to_connected(&mut self, gossip_sender: GossipSender) -> Option<GossipSender> {
         self.0.replace(gossip_sender)
     }
 
-    pub fn set_disconnected(&mut self) -> Option<GossipSender> {
+    pub fn to_disconnected(&mut self) -> Option<GossipSender> {
         self.0.take()
     }
 }

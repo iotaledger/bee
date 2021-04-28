@@ -301,7 +301,7 @@ async fn process_internal_event(
             let mut peerlist = peerlist.0.write().await;
 
             // Try to disconnect, but ignore errors in-case the peer was disconnected already.
-            let _ = peerlist.update_state(&peer_id, |state| state.set_disconnected());
+            let _ = peerlist.update_state(&peer_id, |state| state.to_disconnected());
 
             // Try to remove unknown peers.
             let _ = peerlist.filter_remove(&peer_id, |peer_info, _| peer_info.relation.is_unknown());
@@ -341,7 +341,7 @@ async fn process_internal_event(
             let peer_info = peerlist.info(&peer_id).unwrap();
 
             // We store a clone of the gossip send channel in order to send a shutdown signal.
-            let _ = peerlist.update_state(&peer_id, |state| state.set_connected(gossip_out.clone()));
+            let _ = peerlist.update_state(&peer_id, |state| state.to_connected(gossip_out.clone()));
 
             info!(
                 "Established ({}) protocol with {} ({}).",
@@ -458,7 +458,7 @@ async fn disconnect_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList
     // NB: We sent the `PeerDisconnected` event *before* we sent the shutdown signal to the stream writer task, so
     // it can stop adding messages to the channel before we drop the receiver.
 
-    match peerlist.update_state(&peer_id, |state| state.set_disconnected()) {
+    match peerlist.update_state(&peer_id, |state| state.to_disconnected()) {
         Ok(Some(gossip_sender)) => {
             let _ = senders.events.send(Event::PeerDisconnected { peer_id });
 
