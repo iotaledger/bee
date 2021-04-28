@@ -38,3 +38,29 @@ impl PeerState {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::swarm::protocols::gossip::io::gossip_channel;
+
+    #[test]
+    fn new_peer_state() {
+        let peerstate = PeerState::default();
+
+        assert!(peerstate.is_disconnected());
+    }
+
+    #[test]
+    fn peer_state_change() {
+        let mut peerstate = PeerState::Disconnected;
+        let (tx, _rx) = gossip_channel();
+
+        peerstate.to_connected(tx);
+        assert!(peerstate.is_connected());
+
+        assert!(peerstate.to_disconnected().is_some());
+        assert!(peerstate.is_disconnected());
+        assert!(peerstate.to_disconnected().is_none());
+    }
+}
