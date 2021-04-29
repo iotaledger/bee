@@ -13,6 +13,7 @@ use crate::{
     swarm::{behavior::SwarmBehavior, protocols::gossip::behavior::GOSSIP_ORIGIN},
 };
 
+use futures::channel::oneshot;
 use libp2p::{swarm::SwarmEvent, Multiaddr, PeerId, Swarm};
 use log::*;
 
@@ -49,30 +50,8 @@ pub mod integrated {
         }
 
         async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-            let NetworkHostConfig {
-                internal_event_sender,
-                mut internal_command_receiver,
-                peerlist,
-                mut swarm,
-            } = config;
-
-            node.spawn::<Self, _, _>(|mut shutdown| async move {
-                loop {
-                    let swarm_next_event = Swarm::next_event(&mut swarm);
-                    let recv_command = (&mut internal_command_receiver).recv();
-
-                    tokio::select! {
-                        _ = &mut shutdown => break,
-                        event = swarm_next_event => {
-                            process_swarm_event(event, &internal_event_sender, &peerlist).await;
-                        }
-                        command = recv_command => {
-                            if let Some(command) = command {
-                                process_command(command, &mut swarm, &peerlist).await;
-                            }
-                        },
-                    }
-                }
+            node.spawn::<Self, _, _>(|shutdown| async move {
+                network_host_processor(config, shutdown).await;
 
                 info!("Network Host stopped.");
             });
@@ -87,8 +66,6 @@ pub mod integrated {
 pub mod standalone {
     use super::*;
 
-    use futures::channel::oneshot;
-
     pub struct NetworkHost {
         pub shutdown: oneshot::Receiver<()>,
     }
@@ -99,36 +76,41 @@ pub mod standalone {
         }
 
         pub async fn start(self, config: NetworkHostConfig) {
-            let NetworkHost { mut shutdown } = self;
-            let NetworkHostConfig {
-                internal_event_sender,
-                mut internal_command_receiver,
-                peerlist,
-                mut swarm,
-            } = config;
+            let NetworkHost { shutdown } = self;
 
             tokio::spawn(async move {
-                loop {
-                    let swarm_next_event = Swarm::next_event(&mut swarm);
-                    let recv_command = (&mut internal_command_receiver).recv();
-
-                    tokio::select! {
-                        _ = &mut shutdown => break,
-                        event = swarm_next_event => {
-                            process_swarm_event(event, &internal_event_sender, &peerlist).await;
-                        }
-                        command = recv_command => {
-                            if let Some(command) = command {
-                                process_command(command, &mut swarm, &peerlist).await;
-                            }
-                        },
-                    }
-                }
+                network_host_processor(config, shutdown).await;
 
                 info!("Network Host stopped.");
             });
 
             info!("Network Host started.");
+        }
+    }
+}
+
+async fn network_host_processor(config: NetworkHostConfig, mut shutdown: oneshot::Receiver<()>) {
+    let NetworkHostConfig {
+        internal_event_sender,
+        mut internal_command_receiver,
+        peerlist,
+        mut swarm,
+    } = config;
+
+    loop {
+        let swarm_next_event = Swarm::next_event(&mut swarm);
+        let recv_command = (&mut internal_command_receiver).recv();
+
+        tokio::select! {
+            _ = &mut shutdown => break,
+            event = swarm_next_event => {
+                process_swarm_event(event, &internal_event_sender, &peerlist).await;
+            }
+            command = recv_command => {
+                if let Some(command) = command {
+                    process_command(command, &mut swarm, &peerlist).await;
+                }
+            },
         }
     }
 }
@@ -199,7 +181,6 @@ async fn dial_addr(swarm: &mut Swarm<SwarmBehavior>, addr: Multiaddr, peerlist: 
 
     info!("Dialing address: {}.", addr);
 
-    // FIXME
     GOSSIP_ORIGIN.store(true, std::sync::atomic::Ordering::SeqCst);
 
     Swarm::dial_addr(swarm, addr.clone()).map_err(|_| Error::DialingAddressFailed(addr))?;
@@ -213,13 +194,12 @@ async fn dial_peer(swarm: &mut Swarm<SwarmBehavior>, peer_id: PeerId, peerlist: 
         return Err(Error::DialingPeerDenied(peer_id));
     }
 
-    // Unwrap:
+    // Panic:
     // We just checked, that the peer is fine to be dialed.
     let PeerInfo { address, alias, .. } = peerlist.0.read().await.info(&peer_id).unwrap();
 
     info!("Dialing peer: {} ({}).", alias, alias!(peer_id));
 
-    // FIXME
     GOSSIP_ORIGIN.store(true, std::sync::atomic::Ordering::SeqCst);
 
     Swarm::dial_addr(swarm, address).map_err(|_| Error::DialingPeerFailed(peer_id))?;
