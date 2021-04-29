@@ -13,8 +13,6 @@
 //! ```ignore
 //! // Imports
 //! use bee_vote::{Event, FpcBuilder, OpinionGiver};
-//! # use tests::MockOpinionGiver;
-//! # use futures::executor::block_on;
 //!
 //! // Create a channel to send voting events through.
 //! let (tx, rx) = flume::unbounded();

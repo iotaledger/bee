@@ -1,15 +1,39 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod mock;
-
+use bee_test::rand::{transaction::rand_transaction_id, string::rand_string};
 use bee_vote::{
     error::Error,
     events::Event,
     fpc::{self, FpcBuilder},
-    opinion::{Opinion, OpinionGiver, Opinions},
+    opinion::{Opinion, OpinionGiver, Opinions, QueryObjects},
     VoteObject,
 };
+
+/// Mock opinion giver struct for instantiation in testing.
+#[derive(Clone)]
+struct MockOpinionGiver {
+    id: String,
+    round: u32,
+    round_replies: Vec<Opinions>,
+}
+
+impl OpinionGiver for MockOpinionGiver {
+    fn query(&mut self, _: &QueryObjects) -> Result<Opinions, Error> {
+        if self.round as usize >= self.round_replies.len() {
+            return Ok(self.round_replies.last().unwrap().clone());
+        }
+
+        let opinions = self.round_replies.get(self.round as usize).unwrap().clone();
+        self.round += 1;
+
+        Ok(opinions)
+    }
+
+    fn id(&self) -> &str {
+        &self.id
+    }
+}
 
 #[tokio::test]
 async fn prohibit_multiple_votes() {
@@ -22,7 +46,7 @@ async fn prohibit_multiple_votes() {
         .build()
         .unwrap();
 
-    let tx_id = mock::rand_transaction_id();
+    let tx_id = rand_transaction_id();
 
     assert!(voter.vote(VoteObject::Conflict(tx_id), Opinion::Like).await.is_ok());
     
@@ -32,15 +56,15 @@ async fn prohibit_multiple_votes() {
     ));
 
     assert!(voter
-        .vote(VoteObject::Conflict(mock::rand_transaction_id()), Opinion::Like)
+        .vote(VoteObject::Conflict(rand_transaction_id()), Opinion::Like)
         .await
         .is_ok());
 }
 
 #[tokio::test]
 async fn finalized_event() {
-    let mock = mock::MockOpinionGiver {
-        id: mock::random_id_string(),
+    let mock = MockOpinionGiver {
+        id: rand_string(32),
         round: 0,
         round_replies: vec![Opinions::new(vec![Opinion::Like]); 4],
     };
@@ -58,7 +82,7 @@ async fn finalized_event() {
         .unwrap();
 
     assert!(voter
-        .vote(VoteObject::Conflict(mock::rand_transaction_id()), Opinion::Like)
+        .vote(VoteObject::Conflict(rand_transaction_id()), Opinion::Like)
         .await
         .is_ok());
 
@@ -80,8 +104,8 @@ async fn finalized_event() {
 
 #[tokio::test]
 async fn failed_event() {
-    let mock = mock::MockOpinionGiver {
-        id: mock::random_id_string(),
+    let mock = MockOpinionGiver {
+        id: rand_string(32),
         round: 0,
         round_replies: vec![Opinions::new(vec![Opinion::Dislike])],
     };
@@ -100,7 +124,7 @@ async fn failed_event() {
         .unwrap();
 
     assert!(voter
-        .vote(VoteObject::Conflict(mock::rand_transaction_id()), Opinion::Like)
+        .vote(VoteObject::Conflict(rand_transaction_id()), Opinion::Like)
         .await
         .is_ok());
 
@@ -131,8 +155,8 @@ async fn multiple_opinion_givers() {
             let mut opinion_givers: Vec<Box<dyn OpinionGiver>> = vec![];
 
             for _ in 0..fpc::DEFAULT_SAMPLE_SIZE {
-                opinion_givers.push(Box::new(mock::MockOpinionGiver {
-                    id: mock::random_id_string(),
+                opinion_givers.push(Box::new(MockOpinionGiver {
+                    id: rand_string(32),
                     round: 0,
                     round_replies: vec![Opinions::new(vec![init_opinions[i]])],
                 }));
@@ -151,7 +175,7 @@ async fn multiple_opinion_givers() {
             .unwrap();
 
         assert!(voter
-            .vote(VoteObject::Conflict(mock::rand_transaction_id()), init_opinions[i])
+            .vote(VoteObject::Conflict(rand_transaction_id()), init_opinions[i])
             .await
             .is_ok());
 

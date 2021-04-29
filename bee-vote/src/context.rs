@@ -229,6 +229,7 @@ impl VoteContext {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
     

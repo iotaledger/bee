@@ -1,10 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod mock;
-
 use bee_message::{payload::transaction::TransactionId, MessageId};
 use bee_network::PeerId;
+use bee_test::rand::{message::rand_message_id, transaction::rand_transaction_id};
 use bee_vote::{
     Opinion,
     error::Error,
@@ -46,9 +45,9 @@ async fn registry(node_id: PeerId, tx_id: TransactionId, msg_id: MessageId) -> R
 
 #[tokio::test]
 async fn number_entries() {
-    let node_id = mock::rand_node_id();
-    let tx_id = mock::rand_transaction_id();
-    let msg_id = mock::rand_message_id();
+    let node_id = PeerId::random();
+    let tx_id = rand_transaction_id();
+    let msg_id = rand_message_id();
 
     let registry = registry(node_id, tx_id, msg_id).await;
 
@@ -63,9 +62,9 @@ async fn number_entries() {
 
 #[tokio::test]
 async fn last_entry() {
-    let node_id = mock::rand_node_id();
-    let tx_id = mock::rand_transaction_id();
-    let msg_id = mock::rand_message_id();
+    let node_id = PeerId::random();
+    let tx_id = rand_transaction_id();
+    let msg_id = rand_message_id();
 
     let registry = registry(node_id, tx_id, msg_id).await;
 
@@ -86,9 +85,9 @@ async fn last_entry() {
 
 #[tokio::test]
 async fn not_finalized() {
-    let node_id = mock::rand_node_id();
-    let tx_id = mock::rand_transaction_id();
-    let msg_id = mock::rand_message_id();
+    let node_id = PeerId::random();
+    let tx_id = rand_transaction_id();
+    let msg_id = rand_message_id();
 
     let registry = registry(node_id, tx_id, msg_id).await;
 
@@ -103,9 +102,9 @@ async fn not_finalized() {
 
 #[tokio::test]
 async fn finalized() {
-    let node_id = mock::rand_node_id();
-    let tx_id = mock::rand_transaction_id();
-    let msg_id = mock::rand_message_id();
+    let node_id = PeerId::random();
+    let tx_id = rand_transaction_id();
+    let msg_id = rand_message_id();
 
     let registry = registry(node_id, tx_id, msg_id).await;
 
@@ -121,7 +120,7 @@ async fn finalized() {
 #[tokio::test]
 async fn node_not_found() {
     let registry = Registry::default();
-    let node_id = mock::rand_node_id();
+    let node_id = PeerId::random();
 
     assert!(matches!(
         registry.read_view(node_id, |_| {}).await,

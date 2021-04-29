@@ -14,6 +14,7 @@ homepage = "https://www.iota.org"
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-test = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 flume = "0.10.2"
 futures = "0.3.13"
