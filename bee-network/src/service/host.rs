@@ -25,7 +25,7 @@ use rand::Rng;
 use tokio::time::{self, Duration, Instant};
 use tokio_stream::wrappers::{IntervalStream, UnboundedReceiverStream};
 
-pub struct NetworkServiceConfig {
+pub struct ServiceHostConfig {
     pub local_keys: identity::Keypair,
     pub senders: Senders,
     pub receivers: Receivers,
@@ -59,11 +59,11 @@ pub mod integrated {
     ///
     /// NOTE: This type is only exported to be used as a worker dependency.
     #[derive(Default)]
-    pub struct NetworkService {}
+    pub struct ServiceHost {}
 
     #[async_trait]
-    impl<N: Node> Worker<N> for NetworkService {
-        type Config = NetworkServiceConfig;
+    impl<N: Node> Worker<N> for ServiceHost {
+        type Config = ServiceHostConfig;
         type Error = Infallible;
 
         fn dependencies() -> &'static [TypeId] {
@@ -71,7 +71,7 @@ pub mod integrated {
         }
 
         async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-            let NetworkServiceConfig {
+            let ServiceHostConfig {
                 local_keys: _,
                 senders,
                 receivers,
@@ -89,7 +89,7 @@ pub mod integrated {
             node.spawn::<Self, _, _>(|shutdown| {
                 event_processor(shutdown, internal_events, senders.clone(), peerlist.clone())
             });
-            node.spawn::<Self, _, _>(|shutdown| peer_checker(shutdown, senders, peerlist));
+            node.spawn::<Self, _, _>(|shutdown| peerstate_checker(shutdown, senders, peerlist));
 
             info!("Network service started.");
 
@@ -101,18 +101,18 @@ pub mod integrated {
 pub mod standalone {
     use super::*;
 
-    pub struct NetworkService {
+    pub struct ServiceHost {
         pub shutdown: oneshot::Receiver<()>,
     }
 
-    impl NetworkService {
+    impl ServiceHost {
         pub fn new(shutdown: oneshot::Receiver<()>) -> Self {
             Self { shutdown }
         }
 
-        pub async fn start(self, config: NetworkServiceConfig) {
-            let NetworkService { shutdown } = self;
-            let NetworkServiceConfig {
+        pub async fn start(self, config: ServiceHostConfig) {
+            let ServiceHost { shutdown } = self;
+            let ServiceHostConfig {
                 local_keys: _,
                 senders,
                 receivers,
@@ -147,7 +147,7 @@ pub mod standalone {
                 senders.clone(),
                 peerlist.clone(),
             ));
-            tokio::spawn(peer_checker(shutdown_rx3, senders, peerlist));
+            tokio::spawn(peerstate_checker(shutdown_rx3, senders, peerlist));
 
             info!("Network service started.");
         }
@@ -185,7 +185,7 @@ async fn event_processor(shutdown: Shutdown, events: InternalEventReceiver, send
 }
 
 // TODO: implement exponential back-off to not spam the peer with reconnect attempts.
-async fn peer_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerList) {
+async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerList) {
     debug!("Peer checker running.");
 
     let Senders { internal_commands, .. } = senders;

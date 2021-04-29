@@ -40,7 +40,7 @@ pub use crate::{
     service::{
         command::{Command, NetworkCommandSender},
         event::{Event, NetworkEventReceiver},
-        service::integrated::NetworkService,
+        host::integrated::ServiceHost,
     },
     swarm::protocols::gossip::io::{GossipReceiver, GossipSender},
 };

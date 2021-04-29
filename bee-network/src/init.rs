@@ -20,7 +20,7 @@ use super::{
 use crate::{
     alias,
     network::host::NetworkHostConfig,
-    service::service::{self, NetworkServiceConfig},
+    service::host::{self, ServiceHostConfig},
     swarm::builder::build_swarm,
 };
 
@@ -74,7 +74,7 @@ pub mod global {
 /// Initializes a "standalone" version of the network layer.
 pub mod standalone {
     use super::*;
-    use crate::{network::host::standalone::NetworkHost, service::service::standalone::NetworkService};
+    use crate::{network::host::standalone::NetworkHost, service::host::standalone::ServiceHost};
 
     use futures::channel::oneshot;
 
@@ -100,7 +100,7 @@ pub mod standalone {
             shutdown_signal_tx2.send(()).expect("sending shutdown signal");
         });
 
-        NetworkService::new(shutdown_signal_rx1).start(service_config).await;
+        ServiceHost::new(shutdown_signal_rx1).start(service_config).await;
         NetworkHost::new(shutdown_signal_rx2).start(network_config).await;
 
         Ok((network_command_sender, network_event_receiver))
@@ -110,7 +110,7 @@ pub mod standalone {
 /// Initializes an "integrated" version of the network layer, which is used in the Bee node.
 pub mod integrated {
     use super::*;
-    use crate::{network::host::integrated::NetworkHost, service::service::integrated::NetworkService};
+    use crate::{network::host::integrated::NetworkHost, service::host::integrated::ServiceHost};
 
     use bee_runtime::node::{Node, NodeBuilder};
 
@@ -126,7 +126,7 @@ pub mod integrated {
 
         node_builder = node_builder
             .with_worker_cfg::<NetworkHost>(host_config)
-            .with_worker_cfg::<NetworkService>(service_config)
+            .with_worker_cfg::<ServiceHost>(service_config)
             .with_resource(network_command_sender);
 
         Ok((node_builder, network_event_receiver))
@@ -140,7 +140,7 @@ fn init(
 ) -> Result<
     (
         NetworkHostConfig,
-        NetworkServiceConfig,
+        ServiceHostConfig,
         NetworkCommandSender,
         NetworkEventReceiver,
     ),
@@ -196,21 +196,21 @@ fn init(
     info!("Binding to: {}", bind_multiaddr);
     let _listener_id = Swarm::listen_on(&mut swarm, bind_multiaddr.clone()).map_err(|_| Error::BindingAddressFailed)?;
 
-    let host_config = NetworkHostConfig {
+    let network_host_config = NetworkHostConfig {
         internal_event_sender: internal_event_sender.clone(),
         internal_command_receiver,
         peerlist: peerlist.clone(),
         swarm,
     };
 
-    let service_config = NetworkServiceConfig {
+    let service_host_config = ServiceHostConfig {
         local_keys,
-        senders: service::Senders {
+        senders: host::Senders {
             events: event_sender,
             internal_events: internal_event_sender,
             internal_commands: internal_command_sender,
         },
-        receivers: service::Receivers {
+        receivers: host::Receivers {
             commands: command_receiver,
             internal_events: internal_event_receiver,
         },
@@ -221,8 +221,8 @@ fn init(
     let network_event_receiver = NetworkEventReceiver::new(event_receiver);
 
     Ok((
-        host_config,
-        service_config,
+        network_host_config,
+        service_host_config,
         network_command_sender,
         network_event_receiver,
     ))

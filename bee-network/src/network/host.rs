@@ -25,7 +25,7 @@ pub struct NetworkHostConfig {
 
 pub mod integrated {
     use super::*;
-    use crate::service::service::integrated::NetworkService;
+    use crate::service::host::integrated::ServiceHost;
 
     use bee_runtime::{node::Node, worker::Worker};
 
@@ -45,7 +45,7 @@ pub mod integrated {
         type Error = Infallible;
 
         fn dependencies() -> &'static [TypeId] {
-            vec![TypeId::of::<NetworkService>()].leak()
+            vec![TypeId::of::<ServiceHost>()].leak()
         }
 
         async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
