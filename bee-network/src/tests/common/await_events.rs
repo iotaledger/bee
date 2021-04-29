@@ -19,7 +19,7 @@ pub async fn get_bind_address(rx: &mut NetworkEventReceiver) -> Multiaddr {
                 }
             },
             () = &mut timeout => {
-                assert!(false, "timed out before receiving `AddressBound` event");
+                panic!("timed out before receiving `AddressBound` event");
             }
         }
     }
@@ -37,7 +37,7 @@ pub async fn get_local_id(rx: &mut NetworkEventReceiver) -> PeerId {
                 }
             },
             () = &mut timeout => {
-                assert!(false, "timed out before receiving `PeerCreated` event");
+                panic!("timed out before receiving `PeerCreated` event");
             }
         }
     }
@@ -55,7 +55,7 @@ pub async fn get_added_peer_id(rx: &mut NetworkEventReceiver) -> PeerId {
                 }
             },
             () = &mut timeout => {
-                assert!(false, "timed out before receiving `PeerAdded` event");
+                panic!("timed out before receiving `PeerAdded` event");
             }
         }
     }
@@ -73,7 +73,7 @@ pub async fn get_connected_peer_id(rx: &mut NetworkEventReceiver) -> PeerId {
                 }
             },
             () = &mut timeout => {
-                assert!(false, "timed out before receiving `PeerConnected` event");
+                panic!("timed out before receiving `PeerConnected` event");
             }
         }
     }
@@ -91,7 +91,7 @@ pub async fn get_gossip_channels(rx: &mut NetworkEventReceiver) -> (GossipReceiv
                 }
             },
             () = &mut timeout => {
-                assert!(false, "timed out before receiving `PeerConnected` event");
+                panic!("timed out before receiving `PeerConnected` event");
             }
         }
     }
