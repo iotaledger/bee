@@ -41,13 +41,11 @@ pub enum Error {
     /// The domain was unresolvable.
     #[error("Domain name '{}' couldn't be resolved to an IP address", .0)]
     UnresolvableDomain(String),
-
-    ///
-    #[error("")]
-    ParsingFailed,
-
+    /// Parsing of a [`Multiaddr`] failed.
+    #[error("Parsing of '{}' to a Multiaddr failed.", 0)]
+    ParsingFailed(String),
     /// The provided [`Multiaddr`] lacks the P2p [`Protocol`].
-    #[error("Invalid P2p multiaddr. Did you forget to add '.../p2p/12D3Koo...'?")]
+    #[error("Invalid P2p Multiaddr. Did you forget to add '.../p2p/12D3Koo...'?")]
     MissingP2pProtocol,
 }
 
@@ -391,7 +389,9 @@ impl PeeringConfigBuilder {
 }
 
 fn split_multiaddr(multiaddr: &str) -> Result<(Multiaddr, PeerId), Error> {
-    let mut multiaddr: Multiaddr = multiaddr.parse().map_err(|_| Error::ParsingFailed)?;
+    let mut multiaddr: Multiaddr = multiaddr
+        .parse()
+        .map_err(|_| Error::ParsingFailed(multiaddr.to_string()))?;
 
     if let Protocol::P2p(multihash) = multiaddr.pop().ok_or(Error::MultiaddrUnderspecified)? {
         Ok((
