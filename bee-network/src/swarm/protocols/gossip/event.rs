@@ -7,17 +7,17 @@ use libp2p::{swarm::NegotiatedSubstream, Multiaddr, PeerId};
 
 pub struct GossipEvent {
     pub peer_id: PeerId,
-    pub peer_addr: Multiaddr,
-    pub conn: NegotiatedSubstream,
-    pub conn_info: ConnectionInfo,
+    pub peer_multiaddr: Multiaddr,
+    pub connection_info: ConnectionInfo,
+    pub negotiated_stream: NegotiatedSubstream,
 }
 
 #[derive(Default)]
 pub struct GossipEventBuilder {
     peer_id: Option<PeerId>,
     peer_addr: Option<Multiaddr>,
-    conn: Option<NegotiatedSubstream>,
-    conn_info: Option<ConnectionInfo>,
+    connection_info: Option<ConnectionInfo>,
+    negotiated_stream: Option<NegotiatedSubstream>,
 }
 
 impl GossipEventBuilder {
@@ -32,12 +32,12 @@ impl GossipEventBuilder {
     }
 
     pub fn with_conn(mut self, conn: NegotiatedSubstream) -> Self {
-        self.conn.replace(conn);
+        self.negotiated_stream.replace(conn);
         self
     }
 
     pub fn with_conn_info(mut self, conn_info: ConnectionInfo) -> Self {
-        self.conn_info.replace(conn_info);
+        self.connection_info.replace(conn_info);
         self
     }
 
@@ -46,10 +46,14 @@ impl GossipEventBuilder {
         // Due to the design it is guaranteed that when this method is called all options have been replaced with valid
         // values. Unwrapping is therefore fine at this point.
         GossipEvent {
+            // The following 3 fields are received during `inject_connection_established` which is invoked before
+            // `inject_event`.
             peer_id: self.peer_id.unwrap(),
-            peer_addr: self.peer_addr.unwrap(),
-            conn: self.conn.unwrap(),
-            conn_info: self.conn_info.unwrap(),
+            peer_multiaddr: self.peer_addr.unwrap(),
+            negotiated_stream: self.negotiated_stream.unwrap(),
+
+            // This field is received separatedly during `inject_event`.
+            connection_info: self.connection_info.unwrap(),
         }
     }
 }

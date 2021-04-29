@@ -71,9 +71,9 @@ impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
 
         let GossipEvent {
             peer_id,
-            peer_addr,
-            conn,
-            conn_info,
+            peer_multiaddr: peer_addr,
+            negotiated_stream: conn,
+            connection_info: conn_info,
         } = event;
 
         debug!("New gossip stream with {}.", alias!(peer_id));

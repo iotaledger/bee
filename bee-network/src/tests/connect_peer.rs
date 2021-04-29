@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![cfg(feature = "full")]
+
 use super::common::{await_events::*, keys_and_ids::*, network_config::*, shutdown::*};
 
 use crate::{standalone::init, Command, PeerRelation};
