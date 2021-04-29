@@ -264,9 +264,9 @@ impl NetworkConfigBuilder {
         Ok(self)
     }
 
-    /// Specifies an interval in seconds for automatic reconnects.
+    /// Specifies the interval (in seconds) at which known peers are automatically reconnected if possible.
     ///
-    /// The minimum `secs`
+    /// The allowed minimum value for the `secs` argument is `1`.
     pub fn with_reconnect_interval_secs(mut self, secs: u64) -> Self {
         let secs = secs.max(MIN_RECONNECT_INTERVAL_SECS);
         self.reconnect_interval_secs.replace(secs);
