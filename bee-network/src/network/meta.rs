@@ -16,9 +16,9 @@ pub struct ConnectionInfo {
 /// Describes direction of an established connection.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Origin {
-    /// The connection is inbound (server).
+    /// The connection is inbound (local=server).
     Inbound,
-    /// The connection is outbound (client).
+    /// The connection is outbound (local=client).
     Outbound,
 }
 
@@ -36,10 +36,29 @@ impl Origin {
 
 impl fmt::Display for Origin {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match *self {
-            Origin::Outbound => "outbound",
-            Origin::Inbound => "inbound",
-        };
-        write!(f, "{}", s)
+        match *self {
+            Origin::Inbound => f.write_str("inbound"),
+            Origin::Outbound => f.write_str("outbound"),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn is_api() {
+        let mut origin = Origin::Inbound;
+        assert!(origin.is_inbound());
+
+        origin = Origin::Outbound;
+        assert!(origin.is_outbound());
+    }
+
+    #[test]
+    fn display() {
+        assert_eq!(&Origin::Inbound.to_string(), "inbound");
+        assert_eq!(&Origin::Outbound.to_string(), "outbound");
     }
 }
