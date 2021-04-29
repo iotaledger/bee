@@ -191,12 +191,13 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
     let Senders { internal_commands, .. } = senders;
 
     // NOTE:
-    // We add a random amount of milliseconds to when the reconnector starts, so that even if 2 nodes
-    // go online at the same time the probablilty of them simultaneously dialing each other is reduced
-    // significantly.
-
+    // We want to reduce the overhead of simultaneous mutual dialing even if several nodes are started at the same time
+    // (by script for example). We do this here by adding a small random delay to when this task will be executing
+    // regular peer state checks.
     let delay = Duration::from_millis(rand::thread_rng().gen_range(0u64..1000));
     let start = Instant::now() + delay;
+
+    // The (currently) constant interval at which peer state checks happen.
     let period = Duration::from_secs(reconnect_interval_secs());
 
     let mut interval = ShutdownStream::new(shutdown, IntervalStream::new(time::interval_at(start, period)));
