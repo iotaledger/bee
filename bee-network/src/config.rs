@@ -38,6 +38,9 @@ pub enum Error {
     /// The peer was already added.
     #[error("Static peer {} already added.", alias!(.0))]
     DuplicateStaticPeer(PeerId),
+    /// The domain was unresolvable.
+    #[error("Domain name '{}' couldn't be resolved to an IP address", .0)]
+    UnresolvableDomain(String),
 }
 
 /// The network configuration.
@@ -69,7 +72,7 @@ impl NetworkConfig {
         }
 
         if let Protocol::Dns(dns) = addr {
-            addr = resolve_dns_multiaddr(dns);
+            addr = resolve_dns_multiaddr(dns)?;
         }
 
         // Panic:
@@ -153,16 +156,19 @@ impl NetworkConfig {
     }
 }
 
-fn resolve_dns_multiaddr(dns: Cow<'_, str>) -> Protocol {
+fn resolve_dns_multiaddr(dns: Cow<'_, str>) -> Result<Protocol, Error> {
     use std::net::{IpAddr, ToSocketAddrs};
 
-    for socket_addr in dns.to_socket_addrs().expect("Invalid Multiaddr: Unresolvable") {
+    for socket_addr in dns
+        .to_socket_addrs()
+        .map_err(|_| Error::UnresolvableDomain(dns.to_string()))?
+    {
         match socket_addr.ip() {
-            IpAddr::V4(ip4) => return Protocol::Ip4(ip4),
-            IpAddr::V6(ip6) => return Protocol::Ip6(ip6),
+            IpAddr::V4(ip4) => return Ok(Protocol::Ip4(ip4)),
+            IpAddr::V6(ip6) => return Ok(Protocol::Ip6(ip6)),
         }
     }
-    panic!("Invalid Multiaddr: Unresolvable");
+    Err(Error::UnresolvableDomain(dns.to_string()))
 }
 
 impl Default for NetworkConfig {
@@ -230,6 +236,8 @@ impl NetworkConfigBuilder {
             } else {
                 unreachable!("already checked");
             };
+            // Panic:
+            // We know at this point, that `multiaddr` is valid, so unwrapping is fine.
             let ip = if let Protocol::Dns(dns) = multiaddr.pop().unwrap() {
                 let socket_dns = {
                     let mut socket_addr = String::with_capacity(16);
@@ -239,7 +247,7 @@ impl NetworkConfigBuilder {
                     socket_addr
                 };
 
-                resolve_dns_multiaddr(socket_dns.into())
+                resolve_dns_multiaddr(socket_dns.into())?
             } else {
                 unreachable!("already checked");
             };
