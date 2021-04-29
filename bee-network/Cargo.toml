@@ -58,3 +58,7 @@ fern = "0.6"
 hex = "0.4"
 serial_test = "0.5"
 tokio = { version = "1.4", features = ["rt", "rt-multi-thread", "macros", "signal", "time", "io-std", "io-util"] }
+
+[[example]]
+name = "chat"
+required-features = ["full"]

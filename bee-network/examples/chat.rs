@@ -19,6 +19,8 @@
 //! NOTE: Due to some limitations of `tokio::io::stdin` the shudown is not working
 //! currently. Use your favorite kill command, for example `killall chat`.
 
+#![cfg(feature = "full")]
+
 mod common;
 
 #[tokio::main]
