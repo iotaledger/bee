@@ -41,6 +41,14 @@ pub enum Error {
     /// The domain was unresolvable.
     #[error("Domain name '{}' couldn't be resolved to an IP address", .0)]
     UnresolvableDomain(String),
+
+    ///
+    #[error("")]
+    ParsingFailed,
+
+    /// The provided [`Multiaddr`] lacks the P2p [`Protocol`].
+    #[error("Invalid P2p multiaddr. Did you forget to add '.../p2p/12D3Koo...'?")]
+    MissingP2pProtocol,
 }
 
 /// The network configuration.
@@ -63,6 +71,12 @@ impl NetworkConfig {
         NetworkConfigBuilder::new()
     }
 
+    /// Returns an in-memory config builder to construct a [`NetworkConfig`] iteratively.
+    #[cfg(test)]
+    pub fn build_in_memory() -> InMemoryNetworkConfigBuilder {
+        InMemoryNetworkConfigBuilder::new()
+    }
+
     /// Replaces the address, but keeps the port of the bind address.
     ///
     /// The argument `addr` must be either the `Ip4`, `Ip6`, or `Dns` variant of [`Protocol`].
@@ -76,18 +90,10 @@ impl NetworkConfig {
         }
 
         // Panic:
-        // The builder ensures that the following unwraps are fine. However, since the builder can also be deserialized
-        // from a file panicking can still occur. But since it that case we want the deserialization process to panic,
-        // we provide additonal context messages.
-        let port = self
-            .bind_multiaddr
-            .pop()
-            .expect("Multiaddr is empty (contains no protocols).");
+        // The builder ensures that the following unwraps are fine.
+        let port = self.bind_multiaddr.pop().unwrap();
 
-        let _ = self
-            .bind_multiaddr
-            .pop()
-            .expect("Multiaddr is underspecified (missing a protocol).");
+        let _ = self.bind_multiaddr.pop().unwrap();
 
         self.bind_multiaddr.push(addr);
         self.bind_multiaddr.push(port);
@@ -145,14 +151,6 @@ impl NetworkConfig {
     /// Returns the statically configured peers.
     pub fn static_peers(&self) -> &HashSet<Peer> {
         &self.static_peers
-    }
-}
-
-#[cfg(test)]
-impl NetworkConfig {
-    /// Returns an in-memory config builder to construct a [`NetworkConfig`] iteratively.
-    pub fn build_in_memory() -> InMemoryNetworkConfigBuilder {
-        InMemoryNetworkConfigBuilder::new()
     }
 }
 
@@ -261,6 +259,8 @@ impl NetworkConfigBuilder {
     }
 
     /// Specifies an interval in seconds for automatic reconnects.
+    ///
+    /// The minimum `secs`
     pub fn with_reconnect_interval_secs(mut self, secs: u64) -> Self {
         let secs = secs.max(MIN_RECONNECT_INTERVAL_SECS);
         self.reconnect_interval_secs.replace(secs);
@@ -274,8 +274,8 @@ impl NetworkConfigBuilder {
     }
 
     /// Builds the network config.
-    pub fn finish(self) -> NetworkConfig {
-        NetworkConfig {
+    pub fn finish(self) -> Result<NetworkConfig, Error> {
+        Ok(NetworkConfig {
             bind_multiaddr: self
                 .bind_multiaddr
                 // Panic:
@@ -283,8 +283,8 @@ impl NetworkConfigBuilder {
                 .unwrap_or_else(|| DEFAULT_BIND_MULTIADDR.parse().unwrap()),
             reconnect_interval_secs: self.reconnect_interval_secs.unwrap_or(DEFAULT_RECONNECT_INTERVAL_SECS),
             max_unknown_peers: self.max_unknown_peers.unwrap_or(DEFAULT_MAX_UNKOWN_PEERS),
-            static_peers: self.peering.finish().peers,
-        }
+            static_peers: self.peering.finish()?.peers,
+        })
     }
 }
 
@@ -363,38 +363,43 @@ pub struct PeeringConfigBuilder {
 }
 
 impl PeeringConfigBuilder {
-    pub fn finish(self) -> PeeringConfig {
+    pub fn finish(self) -> Result<PeeringConfig, Error> {
         let peers = match self.peers {
             None => Default::default(),
-            Some(peer_builders) => peer_builders
-                .into_iter()
-                .map(|builder| {
-                    let (multiaddr, peer_id) = split_multiaddr(&builder.multiaddr);
-                    Peer {
+            Some(peer_builders) => {
+                // NOTE: Switch back to combinators once `map_while` is stable.
+
+                let mut peers = HashSet::with_capacity(peer_builders.len());
+
+                for builder in peer_builders {
+                    let (multiaddr, peer_id) = split_multiaddr(&builder.multiaddr)?;
+                    if !peers.insert(Peer {
                         peer_id,
                         multiaddr,
                         alias: builder.alias,
+                    }) {
+                        return Err(Error::DuplicateStaticPeer(peer_id));
                     }
-                })
-                .collect::<HashSet<_>>(),
+                }
+
+                peers
+            }
         };
 
-        PeeringConfig { peers }
+        Ok(PeeringConfig { peers })
     }
 }
 
-fn split_multiaddr(multiaddr: &str) -> (Multiaddr, PeerId) {
-    let mut multiaddr: Multiaddr = multiaddr.parse().expect("error parsing Multiaddr");
+fn split_multiaddr(multiaddr: &str) -> Result<(Multiaddr, PeerId), Error> {
+    let mut multiaddr: Multiaddr = multiaddr.parse().map_err(|_| Error::ParsingFailed)?;
 
-    // Panic:
-    // We want to panic if the configuration is faulty.
-    if let Protocol::P2p(multihash) = multiaddr.pop().unwrap() {
-        return (
+    if let Protocol::P2p(multihash) = multiaddr.pop().ok_or_else(|| Error::MultiaddrUnderspecified)? {
+        return Ok((
             multiaddr,
             PeerId::from_multihash(multihash).expect("Invalid peer Multiaddr: Make sure your peer's Id is complete."),
-        );
+        ));
     } else {
-        panic!("Invalid peer Multiaddr: Missing '.../p2p/12D3Koo...' suffix");
+        Err(Error::MissingP2pProtocol)
     }
 }
 

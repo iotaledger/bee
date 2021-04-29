@@ -5,6 +5,7 @@ use libp2p::core::connection::ConnectionId;
 
 use std::fmt;
 
+/// Meta information about an established connection.
 #[derive(Clone, Debug)]
 pub struct ConnectionInfo {
     /// The assigned connection id.
