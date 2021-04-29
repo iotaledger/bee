@@ -128,3 +128,23 @@ pub enum InternalEvent {
     /// The gossip protocol has been dropped with a peer.
     ProtocolDropped { peer_id: PeerId },
 }
+
+/// Allows the user to receive [`Event`]s published by the network layer.
+pub struct NetworkEventReceiver(EventReceiver);
+
+impl NetworkEventReceiver {
+    pub(crate) fn new(inner: EventReceiver) -> Self {
+        Self(inner)
+    }
+
+    /// Waits for an event from the network.
+    pub async fn recv(&mut self) -> Option<Event> {
+        self.0.recv().await
+    }
+}
+
+impl Into<EventReceiver> for NetworkEventReceiver {
+    fn into(self) -> EventReceiver {
+        self.0
+    }
+}

@@ -11,9 +11,8 @@ use super::{
         meta::{PeerInfo, PeerRelation},
     },
     service::{
-        command::command_channel,
-        controller::{NetworkCommandSender, NetworkEventReceiver},
-        event::{event_channel, Event, InternalEvent},
+        command::{command_channel, NetworkCommandSender},
+        event::{event_channel, Event, InternalEvent, NetworkEventReceiver},
     },
     Keypair, PeerId,
 };

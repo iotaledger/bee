@@ -3,6 +3,8 @@
 
 use crate::peer::meta::PeerRelation;
 
+use super::error::Error;
+
 use libp2p::{Multiaddr, PeerId};
 use tokio::sync::mpsc;
 
@@ -75,4 +77,21 @@ pub enum Command {
         /// The peer's new relation.
         to: PeerRelation,
     },
+}
+
+/// Allows the user to send [`Command`]s to the network layer.
+#[derive(Clone, Debug)]
+pub struct NetworkCommandSender(CommandSender);
+
+impl NetworkCommandSender {
+    pub(crate) fn new(inner: CommandSender) -> Self {
+        Self(inner)
+    }
+
+    /// Sends a command to the network.
+    ///
+    /// NOTE: Although synchronous, this method never actually blocks.
+    pub fn send(&self, command: Command) -> Result<(), Error> {
+        self.0.send(command).map_err(|_| Error::CommandSendFailure)
+    }
 }
