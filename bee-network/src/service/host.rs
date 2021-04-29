@@ -303,7 +303,7 @@ async fn process_internal_event(
             let mut peerlist = peerlist.0.write().await;
 
             // Try to disconnect, but ignore errors in-case the peer was disconnected already.
-            let _ = peerlist.update_state(&peer_id, |state| state.to_disconnected());
+            let _ = peerlist.update_state(&peer_id, |state| state.set_disconnected());
 
             // Try to remove unknown peers.
             let _ = peerlist.filter_remove(&peer_id, |peer_info, _| peer_info.relation.is_unknown());
@@ -346,7 +346,7 @@ async fn process_internal_event(
             let peer_info = peerlist.info(&peer_id).unwrap();
 
             // We store a clone of the gossip send channel in order to send a shutdown signal.
-            let _ = peerlist.update_state(&peer_id, |state| state.to_connected(gossip_out.clone()));
+            let _ = peerlist.update_state(&peer_id, |state| state.set_connected(gossip_out.clone()));
 
             // We no longer need to hold the lock.
             drop(peerlist);
@@ -452,17 +452,11 @@ async fn remove_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList) ->
 
     match peer_removal {
         Ok(_peer_info) => {
-            // We no longer need to hold the lock.
-            drop(peerlist);
-
             let _ = senders.events.send(Event::PeerRemoved { peer_id });
 
             Ok(())
         }
         Err(e) => {
-            // We no longer need to hold the lock.
-            drop(peerlist);
-
             let _ = senders.events.send(Event::CommandFailed {
                 command: Command::RemovePeer { peer_id },
                 reason: e.clone(),
@@ -478,7 +472,7 @@ async fn disconnect_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList
         .0
         .write()
         .await
-        .update_state(&peer_id, |state| state.to_disconnected());
+        .update_state(&peer_id, |state| state.set_disconnected());
 
     match state_update {
         Ok(Some(gossip_sender)) => {

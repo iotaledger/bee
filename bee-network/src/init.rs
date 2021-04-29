@@ -194,7 +194,7 @@ fn init(
 
     // Try binding to the configured bind address.
     info!("Binding to: {}", bind_multiaddr);
-    let _listener_id = Swarm::listen_on(&mut swarm, bind_multiaddr.clone()).map_err(|_| Error::BindingAddressFailed)?;
+    let _listener_id = Swarm::listen_on(&mut swarm, bind_multiaddr).map_err(|_| Error::BindingAddressFailed)?;
 
     let network_host_config = NetworkHostConfig {
         internal_event_sender: internal_event_sender.clone(),

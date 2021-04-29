@@ -222,7 +222,7 @@ async fn dial_peer(swarm: &mut Swarm<SwarmBehavior>, peer_id: PeerId, peerlist: 
     // FIXME
     GOSSIP_ORIGIN.store(true, std::sync::atomic::Ordering::SeqCst);
 
-    Swarm::dial_addr(swarm, address.clone()).map_err(|_| Error::DialingPeerFailed(peer_id))?;
+    Swarm::dial_addr(swarm, address).map_err(|_| Error::DialingPeerFailed(peer_id))?;
 
     Ok(())
 }

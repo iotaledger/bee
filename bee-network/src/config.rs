@@ -161,7 +161,7 @@ fn resolve_dns_multiaddr(dns: Cow<'_, str>) -> Result<Protocol, Error> {
         .to_socket_addrs()
         .map_err(|_| Error::UnresolvableDomain(dns.to_string()))?
         .next()
-        .ok_or(Error::UnresolvableDomain(dns.to_string()))?
+        .ok_or_else(|| Error::UnresolvableDomain(dns.to_string()))?
         .ip()
     {
         IpAddr::V4(ip4) => return Ok(Protocol::Ip4(ip4)),
@@ -240,7 +240,7 @@ impl NetworkConfigBuilder {
                 let socket_dns = {
                     let mut socket_addr = String::with_capacity(16);
                     socket_addr.push_str(&dns);
-                    socket_addr.push_str(":");
+                    socket_addr.push(':');
                     socket_addr.push_str(&port.to_string());
                     socket_addr
                 };
@@ -393,11 +393,11 @@ impl PeeringConfigBuilder {
 fn split_multiaddr(multiaddr: &str) -> Result<(Multiaddr, PeerId), Error> {
     let mut multiaddr: Multiaddr = multiaddr.parse().map_err(|_| Error::ParsingFailed)?;
 
-    if let Protocol::P2p(multihash) = multiaddr.pop().ok_or_else(|| Error::MultiaddrUnderspecified)? {
-        return Ok((
+    if let Protocol::P2p(multihash) = multiaddr.pop().ok_or(Error::MultiaddrUnderspecified)? {
+        Ok((
             multiaddr,
             PeerId::from_multihash(multihash).expect("Invalid peer Multiaddr: Make sure your peer's Id is complete."),
-        ));
+        ))
     } else {
         Err(Error::MissingP2pProtocol)
     }

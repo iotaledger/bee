@@ -53,12 +53,14 @@ impl PeerList {
         let mut p = HashMap::with_capacity(REMOTE_PEERS_INITIAL_CAP);
 
         p.extend(peers.into_iter().map(|peer| {
+            // Realiasing because of otherwise partial move.
+            let peer_id = peer.peer_id;
             (
-                peer.peer_id,
+                peer_id,
                 (
                     PeerInfo {
                         address: peer.multiaddr,
-                        alias: peer.alias.unwrap_or(alias!(peer.peer_id).to_owned()),
+                        alias: peer.alias.unwrap_or_else(|| alias!(peer_id).to_owned()),
                         relation: PeerRelation::Known,
                     },
                     PeerState::Disconnected,
@@ -335,6 +337,7 @@ impl PeerList {
     }
 
     fn find_peer_if_connected(&self, addr: &Multiaddr) -> Option<PeerId> {
+        #[allow(clippy::filter_next)]
         self.filter(|info, state| state.is_connected() && info.address == *addr)
             .next()
             .map(|(peer_id, _)| peer_id)
@@ -485,12 +488,12 @@ impl PeerState {
         matches!(self, Self::Connected(_))
     }
 
-    pub fn to_connected(&mut self, gossip_sender: GossipSender) -> Option<GossipSender> {
+    pub fn set_connected(&mut self, gossip_sender: GossipSender) -> Option<GossipSender> {
         *self = Self::Connected(gossip_sender);
         None
     }
 
-    pub fn to_disconnected(&mut self) -> Option<GossipSender> {
+    pub fn set_disconnected(&mut self) -> Option<GossipSender> {
         match take(self) {
             Self::Disconnected => None,
             Self::Connected(sender) => Some(sender),
@@ -515,11 +518,11 @@ mod peerstate_tests {
         let mut peerstate = PeerState::Disconnected;
         let (tx, _rx) = gossip_channel();
 
-        peerstate.to_connected(tx);
+        peerstate.set_connected(tx);
         assert!(peerstate.is_connected());
 
-        assert!(peerstate.to_disconnected().is_some());
+        assert!(peerstate.set_disconnected().is_some());
         assert!(peerstate.is_disconnected());
-        assert!(peerstate.to_disconnected().is_none());
+        assert!(peerstate.set_disconnected().is_none());
     }
 }

@@ -143,8 +143,8 @@ impl NetworkEventReceiver {
     }
 }
 
-impl Into<EventReceiver> for NetworkEventReceiver {
-    fn into(self) -> EventReceiver {
-        self.0
+impl From<NetworkEventReceiver> for EventReceiver {
+    fn from(rx: NetworkEventReceiver) -> EventReceiver {
+        rx.0
     }
 }

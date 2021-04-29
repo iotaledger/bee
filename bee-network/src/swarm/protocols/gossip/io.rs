@@ -102,7 +102,7 @@ pub fn spawn_gossip_out_processor(
             // to signal that we want to end the connection. We use this "trick" whenever the network
             // receives the `DisconnectPeer` command to enforce that the connection will be dropped.
 
-            if message.len() == 0 {
+            if message.is_empty() {
                 debug!("gossip-out: received shutdown message.");
 
                 // NB: The network service will not shut down before it has received the `ConnectionDropped` event from
