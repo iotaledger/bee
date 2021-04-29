@@ -6,9 +6,17 @@
 pub enum Error {
     /// A command could not be sent.
     #[error("Error sending command.")]
-    CommandSendFailure,
+    SendingCommandFailed,
+
+    /// An event could not be sent.
+    #[error("Error sending command.")]
+    SendingEventFailed,
 
     /// An event could not been received.
     #[error("Error receiving event.")]
-    EventReceiveFailure,
+    ReceivingEventFailed,
+
+    /// A peer error occured
+    #[error("{:?}", 0)]
+    PeerError(#[from] crate::peer::error::Error),
 }

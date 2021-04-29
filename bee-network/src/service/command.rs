@@ -92,6 +92,6 @@ impl NetworkCommandSender {
     ///
     /// NOTE: Although synchronous, this method never actually blocks.
     pub fn send(&self, command: Command) -> Result<(), Error> {
-        self.0.send(command).map_err(|_| Error::CommandSendFailure)
+        self.0.send(command).map_err(|_| Error::SendingCommandFailed)
     }
 }

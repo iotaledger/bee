@@ -3,6 +3,7 @@
 
 use super::{
     command::{Command, CommandReceiver, CommandSender},
+    error::Error,
     event::{Event, EventSender, InternalEvent, InternalEventReceiver, InternalEventSender},
 };
 
@@ -210,7 +211,7 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
         for (peer_id, alias) in peerlist.filter(|info, state| info.relation.is_known() && state.is_disconnected()) {
             info!("Trying to reconnect to: {} ({}).", alias, alias!(peer_id));
 
-            // Ignore if the command fails. We can always try another time.
+            // Ignore if the command fails. We can always retry the next time.
             let _ = internal_commands.send(Command::DialPeer { peer_id });
         }
     }
@@ -218,7 +219,7 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
     debug!("Peer checker stopped.");
 }
 
-async fn process_command(command: Command, senders: &Senders, peerlist: &PeerList) -> Result<(), PeerError> {
+async fn process_command(command: Command, senders: &Senders, peerlist: &PeerList) -> Result<(), Error> {
     trace!("Received {:?}.", command);
 
     match command {
@@ -232,22 +233,31 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
 
             add_peer(peer_id, multiaddr, alias, relation, senders, peerlist).await?;
 
+            // Automatically connect to "known" peers.
             if relation.is_known() {
-                // We automatically connect to such peers.
-                let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
+                senders
+                    .internal_commands
+                    .send(Command::DialPeer { peer_id })
+                    .map_err(|_| Error::SendingCommandFailed)?;
             }
         }
 
         Command::BanAddress { address } => {
             peerlist.0.write().await.ban_address(address.clone())?;
 
-            let _ = senders.events.send(Event::AddressBanned { address });
+            senders
+                .events
+                .send(Event::AddressBanned { address })
+                .map_err(|_| Error::SendingEventFailed)?;
         }
 
         Command::BanPeer { peer_id } => {
             peerlist.0.write().await.ban_peer(peer_id)?;
 
-            let _ = senders.events.send(Event::PeerBanned { peer_id });
+            senders
+                .events
+                .send(Event::PeerBanned { peer_id })
+                .map_err(|_| Error::SendingEventFailed)?;
         }
 
         Command::ChangeRelation { peer_id, to } => {
@@ -259,11 +269,17 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
         }
 
         Command::DialAddress { address } => {
-            let _ = senders.internal_commands.send(Command::DialAddress { address });
+            senders
+                .internal_commands
+                .send(Command::DialAddress { address })
+                .map_err(|_| Error::SendingCommandFailed)?;
         }
 
         Command::DialPeer { peer_id } => {
-            let _ = senders.internal_commands.send(Command::DialPeer { peer_id });
+            senders
+                .internal_commands
+                .send(Command::DialPeer { peer_id })
+                .map_err(|_| Error::SendingCommandFailed)?;
         }
 
         Command::DisconnectPeer { peer_id } => {
@@ -277,27 +293,32 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
         Command::UnbanAddress { address } => {
             peerlist.0.write().await.unban_address(&address)?;
 
-            let _ = senders.events.send(Event::AddressUnbanned { address });
+            senders
+                .events
+                .send(Event::AddressUnbanned { address })
+                .map_err(|_| Error::SendingEventFailed)?;
         }
 
         Command::UnbanPeer { peer_id } => {
             peerlist.0.write().await.unban_peer(&peer_id)?;
 
-            let _ = senders.events.send(Event::PeerUnbanned { peer_id });
+            senders
+                .events
+                .send(Event::PeerUnbanned { peer_id })
+                .map_err(|_| Error::SendingEventFailed)?;
         }
     }
 
     Ok(())
 }
 
-async fn process_internal_event(
-    int_event: InternalEvent,
-    senders: &Senders,
-    peerlist: &PeerList,
-) -> Result<(), PeerError> {
+async fn process_internal_event(int_event: InternalEvent, senders: &Senders, peerlist: &PeerList) -> Result<(), Error> {
     match int_event {
         InternalEvent::AddressBound { address } => {
-            let _ = senders.events.send(Event::AddressBound { address });
+            senders
+                .events
+                .send(Event::AddressBound { address })
+                .map_err(|_| Error::SendingEventFailed)?;
         }
 
         InternalEvent::ProtocolDropped { peer_id } => {
@@ -312,7 +333,10 @@ async fn process_internal_event(
             // We no longer need to hold the lock.
             drop(peerlist);
 
-            let _ = senders.events.send(Event::PeerDisconnected { peer_id });
+            senders
+                .events
+                .send(Event::PeerDisconnected { peer_id })
+                .map_err(|_| Error::SendingEventFailed)?;
         }
 
         InternalEvent::ProtocolEstablished {
@@ -336,10 +360,13 @@ async fn process_internal_event(
                     .insert_peer(peer_id, peer_info.clone())
                     .map_err(|(_, _, e)| e)?;
 
-                let _ = senders.events.send(Event::PeerAdded {
-                    peer_id,
-                    info: peer_info,
-                });
+                senders
+                    .events
+                    .send(Event::PeerAdded {
+                        peer_id,
+                        info: peer_info,
+                    })
+                    .map_err(|_| Error::SendingEventFailed)?;
             }
 
             // Panic:
@@ -359,12 +386,15 @@ async fn process_internal_event(
                 alias!(peer_id)
             );
 
-            let _ = senders.events.send(Event::PeerConnected {
-                peer_id,
-                info: peer_info,
-                gossip_in,
-                gossip_out,
-            });
+            senders
+                .events
+                .send(Event::PeerConnected {
+                    peer_id,
+                    info: peer_info,
+                    gossip_in,
+                    gossip_out,
+                })
+                .map_err(|_| Error::SendingEventFailed)?;
         }
     }
 
@@ -378,7 +408,7 @@ async fn add_peer(
     relation: PeerRelation,
     senders: &Senders,
     peerlist: &PeerList,
-) -> Result<(), PeerError> {
+) -> Result<(), Error> {
     let peer_info = PeerInfo {
         address,
         alias,
@@ -397,7 +427,10 @@ async fn add_peer(
             // We no longer need to hold the lock.
             drop(peerlist);
 
-            let _ = senders.events.send(Event::PeerAdded { peer_id, info });
+            senders
+                .events
+                .send(Event::PeerAdded { peer_id, info })
+                .map_err(|_| Error::SendingEventFailed)?;
 
             Ok(())
         }
@@ -416,10 +449,13 @@ async fn add_peer(
                         // We no longer need to hold the lock.
                         drop(peerlist);
 
-                        let _ = senders.events.send(Event::PeerAdded {
-                            peer_id,
-                            info: peer_info,
-                        });
+                        senders
+                            .events
+                            .send(Event::PeerAdded {
+                                peer_id,
+                                info: peer_info,
+                            })
+                            .map_err(|_| Error::SendingEventFailed)?;
 
                         return Ok(());
                     }
@@ -430,45 +466,55 @@ async fn add_peer(
             // We no longer need to hold the lock.
             drop(peerlist);
 
-            let _ = senders.events.send(Event::CommandFailed {
-                command: Command::AddPeer {
-                    peer_id,
-                    multiaddr: peer_info.address,
-                    // NOTE: the returned failed command now has the default alias, if none was specified originally.
-                    alias: Some(peer_info.alias),
-                    relation: peer_info.relation,
-                },
-                reason: e.clone(),
-            });
+            senders
+                .events
+                .send(Event::CommandFailed {
+                    command: Command::AddPeer {
+                        peer_id,
+                        multiaddr: peer_info.address,
+                        // NOTE: the returned failed command now has the default alias, if none was specified
+                        // originally.
+                        alias: Some(peer_info.alias),
+                        relation: peer_info.relation,
+                    },
+                    reason: e.clone(),
+                })
+                .map_err(|_| Error::SendingEventFailed)?;
 
-            Err(e)
+            Err(e.into())
         }
     }
 }
 
-async fn remove_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList) -> Result<(), PeerError> {
+async fn remove_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList) -> Result<(), Error> {
     disconnect_peer(peer_id, senders, peerlist).await?;
 
     let peer_removal = peerlist.0.write().await.remove(&peer_id);
 
     match peer_removal {
         Ok(_peer_info) => {
-            let _ = senders.events.send(Event::PeerRemoved { peer_id });
+            senders
+                .events
+                .send(Event::PeerRemoved { peer_id })
+                .map_err(|_| Error::SendingEventFailed)?;
 
             Ok(())
         }
         Err(e) => {
-            let _ = senders.events.send(Event::CommandFailed {
-                command: Command::RemovePeer { peer_id },
-                reason: e.clone(),
-            });
+            senders
+                .events
+                .send(Event::CommandFailed {
+                    command: Command::RemovePeer { peer_id },
+                    reason: e.clone(),
+                })
+                .map_err(|_| Error::SendingEventFailed)?;
 
-            Err(e)
+            Err(e.into())
         }
     }
 }
 
-async fn disconnect_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList) -> Result<(), PeerError> {
+async fn disconnect_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList) -> Result<(), Error> {
     let state_update = peerlist
         .0
         .write()
@@ -480,9 +526,13 @@ async fn disconnect_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList
             // We sent the `PeerDisconnected` event *before* we sent the shutdown signal to the stream writer task, so
             // it can stop adding messages to the channel before we drop the receiver.
 
-            let _ = senders.events.send(Event::PeerDisconnected { peer_id });
+            senders
+                .events
+                .send(Event::PeerDisconnected { peer_id })
+                .map_err(|_| Error::SendingEventFailed)?;
 
             // Try to send the shutdown signal. It has to be a Vec<u8>, but it doesn't have to allocate.
+            // We ignore the potential error in case that peer disconnected from us already in the meantime.
             let _ = gossip_sender.send(Vec::new());
 
             Ok(())
@@ -492,12 +542,15 @@ async fn disconnect_peer(peer_id: PeerId, senders: &Senders, peerlist: &PeerList
             Ok(())
         }
         Err(e) => {
-            let _ = senders.events.send(Event::CommandFailed {
-                command: Command::DisconnectPeer { peer_id },
-                reason: e.clone(),
-            });
+            senders
+                .events
+                .send(Event::CommandFailed {
+                    command: Command::DisconnectPeer { peer_id },
+                    reason: e.clone(),
+                })
+                .map_err(|_| Error::SendingEventFailed)?;
 
-            Err(e)
+            Err(e.into())
         }
     }
 }
