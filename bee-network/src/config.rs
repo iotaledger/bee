@@ -23,27 +23,35 @@ pub enum Error {
     /// The provided [`Multiaddr`] has too few protocols in it.
     #[error("Multiaddr is underspecified.")]
     MultiaddrUnderspecified,
+
     /// The provided [`Multiaddr`] has too many protocols in it.
     #[error("Multiaddr is overspecified.")]
     MultiaddrOverspecified,
+
     /// The provided [`Protocol`] is invalid.
     #[error("Invalid Multiaddr protocol at {}.", .0)]
     InvalidProtocol(usize),
+
     /// The provided address is invalid.
     #[error("Invalid address protocol.")]
     InvalidAddressProtocol,
+
     /// The provided port is invalid.
     #[error("Invalid port protocol.")]
     InvalidPortProtocol,
+
     /// The peer was already added.
     #[error("Static peer {} already added.", alias!(.0))]
     DuplicateStaticPeer(PeerId),
+
     /// The domain was unresolvable.
     #[error("Domain name '{}' couldn't be resolved to an IP address", .0)]
     UnresolvableDomain(String),
+
     /// Parsing of a [`Multiaddr`] failed.
     #[error("Parsing of '{}' to a Multiaddr failed.", 0)]
     ParsingFailed(String),
+
     /// The provided [`Multiaddr`] lacks the P2p [`Protocol`].
     #[error("Invalid P2p Multiaddr. Did you forget to add '.../p2p/12D3Koo...'?")]
     MissingP2pProtocol,

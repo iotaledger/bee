@@ -36,7 +36,7 @@ pub enum Error {
     #[error("Already added that peer: {}", .0)]
     PeerIsDuplicate(PeerId),
 
-    /// A failure due to a peer id being in the peer-id banlist.
+    /// A failure due to a peer id being banned.
     #[error("Already banned that peer: {}", .0)]
     PeerIsBanned(PeerId),
 
