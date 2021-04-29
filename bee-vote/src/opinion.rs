@@ -70,7 +70,7 @@ impl Packable for Opinion {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Error> {
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         Ok(match u8::unpack(reader)? {
             0x01 => Opinion::Like,
             0x02 => Opinion::Dislike,

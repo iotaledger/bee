@@ -51,9 +51,9 @@ impl Packable for OpinionStatement {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let opinion = Opinion::unpack(reader)?;
-        let round = <u8>::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let opinion = Opinion::unpack_inner::<R, CHECK>(reader)?;
+        let round = <u8>::unpack_inner::<R, CHECK>(reader)?;
 
         Ok(Self { opinion, round })
     }

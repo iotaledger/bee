@@ -47,9 +47,9 @@ impl Packable for Conflict {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let transaction_id = TransactionId::unpack(reader)?;
-        let opinion = OpinionStatement::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let transaction_id = TransactionId::unpack_inner::<R, CHECK>(reader)?;
+        let opinion = OpinionStatement::unpack_inner::<R, CHECK>(reader)?;
 
         Ok(Self {
             id: transaction_id,

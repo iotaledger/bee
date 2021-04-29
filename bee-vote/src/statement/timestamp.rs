@@ -47,13 +47,13 @@ impl Packable for Timestamp {
         Ok(())
     }
 
-    fn unpack<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Self::Error> {
-        let message_id = MessageId::unpack(reader)?;
-        let opinion = OpinionStatement::unpack(reader)?;
+    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
+        let message_id = MessageId::unpack_inner::<R, CHECK>(reader)?;
+        let opinion = OpinionStatement::unpack_inner::<R, CHECK>(reader)?;
 
         Ok(Self {
             id: message_id,
-            opinion,
+            opinion
         })
     }
 }
