@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::PeerRelation;
+use crate::peer::meta::PeerRelation;
 
 use libp2p::{Multiaddr, PeerId};
 use tokio::sync::mpsc;

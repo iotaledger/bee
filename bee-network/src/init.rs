@@ -6,13 +6,15 @@
 use super::{
     config::NetworkConfig,
     error::Error,
-    peer::list::{PeerList, PeerListWrapper},
+    peer::{
+        list::{PeerList, PeerListWrapper},
+        meta::{PeerInfo, PeerRelation},
+    },
     service::{
         command::command_channel,
         controller::{NetworkCommandSender, NetworkEventReceiver},
         event::{event_channel, Event, InternalEvent},
     },
-    types::{PeerInfo, PeerRelation},
     Keypair, PeerId,
 };
 

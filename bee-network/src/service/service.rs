@@ -9,8 +9,11 @@ use super::{
 use crate::{
     alias,
     init::global::reconnect_interval_secs,
-    peer::{error::Error as PeerError, list::PeerListWrapper as PeerList},
-    types::{PeerInfo, PeerRelation},
+    peer::{
+        error::Error as PeerError,
+        list::PeerListWrapper as PeerList,
+        meta::{PeerInfo, PeerRelation},
+    },
 };
 
 use bee_runtime::shutdown_stream::ShutdownStream;

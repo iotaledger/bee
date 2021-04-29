@@ -1,21 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{error::Error, meta::PeerState};
+#![cfg(feature = "full")]
 
-use crate::{
-    alias,
-    config::Peer,
-    init::global::max_unknown_peers,
-    swarm::protocols::gossip::io::GossipSender,
-    types::{PeerInfo, PeerRelation},
+use super::{
+    error::Error,
+    meta::{PeerInfo, PeerRelation},
 };
+
+use crate::{alias, config::Peer, init::global::max_unknown_peers, swarm::protocols::gossip::io::GossipSender};
 
 use hashbrown::{HashMap, HashSet};
 use libp2p::{Multiaddr, PeerId};
 use tokio::sync::RwLock;
 
-use std::sync::Arc;
+use std::{mem::take, sync::Arc};
 
 const REMOTE_PEERS_INITIAL_CAP: usize = 8;
 const LOCAL_ADDRS_INITIAL_CAP: usize = 4;
@@ -430,7 +429,7 @@ mod tests {
     }
 
     // =======================================================
-    // utils
+    // helpers
     // =======================================================
 
     pub fn gen_constant_peer_id() -> PeerId {
@@ -462,5 +461,65 @@ mod tests {
         addr.push(Protocol::Dns("localhost".into()));
         addr.push(Protocol::Tcp(port));
         addr
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum PeerState {
+    Disconnected,
+    Connected(GossipSender),
+}
+
+impl Default for PeerState {
+    fn default() -> Self {
+        Self::Disconnected
+    }
+}
+
+impl PeerState {
+    pub fn is_disconnected(&self) -> bool {
+        matches!(self, Self::Disconnected)
+    }
+
+    pub fn is_connected(&self) -> bool {
+        matches!(self, Self::Connected(_))
+    }
+
+    pub fn to_connected(&mut self, gossip_sender: GossipSender) -> Option<GossipSender> {
+        *self = Self::Connected(gossip_sender);
+        None
+    }
+
+    pub fn to_disconnected(&mut self) -> Option<GossipSender> {
+        match take(self) {
+            Self::Disconnected => None,
+            Self::Connected(sender) => Some(sender),
+        }
+    }
+}
+
+#[cfg(test)]
+mod peerstate_tests {
+    use super::*;
+    use crate::swarm::protocols::gossip::io::gossip_channel;
+
+    #[test]
+    fn new_peer_state() {
+        let peerstate = PeerState::default();
+
+        assert!(peerstate.is_disconnected());
+    }
+
+    #[test]
+    fn peer_state_change() {
+        let mut peerstate = PeerState::Disconnected;
+        let (tx, _rx) = gossip_channel();
+
+        peerstate.to_connected(tx);
+        assert!(peerstate.is_connected());
+
+        assert!(peerstate.to_disconnected().is_some());
+        assert!(peerstate.is_disconnected());
+        assert!(peerstate.to_disconnected().is_none());
     }
 }

@@ -1,66 +1,63 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::swarm::protocols::gossip::io::GossipSender;
+use libp2p_core::Multiaddr;
 
-use std::mem::take;
-
+/// Additional information about a peer.
 #[derive(Clone, Debug)]
-pub enum PeerState {
-    Disconnected,
-    Connected(GossipSender),
+pub struct PeerInfo {
+    /// The peer's address.
+    pub address: Multiaddr,
+    /// The peer's alias.
+    pub alias: String,
+    /// The type of relation regarding this peer.
+    pub relation: PeerRelation,
 }
 
-impl Default for PeerState {
-    fn default() -> Self {
-        Self::Disconnected
-    }
+/// Describes the relation with a peer.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PeerRelation {
+    /// Represents a persistent peer. If the connection to such a peer drops, the network will try to reconnect.
+    Known,
+    /// Represents an ephemeral peer. If the connection to such a peer drops, the network won't try to reconnect.
+    Unknown,
 }
 
-impl PeerState {
-    pub fn is_disconnected(&self) -> bool {
-        matches!(self, Self::Disconnected)
+impl PeerRelation {
+    /// Returns whether the peer is known.
+    pub fn is_known(&self) -> bool {
+        matches!(self, Self::Known)
     }
 
-    pub fn is_connected(&self) -> bool {
-        matches!(self, Self::Connected(_))
+    /// Returns whether the peer is unknown.
+    pub fn is_unknown(&self) -> bool {
+        matches!(self, Self::Unknown)
     }
 
-    pub fn to_connected(&mut self, gossip_sender: GossipSender) -> Option<GossipSender> {
-        *self = Self::Connected(gossip_sender);
-        None
+    /// Sets the relation to `PeerRelation::Known`.
+    pub fn set_known(&mut self) {
+        *self = Self::Known;
     }
 
-    pub fn to_disconnected(&mut self) -> Option<GossipSender> {
-        match take(self) {
-            Self::Disconnected => None,
-            Self::Connected(sender) => Some(sender),
-        }
+    /// Sets the relation to `PeerRelation::Unknown`.
+    pub fn set_unknown(&mut self) {
+        *self = Self::Unknown;
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::swarm::protocols::gossip::io::gossip_channel;
 
     #[test]
-    fn new_peer_state() {
-        let peerstate = PeerState::default();
+    fn is_and_set_api() {
+        let mut pr = PeerRelation::Unknown;
+        assert!(pr.is_unknown());
 
-        assert!(peerstate.is_disconnected());
-    }
+        pr.set_known();
+        assert!(pr.is_known());
 
-    #[test]
-    fn peer_state_change() {
-        let mut peerstate = PeerState::Disconnected;
-        let (tx, _rx) = gossip_channel();
-
-        peerstate.to_connected(tx);
-        assert!(peerstate.is_connected());
-
-        assert!(peerstate.to_disconnected().is_some());
-        assert!(peerstate.is_disconnected());
-        assert!(peerstate.to_disconnected().is_none());
+        pr.set_unknown();
+        assert!(pr.is_unknown());
     }
 }

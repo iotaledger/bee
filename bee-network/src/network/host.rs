@@ -5,13 +5,12 @@ use super::error::Error;
 
 use crate::{
     alias,
-    peer::list::PeerListWrapper as PeerList,
+    peer::{list::PeerListWrapper as PeerList, meta::PeerInfo},
     service::{
         command::{Command, CommandReceiver},
         event::{InternalEvent, InternalEventSender},
     },
     swarm::{behavior::SwarmBehavior, protocols::gossip::behavior::GOSSIP_ORIGIN},
-    types::PeerInfo,
 };
 
 use libp2p::{swarm::SwarmEvent, Multiaddr, PeerId, Swarm};

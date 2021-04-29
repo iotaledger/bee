@@ -13,13 +13,12 @@ mod network;
 mod peer;
 mod service;
 mod swarm;
-mod types;
 
 #[cfg(test)]
 mod tests;
 
 // Always exported
-pub use self::types::{PeerInfo, PeerRelation};
+pub use self::peer::meta::{PeerInfo, PeerRelation};
 #[doc(inline)]
 pub use libp2p_core::{
     multiaddr::{Multiaddr, Protocol},
