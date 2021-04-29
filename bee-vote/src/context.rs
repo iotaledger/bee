@@ -57,36 +57,40 @@ pub struct VoteContextBuilder {
     /// Object of the voting (conflict or timestamp), and associated ID.
     object: VoteObject,
     /// Opinions held by this context on the vote object.
-    opinions: Option<Opinions>,
+    opinions: Opinions,
 }
 
 impl VoteContextBuilder {
     /// Create a new `VoteContextBuilder`, defining an ID and an `ObjectType` (voting object).
     pub fn new(object: VoteObject) -> Self {
-        Self { object, opinions: None }
+        Self { object, opinions: Opinions::default() }
     }
 
     /// Set a single initial `Opinion`.
     pub fn with_initial_opinion(mut self, opinion: Opinion) -> Self {
-        self.opinions = Some(Opinions::new(vec![opinion]));
+        self.opinions = Opinions::new(vec![opinion]);
         self
     }
 
     /// Set a list of initial `Opinion`s.
     pub fn with_initial_opinions(mut self, opinions: Opinions) -> Self {
-        self.opinions = Some(opinions);
+        self.opinions = opinions;
         self
     }
 
     /// Build a `VoteContext`.
     /// Note: this will panic if no initial opinions have been provided.
     pub fn build(self) -> Result<VoteContext, Error> {
-        Ok(VoteContext {
-            object: self.object,
-            liked: None,
-            rounds: 0,
-            opinions: self.opinions.ok_or(Error::NoInitialOpinions)?,
-        })
+        if self.opinions.is_empty() {
+            Err(Error::NoInitialOpinions)
+        } else {
+            Ok(VoteContext {
+                object: self.object,
+                liked: None,
+                rounds: 0,
+                opinions: self.opinions,
+            })
+        }
     }
 }
 

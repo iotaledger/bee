@@ -81,7 +81,7 @@ impl Packable for Opinion {
 }
 
 /// Wrapper tuple struct for a collection of opinions.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Opinions(Vec<Opinion>);
 
 impl fmt::Debug for Opinions {
