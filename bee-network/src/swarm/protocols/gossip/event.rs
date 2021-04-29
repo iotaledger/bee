@@ -4,6 +4,7 @@
 use crate::network::meta::ConnectionInfo;
 
 use libp2p::{swarm::NegotiatedSubstream, Multiaddr, PeerId};
+
 pub struct GossipEvent {
     pub peer_id: PeerId,
     pub peer_addr: Multiaddr,
