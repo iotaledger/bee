@@ -35,7 +35,7 @@ pub enum Command {
         /// The peer's id.
         peer_id: PeerId,
     },
-    /// Connects a peer.
+    /// Dials a peer.
     DialPeer {
         /// The peer's id.
         peer_id: PeerId,
