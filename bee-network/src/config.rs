@@ -157,16 +157,16 @@ impl NetworkConfig {
 fn resolve_dns_multiaddr(dns: Cow<'_, str>) -> Result<Protocol, Error> {
     use std::net::{IpAddr, ToSocketAddrs};
 
-    for socket_addr in dns
+    match dns
         .to_socket_addrs()
         .map_err(|_| Error::UnresolvableDomain(dns.to_string()))?
+        .next()
+        .ok_or(Error::UnresolvableDomain(dns.to_string()))?
+        .ip()
     {
-        match socket_addr.ip() {
-            IpAddr::V4(ip4) => return Ok(Protocol::Ip4(ip4)),
-            IpAddr::V6(ip6) => return Ok(Protocol::Ip6(ip6)),
-        }
+        IpAddr::V4(ip4) => return Ok(Protocol::Ip4(ip4)),
+        IpAddr::V6(ip6) => return Ok(Protocol::Ip6(ip6)),
     }
-    Err(Error::UnresolvableDomain(dns.to_string()))
 }
 
 impl Default for NetworkConfig {
