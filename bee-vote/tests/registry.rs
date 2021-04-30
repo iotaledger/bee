@@ -22,21 +22,24 @@ async fn registry(node_id: PeerId, tx_id: TransactionId, msg_id: MessageId) -> R
                     opinion: Opinion::Like,
                     round: 1,
                 },
-            });
+            })
+            .unwrap();
             view.add_conflict(Conflict {
                 id: tx_id,
                 opinion: OpinionStatement {
                     opinion: Opinion::Like,
                     round: 2,
                 },
-            });
+            })
+            .unwrap();
             view.add_timestamp(Timestamp {
                 id: msg_id,
                 opinion: OpinionStatement {
                     opinion: Opinion::Like,
                     round: 1,
                 },
-            });
+            })
+            .unwrap();
         })
         .await;
 

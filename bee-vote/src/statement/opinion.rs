@@ -9,8 +9,7 @@ use bee_common::packable::{Packable, Read, Write};
 
 use std::{
     cmp::{Ord, Ordering, PartialOrd},
-    collections::BinaryHeap,
-    ops::{Deref, DerefMut},
+    collections::BTreeSet,
 };
 
 /// Length (in bytes) of this statement when serialized.
@@ -61,26 +60,12 @@ impl Packable for OpinionStatement {
 
 /// Wrapper struct for a collection of `OpinionStatement` statements.
 #[derive(Debug, Clone)]
-pub struct OpinionStatements(BinaryHeap<OpinionStatement>);
-
-impl Deref for OpinionStatements {
-    type Target = BinaryHeap<OpinionStatement>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for OpinionStatements {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
+pub struct OpinionStatements(BTreeSet<OpinionStatement>);
 
 impl OpinionStatements {
     /// Create a new, empty `OpinionStatements` collection.
     pub fn new() -> Self {
-        Self(BinaryHeap::new())
+        Self(BTreeSet::new())
     }
 
     pub fn len(&self) -> usize {
@@ -93,7 +78,22 @@ impl OpinionStatements {
 
     /// Get the `OpinionStatement` that was formed on the most recent round.
     pub fn last(&self) -> Option<&OpinionStatement> {
-        self.0.peek()
+        self.0.iter().last()
+    }
+
+    /// Insert an `OpinionStatement` into the collection. An error will be returned if the
+    /// `OpinionStatement` already exists.
+    pub fn insert(&mut self, statement: OpinionStatement) -> Result<(), Error> {
+        if !self.0.insert(statement) {
+            Err(Error::DuplicateOpinionStatement(statement))
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Clear the collection.
+    pub fn clear(&mut self) {
+        self.0.clear()
     }
 
     /// Check that the `OpinionStatement` at a given index is finalized.
@@ -104,10 +104,10 @@ impl OpinionStatements {
 
         let last = self.last();
 
-        // Check for identical consecutive `OpinionStatement`s after the given index.
+        // Check for identical consecutive `Opinion`s after the given index.
         if let Some(last) = last {
             for (i, opinion_statement) in self.0.iter().enumerate() {
-                if i >= idx && opinion_statement != last {
+                if i >= idx && opinion_statement.opinion != last.opinion {
                     return false;
                 }
             }

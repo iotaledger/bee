@@ -43,23 +43,23 @@ impl View {
     }
 
     /// Add a conflict entry to the `View`.
-    pub fn add_conflict(&mut self, conflict: Conflict) {
-        self.conflicts.add_entry(conflict);
+    pub fn add_conflict(&mut self, conflict: Conflict) -> Result<(), Error> {
+        self.conflicts.add_entry(conflict)
     }
 
     /// Add multiple conflict entries to the `View`.
-    pub fn add_conflicts(&mut self, conflicts: Vec<Conflict>) {
-        self.conflicts.add_entries(conflicts);
+    pub fn add_conflicts(&mut self, conflicts: Vec<Conflict>) -> Result<(), Error> {
+        self.conflicts.add_entries(conflicts)
     }
 
     /// Add a timestamp entry to the `View`.
-    pub fn add_timestamp(&mut self, timestamp: Timestamp) {
-        self.timestamps.add_entry(timestamp);
+    pub fn add_timestamp(&mut self, timestamp: Timestamp) -> Result<(), Error> {
+        self.timestamps.add_entry(timestamp)
     }
 
     /// Add multiple timestamp entries to the `View`.
-    pub fn add_timestamps(&mut self, timestamps: Vec<Timestamp>) {
-        self.timestamps.add_entries(timestamps);
+    pub fn add_timestamps(&mut self, timestamps: Vec<Timestamp>) -> Result<(), Error> {
+        self.timestamps.add_entries(timestamps)
     }
 
     /// Get the node's opinions on a given transaction conflict.
