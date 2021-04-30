@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_test::rand::{transaction::rand_transaction_id, string::rand_string};
+use bee_test::rand::{string::rand_string, transaction::rand_transaction_id};
 use bee_vote::{
     error::Error,
     events::Event,
@@ -49,7 +49,7 @@ async fn prohibit_multiple_votes() {
     let tx_id = rand_transaction_id();
 
     assert!(voter.vote(VoteObject::Conflict(tx_id), Opinion::Like).await.is_ok());
-    
+
     assert!(matches!(
         voter.vote(VoteObject::Conflict(tx_id), Opinion::Like).await,
         Err(Error::VoteOngoing(_))
@@ -69,7 +69,7 @@ async fn finalized_event() {
         round_replies: vec![Opinions::new(vec![Opinion::Like]); 4],
     };
 
-    let opinion_giver_fn = || -> Vec<Box<dyn OpinionGiver>> { vec![Box::new(mock.clone())] };
+    let opinion_giver_fn = || -> Vec<Box<dyn OpinionGiver + 'static>> { vec![Box::new(mock.clone())] };
 
     let (tx, rx) = flume::unbounded();
     let voter = FpcBuilder::default()
@@ -92,8 +92,7 @@ async fn finalized_event() {
 
     let mut event = None;
 
-    let mut iter = rx.try_iter();
-    while let Some(ev) = iter.next() {
+    for ev in rx.try_iter() {
         if let Event::Finalized(_) = ev {
             event = Some(ev);
         }
@@ -110,7 +109,7 @@ async fn failed_event() {
         round_replies: vec![Opinions::new(vec![Opinion::Dislike])],
     };
 
-    let opinion_giver_fn = || -> Vec<Box<dyn OpinionGiver>> { vec![Box::new(mock.clone())] };
+    let opinion_giver_fn = || -> Vec<Box<dyn OpinionGiver + 'static>> { vec![Box::new(mock.clone())] };
 
     let (tx, rx) = flume::unbounded();
     let voter = FpcBuilder::default()
@@ -134,8 +133,7 @@ async fn failed_event() {
 
     let mut event = None;
 
-    let mut iter = rx.try_iter();
-    while let Some(ev) = iter.next() {
+    for ev in rx.try_iter() {
         if let Event::Failed(_) = ev {
             event = Some(ev);
         }
@@ -151,7 +149,7 @@ async fn multiple_opinion_givers() {
     let num_tests = 2;
 
     for i in 0..num_tests {
-        let opinion_giver_fn = || -> Vec<Box<dyn OpinionGiver>> {
+        let opinion_giver_fn = || -> Vec<Box<dyn OpinionGiver + 'static>> {
             let mut opinion_givers: Vec<Box<dyn OpinionGiver>> = vec![];
 
             for _ in 0..fpc::DEFAULT_SAMPLE_SIZE {

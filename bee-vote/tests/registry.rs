@@ -5,10 +5,9 @@ use bee_message::{payload::transaction::TransactionId, MessageId};
 use bee_network::PeerId;
 use bee_test::rand::{message::rand_message_id, transaction::rand_transaction_id};
 use bee_vote::{
-    Opinion,
     error::Error,
     statement::{Conflict, OpinionStatement, Timestamp},
-    Registry,
+    Opinion, Registry,
 };
 
 async fn registry(node_id: PeerId, tx_id: TransactionId, msg_id: MessageId) -> Registry {

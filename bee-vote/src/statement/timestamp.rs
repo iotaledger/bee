@@ -53,7 +53,7 @@ impl Packable for Timestamp {
 
         Ok(Self {
             id: message_id,
-            opinion
+            opinion,
         })
     }
 }

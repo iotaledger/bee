@@ -59,7 +59,7 @@ impl Packable for OpinionStatement {
 }
 
 /// Wrapper struct for a collection of `OpinionStatement` statements.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct OpinionStatements(BTreeSet<OpinionStatement>);
 
 impl OpinionStatements {

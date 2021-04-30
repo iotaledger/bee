@@ -63,7 +63,10 @@ pub struct VoteContextBuilder {
 impl VoteContextBuilder {
     /// Create a new `VoteContextBuilder`, defining an ID and an `ObjectType` (voting object).
     pub fn new(object: VoteObject) -> Self {
-        Self { object, opinions: Opinions::default() }
+        Self {
+            object,
+            opinions: Opinions::default(),
+        }
     }
 
     /// Set a single initial `Opinion`.
@@ -130,8 +133,9 @@ impl VoteContext {
     }
 
     /// Describes whether this `VoteContext` has been finalized.
-    /// This is determined by checking that an opinion has remained the same for `total_rounds_finalization` number of rounds.
-    /// It is therefore implied that the opinion will not change in the future, and we have determined a final value.
+    /// This is determined by checking that an opinion has remained the same for `total_rounds_finalization` number of
+    /// rounds. It is therefore implied that the opinion will not change in the future, and we have determined a
+    /// final value.
     pub fn finalized(&self, cool_off_period: u32, total_rounds_finalization: u32) -> bool {
         // Check whether we have enough opinions to decide if the vote is finalised.
         if self.opinions.len() < (cool_off_period + total_rounds_finalization + 1) as usize {
@@ -172,7 +176,8 @@ impl VoteContext {
     }
 
     /// Describes whether the `VoteContext` has *just* held a fixed round.
-    /// A "fixed" round takes place in the last rounds of a vote, given by `total_rounds_fixed`, and uses a fixed random threshold.
+    /// A "fixed" round takes place in the last rounds of a vote, given by `total_rounds_fixed`, and uses a fixed random
+    /// threshold.
     pub(crate) fn had_fixed_round(
         &self,
         cool_off_period: u32,
@@ -232,7 +237,7 @@ impl VoteContext {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn had_fixed_round() {
         let ctx = VoteContextBuilder::new(VoteObject::Conflict(TransactionId::new([0u8; 32])))
@@ -251,7 +256,7 @@ mod tests {
                 Opinion::Like,
                 Opinion::Like,
                 Opinion::Like,
-                Opinion::Dislike
+                Opinion::Dislike,
             ]))
             .build()
             .unwrap();

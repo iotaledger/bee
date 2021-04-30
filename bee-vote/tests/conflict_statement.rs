@@ -3,11 +3,14 @@
 
 use bee_common::packable::Packable;
 use bee_test::rand::transaction::rand_transaction_id;
-use bee_vote::{Opinion, statement::{Conflict, OpinionStatement}};
+use bee_vote::{
+    statement::{Conflict, OpinionStatement},
+    Opinion,
+};
 
 #[test]
 fn packed_len() {
-    let conflict = Conflict { 
+    let conflict = Conflict {
         id: rand_transaction_id(),
         opinion: OpinionStatement {
             opinion: Opinion::Like,

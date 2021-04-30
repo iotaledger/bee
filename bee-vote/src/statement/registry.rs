@@ -33,15 +33,16 @@ pub struct View {
     timestamps: EntryMap<MessageId, Timestamp>,
 }
 
-impl View {
-    /// Create a new, empty `View`.
-    pub fn new() -> Self {
+impl Default for View {
+    fn default() -> Self {
         Self {
             conflicts: EntryMap::new(),
             timestamps: EntryMap::new(),
         }
     }
+}
 
+impl View {
     /// Add a conflict entry to the `View`.
     pub fn add_conflict(&mut self, conflict: Conflict) -> Result<(), Error> {
         self.conflicts.add_entry(conflict)

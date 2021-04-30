@@ -3,11 +3,14 @@
 
 use bee_common::packable::Packable;
 use bee_test::rand::message::rand_message_id;
-use bee_vote::{Opinion, statement::{Timestamp, OpinionStatement}};
+use bee_vote::{
+    statement::{OpinionStatement, Timestamp},
+    Opinion,
+};
 
 #[test]
 fn packed_len() {
-    let timestamp = Timestamp { 
+    let timestamp = Timestamp {
         id: rand_message_id(),
         opinion: OpinionStatement {
             opinion: Opinion::Like,

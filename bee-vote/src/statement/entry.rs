@@ -3,8 +3,8 @@
 
 //! Helper functionality for registry entries.
 
-use crate::Error;
 use super::opinion::{OpinionStatement, OpinionStatements};
+use crate::Error;
 
 use std::{
     collections::HashMap,
@@ -35,7 +35,7 @@ pub(super) trait EntryType {
 }
 
 /// `HashMap` of entries, indexed by IDs.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub(super) struct EntryMap<I, T> {
     map: HashMap<I, Entry>,
     phantom: PhantomData<T>,
