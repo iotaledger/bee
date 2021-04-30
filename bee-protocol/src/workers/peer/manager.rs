@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-use bee_network::{Event, NetworkEventReceiver, NetworkService};
+use bee_network::{Event, NetworkEventReceiver, ServiceHost};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 
@@ -34,7 +34,7 @@ where
     fn dependencies() -> &'static [TypeId] {
         vec![
             TypeId::of::<TangleWorker>(),
-            TypeId::of::<NetworkService>(),
+            TypeId::of::<ServiceHost>(),
             TypeId::of::<MilestoneRequesterWorker>(),
             TypeId::of::<MetricsWorker>(),
             TypeId::of::<HasherWorker>(),

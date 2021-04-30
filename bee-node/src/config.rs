@@ -97,7 +97,13 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
             bech32_hrp: self.bech32_hrp.unwrap_or_else(|| DEFAULT_BECH32_HRP.to_owned()),
             network_id: (network_id_string, network_id_numeric),
             logger: self.logger.unwrap_or_default().finish(),
-            network: self.network.unwrap_or_default().finish(),
+            // TODO: Create specific error types for each config section, e.g.
+            // Error::NetworkConfigError(bee_network::config::Error)
+            network: self
+                .network
+                .unwrap_or_default()
+                .finish()
+                .expect("faulty network configuration"),
             protocol: self.protocol.unwrap_or_default().finish(),
             rest_api: self.rest_api.unwrap_or_default().finish(),
             snapshot: self.snapshot.unwrap_or_default().finish(),
