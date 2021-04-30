@@ -333,6 +333,10 @@ impl From<&Output> for OutputDto {
                     amount: s.amount(),
                 })
             }
+            Output::Treasury(t) => OutputDto::Treasury(TreasuryOutputDto {
+                kind: TreasuryOutput::KIND,
+                amount: t.amount(),
+            }),
             _ => unimplemented!(),
         }
     }
