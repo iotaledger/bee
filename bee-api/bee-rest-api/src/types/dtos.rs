@@ -107,6 +107,10 @@ impl From<&Payload> for PayloadDto {
             Payload::Transaction(t) => PayloadDto::Transaction(Box::new(TransactionPayloadDto::from(t.as_ref()))),
             Payload::Milestone(m) => PayloadDto::Milestone(Box::new(MilestonePayloadDto::from(m.as_ref()))),
             Payload::Indexation(i) => PayloadDto::Indexation(Box::new(IndexationPayloadDto::from(i.as_ref()))),
+            Payload::Receipt(r) => PayloadDto::Receipt(Box::new(ReceiptPayloadDto::from(r.as_ref()))),
+            Payload::TreasuryTransaction(t) => {
+                PayloadDto::TreasuryTransaction(Box::new(TreasuryTransactionPayloadDto::from(t.as_ref())))
+            }
             _ => unimplemented!(),
         }
     }
