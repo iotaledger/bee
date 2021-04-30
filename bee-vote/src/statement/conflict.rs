@@ -13,7 +13,7 @@ use bee_common::packable::{Packable, Read, Write};
 use bee_message::payload::transaction::{TransactionId, TRANSACTION_ID_LENGTH};
 
 /// Holds a conflicting transaction ID and its opinion.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Conflict {
     /// Conflicting transaction ID.
     pub id: TransactionId,

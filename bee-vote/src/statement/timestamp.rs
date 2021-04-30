@@ -13,7 +13,7 @@ use bee_common::packable::{Packable, Read, Write};
 use bee_message::prelude::{MessageId, MESSAGE_ID_LENGTH};
 
 /// Holds a message ID and its timestamp opinion.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Timestamp {
     /// Message ID.
     pub id: MessageId,

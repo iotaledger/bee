@@ -3,6 +3,7 @@
 
 //! Helper functionality for registry entries.
 
+use crate::Error;
 use super::opinion::{OpinionStatement, OpinionStatements};
 
 use std::{
@@ -77,10 +78,10 @@ where
 
     /// Adds an `Entry` to the map.
     /// If an `Entry` with this ID already exists, add the opinion of the given `EntryType` to its stored opinions.
-    pub(super) fn add_entry(&mut self, entry: T) {
+    pub(super) fn add_entry(&mut self, entry: T) -> Result<(), Error> {
         if !self.contains_key(entry.id()) {
             let mut opinions = OpinionStatements::new();
-            opinions.push(*entry.opinion());
+            opinions.insert(*entry.opinion())?;
 
             self.insert(
                 entry.id().clone(),
@@ -95,15 +96,19 @@ where
         } else {
             // This will never fail.
             let existing_entry = self.get_mut(entry.id()).unwrap();
-            existing_entry.opinions.push(*entry.opinion());
+            existing_entry.opinions.insert(*entry.opinion())?;
         }
+
+        Ok(())
     }
 
     /// Add multiple entries to the map.
-    pub(super) fn add_entries(&mut self, entries: Vec<T>) {
+    pub(super) fn add_entries(&mut self, entries: Vec<T>) -> Result<(), Error> {
         for entry in entries.into_iter() {
-            self.add_entry(entry);
+            self.add_entry(entry)?;
         }
+
+        Ok(())
     }
 
     /// Get all the opinions on a given `Entry`.
