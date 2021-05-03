@@ -8,6 +8,7 @@ use bee_message::{milestone::MilestoneIndex, payload::milestone::MilestoneId};
 
 const SNAPSHOT_VERSION: u8 = 1;
 
+/// Describes a snapshot header common to full and delta snapshots.
 #[derive(Clone)]
 pub struct SnapshotHeader {
     kind: SnapshotKind,
@@ -18,22 +19,27 @@ pub struct SnapshotHeader {
 }
 
 impl SnapshotHeader {
+    /// Returns the kind of a `SnapshotHeader`.
     pub fn kind(&self) -> SnapshotKind {
         self.kind
     }
 
+    /// Returns the timestamp of a `SnapshotHeader`.
     pub fn timestamp(&self) -> u64 {
         self.timestamp
     }
 
+    /// Returns the network id of a `SnapshotHeader`.
     pub fn network_id(&self) -> u64 {
         self.network_id
     }
 
+    /// Returns the solid entry point index of a `SnapshotHeader`.
     pub fn sep_index(&self) -> MilestoneIndex {
         self.sep_index
     }
 
+    /// Returns the ledger index of a `SnapshotHeader`.
     pub fn ledger_index(&self) -> MilestoneIndex {
         self.ledger_index
     }
@@ -85,6 +91,7 @@ impl Packable for SnapshotHeader {
     }
 }
 
+/// Describes a snapshot header specific to full snapshots.
 #[derive(Clone)]
 pub struct FullSnapshotHeader {
     sep_count: u64,
@@ -95,22 +102,27 @@ pub struct FullSnapshotHeader {
 }
 
 impl FullSnapshotHeader {
+    /// Returns the solid entry point count of a `FullSnapshotHeader`.
     pub fn sep_count(&self) -> u64 {
         self.sep_count
     }
 
+    /// Returns the output count of a `FullSnapshotHeader`.
     pub fn output_count(&self) -> u64 {
         self.output_count
     }
 
+    /// Returns the milestone diff count of a `FullSnapshotHeader`.
     pub fn milestone_diff_count(&self) -> u64 {
         self.milestone_diff_count
     }
 
+    /// Returns the treasury output milestone id of a `FullSnapshotHeader`.
     pub fn treasury_output_milestone_id(&self) -> &MilestoneId {
         &self.treasury_output_milestone_id
     }
 
+    /// Returns the treasury output amount of a `FullSnapshotHeader`.
     pub fn treasury_output_amount(&self) -> u64 {
         self.treasury_output_amount
     }
@@ -154,6 +166,7 @@ impl Packable for FullSnapshotHeader {
     }
 }
 
+/// Describes a snapshot header specific to delta snapshots.
 #[derive(Clone)]
 pub struct DeltaSnapshotHeader {
     sep_count: u64,
@@ -161,10 +174,12 @@ pub struct DeltaSnapshotHeader {
 }
 
 impl DeltaSnapshotHeader {
+    /// Returns the solid entry point count of a `DeltaSnapshotHeader`.
     pub fn sep_count(&self) -> u64 {
         self.sep_count
     }
 
+    /// Returns the milestone diff count of a `DeltaSnapshotHeader`.
     pub fn milestone_diff_count(&self) -> u64 {
         self.milestone_diff_count
     }

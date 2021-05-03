@@ -21,6 +21,9 @@ pub enum Error {
     /// Unsupported payload kind.
     #[error("Unsupported payload kind: {0}")]
     UnsupportedPayloadKind(u32),
+    /// Invalid payload kind.
+    #[error("Invalid payload kind: {0}")]
+    InvalidPayloadKind(u32),
     /// Treasury amount mismatch.
     #[error("Treasury amount mismatch: {0} != {1}")]
     TreasuryAmountMismatch(u64, u64),
@@ -36,6 +39,12 @@ pub enum Error {
     /// Negative balance.
     #[error("Negative balance: {0}")]
     NegativeBalance(i64),
+    /// Negative dust allowance.
+    #[error("Negative dust allowance: {0}")]
+    NegativeDustAllowance(i64),
+    /// Negative dust outputs.
+    #[error("Negative dust outputs: {0}")]
+    NegativeDustOutputs(i64),
     /// Balance overflow.
     #[error("Balance overflow: {0}")]
     BalanceOverflow(i128),
@@ -51,14 +60,19 @@ pub enum Error {
     /// Packable option error happened.
     #[error("Packable option error happened")]
     PackableOption,
+    /// Invalid conflict byte.
+    #[error("Invalid conflict byte")]
+    InvalidConflict(u8),
+    /// Invalid snapshot kind.
     #[error("Invalid snapshot kind: {0}")]
     InvalidSnapshotKind(u8),
+    /// Unsupported snapshot version.
     #[error("Unsupported snapshot version: supports {0}, read {1}")]
     UnsupportedVersion(u8, u8),
-    #[error("Invalid payload kind: {0}")]
-    InvalidPayloadKind(u32),
-    #[error("")]
+    /// Missing consumed treasury.
+    #[error("Missing consumed treasury")]
     MissingConsumedTreasury,
+    /// Milestone length mismatch.
     #[error("Milestone length mismatch: expected {0}, got {1}")]
     MilestoneLengthMismatch(usize, usize),
 }

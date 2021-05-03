@@ -6,6 +6,7 @@ use crate::types::Error;
 use bee_common::packable::{Packable, Read, Write};
 use bee_message::milestone::MilestoneIndex;
 
+/// Snapshot information to be stored.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SnapshotInfo {
     network_id: u64,
@@ -16,6 +17,7 @@ pub struct SnapshotInfo {
 }
 
 impl SnapshotInfo {
+    /// Creates a new `SnapshotInfo`.
     pub fn new(
         network_id: u64,
         snapshot_index: MilestoneIndex,
@@ -32,22 +34,27 @@ impl SnapshotInfo {
         }
     }
 
+    /// Returns the network identifier of a `SnapshotInfo`.
     pub fn network_id(&self) -> u64 {
         self.network_id
     }
 
+    /// Returns the snapshot index of a `SnapshotInfo`.
     pub fn snapshot_index(&self) -> MilestoneIndex {
         self.snapshot_index
     }
 
+    /// Returns the entry point index of a `SnapshotInfo`.
     pub fn entry_point_index(&self) -> MilestoneIndex {
         self.entry_point_index
     }
 
+    /// Returns the pruning index of a `SnapshotInfo`.
     pub fn pruning_index(&self) -> MilestoneIndex {
         self.pruning_index
     }
 
+    /// Returns the timestamp of a `SnapshotInfo`.
     pub fn timestamp(&self) -> u64 {
         self.timestamp
     }
