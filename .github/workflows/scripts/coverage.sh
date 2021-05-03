@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 set -e
 
 # Remove stale coverage report
@@ -43,7 +44,6 @@ cargo +nightly cov -- export ${BINARIES} \
   --ignore-filename-regex="/.cargo|rustc|target|tests|/.rustup" \
   --format=lcov --Xdemangler=rustfilt \
   >> coverage/coverage.info
-  
 
 # Ensure intermediate coverage files are deleted
 echo "Removing intermediate files..."
