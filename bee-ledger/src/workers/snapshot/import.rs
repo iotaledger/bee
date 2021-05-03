@@ -18,7 +18,7 @@ use crate::{
 use bee_common::packable::{Packable, Read};
 use bee_message::{
     milestone::MilestoneIndex,
-    output::{self, Output, OutputId, DUST_THRESHOLD},
+    output::{self, Output, OutputId},
     payload::Payload,
     MessageId,
 };
@@ -76,19 +76,7 @@ async fn import_outputs<R: Read, B: StorageBackend>(
         // TODO handle unwrap
         // TODO batch
         create_output(&*storage, &output_id, &created_output).await.unwrap();
-        match created_output.inner() {
-            Output::SignatureLockedSingle(output) => {
-                balance_diffs.amount_add(*output.address(), output.amount())?;
-                if output.amount() < DUST_THRESHOLD {
-                    balance_diffs.dust_outputs_inc(*output.address())?;
-                }
-            }
-            Output::SignatureLockedDustAllowance(output) => {
-                balance_diffs.amount_add(*output.address(), output.amount())?;
-                balance_diffs.dust_allowance_add(*output.address(), output.amount())?;
-            }
-            output => return Err(Error::UnsupportedOutputKind(output.kind())),
-        }
+        balance_diffs.output_add(created_output.inner())?;
     }
 
     apply_balance_diffs(&*storage, &balance_diffs)
@@ -113,37 +101,13 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
         let mut balance_diffs = BalanceDiffs::new();
 
         for (_, output) in diff.created().iter() {
-            match output.inner() {
-                Output::SignatureLockedSingle(output) => {
-                    balance_diffs.amount_add(*output.address(), output.amount())?;
-                    if output.amount() < DUST_THRESHOLD {
-                        balance_diffs.dust_outputs_inc(*output.address())?;
-                    }
-                }
-                Output::SignatureLockedDustAllowance(output) => {
-                    balance_diffs.amount_add(*output.address(), output.amount())?;
-                    balance_diffs.dust_allowance_add(*output.address(), output.amount())?;
-                }
-                output => return Err(Error::UnsupportedOutputKind(output.kind())),
-            }
+            balance_diffs.output_add(output.inner())?;
         }
 
         let mut consumed = HashMap::new();
 
         for (output_id, (created_output, consumed_output)) in diff.consumed().iter() {
-            match created_output.inner() {
-                Output::SignatureLockedSingle(output) => {
-                    balance_diffs.amount_sub(*output.address(), output.amount())?;
-                    if output.amount() < DUST_THRESHOLD {
-                        balance_diffs.dust_outputs_dec(*output.address())?;
-                    }
-                }
-                Output::SignatureLockedDustAllowance(output) => {
-                    balance_diffs.amount_sub(*output.address(), output.amount())?;
-                    balance_diffs.dust_allowance_sub(*output.address(), output.amount())?;
-                }
-                output => return Err(Error::UnsupportedOutputKind(output.kind())),
-            }
+            balance_diffs.output_sub(created_output.inner())?;
             consumed.insert(*output_id, (created_output.clone(), consumed_output.clone()));
         }
 

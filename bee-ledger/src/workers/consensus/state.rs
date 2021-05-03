@@ -25,19 +25,15 @@ async fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury:
         // Unwrap: an unspent output has to be in database.
         let output = storage::fetch_output(storage, &*output_id).await?.unwrap();
 
-        match output.inner() {
-            output::Output::SignatureLockedSingle(output) => {
-                supply = supply
-                    .checked_add(output.amount())
-                    .ok_or_else(|| Error::LedgerStateOverflow(supply as u128 + output.amount() as u128))?;
-            }
-            output::Output::SignatureLockedDustAllowance(output) => {
-                supply = supply
-                    .checked_add(output.amount())
-                    .ok_or_else(|| Error::LedgerStateOverflow(supply as u128 + output.amount() as u128))?;
-            }
+        let amount = match output.inner() {
+            output::Output::SignatureLockedSingle(output) => output.amount(),
+            output::Output::SignatureLockedDustAllowance(output) => output.amount(),
             output => return Err(Error::UnsupportedOutputKind(output.kind())),
-        }
+        };
+
+        supply = supply
+            .checked_add(amount)
+            .ok_or_else(|| Error::LedgerStateOverflow(supply as u128 + amount as u128))?;
     }
 
     if supply
