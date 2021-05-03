@@ -4,7 +4,7 @@
 use crate::{
     types::{CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
     workers::{
-        consensus::{metadata::WhiteFlagMetadata, state::check_ledger_state, white_flag},
+        consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
         error::Error,
         event::{MilestoneConfirmed, OutputConsumed, OutputCreated},
         pruning::{
@@ -279,7 +279,7 @@ where
             }
         }
 
-        check_ledger_state(&*storage).await?;
+        validate_ledger_state(&*storage).await?;
 
         {
             let mut solid_entry_points = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&*storage)

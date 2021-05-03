@@ -15,7 +15,7 @@ use bee_storage::access::AsStream;
 
 use futures::StreamExt;
 
-async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
+async fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
     let mut supply: u64 = 0;
     let mut stream = AsStream::<Unspent, ()>::stream(storage)
         .await
@@ -51,7 +51,7 @@ async fn check_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u6
     Ok(())
 }
 
-async fn check_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
+async fn validate_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
     let mut supply: u64 = 0;
     let mut stream = AsStream::<Address, Balance>::stream(storage)
         .await
@@ -77,9 +77,9 @@ async fn check_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u6
     Ok(())
 }
 
-pub(crate) async fn check_ledger_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
+pub(crate) async fn validate_ledger_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
     let treasury = storage::fetch_unspent_treasury_output(storage).await?.inner().amount();
 
-    check_ledger_unspent_state(storage, treasury).await?;
-    check_ledger_balance_state(storage, treasury).await
+    validate_ledger_unspent_state(storage, treasury).await?;
+    validate_ledger_balance_state(storage, treasury).await
 }
