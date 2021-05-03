@@ -11,6 +11,7 @@ const DEFAULT_DEPTH: u32 = 50;
 const DEFAULT_INTERVAL_SYNCED: u32 = 50;
 const DEFAULT_INTERVAL_UNSYNCED: u32 = 1000;
 
+/// Builder for a `SnapshotConfig`.
 #[derive(Default, Deserialize)]
 pub struct SnapshotConfigBuilder {
     full_path: Option<String>,
@@ -22,40 +23,48 @@ pub struct SnapshotConfigBuilder {
 }
 
 impl SnapshotConfigBuilder {
+    /// Creates a new `SnapshotConfigBuilder`.
     pub fn new() -> Self {
         Self::default()
     }
 
+    // Sets the full path of the `SnapshotConfigBuilder`.
     pub fn full_path(mut self, full_path: String) -> Self {
         self.full_path.replace(full_path);
         self
     }
 
+    // Sets the delta path of the `SnapshotConfigBuilder`.
     pub fn delta_path(mut self, delta_path: String) -> Self {
         self.delta_path.replace(delta_path);
         self
     }
 
+    // Sets the download URLs of the `SnapshotConfigBuilder`.
     pub fn download_urls(mut self, download_urls: Vec<String>) -> Self {
         self.download_urls.replace(download_urls);
         self
     }
 
+    // Sets the depth of the `SnapshotConfigBuilder`.
     pub fn depth(mut self, depth: u32) -> Self {
         self.depth.replace(depth);
         self
     }
 
+    // Sets the synced interval of the `SnapshotConfigBuilder`.
     pub fn interval_synced(mut self, interval_synced: u32) -> Self {
         self.interval_synced.replace(interval_synced);
         self
     }
 
+    // Sets the unsynced interval of the `SnapshotConfigBuilder`.
     pub fn interval_unsynced(mut self, interval_unsynced: u32) -> Self {
         self.interval_unsynced.replace(interval_unsynced);
         self
     }
 
+    /// Finishes the `SnapshotConfigBuilder` into a `SnapshotConfig`.
     pub fn finish(self) -> SnapshotConfig {
         SnapshotConfig {
             full_path: PathBuf::from(self.full_path.unwrap_or_else(|| DEFAULT_FULL_PATH.to_string())),
@@ -68,6 +77,7 @@ impl SnapshotConfigBuilder {
     }
 }
 
+/// A snapshot configuration.
 #[derive(Clone)]
 pub struct SnapshotConfig {
     full_path: PathBuf,
@@ -79,30 +89,37 @@ pub struct SnapshotConfig {
 }
 
 impl SnapshotConfig {
+    /// Creates a new `SnapshotConfigBuilder`.
     pub fn build() -> SnapshotConfigBuilder {
         SnapshotConfigBuilder::new()
     }
 
+    /// Returns the full path of the `SnapshotConfig`.
     pub fn full_path(&self) -> &Path {
         self.full_path.as_path()
     }
 
+    /// Returns the delta path of the `SnapshotConfig`.
     pub fn delta_path(&self) -> Option<&Path> {
         self.delta_path.as_ref().map(PathBuf::as_path)
     }
 
-    pub fn download_urls(&self) -> &Vec<String> {
+    /// Returns the download URLs of the `SnapshotConfig`.
+    pub fn download_urls(&self) -> &[String] {
         &self.download_urls
     }
 
+    /// Returns the depth of the `SnapshotConfig`.
     pub fn depth(&self) -> u32 {
         self.depth
     }
 
+    /// Returns the synced interval of the `SnapshotConfig`.
     pub fn interval_synced(&self) -> u32 {
         self.interval_synced
     }
 
+    /// Returns the unsynced interval of the `SnapshotConfig`.
     pub fn interval_unsynced(&self) -> u32 {
         self.interval_unsynced
     }
