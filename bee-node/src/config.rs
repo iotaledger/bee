@@ -8,7 +8,6 @@ use crate::plugins::mqtt::config::{MqttConfig, MqttConfigBuilder};
 
 use bee_common::logger::{LoggerConfig, LoggerConfigBuilder};
 use bee_ledger::workers::{
-    consensus::config::{LedgerConfig, LedgerConfigBuilder},
     pruning::config::{PruningConfig, PruningConfigBuilder},
     snapshot::config::{SnapshotConfig, SnapshotConfigBuilder},
 };
@@ -50,7 +49,6 @@ pub struct NodeConfigBuilder<B: StorageBackend> {
     pub(crate) pruning: Option<PruningConfigBuilder>,
     pub(crate) storage: Option<B::ConfigBuilder>,
     pub(crate) tangle: Option<TangleConfigBuilder>,
-    pub(crate) ledger: Option<LedgerConfigBuilder>,
     pub(crate) mqtt: Option<MqttConfigBuilder>,
     #[cfg(feature = "dashboard")]
     pub(crate) dashboard: Option<DashboardConfigBuilder>,
@@ -110,7 +108,6 @@ impl<B: StorageBackend> NodeConfigBuilder<B> {
             pruning: self.pruning.unwrap_or_default().finish(),
             storage: self.storage.unwrap_or_default().into(),
             tangle: self.tangle.unwrap_or_default().finish(),
-            ledger: self.ledger.unwrap_or_default().finish(),
             mqtt: self.mqtt.unwrap_or_default().finish(),
             #[cfg(feature = "dashboard")]
             dashboard: self.dashboard.unwrap_or_default().finish(),
@@ -139,7 +136,6 @@ pub struct NodeConfig<B: StorageBackend> {
     pub pruning: PruningConfig,
     pub storage: B::Config,
     pub tangle: TangleConfig,
-    pub ledger: LedgerConfig,
     pub mqtt: MqttConfig,
     #[cfg(feature = "dashboard")]
     pub dashboard: DashboardConfig,
@@ -161,7 +157,6 @@ impl<B: StorageBackend> Clone for NodeConfig<B> {
             pruning: self.pruning.clone(),
             storage: self.storage.clone(),
             tangle: self.tangle.clone(),
-            ledger: self.ledger.clone(),
             mqtt: self.mqtt.clone(),
             #[cfg(feature = "dashboard")]
             dashboard: self.dashboard.clone(),
