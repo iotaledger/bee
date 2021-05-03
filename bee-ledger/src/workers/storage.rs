@@ -15,14 +15,12 @@ use bee_message::{
     output::{Output, OutputId},
 };
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsStream, Batch, BatchBuilder, Exist, Fetch, Insert, Truncate},
     backend,
 };
 use bee_tangle::solid_entry_point::SolidEntryPoint;
 
 use std::collections::HashMap;
-
-// TODO check all requirements
 
 pub trait StorageBackend:
     backend::StorageBackend
@@ -36,27 +34,15 @@ pub trait StorageBackend:
     + Batch<Address, Balance>
     + Batch<(MilestoneIndex, Receipt), ()>
     + Batch<(bool, TreasuryOutput), ()>
-    + Delete<OutputId, CreatedOutput>
-    + Delete<OutputId, ConsumedOutput>
-    + Delete<Unspent, ()>
-    + Delete<(), LedgerIndex>
-    + Exist<OutputId, CreatedOutput>
-    + Exist<OutputId, ConsumedOutput>
     + Exist<Unspent, ()>
-    + Exist<(), LedgerIndex>
     + Fetch<(), SnapshotInfo>
     + Fetch<OutputId, CreatedOutput>
-    + Fetch<OutputId, ConsumedOutput>
     + Fetch<(), LedgerIndex>
     + Fetch<Address, Balance>
     + Fetch<bool, Vec<TreasuryOutput>>
     + Insert<(), SnapshotInfo>
-    + Insert<OutputId, CreatedOutput>
-    + Insert<OutputId, ConsumedOutput>
-    + Insert<Unspent, ()>
     + Insert<(), LedgerIndex>
     + Insert<(bool, TreasuryOutput), ()>
-    + Insert<SolidEntryPoint, MilestoneIndex>
     + Truncate<SolidEntryPoint, MilestoneIndex>
     + for<'a> AsStream<'a, Unspent, ()>
     + for<'a> AsStream<'a, Address, Balance>
@@ -77,27 +63,15 @@ impl<T> StorageBackend for T where
         + Batch<Address, Balance>
         + Batch<(MilestoneIndex, Receipt), ()>
         + Batch<(bool, TreasuryOutput), ()>
-        + Delete<OutputId, CreatedOutput>
-        + Delete<OutputId, ConsumedOutput>
-        + Delete<Unspent, ()>
-        + Delete<(), LedgerIndex>
-        + Exist<OutputId, CreatedOutput>
-        + Exist<OutputId, ConsumedOutput>
         + Exist<Unspent, ()>
-        + Exist<(), LedgerIndex>
         + Fetch<(), SnapshotInfo>
         + Fetch<OutputId, CreatedOutput>
-        + Fetch<OutputId, ConsumedOutput>
         + Fetch<(), LedgerIndex>
         + Fetch<Address, Balance>
         + Fetch<bool, Vec<TreasuryOutput>>
         + Insert<(), SnapshotInfo>
-        + Insert<OutputId, CreatedOutput>
-        + Insert<OutputId, ConsumedOutput>
-        + Insert<Unspent, ()>
         + Insert<(), LedgerIndex>
         + Insert<(bool, TreasuryOutput), ()>
-        + Insert<SolidEntryPoint, MilestoneIndex>
         + Truncate<SolidEntryPoint, MilestoneIndex>
         + for<'a> AsStream<'a, Unspent, ()>
         + for<'a> AsStream<'a, Address, Balance>
