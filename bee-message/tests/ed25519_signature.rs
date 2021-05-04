@@ -1,8 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::Packable;
 
 use core::convert::TryInto;
 
@@ -21,15 +21,15 @@ fn packed_len() {
     let sig = Ed25519Signature::new(pub_key_bytes, sig_bytes);
 
     assert_eq!(sig.packed_len(), 32 + 64);
-    assert_eq!(sig.pack_new().len(), 32 + 64);
+    assert_eq!(sig.pack_to_vec().unwrap().len(), 32 + 64);
 }
 
 #[test]
-fn pack_unpack_valid() {
+fn round_trip() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let sig = Ed25519Signature::new(pub_key_bytes, sig_bytes);
-    let sig_packed = sig.pack_new();
+    let sig_packed = sig.pack_to_vec().unwrap();
 
-    assert_eq!(sig, Packable::unpack(&mut sig_packed.as_slice()).unwrap());
+    assert_eq!(sig, Ed25519Signature::unpack_from_slice(sig_packed).unwrap());
 }

@@ -1,11 +1,33 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{constants::INPUT_OUTPUT_INDEX_RANGE, Error};
+use crate::{constants::INPUT_OUTPUT_INDEX_RANGE, error::ValidationError, MessageUnpackError};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
-use core::convert::TryFrom;
+use core::{
+    convert::{Infallible, TryFrom},
+    fmt,
+};
+
+#[derive(Debug)]
+pub enum ReferenceUnlockUnpackError {
+    ValidationError(ValidationError),
+}
+
+impl_wrapped_variant!(
+    ReferenceUnlockUnpackError,
+    ValidationError,
+    ReferenceUnlockUnpackError::ValidationError
+);
+
+impl fmt::Display for ReferenceUnlockUnpackError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ValidationError(e) => write!(f, "{}", e),
+        }
+    }
+}
 
 /// An [`UnlockBlock`](crate::unlock::UnlockBlock) that refers to another unlock block.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -17,9 +39,9 @@ impl ReferenceUnlock {
     pub const KIND: u8 = 1;
 
     /// Creates a new `ReferenceUnlock`.
-    pub fn new(index: u16) -> Result<Self, Error> {
+    pub fn new(index: u16) -> Result<Self, ValidationError> {
         if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
-            return Err(Error::InvalidReferenceIndex(index));
+            return Err(ValidationError::InvalidReferenceIndex(index));
         }
 
         Ok(Self(index))
@@ -32,7 +54,7 @@ impl ReferenceUnlock {
 }
 
 impl TryFrom<u16> for ReferenceUnlock {
-    type Error = Error;
+    type Error = ValidationError;
 
     fn try_from(index: u16) -> Result<Self, Self::Error> {
         Self::new(index)
@@ -40,19 +62,22 @@ impl TryFrom<u16> for ReferenceUnlock {
 }
 
 impl Packable for ReferenceUnlock {
-    type Error = Error;
+    type PackError = Infallible;
+    type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        0u16.packed_len()
+        self.0.packed_len()
     }
 
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        self.0.pack(packer).map_err(PackError::infallible)?;
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Self::new(u16::unpack_inner::<R, CHECK>(reader)?)
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let index = u16::unpack(unpacker).map_err(UnpackError::infallible)?;
+
+        ReferenceUnlock::new(index).map_err(|e| UnpackError::Packable(e.into()))
     }
 }

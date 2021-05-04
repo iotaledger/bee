@@ -1,17 +1,16 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::prelude::*;
-use bee_test::rand::bytes::{rand_bytes, rand_bytes_32};
-
-use core::convert::TryInto;
+use bee_packable::Packable;
+use bee_test::rand::bytes::rand_bytes_array;
 
 #[test]
 fn kind() {
     assert_eq!(
         UnlockBlock::from(SignatureUnlock::from(Ed25519Signature::new(
-            rand_bytes_32(),
-            rand_bytes(64).try_into().unwrap(),
+            rand_bytes_array(),
+            rand_bytes_array(),
         )))
         .kind(),
         0
@@ -23,7 +22,7 @@ fn kind() {
 fn new_invalid_first_reference() {
     assert!(matches!(
         UnlockBlocks::new(vec![ReferenceUnlock::new(42).unwrap().into()]),
-        Err(Error::InvalidUnlockBlockReference(0)),
+        Err(ValidationError::InvalidUnlockBlockReference(0)),
     ));
 }
 
@@ -34,7 +33,7 @@ fn new_invalid_self_reference() {
             SignatureUnlock::from(Ed25519Signature::new([0; 32], [0; 64])).into(),
             ReferenceUnlock::new(1).unwrap().into()
         ]),
-        Err(Error::InvalidUnlockBlockReference(1)),
+        Err(ValidationError::InvalidUnlockBlockReference(1)),
     ));
 }
 
@@ -46,7 +45,7 @@ fn new_invalid_future_reference() {
             ReferenceUnlock::new(2).unwrap().into(),
             SignatureUnlock::from(Ed25519Signature::new([1; 32], [1; 64])).into(),
         ]),
-        Err(Error::InvalidUnlockBlockReference(1)),
+        Err(ValidationError::InvalidUnlockBlockReference(1)),
     ));
 }
 
@@ -58,7 +57,7 @@ fn new_invalid_reference_reference() {
             ReferenceUnlock::new(0).unwrap().into(),
             ReferenceUnlock::new(1).unwrap().into()
         ]),
-        Err(Error::InvalidUnlockBlockReference(2)),
+        Err(ValidationError::InvalidUnlockBlockReference(2)),
     ));
 }
 
@@ -75,7 +74,7 @@ fn new_invalid_duplicate_signature() {
             SignatureUnlock::from(Ed25519Signature::new([3; 32], [3; 64])).into(),
             ReferenceUnlock::new(3).unwrap().into()
         ]),
-        Err(Error::DuplicateSignature(5)),
+        Err(ValidationError::DuplicateSignature(5)),
     ));
 }
 
@@ -83,7 +82,7 @@ fn new_invalid_duplicate_signature() {
 fn new_invalid_too_many_blocks() {
     assert!(matches!(
         UnlockBlocks::new(vec![ReferenceUnlock::new(0).unwrap().into(); 300]),
-        Err(Error::InvalidUnlockBlockCount(300)),
+        Err(ValidationError::InvalidUnlockBlockCount(300)),
     ));
 }
 
@@ -142,4 +141,23 @@ fn get_signature_through_reference() {
             .get(1),
         Some(&signature)
     );
+}
+
+#[test]
+fn round_trip() {
+    let blocks_a = UnlockBlocks::new(vec![
+        SignatureUnlock::from(Ed25519Signature::new([0; 32], [0; 64])).into(),
+        ReferenceUnlock::new(0).unwrap().into(),
+        ReferenceUnlock::new(0).unwrap().into(),
+        SignatureUnlock::from(Ed25519Signature::new([1; 32], [1; 64])).into(),
+        SignatureUnlock::from(Ed25519Signature::new([2; 32], [2; 64])).into(),
+        SignatureUnlock::from(Ed25519Signature::new([3; 32], [3; 64])).into(),
+        ReferenceUnlock::new(3).unwrap().into(),
+        ReferenceUnlock::new(4).unwrap().into(),
+    ])
+    .unwrap();
+
+    let blocks_b = UnlockBlocks::unpack_from_slice(blocks_a.pack_to_vec().unwrap()).unwrap();
+
+    assert_eq!(blocks_a, blocks_b);
 }

@@ -9,7 +9,7 @@ edition = "2018"
 cargo-fuzz = true
 
 [dependencies]
-bee-common = { version = "0.4.1", path = "../../bee-common/bee-common" }
+bee-packable = { version = "0.1.0", path = "../../bee-common/bee-packable" }
 
 libfuzzer-sys = "0.4"
 

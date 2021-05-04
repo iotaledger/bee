@@ -1,8 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::Packable;
 
 use core::str::FromStr;
 
@@ -27,7 +27,7 @@ fn from_str_valid() {
 fn from_str_invalid_hex() {
     assert!(matches!(
         TransactionId::from_str(TRANSACTION_ID_INVALID_HEX),
-        Err(Error::InvalidHexadecimalChar(hex))
+        Err(ValidationError::InvalidHexadecimalChar(hex))
             if hex == TRANSACTION_ID_INVALID_HEX
     ));
 }
@@ -36,7 +36,7 @@ fn from_str_invalid_hex() {
 fn from_str_invalid_len() {
     assert!(matches!(
         TransactionId::from_str(TRANSACTION_ID_INVALID_LEN),
-        Err(Error::InvalidHexadecimalLength(expected, actual))
+        Err(ValidationError::InvalidHexadecimalLength(expected, actual))
             if expected == MESSAGE_ID_LENGTH * 2 && actual == MESSAGE_ID_LENGTH * 2 - 2
     ));
 }
@@ -54,16 +54,16 @@ fn packed_len() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
 
     assert_eq!(transaction_id.packed_len(), 32);
-    assert_eq!(transaction_id.pack_new().len(), 32);
+    assert_eq!(transaction_id.pack_to_vec().unwrap().len(), 32);
 }
 
 #[test]
-fn pack_unpack_valid() {
+fn round_trip() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
-    let packed_transaction_id = transaction_id.pack_new();
+    let packed_transaction_id = transaction_id.pack_to_vec().unwrap();
 
     assert_eq!(
         transaction_id,
-        Packable::unpack(&mut packed_transaction_id.as_slice()).unwrap()
+        TransactionId::unpack_from_slice(packed_transaction_id).unwrap()
     );
 }

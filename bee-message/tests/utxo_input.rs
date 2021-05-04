@@ -1,8 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::Packable;
 
 use core::str::FromStr;
 
@@ -60,14 +60,14 @@ fn packed_len() {
             .packed_len(),
         32 + 2
     );
-    assert_eq!(output_id.pack_new().len(), 32 + 2);
+    assert_eq!(output_id.pack_to_vec().unwrap().len(), 32 + 2);
 }
 
 #[test]
-fn pack_unpack() {
+fn round_trip() {
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
     let input_1 = UtxoInput::new(*output_id.transaction_id(), output_id.index()).unwrap();
-    let input_2 = UtxoInput::unpack(&mut input_1.pack_new().as_slice()).unwrap();
+    let input_2 = UtxoInput::unpack_from_slice(input_1.pack_to_vec().unwrap()).unwrap();
 
     assert_eq!(input_1, input_2);
 }
