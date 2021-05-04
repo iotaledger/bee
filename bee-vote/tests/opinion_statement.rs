@@ -1,8 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_common::packable::Packable;
 use bee_vote::{
     statement::{OpinionStatement, OpinionStatements},
+    Error,
     Opinion,
 };
 
@@ -60,4 +62,49 @@ fn opinions_finalized() {
         .unwrap();
 
     assert!(opinions.finalized(1));
+}
+
+#[test]
+fn opinion_packed_len() {
+    let opinion = OpinionStatement {
+        opinion: Opinion::Like,
+        round: 0,
+    };
+
+    let packed = opinion.pack_new();
+
+    assert_eq!(packed.len(), opinion.packed_len());
+    assert_eq!(packed.len(), 2);
+}
+
+#[test]
+fn opinions_empty() {
+    let mut opinions = OpinionStatements::new();
+    let opinion = OpinionStatement {
+        opinion: Opinion::Like,
+        round: 0,
+    };
+
+    assert!(opinions.is_empty());
+
+    opinions.insert(opinion).unwrap();
+
+    assert!(!opinions.is_empty());
+
+    opinions.clear();
+
+    assert!(opinions.is_empty());
+}
+
+#[test]
+fn duplicate_opinion() {
+    let mut opinions = OpinionStatements::new();
+    let opinion = OpinionStatement {
+        opinion: Opinion::Like,
+        round: 0,
+    };
+
+    opinions.insert(opinion).unwrap();
+    
+    assert!(matches!(opinions.insert(opinion), Err(Error::DuplicateOpinionStatement(_))));
 }

@@ -112,7 +112,7 @@ where
     }
 
     /// Get all the opinions on a given `Entry`.
-    pub(super) fn get_entry_opinions(&self, id: &I) -> Option<OpinionStatements> {
-        self.deref().get(id).map(|entry| entry.opinions.clone())
+    pub(super) fn get_entry_opinions(&self, id: &I) -> OpinionStatements {
+        self.deref().get(id).map_or_else(|| OpinionStatements::default(), |entry| entry.opinions.clone())
     }
 }

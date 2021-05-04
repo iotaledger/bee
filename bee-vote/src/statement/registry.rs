@@ -64,43 +64,39 @@ impl View {
     }
 
     /// Get the node's opinions on a given transaction conflict.
-    pub fn get_conflict_opinions(&self, id: TransactionId) -> Option<OpinionStatements> {
+    pub fn get_conflict_opinions(&self, id: TransactionId) -> OpinionStatements {
         self.conflicts.get_entry_opinions(&id)
     }
 
     /// Get the node's opinions on a given message timestamp.
-    pub fn get_timestamp_opinions(&self, id: MessageId) -> Option<OpinionStatements> {
+    pub fn get_timestamp_opinions(&self, id: MessageId) -> OpinionStatements {
         self.timestamps.get_entry_opinions(&id)
     }
 
     /// Query a `View` for the node's opinions on a range of entry IDs.
-    pub fn query(&mut self, query_ids: &QueryObjects) -> Result<Opinions, Error> {
+    pub fn query(&self, query_ids: QueryObjects) -> Result<Opinions, Error> {
         let mut opinions = Opinions::new(vec![]);
 
         for object in query_ids.conflict_objects.iter() {
-            if let Some(conflict_opinions) = self.get_conflict_opinions(object.transaction_id().unwrap()) {
-                if !conflict_opinions.is_empty() {
-                    // This will never fail.
-                    opinions.push(conflict_opinions.last().unwrap().opinion);
-                } else {
-                    opinions.push(Opinion::Unknown);
-                }
+            let conflict_opinions = self.get_conflict_opinions(object.transaction_id().unwrap());
+
+            if !conflict_opinions.is_empty() {
+                // This will never fail.
+                opinions.push(conflict_opinions.last().unwrap().opinion);
             } else {
                 opinions.push(Opinion::Unknown);
-            };
+            }
         }
 
         for object in query_ids.timestamp_objects.iter() {
-            if let Some(timestamp_opinions) = self.get_timestamp_opinions(object.message_id().unwrap()) {
-                if !timestamp_opinions.is_empty() {
-                    // This will never fail.
-                    opinions.push(timestamp_opinions.last().unwrap().opinion);
-                } else {
-                    opinions.push(Opinion::Unknown);
-                }
+            let timestamp_opinions = self.get_timestamp_opinions(object.message_id().unwrap()); 
+            
+            if !timestamp_opinions.is_empty() {
+                // This will never fail.
+                opinions.push(timestamp_opinions.last().unwrap().opinion);
             } else {
                 opinions.push(Opinion::Unknown);
-            };
+            }
         }
 
         Ok(opinions)
@@ -147,12 +143,24 @@ impl Registry {
             .expect("Clock may have gone backwards")
             .as_millis() as u64;
 
+        let mut to_remove = vec![];
         let mut guard = self.views.write().await;
-        for (_, view) in guard.iter_mut() {
-            let filter = |entry: &Entry| -> bool { now - entry.timestamp < duration.as_millis() as u64 };
 
-            (*view.conflicts).retain(|_, entry| filter(entry));
+        for (id, view) in guard.iter_mut() {
+            let filter = |entry: &Entry| -> bool { 
+                now - entry.timestamp < duration.as_millis() as u64 
+            };
+
+            view.conflicts.retain(|_, entry| filter(entry));
             view.timestamps.retain(|_, entry| filter(entry));
+
+            if view.conflicts.is_empty() && view.timestamps.is_empty() {
+                to_remove.push(id.clone());
+            }
+        }
+
+        for id in to_remove.iter() {
+            guard.remove(id).unwrap();
         }
     }
 }
