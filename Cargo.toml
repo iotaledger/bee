@@ -1,5 +1,4 @@
 [workspace]
 members = [
-  "bee-common",
-  "bee-tmp"
+  "bee-common"
 ]
