@@ -4,7 +4,7 @@
 use crate::{
     types::{BalanceDiffs, ConsumedOutput, CreatedOutput},
     workers::{
-        consensus::{dust::dust_outputs_max, merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
+        consensus::{merkle_hasher::MerkleHasher, metadata::WhiteFlagMetadata},
         error::Error,
         storage::{self, StorageBackend},
     },
@@ -14,7 +14,7 @@ use bee_ledger_types::types::ConflictReason;
 use bee_message::{
     address::Address,
     input::Input,
-    output::{Output, OutputId, DUST_THRESHOLD},
+    output::{dust_outputs_max, Output, OutputId, DUST_THRESHOLD},
     payload::{
         transaction::{Essence, RegularEssence, TransactionId, TransactionPayload},
         Payload,

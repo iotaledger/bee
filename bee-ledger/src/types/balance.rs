@@ -4,7 +4,7 @@
 use crate::types::{error::Error, BalanceDiff};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_message::constants::IOTA_SUPPLY;
+use bee_message::{constants::IOTA_SUPPLY, output::dust_outputs_max};
 
 /// Holds the balance of an address.
 #[derive(Debug, Default)]
@@ -45,6 +45,11 @@ impl Balance {
     /// Returns the number of dust outputs of the `Balance`.
     pub fn dust_outputs(&self) -> u64 {
         self.dust_outputs
+    }
+
+    /// Returns whether more dust is allowed on the `Balance`.
+    pub fn dust_allowed(&self) -> bool {
+        self.dust_outputs() < dust_outputs_max(self.dust_allowance())
     }
 
     /// Safely applies a `BalanceDiff` to the `Balance`.

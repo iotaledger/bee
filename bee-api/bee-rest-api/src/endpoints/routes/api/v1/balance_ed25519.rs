@@ -9,7 +9,7 @@ use crate::{
     types::{body::SuccessBody, responses::BalanceAddressResponse},
 };
 
-use bee_ledger::{types::Balance, workers::consensus::dust::dust_outputs_max};
+use bee_ledger::types::Balance;
 use bee_message::address::{Address, Ed25519Address};
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
@@ -53,7 +53,7 @@ pub(crate) async fn balance_ed25519<B: StorageBackend>(
             address_type: 1,
             address: addr.to_string(),
             balance: balance.amount(),
-            dust_allowed: balance.dust_outputs() < dust_outputs_max(balance.dust_allowance()),
+            dust_allowed: balance.dust_allowed(),
         }))),
         None => Err(reject::custom(CustomRejection::NotFound(
             "balance not found".to_string(),

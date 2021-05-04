@@ -3,7 +3,6 @@
 
 pub(crate) mod state;
 
-pub mod dust;
 pub mod merkle_hasher;
 pub mod metadata;
 pub mod white_flag;

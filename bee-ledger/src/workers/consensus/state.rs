@@ -4,13 +4,16 @@
 use crate::{
     types::{Balance, Unspent},
     workers::{
-        consensus::dust::dust_outputs_max,
         error::Error,
         storage::{self, StorageBackend},
     },
 };
 
-use bee_message::{address::Address, constants::IOTA_SUPPLY, output};
+use bee_message::{
+    address::Address,
+    constants::IOTA_SUPPLY,
+    output::{self, dust_outputs_max},
+};
 use bee_storage::access::AsStream;
 
 use futures::StreamExt;
