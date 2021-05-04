@@ -40,6 +40,7 @@ impl_packable_for_int!(u8);
 impl_packable_for_int!(u16);
 impl_packable_for_int!(u32);
 impl_packable_for_int!(u64);
+#[cfg(has_u128)]
 impl_packable_for_int!(u128);
 
 /// `usize` integers are packed and unpacked as `u64` integers according to the spec.
@@ -57,6 +58,7 @@ impl_packable_for_int!(i8);
 impl_packable_for_int!(i16);
 impl_packable_for_int!(i32);
 impl_packable_for_int!(i64);
+#[cfg(has_i128)]
 impl_packable_for_int!(i128);
 
 /// `isize` integers are packed and unpacked as `i64` integers according to the spec.
