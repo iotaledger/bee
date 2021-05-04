@@ -29,7 +29,7 @@ macro_rules! impl_packable_for_int {
             }
 
             fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-                let bytes: &[u8; std::mem::size_of::<Self>()] = unpacker.unpack_exact_bytes()?;
+                let bytes: &[u8; core::mem::size_of::<Self>()] = unpacker.unpack_exact_bytes()?;
                 Ok(Self::from_le_bytes(*bytes))
             }
         }
@@ -136,10 +136,10 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-        use std::mem::MaybeUninit;
+        use core::mem::MaybeUninit;
 
-        // Safety: an array of unitialized stuff is initialized.
-        let mut array: [MaybeUninit<T>; N] = unsafe { MaybeUninit::<[MaybeUninit<T>; N]>::uninit().assume_init() };
+        // Safety: an uninitialized array of unitialized stuff is actually initialized.
+        let mut array = unsafe { MaybeUninit::<[MaybeUninit<T>; N]>::uninit().assume_init() };
 
         for item in array.iter_mut() {
             let unpacked = T::unpack(unpacker)?;
