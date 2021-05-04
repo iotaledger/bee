@@ -8,7 +8,8 @@ mod treasury;
 
 pub use output_id::{OutputId, OUTPUT_ID_LENGTH};
 pub use signature_locked_dust_allowance::{
-    SignatureLockedDustAllowanceOutput, DUST_THRESHOLD, SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT,
+    dust_outputs_max, SignatureLockedDustAllowanceOutput, DUST_ALLOWANCE_DIVISOR, DUST_OUTPUTS_MAX, DUST_THRESHOLD,
+    SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT,
 };
 pub use signature_locked_single::{SignatureLockedSingleOutput, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT};
 pub use treasury::{TreasuryOutput, TREASURY_OUTPUT_AMOUNT};
