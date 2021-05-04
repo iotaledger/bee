@@ -432,7 +432,7 @@ async fn process_internal_event(i_event: InternalEvent, senders: &Senders, peerl
             } else {
                 // Panic:
                 // This branch handles the error case, so unwrapping it is fine.
-                info!("{}", accepted.unwrap_err());
+                debug!("{}", accepted.unwrap_err());
             }
         }
     }
