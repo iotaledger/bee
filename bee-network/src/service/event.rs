@@ -112,7 +112,6 @@ pub enum InternalEvent {
     },
 
     /// The gossip protocol has been established with a peer.
-    #[allow(clippy::large_enum_variant)]
     ProtocolEstablished {
         /// The peer's id.
         peer_id: PeerId,
