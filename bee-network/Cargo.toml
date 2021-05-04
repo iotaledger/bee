@@ -1,6 +1,6 @@
 [package]
 name = "bee-network"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = """
@@ -40,7 +40,7 @@ full = [
 ]
 
 [dependencies]
-bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", optional = true }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 
 async-trait = { version = "0.1", optional = true }
 futures = { version = "0.3", optional = true }

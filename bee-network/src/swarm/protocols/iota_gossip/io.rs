@@ -7,7 +7,7 @@ use crate::{
 };
 
 use futures::{
-    io::{ReadHalf, WriteHalf},
+    io::{BufReader, BufWriter, ReadHalf, WriteHalf},
     AsyncReadExt, AsyncWriteExt, StreamExt,
 };
 use libp2p::{swarm::NegotiatedSubstream, PeerId};
@@ -15,7 +15,7 @@ use log::*;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
-const MSG_BUFFER_SIZE: usize = 32768;
+const MSG_BUFFER_LEN: usize = 32768;
 
 /// A type alias for an unbounded channel sender.
 pub type GossipSender = mpsc::UnboundedSender<Vec<u8>>;
@@ -23,23 +23,23 @@ pub type GossipSender = mpsc::UnboundedSender<Vec<u8>>;
 /// A type alias for an unbounded channel receiver.
 pub type GossipReceiver = UnboundedReceiverStream<Vec<u8>>;
 
-pub fn gossip_channel() -> (GossipSender, GossipReceiver) {
+pub fn channel() -> (GossipSender, GossipReceiver) {
     let (sender, receiver) = mpsc::unbounded_channel();
     (sender, UnboundedReceiverStream::new(receiver))
 }
 
-pub fn spawn_gossip_in_processor(
+pub fn start_incoming_processor(
     peer_id: PeerId,
-    mut reader: ReadHalf<NegotiatedSubstream>,
-    incoming_gossip_sender: GossipSender,
+    mut reader: BufReader<ReadHalf<Box<NegotiatedSubstream>>>,
+    incoming_tx: GossipSender,
     internal_event_sender: InternalEventSender,
 ) {
     tokio::spawn(async move {
-        let mut msg_buf = vec![0u8; MSG_BUFFER_SIZE];
+        let mut msg_buf = vec![0u8; MSG_BUFFER_LEN];
 
         loop {
             if let Some(len) = (&mut reader).read(&mut msg_buf).await.ok().filter(|len| *len > 0) {
-                if incoming_gossip_sender.send(msg_buf[..len].to_vec()).is_err() {
+                if incoming_tx.send(msg_buf[..len].to_vec()).is_err() {
                     debug!("gossip-in: receiver dropped locally.");
 
                     // The receiver of this channel was dropped, maybe due to a shutdown. There is nothing we can do to
@@ -70,14 +70,14 @@ pub fn spawn_gossip_in_processor(
     });
 }
 
-pub fn spawn_gossip_out_processor(
+pub fn start_outgoing_processor(
     peer_id: PeerId,
-    mut writer: WriteHalf<NegotiatedSubstream>,
-    outgoing_gossip_receiver: GossipReceiver,
+    mut writer: BufWriter<WriteHalf<Box<NegotiatedSubstream>>>,
+    outgoing_rx: GossipReceiver,
     internal_event_sender: InternalEventSender,
 ) {
     tokio::spawn(async move {
-        let mut outgoing_gossip_receiver = outgoing_gossip_receiver.fuse();
+        let mut outgoing_gossip_receiver = outgoing_rx.fuse();
 
         // If the gossip sender dropped we end the connection.
         while let Some(message) = outgoing_gossip_receiver.next().await {
@@ -100,6 +100,7 @@ pub fn spawn_gossip_out_processor(
             }
 
             // If sending to the stream fails we end the connection.
+            // TODO: buffer for x milliseconds before flushing.
             if (&mut writer).write_all(&message).await.is_err() || (&mut writer).flush().await.is_err() {
                 debug!("gossip-out: stream closed remotely");
                 break;

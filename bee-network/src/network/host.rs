@@ -5,12 +5,12 @@ use super::error::Error;
 
 use crate::{
     alias,
-    peer::{list::PeerListWrapper as PeerList, meta::PeerInfo},
+    peer::{info::PeerInfo, list::PeerListWrapper as PeerList},
     service::{
         command::{Command, CommandReceiver},
         event::{InternalEvent, InternalEventSender},
     },
-    swarm::{behavior::SwarmBehavior, protocols::gossip::behavior::GOSSIP_ORIGIN},
+    swarm::behavior::SwarmBehavior,
 };
 
 use futures::channel::oneshot;
@@ -22,6 +22,7 @@ pub struct NetworkHostConfig {
     pub internal_command_receiver: CommandReceiver,
     pub peerlist: PeerList,
     pub swarm: Swarm<SwarmBehavior>,
+    pub bind_multiaddr: Multiaddr,
 }
 
 pub mod integrated {
@@ -51,7 +52,9 @@ pub mod integrated {
 
         async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
             node.spawn::<Self, _, _>(|shutdown| async move {
-                network_host_processor(config, shutdown).await;
+                network_host_processor(config, shutdown)
+                    .await
+                    .expect("network host processor.");
 
                 info!("Network Host stopped.");
             });
@@ -79,7 +82,9 @@ pub mod standalone {
             let NetworkHost { shutdown } = self;
 
             tokio::spawn(async move {
-                network_host_processor(config, shutdown).await;
+                network_host_processor(config, shutdown)
+                    .await
+                    .expect("network host processor.");
 
                 info!("Network Host stopped.");
             });
@@ -89,30 +94,40 @@ pub mod standalone {
     }
 }
 
-async fn network_host_processor(config: NetworkHostConfig, mut shutdown: oneshot::Receiver<()>) {
+async fn network_host_processor(
+    config: NetworkHostConfig,
+    mut shutdown: oneshot::Receiver<()>,
+) -> Result<(), crate::Error> {
     let NetworkHostConfig {
         internal_event_sender,
         mut internal_command_receiver,
         peerlist,
         mut swarm,
+        bind_multiaddr,
     } = config;
+
+    // Try binding to the configured bind address.
+    info!("Binding to: {}", bind_multiaddr);
+    let _listener_id = Swarm::listen_on(&mut swarm, bind_multiaddr).map_err(|_| crate::Error::BindingAddressFailed)?;
 
     loop {
         let swarm_next_event = Swarm::next_event(&mut swarm);
-        let recv_command = (&mut internal_command_receiver).recv();
+        let recv_int_command = (&mut internal_command_receiver).recv();
 
         tokio::select! {
             _ = &mut shutdown => break,
             event = swarm_next_event => {
                 process_swarm_event(event, &internal_event_sender, &peerlist).await;
             }
-            command = recv_command => {
+            command = recv_int_command => {
                 if let Some(command) = command {
-                    process_command(command, &mut swarm, &peerlist).await;
+                    process_icommand(command, &mut swarm, &peerlist).await;
                 }
             },
         }
     }
+
+    Ok(())
 }
 
 async fn process_swarm_event(
@@ -147,7 +162,7 @@ async fn process_swarm_event(
             error!("Swarm event: listener error {}.", error);
         }
         SwarmEvent::Dialing(peer_id) => {
-            // NB: strange, but this event is not actually fired when dialing. (open issue?)
+            // TODO: strange, but this event is not actually fired when dialing. (open issue?)
             debug!("Swarm event: dialing {}.", alias!(peer_id));
         }
         SwarmEvent::IncomingConnection { send_back_addr, .. } => {
@@ -157,16 +172,16 @@ async fn process_swarm_event(
     }
 }
 
-async fn process_command(command: Command, swarm: &mut Swarm<SwarmBehavior>, peerlist: &PeerList) {
-    match command {
-        Command::DialPeer { peer_id } => {
-            if let Err(e) = dial_peer(swarm, peer_id, peerlist).await {
-                warn!("Failed to dial peer '...{}'. Cause: {}", alias!(peer_id), e);
-            }
-        }
+async fn process_icommand(icommand: Command, swarm: &mut Swarm<SwarmBehavior>, peerlist: &PeerList) {
+    match icommand {
         Command::DialAddress { address } => {
             if let Err(e) = dial_addr(swarm, address.clone(), peerlist).await {
-                warn!("Failed to dial address '{}'. Cause: {}", address, e);
+                warn!("{:?}", e);
+            }
+        }
+        Command::DialPeer { peer_id } => {
+            if let Err(e) = dial_peer(swarm, peer_id, peerlist).await {
+                warn!("{:?}", e);
             }
         }
         _ => {}
@@ -181,9 +196,7 @@ async fn dial_addr(swarm: &mut Swarm<SwarmBehavior>, addr: Multiaddr, peerlist: 
 
     info!("Dialing address: {}.", addr);
 
-    GOSSIP_ORIGIN.store(true, std::sync::atomic::Ordering::SeqCst);
-
-    Swarm::dial_addr(swarm, addr.clone()).map_err(|_| Error::DialingAddressFailed(addr))?;
+    Swarm::dial_addr(swarm, addr.clone()).map_err(|e| Error::DialingAddressFailed(addr, e))?;
 
     Ok(())
 }
@@ -196,13 +209,15 @@ async fn dial_peer(swarm: &mut Swarm<SwarmBehavior>, peer_id: PeerId, peerlist: 
 
     // Panic:
     // We just checked, that the peer is fine to be dialed.
-    let PeerInfo { address, alias, .. } = peerlist.0.read().await.info(&peer_id).unwrap();
+    let PeerInfo {
+        address: addr, alias, ..
+    } = peerlist.0.read().await.info(&peer_id).unwrap();
 
     info!("Dialing peer: {} ({}).", alias, alias!(peer_id));
 
-    GOSSIP_ORIGIN.store(true, std::sync::atomic::Ordering::SeqCst);
-
-    Swarm::dial_addr(swarm, address).map_err(|_| Error::DialingPeerFailed(peer_id))?;
+    // TODO: We also use `Swarm::dial_addr` here (instead of `Swarm::dial`) for now. See if it's better to change
+    // that.
+    Swarm::dial_addr(swarm, addr).map_err(|e| Error::DialingPeerFailed(peer_id, e))?;
 
     Ok(())
 }
