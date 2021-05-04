@@ -29,27 +29,27 @@ For Example: `bee -c config_example.toml`
 
 ---
 
-|    Name    |                Description                 |  Type  |
-| :--------: | :----------------------------------------: | :----: |
-|   alias    | alias for your node. Shows up in dashboard | string |
-| bech32_hrp |         network address identifier         | string |
-| network_id |             network identifier             | string |
+| Name       | Description                                | Type   |
+| :--------- | :----------------------------------------- | :----- |
+| alias      | alias for your node. Shows up in dashboard | string |
+| bech32_hrp | network address identifier                 | string |
+| network_id | network identifier                         | string |
 
 ## 1. Logger
 
-|        Name         |             Description              |      Type      |
-| :-----------------: | :----------------------------------: | :------------: |
-|    color_enabled    |     stdout it colored if enabled     |      bool      |
-|    target_width     | width of the target section of a log | integer[usize] |
-|     level_width     | width of the level section of a log  | integer[usize] |
-| [outputs](#outputs) |   config for different log filters   |     array      |
+| Name                | Description                          | Type           |
+| :------------------ | :----------------------------------- | :------------- |
+| color_enabled       | stdout it colored if enabled         | bool           |
+| target_width        | width of the target section of a log | integer[usize] |
+| level_width         | width of the level section of a log  | integer[usize] |
+| [outputs](#outputs) | config for different log filters     | array          |
 
 ### outputs
 
-|     Name     |       Description       |  Type  |
-| :----------: | :---------------------: | :----: |
-|     name     | standart stream or file | string |
-| level_filter |    log level filter     | string |
+| Name         | Description             | Type   |
+| :----------- | :---------------------- | :----- |
+| name         | standart stream or file | string |
+| level_filter | log level filter        | string |
 
 Example:
 
@@ -68,10 +68,10 @@ level_filter  = "error"
 
 ## 2. Network
 
-|          Name           |                         Description                         |       Type        |
-| :---------------------: | :---------------------------------------------------------: | :---------------: |
-|      bind_address       |    the address/es the networking layer tries binding to     | string[Multiaddr] |
-| reconnect_interval_secs | the automatic reconnect interval in seconds for known peers |   integer[u64]    |
+| Name                    | Description                                                 | Type              |
+| :---------------------- | :---------------------------------------------------------- | :---------------- |
+| bind_address            | the address/es the networking layer tries binding to        | string[Multiaddr] |
+| reconnect_interval_secs | the automatic reconnect interval in seconds for known peers | integer[u64]      |
 
 Example:
 
@@ -83,24 +83,24 @@ reconnect_interval_secs  = 30
 
 ## 3. Peering
 
-|         Name         |                                        Description                                         |  Type  |
-| :------------------: | :----------------------------------------------------------------------------------------: | :----: |
+| Name                 | Description                                                                                | Type   |
+| :------------------- | :----------------------------------------------------------------------------------------- | :----- |
 | identity_private_key | hex representation of an Ed25519 keypair. Can be generated with the `bee p2pidentity` tool | string |
-|  [manual](#manual)   |                                  config for manual peers                                   | Table  |
+| [manual](#manual)    | config for manual peers                                                                    | Table  |
 
 ### manual
 
-|        Name         |      Description       |      Type      |
-| :-----------------: | :--------------------: | :------------: |
+| Name                | Description            | Type           |
+| :------------------ | :--------------------- | :------------- |
 | unknown_peers_limit | limit of unknown peers | integer[usize] |
-|   [peers](#peers)   |     array of peers     |     array      |
+| [peers](#peers)     | array of peers         | array          |
 
 #### peers
 
-|  Name   |                                             Description                                             |  Type  |
-| :-----: | :-------------------------------------------------------------------------------------------------: | :----: |
+| Name    | Description                                                                                          | Type   |
+| :------ | :--------------------------------------------------------------------------------------------------- | :----- |
 | address | libp2p formatted address(PeerID can be found on the dashboard or in the logs. It starts with `12D3`) | string |
-|  alias  |                                          alias of the peer                                          | string |
+| alias   | alias of the peer                                                                                    | string |
 
 Example:
 
@@ -122,35 +122,35 @@ alias   = "yet another peer"
 
 ## 4. Protocol
 
-|            Name             |      Description      |     Type     |
-| :-------------------------: | :-------------------: | :----------: |
-|      minimum_pow_score      | the minimum pow score |  float[f64]  |
-|      handshake_window       |         TO-DO         | integer[u64] |
-| [coordinator](#coordinator) |  coordinator configs  |    table     |
-|     [workers](#workers)     |    worker configs     |    table     |
+| Name                        | Description           | Type         |
+| :-------------------------- | :-------------------- | :----------- |
+| minimum_pow_score           | the minimum pow score | float[f64]   |
+| handshake_window            | TO-DO                 | integer[u64] |
+| [coordinator](#coordinator) | coordinator configs   | table        |
+| [workers](#workers)         | worker configs        | table        |
 
 ### coordinator
 
-|                  Name                   |      Description      |      Type      |
-| :-------------------------------------: | :-------------------: | :------------: |
-|            public_key_count             | number of public keys | integer[usize] |
-| [public_key_ranges](#public_key_ranges) |   public key ranges   |     array      |
+| Name                                    | Description           | Type           |
+| :-------------------------------------- | :-------------------- | :------------- |
+| public_key_count                        | number of public keys | integer[usize] |
+| [public_key_ranges](#public_key_ranges) | public key ranges     | array          |
 
 #### public_key_ranges
 
-|    Name    | Description |     Type     |
-| :--------: | :---------: | :----------: |
-| public_key | public key  |    string    |
-|   start    |    start    | integer[u32] |
-|    end     |     end     | integer[u32] |
+| Name       | Description | Type         |
+| :--------- | :---------- | :----------- |
+| public_key | public key  | string       |
+| start      | start       | integer[u32] |
+| end        | end         | integer[u32] |
 
 ### workers
 
-|         Name         |      Description      |      Type      |
-| :------------------: | :-------------------: | :------------: |
-| message_worker_cache |         TO-DO         | integer[usize] |
-|   status_interval    | status interval in ms |  integer[u64]  |
-|    ms_sync_count     | milestone sync count  |  integer[u32]  |
+| Name                 | Description           | Type           |
+| :------------------- | :-------------------- | :------------- |
+| message_worker_cache | TO-DO                 | integer[usize] |
+| status_interval      | status interval in ms | integer[u64]   |
+| ms_sync_count        | milestone sync count  | integer[u32]   |
 
 Example:
 
@@ -180,13 +180,13 @@ ms_sync_count = 200
 
 ## 5. Rest_api
 
-|         Name          |            Description            |       Type       |
-| :-------------------: | :-------------------------------: | :--------------: |
-|     binding_port      |     binding port for rest API     |   integer[u16]   |
-|    binding_ip_addr    |   binding address for rest API    |  string[IpAddr]  |
-| feature_proof_of_work |            enable pow             |       bool       |
-|     public_routes     | API routes which should be public | array of strings |
-|      allowed_ips      |      list of whitelisted IPs      |  string[IpAddr]  |
+| Name                  | Description                       | Type             |
+| :-------------------- | :-------------------------------- | :--------------- |
+| binding_port          | binding port for rest API         | integer[u16]     |
+| binding_ip_addr       | binding address for rest API      | string[IpAddr]   |
+| feature_proof_of_work | enable pow                        | bool             |
+| public_routes         | API routes which should be public | array of strings |
+| allowed_ips           | list of whitelisted IPs           | string[IpAddr]   |
 
 Example:
 
@@ -224,14 +224,14 @@ allowed_ips = [
 
 ## 6. Snapshot
 
-|       Name        |              Description               |       Type       |
-| :---------------: | :------------------------------------: | :--------------: |
-|     full_path     |       path to the full snapshot        |      string      |
-|    delta_path     |       path to the delta snapshot       |      string      |
-|   download_urls   | list of download URLs for the snapshot | array of strings |
-|       depth       |                 TO-DO                  |   integer[u32]   |
-|  interval_synced  |                 TO-DO                  |   integer[u32]   |
-| interval_unsynced |                 TO-DO                  |   integer[u32]   |
+| Name              | Description                            | Type             |
+| :---------------- | :------------------------------------- | :--------------- |
+| full_path         | path to the full snapshot              | string           |
+| delta_path        | path to the delta snapshot             | string           |
+| download_urls     | list of download URLs for the snapshot | array of strings |
+| depth             | TO-DO                                  | integer[u32]     |
+| interval_synced   | TO-DO                                  | integer[u32]     |
+| interval_unsynced | TO-DO                                  | integer[u32]     |
 
 Example:
 
@@ -249,49 +249,49 @@ interval_unsynced = 1000
 
 ## 7. Storage
 
-|                    Name                    |     Description      |      Type      |
-| :----------------------------------------: | :------------------: | :------------: |
-|                    path                    | path to the database |     string     |
-|             create_if_missing              |        TO-DO         |      bool      |
-|       create_missing_column_families       |        TO-DO         |      bool      |
-|             enable_statistics              |        TO-DO         |      bool      |
-|            increase_parallelism            |        TO-DO         |  integer[i32]  |
-|         optimize_for_point_lookup          |        TO-DO         |  integer[u64]  |
-|      optimize_level_style_compaction       |        TO-DO         | integer[usize] |
-|    optimize_universal_style_compaction     |        TO-DO         | integer[usize] |
-|         set_advise_random_on_open          |        TO-DO         |      bool      |
-|    set_allow_concurrent_memtable_write     |        TO-DO         |      bool      |
-|            set_allow_mmap_reads            |        TO-DO         |      bool      |
-|           set_allow_mmap_writes            |        TO-DO         |      bool      |
-|              set_atomic_flush              |        TO-DO         |      bool      |
-|             set_bytes_per_sync             |        TO-DO         |  integer[u64]  |
-|       set_compaction_readahead_size        |        TO-DO         | integer[usize] |
-|        set_max_write_buffer_number         |        TO-DO         |  integer[i32]  |
-|           set_write_buffer_size            |        TO-DO         | integer[usize] |
-|          set_db_write_buffer_size          |        TO-DO         | integer[usize] |
-|        set_disable_auto_compactions        |        TO-DO         |      bool      |
-|            set_unordered_write             |        TO-DO         |      bool      |
-| set_use_direct_io_for_flush_and_compaction |        TO-DO         |      bool      |
-|            [storage](#storage)             |        TO-DO         |     table      |
-|            set_compaction_style            |        TO-DO         |     string     |
-|            set_compression_type            |        TO-DO         |     string     |
-|                [env](#env)                 |        TO-DO         |     table      |
+| Name                                       | Description          | Type           |
+| :----------------------------------------- | :------------------- | :------------- |
+| path                                       | path to the database | string         |
+| create_if_missing                          | TO-DO                | bool           |
+| create_missing_column_families             | TO-DO                | bool           |
+| enable_statistics                          | TO-DO                | bool           |
+| increase_parallelism                       | TO-DO                | integer[i32]   |
+| optimize_for_point_lookup                  | TO-DO                | integer[u64]   |
+| optimize_level_style_compaction            | TO-DO                | integer[usize] |
+| optimize_universal_style_compaction        | TO-DO                | integer[usize] |
+| set_advise_random_on_open                  | TO-DO                | bool           |
+| set_allow_concurrent_memtable_write        | TO-DO                | bool           |
+| set_allow_mmap_reads                       | TO-DO                | bool           |
+| set_allow_mmap_writes                      | TO-DO                | bool           |
+| set_atomic_flush                           | TO-DO                | bool           |
+| set_bytes_per_sync                         | TO-DO                | integer[u64]   |
+| set_compaction_readahead_size              | TO-DO                | integer[usize] |
+| set_max_write_buffer_number                | TO-DO                | integer[i32]   |
+| set_write_buffer_size                      | TO-DO                | integer[usize] |
+| set_db_write_buffer_size                   | TO-DO                | integer[usize] |
+| set_disable_auto_compactions               | TO-DO                | bool           |
+| set_unordered_write                        | TO-DO                | bool           |
+| set_use_direct_io_for_flush_and_compaction | TO-DO                | bool           |
+| [storage](#storage)                        | TO-DO                | table          |
+| set_compaction_style                       | TO-DO                | string         |
+| set_compression_type                       | TO-DO                | string         |
+| [env](#env)                                | TO-DO                | table          |
 
 ### storage
 
-|         Name          | Description |      Type      |
-| :-------------------: | :---------: | :------------: |
-|   fetch_edge_limit    |    TO-DO    | integer[usize] |
-|   fetch_index_limit   |    TO-DO    | integer[usize] |
-| fetch_output_id_limit |    TO-DO    | integer[usize] |
-|   iteration_budget    |    TO-DO    | integer[usize] |
+| Name                  | Description | Type           |
+| :-------------------- | :---------- | :------------- |
+| fetch_edge_limit      | TO-DO       | integer[usize] |
+| fetch_index_limit     | TO-DO       | integer[usize] |
+| fetch_output_id_limit | TO-DO       | integer[usize] |
+| iteration_budget      | TO-DO       | integer[usize] |
 
 ### env
 
-|                 Name                 | Description |     Type     |
-| :----------------------------------: | :---------: | :----------: |
-|        set_background_threads        |    TO-DO    | integer[i32] |
-| set_high_priority_background_threads |    TO-DO    | integer[i32] |
+| Name                                 | Description | Type         |
+| :----------------------------------- | :---------- | :----------- |
+| set_background_threads               | TO-DO       | integer[i32] |
+| set_high_priority_background_threads | TO-DO       | integer[i32] |
 
 Example:
 
@@ -332,16 +332,16 @@ set_high_priority_background_threads = 2
 
 ## 8. Tangle
 
-|        Name         |   Description   | Type  |
-| :-----------------: | :-------------: | :---: |
+| Name                | Description     | Type  |
+| :------------------ | :-------------- | :---- |
 | [pruning](#pruning) | pruning configs | table |
 
 ### pruning
 
-|  Name   |  Description   |     Type     |
-| :-----: | :------------: | :----------: |
-| enabled | enable pruning |     bool     |
-|  delay  |     TO-DO      | integer[u32] |
+| Name    | Description    | Type         |
+| :------ | :------------- | :----------- |
+| enabled | enable pruning | bool         |
+| delay   | TO-DO          | integer[u32] |
 
 Example:
 
@@ -354,9 +354,9 @@ delay   = 60480
 
 ## 9. Mqtt
 
-|  Name   | Description |  Type  |
-| :-----: | :---------: | :----: |
-| address |   address   | string |
+| Name    | Description | Type   |
+| :------ | :---------- | :----- |
+| address | address     | string |
 
 Example:
 
@@ -367,19 +367,19 @@ address = "tcp://localhost:1883"
 
 ## 10. Dashboard
 
-| Name |  Description   |     Type     |
-| :--: | :------------: | :----------: |
+| Name | Description    | Type         |
+| :--- | :------------- | :----------- |
 | port | dashboard port | integer[u16] |
-| auth | dashboard auth |    table     |
+| auth | dashboard auth | table        |
 
 ### auth
 
-|      Name       |                         Description                          |     Type     |
-| :-------------: | :----------------------------------------------------------: | :----------: |
-| session_timeout |       expiration time of the authentication in seconds       | integer[u64] |
-|      user       |                             user                             |    String    |
-|  password_salt  | password salt. Can be generated with the `bee password` tool |    String    |
-|  password_hash  | password hash. Can be generated with the `bee password` tool |    String    |
+| Name            | Description                                                  | Type         |
+| :-------------- | :----------------------------------------------------------- | :----------- |
+| session_timeout | expiration time of the authentication in seconds             | integer[u64] |
+| user            | user                                                         | String       |
+| password_salt   | password salt. Can be generated with the `bee password` tool | String       |
+| password_hash   | password hash. Can be generated with the `bee password` tool | String       |
 
 Example:
 
