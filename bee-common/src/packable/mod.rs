@@ -7,8 +7,15 @@ mod unpacker;
 pub use packer::{PackError, Packer};
 pub use unpacker::{UnpackError, Unpacker};
 
+/// A type that can be packed and unpacked.
+///
+/// Almost all basic sized types implement this trait. This trait can be derived using the
+/// `packable_derive` macro. If you need to implement this trait manually, use the provided
+/// implementations as a guide.
 pub trait Packable: Sized {
+    /// Pack this value into the given `Packer`.
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
+    /// Unpack this value from the given `Unpacker`.
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error>;
 }
 
@@ -33,6 +40,7 @@ impl_packable_for_int!(u32);
 impl_packable_for_int!(u64);
 impl_packable_for_int!(u128);
 
+/// `usize` integers are packed and unpacked as `u64` integers according to the spec.
 impl Packable for usize {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         (*self as u64).pack(packer)
@@ -49,6 +57,7 @@ impl_packable_for_int!(i32);
 impl_packable_for_int!(i64);
 impl_packable_for_int!(i128);
 
+/// `isize` integers are packed and unpacked as `i64` integers according to the spec.
 impl Packable for isize {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         (*self as i64).pack(packer)
@@ -59,8 +68,21 @@ impl Packable for isize {
     }
 }
 
+impl Packable for bool {
+    /// Booleans are packed as `u8` integers following Rust's data layout.
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        (*self as u8).pack(packer)
+    }
+
+    /// Booleans are unpacked if the byte used to represent them is non-zero.
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
+        Ok(u8::unpack(unpacker)? != 0)
+    }
+}
+
 impl<T: Packable> Packable for Vec<T> {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        // The length of any dynamically-sized sequence must be prefixed.
         self.len().pack(packer)?;
 
         for item in self.iter() {
@@ -71,6 +93,7 @@ impl<T: Packable> Packable for Vec<T> {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
+        // The length of any dynamically-sized sequence must be prefixed.
         let len = usize::unpack(unpacker)?;
 
         let mut vec = Vec::with_capacity(len);
@@ -86,6 +109,7 @@ impl<T: Packable> Packable for Vec<T> {
 
 impl<T: Packable> Packable for Box<[T]> {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        // The length of any dynamically-sized sequence must be prefixed.
         self.len().pack(packer)?;
 
         for item in self.iter() {
@@ -129,6 +153,8 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
     }
 }
 
+/// Options are packed and unpacked using `0u8` as the prefix for `None` and `1u8` as the prefix
+/// for `Some`.
 impl<T: Packable> Packable for Option<T> {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match self {
@@ -144,7 +170,7 @@ impl<T: Packable> Packable for Option<T> {
         match u8::unpack(unpacker)? {
             0 => Ok(None),
             1 => Ok(Some(T::unpack(unpacker)?)),
-            n => Err(U::Error::invalid_variant(n as u64)),
+            n => Err(U::Error::invalid_variant::<Self>(n as u64)),
         }
     }
 }
