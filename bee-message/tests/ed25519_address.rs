@@ -1,8 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::Packable;
 
 use core::{convert::TryInto, str::FromStr};
 
@@ -25,14 +25,6 @@ fn debug_impl() {
 }
 
 #[test]
-fn generate_address() {
-    match Address::from(Ed25519Address::new([1; 32])) {
-        Address::Ed25519(a) => assert_eq!(a.len(), 32),
-        _ => panic!("Expect Ed25519 address"),
-    }
-}
-
-#[test]
 fn from_str_valid() {
     Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
 }
@@ -41,7 +33,7 @@ fn from_str_valid() {
 fn from_str_invalid_hex() {
     assert!(matches!(
         Ed25519Address::from_str(ED25519_ADDRESS_INVALID_HEX),
-        Err(Error::InvalidHexadecimalChar(hex))
+        Err(ValidationError::InvalidHexadecimalChar(hex))
             if hex == ED25519_ADDRESS_INVALID_HEX
     ));
 }
@@ -50,7 +42,7 @@ fn from_str_invalid_hex() {
 fn from_str_invalid_len_too_short() {
     assert!(matches!(
         Ed25519Address::from_str(ED25519_ADDRESS_INVALID_LEN_TOO_SHORT),
-        Err(Error::InvalidHexadecimalLength(expected, actual))
+        Err(ValidationError::InvalidHexadecimalLength(expected, actual))
             if expected == ED25519_ADDRESS_LENGTH * 2 && actual == ED25519_ADDRESS_LENGTH * 2 - 2
     ));
 }
@@ -59,7 +51,7 @@ fn from_str_invalid_len_too_short() {
 fn from_str_invalid_len_too_long() {
     assert!(matches!(
         Ed25519Address::from_str(ED25519_ADDRESS_INVALID_LEN_TOO_LONG),
-        Err(Error::InvalidHexadecimalLength(expected, actual))
+        Err(ValidationError::InvalidHexadecimalLength(expected, actual))
             if expected == ED25519_ADDRESS_LENGTH * 2 && actual == ED25519_ADDRESS_LENGTH * 2 + 2
     ));
 }
@@ -80,17 +72,17 @@ fn try_from_bech32() {
 }
 
 #[test]
+fn round_trip() {
+    let address = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
+    let packed_address = address.pack_to_vec().unwrap();
+
+    assert_eq!(address, Ed25519Address::unpack_from_slice(packed_address).unwrap());
+}
+
+#[test]
 fn packed_len() {
     let address = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
 
     assert_eq!(address.packed_len(), 32);
-    assert_eq!(address.pack_new().len(), 32);
-}
-
-#[test]
-fn pack_unpack_valid() {
-    let address = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
-    let packed_address = address.pack_new();
-
-    assert_eq!(address, Packable::unpack(&mut packed_address.as_slice()).unwrap());
+    assert_eq!(address.pack_to_vec().unwrap().len(), 32);
 }

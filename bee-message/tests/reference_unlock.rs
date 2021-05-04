@@ -1,8 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::{Packable, UnpackError};
 
 use core::convert::TryFrom;
 
@@ -24,8 +24,8 @@ fn new_valid_max_index() {
 #[test]
 fn new_invalid_more_than_max_index() {
     assert!(matches!(
-        ReferenceUnlock::new(127),
-        Err(Error::InvalidReferenceIndex(127))
+        ReferenceUnlock::new(127).err().unwrap(),
+        ValidationError::InvalidReferenceIndex(127),
     ));
 }
 
@@ -37,8 +37,18 @@ fn try_from_valid() {
 #[test]
 fn try_from_invalid() {
     assert!(matches!(
-        ReferenceUnlock::try_from(127),
-        Err(Error::InvalidReferenceIndex(127))
+        ReferenceUnlock::try_from(127).err().unwrap(),
+        ValidationError::InvalidReferenceIndex(127),
+    ));
+}
+
+#[test]
+fn unpack_invalid_index() {
+    assert!(matches!(
+        ReferenceUnlock::unpack_from_slice(vec![0x2a, 0x2a]).err().unwrap(),
+        UnpackError::Packable(MessageUnpackError::ValidationError(
+            ValidationError::InvalidReferenceIndex(10794)
+        )),
     ));
 }
 
@@ -47,21 +57,13 @@ fn packed_len() {
     let reference = ReferenceUnlock::new(0).unwrap();
 
     assert_eq!(reference.packed_len(), 2);
-    assert_eq!(reference.pack_new().len(), 2);
+    assert_eq!(reference.pack_to_vec().unwrap().len(), 2);
 }
 
 #[test]
-fn pack_unpack_valid() {
+fn round_trip() {
     let reference_1 = ReferenceUnlock::try_from(42).unwrap();
-    let reference_2 = ReferenceUnlock::unpack(&mut reference_1.pack_new().as_slice()).unwrap();
+    let reference_2 = ReferenceUnlock::unpack_from_slice(reference_1.pack_to_vec().unwrap()).unwrap();
 
     assert_eq!(reference_1, reference_2);
-}
-
-#[test]
-fn pack_unpack_invalid_index() {
-    assert!(matches!(
-        ReferenceUnlock::unpack(&mut vec![0x2a, 0x2a].as_slice()),
-        Err(Error::InvalidReferenceIndex(10794))
-    ));
 }

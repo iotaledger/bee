@@ -1,17 +1,17 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::Packable;
 
 use core::convert::TryInto;
 
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
-// The kind of an `Address` is the kind of the underlying address.
 #[test]
 fn kind() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+
     let ed25519_address = Address::from(Ed25519Address::new(bytes));
 
     assert_eq!(ed25519_address.kind(), 0);
@@ -20,6 +20,7 @@ fn kind() {
 #[test]
 fn generate_bech32_string() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+
     let address = Address::from(Ed25519Address::new(bytes));
     let bech32_string = address.to_bech32("iota");
 
@@ -32,6 +33,7 @@ fn generate_bech32_string() {
 #[test]
 fn generate_bech32_testnet_string() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+
     let address = Address::from(Ed25519Address::new(bytes));
     let bech32_string = address.to_bech32("atoi");
 
@@ -46,26 +48,30 @@ fn bech32_string_to_address() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
 
     let address = Address::try_from_bech32(&Address::from(Ed25519Address::new(bytes)).to_bech32("iota")).unwrap();
-    if let Address::Ed25519(ed) = address {
-        assert_eq!(ed.to_string(), ED25519_ADDRESS);
-    } else {
-        panic!("Expecting an Ed25519 address");
-    }
+    let Address::Ed25519(ed) = address;
+    assert_eq!(ed.to_string(), ED25519_ADDRESS);
 
     let address = Address::try_from_bech32(&Address::from(Ed25519Address::new(bytes)).to_bech32("atoi")).unwrap();
-    if let Address::Ed25519(ed) = address {
-        assert_eq!(ed.to_string(), ED25519_ADDRESS);
-    } else {
-        panic!("Expecting an Ed25519 address");
-    }
+    let Address::Ed25519(ed) = address;
+    assert_eq!(ed.to_string(), ED25519_ADDRESS);
 }
 
 #[test]
-fn pack_unpack_valid_ed25519() {
+fn round_trip_ed25519() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+
     let address = Address::from(Ed25519Address::new(bytes));
-    let address_packed = address.pack_new();
+    let address_packed = address.pack_to_vec().unwrap();
 
     assert_eq!(address_packed.len(), address.packed_len());
-    assert_eq!(address, Packable::unpack(&mut address_packed.as_slice()).unwrap());
+    assert_eq!(address, Address::unpack_from_slice(address_packed).unwrap());
+}
+
+#[test]
+fn packed_len_ed25519() {
+    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+
+    let address = Address::from(Ed25519Address::new(bytes));
+
+    assert_eq!(address.packed_len(), 32 + 1);
 }

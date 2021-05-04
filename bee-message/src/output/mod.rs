@@ -1,24 +1,50 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 mod output_id;
-mod signature_locked_dust_allowance;
+mod signature_locked_asset_allowance;
 mod signature_locked_single;
-mod treasury;
 
-pub use output_id::{OutputId, OUTPUT_ID_LENGTH};
-pub use signature_locked_dust_allowance::{
-    SignatureLockedDustAllowanceOutput, DUST_THRESHOLD, SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT,
+pub use crate::error::{MessageUnpackError, ValidationError};
+
+pub use output_id::{OutputId, OutputIdUnpackError, OUTPUT_ID_LENGTH};
+pub use signature_locked_asset_allowance::{
+    AssetBalance, SignatureLockedAssetOutput, SignatureLockedAssetPackError, SignatureLockedAssetUnpackError,
 };
-pub use signature_locked_single::{SignatureLockedSingleOutput, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT};
-pub use treasury::{TreasuryOutput, TREASURY_OUTPUT_AMOUNT};
+pub use signature_locked_single::{
+    SignatureLockedSingleOutput, SignatureLockedSingleUnpackError, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT,
+};
 
-use crate::Error;
+use bee_packable::{PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker};
 
-use bee_common::packable::{Packable, Read, Write};
+use core::{convert::Infallible, fmt};
+
+/// Error encountered unpacking a transaction output.
+#[derive(Debug)]
+#[allow(missing_docs)]
+pub enum OutputUnpackError {
+    InvalidAddressKind(u8),
+    InvalidOutputKind(u8),
+    ValidationError(ValidationError),
+}
+
+impl From<UnknownTagError<u8>> for OutputUnpackError {
+    fn from(error: UnknownTagError<u8>) -> Self {
+        Self::InvalidAddressKind(error.0)
+    }
+}
+
+impl fmt::Display for OutputUnpackError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidAddressKind(kind) => write!(f, "Invalid address kind: {}", kind),
+            Self::InvalidOutputKind(kind) => write!(f, "Invalid output kind: {}", kind),
+            Self::ValidationError(e) => write!(f, "{}", e),
+        }
+    }
+}
 
 /// A generic output that can represent different types defining the deposit of funds.
-#[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(
     feature = "serde",
@@ -28,81 +54,52 @@ use bee_common::packable::{Packable, Read, Write};
 pub enum Output {
     /// A signature locked single output.
     SignatureLockedSingle(SignatureLockedSingleOutput),
-    /// A signature locked dust allowance output.
-    SignatureLockedDustAllowance(SignatureLockedDustAllowanceOutput),
-    /// A treasury output.
-    Treasury(TreasuryOutput),
 }
+
+impl_wrapped_variant!(Output, SignatureLockedSingleOutput, Output::SignatureLockedSingle);
 
 impl Output {
     /// Return the output kind of an `Output`.
     pub fn kind(&self) -> u8 {
         match self {
             Self::SignatureLockedSingle(_) => SignatureLockedSingleOutput::KIND,
-            Self::SignatureLockedDustAllowance(_) => SignatureLockedDustAllowanceOutput::KIND,
-            Self::Treasury(_) => TreasuryOutput::KIND,
         }
-    }
-}
-
-impl From<SignatureLockedSingleOutput> for Output {
-    fn from(output: SignatureLockedSingleOutput) -> Self {
-        Self::SignatureLockedSingle(output)
-    }
-}
-
-impl From<SignatureLockedDustAllowanceOutput> for Output {
-    fn from(output: SignatureLockedDustAllowanceOutput) -> Self {
-        Self::SignatureLockedDustAllowance(output)
-    }
-}
-
-impl From<TreasuryOutput> for Output {
-    fn from(output: TreasuryOutput) -> Self {
-        Self::Treasury(output)
     }
 }
 
 impl Packable for Output {
-    type Error = Error;
+    type PackError = Infallible;
+    type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        match self {
-            Self::SignatureLockedSingle(output) => SignatureLockedSingleOutput::KIND.packed_len() + output.packed_len(),
-            Self::SignatureLockedDustAllowance(output) => {
-                SignatureLockedDustAllowanceOutput::KIND.packed_len() + output.packed_len()
+        0u8.packed_len()
+            + match self {
+                Self::SignatureLockedSingle(output) => output.packed_len(),
             }
-            Self::Treasury(output) => TreasuryOutput::KIND.packed_len() + output.packed_len(),
-        }
     }
 
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        self.kind().pack(packer).map_err(PackError::infallible)?;
+
         match self {
-            Self::SignatureLockedSingle(output) => {
-                SignatureLockedSingleOutput::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::SignatureLockedDustAllowance(output) => {
-                SignatureLockedDustAllowanceOutput::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
-            Self::Treasury(output) => {
-                TreasuryOutput::KIND.pack(writer)?;
-                output.pack(writer)?;
-            }
+            Self::SignatureLockedSingle(output) => output.pack(packer).map_err(PackError::infallible)?,
         }
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            SignatureLockedSingleOutput::KIND => SignatureLockedSingleOutput::unpack_inner::<R, CHECK>(reader)?.into(),
-            SignatureLockedDustAllowanceOutput::KIND => {
-                SignatureLockedDustAllowanceOutput::unpack_inner::<R, CHECK>(reader)?.into()
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let kind = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+
+        let variant = match kind {
+            SignatureLockedSingleOutput::KIND => {
+                Self::SignatureLockedSingle(SignatureLockedSingleOutput::unpack(unpacker)?)
             }
-            TreasuryOutput::KIND => TreasuryOutput::unpack_inner::<R, CHECK>(reader)?.into(),
-            k => return Err(Self::Error::InvalidOutputKind(k)),
-        })
+            tag => {
+                Err(UnpackError::Packable(OutputUnpackError::InvalidOutputKind(tag))).map_err(UnpackError::coerce)?
+            }
+        };
+
+        Ok(variant)
     }
 }

@@ -1,15 +1,16 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{signature::Ed25519Signature, Error};
+use crate::{error::ValidationError, signature::Ed25519Signature};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::Packable;
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
     signatures::ed25519::{PublicKey, Signature},
 };
 
+use alloc::borrow::ToOwned;
 use core::{convert::TryInto, str::FromStr};
 
 /// The number of bytes in an Ed25519 address.
@@ -17,7 +18,8 @@ use core::{convert::TryInto, str::FromStr};
 pub const ED25519_ADDRESS_LENGTH: usize = 32;
 
 /// An Ed25519 address.
-#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Ed25519Address([u8; ED25519_ADDRESS_LENGTH]);
 
 #[allow(clippy::len_without_is_empty)]
@@ -31,16 +33,16 @@ impl Ed25519Address {
     }
 
     /// Returns the length of an Ed25519 address.
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         ED25519_ADDRESS_LENGTH
     }
 
     /// Verifies a [`Ed25519Signature`] for a message against the [`Ed25519Address`].
-    pub fn verify(&self, msg: &[u8], signature: &Ed25519Signature) -> Result<(), Error> {
+    pub fn verify(&self, msg: &[u8], signature: &Ed25519Signature) -> Result<(), ValidationError> {
         let address = Blake2b256::digest(signature.public_key());
 
         if self.0 != *address {
-            return Err(Error::SignaturePublicKeyMismatch(
+            return Err(ValidationError::SignaturePublicKeyMismatch(
                 hex::encode(self.0),
                 hex::encode(address),
             ));
@@ -50,15 +52,12 @@ impl Ed25519Address {
             // This unwrap is fine as the length of the signature has already been verified at construction.
             .verify(&Signature::from_bytes(signature.signature().try_into().unwrap()), msg)
         {
-            return Err(Error::InvalidSignature);
+            return Err(ValidationError::InvalidSignature);
         }
 
         Ok(())
     }
 }
-
-#[cfg(feature = "serde")]
-string_serde_impl!(Ed25519Address);
 
 impl From<[u8; ED25519_ADDRESS_LENGTH]> for Ed25519Address {
     fn from(bytes: [u8; ED25519_ADDRESS_LENGTH]) -> Self {
@@ -67,7 +66,7 @@ impl From<[u8; ED25519_ADDRESS_LENGTH]> for Ed25519Address {
 }
 
 impl FromStr for Ed25519Address {
-    type Err = Error;
+    type Err = ValidationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes: [u8; ED25519_ADDRESS_LENGTH] = hex::decode(s)
@@ -94,25 +93,5 @@ impl core::fmt::Display for Ed25519Address {
 impl core::fmt::Debug for Ed25519Address {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "Ed25519Address({})", self)
-    }
-}
-
-impl Packable for Ed25519Address {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        ED25519_ADDRESS_LENGTH
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(<[u8; ED25519_ADDRESS_LENGTH]>::unpack_inner::<R, CHECK>(
-            reader,
-        )?))
     }
 }

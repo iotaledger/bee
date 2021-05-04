@@ -1,18 +1,34 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod treasury;
 mod utxo;
 
-pub use treasury::TreasuryInput;
 pub use utxo::UtxoInput;
 
-use crate::Error;
+use crate::error::{MessageUnpackError, ValidationError};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
+
+use core::{convert::Infallible, fmt};
+
+/// Error encountered unpacking an input.
+#[derive(Debug)]
+#[allow(missing_docs)]
+pub enum InputUnpackError {
+    InvalidInputKind(u8),
+    ValidationError(ValidationError),
+}
+
+impl fmt::Display for InputUnpackError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidInputKind(kind) => write!(f, "Invalid input kind: {}", kind),
+            Self::ValidationError(e) => write!(f, "{}", e),
+        }
+    }
+}
 
 /// A generic input supporting different input kinds.
-#[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 #[cfg_attr(
     feature = "serde",
@@ -22,8 +38,6 @@ use bee_common::packable::{Packable, Read, Write};
 pub enum Input {
     /// A UTXO input.
     Utxo(UtxoInput),
-    /// A treasury input.
-    Treasury(TreasuryInput),
 }
 
 impl Input {
@@ -31,53 +45,45 @@ impl Input {
     pub fn kind(&self) -> u8 {
         match self {
             Self::Utxo(_) => UtxoInput::KIND,
-            Self::Treasury(_) => TreasuryInput::KIND,
         }
+    }
+}
+
+impl Packable for Input {
+    type PackError = Infallible;
+    type UnpackError = MessageUnpackError;
+
+    fn packed_len(&self) -> usize {
+        self.kind().packed_len()
+            + match self {
+                Self::Utxo(utxo) => utxo.packed_len(),
+            }
+    }
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        self.kind().pack(packer).map_err(PackError::infallible)?;
+
+        match self {
+            Self::Utxo(utxo) => utxo.pack(packer).map_err(PackError::infallible)?,
+        }
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let kind = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+
+        let variant = match kind {
+            UtxoInput::KIND => Self::Utxo(UtxoInput::unpack(unpacker)?),
+            tag => Err(UnpackError::Packable(InputUnpackError::InvalidInputKind(tag))).map_err(UnpackError::coerce)?,
+        };
+
+        Ok(variant)
     }
 }
 
 impl From<UtxoInput> for Input {
     fn from(input: UtxoInput) -> Self {
         Self::Utxo(input)
-    }
-}
-
-impl From<TreasuryInput> for Input {
-    fn from(input: TreasuryInput) -> Self {
-        Self::Treasury(input)
-    }
-}
-
-impl Packable for Input {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::Utxo(input) => UtxoInput::KIND.packed_len() + input.packed_len(),
-            Self::Treasury(input) => TreasuryInput::KIND.packed_len() + input.packed_len(),
-        }
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        match self {
-            Self::Utxo(input) => {
-                UtxoInput::KIND.pack(writer)?;
-                input.pack(writer)?;
-            }
-            Self::Treasury(input) => {
-                TreasuryInput::KIND.pack(writer)?;
-                input.pack(writer)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(match u8::unpack_inner::<R, CHECK>(reader)? {
-            UtxoInput::KIND => UtxoInput::unpack_inner::<R, CHECK>(reader)?.into(),
-            TreasuryInput::KIND => TreasuryInput::unpack_inner::<R, CHECK>(reader)?.into(),
-            k => return Err(Self::Error::InvalidInputKind(k)),
-        })
     }
 }

@@ -1,11 +1,13 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
+use bee_common::packable::Packable;
 
 /// Length of an indexation padded index.
 pub const INDEXATION_PADDED_INDEX_LENGTH: usize = 64;
 
 /// An indexation payload index padded with `0` up to the maximum length.
-#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Packable)]
 pub struct PaddedIndex([u8; INDEXATION_PADDED_INDEX_LENGTH]);
 
 impl PaddedIndex {
@@ -27,7 +29,7 @@ impl AsRef<[u8]> for PaddedIndex {
     }
 }
 
-impl std::ops::Deref for PaddedIndex {
+impl core::ops::Deref for PaddedIndex {
     type Target = [u8; INDEXATION_PADDED_INDEX_LENGTH];
 
     fn deref(&self) -> &Self::Target {

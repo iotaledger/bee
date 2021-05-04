@@ -1,48 +1,117 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! Module describing the indexation payload.
 
 mod padded;
 
-use crate::{Error, MESSAGE_LENGTH_MAX};
+use crate::{MessagePackError, MessageUnpackError, ValidationError, MESSAGE_LENGTH_RANGE};
 
 pub use padded::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH};
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_packable::{
+    error::{PackPrefixError, UnpackPrefixError},
+    PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+};
 
-use alloc::boxed::Box;
-use core::ops::RangeInclusive;
+use alloc::vec::Vec;
+use core::{
+    convert::{Infallible, TryInto},
+    fmt,
+    ops::RangeInclusive,
+};
 
 /// Valid lengths for an indexation payload index.
 pub const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=INDEXATION_PADDED_INDEX_LENGTH;
 
+const PREFIXED_INDEX_LENGTH_MAX: usize = *INDEXATION_INDEX_LENGTH_RANGE.end();
+const PREFIXED_DATA_LENGTH_MAX: usize = *MESSAGE_LENGTH_RANGE.end();
+
+/// Error encountered packing an indexation payload.
+#[derive(Debug)]
+#[allow(missing_docs)]
+pub enum IndexationPackError {
+    InvalidPrefix,
+}
+
+impl From<PackPrefixError<Infallible, u32>> for IndexationPackError {
+    fn from(error: PackPrefixError<Infallible, u32>) -> Self {
+        match error {
+            PackPrefixError::Packable(e) => match e {},
+            PackPrefixError::Prefix(_) => Self::InvalidPrefix,
+        }
+    }
+}
+
+impl fmt::Display for IndexationPackError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidPrefix => write!(f, "invalid prefix for index/data"),
+        }
+    }
+}
+
+/// Error encountered unpacking an indexation payload.
+#[derive(Debug)]
+#[allow(missing_docs)]
+pub enum IndexationUnpackError {
+    InvalidPrefix,
+    InvalidPrefixLength(usize),
+    ValidationError(ValidationError),
+}
+
+impl_wrapped_variant!(
+    IndexationUnpackError,
+    ValidationError,
+    IndexationUnpackError::ValidationError
+);
+
+impl From<UnpackPrefixError<Infallible, u32>> for IndexationUnpackError {
+    fn from(error: UnpackPrefixError<Infallible, u32>) -> Self {
+        match error {
+            UnpackPrefixError::InvalidPrefixLength(len) => Self::InvalidPrefixLength(len),
+            UnpackPrefixError::Packable(e) => match e {},
+            UnpackPrefixError::Prefix(_) => Self::InvalidPrefix,
+        }
+    }
+}
+
+impl fmt::Display for IndexationUnpackError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidPrefix => write!(f, "invalid prefix for index/data"),
+            Self::InvalidPrefixLength(len) => write!(f, "unpacked prefix larger than maximum specified: {}", len),
+            Self::ValidationError(e) => write!(f, "{}", e),
+        }
+    }
+}
+
 /// A payload which holds an index and associated data.
+///
+/// An `IndexationPayload` must:
+/// * Contain an index of within `INDEXATION_INDEX_LENGTH_RANGE` bytes.
+/// * Contain data that does not exceed maximum message length in bytes.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct IndexationPayload {
-    index: Box<[u8]>,
-    data: Box<[u8]>,
+    /// The version of the `IndexationPayload`.
+    version: u8,
+    /// The index key of the message.
+    index: Vec<u8>,
+    /// The data attached to this index.
+    data: Vec<u8>,
 }
 
 impl IndexationPayload {
     /// The payload kind of an `IndexationPayload`.
-    pub const KIND: u32 = 2;
+    pub const KIND: u32 = 8;
 
     /// Creates a new `IndexationPayload`.
-    pub fn new(index: &[u8], data: &[u8]) -> Result<Self, Error> {
-        if !INDEXATION_INDEX_LENGTH_RANGE.contains(&index.len()) {
-            return Err(Error::InvalidIndexationIndexLength(index.len()));
-        }
+    pub fn new(version: u8, index: Vec<u8>, data: Vec<u8>) -> Result<Self, ValidationError> {
+        validate_index(&index)?;
+        validate_data(&data)?;
 
-        if data.len() > MESSAGE_LENGTH_MAX {
-            return Err(Error::InvalidIndexationDataLength(data.len()));
-        }
-
-        Ok(Self {
-            index: index.into(),
-            data: data.into(),
-        })
+        Ok(Self { version, index, data })
     }
 
     /// Returns the index of an `IndexationPayload`.
@@ -63,45 +132,69 @@ impl IndexationPayload {
     }
 }
 
+fn validate_index(index: &[u8]) -> Result<(), ValidationError> {
+    if !INDEXATION_INDEX_LENGTH_RANGE.contains(&index.len()) {
+        Err(ValidationError::InvalidIndexationIndexLength(index.len()))
+    } else {
+        Ok(())
+    }
+}
+
+fn validate_data(data: &[u8]) -> Result<(), ValidationError> {
+    if data.len() > *MESSAGE_LENGTH_RANGE.end() {
+        Err(ValidationError::InvalidIndexationDataLength(data.len()))
+    } else {
+        Ok(())
+    }
+}
+
 impl Packable for IndexationPayload {
-    type Error = Error;
+    type PackError = MessagePackError;
+    type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        0u16.packed_len() + self.index.len() + 0u32.packed_len() + self.data.len()
+        // Unwrap is safe, since index/data lengths have already been validated.
+        self.version.packed_len()
+            + VecPrefix::<u8, u32, PREFIXED_INDEX_LENGTH_MAX>::from(self.index.clone().try_into().unwrap()).packed_len()
+            + VecPrefix::<u8, u32, PREFIXED_DATA_LENGTH_MAX>::from(self.data.clone().try_into().unwrap()).packed_len()
     }
 
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        (self.index.len() as u16).pack(writer)?;
-        writer.write_all(&self.index)?;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        self.version.pack(packer).map_err(PackError::infallible)?;
 
-        (self.data.len() as u32).pack(writer)?;
-        writer.write_all(&self.data)?;
+        // Unwrap is safe, since index/data lengths have already been validated.
+        let prefixed_index: VecPrefix<u8, u32, PREFIXED_INDEX_LENGTH_MAX> = self.index.clone().try_into().unwrap();
+        prefixed_index
+            .pack(packer)
+            .map_err(PackError::coerce::<IndexationPackError>)
+            .map_err(PackError::coerce)?;
+
+        let prefixed_data: VecPrefix<u8, u32, PREFIXED_DATA_LENGTH_MAX> = self.data.clone().try_into().unwrap();
+        prefixed_data
+            .pack(packer)
+            .map_err(PackError::coerce::<IndexationPackError>)
+            .map_err(PackError::coerce)?;
 
         Ok(())
     }
 
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        let index_len = u16::unpack_inner::<R, CHECK>(reader)? as usize;
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
 
-        if CHECK && !INDEXATION_INDEX_LENGTH_RANGE.contains(&index_len) {
-            return Err(Error::InvalidIndexationIndexLength(index_len));
-        }
+        let index: Vec<u8> = VecPrefix::<u8, u32, PREFIXED_INDEX_LENGTH_MAX>::unpack(unpacker)
+            .map_err(UnpackError::coerce::<IndexationUnpackError>)
+            .map_err(UnpackError::coerce)?
+            .into();
 
-        let mut index = vec![0u8; index_len];
-        reader.read_exact(&mut index)?;
+        validate_index(&index).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let data_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
+        let data: Vec<u8> = VecPrefix::<u8, u32, PREFIXED_DATA_LENGTH_MAX>::unpack(unpacker)
+            .map_err(UnpackError::coerce::<IndexationUnpackError>)
+            .map_err(UnpackError::coerce)?
+            .into();
 
-        if CHECK && data_len > MESSAGE_LENGTH_MAX {
-            return Err(Error::InvalidIndexationDataLength(data_len));
-        }
+        validate_data(&data).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let mut data = vec![0u8; data_len];
-        reader.read_exact(&mut data)?;
-
-        Ok(Self {
-            index: index.into(),
-            data: data.into(),
-        })
+        Ok(Self { version, index, data })
     }
 }

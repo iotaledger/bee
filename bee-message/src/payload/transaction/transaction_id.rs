@@ -1,10 +1,11 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Error;
+use crate::error::ValidationError;
 
-use bee_common::packable::{Packable, Read, Write};
+use bee_common::packable::Packable;
 
+use alloc::borrow::ToOwned;
 use core::{convert::TryInto, str::FromStr};
 
 /// The length of a transaction identifier.
@@ -12,7 +13,8 @@ pub const TRANSACTION_ID_LENGTH: usize = 32;
 
 /// A transaction identifier, the BLAKE2b-256 hash of the transaction bytes.
 /// See <https://www.blake2.net/> for more information.
-#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, Packable)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionId([u8; TRANSACTION_ID_LENGTH]);
 
 impl TransactionId {
@@ -22,9 +24,6 @@ impl TransactionId {
     }
 }
 
-#[cfg(feature = "serde")]
-string_serde_impl!(TransactionId);
-
 impl From<[u8; TRANSACTION_ID_LENGTH]> for TransactionId {
     fn from(bytes: [u8; TRANSACTION_ID_LENGTH]) -> Self {
         Self(bytes)
@@ -32,7 +31,7 @@ impl From<[u8; TRANSACTION_ID_LENGTH]> for TransactionId {
 }
 
 impl FromStr for TransactionId {
-    type Err = Error;
+    type Err = ValidationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes: [u8; TRANSACTION_ID_LENGTH] = hex::decode(s)
@@ -59,25 +58,5 @@ impl core::fmt::Display for TransactionId {
 impl core::fmt::Debug for TransactionId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "TransactionId({})", self)
-    }
-}
-
-impl Packable for TransactionId {
-    type Error = Error;
-
-    fn packed_len(&self) -> usize {
-        TRANSACTION_ID_LENGTH
-    }
-
-    fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error> {
-        self.0.pack(writer)?;
-
-        Ok(())
-    }
-
-    fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
-        Ok(Self::new(<[u8; TRANSACTION_ID_LENGTH]>::unpack_inner::<R, CHECK>(
-            reader,
-        )?))
     }
 }

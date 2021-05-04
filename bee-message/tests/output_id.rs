@@ -1,8 +1,8 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::prelude::*;
+use bee_packable::{Packable, UnpackError};
 
 use core::{
     convert::{TryFrom, TryInto},
@@ -48,7 +48,7 @@ fn new_invalid() {
 
     assert!(matches!(
         OutputId::new(transaction_id, 127),
-        Err(Error::InvalidInputOutputIndex(127))
+        Err(ValidationError::InvalidOutputIndex(127))
     ));
 }
 
@@ -68,7 +68,7 @@ fn try_from_invalid() {
 
     assert!(matches!(
         OutputId::try_from(output_id_bytes),
-        Err(Error::InvalidInputOutputIndex(127))
+        Err(ValidationError::InvalidOutputIndex(127))
     ));
 }
 
@@ -85,7 +85,7 @@ fn from_str_valid() {
 fn from_str_invalid_index() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_INDEX),
-        Err(Error::InvalidInputOutputIndex(127))
+        Err(ValidationError::InvalidOutputIndex(127))
     ));
 }
 
@@ -93,7 +93,7 @@ fn from_str_invalid_index() {
 fn from_str_invalid_hex() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_HEX),
-        Err(Error::InvalidHexadecimalChar(hex))
+        Err(ValidationError::InvalidHexadecimalChar(hex))
             if hex == OUTPUT_ID_INVALID_HEX
     ));
 }
@@ -102,7 +102,7 @@ fn from_str_invalid_hex() {
 fn from_str_invalid_len() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_LEN),
-        Err(Error::InvalidHexadecimalLength(expected, actual))
+        Err(ValidationError::InvalidHexadecimalLength(expected, actual))
             if expected == OUTPUT_ID_LENGTH * 2 && actual == OUTPUT_ID_LENGTH * 2 - 2
     ));
 }
@@ -115,30 +115,32 @@ fn from_str_to_str() {
 }
 
 #[test]
-fn packed_len() {
-    let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
-
-    assert_eq!(output_id.packed_len(), 32 + 2);
-    assert_eq!(output_id.pack_new().len(), 32 + 2);
-}
-
-#[test]
-fn pack_unpack_valid() {
-    let output_id_1 = OutputId::from_str(OUTPUT_ID).unwrap();
-    let output_id_2 = OutputId::unpack(&mut output_id_1.pack_new().as_slice()).unwrap();
-
-    assert_eq!(output_id_1, output_id_2);
-}
-
-#[test]
-fn pack_unpack_invalid() {
+fn unpack_invalid_index() {
     let bytes = vec![
         82, 253, 252, 7, 33, 130, 101, 79, 22, 63, 95, 15, 154, 98, 29, 114, 149, 102, 199, 77, 16, 3, 124, 77, 123,
         187, 4, 7, 209, 226, 198, 73, 127, 0,
     ];
 
     assert!(matches!(
-        OutputId::unpack(&mut bytes.as_slice()),
-        Err(Error::InvalidInputOutputIndex(127))
+        OutputId::unpack_from_slice(bytes).err().unwrap(),
+        UnpackError::Packable(MessageUnpackError::ValidationError(
+            ValidationError::InvalidOutputIndex(127)
+        )),
     ));
+}
+
+#[test]
+fn packed_len() {
+    let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
+
+    assert_eq!(output_id.packed_len(), 32 + 2);
+    assert_eq!(output_id.pack_to_vec().unwrap().len(), 32 + 2);
+}
+
+#[test]
+fn round_trip() {
+    let output_id_1 = OutputId::from_str(OUTPUT_ID).unwrap();
+    let output_id_2 = OutputId::unpack_from_slice(output_id_1.pack_to_vec().unwrap()).unwrap();
+
+    assert_eq!(output_id_1, output_id_2);
 }
