@@ -6,34 +6,35 @@ For Example: `bee -c config_example.toml`
 
 ## Table of content
 
-- [[logger]](#1-logger)
-  - [[logger.outputs]](#outputs)
-- [[network]](#2-network)
-- [[peering]](#3-peering)
-  - [[peering.manual]](#manual)
-    - [[peering.manual.peers]](#peers)
-- [[protocol]](#4-protocol)
-  - [[protocol.coordinator]](#coordinator)
-    - [[protocol.coordinator.public_key_ranges]](#public_key_ranges)
-  - [[protocol.workers]](#workers)
-- [[rest_api]](#5-rest_api)
-- [[snapshots]](#6-snapshot)
-- [[storage]](#7-storage)
-  - [[storage.storage]](#storage)
-  - [[storage.env]](#env)
-- [[tangle]](#8-tangle)
-  - [[tangle.pruning]](#pruning)
-- [[mqtt]](#9-mqtt)
-- [[dashboard]](#10-dashboard)
-  - [[dashboard.auth]](#auth)
+[//]: # "Table of contents created with: http://ecotrust-canada.github.io/markdown-toc/"
+
+- [1. Logger](#1-logger)
+  * [outputs](#outputs)
+- [2. Network](#2-network)
+    + [peering](#peering)
+- [3. Protocol](#3-protocol)
+  * [coordinator](#coordinator)
+    + [public_key_ranges](#public-key-ranges)
+  * [workers](#workers)
+- [4. Rest_api](#4-rest-api)
+- [5. Snapshot](#5-snapshot)
+- [6. Pruning](#6-pruning)
+- [7. Storage](#7-storage)
+  * [storage](#storage)
+  * [env](#env)
+- [8. Tangle](#8-tangle)
+- [9. Mqtt](#9-mqtt)
+- [10. Dashboard](#10-dashboard)
+  * [auth](#auth)
 
 ---
 
-| Name       | Description                                | Type   |
-| :--------- | :----------------------------------------- | :----- |
-| alias      | alias for your node. Shows up in dashboard | string |
-| bech32_hrp | network address identifier                 | string |
-| network_id | network identifier                         | string |
+| Name       | Description                                                                                | Type   |
+| :--------- | :----------------------------------------------------------------------------------------- | :----- |
+| identity   | hex representation of an Ed25519 keypair. Can be generated with the `bee p2pidentity` tool | string |
+| alias      | alias for your node. Shows up in dashboard                                                 | string |
+| bech32_hrp | network address identifier                                                                 | string |
+| network_id | network identifier                                                                         | string |
 
 ## 1. Logger
 
@@ -72,30 +73,10 @@ level_filter  = "error"
 | :---------------------- | :---------------------------------------------------------- | :---------------- |
 | bind_address            | the address/es the networking layer tries binding to        | string[Multiaddr] |
 | reconnect_interval_secs | the automatic reconnect interval in seconds for known peers | integer[u64]      |
+| max_unknown_peers       | max count of allowed unknown peers                          | integer[usize]    |
+| [peering](#peering)     | array of static peers                                       | array of tables   |
 
-Example:
-
-```toml
-[network]
-bind_address             = "/ip4/0.0.0.0/tcp/15600"
-reconnect_interval_secs  = 30
-```
-
-## 3. Peering
-
-| Name                 | Description                                                                                | Type   |
-| :------------------- | :----------------------------------------------------------------------------------------- | :----- |
-| identity_private_key | hex representation of an Ed25519 keypair. Can be generated with the `bee p2pidentity` tool | string |
-| [manual](#manual)    | config for manual peers                                                                    | Table  |
-
-### manual
-
-| Name                | Description            | Type           |
-| :------------------ | :--------------------- | :------------- |
-| unknown_peers_limit | limit of unknown peers | integer[usize] |
-| [peers](#peers)     | array of peers         | array          |
-
-#### peers
+#### peering
 
 | Name    | Description                                                                                          | Type   |
 | :------ | :--------------------------------------------------------------------------------------------------- | :----- |
@@ -105,22 +86,24 @@ reconnect_interval_secs  = 30
 Example:
 
 ```toml
-[peering]
-identity_private_key  = "c7826775ab7b0caffa359483694ef9fb44c4053fb46ae764febfa00f69df7dc9d7e4cb8b1aa867c4b7e9033765ea8aa1553b9968dff6318f7d3f514d49f9a13d"
-[peering.manual]
-unknown_peers_limit = 4
-[[peering.manual.peers]]
+[network]
+bind_address             = "/ip4/0.0.0.0/tcp/15600"
+reconnect_interval_secs  = 30
+max_unknown_peers        = 4
+
+[network.peering]
+[[network.peering.peers]]
 address = "/ip4/192.0.2.0/tcp/15600/p2p/PeerID"
 alias   = "some peer"
-[[peering.manual.peers]]
+[[network.peering.peers]]
 address = "/ip6/2001:db8::/tcp/15600/p2p/PeerID"
 alias   = "another peer"
-[[peering.manual.peers]]
+[[network.peering.peers]]
 address = "/dns/example.com/tcp/15600/p2p/PeerID"
 alias   = "yet another peer"
 ```
 
-## 4. Protocol
+## 3. Protocol
 
 | Name                        | Description           | Type         |
 | :-------------------------- | :-------------------- | :----------- |
@@ -131,10 +114,10 @@ alias   = "yet another peer"
 
 ### coordinator
 
-| Name                                    | Description           | Type           |
-| :-------------------------------------- | :-------------------- | :------------- |
-| public_key_count                        | number of public keys | integer[usize] |
-| [public_key_ranges](#public_key_ranges) | public key ranges     | array          |
+| Name                                    | Description           | Type            |
+| :-------------------------------------- | :-------------------- | :-------------- |
+| public_key_count                        | number of public keys | integer[usize]  |
+| [public_key_ranges](#public_key_ranges) | public key ranges     | array of tables |
 
 #### public_key_ranges
 
@@ -173,20 +156,21 @@ public_key  = "0758028d34508079ba1f223907ac3bb5ce8f6bdccc6b961c7c85a2f460b30c1d"
 start       = 0
 end         = 0
 [protocol.workers]
-message_worker_cache = 1000
+message_worker_cache = 10000
 status_interval = 10
 ms_sync_count = 200
 ```
 
-## 5. Rest_api
+## 4. Rest_api
 
-| Name                  | Description                       | Type             |
-| :-------------------- | :-------------------------------- | :--------------- |
-| binding_port          | binding port for rest API         | integer[u16]     |
-| binding_ip_addr       | binding address for rest API      | string[IpAddr]   |
-| feature_proof_of_work | enable pow                        | bool             |
-| public_routes         | API routes which should be public | array of strings |
-| allowed_ips           | list of whitelisted IPs           | string[IpAddr]   |
+| Name                              | Description                       | Type             |
+| :-------------------------------- | :-------------------------------- | :--------------- |
+| binding_port                      | binding port for rest API         | integer[u16]     |
+| binding_ip_addr                   | binding address for rest API      | string[IpAddr]   |
+| feature_proof_of_work             | enable pow                        | bool             |
+| white_flag_solidification_timeout | white flag solidification timeout | integer[u64]     |
+| public_routes                     | API routes which should be public | array of strings |
+| allowed_ips                       | list of whitelisted IPs           | string[IpAddr]   |
 
 Example:
 
@@ -196,6 +180,7 @@ binding_port          = 14265
 binding_ip_addr       = "0.0.0.0"
 feature_proof_of_work = true
 public_routes         = [
+    "/api/v1/peers",
     "/api/v1/addresses/:address",
     "/api/v1/addresses/ed25519/:address",
     "/health",
@@ -210,28 +195,35 @@ public_routes         = [
     "/api/v1/outputs/:outputId",
     "/api/v1/addresses/:address/outputs",
     "/api/v1/addresses/ed25519/:address/outputs",
+    "/api/v1/peers/:peerId",
+    "/api/v1/peers",
+    "/api/v1/peers/:peerId",
+    "/api/v1/messages",
     "/api/v1/messages",
     "/api/v1/tips",
-    "/api/v1/peer",
-    "/api/v1/peer/:peerId",
-    "/api/v1/peers"
+    "/api/v1/receipts",
+    "/api/v1/receipts/:milestoneIndex",
+    "/api/v1/treasury",
+    "/api/v1/transactions/:transactionId/included-message",
+    "/api/plugins/debug/whiteflag",
 ]
 allowed_ips = [
     "127.0.0.1",
     "::1"
 ]
+white_flag_solidification_timeout = 2
 ```
 
-## 6. Snapshot
+## 5. Snapshot
 
-| Name              | Description                            | Type             |
-| :---------------- | :------------------------------------- | :--------------- |
-| full_path         | path to the full snapshot              | string           |
-| delta_path        | path to the delta snapshot             | string           |
-| download_urls     | list of download URLs for the snapshot | array of strings |
-| depth             | TO-DO                                  | integer[u32]     |
-| interval_synced   | TO-DO                                  | integer[u32]     |
-| interval_unsynced | TO-DO                                  | integer[u32]     |
+| Name              | Description                                                                                | Type             |
+| :---------------- | :----------------------------------------------------------------------------------------- | :--------------- |
+| full_path         | path to the full snapshot file                                                             | string           |
+| delta_path        | path to the delta snapshot file                                                            | string           |
+| download_urls     | list of download URLs for the snapshot                                                     | array of strings |
+| depth             | the depth, respectively the starting point, at which a snapshot of the ledger is generated | integer[u32]     |
+| interval_synced   | interval, in milestones, at which snapshot files are created if the node is sync           | integer[u32]     |
+| interval_unsynced | interval, in milestones, at which snapshot files are created if the node is unsync         | integer[u32]     |
 
 Example:
 
@@ -245,6 +237,23 @@ download_urls     = [
 depth             = 50
 interval_synced   = 50
 interval_unsynced = 1000
+```
+
+## 6. Pruning
+
+| Name           | Description                                           | Type         |
+| :------------- | :---------------------------------------------------- | :----------- |
+| enabled        | enable pruning                                        | bool         |
+| delay          | amount of milestone cones to keep in the database     | integer[u32] |
+| prune_receipts | whether to delete old receipts data from the database | bool         |
+
+Example:
+
+```toml
+[pruning]
+enabled         = true
+delay           = 60480
+prune_receipts  = false
 ```
 
 ## 7. Storage
@@ -332,24 +341,14 @@ set_high_priority_background_threads = 2
 
 ## 8. Tangle
 
-| Name                | Description     | Type  |
-| :------------------ | :-------------- | :---- |
-| [pruning](#pruning) | pruning configs | table |
+| Name            | Description | Type   |
+| :-------------- | :---------- | :----- |
+| below_max_depth | TO-DO     | string |
 
-### pruning
-
-| Name    | Description    | Type         |
-| :------ | :------------- | :----------- |
-| enabled | enable pruning | bool         |
-| delay   | TO-DO          | integer[u32] |
-
-Example:
-
+Example
 ```toml
 [tangle]
-[tangle.pruning]
-enabled = true
-delay   = 60480
+below_max_depth = 15
 ```
 
 ## 9. Mqtt
