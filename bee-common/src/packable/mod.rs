@@ -12,7 +12,7 @@ pub use unpacker::{UnpackError, Unpacker};
 /// A type that can be packed and unpacked.
 ///
 /// Almost all basic sized types implement this trait. This trait can be derived using the
-/// `packable_derive` macro. If you need to implement this trait manually, use the provided
+/// `bee_common_derive::Packable` macro. If you need to implement this trait manually, use the provided
 /// implementations as a guide.
 pub trait Packable: Sized {
     /// Pack this value into the given `Packer`.

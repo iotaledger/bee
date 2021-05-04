@@ -1,0 +1,13 @@
+[package]
+name = "bee-common-derive"
+version = "1.0.0-alpha"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "1.0", features = ["full", "extra-traits"] }
+quote = "1.0"
+proc-macro2 = "1.0"
