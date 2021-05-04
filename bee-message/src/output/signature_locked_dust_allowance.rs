@@ -21,7 +21,7 @@ pub const SIGNATURE_LOCKED_DUST_ALLOWANCE_OUTPUT_AMOUNT: RangeInclusive<u64> = D
 /// unspent `SigLockedDustAllowanceOutputs` on this address. Regardless of `dust_allowance_sum`, the number of dust
 /// outputs must never exceed `DUST_OUTPUTS_MAX` per address.
 pub fn dust_outputs_max(dust_allowance_sum: u64) -> u64 {
-    std::cmp::min(dust_allowance_sum / DUST_ALLOWANCE_DIVISOR, DUST_OUTPUTS_MAX)
+    DUST_OUTPUTS_MAX.min(dust_allowance_sum / DUST_ALLOWANCE_DIVISOR)
 }
 
 /// A `SignatureLockedDustAllowanceOutput` functions like a `SignatureLockedSingleOutput` but as a special property it
