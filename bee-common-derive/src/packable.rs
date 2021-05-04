@@ -24,7 +24,7 @@ pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStr
             };
 
             unpack = quote! {
-                Ok(Self { #(#labels: #types::unpack(unpacker)?,)* })
+                Ok(Self { #(#labels: <#types>::unpack(unpacker)?,)* })
             };
         }
         Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
@@ -40,7 +40,7 @@ pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStr
             };
 
             unpack = quote! {
-                Ok(Self(#(#types::unpack(unpacker)?), *))
+                Ok(Self(#(<#types>::unpack(unpacker)?), *))
             };
         }
         Fields::Unit => {
@@ -92,7 +92,7 @@ pub(crate) fn gen_enum_bodies<'a>(
 
                         unpack_branch = quote! {
                             #id => Ok(Self::#ident{
-                                #(#labels: #types::unpack(unpacker)?,) *
+                                #(#labels: <#types>::unpack(unpacker)?,) *
                             })
                         };
                     }
@@ -118,7 +118,7 @@ pub(crate) fn gen_enum_bodies<'a>(
 
                         unpack_branch = quote! {
                             #id => Ok(Self::#ident(
-                                #(#types::unpack(unpacker)?), *
+                                #(<#types>::unpack(unpacker)?), *
                             ))
                         };
                     }
@@ -144,7 +144,7 @@ pub(crate) fn gen_enum_bodies<'a>(
             }
         },
         quote! {
-            match #ty::unpack(unpacker)? {
+            match <#ty>::unpack(unpacker)? {
                 #(#unpack_branches,) *
                 id => Err(U::Error::invalid_variant(id as u64))
             }
