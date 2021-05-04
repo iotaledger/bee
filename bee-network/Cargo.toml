@@ -40,7 +40,7 @@ full = [
 ]
 
 [dependencies]
-bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", optional = true }
 
 async-trait = { version = "0.1", optional = true }
 futures = { version = "0.3", optional = true }
