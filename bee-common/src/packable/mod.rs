@@ -84,47 +84,54 @@ impl Packable for bool {
     }
 }
 
-impl<T: Packable> Packable for Vec<T> {
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        // The length of any dynamically-sized sequence must be prefixed.
-        self.len().pack(packer)?;
+#[cfg(feature = "alloc")]
+mod alloc_support {
+    extern crate alloc;
 
-        for item in self.iter() {
-            item.pack(packer)?;
+    use super::{Packable, Packer, Unpacker};
+
+    impl<T: Packable> Packable for alloc::vec::Vec<T> {
+        fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+            // The length of any dynamically-sized sequence must be prefixed.
+            self.len().pack(packer)?;
+
+            for item in self.iter() {
+                item.pack(packer)?;
+            }
+
+            Ok(())
         }
 
-        Ok(())
+        fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
+            // The length of any dynamically-sized sequence must be prefixed.
+            let len = usize::unpack(unpacker)?;
+
+            let mut vec = Self::with_capacity(len);
+
+            for _ in 0..len {
+                let item = T::unpack(unpacker)?;
+                vec.push(item);
+            }
+
+            Ok(vec)
+        }
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-        // The length of any dynamically-sized sequence must be prefixed.
-        let len = usize::unpack(unpacker)?;
+    impl<T: Packable> Packable for alloc::boxed::Box<[T]> {
+        fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+            // The length of any dynamically-sized sequence must be prefixed.
+            self.len().pack(packer)?;
 
-        let mut vec = Vec::with_capacity(len);
+            for item in self.iter() {
+                item.pack(packer)?;
+            }
 
-        for _ in 0..len {
-            let item = T::unpack(unpacker)?;
-            vec.push(item);
+            Ok(())
         }
 
-        Ok(vec)
-    }
-}
-
-impl<T: Packable> Packable for Box<[T]> {
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        // The length of any dynamically-sized sequence must be prefixed.
-        self.len().pack(packer)?;
-
-        for item in self.iter() {
-            item.pack(packer)?;
+        fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
+            Ok(alloc::vec::Vec::<T>::unpack(unpacker)?.into_boxed_slice())
         }
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-        Ok(Vec::<T>::unpack(unpacker)?.into_boxed_slice())
     }
 }
 

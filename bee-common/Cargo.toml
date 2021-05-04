@@ -4,6 +4,9 @@ version = "1.0.0-alpha"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 
+[features]
+alloc = []
+
 [build-dependencies]
 autocfg = "1.0"
 
