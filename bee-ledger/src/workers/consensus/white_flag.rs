@@ -157,8 +157,7 @@ async fn apply_regular_essence<B: StorageBackend>(
 
     for (index, output) in essence.outputs().iter().enumerate() {
         metadata.created_outputs.insert(
-            // Unwrap is fine, the index is known to be valid.
-            OutputId::new(*transaction_id, index as u16).unwrap(),
+            OutputId::new(*transaction_id, index as u16)?,
             CreatedOutput::new(*message_id, output.clone()),
         );
     }

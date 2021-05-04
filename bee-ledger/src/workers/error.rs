@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    types::{Balance, Error as TypesError},
+    types::{Balance, Error as TypesError, Unspent},
     workers::snapshot::error::Error as SnapshotError,
 };
 
-use bee_message::{address::Address, MessageId};
+use bee_message::{address::Address, Error as MessageError, MessageId};
 
 /// Errors occurring during consensus.
 #[derive(Debug, thiserror::Error)]
@@ -15,6 +15,8 @@ pub enum Error {
     Snapshot(#[from] SnapshotError),
     #[error("")]
     Types(#[from] TypesError),
+    #[error("Message error: {0}")]
+    Message(#[from] MessageError),
     #[error("Message {0} is missing in the past cone of the milestone")]
     MissingMessage(MessageId),
     #[error("")]
@@ -53,6 +55,8 @@ pub enum Error {
     NonZeroBalanceDiffSum(i64),
     #[error("Decreasing receipt migrated at index")]
     DecreasingReceiptMigratedAtIndex,
+    #[error("Missing unspent output: {0}")]
+    MissingUnspentOutput(Unspent),
     #[error("")]
     Storage(Box<dyn std::error::Error + Send>),
 }

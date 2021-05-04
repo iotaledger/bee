@@ -120,8 +120,7 @@ where
 
         for (index, fund) in receipt.funds().iter().enumerate() {
             metadata.created_outputs.insert(
-                // Safe to unwrap because indexes are known to be valid at this point.
-                OutputId::new(transaction_id, index as u16).unwrap(),
+                OutputId::new(transaction_id, index as u16)?,
                 CreatedOutput::new(message_id, Output::from(fund.output().clone())),
             );
             metadata

@@ -22,8 +22,9 @@ async fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury:
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
     while let Some((output_id, _)) = stream.next().await {
-        // Unwrap: an unspent output has to be in database.
-        let output = storage::fetch_output(storage, &*output_id).await?.unwrap();
+        let output = storage::fetch_output(storage, &*output_id)
+            .await?
+            .ok_or(Error::MissingUnspentOutput(output_id))?;
 
         let amount = match output.inner() {
             output::Output::SignatureLockedSingle(output) => output.amount(),
