@@ -108,7 +108,6 @@ alias   = "yet another peer"
 | Name                        | Description           | Type         |
 | :-------------------------- | :-------------------- | :----------- |
 | minimum_pow_score           | the minimum pow score | float[f64]   |
-| handshake_window            | TO-DO                 | integer[u64] |
 | [coordinator](#coordinator) | coordinator configs   | table        |
 | [workers](#workers)         | worker configs        | table        |
 
