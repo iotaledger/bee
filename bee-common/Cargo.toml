@@ -7,6 +7,9 @@ edition = "2018"
 [features]
 alloc = []
 
+[dev-dependencies]
+bee-common= { path = ".", features = ["alloc"] }
+
 [build-dependencies]
 autocfg = "1.0"
 
