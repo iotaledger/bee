@@ -3,7 +3,7 @@
 
 use bee_common::packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
-use core::mem::size_of;
+use core::{fmt::Debug, mem::size_of};
 
 #[derive(Debug)]
 enum Error {
@@ -62,29 +62,24 @@ impl<'un> Unpacker for SliceUnpacker<'un> {
     }
 }
 
-macro_rules! pack_into_bytes_checked {
-    ($ty:ty, $value:expr) => {{
-        let value: $ty = $value;
+fn pack_checked(value: impl Packable + Eq + Debug) -> Vec<u8> {
+    let mut packer = VecPacker::default();
+    value.pack(&mut packer).unwrap();
 
-        let mut packer = VecPacker::default();
-        value.pack(&mut packer).unwrap();
+    let mut unpacker = SliceUnpacker::new(&packer.vec);
+    let result = Packable::unpack(&mut unpacker).unwrap();
 
-        let bytes = packer.vec.leak();
+    assert_eq!(value, result);
 
-        let mut unpacker = SliceUnpacker::new(bytes);
-        let result = <$ty>::unpack(&mut unpacker).unwrap();
-
-        assert_eq!(value, result);
-
-        bytes
-    }};
+    packer.vec
 }
 
 macro_rules! impl_packable_test_for_num {
     ($name:ident, $ty:ident, $value:expr) => {
         #[test]
         fn $name() {
-            let bytes = pack_into_bytes_checked!($ty, $value);
+            let value: $ty = $value;
+            let bytes = pack_checked(value);
             assert_eq!(bytes.len(), size_of::<$ty>());
         }
     };
@@ -105,8 +100,8 @@ impl_packable_test_for_num!(packable_u128, u128, 0x6F7BD423100423DBFF127B91CA0AB
 
 #[test]
 fn packable_bool() {
-    assert_eq!(pack_into_bytes_checked!(bool, false).len(), size_of::<u8>());
-    assert_eq!(pack_into_bytes_checked!(bool, true).len(), size_of::<u8>());
+    assert_eq!(pack_checked(false).len(), size_of::<u8>());
+    assert_eq!(pack_checked(true).len(), size_of::<u8>());
 }
 
 #[test]
@@ -124,26 +119,23 @@ fn packed_non_zero_bytes_are_truthy() {
 
 #[test]
 fn packable_option() {
-    assert_eq!(pack_into_bytes_checked!(Option<u64>, None).len(), size_of::<u8>());
+    assert_eq!(pack_checked(Option::<u64>::None).len(), size_of::<u8>());
     assert_eq!(
-        pack_into_bytes_checked!(Option<u64>, Some(42)).len(),
+        pack_checked(Option::<u64>::Some(42)).len(),
         size_of::<u8>() + size_of::<u64>()
     );
 }
 
 #[test]
 fn packable_vector() {
-    assert_eq!(pack_into_bytes_checked!(Vec<u32>, vec![]).len(), size_of::<u64>());
+    assert_eq!(pack_checked(Vec::<u32>::new()).len(), size_of::<u64>());
     assert_eq!(
-        pack_into_bytes_checked!(Vec<Option<u32>>, vec![Some(0u32), None]).len(),
+        pack_checked(vec![Some(0u32), None]).len(),
         size_of::<u64>() + (size_of::<u8>() + size_of::<u32>()) + size_of::<u8>()
     );
 }
 
 #[test]
 fn packable_array() {
-    assert_eq!(
-        pack_into_bytes_checked!([u8; 1024], [42u8; 1024]).len(),
-        1024 * size_of::<u8>()
-    );
+    assert_eq!(pack_checked([42u8; 1024]).len(), 1024 * size_of::<u8>());
 }
