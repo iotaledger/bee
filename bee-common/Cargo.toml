@@ -3,12 +3,18 @@ name = "bee-common"
 version = "1.0.0-alpha"
 authors = ["IOTA Stiftung"]
 edition = "2018"
+description = "Common utilities used across the bee framework"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "bee", "framework", "common"]
+homepage = "https://www.iota.org"
 
 [features]
 alloc = []
 
 [dev-dependencies]
-bee-common= { path = ".", features = ["alloc"] }
+bee-common = { path = ".", features = ["alloc"] }
 
 [build-dependencies]
 autocfg = "1.0"

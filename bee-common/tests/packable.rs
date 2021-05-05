@@ -1,4 +1,4 @@
-// Copyright 2021 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::{PackError, Packable, Packer, UnpackError, Unpacker};
@@ -7,7 +7,7 @@ use core::mem::size_of;
 
 #[derive(Debug)]
 enum Error {
-    UnexpectedEOF,
+    UnexpectedEof,
     InvalidVariant(&'static str, u64),
 }
 
@@ -57,7 +57,7 @@ impl<'un> Unpacker for SliceUnpacker<'un> {
             self.slice = tail;
             Ok(head)
         } else {
-            Err(Error::UnexpectedEOF)
+            Err(Error::UnexpectedEof)
         }
     }
 }
