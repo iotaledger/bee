@@ -14,7 +14,7 @@ use crate::{
     types::{body::SuccessBody, responses::WhiteFlagResponse},
 };
 
-use bee_ledger::workers::consensus::{self, metadata::WhiteFlagMetadata};
+use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
 use bee_message::{milestone::MilestoneIndex, MessageId};
 use bee_protocol::workers::{event::MessageSolidified, helper, MessageRequesterWorker, RequestedMessages};
 use bee_runtime::{event::Bus, resource::ResourceHandle};
