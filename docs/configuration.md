@@ -16,7 +16,7 @@ For Example: `bee -c config_example.toml`
   * [coordinator](#coordinator)
     + [public_key_ranges](#public-key-ranges)
   * [workers](#workers)
-- [4. Rest_api](#4-rest-api)
+- [4. REST API](#4-rest-api)
 - [5. Snapshot](#5-snapshot)
 - [6. Pruning](#6-pruning)
 - [7. Storage](#7-storage)
@@ -160,7 +160,7 @@ status_interval = 10
 ms_sync_count = 200
 ```
 
-## 4. Rest_api
+## 4. REST API
 
 | Name                              | Description                       | Type             |
 | :-------------------------------- | :-------------------------------- | :--------------- |
