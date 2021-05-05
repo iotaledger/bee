@@ -19,7 +19,7 @@ pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStr
                 .unzip();
 
             pack = quote! {
-                #(self.#labels.pack(packer)?;) *
+                #(<#types>::pack(&self.#labels, packer)?;) *
                 Ok(())
             };
 
@@ -35,7 +35,7 @@ pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStr
                 .unzip();
 
             pack = quote! {
-                #(self.#indices.pack(packer)?;) *
+                #(<#types>::pack(&self.#indices, packer)?;) *
                 Ok(())
             };
 
@@ -85,7 +85,7 @@ pub(crate) fn gen_enum_bodies<'a>(
                         pack_branch = quote! {
                             Self::#ident{#(#labels), *} => {
                                 (#id as #ty).pack(packer)?;
-                                #(#labels.pack(packer)?;) *
+                                #(<#types>::pack(&#labels, packer)?;) *
                                 Ok(())
                             }
                         };
@@ -106,7 +106,7 @@ pub(crate) fn gen_enum_bodies<'a>(
                         pack_branch = quote! {
                             Self::#ident(#(#fields), *) => {
                                 (#id as #ty).pack(packer)?;
-                                #(#fields.pack(packer)?;) *
+                                #(<#types>::pack(&#fields, packer)?;) *
                                 Ok(())
                             }
                         };
