@@ -12,7 +12,6 @@ const DEFAULT_COO_PUBLIC_KEY_COUNT: usize = 2;
 const DEFAULT_COO_PUBLIC_KEY_RANGES: [(&str, MilestoneIndex, MilestoneIndex); 0] = [];
 const DEFAULT_MESSAGE_WORKER_CACHE: usize = 10000;
 const DEFAULT_STATUS_INTERVAL: u64 = 10;
-const DEFAULT_HANDSHAKE_WINDOW: u64 = 10;
 const DEFAULT_MS_SYNC_COUNT: u32 = 200;
 
 #[derive(Default, Deserialize)]
@@ -33,7 +32,6 @@ pub struct ProtocolConfigBuilder {
     minimum_pow_score: Option<f64>,
     coordinator: ProtocolCoordinatorConfigBuilder,
     workers: ProtocolWorkersConfigBuilder,
-    handshake_window: Option<u64>,
 }
 
 impl ProtocolConfigBuilder {
@@ -66,11 +64,6 @@ impl ProtocolConfigBuilder {
         self
     }
 
-    pub fn handshake_window(mut self, handshake_window: u64) -> Self {
-        self.handshake_window.replace(handshake_window);
-        self
-    }
-
     pub fn finish(self) -> ProtocolConfig {
         ProtocolConfig {
             minimum_pow_score: self.minimum_pow_score.unwrap_or(DEFAULT_MINIMUM_POW_SCORE),
@@ -94,7 +87,6 @@ impl ProtocolConfigBuilder {
                 status_interval: self.workers.status_interval.unwrap_or(DEFAULT_STATUS_INTERVAL),
                 ms_sync_count: self.workers.ms_sync_count.unwrap_or(DEFAULT_MS_SYNC_COUNT),
             },
-            handshake_window: self.handshake_window.unwrap_or(DEFAULT_HANDSHAKE_WINDOW),
         }
     }
 }
@@ -117,16 +109,17 @@ pub struct ProtocolConfig {
     pub(crate) minimum_pow_score: f64,
     pub(crate) coordinator: ProtocolCoordinatorConfig,
     pub(crate) workers: ProtocolWorkersConfig,
-    pub(crate) handshake_window: u64,
 }
 
 impl ProtocolConfig {
     pub fn build() -> ProtocolConfigBuilder {
         ProtocolConfigBuilder::new()
     }
+
     pub fn minimum_pow_score(&self) -> f64 {
         self.minimum_pow_score
     }
+
     pub fn coordinator(&self) -> &ProtocolCoordinatorConfig {
         &self.coordinator
     }
