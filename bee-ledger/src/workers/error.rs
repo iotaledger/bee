@@ -45,10 +45,10 @@ pub enum Error {
     InvalidLedgerBalanceState(u64),
     #[error("Invalid ledger dust state: {0:?} {1:?}")]
     InvalidLedgerDustState(Address, Balance),
-    #[error("Consumed amount overflow: tried to add {0} and {1}.")]
-    ConsumedAmountOverflow(u64, u64),
-    #[error("Created amount overflow: tried to add {0} and {1}.")]
-    CreatedAmountOverflow(u64, u64),
+    #[error("Consumed amount overflow: {0}.")]
+    ConsumedAmountOverflow(u128),
+    #[error("Created amount overflow: {0}.")]
+    CreatedAmountOverflow(u128),
     #[error("Ledger state overflow: {0}")]
     LedgerStateOverflow(u128),
     #[error("Non zero balance diff sum: {0}.")]
