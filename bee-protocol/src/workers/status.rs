@@ -3,7 +3,7 @@
 
 use crate::workers::{storage::StorageBackend, MessageRequesterWorker, RequestedMessages};
 
-use bee_ledger::workers::LedgerWorker;
+use bee_ledger::workers::consensus::ConsensusWorker;
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_tangle::{MsTangle, TangleWorker};
 
@@ -30,7 +30,7 @@ where
         vec![
             TypeId::of::<TangleWorker>(),
             TypeId::of::<MessageRequesterWorker>(),
-            TypeId::of::<LedgerWorker>(),
+            TypeId::of::<ConsensusWorker>(),
         ]
         .leak()
     }

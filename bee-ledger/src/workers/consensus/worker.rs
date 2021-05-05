@@ -38,10 +38,10 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::TryInto};
 
-pub struct LedgerWorkerEvent(pub MessageId);
+pub struct ConsensusWorkerEvent(pub MessageId);
 
-pub struct LedgerWorker {
-    pub tx: mpsc::UnboundedSender<LedgerWorkerEvent>,
+pub struct ConsensusWorker {
+    pub tx: mpsc::UnboundedSender<ConsensusWorkerEvent>,
 }
 
 pub(crate) async fn migration_from_milestone(
@@ -230,7 +230,7 @@ where
 }
 
 #[async_trait]
-impl<N: Node> Worker<N> for LedgerWorker
+impl<N: Node> Worker<N> for ConsensusWorker
 where
     N::Backend: StorageBackend,
 {
@@ -331,7 +331,7 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(LedgerWorkerEvent(message_id)) = receiver.next().await {
+            while let Some(ConsensusWorkerEvent(message_id)) = receiver.next().await {
                 if let Err(e) = confirm::<N>(
                     &tangle,
                     &storage,

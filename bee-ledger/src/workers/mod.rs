@@ -7,13 +7,12 @@ pub mod event;
 pub mod pruning;
 pub mod snapshot;
 pub mod storage;
-pub mod worker;
 
 pub use storage::StorageBackend;
-pub use worker::{LedgerWorker, LedgerWorkerEvent};
 
 use bee_runtime::node::{Node, NodeBuilder};
 
+use consensus::ConsensusWorker;
 use pruning::config::PruningConfig;
 use snapshot::config::SnapshotConfig;
 
@@ -27,5 +26,5 @@ where
     N: Node,
     N::Backend: StorageBackend,
 {
-    node_builder.with_worker_cfg::<LedgerWorker>((network_id, snapshot_config, pruning_config))
+    node_builder.with_worker_cfg::<ConsensusWorker>((network_id, snapshot_config, pruning_config))
 }

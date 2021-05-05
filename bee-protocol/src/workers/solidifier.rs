@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-use bee_ledger::workers::{LedgerWorker, LedgerWorkerEvent};
+use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerEvent};
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     MessageId,
@@ -63,7 +63,7 @@ async fn heavy_solidification<B: StorageBackend>(
 
 async fn solidify<B: StorageBackend>(
     tangle: &MsTangle<B>,
-    ledger_worker: &mpsc::UnboundedSender<LedgerWorkerEvent>,
+    consensus_worker: &mpsc::UnboundedSender<ConsensusWorkerEvent>,
     index_updater_worker: &mpsc::UnboundedSender<IndexUpdaterWorkerEvent>,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
@@ -75,8 +75,8 @@ async fn solidify<B: StorageBackend>(
 
     tangle.update_solid_milestone_index(index);
 
-    if let Err(e) = ledger_worker.send(LedgerWorkerEvent(id)) {
-        warn!("Sending message_id to ledger worker failed: {}.", e);
+    if let Err(e) = consensus_worker.send(ConsensusWorkerEvent(id)) {
+        warn!("Sending message_id to consensus worker failed: {}.", e);
     }
 
     if let Err(e) = index_updater_worker
@@ -110,7 +110,7 @@ where
             TypeId::of::<TangleWorker>(),
             TypeId::of::<PeerManagerResWorker>(),
             TypeId::of::<MetricsWorker>(),
-            TypeId::of::<LedgerWorker>(),
+            TypeId::of::<ConsensusWorker>(),
             TypeId::of::<IndexUpdaterWorker>(),
         ]
         .leak()
@@ -120,7 +120,7 @@ where
         let (tx, rx) = mpsc::unbounded_channel();
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
-        let ledger_worker = node.worker::<LedgerWorker>().unwrap().tx.clone();
+        let consensus_worker = node.worker::<ConsensusWorker>().unwrap().tx.clone();
         let milestone_cone_updater = node.worker::<IndexUpdaterWorker>().unwrap().tx.clone();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
@@ -182,7 +182,7 @@ where
                         if tangle.is_solid_message(&id).await {
                             solidify(
                                 &tangle,
-                                &ledger_worker,
+                                &consensus_worker,
                                 &milestone_cone_updater,
                                 &peer_manager,
                                 &metrics,

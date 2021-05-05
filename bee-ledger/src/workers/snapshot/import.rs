@@ -9,9 +9,9 @@ use crate::{
         BalanceDiffs, CreatedOutput, TreasuryOutput,
     },
     workers::{
+        consensus::worker::migration_from_milestone,
         snapshot::{config::SnapshotConfig, download::download_snapshot_file, error::Error},
         storage::{self, apply_balance_diffs, apply_milestone, create_output, rollback_milestone, StorageBackend},
-        worker::migration_from_milestone,
     },
 };
 
