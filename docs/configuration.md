@@ -47,10 +47,11 @@ For Example: `bee -c config_example.toml`
 
 ### outputs
 
-| Name         | Description             | Type   |
-| :----------- | :---------------------- | :----- |
-| name         | standart stream or file | string |
-| level_filter | log level filter        | string |
+| Name         | Description                     | Type             |
+| :----------- | :------------------------------ | :--------------- |
+| name         | standart stream or file         | string           |
+| level_filter | log level filter of an output   | string           |
+| target_fiter | log target filters of an output | array of strings |
 
 Example:
 
@@ -60,11 +61,12 @@ color_enabled = true
 target_width = 42
 level_width = 5
 [[logger.outputs]]
-name          = "stdout"
-level_filter  = "info" # other possible values are: "error", "warn", "info", "debug", "trace"
+name           = "stdout"
+level_filter   = "info" # other possible values are: "error", "warn", "info", "debug", "trace"
+target_filters = ["bee_network"] 
 [[logger.outputs]]
-name          = "error.log"
-level_filter  = "error"
+name           = "error.log"
+level_filter   = "error"
 ```
 
 ## 2. Network
