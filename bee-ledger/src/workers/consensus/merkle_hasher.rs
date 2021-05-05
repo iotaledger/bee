@@ -13,7 +13,6 @@ const LEAF_HASH_PREFIX: u8 = 0x00;
 const NODE_HASH_PREFIX: u8 = 0x01;
 
 /// Computes the largest power of two inferior to `n`.
-#[inline]
 fn largest_power_of_two(n: u32) -> usize {
     1 << (32 - n.leading_zeros() - 1)
 }

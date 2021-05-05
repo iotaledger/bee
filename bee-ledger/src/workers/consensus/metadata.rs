@@ -21,11 +21,11 @@ pub struct WhiteFlagMetadata {
     pub(crate) excluded_conflicting_messages: Vec<(MessageId, ConflictReason)>,
     // The messages which mutate the ledger in the order in which they were applied.
     pub(crate) included_messages: Vec<MessageId>,
-    /// The outputs created within the milestone.
+    /// The outputs created within the confirmed milestone.
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
-    /// The outputs consumed within the milestone.
+    /// The outputs consumed within the confirmed milestone.
     pub(crate) consumed_outputs: HashMap<OutputId, (CreatedOutput, ConsumedOutput)>,
-    /// The balance diffs occuring within the milestone.
+    /// The balance diffs occurring within the confirmed milestone.
     pub(crate) balance_diffs: BalanceDiffs,
     /// The merkle proof of the milestone.
     pub(crate) merkle_proof: Vec<u8>,

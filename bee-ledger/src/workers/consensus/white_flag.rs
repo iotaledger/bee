@@ -216,7 +216,6 @@ async fn apply_message<B: StorageBackend>(
     Ok(())
 }
 
-// TODO make it a tangle method ?
 async fn traversal<B: StorageBackend>(
     tangle: &MsTangle<B>,
     storage: &B,
@@ -225,30 +224,20 @@ async fn traversal<B: StorageBackend>(
 ) -> Result<(), Error> {
     let mut visited = HashSet::new();
 
-    // TODO Tangle get message AND meta at the same time
-
     while let Some(message_id) = messages_ids.last() {
-        let meta = match tangle.get_metadata(message_id).await {
-            Some(meta) => meta,
-            None => {
-                if !tangle.is_solid_entry_point(message_id).await {
-                    return Err(Error::MissingMessage(*message_id));
-                } else {
+        match tangle
+            .get_vertex(&message_id)
+            .await
+            .as_ref()
+            .and_then(|v| v.message_and_metadata().cloned())
+        {
+            Some((message, meta)) => {
+                if meta.flags().is_referenced() {
                     visited.insert(*message_id);
                     messages_ids.pop();
                     continue;
                 }
-            }
-        };
 
-        if meta.flags().is_referenced() {
-            visited.insert(*message_id);
-            messages_ids.pop();
-            continue;
-        }
-
-        match tangle.get(message_id).await {
-            Some(message) => {
                 let mut next = None;
 
                 for parent in message.parents().iter() {
@@ -273,6 +262,7 @@ async fn traversal<B: StorageBackend>(
                 } else {
                     visited.insert(*message_id);
                     messages_ids.pop();
+                    continue;
                 }
             }
         }
