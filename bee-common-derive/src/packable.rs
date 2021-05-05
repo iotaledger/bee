@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::{
     parse::{Parse, ParseStream},
     Attribute, Fields, FieldsNamed, FieldsUnnamed, Ident, Index, Token, Type, Variant,
@@ -100,12 +100,7 @@ pub(crate) fn gen_enum_bodies<'a>(
                         let (fields, types): (Vec<Ident>, Vec<&Type>) = unnamed
                             .iter()
                             .enumerate()
-                            .map(|(index, field)| {
-                                (
-                                    Ident::new(&format!("field_{}", index), proc_macro2::Span::call_site()),
-                                    &field.ty,
-                                )
-                            })
+                            .map(|(index, field)| (format_ident!("field_{}", index), &field.ty))
                             .unzip();
 
                         pack_branch = quote! {
