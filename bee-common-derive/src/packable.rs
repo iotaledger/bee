@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use proc_macro2::TokenStream;
+use proc_macro_error::abort;
 use quote::{format_ident, quote};
 use syn::{
     parse::{Parse, ParseStream},
@@ -15,6 +16,7 @@ pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStr
         Fields::Named(FieldsNamed { named, .. }) => {
             let (labels, types): (Vec<&Ident>, Vec<&Type>) = named
                 .iter()
+                // This is a named field, which means its `ident` cannot be `None`
                 .map(|field| (field.ident.as_ref().unwrap(), &field.ty))
                 .unzip();
 
@@ -56,21 +58,31 @@ pub(crate) fn gen_enum_bodies<'a>(
     variants: impl Iterator<Item = &'a Variant> + 'a,
     ty: Type,
 ) -> (TokenStream, TokenStream) {
-    let mut indices = Vec::new();
+    let mut indices = Vec::<(Index, &Ident)>::new();
 
     let (pack_branches, unpack_branches): (Vec<TokenStream>, Vec<TokenStream>) = variants
         .map(
             |Variant {
                  attrs, ident, fields, ..
              }| {
-                let index = parse_attr::<Index>("id", attrs).unwrap().index as u64;
+                let curr_index = parse_attr::<Index>("id", attrs).unwrap_or_else(|| {
+                    abort!(
+                        ident.span(),
+                        "All variants of an enum that derives `Packable` require a `#[packable(id = ...)]` attribute."
+                    )
+                });
 
-                match indices.binary_search(&index) {
-                    Ok(_) => panic!("The ID {} is already being used.", index),
-                    Err(pos) => indices.insert(pos, index),
+                match indices.binary_search_by(|(index, _)| index.index.cmp(&curr_index.index)) {
+                    Ok(pos) => abort!(
+                        curr_index.span,
+                        "The identifier `{}` is already being used for the `{}` variant.",
+                        curr_index.index,
+                        indices[pos].1
+                    ),
+                    Err(pos) => indices.insert(pos, (curr_index.clone(), ident)),
                 }
 
-                let id = proc_macro2::Literal::u64_unsuffixed(index);
+                let id = proc_macro2::Literal::u64_unsuffixed(curr_index.index as u64);
 
                 let pack_branch: TokenStream;
                 let unpack_branch: TokenStream;
@@ -79,6 +91,7 @@ pub(crate) fn gen_enum_bodies<'a>(
                     Fields::Named(FieldsNamed { named, .. }) => {
                         let (labels, types): (Vec<&Ident>, Vec<&Type>) = named
                             .iter()
+                            // This is a named field, which means its `ident` cannot be `None`
                             .map(|field| (field.ident.as_ref().unwrap(), &field.ty))
                             .unzip();
 
@@ -160,7 +173,7 @@ pub(crate) fn gen_impl(ident: &Ident, pack_body: TokenStream, unpack_body: Token
     }
 }
 
-pub(crate) fn parse_attr<T: Parse>(ident: &str, attrs: &[Attribute]) -> syn::Result<T> {
+pub(crate) fn parse_attr<T: Parse>(ident: &str, attrs: &[Attribute]) -> Option<T> {
     struct AttrArg<T> {
         ident: Ident,
         value: T,
@@ -178,15 +191,12 @@ pub(crate) fn parse_attr<T: Parse>(ident: &str, attrs: &[Attribute]) -> syn::Res
 
     for attr in attrs {
         if attr.path.is_ident("packable") {
-            let arg = attr.parse_args::<AttrArg<T>>()?;
-
-            if arg.ident != ident {
-                panic!("Expected argument `{}` found `{}`.", ident, arg.ident);
+            match attr.parse_args::<AttrArg<T>>() {
+                Ok(arg) if arg.ident == ident => return Some(arg.value),
+                _ => (),
             }
-
-            return Ok(arg.value);
         }
     }
 
-    panic!("There is no `packable` attribute with a `{}` argument.", ident)
+    None
 }
