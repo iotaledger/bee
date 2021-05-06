@@ -74,7 +74,7 @@ impl IotaGossipProtocol {
 impl Default for IotaGossipProtocol {
     fn default() -> Self {
         Self {
-            id: IotaGossipIdentifier::new(IOTA_GOSSIP_NAME.into(), network_id(), IOTA_GOSSIP_VERSION.into()),
+            id: IotaGossipIdentifier::new(IOTA_GOSSIP_NAME, network_id(), IOTA_GOSSIP_VERSION),
             num_handlers: 0,
             num_inbounds: 0,
             num_outbounds: 0,
