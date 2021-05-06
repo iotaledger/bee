@@ -53,6 +53,7 @@ You can build a docker image by running the following at the root level of the p
 ```
 docker build -t bee .
 ```
+
 ## Supporting the project
 
 If you want to discuss Bee or have some questions about it, join us on the
