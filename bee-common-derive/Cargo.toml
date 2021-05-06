@@ -13,6 +13,15 @@ homepage = "https://www.iota.org"
 [lib]
 proc-macro = true
 
+[[test]]
+name = "tests"
+path = "tests/lib.rs"
+
+[dev-dependencies]
+bee-common = { path = "../bee-common" }
+
+trybuild = { version = "1.0", features = ["diff"] }
+
 [dependencies]
 proc-macro-error = "1.0"
 proc-macro2 = "1.0"

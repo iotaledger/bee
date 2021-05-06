@@ -1,0 +1,5 @@
+error: All variants of an enum that derives `Packable` require a `#[packable(id = ...)]` attribute.
+  --> $DIR/no_id_enum.rs:11:5
+   |
+11 |     None,
+   |     ^^^^
