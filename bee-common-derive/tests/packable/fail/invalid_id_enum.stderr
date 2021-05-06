@@ -1,5 +1,5 @@
 error: All variants of an enum that derives `Packable` require a `#[packable(id = ...)]` attribute.
-  --> $DIR/invalid_id_enum.rs:12:5
+  --> $DIR/invalid_id_enum.rs:13:5
    |
-12 |     None,
+13 |     None,
    |     ^^^^

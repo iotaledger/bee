@@ -1,5 +1,6 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
 use super::Packable;
 
 /// A type that can unpack any value that implements `Packer`.

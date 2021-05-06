@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(unused_imports)]
+
 use bee_common::packable::Packable;
 use bee_common_derive::Packable;
 
 #[derive(Packable)]
-#[packable(ty = [u8; 32])]
+#[packable(ty = u8)]
 pub enum OptI32 {
-    #[packable(id = 0)]
+    #[packable(id = [0; 32])]
     None,
     #[packable(id = 1)]
     Some(i32)

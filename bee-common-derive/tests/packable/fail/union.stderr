@@ -1,0 +1,5 @@
+error: Unions cannot derive `Packable`
+  --> $DIR/union.rs:10:11
+   |
+10 | pub union MaybeInt {
+   |           ^^^^^^^^

@@ -1,5 +1,5 @@
 error: Enums that derive `Packable` require a `#[packable(ty = ...)]` attribute.
- --> $DIR/no_ty_enum.rs:9:10
-  |
-9 | pub enum OptI32 {
-  |          ^^^^^^
+  --> $DIR/no_ty_enum.rs:10:10
+   |
+10 | pub enum OptI32 {
+   |          ^^^^^^

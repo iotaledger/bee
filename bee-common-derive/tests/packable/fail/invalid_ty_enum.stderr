@@ -1,15 +1,15 @@
 error[E0605]: non-primitive cast: `i32` as `[u8; 32]`
- --> $DIR/invalid_ty_enum.rs:8:10
+ --> $DIR/invalid_ty_enum.rs:9:10
   |
-8 | #[derive(Packable)]
+9 | #[derive(Packable)]
   |          ^^^^^^^^ an `as` expression can only be used to convert between primitive types or to coerce to a specific trait object
   |
   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0308]: mismatched types
- --> $DIR/invalid_ty_enum.rs:8:10
+ --> $DIR/invalid_ty_enum.rs:9:10
   |
-8 | #[derive(Packable)]
+9 | #[derive(Packable)]
   |          ^^^^^^^^
   |          |
   |          expected array `[u8; 32]`, found integer
@@ -18,9 +18,9 @@ error[E0308]: mismatched types
   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0605]: non-primitive cast: `[u8; 32]` as `u64`
- --> $DIR/invalid_ty_enum.rs:8:10
+ --> $DIR/invalid_ty_enum.rs:9:10
   |
-8 | #[derive(Packable)]
+9 | #[derive(Packable)]
   |          ^^^^^^^^ an `as` expression can only be used to convert between primitive types or to coerce to a specific trait object
   |
   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)

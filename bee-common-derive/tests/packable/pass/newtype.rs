@@ -2,13 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(unused_imports)]
+
 use bee_common::packable::Packable;
 use bee_common_derive::Packable;
 
 #[derive(Packable)]
-pub union MaybeInt {
-    just: u32,
-    nothing: (),
-}
+pub struct Num(u32);
 
 fn main() {}

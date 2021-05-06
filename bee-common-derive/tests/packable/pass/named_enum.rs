@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(unused_imports)]
+
 use bee_common::packable::Packable;
 use bee_common_derive::Packable;
 
 #[derive(Packable)]
 #[packable(ty = u8)]
-pub enum Foo {
+pub enum OptPoint {
     #[packable(id = 0)]
-    Bar(u32),
+    None,
     #[packable(id = 1)]
-    Baz{ x: i32, y: i32 }
+    Some{ x: i32, y: i32 }
 }
 
 fn main() {}
