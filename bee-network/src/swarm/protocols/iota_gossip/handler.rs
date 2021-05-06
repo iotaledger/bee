@@ -141,6 +141,7 @@ impl ProtocolsHandler for GossipProtocolHandler {
     ) {
         debug!("gossip handler: outbound upgrade error: {:?}", e);
 
+        // TODO: finish event management in case of an error.
         // self.events.push_back(ProtocolsHandlerEvent::Close(e));
     }
 
@@ -153,6 +154,8 @@ impl ProtocolsHandler for GossipProtocolHandler {
         e: ProtocolsHandlerUpgrErr<<Self::InboundProtocol as InboundUpgradeSend>::Error>,
     ) {
         debug!("gossip handler: inbound upgrade error: {:?}", e);
+
+        // TODO: finish event management in case of an error.
         // let err = match e {
         //     ProtocolsHandlerUpgrErr::Timeout => io::Error::new(io::ErrorKind::TimedOut, "timeout"),
         //     ProtocolsHandlerUpgrErr::Timer => io::Error::new(io::ErrorKind::TimedOut, "timer"),
