@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-// use std::convert::TryFrom;
-
 use libp2p_core::ProtocolName;
 
 use std::fmt;
