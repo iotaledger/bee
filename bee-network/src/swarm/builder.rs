@@ -39,7 +39,7 @@ pub fn build_swarm(
         use libp2p_core::transport::MemoryTransport;
 
         MemoryTransport::default()
-            .upgrade(upgrade::Version::V1)
+            .upgrade(upgrade::Version::V1Lazy)
             .authenticate(noi_config.into_authenticated())
             .multiplex(SelectUpgrade::new(ymx_config, mpx_config))
             .timeout(Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))
@@ -49,7 +49,7 @@ pub fn build_swarm(
         let dns_config = dns::TokioDnsConfig::system(tcp_config)?;
 
         dns_config
-            .upgrade(upgrade::Version::V1)
+            .upgrade(upgrade::Version::V1Lazy)
             .authenticate(noi_config.into_authenticated())
             .multiplex(SelectUpgrade::new(ymx_config, mpx_config))
             .timeout(Duration::from_secs(DEFAULT_CONNECTION_TIMEOUT_SECS))

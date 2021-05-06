@@ -7,8 +7,8 @@ use super::{
     config::NetworkConfig,
     error::Error,
     peer::{
+        info::{PeerInfo, PeerRelation},
         list::{PeerList, PeerListWrapper},
-        meta::{PeerInfo, PeerRelation},
     },
     service::{
         command::{command_channel, NetworkCommandSender},
@@ -24,7 +24,7 @@ use crate::{
     swarm::builder::build_swarm,
 };
 
-use libp2p::{identity, Swarm};
+use libp2p::identity;
 use log::info;
 use once_cell::sync::OnceCell;
 
@@ -189,18 +189,14 @@ fn init(
     }
 
     // Create the transport layer
-    let mut swarm =
-        build_swarm(&local_keys, internal_event_sender.clone()).map_err(|_| Error::CreatingTransportFailed)?;
-
-    // Try binding to the configured bind address.
-    info!("Binding to: {}", bind_multiaddr);
-    let _listener_id = Swarm::listen_on(&mut swarm, bind_multiaddr).map_err(|_| Error::BindingAddressFailed)?;
+    let swarm = build_swarm(&local_keys, internal_event_sender.clone()).map_err(|_| Error::CreatingTransportFailed)?;
 
     let network_host_config = NetworkHostConfig {
         internal_event_sender: internal_event_sender.clone(),
         internal_command_receiver,
         peerlist: peerlist.clone(),
         swarm,
+        bind_multiaddr,
     };
 
     let service_host_config = ServiceHostConfig {

@@ -1,14 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::protocols::gossip::{self, behavior::Gossip, event::GossipEvent};
+use super::protocols::iota_gossip::{IotaGossipEvent, IotaGossipProtocol};
 
 use crate::{
     alias,
     service::event::{InternalEvent, InternalEventSender},
 };
 
-use futures::AsyncReadExt;
 use libp2p::{
     identify::{Identify, IdentifyConfig, IdentifyEvent},
     identity::PublicKey,
@@ -22,7 +21,7 @@ const IOTA_PROTOCOL_VERSION: &str = "iota/0.1.0";
 #[derive(NetworkBehaviour)]
 pub struct SwarmBehavior {
     identify: Identify,
-    gossip: Gossip,
+    gossip: IotaGossipProtocol,
     #[behaviour(ignore)]
     internal_sender: InternalEventSender,
 }
@@ -34,7 +33,7 @@ impl SwarmBehavior {
 
         Self {
             identify: Identify::new(config),
-            gossip: Gossip::new(),
+            gossip: IotaGossipProtocol::new(),
             internal_sender,
         }
     }
@@ -42,8 +41,6 @@ impl SwarmBehavior {
 
 impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
     fn inject_event(&mut self, event: IdentifyEvent) {
-        trace!("Behavior received identify event.");
-
         match event {
             IdentifyEvent::Received { peer_id, info } => {
                 trace!(
@@ -51,6 +48,8 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
                     alias!(peer_id),
                     info.observed_addr,
                 );
+
+                // TODO: log supported protocols by the peer (info.protocols)
             }
             IdentifyEvent::Sent { peer_id } => {
                 trace!("Sent Identify request to {}.", alias!(peer_id));
@@ -65,36 +64,44 @@ impl NetworkBehaviourEventProcess<IdentifyEvent> for SwarmBehavior {
     }
 }
 
-impl NetworkBehaviourEventProcess<GossipEvent> for SwarmBehavior {
-    fn inject_event(&mut self, event: GossipEvent) {
-        trace!("Behavior received gossip event.");
-
-        let GossipEvent {
-            peer_id,
-            peer_multiaddr: peer_addr,
-            negotiated_stream: conn,
-            connection_info: conn_info,
-        } = event;
-
-        debug!("New gossip stream with {}.", alias!(peer_id));
-
-        let (reader, writer) = conn.split();
-
-        let (incoming_gossip_sender, incoming_gossip_receiver) = gossip::io::gossip_channel();
-        let (outgoing_gossip_sender, outgoing_gossip_receiver) = gossip::io::gossip_channel();
-
-        gossip::io::spawn_gossip_in_processor(peer_id, reader, incoming_gossip_sender, self.internal_sender.clone());
-        gossip::io::spawn_gossip_out_processor(peer_id, writer, outgoing_gossip_receiver, self.internal_sender.clone());
-
-        let _ = self
-            .internal_sender
-            .send(InternalEvent::ProtocolEstablished {
+impl NetworkBehaviourEventProcess<IotaGossipEvent> for SwarmBehavior {
+    fn inject_event(&mut self, event: IotaGossipEvent) {
+        match event {
+            IotaGossipEvent::ReceivedUpgradeRequest { from } => {
+                debug!("Received IOTA gossip request from {}.", alias!(from));
+            }
+            IotaGossipEvent::SentUpgradeRequest { to } => {
+                debug!("Sent IOTA gossip request to {}.", alias!(to));
+            }
+            IotaGossipEvent::UpgradeCompleted {
                 peer_id,
                 peer_addr,
-                conn_info,
-                gossip_in: incoming_gossip_receiver,
-                gossip_out: outgoing_gossip_sender,
-            })
-            .expect("Receiver of internal event channel dropped.");
+                origin,
+                substream,
+            } => {
+                debug!("Successfully negotiated IOTA gossip protocol with {}.", alias!(peer_id));
+
+                if let Err(e) = self.internal_sender.send(InternalEvent::ProtocolEstablished {
+                    peer_id,
+                    peer_addr,
+                    origin,
+                    substream,
+                }) {
+                    warn!(
+                        "Send event error for {} after successfully established IOTA gossip protocol. Cause: {}",
+                        peer_id, e
+                    );
+
+                    // TODO: stop processors in that case.
+                }
+            }
+            IotaGossipEvent::UpgradeError { peer_id, error } => {
+                warn!(
+                    "IOTA gossip upgrade error with {}: Cause: {:?}.",
+                    alias!(peer_id),
+                    error
+                );
+            }
+        }
     }
 }

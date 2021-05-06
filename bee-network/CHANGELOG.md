@@ -19,7 +19,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.2.1 - 2021-05-06
+
+### Changed
+
+- Rename `gossip` module to `iota_gossip` module;
+- Overhaul of the whole `iota_gossip` module;
+- Use `BufReader` and `BufWriter` for network I/O;
+- Use `V1Lazy` variant for optimized outbound protocol negotiation;
+
+### Removed
+
+- Some redundant abstractions;
+
+### Fixed
+
+- Incoming connections from "unknown" peers not denied if limit was reached;
+
 ## 0.2.0 - 2021-04-29
+
+### Added
 
 - Types;
   - `NetworkConfig` and `NetworkConfigBuilder` types;

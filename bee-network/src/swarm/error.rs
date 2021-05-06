@@ -4,7 +4,7 @@
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// IO Error.
-    #[error("{}", 0)]
+    #[error("{0}")]
     IoError(#[from] std::io::Error),
 
     /// Creating Noise authentication keys failed.
