@@ -17,6 +17,6 @@ pub enum Error {
     ReceivingEventFailed,
 
     /// An error regarding a specific peer occured.
-    #[error("{:?}", 0)]
+    #[error("{0}")]
     PeerError(#[from] crate::peer::error::Error),
 }
