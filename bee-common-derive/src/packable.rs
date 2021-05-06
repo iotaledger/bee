@@ -154,7 +154,7 @@ pub(crate) fn gen_enum_bodies<'a>(
         quote! {
             match <#ty>::unpack(unpacker)? {
                 #(#unpack_branches,) *
-                id => Err(U::Error::invalid_variant(id as u64))
+                id => Err(<U::Error as bee_common::packable::UnpackError>::invalid_variant::<Self>(id as u64))
             }
         },
     )
