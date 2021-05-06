@@ -18,7 +18,7 @@ pub fn packable(input: TokenStream) -> TokenStream {
         ..
     } = parse_macro_input!(input);
 
-    let (pack, unpack) = match data {
+    let (pack, unpack, packed_len) = match data {
         Data::Struct(data_struct) => packable::gen_struct_bodies(data_struct.fields),
         Data::Enum(data_enum) => match packable::parse_attr::<Type>("ty", &attrs) {
             Some(ty) => packable::gen_enum_bodies(data_enum.variants.iter(), ty),
@@ -30,5 +30,5 @@ pub fn packable(input: TokenStream) -> TokenStream {
         Data::Union(..) => abort!(ident.span(), "Unions cannot derive `Packable`"),
     };
 
-    packable::gen_impl(&ident, &generics, pack, unpack).into()
+    packable::gen_impl(&ident, &generics, pack, unpack, packed_len).into()
 }

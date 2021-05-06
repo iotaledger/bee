@@ -9,8 +9,8 @@ use syn::{
     Attribute, Fields, FieldsNamed, FieldsUnnamed, Generics, Ident, Index, Token, Type, Variant,
 };
 
-pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStream) {
-    let (pack, unpack);
+pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStream, TokenStream) {
+    let (pack, unpack, packed_len);
 
     match struct_fields {
         Fields::Named(FieldsNamed { named, .. }) => {
@@ -28,6 +28,10 @@ pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStr
             unpack = quote! {
                 Ok(Self { #(#labels: <#types>::unpack(unpacker)?,)* })
             };
+
+            packed_len = quote! {
+                0 #(+ <#types>::packed_len(&self.#labels)) *
+            }
         }
         Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
             let (indices, types): (Vec<Index>, Vec<&Type>) = unnamed
@@ -44,106 +48,132 @@ pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStr
             unpack = quote! {
                 Ok(Self(#(<#types>::unpack(unpacker)?), *))
             };
+
+            packed_len = quote! {
+                0 #(+ <#types>::packed_len(&self.#indices)) *
+            }
         }
         Fields::Unit => {
             pack = quote!(Ok(()));
             unpack = quote!(Ok(Self));
+            packed_len = quote!(0);
         }
     }
 
-    (pack, unpack)
+    (pack, unpack, packed_len)
 }
 
 pub(crate) fn gen_enum_bodies<'a>(
     variants: impl Iterator<Item = &'a Variant> + 'a,
     ty: Type,
-) -> (TokenStream, TokenStream) {
+) -> (TokenStream, TokenStream, TokenStream) {
     let mut indices = Vec::<(Index, &Ident)>::new();
 
-    let (pack_branches, unpack_branches): (Vec<TokenStream>, Vec<TokenStream>) = variants
-        .map(
-            |Variant {
-                 attrs, ident, fields, ..
-             }| {
-                let curr_index = parse_attr::<Index>("id", attrs).unwrap_or_else(|| {
-                    abort!(
-                        ident.span(),
-                        "All variants of an enum that derives `Packable` require a `#[packable(id = ...)]` attribute."
-                    )
-                });
+    let mut pack_branches = Vec::new();
+    let mut unpack_branches = Vec::new();
+    let mut packed_len_branches = Vec::new();
 
-                match indices.binary_search_by(|(index, _)| index.index.cmp(&curr_index.index)) {
-                    Ok(pos) => abort!(
-                        curr_index.span,
-                        "The identifier `{}` is already being used for the `{}` variant.",
-                        curr_index.index,
-                        indices[pos].1
-                    ),
-                    Err(pos) => indices.insert(pos, (curr_index.clone(), ident)),
-                }
+    for variant in variants {
+        let Variant {
+            attrs, ident, fields, ..
+        } = variant;
 
-                let id = proc_macro2::Literal::u64_unsuffixed(curr_index.index as u64);
+        let curr_index = parse_attr::<Index>("id", attrs).unwrap_or_else(|| {
+            abort!(
+                ident.span(),
+                "All variants of an enum that derives `Packable` require a `#[packable(id = ...)]` attribute."
+            )
+        });
 
-                let pack_branch: TokenStream;
-                let unpack_branch: TokenStream;
+        match indices.binary_search_by(|(index, _)| index.index.cmp(&curr_index.index)) {
+            Ok(pos) => abort!(
+                curr_index.span,
+                "The identifier `{}` is already being used for the `{}` variant.",
+                curr_index.index,
+                indices[pos].1
+            ),
+            Err(pos) => indices.insert(pos, (curr_index.clone(), ident)),
+        }
 
-                match fields {
-                    Fields::Named(FieldsNamed { named, .. }) => {
-                        let (labels, types): (Vec<&Ident>, Vec<&Type>) = named
-                            .iter()
-                            // This is a named field, which means its `ident` cannot be `None`
-                            .map(|field| (field.ident.as_ref().unwrap(), &field.ty))
-                            .unzip();
+        let id = proc_macro2::Literal::u64_unsuffixed(curr_index.index as u64);
 
-                        pack_branch = quote! {
-                            Self::#ident{#(#labels), *} => {
-                                (#id as #ty).pack(packer)?;
-                                #(<#types>::pack(&#labels, packer)?;) *
-                                Ok(())
-                            }
-                        };
+        let pack_branch: TokenStream;
+        let unpack_branch: TokenStream;
+        let packed_len_branch: TokenStream;
 
-                        unpack_branch = quote! {
-                            #id => Ok(Self::#ident{
-                                #(#labels: <#types>::unpack(unpacker)?,) *
-                            })
-                        };
-                    }
-                    Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
-                        let (fields, types): (Vec<Ident>, Vec<&Type>) = unnamed
-                            .iter()
-                            .enumerate()
-                            .map(|(index, field)| (format_ident!("field_{}", index), &field.ty))
-                            .unzip();
+        match fields {
+            Fields::Named(FieldsNamed { named, .. }) => {
+                let (labels, types): (Vec<&Ident>, Vec<&Type>) = named
+                    .iter()
+                    // This is a named field, which means its `ident` cannot be `None`
+                    .map(|field| (field.ident.as_ref().unwrap(), &field.ty))
+                    .unzip();
 
-                        pack_branch = quote! {
-                            Self::#ident(#(#fields), *) => {
-                                (#id as #ty).pack(packer)?;
-                                #(<#types>::pack(&#fields, packer)?;) *
-                                Ok(())
-                            }
-                        };
-
-                        unpack_branch = quote! {
-                            #id => Ok(Self::#ident(
-                                #(<#types>::unpack(unpacker)?), *
-                            ))
-                        };
-                    }
-                    Fields::Unit => {
-                        pack_branch = quote! {
-                            Self::#ident => (#id as #ty).pack(packer)
-                        };
-
-                        unpack_branch = quote! {
-                            #id => Ok(Self::#ident)
-                        };
+                pack_branch = quote! {
+                    Self::#ident{#(#labels), *} => {
+                        (#id as #ty).pack(packer)?;
+                        #(<#types>::pack(&#labels, packer)?;) *
+                        Ok(())
                     }
                 };
-                (pack_branch, unpack_branch)
-            },
-        )
-        .unzip();
+
+                unpack_branch = quote! {
+                    #id => Ok(Self::#ident{
+                        #(#labels: <#types>::unpack(unpacker)?,) *
+                    })
+                };
+
+                packed_len_branch = quote! {
+                    Self::#ident{#(#labels), *} => {
+                        (#id as #ty).packed_len() #(+ <#types>::packed_len(&#labels)) *
+                    }
+                };
+            }
+            Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
+                let (fields, types): (Vec<Ident>, Vec<&Type>) = unnamed
+                    .iter()
+                    .enumerate()
+                    .map(|(index, field)| (format_ident!("field_{}", index), &field.ty))
+                    .unzip();
+
+                pack_branch = quote! {
+                    Self::#ident(#(#fields), *) => {
+                        (#id as #ty).pack(packer)?;
+                        #(<#types>::pack(&#fields, packer)?;) *
+                        Ok(())
+                    }
+                };
+
+                unpack_branch = quote! {
+                    #id => Ok(Self::#ident(
+                        #(<#types>::unpack(unpacker)?), *
+                    ))
+                };
+
+                packed_len_branch = quote! {
+                    Self::#ident(#(#fields), *) => {
+                        (#id as #ty).packed_len() #(+ <#types>::packed_len(&#fields)) *
+                    }
+                };
+            }
+            Fields::Unit => {
+                pack_branch = quote! {
+                    Self::#ident => (#id as #ty).pack(packer)
+                };
+
+                unpack_branch = quote! {
+                    #id => Ok(Self::#ident)
+                };
+
+                packed_len_branch = quote! {
+                    Self::#ident => (#id as #ty).packed_len()
+                };
+            }
+        };
+        pack_branches.push(pack_branch);
+        unpack_branches.push(unpack_branch);
+        packed_len_branches.push(packed_len_branch);
+    }
 
     (
         quote! {
@@ -157,6 +187,11 @@ pub(crate) fn gen_enum_bodies<'a>(
                 id => Err(<U::Error as bee_common::packable::UnpackError>::invalid_variant::<Self>(id as u64))
             }
         },
+        quote! {
+            match self {
+                #(#packed_len_branches,) *
+            }
+        },
     )
 }
 
@@ -165,6 +200,7 @@ pub(crate) fn gen_impl(
     generics: &Generics,
     pack_body: TokenStream,
     unpack_body: TokenStream,
+    packed_len_body: TokenStream,
 ) -> TokenStream {
     let params = generics.params.iter();
 
@@ -173,8 +209,13 @@ pub(crate) fn gen_impl(
             fn pack<P: bee_common::packable::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
                 #pack_body
             }
+
             fn unpack<U: bee_common::packable::Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
                 #unpack_body
+            }
+
+            fn packed_len(&self) -> usize {
+                #packed_len_body
             }
         }
     }

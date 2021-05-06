@@ -69,6 +69,7 @@ fn pack_checked(value: impl Packable + Eq + Debug) -> Vec<u8> {
     let mut unpacker = SliceUnpacker::new(&packer.vec);
     let result = Packable::unpack(&mut unpacker).unwrap();
 
+    assert_eq!(value.packed_len(), packer.vec.len());
     assert_eq!(value, result);
 
     packer.vec

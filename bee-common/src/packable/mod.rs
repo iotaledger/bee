@@ -19,6 +19,8 @@ pub trait Packable: Sized {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
     /// Unpack this value from the given `Unpacker`.
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error>;
+    /// The size of the value in bytes after being packed.
+    fn packed_len(&self) -> usize;
 }
 
 macro_rules! impl_packable_for_int {
@@ -31,6 +33,10 @@ macro_rules! impl_packable_for_int {
             fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
                 let bytes: &[u8; core::mem::size_of::<Self>()] = unpacker.unpack_exact_bytes()?;
                 Ok(Self::from_le_bytes(*bytes))
+            }
+
+            fn packed_len(&self) -> usize {
+                core::mem::size_of::<Self>()
             }
         }
     };
@@ -52,6 +58,10 @@ impl Packable for usize {
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
         Ok(u64::unpack(unpacker)? as usize)
     }
+
+    fn packed_len(&self) -> usize {
+        core::mem::size_of::<u64>()
+    }
 }
 
 impl_packable_for_int!(i8);
@@ -70,6 +80,10 @@ impl Packable for isize {
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
         Ok(u64::unpack(unpacker)? as isize)
     }
+
+    fn packed_len(&self) -> usize {
+        core::mem::size_of::<i64>()
+    }
 }
 
 impl Packable for bool {
@@ -81,6 +95,10 @@ impl Packable for bool {
     /// Booleans are unpacked if the byte used to represent them is non-zero.
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
         Ok(u8::unpack(unpacker)? != 0)
+    }
+
+    fn packed_len(&self) -> usize {
+        core::mem::size_of::<u8>()
     }
 }
 
@@ -115,6 +133,10 @@ mod alloc_support {
 
             Ok(vec)
         }
+
+        fn packed_len(&self) -> usize {
+            0usize.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
+        }
     }
 
     impl<T: Packable> Packable for alloc::boxed::Box<[T]> {
@@ -131,6 +153,10 @@ mod alloc_support {
 
         fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
             Ok(alloc::vec::Vec::<T>::unpack(unpacker)?.into_boxed_slice())
+        }
+
+        fn packed_len(&self) -> usize {
+            0usize.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
         }
     }
 }
@@ -162,6 +188,10 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
         // Safety: We traversed the whole array and initialized every item.
         Ok(unsafe { (&array as *const [MaybeUninit<T>; N] as *const Self).read() })
     }
+
+    fn packed_len(&self) -> usize {
+        self.iter().map(T::packed_len).sum::<usize>()
+    }
 }
 
 /// Options are packed and unpacked using `0u8` as the prefix for `None` and `1u8` as the prefix
@@ -183,5 +213,13 @@ impl<T: Packable> Packable for Option<T> {
             1 => Ok(Some(T::unpack(unpacker)?)),
             n => Err(U::Error::invalid_variant::<Self>(n as u64)),
         }
+    }
+
+    fn packed_len(&self) -> usize {
+        0u8.packed_len()
+            + match self {
+                Some(item) => item.packed_len(),
+                None => 0,
+            }
     }
 }
