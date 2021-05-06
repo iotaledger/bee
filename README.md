@@ -47,6 +47,12 @@ having to fix each one individually.
 
 **Note:** The Rust programming language was chosen for Bee because of its C/C++ like performance and its strong memory safety guarantees. [Learn more about Rust](https://www.rust-lang.org/).
 
+## Building
+
+You can build a docker image by running the following at the root level of the project
+```
+docker build -t bee .
+```
 ## Supporting the project
 
 If you want to discuss Bee or have some questions about it, join us on the
