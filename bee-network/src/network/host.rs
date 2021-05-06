@@ -54,7 +54,7 @@ pub mod integrated {
             node.spawn::<Self, _, _>(|shutdown| async move {
                 network_host_processor(config, shutdown)
                     .await
-                    .expect("network host processor.");
+                    .expect("network host processor");
 
                 info!("Network Host stopped.");
             });
@@ -84,7 +84,7 @@ pub mod standalone {
             tokio::spawn(async move {
                 network_host_processor(config, shutdown)
                     .await
-                    .expect("network host processor.");
+                    .expect("network host processor");
 
                 info!("Network Host stopped.");
             });
