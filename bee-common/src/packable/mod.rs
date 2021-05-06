@@ -147,13 +147,13 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
         use core::mem::MaybeUninit;
 
-        // Safety: an uninitialized array of unitialized stuff is actually initialized.
+        // Safety: an uninitialized array of `MaybeUninit`s is safe to be considered initialized.
         let mut array = unsafe { MaybeUninit::<[MaybeUninit<T>; N]>::uninit().assume_init() };
 
         for item in array.iter_mut() {
             let unpacked = T::unpack(unpacker)?;
-            // Safety: each `item` is only visited once so we are never overwritting values that
-            // are already initialized.
+            // Safety: each `item` is only visited once so we are never overwriting nor dropping
+            // values that are already initialized.
             unsafe {
                 item.as_mut_ptr().write(unpacked);
             }

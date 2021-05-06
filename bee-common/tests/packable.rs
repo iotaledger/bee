@@ -112,9 +112,9 @@ fn packed_non_zero_bytes_are_truthy() {
     let bytes = packer.vec.leak();
 
     let mut unpacker = SliceUnpacker::new(bytes);
-    let result = bool::unpack(&mut unpacker).unwrap();
+    let is_true = bool::unpack(&mut unpacker).unwrap();
 
-    assert!(result);
+    assert!(is_true);
 }
 
 #[test]
