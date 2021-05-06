@@ -232,7 +232,6 @@ async fn peerstate_checker(shutdown: Shutdown, senders: Senders, peerlist: PeerL
 
             // Ignore if the command fails. We can always retry the next time.
             let _ = internal_commands.send(Command::DialPeer { peer_id });
-            // let _ = internal_commands.send(Command::DialAddress { address: info.address });
         }
     }
 
