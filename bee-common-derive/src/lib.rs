@@ -10,7 +10,13 @@ mod packable;
 #[proc_macro_error]
 #[proc_macro_derive(Packable, attributes(packable))]
 pub fn packable(input: TokenStream) -> TokenStream {
-    let DeriveInput { ident, data, attrs, .. } = parse_macro_input!(input);
+    let DeriveInput {
+        ident,
+        data,
+        attrs,
+        generics,
+        ..
+    } = parse_macro_input!(input);
 
     let (pack, unpack) = match data {
         Data::Struct(data_struct) => packable::gen_struct_bodies(data_struct.fields),
@@ -24,5 +30,5 @@ pub fn packable(input: TokenStream) -> TokenStream {
         Data::Union(..) => abort!(ident.span(), "Unions cannot derive `Packable`"),
     };
 
-    packable::gen_impl(&ident, pack, unpack).into()
+    packable::gen_impl(&ident, &generics, pack, unpack).into()
 }

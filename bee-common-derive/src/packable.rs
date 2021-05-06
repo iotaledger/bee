@@ -6,7 +6,7 @@ use proc_macro_error::abort;
 use quote::{format_ident, quote};
 use syn::{
     parse::{Parse, ParseStream},
-    Attribute, Fields, FieldsNamed, FieldsUnnamed, Ident, Index, Token, Type, Variant,
+    Attribute, Fields, FieldsNamed, FieldsUnnamed, Generics, Ident, Index, Token, Type, Variant,
 };
 
 pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStream) {
@@ -160,9 +160,16 @@ pub(crate) fn gen_enum_bodies<'a>(
     )
 }
 
-pub(crate) fn gen_impl(ident: &Ident, pack_body: TokenStream, unpack_body: TokenStream) -> TokenStream {
+pub(crate) fn gen_impl(
+    ident: &Ident,
+    generics: &Generics,
+    pack_body: TokenStream,
+    unpack_body: TokenStream,
+) -> TokenStream {
+    let params = generics.params.iter();
+
     quote! {
-        impl Packable for #ident {
+        impl <#(#params: Packable,) *> Packable for #ident #generics {
             fn pack<P: bee_common::packable::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
                 #pack_body
             }
