@@ -182,10 +182,10 @@ async fn command_processor(shutdown: Shutdown, commands: CommandReceiver, sender
 async fn event_processor(shutdown: Shutdown, events: InternalEventReceiver, senders: Senders, peerlist: PeerList) {
     debug!("Event processor running.");
 
-    let mut int_events = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(events));
+    let mut internal_events = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(events));
 
-    while let Some(int_event) = int_events.next().await {
-        if let Err(e) = process_internal_event(int_event, &senders, &peerlist).await {
+    while let Some(internal_event) = internal_events.next().await {
+        if let Err(e) = process_internal_event(internal_event, &senders, &peerlist).await {
             error!("Error processing internal event. Cause: {}", e);
             continue;
         }
@@ -323,8 +323,12 @@ async fn process_command(command: Command, senders: &Senders, peerlist: &PeerLis
     Ok(())
 }
 
-async fn process_internal_event(i_event: InternalEvent, senders: &Senders, peerlist: &PeerList) -> Result<(), Error> {
-    match i_event {
+async fn process_internal_event(
+    internal_event: InternalEvent,
+    senders: &Senders,
+    peerlist: &PeerList,
+) -> Result<(), Error> {
+    match internal_event {
         InternalEvent::AddressBound { address } => {
             senders
                 .events

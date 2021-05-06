@@ -112,16 +112,16 @@ async fn network_host_processor(
 
     loop {
         let swarm_next_event = Swarm::next_event(&mut swarm);
-        let recv_int_command = (&mut internal_command_receiver).recv();
+        let recv_internal_command = (&mut internal_command_receiver).recv();
 
         tokio::select! {
             _ = &mut shutdown => break,
             event = swarm_next_event => {
                 process_swarm_event(event, &internal_event_sender, &peerlist).await;
             }
-            command = recv_int_command => {
+            command = recv_internal_command => {
                 if let Some(command) = command {
-                    process_icommand(command, &mut swarm, &peerlist).await;
+                    process_internal_command(command, &mut swarm, &peerlist).await;
                 }
             },
         }
@@ -172,8 +172,8 @@ async fn process_swarm_event(
     }
 }
 
-async fn process_icommand(icommand: Command, swarm: &mut Swarm<SwarmBehavior>, peerlist: &PeerList) {
-    match icommand {
+async fn process_internal_command(internal_command: Command, swarm: &mut Swarm<SwarmBehavior>, peerlist: &PeerList) {
+    match internal_command {
         Command::DialAddress { address } => {
             if let Err(e) = dial_addr(swarm, address.clone(), peerlist).await {
                 warn!("{:?}", e);
