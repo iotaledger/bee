@@ -339,7 +339,6 @@ impl PeerList {
     }
 
     fn find_peer_if_connected(&self, addr: &Multiaddr) -> Option<PeerId> {
-        // #[allow(clippy::filter_next)]
         self.filter_info(|info, state| state.is_connected() && info.address == *addr)
             .next()
             .map(|(peer_id, _)| peer_id)
