@@ -78,3 +78,14 @@ cargo build --release
 cp config.example.toml config.toml
 ../target/release/bee
 ```
+
+## Script
+
+There is a `build_and_run.sh` script that will build the bee node with dashboard or without, it also builds the `docker image` and run the container using `docker-compose`
+
+- usage
+  - `build bee` build without the dashboard
+  - `build bee-dashboard` build with dashboard
+  - `build docker`  create a docker image using as image tag the version in `Cargo.toml` 
+  - `run bee-image`  run a bee node container
+  - `-h` or ` help` print help

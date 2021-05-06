@@ -1,0 +1,19 @@
+version: "3.9"
+services:
+  bee:
+    build:
+      context: ../../
+      dockerfile: ./bee-node/docker/Dockerfile
+    image: bee:${IMAGE_TAG}
+    working_dir: /bee_workdir
+    tty: true # for colored logs
+    container_name: "bee"
+    ports:
+      - "14265:14265"
+      - "15600:15600"
+      - "1883:1883"
+      - "8081:8081"
+    volumes:
+      - ../config.toml:/bee_workdir/config.toml
+      - ../storage:/bee_workdir/storage
+    # restart: always
