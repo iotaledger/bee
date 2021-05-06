@@ -17,6 +17,9 @@ proc-macro = true
 name = "tests"
 path = "tests/lib.rs"
 
+[package.metadata.cargo-udeps.ignore]
+development = ["bee-common"]
+
 [dev-dependencies]
 bee-common = { path = "../bee-common" }
 
