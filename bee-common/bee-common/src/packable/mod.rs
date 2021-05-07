@@ -11,7 +11,7 @@ mod io;
 mod packer;
 mod unpacker;
 
-pub use error::{UnknownVariant, UnpackError};
+pub use error::UnpackError;
 pub use packer::Packer;
 pub use unpacker::Unpacker;
 
@@ -125,7 +125,7 @@ impl<T: Packable> Packable for Option<T> {
         match u8::unpack(unpacker)? {
             0 => Ok(None),
             1 => Ok(Some(T::unpack(unpacker)?)),
-            n => Err(U::Error::custom(UnknownVariant::new::<Self>(n.into()))),
+            n => Err(U::Error::unknown_variant::<Self>(n.into())),
         }
     }
 
