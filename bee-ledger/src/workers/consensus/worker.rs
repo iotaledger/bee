@@ -7,12 +7,8 @@ use crate::{
         consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
         error::Error,
         event::{MilestoneConfirmed, OutputConsumed, OutputCreated},
-        pruning::{
-            condition::{should_prune, should_snapshot},
-            config::PruningConfig,
-            constants::{PRUNING_THRESHOLD, SOLID_ENTRY_POINT_THRESHOLD_FUTURE, SOLID_ENTRY_POINT_THRESHOLD_PAST},
-        },
-        snapshot::{config::SnapshotConfig, worker::SnapshotWorker},
+        pruning::{condition::should_prune, config::PruningConfig, pruning_impl::prune},
+        snapshot::{condition::should_snapshot, config::SnapshotConfig, worker::SnapshotWorker},
         storage::{self, StorageBackend},
     },
 };
@@ -25,7 +21,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::{config::TangleConfig, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 
@@ -35,6 +31,11 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::TryInto};
+
+const SNAPSHOT_DEPTH_MIN: u32 = 50;
+
+const PRUNING_DEPTH_DELTA: u32 = 50;
+const PRUNING_INTERVAL: u32 = 10;
 
 pub struct ConsensusWorkerEvent(pub MessageId);
 
@@ -240,38 +241,35 @@ where
     }
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        let (snapshot_config, pruning_config) = config;
+        let (mut snapshot_config, mut pruning_config) = config;
 
         let (tx, rx) = mpsc::unbounded_channel();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
+        let tangle_config = node.resource::<TangleConfig>();
         let storage = node.storage();
         let bus = node.bus();
 
         validate_ledger_state(&*storage).await?;
 
-        // TODO should be done in config directly ?
-        let depth = if snapshot_config.depth() < SOLID_ENTRY_POINT_THRESHOLD_FUTURE {
+        if snapshot_config.depth() < SNAPSHOT_DEPTH_MIN {
             warn!(
                 "Configuration value for \"depth\" is too low ({}), value changed to {}.",
                 snapshot_config.depth(),
-                SOLID_ENTRY_POINT_THRESHOLD_FUTURE
+                SNAPSHOT_DEPTH_MIN
             );
-            SOLID_ENTRY_POINT_THRESHOLD_FUTURE
-        } else {
-            snapshot_config.depth()
-        };
-        let delay_min = snapshot_config.depth() + SOLID_ENTRY_POINT_THRESHOLD_PAST + PRUNING_THRESHOLD + 1;
-        let delay = if pruning_config.delay() < delay_min {
+            snapshot_config.override_depth(SNAPSHOT_DEPTH_MIN)
+        }
+
+        let pruning_delay_min = snapshot_config.depth() + PRUNING_DEPTH_DELTA;
+        if pruning_config.delay() < pruning_delay_min {
             warn!(
                 "Configuration value for \"delay\" is too low ({}), value changed to {}.",
                 pruning_config.delay(),
-                delay_min
+                pruning_delay_min
             );
-            delay_min
-        } else {
-            pruning_config.delay()
-        };
+            pruning_config.override_delay(pruning_delay_min);
+        }
 
         // Unwrap is fine because we just inserted the ledger index.
         // TODO unwrap
@@ -302,16 +300,25 @@ where
                     continue;
                 }
 
-                if should_snapshot(&tangle, MilestoneIndex(*ledger_index), depth, &snapshot_config) {
-                    // if let Err(e) = snapshot(snapshot_config.path(), event.index - depth) {
+                if let Ok(snapshot_index) = should_snapshot(&tangle, ledger_index, &snapshot_config) {
+                    // if let Err(e) = snapshot(snapshot_config.path(), snapshot_index) {
                     //     error!("Failed to create snapshot: {:?}.", e);
                     // }
                 }
 
-                if should_prune(&tangle, MilestoneIndex(*ledger_index), delay, &pruning_config) {
-                    // if let Err(e) = prune_database(&tangle, MilestoneIndex(*event.index - delay)) {
-                    //     error!("Failed to prune database: {:?}.", e);
-                    // }
+                if let Ok(pruning_target_index) = should_prune(&tangle, ledger_index, &pruning_config) {
+                    if let Err(e) = prune(
+                        &tangle,
+                        &storage,
+                        &bus,
+                        pruning_target_index,
+                        &pruning_config,
+                        tangle_config.below_max_depth(),
+                    )
+                    .await
+                    {
+                        error!("Failed to prune database: {:?}.", e);
+                    }
                 }
             }
 

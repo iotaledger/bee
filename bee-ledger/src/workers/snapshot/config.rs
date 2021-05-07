@@ -114,6 +114,11 @@ impl SnapshotConfig {
         self.depth
     }
 
+    /// Overrides the depth of the `SnapshotConfig`.
+    pub fn override_depth(&mut self, new_depth: u32) {
+        self.depth = new_depth;
+    }
+
     /// Returns the synced interval of the `SnapshotConfig`.
     pub fn interval_synced(&self) -> u32 {
         self.interval_synced
