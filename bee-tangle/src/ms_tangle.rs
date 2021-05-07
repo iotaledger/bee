@@ -328,6 +328,16 @@ impl<B: StorageBackend> MsTangle<B> {
         self.solid_entry_points.lock().await.insert(sep, index);
     }
 
+    /// Returns a copy of all solid entry points.
+    pub async fn get_solid_entry_points(&self) -> Vec<(SolidEntryPoint, MilestoneIndex)> {
+        self.solid_entry_points
+            .lock()
+            .await
+            .iter()
+            .map(|(k, v)| (*k, *v))
+            .collect::<Vec<_>>()
+    }
+
     /// Removes the given solid entry point from the set of solid entry points.
     pub async fn remove_solid_entry_point(&self, sep: &SolidEntryPoint) {
         self.solid_entry_points.lock().await.remove(sep);
@@ -336,6 +346,16 @@ impl<B: StorageBackend> MsTangle<B> {
     /// Clear all solid entry points.
     pub async fn clear_solid_entry_points(&self) {
         self.solid_entry_points.lock().await.clear();
+    }
+
+    /// Replaces all solid entry points.
+    pub async fn replace_solid_entry_points(
+        &self,
+        new_seps: impl IntoIterator<Item = (SolidEntryPoint, MilestoneIndex)>,
+    ) {
+        let mut seps = self.solid_entry_points.lock().await;
+        seps.clear();
+        seps.extend(new_seps);
     }
 
     /// Returns whether the message associated with given solid entry point is a solid entry point.
