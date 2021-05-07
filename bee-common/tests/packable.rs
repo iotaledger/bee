@@ -1,78 +1,20 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::{PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_common::packable::Packable;
 
 use core::{fmt::Debug, mem::size_of};
 
-#[derive(Debug)]
-enum Error {
-    UnexpectedEof,
-    InvalidVariant(&'static str, u64),
-}
-
-impl PackError for Error {}
-
-impl UnpackError for Error {
-    fn invalid_variant<P: Packable>(value: u64) -> Self {
-        Self::InvalidVariant(core::any::type_name::<P>(), value)
-    }
-}
-
-#[derive(Default)]
-struct VecPacker {
-    vec: Vec<u8>,
-}
-
-impl Packer for VecPacker {
-    type Error = Error;
-
-    fn pack_bytes(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
-        self.vec.extend_from_slice(bytes);
-        Ok(())
-    }
-}
-
-struct SliceUnpacker<'un> {
-    slice: &'un [u8],
-}
-
-impl<'un> SliceUnpacker<'un> {
-    fn new(slice: &'un [u8]) -> Self {
-        Self { slice }
-    }
-}
-
-impl<'un> Unpacker for SliceUnpacker<'un> {
-    type Error = Error;
-
-    fn unpack_exact_bytes<const N: usize>(&mut self) -> Result<&[u8; N], Self::Error> {
-        Ok(unsafe { &*(self.unpack_bytes(N)? as *const [u8] as *const [u8; N]) })
-    }
-
-    fn unpack_bytes(&mut self, n: usize) -> Result<&[u8], Self::Error> {
-        let (head, tail) = self.slice.split_at(n);
-
-        if head.len() == n {
-            self.slice = tail;
-            Ok(head)
-        } else {
-            Err(Error::UnexpectedEof)
-        }
-    }
-}
-
 fn pack_checked(value: impl Packable + Eq + Debug) -> Vec<u8> {
-    let mut packer = VecPacker::default();
+    let mut packer = Vec::new();
     value.pack(&mut packer).unwrap();
 
-    let mut unpacker = SliceUnpacker::new(&packer.vec);
-    let result = Packable::unpack(&mut unpacker).unwrap();
+    let result = Packable::unpack(&mut packer.as_slice()).unwrap();
 
-    assert_eq!(value.packed_len(), packer.vec.len());
+    assert_eq!(value.packed_len(), packer.len());
     assert_eq!(value, result);
 
-    packer.vec
+    packer
 }
 
 macro_rules! impl_packable_test_for_num {
@@ -107,13 +49,10 @@ fn packable_bool() {
 
 #[test]
 fn packed_non_zero_bytes_are_truthy() {
-    let mut packer = VecPacker::default();
+    let mut packer = Vec::new();
     42u8.pack(&mut packer).unwrap();
 
-    let bytes = packer.vec.leak();
-
-    let mut unpacker = SliceUnpacker::new(bytes);
-    let is_true = bool::unpack(&mut unpacker).unwrap();
+    let is_true = bool::unpack(&mut packer.as_slice()).unwrap();
 
     assert!(is_true);
 }

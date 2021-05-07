@@ -12,9 +12,10 @@ homepage = "https://www.iota.org"
 
 [features]
 alloc = []
+io = []
 
 [dev-dependencies]
-bee-common = { path = ".", features = ["alloc"] }
+bee-common = { path = ".", features = ["alloc", "io"] }
 
 [build-dependencies]
 autocfg = "1.0"

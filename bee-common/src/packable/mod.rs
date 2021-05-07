@@ -3,11 +3,17 @@
 
 //! A module that provides a `Packable` trait to serialize and deserialize types.
 
+#[cfg(feature = "alloc")]
+mod alloc;
+mod error;
+#[cfg(feature = "io")]
+mod io;
 mod packer;
 mod unpacker;
 
-pub use packer::{PackError, Packer};
-pub use unpacker::{UnpackError, Unpacker};
+pub use error::{UnknownVariant, UnpackError};
+pub use packer::Packer;
+pub use unpacker::Unpacker;
 
 /// A type that can be packed and unpacked.
 ///
@@ -31,8 +37,8 @@ macro_rules! impl_packable_for_int {
             }
 
             fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-                let bytes: &[u8; core::mem::size_of::<Self>()] = unpacker.unpack_exact_bytes()?;
-                Ok(Self::from_le_bytes(*bytes))
+                let bytes: [u8; core::mem::size_of::<Self>()] = unpacker.unpack_exact_bytes()?;
+                Ok(Self::from_le_bytes(bytes))
             }
 
             fn packed_len(&self) -> usize {
@@ -102,62 +108,33 @@ impl Packable for bool {
     }
 }
 
-#[cfg(feature = "alloc")]
-mod alloc_support {
-    extern crate alloc;
-
-    use super::{Packable, Packer, Unpacker};
-
-    impl<T: Packable> Packable for alloc::vec::Vec<T> {
-        fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-            // The length of any dynamically-sized sequence must be prefixed.
-            self.len().pack(packer)?;
-
-            for item in self.iter() {
-                item.pack(packer)?;
+/// Options are packed and unpacked using `0u8` as the prefix for `None` and `1u8` as the prefix
+/// for `Some`.
+impl<T: Packable> Packable for Option<T> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        match self {
+            None => 0u8.pack(packer),
+            Some(item) => {
+                1u8.pack(packer)?;
+                item.pack(packer)
             }
-
-            Ok(())
-        }
-
-        fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-            // The length of any dynamically-sized sequence must be prefixed.
-            let len = usize::unpack(unpacker)?;
-
-            let mut vec = Self::with_capacity(len);
-
-            for _ in 0..len {
-                let item = T::unpack(unpacker)?;
-                vec.push(item);
-            }
-
-            Ok(vec)
-        }
-
-        fn packed_len(&self) -> usize {
-            0usize.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
         }
     }
 
-    impl<T: Packable> Packable for alloc::boxed::Box<[T]> {
-        fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-            // The length of any dynamically-sized sequence must be prefixed.
-            self.len().pack(packer)?;
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
+        match u8::unpack(unpacker)? {
+            0 => Ok(None),
+            1 => Ok(Some(T::unpack(unpacker)?)),
+            n => Err(U::Error::custom(UnknownVariant::new::<Self>(n.into()))),
+        }
+    }
 
-            for item in self.iter() {
-                item.pack(packer)?;
+    fn packed_len(&self) -> usize {
+        0u8.packed_len()
+            + match self {
+                Some(item) => item.packed_len(),
+                None => 0,
             }
-
-            Ok(())
-        }
-
-        fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-            Ok(alloc::vec::Vec::<T>::unpack(unpacker)?.into_boxed_slice())
-        }
-
-        fn packed_len(&self) -> usize {
-            0usize.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
-        }
     }
 }
 
@@ -191,35 +168,5 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
 
     fn packed_len(&self) -> usize {
         self.iter().map(T::packed_len).sum::<usize>()
-    }
-}
-
-/// Options are packed and unpacked using `0u8` as the prefix for `None` and `1u8` as the prefix
-/// for `Some`.
-impl<T: Packable> Packable for Option<T> {
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
-        match self {
-            None => 0u8.pack(packer),
-            Some(item) => {
-                1u8.pack(packer)?;
-                item.pack(packer)
-            }
-        }
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-        match u8::unpack(unpacker)? {
-            0 => Ok(None),
-            1 => Ok(Some(T::unpack(unpacker)?)),
-            n => Err(U::Error::invalid_variant::<Self>(n as u64)),
-        }
-    }
-
-    fn packed_len(&self) -> usize {
-        0u8.packed_len()
-            + match self {
-                Some(item) => item.packed_len(),
-                None => 0,
-            }
     }
 }
