@@ -329,13 +329,8 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 
     /// Returns a copy of all solid entry points.
-    pub async fn get_solid_entry_points(&self) -> Vec<(SolidEntryPoint, MilestoneIndex)> {
-        self.solid_entry_points
-            .lock()
-            .await
-            .iter()
-            .map(|(k, v)| (*k, *v))
-            .collect::<Vec<_>>()
+    pub async fn get_solid_entry_points(&self) -> HashMap<SolidEntryPoint, MilestoneIndex> {
+        self.solid_entry_points.lock().await.clone()
     }
 
     /// Removes the given solid entry point from the set of solid entry points.
