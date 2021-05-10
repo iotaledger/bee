@@ -16,6 +16,9 @@ pub enum Error {
     /// Unexpected snapshot kind.
     #[error("Unexpected snapshot kind: expected {0:?}, read {1:?}")]
     UnexpectedSnapshotKind(SnapshotKind, SnapshotKind),
+    /// Downloading failed.
+    #[error("Downloading failed.")]
+    DownloadingFailed,
     /// No snapshot download source available.
     #[error("No snapshot download source available")]
     NoDownloadSourceAvailable,

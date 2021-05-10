@@ -3,7 +3,7 @@
 
 use crate::workers::snapshot::error::Error;
 
-use log::{error, info, warn};
+use log::{info, warn};
 
 use std::{fs::File, io::copy, path::Path};
 
@@ -23,24 +23,20 @@ pub(crate) async fn download_snapshot_file(file_path: &Path, download_urls: &[St
         let url = url.to_owned() + &file_name.to_string_lossy();
 
         info!("Downloading snapshot file {}...", url);
+
         match reqwest::get(&url).await.and_then(|res| res.error_for_status()) {
-            Ok(res) => match File::create(file_path) {
-                // TODO unwrap
-                Ok(mut file) => match copy(&mut res.bytes().await.unwrap().as_ref(), &mut file) {
-                    Ok(_) => break,
-                    Err(e) => warn!("Copying snapshot file failed: {:?}.", e),
-                },
-                Err(e) => warn!("Creating snapshot file failed: {:?}.", e),
-            },
-            Err(e) => match e.status() {
-                Some(status) => warn!("Downloading snapshot file failed with status code {}.", status),
-                None => warn!("Downloading snapshot file failed: {:?}.", e),
-            },
+            Ok(res) => {
+                copy(
+                    &mut res.bytes().await.map_err(|_| Error::DownloadingFailed)?.as_ref(),
+                    &mut File::create(file_path)?,
+                )?;
+                break;
+            }
+            Err(e) => warn!("Downloading snapshot file failed with status code {:?}.", e.status()),
         }
     }
 
     if !file_path.exists() {
-        error!("No working download source available.");
         return Err(Error::NoDownloadSourceAvailable);
     }
 
