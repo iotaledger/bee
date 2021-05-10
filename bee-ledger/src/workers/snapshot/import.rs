@@ -10,7 +10,8 @@ use crate::{
     },
     workers::{
         consensus::worker::migration_from_milestone,
-        snapshot::{config::SnapshotConfig, download::download_snapshot_file, error::Error},
+        error::Error,
+        snapshot::{config::SnapshotConfig, download::download_snapshot_file, error::Error as SnapshotError},
         storage::{self, apply_balance_diffs, apply_milestone, create_output, rollback_milestone, StorageBackend},
     },
 };
@@ -37,7 +38,10 @@ use std::{
 
 fn snapshot_reader(path: &Path) -> Result<BufReader<File>, Error> {
     Ok(BufReader::new(
-        OpenOptions::new().read(true).open(path).map_err(Error::Io)?,
+        OpenOptions::new()
+            .read(true)
+            .open(path)
+            .map_err(|e| Error::Snapshot(SnapshotError::Io(e)))?,
     ))
 }
 
@@ -47,14 +51,13 @@ async fn import_solid_entry_points<R: Read, B: StorageBackend>(
     sep_count: u64,
     index: MilestoneIndex,
 ) -> Result<(), Error> {
-    // TODO also clear tangle SEPs
     Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage)
         .await
-        .unwrap();
+        .map_err(|e| Error::Storage(Box::new(e)))?;
     for _ in 0..sep_count {
         Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &SolidEntryPoint::unpack(reader)?, &index)
             .await
-            .unwrap();
+            .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
     Ok(())
@@ -79,9 +82,7 @@ async fn import_outputs<R: Read, B: StorageBackend>(
         balance_diffs.output_add(created_output.inner())?;
     }
 
-    apply_balance_diffs(&*storage, &balance_diffs)
-        .await
-        .map_err(|e| Error::Consumer(Box::new(e)))?;
+    apply_balance_diffs(&*storage, &balance_diffs).await?;
 
     Ok(())
 }
@@ -122,8 +123,7 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
                     receipt,
                     TreasuryOutput::new(consumed_treasury.0, consumed_treasury.1),
                 )
-                .await
-                .map_err(|e| Error::Consumer(Box::new(e)))?,
+                .await?,
             )
         } else {
             None
@@ -142,7 +142,7 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
                     .await
                     .unwrap();
             }
-            _ => return Err(Error::UnexpectedDiffIndex(index)),
+            _ => return Err(Error::Snapshot(SnapshotError::UnexpectedMilestoneDiffIndex(index))),
         }
     }
 
@@ -157,26 +157,32 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
     let header = SnapshotHeader::unpack(&mut reader)?;
 
     if header.kind() != SnapshotKind::Full {
-        return Err(Error::UnexpectedSnapshotKind(SnapshotKind::Full, header.kind()));
+        return Err(Error::Snapshot(SnapshotError::UnexpectedSnapshotKind(
+            SnapshotKind::Full,
+            header.kind(),
+        )));
     }
 
     if header.network_id() != network_id {
-        return Err(Error::NetworkIdMismatch(header.network_id(), network_id));
+        return Err(Error::Snapshot(SnapshotError::NetworkIdMismatch(
+            header.network_id(),
+            network_id,
+        )));
     }
 
     let full_header = FullSnapshotHeader::unpack(&mut reader)?;
 
     if header.ledger_index() < header.sep_index() {
-        return Err(Error::LedgerSepIndexesInconsistency(
+        return Err(Error::Snapshot(SnapshotError::LedgerSepIndexesInconsistency(
             header.ledger_index(),
             header.sep_index(),
-        ));
+        )));
     }
     if (*(header.ledger_index() - header.sep_index())) as usize != full_header.milestone_diff_count() as usize {
-        return Err(Error::InvalidMilestoneDiffsCount(
+        return Err(Error::Snapshot(SnapshotError::InvalidMilestoneDiffsCount(
             (*(header.ledger_index() - header.sep_index())) as usize,
             full_header.milestone_diff_count() as usize,
-        ));
+        )));
     }
 
     storage::insert_treasury_output(
@@ -186,12 +192,9 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
             *full_header.treasury_output_milestone_id(),
         ),
     )
-    .await
-    .map_err(|e| Error::Consumer(Box::new(e)))?;
+    .await?;
 
-    storage::insert_ledger_index(storage, &header.ledger_index().into())
-        .await
-        .map_err(|e| Error::Consumer(Box::new(e)))?;
+    storage::insert_ledger_index(storage, &header.ledger_index().into()).await?;
     storage::insert_snapshot_info(
         storage,
         &SnapshotInfo::new(
@@ -202,8 +205,7 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
             header.timestamp(),
         ),
     )
-    .await
-    .map_err(|e| Error::Consumer(Box::new(e)))?;
+    .await?;
 
     import_solid_entry_points(&mut reader, storage, full_header.sep_count(), header.sep_index()).await?;
     import_outputs(&mut reader, storage, full_header.output_count()).await?;
@@ -232,31 +234,35 @@ async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, netw
     let header = SnapshotHeader::unpack(&mut reader)?;
 
     if header.kind() != SnapshotKind::Delta {
-        return Err(Error::UnexpectedSnapshotKind(SnapshotKind::Delta, header.kind()));
+        return Err(Error::Snapshot(SnapshotError::UnexpectedSnapshotKind(
+            SnapshotKind::Delta,
+            header.kind(),
+        )));
     }
 
     if header.network_id() != network_id {
-        return Err(Error::NetworkIdMismatch(header.network_id(), network_id));
+        return Err(Error::Snapshot(SnapshotError::NetworkIdMismatch(
+            header.network_id(),
+            network_id,
+        )));
     }
 
     let delta_header = DeltaSnapshotHeader::unpack(&mut reader)?;
 
     if header.sep_index() < header.ledger_index() {
-        return Err(Error::LedgerSepIndexesInconsistency(
+        return Err(Error::Snapshot(SnapshotError::LedgerSepIndexesInconsistency(
             header.ledger_index(),
             header.sep_index(),
-        ));
+        )));
     }
     if (*(header.sep_index() - header.ledger_index())) as usize != delta_header.milestone_diff_count() as usize {
-        return Err(Error::InvalidMilestoneDiffsCount(
+        return Err(Error::Snapshot(SnapshotError::InvalidMilestoneDiffsCount(
             (*(header.sep_index() - header.ledger_index())) as usize,
             delta_header.milestone_diff_count() as usize,
-        ));
+        )));
     }
 
-    storage::insert_ledger_index(storage, &header.ledger_index().into())
-        .await
-        .map_err(|e| Error::Consumer(Box::new(e)))?;
+    storage::insert_ledger_index(storage, &header.ledger_index().into()).await?;
     storage::insert_snapshot_info(
         storage,
         &SnapshotInfo::new(
@@ -267,8 +273,7 @@ async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, netw
             header.timestamp(),
         ),
     )
-    .await
-    .map_err(|e| Error::Consumer(Box::new(e)))?;
+    .await?;
 
     import_solid_entry_points(&mut reader, storage, delta_header.sep_count(), header.sep_index()).await?;
     import_milestone_diffs(&mut reader, storage, delta_header.milestone_diff_count()).await?;
@@ -296,7 +301,7 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
     let delta_exists = config.delta_path().map_or(false, Path::exists);
 
     if !full_exists && delta_exists {
-        return Err(Error::OnlyDeltaSnapshotFileExists);
+        return Err(Error::Snapshot(SnapshotError::OnlyDeltaSnapshotFileExists));
     }
 
     if !full_exists {

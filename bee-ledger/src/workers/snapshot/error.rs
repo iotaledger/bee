@@ -1,52 +1,42 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::{snapshot::SnapshotKind, Error as TypeError};
+use crate::types::snapshot::SnapshotKind;
 
-use bee_message::{milestone::MilestoneIndex, Error as MessageError};
+use bee_message::milestone::MilestoneIndex;
 
 use thiserror::Error;
 
+/// Errors occurring during snapshot operations.
 #[derive(Debug, Error)]
 pub enum Error {
+    /// I/O error happened.
     #[error("I/O error happened: {0}")]
     Io(#[from] std::io::Error),
-    #[error("Invalid snapshot kind: {0}")]
-    InvalidKind(u8),
-    #[error("Unsupported snapshot version: supports {0}, read {1}")]
-    UnsupportedVersion(u8, u8),
+    /// Unexpected snapshot kind.
     #[error("Unexpected snapshot kind: expected {0:?}, read {1:?}")]
     UnexpectedSnapshotKind(SnapshotKind, SnapshotKind),
+    /// No snapshot download source available.
     #[error("No snapshot download source available")]
     NoDownloadSourceAvailable,
-    #[error("Invalid snapshot path: {0}")]
+    /// Invalid file path.
+    #[error("Invalid file path: {0}")]
     InvalidFilePath(String),
-    #[error("Message error: {0}")]
-    Message(#[from] MessageError),
-    #[error("Type error: {0}")]
-    Type(#[from] TypeError),
+    /// Network id mismatch between configuration and snapshot.
     #[error("Network id mismatch between configuration and snapshot: {0} != {1}")]
     NetworkIdMismatch(u64, u64),
+    /// Inconsistency between ledger index and sep index.
     #[error("Inconsistency between ledger index {0} and sep index {1}")]
     LedgerSepIndexesInconsistency(MilestoneIndex, MilestoneIndex),
+    /// Invalid milestone diffs count.
     #[error("Invalid milestone diffs count: expected {0}, read {1}")]
     InvalidMilestoneDiffsCount(usize, usize),
-    #[error("Invalid payload kind: {0}")]
-    InvalidPayloadKind(u32),
-    #[error("")]
-    UnsupportedOutputKind(u8),
-    #[error("")]
-    MissingConsumedTreasury,
-    #[error("Milestone length mismatch: expected {0}, got {1}")]
-    MilestoneLengthMismatch(usize, usize),
+    /// Only a delta snapshot file exists without a full snapshot file.
     #[error(
-        "Only a delta snapshot file exists, without a full snapshot file. Remove the delta snapshot file and restart"
+        "Only a delta snapshot file exists without a full snapshot file. Remove the delta snapshot file and restart"
     )]
     OnlyDeltaSnapshotFileExists,
-    #[error("Unexpected milestine diff index: {0:?}")]
-    UnexpectedDiffIndex(MilestoneIndex),
-    #[error("Storage operation failed: {0}")]
-    StorageBackend(Box<dyn std::error::Error + Send + 'static>),
-    #[error("")]
-    Consumer(Box<dyn std::error::Error + Send + 'static>),
+    /// Unexpected milestone diff index.
+    #[error("Unexpected milestone diff index: {0:?}")]
+    UnexpectedMilestoneDiffIndex(MilestoneIndex),
 }
