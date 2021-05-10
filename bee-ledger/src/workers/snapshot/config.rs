@@ -101,7 +101,7 @@ impl SnapshotConfig {
 
     /// Returns the delta path of the `SnapshotConfig`.
     pub fn delta_path(&self) -> Option<&Path> {
-        self.delta_path.as_ref().map(PathBuf::as_path)
+        self.delta_path.as_deref()
     }
 
     /// Returns the download URLs of the `SnapshotConfig`.

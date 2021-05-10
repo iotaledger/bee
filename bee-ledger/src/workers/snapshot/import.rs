@@ -307,13 +307,12 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
     import_full_snapshot(storage, config.full_path(), network_id).await?;
 
     if let Some(delta_path) = config.delta_path() {
-        if !delta_exists {
-            if download_snapshot_file(delta_path, config.download_urls())
+        if !delta_exists
+            && download_snapshot_file(delta_path, config.download_urls())
                 .await
                 .is_err()
-            {
-                warn!("Could not download the delta snapshot file and it will not be imported.");
-            }
+        {
+            warn!("Could not download the delta snapshot file and it will not be imported.");
         }
 
         if Path::exists(delta_path) {
