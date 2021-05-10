@@ -274,8 +274,7 @@ where
         };
 
         // Unwrap is fine because we just inserted the ledger index.
-        // TODO unwrap
-        let mut ledger_index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
+        let mut ledger_index = storage::fetch_ledger_index(&*storage).await?.unwrap();
         let mut receipt_migrated_at = MilestoneIndex(0);
 
         node.spawn::<Self, _, _>(|shutdown| async move {

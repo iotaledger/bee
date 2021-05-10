@@ -2,19 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod consensus;
-pub mod error;
 pub mod event;
 pub mod pruning;
 pub mod snapshot;
 pub mod storage;
 
-pub use storage::StorageBackend;
+pub(crate) mod error;
 
-use bee_runtime::node::{Node, NodeBuilder};
+pub use storage::StorageBackend;
 
 use consensus::ConsensusWorker;
 use pruning::config::PruningConfig;
 use snapshot::{config::SnapshotConfig, worker::SnapshotWorker};
+
+use bee_runtime::node::{Node, NodeBuilder};
 
 pub fn init<N>(
     node_builder: N::Builder,

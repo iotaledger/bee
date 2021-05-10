@@ -76,9 +76,7 @@ async fn import_outputs<R: Read, B: StorageBackend>(
         let output = Output::unpack(reader)?;
         let created_output = CreatedOutput::new(message_id, output);
 
-        // TODO handle unwrap
-        // TODO batch
-        create_output(&*storage, &output_id, &created_output).await.unwrap();
+        create_output(&*storage, &output_id, &created_output).await?;
         balance_diffs.output_add(created_output.inner())?;
     }
 
@@ -96,8 +94,7 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
         let diff = MilestoneDiff::unpack(reader)?;
         let index = diff.milestone().essence().index();
         // Unwrap is fine because we just inserted the ledger index.
-        // TODO unwrap
-        let ledger_index = *storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
+        let ledger_index = *storage::fetch_ledger_index(&*storage).await?.unwrap();
 
         let mut balance_diffs = BalanceDiffs::new();
 
@@ -131,16 +128,10 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
 
         match index {
             index if index == MilestoneIndex(ledger_index + 1) => {
-                // TODO unwrap until we merge both crates
-                apply_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)
-                    .await
-                    .unwrap();
+                apply_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration).await?;
             }
             index if index == MilestoneIndex(ledger_index) => {
-                // TODO unwrap until we merge both crates
-                rollback_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)
-                    .await
-                    .unwrap();
+                rollback_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration).await?;
             }
             _ => return Err(Error::Snapshot(SnapshotError::UnexpectedMilestoneDiffIndex(index))),
         }
