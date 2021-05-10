@@ -1,41 +1,41 @@
 error[E0599]: no function or associated item named `pack` found for struct `NonPackable` in the current scope
-  --> $DIR/packable_is_structural.rs:11:10
+  --> $DIR/packable_is_structural.rs:13:10
    |
-9  | struct NonPackable;
+11 | struct NonPackable;
    | ------------------- function or associated item `pack` not found for this
-10 |
-11 | #[derive(Packable)]
+12 |
+13 | #[derive(Packable)]
    |          ^^^^^^^^ function or associated item not found in `NonPackable`
    |
    = help: items from traits can only be used if the trait is implemented and in scope
    = note: the following trait defines an item `pack`, perhaps you need to implement it:
-           candidate #1: `Packable`
+           candidate #1: `bee_common::packable::Packable`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0599]: no function or associated item named `unpack` found for struct `NonPackable` in the current scope
-  --> $DIR/packable_is_structural.rs:11:10
+  --> $DIR/packable_is_structural.rs:13:10
    |
-9  | struct NonPackable;
+11 | struct NonPackable;
    | ------------------- function or associated item `unpack` not found for this
-10 |
-11 | #[derive(Packable)]
+12 |
+13 | #[derive(Packable)]
    |          ^^^^^^^^ function or associated item not found in `NonPackable`
    |
    = help: items from traits can only be used if the trait is implemented and in scope
    = note: the following trait defines an item `unpack`, perhaps you need to implement it:
-           candidate #1: `Packable`
+           candidate #1: `bee_common::packable::Packable`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0599]: no function or associated item named `packed_len` found for struct `NonPackable` in the current scope
-  --> $DIR/packable_is_structural.rs:11:10
+  --> $DIR/packable_is_structural.rs:13:10
    |
-9  | struct NonPackable;
+11 | struct NonPackable;
    | ------------------- function or associated item `packed_len` not found for this
-10 |
-11 | #[derive(Packable)]
+12 |
+13 | #[derive(Packable)]
    |          ^^^^^^^^ function or associated item not found in `NonPackable`
    |
    = help: items from traits can only be used if the trait is implemented and in scope
    = note: the following trait defines an item `packed_len`, perhaps you need to implement it:
-           candidate #1: `Packable`
+           candidate #1: `bee_common::packable::Packable`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)

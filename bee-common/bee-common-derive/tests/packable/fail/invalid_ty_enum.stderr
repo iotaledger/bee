@@ -1,5 +1,5 @@
 error: Tags for enums can only be sized integers.
-  --> $DIR/invalid_ty_enum.rs:10:17
+  --> $DIR/invalid_ty_enum.rs:12:17
    |
-10 | #[packable(ty = [u8; 32])]
+12 | #[packable(ty = [u8; 32])]
    |                 ^^^^^^^^

@@ -127,7 +127,7 @@ pub(crate) fn gen_enum_bodies<'a>(
 
                 unpack_branch = quote! {
                     #tag => Ok(Self::#ident{
-                        #(#labels: <#types>::unpack(unpacker)?,) *
+                        #(#labels: <#types>::unpack(unpacker).map_err(|err| err.map(bee_common::packable::UnpackEnumError::Inner))?,) *
                     })
                 };
 
@@ -154,7 +154,7 @@ pub(crate) fn gen_enum_bodies<'a>(
 
                 unpack_branch = quote! {
                     #tag => Ok(Self::#ident(
-                        #(<#types>::unpack(unpacker)?), *
+                        #(<#types>::unpack(unpacker).map_err(|err| err.map(bee_common::packable::UnpackEnumError::Inner))?), *
                     ))
                 };
 
@@ -190,9 +190,9 @@ pub(crate) fn gen_enum_bodies<'a>(
             }
         },
         quote! {
-            match <#ty>::unpack(unpacker)? {
+            match unpacker.unpack_infallible::<#ty>()? {
                 #(#unpack_branches,) *
-                id => Err(<U::Error as bee_common::packable::UnpackError>::unknown_variant::<Self>(id.into()))
+                id => Err(bee_common::packable::UnpackError::Packable(bee_common::packable::UnpackEnumError::UnknownTag(id.into())))
             }
         },
         quote! {
@@ -206,6 +206,7 @@ pub(crate) fn gen_enum_bodies<'a>(
 pub(crate) fn gen_impl(
     ident: &Ident,
     generics: &Generics,
+    error_type: TokenStream,
     pack_body: TokenStream,
     unpack_body: TokenStream,
     packed_len_body: TokenStream,
@@ -214,11 +215,13 @@ pub(crate) fn gen_impl(
 
     quote! {
         impl <#(#params: Packable,) *> Packable for #ident #generics {
+            type Error = #error_type;
+
             fn pack<P: bee_common::packable::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
                 #pack_body
             }
 
-            fn unpack<U: bee_common::packable::Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
+            fn unpack<U: bee_common::packable::Unpacker>(unpacker: &mut U) -> Result<Self, bee_common::packable::UnpackError<Self::Error, U::Error>> {
                 #unpack_body
             }
 

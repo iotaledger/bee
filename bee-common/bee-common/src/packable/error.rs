@@ -1,21 +1,45 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt::{Debug, Display};
+/// Error type raised when `Packable::unpack` fails.
+#[derive(Debug)]
+pub enum UnpackError<T, U> {
+    /// Semantic error. Typically this is `Packable::Error`.
+    Packable(T),
+    /// Error produced by the unpacker. Typically this is `Unpacker::Error`.
+    Unpacker(U),
+}
 
-use super::Packable;
+impl<T, U> UnpackError<T, U> {
+    /// Map the `Packable` variant of this enum.
+    pub fn map<V, F: Fn(T) -> V>(self, f: F) -> UnpackError<V, U> {
+        match self {
+            Self::Packable(err) => UnpackError::Packable(f(err)),
+            Self::Unpacker(err) => UnpackError::Unpacker(err),
+        }
+    }
+}
 
-/// A type that represents errors with the unpacking format as well as with the unpacking process itself.
-pub trait UnpackError: Sized + Debug {
-    /// Raised when there is general error when unpacking a type.
-    fn custom<T: Display>(msg: T) -> Self;
+impl<T, U> From<U> for UnpackError<T, U> {
+    fn from(err: U) -> Self {
+        Self::Unpacker(err)
+    }
+}
 
-    /// Raised when there is an unknown variant tag while unpacking an enum.
-    fn unknown_variant<P: Packable>(tag: u64) -> Self {
-        Self::custom(core::format_args!(
-            "the tag `{}` is not valid for the enum `{}`",
-            tag,
-            core::any::type_name::<P>(),
-        ))
+/// Error type used for semantic errors of enums.
+///
+/// It is recooemded to use this type as `Packable::Error` when implementing `Packable` for an
+/// enum.
+#[derive(Debug)]
+pub enum UnpackEnumError<T> {
+    /// The unpacked tag is invalid for this enum.
+    UnknownTag(u64),
+    /// Other semantic errors.
+    Inner(T),
+}
+
+impl<T> From<T> for UnpackEnumError<T> {
+    fn from(err: T) -> Self {
+        Self::Inner(err)
     }
 }

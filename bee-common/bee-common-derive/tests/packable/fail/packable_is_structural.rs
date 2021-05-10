@@ -6,9 +6,12 @@
 use bee_common::packable::Packable;
 use bee_common_derive::Packable;
 
+use core::convert::Infallible;
+
 struct NonPackable;
 
 #[derive(Packable)]
+#[packable(error = Infallible)]
 pub struct Wrapper(NonPackable);
 
 fn main() {}

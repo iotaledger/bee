@@ -3,6 +3,7 @@
 
 use proc_macro::{self, TokenStream};
 use proc_macro_error::{abort, proc_macro_error};
+use quote::{quote, ToTokens};
 use syn::{parse_macro_input, Data, DeriveInput, Type};
 
 mod packable;
@@ -18,6 +19,17 @@ pub fn packable(input: TokenStream) -> TokenStream {
         ..
     } = parse_macro_input!(input);
 
+    let error_type = match packable::parse_attr::<Type>("error", &attrs) {
+        Some(err) => match data {
+            Data::Enum(_) => quote!(bee_common::packable::UnpackEnumError<#err>),
+            _ => err.into_token_stream(),
+        },
+        None => abort!(
+            ident.span(),
+            "Types that derive `Packable` require a `#[packable(error = ...)]` attribute."
+        ),
+    };
+
     let (pack, unpack, packed_len) = match data {
         Data::Struct(data_struct) => packable::gen_struct_bodies(data_struct.fields),
         Data::Enum(data_enum) => match packable::parse_attr::<Type>("ty", &attrs) {
@@ -30,5 +42,5 @@ pub fn packable(input: TokenStream) -> TokenStream {
         Data::Union(..) => abort!(ident.span(), "Unions cannot derive `Packable`"),
     };
 
-    packable::gen_impl(&ident, &generics, pack, unpack, packed_len).into()
+    packable::gen_impl(&ident, &generics, error_type, pack, unpack, packed_len).into()
 }

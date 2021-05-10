@@ -11,7 +11,9 @@ mod io;
 mod packer;
 mod unpacker;
 
-pub use error::UnpackError;
+use core::convert::Infallible;
+
+pub use error::{UnpackEnumError, UnpackError};
 pub use packer::Packer;
 pub use unpacker::Unpacker;
 
@@ -21,10 +23,15 @@ pub use unpacker::Unpacker;
 /// `bee_common_derive::Packable` macro. If you need to implement this trait manually, use the provided
 /// implementations as a guide.
 pub trait Packable: Sized {
+    /// The error type that can be returned if some semantic error occurs while unpacking.
+    ///
+    /// It is recommended to use `core::convert::Infallible` if this kind of error cannot happen or
+    /// `UnpackEnumError` when implementing this trait for an enum.
+    type Error;
     /// Pack this value into the given `Packer`.
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
     /// Unpack this value from the given `Unpacker`.
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error>;
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>>;
     /// The size of the value in bytes after being packed.
     fn packed_len(&self) -> usize;
 }
@@ -32,13 +39,15 @@ pub trait Packable: Sized {
 macro_rules! impl_packable_for_int {
     ($ty:ty) => {
         impl Packable for $ty {
+            type Error = Infallible;
+
             fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
                 packer.pack_bytes(&self.to_le_bytes())
             }
 
-            fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
+            fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
                 let mut bytes = [0u8; core::mem::size_of::<Self>()];
-                unpacker.unpack_bytes(&mut bytes)?;
+                unpacker.unpack_bytes(&mut bytes).map_err(UnpackError::Unpacker)?;
                 Ok(Self::from_le_bytes(bytes))
             }
 
@@ -58,12 +67,14 @@ impl_packable_for_int!(u128);
 
 /// `usize` integers are packed and unpacked as `u64` integers according to the spec.
 impl Packable for usize {
+    type Error = Infallible;
+
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         (*self as u64).pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-        Ok(u64::unpack(unpacker)? as usize)
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+        Ok(unpacker.unpack_infallible::<u64>().map_err(UnpackError::Unpacker)? as usize)
     }
 
     fn packed_len(&self) -> usize {
@@ -80,12 +91,14 @@ impl_packable_for_int!(i128);
 
 /// `isize` integers are packed and unpacked as `i64` integers according to the spec.
 impl Packable for isize {
+    type Error = Infallible;
+
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         (*self as i64).pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-        Ok(u64::unpack(unpacker)? as isize)
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+        Ok(unpacker.unpack_infallible::<i64>().map_err(UnpackError::Unpacker)? as isize)
     }
 
     fn packed_len(&self) -> usize {
@@ -94,14 +107,16 @@ impl Packable for isize {
 }
 
 impl Packable for bool {
+    type Error = Infallible;
+
     /// Booleans are packed as `u8` integers following Rust's data layout.
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         (*self as u8).pack(packer)
     }
 
     /// Booleans are unpacked if the byte used to represent them is non-zero.
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-        Ok(u8::unpack(unpacker)? != 0)
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+        Ok(unpacker.unpack_infallible::<u8>().map_err(UnpackError::Unpacker)? != 0)
     }
 
     fn packed_len(&self) -> usize {
@@ -112,6 +127,8 @@ impl Packable for bool {
 /// Options are packed and unpacked using `0u8` as the prefix for `None` and `1u8` as the prefix
 /// for `Some`.
 impl<T: Packable> Packable for Option<T> {
+    type Error = UnpackEnumError<T::Error>;
+
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match self {
             None => 0u8.pack(packer),
@@ -122,11 +139,13 @@ impl<T: Packable> Packable for Option<T> {
         }
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-        match u8::unpack(unpacker)? {
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+        match unpacker.unpack_infallible::<u8>()? {
             0 => Ok(None),
-            1 => Ok(Some(T::unpack(unpacker)?)),
-            n => Err(U::Error::unknown_variant::<Self>(n.into())),
+            1 => Ok(Some(
+                T::unpack(unpacker).map_err(|err| err.map(UnpackEnumError::Inner))?,
+            )),
+            n => Err(UnpackError::Packable(Self::Error::UnknownTag(n.into()))),
         }
     }
 
@@ -140,6 +159,8 @@ impl<T: Packable> Packable for Option<T> {
 }
 
 impl<T: Packable, const N: usize> Packable for [T; N] {
+    type Error = T::Error;
+
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         for item in self.iter() {
             item.pack(packer)?;
@@ -148,7 +169,7 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
         Ok(())
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
         use core::mem::MaybeUninit;
 
         // Safety: an uninitialized array of `MaybeUninit`s is safe to be considered initialized.

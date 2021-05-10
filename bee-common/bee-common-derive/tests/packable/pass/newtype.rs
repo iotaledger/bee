@@ -6,7 +6,10 @@
 use bee_common::packable::Packable;
 use bee_common_derive::Packable;
 
+use core::convert::Infallible;
+
 #[derive(Packable)]
+#[packable(error = Infallible)]
 pub struct Num(u32);
 
 fn main() {}

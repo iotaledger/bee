@@ -6,15 +6,7 @@
 use bee_common::packable::Packable;
 use bee_common_derive::Packable;
 
-use core::convert::Infallible;
-
 #[derive(Packable)]
-#[packable(error = Infallible)]
-pub enum OptI32 {
-    #[packable(id = 0)]
-    None,
-    #[packable(id = 1)]
-    Some(i32)
-}
+pub struct Point(i32, i32);
 
 fn main() {}

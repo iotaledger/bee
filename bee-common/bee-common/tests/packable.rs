@@ -5,7 +5,11 @@ use bee_common::packable::Packable;
 
 use core::{fmt::Debug, mem::size_of};
 
-fn pack_checked(value: impl Packable + Eq + Debug) -> Vec<u8> {
+fn pack_checked<P>(value: P) -> Vec<u8>
+where
+    P: Packable + Eq + Debug,
+    P::Error: Debug,
+{
     let mut packer = Vec::new();
     value.pack(&mut packer).unwrap();
 
