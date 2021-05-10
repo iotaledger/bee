@@ -86,6 +86,7 @@ interval_unsynced = 1000
 [pruning]
 enabled         = true
 delay           = 60480
+interval        = 10
 prune_receipts  = false
 
 [storage]

@@ -83,7 +83,7 @@ pub async fn prune<S: StorageBackend>(
     // We get us a clone of the current SEP set. We are the only ones that make changes to that particular tangle state,
     // so we can be sure it can't be invalidated in the meantime while we do the past-cone traversal to find the new
     // set.
-    let old_seps = tangle.get_all_solid_entry_points().await;
+    let old_seps = tangle.get_solid_entry_points().await;
     let num_old_seps = old_seps.len();
 
     // Collect the data that can be safely pruned. In order to find the correct set of SEPs during this pruning we need
