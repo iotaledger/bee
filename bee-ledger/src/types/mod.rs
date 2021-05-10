@@ -7,7 +7,6 @@ pub mod snapshot;
 
 mod balance;
 mod balance_diff;
-mod conflict;
 mod consumed_output;
 mod created_output;
 mod error;
@@ -21,7 +20,7 @@ mod unspent;
 
 pub use balance::Balance;
 pub use balance_diff::{BalanceDiff, BalanceDiffs};
-pub use conflict::ConflictReason;
+
 pub use consumed_output::ConsumedOutput;
 pub use created_output::CreatedOutput;
 pub use error::Error;

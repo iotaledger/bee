@@ -1,19 +1,29 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::types::Error;
-
 use bee_common::packable::Packable;
+
+use serde::{Deserialize, Serialize};
 
 use std::{
     convert::{TryFrom, TryInto},
     io::{Read, Write},
 };
 
+/// Errors related to ledger types.
+#[derive(Debug, thiserror::Error)]
+pub enum ConflictError {
+    /// I/O error.
+    #[error("I/O error: {0}")]
+    Io(#[from] std::io::Error),
+    /// Invalid conflict byte.
+    #[error("Invalid conflict byte")]
+    InvalidConflict(u8),
+}
+
 /// Represents the different reasons why a transaction can conflict with the ledger state.
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum ConflictReason {
     /// The message has no conflict.
     None = 0,
@@ -40,7 +50,7 @@ impl Default for ConflictReason {
 }
 
 impl TryFrom<u8> for ConflictReason {
-    type Error = Error;
+    type Error = ConflictError;
 
     fn try_from(c: u8) -> Result<Self, Self::Error> {
         Ok(match c {
@@ -52,13 +62,13 @@ impl TryFrom<u8> for ConflictReason {
             5 => Self::InvalidSignature,
             6 => Self::InvalidDustAllowance,
             255 => Self::SemanticValidationFailed,
-            x => return Err(Error::InvalidConflict(x)),
+            x => return Err(Self::Error::InvalidConflict(x)),
         })
     }
 }
 
 impl Packable for ConflictReason {
-    type Error = Error;
+    type Error = ConflictError;
 
     fn packed_len(&self) -> usize {
         (*self as u8).packed_len()
