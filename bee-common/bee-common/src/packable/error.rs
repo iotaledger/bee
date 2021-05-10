@@ -1,12 +1,12 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt::Display;
+use core::fmt::{Debug, Display};
 
 use super::Packable;
 
 /// A type that represents errors with the unpacking format as well as with the unpacking process itself.
-pub trait UnpackError: Sized {
+pub trait UnpackError: Sized + Debug {
     /// Raised when there is general error when unpacking a type.
     fn custom<T: Display>(msg: T) -> Self;
 
