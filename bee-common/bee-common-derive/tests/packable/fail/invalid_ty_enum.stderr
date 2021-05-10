@@ -1,33 +1,5 @@
-error[E0605]: non-primitive cast: `i32` as `[u8; 32]`
- --> $DIR/invalid_ty_enum.rs:9:10
-  |
-9 | #[derive(Packable)]
-  |          ^^^^^^^^ an `as` expression can only be used to convert between primitive types or to coerce to a specific trait object
-  |
-  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
-
-error[E0308]: mismatched types
- --> $DIR/invalid_ty_enum.rs:9:10
-  |
-9 | #[derive(Packable)]
-  |          ^^^^^^^^
-  |          |
-  |          expected array `[u8; 32]`, found integer
-  |          this expression has type `[u8; 32]`
-  |
-  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
-
-error[E0277]: the trait bound `u64: From<[u8; 32]>` is not satisfied
- --> $DIR/invalid_ty_enum.rs:9:10
-  |
-9 | #[derive(Packable)]
-  |          ^^^^^^^^ the trait `From<[u8; 32]>` is not implemented for `u64`
-  |
-  = help: the following implementations were found:
-            <u64 as From<NonZeroU64>>
-            <u64 as From<bool>>
-            <u64 as From<char>>
-            <u64 as From<u16>>
-          and 2 others
-  = note: required because of the requirements on the impl of `Into<u64>` for `[u8; 32]`
-  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+error: Tags for enums can only be sized integers.
+  --> $DIR/invalid_ty_enum.rs:10:17
+   |
+10 | #[packable(ty = [u8; 32])]
+   |                 ^^^^^^^^

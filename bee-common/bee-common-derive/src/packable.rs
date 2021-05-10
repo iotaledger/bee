@@ -6,7 +6,8 @@ use proc_macro_error::abort;
 use quote::{format_ident, quote};
 use syn::{
     parse::{Parse, ParseStream},
-    Attribute, Fields, FieldsNamed, FieldsUnnamed, Generics, Ident, Index, Token, Type, Variant,
+    spanned::Spanned,
+    Attribute, Fields, FieldsNamed, FieldsUnnamed, Generics, Ident, Index, Token, Type, TypePath, Variant,
 };
 
 pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStream, TokenStream) {
@@ -67,6 +68,13 @@ pub(crate) fn gen_enum_bodies<'a>(
     variants: impl Iterator<Item = &'a Variant> + 'a,
     ty: Type,
 ) -> (TokenStream, TokenStream, TokenStream) {
+    const TYPES: &[&str] = &["u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64"];
+
+    match &ty {
+        Type::Path(TypePath { path, .. }) if TYPES.iter().any(|ty| path.is_ident(ty)) => (),
+        _ => abort!(ty.span(), "Tags for enums can only be sized integers."),
+    }
+
     let mut indices = Vec::<(Index, &Ident)>::new();
 
     let mut pack_branches = Vec::new();
