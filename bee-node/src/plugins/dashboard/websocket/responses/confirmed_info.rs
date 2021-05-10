@@ -26,7 +26,7 @@ impl From<MilestoneConfirmed> for WsEvent {
 impl From<MilestoneConfirmed> for ConfirmedInfoResponse {
     fn from(val: MilestoneConfirmed) -> Self {
         Self {
-            id: val.id.to_string(),
+            id: val.message_id.to_string(),
             excluded_ids: val
                 .excluded_no_transaction_messages
                 .into_iter()

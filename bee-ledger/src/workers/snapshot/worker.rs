@@ -36,7 +36,6 @@ where
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (network_id, snapshot_config) = config;
-
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
 
@@ -76,16 +75,16 @@ where
             tangle.add_solid_entry_point(sep, index).await;
         }
 
-        // Unwrap is fine because we just inserted the ledger index.
-        // TODO unwrap
-        let ledger_index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
+        // Unwrap is fine because ledger index was either just inserted or already present in storage.
+        let ledger_index = MilestoneIndex(*storage::fetch_ledger_index(&*storage).await?.unwrap());
+        // Unwrap is fine because snapshot info was either just inserted or already present in storage.
         let snapshot_info = storage::fetch_snapshot_info(&*storage).await?.unwrap();
 
         tangle.update_snapshot_index(snapshot_info.snapshot_index());
         tangle.update_pruning_index(snapshot_info.pruning_index());
-        tangle.update_solid_milestone_index(MilestoneIndex(*ledger_index));
-        tangle.update_confirmed_milestone_index(MilestoneIndex(*ledger_index));
-        tangle.update_latest_milestone_index(MilestoneIndex(*ledger_index));
+        tangle.update_solid_milestone_index(ledger_index);
+        tangle.update_confirmed_milestone_index(ledger_index);
+        tangle.update_latest_milestone_index(ledger_index);
 
         Ok(Self {})
     }

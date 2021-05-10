@@ -202,7 +202,7 @@ where
     );
 
     bus.dispatch(MilestoneConfirmed {
-        id: message_id,
+        message_id,
         index: milestone.essence().index(),
         timestamp: milestone.essence().timestamp(),
         referenced_messages: metadata.referenced_messages,

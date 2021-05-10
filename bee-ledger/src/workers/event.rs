@@ -9,13 +9,13 @@ use bee_message::{milestone::MilestoneIndex, MessageId};
 /// An event that indicates that a milestone was confirmed.
 #[derive(Clone)]
 pub struct MilestoneConfirmed {
-    /// The message identifier of the confirmed milestone.
-    pub id: MessageId,
-    /// The index of the confirmed milestone.
+    /// The message identifier of the milestone.
+    pub message_id: MessageId,
+    /// The index of the milestone.
     pub index: MilestoneIndex,
-    /// The timestamp of the confirmed milestone.
+    /// The timestamp of the milestone.
     pub timestamp: u64,
-    /// The number of referenced messages.
+    /// The number of messages referenced by the milestone.
     pub referenced_messages: usize,
     /// The messages that were excluded because not containing a transaction.
     pub excluded_no_transaction_messages: Vec<MessageId>,
@@ -23,9 +23,9 @@ pub struct MilestoneConfirmed {
     pub excluded_conflicting_messages: Vec<(MessageId, ConflictReason)>,
     /// The messages that were included.
     pub included_messages: Vec<MessageId>,
-    /// The number of consumed outputs.
+    /// The number of outputs consumed within the milestone.
     pub consumed_outputs: usize,
-    /// The number of creates outputs.
+    /// The number of outputs created within the milestone.
     pub created_outputs: usize,
     /// Whether a receipt was included in the milestone or not.
     pub receipt: bool,
