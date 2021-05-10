@@ -18,7 +18,7 @@ use chrono::{offset::TimeZone, Utc};
 use futures::stream::StreamExt;
 use log::info;
 
-use std::any::TypeId;
+use std::{any::TypeId, collections::HashMap};
 
 pub struct SnapshotWorker {}
 
@@ -67,13 +67,16 @@ where
             }
         }
 
-        let mut solid_entry_points = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&*storage)
+        let mut solid_entry_points_stream = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&*storage)
             .await
             .map_err(|e| Error::Storage(Box::new(e)))?;
+        let mut solid_entry_points = HashMap::new();
 
-        while let Some((sep, index)) = solid_entry_points.next().await {
-            tangle.add_solid_entry_point(sep, index).await;
+        while let Some((sep, index)) = solid_entry_points_stream.next().await {
+            solid_entry_points.insert(sep, index);
         }
+
+        tangle.replace_solid_entry_points(solid_entry_points).await;
 
         // Unwrap is fine because ledger index was either just inserted or already present in storage.
         let ledger_index = MilestoneIndex(*storage::fetch_ledger_index(&*storage).await?.unwrap());
