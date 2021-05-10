@@ -11,25 +11,25 @@ use std::{
 };
 
 #[derive(Debug)]
-pub enum IOError {
-    IO(io::Error),
+pub enum IoError {
+    Io(io::Error),
     Message(String),
 }
 
-impl UnpackError for IOError {
+impl UnpackError for IoError {
     fn custom<T: std::fmt::Display>(msg: T) -> Self {
         Self::Message(msg.to_string())
     }
 }
 
-impl From<io::Error> for IOError {
+impl From<io::Error> for IoError {
     fn from(err: io::Error) -> Self {
-        Self::IO(err)
+        Self::Io(err)
     }
 }
 
 impl<W: Write> Packer for W {
-    type Error = IOError;
+    type Error = IoError;
 
     fn pack_bytes(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
         Ok(self.write_all(bytes)?)
@@ -37,7 +37,7 @@ impl<W: Write> Packer for W {
 }
 
 impl<R: Read> Unpacker for R {
-    type Error = IOError;
+    type Error = IoError;
 
     fn unpack_bytes(&mut self, slice: &mut [u8]) -> Result<(), Self::Error> {
         Ok(self.read_exact(slice)?)
