@@ -1,10 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::flags::Flags;
+use crate::{
+    conflict::{ConflictError, ConflictReason},
+    flags::Flags,
+};
 
 use bee_common::packable::{OptionError, Packable, Read, Write};
-use bee_ledger::types::ConflictReason;
 use bee_message::{milestone::MilestoneIndex, MessageId};
 
 use serde::Serialize;
@@ -153,8 +155,8 @@ pub enum MessageMetadataError {
     OptionIndex(<Option<MilestoneIndex> as Packable>::Error),
     /// A packing error occurred.
     OptionIndexId(<Option<IndexId> as Packable>::Error),
-    /// An error relating to a ledger type occurred.
-    Ledger(bee_ledger::types::Error),
+    /// An error relating to a conflict reason occurred.
+    Conflict(ConflictError),
 }
 
 impl From<std::io::Error> for MessageMetadataError {
@@ -197,7 +199,7 @@ impl Packable for MessageMetadata {
         self.reference_timestamp.pack(writer)?;
         self.omrsi.pack(writer)?;
         self.ymrsi.pack(writer)?;
-        self.conflict.pack(writer).map_err(MessageMetadataError::Ledger)?;
+        self.conflict.pack(writer).map_err(MessageMetadataError::Conflict)?;
 
         Ok(())
     }
@@ -211,7 +213,7 @@ impl Packable for MessageMetadata {
             reference_timestamp: u64::unpack_inner::<R, CHECK>(reader)?,
             omrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
             ymrsi: Option::<IndexId>::unpack_inner::<R, CHECK>(reader)?,
-            conflict: ConflictReason::unpack_inner::<R, CHECK>(reader).map_err(MessageMetadataError::Ledger)?,
+            conflict: ConflictReason::unpack_inner::<R, CHECK>(reader).map_err(MessageMetadataError::Conflict)?,
         })
     }
 }

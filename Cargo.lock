@@ -352,11 +352,10 @@ dependencies = [
 
 [[package]]
 name = "bee-tangle"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "bee-common",
- "bee-ledger",
  "bee-message",
  "bee-runtime",
  "bee-storage",

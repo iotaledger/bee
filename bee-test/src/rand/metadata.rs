@@ -5,10 +5,10 @@ use crate::rand::{
     message::rand_message_id, milestone::rand_milestone_index, number::rand_number, option::rand_option,
 };
 
-use bee_ledger::types::ConflictReason;
 use bee_tangle::{
     flags::Flags,
     metadata::{IndexId, MessageMetadata},
+    ConflictReason,
 };
 
 use std::convert::TryInto;
