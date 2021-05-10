@@ -1,4 +1,4 @@
-error: Enums that derive `Packable` require a `#[packable(ty = ...)]` attribute.
+error: Enums that derive `Packable` require a `#[packable(tag_ty = ...)]` attribute.
   --> $DIR/no_ty_enum.rs:13:10
    |
 13 | pub enum OptI32 {

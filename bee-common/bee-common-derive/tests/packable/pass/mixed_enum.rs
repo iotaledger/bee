@@ -9,7 +9,7 @@ use bee_common_derive::Packable;
 use core::convert::Infallible;
 
 #[derive(Packable)]
-#[packable(ty = u8)]
+#[packable(tag_ty = u8)]
 #[packable(error = Infallible)]
 pub enum Foo {
     #[packable(tag = 0)]

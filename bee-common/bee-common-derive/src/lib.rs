@@ -32,11 +32,11 @@ pub fn packable(input: TokenStream) -> TokenStream {
 
     let (pack, unpack, packed_len) = match data {
         Data::Struct(data_struct) => packable::gen_struct_bodies(data_struct.fields),
-        Data::Enum(data_enum) => match packable::parse_attr::<Type>("ty", &attrs) {
+        Data::Enum(data_enum) => match packable::parse_attr::<Type>("tag_ty", &attrs) {
             Some(ty) => packable::gen_enum_bodies(data_enum.variants.iter(), ty),
             None => abort!(
                 ident.span(),
-                "Enums that derive `Packable` require a `#[packable(ty = ...)]` attribute."
+                "Enums that derive `Packable` require a `#[packable(tag_ty = ...)]` attribute."
             ),
         },
         Data::Union(..) => abort!(ident.span(), "Unions cannot derive `Packable`"),

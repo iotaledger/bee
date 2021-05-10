@@ -9,7 +9,7 @@ use bee_common_derive::Packable;
 use core::convert::Infallible;
 
 #[derive(Packable)]
-#[packable(ty = i32)]
+#[packable(tag_ty = i32)]
 #[packable(error = Infallible)]
 pub enum OptI32 {
     None,
