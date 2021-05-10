@@ -1,5 +1,0 @@
-error: The identifier `0` is already being used for the `None` variant.
-  --> $DIR/dup_id_enum.rs:14:21
-   |
-14 |     #[packable(id = 0)]
-   |                     ^

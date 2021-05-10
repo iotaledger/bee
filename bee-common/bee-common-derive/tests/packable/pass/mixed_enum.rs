@@ -9,9 +9,9 @@ use bee_common_derive::Packable;
 #[derive(Packable)]
 #[packable(ty = u8)]
 pub enum Foo {
-    #[packable(id = 0)]
+    #[packable(tag = 0)]
     Bar(u32),
-    #[packable(id = 1)]
+    #[packable(tag = 1)]
     Baz{ x: i32, y: i32 }
 }
 

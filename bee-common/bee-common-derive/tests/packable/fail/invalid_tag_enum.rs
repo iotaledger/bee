@@ -9,9 +9,9 @@ use bee_common_derive::Packable;
 #[derive(Packable)]
 #[packable(ty = u8)]
 pub enum OptI32 {
-    #[packable(id = [0; 32])]
+    #[packable(tag = [0; 32])]
     None,
-    #[packable(id = 1)]
+    #[packable(tag = 1)]
     Some(i32)
 }
 

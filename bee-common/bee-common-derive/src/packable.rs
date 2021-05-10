@@ -78,24 +78,24 @@ pub(crate) fn gen_enum_bodies<'a>(
             attrs, ident, fields, ..
         } = variant;
 
-        let curr_index = parse_attr::<Index>("id", attrs).unwrap_or_else(|| {
+        let curr_index = parse_attr::<Index>("tag", attrs).unwrap_or_else(|| {
             abort!(
                 ident.span(),
-                "All variants of an enum that derives `Packable` require a `#[packable(id = ...)]` attribute."
+                "All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute."
             )
         });
 
         match indices.binary_search_by(|(index, _)| index.index.cmp(&curr_index.index)) {
             Ok(pos) => abort!(
                 curr_index.span,
-                "The identifier `{}` is already being used for the `{}` variant.",
+                "The tag `{}` is already being used for the `{}` variant.",
                 curr_index.index,
                 indices[pos].1
             ),
             Err(pos) => indices.insert(pos, (curr_index.clone(), ident)),
         }
 
-        let id = proc_macro2::Literal::u64_unsuffixed(curr_index.index as u64);
+        let tag = proc_macro2::Literal::u64_unsuffixed(curr_index.index as u64);
 
         let pack_branch: TokenStream;
         let unpack_branch: TokenStream;
@@ -111,21 +111,21 @@ pub(crate) fn gen_enum_bodies<'a>(
 
                 pack_branch = quote! {
                     Self::#ident{#(#labels), *} => {
-                        (#id as #ty).pack(packer)?;
+                        (#tag as #ty).pack(packer)?;
                         #(<#types>::pack(&#labels, packer)?;) *
                         Ok(())
                     }
                 };
 
                 unpack_branch = quote! {
-                    #id => Ok(Self::#ident{
+                    #tag => Ok(Self::#ident{
                         #(#labels: <#types>::unpack(unpacker)?,) *
                     })
                 };
 
                 packed_len_branch = quote! {
                     Self::#ident{#(#labels), *} => {
-                        (#id as #ty).packed_len() #(+ <#types>::packed_len(&#labels)) *
+                        (#tag as #ty).packed_len() #(+ <#types>::packed_len(&#labels)) *
                     }
                 };
             }
@@ -138,35 +138,35 @@ pub(crate) fn gen_enum_bodies<'a>(
 
                 pack_branch = quote! {
                     Self::#ident(#(#fields), *) => {
-                        (#id as #ty).pack(packer)?;
+                        (#tag as #ty).pack(packer)?;
                         #(<#types>::pack(&#fields, packer)?;) *
                         Ok(())
                     }
                 };
 
                 unpack_branch = quote! {
-                    #id => Ok(Self::#ident(
+                    #tag => Ok(Self::#ident(
                         #(<#types>::unpack(unpacker)?), *
                     ))
                 };
 
                 packed_len_branch = quote! {
                     Self::#ident(#(#fields), *) => {
-                        (#id as #ty).packed_len() #(+ <#types>::packed_len(&#fields)) *
+                        (#tag as #ty).packed_len() #(+ <#types>::packed_len(&#fields)) *
                     }
                 };
             }
             Fields::Unit => {
                 pack_branch = quote! {
-                    Self::#ident => (#id as #ty).pack(packer)
+                    Self::#ident => (#tag as #ty).pack(packer)
                 };
 
                 unpack_branch = quote! {
-                    #id => Ok(Self::#ident)
+                    #tag => Ok(Self::#ident)
                 };
 
                 packed_len_branch = quote! {
-                    Self::#ident => (#id as #ty).packed_len()
+                    Self::#ident => (#tag as #ty).packed_len()
                 };
             }
         };

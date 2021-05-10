@@ -1,0 +1,5 @@
+error: All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute.
+  --> $DIR/invalid_tag_enum.rs:13:5
+   |
+13 |     None,
+   |     ^^^^

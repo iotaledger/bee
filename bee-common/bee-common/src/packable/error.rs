@@ -10,11 +10,11 @@ pub trait UnpackError: Sized + Debug {
     /// Raised when there is general error when unpacking a type.
     fn custom<T: Display>(msg: T) -> Self;
 
-    /// Raised when there is an unknown variant ID while unpacking an enum.
-    fn unknown_variant<P: Packable>(id: u64) -> Self {
+    /// Raised when there is an unknown variant tag while unpacking an enum.
+    fn unknown_variant<P: Packable>(tag: u64) -> Self {
         Self::custom(core::format_args!(
-            "the ID {} is not valid for the enum `{}`",
-            id,
+            "the tag `{}` is not valid for the enum `{}`",
+            tag,
             core::any::type_name::<P>(),
         ))
     }
