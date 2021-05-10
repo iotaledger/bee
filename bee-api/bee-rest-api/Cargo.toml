@@ -11,7 +11,7 @@ keywords = ["iota", "bee", "framework", "node", "api"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-ledger = { version = "0.2.0", path = "../../bee-ledger" }
+bee-ledger = { version = "0.3.0", path = "../../bee-ledger" }
 bee-message = { version = "0.1.3", path = "../../bee-message" }
 bee-protocol = { version = "0.1.0", path = "../../bee-protocol" }
 
