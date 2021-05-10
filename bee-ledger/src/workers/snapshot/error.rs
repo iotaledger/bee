@@ -42,4 +42,10 @@ pub enum Error {
     /// Unexpected milestone diff index.
     #[error("Unexpected milestone diff index: {0:?}")]
     UnexpectedMilestoneDiffIndex(MilestoneIndex),
+    /// Missing consumed treasury.
+    #[error("Missing consumed treasury.")]
+    MissingConsumedTreasury,
+    /// Remaining bytes in file.
+    #[error("Remaining bytes in file.")]
+    RemainingBytes,
 }

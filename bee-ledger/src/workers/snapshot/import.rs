@@ -93,16 +93,14 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
     for _ in 0..milestone_diff_count {
         let diff = MilestoneDiff::unpack(reader)?;
         let index = diff.milestone().essence().index();
-        // Unwrap is fine because we just inserted the ledger index.
+        // Unwrap is fine because ledger index was inserted just before.
         let ledger_index = *storage::fetch_ledger_index(&*storage).await?.unwrap();
-
         let mut balance_diffs = BalanceDiffs::new();
+        let mut consumed = HashMap::new();
 
         for (_, output) in diff.created().iter() {
             balance_diffs.output_add(output.inner())?;
         }
-
-        let mut consumed = HashMap::new();
 
         for (output_id, (created_output, consumed_output)) in diff.consumed().iter() {
             balance_diffs.output_sub(created_output.inner())?;
@@ -110,8 +108,10 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
         }
 
         let migration = if let Some(Payload::Receipt(receipt)) = diff.milestone().essence().receipt() {
-            // There should be a consumed treasury if there is a receipt.
-            let consumed_treasury = diff.consumed_treasury().unwrap().clone();
+            let consumed_treasury = diff
+                .consumed_treasury()
+                .ok_or(Error::Snapshot(SnapshotError::MissingConsumedTreasury))?
+                .clone();
 
             Some(
                 migration_from_milestone(
@@ -140,26 +140,31 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
     Ok(())
 }
 
-async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
-    info!("Importing full snapshot file {}...", &path.to_string_lossy());
-
-    let mut reader = snapshot_reader(path)?;
-
-    let header = SnapshotHeader::unpack(&mut reader)?;
-
-    if header.kind() != SnapshotKind::Full {
+fn check_header(header: &SnapshotHeader, kind: SnapshotKind, network_id: u64) -> Result<(), Error> {
+    if kind != header.kind() {
         return Err(Error::Snapshot(SnapshotError::UnexpectedSnapshotKind(
-            SnapshotKind::Full,
+            kind,
             header.kind(),
         )));
     }
 
-    if header.network_id() != network_id {
+    if network_id != header.network_id() {
         return Err(Error::Snapshot(SnapshotError::NetworkIdMismatch(
-            header.network_id(),
             network_id,
+            header.network_id(),
         )));
     }
+
+    Ok(())
+}
+
+async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
+    info!("Importing full snapshot file {}...", &path.to_string_lossy());
+
+    let mut reader = snapshot_reader(path)?;
+    let header = SnapshotHeader::unpack(&mut reader)?;
+
+    check_header(&header, SnapshotKind::Full, network_id)?;
 
     let full_header = FullSnapshotHeader::unpack(&mut reader)?;
 
@@ -202,7 +207,9 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
     import_outputs(&mut reader, storage, full_header.output_count()).await?;
     import_milestone_diffs(&mut reader, storage, full_header.milestone_diff_count()).await?;
 
-    // TODO check nothing left
+    if reader.bytes().next().is_some() {
+        return Err(Error::Snapshot(SnapshotError::RemainingBytes));
+    }
 
     info!(
         "Imported full snapshot file from {} with sep index {}, ledger index {}, {} solid entry points, {} outputs and {} milestone diffs.",
@@ -221,22 +228,9 @@ async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, netw
     info!("Importing delta snapshot file {}...", &path.to_string_lossy());
 
     let mut reader = snapshot_reader(path)?;
-
     let header = SnapshotHeader::unpack(&mut reader)?;
 
-    if header.kind() != SnapshotKind::Delta {
-        return Err(Error::Snapshot(SnapshotError::UnexpectedSnapshotKind(
-            SnapshotKind::Delta,
-            header.kind(),
-        )));
-    }
-
-    if header.network_id() != network_id {
-        return Err(Error::Snapshot(SnapshotError::NetworkIdMismatch(
-            header.network_id(),
-            network_id,
-        )));
-    }
+    check_header(&header, SnapshotKind::Delta, network_id)?;
 
     let delta_header = DeltaSnapshotHeader::unpack(&mut reader)?;
 
@@ -269,7 +263,9 @@ async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, netw
     import_solid_entry_points(&mut reader, storage, delta_header.sep_count(), header.sep_index()).await?;
     import_milestone_diffs(&mut reader, storage, delta_header.milestone_diff_count()).await?;
 
-    // TODO check nothing left
+    if reader.bytes().next().is_some() {
+        return Err(Error::Snapshot(SnapshotError::RemainingBytes));
+    }
 
     info!(
         "Imported delta snapshot file from {} with sep index {}, ledger index {}, {} solid entry points and {} milestone diffs.",
@@ -299,7 +295,8 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
         download_snapshot_file(config.full_path(), config.download_urls()).await?;
     }
 
-    // We are sure that the full snapshot file exists from now on.
+    // Full snapshot file exists from now on.
+
     import_full_snapshot(storage, config.full_path(), network_id).await?;
 
     if let Some(delta_path) = config.delta_path() {
