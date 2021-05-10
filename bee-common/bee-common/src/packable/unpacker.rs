@@ -10,11 +10,4 @@ pub trait Unpacker {
 
     /// Unpack a sequence of bytes from the `Unpacker`.
     fn unpack_bytes(&mut self, slice: &mut [u8]) -> Result<(), Self::Error>;
-
-    /// Unpack a statically-sized sequence of bytes from the `Unpacker`.
-    fn unpack_exact_bytes<const N: usize>(&mut self) -> Result<[u8; N], Self::Error> {
-        let mut array = [0u8; N];
-        self.unpack_bytes(&mut array)?;
-        Ok(array)
-    }
 }

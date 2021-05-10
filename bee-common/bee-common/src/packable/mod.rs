@@ -37,7 +37,8 @@ macro_rules! impl_packable_for_int {
             }
 
             fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, U::Error> {
-                let bytes: [u8; core::mem::size_of::<Self>()] = unpacker.unpack_exact_bytes()?;
+                let mut bytes = [0u8; core::mem::size_of::<Self>()];
+                unpacker.unpack_bytes(&mut bytes)?;
                 Ok(Self::from_le_bytes(bytes))
             }
 
