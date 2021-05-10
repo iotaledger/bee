@@ -17,7 +17,7 @@ pub enum Error {
     #[error("Unexpected snapshot kind: expected {0:?}, read {1:?}")]
     UnexpectedSnapshotKind(SnapshotKind, SnapshotKind),
     /// Downloading failed.
-    #[error("Downloading failed.")]
+    #[error("Downloading failed")]
     DownloadingFailed,
     /// No snapshot download source available.
     #[error("No snapshot download source available")]
@@ -43,9 +43,9 @@ pub enum Error {
     #[error("Unexpected milestone diff index: {0:?}")]
     UnexpectedMilestoneDiffIndex(MilestoneIndex),
     /// Missing consumed treasury.
-    #[error("Missing consumed treasury.")]
+    #[error("Missing consumed treasury")]
     MissingConsumedTreasury,
     /// Remaining bytes in file.
-    #[error("Remaining bytes in file.")]
+    #[error("Remaining bytes in file")]
     RemainingBytes,
 }

@@ -6,57 +6,81 @@ use crate::{
     workers::snapshot::error::Error as SnapshotError,
 };
 
-use bee_message::{address::Address, Error as MessageError, MessageId};
+use bee_message::{address::Address, milestone::MilestoneIndex, Error as MessageError, MessageId};
 
-/// Errors occurring during consensus.
+/// Errors occurring during ledger workers operations.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("")]
+    /// Snapshot error.
+    #[error("Snapshot error: {0}")]
     Snapshot(#[from] SnapshotError),
-    #[error("")]
+    /// Types error.
+    #[error("Types error: {0}")]
     Types(#[from] TypesError),
+    /// Message error.
     #[error("Message error: {0}")]
     Message(#[from] MessageError),
+    /// Missing message in the past cone of the milestone
     #[error("Message {0} is missing in the past cone of the milestone")]
     MissingMessage(MessageId),
-    #[error("")]
+    /// Unsupported input kind.
+    #[error("Unsupported input kind: {0}")]
     UnsupportedInputKind(u8),
-    #[error("")]
+    /// Unsupported output kind.
+    #[error("Unsupported output kind: {0}")]
     UnsupportedOutputKind(u8),
-    #[error("")]
+    /// Unsupported address kind.
+    #[error("Unsupported address kind: {0}")]
     UnsupportedAddressKind(u8),
-    #[error("")]
+    /// Unsupported transaction essence kind.
+    #[error("Unsupported transaction essence kind: {0}")]
     UnsupportedTransactionEssenceKind(u8),
-    #[error("")]
+    /// Unsupported payload kind.
+    #[error("Unsupported payload kind: {0}")]
     UnsupportedPayloadKind(u32),
-    #[error("Message was not found")]
-    MilestoneMessageNotFound,
-    #[error("Message payload was not a milestone")]
+    /// Milestone message not found.
+    #[error("Milestone message not found: {0}")]
+    MilestoneMessageNotFound(MessageId),
+    /// Message payload is not a milestone
+    #[error("Message payload is not a milestone")]
     NoMilestonePayload,
-    #[error("Tried to confirm {0} on top of {1}")]
-    NonContiguousMilestone(u32, u32),
-    #[error("The computed merkle proof on milestone {0} does not match the one provided by the coordinator {1}")]
-    MerkleProofMismatch(String, String),
+    /// Non contiguous milestones.
+    #[error("Non contiguous milestones: tried to confirm {0} on top of {1}")]
+    NonContiguousMilestones(u32, u32),
+    /// Merkle proof mismatch.
+    #[error("Merkle proof mismatch on milestone {0}: computed {1} != provided {2}")]
+    MerkleProofMismatch(MilestoneIndex, String, String),
+    /// Invalid messages count.
     #[error("Invalid messages count: referenced ({0}) != no transaction ({1}) + conflicting ({2}) + included ({3})")]
     InvalidMessagesCount(usize, usize, usize, usize),
+    /// Invalid ledger unspent state.
     #[error("Invalid ledger unspent state: {0}")]
     InvalidLedgerUnspentState(u64),
+    /// Invalid ledger balance state.
     #[error("Invalid ledger balance state: {0}")]
     InvalidLedgerBalanceState(u64),
+    /// Invalid ledger dust state.
     #[error("Invalid ledger dust state: {0:?} {1:?}")]
     InvalidLedgerDustState(Address, Balance),
+    /// Consumed amount overflow.
     #[error("Consumed amount overflow: {0}.")]
     ConsumedAmountOverflow(u128),
+    /// Created amount overflow.
     #[error("Created amount overflow: {0}.")]
     CreatedAmountOverflow(u128),
+    /// Ledger state overflow.
     #[error("Ledger state overflow: {0}")]
     LedgerStateOverflow(u128),
+    /// Non zero balance diff sum.
     #[error("Non zero balance diff sum: {0}.")]
     NonZeroBalanceDiffSum(i64),
-    #[error("Decreasing receipt migrated at index")]
-    DecreasingReceiptMigratedAtIndex,
-    #[error("Missing unspent output: {0}")]
+    /// Decreasing receipt migrated at index.
+    #[error("Decreasing receipt migrated at index: {0} < {1}")]
+    DecreasingReceiptMigratedAtIndex(MilestoneIndex, MilestoneIndex),
+    /// Missing unspent output.
+    #[error("Missing unspent output {0}")]
     MissingUnspentOutput(Unspent),
-    #[error("")]
+    /// Storage backend error.
+    #[error("Storage backend error: {0}")]
     Storage(Box<dyn std::error::Error + Send>),
 }

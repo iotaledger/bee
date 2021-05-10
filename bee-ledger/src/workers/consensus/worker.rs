@@ -77,7 +77,10 @@ async fn confirm<N: Node>(
 where
     N::Backend: StorageBackend,
 {
-    let message = tangle.get(&message_id).await.ok_or(Error::MilestoneMessageNotFound)?;
+    let message = tangle
+        .get(&message_id)
+        .await
+        .ok_or(Error::MilestoneMessageNotFound(message_id))?;
 
     let milestone = match message.payload() {
         Some(Payload::Milestone(milestone)) => milestone.clone(),
@@ -85,7 +88,7 @@ where
     };
 
     if milestone.essence().index() != MilestoneIndex(**ledger_index + 1) {
-        return Err(Error::NonContiguousMilestone(
+        return Err(Error::NonContiguousMilestones(
             *milestone.essence().index(),
             **ledger_index,
         ));
@@ -101,6 +104,7 @@ where
 
     if !metadata.merkle_proof.eq(&milestone.essence().merkle_proof()) {
         return Err(Error::MerkleProofMismatch(
+            milestone.essence().index(),
             hex::encode(metadata.merkle_proof),
             hex::encode(milestone.essence().merkle_proof()),
         ));
@@ -127,7 +131,10 @@ where
         }
 
         if receipt.migrated_at() < *receipt_migrated_at {
-            return Err(Error::DecreasingReceiptMigratedAtIndex);
+            return Err(Error::DecreasingReceiptMigratedAtIndex(
+                receipt.migrated_at(),
+                *receipt_migrated_at,
+            ));
         } else {
             *receipt_migrated_at = receipt.migrated_at();
         }
