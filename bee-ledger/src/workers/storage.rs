@@ -303,9 +303,7 @@ pub(crate) async fn rollback_milestone<B: StorageBackend>(
         delete_consumed_output_batch(storage, &mut batch, output_id)?;
     }
 
-    let mut balance_diffs = balance_diffs.clone();
-    balance_diffs.negate();
-    apply_balance_diffs_batch(storage, &mut batch, &balance_diffs).await?;
+    apply_balance_diffs_batch(storage, &mut batch, &balance_diffs.negated()).await?;
 
     if let Some(migration) = migration {
         delete_receipt_batch(storage, &mut batch, migration.receipt())?;

@@ -111,6 +111,13 @@ impl BalanceDiffs {
         }
     }
 
+    /// Creates a new negated version of a `BalanceDiffs`.
+    pub fn negated(&self) -> Self {
+        let mut new = self.clone();
+        new.negate();
+        new
+    }
+
     /// Adds an output to a `BalanceDiffs`.
     pub fn output_add(&mut self, output: &Output) -> Result<(), Error> {
         match output {
