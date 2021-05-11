@@ -138,20 +138,18 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
 
 fn check_header(header: &SnapshotHeader, kind: SnapshotKind, network_id: u64) -> Result<(), Error> {
     if kind != header.kind() {
-        return Err(Error::Snapshot(SnapshotError::UnexpectedSnapshotKind(
+        Err(Error::Snapshot(SnapshotError::UnexpectedSnapshotKind(
             kind,
             header.kind(),
-        )));
-    }
-
-    if network_id != header.network_id() {
-        return Err(Error::Snapshot(SnapshotError::NetworkIdMismatch(
+        )))
+    } else if network_id != header.network_id() {
+        Err(Error::Snapshot(SnapshotError::NetworkIdMismatch(
             network_id,
             header.network_id(),
-        )));
+        )))
+    } else {
+        Ok(())
     }
-
-    Ok(())
 }
 
 async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, network_id: u64) -> Result<(), Error> {
