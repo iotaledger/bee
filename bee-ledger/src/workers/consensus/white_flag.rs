@@ -231,22 +231,12 @@ async fn traversal<B: StorageBackend>(
                     continue;
                 }
 
-                let mut next = None;
-
-                for parent in message.parents().iter() {
-                    if !visited.contains(parent) {
-                        next.replace(parent);
-                        break;
-                    }
-                }
-
-                match next {
-                    Some(next) => message_ids.push(*next),
-                    None => {
-                        apply_message(storage, message_id, &message, metadata).await?;
-                        visited.insert(*message_id);
-                        message_ids.pop();
-                    }
+                if let Some(unvisited) = message.parents().iter().skip_while(|p| visited.contains(p)).next() {
+                    message_ids.push(*unvisited);
+                } else {
+                    apply_message(storage, message_id, &message, metadata).await?;
+                    visited.insert(*message_id);
+                    message_ids.pop();
                 }
             }
             None => {
