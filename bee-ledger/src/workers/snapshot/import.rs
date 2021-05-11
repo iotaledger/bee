@@ -302,7 +302,7 @@ pub(crate) async fn import_snapshots<B: StorageBackend>(
             warn!("Could not download the delta snapshot file and it will not be imported.");
         }
 
-        if Path::exists(delta_path) {
+        if delta_path.exists() {
             import_delta_snapshot(storage, delta_path, network_id).await?;
         }
     }
