@@ -232,7 +232,7 @@ async fn traversal<B: StorageBackend>(
                     continue;
                 }
 
-                if let Some(unvisited) = message.parents().iter().skip_while(|p| visited.contains(p)).next() {
+                if let Some(unvisited) = message.parents().iter().find(|p| !visited.contains(p)) {
                     message_ids.push(*unvisited);
                 } else {
                     apply_message(storage, message_id, &message, metadata).await?;
