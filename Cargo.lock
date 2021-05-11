@@ -215,7 +215,6 @@ dependencies = [
  "hex",
  "iota-crypto 0.5.1",
  "log",
- "rand 0.8.3",
  "reqwest",
  "serde",
  "thiserror",

@@ -486,7 +486,7 @@ pub async fn fetch_unspent_treasury_output<B: StorageBackend>(storage: &B) -> Re
                 0 => panic!("No unspent treasury output found"),
                 // Indexing is fine since length is known
                 1 => Ok(outputs[0].clone()),
-                // There should only be one and only one unspent treasury output at all time.
+                // There should be one and only one unspent treasury output at all time.
                 _ => panic!("More than one unspent treasury output found"),
             }
         }
