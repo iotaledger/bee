@@ -46,7 +46,7 @@ where
                         .set_health(StorageHealth::Corrupted)
                         .await
                         .map_err(|e| Error::Storage(Box::new(e)))?;
-                    return Err(e.into());
+                    return Err(e);
                 }
             }
             Some(info) => {
