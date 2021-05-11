@@ -5,7 +5,7 @@ use crate::workers::snapshot::error::Error;
 
 use log::{info, warn};
 
-use std::{fs::File, io::copy, path::Path};
+use std::path::Path;
 
 pub(crate) async fn download_snapshot_file(file_path: &Path, download_urls: &[String]) -> Result<(), Error> {
     let file_name = file_path
@@ -27,10 +27,11 @@ pub(crate) async fn download_snapshot_file(file_path: &Path, download_urls: &[St
 
         match reqwest::get(&url).await.and_then(|res| res.error_for_status()) {
             Ok(res) => {
-                copy(
+                tokio::io::copy(
                     &mut res.bytes().await.map_err(|_| Error::DownloadingFailed)?.as_ref(),
-                    &mut File::create(file_path)?,
-                )?;
+                    &mut tokio::fs::File::create(file_path).await?,
+                )
+                .await?;
                 break;
             }
             Err(e) => warn!("Downloading snapshot file failed with status code {:?}.", e.status()),
