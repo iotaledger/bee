@@ -92,12 +92,10 @@ pub(crate) fn insert_output_id_for_address_batch<B: StorageBackend>(
     match address {
         Address::Ed25519(address) => {
             Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, batch, &(*address, *output_id), &())
-                .map_err(|e| Error::Storage(Box::new(e)))?;
+                .map_err(|e| Error::Storage(Box::new(e)))
         }
-        address => return Err(Error::UnsupportedAddressKind(address.kind())),
+        address => Err(Error::UnsupportedAddressKind(address.kind())),
     }
-
-    Ok(())
 }
 
 pub(crate) fn delete_output_id_for_address_batch<B: StorageBackend>(
@@ -109,12 +107,10 @@ pub(crate) fn delete_output_id_for_address_batch<B: StorageBackend>(
     match address {
         Address::Ed25519(address) => {
             Batch::<(Ed25519Address, OutputId), ()>::batch_delete(storage, batch, &(*address, *output_id))
-                .map_err(|e| Error::Storage(Box::new(e)))?;
+                .map_err(|e| Error::Storage(Box::new(e)))
         }
-        address => return Err(Error::UnsupportedAddressKind(address.kind())),
+        address => Err(Error::UnsupportedAddressKind(address.kind())),
     }
-
-    Ok(())
 }
 
 pub(crate) fn insert_created_output_batch<B: StorageBackend>(
@@ -130,15 +126,13 @@ pub(crate) fn insert_created_output_batch<B: StorageBackend>(
 
     match output.inner() {
         Output::SignatureLockedSingle(output) => {
-            insert_output_id_for_address_batch(storage, batch, output.address(), output_id)?
+            insert_output_id_for_address_batch(storage, batch, output.address(), output_id)
         }
         Output::SignatureLockedDustAllowance(output) => {
-            insert_output_id_for_address_batch(storage, batch, output.address(), output_id)?
+            insert_output_id_for_address_batch(storage, batch, output.address(), output_id)
         }
-        output => return Err(Error::UnsupportedOutputKind(output.kind())),
+        output => Err(Error::UnsupportedOutputKind(output.kind())),
     }
-
-    Ok(())
 }
 
 pub(crate) fn delete_created_output_batch<B: StorageBackend>(
@@ -154,15 +148,13 @@ pub(crate) fn delete_created_output_batch<B: StorageBackend>(
 
     match output.inner() {
         Output::SignatureLockedSingle(output) => {
-            delete_output_id_for_address_batch(storage, batch, output.address(), output_id)?
+            delete_output_id_for_address_batch(storage, batch, output.address(), output_id)
         }
         Output::SignatureLockedDustAllowance(output) => {
-            delete_output_id_for_address_batch(storage, batch, output.address(), output_id)?
+            delete_output_id_for_address_batch(storage, batch, output.address(), output_id)
         }
-        output => return Err(Error::UnsupportedOutputKind(output.kind())),
+        output => Err(Error::UnsupportedOutputKind(output.kind())),
     }
-
-    Ok(())
 }
 
 pub(crate) async fn create_output<B: StorageBackend>(
@@ -188,10 +180,7 @@ pub(crate) fn insert_consumed_output_batch<B: StorageBackend>(
 ) -> Result<(), Error> {
     Batch::<OutputId, ConsumedOutput>::batch_insert(storage, batch, output_id, output)
         .map_err(|e| Error::Storage(Box::new(e)))?;
-    Batch::<Unspent, ()>::batch_delete(storage, batch, &(*output_id).into())
-        .map_err(|e| Error::Storage(Box::new(e)))?;
-
-    Ok(())
+    Batch::<Unspent, ()>::batch_delete(storage, batch, &(*output_id).into()).map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn delete_consumed_output_batch<B: StorageBackend>(
@@ -202,9 +191,7 @@ pub(crate) fn delete_consumed_output_batch<B: StorageBackend>(
     Batch::<OutputId, ConsumedOutput>::batch_delete(storage, batch, output_id)
         .map_err(|e| Error::Storage(Box::new(e)))?;
     Batch::<Unspent, ()>::batch_insert(storage, batch, &(*output_id).into(), &())
-        .map_err(|e| Error::Storage(Box::new(e)))?;
-
-    Ok(())
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) async fn apply_balance_diffs<B: StorageBackend>(
