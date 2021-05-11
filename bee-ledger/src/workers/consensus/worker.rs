@@ -98,11 +98,7 @@ where
 
     let mut metadata = WhiteFlagMetadata::new(milestone.essence().index());
 
-    let parents = message.parents().iter().copied().collect();
-
-    drop(message);
-
-    white_flag::<N::Backend>(tangle, storage, parents, &mut metadata).await?;
+    white_flag(tangle, storage, message.parents(), &mut metadata).await?;
 
     if !metadata.merkle_proof.eq(&milestone.essence().merkle_proof()) {
         return Err(Error::MerkleProofMismatch(

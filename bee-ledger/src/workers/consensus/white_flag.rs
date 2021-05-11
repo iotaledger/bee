@@ -258,10 +258,10 @@ async fn traversal<B: StorageBackend>(
 pub async fn white_flag<B: StorageBackend>(
     tangle: &MsTangle<B>,
     storage: &B,
-    message_ids: Vec<MessageId>,
+    message_ids: &[MessageId],
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
-    traversal(tangle, storage, message_ids.into_iter().rev().collect(), metadata).await?;
+    traversal(tangle, storage, message_ids.iter().rev().copied().collect(), metadata).await?;
 
     metadata.merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
 
