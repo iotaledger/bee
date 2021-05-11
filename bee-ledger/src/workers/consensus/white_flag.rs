@@ -212,12 +212,12 @@ async fn apply_message<B: StorageBackend>(
 async fn traversal<B: StorageBackend>(
     tangle: &MsTangle<B>,
     storage: &B,
-    mut messages_ids: Vec<MessageId>,
+    mut message_ids: Vec<MessageId>,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
     let mut visited = HashSet::new();
 
-    while let Some(message_id) = messages_ids.last() {
+    while let Some(message_id) = message_ids.last() {
         match tangle
             .get_vertex(&message_id)
             .await
@@ -227,7 +227,7 @@ async fn traversal<B: StorageBackend>(
             Some((message, meta)) => {
                 if meta.flags().is_referenced() {
                     visited.insert(*message_id);
-                    messages_ids.pop();
+                    message_ids.pop();
                     continue;
                 }
 
@@ -241,11 +241,11 @@ async fn traversal<B: StorageBackend>(
                 }
 
                 match next {
-                    Some(next) => messages_ids.push(*next),
+                    Some(next) => message_ids.push(*next),
                     None => {
                         apply_message(storage, message_id, &message, metadata).await?;
                         visited.insert(*message_id);
-                        messages_ids.pop();
+                        message_ids.pop();
                     }
                 }
             }
@@ -254,7 +254,7 @@ async fn traversal<B: StorageBackend>(
                     return Err(Error::MissingMessage(*message_id));
                 } else {
                     visited.insert(*message_id);
-                    messages_ids.pop();
+                    message_ids.pop();
                 }
             }
         }
@@ -267,10 +267,10 @@ async fn traversal<B: StorageBackend>(
 pub async fn white_flag<B: StorageBackend>(
     tangle: &MsTangle<B>,
     storage: &B,
-    messages_ids: Vec<MessageId>,
+    message_ids: Vec<MessageId>,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
-    traversal(tangle, storage, messages_ids.into_iter().rev().collect(), metadata).await?;
+    traversal(tangle, storage, message_ids.into_iter().rev().collect(), metadata).await?;
 
     metadata.merkle_proof = MerkleHasher::<Blake2b256>::new().digest(&metadata.included_messages);
 
