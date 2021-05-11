@@ -35,9 +35,12 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::TryInto};
 
+/// Event of the consensus worker.
 pub struct ConsensusWorkerEvent(pub MessageId);
 
+/// The consensus worker.
 pub struct ConsensusWorker {
+    /// Communication channel of the consensus worker.
     pub tx: mpsc::UnboundedSender<ConsensusWorkerEvent>,
 }
 

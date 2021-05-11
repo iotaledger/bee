@@ -264,6 +264,7 @@ async fn traversal<B: StorageBackend>(
     Ok(())
 }
 
+/// Computes the ledger state according to the White Flag method.
 pub async fn white_flag<B: StorageBackend>(
     tangle: &MsTangle<B>,
     storage: &B,

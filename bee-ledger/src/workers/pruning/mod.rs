@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+// TODO remove with pruning PR
+#![allow(missing_docs)]
+
 pub mod config;
 
 pub(crate) mod condition;

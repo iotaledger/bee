@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module containing workers required to create and maintain the ledger state.
+
 pub mod consensus;
 pub mod event;
 pub mod pruning;
@@ -17,6 +19,7 @@ use snapshot::{config::SnapshotConfig, worker::SnapshotWorker};
 
 use bee_runtime::node::{Node, NodeBuilder};
 
+/// Initializes the ledger workers.
 pub fn init<N>(
     node_builder: N::Builder,
     network_id: u64,

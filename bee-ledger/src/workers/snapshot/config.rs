@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module containing snapshot configuration.
+
 use serde::Deserialize;
 
 use std::path::{Path, PathBuf};
@@ -28,37 +30,37 @@ impl SnapshotConfigBuilder {
         Self::default()
     }
 
-    // Sets the full path of the `SnapshotConfigBuilder`.
+    /// Sets the full path of the `SnapshotConfigBuilder`.
     pub fn full_path(mut self, full_path: String) -> Self {
         self.full_path.replace(full_path);
         self
     }
 
-    // Sets the delta path of the `SnapshotConfigBuilder`.
+    /// Sets the delta path of the `SnapshotConfigBuilder`.
     pub fn delta_path(mut self, delta_path: String) -> Self {
         self.delta_path.replace(delta_path);
         self
     }
 
-    // Sets the download URLs of the `SnapshotConfigBuilder`.
+    /// Sets the download URLs of the `SnapshotConfigBuilder`.
     pub fn download_urls(mut self, download_urls: Vec<String>) -> Self {
         self.download_urls.replace(download_urls);
         self
     }
 
-    // Sets the depth of the `SnapshotConfigBuilder`.
+    /// Sets the depth of the `SnapshotConfigBuilder`.
     pub fn depth(mut self, depth: u32) -> Self {
         self.depth.replace(depth);
         self
     }
 
-    // Sets the synced interval of the `SnapshotConfigBuilder`.
+    /// Sets the synced interval of the `SnapshotConfigBuilder`.
     pub fn interval_synced(mut self, interval_synced: u32) -> Self {
         self.interval_synced.replace(interval_synced);
         self
     }
 
-    // Sets the unsynced interval of the `SnapshotConfigBuilder`.
+    /// Sets the unsynced interval of the `SnapshotConfigBuilder`.
     pub fn interval_unsynced(mut self, interval_unsynced: u32) -> Self {
         self.interval_unsynced.replace(interval_unsynced);
         self

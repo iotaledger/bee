@@ -111,6 +111,7 @@ impl BalanceDiffs {
         }
     }
 
+    /// Adds an output to a `BalanceDiffs`.
     pub fn output_add(&mut self, output: &Output) -> Result<(), Error> {
         match output {
             Output::SignatureLockedSingle(output) => {
@@ -129,6 +130,7 @@ impl BalanceDiffs {
         Ok(())
     }
 
+    /// Subtracts an output from a BalanceDiffs`.
     pub fn output_sub(&mut self, output: &Output) -> Result<(), Error> {
         match output {
             Output::SignatureLockedSingle(output) => {

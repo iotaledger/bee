@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module containing ledger storage operations.
+
 use crate::{
     types::{
         snapshot::SnapshotInfo, Balance, BalanceDiffs, ConsumedOutput, CreatedOutput, LedgerIndex, Migration,
@@ -22,6 +24,7 @@ use bee_tangle::solid_entry_point::SolidEntryPoint;
 
 use std::collections::HashMap;
 
+/// A blanket-implemented helper trait for the storage layer.
 pub trait StorageBackend:
     backend::StorageBackend
     + BatchBuilder
@@ -471,6 +474,7 @@ pub(crate) fn unspend_treasury_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
+/// Fetches the unspent treasury output from the storage.
 pub async fn fetch_unspent_treasury_output<B: StorageBackend>(storage: &B) -> Result<TreasuryOutput, Error> {
     match Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &false)
         .await

@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module containing the event occurring during ledger operations.
+
 use crate::types::{ConsumedOutput, CreatedOutput};
 
 use bee_message::{milestone::MilestoneIndex, MessageId};

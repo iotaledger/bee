@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module containing the worker required to compute and maintain the ledger state.
+
 pub(crate) mod merkle_hasher;
 pub(crate) mod metadata;
 pub(crate) mod state;
