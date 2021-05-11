@@ -9,7 +9,6 @@ use bee_tangle::ConflictReason;
 use std::collections::HashMap;
 
 /// White flag metadata of a milestone confirmation.
-#[derive(Default)]
 pub struct WhiteFlagMetadata {
     /// Index of the confirmed milestone.
     pub(crate) index: MilestoneIndex,
@@ -36,7 +35,14 @@ impl WhiteFlagMetadata {
     pub fn new(index: MilestoneIndex) -> WhiteFlagMetadata {
         WhiteFlagMetadata {
             index,
-            ..Self::default()
+            referenced_messages: 0,
+            excluded_no_transaction_messages: Vec::new(),
+            excluded_conflicting_messages: Vec::new(),
+            included_messages: Vec::new(),
+            created_outputs: HashMap::new(),
+            consumed_outputs: HashMap::new(),
+            balance_diffs: BalanceDiffs::new(),
+            merkle_proof: Vec::new(),
         }
     }
 
