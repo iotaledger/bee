@@ -64,7 +64,12 @@ pub async fn prune<S: StorageBackend>(
 
     // Start pruning from the last pruning index + 1.
     let start_index = tangle.get_pruning_index() + 1;
-    assert!(pruning_target_index >= start_index);
+    assert!(
+        pruning_target_index >= start_index,
+        "target_index: {}, start_index: {}",
+        pruning_target_index,
+        start_index
+    );
 
     // If `start_index == 1` (lowest possible start index), we need to deactivate "unconfirmed" pruning.
     let unconfirmed_additional_pruning_delay = below_max_depth * UNCONFIRMED_PRUNING_DELAY_FACTOR;

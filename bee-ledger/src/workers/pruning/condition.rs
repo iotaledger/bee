@@ -28,11 +28,13 @@ pub(crate) fn should_prune<B: StorageBackend>(
     ledger_index: LedgerIndex,
     pruning_config: &PruningConfig,
 ) -> Result<PruningTargetIndex, SkipReason> {
+    let start_index_min = || *tangle.get_pruning_index() + pruning_config.delay() + 1;
+
     if pruning_config.disabled() {
         Err(SkipReason::Disabled)
-    } else if *ledger_index < *tangle.get_pruning_index() + pruning_config.delay() {
+    } else if *ledger_index < start_index_min() {
         Err(SkipReason::NotEnoughData {
-            remaining_milestones: (*tangle.get_pruning_index() + pruning_config.delay()) - *ledger_index,
+            remaining_milestones: start_index_min() - *ledger_index,
         })
     } else if *ledger_index % pruning_config.interval() != 0 {
         Err(SkipReason::Deferred {
