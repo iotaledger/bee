@@ -3,8 +3,8 @@
 
 use crate::types::{ConsumedOutput, CreatedOutput};
 
-use bee_ledger_types::types::ConflictReason;
 use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_tangle::ConflictReason;
 
 /// An event that indicates that a milestone was confirmed.
 #[derive(Clone)]

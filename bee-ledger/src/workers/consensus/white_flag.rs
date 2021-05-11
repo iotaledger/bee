@@ -10,7 +10,6 @@ use crate::{
     },
 };
 
-use bee_ledger_types::types::ConflictReason;
 use bee_message::{
     address::Address,
     input::Input,
@@ -22,7 +21,7 @@ use bee_message::{
     unlock::{UnlockBlock, UnlockBlocks},
     Message, MessageId,
 };
-use bee_tangle::MsTangle;
+use bee_tangle::{ConflictReason, MsTangle};
 
 use crypto::hashes::blake2b::Blake2b256;
 

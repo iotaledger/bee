@@ -17,7 +17,6 @@ use crate::{
     },
 };
 
-use bee_ledger_types::types::ConflictReason;
 use bee_message::{
     milestone::MilestoneIndex,
     output::{Output, OutputId},
@@ -25,7 +24,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::{ConflictReason, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 

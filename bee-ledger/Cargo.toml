@@ -11,9 +11,6 @@ keywords = ["iota", "tangle", "bee", "framework", "ledger"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-# // TODO remove
-bee_ledger_types = { git = "https://github.com/iotaledger/bee.git", branch = "dev", package = "bee-ledger" }
-
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }

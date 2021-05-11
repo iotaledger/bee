@@ -223,7 +223,6 @@ version = "0.1.0-alpha"
 dependencies = [
  "async-trait",
  "bee-common",
- "bee-ledger 0.2.0",
  "bee-message",
  "bee-runtime",
  "bee-storage",
@@ -241,16 +240,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-stream",
-]
-
-[[package]]
-name = "bee-ledger"
-version = "0.2.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#02a3cb65d167868e7e146d9f908061d360762997"
-dependencies = [
- "bee-common",
- "bee-message",
- "thiserror",
 ]
 
 [[package]]
@@ -298,7 +287,7 @@ dependencies = [
  "async-trait",
  "bee-common",
  "bee-crypto",
- "bee-ledger 0.1.0-alpha",
+ "bee-ledger",
  "bee-message",
  "bee-network",
  "bee-protocol",
@@ -351,7 +340,7 @@ dependencies = [
  "async-trait",
  "bee-common",
  "bee-crypto",
- "bee-ledger 0.1.0-alpha",
+ "bee-ledger",
  "bee-message",
  "bee-network",
  "bee-runtime",
@@ -383,8 +372,7 @@ dependencies = [
  "async-trait",
  "bech32",
  "bee-common",
- "bee-ledger 0.1.0-alpha",
- "bee-ledger 0.2.0",
+ "bee-ledger",
  "bee-message",
  "bee-network",
  "bee-pow",
@@ -436,7 +424,7 @@ dependencies = [
  "async-trait",
  "bee-common",
  "bee-crypto",
- "bee-ledger 0.1.0-alpha",
+ "bee-ledger",
  "bee-message",
  "bee-storage",
  "bee-tangle",
