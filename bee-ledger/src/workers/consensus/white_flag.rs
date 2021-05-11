@@ -255,7 +255,6 @@ async fn traversal<B: StorageBackend>(
                 } else {
                     visited.insert(*message_id);
                     messages_ids.pop();
-                    continue;
                 }
             }
         }
