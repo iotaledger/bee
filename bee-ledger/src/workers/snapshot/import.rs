@@ -80,9 +80,7 @@ async fn import_outputs<R: Read, B: StorageBackend>(
         balance_diffs.output_add(created_output.inner())?;
     }
 
-    apply_balance_diffs(&*storage, &balance_diffs).await?;
-
-    Ok(())
+    apply_balance_diffs(&*storage, &balance_diffs).await
 }
 
 async fn import_milestone_diffs<R: Read, B: StorageBackend>(
@@ -126,14 +124,12 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
             None
         };
 
-        match index {
-            index if index == MilestoneIndex(ledger_index + 1) => {
-                apply_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration).await?;
-            }
-            index if index == MilestoneIndex(ledger_index) => {
-                rollback_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration).await?;
-            }
-            _ => return Err(Error::Snapshot(SnapshotError::UnexpectedMilestoneDiffIndex(index))),
+        if index == MilestoneIndex(ledger_index + 1) {
+            apply_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration).await?;
+        } else if index == MilestoneIndex(ledger_index) {
+            rollback_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration).await?;
+        } else {
+            return Err(Error::Snapshot(SnapshotError::UnexpectedMilestoneDiffIndex(index)));
         }
     }
 
