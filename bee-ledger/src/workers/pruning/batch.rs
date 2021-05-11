@@ -24,7 +24,7 @@ use ref_cast::RefCast;
 use std::collections::VecDeque;
 
 pub type Messages = HashSet<MessageId>;
-pub type ConfirmedApprovers = HashSet<MessageId>;
+pub type FetchedApprovers = HashMap<MessageId, bool>;
 pub type OldSeps = HashMap<SolidEntryPoint, MilestoneIndex>;
 pub type NewSeps = OldSeps;
 
@@ -51,7 +51,7 @@ pub async fn add_confirmed_data<S: StorageBackend>(
     batch: &mut S::Batch,
 ) -> Result<(usize, usize, usize, NewSeps), Error> {
     let mut visited = Messages::default();
-    let mut confirmed_approvers = ConfirmedApprovers::default();
+    let mut fetched_approvers = FetchedApprovers::default();
     let mut new_seps = NewSeps::default();
 
     let mut num_edges: usize = 0;
@@ -134,10 +134,12 @@ pub async fn add_confirmed_data<S: StorageBackend>(
             // This is an efficient method to find the "surface" of a confirmed past-cone, that is all confirmed
             // messages, that have at least one child not confirmed by this milestone (target_index + x).
             //
-            // We only mark this message as a new SEP if it has at least one unconfirmed aprover. For that we need to
-            // retrieve the metadata of each of its approvers, and see if it was confirmed by some future milestone.
+            // We only mark this message as a new SEP if its approvers:
+            //  (a) contain at least one that is still unconfirmed;
+            //  (b) contain at least one that is confirmed by a milestone with an index > target_index;
+            //
             // In order to minimize database operations, we do the following:
-            //  (1) if all approvers have been confirmed by this milestone, we don't need to query the db at all;
+            //  (1) if all its approvers have been confirmed by this milestone, we don't need to query the db at all;
             //  (2) if at least one approver was confirmed by a future (not yet pruned) milestone, we look into the
             //      buffer in case it was queried before already;
             //  (3) if the buffer didn't contain the information, we query the db, and add the result to the buffer;
@@ -149,41 +151,38 @@ pub async fn add_confirmed_data<S: StorageBackend>(
                 .unwrap()
                 .unwrap();
 
+            // A list of approvers not belonging to the currently traversed cone.
             let not_visited_approvers = approvers
                 .iter()
                 .filter(|id| !visited.contains(id))
                 .collect::<HashSet<_>>();
 
-            // Case (1):
-            if not_visited_approvers.is_empty() {
-                continue;
-            } else {
-                let not_visited_not_confirmed_approvers = not_visited_approvers
+            // If it has only previously traversed approvers, we can skip.
+            if !not_visited_approvers.is_empty() {
+                //
+                let not_fetched_approvers = not_visited_approvers
                     .iter()
-                    .filter(|id| !confirmed_approvers.contains(id))
+                    .filter(|id| !fetched_approvers.contains_key(id))
                     .collect::<HashSet<_>>();
 
-                // Case (2):
-                if not_visited_not_confirmed_approvers.is_empty() {
-                    continue;
-                } else {
-                    //
-                    for id in not_visited_not_confirmed_approvers {
-                        // Case (3):
-                        let is_confirmed = Fetch::<MessageId, MessageMetadata>::fetch(storage, id)
-                            .await
-                            .unwrap()
-                            .unwrap()
-                            .milestone_index()
-                            .is_some();
+                // Fetch not yet fetched metadata, and buffer it.
+                for id in not_fetched_approvers {
+                    let is_confirmed = Fetch::<MessageId, MessageMetadata>::fetch(storage, id)
+                        .await
+                        .unwrap()
+                        .unwrap()
+                        .milestone_index()
+                        .is_some();
 
-                        if is_confirmed {
-                            confirmed_approvers.insert(**id);
-                            continue;
-                        } else {
-                            let _ = new_seps.insert(current_id.into(), target_index);
-                        }
-                    }
+                    fetched_approvers.insert(**id, is_confirmed);
+                }
+
+                // Decide whether it's a valid new SEP.
+                if not_visited_approvers
+                    .iter()
+                    .all(|id| *fetched_approvers.get(id).unwrap())
+                {
+                    let _ = new_seps.insert(current_id.into(), target_index);
                 }
             }
         }
