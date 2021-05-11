@@ -28,9 +28,10 @@ use crypto::hashes::blake2b::Blake2b256;
 use std::collections::{HashMap, HashSet};
 
 fn verify_signature(address: &Address, unlock_blocks: &UnlockBlocks, index: usize, essence_hash: &[u8; 32]) -> bool {
-    match unlock_blocks.get(index) {
-        Some(UnlockBlock::Signature(signature)) => address.verify(essence_hash, signature).is_ok(),
-        _ => false,
+    if let Some(UnlockBlock::Signature(signature)) = unlock_blocks.get(index) {
+        address.verify(essence_hash, signature).is_ok()
+    } else {
+        false
     }
 }
 
