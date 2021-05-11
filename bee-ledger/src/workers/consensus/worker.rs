@@ -246,7 +246,6 @@ where
         let (tx, rx) = mpsc::unbounded_channel();
 
         let tangle = node.resource::<MsTangle<N::Backend>>();
-        let tangle_config = node.resource::<TangleConfig>();
         let storage = node.storage();
         let bus = node.bus();
 
@@ -275,6 +274,7 @@ where
         // TODO unwrap
         let mut ledger_index = storage::fetch_ledger_index(&*storage).await.unwrap().unwrap();
         let mut receipt_migrated_at = MilestoneIndex(0);
+        let below_max_depth = tangle.config().below_max_depth();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -313,7 +313,7 @@ where
                             &bus,
                             pruning_target_index,
                             &pruning_config,
-                            tangle_config.below_max_depth(),
+                            below_max_depth,
                         )
                         .await
                         {
