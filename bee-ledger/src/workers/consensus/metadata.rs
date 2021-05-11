@@ -3,8 +3,8 @@
 
 use crate::types::{BalanceDiffs, ConsumedOutput, CreatedOutput};
 
-use bee_ledger_types::types::ConflictReason;
 use bee_message::{milestone::MilestoneIndex, output::OutputId, MessageId};
+use bee_tangle::ConflictReason;
 
 use std::collections::HashMap;
 

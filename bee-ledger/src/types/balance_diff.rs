@@ -3,7 +3,11 @@
 
 use crate::types::Error;
 
-use bee_message::{address::Address, constants::IOTA_SUPPLY};
+use bee_message::{
+    address::Address,
+    constants::IOTA_SUPPLY,
+    output::{Output, DUST_THRESHOLD},
+};
 
 use std::collections::{
     hash_map::{IntoIter, Iter, IterMut},
@@ -100,6 +104,49 @@ impl BalanceDiffs {
         self.0.get(address)
     }
 
+    /// Negates a `BalanceDiffs`.
+    pub fn negate(&mut self) {
+        for (_, diff) in self.iter_mut() {
+            diff.negate();
+        }
+    }
+
+    pub fn output_add(&mut self, output: &Output) -> Result<(), Error> {
+        match output {
+            Output::SignatureLockedSingle(output) => {
+                self.amount_add(*output.address(), output.amount())?;
+                if output.amount() < DUST_THRESHOLD {
+                    self.dust_outputs_inc(*output.address())?;
+                }
+            }
+            Output::SignatureLockedDustAllowance(output) => {
+                self.amount_add(*output.address(), output.amount())?;
+                self.dust_allowance_add(*output.address(), output.amount())?;
+            }
+            output => return Err(Error::UnsupportedOutputKind(output.kind())),
+        }
+
+        Ok(())
+    }
+
+    pub fn output_sub(&mut self, output: &Output) -> Result<(), Error> {
+        match output {
+            Output::SignatureLockedSingle(output) => {
+                self.amount_sub(*output.address(), output.amount())?;
+                if output.amount() < DUST_THRESHOLD {
+                    self.dust_outputs_dec(*output.address())?;
+                }
+            }
+            Output::SignatureLockedDustAllowance(output) => {
+                self.amount_sub(*output.address(), output.amount())?;
+                self.dust_allowance_sub(*output.address(), output.amount())?;
+            }
+            output => return Err(Error::UnsupportedOutputKind(output.kind())),
+        }
+
+        Ok(())
+    }
+
     /// Adds a given amount to a given address.
     pub fn amount_add(&mut self, address: Address, amount: u64) -> Result<(), Error> {
         let entry = self.0.entry(address).or_default();
@@ -168,13 +215,6 @@ impl BalanceDiffs {
     /// Creates a mutable iterator over the balance diffs.
     pub fn iter_mut(&mut self) -> IterMut<'_, Address, BalanceDiff> {
         self.0.iter_mut()
-    }
-
-    /// Negates a `BalanceDiffs`.
-    pub fn negate(&mut self) {
-        for (_, diff) in self.iter_mut() {
-            diff.negate();
-        }
     }
 }
 

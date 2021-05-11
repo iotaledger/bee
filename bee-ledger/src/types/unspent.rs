@@ -9,7 +9,7 @@ use bee_message::output::OutputId;
 use std::ops::Deref;
 
 /// Represents an output id as unspent.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Eq, PartialEq)]
 pub struct Unspent(OutputId);
 
 impl From<OutputId> for Unspent {
@@ -35,6 +35,18 @@ impl Unspent {
     /// Returns the identifier of an `Unspent`.
     pub fn id(&self) -> &OutputId {
         &self.0
+    }
+}
+
+impl core::fmt::Display for Unspent {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", *self)
+    }
+}
+
+impl core::fmt::Debug for Unspent {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "Unspent({})", self)
     }
 }
 
