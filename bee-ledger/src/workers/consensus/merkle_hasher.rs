@@ -12,7 +12,7 @@ const LEAF_HASH_PREFIX: u8 = 0x00;
 /// Node domain separation prefix.
 const NODE_HASH_PREFIX: u8 = 0x01;
 
-/// Computes the largest power of two inferior to `n`.
+/// Computes the largest power of two less than or equal to `n`.
 fn largest_power_of_two(n: u32) -> usize {
     1 << (32 - n.leading_zeros() - 1)
 }
