@@ -7,7 +7,7 @@ use crate::{
         consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
         error::Error,
         event::{MilestoneConfirmed, OutputConsumed, OutputCreated},
-        pruning::{condition::should_prune, config::PruningConfig, pruning_impl::prune},
+        pruning::{self, condition::should_prune, config::PruningConfig},
         snapshot::{condition::should_snapshot, config::SnapshotConfig, worker::SnapshotWorker},
         storage::{self, StorageBackend},
     },
@@ -305,19 +305,23 @@ where
                     //     error!("Failed to create snapshot: {:?}.", e);
                     // }
                 }
-
-                if let Ok(pruning_target_index) = should_prune(&tangle, ledger_index, &pruning_config) {
-                    if let Err(e) = prune(
-                        &tangle,
-                        &storage,
-                        &bus,
-                        pruning_target_index,
-                        &pruning_config,
-                        tangle_config.below_max_depth(),
-                    )
-                    .await
-                    {
-                        error!("Failed to prune database: {:?}.", e);
+                match should_prune(&tangle, ledger_index, &pruning_config) {
+                    Ok(pruning_target_index) => {
+                        if let Err(e) = pruning::prune(
+                            &tangle,
+                            &storage,
+                            &bus,
+                            pruning_target_index,
+                            &pruning_config,
+                            tangle_config.below_max_depth(),
+                        )
+                        .await
+                        {
+                            error!("Failed to prune database: {:?}.", e);
+                        }
+                    }
+                    Err(reason) => {
+                        info!("Pruning skipped. Reason: {:?}", reason);
                     }
                 }
             }

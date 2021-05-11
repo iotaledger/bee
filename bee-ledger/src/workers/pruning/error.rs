@@ -10,5 +10,5 @@ pub enum Error {
     StorageError(Box<dyn std::error::Error + Send>),
 
     #[error("{0:?}")]
-    BatchCommitError(Box<dyn std::error::Error + Send>),
+    PruningFailed(Box<dyn std::error::Error + Send>),
 }

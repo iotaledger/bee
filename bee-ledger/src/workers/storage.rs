@@ -45,6 +45,7 @@ pub trait StorageBackend:
     + Batch<MilestoneIndex, OutputDiff>
     + Batch<OutputId, CreatedOutput>
     + Batch<OutputId, ConsumedOutput>
+    + Batch<SolidEntryPoint, MilestoneIndex>
     + Batch<Unspent, ()>
     // === Exist operations ===
     + Exist<Unspent, ()>
@@ -53,9 +54,11 @@ pub trait StorageBackend:
     + Fetch<(), SnapshotInfo>
     + Fetch<Address, Balance>
     + Fetch<bool, Vec<TreasuryOutput>>
+    + Fetch<MessageId, MessageMetadata>
     + Fetch<MilestoneIndex, Vec<Receipt>>
     + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
     + Fetch<OutputId, CreatedOutput>
+    + Fetch<SolidEntryPoint, MilestoneIndex>
     // === Insert operations ===
     + Insert<(), SnapshotInfo>
     + Insert<(), LedgerIndex>
@@ -88,6 +91,7 @@ impl<T> StorageBackend for T where
         + Batch<MilestoneIndex, OutputDiff>
         + Batch<OutputId, CreatedOutput>
         + Batch<OutputId, ConsumedOutput>
+        + Batch<SolidEntryPoint, MilestoneIndex>
         + Batch<Unspent, ()>
         // === Exist operations ===
         + Exist<Unspent, ()>
@@ -96,9 +100,11 @@ impl<T> StorageBackend for T where
         + Fetch<(), SnapshotInfo>
         + Fetch<Address, Balance>
         + Fetch<bool, Vec<TreasuryOutput>>
+        + Fetch<MessageId, MessageMetadata>
         + Fetch<MilestoneIndex, Vec<Receipt>>
         + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
         + Fetch<OutputId, CreatedOutput>
+        + Fetch<SolidEntryPoint, MilestoneIndex>
         // === Insert operations ===
         + Insert<(), SnapshotInfo>
         + Insert<(), LedgerIndex>
