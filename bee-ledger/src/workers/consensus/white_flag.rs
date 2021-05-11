@@ -279,9 +279,9 @@ pub async fn white_flag<B: StorageBackend>(
 
     let diff_sum = metadata.balance_diffs.iter().map(|(_, diff)| diff.amount()).sum();
 
-    if diff_sum != 0 {
-        return Err(Error::NonZeroBalanceDiffSum(diff_sum));
+    if diff_sum == 0 {
+        Ok(())
+    } else {
+        Err(Error::NonZeroBalanceDiffSum(diff_sum))
     }
-
-    Ok(())
 }
