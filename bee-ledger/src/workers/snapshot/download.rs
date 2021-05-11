@@ -12,11 +12,12 @@ pub(crate) async fn download_snapshot_file(file_path: &Path, download_urls: &[St
         .file_name()
         .ok_or_else(|| Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
 
-    std::fs::create_dir_all(
+    tokio::fs::create_dir_all(
         file_path
             .parent()
             .ok_or_else(|| Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?,
     )
+    .await
     .map_err(|_| Error::InvalidFilePath(file_path.to_string_lossy().to_string()))?;
 
     for url in download_urls {
