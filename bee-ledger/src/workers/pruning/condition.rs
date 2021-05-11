@@ -19,8 +19,8 @@ pub enum SkipReason {
     /// There is not enough data yet to be pruned according to the config settings.
     NotEnoughData,
 
-    /// Pruning is skipped for the current confirmed milestone.
-    Delayed,
+    /// Pruning is deferred to a later milestone.
+    Deferred,
 }
 
 pub(crate) fn should_prune<B: StorageBackend>(
@@ -33,7 +33,7 @@ pub(crate) fn should_prune<B: StorageBackend>(
     } else if *ledger_index < *tangle.get_pruning_index() + pruning_config.delay() {
         Err(SkipReason::NotEnoughData)
     } else if *ledger_index % pruning_config.interval() != 0 {
-        Err(SkipReason::Delayed)
+        Err(SkipReason::Deferred)
     } else {
         // Subtracting unsigned:
         // We made sure that `confirmed_milestone_index` >= pruning_config.delay() always holds.
