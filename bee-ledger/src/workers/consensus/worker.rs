@@ -250,16 +250,13 @@ where
 
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (snapshot_config, pruning_config) = config;
-
         let (tx, rx) = mpsc::unbounded_channel();
-
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
         let bus = node.bus();
 
         validate_ledger_state(&*storage).await?;
 
-        // TODO should be done in config directly ?
         let depth = if snapshot_config.depth() < SOLID_ENTRY_POINT_THRESHOLD_FUTURE {
             warn!(
                 "Configuration value for \"depth\" is too low ({}), value changed to {}.",
@@ -282,7 +279,7 @@ where
             pruning_config.delay()
         };
 
-        // Unwrap is fine because we just inserted the ledger index.
+        // Unwrap is fine because ledger index was already in storage or just added by the snapshot worker.
         let mut ledger_index = storage::fetch_ledger_index(&*storage).await?.unwrap();
         let mut receipt_migrated_at = MilestoneIndex(0);
 
