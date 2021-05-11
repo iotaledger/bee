@@ -16,8 +16,8 @@ const DEFAULT_INTERVAL_UNSYNCED: u32 = 1000;
 /// Builder for a `SnapshotConfig`.
 #[derive(Default, Deserialize)]
 pub struct SnapshotConfigBuilder {
-    full_path: Option<String>,
-    delta_path: Option<String>,
+    full_path: Option<PathBuf>,
+    delta_path: Option<PathBuf>,
     download_urls: Option<Vec<String>>,
     depth: Option<u32>,
     interval_synced: Option<u32>,
@@ -31,13 +31,13 @@ impl SnapshotConfigBuilder {
     }
 
     /// Sets the full path of the `SnapshotConfigBuilder`.
-    pub fn full_path(mut self, full_path: String) -> Self {
+    pub fn full_path(mut self, full_path: PathBuf) -> Self {
         self.full_path.replace(full_path);
         self
     }
 
     /// Sets the delta path of the `SnapshotConfigBuilder`.
-    pub fn delta_path(mut self, delta_path: String) -> Self {
+    pub fn delta_path(mut self, delta_path: PathBuf) -> Self {
         self.delta_path.replace(delta_path);
         self
     }
@@ -69,8 +69,10 @@ impl SnapshotConfigBuilder {
     /// Finishes the `SnapshotConfigBuilder` into a `SnapshotConfig`.
     pub fn finish(self) -> SnapshotConfig {
         SnapshotConfig {
-            full_path: PathBuf::from(self.full_path.unwrap_or_else(|| DEFAULT_FULL_PATH.to_string())),
-            delta_path: self.delta_path.map(PathBuf::from),
+            full_path: self
+                .full_path
+                .unwrap_or_else(|| PathBuf::from(DEFAULT_FULL_PATH.to_string())),
+            delta_path: self.delta_path,
             download_urls: self.download_urls.unwrap_or(DEFAULT_DOWNLOAD_URLS),
             depth: self.depth.unwrap_or(DEFAULT_DEPTH),
             interval_synced: self.interval_synced.unwrap_or(DEFAULT_INTERVAL_SYNCED),
