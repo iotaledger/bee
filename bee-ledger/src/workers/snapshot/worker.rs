@@ -67,22 +67,17 @@ where
             }
         }
 
-        let mut solid_entry_points_stream = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&*storage)
+        let solid_entry_points = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&*storage)
             .await
-            .map_err(|e| Error::Storage(Box::new(e)))?;
-        let mut solid_entry_points = HashMap::new();
-
-        while let Some((sep, index)) = solid_entry_points_stream.next().await {
-            solid_entry_points.insert(sep, index);
-        }
-
-        tangle.replace_solid_entry_points(solid_entry_points).await;
-
+            .map_err(|e| Error::Storage(Box::new(e)))?
+            .collect::<HashMap<SolidEntryPoint, MilestoneIndex>>()
+            .await;
         // Unwrap is fine because ledger index was either just inserted or already present in storage.
         let ledger_index = MilestoneIndex(*storage::fetch_ledger_index(&*storage).await?.unwrap());
         // Unwrap is fine because snapshot info was either just inserted or already present in storage.
         let snapshot_info = storage::fetch_snapshot_info(&*storage).await?.unwrap();
 
+        tangle.replace_solid_entry_points(solid_entry_points).await;
         tangle.update_snapshot_index(snapshot_info.snapshot_index());
         tangle.update_pruning_index(snapshot_info.pruning_index());
         tangle.update_solid_milestone_index(ledger_index);
