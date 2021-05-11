@@ -11,7 +11,7 @@ use log::error;
 const CONFIG_PATH: &str = "./config.toml";
 
 #[tokio::main(flavor = "multi_thread")]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let cli = CliArgs::new();
 
     let config = match NodeConfigBuilder::from_file(cli.config().unwrap_or(&CONFIG_PATH.to_owned())) {
@@ -27,13 +27,13 @@ async fn main() {
         if let Err(e) = tools::exec(tool) {
             error!("Tool execution failed: {}", e);
         }
-        return;
+        return Ok(());
     }
 
     print_banner_and_version();
 
     if cli.version() {
-        return;
+        return Ok(());
     }
 
     match NodeBuilder::<Rocksdb>::new(config) {
@@ -47,4 +47,6 @@ async fn main() {
         },
         Err(e) => error!("Failed to build node builder: {}", e),
     }
+
+    Ok(())
 }

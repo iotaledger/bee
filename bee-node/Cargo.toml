@@ -31,19 +31,18 @@ futures = "0.3"
 fxhash = "0.2"
 hex = "0.4"
 iota-crypto = { version = "0.5.0", features = ["ed25519", "random", "blake2b"] }
-jsonwebtoken = { version = "7.2", optional = true }
 log = "0.4"
 mime_guess = { version = "2.0", optional = true }
 paho-mqtt = { version = "0.9", default-features = false, features = ["bundled"]}
 rand = "0.8"
 rpassword = "5.0"
-rust-embed = { version = "5.7", features = ["interpolate-folder-path"], optional = true }
+rust-embed = { version = "5.9", features = ["interpolate-folder-path"], optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_repr = { version = "0.1", optional = true }
 structopt = { version = "0.3", default-features = false }
 thiserror = "1.0"
-tokio = { version = "1.4", features = ["signal", "rt", "macros", "rt-multi-thread"] }
+tokio = { version = "1.5", features = ["signal", "rt", "macros", "rt-multi-thread"] }
 tokio-stream = "0.1"
 toml = "0.5"
 warp = "0.3"
@@ -58,4 +57,4 @@ name = "bee"
 path = "src/main.rs"
 
 [features]
-dashboard = [ "cap", "mime_guess", "jsonwebtoken", "rust-embed", "serde_repr", "warp-reverse-proxy" ]
+dashboard = [ "cap", "mime_guess", "rust-embed", "serde_repr", "warp-reverse-proxy" ]
