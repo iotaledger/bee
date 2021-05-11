@@ -49,6 +49,3 @@ workers = [
   "tokio",
   "tokio-stream"
 ]
-
-[dev-dependencies]
-rand = "0.8"
