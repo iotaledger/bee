@@ -4,7 +4,6 @@
 #![allow(unused_imports)]
 
 use bee_common::packable::{Packable, UnknownTagError};
-use bee_common_derive::Packable;
 
 #[derive(Packable)]
 #[packable(tag_ty = u8)]

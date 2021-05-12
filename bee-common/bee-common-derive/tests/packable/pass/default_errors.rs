@@ -4,7 +4,6 @@
 #![allow(unused_imports)]
 
 use bee_common::packable::{UnknownTagError, Packable};
-use bee_common_derive::Packable;
 
 use core::{any::TypeId, convert::Infallible};
 

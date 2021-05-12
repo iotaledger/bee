@@ -1,10 +1,10 @@
 error[E0599]: no function or associated item named `pack` found for struct `NonPackable` in the current scope
-  --> $DIR/packable_is_structural.rs:13:10
+  --> $DIR/packable_is_structural.rs:12:10
    |
-11 | struct NonPackable;
+10 | struct NonPackable;
    | ------------------- function or associated item `pack` not found for this
-12 |
-13 | #[derive(Packable)]
+11 |
+12 | #[derive(Packable)]
    |          ^^^^^^^^ function or associated item not found in `NonPackable`
    |
    = help: items from traits can only be used if the trait is implemented and in scope
@@ -13,12 +13,12 @@ error[E0599]: no function or associated item named `pack` found for struct `NonP
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0599]: no function or associated item named `unpack` found for struct `NonPackable` in the current scope
-  --> $DIR/packable_is_structural.rs:13:10
+  --> $DIR/packable_is_structural.rs:12:10
    |
-11 | struct NonPackable;
+10 | struct NonPackable;
    | ------------------- function or associated item `unpack` not found for this
-12 |
-13 | #[derive(Packable)]
+11 |
+12 | #[derive(Packable)]
    |          ^^^^^^^^ function or associated item not found in `NonPackable`
    |
    = help: items from traits can only be used if the trait is implemented and in scope
@@ -27,12 +27,12 @@ error[E0599]: no function or associated item named `unpack` found for struct `No
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0599]: no function or associated item named `packed_len` found for struct `NonPackable` in the current scope
-  --> $DIR/packable_is_structural.rs:13:10
+  --> $DIR/packable_is_structural.rs:12:10
    |
-11 | struct NonPackable;
+10 | struct NonPackable;
    | ------------------- function or associated item `packed_len` not found for this
-12 |
-13 | #[derive(Packable)]
+11 |
+12 | #[derive(Packable)]
    |          ^^^^^^^^ function or associated item not found in `NonPackable`
    |
    = help: items from traits can only be used if the trait is implemented and in scope

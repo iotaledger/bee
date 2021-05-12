@@ -17,6 +17,8 @@ pub use error::{UnknownTagError, UnpackError};
 pub use packer::Packer;
 pub use unpacker::Unpacker;
 
+pub use bee_common_derive::Packable;
+
 /// A type that can be packed and unpacked.
 ///
 /// Almost all basic sized types implement this trait. This trait can be derived using the

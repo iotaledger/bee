@@ -21,3 +21,4 @@ bee-common = { path = ".", features = ["alloc", "io"] }
 autocfg = "1.0"
 
 [dependencies]
+bee-common-derive = { path = "../bee-common-derive" }

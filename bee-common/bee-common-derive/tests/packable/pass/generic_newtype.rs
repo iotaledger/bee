@@ -4,7 +4,6 @@
 #![allow(unused_imports)]
 
 use bee_common::packable::Packable;
-use bee_common_derive::Packable;
 
 #[derive(Packable)]
 #[packable(error = T::Error)]
