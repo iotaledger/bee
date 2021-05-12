@@ -131,7 +131,7 @@ impl BalanceDiffs {
                 self.amount_add(*output.address(), output.amount())?;
                 self.dust_allowance_add(*output.address(), output.amount())?;
             }
-            output => return Err(Error::UnsupportedOutputKind(output.kind())),
+            Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
 
         Ok(())
@@ -150,7 +150,7 @@ impl BalanceDiffs {
                 self.amount_sub(*output.address(), output.amount())?;
                 self.dust_allowance_sub(*output.address(), output.amount())?;
             }
-            output => return Err(Error::UnsupportedOutputKind(output.kind())),
+            Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),
         }
 
         Ok(())

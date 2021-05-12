@@ -68,7 +68,7 @@ async fn apply_regular_essence<B: StorageBackend>(
                     return Ok(ConflictReason::InputUtxoNotFound);
                 }
             }
-            input => {
+            Input::Treasury(_) => {
                 return Err(Error::UnsupportedInputKind(input.kind()));
             }
         };
@@ -100,7 +100,7 @@ async fn apply_regular_essence<B: StorageBackend>(
                     return Ok(ConflictReason::InvalidSignature);
                 }
             }
-            output => return Err(Error::UnsupportedOutputKind(output.kind())),
+            Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(consumed_output.inner().kind())),
         }
 
         consumed_outputs.insert(*output_id, consumed_output);
@@ -124,7 +124,7 @@ async fn apply_regular_essence<B: StorageBackend>(
                 balance_diffs.amount_add(*output.address(), output.amount())?;
                 balance_diffs.dust_allowance_add(*output.address(), output.amount())?;
             }
-            output => return Err(Error::UnsupportedOutputKind(output.kind())),
+            Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(created_output.kind())),
         }
     }
 
@@ -218,34 +218,31 @@ async fn traverse_past_cone<B: StorageBackend>(
     let mut visited = HashSet::new();
 
     while let Some(message_id) = message_ids.last() {
-        match tangle
+        if let Some((message, meta)) = tangle
             .get_vertex(&message_id)
             .await
             .as_ref()
             .and_then(|v| v.message_and_metadata().cloned())
         {
-            Some((message, meta)) => {
-                if meta.flags().is_referenced() {
-                    visited.insert(*message_id);
-                    message_ids.pop();
-                    continue;
-                }
-
-                if let Some(unvisited) = message.parents().iter().find(|p| !visited.contains(p)) {
-                    message_ids.push(*unvisited);
-                } else {
-                    apply_message(storage, message_id, &message, metadata).await?;
-                    visited.insert(*message_id);
-                    message_ids.pop();
-                }
+            if meta.flags().is_referenced() {
+                visited.insert(*message_id);
+                message_ids.pop();
+                continue;
             }
-            None => {
-                if !tangle.is_solid_entry_point(message_id).await {
-                    return Err(Error::MissingMessage(*message_id));
-                } else {
-                    visited.insert(*message_id);
-                    message_ids.pop();
-                }
+
+            if let Some(unvisited) = message.parents().iter().find(|p| !visited.contains(p)) {
+                message_ids.push(*unvisited);
+            } else {
+                apply_message(storage, message_id, &message, metadata).await?;
+                visited.insert(*message_id);
+                message_ids.pop();
+            }
+        } else {
+            if !tangle.is_solid_entry_point(message_id).await {
+                return Err(Error::MissingMessage(*message_id));
+            } else {
+                visited.insert(*message_id);
+                message_ids.pop();
             }
         }
     }

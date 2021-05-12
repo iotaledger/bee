@@ -32,7 +32,7 @@ async fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury:
         let amount = match output.inner() {
             output::Output::SignatureLockedSingle(output) => output.amount(),
             output::Output::SignatureLockedDustAllowance(output) => output.amount(),
-            output => return Err(Error::UnsupportedOutputKind(output.kind())),
+            output::Output::Treasury(_) => return Err(Error::UnsupportedOutputKind(output.kind())),
         };
 
         supply = supply

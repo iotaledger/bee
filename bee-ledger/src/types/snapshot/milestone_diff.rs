@@ -108,9 +108,15 @@ impl Packable for MilestoneDiff {
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error> {
         let milestone_len = u32::unpack_inner::<R, CHECK>(reader)? as usize;
-        let milestone = match Payload::unpack_inner::<R, CHECK>(reader)? {
+        let payload = Payload::unpack_inner::<R, CHECK>(reader)?;
+        let milestone = match payload {
             Payload::Milestone(milestone) => milestone,
-            payload => return Err(Error::InvalidPayloadKind(payload.kind())),
+            Payload::Indexation(_)
+            | Payload::Receipt(_)
+            | Payload::Transaction(_)
+            | Payload::TreasuryTransaction(_) => {
+                return Err(Error::InvalidPayloadKind(payload.kind()));
+            }
         };
 
         if milestone_len != milestone.packed_len() + std::mem::size_of_val(&MilestonePayload::KIND) {

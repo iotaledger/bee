@@ -129,7 +129,7 @@ pub(crate) fn insert_created_output_batch<B: StorageBackend>(
         Output::SignatureLockedDustAllowance(output) => {
             insert_output_id_for_address_batch(storage, batch, output.address(), output_id)
         }
-        output => Err(Error::UnsupportedOutputKind(output.kind())),
+        Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
     }
 }
 
@@ -151,7 +151,7 @@ pub(crate) fn delete_created_output_batch<B: StorageBackend>(
         Output::SignatureLockedDustAllowance(output) => {
             delete_output_id_for_address_batch(storage, batch, output.address(), output_id)
         }
-        output => Err(Error::UnsupportedOutputKind(output.kind())),
+        Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
     }
 }
 
