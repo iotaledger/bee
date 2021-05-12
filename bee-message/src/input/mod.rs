@@ -12,7 +12,6 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 /// A generic input supporting different input kinds.
-#[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 #[cfg_attr(
     feature = "serde",

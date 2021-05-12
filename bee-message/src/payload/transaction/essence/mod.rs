@@ -12,7 +12,6 @@ use bee_common::packable::{Packable, Read, Write};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 /// A generic essence that can represent different types defining transaction essences.
-#[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(
     feature = "serde",

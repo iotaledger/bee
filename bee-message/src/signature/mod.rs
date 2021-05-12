@@ -14,7 +14,6 @@ use bee_common::packable::{Packable, Read, Write};
 /// This is defined as part of the Unspent Transaction Output (UTXO) transaction protocol.
 ///
 /// RFC: <https://github.com/luca-moser/protocol-rfcs/blob/signed-tx-payload/text/0000-transaction-payload/0000-transaction-payload.md#signature-unlock-block>
-#[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(
     feature = "serde",
