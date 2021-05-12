@@ -185,7 +185,6 @@ async fn apply_transaction<B: StorageBackend>(
             )
             .await
         }
-        essence => Err(Error::UnsupportedTransactionEssenceKind(essence.kind())),
     }
 }
 

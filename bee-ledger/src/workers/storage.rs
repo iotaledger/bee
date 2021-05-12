@@ -94,7 +94,6 @@ pub(crate) fn insert_output_id_for_address_batch<B: StorageBackend>(
             Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, batch, &(*address, *output_id), &())
                 .map_err(|e| Error::Storage(Box::new(e)))
         }
-        address => Err(Error::UnsupportedAddressKind(address.kind())),
     }
 }
 
@@ -109,7 +108,6 @@ pub(crate) fn delete_output_id_for_address_batch<B: StorageBackend>(
             Batch::<(Ed25519Address, OutputId), ()>::batch_delete(storage, batch, &(*address, *output_id))
                 .map_err(|e| Error::Storage(Box::new(e)))
         }
-        address => Err(Error::UnsupportedAddressKind(address.kind())),
     }
 }
 

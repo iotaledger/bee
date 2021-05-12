@@ -29,12 +29,6 @@ pub enum Error {
     /// Unsupported output kind.
     #[error("Unsupported output kind: {0}")]
     UnsupportedOutputKind(u8),
-    /// Unsupported address kind.
-    #[error("Unsupported address kind: {0}")]
-    UnsupportedAddressKind(u8),
-    /// Unsupported transaction essence kind.
-    #[error("Unsupported transaction essence kind: {0}")]
-    UnsupportedTransactionEssenceKind(u8),
     /// Unsupported payload kind.
     #[error("Unsupported payload kind: {0}")]
     UnsupportedPayloadKind(u32),
