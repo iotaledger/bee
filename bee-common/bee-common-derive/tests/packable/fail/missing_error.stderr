@@ -1,5 +1,0 @@
-error: Types that derive `Packable` require a `#[packable(error = ...)]` attribute.
-  --> $DIR/missing_error.rs:10:12
-   |
-10 | pub struct Point(i32, i32);
-   |            ^^^^^

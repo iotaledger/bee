@@ -13,7 +13,7 @@ mod unpacker;
 
 use core::convert::Infallible;
 
-pub use error::{UnpackEnumError, UnpackError};
+pub use error::{UnknownTagError, UnpackError};
 pub use packer::Packer;
 pub use unpacker::Unpacker;
 
@@ -124,10 +124,19 @@ impl Packable for bool {
     }
 }
 
+/// Error type raised when a semantic error occurs while unpacking an option.
+#[derive(Debug)]
+pub enum UnpackOptionError<T: Packable> {
+    /// The tag found while unpacking is not valid.
+    UnknownTag(u8),
+    /// A semantic error for the underlying type was raised.
+    Inner(T::Error),
+}
+
 /// Options are packed and unpacked using `0u8` as the prefix for `None` and `1u8` as the prefix
 /// for `Some`.
 impl<T: Packable> Packable for Option<T> {
-    type Error = UnpackEnumError<T::Error>;
+    type Error = UnpackOptionError<T>;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match self {
@@ -143,9 +152,9 @@ impl<T: Packable> Packable for Option<T> {
         match unpacker.unpack_infallible::<u8>()? {
             0 => Ok(None),
             1 => Ok(Some(
-                T::unpack(unpacker).map_err(|err| err.map(UnpackEnumError::Inner))?,
+                T::unpack(unpacker).map_err(|err| err.map(UnpackOptionError::Inner))?,
             )),
-            n => Err(UnpackError::Packable(Self::Error::UnknownTag(n.into()))),
+            n => Err(UnpackError::Packable(Self::Error::UnknownTag(n))),
         }
     }
 

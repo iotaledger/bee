@@ -6,9 +6,16 @@
 use bee_common::packable::{UnknownTagError, Packable};
 use bee_common_derive::Packable;
 
+use core::{any::TypeId, convert::Infallible};
+
+#[derive(Packable)]
+pub struct Point {
+     x: i32,
+     y: u32,
+}
+
 #[derive(Packable)]
 #[packable(tag_ty = u8)]
-#[packable(error = UnknownTagError<u8>)]
 pub enum Foo {
     #[packable(tag = 0)]
     Bar(u32),
@@ -16,4 +23,7 @@ pub enum Foo {
     Baz{ x: i32, y: i32 }
 }
 
-fn main() {}
+fn main() {
+    assert_eq!(TypeId::of::<Infallible>(), TypeId::of::<<Point as Packable>::Error>());
+    assert_eq!(TypeId::of::<UnknownTagError<u8>>(), TypeId::of::<<Foo as Packable>::Error>());
+}

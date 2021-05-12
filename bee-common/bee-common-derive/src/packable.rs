@@ -27,7 +27,7 @@ pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStr
             };
 
             unpack = quote! {
-                Ok(Self { #(#labels: <#types>::unpack(unpacker)?,)* })
+                Ok(Self { #(#labels: <#types>::unpack(unpacker).map_err(bee_common::packable::UnpackError::coerce)?,)* })
             };
 
             packed_len = quote! {
@@ -47,7 +47,7 @@ pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStr
             };
 
             unpack = quote! {
-                Ok(Self(#(<#types>::unpack(unpacker)?), *))
+                Ok(Self(#(<#types>::unpack(unpacker).map_err(bee_common::packable::UnpackError::coerce)?), *))
             };
 
             packed_len = quote! {
@@ -127,7 +127,7 @@ pub(crate) fn gen_enum_bodies<'a>(
 
                 unpack_branch = quote! {
                     #tag => Ok(Self::#ident{
-                        #(#labels: <#types>::unpack(unpacker).map_err(|err| err.map(bee_common::packable::UnpackEnumError::Inner))?,) *
+                        #(#labels: <#types>::unpack(unpacker).map_err(bee_common::packable::UnpackError::coerce)?,) *
                     })
                 };
 
@@ -154,7 +154,7 @@ pub(crate) fn gen_enum_bodies<'a>(
 
                 unpack_branch = quote! {
                     #tag => Ok(Self::#ident(
-                        #(<#types>::unpack(unpacker).map_err(|err| err.map(bee_common::packable::UnpackEnumError::Inner))?), *
+                        #(<#types>::unpack(unpacker).map_err(bee_common::packable::UnpackError::coerce)?), *
                     ))
                 };
 
@@ -192,7 +192,7 @@ pub(crate) fn gen_enum_bodies<'a>(
         quote! {
             match unpacker.unpack_infallible::<#ty>()? {
                 #(#unpack_branches,) *
-                id => Err(bee_common::packable::UnpackError::Packable(bee_common::packable::UnpackEnumError::UnknownTag(id.into())))
+                id => Err(bee_common::packable::UnpackError::Packable(bee_common::packable::UnknownTagError(id).into()))
             }
         },
         quote! {

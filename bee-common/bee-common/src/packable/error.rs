@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::convert::Infallible;
+
 /// Error type raised when `Packable::unpack` fails.
 #[derive(Debug)]
 pub enum UnpackError<T, U> {
@@ -18,6 +20,11 @@ impl<T, U> UnpackError<T, U> {
             Self::Unpacker(err) => UnpackError::Unpacker(err),
         }
     }
+
+    /// Coerce the value by calling `.into()` for the `Packable` variant.
+    pub fn coerce<V: From<T>>(self) -> UnpackError<V, U> {
+        self.map(|x| x.into())
+    }
 }
 
 impl<T, U> From<U> for UnpackError<T, U> {
@@ -26,20 +33,12 @@ impl<T, U> From<U> for UnpackError<T, U> {
     }
 }
 
-/// Error type used for semantic errors of enums.
-///
-/// It is recooemded to use this type as `Packable::Error` when implementing `Packable` for an
-/// enum.
+/// Error type raised when an unknown tag is found while unpacking.
 #[derive(Debug)]
-pub enum UnpackEnumError<T> {
-    /// The unpacked tag is invalid for this enum.
-    UnknownTag(u64),
-    /// Other semantic errors.
-    Inner(T),
-}
+pub struct UnknownTagError<T>(pub T);
 
-impl<T> From<T> for UnpackEnumError<T> {
-    fn from(err: T) -> Self {
-        Self::Inner(err)
+impl<T> From<Infallible> for UnknownTagError<T> {
+    fn from(err: Infallible) -> Self {
+        match err {}
     }
 }

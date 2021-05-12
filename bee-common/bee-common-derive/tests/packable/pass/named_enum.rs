@@ -3,14 +3,12 @@
 
 #![allow(unused_imports)]
 
-use bee_common::packable::Packable;
+use bee_common::packable::{UnknownTagError, Packable};
 use bee_common_derive::Packable;
-
-use core::convert::Infallible;
 
 #[derive(Packable)]
 #[packable(tag_ty = u8)]
-#[packable(error = Infallible)]
+#[packable(error = UnknownTagError<u8>)]
 pub enum OptPoint {
     #[packable(tag = 0)]
     None,
