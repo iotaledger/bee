@@ -170,7 +170,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     {
         Ok(_) => {
             // Did not timeout, parents are solid and white flag can happen.
-            consensus::white_flag::<B>(&tangle, &storage, parents, &mut metadata)
+            consensus::white_flag::<B>(&tangle, &storage, &parents, &mut metadata)
                 .await
                 .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
 

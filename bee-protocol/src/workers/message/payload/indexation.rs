@@ -34,12 +34,9 @@ async fn process<B: StorageBackend>(tangle: &MsTangle<B>, storage: &B, metrics: 
         let indexation = match message.payload() {
             Some(Payload::Indexation(indexation)) => indexation,
             Some(Payload::Transaction(transaction)) => {
-                if let Essence::Regular(essence) = transaction.essence() {
-                    if let Some(Payload::Indexation(indexation)) = essence.payload() {
-                        indexation
-                    } else {
-                        return;
-                    }
+                let Essence::Regular(essence) = transaction.essence();
+                if let Some(Payload::Indexation(indexation)) = essence.payload() {
+                    indexation
                 } else {
                     return;
                 }

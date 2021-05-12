@@ -111,7 +111,6 @@ impl From<&Payload> for PayloadDto {
             Payload::TreasuryTransaction(t) => {
                 PayloadDto::TreasuryTransaction(Box::new(TreasuryTransactionPayloadDto::from(t.as_ref())))
             }
-            _ => unimplemented!(),
         }
     }
 }
@@ -178,7 +177,6 @@ impl From<&Essence> for EssenceDto {
     fn from(value: &Essence) -> Self {
         match value {
             Essence::Regular(r) => EssenceDto::Regular(r.into()),
-            _ => unimplemented!(),
         }
     }
 }
@@ -264,7 +262,6 @@ impl From<&Input> for InputDto {
                 kind: TreasuryInput::KIND,
                 milestone_id: t.milestone_id().to_string(),
             }),
-            _ => unimplemented!(),
         }
     }
 }
@@ -337,7 +334,6 @@ impl From<&Output> for OutputDto {
                 kind: TreasuryOutput::KIND,
                 amount: t.amount(),
             }),
-            _ => unimplemented!(),
         }
     }
 }
@@ -438,7 +434,6 @@ impl From<&Address> for AddressDto {
     fn from(value: &Address) -> Self {
         match value {
             Address::Ed25519(ed) => AddressDto::Ed25519(ed.into()),
-            _ => unimplemented!(),
         }
     }
 }
@@ -509,13 +504,11 @@ impl From<&UnlockBlock> for UnlockBlockDto {
                         signature: hex::encode(ed.signature()),
                     }),
                 }),
-                _ => unimplemented!(),
             },
             UnlockBlock::Reference(r) => UnlockBlockDto::Reference(ReferenceUnlockDto {
                 kind: ReferenceUnlock::KIND,
                 index: r.index(),
             }),
-            _ => unimplemented!(),
         }
     }
 }
