@@ -237,13 +237,11 @@ async fn traverse_past_cone<B: StorageBackend>(
                 visited.insert(*message_id);
                 message_ids.pop();
             }
+        } else if !tangle.is_solid_entry_point(message_id).await {
+            return Err(Error::MissingMessage(*message_id));
         } else {
-            if !tangle.is_solid_entry_point(message_id).await {
-                return Err(Error::MissingMessage(*message_id));
-            } else {
-                visited.insert(*message_id);
-                message_ids.pop();
-            }
+            visited.insert(*message_id);
+            message_ids.pop();
         }
     }
 

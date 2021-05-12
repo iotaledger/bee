@@ -41,7 +41,7 @@ impl Receipt {
         let transaction = match self.inner().transaction() {
             Payload::TreasuryTransaction(transaction) => transaction,
             Payload::Indexation(_) | Payload::Milestone(_) | Payload::Receipt(_) | Payload::Transaction(_) => {
-                return Err(Error::UnsupportedPayloadKind(self.inner().transaction().kind()))
+                return Err(Error::UnsupportedPayloadKind(self.inner().transaction().kind()));
             }
         };
 
@@ -70,7 +70,7 @@ impl Receipt {
         let created_treasury_output = match transaction.output() {
             Output::Treasury(output) => output,
             Output::SignatureLockedDustAllowance(_) | Output::SignatureLockedSingle(_) => {
-                return Err(Error::UnsupportedOutputKind(transaction.output().kind()))
+                return Err(Error::UnsupportedOutputKind(transaction.output().kind()));
             }
         };
 
