@@ -19,7 +19,6 @@ use crate::Error;
 use bee_common::packable::{Packable, Read, Write};
 
 /// A generic output that can represent different types defining the deposit of funds.
-#[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(
     feature = "serde",

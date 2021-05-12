@@ -15,7 +15,6 @@ use alloc::{str::FromStr, string::String};
 use core::convert::TryFrom;
 
 /// A generic address supporting different address kinds.
-#[non_exhaustive]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(
     feature = "serde",

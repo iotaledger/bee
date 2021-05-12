@@ -22,7 +22,6 @@ use bee_common::packable::{Packable, Read, Write};
 use alloc::boxed::Box;
 
 /// A generic payload that can represent different types defining message payloads.
-#[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(
     feature = "serde",
