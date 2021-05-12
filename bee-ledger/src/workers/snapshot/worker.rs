@@ -39,32 +39,27 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
 
-        match storage::fetch_snapshot_info(&*storage).await? {
-            None => {
-                if let Err(e) = import_snapshots(&*storage, network_id, &snapshot_config).await {
-                    (*storage)
-                        .set_health(StorageHealth::Corrupted)
-                        .await
-                        .map_err(|e| Error::Storage(Box::new(e)))?;
-                    return Err(e);
-                }
+        if let Some(info) = storage::fetch_snapshot_info(&*storage).await? {
+            if info.network_id() != network_id {
+                return Err(Error::Snapshot(SnapshotError::NetworkIdMismatch(
+                    info.network_id(),
+                    network_id,
+                )));
             }
-            Some(info) => {
-                if info.network_id() != network_id {
-                    return Err(Error::Snapshot(SnapshotError::NetworkIdMismatch(
-                        info.network_id(),
-                        network_id,
-                    )));
-                }
 
-                info!(
-                    "Loaded snapshot from {} with snapshot index {}, entry point index {} and pruning index {}.",
-                    Utc.timestamp(info.timestamp() as i64, 0).format("%d-%m-%Y %H:%M:%S"),
-                    *info.snapshot_index(),
-                    *info.entry_point_index(),
-                    *info.pruning_index(),
-                );
-            }
+            info!(
+                "Loaded snapshot from {} with snapshot index {}, entry point index {} and pruning index {}.",
+                Utc.timestamp(info.timestamp() as i64, 0).format("%d-%m-%Y %H:%M:%S"),
+                *info.snapshot_index(),
+                *info.entry_point_index(),
+                *info.pruning_index(),
+            );
+        } else if let Err(e) = import_snapshots(&*storage, network_id, &snapshot_config).await {
+            (*storage)
+                .set_health(StorageHealth::Corrupted)
+                .await
+                .map_err(|e| Error::Storage(Box::new(e)))?;
+            return Err(e);
         }
 
         let solid_entry_points = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&*storage)

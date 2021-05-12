@@ -13,6 +13,7 @@ const LEAF_HASH_PREFIX: u8 = 0x00;
 const NODE_HASH_PREFIX: u8 = 0x01;
 
 /// Computes the largest power of two less than or equal to `n`.
+/// Undefined behaviour: 0 is not a valid value for `n`.
 fn largest_power_of_two(n: u32) -> usize {
     1 << (32 - n.leading_zeros() - 1)
 }
@@ -55,9 +56,9 @@ impl<D: Default + Digest> MerkleHasher<D> {
 
     /// Returns the digest of a list of hashes as an `Output<D>`.
     fn digest_inner(&mut self, message_ids: &[MessageId]) -> Output<D> {
-        match message_ids.len() {
-            0 => self.empty(),
-            1 => self.leaf(message_ids[0]),
+        match message_ids {
+            [] => self.empty(),
+            [message_id] => self.leaf(*message_id),
             _ => self.node(message_ids),
         }
     }
@@ -79,9 +80,7 @@ mod tests {
 
     #[test]
     fn tree() {
-        let mut hashes = Vec::new();
-
-        for hash in [
+        let hashes = [
             "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649",
             "81855ad8681d0d86d1e91e00167939cb6694d2c422acd208a0072939487f6999",
             "eb9d18a44784045d87f3c67cf22746e995af5a25367951baa2ff6cd471c483f1",
@@ -91,9 +90,8 @@ mod tests {
             "6bf84c7174cb7476364cc3dbd968b0f7172ed85794bb358b0c3b525da1786f9f",
         ]
         .iter()
-        {
-            hashes.push(MessageId::from_str(hash).unwrap());
-        }
+        .map(|hash| MessageId::from_str(hash).unwrap())
+        .collect::<Vec<_>>();
 
         let hash = MerkleHasher::<Blake2b256>::new().digest(&hashes);
 

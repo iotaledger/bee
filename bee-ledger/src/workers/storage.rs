@@ -464,20 +464,19 @@ pub(crate) fn unspend_treasury_output_batch<B: StorageBackend>(
 
 /// Fetches the unspent treasury output from the storage.
 pub async fn fetch_unspent_treasury_output<B: StorageBackend>(storage: &B) -> Result<TreasuryOutput, Error> {
-    match Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &false)
+    if let Some(outputs) = Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &false)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))?
     {
-        Some(outputs) => {
-            match outputs.as_slice() {
-                // There has to be an unspent treasury output at all time.
-                [] => panic!("No unspent treasury output found"),
-                [output] => Ok(output.clone()),
-                // There should be one and only one unspent treasury output at all time.
-                [_, ..] => panic!("More than one unspent treasury output found"),
-            }
+        match outputs.as_slice() {
+            // There has to be an unspent treasury output at all time.
+            [] => panic!("No unspent treasury output found"),
+            [output] => Ok(output.clone()),
+            // There should be one and only one unspent treasury output at all time.
+            _ => panic!("More than one unspent treasury output found"),
         }
+    } else {
         // There has to be an unspent treasury output at all time.
-        None => panic!("No unspent treasury output found"),
+        panic!("No unspent treasury output found");
     }
 }

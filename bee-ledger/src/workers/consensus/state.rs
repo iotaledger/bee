@@ -45,10 +45,10 @@ async fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury:
         .ok_or_else(|| Error::LedgerStateOverflow(supply as u128 + treasury as u128))?
         != IOTA_SUPPLY
     {
-        return Err(Error::InvalidLedgerUnspentState(supply));
+        Err(Error::InvalidLedgerUnspentState(supply))
+    } else {
+        Ok(())
     }
-
-    Ok(())
 }
 
 async fn validate_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
@@ -71,10 +71,10 @@ async fn validate_ledger_balance_state<B: StorageBackend>(storage: &B, treasury:
         .ok_or_else(|| Error::LedgerStateOverflow(supply as u128 + treasury as u128))?
         != IOTA_SUPPLY
     {
-        return Err(Error::InvalidLedgerBalanceState(supply));
+        Err(Error::InvalidLedgerBalanceState(supply))
+    } else {
+        Ok(())
     }
-
-    Ok(())
 }
 
 pub(crate) async fn validate_ledger_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
