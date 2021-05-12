@@ -1,6 +1,6 @@
 [package]
 name = "bee-ledger"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "All types and features required to compute and maintain the ledger state"
