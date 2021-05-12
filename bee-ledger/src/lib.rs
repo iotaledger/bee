@@ -3,6 +3,8 @@
 
 //! A crate that contains all types and features required to compute and maintain the ledger state.
 
-#![deny(missing_docs, warnings)]
+#![deny(missing_docs)]
 
 pub mod types;
+#[cfg(feature = "workers")]
+pub mod workers;

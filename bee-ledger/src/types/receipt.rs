@@ -40,7 +40,9 @@ impl Receipt {
         let mut migrated_amount: u64 = 0;
         let transaction = match self.inner().transaction() {
             Payload::TreasuryTransaction(transaction) => transaction,
-            payload => return Err(Error::UnsupportedPayloadKind(payload.kind())),
+            Payload::Indexation(_) | Payload::Milestone(_) | Payload::Receipt(_) | Payload::Transaction(_) => {
+                return Err(Error::UnsupportedPayloadKind(self.inner().transaction().kind()));
+            }
         };
 
         for funds in self.inner().funds() {
@@ -62,12 +64,14 @@ impl Receipt {
                     ));
                 }
             }
-            input => return Err(Error::UnsupportedInputKind(input.kind())),
+            Input::Utxo(_) => return Err(Error::UnsupportedInputKind(transaction.input().kind())),
         };
 
         let created_treasury_output = match transaction.output() {
             Output::Treasury(output) => output,
-            output => return Err(Error::UnsupportedOutputKind(output.kind())),
+            Output::SignatureLockedDustAllowance(_) | Output::SignatureLockedSingle(_) => {
+                return Err(Error::UnsupportedOutputKind(transaction.output().kind()));
+            }
         };
 
         let created_amount = consumed_treasury_output

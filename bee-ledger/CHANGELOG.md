@@ -19,7 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-## 0.3.0 - 2021-05-10
+## 0.3.0 - 2021-05-12
+
+### Added
+
+- `SnapshotWorker` and associated types and operations;
+- `ConsensusWorker` (White Flag) and associated types and operations;
+- `BalanceDiffs::{negate, negated, output_add, output_sub}`;
+- `impl core::fmt::{Debug, Display} for Unspent`;
 
 ### Removed
 
