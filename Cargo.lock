@@ -420,10 +420,10 @@ dependencies = [
 [[package]]
 name = "bee-storage-rocksdb"
 version = "0.1.0"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#89c8bf9920eedc5626bf83aadf09ec3cea9be21e"
 dependencies = [
  "async-trait",
  "bee-common",
- "bee-crypto",
  "bee-ledger",
  "bee-message",
  "bee-storage",

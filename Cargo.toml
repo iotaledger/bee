@@ -3,7 +3,6 @@ members = [
 	"bee-api/bee-rest-api",
 	"bee-node",
 	"bee-protocol",
-	"bee-storage/bee-storage-rocksdb",
 ]
 
 [profile.dev]

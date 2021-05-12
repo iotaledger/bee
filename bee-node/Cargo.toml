@@ -20,7 +20,7 @@ bee-protocol = { path = "../bee-protocol" }
 bee-rest-api = { path = "../bee-api/bee-rest-api", features = ["endpoints"] }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-storage-rocksdb = { path = "../bee-storage/bee-storage-rocksdb" }
+bee-storage-rocksdb = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 anymap = "0.12"
