@@ -94,16 +94,19 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
         // Unwrap is fine because ledger index was inserted just before.
         let ledger_index = *storage::fetch_ledger_index(&*storage).await?.unwrap();
         let mut balance_diffs = BalanceDiffs::new();
-        let mut consumed = HashMap::new();
 
         for (_, output) in diff.created().iter() {
             balance_diffs.output_add(output.inner())?;
         }
 
-        for (output_id, (created_output, consumed_output)) in diff.consumed().iter() {
-            balance_diffs.output_sub(created_output.inner())?;
-            consumed.insert(*output_id, (created_output.clone(), consumed_output.clone()));
-        }
+        let consumed = diff
+            .consumed()
+            .iter()
+            .map::<Result<_, Error>, _>(|(output_id, (created_output, consumed_output))| {
+                balance_diffs.output_sub(created_output.inner())?;
+                Ok((*output_id, (created_output.clone(), consumed_output.clone())))
+            })
+            .collect::<Result<HashMap<_, _>, _>>()?;
 
         let migration = if let Some(Payload::Receipt(receipt)) = diff.milestone().essence().receipt() {
             let consumed_treasury = diff

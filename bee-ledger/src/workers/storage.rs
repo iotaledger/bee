@@ -238,20 +238,23 @@ pub(crate) async fn apply_milestone<B: StorageBackend>(
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    let mut created_output_ids = Vec::with_capacity(created_outputs.len());
-    let mut consumed_output_ids = Vec::with_capacity(consumed_outputs.len());
-
     insert_ledger_index_batch(storage, &mut batch, &index.into())?;
 
-    for (output_id, output) in created_outputs.iter() {
-        insert_created_output_batch(storage, &mut batch, output_id, output)?;
-        created_output_ids.push(*output_id);
-    }
+    let created_output_ids = created_outputs
+        .iter()
+        .map::<Result<_, Error>, _>(|(output_id, output)| {
+            insert_created_output_batch(storage, &mut batch, output_id, output)?;
+            Ok(*output_id)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
 
-    for (output_id, (_, consumed_output)) in consumed_outputs.iter() {
-        insert_consumed_output_batch(storage, &mut batch, output_id, consumed_output)?;
-        consumed_output_ids.push(*output_id);
-    }
+    let consumed_output_ids = consumed_outputs
+        .iter()
+        .map::<Result<_, Error>, _>(|(output_id, (_, consumed_output))| {
+            insert_consumed_output_batch(storage, &mut batch, output_id, consumed_output)?;
+            Ok(*output_id)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
 
     apply_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
 
