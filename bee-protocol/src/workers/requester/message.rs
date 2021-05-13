@@ -214,7 +214,7 @@ where
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<NodeMetrics>();
 
-        node.spawn::<Self, _, _>({
+        node.spawn::<Self, _, _>(file!(), line!(), {
             let req_queue = req_queue.clone();
             |shutdown| async move {
                 info!("Requester running.");
@@ -245,7 +245,7 @@ where
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<NodeMetrics>();
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
+        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
             info!("Retryer running.");
 
             let mut ticker = ShutdownStream::new(

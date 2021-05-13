@@ -85,7 +85,7 @@ where
         let node_info = node.info();
         let bus = node.bus();
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
+        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
             info!("Running.");
 
             let routes = routes::filter_all(

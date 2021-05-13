@@ -81,7 +81,7 @@ where
         let indexation_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();
         let metrics = node.resource::<NodeMetrics>();
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
+        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));

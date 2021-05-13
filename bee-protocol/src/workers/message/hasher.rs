@@ -129,7 +129,7 @@ where
         for _ in 0..hash_tasks {
             let task_rx = task_rx.clone();
             let mut processor_worker = processor_worker.clone();
-            node.spawn::<Self, _, _>(|shutdown| async move {
+            node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
                 let mut s = ShutdownStream::new(
                     shutdown,
                     unfold((), |()| task_rx.recv().map(|t| Some((t.ok()?, ())))).boxed(),
@@ -152,7 +152,7 @@ where
             });
         }
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
+        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
             let mut receiver = BatchStream::new(
                 config,
                 metrics,

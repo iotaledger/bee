@@ -50,7 +50,7 @@ impl<N: Node> Worker<N> for MetricsWorker {
 
         let metrics = node.resource::<NodeMetrics>();
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
+        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
             info!("Running.");
 
             let mut ticker = ShutdownStream::new(

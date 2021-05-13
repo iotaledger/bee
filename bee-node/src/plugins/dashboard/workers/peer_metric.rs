@@ -28,7 +28,7 @@ where
     let peer_manager = node.resource::<PeerManager>();
     let users = users.clone();
 
-    node.spawn::<Dashboard, _, _>(|shutdown| async move {
+    node.spawn::<Dashboard, _, _>(file!(), line!(), |shutdown| async move {
         debug!("Ws PeerMetrics topic handler running.");
 
         let mut ticker = ShutdownStream::new(

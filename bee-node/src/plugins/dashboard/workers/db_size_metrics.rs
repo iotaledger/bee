@@ -26,7 +26,7 @@ where
     let storage = node.storage();
     let users = users.clone();
 
-    node.spawn::<Dashboard, _, _>(|shutdown| async move {
+    node.spawn::<Dashboard, _, _>(file!(), line!(), |shutdown| async move {
         debug!("Ws DatabaseSizeMetrics topic handler running.");
 
         let mut ticker = ShutdownStream::new(

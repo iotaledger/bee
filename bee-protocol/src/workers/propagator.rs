@@ -135,7 +135,7 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let bus = node.bus();
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
+        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
             info!("Running.");
 
             let (solidified_tx, solidified_rx) = async_channel::unbounded();

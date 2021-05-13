@@ -35,7 +35,7 @@ impl<N: Node> Worker<N> for MpsWorker {
         let bus = node.bus();
         let metrics = node.resource::<NodeMetrics>();
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
+        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
             info!("Running.");
 
             let mut ticker = ShutdownStream::new(

@@ -124,7 +124,7 @@ impl<B: StorageBackend> Node for BeeNode<B> {
         }
     }
 
-    fn spawn<W, G, F>(&mut self, g: G)
+    fn spawn<W, G, F>(&mut self, file: &str, line: u32, g: G)
     where
         W: Worker<Self>,
         G: FnOnce(oneshot::Receiver<()>) -> F,

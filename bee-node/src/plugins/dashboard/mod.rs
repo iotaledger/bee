@@ -64,7 +64,7 @@ where
     let users = users.clone();
     let (tx, rx) = mpsc::unbounded_channel();
 
-    node.spawn::<Dashboard, _, _>(|shutdown| async move {
+    node.spawn::<Dashboard, _, _>(file!(), line!(), |shutdown| async move {
         debug!("Ws {} topic handler running.", topic);
 
         let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
@@ -167,7 +167,7 @@ where
         node_status_worker(node, &users);
         peer_metric_worker(node, &users);
 
-        node.spawn::<Self, _, _>(|shutdown| async move {
+        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
             info!("Running.");
 
             let routes = routes::routes(
