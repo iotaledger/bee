@@ -1,4 +1,4 @@
-error: Tags for enums can only be sized integers.
+error: Tags for enums can only be unisigned, sized integers.
   --> $DIR/invalid_ty_enum.rs:11:21
    |
 11 | #[packable(tag_ty = [u8; 32])]

@@ -3,83 +3,127 @@
 
 use proc_macro2::TokenStream;
 use proc_macro_error::abort;
-use quote::{format_ident, quote};
+use quote::{format_ident, quote, ToTokens};
 use syn::{
     parse::{Parse, ParseStream},
+    punctuated::Punctuated,
     spanned::Spanned,
-    Attribute, Fields, FieldsNamed, FieldsUnnamed, Generics, Ident, Index, Token, Type, TypePath, Variant,
+    token::Comma,
+    Attribute, Field, Fields, Generics, Ident, Index, Token, Type, Variant,
 };
 
-pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStream, TokenStream) {
-    let (pack, unpack, packed_len);
+const VALID_TAG_TYPES: &[&str] = &["u8", "u16", "u32", "u64"];
 
-    match struct_fields {
-        Fields::Named(FieldsNamed { named, .. }) => {
-            let (labels, types): (Vec<&Ident>, Vec<&Type>) = named
-                .iter()
-                // This is a named field, which means its `ident` cannot be `None`
-                .map(|field| (field.ident.as_ref().unwrap(), &field.ty))
-                .unzip();
-
-            pack = quote! {
-                #(<#types>::pack(&self.#labels, packer)?;) *
-                Ok(())
-            };
-
-            unpack = quote! {
-                Ok(Self { #(#labels: <#types>::unpack(unpacker).map_err(bee_common::packable::UnpackError::coerce)?,)* })
-            };
-
-            packed_len = quote! {
-                0 #(+ <#types>::packed_len(&self.#labels)) *
-            }
-        }
-        Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
-            let (indices, types): (Vec<Index>, Vec<&Type>) = unnamed
-                .iter()
-                .enumerate()
-                .map(|(index, field)| (index.into(), &field.ty))
-                .unzip();
-
-            pack = quote! {
-                #(<#types>::pack(&self.#indices, packer)?;) *
-                Ok(())
-            };
-
-            unpack = quote! {
-                Ok(Self(#(<#types>::unpack(unpacker).map_err(bee_common::packable::UnpackError::coerce)?), *))
-            };
-
-            packed_len = quote! {
-                0 #(+ <#types>::packed_len(&self.#indices)) *
-            }
-        }
-        Fields::Unit => {
-            pack = quote!(Ok(()));
-            unpack = quote!(Ok(Self));
-            packed_len = quote!(0);
-        }
-    }
-
-    (pack, unpack, packed_len)
+struct Fragments {
+    pattern: TokenStream,
+    pack: TokenStream,
+    packed_len: TokenStream,
+    unpack: TokenStream,
 }
 
-pub(crate) fn gen_enum_bodies<'a>(
-    variants: impl Iterator<Item = &'a Variant> + 'a,
-    ty: Type,
-) -> (TokenStream, TokenStream, TokenStream) {
-    const TYPES: &[&str] = &["u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64"];
+impl Fragments {
+    fn new<const NAMED: bool>(name: TokenStream, fields: &Punctuated<Field, Comma>) -> Self {
+        let len = fields.len();
+        let mut types = Vec::with_capacity(len);
+        let mut labels = Vec::with_capacity(len);
+        let mut values = Vec::with_capacity(len);
 
-    match &ty {
-        Type::Path(TypePath { path, .. }) if TYPES.iter().any(|ty| path.is_ident(ty)) => (),
-        _ => abort!(ty.span(), "Tags for enums can only be sized integers."),
+        for (index, Field { ident, ty, .. }) in fields.iter().enumerate() {
+            if NAMED {
+                // This is a named field, which means its `ident` cannot be `None`
+                labels.push(ident.as_ref().unwrap().to_token_stream());
+            } else {
+                labels.push(proc_macro2::Literal::u64_unsuffixed(index as u64).to_token_stream());
+            }
+            types.push(ty);
+            values.push(format_ident!("field_{}", index));
+        }
+
+        Self {
+            pattern: quote!(#name { #(#labels: #values),* }),
+            pack: quote! {
+                #(<#types>::pack(&#values, packer)?;) *
+                Ok(())
+            },
+            packed_len: quote!(0 #(+ <#types>::packed_len(#values))*),
+            unpack: quote! {Ok(#name {
+                #(#labels: <#types>::unpack(unpacker).map_err(|x| x.coerce())?,)*
+            })},
+        }
     }
 
-    let mut indices = Vec::<(Index, &Ident)>::new();
+    fn gen_bodies(self) -> (TokenStream, TokenStream, TokenStream) {
+        let Self {
+            pattern,
+            pack,
+            packed_len,
+            unpack,
+        } = self;
 
-    let mut pack_branches = Vec::new();
-    let mut unpack_branches = Vec::new();
-    let mut packed_len_branches = Vec::new();
+        let pack = quote! {
+            let #pattern = self;
+            #pack
+        };
+
+        let packed_len = quote! {
+            let #pattern = self;
+            #packed_len
+        };
+
+        (pack, packed_len, unpack)
+    }
+
+    fn gen_branches<Tag: ToTokens, TagTy: ToTokens>(
+        self,
+        tag: Tag,
+        tag_ty: TagTy,
+    ) -> (TokenStream, TokenStream, TokenStream) {
+        let Self {
+            pattern,
+            pack,
+            packed_len,
+            unpack,
+        } = self;
+
+        let pack = quote! {
+            #pattern => {
+                (#tag as #tag_ty).pack(packer)?;
+                #pack
+            }
+        };
+
+        let packed_len = quote!(#pattern => (#tag as #tag_ty).packed_len() + #packed_len);
+
+        let unpack = quote!(#tag => #unpack);
+
+        (pack, packed_len, unpack)
+    }
+}
+
+pub(crate) fn gen_struct_bodies(struct_fields: Fields) -> (TokenStream, TokenStream, TokenStream) {
+    match struct_fields {
+        Fields::Named(fields) => Fragments::new::<true>(quote!(Self), &fields.named).gen_bodies(),
+        Fields::Unnamed(fields) => Fragments::new::<false>(quote!(Self), &fields.unnamed).gen_bodies(),
+        Fields::Unit => (quote!(Ok(())), quote!(0), quote!(Ok(Self))),
+    }
+}
+
+pub(crate) fn gen_enum_bodies(
+    variants: &Punctuated<Variant, Comma>,
+    tag_ty: Type,
+) -> (TokenStream, TokenStream, TokenStream) {
+    let len = variants.len();
+
+    match &tag_ty {
+        Type::Path(ty_path) if VALID_TAG_TYPES.iter().any(|ty| ty_path.path.is_ident(ty)) => (),
+        _ => abort!(tag_ty.span(), "Tags for enums can only be unisigned, sized integers."),
+    }
+
+    let mut indices = Vec::<(Index, &Ident)>::with_capacity(len);
+
+    let mut pack_branches = Vec::with_capacity(len);
+    let mut packed_len_branches = Vec::with_capacity(len);
+    let mut unpack_branches = Vec::with_capacity(len);
 
     for variant in variants {
         let Variant {
@@ -105,82 +149,21 @@ pub(crate) fn gen_enum_bodies<'a>(
 
         let tag = proc_macro2::Literal::u64_unsuffixed(curr_index.index as u64);
 
-        let pack_branch: TokenStream;
-        let unpack_branch: TokenStream;
-        let packed_len_branch: TokenStream;
+        let name = quote!(Self::#ident);
 
-        match fields {
-            Fields::Named(FieldsNamed { named, .. }) => {
-                let (labels, types): (Vec<&Ident>, Vec<&Type>) = named
-                    .iter()
-                    // This is a named field, which means its `ident` cannot be `None`
-                    .map(|field| (field.ident.as_ref().unwrap(), &field.ty))
-                    .unzip();
-
-                pack_branch = quote! {
-                    Self::#ident{#(#labels), *} => {
-                        (#tag as #ty).pack(packer)?;
-                        #(<#types>::pack(&#labels, packer)?;) *
-                        Ok(())
-                    }
-                };
-
-                unpack_branch = quote! {
-                    #tag => Ok(Self::#ident{
-                        #(#labels: <#types>::unpack(unpacker).map_err(bee_common::packable::UnpackError::coerce)?,) *
-                    })
-                };
-
-                packed_len_branch = quote! {
-                    Self::#ident{#(#labels), *} => {
-                        (#tag as #ty).packed_len() #(+ <#types>::packed_len(&#labels)) *
-                    }
-                };
-            }
-            Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
-                let (fields, types): (Vec<Ident>, Vec<&Type>) = unnamed
-                    .iter()
-                    .enumerate()
-                    .map(|(index, field)| (format_ident!("field_{}", index), &field.ty))
-                    .unzip();
-
-                pack_branch = quote! {
-                    Self::#ident(#(#fields), *) => {
-                        (#tag as #ty).pack(packer)?;
-                        #(<#types>::pack(&#fields, packer)?;) *
-                        Ok(())
-                    }
-                };
-
-                unpack_branch = quote! {
-                    #tag => Ok(Self::#ident(
-                        #(<#types>::unpack(unpacker).map_err(bee_common::packable::UnpackError::coerce)?), *
-                    ))
-                };
-
-                packed_len_branch = quote! {
-                    Self::#ident(#(#fields), *) => {
-                        (#tag as #ty).packed_len() #(+ <#types>::packed_len(&#fields)) *
-                    }
-                };
-            }
-            Fields::Unit => {
-                pack_branch = quote! {
-                    Self::#ident => (#tag as #ty).pack(packer)
-                };
-
-                unpack_branch = quote! {
-                    #tag => Ok(Self::#ident)
-                };
-
-                packed_len_branch = quote! {
-                    Self::#ident => (#tag as #ty).packed_len()
-                };
-            }
+        let (pack_branch, packed_len_branch, unpack_branch) = match fields {
+            Fields::Named(fields) => Fragments::new::<true>(name, &fields.named).gen_branches(tag, &tag_ty),
+            Fields::Unnamed(fields) => Fragments::new::<false>(name, &fields.unnamed).gen_branches(tag, &tag_ty),
+            Fields::Unit => (
+                quote!(#name => (#tag as #tag_ty).pack(packer)),
+                quote!(#name => (#tag as #tag_ty).packed_len()),
+                quote!(#tag => Ok(#name)),
+            ),
         };
+
         pack_branches.push(pack_branch);
-        unpack_branches.push(unpack_branch);
         packed_len_branches.push(packed_len_branch);
+        unpack_branches.push(unpack_branch);
     }
 
     (
@@ -190,14 +173,14 @@ pub(crate) fn gen_enum_bodies<'a>(
             }
         },
         quote! {
-            match unpacker.unpack_infallible::<#ty>()? {
-                #(#unpack_branches,) *
-                id => Err(bee_common::packable::UnpackError::Packable(bee_common::packable::UnknownTagError(id).into()))
+            match self {
+                #(#packed_len_branches,) *
             }
         },
         quote! {
-            match self {
-                #(#packed_len_branches,) *
+            match unpacker.unpack_infallible::<#tag_ty>()? {
+                #(#unpack_branches,) *
+                tag => Err(bee_common::packable::UnpackError::Packable(bee_common::packable::UnknownTagError(tag).into()))
             }
         },
     )
@@ -211,10 +194,10 @@ pub(crate) fn gen_impl(
     unpack_body: TokenStream,
     packed_len_body: TokenStream,
 ) -> TokenStream {
-    let params = generics.params.iter();
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     quote! {
-        impl <#(#params: Packable,) *> Packable for #ident #generics {
+        impl #impl_generics Packable for #ident #ty_generics #where_clause {
             type Error = #error_type;
 
             fn pack<P: bee_common::packable::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {

@@ -7,6 +7,6 @@ use bee_common::packable::Packable;
 
 #[derive(Packable)]
 #[packable(error = T::Error)]
-pub struct Wrap<T>(T);
+pub struct Wrap<T: Packable>(T);
 
 fn main() {}
