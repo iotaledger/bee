@@ -95,7 +95,7 @@ pub async fn prune<S: StorageBackend>(
     // `target_index` as this would require additional logic to remove redundant SEPs again. If memory or performance
     // becomes an issue, reduce the pruning `interval` in the config.
     let (num_batched_messages, num_batched_edges, num_batched_indexations, new_seps) =
-        batch::add_confirmed_data(tangle, &storage, pruning_target_index, &old_seps, &mut batch).await?;
+        batch::add_confirmed_data(tangle, &storage, &mut batch, pruning_target_index, &old_seps).await?;
 
     let num_new_seps = new_seps.len();
 
@@ -123,6 +123,22 @@ pub async fn prune<S: StorageBackend>(
     if config.prune_receipts() {
         num_batched_receipts += batch::add_receipts(storage, &mut batch, start_index, pruning_target_index).await?;
     }
+
+    // // Handling of remaining unconfirmed messages.
+    // if let Some(unconfirmed_start_index) = unconfirmed_start_index {
+    //     let unconfirmed_target_index = pruning_target_index - unconfirmed_additional_pruning_delay;
+
+    //     assert!(unconfirmed_target_index < pruning_target_index);
+    //     assert!(unconfirmed_target_index >= unconfirmed_start_index);
+
+    //     info!(
+    //         "Pruning unconfirmed messages until milestone {}...",
+    //         unconfirmed_target_index
+    //     );
+
+    //     let (unconfirmed_messages, unconfirmed_edges, unconfirmed_indexations) =
+    //         batch::add_unconfirmed_data(storage, &mut batch, unconfirmed_start_index,
+    // unconfirmed_target_index).await?; }
 
     // WARN: This operation must come before the batch is committed.
     // TODO: consider batching deletes rather than using Truncate. Is one faster than the other?
@@ -152,7 +168,7 @@ pub async fn prune<S: StorageBackend>(
     tangle.update_pruning_index(pruning_target_index);
     info!("Pruning index now at {}.", pruning_target_index);
 
-    info!("Pruning completed in {}.", start.elapsed().as_secs_f64());
+    info!("Pruning completed in {}s.", start.elapsed().as_secs_f64());
 
     bus.dispatch(PrunedIndex {
         index: pruning_target_index,
@@ -178,3 +194,38 @@ mod debugging {
         INSTANCE2.get_or_init(|| Mutex::new(HashMap::default()))
     }
 }
+
+// // TEMP: make sure, that the collect process doesn't yield duplicate message ids.
+//     // **NOTE**: For some reason the enclosing block is necessary in async function despite the manual drop.
+//     {
+//         let mut removal_list = debugging::unique_confirmed_checklist().lock().unwrap();
+//         for confirmed_id in &confirmed {
+//             if let Some(index) = removal_list.get(confirmed_id) {
+//                 error!(
+//                     "Collected confirmed message {} twice. First added during {}, now at {}. This is a bug!",
+//                     confirmed_id, index, pruning_target_index
+//                 );
+//             } else {
+//                 removal_list.insert(*confirmed_id, pruning_target_index);
+//             }
+//         }
+//         // dbg!(removal_list.len());
+//         drop(removal_list); // just here to be explicit about it
+//     }
+
+// // TEMPORARILY ADD TO REMOVAL LIST
+//         {
+//             let mut removal_list = debugging::unique_unconfirmed_checklist().lock().unwrap();
+//             for unconfirmed_id in received.iter().map(|(_, b)| b.message_id()) {
+//                 if let Some(index) = removal_list.get(unconfirmed_id) {
+//                     error!(
+//                         "Collected UNconfirmed message {} twice. First added during {}, now at {}. This is a bug!",
+//                         unconfirmed_id, index, pruning_target_index
+//                     );
+//                 } else {
+//                     removal_list.insert(*unconfirmed_id, pruning_target_index);
+//                 }
+//             }
+//             // dbg!(removal_list.len());
+//             drop(removal_list); // just here to be explicit about it
+//         }

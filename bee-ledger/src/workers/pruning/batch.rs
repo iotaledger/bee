@@ -24,7 +24,7 @@ use ref_cast::RefCast;
 use std::collections::VecDeque;
 
 pub type Messages = HashSet<MessageId>;
-pub type FetchedApprovers = HashMap<MessageId, bool>;
+pub type BufferedApprovers = HashMap<MessageId, bool>;
 pub type OldSeps = HashMap<SolidEntryPoint, MilestoneIndex>;
 pub type NewSeps = OldSeps;
 
@@ -46,12 +46,12 @@ pub struct Edge {
 pub async fn add_confirmed_data<S: StorageBackend>(
     tangle: &MsTangle<S>,
     storage: &S,
+    batch: &mut S::Batch,
     target_index: MilestoneIndex,
     old_seps: &OldSeps,
-    batch: &mut S::Batch,
 ) -> Result<(usize, usize, usize, NewSeps), Error> {
     let mut visited = Messages::default();
-    let mut fetched_approvers = FetchedApprovers::default();
+    let mut buffered_approvers = BufferedApprovers::default();
     let mut new_seps = NewSeps::default();
 
     let mut num_edges: usize = 0;
@@ -152,38 +152,54 @@ pub async fn add_confirmed_data<S: StorageBackend>(
                 .unwrap();
 
             // A list of approvers not belonging to the currently traversed cone.
+            // These can be:
+            //  (a) unconfirmed messages
+            //  (b) messages confirmed by a younger milestone that than the current target
             let not_visited_approvers = approvers
                 .iter()
                 .filter(|id| !visited.contains(id))
                 .collect::<HashSet<_>>();
 
-            // If it has only previously traversed approvers, we can skip.
-            if !not_visited_approvers.is_empty() {
-                //
-                let not_fetched_approvers = not_visited_approvers
-                    .iter()
-                    .filter(|id| !fetched_approvers.contains_key(id))
-                    .collect::<HashSet<_>>();
+            // If it has only previously traversed approvers, we can skip, because it's redundant.
+            if not_visited_approvers.is_empty() {
+                continue;
+            }
 
-                // Fetch not yet fetched metadata, and buffer it.
-                for id in not_fetched_approvers {
-                    let is_confirmed = Fetch::<MessageId, MessageMetadata>::fetch(storage, id)
-                        .await
-                        .unwrap()
-                        .unwrap()
-                        .milestone_index()
-                        .is_some();
+            // If it has unvisited approvers, then we see if we buffered their information already.
+            let not_buffered_approvers = not_visited_approvers
+                .iter()
+                .filter(|id| !buffered_approvers.contains_key(id))
+                .collect::<HashSet<_>>();
 
-                    fetched_approvers.insert(**id, is_confirmed);
-                }
-
-                // Decide whether it's a valid new SEP.
-                if not_visited_approvers
-                    .iter()
-                    .all(|id| *fetched_approvers.get(id).unwrap())
+            // Fetch not yet fetched metadata, and buffer it.
+            for id in not_buffered_approvers {
+                let is_confirmed = if let Some(conf_index) = Fetch::<MessageId, MessageMetadata>::fetch(storage, id)
+                    .await
+                    .unwrap()
+                    .unwrap()
+                    .milestone_index()
                 {
-                    let _ = new_seps.insert(current_id.into(), target_index);
-                }
+                    assert!(
+                        conf_index > target_index,
+                        "conf_index={0}, target_index={1}",
+                        conf_index,
+                        target_index
+                    );
+                    true
+                } else {
+                    false
+                };
+
+                buffered_approvers.insert(**id, is_confirmed);
+            }
+
+            // If there is any confirmed not-visited approver (confirmed by a milestone younger that target), then the
+            // message becomes part of the new SEP set.
+            if not_visited_approvers
+                .iter()
+                .any(|id| *buffered_approvers.get(id).unwrap())
+            {
+                let _ = new_seps.insert(current_id.into(), target_index);
             }
         }
     }
@@ -228,90 +244,120 @@ fn add_indexation_data<S: StorageBackend>(
     Ok(())
 }
 
-pub async fn add_unconfirmed_data_to_delete_batch<S: StorageBackend>(
+pub async fn add_unconfirmed_data<S: StorageBackend>(
     storage: &S,
+    batch: &mut S::Batch,
     start_index: MilestoneIndex,
     target_index: MilestoneIndex,
-    batch: &mut S::Batch,
-) -> Result<(UnreferencedMessages, Messages, Edges, Indexations), Error> {
-    let mut received = UnreferencedMessages::default();
-    let mut messages = Messages::default();
-    let mut edges = Edges::default();
-    let mut indexations = Indexations::default();
+) -> Result<(usize, usize, usize), Error> {
+    let mut num_messages: usize = 0;
+    let mut num_indexations: usize = 0;
+    let mut num_edges: usize = 0;
 
     for index in *start_index..=*target_index {
-        add_unconfirmed_data_to_delete_batch_by_index(
+        add_unconfirmed_data_by_index(
             storage,
-            index.into(),
-            &mut received,
-            &mut messages,
-            &mut edges,
-            &mut indexations,
             batch,
+            index.into(),
+            &mut num_messages,
+            &mut num_edges,
+            &mut num_indexations,
         )
         .await?;
     }
 
-    Ok((received, messages, edges, indexations))
+    Ok((num_messages, num_edges, num_indexations))
 }
 
 /// Get the unconfirmed/unreferenced messages.
-async fn add_unconfirmed_data_to_delete_batch_by_index<S: StorageBackend>(
+async fn add_unconfirmed_data_by_index<S: StorageBackend>(
     storage: &S,
-    index: MilestoneIndex,
-    received: &mut UnreferencedMessages,
-    messages: &mut Messages,
-    edges: &mut Edges,
-    indexations: &mut Indexations,
     batch: &mut S::Batch,
+    index: MilestoneIndex,
+    num_messages: &mut usize,
+    num_edges: &mut usize,
+    num_indexations: &mut usize,
 ) -> Result<(), Error> {
-    let fetched = Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &index)
+    let fetched_unconfirmed = Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &index)
         .await
         .map_err(|e| Error::StorageError(Box::new(e)))?
-        // `unwrap` is safe, because the value returned is a `Vec`, hence if nothing can be fetched the result will be
+        // Panic:
+        // Unwrapping is fine, because the value returned is a `Vec`, hence if nothing can be fetched the result will be
         // `Some(vec![])`
         .unwrap();
 
-    if fetched.is_empty() {
+    if fetched_unconfirmed.is_empty() {
         return Ok(());
     }
 
-    for received_message_id in fetched.iter().map(|msg| msg.message_id()) {
-        // **NOTE**: It is very often the case, that the `Fetch` will not succeed, because the data has been deleted
-        // already from the database via a previous pruning run. So this here is just to prune the unconfirmed, and
-        // hence untraversed remnants.
+    for unconfirmed_message_id in fetched_unconfirmed.iter().map(|msg| msg.message_id()) {
+        // **NOTE**:
+        // It is very often the case, that the `Fetch` will not succeed, because the data has been deleted
+        // already during a previous pruning. So this here is just to prune the unconfirmed, and hence untraversed
+        // remnants.
 
-        if let Some((maybe_payload, parents)) = Fetch::<MessageId, Message>::fetch(storage, &received_message_id)
+        if let Some((maybe_payload, parents)) = Fetch::<MessageId, Message>::fetch(storage, &unconfirmed_message_id)
             .await
             .map_err(|e| Error::StorageError(Box::new(e)))?
-            // TODO: remove the Clone/Copy
             .map(|m| (m.payload().clone(), m.parents().iter().copied().collect::<Vec<_>>()))
         {
             // Collect messages (or rather the message ids pointing to still existing messages)
-            messages.insert(*received_message_id);
+            // messages.insert(*unconfirmed_message_id);
+            add_message_and_metadata(storage, batch, &unconfirmed_message_id)?;
 
             // Collect possible indexation payloads
             if let Some(indexation) = unwrap_indexation(maybe_payload) {
                 let padded_index = indexation.padded_index();
-                let message_id = *received_message_id;
+                let message_id = *unconfirmed_message_id;
 
-                indexations.push((padded_index, message_id));
+                // indexations.push((padded_index, message_id));
+                add_indexation_data(storage, batch, &(padded_index, message_id))?;
+                *num_indexations += 1;
             }
 
             // Collect edges
             for parent in parents.iter() {
-                edges.insert(Edge {
-                    from_parent: *parent,
-                    to_child: *received_message_id,
-                });
+                // edges.insert(Edge {
+                //     from_parent: *parent,
+                //     to_child: *unconfirmed_message_id,
+                // });
+                add_edge(storage, batch, &(*parent, *unconfirmed_message_id))?;
+                *num_edges += 1;
             }
         }
+
+        Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_delete(
+            storage,
+            batch,
+            &(index, (*unconfirmed_message_id).into()),
+        )
+        .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+        *num_messages += 1;
     }
 
-    // Unconfirmed messages associated with their milestone index, which we need for the batch operation.
-    received.extend(std::iter::repeat(index).zip(fetched.into_iter()));
-
     Ok(())
+}
+
+async fn prune_unreferenced<S: StorageBackend, M: IntoIterator<Item = (MilestoneIndex, UnreferencedMessage)>>(
+    storage: &S,
+    batch: &mut S::Batch,
+    received: M,
+) -> Result<usize, Error> {
+    let mut num_pruned = 0;
+
+    for (received_at, received_message_id) in received.into_iter() {
+        Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_delete(
+            storage,
+            batch,
+            &(received_at, received_message_id),
+        )
+        .map_err(|e| Error::StorageError(Box::new(e)))?;
+
+        num_pruned += 1;
+    }
+
+    Ok(num_pruned)
 }
 
 fn unwrap_indexation(maybe_payload: Option<Payload>) -> Option<Box<IndexationPayload>> {
@@ -380,27 +426,6 @@ fn unwrap_indexation(maybe_payload: Option<Payload>) -> Option<Box<IndexationPay
 //     for (index, message_id) in indexes.into_iter() {
 //         Batch::<(PaddedIndex, MessageId), ()>::batch_delete(storage, batch, &(index, message_id))
 //             .map_err(|e| Error::StorageError(Box::new(e)))?;
-
-//         num_pruned += 1;
-//     }
-
-//     Ok(num_pruned)
-// }
-
-// async fn prune_unreferenced<S: StorageBackend, M: IntoIterator<Item = (MilestoneIndex, UnreferencedMessage)>>(
-//     storage: &S,
-//     batch: &mut S::Batch,
-//     received: M,
-// ) -> Result<usize, Error> {
-//     let mut num_pruned = 0;
-
-//     for (received_at, received_message_id) in received.into_iter() {
-//         Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_delete(
-//             storage,
-//             batch,
-//             &(received_at, received_message_id),
-//         )
-//         .map_err(|e| Error::StorageError(Box::new(e)))?;
 
 //         num_pruned += 1;
 //     }
