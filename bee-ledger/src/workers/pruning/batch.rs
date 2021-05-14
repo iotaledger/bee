@@ -86,121 +86,122 @@ pub async fn add_confirmed_data<S: StorageBackend>(
         //      (2) hit an old SEP (reached the "bottom" of the cone)
         if visited.contains(&current_id) || old_seps.contains_key(SolidEntryPoint::ref_cast(&current_id)) {
             continue;
-        } else {
-            // We must be able to get its parents (unless the db is corrupt)
-            if let Some((maybe_payload, current_parents)) = Fetch::<MessageId, Message>::fetch(storage, &current_id)
-                .await
-                .map_err(|e| Error::PruningFailed(Box::new(e)))?
-                .map(|msg| (msg.payload().clone(), msg.parents().iter().copied().collect::<Vec<_>>()))
-            {
-                // Batch possible indexation payloads.
-                if let Some(indexation) = unwrap_indexation(maybe_payload) {
-                    let padded_index = indexation.padded_index();
+        }
 
-                    add_indexation_data(storage, batch, &(padded_index, current_id))?;
-                    num_indexations += 1;
-                }
+        // We must be able to get its parents (unless the db is corrupt)
+        if let Some((maybe_payload, current_parents)) = Fetch::<MessageId, Message>::fetch(storage, &current_id)
+            .await
+            .map_err(|e| Error::PruningFailed(Box::new(e)))?
+            .map(|msg| (msg.payload().clone(), msg.parents().iter().copied().collect::<Vec<_>>()))
+        {
+            // Batch possible indexation payloads.
+            if let Some(indexation) = unwrap_indexation(maybe_payload) {
+                let padded_index = indexation.padded_index();
 
-                // Batch edges with parents.
-                for parent_id in &current_parents {
-                    add_edge(storage, batch, &(*parent_id, current_id))?;
-                    num_edges += 1;
-                }
-
-                // Add the parents to the traversal list.
-                parents.append(&mut current_parents.into_iter().collect());
-            } else {
-                // This error should never happen, because we made sure, that pruning of still "unconfirmed" messages
-                // happens at a much later point in time, so it should not ever interfere with the pruning of
-                // "confirmed" messages.
-                error!(
-                    "Fetching message data for confirmed_message {} failed. This is a bug!",
-                    current_id
-                );
+                add_indexation_data(storage, batch, &(padded_index, current_id))?;
+                num_indexations += 1;
             }
 
-            let _ = visited.insert(current_id);
+            // Batch edges with parents.
+            for parent_id in &current_parents {
+                add_edge(storage, batch, &(*parent_id, current_id))?;
+                num_edges += 1;
+            }
 
-            add_message_and_metadata(storage, batch, &current_id)?;
+            // Add the parents to the traversal list.
+            parents.append(&mut current_parents.into_iter().collect());
+        } else {
+            // This error should never happen, because we made sure, that pruning of still "unconfirmed" messages
+            // happens at a much later point in time, so it should not ever interfere with the pruning of
+            // "confirmed" messages.
+            error!(
+                "Fetching message data for confirmed_message {} failed. This is a bug!",
+                current_id
+            );
+        }
 
-            // Note:
-            //
-            // If all approvers are part of the `collected_messages` set already, then we can assume that this
-            // message is redundant for our new SEP set, because there is no path to it without visiting its also
-            // confirmed children. Since we traverse the past-cone breadth-first we can be sure that its
-            // children are visited before, and the following skip condition is triggered often. This allows
-            // us to not having to fetch the metadata for all of its approvers from the Tangle.
-            //
-            // This is an efficient method to find the "surface" of a confirmed past-cone, that is all confirmed
-            // messages, that have at least one child not confirmed by this milestone (target_index + x).
-            //
-            // We only mark this message as a new SEP if its approvers:
-            //  (a) contain at least one that is still unconfirmed;
-            //  (b) contain at least one that is confirmed by a milestone with an index > target_index;
-            //
-            // In order to minimize database operations, we do the following:
-            //  (1) if all its approvers have been confirmed by this milestone, we don't need to query the db at all;
-            //  (2) if at least one approver was confirmed by a future (not yet pruned) milestone, we look into the
-            //      buffer in case it was queried before already;
-            //  (3) if the buffer didn't contain the information, we query the db, and add the result to the buffer;
+        let _ = visited.insert(current_id);
 
-            // Panic:
-            // Unwrapping is safe, because the current message has been confirmed and hence, must have approvers.
-            let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &current_id)
+        add_message_and_metadata(storage, batch, &current_id)?;
+
+        // Note:
+        //
+        // If all approvers are part of the `collected_messages` set already, then we can assume that this
+        // message is redundant for our new SEP set, because there is no path to it without visiting its also
+        // confirmed children. Since we traverse the past-cone breadth-first we can be sure that its
+        // children are visited before, and the following skip condition is triggered often. This allows
+        // us to not having to fetch the metadata for all of its approvers from the Tangle.
+        //
+        // This is an efficient method to find the "surface" of a confirmed past-cone, that is all confirmed
+        // messages, that have at least one child not confirmed by this milestone (target_index + x).
+        //
+        // We only mark this message as a new SEP if its approvers:
+        //  (a) contain at least one that is still unconfirmed;
+        //  (b) contain at least one that is confirmed by a milestone with an index > target_index;
+        //
+        // In order to minimize database operations, we do the following:
+        //  (1) if all its approvers have been confirmed by this milestone, we don't need to query the db at all;
+        //  (2) if at least one approver was confirmed by a future (not yet pruned) milestone, we look into the
+        //      buffer in case it was queried before already;
+        //  (3) if the buffer didn't contain the information, we query the db, and add the result to the buffer;
+
+        // Panic:
+        // Unwrapping is safe, because the current message has been confirmed and hence, must have approvers.
+        let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &current_id)
+            .await
+            .unwrap()
+            .unwrap();
+
+        // A list of approvers not belonging to the currently traversed cone.
+        // These can be:
+        //  (a) unconfirmed messages
+        //  (b) messages confirmed by a younger milestone that than the current target
+        let not_visited_approvers = approvers
+            .iter()
+            .filter(|id| !visited.contains(id))
+            .collect::<HashSet<_>>();
+
+        // If it has only previously traversed approvers, we can skip, because it's redundant.
+        if not_visited_approvers.is_empty() {
+            continue;
+        }
+
+        // If it has unvisited approvers, then we see if we buffered their information already.
+        let not_buffered_approvers = not_visited_approvers
+            .iter()
+            .filter(|id| !buffered_approvers.contains_key(id))
+            .collect::<HashSet<_>>();
+
+        // Fetch not yet fetched metadata, and buffer it.
+        for id in not_buffered_approvers {
+            let is_confirmed = if let Some(conf_index) = Fetch::<MessageId, MessageMetadata>::fetch(storage, id)
                 .await
                 .unwrap()
-                .unwrap();
-
-            // A list of approvers not belonging to the currently traversed cone.
-            // These can be:
-            //  (a) unconfirmed messages
-            //  (b) messages confirmed by a younger milestone that than the current target
-            let not_visited_approvers = approvers
-                .iter()
-                .filter(|id| !visited.contains(id))
-                .collect::<HashSet<_>>();
-
-            // If it has only previously traversed approvers, we can skip, because it's redundant.
-            if not_visited_approvers.is_empty() {
-                continue;
-            }
-
-            // If it has unvisited approvers, then we see if we buffered their information already.
-            let not_buffered_approvers = not_visited_approvers
-                .iter()
-                .filter(|id| !buffered_approvers.contains_key(id))
-                .collect::<HashSet<_>>();
-
-            // Fetch not yet fetched metadata, and buffer it.
-            for id in not_buffered_approvers {
-                let is_confirmed = if let Some(conf_index) = Fetch::<MessageId, MessageMetadata>::fetch(storage, id)
-                    .await
-                    .unwrap()
-                    .unwrap()
-                    .milestone_index()
-                {
-                    assert!(
-                        conf_index > target_index,
-                        "conf_index={0}, target_index={1}",
-                        conf_index,
-                        target_index
-                    );
-                    true
-                } else {
-                    false
-                };
-
-                buffered_approvers.insert(**id, is_confirmed);
-            }
-
-            // If there is any confirmed not-visited approver (confirmed by a milestone younger that target), then the
-            // message becomes part of the new SEP set.
-            if not_visited_approvers
-                .iter()
-                .any(|id| *buffered_approvers.get(id).unwrap())
+                .unwrap()
+                .milestone_index()
             {
-                let _ = new_seps.insert(current_id.into(), target_index);
-            }
+                // assert!(
+                //     conf_index > target_index,
+                //     "conf_index={0}, target_index={1}",
+                //     conf_index,
+                //     target_index
+                // );
+                // true
+                conf_index > target_index
+            } else {
+                false
+            };
+
+            buffered_approvers.insert(**id, is_confirmed);
+        }
+
+        // If there is any confirmed not-visited approver (confirmed by a milestone younger that target), then the
+        // message becomes part of the new SEP set.
+        if not_visited_approvers
+            .iter()
+            .any(|id| *buffered_approvers.get(id).unwrap())
+        {
+            let _ = new_seps.insert(current_id.into(), target_index);
         }
     }
 

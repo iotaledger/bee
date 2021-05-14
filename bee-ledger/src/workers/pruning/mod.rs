@@ -66,7 +66,7 @@ pub async fn prune<S: StorageBackend>(
     let start_index = tangle.get_pruning_index() + 1;
     assert!(
         pruning_target_index >= start_index,
-        "target_index: {}, start_index: {}",
+        "pruning_target_index: {}, start_index: {}",
         pruning_target_index,
         start_index
     );
@@ -88,7 +88,6 @@ pub async fn prune<S: StorageBackend>(
     // so we can be sure it can't be invalidated in the meantime while we do the past-cone traversal to find the new
     // set.
     let old_seps = tangle.get_solid_entry_points().await;
-    let num_old_seps = old_seps.len();
 
     // Batch the data that can be safely pruned. In order to find the correct set of SEPs during this pruning we need
     // to walk the past-cone from the `target_index` backwards, and not step-by-step from `start_index` to
