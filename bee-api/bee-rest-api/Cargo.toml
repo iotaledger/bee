@@ -32,7 +32,7 @@ num_cpus = { version = "1.13", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
 thiserror = { version = "1.0" }
-tokio = { version = "1.5", features = [], optional = true }
+tokio = { version = "1.6", features = [], optional = true }
 warp = { version = "0.3", optional = true }
 
 [features]
