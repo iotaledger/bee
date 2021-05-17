@@ -13,13 +13,13 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-common = { version = "0.4.1", path = "../bee-common/bee-common" }
 bee-pow = { version = "0.1.0", path = "../bee-pow" }
-bee-ternary = { version = "0.4.2-alpha", path = "../bee-ternary", features = ["serde1"] }
+bee-ternary = { version = "0.4.2-alpha", path = "../bee-ternary", features = [ "serde1" ] }
 
 bech32 = "0.8"
 bytemuck = "1.5"
 digest = "0.9"
 hex = "0.4"
-iota-crypto = { version = "0.4.2", features = ["ed25519", "blake2b"] }
+iota-crypto = { version = "0.4.2", features = [ "ed25519", "blake2b" ] }
 serde = { version = "1.0", optional = true }
 thiserror = "1.0"
 

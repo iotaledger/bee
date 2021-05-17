@@ -16,7 +16,7 @@ bee-ternary = { version = "0.4.2-alpha", path = "../bee-ternary" }
 byteorder = "1.3"
 lazy_static = "1.4"
 thiserror = "1.0"
-tiny-keccak = { version = "2.0", features = ["keccak"] }
+tiny-keccak = { version = "2.0", features = [ "keccak" ] }
 
 [dev-dependencies]
 criterion = "0.3"

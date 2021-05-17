@@ -22,11 +22,11 @@ futures = "0.3"
 num_cpus = "1.13"
 pin-project = "1.0"
 rocksdb = { version = "0.16", default-features = false }
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0", features = [ "derive" ] }
 thiserror = "1.0"
 
 [dev-dependencies]
 bee-storage-test = { path = "../bee-storage-test" }
 bee-test = { path = "../../bee-test" }
 
-tokio = { version = "1.4", features = ["macros"] }
+tokio = { version = "1.6", features = [ "macros" ] }
