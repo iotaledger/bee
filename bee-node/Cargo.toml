@@ -5,23 +5,23 @@ authors = ["IOTA Stiftung"]
 edition = "2018"
 description = ""
 readme = "README.md"
-repository = "https://github.com/Adam-Gleave/bee"
+repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
 keywords = ["iota", "tangle", "bee", "framework", "node"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/Adam-Gleave/bee.git", branch = "dev-tracing", features = [ "auth" ] }
-bee-crypto = { git = "https://github.com/Adam-Gleave/bee.git", branch = "dev-tracing" }
-bee-ledger = { git = "https://github.com/Adam-Gleave/bee.git", branch = "dev-tracing", features = [ "workers" ] }
-bee-message = { git = "https://github.com/Adam-Gleave/bee.git", branch = "dev-tracing" }
-bee-network = { git = "https://github.com/Adam-Gleave/bee.git", branch = "dev-tracing", features = ["full"] }
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = [ "auth" ] }
+bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = [ "workers" ] }
+bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = ["full"] }
 bee-protocol = { path = "../bee-protocol" }
 bee-rest-api = { path = "../bee-api/bee-rest-api", features = ["endpoints"] }
-bee-runtime = { git = "https://github.com/Adam-Gleave/bee.git", branch = "dev-tracing" }
-bee-storage = { git = "https://github.com/Adam-Gleave/bee.git", branch = "dev-tracing" }
-bee-storage-rocksdb = { git = "https://github.com/Adam-Gleave/bee.git", branch = "dev-tracing" }
-bee-tangle = { git = "https://github.com/Adam-Gleave/bee.git", branch = "dev-tracing" }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-storage-rocksdb = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 anymap = "0.12"
 async-trait = "0.1"

@@ -22,7 +22,7 @@ impl<N: Node> Worker<N> for VersionChecker {
     type Error = Infallible;
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
-        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
+        node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
             let mut ticker = ShutdownStream::new(

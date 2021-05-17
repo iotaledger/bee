@@ -222,7 +222,7 @@ checksum = "6c7f7096bc256f5e5cb960f60dfc4f4ef979ca65abe7fb9d5a4f77150d3783d4"
 [[package]]
 name = "bee-common"
 version = "0.4.1"
-source = "git+https://github.com/Adam-Gleave/bee.git?branch=dev-tracing#24a49111fce759d9877c534ab01d83e3fea18feb"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e1b4a814861d95939bd0c858f1ffe6273396bcbb"
 dependencies = [
  "autocfg",
  "chrono",
@@ -238,7 +238,7 @@ dependencies = [
 [[package]]
 name = "bee-crypto"
 version = "0.2.1-alpha"
-source = "git+https://github.com/Adam-Gleave/bee.git?branch=dev-tracing#24a49111fce759d9877c534ab01d83e3fea18feb"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e1b4a814861d95939bd0c858f1ffe6273396bcbb"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -250,7 +250,7 @@ dependencies = [
 [[package]]
 name = "bee-ledger"
 version = "0.3.1"
-source = "git+https://github.com/Adam-Gleave/bee.git?branch=dev-tracing#24a49111fce759d9877c534ab01d83e3fea18feb"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e1b4a814861d95939bd0c858f1ffe6273396bcbb"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -275,7 +275,7 @@ dependencies = [
 [[package]]
 name = "bee-message"
 version = "0.1.5"
-source = "git+https://github.com/Adam-Gleave/bee.git?branch=dev-tracing#24a49111fce759d9877c534ab01d83e3fea18feb"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e1b4a814861d95939bd0c858f1ffe6273396bcbb"
 dependencies = [
  "bech32",
  "bee-common",
@@ -292,7 +292,7 @@ dependencies = [
 [[package]]
 name = "bee-network"
 version = "0.2.1"
-source = "git+https://github.com/Adam-Gleave/bee.git?branch=dev-tracing#24a49111fce759d9877c534ab01d83e3fea18feb"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e1b4a814861d95939bd0c858f1ffe6273396bcbb"
 dependencies = [
  "async-trait",
  "bee-runtime",
@@ -357,7 +357,7 @@ dependencies = [
 [[package]]
 name = "bee-pow"
 version = "0.1.0"
-source = "git+https://github.com/Adam-Gleave/bee.git?branch=dev-tracing#24a49111fce759d9877c534ab01d83e3fea18feb"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e1b4a814861d95939bd0c858f1ffe6273396bcbb"
 dependencies = [
  "bee-crypto",
  "bee-ternary",
@@ -430,7 +430,7 @@ dependencies = [
 [[package]]
 name = "bee-runtime"
 version = "0.1.1-alpha"
-source = "git+https://github.com/Adam-Gleave/bee.git?branch=dev-tracing#24a49111fce759d9877c534ab01d83e3fea18feb"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e1b4a814861d95939bd0c858f1ffe6273396bcbb"
 dependencies = [
  "async-trait",
  "bee-storage",
@@ -442,7 +442,7 @@ dependencies = [
 [[package]]
 name = "bee-storage"
 version = "0.3.0"
-source = "git+https://github.com/Adam-Gleave/bee.git?branch=dev-tracing#24a49111fce759d9877c534ab01d83e3fea18feb"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e1b4a814861d95939bd0c858f1ffe6273396bcbb"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -454,7 +454,7 @@ dependencies = [
 [[package]]
 name = "bee-storage-rocksdb"
 version = "0.1.0"
-source = "git+https://github.com/Adam-Gleave/bee.git?branch=dev-tracing#24a49111fce759d9877c534ab01d83e3fea18feb"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e1b4a814861d95939bd0c858f1ffe6273396bcbb"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -473,7 +473,7 @@ dependencies = [
 [[package]]
 name = "bee-tangle"
 version = "0.1.2"
-source = "git+https://github.com/Adam-Gleave/bee.git?branch=dev-tracing#24a49111fce759d9877c534ab01d83e3fea18feb"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e1b4a814861d95939bd0c858f1ffe6273396bcbb"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -497,7 +497,7 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.4.2-alpha"
-source = "git+https://github.com/Adam-Gleave/bee.git?branch=dev-tracing#24a49111fce759d9877c534ab01d83e3fea18feb"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#e1b4a814861d95939bd0c858f1ffe6273396bcbb"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -3902,7 +3902,3 @@ dependencies = [
  "syn",
  "synstructure",
 ]
-
-[[patch.unused]]
-name = "console-subscriber"
-version = "0.1.0"

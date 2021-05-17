@@ -25,7 +25,7 @@ where
     let users = users.clone();
     let (tx, rx) = mpsc::unbounded_channel::<MilestoneConfirmed>();
 
-    node.spawn::<Dashboard, _, _>(file!(), line!(), |shutdown| async move {
+    node.spawn::<Dashboard, _, _>(|shutdown| async move {
         debug!("Ws ConfirmedMilestoneMetrics topic handler running.");
 
         let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));

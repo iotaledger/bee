@@ -10,6 +10,3 @@ panic = "abort"
 
 [profile.release]
 panic = "abort"
-
-[patch.crates-io]
-console-subscriber = { path = "../console/console-subscriber" }

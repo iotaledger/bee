@@ -41,7 +41,7 @@ where
     let node_info = node.info();
     let users = users.clone();
 
-    node.spawn::<Dashboard, _, _>(file!(), line!(), |shutdown| async move {
+    node.spawn::<Dashboard, _, _>(|shutdown| async move {
         debug!("Ws PublicNodeStatus/NodeStatus topics handler running.");
 
         let mut ticker = ShutdownStream::new(

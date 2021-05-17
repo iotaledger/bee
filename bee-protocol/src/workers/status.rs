@@ -39,7 +39,7 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_messages = node.resource::<RequestedMessages>();
 
-        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
+        node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
             let mut ticker = ShutdownStream::new(shutdown, IntervalStream::new(interval(Duration::from_secs(config))));

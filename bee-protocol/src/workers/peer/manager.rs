@@ -56,7 +56,7 @@ where
         let milestone_responder = node.worker::<MilestoneResponderWorker>().unwrap().tx.clone();
         let milestone_requester = node.worker::<MilestoneRequesterWorker>().unwrap().tx.clone();
 
-        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
+        node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(config.into()));

@@ -75,7 +75,7 @@ where
         let storage = node.storage();
         let metrics = node.resource::<NodeMetrics>();
 
-        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
+        node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));

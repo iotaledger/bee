@@ -36,7 +36,7 @@ where
     let manager = node.resource::<MqttManager>();
     let (tx, rx) = mpsc::unbounded_channel();
 
-    node.spawn::<Mqtt, _, _>(file!(), line!(), |shutdown| async move {
+    node.spawn::<Mqtt, _, _>(|shutdown| async move {
         debug!("Mqtt {} topic handler running.", topic);
 
         let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));

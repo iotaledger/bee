@@ -189,7 +189,7 @@ where
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<NodeMetrics>();
 
-        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
+        node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Requester running.");
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
@@ -218,7 +218,7 @@ where
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<NodeMetrics>();
 
-        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
+        node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Retryer running.");
 
             let mut ticker = ShutdownStream::new(

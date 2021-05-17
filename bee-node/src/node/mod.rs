@@ -20,6 +20,7 @@ use tracing::Instrument;
 use std::{
     any::{type_name, Any, TypeId},
     collections::HashMap,
+    panic::Location,
     marker::PhantomData,
     ops::Deref,
     pin::Pin,
@@ -125,16 +126,18 @@ impl<B: StorageBackend> Node for BeeNode<B> {
         }
     }
 
-    fn spawn<W, G, F>(&mut self, file: &str, line: u32, g: G)
+    #[track_caller]
+    fn spawn<W, G, F>(&mut self, g: G)
     where
         W: Worker<Self>,
         G: FnOnce(oneshot::Receiver<()>) -> F,
         F: Future<Output = ()> + Send + 'static,
     {
+        let caller = Location::caller();
+        let span = tracing::info_span!(target: "tokio::task", "task", file = caller.file(), line = caller.line());
+
         let (tx, rx) = oneshot::channel();
-        
         let future = g(rx);
-        let span = tracing::info_span!(target: "tokio::task", "task", file = file, line = line);
 
         self.tasks
             .entry(TypeId::of::<W>())

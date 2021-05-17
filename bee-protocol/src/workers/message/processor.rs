@@ -78,7 +78,7 @@ where
         let peer_manager = node.resource::<PeerManager>();
         let bus = node.bus();
 
-        node.spawn::<Self, _, _>(file!(), line!(), |shutdown| async move {
+        node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
             let mut latency_num: u64 = 0;
