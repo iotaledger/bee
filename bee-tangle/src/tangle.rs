@@ -98,6 +98,7 @@ where
     }
 }
 
+#[allow(clippy::len_without_is_empty)]
 impl<T, H: Hooks<T>> Tangle<T, H>
 where
     T: Clone,
