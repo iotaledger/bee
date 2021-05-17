@@ -27,6 +27,7 @@ anymap = "0.12"
 async-trait = "0.1"
 cap = { version = "0.1", optional = true }
 chrono = "0.4"
+console-subscriber = { git = "https://github.com/tokio-rs/console.git", branch = "main" }
 futures = "0.3"
 fxhash = "0.2"
 hex = "0.4"
@@ -42,9 +43,12 @@ serde_json = "1.0"
 serde_repr = { version = "0.1", optional = true }
 structopt = { version = "0.3", default-features = false }
 thiserror = "1.0"
-tokio = { version = "1.5", features = ["signal", "rt", "macros", "rt-multi-thread"] }
+tokio = { version = "1.5", features = ["signal", "rt", "macros", "rt-multi-thread", "tracing"] }
 tokio-stream = "0.1"
 toml = "0.5"
+tracing = "0.1.26"
+tracing-futures = "0.2.5"
+tracing-subscriber = { version = "0.2.18", features = ["fmt", "registry", "env-filter"] }
 warp = "0.3"
 warp-reverse-proxy = { version = "0.3", optional = true }
 

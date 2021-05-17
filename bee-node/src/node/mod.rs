@@ -15,6 +15,7 @@ use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
 use futures::{channel::oneshot, future::Future};
 use log::{debug, info, warn};
+use tracing::Instrument;
 
 use std::{
     any::{type_name, Any, TypeId},
@@ -60,7 +61,7 @@ impl<B: StorageBackend> BeeNode<B> {
     }
 
     #[allow(missing_docs)]
-    pub async fn run(mut self) -> Result<(), Error> {
+    pub async fn run(mut self) -> Result<(), Box::<dyn std::error::Error + Send + Sync>> {
         info!("Running.");
 
         // Unwrapping is fine because the builder added this resource.
@@ -131,11 +132,14 @@ impl<B: StorageBackend> Node for BeeNode<B> {
         F: Future<Output = ()> + Send + 'static,
     {
         let (tx, rx) = oneshot::channel();
+        
+        let future = g(rx);
+        let span = tracing::info_span!(target: "tokio::task", "task", file = file, line = line);
 
         self.tasks
             .entry(TypeId::of::<W>())
             .or_default()
-            .push((tx, Box::new(tokio::spawn(g(rx)))));
+            .push((tx, Box::new(tokio::spawn(future.instrument(span)))));
     }
 
     fn worker<W>(&self) -> Option<&W>
