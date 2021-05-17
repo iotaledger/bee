@@ -91,7 +91,7 @@ pub async fn broadcast_heartbeat<B: StorageBackend>(
 ) {
     // TODO bring it back
     //    peer_manager.for_each_peer(|peer_id, _| async {
-    for (peer_id, _) in peer_manager.peers.read().await.iter() {
+    for (peer_id, _) in peer_manager.0.read().await.peers.iter() {
         send_heartbeat(peer_manager, metrics, tangle, &peer_id).await
     }
 }

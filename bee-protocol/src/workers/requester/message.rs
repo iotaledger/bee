@@ -113,10 +113,10 @@ async fn process_request_unchecked(
     metrics: &NodeMetrics,
     counter: &mut usize,
 ) {
-    let guard = peer_manager.peers_keys.read().await;
+    let guard = peer_manager.0.read().await;
 
-    for _ in 0..guard.len() {
-        let peer_id = &guard[*counter % guard.len()];
+    for _ in 0..guard.keys.len() {
+        let peer_id = &guard.keys[*counter % guard.keys.len()];
 
         *counter += 1;
 
@@ -134,8 +134,8 @@ async fn process_request_unchecked(
         }
     }
 
-    for _ in 0..guard.len() {
-        let peer_id = &guard[*counter % guard.len()];
+    for _ in 0..guard.keys.len() {
+        let peer_id = &guard.keys[*counter % guard.keys.len()];
 
         *counter += 1;
 

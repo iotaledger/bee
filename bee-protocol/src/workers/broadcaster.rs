@@ -49,7 +49,7 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
             while let Some(BroadcasterWorkerEvent { source, message }) = receiver.next().await {
                 // TODO bring it back
                 // peer_manager.for_each_peer(|peer_id, _| {
-                for (peer_id, _) in peer_manager.peers.read().await.iter() {
+                for (peer_id, _) in peer_manager.0.read().await.peers.iter() {
                     if match source {
                         Some(ref source) => source != peer_id,
                         None => true,
