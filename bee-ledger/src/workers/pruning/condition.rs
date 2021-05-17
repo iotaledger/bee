@@ -17,7 +17,7 @@ pub enum SkipReason {
     Disabled,
 
     /// There is not enough data yet to be pruned according to the config settings.
-    NotEnoughData { enough_data_in: u32 },
+    NotEnoughData { pruning_starts_in: u32 },
 
     /// Pruning is deferred to a later milestone.
     Deferred { next_pruning_in: u32 },
@@ -34,7 +34,7 @@ pub(crate) fn should_prune<B: StorageBackend>(
         Err(SkipReason::Disabled)
     } else if *ledger_index < start_index_min() {
         Err(SkipReason::NotEnoughData {
-            enough_data_in: start_index_min() - *ledger_index,
+            pruning_starts_in: start_index_min() - *ledger_index,
         })
     } else if *ledger_index % pruning_config.interval() != 0 {
         Err(SkipReason::Deferred {
