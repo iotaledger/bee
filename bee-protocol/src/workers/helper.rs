@@ -66,6 +66,9 @@ pub async fn send_heartbeat<B: StorageBackend>(
     tangle: &MsTangle<B>,
     to: &PeerId,
 ) {
+    let connected_peers = peer_manager.connected_peers().await;
+    let synced_peers = peer_manager.synced_peers().await;
+
     Sender::<Heartbeat>::send(
         peer_manager,
         metrics,
@@ -74,8 +77,8 @@ pub async fn send_heartbeat<B: StorageBackend>(
             *tangle.get_solid_milestone_index(),
             *tangle.get_pruning_index(),
             *tangle.get_latest_milestone_index(),
-            peer_manager.connected_peers().await,
-            peer_manager.synced_peers().await,
+            connected_peers,
+            synced_peers,
         ),
     )
     .await;

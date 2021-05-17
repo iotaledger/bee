@@ -35,12 +35,13 @@ const RETRY_INTERVAL_MS: u64 = 2500;
 #[derive(Default)]
 pub struct RequestedMessages(RwLock<HashMap<MessageId, (MilestoneIndex, Instant), FxBuildHasher>>);
 
+#[allow(clippy::len_without_is_empty)]
 impl RequestedMessages {
     pub async fn contains(&self, message_id: &MessageId) -> bool {
         self.0.read().await.contains_key(message_id)
     }
 
-    pub async fn insert(&self, message_id: MessageId, index: MilestoneIndex) {
+    pub(crate) async fn insert(&self, message_id: MessageId, index: MilestoneIndex) {
         let now = Instant::now();
         self.0.write().await.insert(message_id, (index, now));
     }
@@ -49,7 +50,11 @@ impl RequestedMessages {
         self.0.read().await.len()
     }
 
-    pub async fn remove(&self, message_id: &MessageId) -> Option<(MilestoneIndex, Instant)> {
+    pub async fn is_empty(&self) -> bool {
+        self.0.read().await.is_empty()
+    }
+
+    pub(crate) async fn remove(&self, message_id: &MessageId) -> Option<(MilestoneIndex, Instant)> {
         self.0.write().await.remove(message_id)
     }
 }

@@ -68,6 +68,7 @@ async fn validate(
     ))
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn process<B: StorageBackend>(
     tangle: &MsTangle<B>,
     message_id: MessageId,

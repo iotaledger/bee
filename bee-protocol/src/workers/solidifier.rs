@@ -61,6 +61,7 @@ async fn heavy_solidification<B: StorageBackend>(
     missing_len
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn solidify<B: StorageBackend>(
     tangle: &MsTangle<B>,
     consensus_worker: &mpsc::UnboundedSender<ConsensusWorkerEvent>,

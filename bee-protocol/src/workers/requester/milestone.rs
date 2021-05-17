@@ -33,25 +33,29 @@ use std::{
 
 const RETRY_INTERVAL_MS: u64 = 2500;
 
-// TODO pub ?
 #[derive(Default)]
 pub struct RequestedMilestones(RwLock<HashMap<MilestoneIndex, Instant, FxBuildHasher>>);
 
+#[allow(clippy::len_without_is_empty)]
 impl RequestedMilestones {
     pub async fn contains(&self, index: &MilestoneIndex) -> bool {
         self.0.read().await.contains_key(index)
     }
 
-    pub async fn insert(&self, index: MilestoneIndex) {
+    pub(crate) async fn insert(&self, index: MilestoneIndex) {
         let now = Instant::now();
         self.0.write().await.insert(index, now);
     }
 
-    // pub async fn len(&self) -> usize {
-    //     self.0.read().await.len()
-    // }
+    pub async fn len(&self) -> usize {
+        self.0.read().await.len()
+    }
 
-    pub async fn remove(&self, index: &MilestoneIndex) -> Option<Instant> {
+    pub async fn is_empty(&self) -> bool {
+        self.0.read().await.is_empty()
+    }
+
+    pub(crate) async fn remove(&self, index: &MilestoneIndex) -> Option<Instant> {
         self.0.write().await.remove(index)
     }
 }

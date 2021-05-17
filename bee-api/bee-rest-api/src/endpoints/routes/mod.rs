@@ -18,6 +18,7 @@ use warp::{self, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn filter_all<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,

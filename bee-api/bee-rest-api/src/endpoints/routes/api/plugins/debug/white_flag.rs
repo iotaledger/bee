@@ -28,7 +28,6 @@ use warp::{reject, Filter, Rejection, Reply};
 use std::{
     any::TypeId,
     collections::HashSet,
-    iter::FromIterator,
     net::IpAddr,
     sync::{Arc, Mutex},
     time::Duration,
@@ -38,6 +37,7 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
     super::path().and(warp::path("whiteflag")).and(warp::path::end())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
@@ -123,7 +123,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     // aborting if it took too long. This is done by requesting all missing parents then listening for their
     // solidification event or aborting if the allowed time passed.
 
-    let to_solidify = Arc::new(Mutex::new(HashSet::<MessageId>::from_iter(parents.iter().copied())));
+    let to_solidify = Arc::new(Mutex::new(parents.iter().copied().collect::<HashSet<MessageId>>()));
     let (sender, receiver) = oneshot::channel::<()>();
     let sender = Arc::new(Mutex::new(Some(sender)));
 
@@ -133,10 +133,8 @@ pub(crate) async fn white_flag<B: StorageBackend>(
     struct Static;
     bus.add_listener::<Static, _, _>(move |event: &MessageSolidified| {
         if let Ok(mut to_solidify) = to_solidify.lock() {
-            if to_solidify.remove(&event.message_id) {
-                if to_solidify.is_empty() {
-                    let _ = sender.lock().map(|mut s| s.take().map(|s| s.send(())));
-                }
+            if to_solidify.remove(&event.message_id) && to_solidify.is_empty() {
+                let _ = sender.lock().map(|mut s| s.take().map(|s| s.send(())));
             }
         }
     });

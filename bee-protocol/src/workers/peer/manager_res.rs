@@ -44,6 +44,7 @@ impl<N: Node> Worker<N> for PeerManagerResWorker {
 
 pub struct PeerManager {
     // TODO private
+    #[allow(clippy::type_complexity)]
     pub(crate) peers: RwLock<HashMap<PeerId, (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)>>,
     // This is needed to ensure message distribution fairness as iterating over a HashMap is random.
     // TODO private
