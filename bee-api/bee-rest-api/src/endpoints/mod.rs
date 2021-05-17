@@ -16,7 +16,7 @@ use storage::StorageBackend;
 
 use crate::types::body::{DefaultErrorResponse, ErrorBody};
 
-use bee_network::NetworkServiceController;
+use bee_network::NetworkCommandSender;
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorker, PeerManager, PeerManagerResWorker,
     RequestedMessages,
@@ -81,7 +81,7 @@ where
         let message_requester = node.worker::<MessageRequesterWorker>().unwrap().clone();
         let requested_messages = node.resource::<RequestedMessages>();
         let peer_manager = node.resource::<PeerManager>();
-        let network_controller = node.resource::<NetworkServiceController>();
+        let network_controller = node.resource::<NetworkCommandSender>();
         let node_info = node.info();
         let bus = node.bus();
 
@@ -124,32 +124,32 @@ where
 async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (http_code, err_code, reason) = match err.find() {
         // handle custom rejections
-        Some(CustomRejection::Forbidden) => (StatusCode::FORBIDDEN, "403", "access forbidden"),
-        Some(CustomRejection::NotFound(reason)) => (StatusCode::NOT_FOUND, "404", reason),
-        Some(CustomRejection::BadRequest(reason)) => (StatusCode::BAD_REQUEST, "400", reason),
+        Some(CustomRejection::Forbidden) => (StatusCode::FORBIDDEN, "403".to_string(), "access forbidden".to_string()),
+        Some(CustomRejection::NotFound(reason)) => (StatusCode::NOT_FOUND, "404".to_string(), reason.to_owned()),
+        Some(CustomRejection::BadRequest(reason)) => (StatusCode::BAD_REQUEST, "400".to_string(), reason.to_owned()),
         Some(CustomRejection::ServiceUnavailable(reason)) => {
-            (StatusCode::SERVICE_UNAVAILABLE, "503", reason)
+            (StatusCode::SERVICE_UNAVAILABLE, "503".to_string(), reason.to_owned())
         }
         // handle default rejections
         _ => {
             if err.is_not_found() {
-                (StatusCode::NOT_FOUND, "404", "data not found")
+                (StatusCode::NOT_FOUND, "404".to_string(), "data not found".to_string())
             } else if err.find::<warp::reject::MethodNotAllowed>().is_some() {
-                (StatusCode::FORBIDDEN, "403", "access forbidden")
+                (StatusCode::FORBIDDEN, "403".to_string(), "access forbidden".to_string())
             } else {
                 error!("unhandled rejection: {:?}", err);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    "500",
-                    "internal server error",
+                    "500".to_string(),
+                    "internal server error".to_string(),
                 )
             }
         }
     };
     Ok(warp::reply::with_status(
         warp::reply::json(&ErrorBody::new(DefaultErrorResponse {
-            code: err_code.to_string(),
-            message: reason.to_string(),
+            code: err_code,
+            message: reason,
         })),
         http_code,
     ))

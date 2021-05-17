@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::endpoints::{
-    config::ROUTE_REMOVE_PEER, filters::with_network_controller, path_params::peer_id, permission::has_permission,
+    config::ROUTE_REMOVE_PEER, filters::with_network_command_sender, path_params::peer_id, permission::has_permission,
     rejection::CustomRejection,
 };
 
-use bee_network::{Command::RemovePeer, NetworkServiceController, PeerId};
+use bee_network::{Command::RemovePeer, NetworkCommandSender, PeerId};
 use bee_runtime::resource::ResourceHandle;
 
 use warp::{http::StatusCode, reject, Filter, Rejection, Reply};
@@ -23,18 +23,18 @@ fn path() -> impl Filter<Extract = (PeerId,), Error = warp::Rejection> + Clone {
 pub(crate) fn filter(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
-    network_controller: ResourceHandle<NetworkServiceController>,
+    network_command_sender: ResourceHandle<NetworkCommandSender>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::delete())
         .and(has_permission(ROUTE_REMOVE_PEER, public_routes, allowed_ips))
-        .and(with_network_controller(network_controller))
+        .and(with_network_command_sender(network_command_sender))
         .and_then(remove_peer)
 }
 
 pub(crate) async fn remove_peer(
     peer_id: PeerId,
-    network_controller: ResourceHandle<NetworkServiceController>,
+    network_controller: ResourceHandle<NetworkCommandSender>,
 ) -> Result<impl Reply, Rejection> {
     if let Err(e) = network_controller.send(RemovePeer { peer_id }) {
         return Err(reject::custom(CustomRejection::NotFound(format!(

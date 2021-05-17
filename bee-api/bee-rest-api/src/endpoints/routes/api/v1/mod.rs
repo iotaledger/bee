@@ -28,7 +28,7 @@ pub mod treasury;
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
-use bee_network::NetworkServiceController;
+use bee_network::NetworkCommandSender;
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
 use bee_tangle::MsTangle;
@@ -43,6 +43,7 @@ pub(crate) fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clo
     super::path().and(warp::path("v1"))
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn filter<B: StorageBackend>(
     public_routes: Vec<String>,
     allowed_ips: Vec<IpAddr>,
@@ -54,14 +55,14 @@ pub(crate) fn filter<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
     peer_manager: ResourceHandle<PeerManager>,
-    network_controller: ResourceHandle<NetworkServiceController>,
+    network_command_sender: ResourceHandle<NetworkCommandSender>,
     node_info: ResourceHandle<NodeInfo>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     add_peer::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         peer_manager.clone(),
-        network_controller.clone(),
+        network_command_sender.clone(),
     )
     .or(balance_bech32::filter(
         public_routes.clone(),
@@ -153,7 +154,7 @@ pub(crate) fn filter<B: StorageBackend>(
     .or(remove_peer::filter(
         public_routes.clone(),
         allowed_ips.clone(),
-        network_controller,
+        network_command_sender,
     ))
     .or(submit_message::filter(
         public_routes.clone(),

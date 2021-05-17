@@ -9,7 +9,7 @@ use crate::{
     types::{body::SuccessBody, responses::TreasuryResponse},
 };
 
-use bee_ledger::consensus::storage;
+use bee_ledger::workers::storage;
 use bee_runtime::resource::ResourceHandle;
 
 use warp::{Filter, Rejection, Reply};

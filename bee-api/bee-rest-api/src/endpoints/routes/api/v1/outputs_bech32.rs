@@ -3,13 +3,13 @@
 
 use crate::endpoints::{
     config::ROUTE_OUTPUTS_BECH32, filters::with_storage, path_params::bech32_address, permission::has_permission,
-    rejection::CustomRejection, routes::api::v1::outputs_ed25519::outputs_ed25519, storage::StorageBackend,
+    routes::api::v1::outputs_ed25519::outputs_ed25519, storage::StorageBackend,
 };
 
 use bee_message::address::Address;
 use bee_runtime::resource::ResourceHandle;
 
-use warp::{reject, Filter, Rejection, Reply};
+use warp::{Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 
@@ -39,8 +39,5 @@ pub(crate) async fn outputs_bech32<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     match addr {
         Address::Ed25519(a) => outputs_ed25519(a, storage).await,
-        _ => Err(reject::custom(CustomRejection::BadRequest(
-            "address type not supported".to_string(),
-        ))),
     }
 }
