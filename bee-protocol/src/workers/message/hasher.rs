@@ -7,7 +7,7 @@ use crate::{
     types::metrics::NodeMetrics,
     workers::{
         message::{HashCache, MessageSubmitterError, ProcessorWorker, ProcessorWorkerEvent},
-        packets::Message as MessagePacket,
+        packets::MessagePacket,
         peer::PeerManager,
         storage::StorageBackend,
         MetricsWorker, PeerManagerResWorker,

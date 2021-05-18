@@ -3,7 +3,7 @@
 
 //! Type-length-value encoding on top of the packets.
 
-use crate::workers::packets::{Header, Packet, HEADER_SIZE};
+use crate::workers::packets::{HeaderPacket, Packet, HEADER_SIZE};
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug)]
@@ -25,7 +25,7 @@ pub(crate) enum Error {
 /// * The advertised packet type does not match the required packet type.
 /// * The advertised packet length does not match the buffer length.
 /// * The buffer length is not within the allowed size range of the required packet type.
-pub(crate) fn tlv_from_bytes<P: Packet>(header: &Header, bytes: &[u8]) -> Result<P, Error> {
+pub(crate) fn tlv_from_bytes<P: Packet>(header: &HeaderPacket, bytes: &[u8]) -> Result<P, Error> {
     if header.packet_type != P::ID {
         return Err(Error::InvalidAdvertisedType(header.packet_type, P::ID));
     }
@@ -55,7 +55,7 @@ pub(crate) fn tlv_into_bytes<P: Packet>(packet: P) -> Vec<u8> {
     let mut bytes = vec![0u8; HEADER_SIZE + size];
     let (header, payload) = bytes.split_at_mut(HEADER_SIZE);
 
-    Header {
+    HeaderPacket {
         packet_type: P::ID,
         packet_length: size as u16,
     }
@@ -70,7 +70,9 @@ mod tests {
 
     use super::*;
 
-    use crate::workers::packets::{Heartbeat, Message as MessagePacket, MessageRequest, MilestoneRequest, Packet};
+    use crate::workers::packets::{
+        HeartbeatPacket, MessagePacket, MessageRequestPacket, MilestoneRequestPacket, Packet,
+    };
 
     use rand::Rng;
 
@@ -78,7 +80,7 @@ mod tests {
 
     fn invalid_advertised_type<P: Packet>() {
         match tlv_from_bytes::<P>(
-            &Header {
+            &HeaderPacket {
                 packet_type: P::ID + 1,
                 packet_length: P::size_range().start as u16,
             },
@@ -94,7 +96,7 @@ mod tests {
 
     fn invalid_advertised_length<P: Packet>() {
         match tlv_from_bytes::<P>(
-            &Header {
+            &HeaderPacket {
                 packet_type: P::ID,
                 packet_length: P::size_range().start as u16,
             },
@@ -111,7 +113,7 @@ mod tests {
 
     fn length_out_of_range<P: Packet>() {
         match tlv_from_bytes::<P>(
-            &Header {
+            &HeaderPacket {
                 packet_type: P::ID,
                 packet_length: P::size_range().start as u16 - 1,
             },
@@ -125,7 +127,7 @@ mod tests {
         }
 
         match tlv_from_bytes::<P>(
-            &Header {
+            &HeaderPacket {
                 packet_type: P::ID,
                 packet_length: P::size_range().end as u16,
             },
@@ -146,7 +148,7 @@ mod tests {
             let length = rng.gen_range(P::size_range());
             let bytes_from: Vec<u8> = (0..length).map(|_| rand::random::<u8>()).collect();
             let packet = tlv_from_bytes::<P>(
-                &Header {
+                &HeaderPacket {
                     packet_type: P::ID,
                     packet_length: length as u16,
                 },
@@ -186,7 +188,7 @@ mod tests {
     }
 
     implement_tlv_tests!(
-        MilestoneRequest,
+        MilestoneRequestPacket,
         invalid_advertised_type_milestone_request,
         invalid_advertised_length_milestone_request,
         length_out_of_range_milestone_request,
@@ -202,7 +204,7 @@ mod tests {
     );
 
     implement_tlv_tests!(
-        MessageRequest,
+        MessageRequestPacket,
         invalid_advertised_type_message_request,
         invalid_advertised_length_message_request,
         length_out_of_range_message_request,
@@ -210,7 +212,7 @@ mod tests {
     );
 
     implement_tlv_tests!(
-        Heartbeat,
+        HeartbeatPacket,
         invalid_advertised_type_heartbeat,
         invalid_advertised_length_heartbeat,
         length_out_of_range_heartbeat,

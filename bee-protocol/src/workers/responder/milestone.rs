@@ -4,7 +4,7 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::{Message as MessagePacket, MilestoneRequest},
+        packets::{MessagePacket, MilestoneRequestPacket},
         peer::PeerManager,
         sender::Sender,
         storage::StorageBackend,
@@ -27,7 +27,7 @@ use std::{any::TypeId, convert::Infallible};
 
 pub(crate) struct MilestoneResponderWorkerEvent {
     pub(crate) peer_id: PeerId,
-    pub(crate) request: MilestoneRequest,
+    pub(crate) request: MilestoneRequestPacket,
 }
 
 pub(crate) struct MilestoneResponderWorker {

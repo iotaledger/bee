@@ -4,7 +4,7 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::Heartbeat, peer::PeerManager, sender::Sender, storage::StorageBackend, MessageRequesterWorker,
+        packets::HeartbeatPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MessageRequesterWorker,
         MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages, RequestedMilestones,
     },
 };
@@ -69,11 +69,11 @@ pub async fn send_heartbeat<B: StorageBackend>(
     let connected_peers = peer_manager.connected_peers().await;
     let synced_peers = peer_manager.synced_peers().await;
 
-    Sender::<Heartbeat>::send(
+    Sender::<HeartbeatPacket>::send(
         peer_manager,
         metrics,
         to,
-        Heartbeat::new(
+        HeartbeatPacket::new(
             *tangle.get_solid_milestone_index(),
             *tangle.get_pruning_index(),
             *tangle.get_latest_milestone_index(),

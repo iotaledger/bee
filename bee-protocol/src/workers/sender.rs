@@ -4,7 +4,9 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::{tlv_into_bytes, Heartbeat, Message as MessagePacket, MessageRequest, MilestoneRequest, Packet},
+        packets::{
+            tlv_into_bytes, HeartbeatPacket, MessagePacket, MessageRequestPacket, MilestoneRequestPacket, Packet,
+        },
         peer::PeerManager,
     },
 };
@@ -19,8 +21,13 @@ pub(crate) struct Sender<P: Packet> {
     marker: PhantomData<P>,
 }
 
-impl Sender<MilestoneRequest> {
-    pub(crate) async fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: MilestoneRequest) {
+impl Sender<MilestoneRequestPacket> {
+    pub(crate) async fn send(
+        peer_manager: &PeerManager,
+        metrics: &NodeMetrics,
+        id: &PeerId,
+        packet: MilestoneRequestPacket,
+    ) {
         if let Some(peer) = peer_manager.get(id).await {
             if let Some(ref sender) = peer.1 {
                 match sender.0.send(tlv_into_bytes(packet)) {
@@ -29,7 +36,7 @@ impl Sender<MilestoneRequest> {
                         metrics.milestone_requests_sent_inc();
                     }
                     Err(e) => {
-                        warn!("Sending MilestoneRequest to {} failed: {:?}.", id, e);
+                        warn!("Sending MilestoneRequestPacket to {} failed: {:?}.", id, e);
                     }
                 }
             }
@@ -55,8 +62,13 @@ impl Sender<MessagePacket> {
     }
 }
 
-impl Sender<MessageRequest> {
-    pub(crate) async fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: MessageRequest) {
+impl Sender<MessageRequestPacket> {
+    pub(crate) async fn send(
+        peer_manager: &PeerManager,
+        metrics: &NodeMetrics,
+        id: &PeerId,
+        packet: MessageRequestPacket,
+    ) {
         if let Some(peer) = peer_manager.get(id).await {
             if let Some(ref sender) = peer.1 {
                 match sender.0.send(tlv_into_bytes(packet)) {
@@ -65,7 +77,7 @@ impl Sender<MessageRequest> {
                         metrics.message_requests_sent_inc();
                     }
                     Err(e) => {
-                        warn!("Sending MessageRequest to {} failed: {:?}.", id, e);
+                        warn!("Sending MessageRequestPacket to {} failed: {:?}.", id, e);
                     }
                 }
             }
@@ -73,8 +85,8 @@ impl Sender<MessageRequest> {
     }
 }
 
-impl Sender<Heartbeat> {
-    pub(crate) async fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: Heartbeat) {
+impl Sender<HeartbeatPacket> {
+    pub(crate) async fn send(peer_manager: &PeerManager, metrics: &NodeMetrics, id: &PeerId, packet: HeartbeatPacket) {
         if let Some(peer) = peer_manager.get(id).await {
             if let Some(ref sender) = peer.1 {
                 match sender.0.send(tlv_into_bytes(packet)) {
@@ -84,7 +96,7 @@ impl Sender<Heartbeat> {
                         metrics.heartbeats_sent_inc();
                     }
                     Err(e) => {
-                        warn!("Sending Heartbeat to {} failed: {:?}.", id, e);
+                        warn!("Sending HeartbeatPacket to {} failed: {:?}.", id, e);
                     }
                 }
             }

@@ -12,18 +12,18 @@ const CONSTANT_SIZE: usize = INDEX_SIZE;
 
 /// A packet to request a milestone.
 #[derive(Clone)]
-pub(crate) struct MilestoneRequest {
+pub(crate) struct MilestoneRequestPacket {
     /// Index of the requested milestone.
     pub(crate) index: u32,
 }
 
-impl MilestoneRequest {
+impl MilestoneRequestPacket {
     pub(crate) fn new(index: u32) -> Self {
         Self { index }
     }
 }
 
-impl Packet for MilestoneRequest {
+impl Packet for MilestoneRequestPacket {
     const ID: u8 = 0x01;
 
     fn size_range() -> Range<usize> {
@@ -54,29 +54,35 @@ mod tests {
 
     #[test]
     fn id() {
-        assert_eq!(MilestoneRequest::ID, 1);
+        assert_eq!(MilestoneRequestPacket::ID, 1);
     }
 
     #[test]
     fn size_range() {
-        assert_eq!(MilestoneRequest::size_range().contains(&(CONSTANT_SIZE - 1)), false);
-        assert_eq!(MilestoneRequest::size_range().contains(&CONSTANT_SIZE), true);
-        assert_eq!(MilestoneRequest::size_range().contains(&(CONSTANT_SIZE + 1)), false);
+        assert_eq!(
+            MilestoneRequestPacket::size_range().contains(&(CONSTANT_SIZE - 1)),
+            false
+        );
+        assert_eq!(MilestoneRequestPacket::size_range().contains(&CONSTANT_SIZE), true);
+        assert_eq!(
+            MilestoneRequestPacket::size_range().contains(&(CONSTANT_SIZE + 1)),
+            false
+        );
     }
 
     #[test]
     fn size() {
-        let packet = MilestoneRequest::new(INDEX);
+        let packet = MilestoneRequestPacket::new(INDEX);
 
         assert_eq!(packet.size(), CONSTANT_SIZE);
     }
 
     #[test]
     fn into_from() {
-        let packet_from = MilestoneRequest::new(INDEX);
+        let packet_from = MilestoneRequestPacket::new(INDEX);
         let mut bytes = vec![0u8; packet_from.size()];
         packet_from.into_bytes(&mut bytes);
-        let packet_to = MilestoneRequest::from_bytes(&bytes);
+        let packet_to = MilestoneRequestPacket::from_bytes(&bytes);
 
         assert_eq!(packet_to.index, INDEX);
     }

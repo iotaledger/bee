@@ -4,7 +4,7 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::MilestoneRequest, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
+        packets::MilestoneRequestPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
         PeerManagerResWorker,
     },
 };
@@ -98,7 +98,13 @@ async fn process_request_unchecked(
 ) {
     match peer_id {
         Some(peer_id) => {
-            Sender::<MilestoneRequest>::send(peer_manager, metrics, &peer_id, MilestoneRequest::new(*index)).await;
+            Sender::<MilestoneRequestPacket>::send(
+                peer_manager,
+                metrics,
+                &peer_id,
+                MilestoneRequestPacket::new(*index),
+            )
+            .await;
         }
         None => {
             let guard = peer_manager.0.read().await;
@@ -111,11 +117,11 @@ async fn process_request_unchecked(
                 if let Some(peer) = peer_manager.get(peer_id).await {
                     // TODO also request if has_data ?
                     if (*peer).0.maybe_has_data(index) {
-                        Sender::<MilestoneRequest>::send(
+                        Sender::<MilestoneRequestPacket>::send(
                             peer_manager,
                             metrics,
                             &peer_id,
-                            MilestoneRequest::new(*index),
+                            MilestoneRequestPacket::new(*index),
                         )
                         .await;
                         return;

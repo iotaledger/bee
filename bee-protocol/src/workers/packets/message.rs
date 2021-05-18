@@ -11,12 +11,12 @@ use std::ops::Range;
 
 /// A packet to send a message.
 #[derive(Clone)]
-pub(crate) struct Message {
+pub(crate) struct MessagePacket {
     /// Message to send.
     pub(crate) bytes: Vec<u8>,
 }
 
-impl Message {
+impl MessagePacket {
     pub(crate) fn new(message: &[u8]) -> Self {
         Self {
             bytes: message.to_vec(),
@@ -24,7 +24,7 @@ impl Message {
     }
 }
 
-impl Packet for Message {
+impl Packet for MessagePacket {
     const ID: u8 = 0x02;
 
     fn size_range() -> Range<usize> {
@@ -75,33 +75,33 @@ mod tests {
 
     #[test]
     fn id() {
-        assert_eq!(Message::ID, 2);
+        assert_eq!(MessagePacket::ID, 2);
     }
 
     #[test]
     fn size_range() {
-        assert_eq!(Message::size_range().contains(&(MESSAGE_LENGTH_MIN - 1)), false);
-        assert_eq!(Message::size_range().contains(&MESSAGE_LENGTH_MIN), true);
-        assert_eq!(Message::size_range().contains(&(MESSAGE_LENGTH_MIN + 1)), true);
+        assert_eq!(MessagePacket::size_range().contains(&(MESSAGE_LENGTH_MIN - 1)), false);
+        assert_eq!(MessagePacket::size_range().contains(&MESSAGE_LENGTH_MIN), true);
+        assert_eq!(MessagePacket::size_range().contains(&(MESSAGE_LENGTH_MIN + 1)), true);
 
-        assert_eq!(Message::size_range().contains(&(MESSAGE_LENGTH_MAX - 1)), true);
-        assert_eq!(Message::size_range().contains(&MESSAGE_LENGTH_MAX), true);
-        assert_eq!(Message::size_range().contains(&(MESSAGE_LENGTH_MAX + 1)), false);
+        assert_eq!(MessagePacket::size_range().contains(&(MESSAGE_LENGTH_MAX - 1)), true);
+        assert_eq!(MessagePacket::size_range().contains(&MESSAGE_LENGTH_MAX), true);
+        assert_eq!(MessagePacket::size_range().contains(&(MESSAGE_LENGTH_MAX + 1)), false);
     }
 
     #[test]
     fn size() {
-        let packet = Message::new(&MESSAGE);
+        let packet = MessagePacket::new(&MESSAGE);
 
         assert_eq!(packet.size(), 500);
     }
 
     #[test]
     fn into_from() {
-        let packet_from = Message::new(&MESSAGE);
+        let packet_from = MessagePacket::new(&MESSAGE);
         let mut bytes = vec![0u8; packet_from.size()];
         packet_from.into_bytes(&mut bytes);
-        let packet_to = Message::from_bytes(&bytes);
+        let packet_to = MessagePacket::from_bytes(&bytes);
 
         assert!(packet_to.bytes.eq(&MESSAGE));
     }

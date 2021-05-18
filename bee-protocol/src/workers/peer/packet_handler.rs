@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::workers::packets::{Header, HEADER_SIZE};
+use crate::workers::packets::{HeaderPacket, HEADER_SIZE};
 
 use bee_network::Multiaddr;
 
@@ -25,7 +25,7 @@ enum ReadState {
     /// `PacketHandler` should read a header.
     Header,
     /// `PacketHandler` should read a payload based on a header.
-    Payload(Header),
+    Payload(HeaderPacket),
 }
 
 /// A packet handler.
@@ -56,7 +56,7 @@ impl PacketHandler {
     /// Fetch the header and payload of a packet.
     ///
     /// This method only returns `None` if a shutdown signal is received.
-    pub(super) async fn fetch_packet(&mut self) -> Option<(Header, &[u8])> {
+    pub(super) async fn fetch_packet(&mut self) -> Option<(HeaderPacket, &[u8])> {
         // loop until we can return the header and payload
         loop {
             match &self.state {
@@ -68,7 +68,7 @@ impl PacketHandler {
                         .fetch_bytes_or_shutdown(&mut self.shutdown, HEADER_SIZE)
                         .await?;
                     trace!("[{}] Reading Header...", self.address);
-                    let header = Header::from_bytes(bytes);
+                    let header = HeaderPacket::from_bytes(bytes);
                     // Now we are ready to read a payload.
                     self.state = ReadState::Payload(header);
                 }
@@ -208,7 +208,7 @@ mod tests {
             // field of the header.
             let expected_bytes = vec![0u8; msg_len];
             let expected_msg = (
-                Header {
+                HeaderPacket {
                     packet_type: 0,
                     packet_length: msg_len as u16,
                 },
@@ -300,7 +300,7 @@ mod tests {
         let handle = spawn(async move {
             let expected_bytes = vec![0u8; msg_len];
             let expected_msg = (
-                Header {
+                HeaderPacket {
                     packet_type: 0,
                     packet_length: msg_len as u16,
                 },
