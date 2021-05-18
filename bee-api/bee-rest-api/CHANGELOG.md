@@ -19,6 +19,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.1.1 - 2021-05-18
+
+### Added
+- Routes;
+  - `health` route;
+  - `plugins/debug/white_flag` route;
+  - `plugins/v1/add_peer` route;
+  - `plugins/v1/balance_bech32` route;
+  - `plugins/v1/balance_ed25519` route;
+  - `plugins/v1/info` route;
+  - `plugins/v1/message` route;
+  - `plugins/v1/message_children` route; 
+  - `plugins/v1/message_metadata` route; 
+  - `plugins/v1/message_raw` route;
+  - `plugins/v1/messages_find` route;
+  - `plugins/v1/milestone` route;  
+  - `plugins/v1/milestone_utxo_changes` route;    
+  - `plugins/v1/output` route;     
+  - `plugins/v1/outputs_bech32` route;    
+  - `plugins/v1/outputs_ed25519` route;  
+  - `plugins/v1/peer` route;    
+  - `plugins/v1/peers` route;      
+  - `plugins/v1/receipts` route;        
+  - `plugins/v1/receips_at` route;   
+  - `plugins/v1/remove_peer` route;     
+  - `plugins/v1/submit_message` route;    
+  - `plugins/v1/submit_message_raw` route;  
+  - `plugins/v1/tips` route;    
+  - `plugins/v1/transaction_inculde_message` route;      
+  - `plugins/v1/treasury` route; 
+
 ## 0.1.0 - 2021-04-20
 
 ### Added

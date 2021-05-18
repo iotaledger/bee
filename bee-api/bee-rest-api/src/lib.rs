@@ -3,4 +3,5 @@
 
 // #![deny(missing_docs, warnings)]
 
+pub mod endpoints;
 pub mod types;
