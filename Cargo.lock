@@ -13,7 +13,6 @@ name = "bee-common"
 version = "1.0.0-alpha"
 dependencies = [
  "autocfg",
- "bee-common",
  "bee-common-derive",
 ]
 

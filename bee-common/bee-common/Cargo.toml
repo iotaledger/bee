@@ -18,6 +18,3 @@ autocfg = "1.0"
 
 [dependencies]
 bee-common-derive = { path = "../bee-common-derive" }
-
-[dev-dependencies]
-bee-common = { path = ".", features = ["io"] }

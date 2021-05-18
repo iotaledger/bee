@@ -1,24 +1,66 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+extern crate alloc;
 
-use bee_common::packable::Packable;
+use bee_common::packable::{Packable, Packer, Unpacker};
 
-use core::{fmt::Debug, mem::size_of};
+use alloc::vec::Vec;
+use core::{convert::Infallible, fmt::Debug, mem::size_of};
+
+#[derive(Default)]
+struct VecPacker(Vec<u8>);
+
+impl Packer for VecPacker {
+    type Error = Infallible;
+
+    fn pack_bytes(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
+        self.0.extend_from_slice(bytes);
+        Ok(())
+    }
+}
+
+impl VecPacker {
+    fn as_slice(&self) -> SliceUnpacker<'_> {
+        SliceUnpacker(self.0.as_slice())
+    }
+}
+
+struct SliceUnpacker<'u>(&'u [u8]);
+
+#[derive(Debug)]
+struct UnexpectedEOF;
+
+impl<'u> Unpacker for SliceUnpacker<'u> {
+    type Error = UnexpectedEOF;
+
+    fn unpack_bytes(&mut self, slice: &mut [u8]) -> Result<(), Self::Error> {
+        let len = slice.len();
+
+        if self.0.len() >= len {
+            let (head, tail) = self.0.split_at(len);
+            self.0 = tail;
+            slice.copy_from_slice(head);
+            Ok(())
+        } else {
+            Err(UnexpectedEOF)
+        }
+    }
+}
 
 fn pack_checked<P>(value: P) -> Vec<u8>
 where
     P: Packable + Eq + Debug,
     P::Error: Debug,
 {
-    let mut packer = Vec::new();
+    let mut packer = VecPacker::default();
     value.pack(&mut packer).unwrap();
 
     let result = Packable::unpack(&mut packer.as_slice()).unwrap();
 
-    assert_eq!(value.packed_len(), packer.len());
+    assert_eq!(value.packed_len(), packer.0.len());
     assert_eq!(value, result);
 
-    packer
+    packer.0
 }
 
 macro_rules! impl_packable_test_for_num {
@@ -53,7 +95,7 @@ fn packable_bool() {
 
 #[test]
 fn packed_non_zero_bytes_are_truthy() {
-    let mut packer = Vec::new();
+    let mut packer = VecPacker::default();
     42u8.pack(&mut packer).unwrap();
 
     let is_true = bool::unpack(&mut packer.as_slice()).unwrap();
