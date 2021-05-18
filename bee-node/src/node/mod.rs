@@ -15,12 +15,10 @@ use anymap::{any::Any as AnyMapAny, Map};
 use async_trait::async_trait;
 use futures::{channel::oneshot, future::Future};
 use log::{debug, info, warn};
-use tracing::Instrument;
 
 use std::{
     any::{type_name, Any, TypeId},
     collections::HashMap,
-    panic::Location,
     marker::PhantomData,
     ops::Deref,
     pin::Pin,
@@ -133,16 +131,34 @@ impl<B: StorageBackend> Node for BeeNode<B> {
         G: FnOnce(oneshot::Receiver<()>) -> F,
         F: Future<Output = ()> + Send + 'static,
     {
-        let caller = Location::caller();
-        let span = tracing::info_span!(target: "tokio::task", "task", file = caller.file(), line = caller.line());
-
         let (tx, rx) = oneshot::channel();
         let future = g(rx);
+
+        #[cfg(feature = "console")]
+        let task = {
+            use tracing::Instrument;
+            use std::panic::Location;
+
+            tracing::info!("Instrumenting task");
+
+            let caller = Location::caller();
+            let span = tracing::info_span!(
+                target: "tokio::task", 
+                "task", 
+                file = caller.file(), 
+                line = caller.line(),
+            );
+
+            tokio::spawn(future.instrument(span))
+        };
+
+        #[cfg(not(feature = "console"))]
+        let task = tokio::spawn(future);
 
         self.tasks
             .entry(TypeId::of::<W>())
             .or_default()
-            .push((tx, Box::new(tokio::spawn(future.instrument(span)))));
+            .push((tx, Box::new(task)));
     }
 
     fn worker<W>(&self) -> Option<&W>
