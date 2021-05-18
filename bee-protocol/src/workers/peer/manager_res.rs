@@ -72,11 +72,14 @@ impl PeerManager {
     }
 
     pub async fn get_all(&self) -> Vec<Arc<Peer>> {
-        let mut ret = Vec::new();
-        for (_, (peer, _)) in self.0.read().await.peers.iter() {
-            ret.push(peer.clone());
-        }
-        ret
+        self.0
+            .read()
+            .await
+            .peers
+            .iter()
+            .map(|(_, (peer, _))| peer)
+            .cloned()
+            .collect()
     }
 
     // // TODO find a way to only return a ref to the peer.
