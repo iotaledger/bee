@@ -45,6 +45,7 @@ impl<N: Node> Worker<N> for PeerManagerResWorker {
 #[derive(Default)]
 pub struct PeerManagerInner {
     // TODO private
+    #[allow(clippy::type_complexity)] // TODO
     pub(crate) peers: HashMap<PeerId, (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)>,
     // This is needed to ensure message distribution fairness as iterating over a HashMap is random.
     pub(crate) keys: Vec<PeerId>,
