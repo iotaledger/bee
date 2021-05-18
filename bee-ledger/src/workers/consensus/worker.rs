@@ -300,22 +300,16 @@ where
                     continue;
                 }
 
-                if let Ok(snapshot_index) = should_snapshot(&tangle, ledger_index, &snapshot_config) {
+                if let Ok(_snapshot_index) = should_snapshot(&tangle, ledger_index, &snapshot_config) {
                     // if let Err(e) = snapshot(snapshot_config.path(), snapshot_index) {
                     //     error!("Failed to create snapshot: {:?}.", e);
                     // }
                 }
                 match should_prune(&tangle, ledger_index, &pruning_config) {
-                    Ok(pruning_target_index) => {
-                        if let Err(e) = pruning::prune(
-                            &tangle,
-                            &storage,
-                            &bus,
-                            pruning_target_index,
-                            &pruning_config,
-                            below_max_depth,
-                        )
-                        .await
+                    Ok(target_index) => {
+                        if let Err(e) =
+                            pruning::prune(&tangle, &storage, &bus, target_index, &pruning_config, below_max_depth)
+                                .await
                         {
                             error!("Failed to prune database: {:?}.", e);
                         }

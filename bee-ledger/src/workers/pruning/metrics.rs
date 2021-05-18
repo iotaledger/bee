@@ -22,11 +22,11 @@ pub struct TraversalMetrics {
     pub buffered_approvers: usize,
     pub all_approvers_visited: usize,
     pub approvers_not_visited: usize,
-    pub messages: usize,
-    pub edges: usize,
-    pub indexations: usize,
     pub found_sep_early: usize,
     pub found_sep_late: usize,
+    pub prunable_messages: usize,
+    pub prunable_edges: usize,
+    pub prunable_indexations: usize,
     pub new_seps: usize,
 }
 

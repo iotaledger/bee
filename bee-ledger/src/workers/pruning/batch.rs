@@ -87,12 +87,12 @@ pub async fn add_confirmed_data<S: StorageBackend>(
             let padded_index = indexation.padded_index();
 
             delete_indexation_data(storage, batch, &(padded_index, current_id))?;
-            metrics.indexations += 1;
+            metrics.prunable_indexations += 1;
         }
 
         for parent_id in current_parents.iter() {
             delete_edge(storage, batch, &(*parent_id, current_id))?;
-            metrics.edges += 1;
+            metrics.prunable_edges += 1;
         }
 
         messages.extend(current_parents.iter());
@@ -161,6 +161,7 @@ pub async fn add_confirmed_data<S: StorageBackend>(
         }
     }
 
+    metrics.prunable_messages = visited.len();
     metrics.new_seps = new_seps.len();
 
     Ok((new_seps, metrics))

@@ -64,6 +64,10 @@ pub async fn prune<S: StorageBackend>(
         batch::add_confirmed_data(tangle, &storage, &mut batch, target_index, &old_seps).await?;
     timings.batch_del_confirmed = batch_del_confirmed.elapsed();
 
+    pruning_metrics.messages = traversal_metrics.prunable_messages;
+    pruning_metrics.edges = traversal_metrics.prunable_edges;
+    pruning_metrics.indexations = traversal_metrics.prunable_indexations;
+
     let num_new_seps = new_seps.len();
 
     let batch_ins_new_seps = Instant::now();
