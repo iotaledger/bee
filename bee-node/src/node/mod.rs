@@ -139,8 +139,6 @@ impl<B: StorageBackend> Node for BeeNode<B> {
             use tracing::Instrument;
             use std::panic::Location;
 
-            tracing::info!("Instrumenting task");
-
             let caller = Location::caller();
             let span = tracing::info_span!(
                 target: "tokio::task", 
