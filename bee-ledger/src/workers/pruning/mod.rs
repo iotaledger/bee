@@ -1,198 +1,142 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! **NB**:
-//!
-//! In order to ensure that everything that entered the database gets pruned eventually the following mechanism
-//! is applied:
-//!
-//! (1) Incoming messages immediatedly get assigned the LMI (current latest milestone index known by the node)
-//! (2) Most of them will get confirmed eventually, and are referencable by a particular CMI (the closest future
-//! milestone that references them)
-//!
-//! However, that means that for a given message X LMI(X) <= CMI(X) may not be true. That is certainly the case for
-//! requested messages, that are required to solidify an older milestone. When the message comes in it gets assigned the
-//! current LMI, while its confirming milestone might be several milestone indexes ago already. So that would mean that
-//! when we try to prune LMI(X) (as unconfirmed) it would fail, because it would have been pruned already at CMI(X).
-//!
-//! The other way of failure is also possible: A message X was pruned at LMI(X), but when CMI(X) is about to pruned it
-//! can't be used to fully traverse the past-cone of that particular milestone, and hence will make it impossible to
-//! determine the new SEP set.
-//!
-//! CASE A: CMI < LMI (requested message)        => pruning at CMI problematic for unconfirmed messages
-//!      Solution: just ignore the failure, and assume that the message has been pruned already at CMI, because it was
-//! confirmed CASE B: CMI > LMI (regular gossip message)   => pruning at LMI problematic
-//!      Solution: use `ADDITIONAL_DELAY` such that CMI < LMI + UNCONFIRMED_PRUNING_DELAY_FACTOR
-
 mod batch;
 mod error;
+mod metrics;
 
 pub mod condition;
 pub mod config;
 
-use self::{config::PruningConfig, error::Error};
+use self::{
+    config::PruningConfig,
+    error::Error,
+    metrics::{PruningMetrics, TimingMetrics},
+};
 
 use crate::workers::{event::PrunedIndex, storage::StorageBackend};
 
-use bee_message::{prelude::MilestoneIndex, MessageId};
+use bee_message::prelude::MilestoneIndex;
 use bee_runtime::event::Bus;
 use bee_storage::access::{Batch, Truncate};
 use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle};
 
 use log::*;
-use once_cell::sync::OnceCell;
 
-use std::{collections::HashMap, sync::Mutex, time::Instant};
+use std::time::Instant;
 
-/// Determines how many BMDs we delay pruning of still unconfirmed messages. It basically determines the range to be:
-/// [LMI(X)..LMI(X)+BMD*UNCONFIRMED_PRUNING_DELAY_FACTOR] within which a message *MUST* be confirmed, i.e. contains
-/// CMI(X), so it basically relies on the Coordinator node to not confirm a message anytime later than that, otherwise
-/// traversing the about-to-be-pruned past-cone of a milestone to determine the new SEP set would fail.
-///
-/// Pruning (if still unconf.) happens x-BMD milestones after its LMI(X)
-const UNCONFIRMED_PRUNING_DELAY_FACTOR: u32 = 4;
+const _UNCONFIRMED_PRUNING_DELAY_FACTOR: u32 = 4;
 
 pub async fn prune<S: StorageBackend>(
     tangle: &MsTangle<S>,
     storage: &S,
     bus: &Bus<'_>,
-    pruning_target_index: MilestoneIndex,
+    target_index: MilestoneIndex,
     config: &PruningConfig,
-    below_max_depth: u32,
+    _below_max_depth: u32,
 ) -> Result<(), Error> {
-    let start = Instant::now();
+    let mut timings = TimingMetrics::default();
+    let mut pruning_metrics = PruningMetrics::default();
 
-    // Start pruning from the last pruning index + 1.
     let start_index = tangle.get_pruning_index() + 1;
-    assert!(
-        pruning_target_index >= start_index,
-        "pruning_target_index: {}, start_index: {}",
-        pruning_target_index,
-        start_index
-    );
 
-    // If `start_index == 1` (lowest possible start index), we need to deactivate "unconfirmed" pruning.
-    let unconfirmed_additional_pruning_delay = below_max_depth * UNCONFIRMED_PRUNING_DELAY_FACTOR;
-    let unconfirmed_start_index = if *start_index >= unconfirmed_additional_pruning_delay {
-        Some(start_index - unconfirmed_additional_pruning_delay)
+    if target_index > start_index {
+        info!("Pruning milestones {}..{}", start_index, target_index);
+    } else if target_index == start_index {
+        info!("Pruning milestone {}", target_index);
     } else {
-        None
-    };
+        return Err(Error::InvalidTargetIndex {
+            minimum: start_index,
+            found: target_index,
+        });
+    }
 
-    info!("Pruning database until milestone {}...", pruning_target_index);
+    let full_prune = Instant::now();
 
-    // Prepare a batch of delete operations on the database.
+    let get_old_seps = Instant::now();
+    let old_seps = tangle.get_solid_entry_points().await;
+    timings.get_old_seps = get_old_seps.elapsed();
+
     let mut batch = S::batch_begin();
 
-    // We get us a clone of the current SEP set. We are the only ones that make changes to that particular tangle state,
-    // so we can be sure it can't be invalidated in the meantime while we do the past-cone traversal to find the new
-    // set.
-    let old_seps = tangle.get_solid_entry_points().await;
-
-    // Batch the data that can be safely pruned. In order to find the correct set of SEPs during this pruning we need
-    // to walk the past-cone from the `target_index` backwards, and not step-by-step from `start_index` to
-    // `target_index` as this would require additional logic to remove redundant SEPs again. If memory or performance
-    // becomes an issue, reduce the pruning `interval` in the config.
-    let (num_batched_messages, num_batched_edges, num_batched_indexations, new_seps) =
-        batch::add_confirmed_data(tangle, &storage, &mut batch, pruning_target_index, &old_seps).await?;
+    let batch_del_confirmed = Instant::now();
+    let (new_seps, traversal_metrics) =
+        batch::add_confirmed_data(tangle, &storage, &mut batch, target_index, &old_seps).await?;
+    timings.batch_del_confirmed = batch_del_confirmed.elapsed();
 
     let num_new_seps = new_seps.len();
 
+    let batch_ins_new_seps = Instant::now();
     for (new_sep, index) in &new_seps {
         Batch::<SolidEntryPoint, MilestoneIndex>::batch_insert(storage, &mut batch, new_sep, index)
-            .map_err(|e| Error::PruningFailed(Box::new(e)))?;
+            .map_err(|e| Error::BatchOperation(Box::new(e)))?;
     }
+    timings.batch_ins_new_seps = batch_ins_new_seps.elapsed();
 
+    let replace_seps = Instant::now();
     tangle.replace_solid_entry_points(new_seps).await;
+    timings.replace_seps = replace_seps.elapsed();
 
-    // Remember up to which index we determined SEPs.
-    tangle.update_entry_point_index(pruning_target_index);
-    info!(
-        "Entry point index now at {}. (Selected {} new solid entry points).",
-        pruning_target_index, num_new_seps,
-    );
+    tangle.update_entry_point_index(target_index);
 
-    // Add milestone related data to the batch.
-    let num_batched_milestones = batch::add_milestones(storage, &mut batch, start_index, pruning_target_index).await?;
-    let num_batched_output_diffs =
-        batch::add_output_diffs(storage, &mut batch, start_index, pruning_target_index).await?;
+    pruning_metrics.milestones = batch::add_milestones(storage, &mut batch, start_index, target_index).await?;
+    pruning_metrics.output_diffs = batch::add_output_diffs(storage, &mut batch, start_index, target_index).await?;
 
-    // Add receipts optionally.
-    let mut num_batched_receipts: usize = 0;
     if config.prune_receipts() {
-        num_batched_receipts += batch::add_receipts(storage, &mut batch, start_index, pruning_target_index).await?;
+        pruning_metrics.receipts += batch::add_receipts(storage, &mut batch, start_index, target_index).await?;
     }
 
-    // // Handling of remaining unconfirmed messages.
-    // if let Some(unconfirmed_start_index) = unconfirmed_start_index {
-    //     let unconfirmed_target_index = pruning_target_index - unconfirmed_additional_pruning_delay;
-
-    //     assert!(unconfirmed_target_index < pruning_target_index);
-    //     assert!(unconfirmed_target_index >= unconfirmed_start_index);
-
-    //     info!(
-    //         "Pruning unconfirmed messages until milestone {}...",
-    //         unconfirmed_target_index
-    //     );
-
-    //     let (unconfirmed_messages, unconfirmed_edges, unconfirmed_indexations) =
-    //         batch::add_unconfirmed_data(storage, &mut batch, unconfirmed_start_index,
-    // unconfirmed_target_index).await?; }
-
+    let truncate_old_seps = Instant::now();
     // WARN: This operation must come before the batch is committed.
     // TODO: consider batching deletes rather than using Truncate. Is one faster than the other?
     Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage)
         .await
         .unwrap();
+    timings.truncate_old_seps = truncate_old_seps.elapsed();
 
+    let batch_commit = Instant::now();
     storage
         .batch_commit(batch, true)
         .await
-        // If that error actually happens we set the database to 'corrupted'!
-        .map_err(|e| Error::StorageError(Box::new(e)))?;
+        .map_err(|e| Error::BatchOperation(Box::new(e)))?;
+    timings.batch_commit = batch_commit.elapsed();
 
-    info!(
-        "Pruned {} milestones, {} output diffs, {} receipts.",
-        num_batched_milestones, num_batched_output_diffs, num_batched_receipts
-    );
-    info!(
-        "Pruned {} confirmed messages including {} edges, {} indexations.",
-        num_batched_messages, num_batched_edges, num_batched_indexations
-    );
-    // info!(
-    //     "Pruned {} unreferenced messages, including {} messages, {} edges, {} indexations.",
-    //     num_received_ids, num_unconf_messages, num_unconf_edges, num_unconf_indexations
-    // );
+    tangle.update_pruning_index(target_index);
 
-    tangle.update_pruning_index(pruning_target_index);
-    info!("Pruning index now at {}.", pruning_target_index);
+    timings.full_prune = full_prune.elapsed();
 
-    info!("Pruning completed in {}s.", start.elapsed().as_secs_f64());
+    debug!("Pruning results: {:?}.", pruning_metrics);
+    debug!("Traversal metrics: {:?}", traversal_metrics);
+    debug!("Timing results: {:?}.", timings);
 
-    bus.dispatch(PrunedIndex {
-        index: pruning_target_index,
-    });
+    info!("Selected {} new solid entry points.", num_new_seps,);
+    info!("Entry point index now at {}.", target_index,);
+    info!("Pruning index now at {}.", target_index);
+
+    bus.dispatch(PrunedIndex { index: target_index });
 
     Ok(())
 }
 
-mod debugging {
-    use super::*;
+// mod debugging {
+//     use super::*;
+//     use once_cell::sync::OnceCell;
+//     use std::{collections::HashMap, sync::Mutex};
 
-    // This checklist ensures, that no confirmed message will be collected twice by the past-cone
-    // traversal of 'target_index'.
-    pub fn unique_confirmed_checklist() -> &'static Mutex<HashMap<MessageId, MilestoneIndex>> {
-        static INSTANCE1: OnceCell<Mutex<HashMap<MessageId, MilestoneIndex>>> = OnceCell::new();
-        INSTANCE1.get_or_init(|| Mutex::new(HashMap::default()))
-    }
+//     // This checklist ensures, that no confirmed message will be collected twice by the past-cone
+//     // traversal of 'target_index'.
+//     pub fn unique_confirmed_checklist() -> &'static Mutex<HashMap<MessageId, MilestoneIndex>> {
+//         static INSTANCE1: OnceCell<Mutex<HashMap<MessageId, MilestoneIndex>>> = OnceCell::new();
+//         INSTANCE1.get_or_init(|| Mutex::new(HashMap::default()))
+//     }
 
-    // This checklist ensures, that no unconfirmed message is referenced under two different milestone
-    // indexes.
-    pub fn unique_unconfirmed_checklist() -> &'static Mutex<HashMap<MessageId, MilestoneIndex>> {
-        static INSTANCE2: OnceCell<Mutex<HashMap<MessageId, MilestoneIndex>>> = OnceCell::new();
-        INSTANCE2.get_or_init(|| Mutex::new(HashMap::default()))
-    }
-}
+//     // This checklist ensures, that no unconfirmed message is referenced under two different milestone
+//     // indexes.
+//     pub fn unique_unconfirmed_checklist() -> &'static Mutex<HashMap<MessageId, MilestoneIndex>> {
+//         static INSTANCE2: OnceCell<Mutex<HashMap<MessageId, MilestoneIndex>>> = OnceCell::new();
+//         INSTANCE2.get_or_init(|| Mutex::new(HashMap::default()))
+//     }
+// }
 
 // // TEMP: make sure, that the collect process doesn't yield duplicate message ids.
 //     // **NOTE**: For some reason the enclosing block is necessary in async function despite the manual drop.
