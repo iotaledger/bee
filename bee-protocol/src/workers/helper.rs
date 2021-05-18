@@ -4,7 +4,7 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::Heartbeat, peer::PeerManager, sender::Sender, storage::StorageBackend, MessageRequesterWorker,
+        packets::HeartbeatPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MessageRequesterWorker,
         MessageRequesterWorkerEvent, MilestoneRequesterWorkerEvent, RequestedMessages, RequestedMilestones,
     },
 };
@@ -66,16 +66,19 @@ pub async fn send_heartbeat<B: StorageBackend>(
     tangle: &MsTangle<B>,
     to: &PeerId,
 ) {
-    Sender::<Heartbeat>::send(
+    let connected_peers = peer_manager.connected_peers().await;
+    let synced_peers = peer_manager.synced_peers().await;
+
+    Sender::<HeartbeatPacket>::send(
         peer_manager,
         metrics,
         to,
-        Heartbeat::new(
+        HeartbeatPacket::new(
             *tangle.get_solid_milestone_index(),
             *tangle.get_pruning_index(),
             *tangle.get_latest_milestone_index(),
-            peer_manager.connected_peers().await,
-            peer_manager.synced_peers().await,
+            connected_peers,
+            synced_peers,
         ),
     )
     .await;
@@ -88,7 +91,7 @@ pub async fn broadcast_heartbeat<B: StorageBackend>(
 ) {
     // TODO bring it back
     //    peer_manager.for_each_peer(|peer_id, _| async {
-    for (peer_id, _) in peer_manager.peers.read().await.iter() {
+    for (peer_id, _) in peer_manager.0.read().await.peers.iter() {
         send_heartbeat(peer_manager, metrics, tangle, &peer_id).await
     }
 }

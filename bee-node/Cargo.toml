@@ -1,6 +1,6 @@
 [package]
 name = "bee-node"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = ""
@@ -15,9 +15,9 @@ bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", fe
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = [ "workers" ] }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = ["full"] }
+bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = [ "full" ] }
 bee-protocol = { path = "../bee-protocol" }
-bee-rest-api = { path = "../bee-api/bee-rest-api", features = ["endpoints"] }
+bee-rest-api = { path = "../bee-api/bee-rest-api", features = [ "endpoints" ] }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage-rocksdb = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
@@ -31,19 +31,19 @@ console-subscriber = { git = "https://github.com/tokio-rs/console.git", branch =
 futures = "0.3"
 fxhash = "0.2"
 hex = "0.4"
-iota-crypto = { version = "0.5.0", features = ["ed25519", "random", "blake2b"] }
+iota-crypto = { version = "0.5.0", features = [ "ed25519", "random", "blake2b" ] }
 log = "0.4"
 mime_guess = { version = "2.0", optional = true }
-paho-mqtt = { version = "0.9", default-features = false, features = ["bundled"]}
+paho-mqtt = { version = "0.9", default-features = false, features = [ "bundled" ]}
 rand = "0.8"
 rpassword = "5.0"
-rust-embed = { version = "5.9", features = ["interpolate-folder-path"], optional = true }
-serde = { version = "1.0", features = ["derive"] }
+rust-embed = { version = "5.9", features = [ "interpolate-folder-path" ], optional = true }
+serde = { version = "1.0", features = [ "derive" ] }
 serde_json = "1.0"
 serde_repr = { version = "0.1", optional = true }
 structopt = { version = "0.3", default-features = false }
 thiserror = "1.0"
-tokio = { version = "1.5", features = ["signal", "rt", "macros", "rt-multi-thread"] }
+tokio = { version = "1.6", features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
 tokio-stream = "0.1"
 toml = "0.5"
 tracing = { version = "0.1.26", optional = true }

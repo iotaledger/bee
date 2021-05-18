@@ -30,7 +30,7 @@ impl<N: Node> Worker<N> for PeerManagerResWorker {
 
     async fn stop(self, node: &mut N) -> Result<(), Self::Error> {
         if let Some(peer_manager) = node.remove_resource::<PeerManager>() {
-            for (_, (_, sender)) in peer_manager.peers.into_inner() {
+            for (_, (_, sender)) in peer_manager.0.into_inner().peers {
                 if let Some(sender) = sender {
                     // TODO: Should we handle this error?
                     let _ = sender.1.send(());
@@ -42,24 +42,25 @@ impl<N: Node> Worker<N> for PeerManagerResWorker {
     }
 }
 
-pub struct PeerManager {
+#[derive(Default)]
+pub struct PeerManagerInner {
     // TODO private
-    pub(crate) peers: RwLock<HashMap<PeerId, (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)>>,
+    pub(crate) peers: HashMap<PeerId, (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)>,
     // This is needed to ensure message distribution fairness as iterating over a HashMap is random.
-    // TODO private
-    pub(crate) peers_keys: RwLock<Vec<PeerId>>,
+    pub(crate) keys: Vec<PeerId>,
 }
+
+#[derive(Default)]
+// TODO private
+pub struct PeerManager(pub(crate) RwLock<PeerManagerInner>);
 
 impl PeerManager {
     pub(crate) fn new() -> Self {
-        Self {
-            peers: Default::default(),
-            peers_keys: Default::default(),
-        }
+        Self::default()
     }
 
     pub async fn is_empty(&self) -> bool {
-        self.peers.read().await.is_empty()
+        self.0.read().await.peers.is_empty()
     }
 
     // TODO find a way to only return a ref to the peer.
@@ -67,15 +68,18 @@ impl PeerManager {
         &self,
         id: &PeerId,
     ) -> Option<impl std::ops::Deref<Target = (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)> + '_> {
-        RwLockReadGuard::try_map(self.peers.read().await, |map| map.get(id)).ok()
+        RwLockReadGuard::try_map(self.0.read().await, |map| map.peers.get(id)).ok()
     }
 
     pub async fn get_all(&self) -> Vec<Arc<Peer>> {
-        let mut ret = Vec::new();
-        for (_, (peer, _)) in self.peers.read().await.iter() {
-            ret.push(peer.clone());
-        }
-        ret
+        self.0
+            .read()
+            .await
+            .peers
+            .iter()
+            .map(|(_, (peer, _))| peer)
+            .cloned()
+            .collect()
     }
 
     // // TODO find a way to only return a ref to the peer.
@@ -89,14 +93,16 @@ impl PeerManager {
 
     pub(crate) async fn add(&self, peer: Arc<Peer>) {
         debug!("Added peer {}.", peer.id());
-        self.peers_keys.write().await.push(*peer.id());
-        self.peers.write().await.insert(*peer.id(), (peer, None));
+        let mut lock = self.0.write().await;
+        lock.keys.push(*peer.id());
+        lock.peers.insert(*peer.id(), (peer, None));
     }
 
     pub(crate) async fn remove(&self, id: &PeerId) -> Option<(Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)> {
         debug!("Removed peer {}.", id);
-        self.peers_keys.write().await.retain(|peer_id| peer_id != id);
-        self.peers.write().await.remove(id)
+        let mut lock = self.0.write().await;
+        lock.keys.retain(|peer_id| peer_id != id);
+        lock.peers.remove(id)
     }
 
     // TODO bring it back
@@ -107,19 +113,26 @@ impl PeerManager {
     // }
 
     pub async fn is_connected(&self, id: &PeerId) -> bool {
-        self.peers.read().await.get(id).map(|p| p.1.is_some()).unwrap_or(false)
+        self.0
+            .read()
+            .await
+            .peers
+            .get(id)
+            .map(|p| p.1.is_some())
+            .unwrap_or(false)
     }
 
     pub async fn connected_peers(&self) -> u8 {
-        self.peers
+        self.0
             .read()
             .await
+            .peers
             .iter()
             .fold(0, |acc, (_, (_, ctx))| acc + ctx.is_some() as u8)
     }
 
     pub async fn synced_peers(&self) -> u8 {
-        self.peers.read().await.iter().fold(0, |acc, (_, (peer, ctx))| {
+        self.0.read().await.peers.iter().fold(0, |acc, (_, (peer, ctx))| {
             acc + (ctx.is_some() && peer.is_synced()) as u8
         })
     }

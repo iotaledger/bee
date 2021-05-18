@@ -3,7 +3,7 @@
 
 use crate::{
     types::metrics::NodeMetrics,
-    workers::{packets::Message, peer::PeerManager, sender::Sender, MetricsWorker, PeerManagerResWorker},
+    workers::{packets::MessagePacket, peer::PeerManager, sender::Sender, MetricsWorker, PeerManagerResWorker},
 };
 
 use bee_network::PeerId;
@@ -19,7 +19,7 @@ use std::{any::TypeId, convert::Infallible};
 
 pub(crate) struct BroadcasterWorkerEvent {
     pub(crate) source: Option<PeerId>,
-    pub(crate) message: Message,
+    pub(crate) message: MessagePacket,
 }
 
 pub(crate) struct BroadcasterWorker {
@@ -49,12 +49,12 @@ impl<N: Node> Worker<N> for BroadcasterWorker {
             while let Some(BroadcasterWorkerEvent { source, message }) = receiver.next().await {
                 // TODO bring it back
                 // peer_manager.for_each_peer(|peer_id, _| {
-                for (peer_id, _) in peer_manager.peers.read().await.iter() {
+                for (peer_id, _) in peer_manager.0.read().await.peers.iter() {
                     if match source {
                         Some(ref source) => source != peer_id,
                         None => true,
                     } {
-                        Sender::<Message>::send(&peer_manager, &metrics, peer_id, message.clone()).await;
+                        Sender::<MessagePacket>::send(&peer_manager, &metrics, peer_id, message.clone()).await;
                     }
                 }
             }

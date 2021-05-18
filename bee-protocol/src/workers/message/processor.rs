@@ -7,7 +7,7 @@ use crate::{
         config::ProtocolConfig,
         event::{MessageProcessed, NewVertex},
         helper,
-        packets::Message as MessagePacket,
+        packets::MessagePacket,
         peer::PeerManager,
         storage::StorageBackend,
         BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker, MessageSubmitterError, MetricsWorker,

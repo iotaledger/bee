@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    types::{key_manager::KeyManager, metrics::NodeMetrics},
+    types::{metrics::NodeMetrics, milestone_key_manager::MilestoneKeyManager},
     workers::{
         config::ProtocolConfig, helper, peer::PeerManager, storage::StorageBackend, MetricsWorker,
         MilestoneRequesterWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, PeerManagerResWorker,
@@ -45,7 +45,7 @@ pub(crate) struct MilestonePayloadWorker {
 async fn validate(
     message: &Message,
     milestone: &MilestonePayload,
-    key_manager: &KeyManager,
+    key_manager: &MilestoneKeyManager,
     message_id: MessageId,
 ) -> Result<(MilestoneIndex, Milestone), Error> {
     if !message.parents().eq(milestone.essence().parents()) {
@@ -68,6 +68,7 @@ async fn validate(
     ))
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn process<B: StorageBackend>(
     tangle: &MsTangle<B>,
     message_id: MessageId,
@@ -75,10 +76,10 @@ async fn process<B: StorageBackend>(
     metrics: &NodeMetrics,
     requested_milestones: &RequestedMilestones,
     milestone_solidifier: &mpsc::UnboundedSender<MilestoneSolidifierWorkerEvent>,
-    key_manager: &KeyManager,
+    key_manager: &MilestoneKeyManager,
     bus: &Bus<'static>,
 ) {
-    metrics.milestone_payload_inc(1);
+    metrics.milestone_payloads_inc(1);
 
     if let Some(message) = tangle.get(&message_id).await {
         if let Some(Payload::Milestone(milestone)) = message.payload() {
@@ -145,7 +146,7 @@ where
         let requested_milestones = node.resource::<RequestedMilestones>();
         let peer_manager = node.resource::<PeerManager>();
         let metrics = node.resource::<NodeMetrics>();
-        let key_manager = KeyManager::new(
+        let key_manager = MilestoneKeyManager::new(
             config.coordinator.public_key_count,
             config.coordinator.public_key_ranges.into_boxed_slice(),
         );

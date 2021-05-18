@@ -5,4 +5,5 @@ mod message;
 mod milestone;
 
 pub use message::{MessageRequesterWorker, MessageRequesterWorkerEvent, RequestedMessages};
-pub(crate) use milestone::{MilestoneRequesterWorker, MilestoneRequesterWorkerEvent, RequestedMilestones};
+pub use milestone::RequestedMilestones;
+pub(crate) use milestone::{MilestoneRequesterWorker, MilestoneRequesterWorkerEvent};

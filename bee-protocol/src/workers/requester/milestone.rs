@@ -4,7 +4,7 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::MilestoneRequest, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
+        packets::MilestoneRequestPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
         PeerManagerResWorker,
     },
 };
@@ -33,25 +33,29 @@ use std::{
 
 const RETRY_INTERVAL_MS: u64 = 2500;
 
-// TODO pub ?
 #[derive(Default)]
 pub struct RequestedMilestones(RwLock<HashMap<MilestoneIndex, Instant, FxBuildHasher>>);
 
+#[allow(clippy::len_without_is_empty)]
 impl RequestedMilestones {
     pub async fn contains(&self, index: &MilestoneIndex) -> bool {
         self.0.read().await.contains_key(index)
     }
 
-    pub async fn insert(&self, index: MilestoneIndex) {
+    pub(crate) async fn insert(&self, index: MilestoneIndex) {
         let now = Instant::now();
         self.0.write().await.insert(index, now);
     }
 
-    // pub async fn len(&self) -> usize {
-    //     self.0.read().await.len()
-    // }
+    pub async fn len(&self) -> usize {
+        self.0.read().await.len()
+    }
 
-    pub async fn remove(&self, index: &MilestoneIndex) -> Option<Instant> {
+    pub async fn is_empty(&self) -> bool {
+        self.0.read().await.is_empty()
+    }
+
+    pub(crate) async fn remove(&self, index: &MilestoneIndex) -> Option<Instant> {
         self.0.write().await.remove(index)
     }
 }
@@ -94,24 +98,30 @@ async fn process_request_unchecked(
 ) {
     match peer_id {
         Some(peer_id) => {
-            Sender::<MilestoneRequest>::send(peer_manager, metrics, &peer_id, MilestoneRequest::new(*index)).await;
+            Sender::<MilestoneRequestPacket>::send(
+                peer_manager,
+                metrics,
+                &peer_id,
+                MilestoneRequestPacket::new(*index),
+            )
+            .await;
         }
         None => {
-            let guard = peer_manager.peers_keys.read().await;
+            let guard = peer_manager.0.read().await;
 
-            for _ in 0..guard.len() {
-                let peer_id = &guard[*counter % guard.len()];
+            for _ in 0..guard.keys.len() {
+                let peer_id = &guard.keys[*counter % guard.keys.len()];
 
                 *counter += 1;
 
                 if let Some(peer) = peer_manager.get(peer_id).await {
                     // TODO also request if has_data ?
                     if (*peer).0.maybe_has_data(index) {
-                        Sender::<MilestoneRequest>::send(
+                        Sender::<MilestoneRequestPacket>::send(
                             peer_manager,
                             metrics,
                             &peer_id,
-                            MilestoneRequest::new(*index),
+                            MilestoneRequestPacket::new(*index),
                         )
                         .await;
                         return;

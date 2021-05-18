@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::workers::{packets::Message, storage::StorageBackend, HasherWorker, HasherWorkerEvent};
+use crate::workers::{packets::MessagePacket, storage::StorageBackend, HasherWorker, HasherWorkerEvent};
 
 use bee_message::MessageId;
 use bee_runtime::{
@@ -61,7 +61,7 @@ where
             while let Some(MessageSubmitterWorkerEvent { message, notifier }) = receiver.next().await {
                 let event = HasherWorkerEvent {
                     from: None,
-                    message_packet: Message::new(&message),
+                    message_packet: MessagePacket::new(message),
                     notifier: Some(notifier),
                 };
                 if let Err(e) = hasher.send(event) {

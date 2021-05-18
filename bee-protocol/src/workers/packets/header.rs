@@ -11,14 +11,14 @@ pub(crate) const HEADER_SIZE: usize = HEADER_TYPE_SIZE + HEADER_LENGTH_SIZE;
 
 /// A header for the type-length-value encoding.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct Header {
+pub(crate) struct HeaderPacket {
     /// Type of the packet.
     pub(crate) packet_type: u8,
     /// Length of the packet.
     pub(crate) packet_length: u16,
 }
 
-impl Header {
+impl HeaderPacket {
     // TODO impl try_from
     pub(crate) fn from_bytes(bytes: &[u8]) -> Self {
         Self {

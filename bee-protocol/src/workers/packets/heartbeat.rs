@@ -25,7 +25,7 @@ const CONSTANT_SIZE: usize = SOLID_MILESTONE_INDEX_SIZE
 /// - solidified a new milestone;
 /// It also helps other nodes to know if they can ask it a specific message.
 #[derive(Clone)]
-pub(crate) struct Heartbeat {
+pub(crate) struct HeartbeatPacket {
     /// Index of the latest solid milestone.
     pub(crate) solid_milestone_index: u32,
     /// Pruned index.
@@ -38,7 +38,7 @@ pub(crate) struct Heartbeat {
     pub(crate) synced_peers: u8,
 }
 
-impl Heartbeat {
+impl HeartbeatPacket {
     pub(crate) fn new(
         solid_milestone_index: u32,
         pruned_index: u32,
@@ -56,7 +56,7 @@ impl Heartbeat {
     }
 }
 
-impl Packet for Heartbeat {
+impl Packet for HeartbeatPacket {
     const ID: u8 = 0x04;
 
     fn size_range() -> Range<usize> {
@@ -119,19 +119,19 @@ mod tests {
 
     #[test]
     fn id() {
-        assert_eq!(Heartbeat::ID, 4);
+        assert_eq!(HeartbeatPacket::ID, 4);
     }
 
     #[test]
     fn size_range() {
-        assert_eq!(Heartbeat::size_range().contains(&(CONSTANT_SIZE - 1)), false);
-        assert_eq!(Heartbeat::size_range().contains(&CONSTANT_SIZE), true);
-        assert_eq!(Heartbeat::size_range().contains(&(CONSTANT_SIZE + 1)), false);
+        assert_eq!(HeartbeatPacket::size_range().contains(&(CONSTANT_SIZE - 1)), false);
+        assert_eq!(HeartbeatPacket::size_range().contains(&CONSTANT_SIZE), true);
+        assert_eq!(HeartbeatPacket::size_range().contains(&(CONSTANT_SIZE + 1)), false);
     }
 
     #[test]
     fn size() {
-        let packet = Heartbeat::new(
+        let packet = HeartbeatPacket::new(
             SOLID_MILESTONE_INDEX,
             PRUNED_INDEX,
             LATEST_MILESTONE_INDEX,
@@ -144,7 +144,7 @@ mod tests {
 
     #[test]
     fn into_from() {
-        let packet_from = Heartbeat::new(
+        let packet_from = HeartbeatPacket::new(
             SOLID_MILESTONE_INDEX,
             PRUNED_INDEX,
             LATEST_MILESTONE_INDEX,
@@ -153,7 +153,7 @@ mod tests {
         );
         let mut bytes = vec![0u8; packet_from.size()];
         packet_from.into_bytes(&mut bytes);
-        let packet_to = Heartbeat::from_bytes(&bytes);
+        let packet_to = HeartbeatPacket::from_bytes(&bytes);
 
         assert_eq!(packet_to.solid_milestone_index, SOLID_MILESTONE_INDEX);
         assert_eq!(packet_to.pruned_index, PRUNED_INDEX);

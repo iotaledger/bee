@@ -1,145 +1,144 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module that provides a type to hold metrics related to peers.
+
 use std::sync::atomic::{AtomicU64, Ordering};
 
+/// Holds metrics related to a peer.
 #[derive(Default)]
 pub struct PeerMetrics {
-    #[allow(dead_code)]
     invalid_messages: AtomicU64,
-    #[allow(dead_code)]
     new_messages: AtomicU64,
-    #[allow(dead_code)]
     known_messages: AtomicU64,
-
     invalid_packets: AtomicU64,
-
     milestone_requests_received: AtomicU64,
     messages_received: AtomicU64,
     message_requests_received: AtomicU64,
     heartbeats_received: AtomicU64,
-
-    #[allow(dead_code)]
     milestone_requests_sent: AtomicU64,
     messages_sent: AtomicU64,
-    #[allow(dead_code)]
     message_requests_sent: AtomicU64,
-    #[allow(dead_code)]
     heartbeats_sent: AtomicU64,
 }
 
 impl PeerMetrics {
-    #[allow(dead_code)]
+    /// Returns the number of invalid messages of the `PeerMetrics`.
     pub fn invalid_messages(&self) -> u64 {
         self.invalid_messages.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
+    /// Increments the number of invalid messages of the `PeerMetrics`.
     pub fn invalid_messages_inc(&self) -> u64 {
         self.invalid_messages.fetch_add(1, Ordering::SeqCst)
     }
 
-    #[allow(dead_code)]
+    /// Returns the number of new messages of the `PeerMetrics`.
     pub fn new_messages(&self) -> u64 {
         self.new_messages.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
+    /// Increments the number of new messages of the `PeerMetrics`.
     pub fn new_messages_inc(&self) -> u64 {
         self.new_messages.fetch_add(1, Ordering::SeqCst)
     }
 
-    #[allow(dead_code)]
+    /// Returns the number of known messages of the `PeerMetrics`.
     pub fn known_messages(&self) -> u64 {
         self.known_messages.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
+    /// Increments the number of known messages of the `PeerMetrics`.
     pub fn known_messages_inc(&self) -> u64 {
         self.known_messages.fetch_add(1, Ordering::SeqCst)
     }
 
-    #[allow(dead_code)]
+    /// Returns the number of invalid packets of the `PeerMetrics`.
     pub fn invalid_packets(&self) -> u64 {
         self.invalid_packets.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
+    /// Increments the number of invalid packets of the `PeerMetrics`.
     pub fn invalid_packets_inc(&self) -> u64 {
         self.invalid_packets.fetch_add(1, Ordering::SeqCst)
     }
 
-    #[allow(dead_code)]
+    /// Returns the number of received milestones requests of the `PeerMetrics`.
     pub fn milestone_requests_received(&self) -> u64 {
         self.milestone_requests_received.load(Ordering::Relaxed)
     }
 
+    /// Increments the number of received milestone requests of the `PeerMetrics`.
     pub fn milestone_requests_received_inc(&self) -> u64 {
         self.milestone_requests_received.fetch_add(1, Ordering::SeqCst)
     }
 
-    #[allow(dead_code)]
+    /// Returns the number of received messages of the `PeerMetrics`.
     pub fn messages_received(&self) -> u64 {
         self.messages_received.load(Ordering::Relaxed)
     }
 
+    /// Increments the number of received messages of the `PeerMetrics`.
     pub fn messages_received_inc(&self) -> u64 {
         self.messages_received.fetch_add(1, Ordering::SeqCst)
     }
 
-    #[allow(dead_code)]
+    /// Returns the number of received messages requests of the `PeerMetrics`.
     pub fn message_requests_received(&self) -> u64 {
         self.message_requests_received.load(Ordering::Relaxed)
     }
 
+    /// Increments the number of received message requests of the `PeerMetrics`.
     pub fn message_requests_received_inc(&self) -> u64 {
         self.message_requests_received.fetch_add(1, Ordering::SeqCst)
     }
 
-    #[allow(dead_code)]
+    /// Returns the number of received heartbeats of the `PeerMetrics`.
     pub fn heartbeats_received(&self) -> u64 {
         self.heartbeats_received.load(Ordering::Relaxed)
     }
 
+    /// Increments the number of received heartbeats of the `PeerMetrics`.
     pub fn heartbeats_received_inc(&self) -> u64 {
         self.heartbeats_received.fetch_add(1, Ordering::SeqCst)
     }
 
-    #[allow(dead_code)]
+    /// Returns the number of sent milestone requests of the `PeerMetrics`.
     pub fn milestone_requests_sent(&self) -> u64 {
         self.milestone_requests_sent.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
+    /// Increments the number of sent milestone requests of the `PeerMetrics`.
     pub fn milestone_requests_sent_inc(&self) -> u64 {
         self.milestone_requests_sent.fetch_add(1, Ordering::SeqCst)
     }
 
-    #[allow(dead_code)]
+    /// Returns the number of sent messages of the `PeerMetrics`.
     pub fn messages_sent(&self) -> u64 {
         self.messages_sent.load(Ordering::Relaxed)
     }
 
+    /// Increments the number of sent messages of the `PeerMetrics`.
     pub fn messages_sent_inc(&self) -> u64 {
         self.messages_sent.fetch_add(1, Ordering::SeqCst)
     }
 
-    #[allow(dead_code)]
+    /// Returns the number of sent message requests of the `PeerMetrics`.
     pub fn message_requests_sent(&self) -> u64 {
         self.message_requests_sent.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
+    /// Increments the number of sent message requests of the `PeerMetrics`.
     pub fn message_requests_sent_inc(&self) -> u64 {
         self.message_requests_sent.fetch_add(1, Ordering::SeqCst)
     }
 
-    #[allow(dead_code)]
+    /// Returns the number of sent heartbeats of the `PeerMetrics`.
     pub fn heartbeats_sent(&self) -> u64 {
         self.heartbeats_sent.load(Ordering::Relaxed)
     }
 
-    #[allow(dead_code)]
+    /// Increments the number of sent heartbeats of the `PeerMetrics`.
     pub fn heartbeats_sent_inc(&self) -> u64 {
         self.heartbeats_sent.fetch_add(1, Ordering::SeqCst)
     }

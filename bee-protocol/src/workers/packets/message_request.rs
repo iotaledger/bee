@@ -12,12 +12,12 @@ const CONSTANT_SIZE: usize = MESSAGE_ID_SIZE;
 
 /// A packet to request a message.
 #[derive(Clone)]
-pub(crate) struct MessageRequest {
+pub(crate) struct MessageRequestPacket {
     /// Message Id of the requested message.
     pub(crate) message_id: [u8; MESSAGE_ID_SIZE],
 }
 
-impl MessageRequest {
+impl MessageRequestPacket {
     pub(crate) fn new(message_id: &[u8]) -> Self {
         let mut bytes = [0u8; MESSAGE_ID_SIZE];
         bytes.copy_from_slice(message_id);
@@ -26,7 +26,7 @@ impl MessageRequest {
     }
 }
 
-impl Packet for MessageRequest {
+impl Packet for MessageRequestPacket {
     const ID: u8 = 0x03;
 
     fn size_range() -> Range<usize> {
@@ -62,29 +62,29 @@ mod tests {
 
     #[test]
     fn id() {
-        assert_eq!(MessageRequest::ID, 3);
+        assert_eq!(MessageRequestPacket::ID, 3);
     }
 
     #[test]
     fn size_range() {
-        assert_eq!(MessageRequest::size_range().contains(&(CONSTANT_SIZE - 1)), false);
-        assert_eq!(MessageRequest::size_range().contains(&CONSTANT_SIZE), true);
-        assert_eq!(MessageRequest::size_range().contains(&(CONSTANT_SIZE + 1)), false);
+        assert_eq!(MessageRequestPacket::size_range().contains(&(CONSTANT_SIZE - 1)), false);
+        assert_eq!(MessageRequestPacket::size_range().contains(&CONSTANT_SIZE), true);
+        assert_eq!(MessageRequestPacket::size_range().contains(&(CONSTANT_SIZE + 1)), false);
     }
 
     #[test]
     fn size() {
-        let packet = MessageRequest::new(&MESSAGE_ID);
+        let packet = MessageRequestPacket::new(&MESSAGE_ID);
 
         assert_eq!(packet.size(), CONSTANT_SIZE);
     }
 
     #[test]
     fn into_from() {
-        let packet_from = MessageRequest::new(&MESSAGE_ID);
+        let packet_from = MessageRequestPacket::new(&MESSAGE_ID);
         let mut bytes = vec![0u8; packet_from.size()];
         packet_from.into_bytes(&mut bytes);
-        let packet_to = MessageRequest::from_bytes(&bytes);
+        let packet_to = MessageRequestPacket::from_bytes(&bytes);
 
         assert!(packet_to.message_id.eq(&MESSAGE_ID));
     }

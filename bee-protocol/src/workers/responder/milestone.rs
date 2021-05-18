@@ -4,7 +4,7 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::{Message as MessagePacket, MilestoneRequest},
+        packets::{MessagePacket, MilestoneRequestPacket},
         peer::PeerManager,
         sender::Sender,
         storage::StorageBackend,
@@ -27,7 +27,7 @@ use std::{any::TypeId, convert::Infallible};
 
 pub(crate) struct MilestoneResponderWorkerEvent {
     pub(crate) peer_id: PeerId,
-    pub(crate) request: MilestoneRequest,
+    pub(crate) request: MilestoneRequestPacket,
 }
 
 pub(crate) struct MilestoneResponderWorker {
@@ -53,7 +53,6 @@ where
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
-
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let metrics = node.resource::<NodeMetrics>();
         let peer_manager = node.resource::<PeerManager>();
@@ -75,7 +74,7 @@ where
                         &peer_manager,
                         &metrics,
                         &peer_id,
-                        MessagePacket::new(&message.pack_new()),
+                        MessagePacket::new(message.pack_new()),
                     )
                     .await;
                 }

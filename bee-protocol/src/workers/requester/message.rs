@@ -4,7 +4,7 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        packets::MessageRequest, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
+        packets::MessageRequestPacket, peer::PeerManager, sender::Sender, storage::StorageBackend, MetricsWorker,
         PeerManagerResWorker,
     },
 };
@@ -35,12 +35,13 @@ const RETRY_INTERVAL_MS: u64 = 2500;
 #[derive(Default)]
 pub struct RequestedMessages(RwLock<HashMap<MessageId, (MilestoneIndex, Instant), FxBuildHasher>>);
 
+#[allow(clippy::len_without_is_empty)]
 impl RequestedMessages {
     pub async fn contains(&self, message_id: &MessageId) -> bool {
         self.0.read().await.contains_key(message_id)
     }
 
-    pub async fn insert(&self, message_id: MessageId, index: MilestoneIndex) {
+    pub(crate) async fn insert(&self, message_id: MessageId, index: MilestoneIndex) {
         let now = Instant::now();
         self.0.write().await.insert(message_id, (index, now));
     }
@@ -49,7 +50,11 @@ impl RequestedMessages {
         self.0.read().await.len()
     }
 
-    pub async fn remove(&self, message_id: &MessageId) -> Option<(MilestoneIndex, Instant)> {
+    pub async fn is_empty(&self) -> bool {
+        self.0.read().await.is_empty()
+    }
+
+    pub(crate) async fn remove(&self, message_id: &MessageId) -> Option<(MilestoneIndex, Instant)> {
         self.0.write().await.remove(message_id)
     }
 }
@@ -108,20 +113,20 @@ async fn process_request_unchecked(
     metrics: &NodeMetrics,
     counter: &mut usize,
 ) {
-    let guard = peer_manager.peers_keys.read().await;
+    let guard = peer_manager.0.read().await;
 
-    for _ in 0..guard.len() {
-        let peer_id = &guard[*counter % guard.len()];
+    for _ in 0..guard.keys.len() {
+        let peer_id = &guard.keys[*counter % guard.keys.len()];
 
         *counter += 1;
 
         if let Some(peer) = peer_manager.get(peer_id).await {
             if (*peer).0.has_data(index) {
-                Sender::<MessageRequest>::send(
+                Sender::<MessageRequestPacket>::send(
                     peer_manager,
                     metrics,
                     peer_id,
-                    MessageRequest::new(message_id.as_ref()),
+                    MessageRequestPacket::new(message_id.as_ref()),
                 )
                 .await;
                 return;
@@ -129,18 +134,18 @@ async fn process_request_unchecked(
         }
     }
 
-    for _ in 0..guard.len() {
-        let peer_id = &guard[*counter % guard.len()];
+    for _ in 0..guard.keys.len() {
+        let peer_id = &guard.keys[*counter % guard.keys.len()];
 
         *counter += 1;
 
         if let Some(peer) = peer_manager.get(peer_id).await {
             if (*peer).0.maybe_has_data(index) {
-                Sender::<MessageRequest>::send(
+                Sender::<MessageRequestPacket>::send(
                     peer_manager,
                     metrics,
                     peer_id,
-                    MessageRequest::new(message_id.as_ref()),
+                    MessageRequestPacket::new(message_id.as_ref()),
                 )
                 .await;
             }

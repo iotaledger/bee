@@ -14,8 +14,8 @@ homepage = "https://www.iota.org"
 bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = [ "workers" ], optional = true }
-bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = ["serde"] }
-bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = ["full"] }
+bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = [ "serde" ] }
+bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = [ "full" ] }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
@@ -28,7 +28,7 @@ futures = { version = "0.3", optional = true }
 futures-util = { version = "~0.3.14", optional = true }
 fxhash = { version = "0.2", optional = true }
 hex = { version = "0.4", optional = true }
-iota-crypto = { version = "0.5.0", features = ["blake2b", "ed25519"], optional = true }
+iota-crypto = { version = "0.5.0", features = [ "blake2b", "ed25519" ], optional = true }
 log = { version = "0.4", optional = true }
 num_cpus = { version = "1.13", optional = true }
 pin-project = { version = "1.0", optional = true }
@@ -37,7 +37,7 @@ ref-cast = { version = "1.0", optional = true }
 serde = { version = "1.0", features = [ "derive" ], optional = true }
 spin = { version = "0.9", optional = true }
 thiserror = { version = "1.0", optional = true }
-tokio = { version = "1.5", features = ["rt-multi-thread"], optional = true }
+tokio = { version = "1.6", features = [ "rt-multi-thread" ], optional = true }
 tokio-stream = { version = "0.1", optional = true }
 twox-hash = { version = "1.6", optional = true }
 
@@ -73,4 +73,4 @@ workers = [
 ]
 
 [dev-dependencies]
-tokio = { version = "1.5", features = ["macros"] }
+tokio = { version = "1.6", features = ["macros"] }

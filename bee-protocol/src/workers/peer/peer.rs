@@ -5,7 +5,10 @@ use crate::{
     types::{metrics::NodeMetrics, peer::Peer},
     workers::{
         helper,
-        packets::{tlv_from_bytes, Header, Heartbeat, Message, MessageRequest, MilestoneRequest, Packet, TlvError},
+        packets::{
+            tlv_from_bytes, HeaderPacket, HeartbeatPacket, MessagePacket, MessageRequestPacket, MilestoneRequestPacket,
+            Packet, TlvError,
+        },
         peer::packet_handler::PacketHandler,
         storage::StorageBackend,
         HasherWorkerEvent, MessageResponderWorkerEvent, MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent,
@@ -104,14 +107,14 @@ impl PeerWorker {
     fn process_packet<B: StorageBackend>(
         &mut self,
         tangle: &MsTangle<B>,
-        header: &Header,
+        header: &HeaderPacket,
         bytes: &[u8],
     ) -> Result<(), Error> {
         match header.packet_type {
-            MilestoneRequest::ID => {
-                trace!("[{}] Reading MilestoneRequest...", self.peer.alias());
+            MilestoneRequestPacket::ID => {
+                trace!("[{}] Reading MilestoneRequestPacket...", self.peer.alias());
 
-                let packet = tlv_from_bytes::<MilestoneRequest>(&header, bytes)?;
+                let packet = tlv_from_bytes::<MilestoneRequestPacket>(&header, bytes)?;
 
                 let _ = self.milestone_responder.send(MilestoneResponderWorkerEvent {
                     peer_id: *self.peer.id(),
@@ -121,10 +124,10 @@ impl PeerWorker {
                 self.peer.metrics().milestone_requests_received_inc();
                 self.metrics.milestone_requests_received_inc();
             }
-            Message::ID => {
-                trace!("[{}] Reading Message...", self.peer.alias());
+            MessagePacket::ID => {
+                trace!("[{}] Reading MessagePacket...", self.peer.alias());
 
-                let packet = tlv_from_bytes::<Message>(&header, bytes)?;
+                let packet = tlv_from_bytes::<MessagePacket>(&header, bytes)?;
 
                 let _ = self.hasher.send(HasherWorkerEvent {
                     from: Some(*self.peer.id()),
@@ -135,10 +138,10 @@ impl PeerWorker {
                 self.peer.metrics().messages_received_inc();
                 self.metrics.messages_received_inc();
             }
-            MessageRequest::ID => {
-                trace!("[{}] Reading MessageRequest...", self.peer.alias());
+            MessageRequestPacket::ID => {
+                trace!("[{}] Reading MessageRequestPacket...", self.peer.alias());
 
-                let packet = tlv_from_bytes::<MessageRequest>(&header, bytes)?;
+                let packet = tlv_from_bytes::<MessageRequestPacket>(&header, bytes)?;
 
                 let _ = self.message_responder.send(MessageResponderWorkerEvent {
                     peer_id: *self.peer.id(),
@@ -148,10 +151,10 @@ impl PeerWorker {
                 self.peer.metrics().message_requests_received_inc();
                 self.metrics.message_requests_received_inc();
             }
-            Heartbeat::ID => {
-                trace!("[{}] Reading Heartbeat...", self.peer.alias());
+            HeartbeatPacket::ID => {
+                trace!("[{}] Reading HeartbeatPacket...", self.peer.alias());
 
-                let packet = tlv_from_bytes::<Heartbeat>(&header, bytes)?;
+                let packet = tlv_from_bytes::<HeartbeatPacket>(&header, bytes)?;
 
                 self.peer.set_solid_milestone_index(packet.solid_milestone_index.into());
                 self.peer.set_pruned_index(packet.pruned_index.into());
