@@ -16,8 +16,7 @@ use tokio_stream::wrappers::IntervalStream;
 
 use std::{any::TypeId, convert::Infallible, time::Duration};
 
-// In seconds.
-const MPS_INTERVAL: u64 = 1;
+const MPS_INTERVAL: u64 = 1; // In seconds
 
 #[derive(Default)]
 pub(crate) struct MpsWorker {}
