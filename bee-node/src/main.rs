@@ -10,7 +10,7 @@ use log::error;
 const CONFIG_PATH: &str = "./config.toml";
 
 #[cfg(feature = "console")]
-fn logger_init() -> tokio::task::JoinHandle<()> {
+fn logger_init() -> tokio::task::JoinHandle<Result<(), Box<dyn std::error::Error + Send + Sync>>> {
     use tracing_subscriber::prelude::*;
 
     let (layer, server) = console_subscriber::TasksLayer::new();
@@ -26,7 +26,7 @@ fn logger_init() -> tokio::task::JoinHandle<()> {
         .with(layer)
         .init();
 
-    tokio::spawn(async move { server.serve().await.unwrap() })
+    tokio::spawn(async move { server.serve().await })
 }
 
 #[cfg(not(feature = "console"))]
