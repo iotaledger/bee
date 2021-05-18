@@ -40,7 +40,7 @@ async fn process<B: StorageBackend>(
             _ => return,
         };
 
-        metrics.transaction_payload_inc(1);
+        metrics.transaction_payloads_inc(1);
 
         let Essence::Regular(essence) = transaction.essence();
 
