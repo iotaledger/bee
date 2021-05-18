@@ -30,3 +30,4 @@ syn = { version = "1.0", features = ["full", "extra-traits"] }
 bee-common = { path = "../bee-common" }
 
 trybuild = { version = "1.0", features = ["diff"] }
+rustversion = { version = "1.0" }
