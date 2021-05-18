@@ -1,5 +1,5 @@
-error: All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute.
-  --> $DIR/invalid_tag_enum.rs:15:5
+error: Tags for variants can only be integers without type annotations.
+  --> $DIR/invalid_tag_enum.rs:14:22
    |
-15 |     None,
-   |     ^^^^
+14 |     #[packable(tag = [0; 32])]
+   |                      ^^^^^^^

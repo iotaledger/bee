@@ -9,7 +9,7 @@ use syn::{
     punctuated::Punctuated,
     spanned::Spanned,
     token::Comma,
-    Attribute, Field, Fields, Generics, Ident, Index, Token, Type, Variant,
+    Attribute, Expr, Field, Fields, Generics, Ident, Index, Token, Type, Variant,
 };
 
 /// The names of the types that can be used for tags.
@@ -217,13 +217,24 @@ pub(crate) fn gen_bodies_for_enum(
             attrs, ident, fields, ..
         } = variant;
 
-        // Verify that this variant has a `"tag"` attribute.
-        let curr_tag = parse_attr::<Index>("tag", attrs).unwrap_or_else(|| {
+        // Verify that this variant has a `"tag"` attribute with an untyped, unsigned integer on it.
+        let curr_tag = if let Some(tag) = parse_attr::<Index>("tag", attrs) {
+            tag
+        } else {
+            // Try to parse a `"tag"` attribute with any expression for good error reporting.
+            let expr = parse_attr::<Expr>("tag", attrs).unwrap_or_else(|| {
+                // There is no tag attribute at all.
+                abort!(
+                    ident.span(),
+                    "All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute."
+                )
+            });
+            // There is a tag attribute with an illegal expression.
             abort!(
-                ident.span(),
-                "All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute."
-            )
-        });
+                expr.span(),
+                "Tags for variants can only be integers without type annotations.",
+            );
+        };
 
         // Search for the current tag inside `tags`.
         match tags.binary_search_by(|(tag, _)| tag.index.cmp(&curr_tag.index)) {
