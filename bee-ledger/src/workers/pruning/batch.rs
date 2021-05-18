@@ -119,7 +119,10 @@ pub async fn add_confirmed_data<S: StorageBackend>(
         metrics.approvers_not_visited += 1;
 
         // Try to use the buffer first before making any storage queries.
-        if not_visited_approvers.any(|id| *buffered_approvers.get(&id).unwrap_or(&false)) {
+        if not_visited_approvers
+            .clone()
+            .any(|id| *buffered_approvers.get(&id).unwrap_or(&false))
+        {
             new_seps.insert(current_id.into(), target_index);
 
             metrics.found_sep_early += 1;
