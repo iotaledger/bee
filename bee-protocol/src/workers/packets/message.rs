@@ -17,10 +17,8 @@ pub(crate) struct MessagePacket {
 }
 
 impl MessagePacket {
-    pub(crate) fn new(message: &[u8]) -> Self {
-        Self {
-            bytes: message.to_vec(),
-        }
+    pub(crate) fn new(bytes: Vec<u8>) -> Self {
+        Self { bytes }
     }
 }
 
@@ -91,14 +89,14 @@ mod tests {
 
     #[test]
     fn size() {
-        let packet = MessagePacket::new(&MESSAGE);
+        let packet = MessagePacket::new(MESSAGE.to_vec());
 
         assert_eq!(packet.size(), 500);
     }
 
     #[test]
     fn into_from() {
-        let packet_from = MessagePacket::new(&MESSAGE);
+        let packet_from = MessagePacket::new(MESSAGE.to_vec());
         let mut bytes = vec![0u8; packet_from.size()];
         packet_from.into_bytes(&mut bytes);
         let packet_to = MessagePacket::from_bytes(&bytes);

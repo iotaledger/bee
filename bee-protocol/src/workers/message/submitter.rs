@@ -61,7 +61,7 @@ where
             while let Some(MessageSubmitterWorkerEvent { message, notifier }) = receiver.next().await {
                 let event = HasherWorkerEvent {
                     from: None,
-                    message_packet: MessagePacket::new(&message),
+                    message_packet: MessagePacket::new(message),
                     notifier: Some(notifier),
                 };
                 if let Err(e) = hasher.send(event) {

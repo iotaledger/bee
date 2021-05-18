@@ -68,7 +68,7 @@ where
                         &peer_manager,
                         &metrics,
                         &peer_id,
-                        MessagePacket::new(&message.pack_new()),
+                        MessagePacket::new(message.pack_new()),
                     )
                     .await;
                 }
