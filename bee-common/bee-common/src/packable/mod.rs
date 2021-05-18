@@ -3,14 +3,15 @@
 
 //! A module that provides a `Packable` trait to serialize and deserialize types.
 
-#[cfg(feature = "alloc")]
-mod alloc;
+extern crate alloc;
+
 mod error;
 #[cfg(feature = "io")]
 mod io;
 mod packer;
 mod unpacker;
 
+use alloc::{boxed::Box, vec::Vec};
 use core::convert::Infallible;
 
 pub use error::{UnknownTagError, UnpackError};
@@ -205,5 +206,61 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
 
     fn packed_len(&self) -> usize {
         self.iter().map(T::packed_len).sum::<usize>()
+    }
+}
+
+impl<T: Packable> Packable for Vec<T> {
+    type Error = T::Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        // The length of any dynamically-sized sequence must be prefixed.
+        self.len().pack(packer)?;
+
+        for item in self.iter() {
+            item.pack(packer)?;
+        }
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+        // The length of any dynamically-sized sequence must be prefixed.
+        let len = unpacker.unpack_infallible::<usize>().map_err(UnpackError::Unpacker)?;
+
+        let mut vec = Self::with_capacity(len);
+
+        for _ in 0..len {
+            let item = T::unpack(unpacker)?;
+            vec.push(item);
+        }
+
+        Ok(vec)
+    }
+
+    fn packed_len(&self) -> usize {
+        0usize.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
+    }
+}
+
+impl<T: Packable> Packable for Box<[T]> {
+    type Error = T::Error;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+        // The length of any dynamically-sized sequence must be prefixed.
+        self.len().pack(packer)?;
+
+        for item in self.iter() {
+            item.pack(packer)?;
+        }
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+        Ok(Vec::<T>::unpack(unpacker)?.into_boxed_slice())
+    }
+
+    fn packed_len(&self) -> usize {
+        0usize.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
     }
 }
