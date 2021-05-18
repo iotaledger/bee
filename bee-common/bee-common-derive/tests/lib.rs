@@ -1,9 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::path::Path;
-
 use trybuild::TestCases;
+
+use std::path::Path;
 
 macro_rules! make_test {
     ($name:ident) => {

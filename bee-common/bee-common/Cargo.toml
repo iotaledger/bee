@@ -14,11 +14,11 @@ homepage = "https://www.iota.org"
 alloc = []
 io = []
 
-[dev-dependencies]
-bee-common = { path = ".", features = ["alloc", "io"] }
-
 [build-dependencies]
 autocfg = "1.0"
 
 [dependencies]
 bee-common-derive = { path = "../bee-common-derive" }
+
+[dev-dependencies]
+bee-common = { path = ".", features = ["alloc", "io"] }

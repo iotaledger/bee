@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-/// A type that can pack any value that implements `Packer`.
+/// A type that can pack any value that implements `Packable`.
 pub trait Packer {
     /// The error type that can be returned if some error occurs while packing.
     type Error;

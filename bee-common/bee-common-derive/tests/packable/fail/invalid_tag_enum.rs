@@ -8,7 +8,7 @@ use bee_common::packable::Packable;
 use core::convert::Infallible;
 
 #[derive(Packable)]
-#[packable(tag_ty = u8)]
+#[packable(tag_type = u8)]
 #[packable(error = Infallible)]
 pub enum OptI32 {
     #[packable(tag = [0; 32])]

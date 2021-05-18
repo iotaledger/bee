@@ -1,5 +1,0 @@
-error: Enums that derive `Packable` require a `#[packable(tag_ty = ...)]` attribute.
-  --> $DIR/missing_ty_enum.rs:12:10
-   |
-12 | pub enum OptI32 {
-   |          ^^^^^^

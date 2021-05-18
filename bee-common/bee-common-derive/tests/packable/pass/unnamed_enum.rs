@@ -6,7 +6,7 @@
 use bee_common::packable::{Packable, UnknownTagError};
 
 #[derive(Packable)]
-#[packable(tag_ty = u8)]
+#[packable(tag_type = u8)]
 #[packable(error = UnknownTagError<u8>)]
 pub enum OptI32 {
     #[packable(tag = 0)]

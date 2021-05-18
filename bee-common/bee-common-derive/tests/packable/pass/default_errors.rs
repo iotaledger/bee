@@ -14,7 +14,7 @@ pub struct Point {
 }
 
 #[derive(Packable)]
-#[packable(tag_ty = u8)]
+#[packable(tag_type = u8)]
 pub enum Foo {
     #[packable(tag = 0)]
     Bar(u32),

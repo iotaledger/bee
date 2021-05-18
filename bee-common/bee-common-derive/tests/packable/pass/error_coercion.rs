@@ -57,7 +57,7 @@ impl From<UnknownTagError<u8>> for PickyOrByteError {
 }
 
 #[derive(Packable)]
-#[packable(tag_ty = u8)]
+#[packable(tag_type = u8)]
 #[packable(error = PickyOrByteError)]
 pub enum PickyOrByte {
     #[packable(tag = 0)]

@@ -199,7 +199,7 @@ pub(crate) fn gen_bodies_for_enum(
     // Validate that the tag type is in `VALID_TAG_TYPES`.
     match &tag_ty {
         Type::Path(ty_path) if VALID_TAG_TYPES.iter().any(|ty| ty_path.path.is_ident(ty)) => (),
-        _ => abort!(tag_ty.span(), "Tags for enums can only be unisigned, sized integers."),
+        _ => abort!(tag_ty.span(), "Tags for enums can only be unsigned, sized integers."),
     }
 
     // Store the tags and names of the variants so we can guarantee that tags are unique.
@@ -287,8 +287,8 @@ pub(crate) fn gen_impl(
     generics: &Generics,
     error_type: TokenStream,
     pack_body: TokenStream,
-    unpack_body: TokenStream,
     packed_len_body: TokenStream,
+    unpack_body: TokenStream,
 ) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
