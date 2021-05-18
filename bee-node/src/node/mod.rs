@@ -60,7 +60,7 @@ impl<B: StorageBackend> BeeNode<B> {
     }
 
     #[allow(missing_docs)]
-    pub async fn run(mut self) -> Result<(), Error> {
+    pub async fn run(mut self) -> Result<(), Box::<dyn std::error::Error + Send + Sync>> {
         info!("Running.");
 
         // Unwrapping is fine because the builder added this resource.
@@ -124,6 +124,7 @@ impl<B: StorageBackend> Node for BeeNode<B> {
         }
     }
 
+    #[track_caller]
     fn spawn<W, G, F>(&mut self, g: G)
     where
         W: Worker<Self>,
@@ -131,11 +132,31 @@ impl<B: StorageBackend> Node for BeeNode<B> {
         F: Future<Output = ()> + Send + 'static,
     {
         let (tx, rx) = oneshot::channel();
+        let future = g(rx);
+
+        #[cfg(feature = "console")]
+        let task = {
+            use tracing::Instrument;
+            use std::panic::Location;
+
+            let caller = Location::caller();
+            let span = tracing::info_span!(
+                target: "tokio::task", 
+                "task", 
+                file = caller.file(), 
+                line = caller.line(),
+            );
+
+            tokio::spawn(future.instrument(span))
+        };
+
+        #[cfg(not(feature = "console"))]
+        let task = tokio::spawn(future);
 
         self.tasks
             .entry(TypeId::of::<W>())
             .or_default()
-            .push((tx, Box::new(tokio::spawn(g(rx)))));
+            .push((tx, Box::new(task)));
     }
 
     fn worker<W>(&self) -> Option<&W>

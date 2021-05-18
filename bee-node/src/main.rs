@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::logger::logger_init;
 use bee_node::{plugins, print_banner_and_version, tools, CliArgs, NodeBuilder, NodeConfigBuilder};
 use bee_runtime::node::NodeBuilder as _;
 use bee_storage_rocksdb::storage::Storage as Rocksdb;
@@ -9,6 +8,35 @@ use bee_storage_rocksdb::storage::Storage as Rocksdb;
 use log::error;
 
 const CONFIG_PATH: &str = "./config.toml";
+
+#[cfg(feature = "console")]
+fn logger_init() -> tokio::task::JoinHandle<Result<(), Box<dyn std::error::Error + Send + Sync>>> {
+    use tracing_subscriber::prelude::*;
+
+    let (layer, server) = console_subscriber::TasksLayer::new();
+
+    // Unwrap here is fine, since it is known that the string is correct.
+    let filter = tracing_subscriber::EnvFilter::from_default_env()
+        .add_directive(tracing::Level::INFO.into())
+        .add_directive("tokio=info".parse().unwrap());
+
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(filter)
+        .with(layer)
+        .init();
+
+    tokio::spawn(async move { server.serve().await })
+}
+
+#[cfg(not(feature = "console"))]
+fn logger_init(logger: bee_common::logger::LoggerConfig) {
+    use bee_common::logger;
+
+    if let Err(e) = logger::logger_init(logger) {
+        panic!("Failed to initialise the logger: {}", e);
+    }
+}
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -19,9 +47,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Err(e) => panic!("Failed to create the node config builder: {}", e),
     };
 
-    if let Err(e) = logger_init(config.logger.clone()) {
-        panic!("Failed to initialise the logger: {}", e);
-    }
+    #[cfg(feature = "console")]
+    let console_handle = logger_init();
+
+    #[cfg(not(feature = "console"))]
+    logger_init(config.logger.clone());
 
     if let Some(tool) = cli.tool() {
         if let Err(e) = tools::exec(tool) {
@@ -39,8 +69,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     match NodeBuilder::<Rocksdb>::new(config) {
         Ok(builder) => match builder.with_plugin::<plugins::Mps>().finish().await {
             Ok(node) => {
-                if let Err(e) = node.run().await {
-                    error!("Failed to run node: {}", e)
+                #[cfg(feature = "console")]
+                let res = tokio::try_join!(tokio::spawn(node.run()), console_handle);
+
+                #[cfg(not(feature = "console"))]
+                let res = node.run().await;
+
+                if let Err(e) = res {
+                    error!("Failed to run node: {}", e);
                 }
             }
             Err(e) => error!("Failed to build node: {}", e),

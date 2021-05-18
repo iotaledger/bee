@@ -27,6 +27,7 @@ anymap = "0.12"
 async-trait = "0.1"
 cap = { version = "0.1", optional = true }
 chrono = "0.4"
+console-subscriber = { git = "https://github.com/tokio-rs/console.git", branch = "main", optional = true }
 futures = "0.3"
 fxhash = "0.2"
 hex = "0.4"
@@ -45,6 +46,9 @@ thiserror = "1.0"
 tokio = { version = "1.6", features = [ "signal", "rt", "macros", "rt-multi-thread" ] }
 tokio-stream = "0.1"
 toml = "0.5"
+tracing = { version = "0.1.26", optional = true }
+tracing-futures = { version = "0.2.5", optional = true }
+tracing-subscriber = { version = "0.2.18", features = ["fmt", "registry", "env-filter"], optional = true }
 warp = "0.3"
 warp-reverse-proxy = { version = "0.3", optional = true }
 
@@ -57,4 +61,5 @@ name = "bee"
 path = "src/main.rs"
 
 [features]
+console = ["console-subscriber", "tokio/tracing", "tracing", "tracing-futures", "tracing-subscriber"]
 dashboard = [ "cap", "mime_guess", "rust-embed", "serde_repr", "warp-reverse-proxy" ]
