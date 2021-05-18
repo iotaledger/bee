@@ -18,6 +18,9 @@ pub enum Error {
     MissingMessage(MessageId),
 
     #[error("{0}")]
+    MissingMetadata(MessageId),
+
+    #[error("{0}")]
     MissingApprovers(MessageId),
 
     #[error("{0:?}")]

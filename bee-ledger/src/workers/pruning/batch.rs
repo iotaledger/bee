@@ -135,8 +135,8 @@ pub async fn add_confirmed_data<S: StorageBackend>(
             let is_confirmed_in_future = if let Some(conf_index) =
                 Fetch::<MessageId, MessageMetadata>::fetch(storage, &id)
                     .await
-                    .unwrap()
-                    .unwrap()
+                    .map_err(|e| Error::FetchOperation(Box::new(e)))?
+                    .ok_or(Error::MissingMetadata(id))?
                     .milestone_index()
             {
                 // Note that an approver can be confirmed by the same milestone (be child and sibling at the same time).
