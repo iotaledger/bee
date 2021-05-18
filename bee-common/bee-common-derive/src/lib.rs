@@ -19,7 +19,11 @@ pub fn packable(input: TokenStream) -> TokenStream {
         ..
     } = parse_macro_input!(input);
     // Parse an `error` attribute if the input has one.
-    let error_type = packable::parse_attr::<Type>("error", &attrs).map(ToTokens::into_token_stream);
+    let error_type = match packable::parse_attr::<Type>("error", &attrs) {
+        Some(Ok(ty)) => Some(ty.into_token_stream()),
+        Some(Err(span)) => abort!(span, "The `error` attribute requires a type for its value."),
+        None => None,
+    };
 
     match data {
         Data::Struct(data) => {
@@ -31,12 +35,14 @@ pub fn packable(input: TokenStream) -> TokenStream {
         }
         Data::Enum(data) => {
             // Verify that the enum has a `"tag_type"` attribute for the type of the tag.
-            let tag_ty = packable::parse_attr::<Type>("tag_type", &attrs).unwrap_or_else(|| {
-                abort!(
+            let tag_ty = match packable::parse_attr::<Type>("tag_type", &attrs) {
+                Some(Ok(tag_ty)) => tag_ty,
+                Some(Err(span)) => abort!(span, "The `tag_type` attribute requires a type for its value."),
+                None => abort!(
                     ident.span(),
                     "Enums that derive `Packable` require a `#[packable(tag_type = ...)]` attribute."
-                )
-            });
+                ),
+            };
             // Use `UnknownTagError` if there was no error attribute.
             let error_type = error_type.unwrap_or_else(|| quote!(bee_common::packable::UnknownTagError<#tag_ty>));
             // Generate the implementation for the enum.

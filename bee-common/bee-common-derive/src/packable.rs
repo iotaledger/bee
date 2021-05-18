@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use proc_macro_error::abort;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
@@ -9,7 +9,7 @@ use syn::{
     punctuated::Punctuated,
     spanned::Spanned,
     token::Comma,
-    Attribute, Expr, Field, Fields, Generics, Ident, Index, Token, Type, Variant,
+    Attribute, Field, Fields, Generics, Ident, Index, Token, Type, Variant,
 };
 
 /// The names of the types that can be used for tags.
@@ -218,22 +218,13 @@ pub(crate) fn gen_bodies_for_enum(
         } = variant;
 
         // Verify that this variant has a `"tag"` attribute with an untyped, unsigned integer on it.
-        let curr_tag = if let Some(tag) = parse_attr::<Index>("tag", attrs) {
-            tag
-        } else {
-            // Try to parse a `"tag"` attribute with any expression for good error reporting.
-            let expr = parse_attr::<Expr>("tag", attrs).unwrap_or_else(|| {
-                // There is no tag attribute at all.
-                abort!(
-                    ident.span(),
-                    "All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute."
-                )
-            });
-            // There is a tag attribute with an illegal expression.
-            abort!(
-                expr.span(),
-                "Tags for variants can only be integers without type annotations.",
-            );
+        let curr_tag = match parse_attr::<Index>("tag", attrs) {
+            Some(Ok(tag)) => tag,
+            Some(Err(span)) => abort!(span, "Tags for variants can only be integers without type annotations.",),
+            None => abort!(
+                ident.span(),
+                "All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute."
+            ),
         };
 
         // Search for the current tag inside `tags`.
@@ -322,30 +313,53 @@ pub(crate) fn gen_impl(
     }
 }
 
-/// Utility function to parse an attribute of the form `#[packable(ident = value)]` where `value`
-/// is of type `T` from an slice of attributes. Return `Some(value)` if such attribute exists and
-/// return `None` otherwise.
-pub(crate) fn parse_attr<T: Parse>(ident: &str, attrs: &[Attribute]) -> Option<T> {
-    struct AttrArg<T> {
-        ident: Ident,
-        value: T,
-    }
-
-    impl<T: Parse> Parse for AttrArg<T> {
-        fn parse(input: ParseStream) -> syn::Result<Self> {
-            let ident = input.parse::<Ident>()?;
-            let _ = input.parse::<Token![=]>()?;
-            let value = input.parse::<T>()?;
-
-            Ok(Self { ident, value })
-        }
-    }
-
+/// Utility function to parse an attribute of the form `#[packable(key = value)]` where `value` is
+/// of type `T` from an slice of attributes. Return `Some(Ok(value))` if such attribute exists,
+/// `Some(Err(span))` if the attribute exist but the value cannot be parsed and return `None`
+/// otherwise.
+pub(crate) fn parse_attr<T: Parse + std::fmt::Debug>(key: &str, attrs: &[Attribute]) -> Option<Result<T, Span>> {
     for attr in attrs {
         if attr.path.is_ident("packable") {
-            match attr.parse_args::<AttrArg<T>>() {
-                Ok(arg) if arg.ident == ident => return Some(arg.value),
-                _ => (),
+            let value = attr.parse_args_with(|input: ParseStream| -> syn::Result<Option<T>> {
+                // Parse `key =`.
+                let found_key = input
+                    .parse::<Ident>()
+                    .and_then(|found_key| input.parse::<Token![=]>().map(|_| found_key));
+
+                match found_key {
+                    // If we could parse the key and it is the one we are looking for, we try to
+                    // parse the value.
+                    Ok(found_key) if found_key == key => input.parse::<T>().map(Some),
+                    // We couldn't parse the key or is not the one we are looking for.
+                    _ => {
+                        // Consume the rest of the argument so Syn does not error.
+                        input
+                            .step(|cursor| {
+                                let mut rest = *cursor;
+                                while let Some((_, next)) = rest.token_tree() {
+                                    rest = next;
+                                }
+                                Ok(((), rest))
+                            })
+                            .unwrap();
+
+                        Ok(None)
+                    }
+                }
+            });
+
+            match value {
+                // We found the key and the value with type. Return it.
+                Ok(Some(value)) => {
+                    return Some(Ok(value));
+                }
+                // We found the key but the value has the incorrect type. Return the span of the
+                // attribute for error reporting.
+                Err(_) => {
+                    return Some(Err(attr.tokens.span()));
+                }
+                // This attribute does not have the key we are looking for. Continue.
+                Ok(None) => (),
             }
         }
     }
