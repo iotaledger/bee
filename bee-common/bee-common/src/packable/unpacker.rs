@@ -11,7 +11,7 @@ pub trait Unpacker: Sized {
     type Error;
 
     /// Unpack a sequence of bytes from the `Unpacker`.
-    fn unpack_bytes(&mut self, slice: &mut [u8]) -> Result<(), Self::Error>;
+    fn unpack_bytes<B: AsMut<[u8]>>(&mut self, bytes: B) -> Result<(), Self::Error>;
 
     /// Unpack a packable value that has no semantic errors.
     ///
@@ -49,7 +49,8 @@ pub struct UnexpectedEOF {
 impl<'u> Unpacker for SliceUnpacker<'u> {
     type Error = UnexpectedEOF;
 
-    fn unpack_bytes(&mut self, slice: &mut [u8]) -> Result<(), Self::Error> {
+    fn unpack_bytes<B: AsMut<[u8]>>(&mut self, mut bytes: B) -> Result<(), Self::Error> {
+        let slice = bytes.as_mut();
         let len = slice.len();
 
         if self.0.len() >= len {

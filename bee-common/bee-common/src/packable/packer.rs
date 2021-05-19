@@ -13,7 +13,7 @@ pub trait Packer {
     type Error;
 
     /// Pack a sequence of bytes into the `Packer`.
-    fn pack_bytes(&mut self, bytes: &[u8]) -> Result<(), Self::Error>;
+    fn pack_bytes<B: AsRef<[u8]>>(&mut self, bytes: B) -> Result<(), Self::Error>;
 }
 
 #[derive(Default)]
@@ -40,8 +40,8 @@ impl VecPacker {
 impl Packer for VecPacker {
     type Error = Infallible;
 
-    fn pack_bytes(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
-        self.0.extend_from_slice(bytes);
+    fn pack_bytes<B: AsRef<[u8]>>(&mut self, bytes: B) -> Result<(), Self::Error> {
+        self.0.extend_from_slice(bytes.as_ref());
         Ok(())
     }
 }
