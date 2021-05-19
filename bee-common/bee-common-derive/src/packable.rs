@@ -199,7 +199,15 @@ pub(crate) fn gen_bodies_for_enum(
     // Validate that the tag type is in `VALID_TAG_TYPES`.
     match &tag_ty {
         Type::Path(ty_path) if VALID_TAG_TYPES.iter().any(|ty| ty_path.path.is_ident(ty)) => (),
-        _ => abort!(tag_ty.span(), "Tags for enums can only be unsigned, sized integers."),
+        _ => {
+            let (last, rest) = VALID_TAG_TYPES.split_last().unwrap();
+            abort!(
+                tag_ty.span(),
+                "Tags for enums can only be of type `{}` or `{}`.",
+                rest.join("`, `"),
+                last
+            );
+        }
     }
 
     // Store the tags and names of the variants so we can guarantee that tags are unique.
