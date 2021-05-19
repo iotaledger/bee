@@ -18,6 +18,10 @@ impl Packable for Picky {
         self.0.pack(packer)
     }
 
+    fn packed_len(&self) -> usize {
+        self.0.packed_len()
+    }
+
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
         let value = unpacker.unpack_infallible::<u8>()?;
 
@@ -26,10 +30,6 @@ impl Packable for Picky {
         } else {
             Err(UnpackError::Packable(PickyError(value)))
         }
-    }
-
-    fn packed_len(&self) -> usize {
-        self.0.packed_len()
     }
 }
 
@@ -79,7 +79,6 @@ impl From<PickyError> for PickyAndByteError {
         Self(err)
     }
 }
-
 
 #[derive(Packable)]
 #[packable(error = PickyAndByteError)]

@@ -1,5 +1,6 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
 extern crate alloc;
 
 use super::unpacker::SliceUnpacker;
@@ -16,11 +17,16 @@ pub trait Packer {
     fn pack_bytes<B: AsRef<[u8]>>(&mut self, bytes: B) -> Result<(), Self::Error>;
 }
 
-#[derive(Default)]
 /// A `Packer` backed by a `Vec<u8>`.
+#[derive(Default)]
 pub struct VecPacker(Vec<u8>);
 
 impl VecPacker {
+    /// Create a new, empty packer.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Use the backing `Vec<u8>` to create an `Unpacker`.
     pub fn as_slice(&self) -> SliceUnpacker<'_> {
         SliceUnpacker::new(self.0.as_slice())

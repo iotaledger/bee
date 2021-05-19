@@ -10,9 +10,9 @@ use core::convert::Infallible;
 #[derive(Packable)]
 #[packable(error = Infallible)]
 pub enum OptI32 {
-    #[packable(id = 0)]
+    #[packable(tag = 0)]
     None,
-    #[packable(id = 1)]
+    #[packable(tag = 1)]
     Some(i32)
 }
 

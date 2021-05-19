@@ -5,7 +5,7 @@ use super::{Packable, UnpackError};
 
 use core::convert::Infallible;
 
-/// A type that can unpack any value that implements `Packer`.
+/// A type that can unpack any value that implements `Packable`.
 pub trait Unpacker: Sized {
     /// The error type that can be returned if some error occurs while unpacking.
     type Error;

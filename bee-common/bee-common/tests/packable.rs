@@ -1,5 +1,6 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
 extern crate alloc;
 
 use bee_common::packable::{Packable, VecPacker};

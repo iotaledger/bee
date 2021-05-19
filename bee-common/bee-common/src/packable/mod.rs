@@ -29,14 +29,14 @@ pub trait Packable: Sized {
     /// The error type that can be returned if some semantic error occurs while unpacking.
     ///
     /// It is recommended to use `core::convert::Infallible` if this kind of error cannot happen or
-    /// `UnpackEnumError` when implementing this trait for an enum.
+    /// `UnknownTagError` when implementing this trait for an enum.
     type Error;
     /// Pack this value into the given `Packer`.
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
-    /// Unpack this value from the given `Unpacker`.
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>>;
     /// The size of the value in bytes after being packed.
     fn packed_len(&self) -> usize;
+    /// Unpack this value from the given `Unpacker`.
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>>;
 }
 
 macro_rules! impl_packable_for_int {
@@ -48,14 +48,14 @@ macro_rules! impl_packable_for_int {
                 packer.pack_bytes(&self.to_le_bytes())
             }
 
-            fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
-                let mut bytes = [0u8; core::mem::size_of::<Self>()];
-                unpacker.unpack_bytes(&mut bytes).map_err(UnpackError::Unpacker)?;
-                Ok(Self::from_le_bytes(bytes))
-            }
-
             fn packed_len(&self) -> usize {
                 core::mem::size_of::<Self>()
+            }
+
+            fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+                let mut bytes = [0u8; core::mem::size_of::<Self>()];
+                unpacker.unpack_bytes(&mut bytes)?;
+                Ok(Self::from_le_bytes(bytes))
             }
         }
     };
@@ -76,12 +76,12 @@ impl Packable for usize {
         (*self as u64).pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
-        Ok(unpacker.unpack_infallible::<u64>().map_err(UnpackError::Unpacker)? as usize)
-    }
-
     fn packed_len(&self) -> usize {
         core::mem::size_of::<u64>()
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+        Ok(unpacker.unpack_infallible::<u64>().map_err(UnpackError::Unpacker)? as usize)
     }
 }
 
@@ -100,12 +100,12 @@ impl Packable for isize {
         (*self as i64).pack(packer)
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
-        Ok(unpacker.unpack_infallible::<i64>().map_err(UnpackError::Unpacker)? as isize)
-    }
-
     fn packed_len(&self) -> usize {
         core::mem::size_of::<i64>()
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+        Ok(unpacker.unpack_infallible::<i64>().map_err(UnpackError::Unpacker)? as isize)
     }
 }
 
@@ -117,13 +117,13 @@ impl Packable for bool {
         (*self as u8).pack(packer)
     }
 
+    fn packed_len(&self) -> usize {
+        core::mem::size_of::<u8>()
+    }
+
     /// Booleans are unpacked if the byte used to represent them is non-zero.
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
         Ok(unpacker.unpack_infallible::<u8>().map_err(UnpackError::Unpacker)? != 0)
-    }
-
-    fn packed_len(&self) -> usize {
-        core::mem::size_of::<u8>()
     }
 }
 
@@ -151,6 +151,14 @@ impl<T: Packable> Packable for Option<T> {
         }
     }
 
+    fn packed_len(&self) -> usize {
+        0u8.packed_len()
+            + match self {
+                Some(item) => item.packed_len(),
+                None => 0,
+            }
+    }
+
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
         match unpacker.unpack_infallible::<u8>()? {
             0 => Ok(None),
@@ -159,14 +167,6 @@ impl<T: Packable> Packable for Option<T> {
             )),
             n => Err(UnpackError::Packable(Self::Error::UnknownTag(n))),
         }
-    }
-
-    fn packed_len(&self) -> usize {
-        0u8.packed_len()
-            + match self {
-                Some(item) => item.packed_len(),
-                None => 0,
-            }
     }
 }
 
@@ -179,6 +179,10 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
         }
 
         Ok(())
+    }
+
+    fn packed_len(&self) -> usize {
+        self.iter().map(T::packed_len).sum::<usize>()
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
@@ -203,10 +207,6 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
         // when stabilized.
         Ok(unsafe { (&array as *const [MaybeUninit<T>; N] as *const Self).read() })
     }
-
-    fn packed_len(&self) -> usize {
-        self.iter().map(T::packed_len).sum::<usize>()
-    }
 }
 
 impl<T: Packable> Packable for Vec<T> {
@@ -223,6 +223,10 @@ impl<T: Packable> Packable for Vec<T> {
         Ok(())
     }
 
+    fn packed_len(&self) -> usize {
+        0usize.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
+    }
+
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
         // The length of any dynamically-sized sequence must be prefixed.
         let len = unpacker.unpack_infallible::<usize>().map_err(UnpackError::Unpacker)?;
@@ -235,10 +239,6 @@ impl<T: Packable> Packable for Vec<T> {
         }
 
         Ok(vec)
-    }
-
-    fn packed_len(&self) -> usize {
-        0usize.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
     }
 }
 
@@ -256,11 +256,11 @@ impl<T: Packable> Packable for Box<[T]> {
         Ok(())
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
-        Ok(Vec::<T>::unpack(unpacker)?.into_boxed_slice())
-    }
-
     fn packed_len(&self) -> usize {
         0usize.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+        Ok(Vec::<T>::unpack(unpacker)?.into_boxed_slice())
     }
 }

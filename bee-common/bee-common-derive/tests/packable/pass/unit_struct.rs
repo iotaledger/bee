@@ -16,4 +16,3 @@ pub struct Unit;
 pub struct RoundUnit();
 
 fn main() {}
-

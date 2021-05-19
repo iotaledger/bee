@@ -142,6 +142,7 @@ impl Fragments {
             packed_len,
             unpack,
         } = self;
+
         // Following the example from `new` and assuming that the tag for this variant is `tag` and
         // the type of the tag is `W`. This would be
         // ```
