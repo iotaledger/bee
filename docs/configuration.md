@@ -8,23 +8,23 @@ For Example: `bee -c config_example.toml`
 
 [//]: # "Table of contents created with: http://ecotrust-canada.github.io/markdown-toc/"
 
-- [1. Logger](#1-logger)
+- [Logger](#logger)
   * [outputs](#outputs)
-- [2. Network](#2-network)
+- [Network](#network)
     + [peering](#peering)
-- [3. Protocol](#3-protocol)
+- [Protocol](#protocol)
   * [coordinator](#coordinator)
     + [public_key_ranges](#public-key-ranges)
   * [workers](#workers)
-- [4. REST API](#4-rest-api)
-- [5. Snapshot](#5-snapshot)
-- [6. Pruning](#6-pruning)
-- [7. Storage](#7-storage)
-  * [storage](#storage)
+- [Rest_api](#rest-api)
+- [Snapshot](#snapshot)
+- [Pruning](#pruning)
+- [Storage](#storage)
+  * [storage](#storage-1)
   * [env](#env)
-- [8. Tangle](#8-tangle)
-- [9. Mqtt](#9-mqtt)
-- [10. Dashboard](#10-dashboard)
+- [Tangle](#tangle)
+- [Mqtt](#mqtt)
+- [Dashboard](#dashboard)
   * [auth](#auth)
 
 ---
@@ -36,7 +36,7 @@ For Example: `bee -c config_example.toml`
 | bech32_hrp | network address identifier                                                                 | string |
 | network_id | network identifier                                                                         | string |
 
-## 1. Logger
+## Logger
 
 | Name                | Description                          | Type           |
 | :------------------ | :----------------------------------- | :------------- |
@@ -69,7 +69,7 @@ name           = "error.log"
 level_filter   = "error"
 ```
 
-## 2. Network
+## Network
 
 | Name                    | Description                                                 | Type              |
 | :---------------------- | :---------------------------------------------------------- | :---------------- |
@@ -105,7 +105,7 @@ address = "/dns/example.com/tcp/15600/p2p/PeerID"
 alias   = "yet another peer"
 ```
 
-## 3. Protocol
+## Protocol
 
 | Name                        | Description           | Type         |
 | :-------------------------- | :-------------------- | :----------- |
@@ -162,7 +162,7 @@ status_interval = 10
 ms_sync_count = 200
 ```
 
-## 4. REST API
+## Rest_api
 
 | Name                              | Description                       | Type             |
 | :-------------------------------- | :-------------------------------- | :--------------- |
@@ -215,7 +215,7 @@ allowed_ips = [
 white_flag_solidification_timeout = 2
 ```
 
-## 5. Snapshot
+## Snapshot
 
 | Name              | Description                                                                                | Type             |
 | :---------------- | :----------------------------------------------------------------------------------------- | :--------------- |
@@ -240,7 +240,7 @@ interval_synced   = 50
 interval_unsynced = 1000
 ```
 
-## 6. Pruning
+## Pruning
 
 | Name           | Description                                           | Type         |
 | :------------- | :---------------------------------------------------- | :----------- |
@@ -257,7 +257,7 @@ delay           = 60480
 prune_receipts  = false
 ```
 
-## 7. Storage
+## Storage
 
 | Name                                       | Description          | Type           |
 | :----------------------------------------- | :------------------- | :------------- |
@@ -340,7 +340,7 @@ set_background_threads = 4 # defaults to the number of cpu cores
 set_high_priority_background_threads = 2
 ```
 
-## 8. Tangle
+## Tangle
 
 | Name            | Description | Type   |
 | :-------------- | :---------- | :----- |
@@ -352,7 +352,7 @@ Example
 below_max_depth = 15
 ```
 
-## 9. Mqtt
+## Mqtt
 
 | Name    | Description | Type   |
 | :------ | :---------- | :----- |
@@ -365,7 +365,7 @@ Example:
 address = "tcp://localhost:1883"
 ```
 
-## 10. Dashboard
+## Dashboard
 
 | Name | Description    | Type         |
 | :--- | :------------- | :----------- |
