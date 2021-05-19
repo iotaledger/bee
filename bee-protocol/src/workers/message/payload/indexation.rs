@@ -30,7 +30,7 @@ pub(crate) struct IndexationPayloadWorker {
 }
 
 async fn process<B: StorageBackend>(tangle: &MsTangle<B>, storage: &B, metrics: &NodeMetrics, message_id: MessageId) {
-    if let Some(message) = tangle.get(&message_id).await.map(|m| (*m).clone()) {
+    if let Some(message) = tangle.get(&message_id).await {
         let indexation = match message.payload() {
             Some(Payload::Indexation(indexation)) => indexation,
             Some(Payload::Transaction(transaction)) => {

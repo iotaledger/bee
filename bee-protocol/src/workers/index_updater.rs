@@ -72,12 +72,10 @@ where
 }
 
 async fn process<B: StorageBackend>(tangle: &MsTangle<B>, milestone: Milestone, index: MilestoneIndex) {
-    let message_id = milestone.message_id();
-
     if let Some(parents) = tangle
-        .get(message_id)
+        .get(milestone.message_id())
         .await
-        .map(|message| message.parents().iter().copied().collect())
+        .map(|message| message.parents().to_vec())
     {
         // Update the past cone of this milestone by setting its milestone index, and return them.
         let roots = update_past_cone(tangle, parents, index).await;
@@ -129,13 +127,10 @@ async fn update_past_cone<B: StorageBackend>(
             })
             .await;
 
-        if let Some(mut grand_parents) = tangle
+        tangle
             .get(&parent_id)
             .await
-            .map(|parent| parent.parents().iter().copied().collect())
-        {
-            parents.append(&mut grand_parents);
-        }
+            .map(|parent| parents.extend_from_slice(parent.parents()));
 
         // Preferably we would only collect the 'root messages/transactions'. They are defined as being confirmed by
         // a milestone, but at least one of their children is not confirmed yet. One can think of them as an attachment

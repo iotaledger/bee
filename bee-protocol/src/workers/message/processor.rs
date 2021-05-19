@@ -142,13 +142,8 @@ where
 
                         // TODO should be passed by the hasher worker ?
                         let (message_id, _) = message.id();
-
                         let metadata = MessageMetadata::arrived();
-
-                        // TODO try to avoid that
-                        let parents = message.parents().iter().copied().collect::<Vec<MessageId>>();
-
-                        // store message
+                        let parents = message.parents().to_vec();
                         let inserted = tangle.insert(message, message_id, metadata).await.is_some();
 
                         if !inserted {
@@ -166,22 +161,6 @@ where
                         if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
                             error!("Failed to send message id {} to propagator: {:?}.", message_id, e);
                         }
-
-                        bus.dispatch(MessageProcessed { message_id });
-
-                        // TODO: boolean values are false at this point in time? trigger event from another location?
-                        bus.dispatch(VertexCreated {
-                            message_id,
-                            parent_message_ids: parents.clone(),
-                            is_solid: false,
-                            is_referenced: false,
-                            is_conflicting: false,
-                            is_milestone: false,
-                            is_tip: false,
-                            is_selected: false,
-                        });
-
-                        metrics.new_messages_inc();
 
                         match requested_messages.remove(&message_id).await {
                             Some((index, instant)) => {
@@ -231,6 +210,22 @@ where
                                 error!("Failed to send message id: {:?}.", e);
                             }
                         }
+
+                        bus.dispatch(MessageProcessed { message_id });
+
+                        // TODO: boolean values are false at this point in time? trigger event from another location?
+                        bus.dispatch(VertexCreated {
+                            message_id,
+                            parent_message_ids: parents,
+                            is_solid: false,
+                            is_referenced: false,
+                            is_conflicting: false,
+                            is_milestone: false,
+                            is_tip: false,
+                            is_selected: false,
+                        });
+
+                        metrics.new_messages_inc();
                     }
                 });
             }

@@ -37,7 +37,7 @@ async fn process<B: StorageBackend>(
     milestone_payload_worker: &mpsc::UnboundedSender<MilestonePayloadWorkerEvent>,
     indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
 ) {
-    if let Some(message) = tangle.get(&message_id).await.map(|m| (*m).clone()) {
+    if let Some(message) = tangle.get(&message_id).await {
         match message.payload() {
             Some(Payload::Transaction(_)) => {
                 if let Err(e) = transaction_payload_worker.send(TransactionPayloadWorkerEvent(message_id)) {

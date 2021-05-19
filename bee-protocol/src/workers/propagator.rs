@@ -38,14 +38,9 @@ async fn propagate<B: StorageBackend>(
             continue 'outer;
         }
 
-        // TODO Copying parents to avoid double locking, will be refactored.
-        if let Some(parents) = tangle
-            .get(&message_id)
-            .await
-            .map(|message| message.parents().iter().copied().collect::<Vec<MessageId>>())
-        {
+        if let Some(message) = tangle.get(&message_id).await {
             // If one of the parents is not yet solid, we skip the current message.
-            for parent in parents.iter() {
+            for parent in message.parents().iter() {
                 if !tangle.is_solid_message(parent).await {
                     continue 'outer;
                 }
@@ -61,7 +56,7 @@ async fn propagate<B: StorageBackend>(
             let mut parent_omrsis = Vec::new();
             let mut parent_ymrsis = Vec::new();
 
-            for parent in parents.iter() {
+            for parent in message.parents().iter() {
                 let (parent_omrsi, parent_ymrsi) = match tangle
                     .get_solid_entry_point_index(SolidEntryPoint::ref_cast(&parent))
                     .await
@@ -109,7 +104,10 @@ async fn propagate<B: StorageBackend>(
             }
 
             // Send child to the tip pool.
-            if let Err(e) = solidified_tx.send((*message_id, parents, ms_index_maybe)).await {
+            if let Err(e) = solidified_tx
+                .send((*message_id, message.parents().to_vec(), ms_index_maybe))
+                .await
+            {
                 warn!("Failed to send message to the tip pool. Cause: {:?}", e);
             }
         }
