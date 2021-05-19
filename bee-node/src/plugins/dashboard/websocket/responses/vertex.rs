@@ -6,7 +6,7 @@ use crate::plugins::dashboard::websocket::{
     topics::WsTopic,
 };
 
-use bee_protocol::workers::event::NewVertex;
+use bee_protocol::workers::event::VertexCreated;
 
 use serde::Serialize;
 
@@ -22,17 +22,17 @@ pub(crate) struct VertexResponse {
     is_selected: bool,
 }
 
-impl From<NewVertex> for WsEvent {
-    fn from(event: NewVertex) -> Self {
+impl From<VertexCreated> for WsEvent {
+    fn from(event: VertexCreated) -> Self {
         Self::new(WsTopic::Vertex, WsEventInner::Vertex(event.into()))
     }
 }
 
-impl From<NewVertex> for VertexResponse {
-    fn from(event: NewVertex) -> Self {
+impl From<VertexCreated> for VertexResponse {
+    fn from(event: VertexCreated) -> Self {
         Self {
-            id: event.id,
-            parents: event.parent_ids,
+            id: event.message_id.to_string(),
+            parents: event.parent_message_ids.iter().map(|p| p.to_string()).collect(),
             is_solid: event.is_solid,
             is_referenced: event.is_referenced,
             is_conflicting: event.is_conflicting,

@@ -28,7 +28,7 @@ use crate::{
 
 use bee_ledger::workers::event::MilestoneConfirmed;
 use bee_protocol::workers::{
-    event::{MessageSolidified, MpsMetricsUpdated, NewVertex, TipAdded, TipRemoved},
+    event::{MessageSolidified, MpsMetricsUpdated, TipAdded, TipRemoved, VertexCreated},
     MetricsWorker, PeerManagerResWorker,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
@@ -150,7 +150,7 @@ where
             <WsEvent as From<MessageSolidified>>::from,
         );
         topic_handler(node, "MilestoneInfo", &users, false, milestone_info::forward);
-        topic_handler(node, "Vertex", &users, true, <WsEvent as From<NewVertex>>::from);
+        topic_handler(node, "Vertex", &users, true, <WsEvent as From<VertexCreated>>::from);
         topic_handler(
             node,
             "MilestoneConfirmed",

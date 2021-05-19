@@ -5,7 +5,7 @@ use crate::{
     types::metrics::NodeMetrics,
     workers::{
         config::ProtocolConfig,
-        event::{MessageProcessed, NewVertex},
+        event::{MessageProcessed, VertexCreated},
         helper,
         packets::MessagePacket,
         peer::PeerManager,
@@ -170,9 +170,9 @@ where
                         bus.dispatch(MessageProcessed { message_id });
 
                         // TODO: boolean values are false at this point in time? trigger event from another location?
-                        bus.dispatch(NewVertex {
-                            id: message_id.to_string(),
-                            parent_ids: parents.iter().map(|p| p.to_string()).collect(),
+                        bus.dispatch(VertexCreated {
+                            message_id,
+                            parent_message_ids: parents.clone(),
                             is_solid: false,
                             is_referenced: false,
                             is_conflicting: false,

@@ -21,7 +21,7 @@ impl From<TipAdded> for WsEvent {
         Self::new(
             WsTopic::TipInfo,
             WsEventInner::TipInfo(TipInfoResponse {
-                id: event.tip.to_string(),
+                id: event.message_id.to_string(),
                 is_tip: true,
             }),
         )
@@ -33,7 +33,7 @@ impl From<TipRemoved> for WsEvent {
         Self::new(
             WsTopic::TipInfo,
             WsEventInner::TipInfo(TipInfoResponse {
-                id: event.tip.to_string(),
+                id: event.message_id.to_string(),
                 is_tip: false,
             }),
         )
