@@ -1,5 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+extern crate alloc;
+
+use super::unpacker::SliceUnpacker;
+
+use alloc::vec::Vec;
+use core::convert::Infallible;
 
 /// A type that can pack any value that implements `Packable`.
 pub trait Packer {
@@ -8,4 +14,34 @@ pub trait Packer {
 
     /// Pack a sequence of bytes into the `Packer`.
     fn pack_bytes(&mut self, bytes: &[u8]) -> Result<(), Self::Error>;
+}
+
+#[derive(Default)]
+/// A `Packer` backed by a `Vec<u8>`.
+pub struct VecPacker(Vec<u8>);
+
+impl VecPacker {
+    /// Use the backing `Vec<u8>` to create an `Unpacker`.
+    pub fn as_slice(&self) -> SliceUnpacker<'_> {
+        SliceUnpacker::new(self.0.as_slice())
+    }
+
+    /// Return the number of packed bytes.
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Return `true` if no bytes have been packed yet.
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+impl Packer for VecPacker {
+    type Error = Infallible;
+
+    fn pack_bytes(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
+        self.0.extend_from_slice(bytes);
+        Ok(())
+    }
 }

@@ -2,52 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 extern crate alloc;
 
-use bee_common::packable::{Packable, Packer, Unpacker};
+use bee_common::packable::{Packable, VecPacker};
 
 use alloc::vec::Vec;
-use core::{convert::Infallible, fmt::Debug, mem::size_of};
+use core::{fmt::Debug, mem::size_of};
 
-#[derive(Default)]
-struct VecPacker(Vec<u8>);
-
-impl Packer for VecPacker {
-    type Error = Infallible;
-
-    fn pack_bytes(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
-        self.0.extend_from_slice(bytes);
-        Ok(())
-    }
-}
-
-impl VecPacker {
-    fn as_slice(&self) -> SliceUnpacker<'_> {
-        SliceUnpacker(self.0.as_slice())
-    }
-}
-
-struct SliceUnpacker<'u>(&'u [u8]);
-
-#[derive(Debug)]
-struct UnexpectedEOF;
-
-impl<'u> Unpacker for SliceUnpacker<'u> {
-    type Error = UnexpectedEOF;
-
-    fn unpack_bytes(&mut self, slice: &mut [u8]) -> Result<(), Self::Error> {
-        let len = slice.len();
-
-        if self.0.len() >= len {
-            let (head, tail) = self.0.split_at(len);
-            self.0 = tail;
-            slice.copy_from_slice(head);
-            Ok(())
-        } else {
-            Err(UnexpectedEOF)
-        }
-    }
-}
-
-fn pack_checked<P>(value: P) -> Vec<u8>
+fn pack_checked<P>(value: P) -> VecPacker
 where
     P: Packable + Eq + Debug,
     P::Error: Debug,
@@ -57,10 +17,10 @@ where
 
     let result = Packable::unpack(&mut packer.as_slice()).unwrap();
 
-    assert_eq!(value.packed_len(), packer.0.len());
+    assert_eq!(value.packed_len(), packer.len());
     assert_eq!(value, result);
 
-    packer.0
+    packer
 }
 
 macro_rules! impl_packable_test_for_num {

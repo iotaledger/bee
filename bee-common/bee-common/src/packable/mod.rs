@@ -15,8 +15,8 @@ use alloc::{boxed::Box, vec::Vec};
 use core::convert::Infallible;
 
 pub use error::{UnknownTagError, UnpackError};
-pub use packer::Packer;
-pub use unpacker::Unpacker;
+pub use packer::{Packer, VecPacker};
+pub use unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker};
 
 pub use bee_common_derive::Packable;
 
