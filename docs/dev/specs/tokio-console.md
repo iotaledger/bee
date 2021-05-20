@@ -2,7 +2,7 @@
 The `bee-node` crate now includes a `console` feature, which can help with debugging and providing diagnostics for the multiple async tasks that Bee is executing at any given time. Building with this feature enabled and running a separate executable will provide realtime diagnostics in your terminal. 
 
 # What is it?
-The `console` feature provides instrumentation on all tasks spawned in the `BeeNode::spawn` method, and aggregates information provided by this insrumentation in a "subscriber", that allows logging and further processing. This is extremely useful for Bee particularly, since it makes use of a task-heavy architecture that can be difficult to debug and diagnose: having real-time task diagnostics should help to alleviate this.
+The `console` feature provides instrumentation on all tasks spawned in the `BeeNode::spawn` method, and aggregates information provided by this instrumentation in a "subscriber", that allows logging and further processing. This is extremely useful for Bee particularly, since it makes use of a task-heavy architecture that can be difficult to debug and diagnose: having real-time task diagnostics should help to alleviate this.
 
 `tokio-console` provides the following statistics for each worker task:
 
