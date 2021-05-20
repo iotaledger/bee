@@ -11,7 +11,7 @@ use crate::{
 };
 
 use bee_message::{
-    milestone::{Milestone, MilestoneIndex},
+    milestone::Milestone,
     payload::{
         milestone::{MilestonePayload, MilestoneValidationError},
         Payload,
@@ -45,11 +45,11 @@ pub(crate) struct MilestonePayloadWorker {
 }
 
 async fn validate(
+    message_id: MessageId,
     message: &Message,
     milestone: &MilestonePayload,
     key_manager: &MilestoneKeyManager,
-    message_id: MessageId,
-) -> Result<(MilestoneIndex, Milestone), Error> {
+) -> Result<Milestone, Error> {
     if !message.parents().eq(milestone.essence().parents()) {
         return Err(Error::MessageMilestoneParentsMismatch);
     }
@@ -64,10 +64,7 @@ async fn validate(
         )
         .map_err(Error::InvalidMilestone)?;
 
-    Ok((
-        milestone.essence().index(),
-        Milestone::new(message_id, milestone.essence().timestamp()),
-    ))
+    Ok(Milestone::new(message_id, milestone.essence().timestamp()))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -83,22 +80,24 @@ async fn process<B: StorageBackend>(
     bus: &Bus<'static>,
 ) {
     if let Some(Payload::Milestone(milestone)) = message.payload() {
-        if milestone.essence().index() <= tangle.get_solid_milestone_index() {
+        metrics.milestone_payloads_inc(1);
+
+        let index = milestone.essence().index();
+
+        if index <= tangle.get_solid_milestone_index() {
             return;
         }
-        match validate(&message, &milestone, &key_manager, message_id).await {
-            Ok((index, milestone)) => {
+
+        match validate(message_id, &message, &milestone, &key_manager).await {
+            Ok(milestone) => {
                 tangle.add_milestone(index, milestone.clone()).await;
                 if index > tangle.get_latest_milestone_index() {
-                    info!("New milestone {} {}.", *index, milestone.message_id());
+                    info!("New milestone {} {}.", index, milestone.message_id());
                     tangle.update_latest_milestone_index(index);
 
                     helper::broadcast_heartbeat(&peer_manager, &metrics, tangle).await;
 
-                    bus.dispatch(LatestMilestoneChanged {
-                        index,
-                        milestone: milestone.clone(),
-                    });
+                    bus.dispatch(LatestMilestoneChanged { index, milestone });
                 } else {
                     debug!("New milestone {} {}.", *index, milestone.message_id());
                 }
@@ -109,13 +108,14 @@ async fn process<B: StorageBackend>(
                     error!("Sending solidification event failed: {}.", e);
                 }
             }
-            Err(e) => debug!("Invalid milestone message: {:?}.", e),
+            Err(e) => debug!("Invalid milestone message {}: {:?}.", message_id, e),
         }
     } else {
-        error!("No milestone payload in message {}.", message_id);
+        error!(
+            "Missing or invalid payload for message {}: expected milestone payload.",
+            message_id
+        );
     }
-
-    metrics.milestone_payloads_inc(1);
 }
 
 #[async_trait]

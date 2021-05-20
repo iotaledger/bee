@@ -36,26 +36,36 @@ async fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_
         Some(Payload::Indexation(indexation)) => indexation,
         Some(Payload::Transaction(transaction)) => {
             let Essence::Regular(essence) = transaction.essence();
+
             if let Some(Payload::Indexation(indexation)) = essence.payload() {
                 indexation
             } else {
-                error!("Missing indexation payload for {}.", message_id);
+                error!(
+                    "Missing or invalid payload for message {}: expected indexation payload.",
+                    message_id
+                );
                 return;
             }
         }
         _ => {
-            error!("Missing indexation payload for {}.", message_id);
+            error!(
+                "Missing or invalid payload for message {}: expected indexation payload.",
+                message_id
+            );
             return;
         }
     };
 
+    metrics.indexation_payload_inc(1);
+
     if let Err(e) =
         Insert::<(PaddedIndex, MessageId), ()>::insert(&*storage, &(indexation.padded_index(), message_id), &()).await
     {
-        error!("Inserting indexation payload for {} failed: {:?}.", message_id, e);
+        error!(
+            "Inserting indexation payload for message {} failed: {:?}.",
+            message_id, e
+        );
     }
-
-    metrics.indexation_payload_inc(1);
 }
 
 #[async_trait]
