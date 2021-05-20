@@ -206,6 +206,7 @@ fn delete_indexation_data<S: StorageBackend>(
     Ok(())
 }
 
+#[allow(dead_code)]
 pub async fn add_unconfirmed_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
@@ -231,7 +232,7 @@ pub async fn add_unconfirmed_data<S: StorageBackend>(
     Ok((num_messages, num_edges, num_indexations))
 }
 
-/// Get the unconfirmed/unreferenced messages.
+#[allow(dead_code)]
 async fn add_unconfirmed_data_by_index<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
