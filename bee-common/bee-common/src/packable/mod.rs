@@ -81,7 +81,7 @@ impl Packable for usize {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
-        Ok(unpacker.unpack_infallible::<u64>().map_err(UnpackError::Unpacker)? as usize)
+        Ok(u64::unpack(unpacker).map_err(UnpackError::infallible)? as usize)
     }
 }
 
@@ -105,7 +105,7 @@ impl Packable for isize {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
-        Ok(unpacker.unpack_infallible::<i64>().map_err(UnpackError::Unpacker)? as isize)
+        Ok(i64::unpack(unpacker).map_err(UnpackError::infallible)? as isize)
     }
 }
 
@@ -123,23 +123,29 @@ impl Packable for bool {
 
     /// Booleans are unpacked if the byte used to represent them is non-zero.
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
-        Ok(unpacker.unpack_infallible::<u8>().map_err(UnpackError::Unpacker)? != 0)
+        Ok(u8::unpack(unpacker).map_err(UnpackError::infallible)? != 0)
     }
 }
 
 /// Error type raised when a semantic error occurs while unpacking an option.
 #[derive(Debug)]
-pub enum UnpackOptionError<T: Packable> {
+pub enum UnpackOptionError<E> {
     /// The tag found while unpacking is not valid.
     UnknownTag(u8),
     /// A semantic error for the underlying type was raised.
-    Inner(T::Error),
+    Inner(E),
+}
+
+impl<E> From<E> for UnpackOptionError<E> {
+    fn from(err: E) -> Self {
+        Self::Inner(err)
+    }
 }
 
 /// Options are packed and unpacked using `0u8` as the prefix for `None` and `1u8` as the prefix
 /// for `Some`.
 impl<T: Packable> Packable for Option<T> {
-    type Error = UnpackOptionError<T>;
+    type Error = UnpackOptionError<T::Error>;
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
         match self {
@@ -160,11 +166,9 @@ impl<T: Packable> Packable for Option<T> {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
-        match unpacker.unpack_infallible::<u8>()? {
+        match u8::unpack(unpacker).map_err(UnpackError::infallible)? {
             0 => Ok(None),
-            1 => Ok(Some(
-                T::unpack(unpacker).map_err(|err| err.map(UnpackOptionError::Inner))?,
-            )),
+            1 => Ok(Some(T::unpack(unpacker).map_err(|err| err.coerce())?)),
             n => Err(UnpackError::Packable(Self::Error::UnknownTag(n))),
         }
     }
@@ -229,7 +233,7 @@ impl<T: Packable> Packable for Vec<T> {
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
         // The length of any dynamically-sized sequence must be prefixed.
-        let len = unpacker.unpack_infallible::<usize>().map_err(UnpackError::Unpacker)?;
+        let len = usize::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         let mut vec = Self::with_capacity(len);
 

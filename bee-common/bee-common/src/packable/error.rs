@@ -33,6 +33,16 @@ impl<T, U> From<U> for UnpackError<T, U> {
     }
 }
 
+impl<U> UnpackError<Infallible, U> {
+    /// Coerce the value if the `Packable` variant is `Infallible`.
+    pub fn infallible<E>(self) -> UnpackError<E, U> {
+        match self {
+            Self::Packable(err) => match err {},
+            Self::Unpacker(err) => UnpackError::Unpacker(err),
+        }
+    }
+}
+
 /// Error type raised when an unknown tag is found while unpacking.
 #[derive(Debug)]
 pub struct UnknownTagError<T>(pub T);

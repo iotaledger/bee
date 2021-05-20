@@ -3,7 +3,7 @@
 
 #![allow(unused_imports)]
 
-use bee_common::packable::{Packable, Packer, Unpacker, UnpackError, UnknownTagError};
+use bee_common::packable::{Packable, Packer, UnknownTagError, UnpackError, Unpacker};
 
 use core::convert::Infallible;
 
@@ -23,7 +23,7 @@ impl Packable for Picky {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
-        let value = unpacker.unpack_infallible::<u8>()?;
+        let value = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         if value == 42 {
             Ok(Self(value))

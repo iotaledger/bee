@@ -284,7 +284,7 @@ pub(crate) fn gen_bodies_for_enum(
             }
         },
         quote! {
-            match unpacker.unpack_infallible::<#tag_ty>()? {
+            match <#tag_ty>::unpack(unpacker).map_err(bee_common::packable::UnpackError::infallible)? {
                 #(#unpack_branches,) *
                 tag => Err(bee_common::packable::UnpackError::Packable(bee_common::packable::UnknownTagError(tag).into()))
             }
