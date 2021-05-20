@@ -1,9 +1,34 @@
 # `console` feature
-The `bee-node` crate now includes a `console` feature, which can help with debugging and providing diagnostics for the multiple async tasks that Bee is executing at any given time. Building with this feature enabled and running a separate executable will provide realtime diagnostics in your terminal.
+The `bee-node` crate now includes a `console` feature, which can help with debugging and providing diagnostics for the multiple async tasks that Bee is executing at any given time. Building with this feature enabled and running a separate executable will provide realtime diagnostics in your terminal. 
+
+# What is it?
+The `console` feature provides instrumentation on all tasks spawned in the `BeeNode::spawn` method, and aggregates information provided by this insrumentation in a "subscriber", that allows logging and further processing. This is extremely useful for Bee particularly, since it makes use of a task-heavy architecture that can be difficult to debug and diagnose: having real-time task diagnostics should help to alleviate this.
+
+`tokio-console` provides the following statistics for each worker task:
+
+ - Total execution time (time since task spawn)
+ - Total "idle" time (time spent `await`ing, blocked, etc)
+ - Total "busy" time ("total" - "idle")
+ - Customisable fields, represented as a string
+
+Here, we add the file and line of the calling function to the task fields, so that we can determine which particular worker has spawned a task. As mentioned above, additional information can be added with the `span` macro from the `tracing` crate:
+
+```rust
+// Creates a span with the name "task" and fields "file", "line", "content", and "extra".
+let _span = span!(
+    "task", 
+    file = file!(), 
+    line = line!(), 
+    content = "example field", 
+    extra = "extra field"
+);
+```
+
+`tokio-console` is interactive, and continually updates as your process runs:
+
+![Capture](https://user-images.githubusercontent.com/22496597/118669528-bb279e00-b7ed-11eb-88a6-e8f535643fdd.PNG)
 
 **Note**: `tokio-console` is highly unstable, so this feature may be very changeable.
-
-
 
 # How do I use it?
 To build/run with the instrumentation, make sure the `console` feature is enabled:
