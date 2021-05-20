@@ -12,7 +12,7 @@ use bee_message::{
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_storage::access::Insert;
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::MessageRef;
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -22,38 +22,40 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible};
 
-#[derive(Debug)]
-pub(crate) struct IndexationPayloadWorkerEvent(pub(crate) MessageId);
+pub(crate) struct IndexationPayloadWorkerEvent {
+    pub(crate) message_id: MessageId,
+    pub(crate) message: MessageRef,
+}
 
 pub(crate) struct IndexationPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
 }
 
-async fn process<B: StorageBackend>(tangle: &MsTangle<B>, storage: &B, metrics: &NodeMetrics, message_id: MessageId) {
-    if let Some(message) = tangle.get(&message_id).await {
-        let indexation = match message.payload() {
-            Some(Payload::Indexation(indexation)) => indexation,
-            Some(Payload::Transaction(transaction)) => {
-                let Essence::Regular(essence) = transaction.essence();
-                if let Some(Payload::Indexation(indexation)) = essence.payload() {
-                    indexation
-                } else {
-                    return;
-                }
+async fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: MessageId, message: MessageRef) {
+    let indexation = match message.payload() {
+        Some(Payload::Indexation(indexation)) => indexation,
+        Some(Payload::Transaction(transaction)) => {
+            let Essence::Regular(essence) = transaction.essence();
+            if let Some(Payload::Indexation(indexation)) = essence.payload() {
+                indexation
+            } else {
+                error!("Missing indexation payload for {}.", message_id);
+                return;
             }
-            _ => return,
-        };
-
-        metrics.indexation_payload_inc(1);
-
-        let index = indexation.padded_index();
-
-        if let Err(e) = Insert::<(PaddedIndex, MessageId), ()>::insert(&*storage, &(index, message_id), &()).await {
-            error!("Inserting indexation payload failed: {:?}.", e);
         }
-    } else {
-        error!("Missing message {}.", message_id);
+        _ => {
+            error!("Missing indexation payload for {}.", message_id);
+            return;
+        }
+    };
+
+    if let Err(e) =
+        Insert::<(PaddedIndex, MessageId), ()>::insert(&*storage, &(indexation.padded_index(), message_id), &()).await
+    {
+        error!("Inserting indexation payload for {} failed: {:?}.", message_id, e);
     }
+
+    metrics.indexation_payload_inc(1);
 }
 
 #[async_trait]
@@ -66,12 +68,11 @@ where
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![TypeId::of::<TangleWorker>(), TypeId::of::<MetricsWorker>()].leak()
+        vec![TypeId::of::<MetricsWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
-        let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
         let metrics = node.resource::<NodeMetrics>();
 
@@ -80,8 +81,8 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(IndexationPayloadWorkerEvent(message_id)) = receiver.next().await {
-                process(&tangle, &storage, &metrics, message_id).await;
+            while let Some(IndexationPayloadWorkerEvent { message_id, message }) = receiver.next().await {
+                process(&*storage, &metrics, message_id, message).await;
             }
 
             // Before the worker completely stops, the receiver needs to be drained for indexation payloads to be
@@ -90,8 +91,9 @@ where
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
-            while let Some(Some(IndexationPayloadWorkerEvent(message_id))) = receiver.next().now_or_never() {
-                process(&tangle, &storage, &metrics, message_id).await;
+            while let Some(Some(IndexationPayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never()
+            {
+                process(&*storage, &metrics, message_id, message).await;
                 count += 1;
             }
 

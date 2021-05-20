@@ -24,7 +24,7 @@ use bee_tangle::{metadata::MessageMetadata, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{channel::oneshot::Sender, stream::StreamExt};
-use log::{error, info, trace, warn};
+use log::{error, info, trace};
 use tokio::{sync::mpsc, task};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
@@ -143,10 +143,10 @@ where
                         // TODO should be passed by the hasher worker ?
                         let (message_id, _) = message.id();
                         let metadata = MessageMetadata::arrived();
-                        let parents = message.parents().to_vec();
-                        let inserted = tangle.insert(message, message_id, metadata).await.is_some();
 
-                        if !inserted {
+                        let message = if let Some(message) = tangle.insert(message, message_id, metadata).await {
+                            message
+                        } else {
                             metrics.known_messages_inc();
                             if let Some(ref peer_id) = from {
                                 peer_manager
@@ -155,7 +155,7 @@ where
                                     .map(|peer| (*peer).0.metrics().known_messages_inc());
                             }
                             continue;
-                        }
+                        };
 
                         // Send the propagation event ASAP to allow the propagator to do its thing
                         if let Err(e) = propagator.send(PropagatorWorkerEvent(message_id)) {
@@ -170,7 +170,7 @@ where
                                 latency_sum += (Instant::now() - instant).as_millis() as u64;
                                 metrics.messages_average_latency_set(latency_sum / latency_num);
 
-                                for parent in parents.iter() {
+                                for parent in message.parents().iter() {
                                     helper::request_message(
                                         &tangle,
                                         &message_requester,
@@ -187,7 +187,7 @@ where
                                     source: from,
                                     message: message_packet,
                                 }) {
-                                    warn!("Broadcasting message failed: {}.", e);
+                                    error!("Broadcasting message failed: {}.", e);
                                 }
                                 if let Err(e) =
                                     unreferenced_inserted_worker.send(UnreferencedMessageInserterWorkerEvent(
@@ -195,14 +195,16 @@ where
                                         tangle.get_latest_milestone_index(),
                                     ))
                                 {
-                                    warn!("Sending message to unreferenced inserter failed: {}.", e);
+                                    error!("Sending message to unreferenced inserter failed: {}.", e);
                                 }
                             }
                         };
 
-                        if let Err(e) = payload_worker.send(PayloadWorkerEvent(message_id)) {
-                            warn!("Sending message id {} to payload worker failed: {:?}.", message_id, e);
-                        } else {
+                        if let Err(_) = payload_worker.send(PayloadWorkerEvent {
+                            message_id,
+                            message: message.clone(),
+                        }) {
+                            error!("Sending message {} to payload worker failed.", message_id);
                         }
 
                         if let Some(notifier) = notifier {
@@ -216,7 +218,7 @@ where
                         // TODO: boolean values are false at this point in time? trigger event from another location?
                         bus.dispatch(VertexCreated {
                             message_id,
-                            parent_message_ids: parents,
+                            parent_message_ids: message.parents().to_vec(),
                             is_solid: false,
                             is_referenced: false,
                             is_conflicting: false,

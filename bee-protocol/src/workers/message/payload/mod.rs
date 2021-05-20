@@ -13,7 +13,7 @@ use crate::workers::storage::StorageBackend;
 
 use bee_message::{payload::Payload, MessageId};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::MessageRef;
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -23,50 +23,48 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible};
 
-#[derive(Debug)]
-pub(crate) struct PayloadWorkerEvent(pub(crate) MessageId);
+pub(crate) struct PayloadWorkerEvent {
+    pub(crate) message_id: MessageId,
+    pub(crate) message: MessageRef,
+}
 
 pub(crate) struct PayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<PayloadWorkerEvent>,
 }
 
-async fn process<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+async fn process(
     message_id: MessageId,
+    message: MessageRef,
     transaction_payload_worker: &mpsc::UnboundedSender<TransactionPayloadWorkerEvent>,
     milestone_payload_worker: &mpsc::UnboundedSender<MilestonePayloadWorkerEvent>,
     indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
 ) {
-    if let Some(message) = tangle.get(&message_id).await {
-        match message.payload() {
-            Some(Payload::Transaction(_)) => {
-                if let Err(e) = transaction_payload_worker.send(TransactionPayloadWorkerEvent(message_id)) {
-                    error!(
-                        "Sending message id {} to transaction payload worker failed: {:?}.",
-                        message_id, e
-                    );
-                }
+    match message.payload() {
+        Some(Payload::Transaction(_)) => {
+            if transaction_payload_worker
+                .send(TransactionPayloadWorkerEvent { message_id, message })
+                .is_err()
+            {
+                error!("Sending message {} to transaction payload worker failed.", message_id);
             }
-            Some(Payload::Milestone(_)) => {
-                if let Err(e) = milestone_payload_worker.send(MilestonePayloadWorkerEvent(message_id)) {
-                    error!(
-                        "Sending message id {} to milestone payload worker failed: {:?}.",
-                        message_id, e
-                    );
-                }
-            }
-            Some(Payload::Indexation(_)) => {
-                if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
-                    error!(
-                        "Sending message id {} to indexation payload worker failed: {:?}.",
-                        message_id, e
-                    );
-                }
-            }
-            _ => {}
         }
-    } else {
-        error!("Missing message {}.", message_id);
+        Some(Payload::Milestone(_)) => {
+            if milestone_payload_worker
+                .send(MilestonePayloadWorkerEvent { message_id, message })
+                .is_err()
+            {
+                error!("Sending message {} to milestone payload worker failed.", message_id);
+            }
+        }
+        Some(Payload::Indexation(_)) => {
+            if indexation_payload_worker
+                .send(IndexationPayloadWorkerEvent { message_id, message })
+                .is_err()
+            {
+                error!("Sending message {} to indexation payload worker failed.", message_id);
+            }
+        }
+        _ => {}
     }
 }
 
@@ -81,7 +79,6 @@ where
 
     fn dependencies() -> &'static [TypeId] {
         vec![
-            TypeId::of::<TangleWorker>(),
             TypeId::of::<TransactionPayloadWorker>(),
             TypeId::of::<MilestonePayloadWorker>(),
             TypeId::of::<IndexationPayloadWorker>(),
@@ -91,7 +88,6 @@ where
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
-        let tangle = node.resource::<MsTangle<N::Backend>>();
         let transaction_payload_worker = node.worker::<TransactionPayloadWorker>().unwrap().tx.clone();
         let milestone_payload_worker = node.worker::<MilestonePayloadWorker>().unwrap().tx.clone();
         let indexation_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();
@@ -101,10 +97,10 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(PayloadWorkerEvent(message_id)) = receiver.next().await {
+            while let Some(PayloadWorkerEvent { message_id, message }) = receiver.next().await {
                 process(
-                    &tangle,
                     message_id,
+                    message,
                     &transaction_payload_worker,
                     &milestone_payload_worker,
                     &indexation_payload_worker,
@@ -118,10 +114,10 @@ where
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
-            while let Some(Some(PayloadWorkerEvent(message_id))) = receiver.next().now_or_never() {
+            while let Some(Some(PayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never() {
                 process(
-                    &tangle,
                     message_id,
+                    message,
                     &transaction_payload_worker,
                     &milestone_payload_worker,
                     &indexation_payload_worker,

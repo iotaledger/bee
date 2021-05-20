@@ -11,7 +11,7 @@ use bee_message::{
     MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{MsTangle, TangleWorker};
+use bee_tangle::MessageRef;
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -21,40 +21,38 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::Infallible};
 
-#[derive(Debug)]
-pub(crate) struct TransactionPayloadWorkerEvent(pub(crate) MessageId);
+pub(crate) struct TransactionPayloadWorkerEvent {
+    pub(crate) message_id: MessageId,
+    pub(crate) message: MessageRef,
+}
 
 pub(crate) struct TransactionPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<TransactionPayloadWorkerEvent>,
 }
 
-async fn process<B: StorageBackend>(
-    tangle: &MsTangle<B>,
+async fn process(
     metrics: &NodeMetrics,
     indexation_payload_worker: &mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
     message_id: MessageId,
+    message: MessageRef,
 ) {
-    if let Some(message) = tangle.get(&message_id).await {
-        let transaction = match message.payload() {
-            Some(Payload::Transaction(transaction)) => transaction,
-            _ => return,
-        };
+    let transaction = match message.payload() {
+        Some(Payload::Transaction(transaction)) => transaction,
+        _ => return,
+    };
 
-        metrics.transaction_payloads_inc(1);
+    let Essence::Regular(essence) = transaction.essence();
 
-        let Essence::Regular(essence) = transaction.essence();
-
-        if let Some(Payload::Indexation(_)) = essence.payload() {
-            if let Err(e) = indexation_payload_worker.send(IndexationPayloadWorkerEvent(message_id)) {
-                error!(
-                    "Sending message id {} to indexation payload worker failed: {:?}.",
-                    message_id, e
-                );
-            }
+    if let Some(Payload::Indexation(_)) = essence.payload() {
+        if indexation_payload_worker
+            .send(IndexationPayloadWorkerEvent { message_id, message })
+            .is_err()
+        {
+            error!("Sending message id {} to indexation payload worker failed.", message_id);
         }
-    } else {
-        error!("Missing message {}.", message_id);
     }
+
+    metrics.transaction_payloads_inc(1);
 }
 
 #[async_trait]
@@ -67,17 +65,11 @@ where
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
-        vec![
-            TypeId::of::<TangleWorker>(),
-            TypeId::of::<IndexationPayloadWorker>(),
-            TypeId::of::<MetricsWorker>(),
-        ]
-        .leak()
+        vec![TypeId::of::<IndexationPayloadWorker>(), TypeId::of::<MetricsWorker>()].leak()
     }
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
-        let tangle = node.resource::<MsTangle<N::Backend>>();
         let indexation_payload_worker = node.worker::<IndexationPayloadWorker>().unwrap().tx.clone();
         let metrics = node.resource::<NodeMetrics>();
 
@@ -86,8 +78,8 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(TransactionPayloadWorkerEvent(message_id)) = receiver.next().await {
-                process(&tangle, &metrics, &indexation_payload_worker, message_id).await;
+            while let Some(TransactionPayloadWorkerEvent { message_id, message }) = receiver.next().await {
+                process(&metrics, &indexation_payload_worker, message_id, message).await;
             }
 
             // Before the worker completely stops, the receiver needs to be drained for transaction payloads to be
@@ -96,8 +88,9 @@ where
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
-            while let Some(Some(TransactionPayloadWorkerEvent(message_id))) = receiver.next().now_or_never() {
-                process(&tangle, &metrics, &indexation_payload_worker, message_id).await;
+            while let Some(Some(TransactionPayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never()
+            {
+                process(&metrics, &indexation_payload_worker, message_id, message).await;
                 count += 1;
             }
 

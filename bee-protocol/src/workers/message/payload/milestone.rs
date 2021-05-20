@@ -19,7 +19,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::{event::LatestMilestoneChanged, MsTangle, TangleWorker};
+use bee_tangle::{event::LatestMilestoneChanged, MessageRef, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{future::FutureExt, stream::StreamExt};
@@ -35,8 +35,10 @@ pub(crate) enum Error {
     InvalidMilestone(MilestoneValidationError),
 }
 
-#[derive(Debug)]
-pub(crate) struct MilestonePayloadWorkerEvent(pub(crate) MessageId);
+pub(crate) struct MilestonePayloadWorkerEvent {
+    pub(crate) message_id: MessageId,
+    pub(crate) message: MessageRef,
+}
 
 pub(crate) struct MilestonePayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<MilestonePayloadWorkerEvent>,
@@ -72,6 +74,7 @@ async fn validate(
 async fn process<B: StorageBackend>(
     tangle: &MsTangle<B>,
     message_id: MessageId,
+    message: MessageRef,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     requested_milestones: &RequestedMilestones,
@@ -79,44 +82,40 @@ async fn process<B: StorageBackend>(
     key_manager: &MilestoneKeyManager,
     bus: &Bus<'static>,
 ) {
-    metrics.milestone_payloads_inc(1);
+    if let Some(Payload::Milestone(milestone)) = message.payload() {
+        if milestone.essence().index() <= tangle.get_solid_milestone_index() {
+            return;
+        }
+        match validate(&message, &milestone, &key_manager, message_id).await {
+            Ok((index, milestone)) => {
+                tangle.add_milestone(index, milestone.clone()).await;
+                if index > tangle.get_latest_milestone_index() {
+                    info!("New milestone {} {}.", *index, milestone.message_id());
+                    tangle.update_latest_milestone_index(index);
 
-    if let Some(message) = tangle.get(&message_id).await {
-        if let Some(Payload::Milestone(milestone)) = message.payload() {
-            if milestone.essence().index() <= tangle.get_solid_milestone_index() {
-                return;
-            }
-            match validate(&message, &milestone, &key_manager, message_id).await {
-                Ok((index, milestone)) => {
-                    tangle.add_milestone(index, milestone.clone()).await;
-                    if index > tangle.get_latest_milestone_index() {
-                        info!("New milestone {} {}.", *index, milestone.message_id());
-                        tangle.update_latest_milestone_index(index);
+                    helper::broadcast_heartbeat(&peer_manager, &metrics, tangle).await;
 
-                        helper::broadcast_heartbeat(&peer_manager, &metrics, tangle).await;
-
-                        bus.dispatch(LatestMilestoneChanged {
-                            index,
-                            milestone: milestone.clone(),
-                        });
-                    } else {
-                        debug!("New milestone {} {}.", *index, milestone.message_id());
-                    }
-
-                    requested_milestones.remove(&index).await;
-
-                    if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
-                        error!("Sending solidification event failed: {}.", e);
-                    }
+                    bus.dispatch(LatestMilestoneChanged {
+                        index,
+                        milestone: milestone.clone(),
+                    });
+                } else {
+                    debug!("New milestone {} {}.", *index, milestone.message_id());
                 }
-                Err(e) => debug!("Invalid milestone message: {:?}.", e),
+
+                requested_milestones.remove(&index).await;
+
+                if let Err(e) = milestone_solidifier.send(MilestoneSolidifierWorkerEvent(index)) {
+                    error!("Sending solidification event failed: {}.", e);
+                }
             }
-        } else {
-            error!("No milestone payload in message {}.", message_id);
+            Err(e) => debug!("Invalid milestone message: {:?}.", e),
         }
     } else {
-        error!("Missing message {}.", message_id);
+        error!("No milestone payload in message {}.", message_id);
     }
+
+    metrics.milestone_payloads_inc(1);
 }
 
 #[async_trait]
@@ -141,7 +140,6 @@ where
     async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
         let (tx, rx) = mpsc::unbounded_channel();
         let milestone_solidifier = node.worker::<MilestoneSolidifierWorker>().unwrap().tx.clone();
-
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let requested_milestones = node.resource::<RequestedMilestones>();
         let peer_manager = node.resource::<PeerManager>();
@@ -157,10 +155,11 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(MilestonePayloadWorkerEvent(message_id)) = receiver.next().await {
+            while let Some(MilestonePayloadWorkerEvent { message_id, message }) = receiver.next().await {
                 process(
                     &tangle,
                     message_id,
+                    message,
                     &peer_manager,
                     &metrics,
                     &requested_milestones,
@@ -177,10 +176,11 @@ where
             let (_, mut receiver) = receiver.split();
             let mut count: usize = 0;
 
-            while let Some(Some(MilestonePayloadWorkerEvent(message_id))) = receiver.next().now_or_never() {
+            while let Some(Some(MilestonePayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never() {
                 process(
                     &tangle,
                     message_id,
+                    message,
                     &peer_manager,
                     &metrics,
                     &requested_milestones,
