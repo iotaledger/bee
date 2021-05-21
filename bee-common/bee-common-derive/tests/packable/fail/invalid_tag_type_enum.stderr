@@ -1,0 +1,5 @@
+error: Tags for enums can only be of type `u8`, `u16`, `u32` or `u64`.
+  --> $DIR/invalid_tag_type_enum.rs:11:23
+   |
+11 | #[packable(tag_type = [u8; 32])]
+   |                       ^^^^^^^^

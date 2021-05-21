@@ -1,0 +1,5 @@
+error: The tag `0` is already being used for the `None` variant.
+  --> $DIR/duplicated_tag_enum.rs:16:22
+   |
+16 |     #[packable(tag = 0)]
+   |                      ^
