@@ -14,9 +14,9 @@ For Example: `bee -c config_example.toml`
     + [peering](#peering)
 - [Protocol](#protocol)
   * [coordinator](#coordinator)
-    + [public_key_ranges](#public-key-ranges)
+    + [public_key_ranges](#public_key_ranges)
   * [workers](#workers)
-- [Rest_api](#rest-api)
+- [REST API](#rest-api)
 - [Snapshot](#snapshot)
 - [Pruning](#pruning)
 - [Storage](#storage)
@@ -162,7 +162,7 @@ status_interval = 10
 ms_sync_count = 200
 ```
 
-## Rest_api
+## REST API
 
 | Name                              | Description                       | Type             |
 | :-------------------------------- | :-------------------------------- | :--------------- |
