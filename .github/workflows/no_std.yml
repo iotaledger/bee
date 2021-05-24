@@ -1,4 +1,4 @@
-name: Check no_std support
+name: Support no_std
 
 on:
   push:
@@ -14,6 +14,7 @@ jobs:
     strategy:
       matrix:
         rust: [nightly, beta, stable]
+        crate: ["bee-common/bee-common"]
 
     steps:
     - uses: actions/checkout@v2
@@ -47,5 +48,5 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: check
-        args: --all --release --target=riscv64gc-unknown-none-elf
+        args: --all --release --target=riscv64gc-unknown-none-elf --manifest-path ${{ matrix.crate }}/Cargo.toml
 
