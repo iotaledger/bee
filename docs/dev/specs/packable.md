@@ -280,5 +280,5 @@ were two downsides around this idea:
 
 At the time there is no de-facto crates for `no_std` IO in Rust. The most
 popular one is the [GenIO crate](https://github.com/Kixunil/genio) which is
-being redesgined. Thus we cannot count on its stability or maintainaility.
+being redesigned. Thus we cannot count on its stability or maintainaility.
 
