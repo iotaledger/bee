@@ -42,13 +42,17 @@ impl<T> StorageBackend for T where
 pub async fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &B) {
     let (sep, index) = (rand_solid_entry_point(), rand_milestone_index());
 
-    assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep)
-        .await
-        .unwrap());
-    assert!(Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(storage, &sep)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(storage, &sep)
+            .await
+            .unwrap()
+            .is_none()
+    );
     let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &[sep])
         .await
         .unwrap();
@@ -59,9 +63,11 @@ pub async fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(stor
         .await
         .unwrap();
 
-    assert!(Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep)
-        .await
-        .unwrap());
+    assert!(
+        Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep)
+            .await
+            .unwrap()
+    );
     assert_eq!(
         Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(storage, &sep)
             .await
@@ -79,13 +85,17 @@ pub async fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(stor
         .await
         .unwrap();
 
-    assert!(!Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep)
-        .await
-        .unwrap());
-    assert!(Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(storage, &sep)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<SolidEntryPoint, MilestoneIndex>::exist(storage, &sep)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(storage, &sep)
+            .await
+            .unwrap()
+            .is_none()
+    );
     let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &[sep])
         .await
         .unwrap();
