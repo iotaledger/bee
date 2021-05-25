@@ -127,10 +127,9 @@ async fn update_past_cone<B: StorageBackend>(
             })
             .await;
 
-        tangle
-            .get(&parent_id)
-            .await
-            .map(|parent| parents.extend_from_slice(parent.parents()));
+        if let Some(parent) = tangle.get(&parent_id).await {
+            parents.extend_from_slice(parent.parents())
+        }
 
         // Preferably we would only collect the 'root messages/transactions'. They are defined as being confirmed by
         // a milestone, but at least one of their children is not confirmed yet. One can think of them as an attachment

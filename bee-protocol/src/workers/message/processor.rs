@@ -200,10 +200,13 @@ where
                             }
                         };
 
-                        if let Err(_) = payload_worker.send(PayloadWorkerEvent {
-                            message_id,
-                            message: message.clone(),
-                        }) {
+                        if payload_worker
+                            .send(PayloadWorkerEvent {
+                                message_id,
+                                message: message.clone(),
+                            })
+                            .is_err()
+                        {
                             error!("Sending message {} to payload worker failed.", message_id);
                         }
 
