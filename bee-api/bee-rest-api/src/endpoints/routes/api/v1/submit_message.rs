@@ -145,6 +145,23 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         if parsed == 0 { None } else { Some(parsed) }
     };
 
+    let message = build_message(network_id, parents, payload, nonce);
+    let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
+
+    Ok(warp::reply::with_status(
+        warp::reply::json(&SuccessBody::new(SubmitMessageResponse {
+            message_id: message_id.to_string(),
+        })),
+        StatusCode::CREATED,
+    ))
+}
+
+pub (crate) async fn build_message(
+    network_id: String,
+    parents: Vec<MessageId>,
+    payload: Payload,
+    nonce: u64
+) -> Message {
     let message = if let Some(nonce) = nonce {
         let mut builder = MessageBuilder::new()
             .with_network_id(network_id)
@@ -181,14 +198,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
             .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?
     };
 
-    let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
-
-    Ok(warp::reply::with_status(
-        warp::reply::json(&SuccessBody::new(SubmitMessageResponse {
-            message_id: message_id.to_string(),
-        })),
-        StatusCode::CREATED,
-    ))
+    message
 }
 
 pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
