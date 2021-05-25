@@ -21,7 +21,7 @@ async-trait = "0.1"
 futures = "0.3"
 num_cpus = "1.13"
 pin-project = "1.0"
-rocksdb = { git = "https://github.com/rust-rocksdb/rust-rocksdb", branch = "master", default-features = false }
+rocksdb = { git = "https://github.com/rust-rocksdb/rust-rocksdb", rev = "b6c1d54c98acf140e1444e6d73b1dd0730d21b0d", default-features = false }
 # TODO
 # rocksdb = { version = "0.17", default-features = false }
 serde = { version = "1.0", features = [ "derive" ] }
