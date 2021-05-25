@@ -156,11 +156,11 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     ))
 }
 
-pub (crate) async fn build_message(
+pub(crate) async fn build_message(
     network_id: String,
     parents: Vec<MessageId>,
     payload: Payload,
-    nonce: u64
+    nonce: u64,
 ) -> Message {
     let message = if let Some(nonce) = nonce {
         let mut builder = MessageBuilder::new()
