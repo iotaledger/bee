@@ -321,7 +321,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -332,7 +332,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-rocksdb"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -353,7 +353,7 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-test"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bee-common",
  "bee-ledger",
