@@ -1,0 +1,51 @@
+name: Support no_std
+
+on:
+  push:
+    branches:
+      - coordicide
+  pull_request:
+    branches:
+      - coordicide
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [nightly, beta, stable]
+        crate: ["bee-common/bee-common"]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install ${{ matrix.rust }}
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.rust }}
+        target: riscv64gc-unknown-none-elf
+        override: true
+
+    - name: Cache cargo registry
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/registry
+        key: ubuntu-latest-${{ matrix.rust }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}
+
+    - name: Cache cargo index
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/git
+        key: ubuntu-latest-${{ matrix.rust }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}
+
+    - name: Cache cargo target
+      uses: actions/cache@v2
+      with:
+        path: target
+        key: ubuntu-latest-${{ matrix.rust }}-cargo-target-${{ hashFiles('**/Cargo.toml') }}
+
+    - name: Check
+      uses: actions-rs/cargo@v1
+      with:
+        command: check
+        args: --all --release --target=riscv64gc-unknown-none-elf --manifest-path ${{ matrix.crate }}/Cargo.toml
