@@ -30,19 +30,19 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cargo/registry
-        key: ${{ matrix.rust }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}
+        key: ubuntu-latest-${{ matrix.rust }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}
 
     - name: Cache cargo index
       uses: actions/cache@v2
       with:
         path: ~/.cargo/git
-        key: ${{ matrix.rust }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}
+        key: ubuntu-latest-${{ matrix.rust }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}
 
     - name: Cache cargo target
       uses: actions/cache@v2
       with:
         path: target
-        key: ${{ matrix.rust }}-cargo-target-${{ hashFiles('**/Cargo.toml') }}
+        key: ubuntu-latest-${{ matrix.rust }}-cargo-target-${{ hashFiles('**/Cargo.toml') }}
 
     - name: Check
       uses: actions-rs/cargo@v1
