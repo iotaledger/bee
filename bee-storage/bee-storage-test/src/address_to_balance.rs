@@ -5,19 +5,18 @@ use bee_common::packable::Packable;
 use bee_ledger::types::Balance;
 use bee_message::address::Address;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::{address::rand_address, balance::rand_balance};
 
 use futures::stream::StreamExt;
 
-use std::collections::HashMap;
-
 pub trait StorageBackend:
     backend::StorageBackend
     + Exist<Address, Balance>
     + Fetch<Address, Balance>
+    + MultiFetch<Address, Balance>
     + Insert<Address, Balance>
     + Delete<Address, Balance>
     + BatchBuilder
@@ -31,6 +30,7 @@ impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Exist<Address, Balance>
         + Fetch<Address, Balance>
+        + MultiFetch<Address, Balance>
         + Insert<Address, Balance>
         + Delete<Address, Balance>
         + BatchBuilder
@@ -44,12 +44,15 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     let (address, balance) = (rand_address(), rand_balance());
 
     assert!(!Exist::<Address, Balance>::exist(storage, &address).await.unwrap());
-    assert!(
-        Fetch::<Address, Balance>::fetch(storage, &address)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(Fetch::<Address, Balance>::fetch(storage, &address)
+        .await
+        .unwrap()
+        .is_none());
+    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert!(results[0].is_none());
 
     Insert::<Address, Balance>::insert(storage, &address, &balance)
         .await
@@ -64,18 +67,28 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
             .pack_new(),
         balance.pack_new()
     );
+    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].as_ref().unwrap(), &balance);
 
     Delete::<Address, Balance>::delete(storage, &address).await.unwrap();
 
     assert!(!Exist::<Address, Balance>::exist(storage, &address).await.unwrap());
-    assert!(
-        Fetch::<Address, Balance>::fetch(storage, &address)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(Fetch::<Address, Balance>::fetch(storage, &address)
+        .await
+        .unwrap()
+        .is_none());
+    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert!(results[0].is_none());
 
     let mut batch = B::batch_begin();
+    let mut addresses = Vec::new();
+    let mut balances = Vec::new();
 
     for _ in 0..10 {
         let (address, balance) = (rand_address(), rand_balance());
@@ -83,14 +96,15 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap();
         Batch::<Address, Balance>::batch_delete(storage, &mut batch, &address).unwrap();
+        addresses.push(address);
+        balances.push((address, None));
     }
-
-    let mut balances = HashMap::new();
 
     for _ in 0..10 {
         let (address, balance) = (rand_address(), rand_balance());
         Batch::<Address, Balance>::batch_insert(storage, &mut batch, &address, &balance).unwrap();
-        balances.insert(address, balance);
+        addresses.push(address);
+        balances.push((address, Some(balance)));
     }
 
     storage.batch_commit(batch, true).await.unwrap();
@@ -99,11 +113,21 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     let mut count = 0;
 
     while let Some((address, balance)) = stream.next().await {
-        assert_eq!(balances.get(&address).unwrap().pack_new(), balance.pack_new());
+        assert!(balances.contains(&(address, Some(balance))));
         count += 1;
     }
 
-    assert_eq!(count, balances.len());
+    assert_eq!(count, 10);
+
+    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &addresses)
+        .await
+        .unwrap();
+
+    assert_eq!(results.len(), addresses.len());
+
+    for ((_, balance), result) in balances.iter().zip(results.iter()) {
+        assert_eq!(balance, result);
+    }
 
     Truncate::<Address, Balance>::truncate(storage).await.unwrap();
 

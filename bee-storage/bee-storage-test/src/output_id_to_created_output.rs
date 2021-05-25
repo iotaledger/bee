@@ -4,19 +4,18 @@
 use bee_ledger::types::CreatedOutput;
 use bee_message::output::OutputId;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::output::{rand_created_output, rand_output_id};
 
 use futures::stream::StreamExt;
 
-use std::collections::HashMap;
-
 pub trait StorageBackend:
     backend::StorageBackend
     + Exist<OutputId, CreatedOutput>
     + Fetch<OutputId, CreatedOutput>
+    + MultiFetch<OutputId, CreatedOutput>
     + Insert<OutputId, CreatedOutput>
     + Delete<OutputId, CreatedOutput>
     + BatchBuilder
@@ -30,6 +29,7 @@ impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Exist<OutputId, CreatedOutput>
         + Fetch<OutputId, CreatedOutput>
+        + MultiFetch<OutputId, CreatedOutput>
         + Insert<OutputId, CreatedOutput>
         + Delete<OutputId, CreatedOutput>
         + BatchBuilder
@@ -42,27 +42,26 @@ impl<T> StorageBackend for T where
 pub async fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
     let (output_id, created_output) = (rand_output_id(), rand_created_output());
 
-    assert!(
-        !Exist::<OutputId, CreatedOutput>::exist(storage, &output_id)
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<OutputId, CreatedOutput>::fetch(storage, &output_id)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(!Exist::<OutputId, CreatedOutput>::exist(storage, &output_id)
+        .await
+        .unwrap());
+    assert!(Fetch::<OutputId, CreatedOutput>::fetch(storage, &output_id)
+        .await
+        .unwrap()
+        .is_none());
+    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch(storage, &[output_id])
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert!(results[0].is_none());
 
     Insert::<OutputId, CreatedOutput>::insert(storage, &output_id, &created_output)
         .await
         .unwrap();
 
-    assert!(
-        Exist::<OutputId, CreatedOutput>::exist(storage, &output_id)
-            .await
-            .unwrap()
-    );
+    assert!(Exist::<OutputId, CreatedOutput>::exist(storage, &output_id)
+        .await
+        .unwrap());
     assert_eq!(
         Fetch::<OutputId, CreatedOutput>::fetch(storage, &output_id)
             .await
@@ -70,24 +69,32 @@ pub async fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) 
             .unwrap(),
         created_output
     );
+    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch(storage, &[output_id])
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].as_ref().unwrap(), &created_output);
 
     Delete::<OutputId, CreatedOutput>::delete(storage, &output_id)
         .await
         .unwrap();
 
-    assert!(
-        !Exist::<OutputId, CreatedOutput>::exist(storage, &output_id)
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<OutputId, CreatedOutput>::fetch(storage, &output_id)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(!Exist::<OutputId, CreatedOutput>::exist(storage, &output_id)
+        .await
+        .unwrap());
+    assert!(Fetch::<OutputId, CreatedOutput>::fetch(storage, &output_id)
+        .await
+        .unwrap()
+        .is_none());
+    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch(storage, &[output_id])
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert!(results[0].is_none());
 
     let mut batch = B::batch_begin();
+    let mut output_ids = Vec::new();
+    let mut created_outputs = Vec::new();
 
     for _ in 0..10 {
         let (output_id, created_output) = (rand_output_id(), rand_created_output());
@@ -95,14 +102,15 @@ pub async fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) 
             .await
             .unwrap();
         Batch::<OutputId, CreatedOutput>::batch_delete(storage, &mut batch, &output_id).unwrap();
+        output_ids.push(output_id);
+        created_outputs.push((output_id, None));
     }
-
-    let mut created_outputs = HashMap::new();
 
     for _ in 0..10 {
         let (output_id, created_output) = (rand_output_id(), rand_created_output());
         Batch::<OutputId, CreatedOutput>::batch_insert(storage, &mut batch, &output_id, &created_output).unwrap();
-        created_outputs.insert(output_id, created_output);
+        output_ids.push(output_id);
+        created_outputs.push((output_id, Some(created_output)));
     }
 
     storage.batch_commit(batch, true).await.unwrap();
@@ -111,11 +119,21 @@ pub async fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) 
     let mut count = 0;
 
     while let Some((output_id, created_output)) = stream.next().await {
-        assert_eq!(created_outputs.get(&output_id).unwrap(), &created_output);
+        assert!(created_outputs.contains(&(output_id, Some(created_output))));
         count += 1;
     }
 
-    assert_eq!(count, created_outputs.len());
+    assert_eq!(count, 10);
+
+    let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch(storage, &output_ids)
+        .await
+        .unwrap();
+
+    assert_eq!(results.len(), output_ids.len());
+
+    for ((_, created_output), result) in created_outputs.iter().zip(results.iter()) {
+        assert_eq!(created_output, result);
+    }
 
     Truncate::<OutputId, CreatedOutput>::truncate(storage).await.unwrap();
 

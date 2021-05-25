@@ -17,7 +17,7 @@ use std::{
 };
 
 /// Metadata associated with a tangle message.
-#[derive(Copy, Clone, Default, Debug, Serialize)]
+#[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Serialize)]
 pub struct MessageMetadata {
     flags: Flags,
     milestone_index: Option<MilestoneIndex>,
