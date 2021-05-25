@@ -53,8 +53,7 @@ pub(crate) fn with_storage<B: StorageBackend>(
 
 pub(crate) fn with_message_submitter(
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
-) -> impl Filter<Extract = (mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,), Error = Infallible> + Clone
-{
+) -> impl Filter<Extract = (mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,), Error = Infallible> + Clone {
     warp::any().map(move || message_submitter.clone())
 }
 
