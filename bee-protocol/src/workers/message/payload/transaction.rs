@@ -36,36 +36,26 @@ async fn process(
     message_id: MessageId,
     message: MessageRef,
 ) {
-    let transaction = match message.payload() {
-        Some(Payload::Transaction(transaction)) => transaction,
-        _ => {
-            error!(
-                "Missing or invalid payload for message {}: expected transaction payload.",
-                message_id
-            );
-            return;
-        }
+    let transaction = if let Some(Payload::Transaction(transaction)) = message.payload() {
+        transaction
+    } else {
+        error!(
+            "Missing or invalid payload for message {}: expected transaction payload.",
+            message_id
+        );
+        return;
     };
 
     metrics.transaction_payloads_inc(1);
 
     let Essence::Regular(essence) = transaction.essence();
 
-    match essence.payload() {
-        Some(Payload::Indexation(_)) => {
-            if indexation_payload_worker
-                .send(IndexationPayloadWorkerEvent { message_id, message })
-                .is_err()
-            {
-                error!("Sending message {} to indexation payload worker failed.", message_id);
-            }
-        }
-        _ => {
-            error!(
-                "Missing or invalid payload for message {}: expected indexation payload.",
-                message_id
-            );
-            return;
+    if let Some(Payload::Indexation(_)) = essence.payload() {
+        if indexation_payload_worker
+            .send(IndexationPayloadWorkerEvent { message_id, message })
+            .is_err()
+        {
+            error!("Sending message {} to indexation payload worker failed.", message_id);
         }
     }
 }

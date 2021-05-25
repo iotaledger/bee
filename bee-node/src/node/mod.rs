@@ -60,7 +60,7 @@ impl<B: StorageBackend> BeeNode<B> {
     }
 
     #[allow(missing_docs)]
-    pub async fn run(mut self) -> Result<(), Box::<dyn std::error::Error + Send + Sync>> {
+    pub async fn run(mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         info!("Running.");
 
         // Unwrapping is fine because the builder added this resource.
@@ -136,14 +136,14 @@ impl<B: StorageBackend> Node for BeeNode<B> {
 
         #[cfg(feature = "console")]
         let task = {
-            use tracing::Instrument;
             use std::panic::Location;
+            use tracing::Instrument;
 
             let caller = Location::caller();
             let span = tracing::info_span!(
-                target: "tokio::task", 
-                "task", 
-                file = caller.file(), 
+                target: "tokio::task",
+                "task",
+                file = caller.file(),
                 line = caller.line(),
             );
 
