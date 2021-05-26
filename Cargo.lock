@@ -203,7 +203,7 @@ checksum = "6c7f7096bc256f5e5cb960f60dfc4f4ef979ca65abe7fb9d5a4f77150d3783d4"
 [[package]]
 name = "bee-common"
 version = "0.4.1"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#5f2a6466ee0656166903de4d24760d8ea3693a40"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#68dcf8b3d379881edd56a0ea1351790f6fe8c0a2"
 dependencies = [
  "autocfg",
  "chrono",
@@ -219,7 +219,7 @@ dependencies = [
 [[package]]
 name = "bee-crypto"
 version = "0.2.1-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#5f2a6466ee0656166903de4d24760d8ea3693a40"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#68dcf8b3d379881edd56a0ea1351790f6fe8c0a2"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -231,7 +231,7 @@ dependencies = [
 [[package]]
 name = "bee-ledger"
 version = "0.3.1"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#5f2a6466ee0656166903de4d24760d8ea3693a40"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#68dcf8b3d379881edd56a0ea1351790f6fe8c0a2"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -256,7 +256,7 @@ dependencies = [
 [[package]]
 name = "bee-message"
 version = "0.1.5"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#5f2a6466ee0656166903de4d24760d8ea3693a40"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#68dcf8b3d379881edd56a0ea1351790f6fe8c0a2"
 dependencies = [
  "bech32",
  "bee-common",
@@ -273,7 +273,7 @@ dependencies = [
 [[package]]
 name = "bee-network"
 version = "0.2.1"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#5f2a6466ee0656166903de4d24760d8ea3693a40"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#68dcf8b3d379881edd56a0ea1351790f6fe8c0a2"
 dependencies = [
  "async-trait",
  "bee-runtime",
@@ -338,7 +338,7 @@ dependencies = [
 [[package]]
 name = "bee-pow"
 version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#5f2a6466ee0656166903de4d24760d8ea3693a40"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#68dcf8b3d379881edd56a0ea1351790f6fe8c0a2"
 dependencies = [
  "bee-crypto",
  "bee-ternary",
@@ -411,7 +411,7 @@ dependencies = [
 [[package]]
 name = "bee-runtime"
 version = "0.1.1-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#5f2a6466ee0656166903de4d24760d8ea3693a40"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#68dcf8b3d379881edd56a0ea1351790f6fe8c0a2"
 dependencies = [
  "async-trait",
  "bee-storage",
@@ -422,8 +422,8 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "0.3.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#5f2a6466ee0656166903de4d24760d8ea3693a40"
+version = "0.4.0"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#68dcf8b3d379881edd56a0ea1351790f6fe8c0a2"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -434,8 +434,8 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-rocksdb"
-version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#5f2a6466ee0656166903de4d24760d8ea3693a40"
+version = "0.2.0"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#68dcf8b3d379881edd56a0ea1351790f6fe8c0a2"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -454,7 +454,7 @@ dependencies = [
 [[package]]
 name = "bee-tangle"
 version = "0.1.2"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#5f2a6466ee0656166903de4d24760d8ea3693a40"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#68dcf8b3d379881edd56a0ea1351790f6fe8c0a2"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -478,7 +478,7 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.4.2-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#5f2a6466ee0656166903de4d24760d8ea3693a40"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#68dcf8b3d379881edd56a0ea1351790f6fe8c0a2"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -487,9 +487,9 @@ dependencies = [
 
 [[package]]
 name = "bindgen"
-version = "0.57.0"
+version = "0.58.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd4865004a46a0aafb2a0a5eb19d3c9fc46ee5f063a6cfc605c69ac9ecf5263d"
+checksum = "0f8523b410d7187a43085e7e064416ea32ded16bd0a4e6fc025e21616d01258f"
 dependencies = [
  "bitflags",
  "cexpr",
@@ -751,7 +751,7 @@ dependencies = [
 [[package]]
 name = "console-api"
 version = "0.1.0"
-source = "git+https://github.com/tokio-rs/console.git?branch=main#53515a7d9532e8b9780b56ab95d067309b46dc6f"
+source = "git+https://github.com/tokio-rs/console.git?branch=main#38adbd97aefc53d06e509c7b33c98b4dcfa7a970"
 dependencies = [
  "prost",
  "prost-types",
@@ -763,7 +763,7 @@ dependencies = [
 [[package]]
 name = "console-subscriber"
 version = "0.1.0"
-source = "git+https://github.com/tokio-rs/console.git?branch=main#53515a7d9532e8b9780b56ab95d067309b46dc6f"
+source = "git+https://github.com/tokio-rs/console.git?branch=main#38adbd97aefc53d06e509c7b33c98b4dcfa7a970"
 dependencies = [
  "console-api",
  "futures",
@@ -1363,9 +1363,9 @@ checksum = "6456b8a6c8f33fee7d958fcd1b60d55b11940a79e63ae87013e6d22e26034440"
 
 [[package]]
 name = "hyper"
-version = "0.14.7"
+version = "0.14.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e5f105c494081baa3bf9e200b279e27ec1623895cd504c7dbef8d0b080fcf54"
+checksum = "d3f71a7eea53a3f8257a7b4795373ff886397178cd634430ea94e12d7fe4fe34"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -1560,9 +1560,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.94"
+version = "0.2.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18794a8ad5b29321f790b55d93dfba91e125cb1a9edbd4f8e3150acc771c1a5e"
+checksum = "789da6d93f1b866ffe175afc5322a4d76c038605a1c3319bb57b06967ca98a36"
 
 [[package]]
 name = "libloading"
@@ -1761,9 +1761,8 @@ dependencies = [
 
 [[package]]
 name = "librocksdb-sys"
-version = "6.17.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5da125e1c0f22c7cae785982115523a0738728498547f415c9054cb17c7e89f9"
+version = "6.19.3"
+source = "git+https://github.com/rust-rocksdb/rust-rocksdb?rev=b6c1d54c98acf140e1444e6d73b1dd0730d21b0d#b6c1d54c98acf140e1444e6d73b1dd0730d21b0d"
 dependencies = [
  "bindgen",
  "cc",
@@ -2623,9 +2622,8 @@ dependencies = [
 
 [[package]]
 name = "rocksdb"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c749134fda8bfc90d0de643d59bfc841dcb3ac8a1062e12b6754bd60235c48b3"
+version = "0.17.0"
+source = "git+https://github.com/rust-rocksdb/rust-rocksdb?rev=b6c1d54c98acf140e1444e6d73b1dd0730d21b0d#b6c1d54c98acf140e1444e6d73b1dd0730d21b0d"
 dependencies = [
  "libc",
  "librocksdb-sys",
@@ -2909,9 +2907,9 @@ dependencies = [
 
 [[package]]
 name = "shlex"
-version = "0.1.1"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fdf1b9db47230893d76faad238fd6097fd6d6a9245cd7a4d90dbd639536bbd2"
+checksum = "42a568c8f2cd051a4d283bd6eb0343ac214c1b0f1ac19f93e1175b2dee38c73d"
 
 [[package]]
 name = "signal-hook-registry"
