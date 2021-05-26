@@ -16,7 +16,7 @@
   <img src="https://github.com/iotaledger/bee/workflows/Clippy/badge.svg">
   <img src="https://github.com/iotaledger/bee/workflows/Build/badge.svg">
   <img src="https://github.com/iotaledger/bee/workflows/Test/badge.svg">
-  <img src="https://coveralls.io/repos/github/iotaledger/bee/badge.svg?branch=dev">
+  <img src="https://coveralls.io/repos/github/iotaledger/bee/badge.svg?branch=coordicide">
 </p>
 
 <p align="center">
