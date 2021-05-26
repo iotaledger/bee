@@ -47,7 +47,7 @@ impl StorageBackend for Storage {
     type Config = ();
     type Error = Error;
 
-    async fn start(config: Self::Config) -> Result<Self, Self::Error> {
+    async fn start((): Self::Config) -> Result<Self, Self::Error> {
         Self::new()
     }
 
