@@ -320,7 +320,7 @@ where
                         // }
                     }
                     Err(reason) => {
-                        info!("Snapshot skipped. Reason: {:?}", reason);
+                        info!("Snapshot skipped: {:?}", reason);
                     }
                 }
 
@@ -336,11 +336,11 @@ where
                         )
                         .await
                         {
-                            error!("Failed to prune database: {:?}.", e);
+                            error!("Pruning failed: {:?}.", e);
                         }
                     }
                     Err(reason) => {
-                        info!("Pruning skipped. Reason: {:?}", reason);
+                        info!("Pruning skipped: {:?}", reason);
                     }
                 }
             }
