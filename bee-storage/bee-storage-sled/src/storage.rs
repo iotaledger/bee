@@ -22,25 +22,6 @@ impl Storage {
     pub fn new(config: StorageConfig) -> Result<Self, Error> {
         let inner = sled::open("./storage/mainnet")?;
 
-        inner.open_tree(TREE_SYSTEM)?;
-        inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?;
-        inner.open_tree(TREE_MESSAGE_ID_TO_METADATA)?;
-        inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE_ID)?;
-        inner.open_tree(TREE_INDEX_TO_MESSAGE_ID)?;
-        inner.open_tree(TREE_OUTPUT_ID_TO_CREATED_OUTPUT)?;
-        inner.open_tree(TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT)?;
-        inner.open_tree(TREE_OUTPUT_ID_UNSPENT)?;
-        inner.open_tree(TREE_ED25519_ADDRESS_TO_OUTPUT_ID)?;
-        inner.open_tree(TREE_LEDGER_INDEX)?;
-        inner.open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE)?;
-        inner.open_tree(TREE_SNAPSHOT_INFO)?;
-        inner.open_tree(TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?;
-        inner.open_tree(TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF)?;
-        inner.open_tree(TREE_ADDRESS_TO_BALANCE)?;
-        inner.open_tree(TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE)?;
-        inner.open_tree(TREE_MILESTONE_INDEX_TO_RECEIPT)?;
-        inner.open_tree(TREE_SPENT_TO_TREASURY_OUTPUT)?;
-
         Ok(Self { inner, config })
     }
 }

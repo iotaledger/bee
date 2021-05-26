@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub const TREE_SYSTEM: &str = "system";
 pub const TREE_MESSAGE_ID_TO_MESSAGE: &str = "message_id_to_message";
 pub const TREE_MESSAGE_ID_TO_METADATA: &str = "message_id_to_metadata";
 pub const TREE_MESSAGE_ID_TO_MESSAGE_ID: &str = "message_id_to_message_id";
