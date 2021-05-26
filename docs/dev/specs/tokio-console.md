@@ -1,8 +1,8 @@
 # `console` feature
-The `bee-node` crate now includes a `console` feature, which can help with debugging and providing diagnostics for the multiple async tasks that Bee is executing at any given time. Building with this feature enabled and running a separate executable will provide realtime diagnostics in your terminal. 
+The `bee-node` crate includes a `console` feature, which can help with debugging and providing diagnostics for the multiple async tasks that the node is executing at any given time. Building with this feature enabled and running a separate executable will provide realtime diagnostics in your terminal. 
 
 # What is it?
-The `console` feature provides instrumentation on all tasks spawned in the `BeeNode::spawn` method, and aggregates information provided by this instrumentation in a "subscriber", that allows logging and further processing. This is extremely useful for Bee particularly, since it makes use of a task-heavy architecture that can be difficult to debug and diagnose: having real-time task diagnostics should help to alleviate this.
+The `console` feature provides instrumentation on all tasks spawned in the `BeeNode::spawn` method, and aggregates information provided by this instrumentation in a "subscriber", that allows logging and further processing. This is extremely useful for Bee particularly, since it makes use of a task-heavy architecture that can be difficult to debug and diagnose: having realtime task diagnostics should help to alleviate this.
 
 `tokio-console` provides the following statistics for each worker task:
 
@@ -31,17 +31,13 @@ let _span = span!(
 **Note**: `tokio-console` is highly unstable, so this feature may be very changeable.
 
 # How do I use it?
-To build/run with the instrumentation, make sure the `console` feature is enabled:
+To build/run with the instrumentation, make sure the `console` feature is enabled, and your `RUSTFLAGS` environment variable contains the `--cfg tokio_unable` options:
 ```
-> cargo run --release --features console
-```
-Additionally, your `RUSTFLAGS` environment variable must contain the following, in order for `tokio` to be built with the `tracing` feature enabled:
-```
---cfg tokio_unstable
+$ RUSTFLAGS="--cfg tokio_unstable" cargo run --release --features console
 ```
 Once the node is up and running, clone a local copy of the [`tokio-console`](https://github.com/tokio-rs/console) project, and run the `console` crate from its directory:
-```
-.../tokio-console/console/ > cargo run
+```console
+user@tokio-console/console:~$ cargo run
 ```
 
 # How does it work?
