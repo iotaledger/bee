@@ -14,8 +14,7 @@ use bee_message::{
     payload::indexation::PaddedIndex,
     Message, MessageId,
 };
-use bee_storage::access::Truncate;
-use bee_storage::backend::StorageBackend;
+use bee_storage::{access::Truncate, backend::StorageBackend};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
