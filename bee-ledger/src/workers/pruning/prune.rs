@@ -134,6 +134,10 @@ pub async fn prune<S: StorageBackend>(
 
     timings.batch_unconfirmed = batch_unconfirmed.elapsed();
 
+    pruning_metrics.messages += unconfirmed_metrics.prunable_messages;
+    pruning_metrics.edges += unconfirmed_metrics.prunable_edges;
+    pruning_metrics.indexations += unconfirmed_metrics.prunable_indexations;
+
     // Remove old SEPs from the storage.
     //
     // **NOTE**: This operation must come before the batch is committed.
