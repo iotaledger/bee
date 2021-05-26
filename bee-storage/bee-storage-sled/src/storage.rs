@@ -1,7 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::trees::*;
+use crate::{
+    config::{StorageConfig, StorageConfigBuilder},
+    trees::*,
+};
 
 use bee_storage::{backend::StorageBackend, health::StorageHealth};
 
@@ -12,11 +15,12 @@ type Error = sled::Error;
 
 pub struct Storage {
     pub(crate) inner: sled::Db,
+    pub(crate) config: StorageConfig,
 }
 
 impl Storage {
-    pub fn new() -> Result<Self, Error> {
-        let inner = sled::open("./db")?;
+    pub fn new(config: StorageConfig) -> Result<Self, Error> {
+        let inner = sled::open("./storage/mainnet")?;
 
         inner.open_tree(TREE_SYSTEM)?;
         inner.open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?;
@@ -37,18 +41,18 @@ impl Storage {
         inner.open_tree(TREE_MILESTONE_INDEX_TO_RECEIPT)?;
         inner.open_tree(TREE_SPENT_TO_TREASURY_OUTPUT)?;
 
-        Ok(Self { inner })
+        Ok(Self { inner, config })
     }
 }
 
 #[async_trait]
 impl StorageBackend for Storage {
-    type ConfigBuilder = ();
-    type Config = ();
+    type ConfigBuilder = StorageConfigBuilder;
+    type Config = StorageConfig;
     type Error = Error;
 
-    async fn start((): Self::Config) -> Result<Self, Self::Error> {
-        Self::new()
+    async fn start(config: Self::Config) -> Result<Self, Self::Error> {
+        Self::new(config)
     }
 
     async fn shutdown(self) -> Result<(), Self::Error> {
