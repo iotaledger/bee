@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Module containing ledger storage operations.
-
 use crate::{
     types::{
         snapshot::SnapshotInfo, Balance, BalanceDiffs, ConsumedOutput, CreatedOutput, LedgerIndex, Migration,
@@ -28,7 +26,6 @@ use bee_tangle::{
 
 use std::collections::HashMap;
 
-/// A blanket-implemented helper trait for the storage layer.
 pub trait StorageBackend:
     backend::StorageBackend
     + BatchBuilder
@@ -72,7 +69,7 @@ pub trait StorageBackend:
     + for<'a> AsStream<'a, Unspent, ()>
     + for<'a> AsStream<'a, Address, Balance>
     + for<'a> AsStream<'a, SolidEntryPoint, MilestoneIndex>
-    // === Tangle operations ===
+    // === Other operations ===
     + bee_tangle::storage::StorageBackend
 {
 }
@@ -134,9 +131,12 @@ pub(crate) fn insert_output_id_for_address_batch<B: StorageBackend>(
     match address {
         Address::Ed25519(address) => {
             Batch::<(Ed25519Address, OutputId), ()>::batch_insert(storage, batch, &(*address, *output_id), &())
-                .map_err(|e| Error::Storage(Box::new(e)))
+                .map_err(|e| Error::Storage(Box::new(e)))?;
         }
+        address => return Err(Error::UnsupportedAddressKind(address.kind())),
     }
+
+    Ok(())
 }
 
 pub(crate) fn delete_output_id_for_address_batch<B: StorageBackend>(
@@ -148,9 +148,12 @@ pub(crate) fn delete_output_id_for_address_batch<B: StorageBackend>(
     match address {
         Address::Ed25519(address) => {
             Batch::<(Ed25519Address, OutputId), ()>::batch_delete(storage, batch, &(*address, *output_id))
-                .map_err(|e| Error::Storage(Box::new(e)))
+                .map_err(|e| Error::Storage(Box::new(e)))?;
         }
+        address => return Err(Error::UnsupportedAddressKind(address.kind())),
     }
+
+    Ok(())
 }
 
 pub(crate) fn insert_created_output_batch<B: StorageBackend>(
@@ -166,13 +169,15 @@ pub(crate) fn insert_created_output_batch<B: StorageBackend>(
 
     match output.inner() {
         Output::SignatureLockedSingle(output) => {
-            insert_output_id_for_address_batch(storage, batch, output.address(), output_id)
+            insert_output_id_for_address_batch(storage, batch, output.address(), output_id)?
         }
         Output::SignatureLockedDustAllowance(output) => {
-            insert_output_id_for_address_batch(storage, batch, output.address(), output_id)
+            insert_output_id_for_address_batch(storage, batch, output.address(), output_id)?
         }
-        Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
+        output => return Err(Error::UnsupportedOutputKind(output.kind())),
     }
+
+    Ok(())
 }
 
 pub(crate) fn delete_created_output_batch<B: StorageBackend>(
@@ -188,13 +193,15 @@ pub(crate) fn delete_created_output_batch<B: StorageBackend>(
 
     match output.inner() {
         Output::SignatureLockedSingle(output) => {
-            delete_output_id_for_address_batch(storage, batch, output.address(), output_id)
+            delete_output_id_for_address_batch(storage, batch, output.address(), output_id)?
         }
         Output::SignatureLockedDustAllowance(output) => {
-            delete_output_id_for_address_batch(storage, batch, output.address(), output_id)
+            delete_output_id_for_address_batch(storage, batch, output.address(), output_id)?
         }
-        Output::Treasury(_) => Err(Error::UnsupportedOutputKind(output.kind())),
+        output => return Err(Error::UnsupportedOutputKind(output.kind())),
     }
+
+    Ok(())
 }
 
 pub(crate) async fn create_output<B: StorageBackend>(
@@ -220,7 +227,10 @@ pub(crate) fn insert_consumed_output_batch<B: StorageBackend>(
 ) -> Result<(), Error> {
     Batch::<OutputId, ConsumedOutput>::batch_insert(storage, batch, output_id, output)
         .map_err(|e| Error::Storage(Box::new(e)))?;
-    Batch::<Unspent, ()>::batch_delete(storage, batch, &(*output_id).into()).map_err(|e| Error::Storage(Box::new(e)))
+    Batch::<Unspent, ()>::batch_delete(storage, batch, &(*output_id).into())
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+
+    Ok(())
 }
 
 pub(crate) fn delete_consumed_output_batch<B: StorageBackend>(
@@ -231,7 +241,9 @@ pub(crate) fn delete_consumed_output_batch<B: StorageBackend>(
     Batch::<OutputId, ConsumedOutput>::batch_delete(storage, batch, output_id)
         .map_err(|e| Error::Storage(Box::new(e)))?;
     Batch::<Unspent, ()>::batch_insert(storage, batch, &(*output_id).into(), &())
-        .map_err(|e| Error::Storage(Box::new(e)))
+        .map_err(|e| Error::Storage(Box::new(e)))?;
+
+    Ok(())
 }
 
 pub(crate) async fn apply_balance_diffs<B: StorageBackend>(
@@ -278,23 +290,20 @@ pub(crate) async fn apply_milestone<B: StorageBackend>(
 ) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
+    let mut created_output_ids = Vec::with_capacity(created_outputs.len());
+    let mut consumed_output_ids = Vec::with_capacity(consumed_outputs.len());
+
     insert_ledger_index_batch(storage, &mut batch, &index.into())?;
 
-    let created_output_ids = created_outputs
-        .iter()
-        .map::<Result<_, Error>, _>(|(output_id, output)| {
-            insert_created_output_batch(storage, &mut batch, output_id, output)?;
-            Ok(*output_id)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
+    for (output_id, output) in created_outputs.iter() {
+        insert_created_output_batch(storage, &mut batch, output_id, output)?;
+        created_output_ids.push(*output_id);
+    }
 
-    let consumed_output_ids = consumed_outputs
-        .iter()
-        .map::<Result<_, Error>, _>(|(output_id, (_, consumed_output))| {
-            insert_consumed_output_batch(storage, &mut batch, output_id, consumed_output)?;
-            Ok(*output_id)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
+    for (output_id, (_, consumed_output)) in consumed_outputs.iter() {
+        insert_consumed_output_batch(storage, &mut batch, output_id, consumed_output)?;
+        consumed_output_ids.push(*output_id);
+    }
 
     apply_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
 
@@ -346,7 +355,9 @@ pub(crate) async fn rollback_milestone<B: StorageBackend>(
         delete_consumed_output_batch(storage, &mut batch, output_id)?;
     }
 
-    apply_balance_diffs_batch(storage, &mut batch, &balance_diffs.negated()).await?;
+    let mut balance_diffs = balance_diffs.clone();
+    balance_diffs.negate();
+    apply_balance_diffs_batch(storage, &mut batch, &balance_diffs).await?;
 
     if let Some(migration) = migration {
         delete_receipt_batch(storage, &mut batch, migration.receipt())?;
@@ -502,21 +513,22 @@ pub(crate) fn unspend_treasury_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-/// Fetches the unspent treasury output from the storage.
 pub async fn fetch_unspent_treasury_output<B: StorageBackend>(storage: &B) -> Result<TreasuryOutput, Error> {
-    if let Some(outputs) = Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &false)
+    match Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &false)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))?
     {
-        match outputs.as_slice() {
-            // There has to be an unspent treasury output at all time.
-            [] => panic!("No unspent treasury output found"),
-            [output] => Ok(output.clone()),
-            // There should be one and only one unspent treasury output at all time.
-            _ => panic!("More than one unspent treasury output found"),
+        Some(outputs) => {
+            match outputs.len() {
+                // There has to be an unspent treasury output at all time.
+                0 => panic!("No unspent treasury output found"),
+                // Indexing is fine since length is known
+                1 => Ok(outputs[0].clone()),
+                // There should only be one and only one unspent treasury output at all time.
+                _ => panic!("More than one unspent treasury output found"),
+            }
         }
-    } else {
         // There has to be an unspent treasury output at all time.
-        panic!("No unspent treasury output found");
+        None => panic!("No unspent treasury output found"),
     }
 }
