@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{fmt, time::Duration};
+use std::time::Duration;
 
 #[derive(Debug, Default)]
 pub struct PruningMetrics {
@@ -43,7 +43,7 @@ pub struct UnconfirmedMetrics {
     pub already_pruned: usize,
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Timings {
     pub full_prune: Duration,
     pub get_old_seps: Duration,
@@ -57,23 +57,4 @@ pub struct Timings {
     pub batch_new_seps: Duration,
     pub truncate_old_seps: Duration,
     pub batch_commit: Duration,
-}
-
-impl fmt::Debug for Timings {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("PruningMetrics")
-            .field("full_prune", &self.full_prune.as_secs_f32())
-            .field("get_old_seps", &self.get_old_seps.as_secs_f32())
-            .field("filter_old_seps", &self.filter_old_seps.as_secs_f32())
-            .field("replace_seps", &self.replace_seps.as_secs_f32())
-            .field("batch_confirmed", &self.batch_confirmed.as_secs_f32())
-            .field("batch_unconfirmed", &self.batch_unconfirmed.as_secs_f32())
-            .field("batch_milestones", &self.batch_milestones.as_secs_f32())
-            .field("batch_output_diffs", &self.batch_output_diffs.as_secs_f32())
-            .field("batch_receipts", &self.batch_receipts.as_secs_f32())
-            .field("batch_new_seps", &self.batch_new_seps.as_secs_f32())
-            .field("truncate_old_seps", &self.truncate_old_seps.as_secs_f32())
-            .field("batch_commit", &self.batch_commit.as_secs_f32())
-            .finish()
-    }
 }

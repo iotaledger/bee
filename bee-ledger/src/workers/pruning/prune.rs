@@ -44,22 +44,24 @@ pub async fn prune<S: StorageBackend>(
         });
     }
 
+    // Measurement of the full pruning step.
     let full_prune = Instant::now();
 
+    // Get the old set of SEPs.
     let get_old_seps = Instant::now();
     let mut old_seps = tangle.get_solid_entry_points().await;
     timings.get_old_seps = get_old_seps.elapsed();
 
     pruning_metrics.old_seps = old_seps.len();
 
-    let mut delete_batch = S::batch_begin();
+    // Start a batch to make changes to the storage in a single atomic step.
+    let mut batch = S::batch_begin();
 
     // Add confirmed data to the delete batch.
+    // NOTE: This is the most costly thing during pruning, because it has to perform a past-cone traversal.
     let batch_confirmed = Instant::now();
-
     let (mut new_seps, confirmed_metrics) =
-        batch::delete_confirmed_data(tangle, &storage, &mut delete_batch, target_index, &old_seps).await?;
-
+        batch::delete_confirmed_data(tangle, &storage, &mut batch, target_index, &old_seps).await?;
     timings.batch_confirmed = batch_confirmed.elapsed();
 
     pruning_metrics.found_seps = new_seps.len();
@@ -83,55 +85,40 @@ pub async fn prune<S: StorageBackend>(
 
     // Write the new set of SEPs to the storage.
     let batch_new_seps = Instant::now();
-
     for (new_sep, index) in &new_seps {
-        Batch::<SolidEntryPoint, MilestoneIndex>::batch_insert(storage, &mut delete_batch, new_sep, index)
+        Batch::<SolidEntryPoint, MilestoneIndex>::batch_insert(storage, &mut batch, new_sep, index)
             .map_err(|e| Error::BatchOperation(Box::new(e)))?;
     }
-
     timings.batch_new_seps = batch_new_seps.elapsed();
 
-    let replace_seps = Instant::now();
-
     // Replace the old set of SEPs with the new one.
+    let replace_seps = Instant::now();
     tangle.replace_solid_entry_points(new_seps).await;
-
     timings.replace_seps = replace_seps.elapsed();
 
+    // Update entry point index
     tangle.update_entry_point_index(target_index);
 
     // Add prunable milestones to the delete batch.
     let batch_milestones = Instant::now();
-
-    pruning_metrics.milestones =
-        batch::delete_milestones(storage, &mut delete_batch, start_index, target_index).await?;
-
+    pruning_metrics.milestones = batch::delete_milestones(storage, &mut batch, start_index, target_index).await?;
     timings.batch_milestones = batch_milestones.elapsed();
 
     // Add prunable output diffs to the delete batch.
     let batch_output_diffs = Instant::now();
-
-    pruning_metrics.output_diffs =
-        batch::delete_output_diffs(storage, &mut delete_batch, start_index, target_index).await?;
-
+    pruning_metrics.output_diffs = batch::delete_output_diffs(storage, &mut batch, start_index, target_index).await?;
     timings.batch_output_diffs = batch_output_diffs.elapsed();
 
     // Add prunable receipts the delete batch (if wanted).
     if config.prune_receipts() {
         let batch_receipts = Instant::now();
-
-        pruning_metrics.receipts +=
-            batch::delete_receipts(storage, &mut delete_batch, start_index, target_index).await?;
-
+        pruning_metrics.receipts += batch::delete_receipts(storage, &mut batch, start_index, target_index).await?;
         timings.batch_receipts = batch_receipts.elapsed();
     }
 
     // Add unconfirmed data to the delete batch.
     let batch_unconfirmed = Instant::now();
-
-    let unconfirmed_metrics =
-        batch::delete_unconfirmed_data(storage, &mut delete_batch, start_index, target_index).await?;
-
+    let unconfirmed_metrics = batch::delete_unconfirmed_data(storage, &mut batch, start_index, target_index).await?;
     timings.batch_unconfirmed = batch_unconfirmed.elapsed();
 
     pruning_metrics.messages += unconfirmed_metrics.prunable_messages;
@@ -145,23 +132,20 @@ pub async fn prune<S: StorageBackend>(
     // TODO: consider batching deletes rather than using Truncate. Is one faster than the other? Do we care if its
     // atomic or not?
     let truncate_old_seps = Instant::now();
-
     Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage)
         .await
         .unwrap();
-
     timings.truncate_old_seps = truncate_old_seps.elapsed();
 
-    let batch_commit = Instant::now();
-
     // Execute the batch operation.
+    let batch_commit = Instant::now();
     storage
-        .batch_commit(delete_batch, true)
+        .batch_commit(batch, true)
         .await
         .map_err(|e| Error::BatchOperation(Box::new(e)))?;
-
     timings.batch_commit = batch_commit.elapsed();
 
+    // Update the pruning index.
     tangle.update_pruning_index(target_index);
 
     timings.full_prune = full_prune.elapsed();
