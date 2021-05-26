@@ -9,9 +9,8 @@ use crate::{
 use bee_storage::{backend::StorageBackend, health::StorageHealth};
 
 use async_trait::async_trait;
-use sled;
 
-type Error = sled::Error;
+pub type Error = sled::Error;
 
 pub struct Storage {
     pub(crate) inner: sled::Db,
