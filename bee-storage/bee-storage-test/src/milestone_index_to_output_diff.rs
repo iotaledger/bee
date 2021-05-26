@@ -130,7 +130,8 @@ pub async fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &
     let mut stream = AsStream::<MilestoneIndex, OutputDiff>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some((index, output_diff)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let (index, output_diff) = result.unwrap();
         assert!(output_diffs.contains(&(index, Some(output_diff))));
         count += 1;
     }

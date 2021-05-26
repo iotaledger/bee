@@ -115,7 +115,8 @@ pub async fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
     let mut stream = AsStream::<(PaddedIndex, MessageId), ()>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some(((index, message_id), _)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let ((index, message_id), _) = result.unwrap();
         assert!(message_ids.get(&index).unwrap().contains(&message_id));
         count += 1;
     }

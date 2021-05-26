@@ -118,7 +118,8 @@ pub async fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
         .unwrap();
     let mut count = 0;
 
-    while let Some(((index, message_id), _)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let ((index, message_id), _) = result.unwrap();
         assert!(receipts.get(&index).unwrap().contains(&message_id));
         count += 1;
     }

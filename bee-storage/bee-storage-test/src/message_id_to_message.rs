@@ -115,7 +115,8 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     let mut stream = AsStream::<MessageId, Message>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some((message_id, message)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let (message_id, message) = result.unwrap();
         assert!(messages.contains(&(message_id, Some(message))));
         count += 1;
     }

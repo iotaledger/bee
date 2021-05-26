@@ -117,7 +117,8 @@ pub async fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B)
         .unwrap();
     let mut count = 0;
 
-    while let Some(((address, output_id), _)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let ((address, output_id), _) = result.unwrap();
         assert!(output_ids.get(&address).unwrap().contains(&output_id));
         count += 1;
     }

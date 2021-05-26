@@ -128,7 +128,8 @@ pub async fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) 
     let mut stream = AsStream::<OutputId, CreatedOutput>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some((output_id, created_output)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let (output_id, created_output) = result.unwrap();
         assert!(created_outputs.contains(&(output_id, Some(created_output))));
         count += 1;
     }

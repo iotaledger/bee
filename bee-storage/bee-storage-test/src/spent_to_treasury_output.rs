@@ -121,7 +121,8 @@ pub async fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
     let mut stream = AsStream::<(bool, TreasuryOutput), ()>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some(((spent, treasury_output), _)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let ((spent, treasury_output), _) = result.unwrap();
         assert!(treasury_outputs.get(&spent).unwrap().contains(&treasury_output));
         count += 1;
     }
