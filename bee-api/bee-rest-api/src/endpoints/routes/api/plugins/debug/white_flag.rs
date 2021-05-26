@@ -16,7 +16,7 @@ use crate::{
 
 use bee_ledger::workers::consensus::{self, WhiteFlagMetadata};
 use bee_message::{milestone::MilestoneIndex, MessageId};
-use bee_protocol::workers::{event::MessageSolidified, helper, MessageRequesterWorker, RequestedMessages};
+use bee_protocol::workers::{event::MessageSolidified, request_message, MessageRequesterWorker, RequestedMessages};
 use bee_runtime::{event::Bus, resource::ResourceHandle};
 use bee_tangle::MsTangle;
 
@@ -147,7 +147,7 @@ pub(crate) async fn white_flag<B: StorageBackend>(
                 to_solidify.remove(parent);
             }
         } else {
-            helper::request_message(&*tangle, &message_requester, &*requested_messages, *parent, index).await;
+            request_message(&*tangle, &message_requester, &*requested_messages, *parent, index).await;
         }
     }
 

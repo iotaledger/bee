@@ -32,6 +32,21 @@ use std::{
 
 const RETRY_INTERVAL_MS: u64 = 2500;
 
+pub async fn request_message<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    message_requester: &MessageRequesterWorker,
+    requested_messages: &RequestedMessages,
+    message_id: MessageId,
+    index: MilestoneIndex,
+) {
+    if !tangle.contains(&message_id).await
+        && !tangle.is_solid_entry_point(&message_id).await
+        && !requested_messages.contains(&message_id).await
+    {
+        message_requester.request(MessageRequesterWorkerEvent(message_id, index));
+    }
+}
+
 #[derive(Default)]
 pub struct RequestedMessages(RwLock<HashMap<MessageId, (MilestoneIndex, Instant), FxBuildHasher>>);
 

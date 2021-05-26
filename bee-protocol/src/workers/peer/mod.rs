@@ -11,12 +11,12 @@ pub use manager_res::{PeerManager, PeerManagerResWorker};
 use crate::{
     types::{metrics::NodeMetrics, peer::Peer},
     workers::{
-        helper,
         packets::{
             tlv_from_bytes, HeaderPacket, HeartbeatPacket, MessagePacket, MessageRequestPacket, MilestoneRequestPacket,
             Packet, TlvError,
         },
         peer::packet_handler::PacketHandler,
+        requester::request_latest_milestone,
         storage::StorageBackend,
         HasherWorkerEvent, MessageResponderWorkerEvent, MilestoneRequesterWorkerEvent, MilestoneResponderWorkerEvent,
         RequestedMilestones,
@@ -87,7 +87,7 @@ impl PeerWorker {
 
         let mut packet_handler = PacketHandler::new(receiver, shutdown_fused, self.peer.address().clone());
 
-        helper::request_latest_milestone(
+        request_latest_milestone(
             &*tangle,
             &self.milestone_requester,
             &*requested_milestones,

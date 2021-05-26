@@ -4,9 +4,12 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        helper, peer::PeerManager, storage::StorageBackend, IndexUpdaterWorker, IndexUpdaterWorkerEvent,
-        MessageRequesterWorker, MetricsWorker, MilestoneRequesterWorker, PeerManagerResWorker, RequestedMessages,
-        RequestedMilestones,
+        heartbeater::broadcast_heartbeat,
+        peer::PeerManager,
+        requester::{request_message, request_milestone},
+        storage::StorageBackend,
+        IndexUpdaterWorker, IndexUpdaterWorkerEvent, MessageRequesterWorker, MetricsWorker, MilestoneRequesterWorker,
+        PeerManagerResWorker, RequestedMessages, RequestedMilestones,
     },
 };
 
@@ -55,7 +58,7 @@ async fn heavy_solidification<B: StorageBackend>(
     let missing_len = missing.len();
 
     for missing_id in missing {
-        helper::request_message(tangle, message_requester, requested_messages, missing_id, target_index).await;
+        request_message(tangle, message_requester, requested_messages, missing_id, target_index).await;
     }
 
     missing_len
@@ -87,7 +90,7 @@ async fn solidify<B: StorageBackend>(
         warn!("Sending message_id to `IndexUpdater` failed: {:?}.", e);
     }
 
-    helper::broadcast_heartbeat(&peer_manager, &metrics, &tangle).await;
+    broadcast_heartbeat(&peer_manager, &metrics, &tangle).await;
 
     bus.dispatch(SolidMilestoneChanged {
         index,
@@ -144,7 +147,7 @@ where
 
                 // Request all milestones within a range.
                 while next <= cmp::min(smi + MilestoneIndex(ms_sync_count), lmi) {
-                    helper::request_milestone(&tangle, &milestone_requester, &*requested_milestones, next, None).await;
+                    request_milestone(&tangle, &milestone_requester, &*requested_milestones, next, None).await;
                     next = next + MilestoneIndex(1);
                 }
 
@@ -159,14 +162,7 @@ where
                                 *next - 1
                             );
                             for parent in message.parents().iter() {
-                                helper::request_message(
-                                    &tangle,
-                                    &message_requester,
-                                    &requested_messages,
-                                    *parent,
-                                    index,
-                                )
-                                .await;
+                                request_message(&tangle, &message_requester, &requested_messages, *parent, index).await;
                             }
                         } else {
                             error!("Requested milestone {} message not present in the tangle.", index)

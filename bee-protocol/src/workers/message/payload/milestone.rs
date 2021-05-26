@@ -4,9 +4,9 @@
 use crate::{
     types::{metrics::NodeMetrics, milestone_key_manager::MilestoneKeyManager},
     workers::{
-        config::ProtocolConfig, helper, peer::PeerManager, storage::StorageBackend, MetricsWorker,
-        MilestoneRequesterWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent, PeerManagerResWorker,
-        RequestedMilestones,
+        config::ProtocolConfig, heartbeater::broadcast_heartbeat, peer::PeerManager, storage::StorageBackend,
+        MetricsWorker, MilestoneRequesterWorker, MilestoneSolidifierWorker, MilestoneSolidifierWorkerEvent,
+        PeerManagerResWorker, RequestedMilestones,
     },
 };
 
@@ -95,7 +95,7 @@ async fn process<B: StorageBackend>(
                     info!("New milestone {} {}.", index, milestone.message_id());
                     tangle.update_latest_milestone_index(index);
 
-                    helper::broadcast_heartbeat(&peer_manager, &metrics, tangle).await;
+                    broadcast_heartbeat(&peer_manager, &metrics, tangle).await;
 
                     bus.dispatch(LatestMilestoneChanged { index, milestone });
                 } else {

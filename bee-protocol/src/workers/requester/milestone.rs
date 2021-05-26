@@ -17,7 +17,7 @@ use bee_tangle::{MsTangle, TangleWorker};
 use async_trait::async_trait;
 use futures::StreamExt;
 use fxhash::FxBuildHasher;
-use log::{debug, info};
+use log::{debug, info, warn};
 use tokio::{
     sync::{mpsc, RwLock},
     time::interval,
@@ -32,6 +32,29 @@ use std::{
 };
 
 const RETRY_INTERVAL_MS: u64 = 2500;
+
+pub(crate) async fn request_milestone<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
+    requested_milestones: &RequestedMilestones,
+    index: MilestoneIndex,
+    to: Option<PeerId>,
+) {
+    if !requested_milestones.contains(&index).await && !tangle.contains_milestone(index).await {
+        if let Err(e) = milestone_requester.send(MilestoneRequesterWorkerEvent(index, to)) {
+            warn!("Requesting milestone failed: {}.", e);
+        }
+    }
+}
+
+pub(crate) async fn request_latest_milestone<B: StorageBackend>(
+    tangle: &MsTangle<B>,
+    milestone_requester: &mpsc::UnboundedSender<MilestoneRequesterWorkerEvent>,
+    requested_milestones: &RequestedMilestones,
+    to: Option<PeerId>,
+) {
+    request_milestone(tangle, milestone_requester, requested_milestones, MilestoneIndex(0), to).await
+}
 
 #[derive(Default)]
 pub struct RequestedMilestones(RwLock<HashMap<MilestoneIndex, Instant, FxBuildHasher>>);

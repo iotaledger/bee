@@ -3,7 +3,6 @@
 
 pub mod config;
 pub mod event;
-pub mod helper;
 pub mod storage;
 
 mod broadcaster;
@@ -36,8 +35,8 @@ pub(crate) use mps::MpsWorker;
 pub use peer::{PeerManager, PeerManagerResWorker};
 pub(crate) use peer::{PeerManagerWorker, PeerWorker};
 pub(crate) use propagator::{PropagatorWorker, PropagatorWorkerEvent};
-pub use requester::{MessageRequesterWorker, RequestedMessages, RequestedMilestones};
-pub(crate) use requester::{MessageRequesterWorkerEvent, MilestoneRequesterWorker, MilestoneRequesterWorkerEvent};
+pub use requester::{request_message, MessageRequesterWorker, RequestedMessages, RequestedMilestones};
+pub(crate) use requester::{MilestoneRequesterWorker, MilestoneRequesterWorkerEvent};
 pub(crate) use responder::{
     MessageResponderWorker, MessageResponderWorkerEvent, MilestoneResponderWorker, MilestoneResponderWorkerEvent,
 };

@@ -6,9 +6,9 @@ use crate::{
     workers::{
         config::ProtocolConfig,
         event::{MessageProcessed, VertexCreated},
-        helper,
         packets::MessagePacket,
         peer::PeerManager,
+        requester::request_message,
         storage::StorageBackend,
         BroadcasterWorker, BroadcasterWorkerEvent, MessageRequesterWorker, MessageSubmitterError, MetricsWorker,
         PayloadWorker, PayloadWorkerEvent, PeerManagerResWorker, PropagatorWorker, PropagatorWorkerEvent,
@@ -171,14 +171,8 @@ where
                                 metrics.messages_average_latency_set(latency_sum / latency_num);
 
                                 for parent in message.parents().iter() {
-                                    helper::request_message(
-                                        &tangle,
-                                        &message_requester,
-                                        &*requested_messages,
-                                        *parent,
-                                        index,
-                                    )
-                                    .await;
+                                    request_message(&tangle, &message_requester, &*requested_messages, *parent, index)
+                                        .await;
                                 }
                             }
                             None => {
