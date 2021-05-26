@@ -56,7 +56,9 @@ pub trait StorageBackend:
     + Fetch<(), SnapshotInfo>
     + Fetch<Address, Balance>
     + Fetch<bool, Vec<TreasuryOutput>>
+    + Fetch<MessageId, Message>
     + Fetch<MessageId, MessageMetadata>
+    + Fetch<MessageId, Vec<MessageId>>
     + Fetch<MilestoneIndex, Milestone>
     + Fetch<MilestoneIndex, Vec<Receipt>>
     + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
@@ -66,6 +68,7 @@ pub trait StorageBackend:
     + Insert<(), SnapshotInfo>
     + Insert<(), LedgerIndex>
     + Insert<(bool, TreasuryOutput), ()>
+    + Insert<SolidEntryPoint, MilestoneIndex>
     // === Truncate operations ===
     + Truncate<SolidEntryPoint, MilestoneIndex>
     // === Stream operations ===
@@ -104,7 +107,9 @@ impl<T> StorageBackend for T where
         + Fetch<(), SnapshotInfo>
         + Fetch<Address, Balance>
         + Fetch<bool, Vec<TreasuryOutput>>
+        + Fetch<MessageId, Message>
         + Fetch<MessageId, MessageMetadata>
+        + Fetch<MessageId, Vec<MessageId>>
         + Fetch<MilestoneIndex, Milestone>
         + Fetch<MilestoneIndex, Vec<Receipt>>
         + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
@@ -114,6 +119,7 @@ impl<T> StorageBackend for T where
         + Insert<(), SnapshotInfo>
         + Insert<(), LedgerIndex>
         + Insert<(bool, TreasuryOutput), ()>
+        + Insert<SolidEntryPoint, MilestoneIndex>
         // === Truncate operations ===
         + Truncate<SolidEntryPoint, MilestoneIndex>
         // === Stream operations ===
