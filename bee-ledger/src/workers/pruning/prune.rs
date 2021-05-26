@@ -19,7 +19,7 @@ use log::*;
 
 use std::time::Instant;
 
-///
+/// Performs pruning of old data until `target_index`.
 pub async fn prune<S: StorageBackend>(
     tangle: &MsTangle<S>,
     storage: &S,
@@ -138,7 +138,8 @@ pub async fn prune<S: StorageBackend>(
     //
     // **NOTE**: This operation must come before the batch is committed.
     //
-    // TODO: consider batching deletes rather than using Truncate. Is one faster than the other? Do we care if its atomic or not?
+    // TODO: consider batching deletes rather than using Truncate. Is one faster than the other? Do we care if its
+    // atomic or not?
     let truncate_old_seps = Instant::now();
 
     Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage)
