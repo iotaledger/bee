@@ -127,9 +127,9 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let (http_code, err_code, reason) = match err.find() {
         // handle custom rejections
         Some(CustomRejection::Forbidden) => (StatusCode::FORBIDDEN, "403", "access forbidden"),
-        Some(CustomRejection::NotFound(reason)) => (StatusCode::NOT_FOUND, "404", reason),
-        Some(CustomRejection::BadRequest(reason)) => (StatusCode::BAD_REQUEST, "400", reason),
-        Some(CustomRejection::ServiceUnavailable(reason)) => (StatusCode::SERVICE_UNAVAILABLE, "503", reason),
+        Some(CustomRejection::NotFound(reason)) => (StatusCode::NOT_FOUND, "404", reason.as_str()),
+        Some(CustomRejection::BadRequest(reason)) => (StatusCode::BAD_REQUEST, "400", reason.as_str()),
+        Some(CustomRejection::ServiceUnavailable(reason)) => (StatusCode::SERVICE_UNAVAILABLE, "503", reason.as_str()),
         // handle default rejections
         _ => {
             if err.is_not_found() {
