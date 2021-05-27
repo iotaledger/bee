@@ -23,8 +23,6 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
-use sled;
-
 use std::collections::HashMap;
 
 #[derive(Default)]

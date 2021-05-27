@@ -76,7 +76,7 @@ impl SledConfigBuilder {
     pub fn finish(self) -> SledConfig {
         SledConfig {
             storage: self.storage.finish(),
-            path: self.path.unwrap_or(DEFAULT_PATH.into()),
+            path: self.path.unwrap_or_else(|| DEFAULT_PATH.into()),
             compression_factor: self.compression_factor.unwrap_or(DEFAULT_COMPRESSION_FACTOR),
             cache_capacity: self.cache_capacity.unwrap_or(DEFAULT_CACHE_CAPACITY),
             fast_mode: self.fast_mode.unwrap_or(DEFAULT_FAST_MODE),
