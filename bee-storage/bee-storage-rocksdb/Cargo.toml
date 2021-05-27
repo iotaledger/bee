@@ -31,4 +31,4 @@ thiserror = "1.0"
 bee-storage-test = { path = "../bee-storage-test" }
 bee-test = { path = "../../bee-test" }
 
-tokio = { version = "1.6", features = [ "macros" ] }
+tokio = { version = "1.6", features = [ "macros", "rt" ] }
