@@ -145,7 +145,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
         if parsed == 0 { None } else { Some(parsed) }
     };
 
-    let message = build_message(network_id, parents, payload, nonce);
+    let message = build_message(network_id, parents, payload, nonce, rest_api_config, protocol_config).await?;
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
 
     Ok(warp::reply::with_status(
@@ -156,12 +156,14 @@ pub(crate) async fn submit_message<B: StorageBackend>(
     ))
 }
 
-pub(crate) async fn build_message(
-    network_id: String,
+pub(crate) async fn build_message<B: StorageBackend>(
+    network_id: u64,
     parents: Vec<MessageId>,
-    payload: Payload,
-    nonce: u64,
-) -> Message {
+    payload: Option<Payload>,
+    nonce: Option<u64>,
+    rest_api_config: RestApiConfig,
+    protocol_config: ProtocolConfig,
+) -> Result<Message, Rejection> {
     let message = if let Some(nonce) = nonce {
         let mut builder = MessageBuilder::new()
             .with_network_id(network_id)
@@ -198,7 +200,7 @@ pub(crate) async fn build_message(
             .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?
     };
 
-    message
+    Ok(message)
 }
 
 pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
