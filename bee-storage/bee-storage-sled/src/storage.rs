@@ -25,7 +25,7 @@ impl Storage {
                 sled::Mode::LowSpace
             })
             .use_compression(config.compression_factor.is_some())
-            .compression_factor(config.compression_factor.unwrap_or(0) as i32)
+            .compression_factor(config.compression_factor.unwrap_or(1) as i32)
             .temporary(config.temporary)
             .create_new(!config.create_new);
 
