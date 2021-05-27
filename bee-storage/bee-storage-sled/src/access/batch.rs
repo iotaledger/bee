@@ -38,7 +38,7 @@ pub struct StorageBatch {
 impl BatchBuilder for Storage {
     type Batch = StorageBatch;
 
-    async fn batch_commit(&self, batch: Self::Batch, durability: bool) -> Result<(), <Self as StorageBackend>::Error> {
+    async fn batch_commit(&self, batch: Self::Batch, _durability: bool) -> Result<(), <Self as StorageBackend>::Error> {
         for (tree, batch) in batch.inner {
             self.inner.open_tree(tree)?.apply_batch(batch)?;
         }

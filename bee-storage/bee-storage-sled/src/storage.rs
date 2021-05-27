@@ -58,7 +58,7 @@ impl StorageBackend for Storage {
         Ok(None)
     }
 
-    async fn set_health(&self, health: StorageHealth) -> Result<(), Self::Error> {
+    async fn set_health(&self, _health: StorageHealth) -> Result<(), Self::Error> {
         Ok(())
     }
 }
