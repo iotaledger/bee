@@ -41,6 +41,7 @@ pub struct UnconfirmedMetrics {
     pub prunable_edges: usize,
     pub prunable_indexations: usize,
     pub already_pruned: usize,
+    pub was_confirmed: usize,
 }
 
 #[derive(Debug, Default)]

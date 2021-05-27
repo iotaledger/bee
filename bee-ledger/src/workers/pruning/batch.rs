@@ -42,6 +42,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
     target_index: MilestoneIndex,
     old_seps: &Seps,
 ) -> Result<(Seps, ConfirmedMetrics), Error> {
+    // TODO: we should probably think about not allocating those hashmaps each time.
     let mut visited = Messages::with_capacity(512);
     let mut buffered_approvers = Approvers::with_capacity(512);
     let mut new_seps = Seps::with_capacity(512);
@@ -102,10 +103,11 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
         metrics.fetched_approvers += 1;
 
-        let mut not_visited_approvers = approvers.into_iter().filter(|id| !visited.contains(id)).peekable();
+        // Note: Future approvers are approvers/children beyond current target index.
+        let mut unvisited_approvers = approvers.into_iter().filter(|id| !visited.contains(id)).peekable();
 
         // If all approvers were visited before, this confirmed message is a redundant SEP.
-        if not_visited_approvers.peek().is_none() {
+        if unvisited_approvers.peek().is_none() {
             metrics.all_approvers_visited += 1;
             continue;
         }
@@ -113,7 +115,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         metrics.approvers_not_visited += 1;
 
         // Try to use the buffer first before making any storage queries.
-        if not_visited_approvers
+        if unvisited_approvers
             .clone()
             .any(|id| *buffered_approvers.get(&id).unwrap_or(&false))
         {
@@ -124,7 +126,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         }
 
         // Fetch not yet fetched metadata, and buffer it.
-        for id in not_visited_approvers {
+        for id in unvisited_approvers {
             if buffered_approvers.contains_key(&id) {
                 continue;
             }
@@ -190,6 +192,24 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
 
         // TODO: use MultiFetch
         for unconf_msg_id in unconf_msgs.iter().map(|unconf_msg| unconf_msg.message_id()) {
+            // Skip those that were confirmed.
+            match Fetch::<MessageId, MessageMetadata>::fetch(storage, unconf_msg_id)
+                .await
+                .map_err(|e| Error::FetchOperation(Box::new(e)))?
+            {
+                Some(msg_meta) => {
+                    if msg_meta.milestone_index().is_some() {
+                        metrics.was_confirmed += 1;
+                        continue;
+                    }
+                }
+                None => {
+                    metrics.already_pruned += 1;
+                    continue;
+                }
+            }
+
+            // Delete those messages that remained unconfirmed.
             match Fetch::<MessageId, Message>::fetch(storage, unconf_msg_id)
                 .await
                 .map_err(|e| Error::FetchOperation(Box::new(e)))?
