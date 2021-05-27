@@ -315,6 +315,7 @@ where
                 }
 
                 if should_prune(&tangle, MilestoneIndex(*ledger_index), delay, &pruning_config) {
+                    println!("Pruning");
                     // TODO
                     // if let Err(e) = prune_database(&tangle, MilestoneIndex(*event.index - delay)) {
                     //     error!("Failed to prune database: {:?}.", e);
