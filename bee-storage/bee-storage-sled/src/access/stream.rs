@@ -57,7 +57,7 @@ macro_rules! impl_stream {
             async fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
                 Ok(StorageStream::new(
                     self.inner.open_tree($cf)?.iter(),
-                    self.config.iteration_budget,
+                    self.config.storage.iteration_budget,
                 ))
             }
         }

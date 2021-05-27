@@ -60,7 +60,7 @@ impl Fetch<MessageId, Vec<MessageId>> for Storage {
                     let child: [u8; MESSAGE_ID_LENGTH] = child.try_into().unwrap();
                     Ok(MessageId::from(child))
                 })
-                .take(self.config.fetch_edge_limit)
+                .take(self.config.storage.fetch_edge_limit)
                 .collect::<Result<Vec<MessageId>, Self::Error>>()?,
         ))
     }
@@ -80,7 +80,7 @@ impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
                     let message_id: [u8; MESSAGE_ID_LENGTH] = message_id.try_into().unwrap();
                     Ok(MessageId::from(message_id))
                 })
-                .take(self.config.fetch_index_limit)
+                .take(self.config.storage.fetch_index_limit)
                 .collect::<Result<Vec<MessageId>, Self::Error>>()?,
         ))
     }
@@ -125,7 +125,7 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
                         .try_into()
                         .unwrap())
                 })
-                .take(self.config.fetch_output_id_limit)
+                .take(self.config.storage.fetch_output_id_limit)
                 .collect::<Result<Vec<OutputId>, Self::Error>>()?,
         ))
     }

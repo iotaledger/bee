@@ -16,7 +16,20 @@ pub struct Storage {
 
 impl Storage {
     pub fn new(config: SledConfig) -> Result<Self, Error> {
-        let inner = sled::open(&config.path)?;
+        let sled_cfg = sled::Config::default()
+            .path(&config.path)
+            .cache_capacity(config.cache_capacity as u64)
+            .mode(if config.fast_mode {
+                sled::Mode::HighThroughput
+            } else {
+                sled::Mode::LowSpace
+            })
+            .use_compression(config.compression_factor.is_some())
+            .compression_factor(config.compression_factor.unwrap_or(0) as i32)
+            .temporary(config.temporary)
+            .create_new(!config.create_new);
+
+        let inner = sled_cfg.open()?;
 
         Ok(Self { inner, config })
     }
