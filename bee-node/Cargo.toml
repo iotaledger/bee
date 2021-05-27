@@ -20,8 +20,8 @@ bee-protocol = { path = "../bee-protocol" }
 bee-rest-api = { path = "../bee-api/bee-rest-api", features = [ "endpoints" ] }
 bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-storage-rocksdb = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-storage-sled = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-storage-rocksdb = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-storage-sled = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 anymap = "0.12"
@@ -62,5 +62,9 @@ name = "bee"
 path = "src/main.rs"
 
 [features]
+default = ["rocksdb"]
+
 console = ["console-subscriber", "tokio/tracing", "tracing", "tracing-futures", "tracing-subscriber"]
 dashboard = [ "cap", "mime_guess", "rust-embed", "serde_repr", "warp-reverse-proxy" ]
+rocksdb = ["bee-storage-rocksdb"]
+sled = ["bee-storage-sled"]
