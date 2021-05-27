@@ -7,7 +7,7 @@ description = "A bee-storage implementation for the Sled backend"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "storage", "sled"]
+keywords = ["iota", "tangle", "bee", "framework", "sled"]
 homepage = "https://www.iota.org"
 
 [dependencies]

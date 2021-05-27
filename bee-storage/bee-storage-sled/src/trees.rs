@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 pub const TREE_MESSAGE_ID_TO_MESSAGE: &str = "message_id_to_message";
