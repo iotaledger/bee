@@ -4,8 +4,8 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        config::ProtocolConfig,
         event::{MessageProcessed, VertexCreated},
+        message::submitter::{notify_invalid_message, notify_message},
         packets::MessagePacket,
         peer::PeerManager,
         requester::request_message,
@@ -31,7 +31,6 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use std::{any::TypeId, convert::Infallible, time::Instant};
 
 pub(crate) struct ProcessorWorkerEvent {
-    pub(crate) pow_score: f64,
     pub(crate) from: Option<PeerId>,
     pub(crate) message_packet: MessagePacket,
     pub(crate) notifier: Option<Sender<Result<MessageId, MessageSubmitterError>>>,
@@ -46,7 +45,7 @@ impl<N: Node> Worker<N> for ProcessorWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = (ProtocolConfig, u64);
+    type Config = u64;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -99,11 +98,10 @@ where
                 let metrics = metrics.clone();
                 let peer_manager = peer_manager.clone();
                 let bus = bus.clone();
-                let config = config.clone();
+                let network_id = config;
 
                 task::spawn(async move {
                     while let Ok(ProcessorWorkerEvent {
-                        pow_score,
                         from,
                         message_packet,
                         notifier,
@@ -114,33 +112,20 @@ where
                         let message = match Message::unpack(&mut &message_packet.bytes[..]) {
                             Ok(message) => message,
                             Err(e) => {
-                                invalid_message(format!("Invalid message: {:?}.", e), &metrics, notifier);
+                                notify_invalid_message(format!("Invalid message: {:?}.", e), &metrics, notifier);
                                 continue;
                             }
                         };
 
-                        if message.network_id() != config.1 {
-                            invalid_message(
-                                format!("Incompatible network ID {} != {}.", message.network_id(), config.1),
+                        if message.network_id() != network_id {
+                            notify_invalid_message(
+                                format!("Incompatible network ID {} != {}.", message.network_id(), network_id),
                                 &metrics,
                                 notifier,
                             );
                             continue;
                         }
 
-                        if pow_score < config.0.minimum_pow_score {
-                            invalid_message(
-                                format!(
-                                    "Insufficient pow score: {} < {}.",
-                                    pow_score, config.0.minimum_pow_score
-                                ),
-                                &metrics,
-                                notifier,
-                            );
-                            continue;
-                        }
-
-                        // TODO should be passed by the hasher worker ?
                         let (message_id, _) = message.id();
                         let metadata = MessageMetadata::arrived();
 
@@ -204,11 +189,7 @@ where
                             error!("Sending message {} to payload worker failed.", message_id);
                         }
 
-                        if let Some(notifier) = notifier {
-                            if let Err(e) = notifier.send(Ok(message_id)) {
-                                error!("Failed to send message id: {:?}.", e);
-                            }
-                        }
+                        notify_message(message_id, notifier);
 
                         bus.dispatch(MessageProcessed { message_id });
 
@@ -237,20 +218,5 @@ where
         });
 
         Ok(Self { tx })
-    }
-}
-
-fn invalid_message(
-    error: String,
-    metrics: &NodeMetrics,
-    notifier: Option<Sender<Result<MessageId, MessageSubmitterError>>>,
-) {
-    trace!("{}", error);
-    metrics.invalid_messages_inc();
-
-    if let Some(notifier) = notifier {
-        if let Err(e) = notifier.send(Err(MessageSubmitterError(error))) {
-            error!("Failed to send error: {:?}.", e);
-        }
     }
 }

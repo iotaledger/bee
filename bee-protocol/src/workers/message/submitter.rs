@@ -1,7 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::workers::{packets::MessagePacket, storage::StorageBackend, HasherWorker, HasherWorkerEvent};
+use crate::{
+    types::metrics::NodeMetrics,
+    workers::{packets::MessagePacket, storage::StorageBackend, HasherWorker, HasherWorkerEvent},
+};
 
 use bee_message::MessageId;
 use bee_runtime::{
@@ -12,11 +15,37 @@ use bee_runtime::{
 
 use async_trait::async_trait;
 use futures::{channel::oneshot::Sender, stream::StreamExt};
-use log::{error, info};
+use log::{error, info, trace};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, fmt};
+
+pub(crate) fn notify_invalid_message(
+    error: String,
+    metrics: &NodeMetrics,
+    notifier: Option<Sender<Result<MessageId, MessageSubmitterError>>>,
+) {
+    trace!("{}", error);
+    metrics.invalid_messages_inc();
+
+    if let Some(notifier) = notifier {
+        if let Err(e) = notifier.send(Err(MessageSubmitterError(error))) {
+            error!("Failed to send error: {:?}.", e);
+        }
+    }
+}
+
+pub(crate) fn notify_message(
+    message_id: MessageId,
+    notifier: Option<Sender<Result<MessageId, MessageSubmitterError>>>,
+) {
+    if let Some(notifier) = notifier {
+        if let Err(e) = notifier.send(Ok(message_id)) {
+            error!("Failed to send message id: {:?}.", e);
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct MessageSubmitterError(pub String);

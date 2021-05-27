@@ -6,7 +6,10 @@
 use crate::{
     types::metrics::NodeMetrics,
     workers::{
-        message::{HashCache, MessageSubmitterError, ProcessorWorker, ProcessorWorkerEvent},
+        config::ProtocolConfig,
+        message::{
+            submitter::notify_invalid_message, HashCache, MessageSubmitterError, ProcessorWorker, ProcessorWorkerEvent,
+        },
         packets::MessagePacket,
         peer::PeerManager,
         storage::StorageBackend,
@@ -20,6 +23,7 @@ use bee_crypto::ternary::{
 };
 use bee_message::MessageId;
 use bee_network::PeerId;
+use bee_pow::score;
 use bee_runtime::{node::Node, resource::ResourceHandle, shutdown_stream::ShutdownStream, worker::Worker};
 use bee_ternary::{b1t6, Btrit, T1B1Buf, T5B1Buf, TritBuf};
 
@@ -51,43 +55,37 @@ pub(crate) struct HasherWorker {
     pub(crate) tx: mpsc::UnboundedSender<HasherWorkerEvent>,
 }
 
-// fn trigger_hashing(
-//     batch_size: usize,
-//     receiver: &mut BatchStream,
-//     processor_worker: &mut mpsc::UnboundedSender<ProcessorWorkerEvent>,
-// ) {
-//     if batch_size < BATCH_SIZE_THRESHOLD {
-//         send_hashes(receiver.hasher.hash_unbatched(), &mut receiver.events, processor_worker);
-//     } else {
-//         send_hashes(receiver.hasher.hash_batched(), &mut receiver.events, processor_worker);
-//     }
-//     // FIXME: we could store the fraction of times we use the batched hasher
-// }
-
 fn send_hashes(
     hashes: impl Iterator<Item = TritBuf>,
     events: Vec<HasherWorkerEvent>,
     processor_worker: &mut mpsc::UnboundedSender<ProcessorWorkerEvent>,
+    minimum_pow_score: f64,
+    metrics: &NodeMetrics,
 ) {
     for (
         HasherWorkerEvent {
             from,
             message_packet,
-            notifier: message_inserted_tx,
+            notifier,
         },
         hash,
     ) in events.into_iter().zip(hashes)
     {
-        // TODO replace this with scoring function
-        let zeros = hash.iter().rev().take_while(|t| *t == Btrit::Zero).count() as u32;
-        let pow_score = 3u128.pow(zeros) as f64 / message_packet.bytes.len() as f64;
-        // TODO check score
+        let pow_score = score::pow_score(&hash, message_packet.bytes.len());
+
+        if pow_score < minimum_pow_score {
+            notify_invalid_message(
+                format!("Insufficient pow score: {} < {}.", pow_score, minimum_pow_score),
+                metrics,
+                notifier,
+            );
+            continue;
+        }
 
         if let Err(e) = processor_worker.send(ProcessorWorkerEvent {
-            pow_score,
             from,
             message_packet,
-            notifier: message_inserted_tx,
+            notifier,
         }) {
             warn!("Sending event to the processor worker failed: {}.", e);
         }
@@ -105,7 +103,7 @@ impl<N: Node> Worker<N> for HasherWorker
 where
     N::Backend: StorageBackend,
 {
-    type Config = usize;
+    type Config = ProtocolConfig;
     type Error = Infallible;
 
     fn dependencies() -> &'static [TypeId] {
@@ -129,6 +127,8 @@ where
         for _ in 0..hash_tasks {
             let task_rx = task_rx.clone();
             let mut processor_worker = processor_worker.clone();
+            let minimum_pow_score = config.minimum_pow_score;
+            let metrics = metrics.clone();
             node.spawn::<Self, _, _>(|shutdown| async move {
                 let mut s = ShutdownStream::new(
                     shutdown,
@@ -143,9 +143,21 @@ where
                 {
                     tokio::task::block_in_place(|| {
                         if batch_size < BATCH_SIZE_THRESHOLD {
-                            send_hashes(hasher.hash_unbatched(), events, &mut processor_worker);
+                            send_hashes(
+                                hasher.hash_unbatched(),
+                                events,
+                                &mut processor_worker,
+                                minimum_pow_score,
+                                &*metrics,
+                            );
                         } else {
-                            send_hashes(hasher.hash_batched(), events, &mut processor_worker);
+                            send_hashes(
+                                hasher.hash_batched(),
+                                events,
+                                &mut processor_worker,
+                                minimum_pow_score,
+                                &*metrics,
+                            );
                         }
                     });
                 }
@@ -154,7 +166,7 @@ where
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             let mut receiver = BatchStream::new(
-                config,
+                config.workers.message_worker_cache,
                 metrics,
                 peer_manager,
                 ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx)),
