@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 bee-crypto = { version = "0.2.1-alpha", path = "../bee-crypto" }
 bee-ternary = { version = "0.4.2-alpha", path = "../bee-ternary" }
 
-iota-crypto = { version = "0.4.2", features = [ "blake2b", "digest" ] }
+iota-crypto = { version = "0.5", features = [ "blake2b", "digest" ] }
 thiserror = "1.0"
 
 [dev-dependencies]
