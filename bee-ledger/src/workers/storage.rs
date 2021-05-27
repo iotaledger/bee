@@ -13,14 +13,18 @@ use crate::{
 
 use bee_message::{
     address::{Address, Ed25519Address},
-    milestone::MilestoneIndex,
+    milestone::{Milestone, MilestoneIndex},
     output::{Output, OutputId},
+    prelude::PaddedIndex,
+    Message, MessageId,
 };
 use bee_storage::{
     access::{AsStream, Batch, BatchBuilder, Exist, Fetch, Insert, Truncate},
     backend,
 };
-use bee_tangle::solid_entry_point::SolidEntryPoint;
+use bee_tangle::{
+    metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
+};
 
 use std::collections::HashMap;
 
@@ -28,28 +32,50 @@ use std::collections::HashMap;
 pub trait StorageBackend:
     backend::StorageBackend
     + BatchBuilder
+    // === Batch operations ===
+    + Batch<(), LedgerIndex>
+    + Batch<(bool, TreasuryOutput), ()>
+    + Batch<(Ed25519Address, OutputId), ()>
+    + Batch<(MessageId, MessageId), ()>
+    + Batch<(MilestoneIndex, Receipt), ()>
+    + Batch<(MilestoneIndex, UnreferencedMessage), ()>
+    + Batch<(PaddedIndex, MessageId), ()>
+    + Batch<Address, Balance>
+    + Batch<MessageId, Message>
+    + Batch<MessageId, MessageMetadata>
+    + Batch<MilestoneIndex, Milestone>
+    + Batch<MilestoneIndex, OutputDiff>
     + Batch<OutputId, CreatedOutput>
     + Batch<OutputId, ConsumedOutput>
+    + Batch<SolidEntryPoint, MilestoneIndex>
     + Batch<Unspent, ()>
-    + Batch<(), LedgerIndex>
-    + Batch<MilestoneIndex, OutputDiff>
-    + Batch<(Ed25519Address, OutputId), ()>
-    + Batch<Address, Balance>
-    + Batch<(MilestoneIndex, Receipt), ()>
-    + Batch<(bool, TreasuryOutput), ()>
+    // === Exist operations ===
     + Exist<Unspent, ()>
-    + Fetch<(), SnapshotInfo>
-    + Fetch<OutputId, CreatedOutput>
+    // === Fetch operations ===
     + Fetch<(), LedgerIndex>
+    + Fetch<(), SnapshotInfo>
     + Fetch<Address, Balance>
     + Fetch<bool, Vec<TreasuryOutput>>
+    + Fetch<MessageId, Message>
+    + Fetch<MessageId, MessageMetadata>
+    + Fetch<MessageId, Vec<MessageId>>
+    + Fetch<MilestoneIndex, Milestone>
+    + Fetch<MilestoneIndex, Vec<Receipt>>
+    + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
+    + Fetch<OutputId, CreatedOutput>
+    + Fetch<SolidEntryPoint, MilestoneIndex>
+    // === Insert operations ===
     + Insert<(), SnapshotInfo>
     + Insert<(), LedgerIndex>
     + Insert<(bool, TreasuryOutput), ()>
+    + Insert<SolidEntryPoint, MilestoneIndex>
+    // === Truncate operations ===
     + Truncate<SolidEntryPoint, MilestoneIndex>
+    // === Stream operations ===
     + for<'a> AsStream<'a, Unspent, ()>
     + for<'a> AsStream<'a, Address, Balance>
     + for<'a> AsStream<'a, SolidEntryPoint, MilestoneIndex>
+    // === Tangle operations ===
     + bee_tangle::storage::StorageBackend
 {
 }
@@ -57,28 +83,50 @@ pub trait StorageBackend:
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + BatchBuilder
+        // === Batch operations ===
+        + Batch<(), LedgerIndex>
+        + Batch<(Ed25519Address, OutputId), ()>
+        + Batch<(bool, TreasuryOutput), ()>
+        + Batch<(MessageId, MessageId), ()>
+        + Batch<(MilestoneIndex, Receipt), ()>
+        + Batch<(MilestoneIndex, UnreferencedMessage), ()>
+        + Batch<(PaddedIndex, MessageId), ()>
+        + Batch<Address, Balance>
+        + Batch<MessageId, Message>
+        + Batch<MessageId, MessageMetadata>
+        + Batch<MilestoneIndex, Milestone>
+        + Batch<MilestoneIndex, OutputDiff>
         + Batch<OutputId, CreatedOutput>
         + Batch<OutputId, ConsumedOutput>
+        + Batch<SolidEntryPoint, MilestoneIndex>
         + Batch<Unspent, ()>
-        + Batch<(), LedgerIndex>
-        + Batch<MilestoneIndex, OutputDiff>
-        + Batch<(Ed25519Address, OutputId), ()>
-        + Batch<Address, Balance>
-        + Batch<(MilestoneIndex, Receipt), ()>
-        + Batch<(bool, TreasuryOutput), ()>
+        // === Exist operations ===
         + Exist<Unspent, ()>
-        + Fetch<(), SnapshotInfo>
-        + Fetch<OutputId, CreatedOutput>
+        // === Fetch operations ===
         + Fetch<(), LedgerIndex>
+        + Fetch<(), SnapshotInfo>
         + Fetch<Address, Balance>
         + Fetch<bool, Vec<TreasuryOutput>>
+        + Fetch<MessageId, Message>
+        + Fetch<MessageId, MessageMetadata>
+        + Fetch<MessageId, Vec<MessageId>>
+        + Fetch<MilestoneIndex, Milestone>
+        + Fetch<MilestoneIndex, Vec<Receipt>>
+        + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
+        + Fetch<OutputId, CreatedOutput>
+        + Fetch<SolidEntryPoint, MilestoneIndex>
+        // === Insert operations ===
         + Insert<(), SnapshotInfo>
         + Insert<(), LedgerIndex>
         + Insert<(bool, TreasuryOutput), ()>
+        + Insert<SolidEntryPoint, MilestoneIndex>
+        // === Truncate operations ===
         + Truncate<SolidEntryPoint, MilestoneIndex>
+        // === Stream operations ===
         + for<'a> AsStream<'a, Unspent, ()>
         + for<'a> AsStream<'a, Address, Balance>
         + for<'a> AsStream<'a, SolidEntryPoint, MilestoneIndex>
+        // === Tangle operations ===
         + bee_tangle::storage::StorageBackend
 {
 }

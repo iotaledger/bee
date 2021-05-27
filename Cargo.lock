@@ -181,7 +181,7 @@ dependencies = [
 
 [[package]]
 name = "bee-ledger"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -193,9 +193,11 @@ dependencies = [
  "chrono",
  "digest 0.9.0",
  "futures",
+ "hashbrown 0.11.2",
  "hex",
  "iota-crypto 0.5.1",
  "log",
+ "ref-cast",
  "reqwest",
  "serde",
  "thiserror",
