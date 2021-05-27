@@ -131,7 +131,8 @@ pub async fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(s
         .unwrap();
     let mut count = 0;
 
-    while let Some(((index, message_id), _)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let ((index, message_id), _) = result.unwrap();
         assert!(unreferenced_messages.get(&index).unwrap().contains(&message_id));
         count += 1;
     }

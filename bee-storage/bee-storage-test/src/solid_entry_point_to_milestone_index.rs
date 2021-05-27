@@ -130,7 +130,8 @@ pub async fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(stor
         .unwrap();
     let mut count = 0;
 
-    while let Some((sep, index)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let (sep, index) = result.unwrap();
         assert!(seps.contains(&(sep, Some(index))));
         count += 1;
     }
