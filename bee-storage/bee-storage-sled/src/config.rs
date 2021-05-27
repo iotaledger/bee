@@ -29,7 +29,7 @@ pub struct SledConfig {
 
 #[derive(Default, Deserialize)]
 pub struct SledConfigBuilder {
-    storage: StorageConfigBuilder,
+    storage: Option<StorageConfigBuilder>,
     path: Option<PathBuf>,
     compression_factor: Option<Option<usize>>,
     cache_capacity: Option<usize>,
@@ -75,7 +75,7 @@ impl SledConfigBuilder {
 
     pub fn finish(self) -> SledConfig {
         SledConfig {
-            storage: self.storage.finish(),
+            storage: self.storage.unwrap_or_default().finish(),
             path: self.path.unwrap_or_else(|| DEFAULT_PATH.into()),
             compression_factor: self.compression_factor.unwrap_or(DEFAULT_COMPRESSION_FACTOR),
             cache_capacity: self.cache_capacity.unwrap_or(DEFAULT_CACHE_CAPACITY),
