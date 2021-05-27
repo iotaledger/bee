@@ -41,7 +41,8 @@ pub(crate) async fn receipts<B: StorageBackend>(storage: ResourceHandle<B>) -> R
         .await
         .map_err(|_| CustomRejection::InternalError)?;
 
-    while let Some(((_, receipt), _)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let ((_, receipt), _) = result.map_err(|_| CustomRejection::InternalError)?;
         receipts_dto.push(ReceiptDto::try_from(receipt).map_err(|_| CustomRejection::InternalError)?);
     }
 

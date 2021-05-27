@@ -69,7 +69,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<u8, System>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -84,7 +85,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<MessageId, Message>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -99,7 +101,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<MessageId, MessageMetadata>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -114,7 +117,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<(MessageId, MessageId), ()>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -134,7 +138,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<(PaddedIndex, MessageId), ()>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -149,7 +154,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<OutputId, CreatedOutput>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -164,7 +170,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<OutputId, ConsumedOutput>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -179,7 +186,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<Unspent, ()>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -194,7 +202,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<(Ed25519Address, OutputId), ()>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -204,7 +213,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<(), LedgerIndex>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -219,7 +229,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<MilestoneIndex, Milestone>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -229,7 +240,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<(), SnapshotInfo>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -245,7 +257,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -260,7 +273,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<MilestoneIndex, OutputDiff>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -276,7 +290,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<Address, Balance>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -291,7 +306,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<(MilestoneIndex, UnreferencedMessage), ()>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -306,7 +322,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<(MilestoneIndex, Receipt), ()>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
@@ -321,7 +338,8 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Stream => {
                 let mut stream = AsStream::<(bool, TreasuryOutput), ()>::stream(storage).await?;
 
-                while let Some((key, value)) = stream.next().await {
+                while let Some(result) = stream.next().await {
+                    let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
             }
