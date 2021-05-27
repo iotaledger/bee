@@ -85,7 +85,8 @@ pub async fn snapshot_info_access<B: StorageBackend>(storage: &B) {
     let mut stream = AsStream::<(), SnapshotInfo>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some((_, info)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let (_, info) = result.unwrap();
         assert_eq!(snapshot_info, info);
         count += 1;
     }

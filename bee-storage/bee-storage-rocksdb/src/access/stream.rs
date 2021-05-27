@@ -69,7 +69,7 @@ macro_rules! impl_stream {
 
         /// A stream to iterate over all key-value pairs of a column family.
         impl<'a> Stream for StorageStream<'a, $key, $value> {
-            type Item = ($key, $value);
+            type Item = Result<($key, $value), <Storage as StorageBackend>::Error>;
 
             fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
                 let StorageStreamProj {
@@ -89,7 +89,9 @@ macro_rules! impl_stream {
 
                 let item = inner
                     .next()
-                    .map(|(key, value)| Self::unpack_key_value(&key, &value));
+                    .map(|(key, value)| Ok(Self::unpack_key_value(&key, &value)));
+
+                inner.status()?;
 
                 if inner.valid() {
                     Poll::Ready(item)

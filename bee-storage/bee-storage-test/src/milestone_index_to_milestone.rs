@@ -127,7 +127,8 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
     let mut stream = AsStream::<MilestoneIndex, Milestone>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some((index, milestone)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let (index, milestone) = result.unwrap();
         assert!(milestones.contains(&(index, Some(milestone))));
         count += 1;
     }

@@ -24,7 +24,8 @@ async fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury:
         .await
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    while let Some((output_id, _)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let (output_id, _) = result.map_err(|e| Error::Storage(Box::new(e)))?;
         let output = storage::fetch_output(storage, &*output_id)
             .await?
             .ok_or(Error::MissingUnspentOutput(output_id))?;
@@ -57,7 +58,8 @@ async fn validate_ledger_balance_state<B: StorageBackend>(storage: &B, treasury:
         .await
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
-    while let Some((address, balance)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let (address, balance) = result.map_err(|e| Error::Storage(Box::new(e)))?;
         if balance.dust_outputs() > dust_outputs_max(balance.dust_allowance()) {
             return Err(Error::InvalidLedgerDustState(address, balance));
         }

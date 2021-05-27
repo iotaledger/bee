@@ -81,7 +81,8 @@ pub async fn ledger_index_access<B: StorageBackend>(storage: &B) {
     let mut stream = AsStream::<(), LedgerIndex>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some((_, ledger_index)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let (_, ledger_index) = result.unwrap();
         assert_eq!(ledger_index, index);
         count += 1;
     }

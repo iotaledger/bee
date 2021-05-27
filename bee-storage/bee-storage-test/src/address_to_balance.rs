@@ -116,7 +116,8 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
     let mut stream = AsStream::<Address, Balance>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some((address, balance)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let (address, balance) = result.unwrap();
         assert!(balances.contains(&(address, Some(balance))));
         count += 1;
     }

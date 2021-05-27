@@ -15,7 +15,7 @@ use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle, TangleWorker};
 use async_trait::async_trait;
 
 use chrono::{offset::TimeZone, Utc};
-use futures::stream::StreamExt;
+use futures::stream::{StreamExt, TryStreamExt};
 use log::info;
 
 use std::{any::TypeId, collections::HashMap};
@@ -65,8 +65,9 @@ where
         let solid_entry_points = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&*storage)
             .await
             .map_err(|e| Error::Storage(Box::new(e)))?
-            .collect::<HashMap<SolidEntryPoint, MilestoneIndex>>()
-            .await;
+            .map(|result| result.map_err(|e| Error::Storage(Box::new(e))))
+            .try_collect::<HashMap<SolidEntryPoint, MilestoneIndex>>()
+            .await?;
         // Unwrap is fine because ledger index was either just inserted or already present in storage.
         let ledger_index = MilestoneIndex(*storage::fetch_ledger_index(&*storage).await?.unwrap());
         // Unwrap is fine because snapshot info was either just inserted or already present in storage.

@@ -128,7 +128,8 @@ pub async fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     let mut stream = AsStream::<MessageId, MessageMetadata>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some((message_id, metadata)) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let (message_id, metadata) = result.unwrap();
         assert!(metadatas.contains(&(message_id, Some(metadata))));
         count += 1;
     }
