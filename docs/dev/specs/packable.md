@@ -192,7 +192,7 @@ provides an implementation equivalent to the one written before.
 use bee_common::packable::{Packable, Packer, UnknownTagError, Unpacker, UnpackError};
 
 #[derive(Packable)]
-#[packable(tag_ty = u8)]
+#[packable(tag_type = u8)]
 pub enum Maybe {
     #[packable(tag = 0)]
     Nothing,
@@ -201,29 +201,52 @@ pub enum Maybe {
 }
 ```
 
-A few important details here are:
+This macro introduces a few new concepts:
 
-- The `#[packable(tag_ty = u8)]` attribute specifies that the tag prefix for
-  this enum is of type `u8`. This attribute is mandatory for enums deriving `Packable`
-  and its value can only be one of the integer types with sizes less than
-  `128`.
+### Tags for enums
 
-- The `#[packable(tag = ...)]` attribute specifies the tag prefix value for
-  each variant of `Maybe`. This is also mandatory for enums deriving
-  `Packable`.
+A very common pattern when implementing `Packable` for enums consists in
+introducing a prefix value to differentiate each variant of the enumeration
+when unpacking, this prefix value is known as `tag`. The type of the `tag` is
+specified with the `#[packable(tag_type = ...)]` attribute and it can only be
+one of `u8`, `u16`, `u32` or `u64`. The `tag` value used for each variant is
+specified with the `#[packable(tag = ...)]` attribute and can only contain
+integer literal without any type prefixes (e.g. `42` is valid but `42u8` is
+not).
 
-- The `Packable::Error` type is implicitly assumed to be `UnknownTagError<T>`
-  for enums with prefix tag of type `T` or `Infallible` for structs. The user
-  can provide  its own error type by using the `#[packable(error = ...)]`
-  attribute if desired.
+In the example above, the `tag` type is `u8`, the `Nothing` variant has a `tag`
+value of `0` and the `Just` variant has a `tag` value of `1`. This means that
+the packed version of `Maybe::Nothing` is `[0u8]` and the packed version of
+`Maybe::Just(7)` is `[1u8, 0u8, 0u8, 0u8, 7u8]`.
+
+The `tag_type` and `tag` attributes are mandatory for enums. Additionally the
+`tag` for each variant must be unique inside the enum.
+
+### Invalid tag values and error handling
+
+Following the example above, unpacking a `Maybe` value that starts with a `tag`
+value different from `0` or `1` should fail. To represent this kind of error we
+introduced the `UnknownTagError<T>` type. This type is used as
+`Packable::Error` when deriving `Packable` for an enum, the `T` type used is
+the one specified in the `tag_type` attribute. Additionally, we use the
+`std::convert::Infallible` type as `Packable::Error` for structs by default.
+
+However, sometimes it is necessary to use a different error type when deriving
+`Packable`. Two examplew where this can happen  is when `Packable` is being
+derived for a type that contains a field which has a custom implementation of
+`Packable` or when `Packable` is being derived for a struct whose fields use a
+`Packable::Error` type different from `Infallible`. In that case the user can
+specify a custom error type using the `#[packable(error = ...)]` attribute. The
+type used in this attribute must implement `From<E>` where `E` can be the
+`Packable::Error` associated type of any field of the type.
 
 ## Optional features
 
-There are two features for this module:
+There is only one optional feature for this module:
 
 - The `io` feature which implements `Packer` for any type that implements
   `std::io::Write` and `Unpacker` for any type that implements `std::io::Read`,
-  both implementations use `std::io::Error`.
+  both implementations use `std::io::Error` as the `Error` associated type.
 
 # Unsolved Issues
 
@@ -281,4 +304,3 @@ were two downsides around this idea:
 At the time there is no de-facto crates for `no_std` IO in Rust. The most
 popular one is the [GenIO crate](https://github.com/Kixunil/genio) which is
 being redesigned. Thus we cannot count on its stability or maintainaility.
-
