@@ -25,7 +25,7 @@ pub async fn prune<S: StorageBackend>(
     storage: &S,
     bus: &Bus<'_>,
     target_index: MilestoneIndex,
-    snapshot_pruning_delta: u32,
+    _snapshot_pruning_delta: u32,
     config: &PruningConfig,
 ) -> Result<(), Error> {
     let mut timings = Timings::default();
@@ -71,7 +71,8 @@ pub async fn prune<S: StorageBackend>(
 
     // Keep still relevant old SEPs:
     let filter_old_seps = Instant::now();
-    old_seps.retain(|_, v| *v > (target_index + 1) - snapshot_pruning_delta);
+    // old_seps.retain(|_, v| *v > (target_index + 1) - snapshot_pruning_delta);
+    old_seps.retain(|_, v| *v > target_index);
     timings.filter_old_seps = filter_old_seps.elapsed();
 
     pruning_metrics.kept_seps = old_seps.len();
