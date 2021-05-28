@@ -128,7 +128,17 @@ two new helper error types:
   this error is not used for structs).
 
 We also use `core::convert::Infallible` as `Packable::Error` for types whose
-unpacking does not have semantic errors, like integers for example.
+unpacking does not have semantic errors, like integers for example. A more
+grounded explanation of error handling can be found in the *the `derive` macro*
+section.
+
+## `Packable` for basic types
+
+The `Packable` is implemented for every integer type by encoding the value as
+an array of bytes in little-endian order. Booleans are packed following Rust's
+data layout, meaning that `true` is packed as a `1` byte and `false` as a `0`
+byte. However, boolean unpacking is less strict and unpacks any non-zero byte
+as `true`.
 
 # Usage
 
@@ -181,7 +191,6 @@ impl Packable for Maybe {
     }
 }
 ```
-
 
 ## The `derive` macro
 
