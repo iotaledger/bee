@@ -5,7 +5,7 @@ use std::time::Duration;
 
 #[derive(Debug, Default)]
 pub struct PruningMetrics {
-    pub old_seps: usize,
+    pub curr_seps: usize,
     pub found_seps: usize,
     pub kept_seps: usize,
     pub new_seps: usize,
@@ -46,8 +46,8 @@ pub struct UnconfirmedMetrics {
 #[derive(Debug, Default)]
 pub struct Timings {
     pub full_prune: Duration,
-    pub get_old_seps: Duration,
-    pub filter_old_seps: Duration,
+    pub get_curr_seps: Duration,
+    pub filter_curr_seps: Duration,
     pub replace_seps: Duration,
     pub batch_confirmed: Duration,
     pub batch_unconfirmed: Duration,
@@ -55,6 +55,6 @@ pub struct Timings {
     pub batch_output_diffs: Duration,
     pub batch_receipts: Duration,
     pub batch_new_seps: Duration,
-    pub truncate_old_seps: Duration,
+    pub truncate_curr_seps: Duration,
     pub batch_commit: Duration,
 }

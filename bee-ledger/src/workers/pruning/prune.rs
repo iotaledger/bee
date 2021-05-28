@@ -32,11 +32,12 @@ pub async fn prune<S: StorageBackend>(
     let mut pruning_metrics = PruningMetrics::default();
 
     let start_index = tangle.get_pruning_index() + 1;
+    // tangle.get_snapshot_index()
 
     if target_index > start_index {
-        info!("Pruning milestones {}..{}", start_index, target_index);
+        info!("Pruning milestone range [{},{}]...", start_index, target_index);
     } else if target_index == start_index {
-        info!("Pruning milestone {}", target_index);
+        info!("Pruning milestone {}...", target_index);
     } else {
         return Err(Error::InvalidTargetIndex {
             minimum: start_index,
@@ -48,11 +49,11 @@ pub async fn prune<S: StorageBackend>(
     let full_prune = Instant::now();
 
     // Get the old set of SEPs.
-    let get_old_seps = Instant::now();
-    let mut old_seps = tangle.get_solid_entry_points().await;
-    timings.get_old_seps = get_old_seps.elapsed();
+    let get_curr_seps = Instant::now();
+    let mut curr_seps = tangle.get_solid_entry_points().await;
+    timings.get_curr_seps = get_curr_seps.elapsed();
 
-    pruning_metrics.old_seps = old_seps.len();
+    pruning_metrics.curr_seps = curr_seps.len();
 
     // Start a batch to make changes to the storage in a single atomic step.
     let mut batch = S::batch_begin();
@@ -61,7 +62,7 @@ pub async fn prune<S: StorageBackend>(
     // NOTE: This is the most costly thing during pruning, because it has to perform a past-cone traversal.
     let batch_confirmed = Instant::now();
     let (mut new_seps, confirmed_metrics) =
-        batch::delete_confirmed_data(tangle, &storage, &mut batch, target_index, &old_seps).await?;
+        batch::delete_confirmed_data(tangle, &storage, &mut batch, target_index, &curr_seps).await?;
     timings.batch_confirmed = batch_confirmed.elapsed();
 
     pruning_metrics.found_seps = new_seps.len();
@@ -69,16 +70,25 @@ pub async fn prune<S: StorageBackend>(
     pruning_metrics.edges = confirmed_metrics.prunable_edges;
     pruning_metrics.indexations = confirmed_metrics.prunable_indexations;
 
-    // Keep still relevant old SEPs:
-    let filter_old_seps = Instant::now();
-    // old_seps.retain(|_, v| *v > (target_index + 1) - snapshot_pruning_delta);
-    old_seps.retain(|_, v| *v > target_index);
-    timings.filter_old_seps = filter_old_seps.elapsed();
+    // Keep still relevant SEPs.
+    //
+    // Note:
+    // Currently SEPs from the snapshot are stored with their confirming milestone index, but what we need is
+    // the approver with the highest confirmation index in order to decide how long we need to keep it. Hence,
+    // we need to keep the "snapshot-SEPs" around for some time.
+    let filter_curr_seps = Instant::now();
+    let snapshot_index = tangle.get_snapshot_index();
+    if start_index < snapshot_index + 50 {
+        curr_seps.retain(|_, v| *v > target_index || *v == snapshot_index);
+    } else {
+        curr_seps.retain(|_, v| *v > target_index);
+    }
+    timings.filter_curr_seps = filter_curr_seps.elapsed();
 
-    pruning_metrics.kept_seps = old_seps.len();
+    pruning_metrics.kept_seps = curr_seps.len();
 
     // Create the union of both sets:
-    new_seps.extend(old_seps);
+    new_seps.extend(curr_seps);
 
     let num_new_seps = new_seps.len();
 
@@ -136,7 +146,7 @@ pub async fn prune<S: StorageBackend>(
     Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage)
         .await
         .unwrap();
-    timings.truncate_old_seps = truncate_old_seps.elapsed();
+    timings.truncate_curr_seps = truncate_old_seps.elapsed();
 
     // Execute the batch operation.
     let batch_commit = Instant::now();

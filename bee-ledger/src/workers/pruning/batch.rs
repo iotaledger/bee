@@ -40,7 +40,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     target_index: MilestoneIndex,
-    old_seps: &Seps,
+    curr_seps: &Seps,
 ) -> Result<(Seps, ConfirmedMetrics), Error> {
     // TODO: we should probably think about not allocating those hashmaps each time.
     let mut visited = Messages::with_capacity(512);
@@ -64,8 +64,8 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
             continue;
         }
 
-        // Skip SEPs.
-        if old_seps.contains_key(SolidEntryPoint::ref_cast(&current_id)) {
+        // Skip message if it's a SEP.
+        if curr_seps.contains_key(SolidEntryPoint::ref_cast(&current_id)) {
             metrics.bottomed += 1;
             continue;
         }
@@ -156,7 +156,6 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
             new_seps.insert(current_id.into(), max_conf_index);
 
             metrics.found_seps += 1;
-            continue;
         }
     }
 
