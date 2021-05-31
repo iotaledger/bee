@@ -1,20 +1,25 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! The sled storage backend.
+
 use crate::config::{SledConfig, SledConfigBuilder};
 
 use bee_storage::{backend::StorageBackend, health::StorageHealth};
 
 use async_trait::async_trait;
 
+/// Error to be raised when a sled operation fails.
 pub type Error = sled::Error;
 
+/// The sled database.
 pub struct Storage {
     pub(crate) inner: sled::Db,
     pub(crate) config: SledConfig,
 }
 
 impl Storage {
+    /// Create a new database from the provided configuration.
     pub fn new(config: SledConfig) -> Result<Self, Error> {
         let sled_cfg = sled::Config::default()
             .path(&config.path)

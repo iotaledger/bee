@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Types related to the backend configuration.
+
 use serde::Deserialize;
 
 use std::path::PathBuf;
@@ -16,6 +18,7 @@ const DEFAULT_FETCH_INDEX_LIMIT: usize = 1_000;
 const DEFAULT_FETCH_OUTPUT_ID_LIMIT: usize = 1_000;
 const DEFAULT_ITERATION_BUDGET: usize = 100;
 
+/// Configuration for the sled storage backend.
 #[derive(Clone)]
 pub struct SledConfig {
     pub(crate) storage: StorageConfig,
@@ -27,6 +30,7 @@ pub struct SledConfig {
     pub(crate) create_new: bool,
 }
 
+/// Configuration builder for the sled storage backend.
 #[derive(Default, Deserialize)]
 pub struct SledConfigBuilder {
     storage: Option<StorageConfigBuilder>,
@@ -39,40 +43,50 @@ pub struct SledConfigBuilder {
 }
 
 impl SledConfigBuilder {
+    /// Create a new builder with default values.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Set the path where the database will be stored.
     pub fn with_path(mut self, path: String) -> Self {
         self.path = Some(path.into());
         self
     }
 
+    /// Set the compression factor for zstd, it must be an integer between 1 and 22. Do not use
+    /// compression if the factor is `None`,
     pub fn with_compression_factor(mut self, compression_factor: Option<usize>) -> Self {
         self.compression_factor = Some(compression_factor);
         self
     }
 
+    /// Set the page cache maximum capacity in bytes.
     pub fn with_cache_capacity(mut self, cache_capacity: usize) -> Self {
         self.cache_capacity = Some(cache_capacity);
         self
     }
 
+    /// Specify if the database should priorize speed (true) or size (false).
     pub fn with_mode(mut self, fast: bool) -> Self {
         self.fast_mode = Some(fast);
         self
     }
 
+    /// Set the database to be deleted after `Storage` is dropped.
     pub fn with_temporary(mut self, temporary: bool) -> Self {
         self.temporary = Some(temporary);
         self
     }
 
+    /// Specify if the database should be created from scratch and fail if the `path` is already
+    /// used.
     pub fn with_create_new(mut self, create_new: bool) -> Self {
         self.create_new = Some(create_new);
         self
     }
 
+    /// Build the configuration.
     pub fn finish(self) -> SledConfig {
         SledConfig {
             storage: self.storage.unwrap_or_default().finish(),
@@ -92,6 +106,7 @@ impl From<SledConfigBuilder> for SledConfig {
     }
 }
 
+/// Configuration related to the access operations of the storage.
 #[derive(Clone)]
 pub struct StorageConfig {
     pub(crate) fetch_edge_limit: usize,
@@ -100,6 +115,7 @@ pub struct StorageConfig {
     pub(crate) iteration_budget: usize,
 }
 
+/// Configuration builder related to the access operations of the storage.
 #[derive(Default, Deserialize)]
 pub struct StorageConfigBuilder {
     fetch_edge_limit: Option<usize>,
@@ -109,10 +125,12 @@ pub struct StorageConfigBuilder {
 }
 
 impl StorageConfigBuilder {
+    /// Create a new builder with default values.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Build the configuration.
     pub fn finish(self) -> StorageConfig {
         StorageConfig {
             fetch_edge_limit: self.fetch_edge_limit.unwrap_or(DEFAULT_FETCH_EDGE_LIMIT),

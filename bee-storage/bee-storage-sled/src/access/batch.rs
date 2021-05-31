@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Batch access operations.
+
 use crate::{storage::Storage, trees::*};
 
 use bee_common::packable::Packable;
@@ -25,6 +27,7 @@ use bee_tangle::{
 
 use std::collections::HashMap;
 
+/// A writing batch that can be applied atomically.
 #[derive(Default)]
 pub struct StorageBatch {
     inner: HashMap<&'static str, sled::Batch>,

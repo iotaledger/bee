@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Stream access operations.
+
 use crate::{storage::Storage, trees::*};
 
 use bee_common::packable::Packable;
@@ -28,6 +30,7 @@ use pin_project::pin_project;
 
 use std::{convert::TryInto, marker::PhantomData, pin::Pin};
 
+/// Type used to stream a subtree.
 #[pin_project(project = StorageStreamProj)]
 pub struct StorageStream<'a, K, V> {
     #[pin]
