@@ -30,8 +30,8 @@ fn path() -> impl Filter<Extract = (TransactionId,), Error = Rejection> + Clone 
 }
 
 pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Vec<String>,
-    allowed_ips: Vec<IpAddr>,
+    public_routes: Box<[String]>,
+    allowed_ips: Box<[IpAddr]>,
     storage: ResourceHandle<B>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {

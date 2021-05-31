@@ -131,10 +131,10 @@ impl RestApiConfigBuilder {
             IpAddr::V4(ip) => SocketAddr::new(IpAddr::V4(ip), self.binding_port.unwrap_or(DEFAULT_BINDING_PORT)),
             IpAddr::V6(ip) => SocketAddr::new(IpAddr::V6(ip), self.binding_port.unwrap_or(DEFAULT_BINDING_PORT)),
         };
-        let public_routes = self
+        let public_routes: Box<[String]> = self
             .public_routes
-            .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|s| s.to_string()).collect());
-        let allowed_ips = self.allowed_ips.unwrap_or_else(|| DEFAULT_ALLOWED_IPS.to_vec());
+            .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|s| s.to_string()).collect()).into_boxed_slice();
+        let allowed_ips: Box<[IpAddr]> = self.allowed_ips.unwrap_or_else(|| DEFAULT_ALLOWED_IPS.to_vec()).into_boxed_slice();
         let feature_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
         let white_flag_solidification_timeout = self
             .white_flag_solidification_timeout
@@ -154,8 +154,8 @@ impl RestApiConfigBuilder {
 #[derive(Clone)]
 pub struct RestApiConfig {
     pub(crate) binding_socket_addr: SocketAddr,
-    pub(crate) public_routes: Vec<String>,
-    pub(crate) allowed_ips: Vec<IpAddr>,
+    pub(crate) public_routes: Box<[String]>,
+    pub(crate) allowed_ips: Box<[IpAddr]>,
     pub(crate) feature_proof_of_work: bool,
     pub(crate) white_flag_solidification_timeout: u64,
 }
@@ -172,12 +172,12 @@ impl RestApiConfig {
     }
 
     /// Returns all the routes that are available for public use.
-    pub fn public_routes(&self) -> &Vec<String> {
+    pub fn public_routes(&self) -> &[String] {
         &self.public_routes
     }
 
     /// Returns the IP addresses that are allowed to access all the routes.
-    pub fn allowed_ips(&self) -> &Vec<IpAddr> {
+    pub fn allowed_ips(&self) -> &[IpAddr] {
         &self.allowed_ips
     }
 

@@ -25,8 +25,8 @@ fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone
 }
 
 pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Vec<String>,
-    allowed_ips: Vec<IpAddr>,
+    public_routes: Box<[String]>,
+    allowed_ips: Box<[IpAddr]>,
     tangle: ResourceHandle<MsTangle<B>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()

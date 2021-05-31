@@ -29,8 +29,8 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
 }
 
 pub(crate) fn filter(
-    public_routes: Vec<String>,
-    allowed_ips: Vec<IpAddr>,
+    public_routes: Box<[String]>,
+    allowed_ips: Box<[IpAddr]>,
     peer_manager: ResourceHandle<PeerManager>,
     network_command_sender: ResourceHandle<NetworkCommandSender>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {

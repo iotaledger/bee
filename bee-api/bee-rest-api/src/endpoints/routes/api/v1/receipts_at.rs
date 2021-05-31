@@ -26,8 +26,8 @@ fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone
 }
 
 pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Vec<String>,
-    allowed_ips: Vec<IpAddr>,
+    public_routes: Box<[String]>,
+    allowed_ips: Box<[IpAddr]>,
     storage: ResourceHandle<B>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     self::path()

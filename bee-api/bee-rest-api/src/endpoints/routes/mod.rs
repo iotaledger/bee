@@ -20,8 +20,8 @@ use std::net::IpAddr;
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn filter_all<B: StorageBackend>(
-    public_routes: Vec<String>,
-    allowed_ips: Vec<IpAddr>,
+    public_routes: Box<[String]>,
+    allowed_ips: Box<[IpAddr]>,
     tangle: ResourceHandle<MsTangle<B>>,
     storage: ResourceHandle<B>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,

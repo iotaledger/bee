@@ -9,8 +9,8 @@ use std::net::{IpAddr, SocketAddr};
 
 pub fn has_permission(
     route: &'static str,
-    public_routes: Vec<String>,
-    allowed_ips: Vec<IpAddr>,
+    public_routes: Box<[String]>,
+    allowed_ips: Box<[IpAddr]>,
 ) -> impl Filter<Extract = (), Error = Rejection> + Clone {
     warp::addr::remote()
         .and_then(move |addr: Option<SocketAddr>| {

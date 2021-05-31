@@ -25,8 +25,8 @@ fn path() -> impl Filter<Extract = (PeerId,), Error = Rejection> + Clone {
 }
 
 pub(crate) fn filter(
-    public_routes: Vec<String>,
-    allowed_ips: Vec<IpAddr>,
+    public_routes: Box<[String]>,
+    allowed_ips: Box<[IpAddr]>,
     peer_manager: ResourceHandle<PeerManager>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()

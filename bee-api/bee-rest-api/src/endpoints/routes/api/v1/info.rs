@@ -30,8 +30,8 @@ fn path() -> impl Filter<Extract = (), Error = warp::Rejection> + Clone {
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn filter<B: StorageBackend>(
-    public_routes: Vec<String>,
-    allowed_ips: Vec<IpAddr>,
+    public_routes: Box<[String]>,
+    allowed_ips: Box<[IpAddr]>,
     tangle: ResourceHandle<MsTangle<B>>,
     network_id: NetworkId,
     bech32_hrp: Bech32Hrp,
