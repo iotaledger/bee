@@ -98,7 +98,7 @@ pub(crate) async fn submit_message<B: StorageBackend>(
                 "invalid parents: expected an array of message ids".to_string(),
             ))
         })?;
-        let mut message_ids = Vec::new();
+        let mut message_ids = Vec::with_capacity(array.len());
         for s in array {
             let message_id = s
                 .as_str()
