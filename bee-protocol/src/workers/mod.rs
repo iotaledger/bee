@@ -73,7 +73,7 @@ where
         .with_worker::<BroadcasterWorker>()
         .with_worker::<PropagatorWorker>()
         .with_worker::<MpsWorker>()
-        .with_worker_cfg::<MilestoneSolidifierWorker>(config.workers.ms_sync_count)
+        .with_worker_cfg::<MilestoneSolidifierWorker>(config.workers.milestone_sync_count)
         .with_worker::<IndexUpdaterWorker>()
         .with_worker_cfg::<StatusWorker>(config.workers.status_interval)
         .with_worker::<HeartbeaterWorker>()
