@@ -129,12 +129,12 @@ pub async fn prune<S: StorageBackend>(
 
     // Add unconfirmed data to the delete batch.
     let batch_unconfirmed = Instant::now();
-    let unconfirmed_metrics = batch::delete_unconfirmed_data(storage, &mut batch, start_index, target_index).await?;
+    // let unconfirmed_metrics = batch::delete_unconfirmed_data(storage, &mut batch, start_index, target_index).await?;
     timings.batch_unconfirmed = batch_unconfirmed.elapsed();
 
-    pruning_metrics.messages += unconfirmed_metrics.prunable_messages;
-    pruning_metrics.edges += unconfirmed_metrics.prunable_edges;
-    pruning_metrics.indexations += unconfirmed_metrics.prunable_indexations;
+    // pruning_metrics.messages += unconfirmed_metrics.prunable_messages;
+    // pruning_metrics.edges += unconfirmed_metrics.prunable_edges;
+    // pruning_metrics.indexations += unconfirmed_metrics.prunable_indexations;
 
     // Remove old SEPs from the storage.
     //
@@ -163,7 +163,7 @@ pub async fn prune<S: StorageBackend>(
 
     debug!("Pruning metrics: {:?}.", pruning_metrics);
     debug!("Confirmed metrics: {:?}", confirmed_metrics);
-    debug!("Unconfirmed metrics: {:?}", unconfirmed_metrics);
+    // debug!("Unconfirmed metrics: {:?}", unconfirmed_metrics);
     debug!("Timings: {:?}.", timings);
 
     info!("Selected {} new solid entry points.", num_new_seps,);

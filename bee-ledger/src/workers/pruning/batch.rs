@@ -180,14 +180,14 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
         {
             Some(unconf_msgs) => {
                 if unconf_msgs.is_empty() {
-                    metrics.no_unconfirmed += 1;
+                    metrics.none_received += 1;
                     continue;
                 } else {
                     unconf_msgs
                 }
             }
             None => {
-                metrics.no_unconfirmed += 1;
+                metrics.none_received += 1;
                 continue;
             }
         };
@@ -201,7 +201,7 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
             {
                 Some(msg_meta) => {
                     if msg_meta.milestone_index().is_some() {
-                        metrics.was_confirmed += 1;
+                        metrics.were_confirmed += 1;
                         continue;
                     }
                 }

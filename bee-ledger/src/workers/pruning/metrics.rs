@@ -35,12 +35,12 @@ pub struct ConfirmedMetrics {
 
 #[derive(Debug, Default)]
 pub struct UnconfirmedMetrics {
-    pub no_unconfirmed: usize,
+    pub none_received: usize,
     pub prunable_messages: usize,
     pub prunable_edges: usize,
     pub prunable_indexations: usize,
     pub already_pruned: usize,
-    pub was_confirmed: usize,
+    pub were_confirmed: usize,
 }
 
 #[derive(Debug, Default)]
