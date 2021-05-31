@@ -42,20 +42,19 @@ pub(crate) async fn milestone_utxo_changes<B: StorageBackend>(
     index: MilestoneIndex,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    let fetched = match Fetch::<MilestoneIndex, OutputDiff>::fetch(&*storage, &index)
+    let fetched = Fetch::<MilestoneIndex, OutputDiff>::fetch(&*storage, &index)
         .await
         .map_err(|_| {
             reject::custom(CustomRejection::ServiceUnavailable(
                 "can not fetch from storage".to_string(),
             ))
-        })? {
-        Some(diff) => diff,
-        None => {
-            return Err(reject::custom(CustomRejection::NotFound(
+        })?
+        .ok_or_else(|| {
+            reject::custom(CustomRejection::NotFound(
                 "can not find Utxo changes for given milestone index".to_string(),
-            )));
-        }
-    };
+            ))
+        })?;
+
     Ok(warp::reply::json(&SuccessBody::new(UtxoChangesResponse {
         index: *index,
         created_outputs: fetched.created_outputs().iter().map(|id| id.to_string()).collect(),
