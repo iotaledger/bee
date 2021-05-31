@@ -3,7 +3,7 @@
 
 //! Fetch access operations.
 
-use crate::{storage::Storage, trees::*};
+use crate::{storage::Storage, system::System, trees::*};
 
 use bee_common::packable::Packable;
 use bee_ledger::types::{
@@ -23,6 +23,17 @@ use bee_tangle::{
 };
 
 use std::convert::{TryFrom, TryInto};
+
+#[async_trait::async_trait]
+impl Fetch<u8, System> for Storage {
+    async fn fetch(&self, key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {
+        Ok(self
+            .inner
+            .get(&[*key])?
+            // Unpacking from storage is fine.
+            .map(|v| System::unpack_unchecked(&mut v.as_ref()).unwrap()))
+    }
+}
 
 #[async_trait::async_trait]
 impl Fetch<MessageId, Message> for Storage {

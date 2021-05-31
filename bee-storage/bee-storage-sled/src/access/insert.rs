@@ -3,7 +3,7 @@
 
 //! Imsert access operations.
 
-use crate::{storage::Storage, trees::*};
+use crate::{storage::Storage, system::System, trees::*};
 
 use bee_common::packable::Packable;
 use bee_ledger::types::{
@@ -21,6 +21,15 @@ use bee_storage::{access::Insert, backend::StorageBackend};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
+
+#[async_trait::async_trait]
+impl Insert<u8, System> for Storage {
+    async fn insert(&self, key: &u8, value: &System) -> Result<(), <Self as StorageBackend>::Error> {
+        self.inner.insert(&[*key], value.pack_new())?;
+
+        Ok(())
+    }
+}
 
 #[async_trait::async_trait]
 impl Insert<MessageId, Message> for Storage {

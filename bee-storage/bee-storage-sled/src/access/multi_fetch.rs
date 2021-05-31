@@ -3,7 +3,7 @@
 
 //! Multi-fetch access operations.
 
-use crate::{storage::Storage, trees::*};
+use crate::{storage::Storage, system::System, trees::*};
 
 use bee_common::packable::Packable;
 use bee_ledger::types::{Balance, ConsumedOutput, CreatedOutput, OutputDiff};
@@ -15,6 +15,24 @@ use bee_message::{
 };
 use bee_storage::{access::MultiFetch, backend::StorageBackend};
 use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
+
+#[async_trait::async_trait]
+impl MultiFetch<u8, System> for Storage {
+    async fn multi_fetch(&self, keys: &[u8]) -> Result<Vec<Option<System>>, <Self as StorageBackend>::Error> {
+        let mut items = Vec::with_capacity(keys.len());
+
+        for key in keys {
+            let value = self
+                .inner
+                .get(key.pack_new())?
+                .map(|v| <System>::unpack_unchecked(&mut v.as_ref()).unwrap());
+
+            items.push(value);
+        }
+
+        Ok(items)
+    }
+}
 
 macro_rules! impl_multi_fetch {
     ($key:ty, $value:ty, $cf:expr) => {

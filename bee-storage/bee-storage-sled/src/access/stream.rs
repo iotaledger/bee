@@ -3,7 +3,7 @@
 
 //! Stream access operations.
 
-use crate::{storage::Storage, trees::*};
+use crate::{storage::Storage, system::System, trees::*};
 
 use bee_common::packable::Packable;
 use bee_ledger::types::{
@@ -85,14 +85,27 @@ macro_rules! impl_stream {
 
                 *counter += 1;
 
-                let item = inner
-                    .next()
-                    .map(|result| result.map(|(key, value)| Self::unpack_key_value(&key, &value)));
+                let item = inner.next().map(|result| {
+                    result
+                        .map(|(key, value)| Self::unpack_key_value(&key, &value))
+                        .map_err(From::from)
+                });
 
                 Poll::Ready(item)
             }
         }
     };
+}
+
+impl<'a> StorageStream<'a, u8, System> {
+    fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (u8, System) {
+        (
+            // Unpacking from storage is fine.
+            u8::unpack_unchecked(&mut key).unwrap(),
+            // Unpacking from storage is fine.
+            System::unpack_unchecked(&mut value).unwrap(),
+        )
+    }
 }
 
 impl<'a> StorageStream<'a, MessageId, Message> {
@@ -307,6 +320,48 @@ impl<'a> StorageStream<'a, (bool, TreasuryOutput), ()> {
             ),
             (),
         )
+    }
+}
+
+#[async_trait::async_trait]
+impl<'a> AsStream<'a, u8, System> for Storage {
+    type Stream = StorageStream<'a, u8, System>;
+
+    async fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
+        Ok(StorageStream::new(
+            self.inner.iter(),
+            self.config.storage.iteration_budget,
+        ))
+    }
+}
+
+/// A stream to iterate over all key-value pairs of a column family.
+impl<'a> Stream for StorageStream<'a, u8, System> {
+    type Item = Result<(u8, System), <Storage as StorageBackend>::Error>;
+
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
+        let StorageStreamProj {
+            mut inner,
+            budget,
+            counter,
+            ..
+        } = self.project();
+
+        if counter == budget {
+            *counter = 0;
+            cx.waker().wake_by_ref();
+            return Poll::Pending;
+        }
+
+        *counter += 1;
+
+        let item = inner.next().map(|result| {
+            result
+                .map(|(key, value)| Self::unpack_key_value(&key, &value))
+                .map_err(From::from)
+        });
+
+        Poll::Ready(item)
     }
 }
 
