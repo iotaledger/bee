@@ -101,7 +101,7 @@ async fn update_past_cone<B: StorageBackend>(
     while let Some(parent_id) = parents.pop() {
         // Our skip conditions:
         // 1) check if we already updated it during this run
-        // 2) check if it's an SEP
+        // 2) check if it's a SEP
         // 3) check if we already updated it during a previous run
         // Note that the order of calls is important (from cheap to more expensive) for performance reasons.
         if updated.contains(&parent_id)
@@ -148,7 +148,7 @@ async fn update_past_cone<B: StorageBackend>(
 // OMRSI and YMRSI; during that time we need to block the propagator, otherwise it will propagate outdated data.
 async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, roots: HashSet<MessageId>) {
     let mut to_process = roots.into_iter().collect::<Vec<_>>();
-    let mut processed = Vec::new();
+    let mut processed = HashSet::new();
 
     while let Some(parent_id) = to_process.pop() {
         if let Some(children) = tangle.get_children(&parent_id).await {
@@ -208,7 +208,7 @@ async fn update_future_cone<B: StorageBackend>(tangle: &MsTangle<B>, roots: Hash
                 }
             }
 
-            processed.push(parent_id);
+            processed.insert(parent_id);
         }
     }
 
