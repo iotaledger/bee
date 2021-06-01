@@ -43,6 +43,7 @@ pub trait StorageBackend:
     + Fetch<(), LedgerIndex>
     + Fetch<Address, Balance>
     + Fetch<bool, Vec<TreasuryOutput>>
+    + Fetch<Ed25519Address, Vec<OutputId>>
     + Insert<(), SnapshotInfo>
     + Insert<(), LedgerIndex>
     + Insert<(bool, TreasuryOutput), ()>
@@ -72,6 +73,7 @@ impl<T> StorageBackend for T where
         + Fetch<(), LedgerIndex>
         + Fetch<Address, Balance>
         + Fetch<bool, Vec<TreasuryOutput>>
+        + Fetch<Ed25519Address, Vec<OutputId>>
         + Insert<(), SnapshotInfo>
         + Insert<(), LedgerIndex>
         + Insert<(bool, TreasuryOutput), ()>
@@ -401,6 +403,15 @@ pub(crate) async fn fetch_output<B: StorageBackend>(
     output_id: &OutputId,
 ) -> Result<Option<CreatedOutput>, Error> {
     Fetch::<OutputId, CreatedOutput>::fetch(storage, output_id)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
+}
+
+pub(crate) async fn fetch_outputs_for_ed25519_address<B: StorageBackend>(
+    storage: &B,
+    address: &Ed25519Address,
+) -> Result<Option<Vec<OutputId>>, Error> {
+    Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&*storage, &address)
         .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }
