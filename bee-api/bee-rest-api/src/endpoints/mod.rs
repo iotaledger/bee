@@ -127,9 +127,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
         Some(CustomRejection::Forbidden) => (StatusCode::FORBIDDEN, "403", "access forbidden"),
         Some(CustomRejection::NotFound(reason)) => (StatusCode::NOT_FOUND, "404", reason.as_str()),
         Some(CustomRejection::BadRequest(reason)) => (StatusCode::BAD_REQUEST, "400", reason.as_str()),
-        Some(CustomRejection::ServiceUnavailable(reason)) => {
-            (StatusCode::SERVICE_UNAVAILABLE, "503", reason.as_str())
-        }
+        Some(CustomRejection::ServiceUnavailable(reason)) => (StatusCode::SERVICE_UNAVAILABLE, "503", reason.as_str()),
         // handle default rejections
         _ => {
             if err.is_not_found() {
@@ -138,11 +136,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
                 (StatusCode::FORBIDDEN, "403", "access forbidden")
             } else {
                 error!("unhandled rejection: {:?}", err);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "500",
-                    "internal server error",
-                )
+                (StatusCode::INTERNAL_SERVER_ERROR, "500", "internal server error")
             }
         }
     };

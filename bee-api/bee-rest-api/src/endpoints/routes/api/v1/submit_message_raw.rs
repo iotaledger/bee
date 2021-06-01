@@ -48,8 +48,8 @@ pub(crate) async fn submit_message_raw<B: StorageBackend>(
     tangle: ResourceHandle<MsTangle<B>>,
     message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
 ) -> Result<impl Reply, Rejection> {
-    let message = Message::unpack(&mut &(*buf))
-        .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
+    let message =
+        Message::unpack(&mut &(*buf)).map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
     let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
     Ok(warp::reply::with_status(
         warp::reply::json(&SuccessBody::new(SubmitMessageResponse {

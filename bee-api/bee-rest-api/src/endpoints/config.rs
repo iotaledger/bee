@@ -133,8 +133,12 @@ impl RestApiConfigBuilder {
         };
         let public_routes: Box<[String]> = self
             .public_routes
-            .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|s| s.to_string()).collect()).into_boxed_slice();
-        let allowed_ips: Box<[IpAddr]> = self.allowed_ips.unwrap_or_else(|| DEFAULT_ALLOWED_IPS.to_vec()).into_boxed_slice();
+            .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|s| s.to_string()).collect())
+            .into_boxed_slice();
+        let allowed_ips: Box<[IpAddr]> = self
+            .allowed_ips
+            .unwrap_or_else(|| DEFAULT_ALLOWED_IPS.to_vec())
+            .into_boxed_slice();
         let feature_proof_of_work = self.feature_proof_of_work.unwrap_or(DEFAULT_FEATURE_PROOF_OF_WORK);
         let white_flag_solidification_timeout = self
             .white_flag_solidification_timeout

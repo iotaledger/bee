@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerEvent};
+use bee_ledger::workers::consensus::{ConsensusWorker, ConsensusWorkerCommand};
 use bee_message::{
     milestone::{Milestone, MilestoneIndex},
     MessageId,
@@ -67,7 +67,7 @@ async fn heavy_solidification<B: StorageBackend>(
 #[allow(clippy::too_many_arguments)]
 async fn solidify<B: StorageBackend>(
     tangle: &MsTangle<B>,
-    consensus_worker: &mpsc::UnboundedSender<ConsensusWorkerEvent>,
+    consensus_worker: &mpsc::UnboundedSender<ConsensusWorkerCommand>,
     index_updater_worker: &mpsc::UnboundedSender<IndexUpdaterWorkerEvent>,
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
@@ -79,7 +79,7 @@ async fn solidify<B: StorageBackend>(
 
     tangle.update_solid_milestone_index(index);
 
-    if let Err(e) = consensus_worker.send(ConsensusWorkerEvent(id)) {
+    if let Err(e) = consensus_worker.send(ConsensusWorkerCommand::ConfirmMilestone(id)) {
         warn!("Sending message_id to consensus worker failed: {}.", e);
     }
 
