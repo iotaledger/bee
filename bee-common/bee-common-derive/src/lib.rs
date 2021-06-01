@@ -44,7 +44,7 @@ pub fn packable(input: TokenStream) -> TokenStream {
                 ),
             };
             // Use `UnknownTagError` if there was no error attribute.
-            let error_type = error_type.unwrap_or_else(|| quote!(bee_common::packable::UnknownTagError<#tag_ty>));
+            let error_type = error_type.unwrap_or_else(|| quote!(bee_packable::error::UnknownTagError<#tag_ty>));
             // Generate the implementation for the enum.
             let (pack, packed_len, unpack) = packable::gen_bodies_for_enum(&data.variants, tag_ty);
             packable::gen_impl(&ident, &generics, error_type, pack, packed_len, unpack).into()

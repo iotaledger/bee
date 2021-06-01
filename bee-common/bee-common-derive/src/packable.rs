@@ -284,9 +284,9 @@ pub(crate) fn gen_bodies_for_enum(
             }
         },
         quote! {
-            match <#tag_ty>::unpack(unpacker).map_err(bee_common::packable::UnpackError::infallible)? {
+            match <#tag_ty>::unpack(unpacker).map_err(bee_packable::error::UnpackError::infallible)? {
                 #(#unpack_branches,) *
-                tag => Err(bee_common::packable::UnpackError::Packable(bee_common::packable::UnknownTagError(tag).into()))
+                tag => Err(bee_packable::error::UnpackError::Packable(bee_packable::error::UnknownTagError(tag).into()))
             }
         },
     )
@@ -307,11 +307,11 @@ pub(crate) fn gen_impl(
         impl #impl_generics Packable for #ident #ty_generics #where_clause {
             type Error = #error_type;
 
-            fn pack<P: bee_common::packable::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+            fn pack<P: bee_packable::packer::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
                 #pack_body
             }
 
-            fn unpack<U: bee_common::packable::Unpacker>(unpacker: &mut U) -> Result<Self, bee_common::packable::UnpackError<Self::Error, U::Error>> {
+            fn unpack<U: bee_packable::unpacker::Unpacker>(unpacker: &mut U) -> Result<Self, bee_packable::error::UnpackError<Self::Error, U::Error>> {
                 #unpack_body
             }
 

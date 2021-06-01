@@ -3,7 +3,7 @@
 
 #![allow(unused_imports)]
 
-use bee_common::packable::Packable;
+use bee_packable::Packable;
 
 use core::convert::Infallible;
 
@@ -12,7 +12,7 @@ use core::convert::Infallible;
 #[packable(error = Infallible)]
 pub enum OptI32 {
     None,
-    Some(i32)
+    Some(i32),
 }
 
 fn main() {}

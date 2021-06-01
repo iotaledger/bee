@@ -5,20 +5,16 @@
 
 extern crate alloc;
 
-mod error;
-#[cfg(feature = "io")]
-mod io;
-mod packer;
-mod unpacker;
+pub use crate::{
+    error::{UnknownTagError, UnpackError},
+    packer::{Packer, VecPacker},
+    unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker},
+};
+
+pub use bee_common_derive::Packable;
 
 use alloc::{boxed::Box, vec::Vec};
 use core::convert::Infallible;
-
-pub use error::{UnknownTagError, UnpackError};
-pub use packer::{Packer, VecPacker};
-pub use unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker};
-
-pub use bee_common_derive::Packable;
 
 /// A type that can be packed and unpacked.
 ///

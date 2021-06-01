@@ -1,6 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! A module to unpack any value that implements `Packable`.
+
+#[cfg(feature = "io")]
+extern crate std;
+
+#[cfg(feature = "io")]
+use std::io::{self, Read};
+
 /// A type that can unpack any value that implements `Packable`.
 pub trait Unpacker: Sized {
     /// The error type that can be returned if some error occurs while unpacking.
@@ -47,5 +55,14 @@ impl<'u> Unpacker for SliceUnpacker<'u> {
                 had: self.0.len(),
             })
         }
+    }
+}
+
+#[cfg(feature = "io")]
+impl<R: Read> Unpacker for R {
+    type Error = io::Error;
+
+    fn unpack_bytes<B: AsMut<[u8]>>(&mut self, mut bytes: B) -> Result<(), Self::Error> {
+        self.read_exact(bytes.as_mut())
     }
 }

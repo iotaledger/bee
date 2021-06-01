@@ -3,7 +3,7 @@
 
 extern crate alloc;
 
-use bee_common::packable::{Packable, VecPacker};
+use bee_packable::{packer::VecPacker, Packable};
 
 use alloc::vec::Vec;
 use core::{fmt::Debug, mem::size_of};

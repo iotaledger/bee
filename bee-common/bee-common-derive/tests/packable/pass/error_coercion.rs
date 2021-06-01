@@ -3,7 +3,12 @@
 
 #![allow(unused_imports)]
 
-use bee_common::packable::{Packable, Packer, UnknownTagError, UnpackError, Unpacker};
+use bee_packable::{
+    error::{UnknownTagError, UnpackError},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 
 use core::convert::Infallible;
 

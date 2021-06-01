@@ -3,14 +3,14 @@
 
 #![allow(unused_imports)]
 
-use bee_common::packable::{UnknownTagError, Packable};
+use bee_packable::{error::UnknownTagError, Packable};
 
 use core::{any::TypeId, convert::Infallible};
 
 #[derive(Packable)]
 pub struct Point {
-     x: i32,
-     y: u32,
+    x: i32,
+    y: u32,
 }
 
 #[derive(Packable)]
@@ -19,10 +19,13 @@ pub enum Foo {
     #[packable(tag = 0)]
     Bar(u32),
     #[packable(tag = 1)]
-    Baz{ x: i32, y: i32 }
+    Baz { x: i32, y: i32 },
 }
 
 fn main() {
     assert_eq!(TypeId::of::<Infallible>(), TypeId::of::<<Point as Packable>::Error>());
-    assert_eq!(TypeId::of::<UnknownTagError<u8>>(), TypeId::of::<<Foo as Packable>::Error>());
+    assert_eq!(
+        TypeId::of::<UnknownTagError<u8>>(),
+        TypeId::of::<<Foo as Packable>::Error>()
+    );
 }

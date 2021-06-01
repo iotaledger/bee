@@ -9,24 +9,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
-name = "bee-common"
-version = "1.0.0-alpha"
-dependencies = [
- "autocfg",
- "bee-common-derive",
-]
-
-[[package]]
 name = "bee-common-derive"
 version = "1.0.0-alpha"
 dependencies = [
- "bee-common",
+ "bee-packable",
  "proc-macro-error",
  "proc-macro2",
  "quote",
  "rustversion",
  "syn",
  "trybuild",
+]
+
+[[package]]
+name = "bee-packable"
+version = "0.1.0"
+dependencies = [
+ "autocfg",
+ "bee-common-derive",
 ]
 
 [[package]]

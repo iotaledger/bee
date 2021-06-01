@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Errors related to packable operations.
+
 use core::convert::Infallible;
 
 /// Error type raised when `Packable::unpack` fails.
