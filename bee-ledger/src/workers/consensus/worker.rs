@@ -36,20 +36,20 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::TryInto};
 
-/// Event of the consensus worker.
+/// Commands of the consensus worker.
 #[allow(clippy::type_complexity)]
-pub enum ConsensusWorkerEvent {
-    /// Event to confirm a milestone.
-    Confirm(MessageId),
-    /// Event to fetch the balance of an address.
-    Balance(Address, oneshot::Sender<(Result<Option<Balance>, Error>, LedgerIndex)>),
-    /// Event to fetch an output.
-    Output(
+pub enum ConsensusWorkerCommand {
+    /// Command to confirm a milestone.
+    ConfirmMilestone(MessageId),
+    /// Command to fetch the balance of an address.
+    FetchBalance(Address, oneshot::Sender<(Result<Option<Balance>, Error>, LedgerIndex)>),
+    /// Command to fetch an output.
+    FetchOutput(
         OutputId,
         oneshot::Sender<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>,
     ),
-    /// Event to fetch the outputs of an address.
-    Outputs(
+    /// Command to fetch the outputs of an address.
+    FetchOutputs(
         Address,
         oneshot::Sender<(Result<Option<Vec<OutputId>>, Error>, LedgerIndex)>,
     ),
@@ -58,7 +58,7 @@ pub enum ConsensusWorkerEvent {
 /// The consensus worker.
 pub struct ConsensusWorker {
     /// Communication channel of the consensus worker.
-    pub tx: mpsc::UnboundedSender<ConsensusWorkerEvent>,
+    pub tx: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 }
 
 pub(crate) async fn migration_from_milestone(
@@ -307,7 +307,7 @@ where
 
             while let Some(event) = receiver.next().await {
                 match event {
-                    ConsensusWorkerEvent::Confirm(message_id) => {
+                    ConsensusWorkerCommand::ConfirmMilestone(message_id) => {
                         if let Err(e) = confirm::<N>(
                             &tangle,
                             &storage,
@@ -340,18 +340,18 @@ where
                             // }
                         }
                     }
-                    ConsensusWorkerEvent::Balance(address, sender) => {
+                    ConsensusWorkerCommand::FetchBalance(address, sender) => {
                         if let Err(e) = sender.send((storage::fetch_balance(&*storage, &address).await, ledger_index)) {
                             error!("Error while sending balance: {:?}", e);
                         }
                     }
-                    ConsensusWorkerEvent::Output(output_id, sender) => {
+                    ConsensusWorkerCommand::FetchOutput(output_id, sender) => {
                         if let Err(e) = sender.send((storage::fetch_output(&*storage, &output_id).await, ledger_index))
                         {
                             error!("Error while sending output: {:?}", e);
                         }
                     }
-                    ConsensusWorkerEvent::Outputs(address, sender) => match address {
+                    ConsensusWorkerCommand::FetchOutputs(address, sender) => match address {
                         Address::Ed25519(address) => {
                             if let Err(e) = sender.send((
                                 storage::fetch_outputs_for_ed25519_address(&*storage, &address).await,
