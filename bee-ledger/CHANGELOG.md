@@ -19,6 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.4.0 - 2021-06-01
+
+### Added
+
+- `ConsensusWorkerCommand::{FetchBalance, FetchOutput, FetchOutputs}`;
+
+### Changed
+
+- `struct ConsensusWorkerEvent` to `enum ConsensusWorkerCommand`;
+
 ## 0.3.1 - 2021-05-12
 
 ### Added
