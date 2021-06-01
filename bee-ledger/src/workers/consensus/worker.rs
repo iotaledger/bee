@@ -37,6 +37,7 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use std::{any::TypeId, convert::TryInto};
 
 /// Event of the consensus worker.
+#[allow(clippy::type_complexity)]
 pub enum ConsensusWorkerEvent {
     /// Event to confirm a milestone.
     Confirm(MessageId),
