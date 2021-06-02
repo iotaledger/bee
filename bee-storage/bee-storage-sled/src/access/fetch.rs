@@ -26,10 +26,10 @@ use std::convert::{TryFrom, TryInto};
 
 #[async_trait::async_trait]
 impl Fetch<u8, System> for Storage {
-    async fn fetch(&self, key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {
+    async fn fetch(&self, &key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
-            .get(&[*key])?
+            .get(&[key])?
             // Unpacking from storage is fine.
             .map(|v| System::unpack_unchecked(&mut v.as_ref()).unwrap()))
     }
