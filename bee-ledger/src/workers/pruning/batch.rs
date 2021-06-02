@@ -55,9 +55,9 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
     let target_id = target_milestone.message_id().clone();
 
-    let mut messages: VecDeque<_> = vec![target_id].into_iter().collect();
+    let mut parents: VecDeque<_> = vec![target_id].into_iter().collect();
 
-    while let Some(current_id) = messages.pop_front() {
+    while let Some(current_id) = parents.pop_front() {
         // Skip message if we already visited it.
         if visited.contains(&current_id) {
             metrics.msg_already_visited += 1;
@@ -94,7 +94,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         }
 
         // Continue the traversal with its parents.
-        messages.extend(current_parents.iter());
+        parents.extend(current_parents.iter());
 
         // Mark this message as "visited".
         visited.insert(current_id);
