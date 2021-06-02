@@ -9,7 +9,7 @@ on:
       - coordicide
 
 jobs:
-  check:
+  no_std:
     runs-on: ubuntu-latest
     strategy:
       matrix:
