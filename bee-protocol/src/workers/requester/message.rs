@@ -141,7 +141,7 @@ async fn process_request_unchecked(
                     peer_manager,
                     metrics,
                     peer_id,
-                    MessageRequestPacket::new(message_id.as_ref()),
+                    MessageRequestPacket::new(message_id),
                 )
                 .await;
                 return;
@@ -160,7 +160,7 @@ async fn process_request_unchecked(
                     peer_manager,
                     metrics,
                     peer_id,
-                    MessageRequestPacket::new(message_id.as_ref()),
+                    MessageRequestPacket::new(message_id),
                 )
                 .await;
             }

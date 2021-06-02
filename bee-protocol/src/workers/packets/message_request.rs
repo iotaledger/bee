@@ -5,6 +5,8 @@
 
 use crate::workers::packets::Packet;
 
+use bee_message::MessageId;
+
 use std::ops::Range;
 
 const MESSAGE_ID_SIZE: usize = 32;
@@ -14,15 +16,12 @@ const CONSTANT_SIZE: usize = MESSAGE_ID_SIZE;
 #[derive(Clone)]
 pub(crate) struct MessageRequestPacket {
     /// Message Id of the requested message.
-    pub(crate) message_id: [u8; MESSAGE_ID_SIZE],
+    pub(crate) message_id: MessageId,
 }
 
 impl MessageRequestPacket {
-    pub(crate) fn new(message_id: &[u8]) -> Self {
-        let mut bytes = [0u8; MESSAGE_ID_SIZE];
-        bytes.copy_from_slice(message_id);
-
-        Self { message_id: bytes }
+    pub(crate) fn new(message_id: MessageId) -> Self {
+        Self { message_id }
     }
 }
 
@@ -38,7 +37,9 @@ impl Packet for MessageRequestPacket {
 
         message_id.copy_from_slice(&bytes[0..MESSAGE_ID_SIZE]);
 
-        Self { message_id }
+        Self {
+            message_id: MessageId::from(message_id),
+        }
     }
 
     fn size(&self) -> usize {
@@ -46,7 +47,7 @@ impl Packet for MessageRequestPacket {
     }
 
     fn into_bytes(self, bytes: &mut [u8]) {
-        bytes.copy_from_slice(&self.message_id)
+        bytes.copy_from_slice(self.message_id.as_ref())
     }
 }
 
@@ -74,18 +75,18 @@ mod tests {
 
     #[test]
     fn size() {
-        let packet = MessageRequestPacket::new(&MESSAGE_ID);
+        let packet = MessageRequestPacket::new(MessageId::from(MESSAGE_ID));
 
         assert_eq!(packet.size(), CONSTANT_SIZE);
     }
 
     #[test]
     fn into_from() {
-        let packet_from = MessageRequestPacket::new(&MESSAGE_ID);
+        let packet_from = MessageRequestPacket::new(MessageId::from(MESSAGE_ID));
         let mut bytes = vec![0u8; packet_from.size()];
         packet_from.into_bytes(&mut bytes);
         let packet_to = MessageRequestPacket::from_bytes(&bytes);
 
-        assert!(packet_to.message_id.eq(&MESSAGE_ID));
+        assert!(packet_to.message_id.as_ref().eq(&MESSAGE_ID));
     }
 }
