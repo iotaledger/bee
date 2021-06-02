@@ -136,6 +136,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
                         // Note that an approver can be confirmed by the same milestone (be child and sibling at the same time).
                         conf_index
                     } else {
+                        // NB: `target_index` is the lower bound.
                         target_index
                     };
 
@@ -161,6 +162,10 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
     metrics.prunable_messages = visited.len();
     metrics.new_seps = new_seps.len();
+
+    if !new_seps.contains_key(&SolidEntryPoint::ref_cast(&target_id)) {
+        log::error!("Target milestone not included in new SEP set. This is a bug!");
+    }
 
     Ok((new_seps, metrics))
 }
