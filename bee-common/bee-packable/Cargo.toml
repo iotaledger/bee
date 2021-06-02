@@ -3,11 +3,11 @@ name = "bee-packable"
 version = "0.1.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = "Common utilities used across the bee framework"
+description = "Serialization and deserialization primitives for the bee framework"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "common"]
+keywords = ["iota", "tangle", "bee", "framework", "packable"]
 homepage = "https://www.iota.org"
 
 [features]
@@ -17,4 +17,4 @@ io = []
 autocfg = "1.0"
 
 [dependencies]
-bee-common-derive = { path = "../bee-common-derive" }
+bee-packable-derive = { path = "../bee-packable-derive" }

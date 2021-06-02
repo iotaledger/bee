@@ -1,5 +1,5 @@
 [workspace]
 members = [
-  "bee-common/bee-common-derive",
   "bee-common/bee-packable",
+  "bee-common/bee-packable-derive",
 ]

@@ -11,7 +11,7 @@ pub use crate::{
     unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker},
 };
 
-pub use bee_common_derive::Packable;
+pub use bee_packable_derive::Packable;
 
 use alloc::{boxed::Box, vec::Vec};
 use core::convert::Infallible;
