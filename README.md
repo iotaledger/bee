@@ -11,12 +11,15 @@
 </p>
 
 <p align="center">
-  <img src="https://github.com/iotaledger/bee/workflows/Format/badge.svg">
-  <img src="https://github.com/iotaledger/bee/workflows/Audit/badge.svg">
-  <img src="https://github.com/iotaledger/bee/workflows/Clippy/badge.svg">
-  <img src="https://github.com/iotaledger/bee/workflows/Build/badge.svg">
-  <img src="https://github.com/iotaledger/bee/workflows/Test/badge.svg">
+  <img src="https://github.com/iotaledger/bee/actions/workflows/audit.yml/badge.svg?branch=coordicide">
+  <img src="https://github.com/iotaledger/bee/actions/workflows/check.yml/badge.svg?branch=coordicide">
+  <img src="https://github.com/iotaledger/bee/actions/workflows/clippy.yml/badge.svg?branch=coordicide">
   <img src="https://coveralls.io/repos/github/iotaledger/bee/badge.svg?branch=coordicide">
+  <img src="https://github.com/iotaledger/bee/actions/workflows/format.yml/badge.svg?branch=coordicide">
+  <img src="https://github.com/iotaledger/bee/actions/workflows/no_std.yml/badge.svg?branch=coordicide">
+  <img src="https://github.com/iotaledger/bee/actions/workflows/test.yml/badge.svg?branch=coordicide">
+  <img src="https://github.com/iotaledger/bee/actions/workflows/udeps.yml/badge.svg?branch=coordicide">
+  <a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fiotaledger%2Fbee?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fiotaledger%2Fbee.svg?type=shield"/></a>
 </p>
 
 <p align="center">
