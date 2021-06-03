@@ -289,6 +289,12 @@ impl<T, P> VecPrefix<T, P> {
     }
 }
 
+impl<T, P> Default for VecPrefix<T, P> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T, P> From<Vec<T>> for VecPrefix<T, P> {
     fn from(vec: Vec<T>) -> Self {
         Self {
