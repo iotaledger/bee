@@ -5,7 +5,7 @@
 
 pub mod batch;
 pub mod delete;
-pub mod exists;
+pub mod exist;
 pub mod fetch;
 pub mod insert;
 pub mod multi_fetch;

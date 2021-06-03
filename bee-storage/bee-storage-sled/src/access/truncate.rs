@@ -21,18 +21,14 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
-fn truncate(storage: &Storage, tree_str: &'static str) -> Result<(), <Storage as StorageBackend>::Error> {
-    storage.inner.drop_tree(tree_str)?;
-
-    Ok(())
-}
-
 macro_rules! impl_truncate {
     ($key:ty, $value:ty, $cf:expr) => {
         #[async_trait::async_trait]
         impl Truncate<$key, $value> for Storage {
             async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
-                truncate(self, $cf)
+                self.inner.drop_tree($cf)?;
+
+                Ok(())
             }
         }
     };

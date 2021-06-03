@@ -153,9 +153,9 @@ impl<'a> StorageStream<'a, (PaddedIndex, MessageId), ()> {
         let index: [u8; INDEXATION_PADDED_INDEX_LENGTH] = index.try_into().unwrap();
 
         (
-            // Unpacking from storage is fine.
             (
                 PaddedIndex::new(index),
+                // Unpacking from storage is fine.
                 MessageId::unpack_unchecked(&mut message_id).unwrap(),
             ),
             (),
