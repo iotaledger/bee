@@ -3,15 +3,13 @@
 
 //! The sled storage backend.
 
-use crate::{
-    config::{SledConfig, SledConfigBuilder},
-    system::{StorageVersion, System, STORAGE_VERSION, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
-};
+use crate::config::{SledConfig, SledConfigBuilder};
 
 use bee_storage::{
     access::{Fetch, Insert},
     backend::StorageBackend,
     health::StorageHealth,
+    system::{StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
 
 use async_trait::async_trait;
@@ -31,6 +29,8 @@ pub enum Error {
     #[error("Unhealthy storage: {0:?}, remove storage folder and restart")]
     UnhealthyStorage(StorageHealth),
 }
+
+pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(1);
 
 /// The sled database.
 pub struct Storage {

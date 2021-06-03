@@ -3,7 +3,7 @@
 
 //! Insert access operations.
 
-use crate::{storage::Storage, system::System, trees::*};
+use crate::{storage::Storage, trees::*};
 
 use bee_common::packable::Packable;
 use bee_ledger::types::{
@@ -17,7 +17,7 @@ use bee_message::{
     payload::indexation::PaddedIndex,
     Message, MessageId,
 };
-use bee_storage::{access::Insert, backend::StorageBackend};
+use bee_storage::{access::Insert, backend::StorageBackend, system::System};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };

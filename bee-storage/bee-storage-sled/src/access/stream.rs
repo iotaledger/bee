@@ -3,7 +3,7 @@
 
 //! Stream access operations.
 
-use crate::{storage::Storage, system::System, trees::*};
+use crate::{storage::Storage, trees::*};
 
 use bee_common::packable::Packable;
 use bee_ledger::types::{
@@ -17,7 +17,7 @@ use bee_message::{
     payload::indexation::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH},
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
-use bee_storage::{access::AsStream, backend::StorageBackend};
+use bee_storage::{access::AsStream, backend::StorageBackend, system::System};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };

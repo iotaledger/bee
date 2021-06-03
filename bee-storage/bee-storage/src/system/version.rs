@@ -1,10 +1,9 @@
-// Copyright 2021 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_common::packable::{Packable, Read, Write};
 
-pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(0);
-
+/// Version of the storage.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct StorageVersion(pub u64);
 

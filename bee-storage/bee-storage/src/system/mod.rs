@@ -1,17 +1,20 @@
-// Copyright 2021 IOTA Stiftung
+// Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 //! Types related to the state of the storage itself.
 
 mod version;
 
-pub(crate) use version::{StorageVersion, STORAGE_VERSION};
+pub use version::StorageVersion;
 
-pub(crate) const SYSTEM_VERSION_KEY: u8 = 0;
-pub(crate) const SYSTEM_HEALTH_KEY: u8 = 1;
+use crate::health::{Error as StorageHealthError, StorageHealth};
 
 use bee_common::packable::{Packable, Read, Write};
-use bee_storage::health::{Error as StorageHealthError, StorageHealth};
+
+/// Key used to store the system version.
+pub const SYSTEM_VERSION_KEY: u8 = 0;
+/// Key used to store the system health.
+pub const SYSTEM_HEALTH_KEY: u8 = 1;
 
 /// Errors to be raised if packing/unpacking `System` fails.
 #[derive(Debug, thiserror::Error)]

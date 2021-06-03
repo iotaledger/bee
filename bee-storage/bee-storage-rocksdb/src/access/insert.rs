@@ -4,7 +4,6 @@
 use crate::{
     column_families::*,
     storage::{Storage, StorageBackend},
-    system::System,
 };
 
 use bee_common::packable::Packable;
@@ -19,7 +18,7 @@ use bee_message::{
     payload::indexation::PaddedIndex,
     Message, MessageId,
 };
-use bee_storage::access::Insert;
+use bee_storage::{access::Insert, system::System};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };

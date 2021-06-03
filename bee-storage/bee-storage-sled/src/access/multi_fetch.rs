@@ -3,7 +3,7 @@
 
 //! Multi-fetch access operations.
 
-use crate::{storage::Storage, system::System, trees::*};
+use crate::{storage::Storage, trees::*};
 
 use bee_common::packable::Packable;
 use bee_ledger::types::{Balance, ConsumedOutput, CreatedOutput, OutputDiff};
@@ -13,7 +13,7 @@ use bee_message::{
     output::OutputId,
     Message, MessageId,
 };
-use bee_storage::{access::MultiFetch, backend::StorageBackend};
+use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
 use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 
 #[async_trait::async_trait]
