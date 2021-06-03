@@ -25,7 +25,7 @@ pub enum Error {
     /// Packing/unpacking the `System::Health` variant failed.
     #[error("Storage health error: {0}")]
     Health(#[from] StorageHealthError),
-    /// Found and invalid key while unpacking a `System` value.
+    /// Found an invalid key while unpacking a `System` value.
     #[error("Unknown system key: {0}")]
     UnknownSystemKey(u8),
 }

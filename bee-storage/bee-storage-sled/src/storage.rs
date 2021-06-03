@@ -14,8 +14,8 @@ use bee_storage::{
 use async_trait::async_trait;
 use thiserror::Error;
 
-#[derive(Debug, Error)]
 /// Error to be raised when a backend operation fails.
+#[derive(Debug, Error)]
 pub enum Error {
     /// A sled operation failed.
     #[error("Sled internal error: {0}")]
@@ -29,7 +29,7 @@ pub enum Error {
     UnhealthyStorage(StorageHealth),
 }
 
-pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(1);
+pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(0);
 
 /// The sled database.
 pub struct Storage {
