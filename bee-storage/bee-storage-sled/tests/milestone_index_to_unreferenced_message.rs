@@ -4,4 +4,7 @@
 #[macro_use]
 mod access;
 
-impl_access_test!(milestone_index_to_unreferenced_message_access);
+impl_access_test!(
+    milestone_index_to_unreferenced_message_access_sled,
+    milestone_index_to_unreferenced_message_access
+);

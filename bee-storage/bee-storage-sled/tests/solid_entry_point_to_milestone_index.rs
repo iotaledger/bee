@@ -4,4 +4,7 @@
 #[macro_use]
 mod access;
 
-impl_access_test!(solid_entry_point_to_milestone_index_access);
+impl_access_test!(
+    solid_entry_point_to_milestone_index_access_sled,
+    solid_entry_point_to_milestone_index_access
+);

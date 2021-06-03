@@ -4,4 +4,4 @@
 #[macro_use]
 mod access;
 
-impl_access_test!(spent_to_treasury_output_access);
+impl_access_test!(spent_to_treasury_output_access_sled, spent_to_treasury_output_access);

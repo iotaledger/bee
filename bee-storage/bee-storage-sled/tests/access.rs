@@ -4,9 +4,9 @@
 #[macro_use]
 #[allow(unused_macros)]
 macro_rules! impl_access_test {
-    ($name:ident) => {
+    ($name_sled:ident, $name:ident) => {
         #[tokio::test]
-        async fn $name() {
+        async fn $name_sled() {
             use bee_storage::backend::StorageBackend;
 
             let path = String::from("./tests/database/") + stringify!($name);

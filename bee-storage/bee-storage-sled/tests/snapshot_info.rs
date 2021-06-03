@@ -4,4 +4,4 @@
 #[macro_use]
 mod access;
 
-impl_access_test!(snapshot_info_access);
+impl_access_test!(snapshot_info_access_sled, snapshot_info_access);
