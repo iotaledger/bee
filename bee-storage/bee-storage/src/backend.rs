@@ -4,7 +4,7 @@
 //! This module forms the backend layer which holds the contracts of starting and shutting down the backend, as well as
 //! accessing backend properties.
 
-use crate::health::StorageHealth;
+use crate::system::StorageHealth;
 
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;

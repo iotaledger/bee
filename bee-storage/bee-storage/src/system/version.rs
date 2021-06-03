@@ -3,8 +3,7 @@
 
 use bee_common::packable::{Packable, Read, Write};
 
-pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(9);
-
+/// Version of the storage.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct StorageVersion(pub u64);
 

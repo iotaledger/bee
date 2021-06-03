@@ -4,4 +4,4 @@
 #[macro_use]
 mod access;
 
-impl_access_test!(index_to_message_id_access);
+impl_access_test!(index_to_message_id_access_rocksdb, index_to_message_id_access);

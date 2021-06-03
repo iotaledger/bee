@@ -7,7 +7,7 @@ description = "A bee-storage implementation for the RocksDB backend"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "storage", "rocksdb"]
+keywords = ["iota", "tangle", "bee", "framework", "rocksdb"]
 homepage = "https://www.iota.org"
 
 [dependencies]
@@ -31,4 +31,4 @@ thiserror = "1.0"
 bee-storage-test = { path = "../bee-storage-test" }
 bee-test = { path = "../../bee-test" }
 
-tokio = { version = "1.6", features = [ "macros" ] }
+tokio = { version = "1.6", features = [ "macros", "rt" ] }

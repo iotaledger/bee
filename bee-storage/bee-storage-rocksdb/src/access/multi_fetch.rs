@@ -4,7 +4,6 @@
 use crate::{
     column_families::*,
     storage::{Storage, StorageBackend},
-    system::System,
 };
 
 use bee_common::packable::Packable;
@@ -15,7 +14,7 @@ use bee_message::{
     output::OutputId,
     Message, MessageId,
 };
-use bee_storage::access::MultiFetch;
+use bee_storage::{access::MultiFetch, system::System};
 use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 
 macro_rules! impl_multi_fetch {

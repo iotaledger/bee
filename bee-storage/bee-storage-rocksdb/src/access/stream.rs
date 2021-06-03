@@ -4,7 +4,6 @@
 use crate::{
     column_families::*,
     storage::{Storage, StorageBackend},
-    system::System,
 };
 
 use bee_common::packable::Packable;
@@ -19,7 +18,7 @@ use bee_message::{
     payload::indexation::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH},
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
-use bee_storage::access::AsStream;
+use bee_storage::{access::AsStream, system::System};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
@@ -159,9 +158,9 @@ impl<'a> StorageStream<'a, (PaddedIndex, MessageId), ()> {
         let index: [u8; INDEXATION_PADDED_INDEX_LENGTH] = index.try_into().unwrap();
 
         (
-            // Unpacking from storage is fine.
             (
                 PaddedIndex::new(index),
+                // Unpacking from storage is fine.
                 MessageId::unpack_unchecked(&mut message_id).unwrap(),
             ),
             (),
