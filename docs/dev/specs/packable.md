@@ -18,9 +18,9 @@ The proposed trait was the following
 pub trait Packable {
     type Error: Debug;
 
-    fn packed_len(&self) -> usize;
-
     fn pack<W: Write>(&self, writer: &mut W) -> Result<(), Self::Error>;
+
+    fn packed_len(&self) -> usize;
 
     fn unpack_inner<R: Read + ?Sized, const CHECK: bool>(reader: &mut R) -> Result<Self, Self::Error>
     where
@@ -53,15 +53,16 @@ read bytes from it.
 pub trait Unpacker: Sized {
     type Error;
 
-    fn unpack_bytes(&mut self, slice: &mut [u8]) -> Result<(), Self::Error>;
+    fn unpack_bytes<B: AsMut<[u8]>>(&mut self, bytes: B) -> Result<(), Self::Error>;
 }
 ```
 
 - The `Error` associated type represents any error related to byte
   deserialization.
 
-- The `unpack_bytes` method writes enough bytes to fill `slice`. This method
-  must fail if the unpacker does not have enough bytes to fulfill the request.
+- The `unpack_bytes` method reads enough bytes from the unpacker to fill
+  `bytes` completely. This method must fail if the unpacker does not have
+  enough bytes to fulfill the request.
 
 We also have the `Packer` trait which represents a type that can be used to
 write bytes into it.
@@ -70,15 +71,16 @@ write bytes into it.
 pub trait Packer {
     type Error;
 
-    fn pack_bytes(&mut self, bytes: &[u8]) -> Result<(), Self::Error>;
+    fn pack_bytes<B: AsRef<[u8]>>(&mut self, bytes: B) -> Result<(), Self::Error>;
 }
 ```
 
 - The `Error` associated type represents any error related to byte
   serialization.
 
-- The `pack_bytes` method reads all the bytes from `slice`. This method must
-  fail if the packer does not have enough space to fulfill the request.
+- The `pack_bytes` method writes all the bytes from `bytes` into the packer.
+  This method must fail if the packer does not have enough space to fulfill the
+  request.
 
 Both traits allows us to abstract away any IO operation without relying on
 `std::io`. This has the additional benefit of allowing us to pack and unpack
@@ -95,9 +97,9 @@ pub trait Packable: Sized {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>>;
-
     fn packed_len(&self) -> usize;
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>>;
 }
 ```
 
@@ -106,12 +108,12 @@ pub trait Packable: Sized {
 - The `pack` method serializes the current value using a `Packer` to write the
   bytes.
 
-- The `unpack` method deserializes a value using an `Unpacker` to read the
-  bytes.
-
 - The `packed_len` method returns the length in bytes of the serialized value.
   This has to match the number of bytes written using `pack` to avoid
   inconsistencies.
+
+- The `unpack` method deserializes a value using an `Unpacker` to read the
+  bytes.
 
 ## Error handling
 
@@ -119,7 +121,7 @@ In addition to the three `Error` associated types mentioned before, we provide
 two new helper error types:
 
 - The `UnpackError` type which is an enum wrapping values of either the
-  `Unpacker::Error` or `Packable::Error` type.
+  `Packable::Error` or `Unpacker::Error` type.
 
 - The `UnknownTagError` type which can be used if the prefix tag used to
   represent the variant of an enum does not correspond to any variant of such
@@ -134,11 +136,13 @@ section.
 
 ## `Packable` for basic types
 
-The `Packable` is implemented for every integer type by encoding the value as
-an array of bytes in little-endian order. Booleans are packed following Rust's
-data layout, meaning that `true` is packed as a `1` byte and `false` as a `0`
-byte. However, boolean unpacking is less strict and unpacks any non-zero byte
-as `true`.
+The `Packable` trait is implemented for every integer type by encoding the
+value as an array of bytes in little-endian order. Booleans are packed
+following Rust's data layout, meaning that `true` is packed as a `1` byte and
+`false` as a `0` byte. However, boolean unpacking is less strict and unpacks
+any non-zero byte as `true`. Additional implementations of `Packable` are
+provided for `Vec<T>`, `Box<[T]>`, `[T; N]` and `Option<T>` if `T` implements
+`Packable`.
 
 # Usage
 
@@ -157,10 +161,15 @@ pub enum Maybe {
 ```
 Following the conventions from the [IOTA protocol messages RFC](https://github.com/iotaledger/protocol-rfcs/pull/0017),
 we will use an integer prefix as a tag to determine which variant of the enum
-is being packed
+is being packed.
 
 ```rust
-use bee_common::packable::{Packable, Packer, UnknownTagError, Unpacker, UnpackError};
+use bee_packable::{
+    error::{UnknownTagError, UnpackError},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 
 impl Packable for Maybe {
     type Error = UnknownTagError<u8>;
@@ -175,18 +184,18 @@ impl Packable for Maybe {
         }
     }
 
+    fn packed_len(&self) -> usize {
+        match self {
+            Self::Nothing => 0u8.packed_len(),
+            Self::Just(value) => 1u8.packed_len() + value.packed_len(),
+        }
+    }
+
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
         match u8::unpack(unpacker).map_err(UnpackError::coerce)? {
             0u8 => Ok(Self::Nothing),
             1u8 => Ok(Self::Just(i32::unpack(unpacker).map_err(UnpackError::coerce)?)),
             tag => Err(UnpackError::Packable(UnknownTagError(tag))),
-        }
-    }
-
-    fn packed_len(&self) -> usize {
-        match self {
-            Self::Nothing => 0u8.packed_len(),
-            Self::Just(value) => 1u8.packed_len() + value.packed_len(),
         }
     }
 }
@@ -198,7 +207,12 @@ Another option is to use the derive macro for the `Packable` trait which
 provides an implementation equivalent to the one written before.
 
 ```rust
-use bee_common::packable::{Packable, Packer, UnknownTagError, Unpacker, UnpackError};
+use bee_packable::{
+    error::{UnknownTagError, UnpackError},
+    packer::Packer,
+    unpacker::Unpacker,
+    Packable,
+};
 
 #[derive(Packable)]
 #[packable(tag_type = u8)]
@@ -241,7 +255,7 @@ the one specified in the `tag_type` attribute. Additionally, we use the
 `std::convert::Infallible` type as `Packable::Error` for structs by default.
 
 However, sometimes it is necessary to use a different error type when deriving
-`Packable`. Two examplew where this can happen  is when `Packable` is being
+`Packable`. Two examples where this can happen are when `Packable` is being
 derived for a type that contains a field which has a custom implementation of
 `Packable` or when `Packable` is being derived for a struct whose fields use a
 `Packable::Error` type different from `Infallible`. In that case the user can
@@ -251,7 +265,7 @@ type used in this attribute must implement `From<E>` where `E` can be the
 
 ## Optional features
 
-There is only one optional feature for this module:
+There is only one optional feature for this crate:
 
 - The `io` feature which implements `Packer` for any type that implements
   `std::io::Write` and `Unpacker` for any type that implements `std::io::Read`,
@@ -282,7 +296,7 @@ following signature
 
 ```rust
 impl<U> UnpackError<Infallible, U> {
-    pub fn coerce<V>(self) -> UnpackError<V, U> { ... }
+    pub fn infallible<V>(self) -> UnpackError<V, U> { ... }
 }
 ```
 
