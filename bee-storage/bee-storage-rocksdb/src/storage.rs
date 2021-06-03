@@ -10,8 +10,7 @@ use super::{
 pub use bee_storage::{
     access::{Fetch, Insert},
     backend::StorageBackend,
-    health::StorageHealth,
-    system::{StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
+    system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
 
 use bee_message::{

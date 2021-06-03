@@ -3,7 +3,7 @@
 
 use crate::storage::StorageVersion;
 
-use bee_storage::health::StorageHealth;
+use bee_storage::system::StorageHealth;
 
 use thiserror::Error;
 

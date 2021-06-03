@@ -19,5 +19,4 @@
 
 pub mod access;
 pub mod backend;
-pub mod health;
 pub mod system;

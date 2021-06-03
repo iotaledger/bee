@@ -3,11 +3,11 @@
 
 //! Types related to the state of the storage itself.
 
+mod health;
 mod version;
 
+pub use health::{Error as StorageHealthError, StorageHealth};
 pub use version::StorageVersion;
-
-use crate::health::{Error as StorageHealthError, StorageHealth};
 
 use bee_common::packable::{Packable, Read, Write};
 
