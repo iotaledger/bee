@@ -163,8 +163,14 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
     metrics.prunable_messages = visited.len();
     metrics.new_seps = new_seps.len();
 
-    if !new_seps.contains_key(&SolidEntryPoint::ref_cast(&target_id)) {
+    if let Some(youngest_approver) = new_seps.get(&SolidEntryPoint::ref_cast(&target_id)) {
+        if youngest_approver <= &target_index {
+            log::error!("Target milestone must have younger approver.");
+            panic!();
+        }
+    } else {
         log::error!("Target milestone not included in new SEP set. This is a bug!");
+        panic!();
     }
 
     Ok((new_seps, metrics))

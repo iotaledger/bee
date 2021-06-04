@@ -19,6 +19,8 @@ use log::*;
 
 use std::time::Instant;
 
+const RETAIN_SNAPSHOT_SEPS: u32 = 50;
+
 /// Performs pruning of old data until `target_index`.
 pub async fn prune<S: StorageBackend>(
     tangle: &MsTangle<S>,
@@ -32,7 +34,6 @@ pub async fn prune<S: StorageBackend>(
     let mut pruning_metrics = PruningMetrics::default();
 
     let start_index = tangle.get_pruning_index() + 1;
-    // tangle.get_snapshot_index()
 
     if target_index > start_index {
         info!("Pruning milestone range [{},{}]...", start_index, target_index);
@@ -48,7 +49,7 @@ pub async fn prune<S: StorageBackend>(
     // Measurement of the full pruning step.
     let full_prune = Instant::now();
 
-    // Get the old set of SEPs.
+    // Get the current set of SEPs.
     let get_curr_seps = Instant::now();
     let mut curr_seps = tangle.get_solid_entry_points().await;
     timings.get_curr_seps = get_curr_seps.elapsed();
@@ -74,11 +75,11 @@ pub async fn prune<S: StorageBackend>(
     //
     // Note:
     // Currently SEPs from the snapshot are stored with their confirming milestone index, but what we need is
-    // the approver with the highest confirmation index in order to decide how long we need to keep it. Hence,
+    // its "youngest" approver (highest confirmation index) in order to decide how long we need to keep it. Hence,
     // we need to keep the "snapshot-SEPs" around for some time.
     let filter_curr_seps = Instant::now();
     let snapshot_index = tangle.get_snapshot_index();
-    if start_index < snapshot_index + 50 {
+    if start_index < snapshot_index + RETAIN_SNAPSHOT_SEPS {
         curr_seps.retain(|_, v| *v > target_index || *v == snapshot_index);
     } else {
         curr_seps.retain(|_, v| *v > target_index);
@@ -161,10 +162,10 @@ pub async fn prune<S: StorageBackend>(
 
     timings.full_prune = full_prune.elapsed();
 
-    debug!("Pruning metrics: {:?}.", pruning_metrics);
-    debug!("Confirmed metrics: {:?}", confirmed_metrics);
+    debug!("{:?}.", pruning_metrics);
+    debug!("{:?}", confirmed_metrics);
     // debug!("Unconfirmed metrics: {:?}", unconfirmed_metrics);
-    debug!("Timings: {:?}.", timings);
+    debug!("{:?}.", timings);
 
     info!("Selected {} new solid entry points.", num_new_seps,);
     info!("Entry point index now at {}.", target_index,);
