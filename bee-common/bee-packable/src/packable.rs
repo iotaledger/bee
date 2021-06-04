@@ -273,14 +273,15 @@ pub struct VecPrefix<T, P> {
 }
 
 impl<T, P> VecPrefix<T, P> {
-    /// Create a new empty `VecPrefix<T, P>`.
+    /// Creates a new empty `VecPrefix<T, P>`.
     pub fn new() -> Self {
         Self {
             inner: Vec::new(),
             marker: PhantomData,
         }
     }
-    /// Create a new empty `VecPrefix<T, P>` with a specified capacity.
+
+    /// Creates a new empty `VecPrefix<T, P>` with a specified capacity.
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             inner: Vec::with_capacity(capacity),
