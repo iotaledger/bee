@@ -87,7 +87,7 @@ fn packable_array() {
     assert_eq!(pack_checked([42u8; 1024]).len(), 1024 * size_of::<u8>());
 }
 
-macro_rules! packable_pack_prefix {
+macro_rules! packable_vec_prefix {
     ($ty:ty,$name:ident) => {
         #[test]
         fn $name() {
@@ -100,9 +100,9 @@ macro_rules! packable_pack_prefix {
     };
 }
 
-packable_pack_prefix!(u8, packable_pack_prefix_u8);
-packable_pack_prefix!(u16, packable_pack_prefix_u16);
-packable_pack_prefix!(u32, packable_pack_prefix_u32);
-packable_pack_prefix!(u64, packable_pack_prefix_u64);
+packable_vec_prefix!(u8, packable_vec_prefix_u8);
+packable_vec_prefix!(u16, packable_vec_prefix_u16);
+packable_vec_prefix!(u32, packable_vec_prefix_u32);
+packable_vec_prefix!(u64, packable_vec_prefix_u64);
 #[cfg(has_u128)]
-packable_pack_prefix!(u128, packable_pack_prefix_u128);
+packable_vec_prefix!(u128, packable_vec_prefix_u128);
