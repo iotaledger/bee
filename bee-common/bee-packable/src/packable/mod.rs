@@ -33,10 +33,13 @@ pub trait Packable: Sized {
     /// It is recommended to use `core::convert::Infallible` if this kind of error cannot happen or
     /// `UnknownTagError` when implementing this trait for an enum.
     type Error;
+
     /// Pack this value into the given `Packer`.
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
     /// The size of the value in bytes after being packed.
+
     fn packed_len(&self) -> usize;
+
     /// Unpack this value from the given `Unpacker`.
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>>;
 }
