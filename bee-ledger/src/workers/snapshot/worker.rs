@@ -9,7 +9,7 @@ use crate::workers::{
 
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::{node::Node, worker::Worker};
-use bee_storage::{access::AsStream, backend::StorageBackend as _, system::StorageHealth};
+use bee_storage::{access::AsStream, backend::StorageBackend as _, health::StorageHealth};
 use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle, TangleWorker};
 
 use async_trait::async_trait;

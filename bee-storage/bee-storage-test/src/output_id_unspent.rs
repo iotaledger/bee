@@ -8,8 +8,6 @@ use bee_storage::{
 };
 use bee_test::rand::output::rand_unspent_output_id;
 
-use futures::stream::StreamExt;
-
 pub trait StorageBackend:
     backend::StorageBackend
     + Exist<Unspent, ()>
@@ -34,24 +32,24 @@ impl<T> StorageBackend for T where
 {
 }
 
-pub async fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
+pub fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
     let unspent = rand_unspent_output_id();
 
-    assert!(!Exist::<Unspent, ()>::exist(storage, &unspent).await.unwrap());
+    assert!(!Exist::<Unspent, ()>::exist(storage, &unspent).unwrap());
 
-    Insert::<Unspent, ()>::insert(storage, &unspent, &()).await.unwrap();
+    Insert::<Unspent, ()>::insert(storage, &unspent, &()).unwrap();
 
-    assert!(Exist::<Unspent, ()>::exist(storage, &unspent).await.unwrap());
+    assert!(Exist::<Unspent, ()>::exist(storage, &unspent).unwrap());
 
-    Delete::<Unspent, ()>::delete(storage, &unspent).await.unwrap();
+    Delete::<Unspent, ()>::delete(storage, &unspent).unwrap();
 
-    assert!(!Exist::<Unspent, ()>::exist(storage, &unspent).await.unwrap());
+    assert!(!Exist::<Unspent, ()>::exist(storage, &unspent).unwrap());
 
     let mut batch = B::batch_begin();
 
     for _ in 0..10 {
         let unspent = rand_unspent_output_id();
-        Insert::<Unspent, ()>::insert(storage, &unspent, &()).await.unwrap();
+        Insert::<Unspent, ()>::insert(storage, &unspent, &()).unwrap();
         Batch::<Unspent, ()>::batch_delete(storage, &mut batch, &unspent).unwrap();
     }
 
@@ -63,22 +61,22 @@ pub async fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
         unspents.push(unspent);
     }
 
-    storage.batch_commit(batch, true).await.unwrap();
+    storage.batch_commit(batch, true).unwrap();
 
-    let mut stream = AsStream::<Unspent, ()>::stream(storage).await.unwrap();
-    let mut count = 0;
+    // let mut stream = AsStream::<Unspent, ()>::stream(storage).unwrap();
+    // let mut count = 0;
+    //
+    // while let Some(result) = stream.next() {
+    //     let (unspent, ()) = result.unwrap();
+    //     assert!(unspents.contains(&unspent));
+    //     count += 1;
+    // }
+    //
+    // assert_eq!(count, unspents.len());
 
-    while let Some(result) = stream.next().await {
-        let (unspent, ()) = result.unwrap();
-        assert!(unspents.contains(&unspent));
-        count += 1;
-    }
+    Truncate::<Unspent, ()>::truncate(storage).unwrap();
 
-    assert_eq!(count, unspents.len());
-
-    Truncate::<Unspent, ()>::truncate(storage).await.unwrap();
-
-    let mut stream = AsStream::<Unspent, ()>::stream(storage).await.unwrap();
-
-    assert!(stream.next().await.is_none());
+    // let mut stream = AsStream::<Unspent, ()>::stream(storage).unwrap();
+    //
+    // assert!(stream.next().is_none());
 }

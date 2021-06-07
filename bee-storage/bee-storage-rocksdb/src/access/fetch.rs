@@ -25,9 +25,8 @@ use bee_tangle::{
 
 use std::convert::{TryFrom, TryInto};
 
-#[async_trait::async_trait]
 impl Fetch<u8, System> for Storage {
-    async fn fetch(&self, key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, key: &u8) -> Result<Option<System>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_SYSTEM)?, [*key])?
@@ -36,9 +35,8 @@ impl Fetch<u8, System> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<MessageId, Message> for Storage {
-    async fn fetch(&self, message_id: &MessageId) -> Result<Option<Message>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, message_id: &MessageId) -> Result<Option<Message>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?, message_id)?
@@ -47,9 +45,8 @@ impl Fetch<MessageId, Message> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<MessageId, MessageMetadata> for Storage {
-    async fn fetch(&self, message_id: &MessageId) -> Result<Option<MessageMetadata>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, message_id: &MessageId) -> Result<Option<MessageMetadata>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?
@@ -58,9 +55,8 @@ impl Fetch<MessageId, MessageMetadata> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<MessageId, Vec<MessageId>> for Storage {
-    async fn fetch(&self, parent: &MessageId) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, parent: &MessageId) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .prefix_iterator_cf(self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE_ID)?, parent)
@@ -76,9 +72,8 @@ impl Fetch<MessageId, Vec<MessageId>> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
-    async fn fetch(&self, index: &PaddedIndex) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, index: &PaddedIndex) -> Result<Option<Vec<MessageId>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .prefix_iterator_cf(self.cf_handle(CF_INDEX_TO_MESSAGE_ID)?, index)
@@ -94,9 +89,8 @@ impl Fetch<PaddedIndex, Vec<MessageId>> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<OutputId, CreatedOutput> for Storage {
-    async fn fetch(&self, output_id: &OutputId) -> Result<Option<CreatedOutput>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, output_id: &OutputId) -> Result<Option<CreatedOutput>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?, output_id.pack_new())?
@@ -105,9 +99,8 @@ impl Fetch<OutputId, CreatedOutput> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<OutputId, ConsumedOutput> for Storage {
-    async fn fetch(&self, output_id: &OutputId) -> Result<Option<ConsumedOutput>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, output_id: &OutputId) -> Result<Option<ConsumedOutput>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)?, output_id.pack_new())?
@@ -116,9 +109,8 @@ impl Fetch<OutputId, ConsumedOutput> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
-    async fn fetch(&self, address: &Ed25519Address) -> Result<Option<Vec<OutputId>>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, address: &Ed25519Address) -> Result<Option<Vec<OutputId>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .prefix_iterator_cf(self.cf_handle(CF_ED25519_ADDRESS_TO_OUTPUT_ID)?, address)
@@ -133,9 +125,8 @@ impl Fetch<Ed25519Address, Vec<OutputId>> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<(), LedgerIndex> for Storage {
-    async fn fetch(&self, (): &()) -> Result<Option<LedgerIndex>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, (): &()) -> Result<Option<LedgerIndex>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_LEDGER_INDEX)?, [0x00u8])?
@@ -144,9 +135,8 @@ impl Fetch<(), LedgerIndex> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<MilestoneIndex, Milestone> for Storage {
-    async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Milestone>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Milestone>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?, index.pack_new())?
@@ -155,9 +145,8 @@ impl Fetch<MilestoneIndex, Milestone> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<(), SnapshotInfo> for Storage {
-    async fn fetch(&self, (): &()) -> Result<Option<SnapshotInfo>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, (): &()) -> Result<Option<SnapshotInfo>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_SNAPSHOT_INFO)?, [0x00u8])?
@@ -166,9 +155,8 @@ impl Fetch<(), SnapshotInfo> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
-    async fn fetch(&self, sep: &SolidEntryPoint) -> Result<Option<MilestoneIndex>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, sep: &SolidEntryPoint) -> Result<Option<MilestoneIndex>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?, sep.as_ref())?
@@ -177,9 +165,8 @@ impl Fetch<SolidEntryPoint, MilestoneIndex> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<MilestoneIndex, OutputDiff> for Storage {
-    async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<OutputDiff>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, index: &MilestoneIndex) -> Result<Option<OutputDiff>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?, index.pack_new())?
@@ -188,9 +175,8 @@ impl Fetch<MilestoneIndex, OutputDiff> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<Address, Balance> for Storage {
-    async fn fetch(&self, address: &Address) -> Result<Option<Balance>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, address: &Address) -> Result<Option<Balance>, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .get_cf(self.cf_handle(CF_ADDRESS_TO_BALANCE)?, address.pack_new())?
@@ -199,9 +185,8 @@ impl Fetch<Address, Balance> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<MilestoneIndex, Vec<UnreferencedMessage>> for Storage {
-    async fn fetch(
+    fn fetch(
         &self,
         index: &MilestoneIndex,
     ) -> Result<Option<Vec<UnreferencedMessage>>, <Self as StorageBackend>::Error> {
@@ -222,9 +207,8 @@ impl Fetch<MilestoneIndex, Vec<UnreferencedMessage>> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
-    async fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Vec<Receipt>>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, index: &MilestoneIndex) -> Result<Option<Vec<Receipt>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .prefix_iterator_cf(self.cf_handle(CF_MILESTONE_INDEX_TO_RECEIPT)?, index.pack_new())
@@ -239,9 +223,8 @@ impl Fetch<MilestoneIndex, Vec<Receipt>> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Fetch<bool, Vec<TreasuryOutput>> for Storage {
-    async fn fetch(&self, spent: &bool) -> Result<Option<Vec<TreasuryOutput>>, <Self as StorageBackend>::Error> {
+    fn fetch(&self, spent: &bool) -> Result<Option<Vec<TreasuryOutput>>, <Self as StorageBackend>::Error> {
         Ok(Some(
             self.inner
                 .prefix_iterator_cf(self.cf_handle(CF_SPENT_TO_TREASURY_OUTPUT)?, spent.pack_new())

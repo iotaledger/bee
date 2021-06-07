@@ -53,11 +53,10 @@ impl<'a, K, V> StorageStream<'a, K, V> {
 
 macro_rules! impl_stream {
     ($key:ty, $value:ty, $cf:expr) => {
-        #[async_trait::async_trait]
         impl<'a> AsStream<'a, $key, $value> for Storage {
             type Stream = StorageStream<'a, $key, $value>;
 
-            async fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
+            fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
                 Ok(StorageStream::new(
                     self.inner.open_tree($cf)?.iter(),
                     self.config.storage.iteration_budget,
@@ -323,11 +322,10 @@ impl<'a> StorageStream<'a, (bool, TreasuryOutput), ()> {
     }
 }
 
-#[async_trait::async_trait]
 impl<'a> AsStream<'a, u8, System> for Storage {
     type Stream = StorageStream<'a, u8, System>;
 
-    async fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
+    fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
         Ok(StorageStream::new(
             self.inner.iter(),
             self.config.storage.iteration_budget,

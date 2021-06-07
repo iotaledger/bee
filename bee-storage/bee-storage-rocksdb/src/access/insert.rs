@@ -23,9 +23,8 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
-#[async_trait::async_trait]
 impl Insert<u8, System> for Storage {
-    async fn insert(&self, key: &u8, value: &System) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, key: &u8, value: &System) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .put_cf(self.cf_handle(CF_SYSTEM)?, [*key], value.pack_new())?;
 
@@ -33,9 +32,8 @@ impl Insert<u8, System> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<MessageId, Message> for Storage {
-    async fn insert(&self, message_id: &MessageId, message: &Message) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, message_id: &MessageId, message: &Message) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.put_cf(
             self.cf_handle(CF_MESSAGE_ID_TO_MESSAGE)?,
             message_id,
@@ -46,9 +44,8 @@ impl Insert<MessageId, Message> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<MessageId, MessageMetadata> for Storage {
-    async fn insert(
+    fn insert(
         &self,
         message_id: &MessageId,
         metadata: &MessageMetadata,
@@ -63,13 +60,8 @@ impl Insert<MessageId, MessageMetadata> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<(MessageId, MessageId), ()> for Storage {
-    async fn insert(
-        &self,
-        (parent, child): &(MessageId, MessageId),
-        (): &(),
-    ) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, (parent, child): &(MessageId, MessageId), (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
@@ -80,9 +72,8 @@ impl Insert<(MessageId, MessageId), ()> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<(PaddedIndex, MessageId), ()> for Storage {
-    async fn insert(
+    fn insert(
         &self,
         (index, message_id): &(PaddedIndex, MessageId),
         (): &(),
@@ -96,13 +87,8 @@ impl Insert<(PaddedIndex, MessageId), ()> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<OutputId, CreatedOutput> for Storage {
-    async fn insert(
-        &self,
-        output_id: &OutputId,
-        output: &CreatedOutput,
-    ) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, output_id: &OutputId, output: &CreatedOutput) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.put_cf(
             self.cf_handle(CF_OUTPUT_ID_TO_CREATED_OUTPUT)?,
             output_id.pack_new(),
@@ -113,13 +99,8 @@ impl Insert<OutputId, CreatedOutput> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<OutputId, ConsumedOutput> for Storage {
-    async fn insert(
-        &self,
-        output_id: &OutputId,
-        output: &ConsumedOutput,
-    ) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, output_id: &OutputId, output: &ConsumedOutput) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.put_cf(
             self.cf_handle(CF_OUTPUT_ID_TO_CONSUMED_OUTPUT)?,
             output_id.pack_new(),
@@ -130,9 +111,8 @@ impl Insert<OutputId, ConsumedOutput> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<Unspent, ()> for Storage {
-    async fn insert(&self, unspent: &Unspent, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, unspent: &Unspent, (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .put_cf(self.cf_handle(CF_OUTPUT_ID_UNSPENT)?, unspent.pack_new(), [])?;
 
@@ -140,9 +120,8 @@ impl Insert<Unspent, ()> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<(Ed25519Address, OutputId), ()> for Storage {
-    async fn insert(
+    fn insert(
         &self,
         (address, output_id): &(Ed25519Address, OutputId),
         (): &(),
@@ -157,9 +136,8 @@ impl Insert<(Ed25519Address, OutputId), ()> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<(), LedgerIndex> for Storage {
-    async fn insert(&self, (): &(), index: &LedgerIndex) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, (): &(), index: &LedgerIndex) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .put_cf(self.cf_handle(CF_LEDGER_INDEX)?, [0x00u8], index.pack_new())?;
 
@@ -167,13 +145,8 @@ impl Insert<(), LedgerIndex> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<MilestoneIndex, Milestone> for Storage {
-    async fn insert(
-        &self,
-        index: &MilestoneIndex,
-        milestone: &Milestone,
-    ) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, index: &MilestoneIndex, milestone: &Milestone) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.put_cf(
             self.cf_handle(CF_MILESTONE_INDEX_TO_MILESTONE)?,
             index.pack_new(),
@@ -184,9 +157,8 @@ impl Insert<MilestoneIndex, Milestone> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<(), SnapshotInfo> for Storage {
-    async fn insert(&self, (): &(), info: &SnapshotInfo) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, (): &(), info: &SnapshotInfo) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
             .put_cf(self.cf_handle(CF_SNAPSHOT_INFO)?, [0x00u8], info.pack_new())?;
 
@@ -194,13 +166,8 @@ impl Insert<(), SnapshotInfo> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<SolidEntryPoint, MilestoneIndex> for Storage {
-    async fn insert(
-        &self,
-        sep: &SolidEntryPoint,
-        index: &MilestoneIndex,
-    ) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, sep: &SolidEntryPoint, index: &MilestoneIndex) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.put_cf(
             self.cf_handle(CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?,
             sep.as_ref(),
@@ -211,9 +178,8 @@ impl Insert<SolidEntryPoint, MilestoneIndex> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<MilestoneIndex, OutputDiff> for Storage {
-    async fn insert(&self, index: &MilestoneIndex, diff: &OutputDiff) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, index: &MilestoneIndex, diff: &OutputDiff) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.put_cf(
             self.cf_handle(CF_MILESTONE_INDEX_TO_OUTPUT_DIFF)?,
             index.pack_new(),
@@ -224,9 +190,8 @@ impl Insert<MilestoneIndex, OutputDiff> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<Address, Balance> for Storage {
-    async fn insert(&self, address: &Address, balance: &Balance) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, address: &Address, balance: &Balance) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner.put_cf(
             self.cf_handle(CF_ADDRESS_TO_BALANCE)?,
             address.pack_new(),
@@ -237,9 +202,8 @@ impl Insert<Address, Balance> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
-    async fn insert(
+    fn insert(
         &self,
         (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
         (): &(),
@@ -254,9 +218,8 @@ impl Insert<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<(MilestoneIndex, Receipt), ()> for Storage {
-    async fn insert(
+    fn insert(
         &self,
         (index, receipt): &(MilestoneIndex, Receipt),
         (): &(),
@@ -271,13 +234,8 @@ impl Insert<(MilestoneIndex, Receipt), ()> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Insert<(bool, TreasuryOutput), ()> for Storage {
-    async fn insert(
-        &self,
-        (spent, output): &(bool, TreasuryOutput),
-        (): &(),
-    ) -> Result<(), <Self as StorageBackend>::Error> {
+    fn insert(&self, (spent, output): &(bool, TreasuryOutput), (): &()) -> Result<(), <Self as StorageBackend>::Error> {
         let mut key = spent.pack_new();
         key.extend_from_slice(&output.pack_new());
 

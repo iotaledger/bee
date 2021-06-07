@@ -54,11 +54,10 @@ impl<'a, K, V> StorageStream<'a, K, V> {
 
 macro_rules! impl_stream {
     ($key:ty, $value:ty, $cf:expr) => {
-        #[async_trait::async_trait]
         impl<'a> AsStream<'a, $key, $value> for Storage {
             type Stream = StorageStream<'a, $key, $value>;
 
-            async fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
+            fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
                 Ok(StorageStream::new(
                     self.inner.iterator_cf(self.cf_handle($cf)?, IteratorMode::Start),
                     self.config.iteration_budget,

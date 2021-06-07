@@ -22,9 +22,8 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
-#[async_trait::async_trait]
 impl Exist<MessageId, Message> for Storage {
-    async fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_MESSAGE)?
@@ -32,9 +31,8 @@ impl Exist<MessageId, Message> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<MessageId, MessageMetadata> for Storage {
-    async fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, message_id: &MessageId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MESSAGE_ID_TO_METADATA)?
@@ -42,9 +40,8 @@ impl Exist<MessageId, MessageMetadata> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<(MessageId, MessageId), ()> for Storage {
-    async fn exist(&self, (parent, child): &(MessageId, MessageId)) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, (parent, child): &(MessageId, MessageId)) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = parent.as_ref().to_vec();
         key.extend_from_slice(child.as_ref());
 
@@ -52,12 +49,8 @@ impl Exist<(MessageId, MessageId), ()> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<(PaddedIndex, MessageId), ()> for Storage {
-    async fn exist(
-        &self,
-        (index, message_id): &(PaddedIndex, MessageId),
-    ) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, (index, message_id): &(PaddedIndex, MessageId)) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = index.as_ref().to_vec();
         key.extend_from_slice(message_id.as_ref());
 
@@ -65,9 +58,8 @@ impl Exist<(PaddedIndex, MessageId), ()> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<OutputId, CreatedOutput> for Storage {
-    async fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_OUTPUT_ID_TO_CREATED_OUTPUT)?
@@ -75,9 +67,8 @@ impl Exist<OutputId, CreatedOutput> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<OutputId, ConsumedOutput> for Storage {
-    async fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, output_id: &OutputId) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT)?
@@ -85,9 +76,8 @@ impl Exist<OutputId, ConsumedOutput> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<Unspent, ()> for Storage {
-    async fn exist(&self, unspent: &Unspent) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, unspent: &Unspent) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_OUTPUT_ID_UNSPENT)?
@@ -95,9 +85,8 @@ impl Exist<Unspent, ()> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<(Ed25519Address, OutputId), ()> for Storage {
-    async fn exist(
+    fn exist(
         &self,
         (address, output_id): &(Ed25519Address, OutputId),
     ) -> Result<bool, <Self as StorageBackend>::Error> {
@@ -111,16 +100,14 @@ impl Exist<(Ed25519Address, OutputId), ()> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<(), LedgerIndex> for Storage {
-    async fn exist(&self, (): &()) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, (): &()) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self.inner.open_tree(TREE_LEDGER_INDEX)?.contains_key([0x00u8])?)
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<MilestoneIndex, Milestone> for Storage {
-    async fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MILESTONE_INDEX_TO_MILESTONE)?
@@ -128,16 +115,14 @@ impl Exist<MilestoneIndex, Milestone> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<(), SnapshotInfo> for Storage {
-    async fn exist(&self, (): &()) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, (): &()) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self.inner.open_tree(TREE_SNAPSHOT_INFO)?.contains_key([0x00u8])?)
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<SolidEntryPoint, MilestoneIndex> for Storage {
-    async fn exist(&self, sep: &SolidEntryPoint) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, sep: &SolidEntryPoint) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX)?
@@ -145,9 +130,8 @@ impl Exist<SolidEntryPoint, MilestoneIndex> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<MilestoneIndex, OutputDiff> for Storage {
-    async fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, index: &MilestoneIndex) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF)?
@@ -155,9 +139,8 @@ impl Exist<MilestoneIndex, OutputDiff> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<Address, Balance> for Storage {
-    async fn exist(&self, address: &Address) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, address: &Address) -> Result<bool, <Self as StorageBackend>::Error> {
         Ok(self
             .inner
             .open_tree(TREE_ADDRESS_TO_BALANCE)?
@@ -165,9 +148,8 @@ impl Exist<Address, Balance> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
-    async fn exist(
+    fn exist(
         &self,
         (index, unreferenced_message): &(MilestoneIndex, UnreferencedMessage),
     ) -> Result<bool, <Self as StorageBackend>::Error> {
@@ -181,12 +163,8 @@ impl Exist<(MilestoneIndex, UnreferencedMessage), ()> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<(MilestoneIndex, Receipt), ()> for Storage {
-    async fn exist(
-        &self,
-        (index, receipt): &(MilestoneIndex, Receipt),
-    ) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, (index, receipt): &(MilestoneIndex, Receipt)) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = index.pack_new();
         key.extend_from_slice(&receipt.pack_new());
 
@@ -197,9 +175,8 @@ impl Exist<(MilestoneIndex, Receipt), ()> for Storage {
     }
 }
 
-#[async_trait::async_trait]
 impl Exist<(bool, TreasuryOutput), ()> for Storage {
-    async fn exist(&self, (spent, output): &(bool, TreasuryOutput)) -> Result<bool, <Self as StorageBackend>::Error> {
+    fn exist(&self, (spent, output): &(bool, TreasuryOutput)) -> Result<bool, <Self as StorageBackend>::Error> {
         let mut key = spent.pack_new();
         key.extend_from_slice(&output.pack_new());
 

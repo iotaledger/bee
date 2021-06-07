@@ -35,11 +35,10 @@ pub struct StorageBatch {
     value_buf: Vec<u8>,
 }
 
-#[async_trait::async_trait]
 impl BatchBuilder for Storage {
     type Batch = StorageBatch;
 
-    async fn batch_commit(&self, batch: Self::Batch, _durability: bool) -> Result<(), <Self as StorageBackend>::Error> {
+    fn batch_commit(&self, batch: Self::Batch, _durability: bool) -> Result<(), <Self as StorageBackend>::Error> {
         for (tree, batch) in batch.inner {
             self.inner.open_tree(tree)?.apply_batch(batch)?;
         }
