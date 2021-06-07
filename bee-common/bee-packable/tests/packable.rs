@@ -3,7 +3,7 @@
 
 extern crate alloc;
 
-use bee_packable::{packer::VecPacker, Packable};
+use bee_packable::{packer::VecPacker, Packable, VecPrefix};
 
 use alloc::vec::Vec;
 use core::{fmt::Debug, mem::size_of};
@@ -86,3 +86,23 @@ fn packable_vector() {
 fn packable_array() {
     assert_eq!(pack_checked([42u8; 1024]).len(), 1024 * size_of::<u8>());
 }
+
+macro_rules! packable_vec_prefix {
+    ($ty:ty,$name:ident) => {
+        #[test]
+        fn $name() {
+            assert_eq!(pack_checked(VecPrefix::<u32, $ty>::new()).len(), size_of::<$ty>());
+            assert_eq!(
+                pack_checked(VecPrefix::<Option<u32>, $ty>::from(vec![Some(0u32), None])).len(),
+                size_of::<$ty>() + (size_of::<u8>() + size_of::<u32>()) + size_of::<u8>()
+            );
+        }
+    };
+}
+
+packable_vec_prefix!(u8, packable_vec_prefix_u8);
+packable_vec_prefix!(u16, packable_vec_prefix_u16);
+packable_vec_prefix!(u32, packable_vec_prefix_u32);
+packable_vec_prefix!(u64, packable_vec_prefix_u64);
+#[cfg(has_u128)]
+packable_vec_prefix!(u128, packable_vec_prefix_u128);
