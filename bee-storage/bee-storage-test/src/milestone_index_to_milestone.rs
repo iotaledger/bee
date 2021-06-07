@@ -41,13 +41,17 @@ impl<T> StorageBackend for T where
 pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
     let (index, milestone) = (rand_milestone_index(), rand_milestone());
 
-    assert!(!Exist::<MilestoneIndex, Milestone>::exist(storage, &index)
-        .await
-        .unwrap());
-    assert!(Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<MilestoneIndex, Milestone>::exist(storage, &index)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
+            .await
+            .unwrap()
+            .is_none()
+    );
     let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
         .await
         .unwrap();
@@ -58,9 +62,11 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
         .await
         .unwrap();
 
-    assert!(Exist::<MilestoneIndex, Milestone>::exist(storage, &index)
-        .await
-        .unwrap());
+    assert!(
+        Exist::<MilestoneIndex, Milestone>::exist(storage, &index)
+            .await
+            .unwrap()
+    );
     assert_eq!(
         Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
             .await
@@ -78,13 +84,17 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
         .await
         .unwrap();
 
-    assert!(!Exist::<MilestoneIndex, Milestone>::exist(storage, &index)
-        .await
-        .unwrap());
-    assert!(Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<MilestoneIndex, Milestone>::exist(storage, &index)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<MilestoneIndex, Milestone>::fetch(storage, &index)
+            .await
+            .unwrap()
+            .is_none()
+    );
     let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
         .await
         .unwrap();

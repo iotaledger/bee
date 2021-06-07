@@ -47,11 +47,13 @@ pub async fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap()
     );
-    assert!(Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     Insert::<(MilestoneIndex, Receipt), ()>::insert(storage, &(index, receipt.clone()), &())
         .await
@@ -79,11 +81,13 @@ pub async fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap()
     );
-    assert!(Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
-        .await
-        .unwrap()
-        .unwrap()
-        .is_empty());
+    assert!(
+        Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_empty()
+    );
 
     let mut batch = B::batch_begin();
 

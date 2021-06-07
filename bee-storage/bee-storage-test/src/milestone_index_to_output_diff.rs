@@ -43,13 +43,17 @@ impl<T> StorageBackend for T where
 pub async fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
     let (index, output_diff) = (rand_milestone_index(), rand_output_diff());
 
-    assert!(!Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index)
-        .await
-        .unwrap());
-    assert!(Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index)
+            .await
+            .unwrap()
+            .is_none()
+    );
     let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index])
         .await
         .unwrap();
@@ -60,9 +64,11 @@ pub async fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &
         .await
         .unwrap();
 
-    assert!(Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index)
-        .await
-        .unwrap());
+    assert!(
+        Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index)
+            .await
+            .unwrap()
+    );
     assert_eq!(
         Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index)
             .await
@@ -81,13 +87,17 @@ pub async fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &
         .await
         .unwrap();
 
-    assert!(!Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index)
-        .await
-        .unwrap());
-    assert!(Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        !Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index)
+            .await
+            .unwrap()
+    );
+    assert!(
+        Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index)
+            .await
+            .unwrap()
+            .is_none()
+    );
     let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index])
         .await
         .unwrap();
