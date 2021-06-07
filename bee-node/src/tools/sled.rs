@@ -35,7 +35,7 @@ use std::str::FromStr;
 pub enum SledCommand {
     /// Fetches a value by its key.
     Fetch { key: String },
-    /// Streams a column family.
+    /// Streams a tree.
     Stream,
 }
 
@@ -45,8 +45,8 @@ pub enum SledError {
     StorageBackend(#[from] BackendError),
     #[error("Invalid key: {0}")]
     InvalidKey(String),
-    #[error("Unknown column family: {0}")]
-    UnknownColumnFamily(String),
+    #[error("Unknown tree: {0}")]
+    UnknownTree(String),
     #[error("Unsupported command")]
     UnsupportedCommand,
 }
@@ -54,13 +54,13 @@ pub enum SledError {
 #[derive(Clone, Debug, StructOpt)]
 pub struct SledTool {
     path: String,
-    column_family: String,
+    tree: String,
     #[structopt(subcommand)]
     command: SledCommand,
 }
 
 async fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError> {
-    match &tool.column_family[..] {
+    match &tool.tree[..] {
         TREE_MESSAGE_ID_TO_MESSAGE => match &tool.command {
             SledCommand::Fetch { key } => {
                 let key = MessageId::from_str(key).map_err(|_| SledError::InvalidKey(key.clone()))?;
@@ -330,7 +330,7 @@ async fn exec_inner(tool: &SledTool, storage: &Storage) -> Result<(), SledError>
             }
         },
 
-        _ => return Err(SledError::UnknownColumnFamily(tool.column_family[..].to_owned())),
+        _ => return Err(SledError::UnknownTree(tool.tree[..].to_owned())),
     }
 
     Ok(())
