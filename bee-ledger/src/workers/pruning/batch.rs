@@ -66,7 +66,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
         // Skip message if it's a SEP.
         if curr_seps.contains_key(SolidEntryPoint::ref_cast(&current_id)) {
-            metrics.bottomed += 1;
+            metrics.references_sep += 1;
             continue;
         }
 
@@ -109,40 +109,53 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
         metrics.fetched_approvers += 1;
 
-        // We need to base our decision on the approvers we haven't visited yet, more specifically the ones beyond the 'target_index'.
+        // We need to base our decision on the approvers we haven't visited yet, more specifically the ones beyond the
+        // 'target_index'.
         let mut unvisited_approvers = approvers.into_iter().filter(|id| !visited.contains(id)).peekable();
+        // let mut unvisited_approvers = approvers.into_iter().peekable();
 
-        // If all its approvers were visited already during this traversal, this message is redundant as a SEP, and can be ignored.
+        // If all its approvers were visited already during this traversal, this message is redundant as a SEP, and can
+        // be ignored.
         if unvisited_approvers.peek().is_none() {
             metrics.all_approvers_visited += 1;
             continue;
         }
 
+        // If not all its approvers have been visited during the traversal, this possibly means, that it is referenced
+        // by some message belonging to the past cone of a milestone beyond the target index.
         metrics.not_all_approvers_visited += 1;
 
-        // To decide for how long we need to keep a particular SEP, we need to know the largest confirming index over all its approvers.
+        // To decide for how long we need to keep a particular SEP around, we need to know the largest confirming index
+        // over all its approvers.
         let mut max_conf_index = target_index;
         for id in unvisited_approvers {
             let conf_index = match buffered_approvers.get(&id) {
-                Some(conf_index) => *conf_index,
+                Some(conf_index) => {
+                    metrics.approver_cache_hit += 1;
+
+                    *conf_index
+                }
                 None => {
-                    // Fetch and buffer
+                    metrics.approver_cache_miss += 1;
+
                     let conf_index = if let Some(conf_index) = Fetch::<MessageId, MessageMetadata>::fetch(storage, &id)
                         .await
                         .map_err(|e| Error::FetchOperation(Box::new(e)))?
                         .ok_or(Error::MissingMetadata(id))?
                         .milestone_index()
                     {
-                        // Note that an approver can be confirmed by the same milestone (be child and sibling at the same time).
+                        // Note that an approver can still be confirmed by the same milestone (if it is child/approver and sibling at the
+                        // same time), in other words: it shares an approver with one of its approvers.
                         conf_index
                     } else {
-                        // NB: `target_index` is the lower bound.
+                        // If it was referenced by a message, that never got confirmed, we return `target_index` here,
+                        // which is the lower bound. We can treat this situtation in the same way as if the approver
+                        // had been confirmed by the current target milestone. Being referenced by an unconfirmed
+                        // message is irrelevant, because we never traverse such message during the walk.
                         target_index
                     };
 
                     buffered_approvers.insert(id, conf_index);
-
-                    metrics.buffered_approvers += 1;
 
                     conf_index
                 }
@@ -154,7 +167,8 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         }
 
         if max_conf_index > target_index {
-            new_seps.insert(current_id.into(), max_conf_index);
+            // new_seps.insert(current_id.into(), max_conf_index);
+            new_seps.insert(current_id.into(), target_index + 50);
 
             metrics.found_seps += 1;
         }

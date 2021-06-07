@@ -20,10 +20,11 @@ pub struct PruningMetrics {
 #[derive(Debug, Default)]
 pub struct ConfirmedMetrics {
     pub msg_already_visited: usize,
-    pub bottomed: usize,
+    pub references_sep: usize,
     pub fetched_messages: usize,
     pub fetched_approvers: usize,
-    pub buffered_approvers: usize,
+    pub approver_cache_miss: usize,
+    pub approver_cache_hit: usize,
     pub all_approvers_visited: usize,
     pub not_all_approvers_visited: usize,
     pub found_seps: usize,
