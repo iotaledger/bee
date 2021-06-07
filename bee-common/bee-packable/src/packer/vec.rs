@@ -1,27 +1,12 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! A module to pack any value that implements `Packable`.
-
 extern crate alloc;
-#[cfg(feature = "io")]
-extern crate std;
 
-use super::unpacker::SliceUnpacker;
+use crate::{packer::Packer, unpacker::SliceUnpacker};
 
 use alloc::vec::Vec;
 use core::convert::Infallible;
-#[cfg(feature = "io")]
-use std::io::{self, Write};
-
-/// A type that can pack any value that implements `Packable`.
-pub trait Packer {
-    /// The error type that can be returned if some error occurs while packing.
-    type Error;
-
-    /// Pack a sequence of bytes into the `Packer`.
-    fn pack_bytes<B: AsRef<[u8]>>(&mut self, bytes: B) -> Result<(), Self::Error>;
-}
 
 /// A `Packer` backed by a `Vec<u8>`.
 #[derive(Default)]
@@ -55,14 +40,5 @@ impl Packer for VecPacker {
     fn pack_bytes<B: AsRef<[u8]>>(&mut self, bytes: B) -> Result<(), Self::Error> {
         self.0.extend_from_slice(bytes.as_ref());
         Ok(())
-    }
-}
-
-#[cfg(feature = "io")]
-impl<W: Write> Packer for W {
-    type Error = io::Error;
-
-    fn pack_bytes<B: AsRef<[u8]>>(&mut self, bytes: B) -> Result<(), Self::Error> {
-        self.write_all(bytes.as_ref())
     }
 }
