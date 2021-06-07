@@ -3,7 +3,10 @@
 
 use bee_node::{plugins, print_banner_and_version, tools, CliArgs, NodeBuilder, NodeConfigBuilder};
 use bee_runtime::node::NodeBuilder as _;
-use bee_storage_rocksdb::storage::Storage as Rocksdb;
+#[cfg(feature = "rocksdb")]
+use bee_storage_rocksdb::storage::Storage as RocksDb;
+#[cfg(all(feature = "sled", not(feature = "rocksdb")))]
+use bee_storage_sled::storage::Storage as Sled;
 
 use log::error;
 
@@ -66,7 +69,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         return Ok(());
     }
 
-    match NodeBuilder::<Rocksdb>::new(config) {
+    #[cfg(feature = "rocksdb")]
+    let node_builder = NodeBuilder::<RocksDb>::new(config);
+    #[cfg(all(feature = "sled", not(feature = "rocksdb")))]
+    let node_builder = NodeBuilder::<Sled>::new(config);
+
+    match node_builder {
         Ok(builder) => match builder.with_plugin::<plugins::Mps>().finish().await {
             Ok(node) => {
                 #[cfg(feature = "console")]

@@ -4,7 +4,10 @@
 mod ed25519;
 mod p2p_identity;
 mod password;
+#[cfg(feature = "rocksdb")]
 mod rocksdb;
+#[cfg(feature = "sled")]
+mod sled;
 mod snapshot_info;
 
 use structopt::StructOpt;
@@ -18,7 +21,11 @@ pub enum Tool {
     /// Generates a p2p identity.
     P2pIdentity(p2p_identity::P2pIdentityTool),
     /// Rocksdb database analyser.
+    #[cfg(feature = "rocksdb")]
     Rocksdb(rocksdb::RocksdbTool),
+    /// Sled database analyser.
+    #[cfg(feature = "sled")]
+    Sled(sled::SledTool),
     /// Outputs information about a snapshot file.
     SnapshotInfo(snapshot_info::SnapshotInfoTool),
     /// Generates password salt and hash.
@@ -29,8 +36,12 @@ pub enum Tool {
 pub enum ToolError {
     #[error("{0}")]
     Ed25519(#[from] ed25519::Ed25519Error),
+    #[cfg(feature = "rocksdb")]
     #[error("{0}")]
     Rocksdb(#[from] rocksdb::RocksdbError),
+    #[cfg(feature = "sled")]
+    #[error("{0}")]
+    Sled(#[from] sled::SledError),
     #[error("{0}")]
     SnapshotInfo(#[from] snapshot_info::SnapshotInfoError),
     #[error("{0}")]
@@ -41,7 +52,10 @@ pub fn exec(tool: &Tool) -> Result<(), ToolError> {
     match tool {
         Tool::Ed25519(tool) => ed25519::exec(tool)?,
         Tool::P2pIdentity(tool) => p2p_identity::exec(tool),
+        #[cfg(feature = "rocksdb")]
         Tool::Rocksdb(tool) => rocksdb::exec(tool)?,
+        #[cfg(feature = "sled")]
+        Tool::Sled(tool) => sled::exec(tool)?,
         Tool::SnapshotInfo(tool) => snapshot_info::exec(tool)?,
         Tool::Password(tool) => password::exec(tool)?,
     }
