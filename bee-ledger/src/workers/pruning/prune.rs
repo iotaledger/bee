@@ -91,9 +91,9 @@ pub async fn prune<S: StorageBackend>(
     // Create the union of both sets:
     new_seps.extend(curr_seps);
 
-    let num_new_seps = new_seps.len();
+    let num_total_seps = new_seps.len();
 
-    pruning_metrics.new_seps = num_new_seps;
+    pruning_metrics.total_seps = num_total_seps;
 
     // Write the new set of SEPs to the storage.
     let batch_new_seps = Instant::now();
@@ -167,7 +167,7 @@ pub async fn prune<S: StorageBackend>(
     // debug!("Unconfirmed metrics: {:?}", unconfirmed_metrics);
     debug!("{:?}.", timings);
 
-    info!("Selected {} new solid entry points.", num_new_seps,);
+    info!("{} total solid entry points.", num_total_seps,);
     info!("Entry point index now at {}.", target_index,);
     info!("Pruning index now at {}.", target_index);
 
