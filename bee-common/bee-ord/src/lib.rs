@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! A module that provides features related to ordering.
+//! A crate that provides features related to ordering.
 
 #![no_std]
 #![warn(missing_docs)]
