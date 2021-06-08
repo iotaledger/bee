@@ -19,11 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
-<<<<<<< HEAD
-## 0.4.0 - 2021-05-xx
-=======
 ## 0.5.0 - 2021-06-xx
->>>>>>> dev_pruning
 
 ### Added
 
@@ -35,8 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `consensus::worker`;
 - `pruning::{error, condition, config}`;
 
-<<<<<<< HEAD
-=======
 ## 0.4.0 - 2021-06-01
 
 ### Added
@@ -47,7 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `struct ConsensusWorkerEvent` to `enum ConsensusWorkerCommand`;
 
->>>>>>> dev_pruning
 ## 0.3.1 - 2021-05-12
 
 ### Added
