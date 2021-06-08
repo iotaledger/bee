@@ -3,6 +3,9 @@
 
 //! A module that provides features related to ordering.
 
+#![no_std]
+#![warn(missing_docs)]
+
 use core::{cmp::Ordering, iter::Iterator};
 
 /// Checks if an iterator yields ordered and unique values.
