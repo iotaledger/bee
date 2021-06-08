@@ -42,32 +42,26 @@ impl<T> StorageBackend for T where
 pub async fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
     let (output_id, consumed_output) = (rand_output_id(), rand_consumed_output());
 
-    assert!(
-        !Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id)
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(!Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id)
+        .await
+        .unwrap());
+    assert!(Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
+        .await
+        .unwrap()
+        .is_none());
     let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &[output_id])
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert!(results[0].is_none());
+    assert!(matches!(results.get(0), Some(Ok(None))));
 
     Insert::<OutputId, ConsumedOutput>::insert(storage, &output_id, &consumed_output)
         .await
         .unwrap();
 
-    assert!(
-        Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id)
-            .await
-            .unwrap()
-    );
+    assert!(Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id)
+        .await
+        .unwrap());
     assert_eq!(
         Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
             .await
@@ -79,28 +73,24 @@ pub async fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B)
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert_eq!(results[0].as_ref().unwrap(), &consumed_output);
+    assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &consumed_output));
 
     Delete::<OutputId, ConsumedOutput>::delete(storage, &output_id)
         .await
         .unwrap();
 
-    assert!(
-        !Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id)
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(!Exist::<OutputId, ConsumedOutput>::exist(storage, &output_id)
+        .await
+        .unwrap());
+    assert!(Fetch::<OutputId, ConsumedOutput>::fetch(storage, &output_id)
+        .await
+        .unwrap()
+        .is_none());
     let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &[output_id])
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert!(results[0].is_none());
+    assert!(matches!(results.get(0), Some(Ok(None))));
 
     let mut batch = B::batch_begin();
     let mut output_ids = Vec::new();
@@ -142,8 +132,8 @@ pub async fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B)
 
     assert_eq!(results.len(), output_ids.len());
 
-    for ((_, consumed_output), result) in consumed_outputs.iter().zip(results.iter()) {
-        assert_eq!(consumed_output, result);
+    for ((_, consumed_output), result) in consumed_outputs.into_iter().zip(results.into_iter()) {
+        assert_eq!(consumed_output, result.unwrap());
     }
 
     Truncate::<OutputId, ConsumedOutput>::truncate(storage).await.unwrap();

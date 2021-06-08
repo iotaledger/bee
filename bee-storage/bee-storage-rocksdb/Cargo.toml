@@ -1,6 +1,6 @@
 [package]
 name = "bee-storage-rocksdb"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "A bee-storage implementation for the RocksDB backend"

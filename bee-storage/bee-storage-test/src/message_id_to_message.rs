@@ -42,17 +42,15 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     let (message_id, message) = (rand_message_id(), rand_message());
 
     assert!(!Exist::<MessageId, Message>::exist(storage, &message_id).await.unwrap());
-    assert!(
-        Fetch::<MessageId, Message>::fetch(storage, &message_id)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(Fetch::<MessageId, Message>::fetch(storage, &message_id)
+        .await
+        .unwrap()
+        .is_none());
     let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert!(results[0].is_none());
+    assert!(matches!(results.get(0), Some(Ok(None))));
 
     Insert::<MessageId, Message>::insert(storage, &message_id, &message)
         .await
@@ -70,24 +68,22 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert_eq!(results[0].as_ref().unwrap(), &message);
+    assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &message));
 
     Delete::<MessageId, Message>::delete(storage, &message_id)
         .await
         .unwrap();
 
     assert!(!Exist::<MessageId, Message>::exist(storage, &message_id).await.unwrap());
-    assert!(
-        Fetch::<MessageId, Message>::fetch(storage, &message_id)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(Fetch::<MessageId, Message>::fetch(storage, &message_id)
+        .await
+        .unwrap()
+        .is_none());
     let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert!(results[0].is_none());
+    assert!(matches!(results.get(0), Some(Ok(None))));
 
     let mut batch = B::batch_begin();
     let mut message_ids = Vec::new();
@@ -129,8 +125,8 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(results.len(), message_ids.len());
 
-    for ((_, message), result) in messages.iter().zip(results.iter()) {
-        assert_eq!(message, result);
+    for ((_, message), result) in messages.into_iter().zip(results.into_iter()) {
+        assert_eq!(message, result.unwrap());
     }
 
     Truncate::<MessageId, Message>::truncate(storage).await.unwrap();

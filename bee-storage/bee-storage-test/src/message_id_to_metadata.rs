@@ -42,32 +42,26 @@ impl<T> StorageBackend for T where
 pub async fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
     let (message_id, metadata) = (rand_message_id(), rand_message_metadata());
 
-    assert!(
-        !Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
+        .await
+        .unwrap());
+    assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        .await
+        .unwrap()
+        .is_none());
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert!(results[0].is_none());
+    assert!(matches!(results.get(0), Some(Ok(None))));
 
     Insert::<MessageId, MessageMetadata>::insert(storage, &message_id, &metadata)
         .await
         .unwrap();
 
-    assert!(
-        Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
-            .await
-            .unwrap()
-    );
+    assert!(Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
+        .await
+        .unwrap());
     assert_eq!(
         Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
             .await
@@ -79,28 +73,24 @@ pub async fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert_eq!(results[0].as_ref().unwrap(), &metadata);
+    assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &metadata));
 
     Delete::<MessageId, MessageMetadata>::delete(storage, &message_id)
         .await
         .unwrap();
 
-    assert!(
-        !Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
-            .await
-            .unwrap()
-    );
-    assert!(
-        Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(!Exist::<MessageId, MessageMetadata>::exist(storage, &message_id)
+        .await
+        .unwrap());
+    assert!(Fetch::<MessageId, MessageMetadata>::fetch(storage, &message_id)
+        .await
+        .unwrap()
+        .is_none());
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert!(results[0].is_none());
+    assert!(matches!(results.get(0), Some(Ok(None))));
 
     let mut batch = B::batch_begin();
     let mut message_ids = Vec::new();
@@ -142,8 +132,8 @@ pub async fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(results.len(), message_ids.len());
 
-    for ((_, metadata), result) in metadatas.iter().zip(results.iter()) {
-        assert_eq!(metadata, result);
+    for ((_, metadata), result) in metadatas.into_iter().zip(results.into_iter()) {
+        assert_eq!(metadata, result.unwrap());
     }
 
     Truncate::<MessageId, MessageMetadata>::truncate(storage).await.unwrap();

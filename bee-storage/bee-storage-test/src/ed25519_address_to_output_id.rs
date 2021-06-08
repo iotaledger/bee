@@ -46,13 +46,11 @@ pub async fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B)
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage, &address)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage, &address)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     Insert::<(Ed25519Address, OutputId), ()>::insert(storage, &(address, output_id), &())
         .await
@@ -80,13 +78,11 @@ pub async fn ed25519_address_to_output_id_access<B: StorageBackend>(storage: &B)
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage, &address)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage, &address)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     let mut batch = B::batch_begin();
 

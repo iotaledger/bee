@@ -21,26 +21,27 @@ macro_rules! impl_multi_fetch {
     ($key:ty, $value:ty, $cf:expr) => {
         #[async_trait::async_trait]
         impl MultiFetch<$key, $value> for Storage {
-            async fn multi_fetch(&self, keys: &[$key]) -> Result<Vec<Option<$value>>, <Self as StorageBackend>::Error> {
+            async fn multi_fetch(
+                &self,
+                keys: &[$key],
+            ) -> Result<Vec<Result<Option<$value>, <Self as StorageBackend>::Error>>, <Self as StorageBackend>::Error>
+            {
                 let cf = self.cf_handle($cf)?;
-                let mut items = Vec::with_capacity(keys.len());
 
-                for value in self
+                Ok(self
                     .inner
                     .multi_get_cf(keys.iter().map(|k| (cf, k.pack_new())))
                     .into_iter()
-                {
-                    items.push(value?.and_then(|v| {
-                        if v.is_empty() {
-                            None
-                        } else {
-                            // Unpacking from storage is fine.
-                            Some(<$value>::unpack_unchecked(&mut v.as_slice()).unwrap())
-                        }
-                    }))
-                }
-
-                Ok(items)
+                    .map(|r| {
+                        r.map(|o| {
+                            o.map(|v| {
+                                // Unpacking from storage is fine.
+                                <$value>::unpack_unchecked(&mut v.as_slice()).unwrap()
+                            })
+                        })
+                        .map_err(|e| e.into())
+                    })
+                    .collect())
             }
         }
     };

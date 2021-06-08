@@ -46,13 +46,11 @@ pub async fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     Insert::<(bool, TreasuryOutput), ()>::insert(storage, &(spent, treasury_output.clone()), &())
         .await
@@ -80,13 +78,11 @@ pub async fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     let mut batch = B::batch_begin();
 

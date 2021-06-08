@@ -46,13 +46,11 @@ pub async fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     Insert::<(PaddedIndex, MessageId), ()>::insert(storage, &(index, message_id), &())
         .await
@@ -80,13 +78,11 @@ pub async fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap()
     );
-    assert!(
-        Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
-            .await
-            .unwrap()
-            .unwrap()
-            .is_empty()
-    );
+    assert!(Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
+        .await
+        .unwrap()
+        .unwrap()
+        .is_empty());
 
     let mut batch = B::batch_begin();
 
