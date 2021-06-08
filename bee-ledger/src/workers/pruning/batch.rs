@@ -26,7 +26,7 @@ use ref_cast::RefCast;
 use std::collections::VecDeque;
 
 pub type Messages = HashSet<MessageId>;
-pub type Approvers = HashMap<MessageId, bool>;
+pub type Approvers = HashMap<MessageId, MilestoneIndex>;
 pub type Seps = HashMap<SolidEntryPoint, MilestoneIndex>;
 
 #[derive(Eq, PartialEq, Hash)]
@@ -40,8 +40,9 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     target_index: MilestoneIndex,
-    old_seps: &Seps,
+    curr_seps: &Seps,
 ) -> Result<(Seps, ConfirmedMetrics), Error> {
+    // TODO: we should probably think about not allocating those hashmaps each time.
     let mut visited = Messages::with_capacity(512);
     let mut buffered_approvers = Approvers::with_capacity(512);
     let mut new_seps = Seps::with_capacity(512);
@@ -54,19 +55,22 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
     let target_id = target_milestone.message_id().clone();
 
-    let mut messages: VecDeque<_> = vec![target_id].into_iter().collect();
+    let mut parents: VecDeque<_> = vec![target_id].into_iter().collect();
 
-    while let Some(current_id) = messages.pop_front() {
+    while let Some(current_id) = parents.pop_front() {
+        // Skip message if we already visited it.
         if visited.contains(&current_id) {
             metrics.msg_already_visited += 1;
             continue;
         }
 
-        if old_seps.contains_key(SolidEntryPoint::ref_cast(&current_id)) {
-            metrics.bottomed += 1;
+        // Skip message if it's a SEP.
+        if curr_seps.contains_key(SolidEntryPoint::ref_cast(&current_id)) {
+            metrics.references_sep += 1;
             continue;
         }
 
+        // Fetch the associated message to find out about its parents (and other data).
         let msg = Fetch::<MessageId, Message>::fetch(storage, &current_id)
             .await
             .map_err(|e| Error::FetchOperation(Box::new(e)))?
@@ -89,12 +93,15 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
             metrics.prunable_edges += 1;
         }
 
-        messages.extend(current_parents.iter());
+        // Continue the traversal with its parents.
+        parents.extend(current_parents.iter());
 
-        let _ = visited.insert(current_id);
+        // Mark this message as "visited".
+        visited.insert(current_id);
 
         delete_message_and_metadata(storage, batch, &current_id)?;
 
+        // Fetch its approvers from storage so that we can decide whether to keep it as an SEP, or not.
         let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &current_id)
             .await
             .map_err(|e| Error::FetchOperation(Box::new(e)))?
@@ -102,61 +109,83 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
         metrics.fetched_approvers += 1;
 
-        let mut not_visited_approvers = approvers.into_iter().filter(|id| !visited.contains(id)).peekable();
+        // We need to base our decision on the approvers we haven't visited yet, more specifically the ones beyond the
+        // 'target_index'.
+        let mut unvisited_approvers = approvers.into_iter().filter(|id| !visited.contains(id)).peekable();
+        // let mut unvisited_approvers = approvers.into_iter().peekable();
 
-        // If all approvers were visited before, this confirmed message is a redundant SEP.
-        if not_visited_approvers.peek().is_none() {
+        // If all its approvers were visited already during this traversal, this message is redundant as a SEP, and can
+        // be ignored.
+        if unvisited_approvers.peek().is_none() {
             metrics.all_approvers_visited += 1;
             continue;
         }
 
-        metrics.approvers_not_visited += 1;
+        // If not all its approvers have been visited during the traversal, this possibly means, that it is referenced
+        // by some message belonging to the past cone of a milestone beyond the target index.
+        metrics.not_all_approvers_visited += 1;
 
-        // Try to use the buffer first before making any storage queries.
-        if not_visited_approvers
-            .clone()
-            .any(|id| *buffered_approvers.get(&id).unwrap_or(&false))
-        {
-            new_seps.insert(current_id.into(), target_index);
+        // To decide for how long we need to keep a particular SEP around, we need to know the largest confirming index
+        // over all its approvers.
+        let mut max_conf_index = target_index;
+        for id in unvisited_approvers {
+            let conf_index = match buffered_approvers.get(&id) {
+                Some(conf_index) => {
+                    metrics.approver_cache_hit += 1;
 
-            metrics.found_sep_early += 1;
-            continue;
-        }
+                    *conf_index
+                }
+                None => {
+                    metrics.approver_cache_miss += 1;
 
-        // Fetch not yet fetched metadata, and buffer it.
-        for id in not_visited_approvers {
-            if buffered_approvers.contains_key(&id) {
-                continue;
-            }
+                    let conf_index = if let Some(conf_index) = Fetch::<MessageId, MessageMetadata>::fetch(storage, &id)
+                        .await
+                        .map_err(|e| Error::FetchOperation(Box::new(e)))?
+                        .ok_or(Error::MissingMetadata(id))?
+                        .milestone_index()
+                    {
+                        // Note that an approver can still be confirmed by the same milestone (if it is child/approver and sibling at the
+                        // same time), in other words: it shares an approver with one of its approvers.
+                        conf_index
+                    } else {
+                        // If it was referenced by a message, that never got confirmed, we return `target_index` here,
+                        // which is the lower bound. We can treat this situtation in the same way as if the approver
+                        // had been confirmed by the current target milestone. Being referenced by an unconfirmed
+                        // message is irrelevant, because we never traverse such message during the walk.
+                        target_index
+                    };
 
-            let is_confirmed_in_future = if let Some(conf_index) =
-                Fetch::<MessageId, MessageMetadata>::fetch(storage, &id)
-                    .await
-                    .map_err(|e| Error::FetchOperation(Box::new(e)))?
-                    .ok_or(Error::MissingMetadata(id))?
-                    .milestone_index()
-            {
-                // Note that an approver can be confirmed by the same milestone (be child and sibling at the same time).
-                conf_index > target_index
-            } else {
-                false
+                    buffered_approvers.insert(id, conf_index);
+
+                    conf_index
+                }
             };
 
-            buffered_approvers.insert(id, is_confirmed_in_future);
-
-            metrics.buffered_approvers += 1;
-
-            if is_confirmed_in_future {
-                new_seps.insert(current_id.into(), target_index);
-
-                metrics.found_sep_late += 1;
-                continue;
+            if conf_index > max_conf_index {
+                max_conf_index = conf_index;
             }
+        }
+
+        if max_conf_index > target_index {
+            // new_seps.insert(current_id.into(), max_conf_index);
+            new_seps.insert(current_id.into(), target_index + 50);
+
+            metrics.found_seps += 1;
         }
     }
 
     metrics.prunable_messages = visited.len();
     metrics.new_seps = new_seps.len();
+
+    if let Some(youngest_approver) = new_seps.get(&SolidEntryPoint::ref_cast(&target_id)) {
+        if youngest_approver <= &target_index {
+            log::error!("Target milestone must have younger approver.");
+            panic!();
+        }
+    } else {
+        log::error!("Target milestone not included in new SEP set. This is a bug!");
+        panic!();
+    }
 
     Ok((new_seps, metrics))
 }
@@ -176,20 +205,38 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
         {
             Some(unconf_msgs) => {
                 if unconf_msgs.is_empty() {
-                    metrics.no_unconfirmed += 1;
+                    metrics.none_received += 1;
                     continue;
                 } else {
                     unconf_msgs
                 }
             }
             None => {
-                metrics.no_unconfirmed += 1;
+                metrics.none_received += 1;
                 continue;
             }
         };
 
         // TODO: use MultiFetch
         for unconf_msg_id in unconf_msgs.iter().map(|unconf_msg| unconf_msg.message_id()) {
+            // Skip those that were confirmed.
+            match Fetch::<MessageId, MessageMetadata>::fetch(storage, unconf_msg_id)
+                .await
+                .map_err(|e| Error::FetchOperation(Box::new(e)))?
+            {
+                Some(msg_meta) => {
+                    if msg_meta.milestone_index().is_some() {
+                        metrics.were_confirmed += 1;
+                        continue;
+                    }
+                }
+                None => {
+                    metrics.already_pruned += 1;
+                    continue;
+                }
+            }
+
+            // Delete those messages that remained unconfirmed.
             match Fetch::<MessageId, Message>::fetch(storage, unconf_msg_id)
                 .await
                 .map_err(|e| Error::FetchOperation(Box::new(e)))?

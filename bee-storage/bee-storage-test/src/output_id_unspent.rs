@@ -68,7 +68,8 @@ pub async fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
     let mut stream = AsStream::<Unspent, ()>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some((unspent, ())) = stream.next().await {
+    while let Some(result) = stream.next().await {
+        let (unspent, ()) = result.unwrap();
         assert!(unspents.contains(&unspent));
         count += 1;
     }

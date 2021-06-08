@@ -4,4 +4,4 @@
 #[macro_use]
 mod access;
 
-impl_access_test!(message_id_to_metadata_access);
+impl_access_test!(message_id_to_metadata_access_rocksdb, message_id_to_metadata_access);

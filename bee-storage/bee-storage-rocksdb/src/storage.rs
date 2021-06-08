@@ -5,13 +5,12 @@ use super::{
     column_families::*,
     config::{RocksDbConfig, RocksDbConfigBuilder, StorageConfig},
     error::Error,
-    system::{System, STORAGE_VERSION, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
 
 pub use bee_storage::{
     access::{Fetch, Insert},
     backend::StorageBackend,
-    health::StorageHealth,
+    system::{StorageHealth, StorageVersion, System, SYSTEM_HEALTH_KEY, SYSTEM_VERSION_KEY},
 };
 
 use bee_message::{
@@ -24,6 +23,8 @@ use rocksdb::{
     ColumnFamily, ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, Options,
     SliceTransform, DB,
 };
+
+pub(crate) const STORAGE_VERSION: StorageVersion = StorageVersion(9);
 
 pub struct Storage {
     pub(crate) config: StorageConfig,

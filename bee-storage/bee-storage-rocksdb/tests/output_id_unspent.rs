@@ -4,4 +4,4 @@
 #[macro_use]
 mod access;
 
-impl_access_test!(output_id_unspent_access);
+impl_access_test!(output_id_unspent_access_rocksdb, output_id_unspent_access);

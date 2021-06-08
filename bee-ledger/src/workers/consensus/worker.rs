@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    types::{CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
+    types::{Balance, CreatedOutput, LedgerIndex, Migration, Receipt, TreasuryOutput},
     workers::{
         consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
         error::Error,
@@ -14,6 +14,7 @@ use crate::{
 };
 
 use bee_message::{
+    address::Address,
     milestone::MilestoneIndex,
     output::{Output, OutputId},
     payload::{milestone::MilestoneId, receipt::ReceiptPayload, transaction::TransactionId, Payload},
@@ -24,7 +25,7 @@ use bee_tangle::{ConflictReason, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 
-use futures::stream::StreamExt;
+use futures::{channel::oneshot, stream::StreamExt};
 use log::{error, info, warn};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
@@ -34,13 +35,29 @@ use std::{any::TypeId, convert::TryInto};
 pub(crate) const EXTRA_SNAPSHOT_DEPTH: u32 = 5;
 pub(crate) const EXTRA_PRUNING_DEPTH: u32 = 5;
 
-/// Event of the consensus worker.
-pub struct ConsensusWorkerEvent(pub MessageId);
+/// Commands of the consensus worker.
+#[allow(clippy::type_complexity)]
+pub enum ConsensusWorkerCommand {
+    /// Command to confirm a milestone.
+    ConfirmMilestone(MessageId),
+    /// Command to fetch the balance of an address.
+    FetchBalance(Address, oneshot::Sender<(Result<Option<Balance>, Error>, LedgerIndex)>),
+    /// Command to fetch an output.
+    FetchOutput(
+        OutputId,
+        oneshot::Sender<(Result<Option<CreatedOutput>, Error>, LedgerIndex)>,
+    ),
+    /// Command to fetch the outputs of an address.
+    FetchOutputs(
+        Address,
+        oneshot::Sender<(Result<Option<Vec<OutputId>>, Error>, LedgerIndex)>,
+    ),
+}
 
 /// The consensus worker.
 pub struct ConsensusWorker {
     /// Communication channel of the consensus worker.
-    pub tx: mpsc::UnboundedSender<ConsensusWorkerEvent>,
+    pub tx: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 }
 
 pub(crate) async fn migration_from_milestone(
@@ -293,55 +310,80 @@ where
 
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-            while let Some(ConsensusWorkerEvent(message_id)) = receiver.next().await {
-                if let Err(e) = confirm::<N>(
-                    &tangle,
-                    &storage,
-                    &bus,
-                    message_id,
-                    &mut ledger_index,
-                    &mut receipt_migrated_at,
-                )
-                .await
-                {
-                    error!("Confirmation error on {}: {}.", message_id, e);
-                    panic!("Aborting due to unexpected ledger error.");
-                }
-
-                if !tangle.is_confirmed() {
-                    continue;
-                }
-
-                match should_snapshot(&tangle, ledger_index, pruning_depth_min, &snapshot_config) {
-                    Ok(()) => {
-                        // TODO
-                        // if let Err(e) = snapshot(snapshot_config.path(), event.index - snapshot_depth) {
-                        //     error!("Failed to create snapshot: {:?}.", e);
-                        // }
-                    }
-                    Err(reason) => {
-                        info!("Snapshot skipped: {:?}", reason);
-                    }
-                }
-
-                match should_prune(&tangle, ledger_index, pruning_depth, &pruning_config) {
-                    Ok(target_index) => {
-                        if let Err(e) = prune::prune(
+            while let Some(event) = receiver.next().await {
+                match event {
+                    ConsensusWorkerCommand::ConfirmMilestone(message_id) => {
+                        if let Err(e) = confirm::<N>(
                             &tangle,
                             &storage,
                             &bus,
-                            target_index,
-                            snapshot_pruning_delta,
-                            &pruning_config,
+                            message_id,
+                            &mut ledger_index,
+                            &mut receipt_migrated_at,
                         )
                         .await
                         {
-                            error!("Pruning failed: {:?}.", e);
+                            error!("Confirmation error on {}: {}.", message_id, e);
+                            panic!("Aborting due to unexpected ledger error.");
+                        }
+
+                        if !tangle.is_confirmed() {
+                            continue;
+                        }
+
+                        match should_snapshot(&tangle, ledger_index, pruning_depth_min, &snapshot_config) {
+                            Ok(()) => {
+                                // TODO
+                                // if let Err(e) = snapshot(snapshot_config.path(), event.index - snapshot_depth) {
+                                //     error!("Failed to create snapshot: {:?}.", e);
+                                // }
+                            }
+                            Err(reason) => {
+                                info!("Snapshot skipped: {:?}", reason);
+                            }
+                        }
+
+                        match should_prune(&tangle, ledger_index, pruning_depth, &pruning_config) {
+                            Ok(target_index) => {
+                                if let Err(e) = prune::prune(
+                                    &tangle,
+                                    &storage,
+                                    &bus,
+                                    target_index,
+                                    snapshot_pruning_delta,
+                                    &pruning_config,
+                                )
+                                .await
+                                {
+                                    error!("Pruning failed: {:?}.", e);
+                                }
+                            }
+                            Err(reason) => {
+                                info!("Pruning skipped: {:?}", reason);
+                            }
                         }
                     }
-                    Err(reason) => {
-                        info!("Pruning skipped: {:?}", reason);
+                    ConsensusWorkerCommand::FetchBalance(address, sender) => {
+                        if let Err(e) = sender.send((storage::fetch_balance(&*storage, &address).await, ledger_index)) {
+                            error!("Error while sending balance: {:?}", e);
+                        }
                     }
+                    ConsensusWorkerCommand::FetchOutput(output_id, sender) => {
+                        if let Err(e) = sender.send((storage::fetch_output(&*storage, &output_id).await, ledger_index))
+                        {
+                            error!("Error while sending output: {:?}", e);
+                        }
+                    }
+                    ConsensusWorkerCommand::FetchOutputs(address, sender) => match address {
+                        Address::Ed25519(address) => {
+                            if let Err(e) = sender.send((
+                                storage::fetch_outputs_for_ed25519_address(&*storage, &address).await,
+                                ledger_index,
+                            )) {
+                                error!("Error while sending output: {:?}", e);
+                            }
+                        }
+                    },
                 }
             }
 

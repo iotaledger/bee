@@ -19,6 +19,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.6.0 - 2021-06-07
+
+### Added
+
+- `crate::system::version`;
+
+### Changed
+
+- Moved `crate::health` to `crate::system`;
+
+## 0.5.0 - 2021-05-27
+
+### Changed
+
+- `AsStream::Stream`
+  - from  `Stream<Item = (K, V)> + Send + Sync + Unpin;`
+  - to    `Stream<Item = Result<(K, V), Self::Error>> + Send + Sync + Unpin;`
+
+## 0.4.0 - 2021-05-25
+
+### Added
+
+- `MultiFetch` trait;
+
 ## 0.3.0 - 2021-04-13
 
 ### Added

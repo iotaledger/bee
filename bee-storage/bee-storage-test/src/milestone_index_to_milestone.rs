@@ -3,19 +3,18 @@
 
 use bee_message::milestone::{Milestone, MilestoneIndex};
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::milestone::{rand_milestone, rand_milestone_index};
 
 use futures::stream::StreamExt;
 
-use std::collections::HashMap;
-
 pub trait StorageBackend:
     backend::StorageBackend
     + Exist<MilestoneIndex, Milestone>
     + Fetch<MilestoneIndex, Milestone>
+    + MultiFetch<MilestoneIndex, Milestone>
     + Insert<MilestoneIndex, Milestone>
     + Delete<MilestoneIndex, Milestone>
     + BatchBuilder
@@ -29,6 +28,7 @@ impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Exist<MilestoneIndex, Milestone>
         + Fetch<MilestoneIndex, Milestone>
+        + MultiFetch<MilestoneIndex, Milestone>
         + Insert<MilestoneIndex, Milestone>
         + Delete<MilestoneIndex, Milestone>
         + BatchBuilder
@@ -52,6 +52,11 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
             .unwrap()
             .is_none()
     );
+    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert!(results[0].is_none());
 
     Insert::<MilestoneIndex, Milestone>::insert(storage, &index, &milestone)
         .await
@@ -69,6 +74,11 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
             .unwrap(),
         milestone
     );
+    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].as_ref().unwrap(), &milestone);
 
     Delete::<MilestoneIndex, Milestone>::delete(storage, &index)
         .await
@@ -85,8 +95,15 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
             .unwrap()
             .is_none()
     );
+    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert!(results[0].is_none());
 
     let mut batch = B::batch_begin();
+    let mut indexes = Vec::new();
+    let mut milestones = Vec::new();
 
     for _ in 0..10 {
         let (index, milestone) = (rand_milestone_index(), rand_milestone());
@@ -94,14 +111,15 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
             .await
             .unwrap();
         Batch::<MilestoneIndex, Milestone>::batch_delete(storage, &mut batch, &index).unwrap();
+        indexes.push(index);
+        milestones.push((index, None));
     }
-
-    let mut milestones = HashMap::new();
 
     for _ in 0..10 {
         let (index, milestone) = (rand_milestone_index(), rand_milestone());
         Batch::<MilestoneIndex, Milestone>::batch_insert(storage, &mut batch, &index, &milestone).unwrap();
-        milestones.insert(index, milestone);
+        indexes.push(index);
+        milestones.push((index, Some(milestone)));
     }
 
     storage.batch_commit(batch, true).await.unwrap();
@@ -109,12 +127,23 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
     let mut stream = AsStream::<MilestoneIndex, Milestone>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some((index, milestone)) = stream.next().await {
-        assert_eq!(milestones.get(&index).unwrap(), &milestone);
+    while let Some(result) = stream.next().await {
+        let (index, milestone) = result.unwrap();
+        assert!(milestones.contains(&(index, Some(milestone))));
         count += 1;
     }
 
-    assert_eq!(count, milestones.len());
+    assert_eq!(count, 10);
+
+    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &indexes)
+        .await
+        .unwrap();
+
+    assert_eq!(results.len(), indexes.len());
+
+    for ((_, milestone), result) in milestones.iter().zip(results.iter()) {
+        assert_eq!(milestone, result);
+    }
 
     Truncate::<MilestoneIndex, Milestone>::truncate(storage).await.unwrap();
 

@@ -1,22 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
 use bee_message::{Message, MessageId};
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::message::{rand_message, rand_message_id};
 
 use futures::stream::StreamExt;
 
-use std::collections::HashMap;
-
 pub trait StorageBackend:
     backend::StorageBackend
     + Exist<MessageId, Message>
     + Fetch<MessageId, Message>
+    + MultiFetch<MessageId, Message>
     + Insert<MessageId, Message>
     + Delete<MessageId, Message>
     + BatchBuilder
@@ -30,6 +28,7 @@ impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Exist<MessageId, Message>
         + Fetch<MessageId, Message>
+        + MultiFetch<MessageId, Message>
         + Insert<MessageId, Message>
         + Delete<MessageId, Message>
         + BatchBuilder
@@ -49,6 +48,11 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
+    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert!(results[0].is_none());
 
     Insert::<MessageId, Message>::insert(storage, &message_id, &message)
         .await
@@ -59,10 +63,14 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
         Fetch::<MessageId, Message>::fetch(storage, &message_id)
             .await
             .unwrap()
-            .unwrap()
-            .pack_new(),
-        message.pack_new()
+            .unwrap(),
+        message
     );
+    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].as_ref().unwrap(), &message);
 
     Delete::<MessageId, Message>::delete(storage, &message_id)
         .await
@@ -75,8 +83,15 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
+    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+    assert!(results[0].is_none());
 
     let mut batch = B::batch_begin();
+    let mut message_ids = Vec::new();
+    let mut messages = Vec::new();
 
     for _ in 0..10 {
         let (message_id, message) = (rand_message_id(), rand_message());
@@ -84,14 +99,15 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
             .await
             .unwrap();
         Batch::<MessageId, Message>::batch_delete(storage, &mut batch, &message_id).unwrap();
+        message_ids.push(message_id);
+        messages.push((message_id, None));
     }
-
-    let mut messages = HashMap::new();
 
     for _ in 0..10 {
         let (message_id, message) = (rand_message_id(), rand_message());
         Batch::<MessageId, Message>::batch_insert(storage, &mut batch, &message_id, &message).unwrap();
-        messages.insert(message_id, message);
+        message_ids.push(message_id);
+        messages.push((message_id, Some(message)));
     }
 
     storage.batch_commit(batch, true).await.unwrap();
@@ -99,12 +115,23 @@ pub async fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
     let mut stream = AsStream::<MessageId, Message>::stream(storage).await.unwrap();
     let mut count = 0;
 
-    while let Some((message_id, message)) = stream.next().await {
-        assert_eq!(messages.get(&message_id).unwrap().pack_new(), message.pack_new());
+    while let Some(result) = stream.next().await {
+        let (message_id, message) = result.unwrap();
+        assert!(messages.contains(&(message_id, Some(message))));
         count += 1;
     }
 
-    assert_eq!(count, messages.len());
+    assert_eq!(count, 10);
+
+    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &message_ids)
+        .await
+        .unwrap();
+
+    assert_eq!(results.len(), message_ids.len());
+
+    for ((_, message), result) in messages.iter().zip(results.iter()) {
+        assert_eq!(message, result);
+    }
 
     Truncate::<MessageId, Message>::truncate(storage).await.unwrap();
 
