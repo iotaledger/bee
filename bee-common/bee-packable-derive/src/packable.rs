@@ -156,7 +156,7 @@ impl Fragments {
         // The cast to `W` is included because `tag` is an integer without type annotations.
         let pack = quote! {
             #pattern => {
-                (#tag as #tag_ty).pack(packer)?;
+                (#tag as #tag_ty).pack(packer).map_err(|x| x.infallible())?;
                 #pack
             }
         };
@@ -284,7 +284,7 @@ pub(crate) fn gen_bodies_for_enum(
             }
         },
         quote! {
-            match <#tag_ty>::unpack(unpacker).map_err(bee_packable::error::UnpackError::infallible)? {
+            match <#tag_ty>::unpack(unpacker).map_err(|x| x.infallible())? {
                 #(#unpack_branches,) *
                 tag => Err(bee_packable::error::UnpackError::Packable(bee_packable::error::UnknownTagError(tag).into()))
             }
@@ -296,7 +296,8 @@ pub(crate) fn gen_bodies_for_enum(
 pub(crate) fn gen_impl(
     ident: &Ident,
     generics: &Generics,
-    error_type: TokenStream,
+    pack_error_type: TokenStream,
+    unpack_error_type: TokenStream,
     pack_body: TokenStream,
     packed_len_body: TokenStream,
     unpack_body: TokenStream,
@@ -305,13 +306,14 @@ pub(crate) fn gen_impl(
 
     quote! {
         impl #impl_generics Packable for #ident #ty_generics #where_clause {
-            type Error = #error_type;
+            type PackError = #pack_error_type;
+            type UnpackError = #unpack_error_type;
 
-            fn pack<P: bee_packable::packer::Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+            fn pack<P: bee_packable::packer::Packer>(&self, packer: &mut P) -> Result<(), bee_packable::error::PackError<Self::PackError, P::Error>> {
                 #pack_body
             }
 
-            fn unpack<U: bee_packable::unpacker::Unpacker>(unpacker: &mut U) -> Result<Self, bee_packable::error::UnpackError<Self::Error, U::Error>> {
+            fn unpack<U: bee_packable::unpacker::Unpacker>(unpacker: &mut U) -> Result<Self, bee_packable::error::UnpackError<Self::UnpackError, U::Error>> {
                 #unpack_body
             }
 

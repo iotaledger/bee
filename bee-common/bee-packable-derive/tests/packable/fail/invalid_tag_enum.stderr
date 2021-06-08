@@ -1,5 +1,5 @@
 error: Tags for variants can only be integers without type annotations.
-  --> $DIR/invalid_tag_enum.rs:14:15
+  --> $DIR/invalid_tag_enum.rs:15:15
    |
-14 |     #[packable(tag = [0; 32])]
+15 |     #[packable(tag = [0; 32])]
    |               ^^^^^^^^^^^^^^^

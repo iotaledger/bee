@@ -8,7 +8,7 @@ use core::convert::Infallible;
 /// Error type raised when `Packable::unpack` fails.
 #[derive(Debug)]
 pub enum UnpackError<T, U> {
-    /// Semantic error. Typically this is `Packable::Error`.
+    /// Semantic error. Typically this is `Packable::UnpackError`.
     Packable(T),
     /// Error produced by the unpacker. Typically this is `Unpacker::Error`.
     Unpacker(U),
@@ -41,6 +41,46 @@ impl<U> UnpackError<Infallible, U> {
         match self {
             Self::Packable(err) => match err {},
             Self::Unpacker(err) => UnpackError::Unpacker(err),
+        }
+    }
+}
+
+/// Error type raised when `Packable::pack` fails.
+#[derive(Debug)]
+pub enum PackError<T, P> {
+    /// Semantic error. Typically this is `Packable::PackError`.
+    Packable(T),
+    /// Error produced by the packer. Typically this is `Packer::Error`.
+    Packer(P),
+}
+
+impl<T, P> PackError<T, P> {
+    /// Map the `Packable` variant of this enum.
+    pub fn map<V, F: Fn(T) -> V>(self, f: F) -> PackError<V, P> {
+        match self {
+            Self::Packable(err) => PackError::Packable(f(err)),
+            Self::Packer(err) => PackError::Packer(err),
+        }
+    }
+
+    /// Coerce the value by calling `.into()` for the `Packable` variant.
+    pub fn coerce<V: From<T>>(self) -> PackError<V, P> {
+        self.map(|x| x.into())
+    }
+}
+
+impl<T, P> From<P> for PackError<T, P> {
+    fn from(err: P) -> Self {
+        Self::Packer(err)
+    }
+}
+
+impl<P> PackError<Infallible, P> {
+    /// Coerce the value if the `Packable` variant is `Infallible`.
+    pub fn infallible<E>(self) -> PackError<E, P> {
+        match self {
+            Self::Packable(err) => match err {},
+            Self::Packer(err) => PackError::Packer(err),
         }
     }
 }
