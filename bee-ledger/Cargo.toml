@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 bee-common = { version = "0.4.1", path = "../bee-common/bee-common" }
 bee-message = { version = "0.1.5", path = "../bee-message" }
 bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime", optional = true }
-bee-storage = { version = "0.6.0", path = "../bee-storage/bee-storage", optional = true }
+bee-storage = { version = "0.7.0", path = "../bee-storage/bee-storage", optional = true }
 bee-tangle = { version = "0.1.1", path = "../bee-tangle", optional = true }
 bee-ternary = { version = "0.4.2-alpha", path = "../bee-ternary", optional = true }
 
