@@ -14,7 +14,10 @@ jobs:
     strategy:
       matrix:
         rust: [nightly, beta, stable]
-        crate: ["bee-common/bee-packable"]
+        crates: [
+          "bee-common/bee-ord",
+          "bee-common/bee-packable"
+        ]
 
     steps:
     - uses: actions/checkout@v2
@@ -48,4 +51,4 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: check
-        args: --all --release --target=riscv64gc-unknown-none-elf --manifest-path ${{ matrix.crate }}/Cargo.toml
+        args: --all --release --target=riscv64gc-unknown-none-elf --manifest-path ${{ matrix.crates }}/Cargo.toml
