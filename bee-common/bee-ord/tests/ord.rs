@@ -3,8 +3,6 @@
 
 extern crate alloc;
 
-use bee_ord;
-
 use alloc::vec::Vec;
 
 #[test]
