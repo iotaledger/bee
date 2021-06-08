@@ -19,6 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.5.0 - 2021-06-xx
+
+### Added
+
+- `pruning::{batch, metrics, prune}`;
+- `snapshot::condition`; 
+
+### Changed
+
+- `consensus::worker`;
+- `pruning::{error, condition, config}`;
+
 ## 0.4.0 - 2021-06-01
 
 ### Added
