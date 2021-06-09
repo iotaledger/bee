@@ -1,0 +1,21 @@
+name: Missing license
+
+on:
+  push:
+    branches:
+      - dev
+      - stable
+      - coordicide
+  pull_request:
+    branches:
+      - dev
+      - stable
+      - coordicide
+
+jobs:
+  missing_license:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run missing license check
+        run: bash .github/workflows/scripts/missing_license.sh
