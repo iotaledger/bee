@@ -35,7 +35,7 @@ fn verify_signature(address: &Address, unlock_blocks: &UnlockBlocks, index: usiz
     }
 }
 
-async fn apply_regular_essence<B: StorageBackend>(
+fn apply_regular_essence<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
     transaction_id: &TransactionId,
@@ -59,8 +59,8 @@ async fn apply_regular_essence<B: StorageBackend>(
 
                 if let Some(output) = metadata.created_outputs.get(output_id).cloned() {
                     (output_id, output)
-                } else if let Some(output) = storage::fetch_output(storage, output_id).await? {
-                    if !storage::is_output_unspent(storage, output_id).await? {
+                } else if let Some(output) = storage::fetch_output(storage, output_id)? {
+                    if !storage::is_output_unspent(storage, output_id)? {
                         return Ok(ConflictReason::InputUtxoAlreadySpent);
                     }
                     (output_id, output)
@@ -134,9 +134,7 @@ async fn apply_regular_essence<B: StorageBackend>(
 
     for (address, diff) in balance_diffs.iter() {
         if diff.is_dust_mutating() {
-            let mut balance = storage::fetch_balance_or_default(storage, &address)
-                .await?
-                .apply_diff(diff)?;
+            let mut balance = storage::fetch_balance_or_default(storage, &address)?.apply_diff(diff)?;
 
             if let Some(diff) = metadata.balance_diffs.get(&address) {
                 balance = balance.apply_diff(diff)?;
@@ -167,28 +165,25 @@ async fn apply_regular_essence<B: StorageBackend>(
     Ok(ConflictReason::None)
 }
 
-async fn apply_transaction<B: StorageBackend>(
+fn apply_transaction<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
     transaction: &TransactionPayload,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<ConflictReason, Error> {
     match transaction.essence() {
-        Essence::Regular(essence) => {
-            apply_regular_essence(
-                storage,
-                message_id,
-                &transaction.id(),
-                essence,
-                transaction.unlock_blocks(),
-                metadata,
-            )
-            .await
-        }
+        Essence::Regular(essence) => apply_regular_essence(
+            storage,
+            message_id,
+            &transaction.id(),
+            essence,
+            transaction.unlock_blocks(),
+            metadata,
+        ),
     }
 }
 
-async fn apply_message<B: StorageBackend>(
+fn apply_message<B: StorageBackend>(
     storage: &B,
     message_id: &MessageId,
     message: &Message,
@@ -198,7 +193,7 @@ async fn apply_message<B: StorageBackend>(
 
     match message.payload() {
         Some(Payload::Transaction(transaction)) => {
-            match apply_transaction(storage, message_id, transaction, metadata).await? {
+            match apply_transaction(storage, message_id, transaction, metadata)? {
                 ConflictReason::None => metadata.included_messages.push(*message_id),
                 conflict => metadata.excluded_conflicting_messages.push((*message_id, conflict)),
             }
@@ -233,7 +228,7 @@ async fn traverse_past_cone<B: StorageBackend>(
             if let Some(unvisited) = message.parents().iter().find(|p| !visited.contains(p)) {
                 message_ids.push(*unvisited);
             } else {
-                apply_message(storage, message_id, &message, metadata).await?;
+                apply_message(storage, message_id, &message, metadata)?;
                 visited.insert(*message_id);
                 message_ids.pop();
             }

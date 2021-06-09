@@ -9,13 +9,12 @@ use crate::workers::{
 
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::{node::Node, worker::Worker};
-use bee_storage::{access::AsStream, backend::StorageBackend as _, system::StorageHealth};
+use bee_storage::{access::AsIterator, backend::StorageBackend as _, system::StorageHealth};
 use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 
 use chrono::{offset::TimeZone, Utc};
-use futures::stream::{StreamExt, TryStreamExt};
 use log::info;
 
 use std::{any::TypeId, collections::HashMap};
@@ -39,7 +38,7 @@ where
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
 
-        if let Some(info) = storage::fetch_snapshot_info(&*storage).await? {
+        if let Some(info) = storage::fetch_snapshot_info(&*storage)? {
             if info.network_id() != network_id {
                 return Err(Error::Snapshot(SnapshotError::NetworkIdMismatch(
                     info.network_id(),
@@ -57,21 +56,18 @@ where
         } else if let Err(e) = import_snapshots(&*storage, network_id, &snapshot_config).await {
             (*storage)
                 .set_health(StorageHealth::Corrupted)
-                .await
                 .map_err(|e| Error::Storage(Box::new(e)))?;
             return Err(e);
         }
 
-        let solid_entry_points = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(&*storage)
-            .await
+        let solid_entry_points = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter(&*storage)
             .map_err(|e| Error::Storage(Box::new(e)))?
             .map(|result| result.map_err(|e| Error::Storage(Box::new(e))))
-            .try_collect::<HashMap<SolidEntryPoint, MilestoneIndex>>()
-            .await?;
+            .collect::<Result<HashMap<SolidEntryPoint, MilestoneIndex>, _>>()?;
         // Unwrap is fine because ledger index was either just inserted or already present in storage.
-        let ledger_index = MilestoneIndex(*storage::fetch_ledger_index(&*storage).await?.unwrap());
+        let ledger_index = MilestoneIndex(*storage::fetch_ledger_index(&*storage)?.unwrap());
         // Unwrap is fine because snapshot info was either just inserted or already present in storage.
-        let snapshot_info = storage::fetch_snapshot_info(&*storage).await?.unwrap();
+        let snapshot_info = storage::fetch_snapshot_info(&*storage)?.unwrap();
 
         tangle.replace_solid_entry_points(solid_entry_points).await;
         tangle.update_snapshot_index(snapshot_info.snapshot_index());

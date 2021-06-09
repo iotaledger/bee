@@ -167,7 +167,7 @@ where
                 milestone.essence().index(),
                 milestone_id,
                 receipt,
-                storage::fetch_unspent_treasury_output(storage).await?,
+                storage::fetch_unspent_treasury_output(storage)?,
             )
             .await?,
         )
@@ -182,8 +182,7 @@ where
         &metadata.consumed_outputs,
         &metadata.balance_diffs,
         &migration,
-    )
-    .await?;
+    )?;
 
     *ledger_index = LedgerIndex(milestone.essence().index());
     tangle.update_confirmed_milestone_index(milestone.essence().index());
@@ -272,7 +271,7 @@ where
         let storage = node.storage();
         let bus = node.bus();
 
-        validate_ledger_state(&*storage).await?;
+        validate_ledger_state(&*storage)?;
 
         let depth = if snapshot_config.depth() < SOLID_ENTRY_POINT_THRESHOLD_FUTURE {
             warn!(
@@ -297,7 +296,7 @@ where
         };
 
         // Unwrap is fine because ledger index was already in storage or just added by the snapshot worker.
-        let mut ledger_index = storage::fetch_ledger_index(&*storage).await?.unwrap();
+        let mut ledger_index = storage::fetch_ledger_index(&*storage)?.unwrap();
         let mut receipt_migrated_at = MilestoneIndex(0);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
@@ -341,20 +340,19 @@ where
                         }
                     }
                     ConsensusWorkerCommand::FetchBalance(address, sender) => {
-                        if let Err(e) = sender.send((storage::fetch_balance(&*storage, &address).await, ledger_index)) {
+                        if let Err(e) = sender.send((storage::fetch_balance(&*storage, &address), ledger_index)) {
                             error!("Error while sending balance: {:?}", e);
                         }
                     }
                     ConsensusWorkerCommand::FetchOutput(output_id, sender) => {
-                        if let Err(e) = sender.send((storage::fetch_output(&*storage, &output_id).await, ledger_index))
-                        {
+                        if let Err(e) = sender.send((storage::fetch_output(&*storage, &output_id), ledger_index)) {
                             error!("Error while sending output: {:?}", e);
                         }
                     }
                     ConsensusWorkerCommand::FetchOutputs(address, sender) => match address {
                         Address::Ed25519(address) => {
                             if let Err(e) = sender.send((
-                                storage::fetch_outputs_for_ed25519_address(&*storage, &address).await,
+                                storage::fetch_outputs_for_ed25519_address(&*storage, &address),
                                 ledger_index,
                             )) {
                                 error!("Error while sending output: {:?}", e);

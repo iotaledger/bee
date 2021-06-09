@@ -160,20 +160,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-common"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e70a15b5cdc7f8fc726fb18c4c4cc8bb725e56f27706d9254fdc94363bc883d3"
-dependencies = [
- "autocfg",
- "chrono",
- "fern",
- "log",
- "serde",
- "thiserror",
-]
-
-[[package]]
 name = "bee-common-derive"
 version = "0.1.1-alpha"
 dependencies = [
@@ -198,10 +184,10 @@ name = "bee-ledger"
 version = "0.4.0"
 dependencies = [
  "async-trait",
- "bee-common 0.4.1",
+ "bee-common",
  "bee-message",
  "bee-runtime",
- "bee-storage 0.7.0",
+ "bee-storage",
  "bee-tangle",
  "bee-ternary",
  "chrono",
@@ -222,7 +208,7 @@ name = "bee-message"
 version = "0.1.5"
 dependencies = [
  "bech32",
- "bee-common 0.4.1",
+ "bee-common",
  "bee-pow",
  "bee-ternary",
  "bee-test",
@@ -294,7 +280,7 @@ name = "bee-runtime"
 version = "0.1.1-alpha"
 dependencies = [
  "async-trait",
- "bee-storage 0.8.0",
+ "bee-storage",
  "dashmap",
  "futures",
  "log",
@@ -316,22 +302,9 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0a10ecb3c3cf62b995dd20eb6cce263eda3e51c8a8e1ca00b9661dbab3c3592"
-dependencies = [
- "async-trait",
- "bee-common 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "futures",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "bee-storage"
 version = "0.8.0"
 dependencies = [
- "bee-common 0.4.1",
+ "bee-common",
  "serde",
  "thiserror",
 ]
@@ -340,10 +313,10 @@ dependencies = [
 name = "bee-storage-rocksdb"
 version = "0.4.0"
 dependencies = [
- "bee-common 0.4.1",
+ "bee-common",
  "bee-ledger",
  "bee-message",
- "bee-storage 0.8.0",
+ "bee-storage",
  "bee-storage-test",
  "bee-tangle",
  "bee-test",
@@ -357,10 +330,10 @@ dependencies = [
 name = "bee-storage-sled"
 version = "0.3.0"
 dependencies = [
- "bee-common 0.4.1",
+ "bee-common",
  "bee-ledger",
  "bee-message",
- "bee-storage 0.8.0",
+ "bee-storage",
  "bee-storage-test",
  "bee-tangle",
  "bee-test",
@@ -374,10 +347,10 @@ dependencies = [
 name = "bee-storage-test"
 version = "0.2.0"
 dependencies = [
- "bee-common 0.4.1",
+ "bee-common",
  "bee-ledger",
  "bee-message",
- "bee-storage 0.8.0",
+ "bee-storage",
  "bee-tangle",
  "bee-test",
 ]
@@ -387,10 +360,10 @@ name = "bee-tangle"
 version = "0.1.2"
 dependencies = [
  "async-trait",
- "bee-common 0.4.1",
+ "bee-common",
  "bee-message",
  "bee-runtime",
- "bee-storage 0.8.0",
+ "bee-storage",
  "bitflags",
  "dashmap",
  "futures",

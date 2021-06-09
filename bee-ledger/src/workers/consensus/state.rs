@@ -14,21 +14,15 @@ use bee_message::{
     constants::IOTA_SUPPLY,
     output::{self, dust_outputs_max},
 };
-use bee_storage::access::AsStream;
+use bee_storage::access::AsIterator;
 
-use futures::StreamExt;
-
-async fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
+fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
     let mut supply: u64 = 0;
-    let mut stream = AsStream::<Unspent, ()>::stream(storage)
-        .await
-        .map_err(|e| Error::Storage(Box::new(e)))?;
+    let mut iterator = AsIterator::<Unspent, ()>::iter(storage).map_err(|e| Error::Storage(Box::new(e)))?;
 
-    while let Some(result) = stream.next().await {
+    while let Some(result) = iterator.next() {
         let (output_id, _) = result.map_err(|e| Error::Storage(Box::new(e)))?;
-        let output = storage::fetch_output(storage, &*output_id)
-            .await?
-            .ok_or(Error::MissingUnspentOutput(output_id))?;
+        let output = storage::fetch_output(storage, &*output_id)?.ok_or(Error::MissingUnspentOutput(output_id))?;
 
         let amount = match output.inner() {
             output::Output::SignatureLockedSingle(output) => output.amount(),
@@ -52,13 +46,11 @@ async fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury:
     }
 }
 
-async fn validate_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
+fn validate_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
     let mut supply: u64 = 0;
-    let mut stream = AsStream::<Address, Balance>::stream(storage)
-        .await
-        .map_err(|e| Error::Storage(Box::new(e)))?;
+    let mut iterator = AsIterator::<Address, Balance>::iter(storage).map_err(|e| Error::Storage(Box::new(e)))?;
 
-    while let Some(result) = stream.next().await {
+    while let Some(result) = iterator.next() {
         let (address, balance) = result.map_err(|e| Error::Storage(Box::new(e)))?;
         if balance.dust_outputs() > dust_outputs_max(balance.dust_allowance()) {
             return Err(Error::InvalidLedgerDustState(address, balance));
@@ -79,9 +71,9 @@ async fn validate_ledger_balance_state<B: StorageBackend>(storage: &B, treasury:
     }
 }
 
-pub(crate) async fn validate_ledger_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
-    let treasury = storage::fetch_unspent_treasury_output(storage).await?.inner().amount();
+pub(crate) fn validate_ledger_state<B: StorageBackend>(storage: &B) -> Result<(), Error> {
+    let treasury = storage::fetch_unspent_treasury_output(storage)?.inner().amount();
 
-    validate_ledger_unspent_state(storage, treasury).await?;
-    validate_ledger_balance_state(storage, treasury).await
+    validate_ledger_unspent_state(storage, treasury)?;
+    validate_ledger_balance_state(storage, treasury)
 }
