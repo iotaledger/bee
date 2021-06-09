@@ -57,7 +57,7 @@ pub async fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) 
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert!(results[0].is_none());
+    assert!(matches!(results.get(0), Some(Ok(None))));
 
     Insert::<OutputId, CreatedOutput>::insert(storage, &output_id, &created_output)
         .await
@@ -79,7 +79,7 @@ pub async fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) 
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert_eq!(results[0].as_ref().unwrap(), &created_output);
+    assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &created_output));
 
     Delete::<OutputId, CreatedOutput>::delete(storage, &output_id)
         .await
@@ -100,7 +100,7 @@ pub async fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) 
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert!(results[0].is_none());
+    assert!(matches!(results.get(0), Some(Ok(None))));
 
     let mut batch = B::batch_begin();
     let mut output_ids = Vec::new();
@@ -142,8 +142,8 @@ pub async fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) 
 
     assert_eq!(results.len(), output_ids.len());
 
-    for ((_, created_output), result) in created_outputs.iter().zip(results.iter()) {
-        assert_eq!(created_output, result);
+    for ((_, created_output), result) in created_outputs.into_iter().zip(results.into_iter()) {
+        assert_eq!(created_output, result.unwrap());
     }
 
     Truncate::<OutputId, CreatedOutput>::truncate(storage).await.unwrap();

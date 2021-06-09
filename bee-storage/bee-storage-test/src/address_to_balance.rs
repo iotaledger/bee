@@ -54,7 +54,7 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert!(results[0].is_none());
+    assert!(matches!(results.get(0), Some(Ok(None))));
 
     Insert::<Address, Balance>::insert(storage, &address, &balance)
         .await
@@ -73,7 +73,7 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert_eq!(results[0].as_ref().unwrap(), &balance);
+    assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &balance));
 
     Delete::<Address, Balance>::delete(storage, &address).await.unwrap();
 
@@ -88,7 +88,7 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert!(results[0].is_none());
+    assert!(matches!(results.get(0), Some(Ok(None))));
 
     let mut batch = B::batch_begin();
     let mut addresses = Vec::new();
@@ -130,8 +130,8 @@ pub async fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(results.len(), addresses.len());
 
-    for ((_, balance), result) in balances.iter().zip(results.iter()) {
-        assert_eq!(balance, result);
+    for ((_, balance), result) in balances.into_iter().zip(results.into_iter()) {
+        assert_eq!(balance, result.unwrap());
     }
 
     Truncate::<Address, Balance>::truncate(storage).await.unwrap();

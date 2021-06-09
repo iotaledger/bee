@@ -8,5 +8,5 @@ use crate::backend::StorageBackend;
 #[async_trait::async_trait]
 pub trait MultiFetch<K, V>: StorageBackend {
     /// Fetches the values associated with the keys from the storage.
-    async fn multi_fetch(&self, keys: &[K]) -> Result<Vec<Option<V>>, Self::Error>;
+    async fn multi_fetch(&self, keys: &[K]) -> Result<Vec<Result<Option<V>, Self::Error>>, Self::Error>;
 }

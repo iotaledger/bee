@@ -18,19 +18,18 @@ use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 
 #[async_trait::async_trait]
 impl MultiFetch<u8, System> for Storage {
-    async fn multi_fetch(&self, keys: &[u8]) -> Result<Vec<Option<System>>, <Self as StorageBackend>::Error> {
-        let mut items = Vec::with_capacity(keys.len());
-
-        for key in keys {
-            let value = self
-                .inner
-                .get(key.pack_new())?
-                .map(|v| <System>::unpack_unchecked(&mut v.as_ref()).unwrap());
-
-            items.push(value);
-        }
-
-        Ok(items)
+    async fn multi_fetch(
+        &self,
+        keys: &[u8],
+    ) -> Result<Vec<Result<Option<System>, <Self as StorageBackend>::Error>>, <Self as StorageBackend>::Error> {
+        Ok(keys
+            .iter()
+            .map(|k| self.inner.get(k.pack_new()))
+            .map(|r| {
+                r.map(|o| o.map(|v| System::unpack_unchecked(&mut v.as_ref()).unwrap()))
+                    .map_err(|e| e.into())
+            })
+            .collect())
     }
 }
 
@@ -38,19 +37,21 @@ macro_rules! impl_multi_fetch {
     ($key:ty, $value:ty, $cf:expr) => {
         #[async_trait::async_trait]
         impl MultiFetch<$key, $value> for Storage {
-            async fn multi_fetch(&self, keys: &[$key]) -> Result<Vec<Option<$value>>, <Self as StorageBackend>::Error> {
+            async fn multi_fetch(
+                &self,
+                keys: &[$key],
+            ) -> Result<Vec<Result<Option<$value>, <Self as StorageBackend>::Error>>, <Self as StorageBackend>::Error>
+            {
                 let tree = self.inner.open_tree($cf)?;
-                let mut items = Vec::with_capacity(keys.len());
 
-                for key in keys {
-                    let value = tree
-                        .get(key.pack_new())?
-                        .map(|v| <$value>::unpack_unchecked(&mut v.as_ref()).unwrap());
-
-                    items.push(value);
-                }
-
-                Ok(items)
+                Ok(keys
+                    .iter()
+                    .map(|k| tree.get(k.pack_new()))
+                    .map(|r| {
+                        r.map(|o| o.map(|v| <$value>::unpack_unchecked(&mut v.as_ref()).unwrap()))
+                            .map_err(|e| e.into())
+                    })
+                    .collect())
             }
         }
     };

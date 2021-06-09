@@ -56,7 +56,7 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert!(results[0].is_none());
+    assert!(matches!(results.get(0), Some(Ok(None))));
 
     Insert::<MilestoneIndex, Milestone>::insert(storage, &index, &milestone)
         .await
@@ -78,7 +78,7 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert_eq!(results[0].as_ref().unwrap(), &milestone);
+    assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &milestone));
 
     Delete::<MilestoneIndex, Milestone>::delete(storage, &index)
         .await
@@ -99,7 +99,7 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
         .await
         .unwrap();
     assert_eq!(results.len(), 1);
-    assert!(results[0].is_none());
+    assert!(matches!(results.get(0), Some(Ok(None))));
 
     let mut batch = B::batch_begin();
     let mut indexes = Vec::new();
@@ -141,8 +141,8 @@ pub async fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B)
 
     assert_eq!(results.len(), indexes.len());
 
-    for ((_, milestone), result) in milestones.iter().zip(results.iter()) {
-        assert_eq!(milestone, result);
+    for ((_, milestone), result) in milestones.into_iter().zip(results.into_iter()) {
+        assert_eq!(milestone, result.unwrap());
     }
 
     Truncate::<MilestoneIndex, Milestone>::truncate(storage).await.unwrap();

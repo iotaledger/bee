@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.3.0 - 2021-06-08
+
+### Changed
+
+- `MultiFetch::multi_fetch`;
+  - from `async fn multi_fetch(&self, keys: &[K]) -> Result<Vec<Option<V>>, Self::Error>;`;
+  - to `async fn multi_fetch(&self, keys: &[K]) -> Result<Vec<Result<Option<V>, Self::Error>>, Self::Error>;`;
+
 ## 0.2.0 - 2021-05-27
 
 ### Added
