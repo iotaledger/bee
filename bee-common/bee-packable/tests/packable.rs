@@ -3,7 +3,7 @@
 
 extern crate alloc;
 
-use bee_packable::{packer::VecPacker, Packable, VecPrefix};
+use bee_packable::{Packable, SliceUnpacker, VecPrefix, packer::VecPacker};
 
 use alloc::vec::Vec;
 use core::{fmt::Debug, mem::size_of};
@@ -87,8 +87,77 @@ fn packable_array() {
     assert_eq!(pack_checked([42u8; 1024]).len(), 1024 * size_of::<u8>());
 }
 
+fn pack_new_checked<P>(value: P) -> Vec<u8>
+where
+    P: Packable + Eq + Debug,
+    P::Error: Debug,
+{
+    let bytes = value.pack_new();
+    
+    let mut unpacker = SliceUnpacker::new(&bytes.as_slice());
+    let result: P = Packable::unpack(&mut unpacker).unwrap();
+
+    assert_eq!(value.packed_len(), bytes.len());
+    assert_eq!(value, result);
+
+    bytes
+}
+
+macro_rules! impl_pack_new_test_for_num {
+    ($name:ident, $ty:ident, $value:expr) => {
+        #[test]
+        fn $name() {
+            let value: $ty = $value;
+            let bytes = pack_new_checked(value);
+            assert_eq!(bytes.len(), size_of::<$ty>());
+        }
+    };
+}
+
+impl_pack_new_test_for_num!(pack_new_i8, i8, 0x6F);
+impl_pack_new_test_for_num!(pack_new_u8, u8, 0x6F);
+impl_pack_new_test_for_num!(pack_new_i16, i16, 0x6F7B);
+impl_pack_new_test_for_num!(pack_new_u16, u16, 0x6F7B);
+impl_pack_new_test_for_num!(pack_new_i32, i32, 0x6F7BD423);
+impl_pack_new_test_for_num!(pack_new_u32, u32, 0x6F7BD423);
+impl_pack_new_test_for_num!(pack_new_i64, i64, 0x6F7BD423100423DB);
+impl_pack_new_test_for_num!(pack_new_u64, u64, 0x6F7BD423100423DB);
+#[cfg(has_i128)]
+impl_pack_new_test_for_num!(pack_new_i128, i128, 0x6F7BD423100423DBFF127B91CA0AB123);
+#[cfg(has_u128)]
+impl_pack_new_test_for_num!(pack_new_u128, u128, 0x6F7BD423100423DBFF127B91CA0AB123);
+
+#[test]
+fn pack_new_bool() {
+    assert_eq!(pack_new_checked(false).len(), size_of::<u8>());
+    assert_eq!(pack_new_checked(true).len(), size_of::<u8>());
+}
+
+#[test]
+fn pack_new_option() {
+    assert_eq!(pack_new_checked(Option::<u64>::None).len(), size_of::<u8>());
+    assert_eq!(
+        pack_new_checked(Option::<u64>::Some(42)).len(),
+        size_of::<u8>() + size_of::<u64>()
+    );
+}
+
+#[test]
+fn pack_new_vector() {
+    assert_eq!(pack_new_checked(Vec::<u32>::new()).len(), size_of::<u64>());
+    assert_eq!(
+        pack_new_checked(vec![Some(0u32), None]).len(),
+        size_of::<u64>() + (size_of::<u8>() + size_of::<u32>()) + size_of::<u8>()
+    );
+}
+
+#[test]
+fn pack_new_array() {
+    assert_eq!(pack_new_checked([42u8; 1024]).len(), 1024 * size_of::<u8>());
+}
+
 macro_rules! packable_vec_prefix {
-    ($ty:ty,$name:ident) => {
+    ($name:ident, $ty:ty) => {
         #[test]
         fn $name() {
             assert_eq!(pack_checked(VecPrefix::<u32, $ty>::new()).len(), size_of::<$ty>());
@@ -100,9 +169,29 @@ macro_rules! packable_vec_prefix {
     };
 }
 
-packable_vec_prefix!(u8, packable_vec_prefix_u8);
-packable_vec_prefix!(u16, packable_vec_prefix_u16);
-packable_vec_prefix!(u32, packable_vec_prefix_u32);
-packable_vec_prefix!(u64, packable_vec_prefix_u64);
+packable_vec_prefix!(packable_vec_prefix_u8, u8);
+packable_vec_prefix!(packable_vec_prefix_u16, u16);
+packable_vec_prefix!(packable_vec_prefix_u32, u32);
+packable_vec_prefix!(packable_vec_prefix_u64, u64);
 #[cfg(has_u128)]
-packable_vec_prefix!(u128, packable_vec_prefix_u128);
+packable_vec_prefix!(packable_vec_prefix_u128, u128);
+
+macro_rules! pack_new_vec_prefix {
+    ($name:ident, $ty:ty) => {
+        #[test]
+        fn $name() {
+            assert_eq!(pack_new_checked(VecPrefix::<u32, $ty>::new()).len(), size_of::<$ty>());
+            assert_eq!(
+                pack_new_checked(VecPrefix::<Option<u32>, $ty>::from(vec![Some(0u32), None])).len(),
+                size_of::<$ty>() + (size_of::<u8>() + size_of::<u32>()) + size_of::<u8>()
+            );
+        }
+    };
+}
+
+pack_new_vec_prefix!(pack_new_vec_prefix_u8, u8);
+pack_new_vec_prefix!(pack_new_vec_prefix_u16, u16);
+pack_new_vec_prefix!(pack_new_vec_prefix_u32, u32);
+pack_new_vec_prefix!(pack_new_vec_prefix_u64, u64);
+#[cfg(has_u128)]
+pack_new_vec_prefix!(pack_new_vec_prefix_u128, u128);
