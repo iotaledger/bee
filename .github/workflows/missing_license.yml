@@ -6,6 +6,11 @@ on:
       - dev
       - stable
       - coordicide
+  pull_request:
+    branches:
+      - dev
+      - stable
+      - coordicide
 
 jobs:
   missing_license:
