@@ -48,7 +48,7 @@ pub trait Packable: Sized {
         // Packing to bytes will not fail.
         self.pack(&mut packer).unwrap();
 
-        packer.clone()
+        packer.into_vec()
     }
 
     /// The size of the value in bytes after being packed.
