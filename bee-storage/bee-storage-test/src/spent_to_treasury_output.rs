@@ -3,7 +3,7 @@
 
 use bee_ledger::types::TreasuryOutput;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
 use bee_test::rand::{bool::rand_bool, output::rand_ledger_treasury_output};
@@ -18,7 +18,7 @@ pub trait StorageBackend:
     + Delete<(bool, TreasuryOutput), ()>
     + BatchBuilder
     + Batch<(bool, TreasuryOutput), ()>
-    + for<'a> AsStream<'a, (bool, TreasuryOutput), ()>
+    + for<'a> AsIterator<'a, (bool, TreasuryOutput), ()>
     + Truncate<(bool, TreasuryOutput), ()>
 {
 }
@@ -31,7 +31,7 @@ impl<T> StorageBackend for T where
         + Delete<(bool, TreasuryOutput), ()>
         + BatchBuilder
         + Batch<(bool, TreasuryOutput), ()>
-        + for<'a> AsStream<'a, (bool, TreasuryOutput), ()>
+        + for<'a> AsIterator<'a, (bool, TreasuryOutput), ()>
         + Truncate<(bool, TreasuryOutput), ()>
 {
 }
@@ -59,7 +59,7 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     Delete::<(bool, TreasuryOutput), ()>::delete(storage, &(spent, treasury_output.clone())).unwrap();
 
-    assert!(!Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output.clone())).unwrap());
+    assert!(!Exist::<(bool, TreasuryOutput), ()>::exist(storage, &(spent, treasury_output)).unwrap());
     assert!(
         Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &spent)
             .unwrap()
@@ -95,20 +95,20 @@ pub fn spent_to_treasury_output_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    // let mut stream = AsStream::<(bool, TreasuryOutput), ()>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let ((spent, treasury_output), _) = result.unwrap();
-    //     assert!(treasury_outputs.get(&spent).unwrap().contains(&treasury_output));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, treasury_outputs.iter().fold(0, |acc, v| acc + v.1.len()));
+    let iter = AsIterator::<(bool, TreasuryOutput), ()>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let ((spent, treasury_output), _) = result.unwrap();
+        assert!(treasury_outputs.get(&spent).unwrap().contains(&treasury_output));
+        count += 1;
+    }
+
+    assert_eq!(count, treasury_outputs.iter().fold(0, |acc, v| acc + v.1.len()));
 
     Truncate::<(bool, TreasuryOutput), ()>::truncate(storage).unwrap();
 
-    // let mut stream = AsStream::<(bool, TreasuryOutput), ()>::stream(storage).unwrap();
-    //
-    // assert!(stream.next().is_none());
+    let mut iter = AsIterator::<(bool, TreasuryOutput), ()>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

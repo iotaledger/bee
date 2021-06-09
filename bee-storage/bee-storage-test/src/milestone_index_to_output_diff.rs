@@ -5,7 +5,7 @@ use bee_common::packable::Packable;
 use bee_ledger::types::OutputDiff;
 use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::{milestone::rand_milestone_index, output_diff::rand_output_diff};
@@ -19,7 +19,7 @@ pub trait StorageBackend:
     + Delete<MilestoneIndex, OutputDiff>
     + BatchBuilder
     + Batch<MilestoneIndex, OutputDiff>
-    + for<'a> AsStream<'a, MilestoneIndex, OutputDiff>
+    + for<'a> AsIterator<'a, MilestoneIndex, OutputDiff>
     + Truncate<MilestoneIndex, OutputDiff>
 {
 }
@@ -33,7 +33,7 @@ impl<T> StorageBackend for T where
         + Delete<MilestoneIndex, OutputDiff>
         + BatchBuilder
         + Batch<MilestoneIndex, OutputDiff>
-        + for<'a> AsStream<'a, MilestoneIndex, OutputDiff>
+        + for<'a> AsIterator<'a, MilestoneIndex, OutputDiff>
         + Truncate<MilestoneIndex, OutputDiff>
 {
 }
@@ -98,16 +98,16 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    // let mut stream = AsStream::<MilestoneIndex, OutputDiff>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let (index, output_diff) = result.unwrap();
-    //     assert!(output_diffs.contains(&(index, Some(output_diff))));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, 10);
+    let iter = AsIterator::<MilestoneIndex, OutputDiff>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let (index, output_diff) = result.unwrap();
+        assert!(output_diffs.contains(&(index, Some(output_diff))));
+        count += 1;
+    }
+
+    assert_eq!(count, 10);
 
     let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &indexes).unwrap();
 
@@ -119,7 +119,7 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<MilestoneIndex, OutputDiff>::truncate(storage).unwrap();
 
-    // let mut stream = AsStream::<MilestoneIndex, OutputDiff>::stream(storage).unwrap();
-    //
-    // assert!(stream.next().is_none());
+    let mut iter = AsIterator::<MilestoneIndex, OutputDiff>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

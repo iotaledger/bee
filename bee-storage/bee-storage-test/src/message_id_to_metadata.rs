@@ -3,7 +3,7 @@
 
 use bee_message::MessageId;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_tangle::metadata::MessageMetadata;
@@ -18,7 +18,7 @@ pub trait StorageBackend:
     + Delete<MessageId, MessageMetadata>
     + BatchBuilder
     + Batch<MessageId, MessageMetadata>
-    + for<'a> AsStream<'a, MessageId, MessageMetadata>
+    + for<'a> AsIterator<'a, MessageId, MessageMetadata>
     + Truncate<MessageId, MessageMetadata>
 {
 }
@@ -32,7 +32,7 @@ impl<T> StorageBackend for T where
         + Delete<MessageId, MessageMetadata>
         + BatchBuilder
         + Batch<MessageId, MessageMetadata>
-        + for<'a> AsStream<'a, MessageId, MessageMetadata>
+        + for<'a> AsIterator<'a, MessageId, MessageMetadata>
         + Truncate<MessageId, MessageMetadata>
 {
 }
@@ -96,16 +96,16 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    // let mut stream = AsStream::<MessageId, MessageMetadata>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let (message_id, metadata) = result.unwrap();
-    //     assert!(metadatas.contains(&(message_id, Some(metadata))));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, 10);
+    let iter = AsIterator::<MessageId, MessageMetadata>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let (message_id, metadata) = result.unwrap();
+        assert!(metadatas.contains(&(message_id, Some(metadata))));
+        count += 1;
+    }
+
+    assert_eq!(count, 10);
 
     let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &message_ids).unwrap();
 
@@ -117,7 +117,7 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<MessageId, MessageMetadata>::truncate(storage).unwrap();
 
-    // let mut stream = AsStream::<MessageId, MessageMetadata>::stream(storage).unwrap();
-    //
-    // assert!(stream.next().is_none());
+    let mut iter = AsIterator::<MessageId, MessageMetadata>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

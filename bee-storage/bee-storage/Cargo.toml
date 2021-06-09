@@ -13,6 +13,5 @@ homepage = "https://www.iota.org"
 [dependencies]
 bee-common = { version = "0.4.1", path = "../../bee-common/bee-common" }
 
-futures = "0.3"
 serde = { version = "1.0", features = [ "derive" ] }
 thiserror = { version = "1.0" }

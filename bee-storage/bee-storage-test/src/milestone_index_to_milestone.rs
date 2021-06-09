@@ -3,7 +3,7 @@
 
 use bee_message::milestone::{Milestone, MilestoneIndex};
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::milestone::{rand_milestone, rand_milestone_index};
@@ -17,7 +17,7 @@ pub trait StorageBackend:
     + Delete<MilestoneIndex, Milestone>
     + BatchBuilder
     + Batch<MilestoneIndex, Milestone>
-    + for<'a> AsStream<'a, MilestoneIndex, Milestone>
+    + for<'a> AsIterator<'a, MilestoneIndex, Milestone>
     + Truncate<MilestoneIndex, Milestone>
 {
 }
@@ -31,7 +31,7 @@ impl<T> StorageBackend for T where
         + Delete<MilestoneIndex, Milestone>
         + BatchBuilder
         + Batch<MilestoneIndex, Milestone>
-        + for<'a> AsStream<'a, MilestoneIndex, Milestone>
+        + for<'a> AsIterator<'a, MilestoneIndex, Milestone>
         + Truncate<MilestoneIndex, Milestone>
 {
 }
@@ -95,16 +95,16 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    // let mut stream = AsStream::<MilestoneIndex, Milestone>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let (index, milestone) = result.unwrap();
-    //     assert!(milestones.contains(&(index, Some(milestone))));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, 10);
+    let iter = AsIterator::<MilestoneIndex, Milestone>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let (index, milestone) = result.unwrap();
+        assert!(milestones.contains(&(index, Some(milestone))));
+        count += 1;
+    }
+
+    assert_eq!(count, 10);
 
     let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &indexes).unwrap();
 
@@ -116,7 +116,7 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<MilestoneIndex, Milestone>::truncate(storage).unwrap();
 
-    // let mut stream = AsStream::<MilestoneIndex, Milestone>::stream(storage).unwrap();
-    //
-    // assert!(stream.next().is_none());
+    let mut iter = AsIterator::<MilestoneIndex, Milestone>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

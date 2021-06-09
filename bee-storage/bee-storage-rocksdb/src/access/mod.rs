@@ -6,6 +6,6 @@ pub mod delete;
 pub mod exist;
 pub mod fetch;
 pub mod insert;
+pub mod iter;
 pub mod multi_fetch;
-pub mod stream;
 pub mod truncate;

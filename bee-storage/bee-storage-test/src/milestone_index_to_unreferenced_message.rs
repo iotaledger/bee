@@ -3,7 +3,7 @@
 
 use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
 use bee_tangle::unreferenced_message::UnreferencedMessage;
@@ -19,7 +19,7 @@ pub trait StorageBackend:
     + Delete<(MilestoneIndex, UnreferencedMessage), ()>
     + BatchBuilder
     + Batch<(MilestoneIndex, UnreferencedMessage), ()>
-    + for<'a> AsStream<'a, (MilestoneIndex, UnreferencedMessage), ()>
+    + for<'a> AsIterator<'a, (MilestoneIndex, UnreferencedMessage), ()>
     + Truncate<(MilestoneIndex, UnreferencedMessage), ()>
 {
 }
@@ -32,7 +32,7 @@ impl<T> StorageBackend for T where
         + Delete<(MilestoneIndex, UnreferencedMessage), ()>
         + BatchBuilder
         + Batch<(MilestoneIndex, UnreferencedMessage), ()>
-        + for<'a> AsStream<'a, (MilestoneIndex, UnreferencedMessage), ()>
+        + for<'a> AsIterator<'a, (MilestoneIndex, UnreferencedMessage), ()>
         + Truncate<(MilestoneIndex, UnreferencedMessage), ()>
 {
 }
@@ -110,20 +110,20 @@ pub fn milestone_index_to_unreferenced_message_access<B: StorageBackend>(storage
 
     storage.batch_commit(batch, true).unwrap();
 
-    // let mut stream = AsStream::<(MilestoneIndex, UnreferencedMessage), ()>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let ((index, message_id), _) = result.unwrap();
-    //     assert!(unreferenced_messages.get(&index).unwrap().contains(&message_id));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, unreferenced_messages.iter().fold(0, |acc, v| acc + v.1.len()));
+    let iter = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let ((index, message_id), _) = result.unwrap();
+        assert!(unreferenced_messages.get(&index).unwrap().contains(&message_id));
+        count += 1;
+    }
+
+    assert_eq!(count, unreferenced_messages.iter().fold(0, |acc, v| acc + v.1.len()));
 
     Truncate::<(MilestoneIndex, UnreferencedMessage), ()>::truncate(storage).unwrap();
 
-    // let mut stream = AsStream::<(MilestoneIndex, UnreferencedMessage), ()>::stream(storage).unwrap();
-    //
-    // assert!(stream.next().is_none());
+    let mut iter = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

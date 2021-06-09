@@ -3,7 +3,7 @@
 
 use bee_ledger::types::snapshot::SnapshotInfo;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
 use bee_test::rand::snapshot::rand_snapshot_info;
@@ -16,7 +16,7 @@ pub trait StorageBackend:
     + Delete<(), SnapshotInfo>
     + BatchBuilder
     + Batch<(), SnapshotInfo>
-    + for<'a> AsStream<'a, (), SnapshotInfo>
+    + for<'a> AsIterator<'a, (), SnapshotInfo>
     + Truncate<(), SnapshotInfo>
 {
 }
@@ -29,7 +29,7 @@ impl<T> StorageBackend for T where
         + Delete<(), SnapshotInfo>
         + BatchBuilder
         + Batch<(), SnapshotInfo>
-        + for<'a> AsStream<'a, (), SnapshotInfo>
+        + for<'a> AsIterator<'a, (), SnapshotInfo>
         + Truncate<(), SnapshotInfo>
 {
 }
@@ -76,18 +76,22 @@ pub fn snapshot_info_access<B: StorageBackend>(storage: &B) {
 
     Insert::<(), SnapshotInfo>::insert(storage, &(), &snapshot_info).unwrap();
 
-    // let mut stream = AsStream::<(), SnapshotInfo>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let (_, info) = result.unwrap();
-    //     assert_eq!(snapshot_info, info);
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, 1);
+    let iter = AsIterator::<(), SnapshotInfo>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let (_, info) = result.unwrap();
+        assert_eq!(snapshot_info, info);
+        count += 1;
+    }
+
+    assert_eq!(count, 1);
 
     Truncate::<(), SnapshotInfo>::truncate(storage).unwrap();
 
     assert!(!Exist::<(), SnapshotInfo>::exist(storage, &()).unwrap());
+
+    let mut iter = AsIterator::<(), SnapshotInfo>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

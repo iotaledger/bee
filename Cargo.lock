@@ -319,7 +319,6 @@ name = "bee-storage"
 version = "0.7.0"
 dependencies = [
  "bee-common 0.4.1",
- "futures",
  "serde",
  "thiserror",
 ]
@@ -348,9 +347,7 @@ dependencies = [
  "bee-storage-test",
  "bee-tangle",
  "bee-test",
- "futures",
  "num_cpus",
- "pin-project 1.0.7",
  "rocksdb",
  "serde",
  "thiserror",
@@ -367,9 +364,7 @@ dependencies = [
  "bee-storage-test",
  "bee-tangle",
  "bee-test",
- "futures",
  "num_cpus",
- "pin-project 1.0.7",
  "serde",
  "sled",
  "thiserror",
@@ -385,7 +380,6 @@ dependencies = [
  "bee-storage 0.7.0",
  "bee-tangle",
  "bee-test",
- "futures",
 ]
 
 [[package]]
@@ -1523,9 +1517,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.95"
+version = "0.2.96"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "789da6d93f1b866ffe175afc5322a4d76c038605a1c3319bb57b06967ca98a36"
+checksum = "5600b4e6efc5421841a2138a6b082e07fe12f9aaa12783d50e5d13325b26b4fc"
 
 [[package]]
 name = "libloading"

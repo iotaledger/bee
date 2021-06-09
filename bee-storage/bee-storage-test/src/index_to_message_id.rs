@@ -3,7 +3,7 @@
 
 use bee_message::{payload::indexation::PaddedIndex, MessageId};
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
 use bee_test::rand::{message::rand_message_id, payload::rand_indexation_payload};
@@ -18,7 +18,7 @@ pub trait StorageBackend:
     + Delete<(PaddedIndex, MessageId), ()>
     + BatchBuilder
     + Batch<(PaddedIndex, MessageId), ()>
-    + for<'a> AsStream<'a, (PaddedIndex, MessageId), ()>
+    + for<'a> AsIterator<'a, (PaddedIndex, MessageId), ()>
     + Truncate<(PaddedIndex, MessageId), ()>
 {
 }
@@ -31,7 +31,7 @@ impl<T> StorageBackend for T where
         + Delete<(PaddedIndex, MessageId), ()>
         + BatchBuilder
         + Batch<(PaddedIndex, MessageId), ()>
-        + for<'a> AsStream<'a, (PaddedIndex, MessageId), ()>
+        + for<'a> AsIterator<'a, (PaddedIndex, MessageId), ()>
         + Truncate<(PaddedIndex, MessageId), ()>
 {
 }
@@ -89,20 +89,20 @@ pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    // let mut stream = AsStream::<(PaddedIndex, MessageId), ()>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let ((index, message_id), _) = result.unwrap();
-    //     assert!(message_ids.get(&index).unwrap().contains(&message_id));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, message_ids.iter().fold(0, |acc, v| acc + v.1.len()));
+    let iter = AsIterator::<(PaddedIndex, MessageId), ()>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let ((index, message_id), _) = result.unwrap();
+        assert!(message_ids.get(&index).unwrap().contains(&message_id));
+        count += 1;
+    }
+
+    assert_eq!(count, message_ids.iter().fold(0, |acc, v| acc + v.1.len()));
 
     Truncate::<(PaddedIndex, MessageId), ()>::truncate(storage).unwrap();
 
-    // let mut stream = AsStream::<(PaddedIndex, MessageId), ()>::stream(storage).unwrap();
-    //
-    // assert!(stream.next().is_none());
+    let mut iter = AsIterator::<(PaddedIndex, MessageId), ()>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

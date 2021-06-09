@@ -5,7 +5,7 @@ use bee_common::packable::Packable;
 use bee_ledger::types::Balance;
 use bee_message::address::Address;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::{address::rand_address, balance::rand_balance};
@@ -19,7 +19,7 @@ pub trait StorageBackend:
     + Delete<Address, Balance>
     + BatchBuilder
     + Batch<Address, Balance>
-    + for<'a> AsStream<'a, Address, Balance>
+    + for<'a> AsIterator<'a, Address, Balance>
     + Truncate<Address, Balance>
 {
 }
@@ -33,7 +33,7 @@ impl<T> StorageBackend for T where
         + Delete<Address, Balance>
         + BatchBuilder
         + Batch<Address, Balance>
-        + for<'a> AsStream<'a, Address, Balance>
+        + for<'a> AsIterator<'a, Address, Balance>
         + Truncate<Address, Balance>
 {
 }
@@ -90,16 +90,16 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    // let mut stream = AsStream::<Address, Balance>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let (address, balance) = result.unwrap();
-    //     assert!(balances.contains(&(address, Some(balance))));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, 10);
+    let iter = AsIterator::<Address, Balance>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let (address, balance) = result.unwrap();
+        assert!(balances.contains(&(address, Some(balance))));
+        count += 1;
+    }
+
+    assert_eq!(count, 10);
 
     let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &addresses).unwrap();
 
@@ -111,7 +111,7 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<Address, Balance>::truncate(storage).unwrap();
 
-    // let mut stream = AsStream::<Address, Balance>::stream(storage).unwrap();
-    //
-    // assert!(stream.next().is_none());
+    let mut iter = AsIterator::<Address, Balance>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

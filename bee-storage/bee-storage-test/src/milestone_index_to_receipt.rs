@@ -4,7 +4,7 @@
 use bee_ledger::types::Receipt;
 use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
 use bee_test::rand::{milestone::rand_milestone_index, receipt::rand_ledger_receipt};
@@ -19,7 +19,7 @@ pub trait StorageBackend:
     + Delete<(MilestoneIndex, Receipt), ()>
     + BatchBuilder
     + Batch<(MilestoneIndex, Receipt), ()>
-    + for<'a> AsStream<'a, (MilestoneIndex, Receipt), ()>
+    + for<'a> AsIterator<'a, (MilestoneIndex, Receipt), ()>
     + Truncate<(MilestoneIndex, Receipt), ()>
 {
 }
@@ -32,7 +32,7 @@ impl<T> StorageBackend for T where
         + Delete<(MilestoneIndex, Receipt), ()>
         + BatchBuilder
         + Batch<(MilestoneIndex, Receipt), ()>
-        + for<'a> AsStream<'a, (MilestoneIndex, Receipt), ()>
+        + for<'a> AsIterator<'a, (MilestoneIndex, Receipt), ()>
         + Truncate<(MilestoneIndex, Receipt), ()>
 {
 }
@@ -60,7 +60,7 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     Delete::<(MilestoneIndex, Receipt), ()>::delete(storage, &(index, receipt.clone())).unwrap();
 
-    assert!(!Exist::<(MilestoneIndex, Receipt), ()>::exist(storage, &(index, receipt.clone())).unwrap());
+    assert!(!Exist::<(MilestoneIndex, Receipt), ()>::exist(storage, &(index, receipt)).unwrap());
     assert!(
         Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
             .unwrap()
@@ -90,20 +90,20 @@ pub fn milestone_index_to_receipt_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    // let mut stream = AsStream::<(MilestoneIndex, Receipt), ()>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let ((index, message_id), _) = result.unwrap();
-    //     assert!(receipts.get(&index).unwrap().contains(&message_id));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, receipts.iter().fold(0, |acc, v| acc + v.1.len()));
+    let iter = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let ((index, message_id), _) = result.unwrap();
+        assert!(receipts.get(&index).unwrap().contains(&message_id));
+        count += 1;
+    }
+
+    assert_eq!(count, receipts.iter().fold(0, |acc, v| acc + v.1.len()));
 
     Truncate::<(MilestoneIndex, Receipt), ()>::truncate(storage).unwrap();
 
-    // let mut stream = AsStream::<(MilestoneIndex, Receipt), ()>::stream(storage).unwrap();
-    //
-    // assert!(stream.next().is_none());
+    let mut iter = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

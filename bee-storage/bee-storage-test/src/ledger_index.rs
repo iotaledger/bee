@@ -4,7 +4,7 @@
 use bee_ledger::types::LedgerIndex;
 use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
 
@@ -16,7 +16,7 @@ pub trait StorageBackend:
     + Delete<(), LedgerIndex>
     + BatchBuilder
     + Batch<(), LedgerIndex>
-    + for<'a> AsStream<'a, (), LedgerIndex>
+    + for<'a> AsIterator<'a, (), LedgerIndex>
     + Truncate<(), LedgerIndex>
 {
 }
@@ -29,7 +29,7 @@ impl<T> StorageBackend for T where
         + Delete<(), LedgerIndex>
         + BatchBuilder
         + Batch<(), LedgerIndex>
-        + for<'a> AsStream<'a, (), LedgerIndex>
+        + for<'a> AsIterator<'a, (), LedgerIndex>
         + Truncate<(), LedgerIndex>
 {
 }
@@ -70,18 +70,22 @@ pub fn ledger_index_access<B: StorageBackend>(storage: &B) {
 
     Insert::<(), LedgerIndex>::insert(storage, &(), &index).unwrap();
 
-    // let mut stream = AsStream::<(), LedgerIndex>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let (_, ledger_index) = result.unwrap();
-    //     assert_eq!(ledger_index, index);
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, 1);
+    let iter = AsIterator::<(), LedgerIndex>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let (_, ledger_index) = result.unwrap();
+        assert_eq!(ledger_index, index);
+        count += 1;
+    }
+
+    assert_eq!(count, 1);
 
     Truncate::<(), LedgerIndex>::truncate(storage).unwrap();
 
     assert!(!Exist::<(), LedgerIndex>::exist(storage, &()).unwrap());
+
+    let mut iter = AsIterator::<(), LedgerIndex>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

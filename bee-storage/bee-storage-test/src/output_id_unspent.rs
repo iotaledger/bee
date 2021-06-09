@@ -3,7 +3,7 @@
 
 use bee_ledger::types::Unspent;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Insert, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Insert, Truncate},
     backend,
 };
 use bee_test::rand::output::rand_unspent_output_id;
@@ -15,7 +15,7 @@ pub trait StorageBackend:
     + Delete<Unspent, ()>
     + BatchBuilder
     + Batch<Unspent, ()>
-    + for<'a> AsStream<'a, Unspent, ()>
+    + for<'a> AsIterator<'a, Unspent, ()>
     + Truncate<Unspent, ()>
 {
 }
@@ -27,7 +27,7 @@ impl<T> StorageBackend for T where
         + Delete<Unspent, ()>
         + BatchBuilder
         + Batch<Unspent, ()>
-        + for<'a> AsStream<'a, Unspent, ()>
+        + for<'a> AsIterator<'a, Unspent, ()>
         + Truncate<Unspent, ()>
 {
 }
@@ -63,20 +63,20 @@ pub fn output_id_unspent_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    // let mut stream = AsStream::<Unspent, ()>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let (unspent, ()) = result.unwrap();
-    //     assert!(unspents.contains(&unspent));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, unspents.len());
+    let iter = AsIterator::<Unspent, ()>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let (unspent, ()) = result.unwrap();
+        assert!(unspents.contains(&unspent));
+        count += 1;
+    }
+
+    assert_eq!(count, unspents.len());
 
     Truncate::<Unspent, ()>::truncate(storage).unwrap();
 
-    // let mut stream = AsStream::<Unspent, ()>::stream(storage).unwrap();
-    //
-    // assert!(stream.next().is_none());
+    let mut iter = AsIterator::<Unspent, ()>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

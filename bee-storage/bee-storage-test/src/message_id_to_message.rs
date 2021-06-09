@@ -3,7 +3,7 @@
 
 use bee_message::{Message, MessageId};
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::message::{rand_message, rand_message_id};
@@ -17,7 +17,7 @@ pub trait StorageBackend:
     + Delete<MessageId, Message>
     + BatchBuilder
     + Batch<MessageId, Message>
-    + for<'a> AsStream<'a, MessageId, Message>
+    + for<'a> AsIterator<'a, MessageId, Message>
     + Truncate<MessageId, Message>
 {
 }
@@ -31,7 +31,7 @@ impl<T> StorageBackend for T where
         + Delete<MessageId, Message>
         + BatchBuilder
         + Batch<MessageId, Message>
-        + for<'a> AsStream<'a, MessageId, Message>
+        + for<'a> AsIterator<'a, MessageId, Message>
         + Truncate<MessageId, Message>
 {
 }
@@ -95,16 +95,16 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    // let mut stream = AsStream::<MessageId, Message>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let (message_id, message) = result.unwrap();
-    //     assert!(messages.contains(&(message_id, Some(message))));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, 10);
+    let iter = AsIterator::<MessageId, Message>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let (message_id, message) = result.unwrap();
+        assert!(messages.contains(&(message_id, Some(message))));
+        count += 1;
+    }
+
+    assert_eq!(count, 10);
 
     let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &message_ids).unwrap();
 
@@ -116,7 +116,7 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<MessageId, Message>::truncate(storage).unwrap();
 
-    // let mut stream = AsStream::<MessageId, Message>::stream(storage).unwrap();
-    //
-    // assert!(stream.next().is_none());
+    let mut iter = AsIterator::<MessageId, Message>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

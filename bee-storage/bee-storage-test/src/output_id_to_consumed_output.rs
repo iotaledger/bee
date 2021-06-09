@@ -4,7 +4,7 @@
 use bee_ledger::types::ConsumedOutput;
 use bee_message::output::OutputId;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::output::{rand_consumed_output, rand_output_id};
@@ -18,7 +18,7 @@ pub trait StorageBackend:
     + Delete<OutputId, ConsumedOutput>
     + BatchBuilder
     + Batch<OutputId, ConsumedOutput>
-    + for<'a> AsStream<'a, OutputId, ConsumedOutput>
+    + for<'a> AsIterator<'a, OutputId, ConsumedOutput>
     + Truncate<OutputId, ConsumedOutput>
 {
 }
@@ -32,7 +32,7 @@ impl<T> StorageBackend for T where
         + Delete<OutputId, ConsumedOutput>
         + BatchBuilder
         + Batch<OutputId, ConsumedOutput>
-        + for<'a> AsStream<'a, OutputId, ConsumedOutput>
+        + for<'a> AsIterator<'a, OutputId, ConsumedOutput>
         + Truncate<OutputId, ConsumedOutput>
 {
 }
@@ -96,16 +96,16 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    // let mut stream = AsStream::<OutputId, ConsumedOutput>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let (output_id, consumed_output) = result.unwrap();
-    //     assert!(consumed_outputs.contains(&(output_id, Some(consumed_output))));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, 10);
+    let iter = AsIterator::<OutputId, ConsumedOutput>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let (output_id, consumed_output) = result.unwrap();
+        assert!(consumed_outputs.contains(&(output_id, Some(consumed_output))));
+        count += 1;
+    }
+
+    assert_eq!(count, 10);
 
     let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &output_ids).unwrap();
 
@@ -117,7 +117,7 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<OutputId, ConsumedOutput>::truncate(storage).unwrap();
 
-    // let mut stream = AsStream::<OutputId, ConsumedOutput>::stream(storage).unwrap();
-    //
-    // assert!(stream.next().is_none());
+    let mut iter = AsIterator::<OutputId, ConsumedOutput>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }

@@ -4,7 +4,7 @@
 use bee_ledger::types::CreatedOutput;
 use bee_message::output::OutputId;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::output::{rand_created_output, rand_output_id};
@@ -18,7 +18,7 @@ pub trait StorageBackend:
     + Delete<OutputId, CreatedOutput>
     + BatchBuilder
     + Batch<OutputId, CreatedOutput>
-    + for<'a> AsStream<'a, OutputId, CreatedOutput>
+    + for<'a> AsIterator<'a, OutputId, CreatedOutput>
     + Truncate<OutputId, CreatedOutput>
 {
 }
@@ -32,7 +32,7 @@ impl<T> StorageBackend for T where
         + Delete<OutputId, CreatedOutput>
         + BatchBuilder
         + Batch<OutputId, CreatedOutput>
-        + for<'a> AsStream<'a, OutputId, CreatedOutput>
+        + for<'a> AsIterator<'a, OutputId, CreatedOutput>
         + Truncate<OutputId, CreatedOutput>
 {
 }
@@ -96,16 +96,16 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
 
     storage.batch_commit(batch, true).unwrap();
 
-    // let mut stream = AsStream::<OutputId, CreatedOutput>::stream(storage).unwrap();
-    // let mut count = 0;
-    //
-    // while let Some(result) = stream.next() {
-    //     let (output_id, created_output) = result.unwrap();
-    //     assert!(created_outputs.contains(&(output_id, Some(created_output))));
-    //     count += 1;
-    // }
-    //
-    // assert_eq!(count, 10);
+    let iter = AsIterator::<OutputId, CreatedOutput>::iter(storage).unwrap();
+    let mut count = 0;
+
+    for result in iter {
+        let (output_id, created_output) = result.unwrap();
+        assert!(created_outputs.contains(&(output_id, Some(created_output))));
+        count += 1;
+    }
+
+    assert_eq!(count, 10);
 
     let results = MultiFetch::<OutputId, CreatedOutput>::multi_fetch(storage, &output_ids).unwrap();
 
@@ -117,7 +117,7 @@ pub fn output_id_to_created_output_access<B: StorageBackend>(storage: &B) {
 
     Truncate::<OutputId, CreatedOutput>::truncate(storage).unwrap();
 
-    // let mut stream = AsStream::<OutputId, CreatedOutput>::stream(storage).unwrap();
-    //
-    // assert!(stream.next().is_none());
+    let mut iter = AsIterator::<OutputId, CreatedOutput>::iter(storage).unwrap();
+
+    assert!(iter.next().is_none());
 }
