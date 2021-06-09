@@ -390,7 +390,7 @@ dependencies = [
  "bee-common 0.4.1",
  "bee-message",
  "bee-runtime",
- "bee-storage 0.7.0",
+ "bee-storage 0.8.0",
  "bitflags",
  "dashmap",
  "futures",

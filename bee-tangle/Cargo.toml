@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 bee-common = { version = "0.4.1", path = "../bee-common/bee-common" }
 bee-message = { version = "0.1.3", path = "../bee-message", features = [ "serde" ] }
 bee-runtime = { version = "0.1.1-alpha", path = "../bee-runtime" }
-bee-storage = { version = "0.7.0" }
+bee-storage = { version = "0.8.0", path = "../bee-storage/bee-storage" }
 
 async-trait = "0.1"
 bitflags = "1.2"
