@@ -6,7 +6,7 @@ extern crate alloc;
 use crate::{packer::Packer, unpacker::SliceUnpacker};
 
 use alloc::vec::Vec;
-use core::convert::Infallible;
+use core::{convert::Infallible, ops::Deref};
 
 /// A `Packer` backed by a `Vec<u8>`.
 #[derive(Default)]
@@ -16,6 +16,11 @@ impl VecPacker {
     /// Create a new, empty packer.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Create an empty packer with an initial capacity.
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self(Vec::with_capacity(capacity))
     }
 
     /// Use the backing `Vec<u8>` to create an `Unpacker`.
@@ -33,6 +38,14 @@ impl VecPacker {
         self.0.is_empty()
     }
 }
+
+impl Deref for VecPacker {
+    type Target = Vec<u8>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+} 
 
 impl Packer for VecPacker {
     type Error = Infallible;
