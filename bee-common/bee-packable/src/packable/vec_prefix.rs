@@ -4,14 +4,14 @@
 extern crate alloc;
 
 pub use crate::{
-    error::{PackError, UnknownTagError, UnpackError},
+    error::{PackError, PrefixError, UnknownTagError, UnpackError},
     packer::{Packer, VecPacker},
     unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker},
     Packable,
 };
 
 use alloc::vec::Vec;
-use core::marker::PhantomData;
+use core::{convert::TryFrom, marker::PhantomData};
 
 /// Wrapper type for `Vec<T>` where the length prefix is of type `P`.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -70,15 +70,18 @@ impl<T, P> core::ops::DerefMut for VecPrefix<T, P> {
 macro_rules! impl_packable_for_vec_prefix {
     ($ty:ty) => {
         impl<T: Packable> Packable for VecPrefix<T, $ty> {
-            type PackError = T::PackError;
-            type UnpackError = T::UnpackError;
+            type PackError = PrefixError<T::PackError, <$ty as TryFrom<usize>>::Error>;
+            type UnpackError = PrefixError<T::UnpackError, <usize as TryFrom<$ty>>::Error>;
 
             fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
                 // The length of any dynamically-sized sequence must be prefixed.
-                (self.len() as $ty).pack(packer).map_err(PackError::infallible)?;
+                <$ty>::try_from(self.len())
+                    .map_err(|err| PackError::Packable(PrefixError::Prefix(err)))?
+                    .pack(packer)
+                    .map_err(PackError::infallible)?;
 
                 for item in self.iter() {
-                    item.pack(packer)?;
+                    item.pack(packer).map_err(PackError::coerce)?;
                 }
 
                 Ok(())
@@ -92,10 +95,12 @@ macro_rules! impl_packable_for_vec_prefix {
                 // The length of any dynamically-sized sequence must be prefixed.
                 let len = <$ty>::unpack(unpacker).map_err(UnpackError::infallible)?;
 
-                let mut vec = Self::with_capacity(len as usize);
+                let mut vec = Self::with_capacity(
+                    usize::try_from(len).map_err(|err| UnpackError::Packable(PrefixError::Prefix(err)))?,
+                );
 
                 for _ in 0..len {
-                    let item = T::unpack(unpacker)?;
+                    let item = T::unpack(unpacker).map_err(UnpackError::coerce)?;
                     vec.push(item);
                 }
 

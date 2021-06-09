@@ -94,3 +94,21 @@ impl<T> From<Infallible> for UnknownTagError<T> {
         match err {}
     }
 }
+
+/// Semantic error type for dynamically-sized sequences that use a type different than `usize` for
+/// their length-prefix.
+#[derive(Debug)]
+pub enum PrefixError<T, P> {
+    /// Semantic error for an element of the sequence. Typically this is `Packable::PackError` or
+    /// `Packable::UnpackError`.
+    Packable(T),
+    /// Semantic error for the prefix of the sequence. Typically this is `TryFrom::<usize>::Error`
+    /// or `TryInto::<usize>::Error`.
+    Prefix(P),
+}
+
+impl<T, P> From<T> for PrefixError<T, P> {
+    fn from(err: T) -> Self {
+        Self::Packable(err)
+    }
+}
