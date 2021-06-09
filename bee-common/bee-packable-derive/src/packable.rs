@@ -44,7 +44,9 @@ impl Fragments {
         // The value of each field of the record.
         let mut values = Vec::with_capacity(len);
 
-        for (index, Field { ident, ty, .. }) in fields.iter().enumerate() {
+        let mut wrappers = Vec::with_capacity(len);
+
+        for (index, Field { ident, ty, attrs, .. }) in fields.iter().enumerate() {
             if NAMED {
                 // This is a named field, which means its `ident` cannot be `None`.
                 labels.push(ident.as_ref().unwrap().to_token_stream());
@@ -54,6 +56,13 @@ impl Fragments {
                 // homogeneously.
                 labels.push(proc_macro2::Literal::u64_unsuffixed(index as u64).to_token_stream());
             }
+
+            match parse_attr::<Type>("wrapper", &attrs) {
+                Some(Ok(ty)) => wrappers.push(ty),
+                Some(Err(span)) => abort!(span, "The `wrapper` attribute requires a type for its value."),
+                None => wrappers.push(ty.clone()),
+            };
+
             types.push(ty);
             // We will use variables called `field_<index>` for the values of each field.
             values.push(format_ident!("field_{}", index));
@@ -70,12 +79,12 @@ impl Fragments {
             // Ok(())
             // ```
             pack: quote! {
-                #(<#types>::pack(&#values, packer)?;) *
+                #(<#wrappers>::pack(bee_packable::wrap::Wrap::wrap(#values), packer)?;) *
                 Ok(())
             },
             // This would be `0 + <T>::packed_len(&field_0) + <V>::packed_len(&field_1)`. The `0`
             // is used in case the record has no fields.
-            packed_len: quote!(0 #(+ <#types>::packed_len(#values))*),
+            packed_len: quote!(0 #(+ <#wrappers>::packed_len(bee_packable::wrap::Wrap::wrap(#values)))*),
             // And this would be
             // ```
             // Ok(Foo {
@@ -83,7 +92,7 @@ impl Fragments {
             //     baz: <V>::unpack(unpacker).map_err(|x| x.coerce())?,
             // })```
             unpack: quote! {Ok(#name {
-                #(#labels: <#types>::unpack(unpacker).map_err(|x| x.coerce())?,)*
+                #(#labels: <#wrappers as Into<#types>>::into(<#wrappers>::unpack(unpacker).map_err(|x| x.coerce())?),)*
             })},
         }
     }
