@@ -3,7 +3,7 @@
 
 extern crate alloc;
 
-use bee_packable::{Packable, SliceUnpacker, VecPrefix, packer::VecPacker};
+use bee_packable::{packer::VecPacker, Packable, SliceUnpacker, VecPrefix};
 
 use alloc::vec::Vec;
 use core::{fmt::Debug, mem::size_of};
@@ -93,7 +93,7 @@ where
     P::Error: Debug,
 {
     let bytes = value.pack_new();
-    
+
     let mut unpacker = SliceUnpacker::new(&bytes.as_slice());
     let result: P = Packable::unpack(&mut unpacker).unwrap();
 
@@ -180,7 +180,10 @@ macro_rules! pack_new_vec_prefix {
     ($name:ident, $ty:ty) => {
         #[test]
         fn $name() {
-            assert_eq!(pack_new_checked(VecPrefix::<u32, $ty>::new()).len(), size_of::<$ty>());
+            assert_eq!(
+                pack_new_checked(VecPrefix::<u32, $ty>::new()).len(),
+                size_of::<$ty>()
+            );
             assert_eq!(
                 pack_new_checked(VecPrefix::<Option<u32>, $ty>::from(vec![Some(0u32), None])).len(),
                 size_of::<$ty>() + (size_of::<u8>() + size_of::<u32>()) + size_of::<u8>()
