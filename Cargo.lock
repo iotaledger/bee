@@ -294,7 +294,7 @@ name = "bee-runtime"
 version = "0.1.1-alpha"
 dependencies = [
  "async-trait",
- "bee-storage 0.7.0",
+ "bee-storage 0.8.0",
  "dashmap",
  "futures",
  "log",

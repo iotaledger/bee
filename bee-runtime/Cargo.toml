@@ -11,7 +11,7 @@ keywords = ["iota", "tangle", "bee", "framework", "runtime"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-storage = { version = "0.7.0" }
+bee-storage = { version = "0.8.0", path = "../bee-storage/bee-storage" }
 
 async-trait = "0.1"
 dashmap = "4.0"
