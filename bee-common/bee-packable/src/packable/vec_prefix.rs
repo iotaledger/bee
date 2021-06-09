@@ -5,7 +5,7 @@ extern crate alloc;
 
 use crate::wrap::Wrap;
 pub use crate::{
-    error::{PackError, PrefixError, UnknownTagError, UnpackError},
+    error::{PackError, PackPrefixError, UnknownTagError, UnpackError, UnpackPrefixError},
     packer::{Packer, VecPacker},
     unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker},
     Packable,
@@ -97,13 +97,13 @@ impl_wrap_for_vec!(u128);
 macro_rules! impl_packable_for_vec_prefix {
     ($ty:ty) => {
         impl<T: Packable> Packable for VecPrefix<T, $ty> {
-            type PackError = PrefixError<T::PackError, <$ty as TryFrom<usize>>::Error>;
-            type UnpackError = PrefixError<T::UnpackError, <usize as TryFrom<$ty>>::Error>;
+            type PackError = PackPrefixError<T::PackError, $ty>;
+            type UnpackError = UnpackPrefixError<T::UnpackError, $ty>;
 
             fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
                 // The length of any dynamically-sized sequence must be prefixed.
                 <$ty>::try_from(self.len())
-                    .map_err(|err| PackError::Packable(PrefixError::Prefix(err)))?
+                    .map_err(|err| PackError::Packable(PackPrefixError::Prefix(err)))?
                     .pack(packer)
                     .map_err(PackError::infallible)?;
 
@@ -123,7 +123,7 @@ macro_rules! impl_packable_for_vec_prefix {
                 let len = <$ty>::unpack(unpacker).map_err(UnpackError::infallible)?;
 
                 let mut vec = Self::with_capacity(
-                    usize::try_from(len).map_err(|err| UnpackError::Packable(PrefixError::Prefix(err)))?,
+                    usize::try_from(len).map_err(|err| UnpackError::Packable(UnpackPrefixError::Prefix(err)))?,
                 );
 
                 for _ in 0..len {

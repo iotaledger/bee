@@ -95,19 +95,45 @@ impl<T> From<Infallible> for UnknownTagError<T> {
     }
 }
 
-/// Semantic error type for dynamically-sized sequences that use a type different than `usize` for
-/// their length-prefix.
+/// Semantic error raised while packing a dynamically-sized sequences that use a type different
+/// than `usize` for their length-prefix.
 #[derive(Debug)]
-pub enum PrefixError<T, P> {
-    /// Semantic error for an element of the sequence. Typically this is `Packable::PackError` or
-    /// `Packable::UnpackError`.
+pub enum PackPrefixError<T, P>
+where
+    P: core::convert::TryFrom<usize>,
+{
+    /// Semantic error raised while packing an element of the sequence. Typically this is `Packable::PackError`.`
     Packable(T),
-    /// Semantic error for the prefix of the sequence. Typically this is `TryFrom::<usize>::Error`
-    /// or `TryInto::<usize>::Error`.
-    Prefix(P),
+    /// Semantic error raised while packing the prefix of the sequence.
+    Prefix(P::Error),
 }
 
-impl<T, P> From<T> for PrefixError<T, P> {
+impl<T, P> From<T> for PackPrefixError<T, P>
+where
+    P: core::convert::TryFrom<usize>,
+{
+    fn from(err: T) -> Self {
+        Self::Packable(err)
+    }
+}
+
+/// Semantic error raised while unpacking a dynamically-sized sequences that use a type different
+/// than `usize` for their length-prefix.
+#[derive(Debug)]
+pub enum UnpackPrefixError<T, P>
+where
+    P: core::convert::TryInto<usize>,
+{
+    /// Semantic error raised while unpacking an element of the sequence. Typically this is `Packable::UnpackError`.`
+    Packable(T),
+    /// Semantic error raised while unpacking the prefix of the sequence.
+    Prefix(P::Error),
+}
+
+impl<T, P> From<T> for UnpackPrefixError<T, P>
+where
+    P: core::convert::TryInto<usize>,
+{
     fn from(err: T) -> Self {
         Self::Packable(err)
     }

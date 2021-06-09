@@ -3,13 +3,17 @@
 
 #![allow(unused_imports)]
 
-use bee_packable::{packer::VecPacker, Packable, VecPrefix, error::PrefixError};
+use bee_packable::{
+    error::{PackPrefixError, UnpackPrefixError},
+    packer::VecPacker,
+    Packable, VecPrefix,
+};
 
-use core::convert::{TryFrom, Infallible};
+use core::convert::Infallible;
 
 #[derive(Packable)]
-#[packable(pack_error = PrefixError<Infallible, <u16 as TryFrom<usize>>::Error>)]
-#[packable(unpack_error = PrefixError<Infallible, <usize as TryFrom<u16>>::Error>)]
+#[packable(pack_error = PackPrefixError<Infallible, u16>)]
+#[packable(unpack_error = UnpackPrefixError<Infallible, u16>)]
 pub struct Foo {
     #[packable(wrapper = VecPrefix<u8, u16>)]
     inner: Vec<u8>,
