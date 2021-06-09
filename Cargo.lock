@@ -201,7 +201,7 @@ dependencies = [
  "bee-common 0.4.1",
  "bee-message",
  "bee-runtime",
- "bee-storage 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-storage 0.7.0",
  "bee-tangle",
  "bee-ternary",
  "chrono",
@@ -317,15 +317,6 @@ dependencies = [
 [[package]]
 name = "bee-storage"
 version = "0.7.0"
-dependencies = [
- "bee-common 0.4.1",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "bee-storage"
-version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c0a10ecb3c3cf62b995dd20eb6cce263eda3e51c8a8e1ca00b9661dbab3c3592"
 dependencies = [
@@ -337,13 +328,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "bee-storage"
+version = "0.8.0"
+dependencies = [
+ "bee-common 0.4.1",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "bee-storage-rocksdb"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bee-common 0.4.1",
  "bee-ledger",
  "bee-message",
- "bee-storage 0.7.0",
+ "bee-storage 0.8.0",
  "bee-storage-test",
  "bee-tangle",
  "bee-test",
@@ -355,12 +355,12 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-sled"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bee-common 0.4.1",
  "bee-ledger",
  "bee-message",
- "bee-storage 0.7.0",
+ "bee-storage 0.8.0",
  "bee-storage-test",
  "bee-tangle",
  "bee-test",
@@ -377,7 +377,7 @@ dependencies = [
  "bee-common 0.4.1",
  "bee-ledger",
  "bee-message",
- "bee-storage 0.7.0",
+ "bee-storage 0.8.0",
  "bee-tangle",
  "bee-test",
 ]
@@ -390,7 +390,7 @@ dependencies = [
  "bee-common 0.4.1",
  "bee-message",
  "bee-runtime",
- "bee-storage 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bee-storage 0.7.0",
  "bitflags",
  "dashmap",
  "futures",

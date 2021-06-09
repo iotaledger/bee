@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.8.0 - 2021-06-09
+
+### Changed
+
+- All interfaces have been made sync;
+
 ## 0.7.0 - 2021-06-08
 
 ### Changed
