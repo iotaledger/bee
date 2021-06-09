@@ -15,7 +15,7 @@ pub enum UnpackError<T, U> {
 }
 
 impl<T, U> UnpackError<T, U> {
-    /// Map the `Packable` variant of this enum.
+    /// Maps the `Packable` variant of this enum.
     pub fn map<V, F: Fn(T) -> V>(self, f: F) -> UnpackError<V, U> {
         match self {
             Self::Packable(err) => UnpackError::Packable(f(err)),
@@ -23,7 +23,7 @@ impl<T, U> UnpackError<T, U> {
         }
     }
 
-    /// Coerce the value by calling `.into()` for the `Packable` variant.
+    /// Coerces the value by calling `.into()` for the `Packable` variant.
     pub fn coerce<V: From<T>>(self) -> UnpackError<V, U> {
         self.map(|x| x.into())
     }
@@ -36,7 +36,7 @@ impl<T, U> From<U> for UnpackError<T, U> {
 }
 
 impl<U> UnpackError<Infallible, U> {
-    /// Coerce the value if the `Packable` variant is `Infallible`.
+    /// Coerces the value if the `Packable` variant is `Infallible`.
     pub fn infallible<E>(self) -> UnpackError<E, U> {
         match self {
             Self::Packable(err) => match err {},

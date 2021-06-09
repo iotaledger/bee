@@ -3,6 +3,8 @@
 
 //! A module that provides a `Packable` trait to serialize and deserialize types.
 
+extern crate alloc;
+
 mod array;
 mod bool;
 mod r#box;
@@ -22,6 +24,8 @@ pub use crate::{
 
 pub use bee_packable_derive::Packable;
 
+use alloc::vec::Vec;
+
 /// A type that can be packed and unpacked.
 ///
 /// Almost all basic sized types implement this trait. This trait can be derived using the
@@ -34,12 +38,22 @@ pub trait Packable: Sized {
     /// `UnknownTagError` when implementing this trait for an enum.
     type Error;
 
-    /// Pack this value into the given `Packer`.
+    /// Packs this value into the given `Packer`.
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
-    /// The size of the value in bytes after being packed.
 
+    /// Convenience method that packs this value into a `Vec<u8>`.
+    fn pack_new(&self) -> Vec<u8> {
+        let mut packer = VecPacker::with_capacity(self.packed_len());
+
+        // Packing to bytes will not fail.
+        self.pack(&mut packer).unwrap();
+
+        packer.into_vec()
+    }
+
+    /// Returns the size of the value in bytes after being packed.
     fn packed_len(&self) -> usize;
 
-    /// Unpack this value from the given `Unpacker`.
+    /// Unpacks this value from the given `Unpacker`.
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>>;
 }
