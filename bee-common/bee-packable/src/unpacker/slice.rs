@@ -7,7 +7,7 @@ use crate::unpacker::Unpacker;
 pub struct SliceUnpacker<'u>(&'u [u8]);
 
 impl<'u> SliceUnpacker<'u> {
-    /// Create a new unpacker from a byte slice.
+    /// Creates a new unpacker from a byte slice.
     pub fn new(slice: &'u [u8]) -> Self {
         Self(slice)
     }
@@ -18,7 +18,7 @@ impl<'u> SliceUnpacker<'u> {
 pub struct UnexpectedEOF {
     /// The required number of bytes.
     pub required: usize,
-    /// THe number of bytes the unpacker had.
+    /// The number of bytes the unpacker had.
     pub had: usize,
 }
 
