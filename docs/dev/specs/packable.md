@@ -100,11 +100,13 @@ pub trait Packable: Sized {
 
     fn packed_len(&self) -> usize;
 
+    fn pack_new(&self) -> Result<Vec<u8>, Self::PackError> { ... }
+
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>>;
 }
 ```
 
-- The `PackError` and `UnpackError` associated type represent a semantic errors
+- The `PackError` and `UnpackError` associated types represent semantic errors
   while packing and unpacking respectively.
 
 - The `pack` method serializes the current value using a `Packer` to write the
@@ -271,13 +273,13 @@ derived for a type that contains a field which has a custom implementation of
 `Packable::PackError` or `Packable::UnpackError` type different from
 `Infallible`. In that case the user can specify a custom error type using the
 `#[packable(pack_error = ...)]` and `#[packable(unpack_error = ...)]`
-attributes. The type used in these attribute must implement `From<E>` where `E`
-can be the associated error types of any field of the type.
+attributes. The type used in these attributes must implement `From<E>` where
+`E` can be the associated error types of any field of the type.
 
 ### Wrapped views
 
 Some types might be packed and unpacked in different ways. An example of this
-are collections with dynamic-lengthas most of them are packed by prefixing
+are collections with dynamic-length as most of them are packed by prefixing
 their length. However, the integer type used to encode the length prefix might
 change according to the context.
 
