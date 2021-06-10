@@ -36,10 +36,10 @@ pub(crate) fn filter<B: StorageBackend>(
 
 pub(crate) fn receipts<B: StorageBackend>(storage: ResourceHandle<B>) -> Result<impl Reply, Rejection> {
     let mut receipts_dto = Vec::new();
-    let mut iterator =
+    let iterator =
         AsIterator::<(MilestoneIndex, Receipt), ()>::iter(&*storage).map_err(|_| CustomRejection::InternalError)?;
 
-    while let Some(result) = iterator.next() {
+    for result in iterator {
         let ((_, receipt), _) = result.map_err(|_| CustomRejection::InternalError)?;
         receipts_dto.push(ReceiptDto::try_from(receipt).map_err(|_| CustomRejection::InternalError)?);
     }
