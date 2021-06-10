@@ -1,10 +1,9 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    column_families::*,
-    storage::{Storage, StorageBackend},
-};
+//! Stream access operations.
+
+use crate::{storage::Storage, trees::*};
 
 use bee_common::packable::Packable;
 use bee_ledger::types::{
@@ -18,35 +17,23 @@ use bee_message::{
     payload::indexation::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH},
     Message, MessageId, MESSAGE_ID_LENGTH,
 };
-use bee_storage::{access::AsStream, system::System};
+use bee_storage::{access::AsIterator, backend::StorageBackend, system::System};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
-use futures::{
-    stream::Stream,
-    task::{Context, Poll},
-};
-use pin_project::pin_project;
-use rocksdb::{DBIterator, IteratorMode};
+use std::{convert::TryInto, marker::PhantomData};
 
-use std::{convert::TryInto, marker::PhantomData, pin::Pin};
-
-#[pin_project(project = StorageStreamProj)]
-pub struct StorageStream<'a, K, V> {
-    #[pin]
-    inner: DBIterator<'a>,
-    budget: usize,
-    counter: usize,
-    marker: PhantomData<(K, V)>,
+/// Type used to stream a subtree.
+pub struct StorageIterator<'a, K, V> {
+    inner: sled::Iter,
+    marker: PhantomData<&'a (K, V)>,
 }
 
-impl<'a, K, V> StorageStream<'a, K, V> {
-    fn new(inner: DBIterator<'a>, budget: usize) -> Self {
-        StorageStream::<K, V> {
+impl<'a, K, V> StorageIterator<'a, K, V> {
+    fn new(inner: sled::Iter) -> Self {
+        StorageIterator::<K, V> {
             inner,
-            budget,
-            counter: 0,
             marker: PhantomData,
         }
     }
@@ -54,55 +41,38 @@ impl<'a, K, V> StorageStream<'a, K, V> {
 
 macro_rules! impl_stream {
     ($key:ty, $value:ty, $cf:expr) => {
-        #[async_trait::async_trait]
-        impl<'a> AsStream<'a, $key, $value> for Storage {
-            type Stream = StorageStream<'a, $key, $value>;
+        impl<'a> AsIterator<'a, $key, $value> for Storage {
+            type AsIter = StorageIterator<'a, $key, $value>;
 
-            async fn stream(&'a self) -> Result<Self::Stream, <Self as StorageBackend>::Error> {
-                Ok(StorageStream::new(
-                    self.inner.iterator_cf(self.cf_handle($cf)?, IteratorMode::Start),
-                    self.config.iteration_budget,
-                ))
+            fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
+                Ok(StorageIterator::new(self.inner.open_tree($cf)?.iter()))
             }
         }
 
         /// A stream to iterate over all key-value pairs of a column family.
-        impl<'a> Stream for StorageStream<'a, $key, $value> {
+        impl<'a> Iterator for StorageIterator<'a, $key, $value> {
             type Item = Result<($key, $value), <Storage as StorageBackend>::Error>;
 
-            fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-                let StorageStreamProj {
-                    mut inner,
-                    budget,
-                    counter,
-                    ..
-                } = self.project();
+            fn next(&mut self) -> Option<Self::Item> {
+                self.inner.next().map(|result| {
+                    result
+                        .map(|(key, value)| Self::unpack_key_value(&key, &value))
+                        .map_err(From::from)
+                })
 
-                if counter == budget {
-                    *counter = 0;
-                    cx.waker().wake_by_ref();
-                    return Poll::Pending;
-                }
-
-                *counter += 1;
-
-                let item = inner
-                    .next()
-                    .map(|(key, value)| Ok(Self::unpack_key_value(&key, &value)));
-
-                inner.status()?;
-
-                if inner.valid() {
-                    Poll::Ready(item)
-                } else {
-                    Poll::Ready(None)
-                }
+                // inner.status()?;
+                //
+                // if inner.valid() {
+                //     Poll::Ready(item)
+                // } else {
+                //     Poll::Ready(None)
+                // }
             }
         }
     };
 }
 
-impl<'a> StorageStream<'a, u8, System> {
+impl<'a> StorageIterator<'a, u8, System> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (u8, System) {
         (
             // Unpacking from storage is fine.
@@ -113,7 +83,7 @@ impl<'a> StorageStream<'a, u8, System> {
     }
 }
 
-impl<'a> StorageStream<'a, MessageId, Message> {
+impl<'a> StorageIterator<'a, MessageId, Message> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MessageId, Message) {
         (
             // Unpacking from storage is fine.
@@ -124,7 +94,7 @@ impl<'a> StorageStream<'a, MessageId, Message> {
     }
 }
 
-impl<'a> StorageStream<'a, MessageId, MessageMetadata> {
+impl<'a> StorageIterator<'a, MessageId, MessageMetadata> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MessageId, MessageMetadata) {
         (
             // Unpacking from storage is fine.
@@ -135,7 +105,7 @@ impl<'a> StorageStream<'a, MessageId, MessageMetadata> {
     }
 }
 
-impl<'a> StorageStream<'a, (MessageId, MessageId), ()> {
+impl<'a> StorageIterator<'a, (MessageId, MessageId), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MessageId, MessageId), ()) {
         let (mut parent, mut child) = key.split_at(MESSAGE_ID_LENGTH);
 
@@ -151,7 +121,7 @@ impl<'a> StorageStream<'a, (MessageId, MessageId), ()> {
     }
 }
 
-impl<'a> StorageStream<'a, (PaddedIndex, MessageId), ()> {
+impl<'a> StorageIterator<'a, (PaddedIndex, MessageId), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((PaddedIndex, MessageId), ()) {
         let (index, mut message_id) = key.split_at(INDEXATION_PADDED_INDEX_LENGTH);
         // Unpacking from storage is fine.
@@ -168,7 +138,7 @@ impl<'a> StorageStream<'a, (PaddedIndex, MessageId), ()> {
     }
 }
 
-impl<'a> StorageStream<'a, OutputId, CreatedOutput> {
+impl<'a> StorageIterator<'a, OutputId, CreatedOutput> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, CreatedOutput) {
         (
             // Unpacking from storage is fine.
@@ -179,7 +149,7 @@ impl<'a> StorageStream<'a, OutputId, CreatedOutput> {
     }
 }
 
-impl<'a> StorageStream<'a, OutputId, ConsumedOutput> {
+impl<'a> StorageIterator<'a, OutputId, ConsumedOutput> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (OutputId, ConsumedOutput) {
         (
             // Unpacking from storage is fine.
@@ -190,7 +160,7 @@ impl<'a> StorageStream<'a, OutputId, ConsumedOutput> {
     }
 }
 
-impl<'a> StorageStream<'a, Unspent, ()> {
+impl<'a> StorageIterator<'a, Unspent, ()> {
     fn unpack_key_value(mut key: &[u8], _: &[u8]) -> (Unspent, ()) {
         (
             // Unpacking from storage is fine.
@@ -200,7 +170,7 @@ impl<'a> StorageStream<'a, Unspent, ()> {
     }
 }
 
-impl<'a> StorageStream<'a, (Ed25519Address, OutputId), ()> {
+impl<'a> StorageIterator<'a, (Ed25519Address, OutputId), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((Ed25519Address, OutputId), ()) {
         let (mut address, mut output_id) = key.split_at(MESSAGE_ID_LENGTH);
 
@@ -216,7 +186,7 @@ impl<'a> StorageStream<'a, (Ed25519Address, OutputId), ()> {
     }
 }
 
-impl<'a> StorageStream<'a, (), LedgerIndex> {
+impl<'a> StorageIterator<'a, (), LedgerIndex> {
     fn unpack_key_value(_: &[u8], mut value: &[u8]) -> ((), LedgerIndex) {
         (
             (),
@@ -226,7 +196,7 @@ impl<'a> StorageStream<'a, (), LedgerIndex> {
     }
 }
 
-impl<'a> StorageStream<'a, MilestoneIndex, Milestone> {
+impl<'a> StorageIterator<'a, MilestoneIndex, Milestone> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneIndex, Milestone) {
         (
             // Unpacking from storage is fine.
@@ -237,7 +207,7 @@ impl<'a> StorageStream<'a, MilestoneIndex, Milestone> {
     }
 }
 
-impl<'a> StorageStream<'a, (), SnapshotInfo> {
+impl<'a> StorageIterator<'a, (), SnapshotInfo> {
     fn unpack_key_value(_: &[u8], mut value: &[u8]) -> ((), SnapshotInfo) {
         (
             (),
@@ -247,7 +217,7 @@ impl<'a> StorageStream<'a, (), SnapshotInfo> {
     }
 }
 
-impl<'a> StorageStream<'a, SolidEntryPoint, MilestoneIndex> {
+impl<'a> StorageIterator<'a, SolidEntryPoint, MilestoneIndex> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (SolidEntryPoint, MilestoneIndex) {
         (
             // Unpacking from storage is fine.
@@ -258,7 +228,7 @@ impl<'a> StorageStream<'a, SolidEntryPoint, MilestoneIndex> {
     }
 }
 
-impl<'a> StorageStream<'a, MilestoneIndex, OutputDiff> {
+impl<'a> StorageIterator<'a, MilestoneIndex, OutputDiff> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (MilestoneIndex, OutputDiff) {
         (
             // Unpacking from storage is fine.
@@ -269,7 +239,7 @@ impl<'a> StorageStream<'a, MilestoneIndex, OutputDiff> {
     }
 }
 
-impl<'a> StorageStream<'a, Address, Balance> {
+impl<'a> StorageIterator<'a, Address, Balance> {
     fn unpack_key_value(mut key: &[u8], mut value: &[u8]) -> (Address, Balance) {
         (
             // Unpacking from storage is fine.
@@ -280,7 +250,7 @@ impl<'a> StorageStream<'a, Address, Balance> {
     }
 }
 
-impl<'a> StorageStream<'a, (MilestoneIndex, UnreferencedMessage), ()> {
+impl<'a> StorageIterator<'a, (MilestoneIndex, UnreferencedMessage), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MilestoneIndex, UnreferencedMessage), ()) {
         let (mut index, mut unreferenced_message) = key.split_at(std::mem::size_of::<MilestoneIndex>());
 
@@ -296,7 +266,7 @@ impl<'a> StorageStream<'a, (MilestoneIndex, UnreferencedMessage), ()> {
     }
 }
 
-impl<'a> StorageStream<'a, (MilestoneIndex, Receipt), ()> {
+impl<'a> StorageIterator<'a, (MilestoneIndex, Receipt), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((MilestoneIndex, Receipt), ()) {
         let (mut index, mut receipt) = key.split_at(std::mem::size_of::<MilestoneIndex>());
 
@@ -312,7 +282,7 @@ impl<'a> StorageStream<'a, (MilestoneIndex, Receipt), ()> {
     }
 }
 
-impl<'a> StorageStream<'a, (bool, TreasuryOutput), ()> {
+impl<'a> StorageIterator<'a, (bool, TreasuryOutput), ()> {
     fn unpack_key_value(key: &[u8], _: &[u8]) -> ((bool, TreasuryOutput), ()) {
         let (mut index, mut receipt) = key.split_at(std::mem::size_of::<bool>());
 
@@ -328,25 +298,51 @@ impl<'a> StorageStream<'a, (bool, TreasuryOutput), ()> {
     }
 }
 
-impl_stream!(u8, System, CF_SYSTEM);
-impl_stream!(MessageId, Message, CF_MESSAGE_ID_TO_MESSAGE);
-impl_stream!(MessageId, MessageMetadata, CF_MESSAGE_ID_TO_METADATA);
-impl_stream!((MessageId, MessageId), (), CF_MESSAGE_ID_TO_MESSAGE_ID);
-impl_stream!((PaddedIndex, MessageId), (), CF_INDEX_TO_MESSAGE_ID);
-impl_stream!(OutputId, CreatedOutput, CF_OUTPUT_ID_TO_CREATED_OUTPUT);
-impl_stream!(OutputId, ConsumedOutput, CF_OUTPUT_ID_TO_CONSUMED_OUTPUT);
-impl_stream!(Unspent, (), CF_OUTPUT_ID_UNSPENT);
-impl_stream!((Ed25519Address, OutputId), (), CF_ED25519_ADDRESS_TO_OUTPUT_ID);
-impl_stream!((), LedgerIndex, CF_LEDGER_INDEX);
-impl_stream!(MilestoneIndex, Milestone, CF_MILESTONE_INDEX_TO_MILESTONE);
-impl_stream!((), SnapshotInfo, CF_SNAPSHOT_INFO);
-impl_stream!(SolidEntryPoint, MilestoneIndex, CF_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX);
-impl_stream!(MilestoneIndex, OutputDiff, CF_MILESTONE_INDEX_TO_OUTPUT_DIFF);
-impl_stream!(Address, Balance, CF_ADDRESS_TO_BALANCE);
+impl<'a> AsIterator<'a, u8, System> for Storage {
+    type AsIter = StorageIterator<'a, u8, System>;
+
+    fn iter(&'a self) -> Result<Self::AsIter, <Self as StorageBackend>::Error> {
+        Ok(StorageIterator::new(self.inner.iter()))
+    }
+}
+
+/// A stream to iterate over all key-value pairs of a column family.
+impl<'a> Iterator for StorageIterator<'a, u8, System> {
+    type Item = Result<(u8, System), <Storage as StorageBackend>::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|result| {
+            result
+                .map(|(key, value)| Self::unpack_key_value(&key, &value))
+                .map_err(From::from)
+        })
+
+        // Poll::Ready(item)
+    }
+}
+
+impl_stream!(MessageId, Message, TREE_MESSAGE_ID_TO_MESSAGE);
+impl_stream!(MessageId, MessageMetadata, TREE_MESSAGE_ID_TO_METADATA);
+impl_stream!((MessageId, MessageId), (), TREE_MESSAGE_ID_TO_MESSAGE_ID);
+impl_stream!((PaddedIndex, MessageId), (), TREE_INDEX_TO_MESSAGE_ID);
+impl_stream!(OutputId, CreatedOutput, TREE_OUTPUT_ID_TO_CREATED_OUTPUT);
+impl_stream!(OutputId, ConsumedOutput, TREE_OUTPUT_ID_TO_CONSUMED_OUTPUT);
+impl_stream!(Unspent, (), TREE_OUTPUT_ID_UNSPENT);
+impl_stream!((Ed25519Address, OutputId), (), TREE_ED25519_ADDRESS_TO_OUTPUT_ID);
+impl_stream!((), LedgerIndex, TREE_LEDGER_INDEX);
+impl_stream!(MilestoneIndex, Milestone, TREE_MILESTONE_INDEX_TO_MILESTONE);
+impl_stream!((), SnapshotInfo, TREE_SNAPSHOT_INFO);
+impl_stream!(
+    SolidEntryPoint,
+    MilestoneIndex,
+    TREE_SOLID_ENTRY_POINT_TO_MILESTONE_INDEX
+);
+impl_stream!(MilestoneIndex, OutputDiff, TREE_MILESTONE_INDEX_TO_OUTPUT_DIFF);
+impl_stream!(Address, Balance, TREE_ADDRESS_TO_BALANCE);
 impl_stream!(
     (MilestoneIndex, UnreferencedMessage),
     (),
-    CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
+    TREE_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE
 );
-impl_stream!((MilestoneIndex, Receipt), (), CF_MILESTONE_INDEX_TO_RECEIPT);
-impl_stream!((bool, TreasuryOutput), (), CF_SPENT_TO_TREASURY_OUTPUT);
+impl_stream!((MilestoneIndex, Receipt), (), TREE_MILESTONE_INDEX_TO_RECEIPT);
+impl_stream!((bool, TreasuryOutput), (), TREE_SPENT_TO_TREASURY_OUTPUT);

@@ -32,11 +32,10 @@ pub struct StorageBatch {
     value_buf: Vec<u8>,
 }
 
-#[async_trait::async_trait]
 impl BatchBuilder for Storage {
     type Batch = StorageBatch;
 
-    async fn batch_commit(&self, batch: Self::Batch, durability: bool) -> Result<(), <Self as StorageBackend>::Error> {
+    fn batch_commit(&self, batch: Self::Batch, durability: bool) -> Result<(), <Self as StorageBackend>::Error> {
         let mut write_options = WriteOptions::default();
         write_options.set_sync(false);
         write_options.disable_wal(!durability);

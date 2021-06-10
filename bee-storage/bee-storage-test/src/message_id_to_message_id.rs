@@ -3,12 +3,10 @@
 
 use bee_message::MessageId;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
 use bee_test::rand::message::rand_message_id;
-
-use futures::stream::StreamExt;
 
 use std::collections::HashMap;
 
@@ -20,7 +18,7 @@ pub trait StorageBackend:
     + Delete<(MessageId, MessageId), ()>
     + BatchBuilder
     + Batch<(MessageId, MessageId), ()>
-    + for<'a> AsStream<'a, (MessageId, MessageId), ()>
+    + for<'a> AsIterator<'a, (MessageId, MessageId), ()>
     + Truncate<(MessageId, MessageId), ()>
 {
 }
@@ -33,56 +31,37 @@ impl<T> StorageBackend for T where
         + Delete<(MessageId, MessageId), ()>
         + BatchBuilder
         + Batch<(MessageId, MessageId), ()>
-        + for<'a> AsStream<'a, (MessageId, MessageId), ()>
+        + for<'a> AsIterator<'a, (MessageId, MessageId), ()>
         + Truncate<(MessageId, MessageId), ()>
 {
 }
 
-pub async fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
+pub fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
     let (parent, child) = (rand_message_id(), rand_message_id());
 
-    assert!(
-        !Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child))
-            .await
-            .unwrap()
-    );
+    assert!(!Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child)).unwrap());
     assert!(
         Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
-            .await
             .unwrap()
             .unwrap()
             .is_empty()
     );
 
-    Insert::<(MessageId, MessageId), ()>::insert(storage, &(parent, child), &())
-        .await
-        .unwrap();
+    Insert::<(MessageId, MessageId), ()>::insert(storage, &(parent, child), &()).unwrap();
 
-    assert!(
-        Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child))
-            .await
-            .unwrap()
-    );
+    assert!(Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child)).unwrap());
     assert_eq!(
         Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
-            .await
             .unwrap()
             .unwrap(),
         vec![child]
     );
 
-    Delete::<(MessageId, MessageId), ()>::delete(storage, &(parent, child))
-        .await
-        .unwrap();
+    Delete::<(MessageId, MessageId), ()>::delete(storage, &(parent, child)).unwrap();
 
-    assert!(
-        !Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child))
-            .await
-            .unwrap()
-    );
+    assert!(!Exist::<(MessageId, MessageId), ()>::exist(storage, &(parent, child)).unwrap());
     assert!(
         Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &parent)
-            .await
             .unwrap()
             .unwrap()
             .is_empty()
@@ -92,9 +71,7 @@ pub async fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (parent, child) = (rand_message_id(), rand_message_id());
-        Insert::<(MessageId, MessageId), ()>::insert(storage, &(parent, child), &())
-            .await
-            .unwrap();
+        Insert::<(MessageId, MessageId), ()>::insert(storage, &(parent, child), &()).unwrap();
         Batch::<(MessageId, MessageId), ()>::batch_delete(storage, &mut batch, &(parent, child)).unwrap();
     }
 
@@ -109,12 +86,12 @@ pub async fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
         }
     }
 
-    storage.batch_commit(batch, true).await.unwrap();
+    storage.batch_commit(batch, true).unwrap();
 
-    let mut stream = AsStream::<(MessageId, MessageId), ()>::stream(storage).await.unwrap();
+    let iter = AsIterator::<(MessageId, MessageId), ()>::iter(storage).unwrap();
     let mut count = 0;
 
-    while let Some(result) = stream.next().await {
+    for result in iter {
         let ((parent, child), _) = result.unwrap();
         assert!(edges.get(&parent).unwrap().contains(&child));
         count += 1;
@@ -122,9 +99,9 @@ pub async fn message_id_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, edges.iter().fold(0, |acc, v| acc + v.1.len()));
 
-    Truncate::<(MessageId, MessageId), ()>::truncate(storage).await.unwrap();
+    Truncate::<(MessageId, MessageId), ()>::truncate(storage).unwrap();
 
-    let mut stream = AsStream::<(MessageId, MessageId), ()>::stream(storage).await.unwrap();
+    let mut iter = AsIterator::<(MessageId, MessageId), ()>::iter(storage).unwrap();
 
-    assert!(stream.next().await.is_none());
+    assert!(iter.next().is_none());
 }

@@ -45,29 +45,22 @@ fn snapshot_reader(path: &Path) -> Result<BufReader<File>, Error> {
     ))
 }
 
-async fn import_solid_entry_points<R: Read, B: StorageBackend>(
+fn import_solid_entry_points<R: Read, B: StorageBackend>(
     reader: &mut R,
     storage: &B,
     sep_count: u64,
     index: MilestoneIndex,
 ) -> Result<(), Error> {
-    Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage)
-        .await
-        .map_err(|e| Error::Storage(Box::new(e)))?;
+    Truncate::<SolidEntryPoint, MilestoneIndex>::truncate(storage).map_err(|e| Error::Storage(Box::new(e)))?;
     for _ in 0..sep_count {
         Insert::<SolidEntryPoint, MilestoneIndex>::insert(&*storage, &SolidEntryPoint::unpack(reader)?, &index)
-            .await
             .map_err(|e| Error::Storage(Box::new(e)))?;
     }
 
     Ok(())
 }
 
-async fn import_outputs<R: Read, B: StorageBackend>(
-    reader: &mut R,
-    storage: &B,
-    output_count: u64,
-) -> Result<(), Error> {
+fn import_outputs<R: Read, B: StorageBackend>(reader: &mut R, storage: &B, output_count: u64) -> Result<(), Error> {
     let mut balance_diffs = BalanceDiffs::new();
 
     for _ in 0..output_count {
@@ -76,11 +69,11 @@ async fn import_outputs<R: Read, B: StorageBackend>(
         let output = Output::unpack(reader)?;
         let created_output = CreatedOutput::new(message_id, output);
 
-        create_output(&*storage, &output_id, &created_output).await?;
+        create_output(&*storage, &output_id, &created_output)?;
         balance_diffs.output_add(created_output.inner())?;
     }
 
-    apply_balance_diffs(&*storage, &balance_diffs).await
+    apply_balance_diffs(&*storage, &balance_diffs)
 }
 
 async fn import_milestone_diffs<R: Read, B: StorageBackend>(
@@ -92,7 +85,7 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
         let diff = MilestoneDiff::unpack(reader)?;
         let index = diff.milestone().essence().index();
         // Unwrap is fine because ledger index was inserted just before.
-        let ledger_index = *storage::fetch_ledger_index(&*storage).await?.unwrap();
+        let ledger_index = *storage::fetch_ledger_index(&*storage)?.unwrap();
         let mut balance_diffs = BalanceDiffs::new();
 
         for (_, output) in diff.created().iter() {
@@ -128,9 +121,9 @@ async fn import_milestone_diffs<R: Read, B: StorageBackend>(
         };
 
         if index == MilestoneIndex(ledger_index + 1) {
-            apply_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration).await?;
+            apply_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)?;
         } else if index == MilestoneIndex(ledger_index) {
-            rollback_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration).await?;
+            rollback_milestone(&*storage, index, diff.created(), &consumed, &balance_diffs, &migration)?;
         } else {
             return Err(Error::Snapshot(SnapshotError::UnexpectedMilestoneDiffIndex(index)));
         }
@@ -184,10 +177,9 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
             output::TreasuryOutput::new(full_header.treasury_output_amount())?,
             *full_header.treasury_output_milestone_id(),
         ),
-    )
-    .await?;
+    )?;
 
-    storage::insert_ledger_index(storage, &header.ledger_index().into()).await?;
+    storage::insert_ledger_index(storage, &header.ledger_index().into())?;
     storage::insert_snapshot_info(
         storage,
         &SnapshotInfo::new(
@@ -197,11 +189,10 @@ async fn import_full_snapshot<B: StorageBackend>(storage: &B, path: &Path, netwo
             header.sep_index(),
             header.timestamp(),
         ),
-    )
-    .await?;
+    )?;
 
-    import_solid_entry_points(&mut reader, storage, full_header.sep_count(), header.sep_index()).await?;
-    import_outputs(&mut reader, storage, full_header.output_count()).await?;
+    import_solid_entry_points(&mut reader, storage, full_header.sep_count(), header.sep_index())?;
+    import_outputs(&mut reader, storage, full_header.output_count())?;
     import_milestone_diffs(&mut reader, storage, full_header.milestone_diff_count()).await?;
 
     if reader.bytes().next().is_some() {
@@ -244,7 +235,7 @@ async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, netw
         )));
     }
 
-    storage::insert_ledger_index(storage, &header.ledger_index().into()).await?;
+    storage::insert_ledger_index(storage, &header.ledger_index().into())?;
     storage::insert_snapshot_info(
         storage,
         &SnapshotInfo::new(
@@ -254,10 +245,9 @@ async fn import_delta_snapshot<B: StorageBackend>(storage: &B, path: &Path, netw
             header.sep_index(),
             header.timestamp(),
         ),
-    )
-    .await?;
+    )?;
 
-    import_solid_entry_points(&mut reader, storage, delta_header.sep_count(), header.sep_index()).await?;
+    import_solid_entry_points(&mut reader, storage, delta_header.sep_count(), header.sep_index())?;
     import_milestone_diffs(&mut reader, storage, delta_header.milestone_diff_count()).await?;
 
     if reader.bytes().next().is_some() {

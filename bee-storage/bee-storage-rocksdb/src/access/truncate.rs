@@ -56,9 +56,8 @@ fn truncate(storage: &Storage, cf_str: &'static str) -> Result<(), <Storage as S
 
 macro_rules! impl_truncate {
     ($key:ty, $value:ty, $cf:expr) => {
-        #[async_trait::async_trait]
         impl Truncate<$key, $value> for Storage {
-            async fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
+            fn truncate(&self) -> Result<(), <Self as StorageBackend>::Error> {
                 truncate(self, $cf)
             }
         }

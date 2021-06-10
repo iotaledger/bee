@@ -5,12 +5,10 @@ use bee_common::packable::Packable;
 use bee_ledger::types::OutputDiff;
 use bee_message::milestone::MilestoneIndex;
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, MultiFetch, Truncate},
     backend,
 };
 use bee_test::rand::{milestone::rand_milestone_index, output_diff::rand_output_diff};
-
-use futures::stream::StreamExt;
 
 pub trait StorageBackend:
     backend::StorageBackend
@@ -21,7 +19,7 @@ pub trait StorageBackend:
     + Delete<MilestoneIndex, OutputDiff>
     + BatchBuilder
     + Batch<MilestoneIndex, OutputDiff>
-    + for<'a> AsStream<'a, MilestoneIndex, OutputDiff>
+    + for<'a> AsIterator<'a, MilestoneIndex, OutputDiff>
     + Truncate<MilestoneIndex, OutputDiff>
 {
 }
@@ -35,72 +33,47 @@ impl<T> StorageBackend for T where
         + Delete<MilestoneIndex, OutputDiff>
         + BatchBuilder
         + Batch<MilestoneIndex, OutputDiff>
-        + for<'a> AsStream<'a, MilestoneIndex, OutputDiff>
+        + for<'a> AsIterator<'a, MilestoneIndex, OutputDiff>
         + Truncate<MilestoneIndex, OutputDiff>
 {
 }
 
-pub async fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
+pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
     let (index, output_diff) = (rand_milestone_index(), rand_output_diff());
 
-    assert!(
-        !Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index)
-            .await
-            .unwrap()
-    );
+    assert!(!Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index).unwrap());
     assert!(
         Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index)
-            .await
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index])
-        .await
-        .unwrap();
+    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index]).unwrap();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
-    Insert::<MilestoneIndex, OutputDiff>::insert(storage, &index, &output_diff)
-        .await
-        .unwrap();
+    Insert::<MilestoneIndex, OutputDiff>::insert(storage, &index, &output_diff).unwrap();
 
-    assert!(
-        Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index)
-            .await
-            .unwrap()
-    );
+    assert!(Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index).unwrap());
     assert_eq!(
         Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index)
-            .await
             .unwrap()
             .unwrap()
             .pack_new(),
         output_diff.pack_new()
     );
-    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index])
-        .await
-        .unwrap();
+    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index]).unwrap();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &output_diff));
 
-    Delete::<MilestoneIndex, OutputDiff>::delete(storage, &index)
-        .await
-        .unwrap();
+    Delete::<MilestoneIndex, OutputDiff>::delete(storage, &index).unwrap();
 
-    assert!(
-        !Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index)
-            .await
-            .unwrap()
-    );
+    assert!(!Exist::<MilestoneIndex, OutputDiff>::exist(storage, &index).unwrap());
     assert!(
         Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index)
-            .await
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index])
-        .await
-        .unwrap();
+    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index]).unwrap();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -110,9 +83,7 @@ pub async fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &
 
     for _ in 0..10 {
         let (index, output_diff) = (rand_milestone_index(), rand_output_diff());
-        Insert::<MilestoneIndex, OutputDiff>::insert(storage, &index, &output_diff)
-            .await
-            .unwrap();
+        Insert::<MilestoneIndex, OutputDiff>::insert(storage, &index, &output_diff).unwrap();
         Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, &mut batch, &index).unwrap();
         indexes.push(index);
         output_diffs.push((index, None));
@@ -125,12 +96,12 @@ pub async fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &
         output_diffs.push((index, Some(output_diff)));
     }
 
-    storage.batch_commit(batch, true).await.unwrap();
+    storage.batch_commit(batch, true).unwrap();
 
-    let mut stream = AsStream::<MilestoneIndex, OutputDiff>::stream(storage).await.unwrap();
+    let iter = AsIterator::<MilestoneIndex, OutputDiff>::iter(storage).unwrap();
     let mut count = 0;
 
-    while let Some(result) = stream.next().await {
+    for result in iter {
         let (index, output_diff) = result.unwrap();
         assert!(output_diffs.contains(&(index, Some(output_diff))));
         count += 1;
@@ -138,9 +109,7 @@ pub async fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &indexes)
-        .await
-        .unwrap();
+    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &indexes).unwrap();
 
     assert_eq!(results.len(), indexes.len());
 
@@ -148,9 +117,9 @@ pub async fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &
         assert_eq!(diff, result.unwrap());
     }
 
-    Truncate::<MilestoneIndex, OutputDiff>::truncate(storage).await.unwrap();
+    Truncate::<MilestoneIndex, OutputDiff>::truncate(storage).unwrap();
 
-    let mut stream = AsStream::<MilestoneIndex, OutputDiff>::stream(storage).await.unwrap();
+    let mut iter = AsIterator::<MilestoneIndex, OutputDiff>::iter(storage).unwrap();
 
-    assert!(stream.next().await.is_none());
+    assert!(iter.next().is_none());
 }

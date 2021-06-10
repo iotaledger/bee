@@ -302,20 +302,17 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
- "async-trait",
  "bee-common",
- "futures",
  "serde",
  "thiserror",
 ]
 
 [[package]]
 name = "bee-storage-rocksdb"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
- "async-trait",
  "bee-common",
  "bee-ledger",
  "bee-message",
@@ -323,20 +320,16 @@ dependencies = [
  "bee-storage-test",
  "bee-tangle",
  "bee-test",
- "futures",
  "num_cpus",
- "pin-project 1.0.7",
  "rocksdb",
  "serde",
  "thiserror",
- "tokio",
 ]
 
 [[package]]
 name = "bee-storage-sled"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
- "async-trait",
  "bee-common",
  "bee-ledger",
  "bee-message",
@@ -344,18 +337,15 @@ dependencies = [
  "bee-storage-test",
  "bee-tangle",
  "bee-test",
- "futures",
  "num_cpus",
- "pin-project 1.0.7",
  "serde",
  "sled",
  "thiserror",
- "tokio",
 ]
 
 [[package]]
 name = "bee-storage-test"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -363,7 +353,6 @@ dependencies = [
  "bee-storage",
  "bee-tangle",
  "bee-test",
- "futures",
 ]
 
 [[package]]
@@ -709,7 +698,7 @@ dependencies = [
  "clap",
  "criterion-plot",
  "csv",
- "itertools 0.10.0",
+ "itertools 0.10.1",
  "lazy_static",
  "num-traits",
  "oorandom",
@@ -1436,9 +1425,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37d572918e350e82412fe766d24b15e6682fb2ed2bbe018280caa810397cb319"
+checksum = "69ddb889f9d0d08a67338271fa9b62996bc788c7796a5c18cf057420aaed5eaf"
 dependencies = [
  "either",
 ]
@@ -1501,9 +1490,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.95"
+version = "0.2.96"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "789da6d93f1b866ffe175afc5322a4d76c038605a1c3319bb57b06967ca98a36"
+checksum = "5600b4e6efc5421841a2138a6b082e07fe12f9aaa12783d50e5d13325b26b4fc"
 
 [[package]]
 name = "libloading"
@@ -2353,7 +2342,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ef9e7e66b4468674bfcb0c81af8b7fa0bb154fa9f28eb840da5c447baeb8d7e"
 dependencies = [
  "libc",
- "rand_chacha 0.3.0",
+ "rand_chacha 0.3.1",
  "rand_core 0.6.2",
  "rand_hc 0.3.0",
 ]
@@ -2370,9 +2359,9 @@ dependencies = [
 
 [[package]]
 name = "rand_chacha"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e12735cf05c9e10bf21534da50a147b924d555dc7a547c42e6bb2d5b6017ae0d"
+checksum = "e6c10a63a0fa32252be49d21e7709d4d4baf8d231c2dbce1eaa8141b9b127d88"
 dependencies = [
  "ppv-lite86",
  "rand_core 0.6.2",
@@ -2914,9 +2903,9 @@ checksum = "1e81da0851ada1f3e9d4312c704aa4f8806f0f9d69faaf8df2f3464b4a9437c2"
 
 [[package]]
 name = "syn"
-version = "1.0.72"
+version = "1.0.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1e8cdbefb79a9a5a65e0db8b47b723ee907b7c7f8496c76a1770b5c310bab82"
+checksum = "f71489ff30030d2ae598524f61326b902466f72a0fb1a8564c001cc63425bcc7"
 dependencies = [
  "proc-macro2",
  "quote",

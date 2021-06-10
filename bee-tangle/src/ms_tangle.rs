@@ -17,7 +17,6 @@ use bee_message::{
 };
 use bee_runtime::resource::ResourceHandle;
 
-use async_trait::async_trait;
 use hashbrown::HashMap;
 use log::{info, trace};
 use ref_cast::RefCast;
@@ -37,52 +36,51 @@ pub struct StorageHooks<B> {
     storage: ResourceHandle<B>,
 }
 
-#[async_trait]
 impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
     type Error = B::Error;
 
-    async fn get(&self, id: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
+    fn get(&self, id: &MessageId) -> Result<Option<(Message, MessageMetadata)>, Self::Error> {
         trace!("Attempted to fetch message {:?}", id);
-        let msg = self.storage.fetch(id).await?;
-        let meta = self.storage.fetch(id).await?;
+        let msg = self.storage.fetch(id)?;
+        let meta = self.storage.fetch(id)?;
         Ok(msg.zip(meta))
     }
 
-    async fn insert(&self, id: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
+    fn insert(&self, id: MessageId, tx: Message, metadata: MessageMetadata) -> Result<(), Self::Error> {
         trace!("Attempted to insert message {:?}", id);
-        self.storage.insert(&id, &tx).await?;
-        self.storage.insert(&id, &metadata).await?;
+        self.storage.insert(&id, &tx)?;
+        self.storage.insert(&id, &metadata)?;
         Ok(())
     }
 
-    async fn fetch_approvers(&self, id: &MessageId) -> Result<Option<Vec<MessageId>>, Self::Error> {
+    fn fetch_approvers(&self, id: &MessageId) -> Result<Option<Vec<MessageId>>, Self::Error> {
         trace!("Attempted to fetch approvers for message {:?}", id);
-        self.storage.fetch(id).await
+        self.storage.fetch(id)
     }
 
-    async fn insert_approver(&self, id: MessageId, approver: MessageId) -> Result<(), Self::Error> {
+    fn insert_approver(&self, id: MessageId, approver: MessageId) -> Result<(), Self::Error> {
         trace!("Attempted to insert approver for message {:?}", id);
-        self.storage.insert(&(id, approver), &()).await
+        self.storage.insert(&(id, approver), &())
     }
 
-    async fn update_approvers(&self, id: MessageId, approvers: &[MessageId]) -> Result<(), Self::Error> {
+    fn update_approvers(&self, id: MessageId, approvers: &[MessageId]) -> Result<(), Self::Error> {
         trace!("Attempted to update approvers for message {:?}", id);
         for approver in approvers {
-            self.storage.insert(&(id, *approver), &()).await?;
+            self.storage.insert(&(id, *approver), &())?;
         }
         Ok(())
     }
 }
 
 impl<B: StorageBackend> StorageHooks<B> {
-    async fn get_milestone(&self, idx: &MilestoneIndex) -> Result<Option<Milestone>, B::Error> {
+    fn get_milestone(&self, idx: &MilestoneIndex) -> Result<Option<Milestone>, B::Error> {
         trace!("Attempted to fetch milestone {:?}", idx);
-        Ok(self.storage.fetch(idx).await?)
+        self.storage.fetch(idx)
     }
 
-    async fn insert_milestone(&self, idx: MilestoneIndex, milestone: &Milestone) -> Result<(), B::Error> {
+    fn insert_milestone(&self, idx: MilestoneIndex, milestone: &Milestone) -> Result<(), B::Error> {
         trace!("Attempted to insert milestone {:?}", idx);
-        self.storage.insert(&idx, milestone).await?;
+        self.storage.insert(&idx, milestone)?;
         Ok(())
     }
 }
@@ -157,7 +155,6 @@ impl<B: StorageBackend> MsTangle<B> {
         self.inner
             .hooks()
             .insert_milestone(idx, &milestone)
-            .await
             .unwrap_or_else(|e| info!("Failed to insert message {:?}", e));
         self.milestones.lock().await.insert(idx, milestone);
     }
@@ -168,7 +165,7 @@ impl<B: StorageBackend> MsTangle<B> {
     }
 
     async fn pull_milestone(&self, idx: MilestoneIndex) -> Option<MessageId> {
-        if let Some(milestone) = self.inner.hooks().get_milestone(&idx).await.unwrap_or_else(|e| {
+        if let Some(milestone) = self.inner.hooks().get_milestone(&idx).unwrap_or_else(|e| {
             info!("Failed to insert message {:?}", e);
             None
         }) {

@@ -18,7 +18,6 @@ use bee_message::{
     MESSAGE_ID_LENGTH,
 };
 
-use async_trait::async_trait;
 use rocksdb::{
     ColumnFamily, ColumnFamilyDescriptor, DBCompactionStyle, DBCompressionType, Env, FlushOptions, Options,
     SliceTransform, DB,
@@ -163,59 +162,56 @@ impl Storage {
     }
 }
 
-#[async_trait]
 impl StorageBackend for Storage {
     type ConfigBuilder = RocksDbConfigBuilder;
     type Config = RocksDbConfig;
     type Error = Error;
 
-    async fn start(config: Self::Config) -> Result<Self, Self::Error> {
+    fn start(config: Self::Config) -> Result<Self, Self::Error> {
         let storage = Self::new(config)?;
 
-        match Fetch::<u8, System>::fetch(&storage, &SYSTEM_VERSION_KEY).await? {
+        match Fetch::<u8, System>::fetch(&storage, &SYSTEM_VERSION_KEY)? {
             Some(System::Version(version)) => {
                 if version != STORAGE_VERSION {
                     return Err(Error::VersionMismatch(version, STORAGE_VERSION));
                 }
             }
-            None => {
-                Insert::<u8, System>::insert(&storage, &SYSTEM_VERSION_KEY, &System::Version(STORAGE_VERSION)).await?
-            }
+            None => Insert::<u8, System>::insert(&storage, &SYSTEM_VERSION_KEY, &System::Version(STORAGE_VERSION))?,
             _ => panic!("Another system value was inserted on the version key."),
         }
 
-        if let Some(health) = storage.get_health().await? {
+        if let Some(health) = storage.get_health()? {
             if health != StorageHealth::Healthy {
                 return Err(Self::Error::UnhealthyStorage(health));
             }
         }
 
-        storage.set_health(StorageHealth::Idle).await?;
+        storage.set_health(StorageHealth::Idle)?;
 
         Ok(storage)
     }
 
-    async fn shutdown(self) -> Result<(), Self::Error> {
-        self.set_health(StorageHealth::Healthy).await?;
+    fn shutdown(self) -> Result<(), Self::Error> {
+        self.set_health(StorageHealth::Healthy)?;
 
         Ok(self.inner.flush()?)
     }
 
-    async fn size(&self) -> Result<Option<usize>, Self::Error> {
+    fn size(&self) -> Result<Option<usize>, Self::Error> {
         Ok(Some(
             self.inner.live_files()?.iter().fold(0, |acc, file| acc + file.size),
         ))
     }
 
-    async fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error> {
-        Ok(match Fetch::<u8, System>::fetch(self, &SYSTEM_HEALTH_KEY).await? {
+    fn get_health(&self) -> Result<Option<StorageHealth>, Self::Error> {
+        Ok(match Fetch::<u8, System>::fetch(self, &SYSTEM_HEALTH_KEY)? {
             Some(System::Health(health)) => Some(health),
             None => None,
             _ => panic!("Another system value was inserted on the health key."),
         })
     }
 
-    async fn set_health(&self, health: StorageHealth) -> Result<(), Self::Error> {
-        Insert::<u8, System>::insert(self, &SYSTEM_HEALTH_KEY, &System::Health(health)).await
+    fn set_health(&self, health: StorageHealth) -> Result<(), Self::Error> {
+        Insert::<u8, System>::insert(self, &SYSTEM_HEALTH_KEY, &System::Health(health))
     }
 }

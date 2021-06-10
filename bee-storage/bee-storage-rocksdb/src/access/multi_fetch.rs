@@ -19,9 +19,8 @@ use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 
 macro_rules! impl_multi_fetch {
     ($key:ty, $value:ty, $cf:expr) => {
-        #[async_trait::async_trait]
         impl MultiFetch<$key, $value> for Storage {
-            async fn multi_fetch(
+            fn multi_fetch(
                 &self,
                 keys: &[$key],
             ) -> Result<Vec<Result<Option<$value>, <Self as StorageBackend>::Error>>, <Self as StorageBackend>::Error>

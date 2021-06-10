@@ -3,12 +3,10 @@
 
 use bee_message::{payload::indexation::PaddedIndex, MessageId};
 use bee_storage::{
-    access::{AsStream, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
+    access::{AsIterator, Batch, BatchBuilder, Delete, Exist, Fetch, Insert, Truncate},
     backend,
 };
 use bee_test::rand::{message::rand_message_id, payload::rand_indexation_payload};
-
-use futures::stream::StreamExt;
 
 use std::collections::HashMap;
 
@@ -20,7 +18,7 @@ pub trait StorageBackend:
     + Delete<(PaddedIndex, MessageId), ()>
     + BatchBuilder
     + Batch<(PaddedIndex, MessageId), ()>
-    + for<'a> AsStream<'a, (PaddedIndex, MessageId), ()>
+    + for<'a> AsIterator<'a, (PaddedIndex, MessageId), ()>
     + Truncate<(PaddedIndex, MessageId), ()>
 {
 }
@@ -33,56 +31,37 @@ impl<T> StorageBackend for T where
         + Delete<(PaddedIndex, MessageId), ()>
         + BatchBuilder
         + Batch<(PaddedIndex, MessageId), ()>
-        + for<'a> AsStream<'a, (PaddedIndex, MessageId), ()>
+        + for<'a> AsIterator<'a, (PaddedIndex, MessageId), ()>
         + Truncate<(PaddedIndex, MessageId), ()>
 {
 }
 
-pub async fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
+pub fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
     let (index, message_id) = (rand_indexation_payload().padded_index(), rand_message_id());
 
-    assert!(
-        !Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id))
-            .await
-            .unwrap()
-    );
+    assert!(!Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id)).unwrap());
     assert!(
         Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
-            .await
             .unwrap()
             .unwrap()
             .is_empty()
     );
 
-    Insert::<(PaddedIndex, MessageId), ()>::insert(storage, &(index, message_id), &())
-        .await
-        .unwrap();
+    Insert::<(PaddedIndex, MessageId), ()>::insert(storage, &(index, message_id), &()).unwrap();
 
-    assert!(
-        Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id))
-            .await
-            .unwrap()
-    );
+    assert!(Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id)).unwrap());
     assert_eq!(
         Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
-            .await
             .unwrap()
             .unwrap(),
         vec![message_id]
     );
 
-    Delete::<(PaddedIndex, MessageId), ()>::delete(storage, &(index, message_id))
-        .await
-        .unwrap();
+    Delete::<(PaddedIndex, MessageId), ()>::delete(storage, &(index, message_id)).unwrap();
 
-    assert!(
-        !Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id))
-            .await
-            .unwrap()
-    );
+    assert!(!Exist::<(PaddedIndex, MessageId), ()>::exist(storage, &(index, message_id)).unwrap());
     assert!(
         Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &index)
-            .await
             .unwrap()
             .unwrap()
             .is_empty()
@@ -92,9 +71,7 @@ pub async fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     for _ in 0..10 {
         let (index, message_id) = (rand_indexation_payload().padded_index(), rand_message_id());
-        Insert::<(PaddedIndex, MessageId), ()>::insert(storage, &(index, message_id), &())
-            .await
-            .unwrap();
+        Insert::<(PaddedIndex, MessageId), ()>::insert(storage, &(index, message_id), &()).unwrap();
         Batch::<(PaddedIndex, MessageId), ()>::batch_delete(storage, &mut batch, &(index, message_id)).unwrap();
     }
 
@@ -110,12 +87,12 @@ pub async fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
         }
     }
 
-    storage.batch_commit(batch, true).await.unwrap();
+    storage.batch_commit(batch, true).unwrap();
 
-    let mut stream = AsStream::<(PaddedIndex, MessageId), ()>::stream(storage).await.unwrap();
+    let iter = AsIterator::<(PaddedIndex, MessageId), ()>::iter(storage).unwrap();
     let mut count = 0;
 
-    while let Some(result) = stream.next().await {
+    for result in iter {
         let ((index, message_id), _) = result.unwrap();
         assert!(message_ids.get(&index).unwrap().contains(&message_id));
         count += 1;
@@ -123,11 +100,9 @@ pub async fn index_to_message_id_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, message_ids.iter().fold(0, |acc, v| acc + v.1.len()));
 
-    Truncate::<(PaddedIndex, MessageId), ()>::truncate(storage)
-        .await
-        .unwrap();
+    Truncate::<(PaddedIndex, MessageId), ()>::truncate(storage).unwrap();
 
-    let mut stream = AsStream::<(PaddedIndex, MessageId), ()>::stream(storage).await.unwrap();
+    let mut iter = AsIterator::<(PaddedIndex, MessageId), ()>::iter(storage).unwrap();
 
-    assert!(stream.next().await.is_none());
+    assert!(iter.next().is_none());
 }
