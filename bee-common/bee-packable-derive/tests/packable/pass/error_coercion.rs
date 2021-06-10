@@ -4,7 +4,7 @@
 #![allow(unused_imports)]
 
 use bee_packable::{
-    error::{UnknownTagError, UnpackError},
+    error::{PackError, UnknownTagError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
     Packable,
@@ -17,9 +17,10 @@ pub struct Picky(u8);
 pub struct PickyError(u8);
 
 impl Packable for Picky {
-    type Error = PickyError;
+    type PackError = Infallible;
+    type UnpackError = PickyError;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         self.0.pack(packer)
     }
 
@@ -27,7 +28,7 @@ impl Packable for Picky {
         self.0.packed_len()
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let value = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         if value == 42 {
@@ -63,7 +64,8 @@ impl From<UnknownTagError<u8>> for PickyOrByteError {
 
 #[derive(Packable)]
 #[packable(tag_type = u8)]
-#[packable(error = PickyOrByteError)]
+#[packable(pack_error = Infallible)]
+#[packable(unpack_error = PickyOrByteError)]
 pub enum PickyOrByte {
     #[packable(tag = 0)]
     Picky(Picky),
@@ -86,7 +88,8 @@ impl From<PickyError> for PickyAndByteError {
 }
 
 #[derive(Packable)]
-#[packable(error = PickyAndByteError)]
+#[packable(pack_error = Infallible)]
+#[packable(unpack_error = PickyAndByteError)]
 pub struct PickyAndByte {
     picky: Picky,
     byte: u8,

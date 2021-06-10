@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use crate::{
-    error::{UnknownTagError, UnpackError},
+    error::{PackError, UnknownTagError, UnpackError},
     packer::{Packer, VecPacker},
     unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker},
     Packable,
 };
 
 impl<T: Packable, const N: usize> Packable for [T; N] {
-    type Error = T::Error;
+    type PackError = T::PackError;
+    type UnpackError = T::UnpackError;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         for item in self.iter() {
             item.pack(packer)?;
         }
@@ -23,7 +24,7 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
         self.iter().map(T::packed_len).sum::<usize>()
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         use core::mem::MaybeUninit;
 
         // Safety: an uninitialized array of `MaybeUninit`s is safe to be considered initialized.

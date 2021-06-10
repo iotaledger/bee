@@ -8,11 +8,13 @@ use bee_packable::Packable;
 use core::convert::Infallible;
 
 #[derive(Packable)]
-#[packable(error = Infallible)]
+#[packable(pack_error = Infallible)]
+#[packable(unpack_error = Infallible)]
 pub struct Unit;
 
 #[derive(Packable)]
-#[packable(error = Infallible)]
+#[packable(pack_error = Infallible)]
+#[packable(unpack_error = Infallible)]
 pub struct RoundUnit();
 
 fn main() {}

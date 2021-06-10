@@ -60,4 +60,4 @@ macro_rules! make_test {
 #[rustversion::not(nightly)]
 make_test!(packable);
 #[rustversion::nightly]
-make_test!(packable, packable_is_structural);
+make_test!(packable, packable_is_structural, invalid_wrapper);

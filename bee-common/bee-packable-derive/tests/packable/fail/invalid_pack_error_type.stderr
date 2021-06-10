@@ -1,0 +1,5 @@
+error: The `pack_error` attribute requires a type for its value.
+  --> $DIR/invalid_pack_error_type.rs:11:11
+   |
+11 | #[packable(pack_error = 1)]
+   |           ^^^^^^^^^^^^^^^^

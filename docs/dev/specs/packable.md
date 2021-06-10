@@ -93,17 +93,21 @@ The new `Packable` trait is the following
 
 ```rust
 pub trait Packable: Sized {
-    type Error;
+    type PackError;
+    type UnpackError;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error>;
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::Error, P::Error>>;
 
     fn packed_len(&self) -> usize;
+
+    fn pack_new(&self) -> Result<Vec<u8>, Self::PackError> { ... }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>>;
 }
 ```
 
-- The `Error` associated type represents a semantic error.
+- The `PackError` and `UnpackError` associated types represent semantic errors
+  while packing and unpacking respectively.
 
 - The `pack` method serializes the current value using a `Packer` to write the
   bytes.
@@ -120,19 +124,22 @@ pub trait Packable: Sized {
 In addition to the three `Error` associated types mentioned before, we provide
 two new helper error types:
 
+- The `PackError` type which is an enum wrapping values of either the
+  `Packable::PackError` or `Packer::Error` type.
+
 - The `UnpackError` type which is an enum wrapping values of either the
-  `Packable::Error` or `Unpacker::Error` type.
+  `Packable::UnpackError` or `Unpacker::Error` type.
 
 - The `UnknownTagError` type which can be used if the prefix tag used to
   represent the variant of an enum does not correspond to any variant of such
-  enum. As a convention, any `Packable::Error` type for an enum must implement
-  `From<UnknownTagError>` (this is not enforced in the trait itself because
-  this error is not used for structs).
+  enum. As a convention, any `Packable::UnpackError` type for an enum must
+  implement `From<UnknownTagError>` (this is not enforced in the trait itself
+  because this error is not used for structs).
 
-We also use `core::convert::Infallible` as `Packable::Error` for types whose
-unpacking does not have semantic errors, like integers for example. A more
-grounded explanation of error handling can be found in the *the `derive` macro*
-section.
+We also use `core::convert::Infallible` as `Packable::PackError` and
+`Packable::UnpackError` for types whose unpacking does not have semantic
+errors, like integers for example. A more grounded explanation of error
+handling can be found in the *the `derive` macro* section.
 
 ## `Packable` for basic types
 
@@ -165,16 +172,19 @@ is being packed.
 
 ```rust
 use bee_packable::{
-    error::{UnknownTagError, UnpackError},
+    error::{UnknownTagError, PackError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
     Packable,
 };
 
-impl Packable for Maybe {
-    type Error = UnknownTagError<u8>;
+use core::convert::Infallible;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+impl Packable for Maybe {
+    type PackError = Infallible;
+    type UnpackError = UnknownTagError<u8>;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         match self {
             Self::Nothing => 0u8.pack(packer),
             Self::Just(value) => {
@@ -191,7 +201,7 @@ impl Packable for Maybe {
         }
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         match u8::unpack(unpacker).map_err(UnpackError::coerce)? {
             0u8 => Ok(Self::Nothing),
             1u8 => Ok(Self::Just(i32::unpack(unpacker).map_err(UnpackError::coerce)?)),
@@ -208,7 +218,7 @@ provides an implementation equivalent to the one written before.
 
 ```rust
 use bee_packable::{
-    error::{UnknownTagError, UnpackError},
+    error::{UnknownTagError, PackError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
     Packable,
@@ -250,18 +260,51 @@ The `tag_type` and `tag` attributes are mandatory for enums. Additionally the
 Following the example above, unpacking a `Maybe` value that starts with a `tag`
 value different from `0` or `1` should fail. To represent this kind of error we
 introduced the `UnknownTagError<T>` type. This type is used as
-`Packable::Error` when deriving `Packable` for an enum, the `T` type used is
+`Packable::UnpackError` when deriving `Packable` for an enum, the `T` type used is
 the one specified in the `tag_type` attribute. Additionally, we use the
-`std::convert::Infallible` type as `Packable::Error` for structs by default.
+`core::convert::Infallible` type as `Packable::UnpackError` for structs by
+default. For the `Packable::PackError` type we use `core::convert::Infallible`
+by default for all the types.
 
 However, sometimes it is necessary to use a different error type when deriving
 `Packable`. Two examples where this can happen are when `Packable` is being
 derived for a type that contains a field which has a custom implementation of
 `Packable` or when `Packable` is being derived for a struct whose fields use a
-`Packable::Error` type different from `Infallible`. In that case the user can
-specify a custom error type using the `#[packable(error = ...)]` attribute. The
-type used in this attribute must implement `From<E>` where `E` can be the
-`Packable::Error` associated type of any field of the type.
+`Packable::PackError` or `Packable::UnpackError` type different from
+`Infallible`. In that case the user can specify a custom error type using the
+`#[packable(pack_error = ...)]` and `#[packable(unpack_error = ...)]`
+attributes. The type used in these attributes must implement `From<E>` where
+`E` can be the associated error types of any field of the type.
+
+### Wrapped views
+
+Some types might be packed and unpacked in different ways. An example of this
+are collections with dynamic-length as most of them are packed by prefixing
+their length. However, the integer type used to encode the length prefix might
+change according to the context.
+
+To solve this we introduce the `Wrap<W>` trait. We read `A: Wrap<B>` as `B` is
+a wrapper for `A`. This trait has the following form:
+
+```rust
+pub trait Wrap<W: Into<Self>>: Sized {
+    fn wrap(&self) -> &W;
+}
+```
+
+The `Wrap::wrap` method wraps a reference of `Self` into a reference of `W` and
+it is used before packing. Additionally `W` must implement `Into<Self>` so we
+can "unwrap" a value after unpacking it.
+
+Both of these operations are infallible, which means that any error must be
+raised while packing or unpacking the wrapped value itself.
+
+We provide the type `VecPrefix<T, P>` which is a wrapper for `Vec<T>` that
+packs its length-prefix using the type `P` instead of `usize`.
+
+This functionality is intended to be used from the derive macro adding the
+`#[packable(wrapper = ...)]` attribute to the field that the user wants to
+wrap.
 
 ## Optional features
 
@@ -275,10 +318,11 @@ There is only one optional feature for this crate:
 
 ## Error coercion
 
-One disadvantage of using `UnpackError` as the error variant returned by the
-`Packable::unpack` method is that conversions between errors must be explicit.
-As seen in the `Maybe` example, we use the `UnpackError::coerce` method to map
-the error variant to an appropiate type. The signature of this method is
+One disadvantage of using `PackError` and `UnpackError` as the error variant
+returned by the `Packable::pack` and `Packable::unpack` methods is that
+conversions between errors must be explicit.  As seen in the `Maybe` example,
+we use the `UnpackError::coerce` method to map the error variant to an
+appropiate type. The signature of this method is
 
 ```rust
 impl<T, U> UnpackError<T, U> {
@@ -287,9 +331,9 @@ impl<T, U> UnpackError<T, U> {
 ```
 
 and it takes care of mapping the `UnpackError::Packable` variant from `T` to
-`V`. At first sight this could be solved by implementing `From<UnpackError<T,
-U>>` for `UnpackError<V, U>`. However, that implementation would overlap with
-the existing implementations in the standard library.
+`V`. At first sight this could be solved by implementing `From<UnpackError<T, U>>`
+for `UnpackError<V, U>`. However, that implementation would overlap with the
+existing implementations in the standard library.
 
 In a similar fashion we introduced a `UnpackError::infallible` method with the
 following signature
@@ -302,7 +346,7 @@ impl<U> UnpackError<Infallible, U> {
 
 with the same philosophy. It is not possible to provide a single `coerce`
 method for both operations because of the same reasons around using the `From`
-trait.
+trait. These methods also exist for the `PackError` enum.
 
 # Alternatives
 
