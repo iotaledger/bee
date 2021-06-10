@@ -198,3 +198,41 @@ pack_new_vec_prefix!(pack_new_vec_prefix_u32, u32);
 pack_new_vec_prefix!(pack_new_vec_prefix_u64, u64);
 #[cfg(has_u128)]
 pack_new_vec_prefix!(pack_new_vec_prefix_u128, u128);
+
+fn round_trip<P>(value: P)
+where
+    P: Packable + Eq + Debug,
+    P::Error: Debug,
+{
+    let bytes = value.pack_new();
+    let unpacked = Packable::unpack_from_bytes(&bytes).unwrap();
+
+    assert_eq!(value, unpacked);
+}
+
+macro_rules! impl_round_trip_test {
+    ($name:ident, $value:expr) => {
+        #[test]
+        fn $name() {
+            round_trip($value);
+        }
+    };
+}
+
+impl_round_trip_test!(round_trip_i8, 0x6Fi8);
+impl_round_trip_test!(round_trip_u8, 0x6Fu8);
+impl_round_trip_test!(round_trip_i16, 0x6F7Bi16);
+impl_round_trip_test!(round_trip_u16, 0x6F7Bu16);
+impl_round_trip_test!(round_trip_i32, 0x6F7BD423i32);
+impl_round_trip_test!(round_trip_u32, 0x6F7BD423u32);
+impl_round_trip_test!(round_trip_i64, 0x6F7BD423100423DBi64);
+impl_round_trip_test!(round_trip_u64, 0x6F7BD423100423DBu64);
+#[cfg(has_i128)]
+impl_round_trip_test!(round_trip_i128, 0x6F7BD423100423DBFF127B91CA0AB123i128);
+#[cfg(has_u128)]
+impl_round_trip_test!(round_trip_u128, 0x6F7BD423100423DBFF127B91CA0AB123u128);
+
+impl_round_trip_test!(round_trip_bool, true);
+impl_round_trip_test!(round_trip_option, Some(42u32));
+impl_round_trip_test!(round_trip_vector, vec![Some(0u32), None]);
+impl_round_trip_test!(round_trip_array, [42u8; 1024]);
