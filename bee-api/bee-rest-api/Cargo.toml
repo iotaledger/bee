@@ -11,15 +11,15 @@ keywords = ["iota", "tangle", "bee", "framework", "api"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage", optional = true }
-bee-ledger = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage" }
-bee-message = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage" }
-bee-network = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage", optional = true }
-bee-pow = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage" }
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-pow = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 bee-protocol = { path = "../../bee-protocol" }
-bee-runtime = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage", optional = true  }
-bee-storage = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage", optional = true }
-bee-tangle = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage", optional = true }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true  }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
 
 async-trait = { version = "0.1", optional = true }
 bech32 = { version = "0.8", optional = true }

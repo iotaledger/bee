@@ -11,18 +11,18 @@ keywords = [ "iota", "tangle", "bee", "framework", "node" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-common = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage", features = [ "auth" ] }
-bee-crypto = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage" }
-bee-ledger = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage", features = [ "workers" ] }
-bee-message = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage" }
-bee-network = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage", features = [ "full" ] }
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = [ "auth" ] }
+bee-crypto = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = [ "workers" ] }
+bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-network = { git = "https://github.com/iotaledger/bee.git", branch = "dev", features = [ "full" ] }
 bee-protocol = { path = "../bee-protocol" }
 bee-rest-api = { path = "../bee-api/bee-rest-api", features = [ "endpoints" ] }
-bee-runtime = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage" }
-bee-storage = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage" }
-bee-storage-rocksdb = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage", optional = true }
-bee-storage-sled = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage", optional = true }
-bee-tangle = { git = "https://github.com/thibault-martinez/bee.git", branch = "sync-storage" }
+bee-runtime = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-storage = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
+bee-storage-rocksdb = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-storage-sled = { git = "https://github.com/iotaledger/bee.git", branch = "dev", optional = true }
+bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
 
 anymap = "0.12"
 async-trait = "0.1"
