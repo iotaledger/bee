@@ -1,11 +1,11 @@
 [package]
 name = "bee-ord"
 version = "0.1.0"
-authors = ["IOTA Stiftung"]
+authors = [ "IOTA Stiftung" ]
 edition = "2018"
 description = "Ordering utilities for the bee framework"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "ord"]
+keywords = [ "iota", "tangle", "bee", "framework", "ord" ]
 homepage = "https://www.iota.org"
