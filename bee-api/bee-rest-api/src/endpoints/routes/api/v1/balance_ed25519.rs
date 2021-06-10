@@ -35,20 +35,18 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_BALANCE_ED25519, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(balance_ed25519)
+        .and_then(|addr, storage| async move { balance_ed25519(addr, storage) })
 }
 
-pub(crate) async fn balance_ed25519<B: StorageBackend>(
+pub(crate) fn balance_ed25519<B: StorageBackend>(
     addr: Ed25519Address,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    match Fetch::<Address, Balance>::fetch(&*storage, &Address::Ed25519(addr))
-        .await
-        .map_err(|_| {
-            reject::custom(CustomRejection::ServiceUnavailable(
-                "can not fetch from storage".to_string(),
-            ))
-        })? {
+    match Fetch::<Address, Balance>::fetch(&*storage, &Address::Ed25519(addr)).map_err(|_| {
+        reject::custom(CustomRejection::ServiceUnavailable(
+            "can not fetch from storage".to_string(),
+        ))
+    })? {
         Some(balance) => Ok(warp::reply::json(&SuccessBody::new(BalanceAddressResponse {
             address_type: 1,
             address: addr.to_string(),

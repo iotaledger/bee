@@ -184,7 +184,7 @@ async fn user_message<B: StorageBackend>(
                         return;
                     }
                 }
-                send_init_values(&topic, &user, tangle, storage).await;
+                send_init_values(&topic, &user, tangle, storage);
                 let _ = user.topics.insert(topic);
             }
             WsCommand::Unregister => {
@@ -199,7 +199,7 @@ async fn user_disconnected(user_id: usize, users: &WsUsers) {
     users.write().await.remove(&user_id);
 }
 
-async fn send_init_values<B: StorageBackend>(topic: &WsTopic, user: &WsUser, tangle: &MsTangle<B>, storage: &B) {
+fn send_init_values<B: StorageBackend>(topic: &WsTopic, user: &WsUser, tangle: &MsTangle<B>, storage: &B) {
     match topic {
         WsTopic::SyncStatus => {
             let event = WsEvent::new(
@@ -215,7 +215,7 @@ async fn send_init_values<B: StorageBackend>(topic: &WsTopic, user: &WsUser, tan
             let event = WsEvent::new(
                 WsTopic::DatabaseSizeMetrics,
                 WsEventInner::DatabaseSizeMetrics(DatabaseSizeMetricsResponse {
-                    total: storage.size().await.unwrap().unwrap() as u64,
+                    total: storage.size().unwrap().unwrap() as u64,
                     ts: 0,
                 }),
             );

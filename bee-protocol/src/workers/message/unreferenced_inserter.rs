@@ -58,7 +58,7 @@ where
 
                 counter += 1;
                 if counter == UNREFERENCED_MESSAGE_BATCH_SIZE {
-                    if let Err(e) = storage.batch_commit(batch, true).await {
+                    if let Err(e) = storage.batch_commit(batch, true) {
                         error!("Committing unreferenced message batch failed: {:?}.", e);
                     }
                     batch = N::Backend::batch_begin();
@@ -66,7 +66,7 @@ where
                 }
             }
 
-            if let Err(e) = storage.batch_commit(batch, true).await {
+            if let Err(e) = storage.batch_commit(batch, true) {
                 error!("Committing unreferenced message batch failed: {:?}.", e);
             }
 
@@ -83,9 +83,7 @@ where
                     &*storage,
                     &(index, UnreferencedMessage::from(message_id)),
                     &(),
-                )
-                .await
-                {
+                ) {
                     error!("Inserting unreferenced message failed: {:?}.", e);
                 }
                 counter += 1;

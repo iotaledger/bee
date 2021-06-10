@@ -43,7 +43,7 @@ pub(super) fn milestone_index() -> impl Filter<Extract = (MilestoneIndex,), Erro
         value
             .parse::<u32>()
             .map_err(|_| reject::custom(CustomRejection::BadRequest("invalid milestone index".to_string())))
-            .map(|index| MilestoneIndex(index))
+            .map(MilestoneIndex)
     })
 }
 

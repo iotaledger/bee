@@ -35,15 +35,14 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MILESTONE_UTXO_CHANGES, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(milestone_utxo_changes)
+        .and_then(|index, storage| async move { milestone_utxo_changes(index, storage) })
 }
 
-pub(crate) async fn milestone_utxo_changes<B: StorageBackend>(
+pub(crate) fn milestone_utxo_changes<B: StorageBackend>(
     index: MilestoneIndex,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
     let fetched = Fetch::<MilestoneIndex, OutputDiff>::fetch(&*storage, &index)
-        .await
         .map_err(|_| {
             reject::custom(CustomRejection::ServiceUnavailable(
                 "can not fetch from storage".to_string(),

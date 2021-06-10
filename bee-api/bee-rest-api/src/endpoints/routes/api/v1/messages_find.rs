@@ -41,10 +41,10 @@ pub(crate) fn filter<B: StorageBackend>(
             }
         }))
         .and(with_storage(storage))
-        .and_then(messages_find)
+        .and_then(|index, storage| async move { messages_find(index, storage) })
 }
 
-pub(crate) async fn messages_find<B: StorageBackend>(
+pub(crate) fn messages_find<B: StorageBackend>(
     index: String,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
@@ -52,13 +52,11 @@ pub(crate) async fn messages_find<B: StorageBackend>(
         .map_err(|_| reject::custom(CustomRejection::BadRequest("Invalid index".to_owned())))?;
     let hashed_index = IndexationPayload::new(&index_bytes, &[]).unwrap().padded_index();
 
-    let mut fetched = match Fetch::<PaddedIndex, Vec<MessageId>>::fetch(&*storage, &hashed_index)
-        .await
-        .map_err(|_| {
-            reject::custom(CustomRejection::ServiceUnavailable(
-                "can not fetch from storage".to_string(),
-            ))
-        })? {
+    let mut fetched = match Fetch::<PaddedIndex, Vec<MessageId>>::fetch(&*storage, &hashed_index).map_err(|_| {
+        reject::custom(CustomRejection::ServiceUnavailable(
+            "can not fetch from storage".to_string(),
+        ))
+    })? {
         Some(ids) => ids,
         None => vec![],
     };

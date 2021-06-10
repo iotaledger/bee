@@ -35,20 +35,18 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUTS_ED25519, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(outputs_ed25519)
+        .and_then(|addr, storage| async move { outputs_ed25519(addr, storage) })
 }
 
-pub(crate) async fn outputs_ed25519<B: StorageBackend>(
+pub(crate) fn outputs_ed25519<B: StorageBackend>(
     addr: Ed25519Address,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    let mut fetched = match Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&*storage, &addr)
-        .await
-        .map_err(|_| {
-            reject::custom(CustomRejection::ServiceUnavailable(
-                "can not fetch from storage".to_string(),
-            ))
-        })? {
+    let mut fetched = match Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&*storage, &addr).map_err(|_| {
+        reject::custom(CustomRejection::ServiceUnavailable(
+            "can not fetch from storage".to_string(),
+        ))
+    })? {
         Some(ids) => ids,
         None => vec![],
     };

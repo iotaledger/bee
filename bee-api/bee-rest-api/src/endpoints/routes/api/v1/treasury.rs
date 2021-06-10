@@ -29,13 +29,11 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_TREASURY, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(treasury)
+        .and_then(|storage| async move { treasury(storage) })
 }
 
-pub(crate) async fn treasury<B: StorageBackend>(storage: ResourceHandle<B>) -> Result<impl Reply, Rejection> {
-    let treasury = storage::fetch_unspent_treasury_output(&*storage)
-        .await
-        .map_err(|_| CustomRejection::StorageBackend)?;
+pub(crate) fn treasury<B: StorageBackend>(storage: ResourceHandle<B>) -> Result<impl Reply, Rejection> {
+    let treasury = storage::fetch_unspent_treasury_output(&*storage).map_err(|_| CustomRejection::StorageBackend)?;
 
     Ok(warp::reply::json(&SuccessBody::new(TreasuryResponse {
         milestone_id: treasury.milestone_id().to_string(),

@@ -36,7 +36,7 @@ where
 
         while ticker.next().await.is_some() {
             let metrics = DatabaseSizeMetrics {
-                total: storage.size().await.unwrap().unwrap() as u64,
+                total: storage.size().unwrap().unwrap() as u64,
                 ts: 0, // replace with appropriate storage function
             };
             broadcast(metrics.into(), &users).await;

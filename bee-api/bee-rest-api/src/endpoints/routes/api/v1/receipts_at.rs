@@ -34,17 +34,16 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_RECEIPTS_AT, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(receipts_at)
+        .and_then(|milestone_index, storage| async move { receipts_at(milestone_index, storage) })
 }
 
-pub(crate) async fn receipts_at<B: StorageBackend>(
+pub(crate) fn receipts_at<B: StorageBackend>(
     milestone_index: MilestoneIndex,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
     let mut receipts_dto = Vec::new();
 
     if let Some(receipts) = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(&*storage, &milestone_index)
-        .await
         .map_err(|_| CustomRejection::InternalError)?
     {
         for receipt in receipts {

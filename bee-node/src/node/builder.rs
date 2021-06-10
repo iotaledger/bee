@@ -138,9 +138,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
         }
         .with_resource(node_info)
         // TODO block ? Make new async ?
-        .with_resource(
-            futures::executor::block_on(B::start(config.storage)).map_err(|e| Error::StorageBackend(Box::new(e)))?,
-        )
+        .with_resource((B::start(config.storage)).map_err(|e| Error::StorageBackend(Box::new(e)))?)
         .with_resource(Bus::<TypeId>::default()))
     }
 

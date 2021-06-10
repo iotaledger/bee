@@ -29,14 +29,14 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_BALANCE_BECH32, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(balance_bech32)
+        .and_then(|addr, storage| async move { balance_bech32(addr, storage) })
 }
 
-pub(crate) async fn balance_bech32<B: StorageBackend>(
+pub(crate) fn balance_bech32<B: StorageBackend>(
     addr: Address,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
     match addr {
-        Address::Ed25519(a) => balance_ed25519(a, storage).await,
+        Address::Ed25519(a) => balance_ed25519(a, storage),
     }
 }

@@ -102,7 +102,6 @@ impl<B: StorageBackend> Node for BeeNode<B> {
         self.remove_resource::<B>()
             .unwrap()
             .shutdown()
-            .await
             .map_err(|e| Error::StorageBackend(Box::new(e)))?;
 
         Ok(())
