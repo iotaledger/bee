@@ -31,7 +31,7 @@ pub(crate) struct IndexationPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
 }
 
-async fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: MessageId, message: MessageRef) {
+fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: MessageId, message: MessageRef) {
     let indexation = match message.payload() {
         Some(Payload::Indexation(indexation)) => indexation,
         Some(Payload::Transaction(transaction)) => {
@@ -59,7 +59,7 @@ async fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_
     metrics.indexation_payload_inc(1);
 
     if let Err(e) =
-        Insert::<(PaddedIndex, MessageId), ()>::insert(&*storage, &(indexation.padded_index(), message_id), &()).await
+        Insert::<(PaddedIndex, MessageId), ()>::insert(&*storage, &(indexation.padded_index(), message_id), &())
     {
         error!(
             "Inserting indexation payload for message {} failed: {:?}.",
@@ -92,7 +92,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(IndexationPayloadWorkerEvent { message_id, message }) = receiver.next().await {
-                process(&*storage, &metrics, message_id, message).await;
+                process(&*storage, &metrics, message_id, message);
             }
 
             // Before the worker completely stops, the receiver needs to be drained for indexation payloads to be
@@ -103,7 +103,7 @@ where
 
             while let Some(Some(IndexationPayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never()
             {
-                process(&*storage, &metrics, message_id, message).await;
+                process(&*storage, &metrics, message_id, message);
                 count += 1;
             }
 
