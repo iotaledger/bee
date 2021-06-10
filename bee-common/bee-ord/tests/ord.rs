@@ -6,6 +6,12 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 #[test]
+fn empty_is_sorted() {
+    let vec = Vec::<u8>::new();
+    assert!(bee_ord::is_sorted(vec.iter()));
+}
+
+#[test]
 fn is_sorted() {
     let vec = Vec::from([0, 1, 2, 3, 5, 7, 10, 12, 29]);
     assert!(bee_ord::is_sorted(vec.iter()));
@@ -15,6 +21,12 @@ fn is_sorted() {
 fn not_sorted() {
     let vec = Vec::from([0, 1, 2, 3, 5, 7, 10, 29, 12]);
     assert!(!bee_ord::is_sorted(vec.iter()));
+}
+
+#[test]
+fn empty_is_unique_sorted() {
+    let vec = Vec::<u8>::new();
+    assert!(bee_ord::is_unique_sorted(vec.iter()));
 }
 
 #[test]
