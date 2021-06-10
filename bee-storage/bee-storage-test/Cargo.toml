@@ -1,6 +1,6 @@
 [package]
 name = "bee-storage-test"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "A crate to test storage implementation in a generic way"
