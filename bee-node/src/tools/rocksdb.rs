@@ -13,7 +13,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_storage::{
-    access::{AsStream, Exist, Fetch},
+    access::{AsIterator, Exist, Fetch},
     backend::StorageBackend,
 };
 use bee_storage_rocksdb::{
@@ -26,7 +26,6 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
-use futures::{executor, stream::StreamExt};
 use structopt::StructOpt;
 use thiserror::Error;
 
@@ -36,8 +35,8 @@ use std::str::FromStr;
 pub enum RocksdbCommand {
     /// Fetches a value by its key.
     Fetch { key: String },
-    /// Streams a column family.
-    Stream,
+    /// Iterates a column family.
+    Iterator,
 }
 
 #[derive(Debug, Error)]
@@ -60,19 +59,19 @@ pub struct RocksdbTool {
     command: RocksdbCommand,
 }
 
-async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError> {
+fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), RocksdbError> {
     match &tool.column_family[..] {
         CF_SYSTEM => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = u8::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = Fetch::<u8, System>::fetch(storage, &key).await?;
+                let value = Fetch::<u8, System>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<u8, System>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut stream = AsIterator::<u8, System>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = stream.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -81,14 +80,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         CF_MESSAGE_ID_TO_MESSAGE => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MessageId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = Fetch::<MessageId, Message>::fetch(storage, &key).await?;
+                let value = Fetch::<MessageId, Message>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<MessageId, Message>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut stream = AsIterator::<MessageId, Message>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = stream.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -97,14 +96,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         CF_MESSAGE_ID_TO_METADATA => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MessageId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = Fetch::<MessageId, MessageMetadata>::fetch(storage, &key).await?;
+                let value = Fetch::<MessageId, MessageMetadata>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<MessageId, MessageMetadata>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut stream = AsIterator::<MessageId, MessageMetadata>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = stream.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -113,14 +112,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         CF_MESSAGE_ID_TO_MESSAGE_ID => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MessageId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &key).await?;
+                let value = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<(MessageId, MessageId), ()>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut stream = AsIterator::<(MessageId, MessageId), ()>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = stream.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -134,14 +133,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
                 )
                 .map_err(|_| RocksdbError::InvalidKey(key.clone()))?
                 .padded_index();
-                let value = Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &key).await?;
+                let value = Fetch::<PaddedIndex, Vec<MessageId>>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<(PaddedIndex, MessageId), ()>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut stream = AsIterator::<(PaddedIndex, MessageId), ()>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = stream.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -150,14 +149,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         CF_OUTPUT_ID_TO_CREATED_OUTPUT => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = OutputId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = Fetch::<OutputId, CreatedOutput>::fetch(storage, &key).await?;
+                let value = Fetch::<OutputId, CreatedOutput>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<OutputId, CreatedOutput>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut stream = AsIterator::<OutputId, CreatedOutput>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = stream.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -166,14 +165,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         CF_OUTPUT_ID_TO_CONSUMED_OUTPUT => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = OutputId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = Fetch::<OutputId, ConsumedOutput>::fetch(storage, &key).await?;
+                let value = Fetch::<OutputId, ConsumedOutput>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<OutputId, ConsumedOutput>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut stream = AsIterator::<OutputId, ConsumedOutput>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = stream.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -182,14 +181,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         CF_OUTPUT_ID_UNSPENT => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = Unspent::from(OutputId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Exist::<Unspent, ()>::exist(storage, &key).await?;
+                let value = Exist::<Unspent, ()>::exist(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<Unspent, ()>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut stream = AsIterator::<Unspent, ()>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = stream.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -198,14 +197,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         CF_ED25519_ADDRESS_TO_OUTPUT_ID => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = Ed25519Address::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage, &key).await?;
+                let value = Fetch::<Ed25519Address, Vec<OutputId>>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<(Ed25519Address, OutputId), ()>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut stream = AsIterator::<(Ed25519Address, OutputId), ()>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = stream.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -213,10 +212,10 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         },
         CF_LEDGER_INDEX => match &tool.command {
             RocksdbCommand::Fetch { key: _key } => return Err(RocksdbError::UnsupportedCommand),
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<(), LedgerIndex>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut stream = AsIterator::<(), LedgerIndex>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = stream.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -225,14 +224,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         CF_MILESTONE_INDEX_TO_MILESTONE => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, Milestone>::fetch(storage, &key).await?;
+                let value = Fetch::<MilestoneIndex, Milestone>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<MilestoneIndex, Milestone>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut stream = AsIterator::<MilestoneIndex, Milestone>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = stream.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -240,10 +239,10 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         },
         CF_SNAPSHOT_INFO => match &tool.command {
             RocksdbCommand::Fetch { key: _key } => return Err(RocksdbError::UnsupportedCommand),
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<(), SnapshotInfo>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut iterator = AsIterator::<(), SnapshotInfo>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = iterator.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -253,14 +252,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Fetch { key } => {
                 let key =
                     SolidEntryPoint::from(MessageId::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(storage, &key).await?;
+                let value = Fetch::<SolidEntryPoint, MilestoneIndex>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<SolidEntryPoint, MilestoneIndex>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut iterator = AsIterator::<SolidEntryPoint, MilestoneIndex>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = iterator.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -269,14 +268,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         CF_MILESTONE_INDEX_TO_OUTPUT_DIFF => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &key).await?;
+                let value = Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<MilestoneIndex, OutputDiff>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut iterator = AsIterator::<MilestoneIndex, OutputDiff>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = iterator.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -286,14 +285,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
             RocksdbCommand::Fetch { key } => {
                 let key =
                     Address::from(Ed25519Address::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Fetch::<Address, Balance>::fetch(storage, &key).await?;
+                let value = Fetch::<Address, Balance>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<Address, Balance>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut iterator = AsIterator::<Address, Balance>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = iterator.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -302,14 +301,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         CF_MILESTONE_INDEX_TO_UNREFERENCED_MESSAGE => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &key).await?;
+                let value = Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<(MilestoneIndex, UnreferencedMessage), ()>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut iterator = AsIterator::<(MilestoneIndex, UnreferencedMessage), ()>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = iterator.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -318,14 +317,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         CF_MILESTONE_INDEX_TO_RECEIPT => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = MilestoneIndex(u32::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?);
-                let value = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &key).await?;
+                let value = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<(MilestoneIndex, Receipt), ()>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut iterator = AsIterator::<(MilestoneIndex, Receipt), ()>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = iterator.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -334,14 +333,14 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
         CF_SPENT_TO_TREASURY_OUTPUT => match &tool.command {
             RocksdbCommand::Fetch { key } => {
                 let key = bool::from_str(key).map_err(|_| RocksdbError::InvalidKey(key.clone()))?;
-                let value = Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &key).await?;
+                let value = Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &key)?;
 
                 println!("Key: {:?}\nValue: {:?}\n", key, value);
             }
-            RocksdbCommand::Stream => {
-                let mut stream = AsStream::<(bool, TreasuryOutput), ()>::stream(storage).await?;
+            RocksdbCommand::Iterator => {
+                let mut stream = AsIterator::<(bool, TreasuryOutput), ()>::iter(storage)?;
 
-                while let Some(result) = stream.next().await {
+                while let Some(result) = stream.next() {
                     let (key, value) = result?;
                     println!("Key: {:?}\nValue: {:?}\n", key, value);
                 }
@@ -355,12 +354,10 @@ async fn exec_inner(tool: &RocksdbTool, storage: &Storage) -> Result<(), Rocksdb
 }
 
 pub fn exec(tool: &RocksdbTool) -> Result<(), RocksdbError> {
-    executor::block_on(async {
-        let storage = Storage::start(RocksDbConfigBuilder::default().with_path(tool.path.clone()).finish()).await?;
-        let res = exec_inner(tool, &storage).await;
+    let storage = Storage::start(RocksDbConfigBuilder::default().with_path(tool.path.clone()).finish())?;
+    let res = exec_inner(tool, &storage);
 
-        storage.shutdown().await?;
+    storage.shutdown()?;
 
-        res
-    })
+    res
 }
