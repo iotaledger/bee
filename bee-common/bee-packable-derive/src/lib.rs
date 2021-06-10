@@ -43,7 +43,7 @@ pub fn packable(input: TokenStream) -> TokenStream {
 
     match data {
         Data::Struct(data) => {
-            // use `infallible` if there was no pack_error attribute.
+            // Use `Infallible` if there was no pack_error attribute.
             let pack_error_type = pack_error_type.unwrap_or_else(|| quote!(core::convert::Infallible));
             // Use `Infallible` if there was no unpack_error attribute.
             let unpack_error_type = unpack_error_type.unwrap_or_else(|| quote!(core::convert::Infallible));

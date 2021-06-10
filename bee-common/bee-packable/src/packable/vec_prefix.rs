@@ -3,11 +3,11 @@
 
 extern crate alloc;
 
-use crate::wrap::Wrap;
-pub use crate::{
-    error::{PackError, PackPrefixError, UnknownTagError, UnpackError, UnpackPrefixError},
-    packer::{Packer, VecPacker},
-    unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker},
+use crate::{
+    error::{PackError, PackPrefixError, UnpackError, UnpackPrefixError},
+    packer::Packer,
+    unpacker::Unpacker,
+    wrap::Wrap,
     Packable,
 };
 
@@ -81,6 +81,10 @@ macro_rules! impl_wrap_for_vec {
     ($ty:ty) => {
         impl<T> Wrap<VecPrefix<T, $ty>> for Vec<T> {
             fn wrap(&self) -> &VecPrefix<T, $ty> {
+                // SAFETY: `VecPrefix` has a transparent representation and it is composed of one
+                // `Vec` field and an additional zero-sized type field. This means that `VecPrefix`
+                // has the same layout as `Vec` and any valid `Vec` reference can be casted into a
+                // valid `VecPrefix` reference.
                 unsafe { &*(self as *const Vec<T> as *const VecPrefix<T, $ty>) }
             }
         }
