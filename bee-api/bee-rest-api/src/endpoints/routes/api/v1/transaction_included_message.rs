@@ -55,13 +55,11 @@ pub(crate) async fn transaction_included_message<B: StorageBackend>(
     // Safe to unwrap since 0 is a valid index;
     let output_id = OutputId::new(transaction_id, 0).unwrap();
 
-    match Fetch::<OutputId, CreatedOutput>::fetch(&*storage, &output_id)
-        .await
-        .map_err(|_| {
-            reject::custom(CustomRejection::ServiceUnavailable(
-                "Can not fetch from storage".to_string(),
-            ))
-        })? {
+    match Fetch::<OutputId, CreatedOutput>::fetch(&*storage, &output_id).map_err(|_| {
+        reject::custom(CustomRejection::ServiceUnavailable(
+            "Can not fetch from storage".to_string(),
+        ))
+    })? {
         Some(output) => message::message(*output.message_id(), tangle).await,
         None => {
             return Err(reject::custom(CustomRejection::NotFound(

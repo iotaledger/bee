@@ -34,27 +34,23 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUT, public_routes, allowed_ips))
         .and(with_storage(storage))
-        .and_then(output)
+        .and_then(|output_id, storage| async move { output(output_id, storage) })
 }
 
-pub(crate) async fn output<B: StorageBackend>(
+pub(crate) fn output<B: StorageBackend>(
     output_id: OutputId,
     storage: ResourceHandle<B>,
 ) -> Result<impl Reply, Rejection> {
-    let output = Fetch::<OutputId, CreatedOutput>::fetch(&*storage, &output_id)
-        .await
-        .map_err(|_| {
-            reject::custom(CustomRejection::ServiceUnavailable(
-                "can not fetch from storage".to_string(),
-            ))
-        })?;
-    let is_spent = Fetch::<OutputId, ConsumedOutput>::fetch(&*storage, &output_id)
-        .await
-        .map_err(|_| {
-            reject::custom(CustomRejection::ServiceUnavailable(
-                "can not fetch from storage".to_string(),
-            ))
-        })?;
+    let output = Fetch::<OutputId, CreatedOutput>::fetch(&*storage, &output_id).map_err(|_| {
+        reject::custom(CustomRejection::ServiceUnavailable(
+            "can not fetch from storage".to_string(),
+        ))
+    })?;
+    let is_spent = Fetch::<OutputId, ConsumedOutput>::fetch(&*storage, &output_id).map_err(|_| {
+        reject::custom(CustomRejection::ServiceUnavailable(
+            "can not fetch from storage".to_string(),
+        ))
+    })?;
     match output {
         Some(output) => Ok(warp::reply::json(&SuccessBody::new(OutputResponse {
             message_id: output.message_id().to_string(),
