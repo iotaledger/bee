@@ -17,10 +17,10 @@ use bee_message::{
 use bee_storage::access::AsIterator;
 
 fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
+    let iterator = AsIterator::<Unspent, ()>::iter(storage).map_err(|e| Error::Storage(Box::new(e)))?;
     let mut supply: u64 = 0;
-    let mut iterator = AsIterator::<Unspent, ()>::iter(storage).map_err(|e| Error::Storage(Box::new(e)))?;
 
-    while let Some(result) = iterator.next() {
+    for result in iterator {
         let (output_id, _) = result.map_err(|e| Error::Storage(Box::new(e)))?;
         let output = storage::fetch_output(storage, &*output_id)?.ok_or(Error::MissingUnspentOutput(output_id))?;
 
@@ -47,10 +47,10 @@ fn validate_ledger_unspent_state<B: StorageBackend>(storage: &B, treasury: u64) 
 }
 
 fn validate_ledger_balance_state<B: StorageBackend>(storage: &B, treasury: u64) -> Result<(), Error> {
+    let iterator = AsIterator::<Address, Balance>::iter(storage).map_err(|e| Error::Storage(Box::new(e)))?;
     let mut supply: u64 = 0;
-    let mut iterator = AsIterator::<Address, Balance>::iter(storage).map_err(|e| Error::Storage(Box::new(e)))?;
 
-    while let Some(result) = iterator.next() {
+    for result in iterator {
         let (address, balance) = result.map_err(|e| Error::Storage(Box::new(e)))?;
         if balance.dust_outputs() > dust_outputs_max(balance.dust_allowance()) {
             return Err(Error::InvalidLedgerDustState(address, balance));

@@ -16,6 +16,7 @@ use bee_message::{
 use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
 use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 
+#[allow(clippy::type_complexity)]
 impl MultiFetch<u8, System> for Storage {
     fn multi_fetch(
         &self,

@@ -75,7 +75,7 @@ impl<B: StorageBackend> Hooks<MessageMetadata> for StorageHooks<B> {
 impl<B: StorageBackend> StorageHooks<B> {
     fn get_milestone(&self, idx: &MilestoneIndex) -> Result<Option<Milestone>, B::Error> {
         trace!("Attempted to fetch milestone {:?}", idx);
-        Ok(self.storage.fetch(idx)?)
+        self.storage.fetch(idx)
     }
 
     fn insert_milestone(&self, idx: MilestoneIndex, milestone: &Milestone) -> Result<(), B::Error> {
