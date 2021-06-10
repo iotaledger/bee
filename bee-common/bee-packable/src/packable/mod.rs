@@ -25,6 +25,7 @@ pub use crate::{
 pub use bee_packable_derive::Packable;
 
 use alloc::vec::Vec;
+use core::convert::AsRef;
 
 /// A type that can be packed and unpacked.
 ///
@@ -56,4 +57,10 @@ pub trait Packable: Sized {
 
     /// Unpacks this value from the given `Unpacker`.
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>>;
+
+    /// Unpacks this value from a type that implements `AsRef<[u8]>`.
+    fn unpack_from_bytes<T: AsRef<[u8]>>(bytes: T) -> Result<Self, UnpackError<Self::Error, UnexpectedEOF>> {
+        let mut unpacker = SliceUnpacker::new(bytes.as_ref());
+        Packable::unpack(&mut unpacker)
+    }
 }
