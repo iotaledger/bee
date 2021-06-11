@@ -204,9 +204,10 @@ pack_new_vec_prefix!(pack_new_vec_prefix_u128, u128);
 fn round_trip<P>(value: P)
 where
     P: Packable + Eq + Debug,
-    P::Error: Debug,
+    P::PackError: Debug,
+    P::UnpackError: Debug,
 {
-    let bytes = value.pack_new();
+    let bytes = value.pack_new().unwrap();
     let unpacked = Packable::unpack_from_bytes(&bytes).unwrap();
 
     assert_eq!(value, unpacked);
