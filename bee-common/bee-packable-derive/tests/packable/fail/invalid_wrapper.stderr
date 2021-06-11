@@ -1,0 +1,70 @@
+error[E0277]: the trait bound `Vec<u32>: Wrap<VecPrefix<u64, u8>>` is not satisfied
+  --> $DIR/invalid_wrapper.rs:10:10
+   |
+10 | #[derive(Packable)]
+   |          ^^^^^^^^ the trait `Wrap<VecPrefix<u64, u8>>` is not implemented for `Vec<u32>`
+   |
+   = help: the following implementations were found:
+             <Vec<T> as Wrap<VecPrefix<T, u128>>>
+             <Vec<T> as Wrap<VecPrefix<T, u16>>>
+             <Vec<T> as Wrap<VecPrefix<T, u32>>>
+             <Vec<T> as Wrap<VecPrefix<T, u64>>>
+             <Vec<T> as Wrap<VecPrefix<T, u8>>>
+   = note: required by `wrap`
+   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `Vec<u32>: From<VecPrefix<u64, u8>>` is not satisfied
+  --> $DIR/invalid_wrapper.rs:10:10
+   |
+10 | #[derive(Packable)]
+   |          ^^^^^^^^ the trait `From<VecPrefix<u64, u8>>` is not implemented for `Vec<u32>`
+   |
+   = help: the following implementations were found:
+             <Vec<T, A> as From<Box<[T], A>>>
+             <Vec<T> as From<&[T]>>
+             <Vec<T> as From<&mut [T]>>
+             <Vec<T> as From<BinaryHeap<T>>>
+           and 6 others
+   = note: required because of the requirements on the impl of `Into<Vec<u32>>` for `VecPrefix<u64, u8>`
+   = note: required by `wrap`
+   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: `?` couldn't convert the error to `PackError<Infallible, <P as bee_packable::Packer>::Error>`
+  --> $DIR/invalid_wrapper.rs:10:17
+   |
+10 | #[derive(Packable)]
+   |                 ^ the trait `From<PackError<PackPrefixError<Infallible, u8>, <P as bee_packable::Packer>::Error>>` is not implemented for `PackError<Infallible, <P as bee_packable::Packer>::Error>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = note: required by `from`
+   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider introducing a `where` bound, but there might be an alternative better way to express this requirement
+   |
+13 | pub struct Foo where PackError<Infallible, <P as bee_packable::Packer>::Error>: From<PackError<PackPrefixError<Infallible, u8>, <P as bee_packable::Packer>::Error>> {
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0277]: the trait bound `Vec<u32>: From<VecPrefix<u64, u8>>` is not satisfied
+  --> $DIR/invalid_wrapper.rs:10:10
+   |
+10 | #[derive(Packable)]
+   |          ^^^^^^^^ the trait `From<VecPrefix<u64, u8>>` is not implemented for `Vec<u32>`
+   |
+   = help: the following implementations were found:
+             <Vec<T, A> as From<Box<[T], A>>>
+             <Vec<T> as From<&[T]>>
+             <Vec<T> as From<&mut [T]>>
+             <Vec<T> as From<BinaryHeap<T>>>
+           and 6 others
+   = note: required because of the requirements on the impl of `Into<Vec<u32>>` for `VecPrefix<u64, u8>`
+   = note: required by `into`
+   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `Infallible: From<UnpackPrefixError<Infallible, u8>>` is not satisfied
+  --> $DIR/invalid_wrapper.rs:10:10
+   |
+10 | #[derive(Packable)]
+   |          ^^^^^^^^ the trait `From<UnpackPrefixError<Infallible, u8>>` is not implemented for `Infallible`
+   |
+   = help: the following implementations were found:
+             <Infallible as From<!>>
+   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use crate::{
-    error::{UnknownTagError, UnpackError},
+    error::{PackError, UnknownTagError, UnpackError},
     packer::{Packer, VecPacker},
     unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker},
     Packable,
@@ -26,13 +26,14 @@ impl<E> From<E> for UnpackOptionError<E> {
 /// Options are packed and unpacked using `0u8` as the prefix for `None` and `1u8` as the prefix
 /// for `Some`.
 impl<T: Packable> Packable for Option<T> {
-    type Error = UnpackOptionError<T::Error>;
+    type PackError = T::PackError;
+    type UnpackError = UnpackOptionError<T::UnpackError>;
 
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), P::Error> {
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         match self {
-            None => 0u8.pack(packer),
+            None => Ok(0u8.pack(packer).map_err(PackError::infallible)?),
             Some(item) => {
-                1u8.pack(packer)?;
+                1u8.pack(packer).map_err(PackError::infallible)?;
                 item.pack(packer)
             }
         }
@@ -46,11 +47,11 @@ impl<T: Packable> Packable for Option<T> {
             }
     }
 
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>> {
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         match u8::unpack(unpacker).map_err(UnpackError::infallible)? {
             0 => Ok(None),
             1 => Ok(Some(T::unpack(unpacker).map_err(|err| err.coerce())?)),
-            n => Err(UnpackError::Packable(Self::Error::UnknownTag(n))),
+            n => Err(UnpackError::Packable(Self::UnpackError::UnknownTag(n))),
         }
     }
 }

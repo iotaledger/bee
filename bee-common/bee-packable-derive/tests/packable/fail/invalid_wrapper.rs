@@ -3,19 +3,17 @@
 
 #![allow(unused_imports)]
 
-use bee_packable::Packable;
+use bee_packable::{VecPrefix, Packable};
 
 use core::convert::Infallible;
 
 #[derive(Packable)]
-#[packable(tag_type = [u8; 32])]
 #[packable(pack_error = Infallible)]
 #[packable(unpack_error = Infallible)]
-pub enum OptI32 {
-    #[packable(tag = 0)]
-    None,
-    #[packable(tag = 1)]
-    Some(i32),
+pub struct Foo {
+    #[packable(wrapper = VecPrefix<u64, u8>)]
+    inner: Vec<u32>,
 }
 
 fn main() {}
+

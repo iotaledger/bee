@@ -10,7 +10,8 @@ use core::convert::Infallible;
 struct NonPackable;
 
 #[derive(Packable)]
-#[packable(error = Infallible)]
+#[packable(pack_error = Infallible)]
+#[packable(unpack_error = Infallible)]
 pub struct Wrapper(NonPackable);
 
 fn main() {}

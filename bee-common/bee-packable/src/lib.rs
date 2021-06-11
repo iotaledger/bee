@@ -10,5 +10,6 @@ pub mod error;
 pub mod packable;
 pub mod packer;
 pub mod unpacker;
+pub mod wrap;
 
 pub use packable::*;

@@ -11,7 +11,8 @@ use core::{fmt::Debug, mem::size_of};
 fn pack_checked<P>(value: P) -> VecPacker
 where
     P: Packable + Eq + Debug,
-    P::Error: Debug,
+    P::UnpackError: Debug,
+    P::PackError: Debug,
 {
     let mut packer = VecPacker::default();
     value.pack(&mut packer).unwrap();
@@ -90,9 +91,10 @@ fn packable_array() {
 fn pack_new_checked<P>(value: P) -> Vec<u8>
 where
     P: Packable + Eq + Debug,
-    P::Error: Debug,
+    P::PackError: Debug,
+    P::UnpackError: Debug,
 {
-    let bytes = value.pack_new();
+    let bytes = value.pack_new().unwrap();
 
     let mut unpacker = SliceUnpacker::new(&bytes.as_slice());
     let result: P = Packable::unpack(&mut unpacker).unwrap();

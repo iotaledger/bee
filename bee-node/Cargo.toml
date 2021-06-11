@@ -1,0 +1,21 @@
+[package]
+name = "bee-node"
+version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
+edition = "2018"
+description = "A node implementation to join the IOTA networks"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "framework", "node" ]
+homepage = "https://www.iota.org"
+
+[dependencies]
+tokio = { version = "1.6", features = [ "macros", "rt-multi-thread" ] }
+
+[[bin]]
+name = "bee"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"

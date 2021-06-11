@@ -23,9 +23,17 @@ pub enum Foo {
 }
 
 fn main() {
-    assert_eq!(TypeId::of::<Infallible>(), TypeId::of::<<Point as Packable>::Error>());
+    assert_eq!(
+        TypeId::of::<Infallible>(),
+        TypeId::of::<<Point as Packable>::PackError>()
+    );
+    assert_eq!(TypeId::of::<Infallible>(), TypeId::of::<<Foo as Packable>::PackError>());
+    assert_eq!(
+        TypeId::of::<Infallible>(),
+        TypeId::of::<<Point as Packable>::UnpackError>()
+    );
     assert_eq!(
         TypeId::of::<UnknownTagError<u8>>(),
-        TypeId::of::<<Foo as Packable>::Error>()
+        TypeId::of::<<Foo as Packable>::UnpackError>()
     );
 }

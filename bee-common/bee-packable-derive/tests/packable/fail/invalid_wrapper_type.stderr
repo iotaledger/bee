@@ -1,0 +1,5 @@
+error: The `wrapper` attribute requires a type for its value.
+  --> $DIR/invalid_wrapper_type.rs:14:15
+   |
+14 |     #[packable(wrapper = 1)]
+   |               ^^^^^^^^^^^^^

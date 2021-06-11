@@ -8,14 +8,11 @@ use bee_packable::Packable;
 use core::convert::Infallible;
 
 #[derive(Packable)]
-#[packable(tag_type = [u8; 32])]
 #[packable(pack_error = Infallible)]
-#[packable(unpack_error = Infallible)]
-pub enum OptI32 {
-    #[packable(tag = 0)]
-    None,
-    #[packable(tag = 1)]
-    Some(i32),
+#[packable(unpack_error = 1)]
+pub struct Point {
+    x: u32,
+    y: u32,
 }
 
 fn main() {}
