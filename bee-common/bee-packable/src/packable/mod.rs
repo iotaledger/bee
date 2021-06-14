@@ -52,7 +52,7 @@ pub trait Packable: Sized {
     fn packed_len(&self) -> usize;
 
     /// Convenience method that packs this value into a `Vec<u8>`.
-    fn pack_new(&self) -> Result<Vec<u8>, Self::PackError> {
+    fn pack_to_vec(&self) -> Result<Vec<u8>, Self::PackError> {
         let mut packer = VecPacker::with_capacity(self.packed_len());
 
         // Packing to bytes will not fail but packing the value itself might.
@@ -68,7 +68,7 @@ pub trait Packable: Sized {
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>>;
 
     /// Unpacks this value from a type that implements `AsRef<[u8]>`.
-    fn unpack_from_bytes<T: AsRef<[u8]>>(bytes: T) -> Result<Self, UnpackError<Self::UnpackError, UnexpectedEOF>> {
+    fn unpack_from_slice<T: AsRef<[u8]>>(bytes: T) -> Result<Self, UnpackError<Self::UnpackError, UnexpectedEOF>> {
         let mut unpacker = SliceUnpacker::new(bytes.as_ref());
         Packable::unpack(&mut unpacker)
     }
