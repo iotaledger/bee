@@ -1,4 +1,4 @@
-name: Missing license
+name: Missing files
 
 on:
   push:
@@ -13,9 +13,9 @@ on:
       - coordicide
 
 jobs:
-  missing_license:
+  missing_files:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Run missing license check
-        run: bash .github/workflows/scripts/missing_license.sh
+      - name: Run missing files check
+        run: bash .github/workflows/scripts/missing_files.sh
