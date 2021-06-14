@@ -45,7 +45,7 @@ pub trait Packable: Sized {
     /// `UnknownTagError` when implementing this trait for an enum.
     type UnpackError;
 
-    /// Pack this value into the given `Packer`.
+    /// Packs this value into the given `Packer`.
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>>;
 
     /// The size of the value in bytes after being packed.
@@ -64,7 +64,7 @@ pub trait Packable: Sized {
         Ok(packer.into_vec())
     }
 
-    /// Unpack this value from the given `Unpacker`.
+    /// Unpacks this value from the given `Unpacker`.
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>>;
 
     /// Unpacks this value from a type that implements `AsRef<[u8]>`.
