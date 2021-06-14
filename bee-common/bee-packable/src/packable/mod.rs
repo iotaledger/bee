@@ -25,6 +25,7 @@ pub use crate::{
 pub use bee_packable_derive::Packable;
 
 use alloc::vec::Vec;
+use core::convert::AsRef;
 
 /// A type that can be packed and unpacked.
 ///
@@ -44,14 +45,14 @@ pub trait Packable: Sized {
     /// `UnknownTagError` when implementing this trait for an enum.
     type UnpackError;
 
-    /// Pack this value into the given `Packer`.
+    /// Packs this value into the given `Packer`.
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>>;
 
     /// The size of the value in bytes after being packed.
     fn packed_len(&self) -> usize;
 
     /// Convenience method that packs this value into a `Vec<u8>`.
-    fn pack_new(&self) -> Result<Vec<u8>, Self::PackError> {
+    fn pack_to_vec(&self) -> Result<Vec<u8>, Self::PackError> {
         let mut packer = VecPacker::with_capacity(self.packed_len());
 
         // Packing to bytes will not fail but packing the value itself might.
@@ -63,6 +64,12 @@ pub trait Packable: Sized {
         Ok(packer.into_vec())
     }
 
-    /// Unpack this value from the given `Unpacker`.
+    /// Unpacks this value from the given `Unpacker`.
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>>;
+
+    /// Unpacks this value from a type that implements `AsRef<[u8]>`.
+    fn unpack_from_slice<T: AsRef<[u8]>>(bytes: T) -> Result<Self, UnpackError<Self::UnpackError, UnexpectedEOF>> {
+        let mut unpacker = SliceUnpacker::new(bytes.as_ref());
+        Packable::unpack(&mut unpacker)
+    }
 }

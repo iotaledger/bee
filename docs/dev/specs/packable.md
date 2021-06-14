@@ -100,9 +100,11 @@ pub trait Packable: Sized {
 
     fn packed_len(&self) -> usize;
 
-    fn pack_new(&self) -> Result<Vec<u8>, Self::PackError> { ... }
+    fn pack_to_vec(&self) -> Result<Vec<u8>, Self::PackError> { ... }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::Error, U::Error>>;
+
+    fn unpack_from_slice<T: AsRef<[u8]>>(bytes: T) -> Result<Self, UnpackError<Self::Error, UnexpectedEOF>> { ... }
 }
 ```
 
@@ -116,8 +118,12 @@ pub trait Packable: Sized {
   This has to match the number of bytes written using `pack` to avoid
   inconsistencies.
 
+- The `pack_to_vec` method provides convenience functionality to easily serialize the current value into a `Vec<u8>`.
+
 - The `unpack` method deserializes a value using an `Unpacker` to read the
   bytes.
+
+- The `unpack_from_slice` method provides convenience functionality to deserialize a value from any type that implements `AsRef<[u8]>`.
 
 ## Error handling
 
