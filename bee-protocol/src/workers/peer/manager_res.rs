@@ -11,7 +11,7 @@ use bee_runtime::{node::Node, worker::Worker};
 use async_trait::async_trait;
 use futures::channel::oneshot;
 use log::debug;
-use tokio::sync::{RwLock, RwLockReadGuard};
+use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use std::{collections::HashMap, convert::Infallible, sync::Arc};
 
@@ -72,6 +72,13 @@ impl PeerManager {
         RwLockReadGuard::try_map(self.0.read().await, |map| map.peers.get(id)).ok()
     }
 
+    pub async fn get_mut(
+        &self,
+        id: &PeerId,
+    ) -> Option<impl std::ops::DerefMut<Target = (Arc<Peer>, Option<(GossipSender, oneshot::Sender<()>)>)> + '_> {
+        RwLockWriteGuard::try_map(self.0.write().await, |map| map.peers.get_mut(id)).ok()
+    }
+
     pub async fn get_all(&self) -> Vec<Arc<Peer>> {
         self.0
             .read()
@@ -82,15 +89,6 @@ impl PeerManager {
             .cloned()
             .collect()
     }
-
-    // // TODO find a way to only return a ref to the peer.
-    // TODO implement
-    // pub(crate) async fn get_mut(
-    //     &self,
-    //     id: &PeerId,
-    // ) -> Option<impl std::ops::DerefMut<Target = (Arc<Peer>, Option<(MessageSender, oneshot::Sender<()>)>)> + '_> {
-    //     RwLockWriteGuard::try_map(self.peers.write().await, |map| map.get(id)).ok()
-    // }
 
     pub(crate) async fn add(&self, peer: Arc<Peer>) {
         debug!("Added peer {}.", peer.id());

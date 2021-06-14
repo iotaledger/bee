@@ -85,7 +85,7 @@ where
                         gossip_out: sender,
                     } => {
                         // TODO write a get_mut peer manager method
-                        if let Some(peer) = peer_manager.0.write().await.peers.get_mut(&peer_id) {
+                        if let Some(mut peer) = peer_manager.get_mut(&peer_id).await {
                             let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
                             peer.0.set_connected(true);
