@@ -3,8 +3,8 @@
 
 use crate::backend::StorageBackend;
 
-/// `MultiFetch<K, V>` trait extends the `StorageBackend` with `multi_fetch` operation for the (key: K, value: V pair);
-/// therefore, it should be explicitly implemented for the corresponding `StorageBackend`.
+/// `MultiFetch<'a, K, V>` trait extends the `StorageBackend` with `multi_fetch` operation for the (key: K, value: V)
+/// pair; therefore, it should be explicitly implemented for the corresponding `StorageBackend`.
 pub trait MultiFetch<'a, K, V>: StorageBackend {
     /// The iterator associated type over values.
     type Iter: 'a + Iterator<Item = Result<Option<V>, Self::Error>>;
