@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.4.0 - 2021-06-15
+
+### Changed
+
+- `MultiFetch::multi_fetch` returns an `Iterator` instead of a `Vec`;
+
 ## 0.3.0 - 2021-06-10
 
 ### Changed
