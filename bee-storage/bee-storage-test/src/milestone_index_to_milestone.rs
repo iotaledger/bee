@@ -12,7 +12,7 @@ pub trait StorageBackend:
     backend::StorageBackend
     + Exist<MilestoneIndex, Milestone>
     + Fetch<MilestoneIndex, Milestone>
-    + MultiFetch<MilestoneIndex, Milestone>
+    + for<'a> MultiFetch<'a, MilestoneIndex, Milestone>
     + Insert<MilestoneIndex, Milestone>
     + Delete<MilestoneIndex, Milestone>
     + BatchBuilder
@@ -26,7 +26,7 @@ impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Exist<MilestoneIndex, Milestone>
         + Fetch<MilestoneIndex, Milestone>
-        + MultiFetch<MilestoneIndex, Milestone>
+        + for<'a> MultiFetch<'a, MilestoneIndex, Milestone>
         + Insert<MilestoneIndex, Milestone>
         + Delete<MilestoneIndex, Milestone>
         + BatchBuilder
@@ -45,7 +45,9 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index]).unwrap();
+    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -58,7 +60,9 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
             .unwrap(),
         milestone
     );
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index]).unwrap();
+    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &milestone));
 
@@ -70,7 +74,9 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index]).unwrap();
+    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &[index])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -106,7 +112,9 @@ pub fn milestone_index_to_milestone_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &indexes).unwrap();
+    let results = MultiFetch::<MilestoneIndex, Milestone>::multi_fetch(storage, &indexes)
+        .unwrap()
+        .collect::<Vec<_>>();
 
     assert_eq!(results.len(), indexes.len());
 

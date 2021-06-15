@@ -17,40 +17,41 @@ use bee_storage::{access::MultiFetch, backend::StorageBackend, system::System};
 use bee_tangle::{metadata::MessageMetadata, solid_entry_point::SolidEntryPoint};
 
 #[allow(clippy::type_complexity)]
-impl MultiFetch<u8, System> for Storage {
+impl<'a> MultiFetch<'a, u8, System> for Storage {
     fn multi_fetch(
-        &self,
-        keys: &[u8],
-    ) -> Result<Vec<Result<Option<System>, <Self as StorageBackend>::Error>>, <Self as StorageBackend>::Error> {
-        Ok(keys
-            .iter()
-            .map(|k| self.inner.get(k.pack_new()))
-            .map(|r| {
+        &'a self,
+        keys: &'a [u8],
+    ) -> Result<
+        Box<dyn Iterator<Item = Result<Option<System>, <Self as StorageBackend>::Error>> + 'a>,
+        <Self as StorageBackend>::Error,
+    > {
+        Ok(Box::new(keys.iter().map(move |k| self.inner.get(k.pack_new())).map(
+            |r| {
                 r.map(|o| o.map(|v| System::unpack_unchecked(&mut v.as_ref()).unwrap()))
                     .map_err(|e| e.into())
-            })
-            .collect())
+            },
+        )))
     }
 }
 
 macro_rules! impl_multi_fetch {
     ($key:ty, $value:ty, $cf:expr) => {
-        impl MultiFetch<$key, $value> for Storage {
+        impl<'a> MultiFetch<'a, $key, $value> for Storage {
             fn multi_fetch(
-                &self,
-                keys: &[$key],
-            ) -> Result<Vec<Result<Option<$value>, <Self as StorageBackend>::Error>>, <Self as StorageBackend>::Error>
-            {
+                &'a self,
+                keys: &'a [$key],
+            ) -> Result<
+                Box<dyn Iterator<Item = Result<Option<$value>, <Self as StorageBackend>::Error>> + 'a>,
+                <Self as StorageBackend>::Error,
+            > {
                 let tree = self.inner.open_tree($cf)?;
 
-                Ok(keys
-                    .iter()
-                    .map(|k| tree.get(k.pack_new()))
-                    .map(|r| {
+                Ok(Box::new(keys.iter().map(move |k| tree.get(k.pack_new())).map(
+                    |r| {
                         r.map(|o| o.map(|v| <$value>::unpack_unchecked(&mut v.as_ref()).unwrap()))
                             .map_err(|e| e.into())
-                    })
-                    .collect())
+                    },
+                )))
             }
         }
     };

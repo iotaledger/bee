@@ -13,7 +13,7 @@ pub trait StorageBackend:
     backend::StorageBackend
     + Exist<MessageId, MessageMetadata>
     + Fetch<MessageId, MessageMetadata>
-    + MultiFetch<MessageId, MessageMetadata>
+    + for<'a> MultiFetch<'a, MessageId, MessageMetadata>
     + Insert<MessageId, MessageMetadata>
     + Delete<MessageId, MessageMetadata>
     + BatchBuilder
@@ -27,7 +27,7 @@ impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Exist<MessageId, MessageMetadata>
         + Fetch<MessageId, MessageMetadata>
-        + MultiFetch<MessageId, MessageMetadata>
+        + for<'a> MultiFetch<'a, MessageId, MessageMetadata>
         + Insert<MessageId, MessageMetadata>
         + Delete<MessageId, MessageMetadata>
         + BatchBuilder
@@ -46,7 +46,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id]).unwrap();
+    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -59,7 +61,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
             .unwrap(),
         metadata
     );
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id]).unwrap();
+    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &metadata));
 
@@ -71,7 +75,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id]).unwrap();
+    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &[message_id])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -107,7 +113,9 @@ pub fn message_id_to_metadata_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &message_ids).unwrap();
+    let results = MultiFetch::<MessageId, MessageMetadata>::multi_fetch(storage, &message_ids)
+        .unwrap()
+        .collect::<Vec<_>>();
 
     assert_eq!(results.len(), message_ids.len());
 

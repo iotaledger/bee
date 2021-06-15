@@ -14,7 +14,7 @@ pub trait StorageBackend:
     backend::StorageBackend
     + Exist<MilestoneIndex, OutputDiff>
     + Fetch<MilestoneIndex, OutputDiff>
-    + MultiFetch<MilestoneIndex, OutputDiff>
+    + for<'a> MultiFetch<'a, MilestoneIndex, OutputDiff>
     + Insert<MilestoneIndex, OutputDiff>
     + Delete<MilestoneIndex, OutputDiff>
     + BatchBuilder
@@ -28,7 +28,7 @@ impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Exist<MilestoneIndex, OutputDiff>
         + Fetch<MilestoneIndex, OutputDiff>
-        + MultiFetch<MilestoneIndex, OutputDiff>
+        + for<'a> MultiFetch<'a, MilestoneIndex, OutputDiff>
         + Insert<MilestoneIndex, OutputDiff>
         + Delete<MilestoneIndex, OutputDiff>
         + BatchBuilder
@@ -47,7 +47,9 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index]).unwrap();
+    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -61,7 +63,9 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
             .pack_new(),
         output_diff.pack_new()
     );
-    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index]).unwrap();
+    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &output_diff));
 
@@ -73,7 +77,9 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index]).unwrap();
+    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &[index])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -109,7 +115,9 @@ pub fn milestone_index_to_output_diff_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &indexes).unwrap();
+    let results = MultiFetch::<MilestoneIndex, OutputDiff>::multi_fetch(storage, &indexes)
+        .unwrap()
+        .collect::<Vec<_>>();
 
     assert_eq!(results.len(), indexes.len());
 

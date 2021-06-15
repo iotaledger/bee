@@ -14,7 +14,7 @@ pub trait StorageBackend:
     backend::StorageBackend
     + Exist<Address, Balance>
     + Fetch<Address, Balance>
-    + MultiFetch<Address, Balance>
+    + for<'a> MultiFetch<'a, Address, Balance>
     + Insert<Address, Balance>
     + Delete<Address, Balance>
     + BatchBuilder
@@ -28,7 +28,7 @@ impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Exist<Address, Balance>
         + Fetch<Address, Balance>
-        + MultiFetch<Address, Balance>
+        + for<'a> MultiFetch<'a, Address, Balance>
         + Insert<Address, Balance>
         + Delete<Address, Balance>
         + BatchBuilder
@@ -43,7 +43,9 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<Address, Balance>::exist(storage, &address).unwrap());
     assert!(Fetch::<Address, Balance>::fetch(storage, &address).unwrap().is_none());
-    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address]).unwrap();
+    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -57,7 +59,9 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
             .pack_new(),
         balance.pack_new()
     );
-    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address]).unwrap();
+    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &balance));
 
@@ -65,7 +69,9 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     assert!(!Exist::<Address, Balance>::exist(storage, &address).unwrap());
     assert!(Fetch::<Address, Balance>::fetch(storage, &address).unwrap().is_none());
-    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address]).unwrap();
+    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &[address])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -101,7 +107,9 @@ pub fn address_to_balance_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &addresses).unwrap();
+    let results = MultiFetch::<Address, Balance>::multi_fetch(storage, &addresses)
+        .unwrap()
+        .collect::<Vec<_>>();
 
     assert_eq!(results.len(), addresses.len());
 

@@ -13,7 +13,7 @@ pub trait StorageBackend:
     backend::StorageBackend
     + Exist<OutputId, ConsumedOutput>
     + Fetch<OutputId, ConsumedOutput>
-    + MultiFetch<OutputId, ConsumedOutput>
+    + for<'a> MultiFetch<'a, OutputId, ConsumedOutput>
     + Insert<OutputId, ConsumedOutput>
     + Delete<OutputId, ConsumedOutput>
     + BatchBuilder
@@ -27,7 +27,7 @@ impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Exist<OutputId, ConsumedOutput>
         + Fetch<OutputId, ConsumedOutput>
-        + MultiFetch<OutputId, ConsumedOutput>
+        + for<'a> MultiFetch<'a, OutputId, ConsumedOutput>
         + Insert<OutputId, ConsumedOutput>
         + Delete<OutputId, ConsumedOutput>
         + BatchBuilder
@@ -46,7 +46,9 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &[output_id]).unwrap();
+    let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &[output_id])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -59,7 +61,9 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
             .unwrap(),
         consumed_output
     );
-    let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &[output_id]).unwrap();
+    let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &[output_id])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &consumed_output));
 
@@ -71,7 +75,9 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &[output_id]).unwrap();
+    let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &[output_id])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -107,7 +113,9 @@ pub fn output_id_to_consumed_output_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &output_ids).unwrap();
+    let results = MultiFetch::<OutputId, ConsumedOutput>::multi_fetch(storage, &output_ids)
+        .unwrap()
+        .collect::<Vec<_>>();
 
     assert_eq!(results.len(), output_ids.len());
 
