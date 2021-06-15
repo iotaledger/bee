@@ -35,7 +35,12 @@ struct Fragments {
 impl Fragments {
     /// Create a new set of fragments from the fields of a record with name `name` and fields
     /// `fields`. The `NAMED` parameter specifies if the fields of the record are named or not.
-    fn new<const NAMED: bool>(name: TokenStream, fields: &Punctuated<Field, Comma>) -> Self {
+    fn new<const NAMED: bool>(
+        name: TokenStream,
+        fields: &Punctuated<Field, Comma>,
+        pack_error_type: &mut Option<TokenStream>,
+        unpack_error_type: &mut Option<TokenStream>,
+    ) -> Self {
         let len = fields.len();
         // The type of each field of the record.
         let mut types = Vec::with_capacity(len);
@@ -57,12 +62,21 @@ impl Fragments {
                 labels.push(proc_macro2::Literal::u64_unsuffixed(index as u64).to_token_stream());
             }
 
-            match parse_attr::<Type>("wrapper", &attrs) {
-                Some(Ok(ty)) => wrappers.push(ty),
+            let wrapper = match parse_attr::<Type>("wrapper", &attrs) {
+                Some(Ok(ty)) => ty,
                 Some(Err(span)) => abort!(span, "The `wrapper` attribute requires a type for its value."),
-                None => wrappers.push(ty.clone()),
+                None => ty.clone(),
             };
 
+            if pack_error_type.is_none() {
+                *pack_error_type = Some(quote!(<#wrapper as Packable>::PackError));
+            }
+
+            if unpack_error_type.is_none() {
+                *unpack_error_type = Some(quote!(<#wrapper as Packable>::UnpackError));
+            }
+
+            wrappers.push(wrapper);
             types.push(ty);
             // We will use variables called `field_<index>` for the values of each field.
             values.push(format_ident!("field_{}", index));
@@ -190,10 +204,19 @@ impl Fragments {
 }
 
 /// Generate the bodies of `pack`, `packed_len` and `unpack` for a struct with fields `fields`.
-pub(crate) fn gen_bodies_for_struct(fields: Fields) -> (TokenStream, TokenStream, TokenStream) {
+pub(crate) fn gen_bodies_for_struct(
+    fields: Fields,
+    pack_error_type: &mut Option<TokenStream>,
+    unpack_error_type: &mut Option<TokenStream>,
+) -> (TokenStream, TokenStream, TokenStream) {
     match fields {
-        Fields::Named(fields) => Fragments::new::<true>(quote!(Self), &fields.named).consume_for_struct(),
-        Fields::Unnamed(fields) => Fragments::new::<false>(quote!(Self), &fields.unnamed).consume_for_struct(),
+        Fields::Named(fields) => {
+            Fragments::new::<true>(quote!(Self), &fields.named, pack_error_type, unpack_error_type).consume_for_struct()
+        }
+        Fields::Unnamed(fields) => {
+            Fragments::new::<false>(quote!(Self), &fields.unnamed, pack_error_type, unpack_error_type)
+                .consume_for_struct()
+        }
         Fields::Unit => (quote!(Ok(())), quote!(0), quote!(Ok(Self))),
     }
 }
@@ -203,6 +226,8 @@ pub(crate) fn gen_bodies_for_struct(fields: Fields) -> (TokenStream, TokenStream
 pub(crate) fn gen_bodies_for_enum(
     variants: &Punctuated<Variant, Comma>,
     tag_ty: Type,
+    pack_error_type: &mut Option<TokenStream>,
+    unpack_error_type: &mut Option<TokenStream>,
 ) -> (TokenStream, TokenStream, TokenStream) {
     let len = variants.len();
 
@@ -266,8 +291,12 @@ pub(crate) fn gen_bodies_for_enum(
         let name = quote!(Self::#ident);
 
         let (pack_branch, packed_len_branch, unpack_branch) = match fields {
-            Fields::Named(fields) => Fragments::new::<true>(name, &fields.named).consume_for_variant(tag, &tag_ty),
-            Fields::Unnamed(fields) => Fragments::new::<false>(name, &fields.unnamed).consume_for_variant(tag, &tag_ty),
+            Fields::Named(fields) => Fragments::new::<true>(name, &fields.named, pack_error_type, unpack_error_type)
+                .consume_for_variant(tag, &tag_ty),
+            Fields::Unnamed(fields) => {
+                Fragments::new::<false>(name, &fields.unnamed, pack_error_type, unpack_error_type)
+                    .consume_for_variant(tag, &tag_ty)
+            }
             Fields::Unit => (
                 quote!(#name => (#tag as #tag_ty).pack(packer)),
                 quote!(#name => (#tag as #tag_ty).packed_len()),

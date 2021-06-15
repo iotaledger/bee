@@ -261,26 +261,23 @@ the packed version of `Maybe::Nothing` is `[0u8]` and the packed version of
 The `tag_type` and `tag` attributes are mandatory for enums. Additionally the
 `tag` for each variant must be unique inside the enum.
 
-### Invalid tag values and error handling
+### Associated error types
 
-Following the example above, unpacking a `Maybe` value that starts with a `tag`
-value different from `0` or `1` should fail. To represent this kind of error we
-introduced the `UnknownTagError<T>` type. This type is used as
-`Packable::UnpackError` when deriving `Packable` for an enum, the `T` type used is
-the one specified in the `tag_type` attribute. Additionally, we use the
-`core::convert::Infallible` type as `Packable::UnpackError` for structs by
-default. For the `Packable::PackError` type we use `core::convert::Infallible`
-by default for all the types.
+The derive macro provides two optional attributes `#[packable(pack_error = ...)]`
+and `#[packable(unpack_error = ...)]` to specify the `PackError` and
+`UnpackError` associated types. However, the macro provides sensible defaults
+for cases when the attributes are not specified.
 
-However, sometimes it is necessary to use a different error type when deriving
-`Packable`. Two examples where this can happen are when `Packable` is being
-derived for a type that contains a field which has a custom implementation of
-`Packable` or when `Packable` is being derived for a struct whose fields use a
-`Packable::PackError` or `Packable::UnpackError` type different from
-`Infallible`. In that case the user can specify a custom error type using the
-`#[packable(pack_error = ...)]` and `#[packable(unpack_error = ...)]`
-attributes. The type used in these attributes must implement `From<E>` where
-`E` can be the associated error types of any field of the type.
+For structs, we use the `PackError` and `UnpackError` types of any of the
+fields or `core::convert::Infallible` in case the struct has no fields.
+
+For enums, we use the `PackError` type of any of the fields of any of the
+variants or `core::convert::Infallible` if no variant has any fields. For
+`UnpackError` we use `UnknownTagError<T>` where `T` is the type specified with
+the `tag_ty` attribute.
+
+Following the example above, `Maybe::UnpackError` is `UnknownTagError<u8>`
+because no `unpack_error` attribute was specified.
 
 ### Wrapped views
 

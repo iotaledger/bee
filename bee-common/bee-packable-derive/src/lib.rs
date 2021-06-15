@@ -28,14 +28,14 @@ pub fn packable(input: TokenStream) -> TokenStream {
         ..
     } = parse_macro_input!(input);
     // Parse a `pack_error` attribute if the input has one.
-    let pack_error_type = match packable::parse_attr::<Type>("pack_error", &attrs) {
+    let mut pack_error_type = match packable::parse_attr::<Type>("pack_error", &attrs) {
         Some(Ok(ty)) => Some(ty.into_token_stream()),
         Some(Err(span)) => abort!(span, "The `pack_error` attribute requires a type for its value."),
         None => None,
     };
 
     // Parse an `unpack_error` attribute if the input has one.
-    let unpack_error_type = match packable::parse_attr::<Type>("unpack_error", &attrs) {
+    let mut unpack_error_type = match packable::parse_attr::<Type>("unpack_error", &attrs) {
         Some(Ok(ty)) => Some(ty.into_token_stream()),
         Some(Err(span)) => abort!(span, "The `unpack_error` attribute requires a type for its value."),
         None => None,
@@ -43,12 +43,16 @@ pub fn packable(input: TokenStream) -> TokenStream {
 
     match data {
         Data::Struct(data) => {
-            // Use `Infallible` if there was no pack_error attribute.
-            let pack_error_type = pack_error_type.unwrap_or_else(|| quote!(core::convert::Infallible));
-            // Use `Infallible` if there was no unpack_error attribute.
-            let unpack_error_type = unpack_error_type.unwrap_or_else(|| quote!(core::convert::Infallible));
             // Generate the implementation for the struct.
-            let (pack, packed_len, unpack) = packable::gen_bodies_for_struct(data.fields);
+            let (pack, packed_len, unpack) =
+                packable::gen_bodies_for_struct(data.fields, &mut pack_error_type, &mut unpack_error_type);
+            // Use `Infallible` if there was no pack_error attribute and the struct do not have
+            // fields.
+            let pack_error_type = pack_error_type.unwrap_or_else(|| quote!(core::convert::Infallible));
+            // Use `Infallible` if there was no unpack_error attribute and the struct do not have
+            // fields.
+            let unpack_error_type = unpack_error_type.unwrap_or_else(|| quote!(core::convert::Infallible));
+
             packable::gen_impl(
                 &ident,
                 &generics,
@@ -70,13 +74,26 @@ pub fn packable(input: TokenStream) -> TokenStream {
                     "Enums that derive `Packable` require a `#[packable(tag_type = ...)]` attribute."
                 ),
             };
-            // Use `Infallible` if there was no pack_error attribute.
-            let pack_error_type = pack_error_type.unwrap_or_else(|| quote!(core::convert::Infallible));
-            // Use `UnknownTagError` if there was no unpack_error attribute.
-            let unpack_error_type =
-                unpack_error_type.unwrap_or_else(|| quote!(bee_packable::error::UnknownTagError<#tag_ty>));
+            // Use `UnknownTagError` if there was no unpack_error attribute. We override this first
+            // because it is more reasonable to use `UnknownTagError` than the error provided by
+            // any field.
+            if unpack_error_type.is_none() {
+                unpack_error_type = Some(quote!(bee_packable::error::UnknownTagError<#tag_ty>));
+            }
             // Generate the implementation for the enum.
-            let (pack, packed_len, unpack) = packable::gen_bodies_for_enum(&data.variants, tag_ty);
+            let (pack, packed_len, unpack) = packable::gen_bodies_for_enum(
+                &data.variants,
+                tag_ty,
+                &mut pack_error_type,
+                // This reference will never be used inside `gen_bodies_for_enum`.
+                &mut unpack_error_type,
+            );
+            // Use `Infallible` if there was no pack_error attribute and the variants do not have
+            // fields.
+            let pack_error_type = pack_error_type.unwrap_or_else(|| quote!(core::convert::Infallible));
+            // This unwrap cannot fail because we set its value before.
+            let unpack_error_type = unpack_error_type.unwrap();
+
             packable::gen_impl(
                 &ident,
                 &generics,

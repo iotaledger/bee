@@ -22,18 +22,30 @@ pub enum Foo {
     Baz { x: i32, y: i32 },
 }
 
+#[derive(Packable)]
+pub struct Bar {
+    foo: Foo,
+}
+
 fn main() {
     assert_eq!(
         TypeId::of::<Infallible>(),
         TypeId::of::<<Point as Packable>::PackError>()
     );
-    assert_eq!(TypeId::of::<Infallible>(), TypeId::of::<<Foo as Packable>::PackError>());
     assert_eq!(
         TypeId::of::<Infallible>(),
         TypeId::of::<<Point as Packable>::UnpackError>()
     );
+
+    assert_eq!(TypeId::of::<Infallible>(), TypeId::of::<<Foo as Packable>::PackError>());
     assert_eq!(
         TypeId::of::<UnknownTagError<u8>>(),
         TypeId::of::<<Foo as Packable>::UnpackError>()
+    );
+
+    assert_eq!(TypeId::of::<Infallible>(), TypeId::of::<<Bar as Packable>::PackError>());
+    assert_eq!(
+        TypeId::of::<UnknownTagError<u8>>(),
+        TypeId::of::<<Bar as Packable>::UnpackError>()
     );
 }
