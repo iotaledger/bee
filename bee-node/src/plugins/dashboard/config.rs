@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use libp2p::{multiaddr::Protocol, Multiaddr};
+use multiaddr::{Multiaddr, Protocol};
 use serde::Deserialize;
 
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
@@ -87,7 +87,7 @@ impl DashboardConfigBuilder {
                 Protocol::Dns(address) => Some(
                     (address.to_string(), 0)
                         .to_socket_addrs()
-                        .unwrap_or_else(|error| panic!("error resolving '{}':{}", address, error)) 
+                        .unwrap_or_else(|error| panic!("error resolving '{}':{}", address, error))
                         .nth(0)
                         //Unwrapping here is fine, because to_socket-addrs() didn't return an error,
                         //thus we can be sure that the iterator contains at least 1 element.

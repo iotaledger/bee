@@ -186,7 +186,7 @@ where
             );
 
             info!("Dashboard available at http://{}.", config.bind_socket_addr());
-            
+
             server.await;
 
             let mut readies = Vec::new();
