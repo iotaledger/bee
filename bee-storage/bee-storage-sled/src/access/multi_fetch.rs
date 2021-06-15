@@ -62,7 +62,6 @@ impl<'a, K: Packable, V: Packable, E: From<sled::Error>> Iterator for DbIter<'a,
     }
 }
 
-#[allow(clippy::type_complexity)]
 impl<'a> MultiFetch<'a, u8, System> for Storage {
     type Iter = DbIter<'a, u8, System, <Self as StorageBackend>::Error>;
 
