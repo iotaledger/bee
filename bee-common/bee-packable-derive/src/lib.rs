@@ -91,7 +91,7 @@ pub fn packable(input: TokenStream) -> TokenStream {
             // Use `Infallible` if there was no pack_error attribute and the variants do not have
             // fields.
             let pack_error_type = pack_error_type.unwrap_or_else(|| quote!(core::convert::Infallible));
-            // This unwrap cannot fail Because we set its value before.
+            // This unwrap cannot fail because we set its value before.
             let unpack_error_type = unpack_error_type.unwrap();
 
             packable::gen_impl(
