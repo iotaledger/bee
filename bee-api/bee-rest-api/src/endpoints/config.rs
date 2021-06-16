@@ -1,12 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use multiaddr::{Multiaddr, Protocol};
 use serde::Deserialize;
 
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, ToSocketAddrs};
 
-pub(crate) const DEFAULT_BINDING_PORT: u16 = 14265;
-pub(crate) const DEFAULT_BINDING_IP_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
+pub(crate) const DEFAULT_BIND_ADDRESS: &str = "/ip4/0.0.0.0/tcp/14265";
 
 // all available routes
 pub(crate) const ROUTE_ADD_PEER: &str = "/api/v1/peers";
@@ -70,8 +70,7 @@ pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: u64 = 2;
 /// REST API configuration builder.
 #[derive(Default, Deserialize)]
 pub struct RestApiConfigBuilder {
-    binding_port: Option<u16>,
-    binding_ip_addr: Option<IpAddr>,
+    bind_address: Option<Multiaddr>,
     public_routes: Option<Vec<String>>,
     allowed_ips: Option<Vec<IpAddr>>,
     feature_proof_of_work: Option<bool>,
@@ -84,17 +83,11 @@ impl RestApiConfigBuilder {
         Self::default()
     }
 
-    /// Sets the binding port for the REST API.
-    pub fn binding_port(mut self, port: u16) -> Self {
-        self.binding_port.replace(port);
-        self
-    }
-
-    /// Sets the binding IP address for the REST API.
-    pub fn binding_ip_addr(mut self, addr: &str) -> Self {
+    /// Sets the binding address for the REST API.
+    pub fn bind_address(mut self, addr: &str) -> Self {
         match addr.parse() {
             Ok(addr) => {
-                self.binding_ip_addr.replace(addr);
+                self.bind_address.replace(addr);
             }
             Err(e) => panic!("Error parsing IP address: {:?}", e),
         }
@@ -127,10 +120,33 @@ impl RestApiConfigBuilder {
 
     /// Builds the REST API config.
     pub fn finish(self) -> RestApiConfig {
-        let binding_socket_addr = match self.binding_ip_addr.unwrap_or(DEFAULT_BINDING_IP_ADDR) {
-            IpAddr::V4(ip) => SocketAddr::new(IpAddr::V4(ip), self.binding_port.unwrap_or(DEFAULT_BINDING_PORT)),
-            IpAddr::V6(ip) => SocketAddr::new(IpAddr::V6(ip), self.binding_port.unwrap_or(DEFAULT_BINDING_PORT)),
-        };
+        let multi_addr = self
+            .bind_address
+            // We made sure that the default value is valid and therefore parseable.
+            .unwrap_or_else(|| DEFAULT_BIND_ADDRESS.parse().unwrap());
+        let address = multi_addr
+            .iter()
+            .find_map(|x| match x {
+                Protocol::Dns(address) => Some(
+                    (address.to_string(), 0)
+                        .to_socket_addrs()
+                        .unwrap_or_else(|error| panic!("error resolving '{}':{}", address, error))
+                        .next()
+                        // Unwrapping here is fine, because to_socket-addrs() didn't return an error,
+                        // thus we can be sure that the iterator contains at least 1 element.
+                        .unwrap()
+                        .ip(),
+                ),
+                Protocol::Ip4(ip) => Some(IpAddr::V4(ip)),
+                Protocol::Ip6(ip) => Some(IpAddr::V6(ip)),
+                _ => None,
+            })
+            .expect("Unsupported address");
+
+        let port = multi_addr
+            .iter()
+            .find_map(|x| if let Protocol::Tcp(port) = x { Some(port) } else { None })
+            .unwrap_or_else(|| panic!("Unsupported protocol"));
         let public_routes: Box<[String]> = self
             .public_routes
             .unwrap_or_else(|| DEFAULT_PUBLIC_ROUTES.iter().map(|s| s.to_string()).collect())
@@ -145,7 +161,7 @@ impl RestApiConfigBuilder {
             .unwrap_or(DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT);
 
         RestApiConfig {
-            binding_socket_addr,
+            binding_socket_addr: SocketAddr::new(address, port),
             public_routes,
             allowed_ips,
             feature_proof_of_work,
@@ -171,7 +187,7 @@ impl RestApiConfig {
     }
 
     /// Returns the binding address.
-    pub fn binding_socket_addr(&self) -> SocketAddr {
+    pub fn bind_socket_addr(&self) -> SocketAddr {
         self.binding_socket_addr
     }
 

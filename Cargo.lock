@@ -317,6 +317,7 @@ dependencies = [
  "iota-crypto",
  "log",
  "mime_guess",
+ "multiaddr",
  "paho-mqtt",
  "rand 0.8.4",
  "rpassword",
@@ -402,6 +403,7 @@ dependencies = [
  "hex",
  "iota-crypto",
  "log",
+ "multiaddr",
  "num_cpus",
  "serde",
  "serde_json",
@@ -1937,6 +1939,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "multiaddr"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7139982f583d7e53879d9f611fe48ced18e77d684309484f2252c76bcd39f549"
+dependencies = [
+ "arrayref",
+ "bs58",
+ "byteorder",
+ "data-encoding",
+ "multihash",
+ "percent-encoding",
+ "serde",
+ "static_assertions",
+ "unsigned-varint 0.7.0",
+ "url",
+]
+
+[[package]]
 name = "multihash"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2534,9 +2554,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.2.8"
+version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "742739e41cd49414de871ea5e549afb7e2a3ac77b589bcbebe8c82fab37147fc"
+checksum = "5ab49abadf3f9e1c4bc499e8845e152ad87d2ad2d30371841171169e9d75feee"
 dependencies = [
  "bitflags",
 ]

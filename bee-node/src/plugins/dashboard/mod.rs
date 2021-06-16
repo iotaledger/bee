@@ -44,7 +44,6 @@ use warp::ws::Message;
 use std::{
     any::{Any, TypeId},
     convert::Infallible,
-    net::{IpAddr, Ipv4Addr, SocketAddr},
 };
 
 const CONFIRMED_THRESHOLD: u32 = 5;
@@ -179,15 +178,14 @@ where
                 users.clone(),
             );
 
-            info!("Dashboard available at http://localhost:{}.", config.port());
-
             let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(
-                // TODO the whole address needs to be a config
-                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), config.port()),
+                config.bind_socket_addr(),
                 async {
                     shutdown.await.ok();
                 },
             );
+
+            info!("Dashboard available at http://{}.", config.bind_socket_addr());
 
             server.await;
 
