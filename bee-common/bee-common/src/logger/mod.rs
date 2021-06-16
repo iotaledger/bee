@@ -94,6 +94,14 @@ pub fn logger_init(config: LoggerConfig) -> Result<(), Error> {
             });
         }
 
+        if !output.target_exclusions.is_empty() {
+            let target_exclusions = output.target_exclusions;
+            dispatch = dispatch.filter(move |metadata| {
+                let target = metadata.target().to_lowercase();
+                !target_exclusions.iter().any(|f| target.contains(f))
+            });
+        }
+
         // Special case for the standard output.
         dispatch = if output.name == LOGGER_STDOUT_NAME {
             dispatch.chain(std::io::stdout())
