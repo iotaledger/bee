@@ -12,7 +12,7 @@ pub trait StorageBackend:
     backend::StorageBackend
     + Exist<MessageId, Message>
     + Fetch<MessageId, Message>
-    + MultiFetch<MessageId, Message>
+    + for<'a> MultiFetch<'a, MessageId, Message>
     + Insert<MessageId, Message>
     + Delete<MessageId, Message>
     + BatchBuilder
@@ -26,7 +26,7 @@ impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Exist<MessageId, Message>
         + Fetch<MessageId, Message>
-        + MultiFetch<MessageId, Message>
+        + for<'a> MultiFetch<'a, MessageId, Message>
         + Insert<MessageId, Message>
         + Delete<MessageId, Message>
         + BatchBuilder
@@ -45,7 +45,9 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id]).unwrap();
+    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -58,7 +60,9 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
             .unwrap(),
         message
     );
-    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id]).unwrap();
+    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &message));
 
@@ -70,7 +74,9 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id]).unwrap();
+    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &[message_id])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -106,7 +112,9 @@ pub fn message_id_to_message_access<B: StorageBackend>(storage: &B) {
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &message_ids).unwrap();
+    let results = MultiFetch::<MessageId, Message>::multi_fetch(storage, &message_ids)
+        .unwrap()
+        .collect::<Vec<_>>();
 
     assert_eq!(results.len(), message_ids.len());
 

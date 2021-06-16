@@ -13,7 +13,7 @@ pub trait StorageBackend:
     backend::StorageBackend
     + Exist<SolidEntryPoint, MilestoneIndex>
     + Fetch<SolidEntryPoint, MilestoneIndex>
-    + MultiFetch<SolidEntryPoint, MilestoneIndex>
+    + for<'a> MultiFetch<'a, SolidEntryPoint, MilestoneIndex>
     + Insert<SolidEntryPoint, MilestoneIndex>
     + Delete<SolidEntryPoint, MilestoneIndex>
     + BatchBuilder
@@ -27,7 +27,7 @@ impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + Exist<SolidEntryPoint, MilestoneIndex>
         + Fetch<SolidEntryPoint, MilestoneIndex>
-        + MultiFetch<SolidEntryPoint, MilestoneIndex>
+        + for<'a> MultiFetch<'a, SolidEntryPoint, MilestoneIndex>
         + Insert<SolidEntryPoint, MilestoneIndex>
         + Delete<SolidEntryPoint, MilestoneIndex>
         + BatchBuilder
@@ -46,7 +46,9 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &[sep]).unwrap();
+    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &[sep])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -59,7 +61,9 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
             .unwrap(),
         index
     );
-    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &[sep]).unwrap();
+    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &[sep])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(Some(v))) if v == &index));
 
@@ -71,7 +75,9 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
             .unwrap()
             .is_none()
     );
-    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &[sep]).unwrap();
+    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &[sep])
+        .unwrap()
+        .collect::<Vec<_>>();
     assert_eq!(results.len(), 1);
     assert!(matches!(results.get(0), Some(Ok(None))));
 
@@ -107,7 +113,9 @@ pub fn solid_entry_point_to_milestone_index_access<B: StorageBackend>(storage: &
 
     assert_eq!(count, 10);
 
-    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &seps_ids).unwrap();
+    let results = MultiFetch::<SolidEntryPoint, MilestoneIndex>::multi_fetch(storage, &seps_ids)
+        .unwrap()
+        .collect::<Vec<_>>();
 
     assert_eq!(results.len(), seps_ids.len());
 
