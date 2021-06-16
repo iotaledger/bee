@@ -79,7 +79,7 @@ impl DashboardConfigBuilder {
     pub fn finish(self) -> DashboardConfig {
         let multi_addr = self
             .bind_address
-            //We made sure that the default value is valid and therefore parseable.
+            // We made sure that the default value is valid and therefore parseable.
             .unwrap_or_else(|| DEFAULT_BIND_ADDRESS.parse().unwrap());
         let address = multi_addr
             .iter()
@@ -89,8 +89,8 @@ impl DashboardConfigBuilder {
                         .to_socket_addrs()
                         .unwrap_or_else(|error| panic!("error resolving '{}':{}", address, error))
                         .nth(0)
-                        //Unwrapping here is fine, because to_socket-addrs() didn't return an error,
-                        //thus we can be sure that the iterator contains at least 1 element.
+                        // Unwrapping here is fine, because to_socket-addrs() didn't return an error,
+                        // thus we can be sure that the iterator contains at least 1 element.
                         .unwrap()
                         .ip(),
                 ),
