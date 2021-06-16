@@ -203,14 +203,14 @@ checksum = "6c7f7096bc256f5e5cb960f60dfc4f4ef979ca65abe7fb9d5a4f77150d3783d4"
 [[package]]
 name = "bee-common"
 version = "0.4.1"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#668b7b542dde4fd52da1e7e72a6bb376832c15d4"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#1a7cab539d848fc7b346d744426edfd2b3beff6f"
 dependencies = [
  "autocfg",
  "chrono",
  "fern",
  "jsonwebtoken",
  "log",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rust-argon2",
  "serde",
  "thiserror",
@@ -219,7 +219,7 @@ dependencies = [
 [[package]]
 name = "bee-crypto"
 version = "0.2.1-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#668b7b542dde4fd52da1e7e72a6bb376832c15d4"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#1a7cab539d848fc7b346d744426edfd2b3beff6f"
 dependencies = [
  "bee-ternary",
  "byteorder",
@@ -231,7 +231,7 @@ dependencies = [
 [[package]]
 name = "bee-ledger"
 version = "0.4.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#668b7b542dde4fd52da1e7e72a6bb376832c15d4"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#1a7cab539d848fc7b346d744426edfd2b3beff6f"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -256,7 +256,7 @@ dependencies = [
 [[package]]
 name = "bee-message"
 version = "0.1.5"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#668b7b542dde4fd52da1e7e72a6bb376832c15d4"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#1a7cab539d848fc7b346d744426edfd2b3beff6f"
 dependencies = [
  "bech32",
  "bee-common",
@@ -273,7 +273,7 @@ dependencies = [
 [[package]]
 name = "bee-network"
 version = "0.2.1"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#668b7b542dde4fd52da1e7e72a6bb376832c15d4"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#1a7cab539d848fc7b346d744426edfd2b3beff6f"
 dependencies = [
  "async-trait",
  "bee-runtime",
@@ -283,7 +283,7 @@ dependencies = [
  "libp2p-core",
  "log",
  "once_cell",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "thiserror",
  "tokio",
@@ -318,7 +318,7 @@ dependencies = [
  "log",
  "mime_guess",
  "paho-mqtt",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rpassword",
  "rust-embed",
  "serde",
@@ -339,7 +339,7 @@ dependencies = [
 [[package]]
 name = "bee-pow"
 version = "0.1.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#668b7b542dde4fd52da1e7e72a6bb376832c15d4"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#1a7cab539d848fc7b346d744426edfd2b3beff6f"
 dependencies = [
  "bee-crypto",
  "bee-ternary",
@@ -372,7 +372,7 @@ dependencies = [
  "log",
  "num_cpus",
  "pin-project 1.0.7",
- "rand 0.8.3",
+ "rand 0.8.4",
  "ref-cast",
  "serde",
  "spin 0.9.0",
@@ -413,7 +413,7 @@ dependencies = [
 [[package]]
 name = "bee-runtime"
 version = "0.1.1-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#668b7b542dde4fd52da1e7e72a6bb376832c15d4"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#1a7cab539d848fc7b346d744426edfd2b3beff6f"
 dependencies = [
  "async-trait",
  "bee-storage",
@@ -424,8 +424,8 @@ dependencies = [
 
 [[package]]
 name = "bee-storage"
-version = "0.8.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#668b7b542dde4fd52da1e7e72a6bb376832c15d4"
+version = "0.9.0"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#1a7cab539d848fc7b346d744426edfd2b3beff6f"
 dependencies = [
  "bee-common",
  "serde",
@@ -434,8 +434,8 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-rocksdb"
-version = "0.4.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#668b7b542dde4fd52da1e7e72a6bb376832c15d4"
+version = "0.5.0"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#1a7cab539d848fc7b346d744426edfd2b3beff6f"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -450,8 +450,8 @@ dependencies = [
 
 [[package]]
 name = "bee-storage-sled"
-version = "0.3.0"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#668b7b542dde4fd52da1e7e72a6bb376832c15d4"
+version = "0.4.0"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#1a7cab539d848fc7b346d744426edfd2b3beff6f"
 dependencies = [
  "bee-common",
  "bee-ledger",
@@ -467,7 +467,7 @@ dependencies = [
 [[package]]
 name = "bee-tangle"
 version = "0.1.2"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#668b7b542dde4fd52da1e7e72a6bb376832c15d4"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#1a7cab539d848fc7b346d744426edfd2b3beff6f"
 dependencies = [
  "async-trait",
  "bee-common",
@@ -480,7 +480,7 @@ dependencies = [
  "hashbrown 0.11.2",
  "log",
  "lru",
- "rand 0.8.3",
+ "rand 0.8.4",
  "ref-cast",
  "serde",
  "thiserror",
@@ -491,7 +491,7 @@ dependencies = [
 [[package]]
 name = "bee-ternary"
 version = "0.4.2-alpha"
-source = "git+https://github.com/iotaledger/bee.git?branch=dev#668b7b542dde4fd52da1e7e72a6bb376832c15d4"
+source = "git+https://github.com/iotaledger/bee.git?branch=dev#1a7cab539d848fc7b346d744426edfd2b3beff6f"
 dependencies = [
  "autocfg",
  "num-traits",
@@ -764,7 +764,7 @@ dependencies = [
 [[package]]
 name = "console-api"
 version = "0.1.0"
-source = "git+https://github.com/tokio-rs/console.git?branch=main#e45fca08102cefec7494d28f80863990cfb24160"
+source = "git+https://github.com/tokio-rs/console.git?branch=main#20b08be8dc0898e836dacfc12fb64daf41f608ce"
 dependencies = [
  "prost",
  "prost-types",
@@ -776,7 +776,7 @@ dependencies = [
 [[package]]
 name = "console-subscriber"
 version = "0.1.0"
-source = "git+https://github.com/tokio-rs/console.git?branch=main#e45fca08102cefec7494d28f80863990cfb24160"
+source = "git+https://github.com/tokio-rs/console.git?branch=main#20b08be8dc0898e836dacfc12fb64daf41f608ce"
 dependencies = [
  "console-api",
  "futures",
@@ -1528,9 +1528,9 @@ dependencies = [
 
 [[package]]
 name = "ipnet"
-version = "2.3.0"
+version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47be2f14c678be2fdcab04ab1171db51b2762ce6f0a8ee87c8dd4a04ed216135"
+checksum = "68f2d64f2edebec4ce84ad108148e67e1064789bee435edc5b60ad398714a3a9"
 
 [[package]]
 name = "itertools"
@@ -1728,7 +1728,7 @@ dependencies = [
  "log",
  "prost",
  "prost-build",
- "rand 0.8.3",
+ "rand 0.8.4",
  "sha2 0.9.5",
  "snow",
  "static_assertions",
@@ -1916,9 +1916,9 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "0.7.11"
+version = "0.7.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf80d3e903b34e0bd7282b218398aec54e082c840d9baf8339e0080a0c542956"
+checksum = "8c2bdb6314ec10835cd3293dd268473a835c02b7b352e788be788b3c6ca6bb16"
 dependencies = [
  "libc",
  "log",
@@ -2466,14 +2466,14 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.8.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ef9e7e66b4468674bfcb0c81af8b7fa0bb154fa9f28eb840da5c447baeb8d7e"
+checksum = "2e7573632e6454cf6b99d7aac4ccca54be06da05aca2ef7423d22d27d4d4bcd8"
 dependencies = [
  "libc",
  "rand_chacha 0.3.1",
- "rand_core 0.6.2",
- "rand_hc 0.3.0",
+ "rand_core 0.6.3",
+ "rand_hc 0.3.1",
 ]
 
 [[package]]
@@ -2493,7 +2493,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e6c10a63a0fa32252be49d21e7709d4d4baf8d231c2dbce1eaa8141b9b127d88"
 dependencies = [
  "ppv-lite86",
- "rand_core 0.6.2",
+ "rand_core 0.6.3",
 ]
 
 [[package]]
@@ -2507,9 +2507,9 @@ dependencies = [
 
 [[package]]
 name = "rand_core"
-version = "0.6.2"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34cf66eb183df1c5876e2dcf6b13d57340741e8dc255b48e40a26de954d06ae7"
+checksum = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7"
 dependencies = [
  "getrandom 0.2.3",
 ]
@@ -2525,11 +2525,11 @@ dependencies = [
 
 [[package]]
 name = "rand_hc"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3190ef7066a446f2e7f42e239d161e905420ccab01eb967c9eb27d21b2322a73"
+checksum = "d51e9f596de227fda2ea6c84607f5558e196eeaf43c986b724ba4fb8fdf497e7"
 dependencies = [
- "rand_core 0.6.2",
+ "rand_core 0.6.3",
 ]
 
 [[package]]
@@ -3018,8 +3018,8 @@ dependencies = [
  "aes-gcm",
  "blake2",
  "chacha20poly1305",
- "rand 0.8.3",
- "rand_core 0.6.2",
+ "rand 0.8.4",
+ "rand_core 0.6.3",
  "ring",
  "rustc_version",
  "sha2 0.9.5",
@@ -3136,7 +3136,7 @@ checksum = "dac1c663cfc93810f88aed9b8941d48cabf856a1b111c29a40439018d870eb22"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
- "rand 0.8.3",
+ "rand 0.8.4",
  "redox_syscall",
  "remove_dir_all",
  "winapi",
@@ -3216,9 +3216,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.6.1"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a38d31d7831c6ed7aad00aa4c12d9375fd225a6dd77da1d25b707346319a975"
+checksum = "c79ba603c337335df6ba6dd6afc38c38a7d5e1b0c871678439ea973cd62a118e"
 dependencies = [
  "autocfg",
  "bytes",
@@ -3353,7 +3353,7 @@ dependencies = [
  "futures-util",
  "indexmap",
  "pin-project 1.0.7",
- "rand 0.8.3",
+ "rand 0.8.4",
  "slab",
  "tokio",
  "tokio-stream",
@@ -3478,7 +3478,7 @@ dependencies = [
  "ipnet",
  "lazy_static",
  "log",
- "rand 0.8.3",
+ "rand 0.8.4",
  "smallvec",
  "thiserror",
  "tinyvec",
@@ -3525,7 +3525,7 @@ dependencies = [
  "httparse",
  "input_buffer",
  "log",
- "rand 0.8.3",
+ "rand 0.8.4",
  "sha-1",
  "url",
  "utf-8",
@@ -3931,7 +3931,7 @@ dependencies = [
  "log",
  "nohash-hasher",
  "parking_lot",
- "rand 0.8.3",
+ "rand 0.8.4",
  "static_assertions",
 ]
 
