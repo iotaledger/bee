@@ -28,6 +28,8 @@ pub struct LoggerOutputConfigBuilder {
     level_filter: Option<LevelFilter>,
     /// Log target filters of an output.
     target_filters: Option<Vec<String>>,
+    /// Log target exclusions of an output.
+    target_exclusions: Option<Vec<String>>,
 }
 
 impl LoggerOutputConfigBuilder {
@@ -66,6 +68,12 @@ impl LoggerOutputConfigBuilder {
                 .iter()
                 .map(|f| f.to_lowercase())
                 .collect(),
+            target_exclusions: self
+                .target_exclusions
+                .unwrap_or_else(Vec::new)
+                .iter()
+                .map(|f| f.to_lowercase())
+                .collect(),
         }
     }
 }
@@ -77,8 +85,10 @@ pub struct LoggerOutputConfig {
     pub(crate) name: String,
     /// Log level of an output.
     pub(crate) level_filter: LevelFilter,
-    /// Log filters of the output.
+    /// Log target filters of the output.
     pub(crate) target_filters: Vec<String>,
+    /// Log target exclusions of the output.
+    pub(crate) target_exclusions: Vec<String>,
 }
 
 /// Builder for a logger configuration.
