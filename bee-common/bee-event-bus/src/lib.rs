@@ -26,6 +26,10 @@ impl<'a, ID> Default for EventBus<'a, ID> {
 }
 
 impl<'a, ID: Clone + PartialEq> EventBus<'a, ID> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Dispatch an event via this event bus.
     ///
     /// All active listeners registered for this event will be invoked.
