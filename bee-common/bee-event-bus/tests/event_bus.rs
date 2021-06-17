@@ -20,7 +20,7 @@ fn add_listener_dispatch() {
 
     let counter = _counter.clone();
     bus.add_listener::<(), _, _>(move |event: &Event| {
-        counter.fetch_add(1 * event.0, Ordering::SeqCst);
+        counter.fetch_add(event.0, Ordering::SeqCst);
     });
 
     let counter = _counter.clone();
@@ -37,10 +37,7 @@ fn add_listener_dispatch() {
     bus.dispatch(Event(2));
     bus.dispatch(Event(3));
 
-    assert_eq!(
-        _counter.load(Ordering::SeqCst),
-        1 * 1 + 1 * 2 + 1 * 3 + 1 * 2 + 2 * 2 + 2 * 3 + 1 * 3 + 2 * 3 + 3 * 3
-    );
+    assert_eq!(_counter.load(Ordering::SeqCst), 36);
 }
 
 #[test]
@@ -65,7 +62,7 @@ fn add_listener_remove_dispatch() {
 
     let counter = _counter.clone();
     bus.add_listener::<Bound0, _, _>(move |event: &Event| {
-        counter.fetch_add(1 * event.0, Ordering::SeqCst);
+        counter.fetch_add(event.0, Ordering::SeqCst);
     });
 
     let counter = _counter.clone();
@@ -84,8 +81,5 @@ fn add_listener_remove_dispatch() {
     bus.dispatch(Event(2));
     bus.dispatch(Event(3));
 
-    assert_eq!(
-        _counter.load(Ordering::SeqCst),
-        1 * 1 + 1 * 2 + 1 * 3 + 1 * 3 + 2 * 3 + 3 * 3
-    );
+    assert_eq!(_counter.load(Ordering::SeqCst), 24);
 }
