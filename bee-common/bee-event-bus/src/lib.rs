@@ -61,7 +61,8 @@ impl<'a, ID: Clone + PartialEq> EventBus<'a, ID> {
 impl<'a> EventBus<'a, TypeId> {
     /// Add an event listener bound to a specific event type, `E`, and bound to a type `T`.
     ///
-    /// This event listener will be removed when [`EventBus::remove_listeners_by_id`] is called with the `TypeId` of `T`.
+    /// This event listener will be removed when [`EventBus::remove_listeners_by_id`] is called with the `TypeId` of
+    /// `T`.
     pub fn add_listener<T: Any, E: Any, F: Fn(&E) + Send + Sync + 'a>(&self, handler: F) {
         self.add_listener_raw(TypeId::of::<T>(), handler);
     }
