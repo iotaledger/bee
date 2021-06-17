@@ -12,14 +12,14 @@ use std::{
 };
 
 type Listener<'a> = dyn Fn(&dyn Any) + Send + Sync + 'a;
-type Listeners<'a, ID> = HashMap<TypeId, Vec<(Box<Listener<'a>>, ID)>>;
+type Listeners<'a> = HashMap<TypeId, Vec<(Box<Listener<'a>>, TypeId)>>;
 
 /// An event bus for arbitrary event types.
-pub struct EventBus<'a, ID = TypeId> {
-    listeners: Mutex<Listeners<'a, ID>>,
+pub struct EventBus<'a> {
+    listeners: Mutex<Listeners<'a>>,
 }
 
-impl<'a, ID> Default for EventBus<'a, ID> {
+impl<'a> Default for EventBus<'a> {
     fn default() -> Self {
         Self {
             listeners: Mutex::new(HashMap::default()),
@@ -27,7 +27,7 @@ impl<'a, ID> Default for EventBus<'a, ID> {
     }
 }
 
-impl<'a, ID: Clone + PartialEq> EventBus<'a, ID> {
+impl<'a> EventBus<'a> {
     /// Creates a new `EventBus`.
     pub fn new() -> Self {
         Self::default()
@@ -42,8 +42,8 @@ impl<'a, ID: Clone + PartialEq> EventBus<'a, ID> {
         }
     }
 
-    /// Add an event listener bound to a specific event type, `E`, and registered with the given ID.
-    pub fn add_listener_raw<E: Any, F: Fn(&E) + Send + Sync + 'a>(&self, id: ID, handler: F) {
+    /// Add an event listener bound to a specific event type, `E`, and registered with the given type ID.
+    pub fn add_listener_raw<E: Any, F: Fn(&E) + Send + Sync + 'a>(&self, id: TypeId, handler: F) {
         self.listeners
             .lock()
             .unwrap()
@@ -55,17 +55,6 @@ impl<'a, ID: Clone + PartialEq> EventBus<'a, ID> {
             ));
     }
 
-    /// Remove all event listeners registered with the given ID, dropping them in the process.
-    pub fn remove_listeners_by_id(&self, id: ID) {
-        self.listeners
-            .lock()
-            .unwrap()
-            .iter_mut()
-            .for_each(|(_, listeners)| listeners.retain(|(_, listener_id)| listener_id != &id));
-    }
-}
-
-impl<'a> EventBus<'a, TypeId> {
     /// Add an event listener bound to a specific event type, `E`, and bound to a type `T`.
     ///
     /// This event listener will be removed when [`EventBus::remove_listeners_by_id`] is called with the `TypeId` of
@@ -78,6 +67,16 @@ impl<'a> EventBus<'a, TypeId> {
     /// removal until the event bus is dropped.
     pub fn add_static_listener<E: Any, F: Fn(&E) + Send + Sync + 'a>(&self, handler: F) {
         struct Static;
+
         self.add_listener_raw(TypeId::of::<Static>(), handler);
+    }
+
+    /// Remove all event listeners registered with the given ID, dropping them in the process.
+    pub fn remove_listeners_by_id(&self, id: TypeId) {
+        self.listeners
+            .lock()
+            .unwrap()
+            .iter_mut()
+            .for_each(|(_, listeners)| listeners.retain(|(_, listener_id)| listener_id != &id));
     }
 }

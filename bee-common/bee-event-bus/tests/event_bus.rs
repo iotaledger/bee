@@ -3,9 +3,7 @@
 
 use bee_event_bus::EventBus;
 
-use std::any::TypeId;
-
 #[test]
 fn test() {
-    let _bus = EventBus::<TypeId>::new();
+    let _bus = EventBus::new();
 }
