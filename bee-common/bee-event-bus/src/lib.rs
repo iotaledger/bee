@@ -71,6 +71,11 @@ impl<'a> EventBus<'a> {
         self.add_listener_raw(TypeId::of::<Static>(), handler);
     }
 
+    ///
+    pub fn remove_listeners<T: Any>(&self) {
+        self.remove_listeners_by_id(TypeId::of::<T>());
+    }
+
     /// Remove all event listeners registered with the given ID, dropping them in the process.
     pub fn remove_listeners_by_id(&self, id: TypeId) {
         self.listeners
