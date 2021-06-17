@@ -27,8 +27,6 @@ impl<'a> Default for EventBus<'a> {
     }
 }
 
-// TODO unwrap
-
 impl<'a> EventBus<'a> {
     /// Creates a new `EventBus`.
     pub fn new() -> Self {
@@ -39,6 +37,7 @@ impl<'a> EventBus<'a> {
     pub fn add_listener_with_id<E: Any, F: Fn(&E) + Send + Sync + 'a>(&self, handler: F, id: TypeId) {
         self.listeners
             .lock()
+            // We unwrap() to assert that we are not expecting threads to ever fail while holding the lock.
             .unwrap()
             .entry(TypeId::of::<E>())
             .or_default()
@@ -63,6 +62,7 @@ impl<'a> EventBus<'a> {
 
     /// Dispatches an event via the event bus. All active listeners registered for this event will be invoked.
     pub fn dispatch<E: Any>(&self, event: E) {
+        // We unwrap() to assert that we are not expecting threads to ever fail while holding the lock.
         if let Some(listeners) = self.listeners.lock().unwrap().get_mut(&TypeId::of::<E>()) {
             listeners.iter_mut().for_each(|(listener, _)| listener(&event))
         }
@@ -72,6 +72,7 @@ impl<'a> EventBus<'a> {
     pub fn remove_listeners_with_id(&self, id: TypeId) {
         self.listeners
             .lock()
+            // We unwrap() to assert that we are not expecting threads to ever fail while holding the lock.
             .unwrap()
             .iter_mut()
             .for_each(|(_, listeners)| listeners.retain(|(_, listener_id)| listener_id != &id));
