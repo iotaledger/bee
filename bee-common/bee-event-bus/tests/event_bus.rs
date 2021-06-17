@@ -46,7 +46,7 @@ fn add_static_listener_dispatch() {
     let _counter = Arc::new(AtomicU64::new(0));
 
     let counter = _counter.clone();
-    bus.add_listener::<(), _, _>(move |event: &Event| {
+    bus.add_static_listener(move |event: &Event| {
         counter.fetch_add(event.0, Ordering::SeqCst);
     });
 
