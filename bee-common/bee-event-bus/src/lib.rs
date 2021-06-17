@@ -13,11 +13,11 @@ type Listener<'a> = dyn Fn(&dyn Any) + Send + Sync + 'a;
 type Listeners<'a, ID> = HashMap<TypeId, Vec<(Box<Listener<'a>>, ID)>>;
 
 /// An event bus for arbitrary event types.
-pub struct Bus<'a, ID = TypeId> {
+pub struct EventBus<'a, ID = TypeId> {
     listeners: Mutex<Listeners<'a, ID>>,
 }
 
-impl<'a, ID> Default for Bus<'a, ID> {
+impl<'a, ID> Default for EventBus<'a, ID> {
     fn default() -> Self {
         Self {
             listeners: Mutex::new(HashMap::default()),
@@ -25,7 +25,7 @@ impl<'a, ID> Default for Bus<'a, ID> {
     }
 }
 
-impl<'a, ID: Clone + PartialEq> Bus<'a, ID> {
+impl<'a, ID: Clone + PartialEq> EventBus<'a, ID> {
     /// Dispatch an event via this event bus.
     ///
     /// All active listeners registered for this event will be invoked.
@@ -58,10 +58,10 @@ impl<'a, ID: Clone + PartialEq> Bus<'a, ID> {
     }
 }
 
-impl<'a> Bus<'a, TypeId> {
+impl<'a> EventBus<'a, TypeId> {
     /// Add an event listener bound to a specific event type, `E`, and bound to a type `T`.
     ///
-    /// This event listener will be removed when [`Bus::remove_listeners_by_id`] is called with the `TypeId` of `T`.
+    /// This event listener will be removed when [`EventBus::remove_listeners_by_id`] is called with the `TypeId` of `T`.
     pub fn add_listener<T: Any, E: Any, F: Fn(&E) + Send + Sync + 'a>(&self, handler: F) {
         self.add_listener_raw(TypeId::of::<T>(), handler);
     }
