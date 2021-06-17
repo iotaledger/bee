@@ -3,6 +3,8 @@
 
 //! A module that provides a generic, type-safe and thread-safe event bus for arbitrary event types.
 
+#![warn(missing_docs)]
+
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
@@ -26,6 +28,7 @@ impl<'a, ID> Default for EventBus<'a, ID> {
 }
 
 impl<'a, ID: Clone + PartialEq> EventBus<'a, ID> {
+    /// Creates a new `EventBus`.
     pub fn new() -> Self {
         Self::default()
     }
