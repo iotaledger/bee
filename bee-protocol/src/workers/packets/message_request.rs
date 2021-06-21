@@ -68,9 +68,9 @@ mod tests {
 
     #[test]
     fn size_range() {
-        assert_eq!(MessageRequestPacket::size_range().contains(&(CONSTANT_SIZE - 1)), false);
-        assert_eq!(MessageRequestPacket::size_range().contains(&CONSTANT_SIZE), true);
-        assert_eq!(MessageRequestPacket::size_range().contains(&(CONSTANT_SIZE + 1)), false);
+        assert!(!MessageRequestPacket::size_range().contains(&(CONSTANT_SIZE - 1)));
+        assert!(MessageRequestPacket::size_range().contains(&CONSTANT_SIZE));
+        assert!(!MessageRequestPacket::size_range().contains(&(CONSTANT_SIZE + 1)));
     }
 
     #[test]

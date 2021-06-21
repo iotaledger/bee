@@ -103,8 +103,8 @@ mod tests {
         let first_buf = &[1, 2, 3];
         let second_buf = &[1, 2, 3];
 
-        assert_eq!(cache.insert(first_buf), true);
-        assert_eq!(cache.insert(second_buf), false);
+        assert!(cache.insert(first_buf));
+        assert!(!cache.insert(second_buf));
         assert_eq!(cache.len(), 1);
     }
 
@@ -115,8 +115,8 @@ mod tests {
         let first_buf = &[1, 2, 3];
         let second_buf = &[3, 4, 5];
 
-        assert_eq!(cache.insert(first_buf), true);
-        assert_eq!(cache.insert(second_buf), true);
+        assert!(cache.insert(first_buf));
+        assert!(cache.insert(second_buf));
         assert_eq!(cache.len(), 2);
     }
 
@@ -127,9 +127,9 @@ mod tests {
         let first_buf = &[1, 2, 3];
         let second_buf = &[3, 4, 5];
 
-        assert_eq!(cache.insert(first_buf), true);
-        assert_eq!(cache.insert(second_buf), true);
+        assert!(cache.insert(first_buf));
+        assert!(cache.insert(second_buf));
         assert_eq!(cache.len(), 1);
-        assert_eq!(cache.insert(second_buf), false);
+        assert!(!cache.insert(second_buf));
     }
 }

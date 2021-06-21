@@ -59,15 +59,9 @@ mod tests {
 
     #[test]
     fn size_range() {
-        assert_eq!(
-            MilestoneRequestPacket::size_range().contains(&(CONSTANT_SIZE - 1)),
-            false
-        );
-        assert_eq!(MilestoneRequestPacket::size_range().contains(&CONSTANT_SIZE), true);
-        assert_eq!(
-            MilestoneRequestPacket::size_range().contains(&(CONSTANT_SIZE + 1)),
-            false
-        );
+        assert!(!MilestoneRequestPacket::size_range().contains(&(CONSTANT_SIZE - 1)),);
+        assert!(MilestoneRequestPacket::size_range().contains(&CONSTANT_SIZE));
+        assert!(!MilestoneRequestPacket::size_range().contains(&(CONSTANT_SIZE + 1)),);
     }
 
     #[test]

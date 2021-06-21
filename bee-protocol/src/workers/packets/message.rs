@@ -78,13 +78,13 @@ mod tests {
 
     #[test]
     fn size_range() {
-        assert_eq!(MessagePacket::size_range().contains(&(MESSAGE_LENGTH_MIN - 1)), false);
-        assert_eq!(MessagePacket::size_range().contains(&MESSAGE_LENGTH_MIN), true);
-        assert_eq!(MessagePacket::size_range().contains(&(MESSAGE_LENGTH_MIN + 1)), true);
+        assert!(!MessagePacket::size_range().contains(&(MESSAGE_LENGTH_MIN - 1)));
+        assert!(MessagePacket::size_range().contains(&MESSAGE_LENGTH_MIN));
+        assert!(!MessagePacket::size_range().contains(&(MESSAGE_LENGTH_MIN + 1)));
 
-        assert_eq!(MessagePacket::size_range().contains(&(MESSAGE_LENGTH_MAX - 1)), true);
-        assert_eq!(MessagePacket::size_range().contains(&MESSAGE_LENGTH_MAX), true);
-        assert_eq!(MessagePacket::size_range().contains(&(MESSAGE_LENGTH_MAX + 1)), false);
+        assert!(MessagePacket::size_range().contains(&(MESSAGE_LENGTH_MAX - 1)));
+        assert!(MessagePacket::size_range().contains(&MESSAGE_LENGTH_MAX));
+        assert!(!MessagePacket::size_range().contains(&(MESSAGE_LENGTH_MAX + 1)));
     }
 
     #[test]

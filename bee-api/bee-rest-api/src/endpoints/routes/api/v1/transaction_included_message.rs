@@ -62,9 +62,9 @@ pub(crate) async fn transaction_included_message<B: StorageBackend>(
     })? {
         Some(output) => message::message(*output.message_id(), tangle).await,
         None => {
-            return Err(reject::custom(CustomRejection::NotFound(
+            Err(reject::custom(CustomRejection::NotFound(
                 "Can not find output".to_string(),
-            )));
+            )))
         }
     }
 }

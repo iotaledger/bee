@@ -124,9 +124,9 @@ mod tests {
 
     #[test]
     fn size_range() {
-        assert_eq!(HeartbeatPacket::size_range().contains(&(CONSTANT_SIZE - 1)), false);
-        assert_eq!(HeartbeatPacket::size_range().contains(&CONSTANT_SIZE), true);
-        assert_eq!(HeartbeatPacket::size_range().contains(&(CONSTANT_SIZE + 1)), false);
+        assert!(!HeartbeatPacket::size_range().contains(&(CONSTANT_SIZE - 1)));
+        assert!(HeartbeatPacket::size_range().contains(&CONSTANT_SIZE));
+        assert!(!HeartbeatPacket::size_range().contains(&(CONSTANT_SIZE + 1)));
     }
 
     #[test]
