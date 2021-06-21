@@ -32,13 +32,13 @@ impl_packable_test_for_num!(packable_u128, u128, 0x6F7BD423100423DBFF127B91CA0AB
 #[test]
 fn packable_bool() {
     assert_eq!(false.packed_len(), 1);
-    assert_eq!(bool::unpack(&mut false.pack_new().as_slice()).unwrap(), false);
-    assert_eq!(bool::unpack(&mut 0u8.pack_new().as_slice()).unwrap(), false);
+    assert!(!bool::unpack(&mut false.pack_new().as_slice()).unwrap());
+    assert!(!bool::unpack(&mut 0u8.pack_new().as_slice()).unwrap());
 
     assert_eq!(true.packed_len(), 1);
-    assert_eq!(bool::unpack(&mut true.pack_new().as_slice()).unwrap(), true);
-    assert_eq!(bool::unpack(&mut 1u8.pack_new().as_slice()).unwrap(), true);
-    assert_eq!(bool::unpack(&mut 42u8.pack_new().as_slice()).unwrap(), true);
+    assert!(bool::unpack(&mut true.pack_new().as_slice()).unwrap());
+    assert!(bool::unpack(&mut 1u8.pack_new().as_slice()).unwrap());
+    assert!(bool::unpack(&mut 42u8.pack_new().as_slice()).unwrap());
 }
 
 #[test]
