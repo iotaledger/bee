@@ -88,3 +88,12 @@ fn add_listener_remove_dispatch() {
 
     assert_eq!(_counter.load(Ordering::SeqCst), 24);
 }
+
+#[test]
+fn dispatch_without_listeners() {
+    let bus = EventBus::new();
+
+    bus.dispatch(Event1(1));
+    bus.dispatch(Event2(1, 2));
+    bus.dispatch(Event3(1, 2, 3));
+}
