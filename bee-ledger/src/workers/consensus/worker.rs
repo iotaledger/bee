@@ -326,6 +326,7 @@ where
                         }
 
                         if should_snapshot(&tangle, MilestoneIndex(*ledger_index), depth, &snapshot_config) {
+                            println!("snapshot");
                             // TODO
                             // if let Err(e) = snapshot(snapshot_config.path(), event.index - depth) {
                             //     error!("Failed to create snapshot: {:?}.", e);
@@ -333,6 +334,7 @@ where
                         }
 
                         if should_prune(&tangle, MilestoneIndex(*ledger_index), delay, &pruning_config) {
+                            println!("prune_database");
                             // TODO
                             // if let Err(e) = prune_database(&tangle, MilestoneIndex(*event.index - delay)) {
                             //     error!("Failed to prune database: {:?}.", e);
