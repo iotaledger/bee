@@ -19,7 +19,7 @@ fn basic() {
 
     drop(bus);
 
-    assert_eq!(received.load(Ordering::SeqCst), true);
+    assert!(received.load(Ordering::SeqCst));
 }
 
 #[test]
@@ -27,17 +27,3 @@ fn send_sync() {
     fn helper<T: Send + Sync>() {}
     helper::<Bus<'static>>();
 }
-
-// TODO: Enable when stable
-// #[bench]
-// fn bench_add_two(b: &mut Bencher) {
-// use std::hint::black_box;
-//
-// let bus = Bus::default();
-//
-// bus.add_listener(|e: &Foo| { black_box(e); });
-//
-// b.iter(|| {
-// bus.dispatch(Foo);
-// });
-// }
