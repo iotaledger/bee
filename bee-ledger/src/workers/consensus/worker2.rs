@@ -166,7 +166,7 @@ where
                 milestone.essence().index(),
                 milestone_id,
                 receipt,
-                storage::fetch_unspent_treasury_output(storage)?,
+                storage::fetch_unspent_treasury_output(storage).await?,
             )
             .await?,
         )
@@ -181,7 +181,8 @@ where
         &metadata.consumed_outputs,
         &metadata.balance_diffs,
         &migration,
-    )?;
+    )
+    .await?;
 
     *ledger_index = LedgerIndex(milestone.essence().index());
     tangle.update_confirmed_milestone_index(milestone.essence().index());
@@ -270,7 +271,7 @@ where
         let storage = node.storage();
         let bus = node.bus();
 
-        validate_ledger_state(&*storage)?;
+        validate_ledger_state(&*storage).await?;
 
         let bmd = tangle.config().below_max_depth();
 
@@ -300,30 +301,8 @@ where
             pruning_config.delay()
         };
 
-        // let depth = if snapshot_config.depth() < SOLID_ENTRY_POINT_THRESHOLD_FUTURE {
-        //     warn!(
-        //         "Configuration value for \"depth\" is too low ({}), value changed to {}.",
-        //         snapshot_config.depth(),
-        //         SOLID_ENTRY_POINT_THRESHOLD_FUTURE
-        //     );
-        //     SOLID_ENTRY_POINT_THRESHOLD_FUTURE
-        // } else {
-        //     snapshot_config.depth()
-        // };
-        // let delay_min = snapshot_config.depth() + SOLID_ENTRY_POINT_THRESHOLD_PAST + PRUNING_THRESHOLD + 1;
-        // let delay = if pruning_config.delay() < delay_min {
-        //     warn!(
-        //         "Configuration value for \"delay\" is too low ({}), value changed to {}.",
-        //         pruning_config.delay(),
-        //         delay_min
-        //     );
-        //     delay_min
-        // } else {
-        //     pruning_config.delay()
-        // };
-
         // Unwrap is fine because ledger index was already in storage or just added by the snapshot worker.
-        let mut ledger_index = storage::fetch_ledger_index(&*storage)?.unwrap();
+        let mut ledger_index = storage::fetch_ledger_index(&*storage).await?.unwrap();
         let mut receipt_migrated_at = MilestoneIndex(0);
 
         node.spawn::<Self, _, _>(|shutdown| async move {
@@ -352,14 +331,6 @@ where
                             continue;
                         }
 
-                        // if should_snapshot(&tangle, MilestoneIndex(*ledger_index), depth, &snapshot_config) {
-                        //     println!("snapshot");
-                        //     // TODO
-                        //     // if let Err(e) = snapshot(snapshot_config.path(), event.index - depth) {
-                        //     //     error!("Failed to create snapshot: {:?}.", e);
-                        //     // }
-                        // }
-
                         match should_snapshot(&tangle, ledger_index, pruning_depth_min, &snapshot_config) {
                             Ok(()) => {
                                 // TODO
@@ -368,17 +339,10 @@ where
                                 // }
                             }
                             Err(reason) => {
-                                info!("Snapshotting skipped: {:?}", reason);
+                                info!("Snapshot skipped: {:?}", reason);
                             }
                         }
 
-                        // if should_prune(&tangle, MilestoneIndex(*ledger_index), delay, &pruning_config) {
-                        //     println!("prune_database");
-                        //     // TODO
-                        //     // if let Err(e) = prune_database(&tangle, MilestoneIndex(*event.index - delay)) {
-                        //     //     error!("Failed to prune database: {:?}.", e);
-                        //     // }
-                        // }
                         match should_prune(&tangle, ledger_index, pruning_depth, &pruning_config) {
                             Ok(target_index) => {
                                 if let Err(e) = prune::prune(
@@ -400,19 +364,20 @@ where
                         }
                     }
                     ConsensusWorkerCommand::FetchBalance(address, sender) => {
-                        if let Err(e) = sender.send((storage::fetch_balance(&*storage, &address), ledger_index)) {
+                        if let Err(e) = sender.send((storage::fetch_balance(&*storage, &address).await, ledger_index)) {
                             error!("Error while sending balance: {:?}", e);
                         }
                     }
                     ConsensusWorkerCommand::FetchOutput(output_id, sender) => {
-                        if let Err(e) = sender.send((storage::fetch_output(&*storage, &output_id), ledger_index)) {
+                        if let Err(e) = sender.send((storage::fetch_output(&*storage, &output_id).await, ledger_index))
+                        {
                             error!("Error while sending output: {:?}", e);
                         }
                     }
                     ConsensusWorkerCommand::FetchOutputs(address, sender) => match address {
                         Address::Ed25519(address) => {
                             if let Err(e) = sender.send((
-                                storage::fetch_outputs_for_ed25519_address(&*storage, &address),
+                                storage::fetch_outputs_for_ed25519_address(&*storage, &address).await,
                                 ledger_index,
                             )) {
                                 error!("Error while sending output: {:?}", e);

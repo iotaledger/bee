@@ -19,7 +19,7 @@ use bee_message::{
     Message, MessageId,
 };
 use bee_storage::{
-    access::{AsIterator, Batch, BatchBuilder, Exist, Fetch, Insert, Truncate},
+    access::{AsStream, Batch, BatchBuilder, Exist, Fetch, Insert, Truncate},
     backend,
 };
 use bee_tangle::{
@@ -32,39 +32,51 @@ use std::collections::HashMap;
 pub trait StorageBackend:
     backend::StorageBackend
     + BatchBuilder
-    + Batch<OutputId, CreatedOutput>
-    + Batch<OutputId, ConsumedOutput>
-    + Batch<Unspent, ()>
+    // === Batch operations ===
     + Batch<(), LedgerIndex>
-    + Batch<MilestoneIndex, OutputDiff>
-    + Batch<(Ed25519Address, OutputId), ()>
-    + Batch<Address, Balance>
-    + Batch<(MilestoneIndex, Receipt), ()>
     + Batch<(bool, TreasuryOutput), ()>
-    + Batch<SolidEntryPoint, MilestoneIndex>
+    + Batch<(Ed25519Address, OutputId), ()>
+    + Batch<(MessageId, MessageId), ()>
+    + Batch<(MilestoneIndex, Receipt), ()>
     + Batch<(MilestoneIndex, UnreferencedMessage), ()>
     + Batch<(PaddedIndex, MessageId), ()>
-    + Batch<(MessageId, MessageId), ()>
+    + Batch<Address, Balance>
     + Batch<MessageId, Message>
     + Batch<MessageId, MessageMetadata>
     + Batch<MilestoneIndex, Milestone>
+    + Batch<MilestoneIndex, OutputDiff>
+    + Batch<OutputId, CreatedOutput>
+    + Batch<OutputId, ConsumedOutput>
+    + Batch<SolidEntryPoint, MilestoneIndex>
+    + Batch<Unspent, ()>
+    // === Exist operations ===
     + Exist<Unspent, ()>
-    + Fetch<(), SnapshotInfo>
-    + Fetch<OutputId, CreatedOutput>
+    // === Fetch operations ===
     + Fetch<(), LedgerIndex>
+    + Fetch<(), SnapshotInfo>
     + Fetch<Address, Balance>
     + Fetch<bool, Vec<TreasuryOutput>>
     + Fetch<Ed25519Address, Vec<OutputId>>
+    + Fetch<MessageId, Message>
+    + Fetch<MessageId, MessageMetadata>
+    + Fetch<MessageId, Vec<MessageId>>
     + Fetch<MilestoneIndex, Milestone>
     + Fetch<MilestoneIndex, Vec<Receipt>>
     + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
+    + Fetch<OutputId, CreatedOutput>
+    + Fetch<SolidEntryPoint, MilestoneIndex>
+    // === Insert operations ===
     + Insert<(), SnapshotInfo>
     + Insert<(), LedgerIndex>
     + Insert<(bool, TreasuryOutput), ()>
+    + Insert<SolidEntryPoint, MilestoneIndex>
+    // === Truncate operations ===
     + Truncate<SolidEntryPoint, MilestoneIndex>
-    + for<'a> AsIterator<'a, Unspent, ()>
-    + for<'a> AsIterator<'a, Address, Balance>
-    + for<'a> AsIterator<'a, SolidEntryPoint, MilestoneIndex>
+    // === Stream operations ===
+    + for<'a> AsStream<'a, Unspent, ()>
+    + for<'a> AsStream<'a, Address, Balance>
+    + for<'a> AsStream<'a, SolidEntryPoint, MilestoneIndex>
+    // === Tangle operations ===
     + bee_tangle::storage::StorageBackend
 {
 }
@@ -72,39 +84,51 @@ pub trait StorageBackend:
 impl<T> StorageBackend for T where
     T: backend::StorageBackend
         + BatchBuilder
-        + Batch<OutputId, CreatedOutput>
-        + Batch<OutputId, ConsumedOutput>
-        + Batch<Unspent, ()>
+        // === Batch operations ===
         + Batch<(), LedgerIndex>
-        + Batch<MilestoneIndex, OutputDiff>
         + Batch<(Ed25519Address, OutputId), ()>
-        + Batch<Address, Balance>
-        + Batch<(MilestoneIndex, Receipt), ()>
         + Batch<(bool, TreasuryOutput), ()>
-        + Batch<SolidEntryPoint, MilestoneIndex>
+        + Batch<(MessageId, MessageId), ()>
+        + Batch<(MilestoneIndex, Receipt), ()>
         + Batch<(MilestoneIndex, UnreferencedMessage), ()>
         + Batch<(PaddedIndex, MessageId), ()>
-        + Batch<(MessageId, MessageId), ()>
+        + Batch<Address, Balance>
         + Batch<MessageId, Message>
         + Batch<MessageId, MessageMetadata>
         + Batch<MilestoneIndex, Milestone>
+        + Batch<MilestoneIndex, OutputDiff>
+        + Batch<OutputId, CreatedOutput>
+        + Batch<OutputId, ConsumedOutput>
+        + Batch<SolidEntryPoint, MilestoneIndex>
+        + Batch<Unspent, ()>
+        // === Exist operations ===
         + Exist<Unspent, ()>
-        + Fetch<(), SnapshotInfo>
-        + Fetch<OutputId, CreatedOutput>
+        // === Fetch operations ===
         + Fetch<(), LedgerIndex>
+        + Fetch<(), SnapshotInfo>
         + Fetch<Address, Balance>
         + Fetch<bool, Vec<TreasuryOutput>>
         + Fetch<Ed25519Address, Vec<OutputId>>
+        + Fetch<MessageId, Message>
+        + Fetch<MessageId, MessageMetadata>
+        + Fetch<MessageId, Vec<MessageId>>
         + Fetch<MilestoneIndex, Milestone>
         + Fetch<MilestoneIndex, Vec<Receipt>>
         + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
+        + Fetch<OutputId, CreatedOutput>
+        + Fetch<SolidEntryPoint, MilestoneIndex>
+        // === Insert operations ===
         + Insert<(), SnapshotInfo>
         + Insert<(), LedgerIndex>
         + Insert<(bool, TreasuryOutput), ()>
+        + Insert<SolidEntryPoint, MilestoneIndex>
+        // === Truncate operations ===
         + Truncate<SolidEntryPoint, MilestoneIndex>
-        + for<'a> AsIterator<'a, Unspent, ()>
-        + for<'a> AsIterator<'a, Address, Balance>
-        + for<'a> AsIterator<'a, SolidEntryPoint, MilestoneIndex>
+        // === Stream operations ===
+        + for<'a> AsStream<'a, Unspent, ()>
+        + for<'a> AsStream<'a, Address, Balance>
+        + for<'a> AsStream<'a, SolidEntryPoint, MilestoneIndex>
+        // === Tangle operations ===
         + bee_tangle::storage::StorageBackend
 {
 }
@@ -181,7 +205,7 @@ pub(crate) fn delete_created_output_batch<B: StorageBackend>(
     }
 }
 
-pub(crate) fn create_output<B: StorageBackend>(
+pub(crate) async fn create_output<B: StorageBackend>(
     storage: &B,
     output_id: &OutputId,
     output: &CreatedOutput,
@@ -192,6 +216,7 @@ pub(crate) fn create_output<B: StorageBackend>(
 
     storage
         .batch_commit(batch, true)
+        .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
@@ -217,23 +242,27 @@ pub(crate) fn delete_consumed_output_batch<B: StorageBackend>(
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn apply_balance_diffs<B: StorageBackend>(storage: &B, balance_diffs: &BalanceDiffs) -> Result<(), Error> {
+pub(crate) async fn apply_balance_diffs<B: StorageBackend>(
+    storage: &B,
+    balance_diffs: &BalanceDiffs,
+) -> Result<(), Error> {
     let mut batch = B::batch_begin();
 
-    apply_balance_diffs_batch(storage, &mut batch, balance_diffs)?;
+    apply_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
 
     storage
         .batch_commit(batch, true)
+        .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn apply_balance_diffs_batch<B: StorageBackend>(
+pub(crate) async fn apply_balance_diffs_batch<B: StorageBackend>(
     storage: &B,
     batch: &mut <B as BatchBuilder>::Batch,
     balance_diffs: &BalanceDiffs,
 ) -> Result<(), Error> {
     for (address, diff) in balance_diffs.iter() {
-        let balance = fetch_balance_or_default(storage, address)?.apply_diff(diff)?;
+        let balance = fetch_balance_or_default(storage, address).await?.apply_diff(diff)?;
 
         if balance.amount() != 0 {
             Batch::<Address, Balance>::batch_insert(storage, batch, address, &balance)
@@ -247,7 +276,7 @@ pub(crate) fn apply_balance_diffs_batch<B: StorageBackend>(
     Ok(())
 }
 
-pub(crate) fn apply_milestone<B: StorageBackend>(
+pub(crate) async fn apply_milestone<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
@@ -275,7 +304,7 @@ pub(crate) fn apply_milestone<B: StorageBackend>(
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    apply_balance_diffs_batch(storage, &mut batch, balance_diffs)?;
+    apply_balance_diffs_batch(storage, &mut batch, balance_diffs).await?;
 
     let treasury_diff = if let Some(migration) = migration {
         insert_receipt_batch(storage, &mut batch, migration.receipt())?;
@@ -300,10 +329,11 @@ pub(crate) fn apply_milestone<B: StorageBackend>(
 
     storage
         .batch_commit(batch, true)
+        .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn rollback_milestone<B: StorageBackend>(
+pub(crate) async fn rollback_milestone<B: StorageBackend>(
     storage: &B,
     index: MilestoneIndex,
     created_outputs: &HashMap<OutputId, CreatedOutput>,
@@ -324,7 +354,7 @@ pub(crate) fn rollback_milestone<B: StorageBackend>(
         delete_consumed_output_batch(storage, &mut batch, output_id)?;
     }
 
-    apply_balance_diffs_batch(storage, &mut batch, &balance_diffs.negated())?;
+    apply_balance_diffs_batch(storage, &mut batch, &balance_diffs.negated()).await?;
 
     if let Some(migration) = migration {
         delete_receipt_batch(storage, &mut batch, migration.receipt())?;
@@ -337,19 +367,27 @@ pub(crate) fn rollback_milestone<B: StorageBackend>(
 
     storage
         .batch_commit(batch, true)
+        .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn fetch_balance<B: StorageBackend>(storage: &B, address: &Address) -> Result<Option<Balance>, Error> {
-    Fetch::<Address, Balance>::fetch(storage, address).map_err(|e| Error::Storage(Box::new(e)))
+pub(crate) async fn fetch_balance<B: StorageBackend>(storage: &B, address: &Address) -> Result<Option<Balance>, Error> {
+    Fetch::<Address, Balance>::fetch(storage, address)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn fetch_balance_or_default<B: StorageBackend>(storage: &B, address: &Address) -> Result<Balance, Error> {
-    Ok(fetch_balance(storage, address)?.unwrap_or_default())
+pub(crate) async fn fetch_balance_or_default<B: StorageBackend>(
+    storage: &B,
+    address: &Address,
+) -> Result<Balance, Error> {
+    Ok(fetch_balance(storage, address).await?.unwrap_or_default())
 }
 
-pub(crate) fn insert_ledger_index<B: StorageBackend>(storage: &B, index: &LedgerIndex) -> Result<(), Error> {
-    Insert::<(), LedgerIndex>::insert(storage, &(), index).map_err(|e| Error::Storage(Box::new(e)))
+pub(crate) async fn insert_ledger_index<B: StorageBackend>(storage: &B, index: &LedgerIndex) -> Result<(), Error> {
+    Insert::<(), LedgerIndex>::insert(storage, &(), index)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn insert_ledger_index_batch<B: StorageBackend>(
@@ -360,8 +398,10 @@ pub(crate) fn insert_ledger_index_batch<B: StorageBackend>(
     Batch::<(), LedgerIndex>::batch_insert(storage, batch, &(), index).map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn fetch_ledger_index<B: StorageBackend>(storage: &B) -> Result<Option<LedgerIndex>, Error> {
-    Fetch::<(), LedgerIndex>::fetch(storage, &()).map_err(|e| Error::Storage(Box::new(e)))
+pub(crate) async fn fetch_ledger_index<B: StorageBackend>(storage: &B) -> Result<Option<LedgerIndex>, Error> {
+    Fetch::<(), LedgerIndex>::fetch(storage, &())
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn insert_receipt_batch<B: StorageBackend>(
@@ -391,37 +431,51 @@ pub(crate) fn delete_receipt_batch<B: StorageBackend>(
     .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn insert_snapshot_info<B: StorageBackend>(storage: &B, snapshot_info: &SnapshotInfo) -> Result<(), Error> {
-    Insert::<(), SnapshotInfo>::insert(&*storage, &(), snapshot_info).map_err(|e| Error::Storage(Box::new(e)))
+pub(crate) async fn insert_snapshot_info<B: StorageBackend>(
+    storage: &B,
+    snapshot_info: &SnapshotInfo,
+) -> Result<(), Error> {
+    Insert::<(), SnapshotInfo>::insert(&*storage, &(), snapshot_info)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn fetch_snapshot_info<B: StorageBackend>(storage: &B) -> Result<Option<SnapshotInfo>, Error> {
-    Fetch::<(), SnapshotInfo>::fetch(storage, &()).map_err(|e| Error::Storage(Box::new(e)))
+pub(crate) async fn fetch_snapshot_info<B: StorageBackend>(storage: &B) -> Result<Option<SnapshotInfo>, Error> {
+    Fetch::<(), SnapshotInfo>::fetch(storage, &())
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn fetch_output<B: StorageBackend>(
+pub(crate) async fn fetch_output<B: StorageBackend>(
     storage: &B,
     output_id: &OutputId,
 ) -> Result<Option<CreatedOutput>, Error> {
-    Fetch::<OutputId, CreatedOutput>::fetch(storage, output_id).map_err(|e| Error::Storage(Box::new(e)))
+    Fetch::<OutputId, CreatedOutput>::fetch(storage, output_id)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn fetch_outputs_for_ed25519_address<B: StorageBackend>(
+pub(crate) async fn fetch_outputs_for_ed25519_address<B: StorageBackend>(
     storage: &B,
     address: &Ed25519Address,
 ) -> Result<Option<Vec<OutputId>>, Error> {
-    Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&*storage, &address).map_err(|e| Error::Storage(Box::new(e)))
+    Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&*storage, &address)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn is_output_unspent<B: StorageBackend>(storage: &B, output_id: &OutputId) -> Result<bool, Error> {
-    Exist::<Unspent, ()>::exist(storage, &(*output_id).into()).map_err(|e| Error::Storage(Box::new(e)))
+pub(crate) async fn is_output_unspent<B: StorageBackend>(storage: &B, output_id: &OutputId) -> Result<bool, Error> {
+    Exist::<Unspent, ()>::exist(storage, &(*output_id).into())
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))
 }
 
-pub(crate) fn insert_treasury_output<B: StorageBackend>(
+pub(crate) async fn insert_treasury_output<B: StorageBackend>(
     storage: &B,
     treasury_output: &TreasuryOutput,
 ) -> Result<(), Error> {
     Insert::<(bool, TreasuryOutput), ()>::insert(storage, &(false, treasury_output.clone()), &())
+        .await
         .map_err(|e| Error::Storage(Box::new(e)))
 }
 
@@ -466,9 +520,10 @@ pub(crate) fn unspend_treasury_output_batch<B: StorageBackend>(
 }
 
 /// Fetches the unspent treasury output from the storage.
-pub fn fetch_unspent_treasury_output<B: StorageBackend>(storage: &B) -> Result<TreasuryOutput, Error> {
-    if let Some(outputs) =
-        Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &false).map_err(|e| Error::Storage(Box::new(e)))?
+pub async fn fetch_unspent_treasury_output<B: StorageBackend>(storage: &B) -> Result<TreasuryOutput, Error> {
+    if let Some(outputs) = Fetch::<bool, Vec<TreasuryOutput>>::fetch(storage, &false)
+        .await
+        .map_err(|e| Error::Storage(Box::new(e)))?
     {
         match outputs.as_slice() {
             // There has to be an unspent treasury output at all time.
