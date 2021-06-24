@@ -178,12 +178,9 @@ where
                 users.clone(),
             );
 
-            let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(
-                config.bind_socket_addr(),
-                async {
-                    shutdown.await.ok();
-                },
-            );
+            let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(config.bind_socket_addr(), async {
+                shutdown.await.ok();
+            });
 
             info!("Dashboard available at http://{}.", config.bind_socket_addr());
 

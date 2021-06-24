@@ -4,9 +4,11 @@
 use crate::{
     types::{metrics::NodeMetrics, peer::Peer},
     workers::{
-        heartbeater::send_heartbeat, peer::PeerManager, storage::StorageBackend, HasherWorker, MessageResponderWorker,
-        MetricsWorker, MilestoneRequesterWorker, MilestoneResponderWorker, PeerManagerResWorker, PeerWorker,
-        RequestedMilestones,
+        heartbeater::{new_heartbeat, send_heartbeat},
+        peer::PeerManager,
+        storage::StorageBackend,
+        HasherWorker, MessageResponderWorker, MetricsWorker, MilestoneRequesterWorker, MilestoneResponderWorker,
+        PeerManagerResWorker, PeerWorker, RequestedMilestones,
     },
 };
 
@@ -112,7 +114,13 @@ where
                         }
 
                         // TODO can't do it in the if because of deadlock, but it's not really right to do it here.
-                        send_heartbeat(&*peer_manager, &*metrics, &*tangle, &peer_id).await;
+                        send_heartbeat(
+                            &*peer_manager,
+                            &*metrics,
+                            &peer_id,
+                            new_heartbeat(&*peer_manager, &*tangle).await,
+                        )
+                        .await;
                     }
                     Event::PeerDisconnected { peer_id } => {
                         // TODO write a get_mut peer manager method

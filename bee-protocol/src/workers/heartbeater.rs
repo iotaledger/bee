@@ -25,39 +25,42 @@ const _HEARTBEAT_SEND_INTERVAL: u64 = 30; // In seconds.
 const _HEARTBEAT_RECEIVE_INTERVAL: u64 = 100; // In seconds.
 const CHECK_HEARTBEATS_INTERVAL: u64 = 5; // In seconds.
 
-pub async fn send_heartbeat<B: StorageBackend>(
+pub(crate) async fn new_heartbeat<B: StorageBackend>(
     peer_manager: &PeerManager,
-    metrics: &NodeMetrics,
     tangle: &MsTangle<B>,
-    to: &PeerId,
-) {
+) -> HeartbeatPacket {
     let connected_peers = peer_manager.connected_peers().await;
     let synced_peers = peer_manager.synced_peers().await;
 
-    Sender::<HeartbeatPacket>::send(
-        peer_manager,
-        metrics,
-        to,
-        HeartbeatPacket::new(
-            *tangle.get_solid_milestone_index(),
-            *tangle.get_pruning_index(),
-            *tangle.get_latest_milestone_index(),
-            connected_peers,
-            synced_peers,
-        ),
+    HeartbeatPacket::new(
+        *tangle.get_solid_milestone_index(),
+        *tangle.get_pruning_index(),
+        *tangle.get_latest_milestone_index(),
+        connected_peers,
+        synced_peers,
     )
-    .await;
 }
 
-pub async fn broadcast_heartbeat<B: StorageBackend>(
+pub(crate) async fn send_heartbeat(
+    peer_manager: &PeerManager,
+    metrics: &NodeMetrics,
+    to: &PeerId,
+    heartbeat: HeartbeatPacket,
+) {
+    Sender::<HeartbeatPacket>::send(peer_manager, metrics, to, heartbeat).await;
+}
+
+pub(crate) async fn broadcast_heartbeat<B: StorageBackend>(
     peer_manager: &PeerManager,
     metrics: &NodeMetrics,
     tangle: &MsTangle<B>,
 ) {
+    let heartbeat = new_heartbeat(peer_manager, tangle).await;
+
     // TODO bring it back
     //    peer_manager.for_each_peer(|peer_id, _| async {
     for (peer_id, _) in peer_manager.0.read().await.peers.iter() {
-        send_heartbeat(peer_manager, metrics, tangle, &peer_id).await
+        send_heartbeat(peer_manager, metrics, &peer_id, heartbeat.clone()).await
     }
 }
 

@@ -108,12 +108,9 @@ where
             .recover(handle_rejection);
 
             let (_, server) =
-                warp::serve(routes).bind_with_graceful_shutdown(
-                    rest_api_config.bind_socket_addr(), 
-                    async {
-                        shutdown.await.ok();
-                    }
-                );
+                warp::serve(routes).bind_with_graceful_shutdown(rest_api_config.bind_socket_addr(), async {
+                    shutdown.await.ok();
+                });
 
             server.await;
 
