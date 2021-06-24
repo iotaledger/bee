@@ -24,7 +24,7 @@ fn main() -> Result<(), BuildError> {
         Ok(output) => {
             println!("cargo:rerun-if-changed=../.git/HEAD");
             println!(
-                "cargo:rerun-if-changed=../.git/heads/{}",
+                "cargo:rerun-if-changed=../.git/refs/heads/{}",
                 String::from_utf8(output.stdout).unwrap(),
             );
         }
