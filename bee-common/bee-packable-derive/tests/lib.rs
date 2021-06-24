@@ -57,7 +57,7 @@ macro_rules! make_test {
 }
 
 // FIXME: change this when the new error message hits stable.
-#[rustversion::not(nightly)]
+#[rustversion::stable]
 make_test!(packable);
-#[rustversion::nightly]
+#[rustversion::not(stable)]
 make_test!(packable, packable_is_structural, invalid_wrapper);
