@@ -12,12 +12,25 @@ enum BuildError {
 fn main() -> Result<(), BuildError> {
     match Command::new("git").args(&["rev-parse", "HEAD"]).output() {
         Ok(output) => match String::from_utf8(output.stdout) {
-            Ok(output) => {
-                println!("cargo:rustc-env=GIT_COMMIT={}", output);
-                Ok(())
-            }
-            Err(e) => Err(BuildError::GitCommandInvalidOutput(e)),
+            Ok(output) => println!("cargo:rustc-env=GIT_COMMIT={}", output),
+            Err(e) => return Err(BuildError::GitCommandInvalidOutput(e)),
         },
-        Err(e) => Err(BuildError::GitCommandFailed(e)),
+        Err(e) => return Err(BuildError::GitCommandFailed(e)),
     }
+
+    match Command::new("git")
+        .args(&["rev-parse", "--abbrev-ref", "HEAD"])
+        .output()
+    {
+        Ok(output) => match String::from_utf8(output.stdout) {
+            Ok(output) => {
+                println!("cargo:rerun-if-changed=../.git/HEAD");
+                println!("cargo:rerun-if-changed=../.git/refs/heads/{}", output);
+            }
+            Err(e) => return Err(BuildError::GitCommandInvalidOutput(e)),
+        },
+        Err(e) => return Err(BuildError::GitCommandFailed(e)),
+    }
+
+    Ok(())
 }
