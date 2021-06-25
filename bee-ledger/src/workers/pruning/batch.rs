@@ -26,7 +26,7 @@ use ref_cast::RefCast;
 use std::collections::VecDeque;
 
 pub type Messages = HashSet<MessageId>;
-pub type Approvers = HashMap<MessageId, MilestoneIndex>;
+pub type ApproverCache = HashMap<MessageId, MilestoneIndex>;
 pub type Seps = HashMap<SolidEntryPoint, MilestoneIndex>;
 
 #[derive(Eq, PartialEq, Hash)]
@@ -44,7 +44,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 ) -> Result<(Seps, ConfirmedMetrics), Error> {
     // TODO: we should probably think about not allocating those hashmaps each time.
     let mut visited = Messages::with_capacity(512);
-    let mut buffered_approvers = Approvers::with_capacity(512);
+    let mut cache = ApproverCache::with_capacity(512);
     let mut new_seps = Seps::with_capacity(512);
     let mut metrics = ConfirmedMetrics::default();
 
@@ -54,9 +54,10 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
     let target_id = target_milestone.message_id().clone();
 
-    let mut parents: VecDeque<_> = vec![target_id].into_iter().collect();
+    // let mut parents: VecDeque<_> = vec![target_id].into_iter().collect();
+    let mut parents: VecDeque<_> = vec![(target_id, target_id)].into_iter().collect();
 
-    while let Some(current_id) = parents.pop_front() {
+    while let Some((child_id, current_id)) = parents.pop_front() {
         // Skip message if we already visited it.
         if visited.contains(&current_id) {
             metrics.msg_already_visited += 1;
@@ -70,9 +71,29 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         }
 
         // Fetch the associated message to find out about its parents (and other data).
-        let msg = Fetch::<MessageId, Message>::fetch(storage, &current_id)
+        // let msg = Fetch::<MessageId, Message>::fetch(storage, &current_id)
+        //     .map_err(|e| Error::FetchOperation(Box::new(e)))?
+        //     .ok_or(Error::MissingMessage(current_id))?;
+
+        let msg = match Fetch::<MessageId, Message>::fetch(storage, &current_id)
             .map_err(|e| Error::FetchOperation(Box::new(e)))?
-            .ok_or(Error::MissingMessage(current_id))?;
+            .ok_or(Error::MissingMessage(current_id))
+        {
+            Ok(msg) => msg,
+            Err(e) => {
+                // Fetch the approvers of that missing message again, and verify that they contain `child_id` (consistency check)
+                let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &current_id)
+                    .map_err(|e| Error::FetchOperation(Box::new(e)))?
+                    .ok_or(Error::MissingApprovers(current_id))?;
+
+                if !approvers.contains(&child_id) {
+                    log::error!("Storage inconsistent: {} is a child of {} (referenced in metadata), but Fetch returned only {:?} as its children.", child_id, current_id, approvers);
+                } else {
+                    log::error!("Algorithm error. Child {} was correctly fetched, but its confirmation index lead to its too-early pruning.", child_id);
+                }
+                return Err(e);
+            }
+        };
 
         metrics.fetched_messages += 1;
 
@@ -86,13 +107,15 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
             metrics.prunable_indexations += 1;
         }
 
-        for parent_id in current_parents.iter() {
-            delete_edge(storage, batch, &(*parent_id, current_id))?;
+        for _parent_id in current_parents.iter() {
+            // Temporarily do not delete edges, so we can query approvers again in case of a missing message error
+            //delete_edge(storage, batch, &(*parent_id, current_id))?;
             metrics.prunable_edges += 1;
         }
 
         // Continue the traversal with its parents.
-        parents.extend(current_parents.iter());
+        //Temporarily also keep the child which added it, i.e. current_id)
+        parents.extend(std::iter::repeat(current_id).zip(current_parents.iter().copied()));
 
         // Mark this message as "visited".
         visited.insert(current_id);
@@ -126,7 +149,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         // over all its approvers.
         let mut max_conf_index = target_index;
         for id in unvisited_approvers {
-            let conf_index = match buffered_approvers.get(&id) {
+            let conf_index = match cache.get(&id) {
                 Some(conf_index) => {
                     metrics.approver_cache_hit += 1;
 
@@ -151,7 +174,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
                         target_index
                     };
 
-                    buffered_approvers.insert(id, conf_index);
+                    cache.insert(id, conf_index);
 
                     conf_index
                 }
@@ -163,8 +186,8 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         }
 
         if max_conf_index > target_index {
-            // new_seps.insert(current_id.into(), max_conf_index);
-            new_seps.insert(current_id.into(), target_index + 50);
+            new_seps.insert(current_id.into(), max_conf_index);
+            // new_seps.insert(current_id.into(), target_index + 50);
 
             metrics.found_seps += 1;
         }
