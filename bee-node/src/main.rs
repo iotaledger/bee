@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![recursion_limit="256"]
+
 use bee_node::{plugins, print_banner_and_version, tools, CliArgs, NodeBuilder, NodeConfigBuilder};
 use bee_runtime::node::NodeBuilder as _;
 #[cfg(feature = "rocksdb")]
