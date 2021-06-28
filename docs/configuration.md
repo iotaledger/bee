@@ -1,31 +1,36 @@
 # Configuration
 
-Bee uses the Toml standard as config file. If you are unsure about some syntax have a look at the official specs [here](https://toml.io).
-The default config file is `config.toml`. You can change the path or name of the config file by using the `-c` or `--config` flag. 
-For Example: `bee -c config_example.toml`
+Bee uses the Toml standard as a configuration file. If you are unsure about some syntax,  have a look at the [official Toml specifications](https://toml.io).
 
-## Table of content
+The default config file is `config.toml`. You can change the path or name of the config file by using the `-c` or `--config` flag.
+For Example: 
 
-[//]: # "Table of contents created with: http://ecotrust-canada.github.io/markdown-toc/"
+```bash
+bee -c config_example.toml
+```
 
-- [Logger](#logger)
-  * [outputs](#outputs)
-- [Network](#network)
-    + [peering](#peering)
-- [Protocol](#protocol)
-  * [coordinator](#coordinator)
-    + [public_key_ranges](#public_key_ranges)
-  * [workers](#workers)
-- [REST API](#rest-api)
-- [Snapshot](#snapshot)
-- [Pruning](#pruning)
-- [Storage](#storage)
-  * [storage](#storage-1)
-  * [env](#env)
-- [Tangle](#tangle)
-- [Mqtt](#mqtt)
-- [Dashboard](#dashboard)
-  * [auth](#auth)
+## Table of Contents
+
+- [Configuration](#configuration)
+  - [Table of Contents](#table-of-contents)
+  - [Logger](#logger)
+    - [outputs](#outputs)
+  - [Network](#network)
+      - [Peering](#peering)
+  - [Protocol](#protocol)
+    - [coordinator](#coordinator)
+      - [public_key_ranges](#public_key_ranges)
+    - [Workers](#workers)
+  - [REST API](#rest-api)
+  - [Snapshot](#snapshot)
+  - [Pruning](#pruning)
+  - [Storage](#storage)
+    - [Storage](#storage-1)
+    - [Env](#env)
+  - [Tangle](#tangle)
+  - [Mqtt](#mqtt)
+  - [Dashboard](#dashboard)
+    - [Auth](#auth)
 
 ---
 
@@ -47,11 +52,11 @@ For Example: `bee -c config_example.toml`
 
 ### outputs
 
-| Name         | Description                     | Type             |
-| :----------- | :------------------------------ | :--------------- |
-| name         | standart stream or file         | string           |
-| level_filter | log level filter of an output   | string           |
-| target_fiter | log target filters of an output | array of strings |
+| Name          | Description                     | Type             |
+| :------------ | :------------------------------ | :--------------- |
+| name          | standard stream or file         | string           |
+| level_filter  | log level filter of an output   | string           |
+| target_filter | log target filters of an output | array of strings |
 
 Example:
 
@@ -78,7 +83,7 @@ level_filter   = "error"
 | max_unknown_peers       | max count of allowed unknown peers                          | integer[usize]    |
 | [peering](#peering)     | array of static peers                                       | array of tables   |
 
-#### peering
+#### Peering
 
 | Name    | Description                                                                                          | Type   |
 | :------ | :--------------------------------------------------------------------------------------------------- | :----- |
@@ -107,11 +112,11 @@ alias   = "yet another peer"
 
 ## Protocol
 
-| Name                        | Description           | Type         |
-| :-------------------------- | :-------------------- | :----------- |
-| minimum_pow_score           | the minimum pow score | float[f64]   |
-| [coordinator](#coordinator) | coordinator configs   | table        |
-| [workers](#workers)         | worker configs        | table        |
+| Name                        | Description           | Type       |
+| :-------------------------- | :-------------------- | :--------- |
+| minimum_pow_score           | the minimum pow score | float[f64] |
+| [coordinator](#coordinator) | coordinator configs   | table      |
+| [workers](#workers)         | worker configs        | table      |
 
 ### coordinator
 
@@ -128,7 +133,7 @@ alias   = "yet another peer"
 | start      | start       | integer[u32] |
 | end        | end         | integer[u32] |
 
-### workers
+### Workers
 
 | Name                 | Description           | Type           |
 | :------------------- | :-------------------- | :------------- |
@@ -287,7 +292,7 @@ prune_receipts  = false
 | set_compression_type                       | TO-DO                | string         |
 | [env](#env)                                | TO-DO                | table          |
 
-### storage
+### Storage
 
 | Name                  | Description | Type           |
 | :-------------------- | :---------- | :------------- |
@@ -296,7 +301,7 @@ prune_receipts  = false
 | fetch_output_id_limit | TO-DO       | integer[usize] |
 | iteration_budget      | TO-DO       | integer[usize] |
 
-### env
+### Env
 
 | Name                                 | Description | Type         |
 | :----------------------------------- | :---------- | :----------- |
@@ -344,7 +349,7 @@ set_high_priority_background_threads = 2
 
 | Name            | Description | Type   |
 | :-------------- | :---------- | :----- |
-| below_max_depth | TO-DO     | string |
+| below_max_depth | TO-DO       | string |
 
 Example
 ```toml
@@ -372,7 +377,7 @@ address = "tcp://localhost:1883"
 | port | dashboard port | integer[u16] |
 | auth | dashboard auth | table        |
 
-### auth
+### Auth
 
 | Name            | Description                                                  | Type         |
 | :-------------- | :----------------------------------------------------------- | :----------- |

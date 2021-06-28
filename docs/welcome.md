@@ -18,28 +18,32 @@
 
 The IOTA Foundation aims to allow machines of all performance levels to contribute to the IOTA network, from microcontrollers to phones, web browsers, and servers.
 
-Therefore, Bee is being developed as a modular collection of extendable crates, which expose foreign function interfaces (FFIs) for the next iteration of client libraries.
+Therefore, we are developing Bee as a modular collection of extendable crates, which expose foreign function interfaces (FFIs) for the next iteration of client libraries.
 
-**Note:** You can find details about future development plans in our [roadmap](https://roadmap.iota.org).
+::info
+You can find details about future development plans in our [roadmap](https://roadmap.iota.org).
+:::
 
 ## Design
 
 Bee will be a central reference implementation for the most important
-data structures and algorithms. This implementation will be verified during a [Request for Comments](https://github.com/iotaledger/bee-rfcs/) (RFC) process and eventually certified.
+data structures and algorithms. This implementation will be verified during a [Request for Comments](https://github.com/iotaledger/bee-rfcs/) (RFC) process, and eventually certified.
 
 By using this approach, we hope that improvements to core components will quickly propagate to all other client libraries, rather than
 having to fix each one individually.
 
-**Note:** The Rust programming language was chosen for Bee because of its C/C++ like performance and its strong memory safety guarantees. [Learn more about Rust](https://www.rust-lang.org/).
+:::info
+We have chosen the Rust programming language for Bee because of its C/C++ like performance, and its strong memory safety guarantees. [Learn more about Rust](https://www.rust-lang.org/).
+:::
 
-## Supporting the project
+## Supporting the Project
 
-If you want to discuss Bee or have some questions about it, join us on the
+If you want to discuss Bee, or have some questions about it, join us on the
 [IOTA Discord server](https://discord.iota.org/) in the `#bee-dev` and
 `#bee-discussion` channels.
 
-If you want to be a part of development, please see the [contributing guidelines](.github/CONTRIBUTING.md) for information on how to contribute.
+If you want to be a part of development, please see the [contributing guidelines](contribution.md) for information on how to contribute.
 
-## Joining the discussion
+## Joining the Discussion
 
 If you want to get involved in the community, need help getting started, have any issues related to the repository or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord](https://discord.iota.org/).

@@ -1,6 +1,6 @@
-# Setup a node
+# Setup a Node
 
-## Installing from source
+## Installing from Source
 
 ### Dependencies
 
@@ -32,7 +32,7 @@ Restart Powershell
 
 Minimum required version 1.51.
 
-##### Installation (Debian, MacOS)
+##### Installation (Debian, macOS)
 
 ```sh
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
