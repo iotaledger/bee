@@ -76,22 +76,22 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         //     .ok_or(Error::MissingMessage(current_id))?;
 
         //TEMPORARILY CHECKS THAT THE CONFIRMATION INDEX WAS SET CORRECTLY!
-        if Fetch::<MessageId, MessageMetadata>::fetch(storage, &current_id)
+        let current_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &current_id)
             .map_err(|e| Error::FetchOperation(Box::new(e)))?
-            .ok_or(Error::MissingMetadata(current_id))?
-            .milestone_index()
-            .is_none()
-        {
+            .ok_or(Error::MissingMetadata(current_id))?;
+
+        if current_md.milestone_index().is_none() {
             log::error!("Missing milestone index for current: {}", current_id);
+            log::error!("Current: {:?}", current_md);
         }
 
-        if Fetch::<MessageId, MessageMetadata>::fetch(storage, &child_id)
+        let child_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &child_id)
             .map_err(|e| Error::FetchOperation(Box::new(e)))?
-            .ok_or(Error::MissingMetadata(child_id))?
-            .milestone_index()
-            .is_none()
-        {
+            .ok_or(Error::MissingMetadata(child_id))?;
+
+        if child_md.milestone_index().is_none() {
             log::error!("Missing milestone index for child: {}", child_id);
+            log::error!("Child: {:?}", child_md);
         }
 
         let msg = match Fetch::<MessageId, Message>::fetch(storage, &current_id)
