@@ -75,22 +75,59 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         //     .map_err(|e| Error::FetchOperation(Box::new(e)))?
         //     .ok_or(Error::MissingMessage(current_id))?;
 
+        //TEMPORARILY CHECKS THAT THE CONFIRMATION INDEX WAS SET CORRECTLY!
+        if Fetch::<MessageId, MessageMetadata>::fetch(storage, &current_id)
+            .map_err(|e| Error::FetchOperation(Box::new(e)))?
+            .ok_or(Error::MissingMetadata(current_id))?
+            .milestone_index()
+            .is_none()
+        {
+            log::error!("Missing milestone index for current: {}", current_id);
+        }
+
+        if Fetch::<MessageId, MessageMetadata>::fetch(storage, &child_id)
+            .map_err(|e| Error::FetchOperation(Box::new(e)))?
+            .ok_or(Error::MissingMetadata(child_id))?
+            .milestone_index()
+            .is_none()
+        {
+            log::error!("Missing milestone index for child: {}", child_id);
+        }
+
         let msg = match Fetch::<MessageId, Message>::fetch(storage, &current_id)
             .map_err(|e| Error::FetchOperation(Box::new(e)))?
             .ok_or(Error::MissingMessage(current_id))
         {
             Ok(msg) => msg,
             Err(e) => {
-                // Fetch the approvers of that missing message again, and verify that they contain `child_id` (consistency check)
+                log::error!("current_id: {}", current_id);
+                log::error!("referenced_by: {}", child_id);
+
                 let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &current_id)
                     .map_err(|e| Error::FetchOperation(Box::new(e)))?
                     .ok_or(Error::MissingApprovers(current_id))?;
 
-                if !approvers.contains(&child_id) {
-                    log::error!("Storage inconsistent: {} is a child of {} (referenced in metadata), but Fetch returned only {:?} as its children.", child_id, current_id, approvers);
-                } else {
-                    log::error!("Algorithm error. Child {} was correctly fetched, but its confirmation index lead to its too-early pruning.", child_id);
+                log::error!("all approvers: {:?}", approvers);
+                log::error!("now listing their metadata:\n");
+
+                for approver_id in approvers {
+                    let approver_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &approver_id)
+                        .map_err(|e| Error::FetchOperation(Box::new(e)))?
+                        .ok_or(Error::MissingMetadata(approver_id))?;
+
+                    log::error!("{:?}\n", approver_md);
                 }
+
+                // if !approvers.contains(&child_id) {
+                //     log::error!("Storage inconsistent: {} is a child of {} (referenced as parent), but Fetch didn't include it here: {:?}.", child_id, current_id, approvers);
+                // } else {
+                //     log::error!(
+                //         "Algorithm error: Child {} is part of {}'s approvers, but was pruned already.",
+                //         child_id,
+                //         current_id
+                //     );
+                // }
+
                 return Err(e);
             }
         };
@@ -310,8 +347,9 @@ fn delete_message_and_metadata<S: StorageBackend>(
     Batch::<MessageId, Message>::batch_delete(storage, batch, message_id)
         .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
-    Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id)
-        .map_err(|e| Error::BatchOperation(Box::new(e)))?;
+    //TEMPORARILY DEACTIVATED!
+    // Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id)
+    //     .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
     Ok(())
 }
