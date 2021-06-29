@@ -8,7 +8,7 @@ pub fn rand_bytes(len: usize) -> Vec<u8> {
     (0..len).map(|_| rand::random::<u8>()).collect()
 }
 
-/// Generates an array of random bytes of length 32.
+/// Generates an array of random bytes of length N.
 pub fn rand_bytes_array<const N: usize>() -> [u8; N] {
     rand::thread_rng().gen::<[u8; N]>()
 }
