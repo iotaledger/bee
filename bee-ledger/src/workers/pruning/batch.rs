@@ -101,7 +101,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
             Ok(msg) => msg,
             Err(e) => {
                 log::error!("current_id: {}", current_id);
-                log::error!("referenced_by: {}", child_id);
+                log::error!("reached_via: {}", child_id);
 
                 let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &current_id)
                     .map_err(|e| Error::FetchOperation(Box::new(e)))?
