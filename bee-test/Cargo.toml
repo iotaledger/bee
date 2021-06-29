@@ -1,14 +1,14 @@
 [package]
 name = "bee-test"
 version = "0.1.0"
-authors = ["IOTA Stiftung"]
+authors = [ "IOTA Stiftung" ]
 edition = "2018"
-description = "Test utilities and feature tests for bee"
+description = "Test utilities the bee framework"
 readme = "README.md"
 repository = "https://github.com/iotaledger/bee"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "bee", "framework", "test"]
+keywords = [ "iota", "tangle", "bee", "framework", "test" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-rand = { version = "0.8.4", features = ["min_const_gen"]}
+rand = { version = "0.8.4", features = [ "min_const_gen" ]}
