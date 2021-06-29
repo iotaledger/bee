@@ -11,4 +11,4 @@ keywords = ["iota", "tangle", "bee", "framework", "test"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-rand = "0.8"
+rand = { version = "0.8.4", features = ["min_const_gen"]}
