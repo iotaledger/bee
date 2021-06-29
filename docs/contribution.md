@@ -95,7 +95,7 @@ You can invest as much, or as little, time as you want into the initiative.
 
 ## What's in it for You?
 
-In return for your time, not only will you get to be a part of the future of IOTA technology, you will also also be given a badge on Discord to show others that you are a valuable member of the IOTA community.
+In return for your time, you will get to be a part of the future of IOTA technology.  As well,  you will also be given a badge on Discord to show others that you are a valuable member of the IOTA community.
 
 ## How to Join
 
