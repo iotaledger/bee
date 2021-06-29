@@ -344,8 +344,8 @@ fn delete_message_and_metadata<S: StorageBackend>(
     batch: &mut S::Batch,
     message_id: &MessageId,
 ) -> Result<(), Error> {
-    Batch::<MessageId, Message>::batch_delete(storage, batch, message_id)
-        .map_err(|e| Error::BatchOperation(Box::new(e)))?;
+    // Batch::<MessageId, Message>::batch_delete(storage, batch, message_id)
+    //     .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
     //TEMPORARILY DEACTIVATED!
     // Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id)
