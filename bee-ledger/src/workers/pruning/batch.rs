@@ -76,15 +76,6 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         //     .ok_or(Error::MissingMessage(current_id))?;
 
         //TEMPORARILY CHECKS THAT THE CONFIRMATION INDEX WAS SET CORRECTLY!
-        let current_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &current_id)
-            .map_err(|e| Error::FetchOperation(Box::new(e)))?
-            .ok_or(Error::MissingMetadata(current_id))?;
-
-        if current_md.milestone_index().is_none() {
-            log::error!("Missing milestone index for current: {}", current_id);
-            log::error!("Current: {:?}", current_md);
-        }
-
         let child_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &child_id)
             .map_err(|e| Error::FetchOperation(Box::new(e)))?
             .ok_or(Error::MissingMetadata(child_id))?;
@@ -118,19 +109,18 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
                     log::error!("{:?}\n", approver_md);
                 }
 
-                // if !approvers.contains(&child_id) {
-                //     log::error!("Storage inconsistent: {} is a child of {} (referenced as parent), but Fetch didn't include it here: {:?}.", child_id, current_id, approvers);
-                // } else {
-                //     log::error!(
-                //         "Algorithm error: Child {} is part of {}'s approvers, but was pruned already.",
-                //         child_id,
-                //         current_id
-                //     );
-                // }
-
                 return Err(e);
             }
         };
+
+        let msg_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &current_id)
+            .map_err(|e| Error::FetchOperation(Box::new(e)))?
+            .ok_or(Error::MissingMetadata(current_id))?;
+
+        if msg_md.milestone_index().is_none() {
+            log::error!("Missing milestone index for current: {}", current_id);
+            log::error!("Current: {:?}", msg_md);
+        }
 
         metrics.fetched_messages += 1;
 
