@@ -14,15 +14,13 @@ Nodes are responsible for:
 A _message_ is a data structure that is actually being broadcast in the IOTA network and represents a vertex in the
 Tangle graph. When nodes receive a new message, they attach it to the Tangle by adding the message to their local database.
 
-As a result, at any point in time, all nodes may have different messages in their local databases. These messages make
-up a node's view of the Tangle.
+As a result, at any point in time, all nodes may have different messages in their local databases. These messages make up a node's view of the Tangle.
 
 To distribute the messages across the rest of the network, nodes synchronize their local databases with their neighbors.
 
 ## Synchronizing With the Rest of the Network
 
-Like any distributed system, nodes in an IOTA network synchronize their databases with other nodes called neighbors to form a
-single source of truth.
+Like any distributed system, nodes in an IOTA network synchronize their databases with other nodes called neighbors to form a single source of truth.
 
 When one node, no matter where it is in the world, receives a message, it will try to _gossip_ it to all its neighbors. This way, all nodes will eventually see all the messages, and store them in their local databases.
 
@@ -50,8 +48,8 @@ All nodes keep a record of the [Unspent Transaction Outputs (UTXO)](https://chry
 
 Nodes come with two set of low-level APIs:
 
-* HTTP(rest) API
-* Event API
+* [HTTP Rest API](#http-rest-api)
+* [Event API](#event-api)
 
 :::info
 Developers do not need to communicate with nodes using a mentioned low-level API. Developers can leverage the [iota client libraries](https://chrysalis.docs.iota.org/libraries/overview.html) that provide a high-level abstraction to all features IOTA nodes provide, either on HTTP API level or Event API level.

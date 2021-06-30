@@ -42,8 +42,8 @@ If you want to discuss Bee, or have some questions about it, join us on the
 [IOTA Discord server](https://discord.iota.org/) in the `#bee-dev` and
 `#bee-discussion` channels.
 
-If you want to be a part of development, please see the [contributing guidelines](contribution.md) for information on how to contribute.
+If you want to be a part of development, please see the [contributing guidelines](contribute/contribution.md) for information on how to contribute.
 
 ## Joining the Discussion
 
-If you want to get involved in the community, need help getting started, have any issues related to the repository or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord](https://discord.iota.org/).
+If you want to get involved in the community, need help getting started, have any issues related to the repository, or just want to discuss blockchain, distributed ledgers, and IoT with other people, feel free to join our [Discord](https://discord.iota.org/).

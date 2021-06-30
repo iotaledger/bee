@@ -57,9 +57,11 @@ A general purpose storage backend crate with a key:value abstraction API.
 
 #### bee-storage-rocksdb
 
-A bee-storage implementation for the RocksDB backend.
+A bee-storage implementation for the [RocksDB](https://rocksdb.org/) backend.
 
 #### bee-storage-sled
+
+A bee-storage implementation for the [Sled](https://dbdb.io/db/sled) backend.
 
 
 #### bee-storage-test

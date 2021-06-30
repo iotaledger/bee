@@ -32,9 +32,9 @@ This section guides you through reporting a bug. Following these guidelines help
 
 Please check the following list:
 
-- **Do not open a GitHub issue for [security vulnerabilities](security_vulnerabilities.md)**, instead, please contact us at [security@iota.org](mailto:security@iota.org).
+- Do not open a GitHub issue for [security vulnerabilities](security_vulnerabilities.md). Instead, please contact us at [security@iota.org](mailto:security@iota.org).
 
-- **Ensure the bug was not already reported** by searching on GitHub under [**Issues**](https://github.com/iotaledger/bee/issues). If the bug has already been reported, **and the issue is still open**, add a comment to the existing issue instead of opening a new one.
+- Ensure the bug was not already reported by searching on GitHub under [**Issues**](https://github.com/iotaledger/bee/issues). If the bug has already been reported, and the issue is still open, add a comment to the existing issue instead of opening a new one.
 
 :::info
 If you find a **Closed** issue that seems similar to what you're experiencing, open a new issue and include a link to the original issue in the body.
@@ -44,9 +44,11 @@ If you find a **Closed** issue that seems similar to what you're experiencing, o
 
 To report a bug, [open a new issue](https://github.com/iotaledger/bee/issues/new), and be sure to include as many details as possible, using the template.
 
-**Note:** Minor changes such as fixing a typo can but do not need an open issue.
-
 If you also want to fix the bug, submit a [pull request](#pull-requests) and reference the issue.
+
+:::info
+You don't need to open an issue for minor changes such as typos, but you can if you want.
+:::
 
 ### Suggest a New Feature
 
@@ -54,7 +56,7 @@ This section guides you through suggesting a new feature. Following these guidel
 
 #### Before Suggesting a New Feature
 
-**Ensure the feature has not already been suggested** by searching on GitHub under [**Issues**](https://github.com/iotaledger/bee/issues).
+Ensure the feature has not already been suggested by searching on GitHub under [Issues](https://github.com/iotaledger/bee/issues).
 
 #### Suggesting a New Feature
 
@@ -124,7 +126,7 @@ example that compiles and passes the [documentation tests](https://doc.rust-lang
 
 - All code should be well tested, using unit and integration tests.
 
-- Code must compile and pass our [continuous integration tests](.github/workflows).
+- Code must compile and pass our [continuous integration tests](../../.github/workflows).
 
 - To be compatible with the guidelines of the Eclipse foundation, all code must be licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). This license must be referenced in every crate of the workspace (add [`./LICENSE`] to the crate's top level directory). For Rust crates, every `Cargo.toml` must contain the line `license = "Apache-2.0"`.
 
@@ -144,6 +146,6 @@ If all [status checks](https://help.github.com/articles/about-status-checks/) pa
 Reviewers may ask you to complete additional work, tests, or other changes before your pull request can be approved and merged.
 :::
 
-Code of Conduct 
+## Code of Conduct 
 
 This project and everyone who participate in it is governed by the [IOTA Code of Conduct](code_of_conduct.md).

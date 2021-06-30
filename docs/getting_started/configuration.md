@@ -1,38 +1,17 @@
 # Configuration
 
-Bee uses the Toml standard as a configuration file. If you are unsure about some syntax,  have a look at the [official Toml specifications](https://toml.io).
+Bee uses the Toml standard as a configuration file. If you are unsure about syntax, you can have a look at the [official Toml specifications](https://toml.io).
 
-The default config file is `config.toml`. You can change the path or name of the config file by using the `-c` or `--config` flag.
-For Example: 
+The default configuration file is `config.toml`. You can change the configuration file's path or name  by using the `-c` or `--config` flag.
+
+For example: 
 
 ```bash
 bee -c config_example.toml
 ```
 
-## Table of Contents
 
-- [Configuration](#configuration)
-  - [Table of Contents](#table-of-contents)
-  - [Logger](#logger)
-    - [outputs](#outputs)
-  - [Network](#network)
-      - [Peering](#peering)
-  - [Protocol](#protocol)
-    - [coordinator](#coordinator)
-      - [public_key_ranges](#public_key_ranges)
-    - [Workers](#workers)
-  - [REST API](#rest-api)
-  - [Snapshot](#snapshot)
-  - [Pruning](#pruning)
-  - [Storage](#storage)
-    - [Storage](#storage-1)
-    - [Env](#env)
-  - [Tangle](#tangle)
-  - [Mqtt](#mqtt)
-  - [Dashboard](#dashboard)
-    - [Auth](#auth)
-
----
+## Node
 
 | Name       | Description                                                                                | Type   |
 | :--------- | :----------------------------------------------------------------------------------------- | :----- |
@@ -50,7 +29,7 @@ bee -c config_example.toml
 | level_width         | width of the level section of a log  | integer[usize] |
 | [outputs](#outputs) | config for different log filters     | array          |
 
-### outputs
+### Outputs
 
 | Name          | Description                     | Type             |
 | :------------ | :------------------------------ | :--------------- |
@@ -118,7 +97,7 @@ alias   = "yet another peer"
 | [coordinator](#coordinator) | coordinator configs   | table      |
 | [workers](#workers)         | worker configs        | table      |
 
-### coordinator
+### Coordinator
 
 | Name                                    | Description           | Type            |
 | :-------------------------------------- | :-------------------- | :-------------- |
@@ -287,7 +266,7 @@ prune_receipts  = false
 | set_disable_auto_compactions               | TO-DO                | bool           |
 | set_unordered_write                        | TO-DO                | bool           |
 | set_use_direct_io_for_flush_and_compaction | TO-DO                | bool           |
-| [storage](#Storage)                        | TO-DO                | table          |
+| [storage](#storage-1)                        | TO-DO                | table          |
 | set_compaction_style                       | TO-DO                | string         |
 | set_compression_type                       | TO-DO                | string         |
 | [env](#env)                                | TO-DO                | table          |

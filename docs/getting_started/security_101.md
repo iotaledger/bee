@@ -3,7 +3,7 @@
 This section provides a checklist of steps for running a reliable and secure node.
 
 :::info
-Please note that servers that are reachable from the Internet are a constant target from security challengers.  Please, make sure you the follow minimum security essentials summarized in this article.
+Please note that servers that are reachable from the Internet are a constant target from security challengers.  Please, make sure you follow the minimum security essentials summarized in this article.
 :::
 
 ## Securing Your Device
@@ -36,7 +36,7 @@ To evenly distribute the API requests among all your nodes, you can run a revers
 Since broadcasted messages are atomic and nodes provides restful API to communicate, you will not need sticky sessions or similar technologies.
 
 ## Reverse Proxy
-We recommend that you use a reverse proxy in front of a node is even if you are deploying a single node. Using a reverse proxy adds an additional security layer that can handle tasks such as:
+We recommend that you use a reverse proxy in front of a node is even if you are deploying a single node. Using a reverse proxy adds a security layer that can handle tasks such as:
 
 - IP address filtering. 
 - Abuse rate limiting. 
