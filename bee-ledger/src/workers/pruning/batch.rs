@@ -147,7 +147,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         // Mark this message as "visited".
         visited.insert(current_id);
 
-        delete_message_and_metadata(storage, batch, &current_id)?;
+        delete_message_and_metadata(storage, batch, &current_id, &target_index)?;
 
         // Fetch its approvers from storage so that we can decide whether to keep it as an SEP, or not.
         let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &current_id)
@@ -289,7 +289,7 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
                     let parents = msg.parents();
 
                     // Add message data to the delete batch.
-                    delete_message_and_metadata(storage, batch, &unconf_msg_id)?;
+                    delete_message_and_metadata(storage, batch, &unconf_msg_id, &target_index)?;
 
                     if let Some(indexation) = unwrap_indexation(maybe_payload) {
                         let padded_index = indexation.padded_index();
@@ -333,12 +333,15 @@ fn delete_message_and_metadata<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     message_id: &MessageId,
+    target_index: &MilestoneIndex,
 ) -> Result<(), Error> {
     Batch::<MessageId, Message>::batch_delete(storage, batch, message_id)
         .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
     Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id)
         .map_err(|e| Error::BatchOperation(Box::new(e)))?;
+
+    log::trace!("Pruned {} ({}).", message_id, target_index);
 
     Ok(())
 }
