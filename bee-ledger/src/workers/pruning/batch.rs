@@ -214,7 +214,8 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
         if max_conf_index > target_index {
             new_seps.insert(current_id.into(), max_conf_index);
-            // new_seps.insert(current_id.into(), target_index + 50);
+
+            log::trace!("New SEP: {} until {}", current_id, max_conf_index);
 
             metrics.found_seps += 1;
         }
@@ -341,7 +342,7 @@ fn delete_message_and_metadata<S: StorageBackend>(
     Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id)
         .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
-    log::trace!("Pruned {} ({}).", message_id, target_index);
+    log::trace!("Pruned {} at {}.", message_id, target_index);
 
     Ok(())
 }
