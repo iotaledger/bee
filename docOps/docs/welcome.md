@@ -1,6 +1,10 @@
+---
+slug: /
+---
+# A Framework For Building IOTA Nodes, Clients, and Applications in Rust
+
 ![Badge](static/Bee.png "Badge")
 
-# A Framework For Building IOTA Nodes, Clients, and Applications in Rust
 
 [![Discord](https://img.shields.io/badge/Discord-9cf.svg?logo=discord "Discord")](https://discord.iota.org/")
 [![StackExchange](https://img.shields.io/badge/StackExchange-9cf.svg?logo=stackexchange "StackExchange")](https://iota.stackexchange.com/)
@@ -42,7 +46,7 @@ If you want to discuss Bee, or have some questions about it, join us on the
 [IOTA Discord server](https://discord.iota.org/) in the `#bee-dev` and
 `#bee-discussion` channels.
 
-If you want to be a part of development, please see the [contributing guidelines](contribute/contribution.md) for information on how to contribute.
+If you want to be a part of development, please see the [contributing guidelines](contribute/contribute.md) for information on how to contribute.
 
 ## Joining the Discussion
 
