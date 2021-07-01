@@ -75,15 +75,15 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         //     .map_err(|e| Error::FetchOperation(Box::new(e)))?
         //     .ok_or(Error::MissingMessage(current_id))?;
 
-        //TEMPORARILY CHECKS THAT THE CONFIRMATION INDEX WAS SET CORRECTLY!
-        let child_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &child_id)
-            .map_err(|e| Error::FetchOperation(Box::new(e)))?
-            .ok_or(Error::MissingMetadata(child_id))?;
+        // //TEMPORARILY CHECKS THAT THE CONFIRMATION INDEX WAS SET CORRECTLY!
+        // let child_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &child_id)
+        //     .map_err(|e| Error::FetchOperation(Box::new(e)))?
+        //     .ok_or(Error::MissingMetadata(child_id))?;
 
-        if child_md.milestone_index().is_none() {
-            log::error!("Missing milestone index for child: {}", child_id);
-            log::error!("Child: {:?}", child_md);
-        }
+        // if child_md.milestone_index().is_none() {
+        //     log::error!("Missing milestone index for child: {}", child_id);
+        //     log::error!("Child: {:?}", child_md);
+        // }
 
         let msg = match Fetch::<MessageId, Message>::fetch(storage, &current_id)
             .map_err(|e| Error::FetchOperation(Box::new(e)))?
@@ -91,8 +91,17 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         {
             Ok(msg) => msg,
             Err(e) => {
-                log::error!("current_id: {}", current_id);
+                log::error!("current msg: {}", current_id);
                 log::error!("reached_via: {}", child_id);
+
+                let msg_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &current_id)
+                    .map_err(|e| Error::FetchOperation(Box::new(e)))?
+                    .ok_or(Error::MissingMetadata(current_id))?;
+
+                if msg_md.milestone_index().is_none() {
+                    log::error!("Missing milestone index for current msg: {}", current_id);
+                    log::error!("{:?}", msg_md);
+                }
 
                 let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &current_id)
                     .map_err(|e| Error::FetchOperation(Box::new(e)))?
@@ -112,15 +121,6 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
                 return Err(e);
             }
         };
-
-        let msg_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &current_id)
-            .map_err(|e| Error::FetchOperation(Box::new(e)))?
-            .ok_or(Error::MissingMetadata(current_id))?;
-
-        if msg_md.milestone_index().is_none() {
-            log::error!("Missing milestone index for parent: {}", current_id);
-            log::error!("{:?}", msg_md);
-        }
 
         metrics.fetched_messages += 1;
 
@@ -148,6 +148,8 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         visited.insert(current_id);
 
         delete_message_and_metadata(storage, batch, &current_id, &prune_index)?;
+
+        log::trace!("Pruned confirmed msg {} at {}.", current_id, prune_index);
 
         // Fetch its approvers from storage so that we can decide whether to keep it as an SEP, or not.
         let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &current_id)
@@ -297,6 +299,8 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
                     // Add message data to the delete batch.
                     delete_message_and_metadata(storage, batch, &unconf_msg_id, &target_index)?;
 
+                    log::trace!("Pruned unconfirmed msg {} at {}.", unconf_msg_id, target_index);
+
                     if let Some(indexation) = unwrap_indexation(maybe_payload) {
                         let padded_index = indexation.padded_index();
                         let message_id = *unconf_msg_id;
@@ -344,10 +348,8 @@ fn delete_message_and_metadata<S: StorageBackend>(
     Batch::<MessageId, Message>::batch_delete(storage, batch, message_id)
         .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
-    Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id)
-        .map_err(|e| Error::BatchOperation(Box::new(e)))?;
-
-    log::trace!("Pruned {} at {}.", message_id, target_index);
+    // Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id)
+    //     .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
     Ok(())
 }
