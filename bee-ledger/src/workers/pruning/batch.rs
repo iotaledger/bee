@@ -39,7 +39,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
     _tangle: &MsTangle<S>,
     storage: &S,
     batch: &mut S::Batch,
-    target_index: MilestoneIndex,
+    prune_index: MilestoneIndex,
     curr_seps: &Seps,
 ) -> Result<(Seps, ConfirmedMetrics), Error> {
     // TODO: we should probably think about not allocating those hashmaps each time.
@@ -48,14 +48,14 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
     let mut new_seps = Seps::with_capacity(512);
     let mut metrics = ConfirmedMetrics::default();
 
-    let target_milestone = Fetch::<MilestoneIndex, Milestone>::fetch(storage, &target_index)
+    let prune_ms = Fetch::<MilestoneIndex, Milestone>::fetch(storage, &prune_index)
         .map_err(|e| Error::FetchOperation(Box::new(e)))?
-        .ok_or(Error::MissingMilestone(target_index))?;
+        .ok_or(Error::MissingMilestone(prune_index))?;
 
-    let target_id = target_milestone.message_id().clone();
+    let prune_ms_id = prune_ms.message_id().clone();
 
     // let mut parents: VecDeque<_> = vec![target_id].into_iter().collect();
-    let mut parents: VecDeque<_> = vec![(target_id, target_id)].into_iter().collect();
+    let mut parents: VecDeque<_> = vec![(prune_ms_id, prune_ms_id)].into_iter().collect();
 
     while let Some((child_id, current_id)) = parents.pop_front() {
         // Skip message if we already visited it.
@@ -118,8 +118,8 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
             .ok_or(Error::MissingMetadata(current_id))?;
 
         if msg_md.milestone_index().is_none() {
-            log::error!("Missing milestone index for current: {}", current_id);
-            log::error!("Current: {:?}", msg_md);
+            log::error!("Missing milestone index for parent: {}", current_id);
+            log::error!("{:?}", msg_md);
         }
 
         metrics.fetched_messages += 1;
@@ -147,7 +147,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         // Mark this message as "visited".
         visited.insert(current_id);
 
-        delete_message_and_metadata(storage, batch, &current_id, &target_index)?;
+        delete_message_and_metadata(storage, batch, &current_id, &prune_index)?;
 
         // Fetch its approvers from storage so that we can decide whether to keep it as an SEP, or not.
         let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &current_id)
@@ -165,6 +165,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         // be ignored.
         if unvisited_approvers.peek().is_none() {
             metrics.all_approvers_visited += 1;
+            log::trace!("All approvers visited: {}", current_id);
             continue;
         }
 
@@ -174,7 +175,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
         // To decide for how long we need to keep a particular SEP around, we need to know the largest confirming index
         // over all its approvers.
-        let mut max_conf_index = target_index;
+        let mut max_conf_index = prune_index;
         for id in unvisited_approvers {
             let conf_index = match cache.get(&id) {
                 Some(conf_index) => {
@@ -198,7 +199,9 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
                         // which is the lower bound. We can treat this situtation in the same way as if the approver
                         // had been confirmed by the current target milestone. Being referenced by an unconfirmed
                         // message is irrelevant, because we never traverse such message during the walk.
-                        target_index
+                        log::trace!("No conf. index for {}", &id);
+
+                        prune_index
                     };
 
                     cache.insert(id, conf_index);
@@ -212,7 +215,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
             }
         }
 
-        if max_conf_index > target_index {
+        if max_conf_index > prune_index {
             new_seps.insert(current_id.into(), max_conf_index);
 
             log::trace!("New SEP: {} until {}", current_id, max_conf_index);
@@ -224,8 +227,8 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
     metrics.prunable_messages = visited.len();
     metrics.new_seps = new_seps.len();
 
-    if let Some(youngest_approver) = new_seps.get(&SolidEntryPoint::ref_cast(&target_id)) {
-        if youngest_approver <= &target_index {
+    if let Some(youngest_approver) = new_seps.get(&SolidEntryPoint::ref_cast(&prune_ms_id)) {
+        if youngest_approver <= &prune_index {
             log::error!("Target milestone must have younger approver.");
             panic!();
         }
