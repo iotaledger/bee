@@ -80,9 +80,9 @@ pub async fn prune<S: StorageBackend>(
         // we need to keep the "snapshot-SEPs" around for some time.
         let filter_curr_seps = Instant::now();
         if start_index < snapshot_index + RETAIN_SNAPSHOT_SEPS {
-            curr_seps.retain(|_, v| *v > index || *v == snapshot_index);
+            curr_seps.retain(|_, v| **v > *index || *v == snapshot_index);
         } else {
-            curr_seps.retain(|_, v| *v > index);
+            curr_seps.retain(|_, v| **v > *index);
         }
         timings.filter_curr_seps = filter_curr_seps.elapsed();
 

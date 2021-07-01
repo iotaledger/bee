@@ -175,13 +175,13 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
         // To decide for how long we need to keep a particular SEP around, we need to know the largest confirming index
         // over all its approvers.
-        let mut max_conf_index = prune_index;
+        let mut max_conf_index = *prune_index;
         for id in unvisited_approvers {
             let conf_index = match cache.get(&id) {
                 Some(conf_index) => {
                     metrics.approver_cache_hit += 1;
 
-                    *conf_index
+                    **conf_index
                 }
                 None => {
                     metrics.approver_cache_miss += 1;
@@ -191,6 +191,8 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
                         .ok_or(Error::MissingMetadata(id))?
                         .milestone_index()
                     {
+                        log::trace!("Conf. index for {} is {}", &id, conf_index);
+
                         // Note that an approver can still be confirmed by the same milestone (if it is child/approver and sibling at the
                         // same time), in other words: it shares an approver with one of its approvers.
                         conf_index
@@ -206,7 +208,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
                     cache.insert(id, conf_index);
 
-                    conf_index
+                    *conf_index
                 }
             };
 
@@ -215,8 +217,8 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
             }
         }
 
-        if max_conf_index > prune_index {
-            new_seps.insert(current_id.into(), max_conf_index);
+        if max_conf_index > *prune_index {
+            new_seps.insert(current_id.into(), max_conf_index.into());
 
             log::trace!("New SEP: {} until {}", current_id, max_conf_index);
 
