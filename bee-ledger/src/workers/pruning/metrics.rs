@@ -6,9 +6,9 @@ use std::time::Duration;
 #[derive(Debug, Default)]
 pub struct PruningMetrics {
     pub curr_seps: usize,
-    pub found_seps: usize,
+    pub new_seps: usize,
     pub kept_seps: usize,
-    pub total_seps: usize,
+    pub next_seps: usize,
     pub messages: usize,
     pub edges: usize,
     pub indexations: usize,
