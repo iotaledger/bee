@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_event_bus::{Event, EventBus, EventId};
+use bee_event_bus::EventBus;
 
 use std::sync::{
     atomic::{AtomicU64, Ordering},
@@ -9,23 +9,8 @@ use std::sync::{
 };
 
 struct Event1(u64);
-impl Event for Event1 {
-    fn id() -> EventId {
-        1
-    }
-}
 struct Event2(u64, u64);
-impl Event for Event2 {
-    fn id() -> EventId {
-        2
-    }
-}
 struct Event3(u64, u64, u64);
-impl Event for Event3 {
-    fn id() -> EventId {
-        3
-    }
-}
 struct Bound1;
 struct Bound2;
 struct Bound3;

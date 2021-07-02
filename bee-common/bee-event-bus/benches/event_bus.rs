@@ -1,21 +1,16 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_event_bus::{Event, EventBus, EventId};
+use bee_event_bus::EventBus;
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
-struct BenchEvent;
-impl Event for BenchEvent {
-    fn id() -> EventId {
-        0
-    }
-}
+struct Event;
 
-fn listener(_: &BenchEvent) {}
+fn listener(_: &Event) {}
 
 fn dispatch(bus: &EventBus) {
-    bus.dispatch(BenchEvent {});
+    bus.dispatch(Event {});
 }
 
 fn event_bus(c: &mut Criterion) {
