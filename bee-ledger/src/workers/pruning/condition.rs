@@ -42,7 +42,7 @@ pub(crate) fn should_prune<B: StorageBackend>(
         let target_index = *ledger_index - delay;
 
         if target_index > start_index + MAX_PRUNING_BATCH_SIZE {
-            Ok((start_index.into(), MAX_PRUNING_BATCH_SIZE.into()))
+            Ok((start_index.into(), (start_index + MAX_PRUNING_BATCH_SIZE).into()))
         } else {
             Ok((start_index.into(), target_index.into()))
         }
