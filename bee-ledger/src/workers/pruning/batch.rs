@@ -247,92 +247,90 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 pub async fn delete_unconfirmed_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
-    start_index: MilestoneIndex,
-    target_index: MilestoneIndex,
+    prune_index: MilestoneIndex,
 ) -> Result<UnconfirmedMetrics, Error> {
     let mut metrics = UnconfirmedMetrics::default();
 
-    for index in *start_index..=*target_index {
-        let unconf_msgs = match Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &index.into())
-            .map_err(|e| Error::BatchOperation(Box::new(e)))?
+    let unconf_msgs = match Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &prune_index)
+        .map_err(|e| Error::BatchOperation(Box::new(e)))?
+    {
+        Some(unconf_msgs) => {
+            if unconf_msgs.is_empty() {
+                metrics.none_received = true;
+                Vec::new()
+            } else {
+                unconf_msgs
+            }
+        }
+        None => {
+            metrics.none_received = true;
+            Vec::new()
+        }
+    };
+
+    // TODO: use MultiFetch
+    for unconf_msg_id in unconf_msgs.iter().map(|unconf_msg| unconf_msg.message_id()) {
+        // Skip those that were confirmed.
+        match Fetch::<MessageId, MessageMetadata>::fetch(storage, unconf_msg_id)
+            .map_err(|e| Error::FetchOperation(Box::new(e)))?
         {
-            Some(unconf_msgs) => {
-                if unconf_msgs.is_empty() {
-                    metrics.none_received += 1;
+            Some(msg_meta) => {
+                if msg_meta.flags().is_referenced() {
+                    // if msg_meta.milestone_index().is_some() {
+                    metrics.were_confirmed += 1;
                     continue;
-                } else {
-                    unconf_msgs
                 }
             }
             None => {
-                metrics.none_received += 1;
+                metrics.already_pruned += 1;
                 continue;
             }
-        };
-
-        // TODO: use MultiFetch
-        for unconf_msg_id in unconf_msgs.iter().map(|unconf_msg| unconf_msg.message_id()) {
-            // Skip those that were confirmed.
-            match Fetch::<MessageId, MessageMetadata>::fetch(storage, unconf_msg_id)
-                .map_err(|e| Error::FetchOperation(Box::new(e)))?
-            {
-                Some(msg_meta) => {
-                    if msg_meta.milestone_index().is_some() {
-                        metrics.were_confirmed += 1;
-                        continue;
-                    }
-                }
-                None => {
-                    metrics.already_pruned += 1;
-                    continue;
-                }
-            }
-
-            // Delete those messages that remained unconfirmed.
-            match Fetch::<MessageId, Message>::fetch(storage, unconf_msg_id)
-                .map_err(|e| Error::FetchOperation(Box::new(e)))?
-            {
-                Some(msg) => {
-                    let maybe_payload = msg.payload().as_ref();
-                    let parents = msg.parents();
-
-                    // Add message data to the delete batch.
-                    delete_message_and_metadata(storage, batch, &unconf_msg_id, &target_index)?;
-
-                    log::trace!("Pruned unconfirmed msg {} at {}.", unconf_msg_id, target_index);
-
-                    if let Some(indexation) = unwrap_indexation(maybe_payload) {
-                        let padded_index = indexation.padded_index();
-                        let message_id = *unconf_msg_id;
-
-                        // Add prunable indexations to the delete batch.
-                        delete_indexation_data(storage, batch, &(padded_index, message_id))?;
-
-                        metrics.prunable_indexations += 1;
-                    }
-
-                    // Add prunable edges to the delete batch.
-                    for parent in parents.iter() {
-                        delete_edge(storage, batch, &(*parent, *unconf_msg_id))?;
-
-                        metrics.prunable_edges += 1;
-                    }
-                }
-                None => {
-                    metrics.already_pruned += 1;
-                    continue;
-                }
-            }
-
-            Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_delete(
-                storage,
-                batch,
-                &(index.into(), (*unconf_msg_id).into()),
-            )
-            .map_err(|e| Error::BatchOperation(Box::new(e)))?;
-
-            metrics.prunable_messages += 1;
         }
+
+        // Delete those messages that remained unconfirmed.
+        match Fetch::<MessageId, Message>::fetch(storage, unconf_msg_id)
+            .map_err(|e| Error::FetchOperation(Box::new(e)))?
+        {
+            Some(msg) => {
+                let maybe_payload = msg.payload().as_ref();
+                let parents = msg.parents();
+
+                // Add message data to the delete batch.
+                delete_message_and_metadata(storage, batch, &unconf_msg_id, &prune_index)?;
+
+                log::trace!("Pruned unconfirmed msg {} at {}.", unconf_msg_id, prune_index);
+
+                if let Some(indexation) = unwrap_indexation(maybe_payload) {
+                    let padded_index = indexation.padded_index();
+                    let message_id = *unconf_msg_id;
+
+                    // Add prunable indexations to the delete batch.
+                    delete_indexation_data(storage, batch, &(padded_index, message_id))?;
+
+                    metrics.prunable_indexations += 1;
+                }
+
+                // Add prunable edges to the delete batch.
+                for parent in parents.iter() {
+                    delete_edge(storage, batch, &(*parent, *unconf_msg_id))?;
+
+                    metrics.prunable_edges += 1;
+                }
+            }
+            None => {
+                metrics.already_pruned += 1;
+                continue;
+            }
+        }
+
+        Batch::<(MilestoneIndex, UnreferencedMessage), ()>::batch_delete(
+            storage,
+            batch,
+            &(prune_index, (*unconf_msg_id).into()),
+        )
+        .map_err(|e| Error::BatchOperation(Box::new(e)))?;
+
+        metrics.prunable_messages += 1;
     }
 
     Ok(metrics)

@@ -129,7 +129,7 @@ pub async fn prune<S: StorageBackend>(
 
         // Add unconfirmed data to the delete batch.
         let batch_unconfirmed = Instant::now();
-        let unconfirmed_metrics = batch::delete_unconfirmed_data(storage, &mut batch, index, index).await?;
+        let unconfirmed_metrics = batch::delete_unconfirmed_data(storage, &mut batch, index).await?;
         timings.batch_unconfirmed = batch_unconfirmed.elapsed();
 
         pruning_metrics.messages += unconfirmed_metrics.prunable_messages;
