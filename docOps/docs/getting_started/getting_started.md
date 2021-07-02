@@ -28,8 +28,6 @@ Bee exposes different functionality on different ports:
 - 14265 TCP - REST HTTP API port (optional)
 - 8081 TCP - Dashboard (optional)
 
-The mentioned ports are important for flawless node operation. The REST HTTP API port is optional and is only needed if
-you want to offer access to your node's API. All ports can be customized inside
-the [config.toml](../configuration.md) file.
+The mentioned ports are important for flawless node operation. The REST HTTP API port is optional and is only needed if you want to offer access to your node's API. All ports can be customized inside the [config.toml](configuration.md) file.
 
 The default dashboard only listens on localhost:8081 per default. If you want to make it accessible from the Internet, you will need to change the default configuration (though we recommend using a reverse proxy).

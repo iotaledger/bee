@@ -34,8 +34,8 @@ Examples of unacceptable behavior by participants include:
   advances.
 - Trolling, insulting/derogatory comments, and personal or political attacks.
 - Public or private harassment.
-- Publishing others' private information, such as a physical or electronic  address, without explicit permission.
-- Other conduct which could reasonably be considered inappropriate in a  professional setting.
+- Publishing others' private information, such as a physical or electronic address, without explicit permission.
+- Other conduct which could reasonably be considered inappropriate in a professional setting.
 
 ## Our Responsibilities
 
@@ -45,7 +45,7 @@ Project maintainers have the right and responsibility to remove, edit, or reject
 
 ## Scope
 
-This Code of Conduct applies within all project spaces.  It also applies when an individual is representing the project or its community in public spaces. Examples of representing a project or community include:
+This Code of Conduct applies within all project spaces. It also applies when an individual is representing the project or its community in public spaces. Examples of representing a project or community include:
   - Using an official project e-mail address.
   - Posting via an official social media account.
   - Acting as an appointed representative at an online or offline event.
@@ -56,7 +56,7 @@ Project maintainers may further define and clarify what is meant by representati
 
 You may report instances of abusive, harassing, or otherwise unacceptable behavior by contacting the project team at [bee@iotmod.de](mailto:bee@iotmod.de). 
 
-All complaints will be reviewed, investigated, and will result in a response that  is deemed necessary and appropriate to the circumstances. The project team is obligated to maintain confidentiality in regard to the reporter of an incident.  Project maintainers may post details of specific enforcement policies may separately.
+All complaints will be reviewed, investigated, and will result in a response that is deemed necessary and appropriate to the circumstances. The project team is obligated to maintain confidentiality in regard to the reporter of an incident.  Project maintainers may post details of specific enforcement policies may separately.
 
 Project maintainers who do not follow or enforce the Code of Conduct in good faith may face temporary or permanent repercussions as determined by other members of the project's leadership.
 

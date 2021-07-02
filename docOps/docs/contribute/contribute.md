@@ -10,25 +10,25 @@ Thanks!
 
 If you have a general or technical question, you can use one of the following resources instead of submitting an issue:
 
-- [**Developer documentation:**](https://docs.iota.org/) For official information about developing with IOTA technology
-- [**Discord:**](https://discord.iota.org/) For real-time chats with the developers and community members
+- [**Developer documentation:**](https://docs.iota.org/) For official information about developing with IOTA technology.
+- [**Discord:**](https://discord.iota.org/) For real-time chats with the developers and community members.
 - [**IOTA cafe:**](https://iota.cafe/) For technical discussions with the Research and Development Department at the IOTA Foundation
-- [**StackExchange:**](https://iota.stackexchange.com/) For technical and troubleshooting questions
+- [**StackExchange:**](https://iota.stackexchange.com/) For technical and troubleshooting questions.
 
 ## Contributing 
 
 To contribute to Bee on GitHub, you can:
 
-- Report a bug
-- Suggest a new feature
-- Build a new feature
-- Join the Bee Initiative
+- Report a bug.
+- Suggest a new feature.
+- Build a new feature.
+- Join the Bee Initiative.
 
 ### Report a Bug
 
 This section guides you through reporting a bug. Following these guidelines helps maintainers, and the community understand the bug, reproduce the behavior, and find related bugs.
 
-#### Before Reporting a Bug
+#### Before reporting a bug
 
 Please check the following list:
 
@@ -40,7 +40,7 @@ Please check the following list:
 If you find a **Closed** issue that seems similar to what you're experiencing, open a new issue and include a link to the original issue in the body.
 :::
 
-#### Submitting A Bug Report
+#### Submitting a bug report
 
 To report a bug, [open a new issue](https://github.com/iotaledger/bee/issues/new), and be sure to include as many details as possible, using the template.
 
@@ -54,11 +54,11 @@ You don't need to open an issue for minor changes such as typos, but you can if 
 
 This section guides you through suggesting a new feature. Following these guidelines helps maintainers, and the community collaborate to find the best possible way forward with your suggestion.
 
-#### Before Suggesting a New Feature
+#### Before suggesting a new feature
 
 Ensure the feature has not already been suggested by searching on GitHub under [Issues](https://github.com/iotaledger/bee/issues).
 
-#### Suggesting a New Feature
+#### Suggesting a new feature
 
 To suggest a new feature, talk to the IOTA community and IOTA Foundation members in the #bee-discussion channel on [Discord](https://discord.iota.org/).
 
@@ -69,13 +69,13 @@ Or, you can submit an official [Request for Comments (RFC)](https://github.com/i
 
 This section guides you through building a new feature. Following these guidelines helps give your feature the best chance of being approved and merged.
 
-#### Before Building a New Feature
+#### Before building a new feature
 
 Make sure to discuss the feature in the #bee-discussion channel on [Discord](https://discord.iota.org/).
 
 Otherwise, your feature may not be approved at all.
 
-#### Building a New Feature
+#### Building a new feature
 
 To build a new feature, check out a new branch based on the `master` branch, and be sure to document any public-facing APIs, using Rust code comments.
 
@@ -97,7 +97,7 @@ You can invest as much, or as little, time as you want into the initiative.
 
 ## What's in it for You?
 
-In return for your time, you will get to be a part of the future of IOTA technology.  As well,  you will also be given a badge on Discord to show others that you are a valuable member of the IOTA community.
+In return for your time, you will get to be a part of the future of IOTA technology. As well, you will also be given a badge on Discord to show others that you are a valuable member of the IOTA community.
 
 ## How to Join
 

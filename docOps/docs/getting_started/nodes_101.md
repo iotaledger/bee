@@ -7,7 +7,7 @@ Nodes are responsible for:
 
 - Providing an API to interact with the Tangle/IOTA network.
 - Validating [messages]((https://chrysalis.docs.iota.org/guides/dev_guide.html#messages-payloads-and-transactions)) and ledger mutations for consistency.
-- Provide data for other nodes to synchronize to the latest state of the network.
+- Providing data for other nodes to synchronize to the latest state of the network.
 
 ## Attaching New Messages to the Tangle
 
@@ -24,7 +24,7 @@ Like any distributed system, nodes in an IOTA network synchronize their database
 
 When one node, no matter where it is in the world, receives a message, it will try to _gossip_ it to all its neighbors. This way, all nodes will eventually see all the messages, and store them in their local databases.
 
-To synchronize, nodes in IOTA networks use milestones.  If the node has the history of messages that a milestone references, that milestone is solid. Therefore, nodes know if they are synchronized if the index of their latest solid milestone is the same as the index of the latest milestone that it has received.
+To synchronize, nodes in IOTA networks use milestones. If the node has the history of messages that a milestone references, that milestone is solid. Therefore, nodes know if they are synchronized if the index of their latest solid milestone is the same as the index of the latest milestone that it has received.
 
 When a node is synchronized, it then has enough information to decide which transactions it considers confirmed.
 

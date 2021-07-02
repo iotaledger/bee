@@ -12,7 +12,7 @@ At the IOTA Foundation, we consider the security of our systems a top priority. 
 - The scope of the program is limited to technical vulnerabilities in IOTA Foundations' web applications and open source software packages distributed through GitHub. Please do not try to test physical security or attempt phishing attacks against our employees, and so on.
 - Out of concern for the availability of our services to all users, please do not attempt to carry out DoS attacks, leverage black hat SEO techniques, spam people, or other similarly questionable things. We also discourage the use of any vulnerability testing tools that automatically generate significant volumes of traffic.
     
-## What we promise:
+## What We Promise:
 
 - We will respond to your report within 3 business days with our evaluation of the report, and an expected resolution date.
 - If you have followed the instructions above, we will not take any legal action against you in regard to the report.
