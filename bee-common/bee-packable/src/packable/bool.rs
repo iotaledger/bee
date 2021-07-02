@@ -1,10 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub use crate::{
-    error::{PackError, UnknownTagError, UnpackError},
-    packer::{Packer, VecPacker},
-    unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker},
+use crate::{
+    error::{PackError, UnpackError},
+    packer::Packer,
+    unpacker::Unpacker,
     Packable,
 };
 

@@ -3,10 +3,10 @@
 
 extern crate alloc;
 
-pub use crate::{
-    error::{PackError, UnknownTagError, UnpackError},
-    packer::{Packer, VecPacker},
-    unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker},
+use crate::{
+    error::{PackError, UnpackError},
+    packer::Packer,
+    unpacker::Unpacker,
     Packable,
 };
 
