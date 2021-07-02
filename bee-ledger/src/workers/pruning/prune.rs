@@ -26,15 +26,14 @@ pub async fn prune<S: StorageBackend>(
     tangle: &MsTangle<S>,
     storage: &S,
     bus: &Bus<'_>,
+    start_index: MilestoneIndex,
     target_index: MilestoneIndex,
-    _snapshot_pruning_delta: u32,
     config: &PruningConfig,
 ) -> Result<(), Error> {
     let mut timings = Timings::default();
     let mut pruning_metrics = PruningMetrics::default();
 
     let snapshot_index = tangle.get_snapshot_index();
-    let start_index = tangle.get_pruning_index() + 1;
 
     if target_index < start_index {
         return Err(Error::InvalidTargetIndex {
@@ -43,7 +42,7 @@ pub async fn prune<S: StorageBackend>(
         });
     }
 
-    for index in *start_index..*target_index {
+    for index in *start_index..=*target_index {
         let index = index.into();
         info!("Pruning milestone {}...", index);
 
@@ -161,10 +160,10 @@ pub async fn prune<S: StorageBackend>(
 
         debug!("{:?}.", pruning_metrics);
         debug!("{:?}", confirmed_metrics);
-        // debug!("Unconfirmed metrics: {:?}", unconfirmed_metrics);
+        debug!("{:?}", unconfirmed_metrics);
         debug!("{:?}.", timings);
 
-        info!("{} total solid entry points.", num_next_seps,);
+        info!("{} solid entry points.", num_next_seps,);
         info!("Entry point index now at {}.", index,);
         info!("Pruning index now at {}.", index);
 

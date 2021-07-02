@@ -287,40 +287,17 @@ where
         };
 
         let snapshot_pruning_delta = bmd + EXTRA_PRUNING_DEPTH;
-
-        let pruning_depth_min = snapshot_depth + snapshot_pruning_delta;
-        let pruning_depth = if pruning_config.delay() < pruning_depth_min {
+        let pruning_delay_min = snapshot_depth + snapshot_pruning_delta;
+        let pruning_delay = if pruning_config.delay() < pruning_delay_min {
             warn!(
                 "Configuration value for \"delay\" is too low ({}), value changed to {}.",
                 pruning_config.delay(),
-                pruning_depth_min
+                pruning_delay_min
             );
-            pruning_depth_min
+            pruning_delay_min
         } else {
             pruning_config.delay()
         };
-
-        // let depth = if snapshot_config.depth() < SOLID_ENTRY_POINT_THRESHOLD_FUTURE {
-        //     warn!(
-        //         "Configuration value for \"depth\" is too low ({}), value changed to {}.",
-        //         snapshot_config.depth(),
-        //         SOLID_ENTRY_POINT_THRESHOLD_FUTURE
-        //     );
-        //     SOLID_ENTRY_POINT_THRESHOLD_FUTURE
-        // } else {
-        //     snapshot_config.depth()
-        // };
-        // let delay_min = snapshot_config.depth() + SOLID_ENTRY_POINT_THRESHOLD_PAST + PRUNING_THRESHOLD + 1;
-        // let delay = if pruning_config.delay() < delay_min {
-        //     warn!(
-        //         "Configuration value for \"delay\" is too low ({}), value changed to {}.",
-        //         pruning_config.delay(),
-        //         delay_min
-        //     );
-        //     delay_min
-        // } else {
-        //     pruning_config.delay()
-        // };
 
         // Unwrap is fine because ledger index was already in storage or just added by the snapshot worker.
         let mut ledger_index = storage::fetch_ledger_index(&*storage)?.unwrap();
@@ -352,7 +329,7 @@ where
                             continue;
                         }
 
-                        match should_snapshot(&tangle, ledger_index, pruning_depth_min, &snapshot_config) {
+                        match should_snapshot(&tangle, ledger_index, pruning_delay_min, &snapshot_config) {
                             Ok(()) => {
                                 // TODO
                                 // if let Err(e) = snapshot(snapshot_config.path(), event.index - snapshot_depth) {
@@ -364,17 +341,11 @@ where
                             }
                         }
 
-                        match should_prune(&tangle, ledger_index, pruning_depth, &pruning_config) {
-                            Ok(target_index) => {
-                                if let Err(e) = prune::prune(
-                                    &tangle,
-                                    &storage,
-                                    &bus,
-                                    target_index,
-                                    snapshot_pruning_delta,
-                                    &pruning_config,
-                                )
-                                .await
+                        match should_prune(&tangle, ledger_index, pruning_delay, &pruning_config) {
+                            Ok((start_index, target_index)) => {
+                                if let Err(e) =
+                                    prune::prune(&tangle, &storage, &bus, start_index, target_index, &pruning_config)
+                                        .await
                                 {
                                     error!("Pruning failed: {:?}.", e);
                                 }

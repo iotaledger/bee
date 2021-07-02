@@ -8,8 +8,6 @@ use crate::types::LedgerIndex;
 use bee_message::milestone::MilestoneIndex;
 use bee_tangle::{storage::StorageBackend, MsTangle};
 
-type PruningTargetIndex = MilestoneIndex;
-
 /// Reasons for not-pruning.
 #[derive(Debug)]
 pub enum SkipReason {
@@ -23,25 +21,24 @@ pub enum SkipReason {
 pub(crate) fn should_prune<B: StorageBackend>(
     tangle: &MsTangle<B>,
     ledger_index: LedgerIndex,
-    pruning_depth: u32,
-    pruning_config: &PruningConfig,
-) -> Result<PruningTargetIndex, SkipReason> {
-    let pruning_index = *tangle.get_pruning_index();
-    let start_index_min = || pruning_index + pruning_depth + 1;
+    delay: u32,
+    config: &PruningConfig,
+) -> Result<(MilestoneIndex, MilestoneIndex), SkipReason> {
+    let start_index = *tangle.get_pruning_index() + 1;
+    let ledger_index_min = start_index + delay;
 
-    if pruning_config.disabled() {
+    if config.disabled() {
         // Disabled in the config.
         Err(SkipReason::Disabled)
-    } else if *ledger_index < start_index_min() {
+    } else if *ledger_index < ledger_index_min {
         // Not enough history yet.
         Err(SkipReason::BelowThreshold {
-            reached_in: start_index_min() - *ledger_index,
+            reached_in: ledger_index_min - *ledger_index,
         })
     } else {
-        // NB:
-        // We made sure that `confirmed_milestone_index` >= pruning_depth.
-        let pruning_target_index = *ledger_index - pruning_depth;
+        // Note: we made sure that `ledger_index` >= delay.
+        let target_index = *ledger_index - delay;
 
-        Ok(pruning_target_index.into())
+        Ok((start_index.into(), target_index.into()))
     }
 }
