@@ -8,6 +8,8 @@ use crate::types::LedgerIndex;
 use bee_message::milestone::MilestoneIndex;
 use bee_tangle::{storage::StorageBackend, MsTangle};
 
+const MAX_PRUNING_BATCH_SIZE: u32 = 200;
+
 /// Reasons for not-pruning.
 #[derive(Debug)]
 pub enum SkipReason {
@@ -39,6 +41,10 @@ pub(crate) fn should_prune<B: StorageBackend>(
         // Note: we made sure that `ledger_index` >= delay.
         let target_index = *ledger_index - delay;
 
-        Ok((start_index.into(), target_index.into()))
+        if target_index > start_index + MAX_PRUNING_BATCH_SIZE {
+            Ok((start_index.into(), MAX_PRUNING_BATCH_SIZE.into()))
+        } else {
+            Ok((start_index.into(), target_index.into()))
+        }
     }
 }
