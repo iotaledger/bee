@@ -188,23 +188,29 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
                 None => {
                     metrics.approver_cache_miss += 1;
 
-                    let conf_index = if let Some(conf_index) = Fetch::<MessageId, MessageMetadata>::fetch(storage, &id)
+                    let approver_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &id)
                         .map_err(|e| Error::FetchOperation(Box::new(e)))?
-                        .ok_or(Error::MissingMetadata(id))?
-                        .milestone_index()
-                    {
-                        log::trace!("Conf. index for {} is {}", &id, conf_index);
+                        .ok_or(Error::MissingMetadata(current_id))?;
 
-                        // Note that an approver can still be confirmed by the same milestone (if it is child/approver and sibling at the
-                        // same time), in other words: it shares an approver with one of its approvers.
-                        conf_index
+                    let conf_index = if approver_md.flags().is_referenced() {
+                        // Confirmed approver
+                        if let Some(conf_index) = approver_md.milestone_index() {
+                            // Note that an approver can still be confirmed by the same milestone despite the breadth-first walk (if it is
+                            // child/approver and sibling at the same time), in other words: conf_index = prune_index is possible.
+                            conf_index
+                        } else {
+                            // FIXME: `update_metadata` bug mitigation!
+                            log::trace!("Bug mitigation: Set {}+20 to confirmed approver {}", prune_index, &id);
+
+                            prune_index + 20 // BMD + 5
+                        }
                     } else {
-                        // If it was referenced by a message, that never got confirmed, we return `target_index` here,
-                        // which is the lower bound. We can treat this situtation in the same way as if the approver
-                        // had been confirmed by the current target milestone. Being referenced by an unconfirmed
-                        // message is irrelevant, because we never traverse such message during the walk.
-                        log::trace!("No conf. index for {}", &id);
-
+                        // Unconfirmed approver:
+                        // If it was referenced by a message, that never got confirmed, we return `prune_index` here,
+                        // which is the lowest possible bound. We can treat this situtation in the same way as if the approver
+                        // had been confirmed by the current milestone. Being referenced by an unconfirmed
+                        // message is irrelevant, because we never traverse such message during a past-cone walk with a milestone
+                        // as its root.
                         prune_index
                     };
 
