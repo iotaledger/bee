@@ -9,7 +9,7 @@ pub mod pruning;
 pub mod snapshot;
 pub mod storage;
 
-pub(crate) mod error;
+pub mod error;
 
 pub use storage::StorageBackend;
 
