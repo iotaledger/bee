@@ -32,6 +32,7 @@ use log::{error, info};
 use warp::{http::StatusCode, Filter, Rejection, Reply};
 
 use std::{any::TypeId, convert::Infallible};
+use bee_ledger::workers::consensus::ConsensusWorker;
 
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;
@@ -75,6 +76,7 @@ where
         let network_id = config.2;
         let bech32_hrp = config.3;
 
+        let consensus_worker = node.worker::<ConsensusWorker>().unwrap().tx.clone();
         let tangle = node.resource::<MsTangle<N::Backend>>();
         let storage = node.storage();
         let message_submitter = node.worker::<MessageSubmitterWorker>().unwrap().tx.clone();
@@ -104,6 +106,7 @@ where
                 bus,
                 message_requester,
                 requested_messages,
+                consensus_worker,
             )
             .recover(handle_rejection);
 

@@ -3,6 +3,7 @@
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
+use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 use bee_network::NetworkCommandSender;
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorkerEvent, PeerManager, RequestedMessages,
@@ -91,4 +92,10 @@ pub(crate) fn with_requested_messages(
     requested_messages: ResourceHandle<RequestedMessages>,
 ) -> impl Filter<Extract = (ResourceHandle<RequestedMessages>,), Error = Infallible> + Clone {
     warp::any().map(move || requested_messages.clone())
+}
+
+pub(crate) fn with_consensus_worker(
+    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
+) -> impl Filter<Extract = (mpsc::UnboundedSender<ConsensusWorkerCommand>,), Error = Infallible> + Clone {
+    warp::any().map(move || consensus_worker.clone())
 }

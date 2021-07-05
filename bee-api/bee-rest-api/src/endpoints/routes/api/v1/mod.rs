@@ -28,6 +28,7 @@ pub mod treasury;
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
+use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 use bee_network::NetworkCommandSender;
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterWorkerEvent, PeerManager};
 use bee_runtime::{node::NodeInfo, resource::ResourceHandle};
@@ -57,6 +58,7 @@ pub(crate) fn filter<B: StorageBackend>(
     peer_manager: ResourceHandle<PeerManager>,
     network_command_sender: ResourceHandle<NetworkCommandSender>,
     node_info: ResourceHandle<NodeInfo>,
+    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     add_peer::filter(
         public_routes.clone(),
@@ -68,11 +70,13 @@ pub(crate) fn filter<B: StorageBackend>(
         public_routes.clone(),
         allowed_ips.clone(),
         storage.clone(),
+        consensus_worker.clone(),
     ))
     .or(balance_ed25519::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         storage.clone(),
+        consensus_worker.clone(),
     ))
     .or(info::filter(
         public_routes.clone(),
@@ -124,16 +128,19 @@ pub(crate) fn filter<B: StorageBackend>(
         public_routes.clone(),
         allowed_ips.clone(),
         storage.clone(),
+        consensus_worker.clone(),
     ))
     .or(outputs_bech32::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         storage.clone(),
+        consensus_worker.clone(),
     ))
     .or(outputs_ed25519::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         storage.clone(),
+        consensus_worker.clone(),
     ))
     .or(peer::filter(
         public_routes.clone(),

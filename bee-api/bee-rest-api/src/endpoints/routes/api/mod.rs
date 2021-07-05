@@ -6,6 +6,7 @@ pub mod v1;
 
 use crate::endpoints::{config::RestApiConfig, storage::StorageBackend, Bech32Hrp, NetworkId};
 
+use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 use bee_network::NetworkCommandSender;
 use bee_protocol::workers::{
     config::ProtocolConfig, MessageRequesterWorker, MessageSubmitterWorkerEvent, PeerManager, RequestedMessages,
@@ -39,6 +40,7 @@ pub(crate) fn filter<B: StorageBackend>(
     bus: ResourceHandle<Bus<'static>>,
     message_requester: MessageRequesterWorker,
     requested_messages: ResourceHandle<RequestedMessages>,
+    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     v1::filter(
         public_routes.clone(),
@@ -53,6 +55,7 @@ pub(crate) fn filter<B: StorageBackend>(
         peer_manager,
         network_command_sender,
         node_info,
+        consensus_worker,
     )
     .or(plugins::filter(
         public_routes,

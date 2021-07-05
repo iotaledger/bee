@@ -9,9 +9,11 @@ use crate::endpoints::{
 use bee_message::address::Address;
 use bee_runtime::resource::ResourceHandle;
 
+use tokio::sync::mpsc;
 use warp::{Filter, Rejection, Reply};
 
 use std::net::IpAddr;
+use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 
 fn path() -> impl Filter<Extract = (Address,), Error = Rejection> + Clone {
     super::path()
@@ -25,6 +27,7 @@ pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     storage: ResourceHandle<B>,
+    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::get())

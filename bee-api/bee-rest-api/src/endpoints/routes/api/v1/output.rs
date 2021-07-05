@@ -14,9 +14,11 @@ use bee_message::output::OutputId;
 use bee_runtime::resource::ResourceHandle;
 use bee_storage::access::Fetch;
 
+use tokio::sync::mpsc;
 use warp::{reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
+use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 
 fn path() -> impl Filter<Extract = (OutputId,), Error = Rejection> + Clone {
     super::path()
@@ -29,6 +31,7 @@ pub(crate) fn filter<B: StorageBackend>(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
     storage: ResourceHandle<B>,
+    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::get())
