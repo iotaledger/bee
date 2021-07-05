@@ -4,11 +4,11 @@
 //! Module containing workers required to create and maintain the ledger state.
 
 pub mod consensus;
+pub mod error;
 pub mod event;
 pub mod pruning;
 pub mod snapshot;
 pub mod storage;
-pub mod error;
 
 pub use storage::StorageBackend;
 
