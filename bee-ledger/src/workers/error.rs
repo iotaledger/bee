@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module containing the errors that can occur during ledger operations.
+
 use crate::{
     types::{Balance, Error as TypesError, Unspent},
     workers::snapshot::error::Error as SnapshotError,
