@@ -8,7 +8,6 @@ pub mod event;
 pub mod pruning;
 pub mod snapshot;
 pub mod storage;
-
 pub mod error;
 
 pub use storage::StorageBackend;
