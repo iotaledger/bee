@@ -38,7 +38,7 @@ impl<T: Packable> Packable for Box<[T]> {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         // The length of any dynamically-sized sequence must be prefixed.
-        self.len().pack(packer).map_err(PackError::infallible)?;
+        (self.len() as u64).pack(packer).map_err(PackError::infallible)?;
 
         for item in self.iter() {
             item.pack(packer)?;
@@ -48,7 +48,7 @@ impl<T: Packable> Packable for Box<[T]> {
     }
 
     fn packed_len(&self) -> usize {
-        0usize.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
+        0u64.packed_len() + self.iter().map(T::packed_len).sum::<usize>()
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
