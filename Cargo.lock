@@ -252,7 +252,7 @@ dependencies = [
  "digest 0.9.0",
  "futures",
  "hex",
- "iota-crypto",
+ "iota-crypto 0.5.1",
  "log",
  "reqwest",
  "serde",
@@ -273,7 +273,7 @@ dependencies = [
  "bytemuck",
  "digest 0.9.0",
  "hex",
- "iota-crypto",
+ "iota-crypto 0.5.1",
  "serde",
  "thiserror",
 ]
@@ -322,7 +322,7 @@ dependencies = [
  "futures",
  "fxhash",
  "hex",
- "iota-crypto",
+ "iota-crypto 0.6.0",
  "log",
  "mime_guess",
  "multiaddr",
@@ -352,7 +352,7 @@ source = "git+https://github.com/iotaledger/bee.git?branch=dev#61aea44a5100175dc
 dependencies = [
  "bee-crypto",
  "bee-ternary",
- "iota-crypto",
+ "iota-crypto 0.5.1",
  "thiserror",
 ]
 
@@ -377,7 +377,7 @@ dependencies = [
  "futures-util",
  "fxhash",
  "hex",
- "iota-crypto",
+ "iota-crypto 0.6.0",
  "log",
  "num_cpus",
  "pin-project 1.0.7",
@@ -409,7 +409,7 @@ dependencies = [
  "digest 0.9.0",
  "futures",
  "hex",
- "iota-crypto",
+ "iota-crypto 0.6.0",
  "log",
  "multiaddr",
  "num_cpus",
@@ -1274,8 +1274,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fcd999463524c52659517fe2cea98493cfe485d10565e7b0fb07dbba7ad2753"
 dependencies = [
  "cfg-if 1.0.0",
+ "js-sys",
  "libc",
  "wasi 0.10.2+wasi-snapshot-preview1",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1561,6 +1563,17 @@ name = "iota-crypto"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cccb8160eb8a88434fb3a0a3fc852e625aceab6c0272f0f03cc3f47c125bceab"
+dependencies = [
+ "blake2",
+ "digest 0.9.0",
+ "ed25519-zebra",
+]
+
+[[package]]
+name = "iota-crypto"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a563712b1857f24cd194eb799ddee2c9f5fdb9f8cadc8cae333da5c7d2a9213"
 dependencies = [
  "blake2",
  "digest 0.9.0",
