@@ -11,6 +11,26 @@ use crate::{
 };
 
 use alloc::{boxed::Box, vec::Vec};
+use core::ops::Deref;
+
+impl<T: Packable> Packable for Box<T> {
+    type PackError = T::PackError;
+    type UnpackError = T::UnpackError;
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        self.deref().pack(packer)?;
+
+        Ok(())
+    }
+
+    fn packed_len(&self) -> usize {
+        self.deref().packed_len()
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        Ok(Box::new(T::unpack(unpacker)?))
+    }
+}
 
 impl<T: Packable> Packable for Box<[T]> {
     type PackError = T::PackError;
