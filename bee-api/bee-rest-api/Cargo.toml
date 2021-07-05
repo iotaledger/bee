@@ -26,7 +26,7 @@ bech32 = { version = "0.8", optional = true }
 digest = { version = "0.9", optional = true }
 futures = { version = "0.3", optional = true }
 hex = { version = "0.4" }
-iota-crypto = { version = "0.5.0", features = ["blake2b"], optional = true }
+iota-crypto = { version = "0.6.0", features = ["blake2b"], optional = true }
 log = { version = "0.4", optional = true }
 multiaddr = "0.12"
 num_cpus = { version = "1.13", optional = true }
