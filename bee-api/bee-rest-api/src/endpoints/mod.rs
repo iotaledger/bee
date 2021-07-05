@@ -31,8 +31,8 @@ use async_trait::async_trait;
 use log::{error, info};
 use warp::{http::StatusCode, Filter, Rejection, Reply};
 
-use std::{any::TypeId, convert::Infallible};
 use bee_ledger::workers::consensus::ConsensusWorker;
+use std::{any::TypeId, convert::Infallible};
 
 pub(crate) type NetworkId = (String, u64);
 pub(crate) type Bech32Hrp = String;

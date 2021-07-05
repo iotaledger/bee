@@ -69,13 +69,11 @@ pub(crate) fn filter<B: StorageBackend>(
     .or(balance_bech32::filter(
         public_routes.clone(),
         allowed_ips.clone(),
-        storage.clone(),
         consensus_worker.clone(),
     ))
     .or(balance_ed25519::filter(
         public_routes.clone(),
         allowed_ips.clone(),
-        storage.clone(),
         consensus_worker.clone(),
     ))
     .or(info::filter(
@@ -133,13 +131,11 @@ pub(crate) fn filter<B: StorageBackend>(
     .or(outputs_bech32::filter(
         public_routes.clone(),
         allowed_ips.clone(),
-        storage.clone(),
         consensus_worker.clone(),
     ))
     .or(outputs_ed25519::filter(
         public_routes.clone(),
         allowed_ips.clone(),
-        storage.clone(),
         consensus_worker.clone(),
     ))
     .or(peer::filter(

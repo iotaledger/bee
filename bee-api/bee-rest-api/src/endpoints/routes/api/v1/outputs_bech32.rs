@@ -2,18 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::endpoints::{
-    config::ROUTE_OUTPUTS_BECH32, filters::with_storage, path_params::bech32_address, permission::has_permission,
-    routes::api::v1::outputs_ed25519::outputs_ed25519, storage::StorageBackend,
+    config::ROUTE_OUTPUTS_BECH32, filters::with_consensus_worker, path_params::bech32_address,
+    permission::has_permission, routes::api::v1::outputs_ed25519::outputs_ed25519,
 };
 
+use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 use bee_message::address::Address;
-use bee_runtime::resource::ResourceHandle;
 
 use tokio::sync::mpsc;
 use warp::{Filter, Rejection, Reply};
 
 use std::net::IpAddr;
-use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 
 fn path() -> impl Filter<Extract = (Address,), Error = Rejection> + Clone {
     super::path()
@@ -23,24 +22,23 @@ fn path() -> impl Filter<Extract = (Address,), Error = Rejection> + Clone {
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(
+pub(crate) fn filter(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
-    storage: ResourceHandle<B>,
     consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUTS_BECH32, public_routes, allowed_ips))
-        .and(with_storage(storage))
-        .and_then(|addr, storage| async move { outputs_bech32(addr, storage) })
+        .and(with_consensus_worker(consensus_worker))
+        .and_then(|addr, consensus_worker| async move { outputs_bech32(addr, consensus_worker).await })
 }
 
-pub(crate) fn outputs_bech32<B: StorageBackend>(
+pub(crate) async fn outputs_bech32(
     addr: Address,
-    storage: ResourceHandle<B>,
+    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 ) -> Result<impl Reply, Rejection> {
     match addr {
-        Address::Ed25519(a) => outputs_ed25519(a, storage),
+        Address::Ed25519(a) => outputs_ed25519(a, consensus_worker).await,
     }
 }

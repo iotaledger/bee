@@ -3,21 +3,24 @@
 
 use crate::{
     endpoints::{
-        config::ROUTE_OUTPUTS_ED25519, filters::with_storage, path_params::ed25519_address, permission::has_permission,
-        rejection::CustomRejection, storage::StorageBackend,
+        config::ROUTE_OUTPUTS_ED25519, filters::with_consensus_worker, path_params::ed25519_address,
+        permission::has_permission, rejection::CustomRejection,
     },
     types::{body::SuccessBody, responses::OutputsAddressResponse},
 };
 
-use bee_message::{address::Ed25519Address, output::OutputId};
-use bee_runtime::resource::ResourceHandle;
-use bee_storage::access::Fetch;
+use bee_ledger::{
+    types::LedgerIndex,
+    workers::{consensus::ConsensusWorkerCommand, error::Error},
+};
+use bee_message::{address::Ed25519Address, output::OutputId, prelude::Address};
 
+use futures::channel::oneshot;
+use log::error;
 use tokio::sync::mpsc;
 use warp::{reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
-use bee_ledger::workers::consensus::ConsensusWorkerCommand;
 
 fn path() -> impl Filter<Extract = (Ed25519Address,), Error = Rejection> + Clone {
     super::path()
@@ -28,30 +31,44 @@ fn path() -> impl Filter<Extract = (Ed25519Address,), Error = Rejection> + Clone
         .and(warp::path::end())
 }
 
-pub(crate) fn filter<B: StorageBackend>(
+pub(crate) fn filter(
     public_routes: Box<[String]>,
     allowed_ips: Box<[IpAddr]>,
-    storage: ResourceHandle<B>,
     consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     self::path()
         .and(warp::get())
         .and(has_permission(ROUTE_OUTPUTS_ED25519, public_routes, allowed_ips))
-        .and(with_storage(storage))
-        .and_then(|addr, storage| async move { outputs_ed25519(addr, storage) })
+        .and(with_consensus_worker(consensus_worker))
+        .and_then(|addr, consensus_worker| async move { outputs_ed25519(addr, consensus_worker).await })
 }
 
-pub(crate) fn outputs_ed25519<B: StorageBackend>(
+pub(crate) async fn outputs_ed25519(
     addr: Ed25519Address,
-    storage: ResourceHandle<B>,
+    consensus_worker: mpsc::UnboundedSender<ConsensusWorkerCommand>,
 ) -> Result<impl Reply, Rejection> {
-    let mut fetched = match Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&*storage, &addr).map_err(|_| {
+    let (cmd_tx, cmd_rx) = oneshot::channel::<(Result<Option<Vec<OutputId>>, Error>, LedgerIndex)>();
+
+    if let Err(e) = consensus_worker.send(ConsensusWorkerCommand::FetchOutputs(Address::Ed25519(addr), cmd_tx)) {
+        error!("Request to consensus worker failed: {}.", e);
+    }
+
+    let (mut fetched, ledger_index) = match cmd_rx.await.map_err(|e| {
+        error!("Response from consensus worker failed: {}.", e);
         reject::custom(CustomRejection::ServiceUnavailable(
-            "can not fetch from storage".to_string(),
+            "unable to fetch the outputs of the address".to_string(),
         ))
     })? {
-        Some(ids) => ids,
-        None => vec![],
+        (Ok(response), ledger_index) => match response {
+            Some(ids) => (ids, ledger_index),
+            None => (vec![], ledger_index),
+        },
+        (Err(e), _) => {
+            error!("unable to fetch the outputs of the address: {}", e);
+            return Err(reject::custom(CustomRejection::ServiceUnavailable(
+                "unable to fetch the outputs of the address".to_string(),
+            )));
+        }
     };
 
     let count = fetched.len();
@@ -64,5 +81,6 @@ pub(crate) fn outputs_ed25519<B: StorageBackend>(
         max_results,
         count,
         output_ids: fetched.iter().map(|id| id.to_string()).collect(),
+        ledger_index: *ledger_index,
     })))
 }
