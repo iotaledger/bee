@@ -3,8 +3,10 @@ members = [
   "bee-common/bee-event-bus",
   "bee-common/bee-logger",
   "bee-common/bee-ord",
-  "bee-common/bee-packable",
-  "bee-common/bee-packable-derive",
+  "bee-common/bee-packable/bee-packable",
+  "bee-common/bee-packable/bee-packable-derive",
+  "bee-common/bee-type-id/bee-type-id",
+  "bee-common/bee-type-id/bee-type-id-derive",
   "bee-node",
   "bee-test"
 ]

@@ -1,0 +1,14 @@
+[package]
+name = "bee-type-id"
+version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
+edition = "2018"
+description = "Unique type identifiers for the bee framework"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "framework", "type" ]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-type-id-derive = { path = "../bee-type-id-derive" }
