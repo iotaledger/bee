@@ -5,16 +5,18 @@ mod common;
 
 use bee_packable::VecPrefix;
 
+const MAX_LENGTH: usize = 128;
+
 macro_rules! impl_packable_test_for_vec_prefix {
     ($name:ident, $ty:ty) => {
         #[test]
         fn $name() {
             assert_eq!(
-                common::generic_test(&VecPrefix::<u32, $ty>::new()).0.len(),
+                common::generic_test(&VecPrefix::<u32, $ty, MAX_LENGTH>::new()).0.len(),
                 core::mem::size_of::<$ty>()
             );
             assert_eq!(
-                common::generic_test(&VecPrefix::<Option<u32>, $ty>::from(vec![Some(0u32), None]))
+                common::generic_test(&VecPrefix::<Option<u32>, $ty, MAX_LENGTH>::from(vec![Some(0u32), None]))
                     .0
                     .len(),
                 core::mem::size_of::<$ty>()

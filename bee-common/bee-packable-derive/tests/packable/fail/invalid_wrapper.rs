@@ -11,7 +11,7 @@ use core::convert::Infallible;
 #[packable(pack_error = Infallible)]
 #[packable(unpack_error = Infallible)]
 pub struct Foo {
-    #[packable(wrapper = VecPrefix<u64, u8>)]
+    #[packable(wrapper = VecPrefix<u64, u8, 128>)]
     inner: Vec<u32>,
 }
 
