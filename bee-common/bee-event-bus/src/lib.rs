@@ -63,8 +63,8 @@ impl<'a> EventBus<'a> {
     /// Dispatches an event via the event bus. All active listeners registered for this event will be invoked.
     pub fn dispatch<E: Any>(&self, event: E) {
         // We unwrap() to assert that we are not expecting threads to ever fail while holding the lock.
-        if let Some(listeners) = self.listeners.lock().unwrap().get_mut(&TypeId::of::<E>()) {
-            listeners.iter_mut().for_each(|(listener, _)| listener(&event))
+        if let Some(listeners) = self.listeners.lock().unwrap().get(&TypeId::of::<E>()) {
+            listeners.iter().for_each(|(listener, _)| listener(&event))
         }
     }
 
