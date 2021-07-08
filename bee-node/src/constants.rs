@@ -3,3 +3,4 @@
 
 pub(crate) const BEE_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub(crate) const BEE_GIT_COMMIT: &str = env!("GIT_COMMIT");
+pub(crate) const BEE_GIT_API_LATEST: &str = "https://api.github.com/repos/iotaledger/bee/releases/latest";
