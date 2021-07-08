@@ -7,8 +7,8 @@ module.exports = {
   tagline: 'Official IOTA Bee Software',
   url: 'https://bee.docs.iota.org/',
   baseUrl: '/bee/',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'throw',
+  onBrokenLinks: 'warn',
+  onBrokenMarkdownLinks: 'warn',
   favicon: '/img/logo/favicon.ico',
   organizationName: 'iotaledger', // Usually your GitHub org/user name.
   projectName: 'Bee', // Usually your repo name.
