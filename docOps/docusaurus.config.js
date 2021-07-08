@@ -4,24 +4,23 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
   title: 'Bee',
-  tagline: '',
+  tagline: 'Official IOTA Bee Software',
   url: 'https://bee.docs.iota.org/',
-  baseUrl: '/',
+  baseUrl: '/bee/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'throw',
-  favicon: 'img/logo/favicon.ico',
+  favicon: '/img/logo/favicon.ico',
   organizationName: 'iotaledger', // Usually your GitHub org/user name.
-  projectName: 'bee', // Usually your repo name.
+  projectName: 'Bee', // Usually your repo name.
   stylesheets: [
     'https://fonts.googleapis.com/css?family=Material+Icons',
-    'http://v2202102141633143571.bestsrv.de/assets/css/styles.c88dfa6b.css',//replace this URL
   ],
   themeConfig: {
     navbar: {
-      title: 'Bee documentation',
+      title: 'Bee',
       logo: {
         alt: 'IOTA',
-        src: 'static/img/logo/Logo_Swirl_Dark.png',
+        src: 'img/logo/Logo_Swirl_Dark.png',
       },
       items: [
         {
@@ -46,7 +45,7 @@ module.exports = {
           items: [
             {
               label: 'Welcome',
-              to: '/',
+              to: '/welcome',
             },
             {
               label: 'Getting Started',
@@ -109,7 +108,7 @@ module.exports = {
             'https://github.com/iotaledger/bee/tree/main/docs',
         },
         theme: {
-          customCss: require.resolve('./src/css/custom.css'),
+          customCss: require.resolve('./src/css/iota.css'),
         },
       },
     ],
