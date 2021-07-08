@@ -14,7 +14,7 @@ use serde_json::Value;
 
 use std::{convert::Infallible, time::Duration};
 
-const CHECK_INTERVAL_SEC: u64 = 10;
+const CHECK_INTERVAL_SEC: u64 = 3600;
 
 #[derive(Default)]
 pub struct VersionChecker {}
