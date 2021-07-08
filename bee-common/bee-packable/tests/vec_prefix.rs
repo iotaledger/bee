@@ -51,7 +51,7 @@ macro_rules! impl_test_for_invalid_prefix_length {
 
             assert!(matches!(
                 prefixed,
-                Err(UnpackError::Packable(UnpackPrefixError::InvalidPrefixLength(l))) if l == MAX_LENGTH + 1, 
+                Err(UnpackError::Packable(UnpackPrefixError::InvalidPrefixLength(l))) if l == MAX_LENGTH + 1,
             ));
         }
     };
@@ -69,5 +69,11 @@ fn from_vec_error() {
     let vec = vec![0u8; 16];
     let prefixed = VecPrefix::<u8, u32, 8>::try_from(vec);
 
-    assert!(matches!(prefixed, Err(PrefixedFromVecError { max_len: 8, actual_len: 16 })));
+    assert!(matches!(
+        prefixed,
+        Err(PrefixedFromVecError {
+            max_len: 8,
+            actual_len: 16
+        })
+    ));
 }
