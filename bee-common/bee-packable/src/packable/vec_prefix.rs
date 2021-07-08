@@ -129,7 +129,7 @@ macro_rules! impl_packable_for_vec_prefix {
                 let len = usize::try_from(len).map_err(|err| UnpackError::Packable(UnpackPrefixError::Prefix(err)))?;
 
                 if len > N {
-                    return Err(UnpackError::Packable(UnpackPrefixError::InvalidLength(len)));
+                    return Err(UnpackError::Packable(UnpackPrefixError::InvalidPrefixLength(len)));
                 }
 
                 let mut vec = Self::with_capacity(len);

@@ -129,7 +129,7 @@ where
     /// Semantic error raised while unpacking the prefix of the sequence.
     Prefix(P::Error),
     /// Invalid prefix length (larger than maximum specified).
-    InvalidLength(usize),
+    InvalidPrefixLength(usize),
 }
 
 impl<T, P> From<T> for UnpackPrefixError<T, P>
