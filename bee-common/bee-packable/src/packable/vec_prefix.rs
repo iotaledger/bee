@@ -14,6 +14,16 @@ use crate::{
 use alloc::vec::Vec;
 use core::{convert::TryFrom, marker::PhantomData};
 
+/// Error encountered when attempting to convert a `Vec<T>` into a `VecPrefix`, where
+/// the length of the source vector exceeds the maximum length of the `VecPrefix`.
+#[derive(Debug, PartialEq, Eq)]
+pub struct FromVecError {
+    /// Maximum length of the `VecPrefix`.
+    pub max_len: usize,
+    /// Actual length of the source vector.
+    pub actual_len: usize,
+}
+
 /// Wrapper type for `Vec<T>` where the length prefix is of type `P`.
 /// The `Vec<T>`'s maximum length is provided by `N`.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -47,11 +57,20 @@ impl<T, P, const N: usize> Default for VecPrefix<T, P, N> {
     }
 }
 
-impl<T, P, const N: usize> From<Vec<T>> for VecPrefix<T, P, N> {
-    fn from(vec: Vec<T>) -> Self {
-        Self {
-            inner: vec,
-            marker: PhantomData,
+impl<T, P, const N: usize> TryFrom<Vec<T>> for VecPrefix<T, P, N> {
+    type Error = FromVecError;
+
+    fn try_from(vec: Vec<T>) -> Result<Self, Self::Error> {
+        if vec.len() > N {
+            Err(FromVecError {
+                max_len: N,
+                actual_len: vec.len(),
+            })
+        } else {
+            Ok(Self {
+                inner: vec,
+                marker: PhantomData,
+            })
         }
     }
 }
