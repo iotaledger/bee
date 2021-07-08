@@ -14,7 +14,7 @@ mod vec;
 mod vec_prefix;
 
 pub use option::UnpackOptionError;
-pub use vec_prefix::VecPrefix;
+pub use vec_prefix::{VecPrefix, PrefixedFromVecError};
 
 pub use crate::{
     error::{PackError, UnknownTagError, UnpackError},

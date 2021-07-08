@@ -17,7 +17,7 @@ use core::{convert::TryFrom, marker::PhantomData};
 /// Error encountered when attempting to convert a `Vec<T>` into a `VecPrefix`, where
 /// the length of the source vector exceeds the maximum length of the `VecPrefix`.
 #[derive(Debug, PartialEq, Eq)]
-pub struct FromVecError {
+pub struct PrefixedFromVecError {
     /// Maximum length of the `VecPrefix`.
     pub max_len: usize,
     /// Actual length of the source vector.
@@ -58,11 +58,11 @@ impl<T, P, const N: usize> Default for VecPrefix<T, P, N> {
 }
 
 impl<T, P, const N: usize> TryFrom<Vec<T>> for VecPrefix<T, P, N> {
-    type Error = FromVecError;
+    type Error = PrefixedFromVecError;
 
     fn try_from(vec: Vec<T>) -> Result<Self, Self::Error> {
         if vec.len() > N {
-            Err(FromVecError {
+            Err(PrefixedFromVecError {
                 max_len: N,
                 actual_len: vec.len(),
             })

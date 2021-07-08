@@ -3,7 +3,7 @@
 
 mod common;
 
-use bee_packable::VecPrefix;
+use bee_packable::{error::UnpackPrefixError, Packable, PrefixedFromVecError, UnpackError, VecPrefix};
 
 use core::convert::TryFrom;
 
@@ -39,3 +39,35 @@ impl_packable_test_for_vec_prefix!(packable_vec_prefix_u32, u32);
 impl_packable_test_for_vec_prefix!(packable_vec_prefix_u64, u64);
 #[cfg(has_u128)]
 impl_packable_test_for_vec_prefix!(packable_vec_prefix_u128, u128);
+
+macro_rules! impl_test_for_invalid_prefix_length {
+    ($name:ident, $ty:ty) => {
+        #[test]
+        fn $name() {
+            let mut bytes = vec![0u8; MAX_LENGTH + 2];
+            bytes[0] = MAX_LENGTH as u8 + 1;
+
+            let prefixed = VecPrefix::<u8, $ty, MAX_LENGTH>::unpack_from_slice(bytes);
+
+            assert!(matches!(
+                prefixed,
+                Err(UnpackError::Packable(UnpackPrefixError::InvalidPrefixLength(l))) if l == MAX_LENGTH + 1, 
+            ));
+        }
+    };
+}
+
+impl_test_for_invalid_prefix_length!(invalid_prefix_length_u8, u8);
+impl_test_for_invalid_prefix_length!(invalid_prefix_length_u16, u16);
+impl_test_for_invalid_prefix_length!(invalid_prefix_length_u32, u32);
+impl_test_for_invalid_prefix_length!(invalid_prefix_length_u64, u64);
+#[cfg(has_u128)]
+impl_test_for_invalid_prefix_length!(invalid_prefix_length_u128, u128);
+
+#[test]
+fn from_vec_error() {
+    let vec = vec![0u8; 16];
+    let prefixed = VecPrefix::<u8, u32, 8>::try_from(vec);
+
+    assert!(matches!(prefixed, Err(PrefixedFromVecError { max_len: 8, actual_len: 16 })));
+}
