@@ -38,7 +38,7 @@ impl<N: Node> Worker<N> for VersionChecker {
 
             while ticker.next().await.is_some() {
                 match is_latest(&client).await {
-                    Ok(false) => warn!("A new version has been released. Please update the node."),
+                    Ok(false) => warn!("A new version has been released. Please update the node at https://github.com/iotaledger/bee/releases"),
                     Err(e) => error!("error while checking for new update. {:?}", e),
                     _ => (),
                 }
@@ -65,9 +65,9 @@ async fn is_latest(client: &Client) -> Result<bool, reqwest::Error> {
                 Some(tag_name) => return Ok(tag_name == format!("v{}", BEE_VERSION).as_str()),
                 None => error!("no version field found."),
             },
-            Err(e) => error!("error while getting update informations. {:?}", e),
+            Err(e) => error!("error while getting update information. {:?}", e),
         },
-        Err(e) => error!("error while getting update informations. {:?}", e),
+        Err(e) => error!("error while getting update information. {:?}", e),
     }
 
     Ok(true)
