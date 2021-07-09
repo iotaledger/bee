@@ -13,7 +13,7 @@ use serde_json::Value;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 
-use std::{convert::Infallible, time::Duration};
+use std::time::Duration;
 
 const CHECK_INTERVAL_SEC: u64 = 3600;
 
@@ -23,9 +23,14 @@ pub struct VersionChecker {}
 #[async_trait]
 impl<N: Node> Worker<N> for VersionChecker {
     type Config = ();
-    type Error = Infallible;
+    type Error = reqwest::Error;
 
     async fn start(node: &mut N, _config: Self::Config) -> Result<Self, Self::Error> {
+
+        let client = reqwest::Client::builder()
+                .user_agent("curl")
+                .build()?;
+
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
 
@@ -34,21 +39,12 @@ impl<N: Node> Worker<N> for VersionChecker {
                 IntervalStream::new(interval(Duration::from_secs(CHECK_INTERVAL_SEC))),
             );
 
-            let client = reqwest::Client::builder()
-                .user_agent("curl")
-                .build();
-
-            match client {
-                Ok(cl) => {
-                    while ticker.next().await.is_some() {
-                        match is_latest(&cl).await {
-                            Ok(false) => warn!("A new version has been released. Please update the node at https://github.com/iotaledger/bee/releases"),
-                            Err(e) => error!("error while checking for new update. {:?}", e),
-                            _ => (),
-                        }
-                    }
-                },
-                Err(e) => error!("a problem has occured in client building. {:?}", e),
+            while ticker.next().await.is_some() {
+                match is_latest(&client).await {
+                    Ok(false) => warn!("A new version has been released. Please update the node at https://github.com/iotaledger/bee/releases"),
+                    Err(e) => error!("error while checking for new update. {:?}", e),
+                    _ => (),
+                }
             }
 
             info!("Stopped.");
