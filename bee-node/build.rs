@@ -20,7 +20,10 @@ fn main() -> Result<(), BuildError> {
         Err(_) => return Err(BuildError::GitCommit),
     }
 
-    match Command::new("git").args(&["rev-parse", "--abbrev-ref", "HEAD"]).output() {
+    match Command::new("git")
+        .args(&["rev-parse", "--abbrev-ref", "HEAD"])
+        .output()
+    {
         Ok(output) => {
             println!("cargo:rerun-if-changed=../.git/HEAD");
             println!(

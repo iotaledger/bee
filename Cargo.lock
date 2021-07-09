@@ -328,6 +328,7 @@ dependencies = [
  "multiaddr",
  "paho-mqtt",
  "rand 0.8.4",
+ "reqwest",
  "rpassword",
  "rust-embed",
  "serde",
