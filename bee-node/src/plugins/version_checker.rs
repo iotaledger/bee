@@ -39,7 +39,7 @@ impl<N: Node> Worker<N> for VersionChecker {
             while ticker.next().await.is_some() {
                 match is_latest(&client).await {
                     Ok(false) => warn!("A new version has been released. Please update the node."),
-                    Err(e) => error!("Error while checking for new update. {:?}", e),
+                    Err(e) => error!("error while checking for new update. {:?}", e),
                     _ => (),
                 }
             }
@@ -60,14 +60,14 @@ async fn is_latest(client: &Client) -> Result<bool, reqwest::Error> {
         .error_for_status()?;
 
     match res.text().await {
-        Ok(text) => match serde_json::from_str::<Value>(text.as_str()) {
+        Ok(text) => match serde_json::from_str::<Value>(&text) {
             Ok(value) => match value.get("tag_name") {
                 Some(tag_name) => return Ok(tag_name == format!("v{}", BEE_VERSION).as_str()),
-                None => error!("No version field found."),
+                None => error!("no version field found."),
             },
-            Err(_err_parse_json) => error!("Error while getting update informations. {:?}", _err_parse_json),
+            Err(e) => error!("error while getting update informations. {:?}", e),
         },
-        Err(_err_parse_text) => error!("Error while getting update informations. {:?}", _err_parse_text),
+        Err(e) => error!("error while getting update informations. {:?}", e),
     }
 
     Ok(true)
