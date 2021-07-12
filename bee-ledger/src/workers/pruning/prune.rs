@@ -112,18 +112,18 @@ pub async fn prune<S: StorageBackend>(
 
         // Add prunable milestones to the delete batch.
         let batch_milestones = Instant::now();
-        pruning_metrics.milestones = batch::delete_milestones(storage, &mut batch, index, index).await?;
+        batch::delete_milestone(storage, &mut batch, index).await?;
         timings.batch_milestones = batch_milestones.elapsed();
 
         // Add prunable output diffs to the delete batch.
         let batch_output_diffs = Instant::now();
-        pruning_metrics.output_diffs = batch::delete_output_diffs(storage, &mut batch, index, index).await?;
+        batch::delete_output_diff(storage, &mut batch, index).await?;
         timings.batch_output_diffs = batch_output_diffs.elapsed();
 
         // Add prunable receipts the delete batch (if wanted).
         if config.prune_receipts() {
             let batch_receipts = Instant::now();
-            pruning_metrics.receipts += batch::delete_receipts(storage, &mut batch, index, index).await?;
+            pruning_metrics.receipts += batch::delete_receipts(storage, &mut batch, index).await?;
             timings.batch_receipts = batch_receipts.elapsed();
         }
 

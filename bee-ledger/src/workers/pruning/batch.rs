@@ -36,161 +36,126 @@ pub struct Edge {
 }
 
 pub async fn delete_confirmed_data<S: StorageBackend>(
-    _tangle: &MsTangle<S>,
+    _: &MsTangle<S>,
     storage: &S,
     batch: &mut S::Batch,
     prune_index: MilestoneIndex,
-    curr_seps: &Seps,
+    current_seps: &Seps,
 ) -> Result<(Seps, ConfirmedMetrics), Error> {
-    // TODO: we should probably think about not allocating those hashmaps each time.
+    // A list of already visited messages.
     let mut visited = Messages::with_capacity(512);
-    let mut cache = ApproverCache::with_capacity(512);
+    // A cache to prevent unnecessary double fetches from the storage.
+    let mut approver_cache = ApproverCache::with_capacity(512);
+    // The new SEPs for this cone.
     let mut new_seps = Seps::with_capacity(512);
     let mut metrics = ConfirmedMetrics::default();
 
+    // Get the `MessageId` of the milestone that should be pruned from the storage.
     let prune_ms = Fetch::<MilestoneIndex, Milestone>::fetch(storage, &prune_index)
         .map_err(|e| Error::FetchOperation(Box::new(e)))?
         .ok_or(Error::MissingMilestone(prune_index))?;
 
     let prune_ms_id = prune_ms.message_id().clone();
 
-    // let mut parents: VecDeque<_> = vec![target_id].into_iter().collect();
-    let mut parents: VecDeque<_> = vec![(prune_ms_id, prune_ms_id)].into_iter().collect();
+    let mut to_visit: VecDeque<_> = vec![prune_ms_id].into_iter().collect();
+    // let mut to_visit: VecDeque<_> = vec![(prune_ms_id, prune_ms_id)].into_iter().collect();
 
-    while let Some((child_id, current_id)) = parents.pop_front() {
-        // Skip message if we already visited it.
-        if visited.contains(&current_id) {
+    while let Some(message_id) = to_visit.pop_front() {
+        // Skip already visited messages.
+        if visited.contains(&message_id) {
             metrics.msg_already_visited += 1;
             continue;
         }
 
-        // Skip message if it's a SEP.
-        if curr_seps.contains_key(SolidEntryPoint::ref_cast(&current_id)) {
+        // Skip SEPs.
+        if current_seps.contains_key(SolidEntryPoint::ref_cast(&message_id)) {
             metrics.references_sep += 1;
             continue;
         }
 
-        // Fetch the associated message to find out about its parents (and other data).
-        // let msg = Fetch::<MessageId, Message>::fetch(storage, &current_id)
-        //     .map_err(|e| Error::FetchOperation(Box::new(e)))?
-        //     .ok_or(Error::MissingMessage(current_id))?;
-
-        // //TEMPORARILY CHECKS THAT THE CONFIRMATION INDEX WAS SET CORRECTLY!
-        // let child_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &child_id)
-        //     .map_err(|e| Error::FetchOperation(Box::new(e)))?
-        //     .ok_or(Error::MissingMetadata(child_id))?;
-
-        // if child_md.milestone_index().is_none() {
-        //     log::error!("Missing milestone index for child: {}", child_id);
-        //     log::error!("Child: {:?}", child_md);
-        // }
-
-        let msg = match Fetch::<MessageId, Message>::fetch(storage, &current_id)
+        // Get the `Message` for `message_id`.
+        let msg = match Fetch::<MessageId, Message>::fetch(storage, &message_id)
             .map_err(|e| Error::FetchOperation(Box::new(e)))?
-            .ok_or(Error::MissingMessage(current_id))
+            .ok_or(Error::MissingMessage(message_id))
         {
             Ok(msg) => msg,
             Err(e) => {
-                log::error!("current msg: {}", current_id);
-                log::error!("reached_via: {}", child_id);
-
-                let msg_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &current_id)
-                    .map_err(|e| Error::FetchOperation(Box::new(e)))?
-                    .ok_or(Error::MissingMetadata(current_id))?;
-
-                if msg_md.milestone_index().is_none() {
-                    log::error!("Missing milestone index for current msg: {}", current_id);
-                    log::error!("{:?}", msg_md);
-                }
-
-                let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &current_id)
-                    .map_err(|e| Error::FetchOperation(Box::new(e)))?
-                    .ok_or(Error::MissingApprovers(current_id))?;
-
-                log::error!("all approvers: {:?}", approvers);
-                log::error!("now listing their metadata:\n");
-
-                for approver_id in approvers {
-                    let approver_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &approver_id)
-                        .map_err(|e| Error::FetchOperation(Box::new(e)))?
-                        .ok_or(Error::MissingMetadata(approver_id))?;
-
-                    log::error!("{:?}\n", approver_md);
-                }
+                log::error!(
+                    "failed to fetch `Message` associated with message id {} during past-cone traversal of milestone {} ({})",
+                    &message_id,
+                    &prune_index,
+                    &prune_ms_id,
+                );
 
                 return Err(e);
             }
         };
 
-        metrics.fetched_messages += 1;
-
-        let maybe_payload = msg.payload().as_ref();
-        let current_parents = msg.parents();
-
-        if let Some(indexation) = unwrap_indexation(maybe_payload) {
+        // Delete `Indexation` payloads (if existent).
+        let payload = msg.payload().as_ref();
+        if let Some(indexation) = unwrap_indexation(payload) {
             let padded_index = indexation.padded_index();
 
-            delete_indexation_data(storage, batch, &(padded_index, current_id))?;
+            delete_indexation_data(storage, batch, &(padded_index, message_id))?;
             metrics.prunable_indexations += 1;
         }
 
-        for _parent_id in current_parents.iter() {
-            // Temporarily do not delete edges, so we can query approvers again in case of a missing message error
-            //delete_edge(storage, batch, &(*parent_id, current_id))?;
+        // Delete edges.
+        let parents = msg.parents();
+        for parent_id in parents.iter() {
+            delete_edge(storage, batch, &(*parent_id, message_id))?;
             metrics.prunable_edges += 1;
         }
 
-        // Continue the traversal with its parents.
-        //Temporarily also keep the child which added it, i.e. current_id)
-        parents.extend(std::iter::repeat(current_id).zip(current_parents.iter().copied()));
+        // Add its parents to the list of yet to traverse messages.
+        to_visit.extend(parents.iter().copied());
 
         // Mark this message as "visited".
-        visited.insert(current_id);
+        visited.insert(message_id);
 
-        delete_message_and_metadata(storage, batch, &current_id, &prune_index)?;
+        delete_message_and_metadata(storage, batch, &message_id)?;
 
-        log::trace!("Pruned confirmed msg {} at {}.", current_id, prune_index);
+        // ---
+        // Everything that follows is required to decide whether the message id of pruned message should be kept as a solid entry point.
+        // We keep the set of SEPs as minimal as possible by checking whether there are still messages in future cones (beyond the new pruning index)
+        // that are referencing the current message (similar to a garbage collector).
+        // ---
 
         // Fetch its approvers from storage so that we can decide whether to keep it as an SEP, or not.
-        let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &current_id)
+        let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &message_id)
             .map_err(|e| Error::FetchOperation(Box::new(e)))?
-            .ok_or(Error::MissingApprovers(current_id))?;
+            .ok_or(Error::MissingApprovers(message_id))?;
 
-        metrics.fetched_approvers += 1;
-
-        // We need to base our decision on the approvers we haven't visited yet, more specifically the ones beyond the
-        // 'target_index'.
         let mut unvisited_approvers = approvers.into_iter().filter(|id| !visited.contains(id)).peekable();
-        // let mut unvisited_approvers = approvers.into_iter().peekable();
 
-        // If all its approvers were visited already during this traversal, this message is redundant as a SEP, and can
-        // be ignored.
         if unvisited_approvers.peek().is_none() {
             metrics.all_approvers_visited += 1;
-            log::trace!("All approvers visited: {}", current_id);
+
+            // Ignore message whose children are all part of this cone.
             continue;
         }
 
-        // If not all its approvers have been visited during the traversal, this possibly means, that it is referenced
-        // by some message belonging to the past cone of a milestone beyond the target index.
         metrics.not_all_approvers_visited += 1;
 
         // To decide for how long we need to keep a particular SEP around, we need to know the largest confirming index
-        // over all its approvers.
+        // of all its approvers. We initialize this value with the lower bound.
         let mut max_conf_index = *prune_index;
-        for id in unvisited_approvers {
-            let conf_index = match cache.get(&id) {
+
+        for approver_id in unvisited_approvers {
+            let approver_conf_index = match approver_cache.get(&approver_id) {
                 Some(conf_index) => {
+                    // We fetched the metadata of this approver before (fast path).
                     metrics.approver_cache_hit += 1;
 
                     **conf_index
                 }
                 None => {
+                    // We need to fetch the metadata of this approver (slow path).
                     metrics.approver_cache_miss += 1;
 
-                    let approver_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &id)
+                    let approver_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &approver_id)
                         .map_err(|e| Error::FetchOperation(Box::new(e)))?
-                        .ok_or(Error::MissingMetadata(current_id))?;
+                        .ok_or(Error::MissingMetadata(message_id))?;
 
                     let conf_index = if approver_md.flags().is_referenced() {
                         // Confirmed approver
@@ -199,36 +164,46 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
                             // child/approver and sibling at the same time), in other words: conf_index = prune_index is possible.
                             conf_index
                         } else {
-                            // FIXME: `update_metadata` bug mitigation!
-                            log::trace!("Bug mitigation: Set {}+20 to confirmed approver {}", prune_index, &id);
+                            // ---
+                            // BUG/FIXME: The invariant ".flags().is_referenced() => (milestone_index().is_some() == true) is violated" due to some
+                            // bug in our tangle impl (probably `update_metadata`), hence we need this mitigation code for now.
+                            // ---
+                            log::trace!(
+                                "Bug mitigation: Set {}+20 to confirmed approver {}",
+                                prune_index,
+                                &approver_id
+                            );
 
                             prune_index + 20 // BMD + 5
                         }
                     } else {
                         // Unconfirmed approver:
-                        // If it was referenced by a message, that never got confirmed, we return `prune_index` here,
-                        // which is the lowest possible bound. We can treat this situtation in the same way as if the approver
-                        // had been confirmed by the current milestone. Being referenced by an unconfirmed
-                        // message is irrelevant, because we never traverse such message during a past-cone walk with a milestone
-                        // as its root.
+
+                        // ---
+                        // If it was referenced by a message, that never got confirmed, we simply return the lower bound.
+                        // We can treat this situtation in the same way as if the approver had been confirmed by the current milestone,
+                        // because being referenced by an unconfirmed message is irrelevant in terms of SEP consideration.
+                        // ---
+
                         prune_index
                     };
 
-                    cache.insert(id, conf_index);
+                    // Update the approver cache.
+                    approver_cache.insert(approver_id, conf_index);
 
                     *conf_index
                 }
             };
 
-            if conf_index > max_conf_index {
-                max_conf_index = conf_index;
-            }
+            max_conf_index = max_conf_index.max(approver_conf_index);
         }
 
+        // If the greatest confirmation index of all its approvers is greater than the index we're pruning, then we need to keep its
+        // message id as a solid entry point.
         if max_conf_index > *prune_index {
-            new_seps.insert(current_id.into(), max_conf_index.into());
+            new_seps.insert(message_id.into(), max_conf_index.into());
 
-            log::trace!("New SEP: {} until {}", current_id, max_conf_index);
+            log::trace!("New SEP: {} until {}", message_id, max_conf_index);
 
             metrics.found_seps += 1;
         }
@@ -302,7 +277,7 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
                 let parents = msg.parents();
 
                 // Add message data to the delete batch.
-                delete_message_and_metadata(storage, batch, &unconf_msg_id, &prune_index)?;
+                delete_message_and_metadata(storage, batch, &unconf_msg_id)?;
 
                 log::trace!("Pruned unconfirmed msg {} at {}.", unconf_msg_id, prune_index);
 
@@ -347,13 +322,14 @@ fn delete_message_and_metadata<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     message_id: &MessageId,
-    target_index: &MilestoneIndex,
 ) -> Result<(), Error> {
+    // Message
     Batch::<MessageId, Message>::batch_delete(storage, batch, message_id)
         .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
-    // Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id)
-    //     .map_err(|e| Error::BatchOperation(Box::new(e)))?;
+    // MessageMetadata
+    Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id)
+        .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
     Ok(())
 }
@@ -364,6 +340,7 @@ fn delete_edge<S: StorageBackend>(
     batch: &mut S::Batch,
     edge: &(MessageId, MessageId),
 ) -> Result<(), Error> {
+    // Edge
     Batch::<(MessageId, MessageId), ()>::batch_delete(storage, batch, edge)
         .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
@@ -376,71 +353,54 @@ fn delete_indexation_data<S: StorageBackend>(
     batch: &mut S::Batch,
     index_message_id: &(PaddedIndex, MessageId),
 ) -> Result<(), Error> {
+    // Indexation
     Batch::<(PaddedIndex, MessageId), ()>::batch_delete(storage, batch, index_message_id)
         .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
     Ok(())
 }
 
-pub async fn delete_milestones<S: StorageBackend>(
+pub async fn delete_milestone<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
-    start_index: MilestoneIndex,
-    target_index: MilestoneIndex,
-) -> Result<usize, Error> {
-    let mut num = 0;
+    index: MilestoneIndex,
+) -> Result<(), Error> {
+    // Milestone
+    Batch::<MilestoneIndex, Milestone>::batch_delete(storage, batch, &index)
+        .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
-    for index in *start_index..=*target_index {
-        Batch::<MilestoneIndex, Milestone>::batch_delete(storage, batch, &index.into())
-            .map_err(|e| Error::BatchOperation(Box::new(e)))?;
-
-        num += 1;
-    }
-
-    Ok(num)
+    Ok(())
 }
 
-pub async fn delete_output_diffs<S: StorageBackend>(
+pub async fn delete_output_diff<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
-    start_index: MilestoneIndex,
-    target_index: MilestoneIndex,
-) -> Result<usize, Error> {
-    let mut num = 0;
+    index: MilestoneIndex,
+) -> Result<(), Error> {
+    // OutputDiff
+    Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, batch, &index)
+        .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
-    for index in *start_index..=*target_index {
-        Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, batch, &index.into())
-            .map_err(|e| Error::BatchOperation(Box::new(e)))?;
-
-        num += 1;
-    }
-    Ok(num)
+    Ok(())
 }
 
 pub async fn delete_receipts<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
-    start_index: MilestoneIndex,
-    target_index: MilestoneIndex,
+    index: MilestoneIndex,
 ) -> Result<usize, Error> {
+    let receipts = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
+        .map_err(|e| Error::BatchOperation(Box::new(e)))?
+        // TODO: why no panic?
+        .unwrap();
+
     let mut num = 0;
+    for receipt in receipts.into_iter() {
+        // Receipt
+        Batch::<(MilestoneIndex, Receipt), ()>::batch_delete(storage, batch, &(index.into(), receipt))
+            .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
-    for index in *start_index..=*target_index {
-        let receipts = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index.into())
-            .map_err(|e| Error::BatchOperation(Box::new(e)))?
-            // TODO: why no panic?
-            .unwrap();
-
-        if receipts.is_empty() {
-            continue;
-        }
-
-        for receipt in receipts.into_iter() {
-            Batch::<(MilestoneIndex, Receipt), ()>::batch_delete(storage, batch, &(index.into(), receipt))
-                .map_err(|e| Error::BatchOperation(Box::new(e)))?;
-
-            num += 1;
-        }
+        num += 1;
     }
 
     Ok(num)

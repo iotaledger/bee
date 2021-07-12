@@ -12,8 +12,7 @@ pub struct PruningMetrics {
     pub messages: usize,
     pub edges: usize,
     pub indexations: usize,
-    pub milestones: usize,
-    pub output_diffs: usize,
+    pub output_diffs: bool,
     pub receipts: usize,
 }
 
@@ -21,8 +20,6 @@ pub struct PruningMetrics {
 pub struct ConfirmedMetrics {
     pub msg_already_visited: usize,
     pub references_sep: usize,
-    pub fetched_messages: usize,
-    pub fetched_approvers: usize,
     pub approver_cache_miss: usize,
     pub approver_cache_hit: usize,
     pub all_approvers_visited: usize,
