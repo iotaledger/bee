@@ -5,7 +5,7 @@
 
 #![warn(missing_docs)]
 
-mod banner;
-mod constants;
-
-pub use banner::print_logo_and_version;
+pub mod banner;
+pub mod cli;
+pub mod config;
+pub mod constants;
