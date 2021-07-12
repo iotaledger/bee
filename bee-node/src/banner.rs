@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module containing the node banner to be printed.
+
 use crate::constants::{BEE_GIT_COMMIT, BEE_NODE_VERSION};
 
 /// Prints a banner consisting of a logo and a version.

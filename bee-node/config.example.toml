@@ -1,0 +1,16 @@
+# Duplicate this file to config.toml to use it
+
+[logger]
+color_enabled = true
+target_width  = 42
+level_width   = 5
+[[logger.outputs]]
+name              = "stdout"
+level_filter      = "info"
+target_filters    = []
+target_exclusions = []
+[[logger.outputs]]
+name                = "warn.log"
+level_filter        = "warn"
+target_filters    = []
+target_exclusions = []
