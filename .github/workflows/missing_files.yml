@@ -18,4 +18,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run missing files check
-        run: bash .github/workflows/scripts/missing_files.sh
+        run: >
+          bash .github/workflows/scripts/missing_files.sh 
+          bee-message/fuzz
