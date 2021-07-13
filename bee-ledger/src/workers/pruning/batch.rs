@@ -36,7 +36,7 @@ pub struct Edge {
 }
 
 pub async fn delete_confirmed_data<S: StorageBackend>(
-    _: &MsTangle<S>,
+    tangle: &MsTangle<S>,
     storage: &S,
     batch: &mut S::Batch,
     prune_index: MilestoneIndex,
@@ -155,7 +155,19 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
                     let approver_md = Fetch::<MessageId, MessageMetadata>::fetch(storage, &approver_id)
                         .map_err(|e| Error::FetchOperation(Box::new(e)))?
-                        .ok_or(Error::MissingMetadata(message_id))?;
+                        .ok_or(Error::MissingMetadata(approver_id))?;
+
+                    // FIXME: temporary consistency check
+                    let cached_approver_md = tangle
+                        .get_metadata(&approver_id)
+                        .await
+                        .ok_or(Error::MissingMetadata(approver_id))?;
+
+                    if cached_approver_md.milestone_index().is_some() != approver_md.milestone_index().is_some()
+                        || cached_approver_md.flags().is_referenced() != approver_md.flags().is_referenced()
+                    {
+                        log::error!("Cache and Storage have inconsistent metadata for {}", approver_id);
+                    }
 
                     let conf_index = if approver_md.flags().is_referenced() {
                         // Confirmed approver
