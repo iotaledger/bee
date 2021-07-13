@@ -3,8 +3,8 @@
 
 #![no_main]
 
-use bee_common::packable::Packable;
 use bee_message::Message;
+use bee_packable::packable::Packable;
 
 use libfuzzer_sys::fuzz_target;
 
