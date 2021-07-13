@@ -108,8 +108,9 @@ impl Packable for DataPayload {
 
     fn packed_len(&self) -> usize {
         // Unwrap is safe, since the data length has already been validated.
-        self.version.packed_len()
-            + VecPrefix::<u8, u32, PREFIXED_DATA_LENGTH_MAX>::from(self.data.clone().try_into().unwrap()).packed_len()
+        let prefixed_data: VecPrefix<u8, u32, PREFIXED_DATA_LENGTH_MAX> = self.data.clone().try_into().unwrap();
+
+        self.version.packed_len() + prefixed_data.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {

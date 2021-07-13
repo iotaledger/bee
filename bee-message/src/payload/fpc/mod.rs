@@ -59,7 +59,11 @@ impl fmt::Display for FpcUnpackError {
         match self {
             Self::InvalidPrefix => write!(f, "invalid prefix for conflicts/timestamps"),
             Self::InvalidPrefixLength(len) => {
-                write!(f, "unpacked conflicts/timestamps prefix larger than maximum specified: {}", len)
+                write!(
+                    f,
+                    "unpacked conflicts/timestamps prefix larger than maximum specified: {}",
+                    len
+                )
             }
         }
     }

@@ -146,9 +146,8 @@ impl Packable for SignatureLockedAssetOutput {
         self.address.pack(packer).map_err(PackError::infallible)?;
 
         // Unwrap is safe, since length has been validated.
-        let prefixed_balances = VecPrefix::<AssetBalance, u32, PREFIXED_BALANCES_LENGTH_MAX>::from(
-            self.balances.clone().try_into().unwrap(),
-        );
+        let prefixed_balances: VecPrefix<AssetBalance, u32, PREFIXED_BALANCES_LENGTH_MAX> =
+            self.balances.clone().try_into().unwrap();
         prefixed_balances
             .pack(packer)
             .map_err(PackError::coerce::<SignatureLockedAssetPackError>)

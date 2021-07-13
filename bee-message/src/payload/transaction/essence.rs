@@ -173,15 +173,16 @@ impl Packable for TransactionEssence {
 
     fn packed_len(&self) -> usize {
         // Unwraps are safe, since inputs/outputs lengths are alread validated.
+        let prefixed_inputs: VecPrefix<Input, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX> =
+            self.inputs.clone().try_into().unwrap();
+        let prefixed_outputs: VecPrefix<Output, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX> =
+            self.outputs.clone().try_into().unwrap();
+
         self.timestamp.packed_len()
             + self.access_pledge_id.packed_len()
             + self.consensus_pledge_id.packed_len()
-            + VecPrefix::<Input, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX>::from(self.inputs.clone().try_into().unwrap())
-                .packed_len()
-            + VecPrefix::<Output, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX>::from(
-                self.outputs.clone().try_into().unwrap(),
-            )
-            .packed_len()
+            + prefixed_inputs.packed_len()
+            + prefixed_outputs.packed_len()
             + self.payload.packed_len()
     }
 
@@ -191,11 +192,10 @@ impl Packable for TransactionEssence {
         self.consensus_pledge_id.pack(packer).map_err(PackError::infallible)?;
 
         // Unwraps are safe, since inputs/outputs lengths are already validated.
-        let input_prefixed =
-            VecPrefix::<Input, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX>::from(self.inputs.clone().try_into().unwrap());
-        let output_prefixed = VecPrefix::<Output, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX>::from(
-            self.outputs.clone().try_into().unwrap(),
-        );
+        let input_prefixed: VecPrefix<Input, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX> =
+            self.inputs.clone().try_into().unwrap();
+        let output_prefixed: VecPrefix<Output, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX> =
+            self.outputs.clone().try_into().unwrap();
 
         input_prefixed
             .pack(packer)

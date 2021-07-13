@@ -126,13 +126,19 @@ impl Packable for EncryptedDeal {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        // Unwrap is safe, since the `EncryptedDeal` length has been validated.
-        VecPrefix::<u8, u32, PREFIXED_LENGTH_MAX>::from(self.dh_key.clone().try_into().unwrap()).packed_len()
-            + VecPrefix::<u8, u32, PREFIXED_LENGTH_MAX>::from(self.nonce.clone().try_into().unwrap()).packed_len()
-            + VecPrefix::<u8, u32, PREFIXED_LENGTH_MAX>::from(self.encrypted_share.clone().try_into().unwrap())
-                .packed_len()
+        // Unwraps are safe, since the `EncryptedDeal` length has been validated.
+        let prefixed_dh_key: VecPrefix<u8, u32, PREFIXED_LENGTH_MAX> = self.dh_key.clone().try_into().unwrap();
+        let prefixed_nonce: VecPrefix<u8, u32, PREFIXED_LENGTH_MAX> = self.nonce.clone().try_into().unwrap();
+        let prefixed_encrypted_share: VecPrefix<u8, u32, PREFIXED_LENGTH_MAX> =
+            self.encrypted_share.clone().try_into().unwrap();
+        let prefixed_commitments: VecPrefix<u8, u32, PREFIXED_LENGTH_MAX> =
+            self.commitments.clone().try_into().unwrap();
+
+        prefixed_dh_key.packed_len()
+            + prefixed_nonce.packed_len()
+            + prefixed_encrypted_share.packed_len()
             + self.threshold.packed_len()
-            + VecPrefix::<u8, u32, PREFIXED_LENGTH_MAX>::from(self.commitments.clone().try_into().unwrap()).packed_len()
+            + prefixed_commitments.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {

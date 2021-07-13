@@ -98,8 +98,9 @@ impl Packable for Salt {
 
     fn packed_len(&self) -> usize {
         // Unwrap is safe, since bytes length has already been validated.
-        VecPrefix::<u8, u32, PREFIXED_BYTES_LENGTH_MAX>::from(self.bytes.clone().try_into().unwrap()).packed_len()
-            + self.expiry_time.packed_len()
+        let prefixed_bytes: VecPrefix<u8, u32, PREFIXED_BYTES_LENGTH_MAX> = self.bytes.clone().try_into().unwrap();
+
+        prefixed_bytes.packed_len() + self.expiry_time.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {

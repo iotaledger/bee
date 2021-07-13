@@ -234,15 +234,15 @@ impl Packable for UnlockBlocks {
 
     fn packed_len(&self) -> usize {
         // Unwrap is safe, since UnlockBlock count is already validated.
-        VecPrefix::<UnlockBlock, u16, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>::from(self.inner.clone().try_into().unwrap())
-            .packed_len()
+        let prefixed: VecPrefix<UnlockBlock, u16, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX> =
+            self.inner.clone().try_into().unwrap();
+        prefixed.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         // Unwrap is safe, since UnlockBlock count is already validated.
-        let prefixed = VecPrefix::<UnlockBlock, u16, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>::from(
-            self.inner.clone().try_into().unwrap(),
-        );
+        let prefixed: VecPrefix<UnlockBlock, u16, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX> =
+            self.inner.clone().try_into().unwrap();
         prefixed
             .pack(packer)
             .map_err(PackError::coerce::<UnlockBlocksPackError>)

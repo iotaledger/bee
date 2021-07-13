@@ -25,10 +25,7 @@ fn new_invalid_length() {
 
     println!("Result: {:?}", data);
 
-    assert!(matches!(
-        data,
-        Err(ValidationError::InvalidPayloadLength(65160)),
-    ));
+    assert!(matches!(data, Err(ValidationError::InvalidPayloadLength(65160)),));
 }
 
 #[test]
@@ -54,7 +51,9 @@ fn unpack_invalid_length() {
 
     assert!(matches!(
         data,
-        Err(UnpackError::Packable(MessageUnpackError::Data(DataUnpackError::InvalidPrefixLength(65160))))
+        Err(UnpackError::Packable(MessageUnpackError::Data(
+            DataUnpackError::InvalidPrefixLength(65160)
+        )))
     ));
 }
 
