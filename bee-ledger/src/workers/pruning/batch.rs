@@ -169,36 +169,21 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
                         log::error!("Cache and Storage have inconsistent metadata for {}", approver_id);
                     }
 
-                    let conf_index = if approver_md.flags().is_referenced() {
-                        // Confirmed approver
-                        if let Some(conf_index) = approver_md.milestone_index() {
-                            // Note that an approver can still be confirmed by the same milestone despite the breadth-first walk (if it is
-                            // child/approver and sibling at the same time), in other words: conf_index = prune_index is possible.
-                            conf_index
-                        } else {
-                            // ---
-                            // BUG/FIXME: The invariant ".flags().is_referenced() => (milestone_index().is_some() == true) is violated" due to some
-                            // bug in our tangle impl (probably `update_metadata`), hence we need this mitigation code for now.
-                            // ---
-                            log::trace!(
-                                "Bug mitigation: Set {}+20 to confirmed approver {}",
-                                prune_index,
-                                &approver_id
-                            );
-
-                            prune_index + 20 // BMD + 5
-                        }
-                    } else {
-                        // Unconfirmed approver:
-
+                    // Note that an approver can still be confirmed by the same milestone despite the breadth-first walk (if it is
+                    // child/approver and sibling at the same time), in other words: conf_index = prune_index is possible.
+                    let conf_index = approver_md.milestone_index().unwrap_or_else(|| {
                         // ---
-                        // If it was referenced by a message, that never got confirmed, we simply return the lower bound.
-                        // We can treat this situtation in the same way as if the approver had been confirmed by the current milestone,
-                        // because being referenced by an unconfirmed message is irrelevant in terms of SEP consideration.
+                        // BUG/FIXME: The invariant ".flags().is_referenced() => (milestone_index().is_some() == true) is violated" due to some
+                        // bug in our tangle impl (probably `update_metadata`), hence we need this mitigation code for now.
                         // ---
+                        log::trace!(
+                            "Bug mitigation: Set {}+20 to un/confirmed approver {}",
+                            prune_index,
+                            &approver_id
+                        );
 
-                        prune_index
-                    };
+                        prune_index + 20 // BMD + 5
+                    });
 
                     // Update the approver cache.
                     approver_cache.insert(approver_id, conf_index);
