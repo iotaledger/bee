@@ -3,6 +3,9 @@
 
 //! The bee plugin manager.
 
+use log::info;
+use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
+
 use std::{
     collections::HashMap,
     io,
@@ -10,8 +13,6 @@ use std::{
     process::{Child, Command, Stdio},
     sync::mpsc::{channel, Receiver},
 };
-
-use notify::{watcher, DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 
 const WATCHER_DELAY_SECS: u64 = 1;
 const PLUGINS_FOLDER_PATH: &str = "./plugins";
@@ -94,7 +95,7 @@ impl PluginManager {
                 | DebouncedEvent::Rename(_, path) => {
                     let path = path.canonicalize()?;
                     if let Err(err) = self.load_plugin(&path) {
-                        println!("plugin \"{}\" could not be loaded: {}", path.display(), err);
+                        info!("plugin \"{}\" could not be loaded: {}", path.display(), err);
                     }
                 }
                 DebouncedEvent::Rescan => {
@@ -117,13 +118,13 @@ impl PluginManager {
     fn load_plugin(&mut self, path: &Path) -> Result<(), io::Error> {
         self.unload_plugin(path);
 
-        println!("loading plugin \"{}\"", path.display());
+        info!("loading plugin \"{}\"", path.display());
         let child = Command::new(path)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()?;
-        println!("plugin \"{}\" loaded with PID {}", path.display(), child.id());
+        info!("plugin \"{}\" loaded with PID {}", path.display(), child.id());
 
         assert!(self.plugins.insert(path.to_owned(), child).is_none());
 
@@ -137,10 +138,10 @@ impl PluginManager {
     }
 
     fn kill_plugin(path: &Path, mut child: Child) {
-        println!("killing plugin \"{}\"", path.display());
+        info!("killing plugin \"{}\"", path.display());
         match child.kill() {
-            Ok(()) => println!("plugin \"{}\" is down", path.display()),
-            Err(_) => println!("plugin \"{}\" was already down", path.display()),
+            Ok(()) => info!("plugin \"{}\" is down", path.display()),
+            Err(_) => info!("plugin \"{}\" was already down", path.display()),
         }
     }
 }
