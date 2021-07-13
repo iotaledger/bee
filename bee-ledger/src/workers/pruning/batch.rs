@@ -250,7 +250,7 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
     };
 
     // TODO: use MultiFetch
-    for unconf_msg_id in unconf_msgs.iter().map(|unconf_msg| unconf_msg.message_id()) {
+    'outer_loop: for unconf_msg_id in unconf_msgs.iter().map(|unconf_msg| unconf_msg.message_id()) {
         // Skip those that were confirmed.
         match Fetch::<MessageId, MessageMetadata>::fetch(storage, unconf_msg_id)
             .map_err(|e| Error::FetchOperation(Box::new(e)))?
@@ -262,6 +262,29 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
                     continue;
                 } else {
                     log::trace!("referenced flag not set for {}", unconf_msg_id);
+
+                    // ---
+                    // BUG/FIXME: The invariant ".flags().is_referenced() => (milestone_index().is_some() == true) is violated" due to some
+                    // bug in our tangle impl (probably `update_metadata`), hence we need this mitigation code for now.
+                    //
+                    // Bug mitigation: We only prune the messasge if all its approvers are also marked as "not referenced".
+                    //---
+                    let unconf_approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &unconf_msg_id)
+                        .map_err(|e| Error::FetchOperation(Box::new(e)))?
+                        .ok_or(Error::MissingApprovers(*unconf_msg_id))?;
+
+                    // If there's only one approver that was confirmed, then we don't prune it despite the flag indicating otherwise.
+                    for approver_id in unconf_approvers {
+                        if let Some(approver_md) = Fetch::<MessageId, MessageMetadata>::fetch(storage, &approver_id)
+                            .map_err(|e| Error::FetchOperation(Box::new(e)))?
+                        {
+                            if approver_md.flags().is_referenced() {
+                                continue 'outer_loop;
+                            }
+                        }
+                    }
+
+                    log::trace!("All approvers of {} don't have the \"referenced\" flag", unconf_msg_id);
                 }
             }
             None => {
@@ -275,7 +298,7 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
             .map_err(|e| Error::FetchOperation(Box::new(e)))?
         {
             Some(msg) => {
-                let maybe_payload = msg.payload().as_ref();
+                let payload = msg.payload().as_ref();
                 let parents = msg.parents();
 
                 // Add message data to the delete batch.
@@ -283,7 +306,7 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
 
                 log::trace!("Pruned unconfirmed msg {} at {}.", unconf_msg_id, prune_index);
 
-                if let Some(indexation) = unwrap_indexation(maybe_payload) {
+                if let Some(indexation) = unwrap_indexation(payload) {
                     let padded_index = indexation.padded_index();
                     let message_id = *unconf_msg_id;
 
@@ -408,8 +431,8 @@ pub async fn delete_receipts<S: StorageBackend>(
     Ok(num)
 }
 
-fn unwrap_indexation(maybe_payload: Option<&Payload>) -> Option<&Box<IndexationPayload>> {
-    match maybe_payload {
+fn unwrap_indexation(payload: Option<&Payload>) -> Option<&Box<IndexationPayload>> {
+    match payload {
         Some(Payload::Indexation(indexation)) => Some(indexation),
         Some(Payload::Transaction(transaction)) =>
         {
