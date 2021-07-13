@@ -7,7 +7,7 @@ use crate::{
     payload::transaction::TransactionId,
 };
 
-use bee_common::packable::Packable;
+use bee_packable::packable::Packable;
 
 use core::{convert::From, str::FromStr};
 

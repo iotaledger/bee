@@ -11,12 +11,12 @@ const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7
 
 #[test]
 fn kind() {
-    assert_eq!(SignatureLockedAssetAllowanceOutput::KIND, 1);
+    assert_eq!(SignatureLockedAssetOutput::KIND, 1);
 }
 
 #[test]
 fn new_valid() {
-    let output = SignatureLockedAssetAllowanceOutput::new(
+    let output = SignatureLockedAssetOutput::new(
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         vec![
             AssetBalance::new(rand_bytes_array(), 1000),
@@ -30,7 +30,7 @@ fn new_valid() {
 
 #[test]
 fn packed_len() {
-    let output = SignatureLockedAssetAllowanceOutput::new(
+    let output = SignatureLockedAssetOutput::new(
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         vec![
             AssetBalance::new(rand_bytes_array(), 1000),
@@ -46,7 +46,7 @@ fn packed_len() {
 
 #[test]
 fn round_trip() {
-    let output_a = SignatureLockedAssetAllowanceOutput::new(
+    let output_a = SignatureLockedAssetOutput::new(
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         vec![
             AssetBalance::new(rand_bytes_array(), 1000),
@@ -56,7 +56,7 @@ fn round_trip() {
     )
     .unwrap();
 
-    let output_b = SignatureLockedAssetAllowanceOutput::unpack_from_slice(output_a.pack_to_vec().unwrap()).unwrap();
+    let output_b = SignatureLockedAssetOutput::unpack_from_slice(output_a.pack_to_vec().unwrap()).unwrap();
 
     assert_eq!(output_a, output_b);
 }

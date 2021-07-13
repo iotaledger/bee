@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::prelude::*;
+use bee_message::{prelude::*, DataUnpackError};
 use bee_packable::{Packable, UnpackError};
 
 use bee_test::rand::bytes::rand_bytes;
@@ -23,9 +23,11 @@ fn new_invalid_length() {
     let data_bytes = 65160;
     let data = DataPayload::new(0, rand_bytes(data_bytes));
 
+    println!("Result: {:?}", data);
+
     assert!(matches!(
         data,
-        Err(ValidationError::InvalidPayloadLength(n)) if n == data_bytes + 1 + 4,
+        Err(ValidationError::InvalidPayloadLength(65160)),
     ));
 }
 
@@ -52,8 +54,7 @@ fn unpack_invalid_length() {
 
     assert!(matches!(
         data,
-        Err(UnpackError::Packable(MessageUnpackError::ValidationError(ValidationError::InvalidPayloadLength(n))))
-            if n == data_bytes + 1 + 4,
+        Err(UnpackError::Packable(MessageUnpackError::Data(DataUnpackError::InvalidPrefixLength(65160))))
     ));
 }
 

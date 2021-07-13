@@ -17,7 +17,7 @@ use core::{
     fmt,
 };
 
-const PREFIXED_DATA_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX;
+const PREFIXED_DATA_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX - core::mem::size_of::<u8>();
 
 /// Error encountered packing a data payload.
 #[derive(Debug)]
@@ -86,11 +86,9 @@ impl DataPayload {
 
     /// Creates a new `DataPayload`.
     pub fn new(version: u8, data: Vec<u8>) -> Result<Self, ValidationError> {
-        let payload = Self { version, data };
+        validate_data_len(data.len())?;
 
-        validate_payload_len(payload.packed_len())?;
-
-        Ok(payload)
+        Ok(Self { version, data })
     }
 
     /// Returns the version of a `DataPayload`.
@@ -129,20 +127,20 @@ impl Packable for DataPayload {
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let data = VecPrefix::<u8, u32, PREFIXED_DATA_LENGTH_MAX>::unpack(unpacker)
+        let data: Vec<u8> = VecPrefix::<u8, u32, PREFIXED_DATA_LENGTH_MAX>::unpack(unpacker)
             .map_err(UnpackError::coerce::<DataUnpackError>)
             .map_err(UnpackError::coerce)?
             .into();
 
-        let payload = Self { version, data };
+        validate_data_len(data.len()).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        validate_payload_len(payload.packed_len()).map_err(|e| UnpackError::Packable(e.into()))?;
+        let payload = Self { version, data };
 
         Ok(payload)
     }
 }
 
-fn validate_payload_len(len: usize) -> Result<(), ValidationError> {
+fn validate_data_len(len: usize) -> Result<(), ValidationError> {
     if len > PAYLOAD_LENGTH_MAX {
         Err(ValidationError::InvalidPayloadLength(len))
     } else {
