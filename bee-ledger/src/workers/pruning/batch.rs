@@ -260,6 +260,8 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
                     // if msg_meta.milestone_index().is_some() {
                     metrics.were_confirmed += 1;
                     continue;
+                } else {
+                    log::trace!("referenced flag not set for {}", unconf_msg_id);
                 }
             }
             None => {
