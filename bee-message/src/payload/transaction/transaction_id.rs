@@ -3,7 +3,7 @@
 
 use crate::error::ValidationError;
 
-use bee_common::packable::Packable;
+use bee_packable::packable::Packable;
 
 use alloc::borrow::ToOwned;
 use core::{convert::TryInto, str::FromStr};

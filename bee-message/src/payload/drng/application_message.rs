@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
+use bee_packable::packable::Packable;
 
 /// Message used by a node to declare its willingness to participate in the Committee Selection process.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]

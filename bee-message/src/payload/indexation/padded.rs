@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_common::packable::Packable;
+use bee_packable::Packable;
 
 /// Length of an indexation padded index.
 pub const INDEXATION_PADDED_INDEX_LENGTH: usize = 64;

@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::prelude::*;
+use bee_message::{prelude::*, IndexationUnpackError};
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
 
@@ -115,10 +115,8 @@ fn unpack_invalid_index_length_more_than_max() {
         ])
         .err()
         .unwrap(),
-        UnpackError::Packable(MessageUnpackError::ValidationError(
-            ValidationError::InvalidIndexationIndexLength(65)
-        )),
-    ));
+        UnpackError::Packable(MessageUnpackError::Indexation(IndexationUnpackError::InvalidPrefixLength(65)))),
+    );
 }
 
 #[test]
