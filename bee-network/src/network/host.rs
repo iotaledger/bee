@@ -114,11 +114,11 @@ async fn network_host_processor(
         tokio::select! {
             _ = &mut shutdown => break,
             event = (&mut swarm).next() => {
-                let event = event.ok_or_else(|| crate::Error::HostEventLoopError)?;
+                let event = event.ok_or(crate::Error::HostEventLoopError)?;
                 process_swarm_event(event, &internal_event_sender, &peerlist).await;
             }
             command = (&mut internal_command_receiver).recv() => {
-                let command = command.ok_or_else(|| crate::Error::HostEventLoopError)?;
+                let command = command.ok_or(crate::Error::HostEventLoopError)?;
                 process_internal_command(command, &mut swarm, &peerlist).await;
             },
         }
