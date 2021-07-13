@@ -115,8 +115,10 @@ fn unpack_invalid_index_length_more_than_max() {
         ])
         .err()
         .unwrap(),
-        UnpackError::Packable(MessageUnpackError::Indexation(IndexationUnpackError::InvalidPrefixLength(65)))),
-    );
+        UnpackError::Packable(MessageUnpackError::Indexation(
+            IndexationUnpackError::InvalidPrefixLength(65)
+        ))
+    ),);
 }
 
 #[test]
