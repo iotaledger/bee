@@ -33,25 +33,36 @@ pub struct MilestoneConfirmed {
     pub receipt: bool,
 }
 
+/// An event that indicates that a message was referenced.
+#[derive(Clone)]
+pub struct MessageReferenced {
+    /// The message identifier of the message.
+    pub message_id: MessageId,
+}
+
 /// An event that indicates that an output was consumed.
+#[derive(Clone)]
 pub struct OutputConsumed {
     /// The consumed output.
     pub output: ConsumedOutput,
 }
 
 /// An event that indicates that an output was created.
+#[derive(Clone)]
 pub struct OutputCreated {
     /// The created output.
     pub output: CreatedOutput,
 }
 
 /// An event that indicates that a snapshot happened.
+#[derive(Clone)]
 pub struct SnapshottedIndex {
     /// The snapshotted index.
     pub index: MilestoneIndex,
 }
 
 /// An event that indicates that a pruning happened.
+#[derive(Clone)]
 pub struct PrunedIndex {
     /// The pruned index.
     pub index: MilestoneIndex,
