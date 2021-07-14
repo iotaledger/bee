@@ -1,8 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod bls;
 mod ed25519;
 
+pub use bls::{BlsAddress, BLS_ADDRESS_LENGTH};
 pub use ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
 
 use crate::{error::ValidationError, signature::SignatureUnlock};
@@ -15,7 +17,7 @@ use alloc::{str::FromStr, string::String, vec::Vec};
 use core::convert::TryFrom;
 
 /// A generic address supporting different address kinds.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
@@ -26,6 +28,9 @@ pub enum Address {
     /// An Ed25519 address.
     #[packable(tag = 0)]
     Ed25519(Ed25519Address),
+    /// A BLS address.
+    #[packable(tag = 1)]
+    Bls(BlsAddress),
 }
 
 impl Address {
@@ -33,6 +38,7 @@ impl Address {
     pub fn kind(&self) -> u8 {
         match self {
             Self::Ed25519(_) => Ed25519Address::KIND,
+            Self::Bls(_) => BlsAddress::KIND,
         }
     }
 
@@ -48,7 +54,7 @@ impl Address {
     }
 
     /// Encodes this address to a Bech32 string with the hrp (human readable part) argument as prefix.
-    pub fn to_bech32(self, hrp: &str) -> String {
+    pub fn to_bech32(&self, hrp: &str) -> String {
         let bytes = self.pack_to_vec().unwrap();
 
         bech32::encode(hrp, bytes.to_base32(), Variant::Bech32).expect("Invalid address.")
@@ -61,7 +67,17 @@ impl Address {
                 let SignatureUnlock::Ed25519(signature) = signature;
                 address.verify(msg, signature)
             }
+            Address::Bls(_) => {
+                // TODO BLS address verification
+                Err(ValidationError::InvalidAddressKind(BlsAddress::KIND))
+            }
         }
+    }
+}
+
+impl From<BlsAddress> for Address {
+    fn from(address: BlsAddress) -> Self {
+        Self::Bls(address)
     }
 }
 
@@ -84,5 +100,14 @@ impl TryFrom<String> for Address {
 
     fn try_from(address: String) -> Result<Self, Self::Error> {
         Address::from_str(&address)
+    }
+}
+
+impl core::fmt::Display for Address {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match self {
+            Self::Bls(bls) => write!(f, "{}", hex::encode(bls)),
+            Self::Ed25519(ed) => write!(f, "{}", hex::encode(ed)),
+        }
     }
 }
