@@ -35,7 +35,7 @@ fn new_valid() {
 #[test]
 fn conflict_accessors_eq() {
     let transaction_id = TransactionId::from(rand_bytes_array());
-    let conflict = Conflict::new(transaction_id.clone(), 0, 0);  
+    let conflict = Conflict::new(transaction_id, 0, 0);
 
     assert_eq!(*conflict.transaction_id(), transaction_id);
     assert_eq!(conflict.opinion(), 0);
@@ -45,7 +45,7 @@ fn conflict_accessors_eq() {
 #[test]
 fn timestamp_accessors_eq() {
     let message_id = MessageId::from(rand_bytes_array());
-    let timestamp = Timestamp::new(message_id.clone(), 0, 0);  
+    let timestamp = Timestamp::new(message_id, 0, 0);
 
     assert_eq!(*timestamp.message_id(), message_id);
     assert_eq!(timestamp.opinion(), 0);
@@ -72,10 +72,13 @@ fn accessors_eq() {
         .with_timestamps(timestamps.clone())
         .finish()
         .unwrap();
-    
+
     assert_eq!(fpc.version(), 0);
     assert_eq!(fpc.conflicts().cloned().collect::<Vec<Conflict>>(), conflicts.deref());
-    assert_eq!(fpc.timestamps().cloned().collect::<Vec<Timestamp>>(), timestamps.deref());
+    assert_eq!(
+        fpc.timestamps().cloned().collect::<Vec<Timestamp>>(),
+        timestamps.deref()
+    );
 }
 
 #[test]

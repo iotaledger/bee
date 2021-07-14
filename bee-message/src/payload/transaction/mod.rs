@@ -124,7 +124,7 @@ impl TransactionPayload {
 
     /// Return a new `TransactionPayloadBuilder` to build a `TransactionPayload`.
     pub fn builder() -> TransactionPayloadBuilder {
-        TransactionPayloadBuilder::default()
+        TransactionPayloadBuilder::new()
     }
 
     /// Computes the identifier of a `TransactionPayload`.

@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{prelude::*, InputUnpackError};
+use bee_message::{error::InputUnpackError, prelude::*};
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
 
@@ -26,6 +26,8 @@ fn unpack_invalid_tag() {
 
     assert!(matches!(
         input,
-        Err(UnpackError::Packable(MessageUnpackError::Input(InputUnpackError::InvalidInputKind(1)))),
+        Err(UnpackError::Packable(MessageUnpackError::Input(
+            InputUnpackError::InvalidInputKind(1)
+        ))),
     ));
 }

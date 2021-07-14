@@ -3,7 +3,10 @@
 
 use bee_message::prelude::*;
 use bee_packable::Packable;
-use bee_test::rand::{bytes::{rand_bytes, rand_bytes_array}, number::rand_number};
+use bee_test::rand::{
+    bytes::{rand_bytes, rand_bytes_array},
+    number::rand_number,
+};
 
 use core::convert::TryInto;
 
@@ -258,8 +261,8 @@ fn accessors_eq() {
 
     let essence = TransactionEssence::builder()
         .with_timestamp(timestamp)
-        .with_access_pledge_id(access_pledge_id.clone())
-        .with_consensus_pledge_id(consensus_pledge_id.clone())
+        .with_access_pledge_id(access_pledge_id)
+        .with_consensus_pledge_id(consensus_pledge_id)
         .add_input(input1)
         .add_input(input2)
         .add_output(output)

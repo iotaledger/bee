@@ -37,7 +37,7 @@ fn accessors_eq() {
         AssetBalance::new(rand_bytes_array(), 1000),
     ];
 
-    let output = SignatureLockedAssetOutput::new(address.clone(), balances.clone()).unwrap();
+    let output = SignatureLockedAssetOutput::new(address, balances.clone()).unwrap();
 
     assert_eq!(*output.address(), address);
     assert_eq!(output.balance_iter().cloned().collect::<Vec<AssetBalance>>(), balances);
@@ -48,7 +48,7 @@ fn asset_balance_accessors_eq() {
     let id = rand_bytes_array();
     let amount = 1000;
 
-    let balance = AssetBalance::new(id.clone(), amount);
+    let balance = AssetBalance::new(id, amount);
 
     assert_eq!(*balance.id(), id);
     assert_eq!(balance.balance(), amount);

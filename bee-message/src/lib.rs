@@ -12,7 +12,6 @@ extern crate alloc;
 
 #[macro_use]
 mod macros;
-mod error;
 mod message;
 mod message_id;
 
@@ -22,6 +21,8 @@ pub mod address;
 pub mod builder;
 /// A module that contains constants related to messages.
 pub mod constants;
+/// A module that provides error types for validation and packing/unpacking.
+pub mod error;
 /// A module that provides types and syntactic validations of inputs.
 pub mod input;
 /// A module that provides types and syntactic validations of outputs.
@@ -38,6 +39,6 @@ pub mod signature;
 pub mod unlock;
 
 pub use builder::MessageBuilder;
-pub use error::*;
+pub use error::{MessagePackError, MessageUnpackError, ValidationError};
 pub use message::{Message, MESSAGE_LENGTH_RANGE};
 pub use message_id::{MessageId, MESSAGE_ID_LENGTH};

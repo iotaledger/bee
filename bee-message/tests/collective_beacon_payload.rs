@@ -55,9 +55,9 @@ fn accessors_eq() {
         .with_version(0)
         .with_instance_id(0)
         .with_round(1)
-        .with_prev_signature(prev_signature.clone())
-        .with_signature(signature.clone())
-        .with_distributed_public_key(distributed_pk.clone())
+        .with_prev_signature(prev_signature)
+        .with_signature(signature)
+        .with_distributed_public_key(distributed_pk)
         .finish()
         .unwrap();
 

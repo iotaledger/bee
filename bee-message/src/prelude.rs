@@ -4,6 +4,7 @@
 pub use crate::{
     address::{Address, Ed25519Address, ED25519_ADDRESS_LENGTH},
     constants::IOTA_SUPPLY,
+    error::{MessagePackError, MessageUnpackError, ValidationError},
     input::{Input, UtxoInput},
     output::{
         AssetBalance, Output, OutputId, SignatureLockedAssetOutput, SignatureLockedSingleOutput, OUTPUT_ID_LENGTH,
@@ -15,11 +16,10 @@ pub use crate::{
         fpc::{Conflict, Conflicts, FpcPayload, Timestamp, Timestamps},
         indexation::{IndexationPayload, PaddedIndex},
         salt_declaration::{Salt, SaltDeclarationPayload},
-        transaction::{TransactionEssence, TransactionId, TransactionPayload, TransactionPayloadBuilder, TRANSACTION_ID_LENGTH},
+        transaction::{TransactionEssence, TransactionId, TransactionPayload, TRANSACTION_ID_LENGTH},
         Payload, PAYLOAD_LENGTH_MAX,
     },
     signature::{Ed25519Signature, SignatureUnlock},
     unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
-    Message, MessageBuilder, MessageId, MessagePackError, MessageUnpackError, ValidationError, MESSAGE_ID_LENGTH,
-    MESSAGE_LENGTH_RANGE,
+    Message, MessageBuilder, MessageId, MESSAGE_ID_LENGTH, MESSAGE_LENGTH_RANGE,
 };
