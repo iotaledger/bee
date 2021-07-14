@@ -21,4 +21,8 @@ pub enum Error {
     /// Binding to an address failed.
     #[error("Failed to bind to an address.")]
     BindingAddressFailed,
+
+    /// An error occurred in the [`Host`] event loop.
+    #[error("Failed to process an item in the host processor event loop.")]
+    HostEventLoopError,
 }

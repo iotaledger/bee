@@ -6,7 +6,7 @@ use crate::{
     workers::{
         consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
         error::Error,
-        event::{MilestoneConfirmed, OutputConsumed, OutputCreated},
+        event::{MessageReferenced, MilestoneConfirmed, OutputConsumed, OutputCreated},
         pruning::{
             condition::{should_prune, should_snapshot},
             config::PruningConfig,
@@ -194,6 +194,9 @@ where
                 message_metadata.reference(milestone.essence().timestamp());
             })
             .await;
+        bus.dispatch(MessageReferenced {
+            message_id: *message_id,
+        });
     }
 
     for (message_id, conflict) in metadata.excluded_conflicting_messages.iter() {
@@ -203,6 +206,9 @@ where
                 message_metadata.reference(milestone.essence().timestamp());
             })
             .await;
+        bus.dispatch(MessageReferenced {
+            message_id: *message_id,
+        });
     }
 
     for message_id in metadata.included_messages.iter() {
@@ -212,6 +218,9 @@ where
                 message_metadata.reference(milestone.essence().timestamp());
             })
             .await;
+        bus.dispatch(MessageReferenced {
+            message_id: *message_id,
+        });
     }
 
     info!(

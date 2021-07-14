@@ -13,7 +13,7 @@ use crate::{
     swarm::behavior::SwarmBehavior,
 };
 
-use futures::channel::oneshot;
+use futures::{channel::oneshot, StreamExt};
 use libp2p::{swarm::SwarmEvent, Multiaddr, PeerId, Swarm};
 use log::*;
 
@@ -111,18 +111,15 @@ async fn network_host_processor(
     let _listener_id = Swarm::listen_on(&mut swarm, bind_multiaddr).map_err(|_| crate::Error::BindingAddressFailed)?;
 
     loop {
-        let swarm_next_event = Swarm::next_event(&mut swarm);
-        let recv_internal_command = (&mut internal_command_receiver).recv();
-
         tokio::select! {
             _ = &mut shutdown => break,
-            event = swarm_next_event => {
+            event = (&mut swarm).next() => {
+                let event = event.ok_or(crate::Error::HostEventLoopError)?;
                 process_swarm_event(event, &internal_event_sender, &peerlist).await;
             }
-            command = recv_internal_command => {
-                if let Some(command) = command {
-                    process_internal_command(command, &mut swarm, &peerlist).await;
-                }
+            command = (&mut internal_command_receiver).recv() => {
+                let command = command.ok_or(crate::Error::HostEventLoopError)?;
+                process_internal_command(command, &mut swarm, &peerlist).await;
             },
         }
     }
@@ -136,12 +133,12 @@ async fn process_swarm_event(
     peerlist: &PeerList,
 ) {
     match event {
-        SwarmEvent::NewListenAddr(multiaddr) => {
-            debug!("Swarm event: new listen address {}.", multiaddr);
+        SwarmEvent::NewListenAddr { address, .. } => {
+            debug!("Swarm event: new listen address {}.", address);
 
             internal_event_sender
                 .send(InternalEvent::AddressBound {
-                    address: multiaddr.clone(),
+                    address: address.clone(),
                 })
                 .expect("send error");
 
@@ -149,7 +146,7 @@ async fn process_swarm_event(
                 .0
                 .write()
                 .await
-                .insert_local_addr(multiaddr)
+                .insert_local_addr(address)
                 .expect("insert_local_addr");
         }
         SwarmEvent::ConnectionEstablished { peer_id, .. } => {
@@ -158,7 +155,7 @@ async fn process_swarm_event(
         SwarmEvent::ConnectionClosed { peer_id, .. } => {
             debug!("Swarm event: connection closed with {}.", alias!(peer_id));
         }
-        SwarmEvent::ListenerError { error } => {
+        SwarmEvent::ListenerError { error, .. } => {
             error!("Swarm event: listener error {}.", error);
         }
         SwarmEvent::Dialing(peer_id) => {
