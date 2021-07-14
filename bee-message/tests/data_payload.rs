@@ -3,7 +3,6 @@
 
 use bee_message::{error::DataUnpackError, prelude::*};
 use bee_packable::{Packable, UnpackError};
-
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]
