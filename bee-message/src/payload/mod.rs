@@ -183,6 +183,12 @@ impl From<CollectiveBeaconPayload> for Payload {
     }
 }
 
+impl From<DataPayload> for Payload {
+    fn from(payload: DataPayload) -> Self {
+        Self::Data(Box::new(payload))
+    }
+}
+
 impl From<DkgPayload> for Payload {
     fn from(payload: DkgPayload) -> Self {
         Self::Dkg(Box::new(payload))

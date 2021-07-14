@@ -15,7 +15,7 @@ pub use crate::{
         fpc::{Conflict, Conflicts, FpcPayload, Timestamp, Timestamps},
         indexation::{IndexationPayload, PaddedIndex},
         salt_declaration::{Salt, SaltDeclarationPayload},
-        transaction::{TransactionEssence, TransactionId, TransactionPayload, TRANSACTION_ID_LENGTH},
+        transaction::{TransactionEssence, TransactionId, TransactionPayload, TransactionPayloadBuilder, TRANSACTION_ID_LENGTH},
         Payload, PAYLOAD_LENGTH_MAX,
     },
     signature::{Ed25519Signature, SignatureUnlock},

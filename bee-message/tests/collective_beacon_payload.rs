@@ -46,6 +46,30 @@ fn unpack_valid() {
 }
 
 #[test]
+fn accessors_eq() {
+    let prev_signature: [u8; 96] = hex::decode(BEACON_SIGNATURE_0).unwrap().try_into().unwrap();
+    let signature: [u8; 96] = hex::decode(BEACON_SIGNATURE_1).unwrap().try_into().unwrap();
+    let distributed_pk: [u8; 48] = hex::decode(BEACON_DISTRIBUTED_PUBLIC_KEY).unwrap().try_into().unwrap();
+
+    let beacon = CollectiveBeaconPayload::builder()
+        .with_version(0)
+        .with_instance_id(0)
+        .with_round(1)
+        .with_prev_signature(prev_signature.clone())
+        .with_signature(signature.clone())
+        .with_distributed_public_key(distributed_pk.clone())
+        .finish()
+        .unwrap();
+
+    assert_eq!(beacon.version(), 0);
+    assert_eq!(beacon.instance_id(), 0);
+    assert_eq!(beacon.round(), 1);
+    assert_eq!(*beacon.prev_signature(), prev_signature);
+    assert_eq!(*beacon.signature(), signature);
+    assert_eq!(*beacon.distributed_public_key(), distributed_pk);
+}
+
+#[test]
 fn packed_len() {
     let beacon = CollectiveBeaconPayload::builder()
         .with_version(0)

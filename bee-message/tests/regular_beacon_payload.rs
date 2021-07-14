@@ -42,6 +42,27 @@ fn unpack_valid() {
 }
 
 #[test]
+fn accessors_eq() {
+    let partial_pk: [u8; 96] = hex::decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap().try_into().unwrap();
+    let partial_signature: [u8; 96] = hex::decode(BEACON_SIGNATURE).unwrap().try_into().unwrap();
+
+    let beacon = BeaconPayload::builder()
+        .with_version(0)
+        .with_instance_id(0)
+        .with_round(1)
+        .with_partial_public_key(partial_pk.clone())
+        .with_partial_signature(partial_signature.clone())
+        .finish()
+        .unwrap();
+    
+    assert_eq!(beacon.version(), 0);
+    assert_eq!(beacon.instance_id(), 0);
+    assert_eq!(beacon.round(), 1);
+    assert_eq!(*beacon.partial_public_key(), partial_pk);
+    assert_eq!(*beacon.partial_signature(), partial_signature);
+}
+
+#[test]
 fn packed_len() {
     let beacon = BeaconPayload::builder()
         .with_version(0)

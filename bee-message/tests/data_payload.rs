@@ -58,6 +58,15 @@ fn unpack_invalid_length() {
 }
 
 #[test]
+fn accessors_eq() {
+    let bytes = rand_bytes(255);
+    let data = DataPayload::new(0, bytes.clone()).unwrap();
+
+    assert_eq!(data.version(), 0);
+    assert_eq!(*data.data(), bytes);
+}
+
+#[test]
 fn packed_len() {
     let data = DataPayload::new(0, rand_bytes(255)).unwrap();
 

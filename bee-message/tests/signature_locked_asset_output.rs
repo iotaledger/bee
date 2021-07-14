@@ -29,6 +29,32 @@ fn new_valid() {
 }
 
 #[test]
+fn accessors_eq() {
+    let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
+    let balances = vec![
+        AssetBalance::new(rand_bytes_array(), 1000),
+        AssetBalance::new(rand_bytes_array(), 1000),
+        AssetBalance::new(rand_bytes_array(), 1000),
+    ];
+
+    let output = SignatureLockedAssetOutput::new(address.clone(), balances.clone()).unwrap();
+
+    assert_eq!(*output.address(), address);
+    assert_eq!(output.balance_iter().cloned().collect::<Vec<AssetBalance>>(), balances);
+}
+
+#[test]
+fn asset_balance_accessors_eq() {
+    let id = rand_bytes_array();
+    let amount = 1000;
+
+    let balance = AssetBalance::new(id.clone(), amount);
+
+    assert_eq!(*balance.id(), id);
+    assert_eq!(balance.balance(), amount);
+}
+
+#[test]
 fn packed_len() {
     let output = SignatureLockedAssetOutput::new(
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
