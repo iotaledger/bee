@@ -19,7 +19,7 @@ const ASSET_ID_LENGTH: usize = 32;
 /// No `Vec` max length specified, so use `PAYLOAD_LENGTH_MAX` / length of `AddressBalance`.
 const PREFIXED_BALANCES_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX / (ASSET_ID_LENGTH + core::mem::size_of::<u64>());
 
-/// Error encountered packing a `SignatureLockedAssetAllowanceOutput`.
+/// Error encountered packing a `SignatureLockedAssetOutput`.
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum SignatureLockedAssetPackError {
@@ -40,7 +40,7 @@ impl fmt::Display for SignatureLockedAssetPackError {
     }
 }
 
-/// Error encountered unpacking a `SignatureLockedAssetAllowanceOutput`.
+/// Error encountered unpacking a `SignatureLockedAssetOutput`.
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum SignatureLockedAssetUnpackError {
@@ -113,22 +113,22 @@ pub struct SignatureLockedAssetOutput {
 }
 
 impl SignatureLockedAssetOutput {
-    /// The output kind of a `SignatureLockedAssetAllowanceOutput`.
+    /// The output kind of a `SignatureLockedAssetOutput`.
     pub const KIND: u8 = 1;
 
-    /// Creates a new `SignatureLockedAssetAllowanceOutput`.
+    /// Creates a new `SignatureLockedAssetOutput`.
     pub fn new(address: Address, balances: Vec<AssetBalance>) -> Result<Self, ValidationError> {
         validate_balances_length(balances.len())?;
 
         Ok(Self { address, balances })
     }
 
-    /// Returns the address of a `SignatureLockedAssetAllowanceOutput`.
+    /// Returns the address of a `SignatureLockedAssetOutput`.
     pub fn address(&self) -> &Address {
         &self.address
     }
 
-    /// Returns the amount of a `SignatureLockedAssetAllowanceOutput`.
+    /// Returns the amount of a `SignatureLockedAssetOutput`.
     pub fn balance_iter(&self) -> impl Iterator<Item = &AssetBalance> {
         self.balances.iter()
     }
@@ -175,7 +175,7 @@ impl Packable for SignatureLockedAssetOutput {
 
 fn validate_balances_length(len: usize) -> Result<(), ValidationError> {
     if len > PREFIXED_BALANCES_LENGTH_MAX {
-        Err(ValidationError::InvalidAssetAllowanceBalanceLength(len))
+        Err(ValidationError::InvalidAssetBalanceLength(len))
     } else {
         Ok(())
     }
