@@ -18,6 +18,7 @@ pub enum ValidationError {
     InputUnlockBlockCountMismatch(usize, usize),
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
+    InvalidAddressKind(u8),
     InvalidAmount(u64),
     InvalidAssetBalanceLength(usize),
     InvalidEncryptedDealLength(usize),
@@ -61,6 +62,7 @@ impl fmt::Display for ValidationError {
             }
             Self::InvalidAccumulatedOutput(value) => write!(f, "invalid accumulated output balance: {}", value),
             Self::InvalidAddress => write!(f, "invalid address provided"),
+            Self::InvalidAddressKind(kind) => write!(f, "invalid address kind: {}", kind),
             Self::InvalidAssetBalanceLength(len) => {
                 write!(f, "invalid asset allowance balance count: {}", len)
             }

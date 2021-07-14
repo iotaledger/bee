@@ -452,7 +452,7 @@ fn validate_single(single: &SignatureLockedSingleOutput, outputs: &[Output]) -> 
         .count()
         > 1
     {
-        Err(ValidationError::DuplicateAddress(*single.address()))
+        Err(ValidationError::DuplicateAddress(single.address().clone()))
     } else {
         Ok(single.amount())
     }

@@ -165,8 +165,8 @@ fn invalid_duplicate_output_address() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
     let address = Address::from(Ed25519Address::new(bytes));
 
-    let output1 = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, 1000).unwrap());
-    let output2 = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, 1000).unwrap());
+    let output1 = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address.clone(), 1000).unwrap());
+    let output2 = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address.clone(), 1000).unwrap());
 
     let essence = TransactionEssence::builder()
         .with_timestamp(rand_number())
