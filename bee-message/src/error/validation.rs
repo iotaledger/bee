@@ -19,8 +19,7 @@ pub enum ValidationError {
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
     InvalidAmount(u64),
-    InvalidAssetAllowanceBalanceLength(usize),
-    InvalidDustAllowanceAmount(u64),
+    InvalidAssetBalanceLength(usize),
     InvalidEncryptedDealLength(usize),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength(usize, usize),
@@ -62,11 +61,10 @@ impl fmt::Display for ValidationError {
             }
             Self::InvalidAccumulatedOutput(value) => write!(f, "invalid accumulated output balance: {}", value),
             Self::InvalidAddress => write!(f, "invalid address provided"),
-            Self::InvalidAssetAllowanceBalanceLength(len) => {
+            Self::InvalidAssetBalanceLength(len) => {
                 write!(f, "invalid asset allowance balance count: {}", len)
             }
             Self::InvalidAmount(amount) => write!(f, "invalid amount: {}", amount),
-            Self::InvalidDustAllowanceAmount(amount) => write!(f, "invalid dust allowance amount: {}", amount),
             Self::InvalidEncryptedDealLength(len) => write!(f, "invalid encrypted deal length: {}", len),
             Self::InvalidHexadecimalChar(hex) => write!(f, "invalid hexadecimal character: {}", hex),
             Self::InvalidHexadecimalLength(expected, actual) => {

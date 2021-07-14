@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod output_id;
-mod signature_locked_asset_allowance;
+mod signature_locked_asset;
 mod signature_locked_single;
 
 pub use crate::error::{MessageUnpackError, ValidationError};
 
 pub use output_id::{OutputId, OutputIdUnpackError, OUTPUT_ID_LENGTH};
-pub use signature_locked_asset_allowance::{
+pub use signature_locked_asset::{
     AssetBalance, SignatureLockedAssetOutput, SignatureLockedAssetPackError, SignatureLockedAssetUnpackError,
 };
 pub use signature_locked_single::{
