@@ -37,8 +37,8 @@ impl From<UnknownTagError<u8>> for OutputUnpackError {
 impl fmt::Display for OutputUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidAddressKind(kind) => write!(f, "Invalid address kind: {}", kind),
-            Self::InvalidOutputKind(kind) => write!(f, "Invalid output kind: {}", kind),
+            Self::InvalidAddressKind(kind) => write!(f, "invalid address kind: {}", kind),
+            Self::InvalidOutputKind(kind) => write!(f, "invalid output kind: {}", kind),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
     }

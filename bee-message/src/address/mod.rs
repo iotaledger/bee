@@ -57,7 +57,7 @@ impl Address {
     pub fn to_bech32(&self, hrp: &str) -> String {
         let bytes = self.pack_to_vec().unwrap();
 
-        bech32::encode(hrp, bytes.to_base32(), Variant::Bech32).expect("Invalid address.")
+        bech32::encode(hrp, bytes.to_base32(), Variant::Bech32).expect("invalid address.")
     }
 
     /// Verifies a [`SignatureUnlock`] for a message against the [`Address`].

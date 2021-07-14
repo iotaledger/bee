@@ -6,10 +6,14 @@ use bee_packable::Packable;
 
 use core::{convert::TryInto, str::FromStr};
 
-const BLS_ADDRESS: &str = "58501b4f0c2d569f3db0c09c85c74c5f9fbf1e89bc30aae12f02212a86a6412ca69903941fa870ff64c01697d7c62b2cd7";
-const BLS_ADDRESS_INVALID_HEX: &str = "58501b4f0c2d569f3db0c09c85c74c5f9fbf1e89bc30aae12f02212a86a6412ca69903941fa870ff64c01697d7c62b2cdx";
-const BLS_ADDRESS_INVALID_LEN_TOO_SHORT: &str = "58501b4f0c2d569f3db0c09c85c74c5f9fbf1e89bc30aae12f02212a86a6412ca69903941fa870ff64c01697d7c62b2c";
-const BLS_ADDRESS_INVALID_LEN_TOO_LONG: &str = "58501b4f0c2d569f3db0c09c85c74c5f9fbf1e89bc30aae12f02212a86a6412ca69903941fa870ff64c01697d7c62b2cd700";
+const BLS_ADDRESS: &str =
+    "58501b4f0c2d569f3db0c09c85c74c5f9fbf1e89bc30aae12f02212a86a6412ca69903941fa870ff64c01697d7c62b2cd7";
+const BLS_ADDRESS_INVALID_HEX: &str =
+    "58501b4f0c2d569f3db0c09c85c74c5f9fbf1e89bc30aae12f02212a86a6412ca69903941fa870ff64c01697d7c62b2cdx";
+const BLS_ADDRESS_INVALID_LEN_TOO_SHORT: &str =
+    "58501b4f0c2d569f3db0c09c85c74c5f9fbf1e89bc30aae12f02212a86a6412ca69903941fa870ff64c01697d7c62b2c";
+const BLS_ADDRESS_INVALID_LEN_TOO_LONG: &str =
+    "58501b4f0c2d569f3db0c09c85c74c5f9fbf1e89bc30aae12f02212a86a6412ca69903941fa870ff64c01697d7c62b2cd700";
 
 #[test]
 fn kind() {
@@ -58,10 +62,7 @@ fn from_str_invalid_len_too_long() {
 
 #[test]
 fn from_to_str() {
-    assert_eq!(
-        BLS_ADDRESS,
-        BlsAddress::from_str(BLS_ADDRESS).unwrap().to_string()
-    );
+    assert_eq!(BLS_ADDRESS, BlsAddress::from_str(BLS_ADDRESS).unwrap().to_string());
 }
 
 #[test]

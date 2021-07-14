@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use crate::{
-    address::{Address, BlsAddress, BLS_ADDRESS_LENGTH, Ed25519Address, ED25519_ADDRESS_LENGTH},
+    address::{Address, BlsAddress, Ed25519Address, BLS_ADDRESS_LENGTH, ED25519_ADDRESS_LENGTH},
     constants::IOTA_SUPPLY,
     error::{MessagePackError, MessageUnpackError, ValidationError},
     input::{Input, UtxoInput},

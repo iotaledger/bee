@@ -21,7 +21,7 @@ pub enum SignatureUnlockUnpackError {
 impl fmt::Display for SignatureUnlockUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidSignatureUnlockKind(kind) => write!(f, "Invalid SignatureUnlock kind: {}", kind),
+            Self::InvalidSignatureUnlockKind(kind) => write!(f, "invalid SignatureUnlock kind: {}", kind),
         }
     }
 }

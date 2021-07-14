@@ -56,12 +56,12 @@ impl_from_infallible!(PayloadPackError);
 impl fmt::Display for PayloadPackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Data(e) => write!(f, "Error packing data payload: {}.", e),
-            Self::Dkg(e) => write!(f, "Error packing DKG payload: {}", e),
-            Self::Fpc(e) => write!(f, "Error packing FPC payload: {}.", e),
-            Self::Indexation(e) => write!(f, "Error packing indexation payload: {}", e),
-            Self::SaltDeclaration(e) => write!(f, "Error packing salt declaration payload: {}", e),
-            Self::Transaction(e) => write!(f, "Error packing transaction payload: {}", e),
+            Self::Data(e) => write!(f, "error packing data payload: {}.", e),
+            Self::Dkg(e) => write!(f, "error packing DKG payload: {}", e),
+            Self::Fpc(e) => write!(f, "error packing FPC payload: {}.", e),
+            Self::Indexation(e) => write!(f, "error packing indexation payload: {}", e),
+            Self::SaltDeclaration(e) => write!(f, "error packing salt declaration payload: {}", e),
+            Self::Transaction(e) => write!(f, "error packing transaction payload: {}", e),
         }
     }
 }
@@ -99,13 +99,13 @@ impl_from_infallible!(PayloadUnpackError);
 impl fmt::Display for PayloadUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Data(e) => write!(f, "Error unpacking data payload: {}", e),
-            Self::Dkg(e) => write!(f, "Error unpacking DKG payload: {}", e),
-            Self::Fpc(e) => write!(f, "Error unpacking FPC payload: {}.", e),
-            Self::Indexation(e) => write!(f, "Error unpacking indexation payload: {}.", e),
-            Self::InvalidPayloadKind(kind) => write!(f, "Invalid payload kind: {}.", kind),
-            Self::SaltDeclaration(e) => write!(f, "Error unpacking salt declaration payload: {}", e),
-            Self::Transaction(e) => write!(f, "Error unpacking transaction payload: {}", e),
+            Self::Data(e) => write!(f, "error unpacking data payload: {}", e),
+            Self::Dkg(e) => write!(f, "error unpacking DKG payload: {}", e),
+            Self::Fpc(e) => write!(f, "error unpacking FPC payload: {}.", e),
+            Self::Indexation(e) => write!(f, "error unpacking indexation payload: {}.", e),
+            Self::InvalidPayloadKind(kind) => write!(f, "invalid payload kind: {}.", kind),
+            Self::SaltDeclaration(e) => write!(f, "error unpacking salt declaration payload: {}", e),
+            Self::Transaction(e) => write!(f, "error unpacking transaction payload: {}", e),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
     }
