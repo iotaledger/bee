@@ -234,9 +234,9 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "iota-crypto"
-version = "0.5.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cccb8160eb8a88434fb3a0a3fc852e625aceab6c0272f0f03cc3f47c125bceab"
+checksum = "558466ca403e13e2b849f6b1aa0ec98a602dd21a49421a24d69aa265261c2290"
 dependencies = [
  "blake2",
  "digest",
