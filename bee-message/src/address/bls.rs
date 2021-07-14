@@ -1,15 +1,15 @@
 use crate::error::ValidationError;
 
-use bee_packable::packable::Packable;
+use bee_packable::{Packable, Packer, PackError, Unpacker, UnpackError};
 
 use alloc::{borrow::ToOwned, boxed::Box};
-use core::{convert::TryInto, str::FromStr};
+use core::{convert::{Infallible, TryInto}, str::FromStr};
 
 /// The number of bytes in a BLS address.
 pub const BLS_ADDRESS_LENGTH: usize = 49;
 
 /// A BLS address.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlsAddress(Box<[u8]>);
 
@@ -29,6 +29,27 @@ impl BlsAddress {
     }
 
     // TODO verification
+}
+
+impl Packable for BlsAddress {
+    type PackError = Infallible;
+    type UnpackError = Infallible;
+
+    fn packed_len(&self) -> usize {
+        BLS_ADDRESS_LENGTH
+    }
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        let bytes: [u8; BLS_ADDRESS_LENGTH] = self.0.to_vec().try_into().unwrap();
+
+        bytes.pack(packer).map_err(PackError::infallible)
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let bytes = <[u8; BLS_ADDRESS_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
+
+        Ok(Self::new(bytes))
+    }
 }
 
 impl From<[u8; BLS_ADDRESS_LENGTH]> for BlsAddress {
