@@ -17,6 +17,14 @@ fn unpack_valid() {
 }
 
 #[test]
+fn accessors_eq() {
+    let application_msg = ApplicationMessagePayload::new(0, 1);
+
+    assert_eq!(application_msg.version(), 0);
+    assert_eq!(application_msg.instance_id(), 1);
+}
+
+#[test]
 fn packed_len() {
     let application_msg = ApplicationMessagePayload::new(0, 1);
 

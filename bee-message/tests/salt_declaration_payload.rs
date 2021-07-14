@@ -42,6 +42,32 @@ fn unpack_valid() {
 }
 
 #[test]
+fn accessors_eq() {
+    let salt_bytes = rand_bytes(64);
+    let expiry_time = rand_number();
+    let salt = Salt::new(salt_bytes.clone(), expiry_time).unwrap();
+
+    let timestamp = rand_number();
+    let signature = rand_bytes_array();
+
+    let salt_declaration = SaltDeclarationPayload::builder()
+        .with_version(0)
+        .with_node_id(32)
+        .with_salt(salt.clone())
+        .with_timestamp(timestamp)
+        .with_signature(signature.clone())
+        .finish()
+        .unwrap();
+
+    assert_eq!(salt_declaration.version(), 0);
+    assert_eq!(salt_declaration.node_id(), 32);
+    assert_eq!(*salt_declaration.salt().bytes(), salt_bytes);
+    assert_eq!(salt_declaration.salt().expiry_time(), expiry_time);
+    assert_eq!(salt_declaration.timestamp(), timestamp);
+    assert_eq!(*salt_declaration.signature(), signature);
+}
+
+#[test]
 fn packed_len() {
     let salt_declaration = SaltDeclarationPayload::builder()
         .with_version(0)

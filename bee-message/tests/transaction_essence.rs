@@ -3,7 +3,7 @@
 
 use bee_message::prelude::*;
 use bee_packable::Packable;
-use bee_test::rand::{bytes::rand_bytes_array, number::rand_number};
+use bee_test::rand::{bytes::{rand_bytes, rand_bytes_array}, number::rand_number};
 
 use core::convert::TryInto;
 
@@ -207,6 +207,70 @@ fn invalid_outputs_not_sorted() {
         essence.err().unwrap(),
         ValidationError::TransactionOutputsNotSorted,
     ));
+}
+
+#[test]
+fn invalid_payload_kind() {
+    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
+
+    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+
+    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
+    let address = Address::from(Ed25519Address::new(bytes));
+    let amount = 1_000_000;
+    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
+
+    let payload = Payload::from(DataPayload::new(0, rand_bytes(128)).unwrap());
+
+    let essence = TransactionEssence::builder()
+        .with_timestamp(rand_number())
+        .with_access_pledge_id(rand_bytes_array())
+        .with_consensus_pledge_id(rand_bytes_array())
+        .with_inputs(vec![input1, input2])
+        .with_outputs(vec![output])
+        .with_payload(payload)
+        .finish();
+
+    assert!(matches!(
+        essence,
+        Err(ValidationError::InvalidPayloadKind(DataPayload::KIND)),
+    ));
+}
+
+#[test]
+fn accessors_eq() {
+    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
+
+    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+
+    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS_1).unwrap().try_into().unwrap();
+    let address = Address::from(Ed25519Address::new(bytes));
+    let amount = 1_000_000;
+    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
+
+    let timestamp = rand_number();
+    let access_pledge_id = rand_bytes_array();
+    let consensus_pledge_id = rand_bytes_array();
+    let inputs = vec![input1.clone(), input2.clone()];
+    let outputs = vec![output.clone()];
+
+    let essence = TransactionEssence::builder()
+        .with_timestamp(timestamp)
+        .with_access_pledge_id(access_pledge_id.clone())
+        .with_consensus_pledge_id(consensus_pledge_id.clone())
+        .add_input(input1)
+        .add_input(input2)
+        .add_output(output)
+        .finish()
+        .unwrap();
+
+    assert_eq!(essence.timestamp(), timestamp);
+    assert_eq!(*essence.access_pledge_id(), access_pledge_id);
+    assert_eq!(*essence.consensus_pledge_id(), consensus_pledge_id);
+    assert_eq!(*essence.inputs(), inputs);
+    assert_eq!(*essence.outputs(), outputs);
 }
 
 #[test]

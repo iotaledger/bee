@@ -99,6 +99,21 @@ impl FpcPayload {
     pub fn builder() -> FpcPayloadBuilder {
         FpcPayloadBuilder::new()
     }
+
+    /// Returns the version of an `FpcPayload`.
+    pub fn version(&self) -> u8 {
+        self.version
+    }
+
+    /// Returns the `Conflicts` of an `FpcPayload`.
+    pub fn conflicts(&self) -> impl Iterator<Item = &Conflict> {
+        self.conflicts.iter()
+    }
+
+    /// Returns the `Timestamps` of an `FpcPayload`.
+    pub fn timestamps(&self) -> impl Iterator<Item = &Timestamp> {
+        self.timestamps.iter()
+    }
 }
 
 impl Packable for FpcPayload {

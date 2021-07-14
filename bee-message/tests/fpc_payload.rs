@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::ops::Deref;
+
 use bee_message::prelude::*;
 use bee_packable::Packable;
 
@@ -16,18 +18,64 @@ fn new_valid() {
     let fpc = FpcPayload::builder()
         .with_version(0)
         .with_conflicts(Conflicts::new(vec![
-            Conflict::new(TransactionId::from(rand_bytes_array::<32>()), 0, 0),
-            Conflict::new(TransactionId::from(rand_bytes_array::<32>()), 0, 1),
-            Conflict::new(TransactionId::from(rand_bytes_array::<32>()), 1, 2),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
         ]))
         .with_timestamps(Timestamps::new(vec![
-            Timestamp::new(MessageId::from(rand_bytes_array::<32>()), 0, 0),
-            Timestamp::new(MessageId::from(rand_bytes_array::<32>()), 0, 1),
-            Timestamp::new(MessageId::from(rand_bytes_array::<32>()), 1, 2),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
         ]))
         .finish();
 
     assert!(fpc.is_ok());
+}
+
+#[test]
+fn conflict_accessors_eq() {
+    let transaction_id = TransactionId::from(rand_bytes_array());
+    let conflict = Conflict::new(transaction_id.clone(), 0, 0);  
+
+    assert_eq!(*conflict.transaction_id(), transaction_id);
+    assert_eq!(conflict.opinion(), 0);
+    assert_eq!(conflict.round(), 0);
+}
+
+#[test]
+fn timestamp_accessors_eq() {
+    let message_id = MessageId::from(rand_bytes_array());
+    let timestamp = Timestamp::new(message_id.clone(), 0, 0);  
+
+    assert_eq!(*timestamp.message_id(), message_id);
+    assert_eq!(timestamp.opinion(), 0);
+    assert_eq!(timestamp.round(), 0);
+}
+
+#[test]
+fn accessors_eq() {
+    let conflicts = Conflicts::new(vec![
+        Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
+        Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
+        Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
+    ]);
+
+    let timestamps = Timestamps::new(vec![
+        Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
+        Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
+        Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
+    ]);
+
+    let fpc = FpcPayload::builder()
+        .with_version(0)
+        .with_conflicts(conflicts.clone())
+        .with_timestamps(timestamps.clone())
+        .finish()
+        .unwrap();
+    
+    assert_eq!(fpc.version(), 0);
+    assert_eq!(fpc.conflicts().cloned().collect::<Vec<Conflict>>(), conflicts.deref());
+    assert_eq!(fpc.timestamps().cloned().collect::<Vec<Timestamp>>(), timestamps.deref());
 }
 
 #[test]
@@ -59,14 +107,14 @@ fn round_trip() {
     let fpc_a = FpcPayload::builder()
         .with_version(0)
         .with_conflicts(Conflicts::new(vec![
-            Conflict::new(TransactionId::from(rand_bytes_array::<32>()), 0, 0),
-            Conflict::new(TransactionId::from(rand_bytes_array::<32>()), 0, 1),
-            Conflict::new(TransactionId::from(rand_bytes_array::<32>()), 1, 2),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
         ]))
         .with_timestamps(Timestamps::new(vec![
-            Timestamp::new(MessageId::from(rand_bytes_array::<32>()), 0, 0),
-            Timestamp::new(MessageId::from(rand_bytes_array::<32>()), 0, 1),
-            Timestamp::new(MessageId::from(rand_bytes_array::<32>()), 1, 2),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
         ]))
         .finish()
         .unwrap();

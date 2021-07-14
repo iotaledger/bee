@@ -77,9 +77,9 @@ impl fmt::Display for SaltDeclarationUnpackError {
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Salt {
-    /// The value of the salt.
+    /// The value of the `Salt`.
     bytes: Vec<u8>,
-    /// The expiration time of the salt.
+    /// The expiration time of the `Salt`.
     expiry_time: u64,
 }
 
@@ -89,6 +89,16 @@ impl Salt {
         validate_bytes_length(bytes.len())?;
 
         Ok(Self { bytes, expiry_time })
+    }
+
+    /// Returns the value of the `Salt`.
+    pub fn bytes(&self) -> &[u8] {
+        &self.bytes
+    }
+
+    /// Returns the expiration time of the `Salt`.
+    pub fn expiry_time(&self) -> u64 {
+        self.expiry_time
     }
 }
 
