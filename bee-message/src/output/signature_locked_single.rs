@@ -33,7 +33,7 @@ impl From<UnknownTagError<u8>> for SignatureLockedSingleUnpackError {
 impl fmt::Display for SignatureLockedSingleUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidAddressKind(kind) => write!(f, "Invalid address kind: {}", kind),
+            Self::InvalidAddressKind(kind) => write!(f, "invalid address kind: {}", kind),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
     }

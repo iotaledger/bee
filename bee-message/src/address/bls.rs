@@ -1,9 +1,12 @@
 use crate::error::ValidationError;
 
-use bee_packable::{Packable, Packer, PackError, Unpacker, UnpackError};
+use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
 use alloc::{borrow::ToOwned, boxed::Box};
-use core::{convert::{Infallible, TryInto}, str::FromStr};
+use core::{
+    convert::{Infallible, TryInto},
+    str::FromStr,
+};
 
 /// The number of bytes in a BLS address.
 pub const BLS_ADDRESS_LENGTH: usize = 49;

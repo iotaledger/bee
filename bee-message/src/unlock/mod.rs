@@ -45,7 +45,7 @@ impl From<ReferenceUnlockUnpackError> for UnlockBlockUnpackError {
 impl fmt::Display for UnlockBlockUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidUnlockBlockKind(kind) => write!(f, "Invalid unlock block kind: {}", kind),
+            Self::InvalidUnlockBlockKind(kind) => write!(f, "invalid unlock block kind: {}", kind),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
     }

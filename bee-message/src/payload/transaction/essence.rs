@@ -51,9 +51,9 @@ impl From<PackPrefixError<Infallible, u32>> for TransactionEssencePackError {
 impl fmt::Display for TransactionEssencePackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidInputPrefix => write!(f, "Invalid input prefix"),
-            Self::InvalidOutputPrefix => write!(f, "Invalid output prefix"),
-            Self::OptionalPayload(e) => write!(f, "Error packing payload: {}", e),
+            Self::InvalidInputPrefix => write!(f, "invalid input prefix"),
+            Self::InvalidOutputPrefix => write!(f, "invalid output prefix"),
+            Self::OptionalPayload(e) => write!(f, "error packing payload: {}", e),
         }
     }
 }

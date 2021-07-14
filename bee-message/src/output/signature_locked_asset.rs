@@ -70,7 +70,7 @@ impl From<UnpackPrefixError<Infallible, u32>> for SignatureLockedAssetUnpackErro
 impl fmt::Display for SignatureLockedAssetUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidAddressKind(kind) => write!(f, "Invalid address kind: {}", kind),
+            Self::InvalidAddressKind(kind) => write!(f, "invalid address kind: {}", kind),
             Self::InvalidPrefix => write!(f, "invalid prefix for asset balance vector"),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
