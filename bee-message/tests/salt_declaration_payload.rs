@@ -3,7 +3,6 @@
 
 use bee_message::prelude::*;
 use bee_packable::Packable;
-
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,

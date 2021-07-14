@@ -1,12 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::Deref;
-
 use bee_message::prelude::*;
 use bee_packable::Packable;
-
 use bee_test::rand::bytes::rand_bytes_array;
+
+use std::ops::Deref;
 
 #[test]
 fn kind() {
