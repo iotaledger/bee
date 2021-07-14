@@ -137,7 +137,7 @@ fn accessors_eq() {
         .with_deal(deal.clone())
         .finish()
         .unwrap();
-    
+
     assert_eq!(dkg.version(), 0);
     assert_eq!(dkg.instance_id(), 1);
     assert_eq!(dkg.from_index(), 20);
@@ -165,7 +165,10 @@ fn dkg_packed_len() {
         .finish()
         .unwrap();
 
-    assert_eq!(dkg.packed_len(), 1 + 4 + 4 + 4 + 4 + 4 + 4 + 4 + 4 + 128 + 12 + 128 + 12);
+    assert_eq!(
+        dkg.packed_len(),
+        1 + 4 + 4 + 4 + 4 + 4 + 4 + 4 + 4 + 128 + 12 + 128 + 12
+    );
 }
 
 #[test]

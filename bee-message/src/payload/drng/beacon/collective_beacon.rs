@@ -33,7 +33,7 @@ impl CollectiveBeaconPayload {
 
     /// Creates a new `CollectiveBeaconPayloadBuilder`.
     pub fn builder() -> CollectiveBeaconPayloadBuilder {
-        CollectiveBeaconPayloadBuilder::default()
+        CollectiveBeaconPayloadBuilder::new()
     }
 
     /// Returns the version of a `CollectiveBeaconPayload`.
@@ -138,6 +138,11 @@ pub struct CollectiveBeaconPayloadBuilder {
 }
 
 impl CollectiveBeaconPayloadBuilder {
+    /// Creates a new `CollectiveBeaconPayloadBuilder`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Adds a version to a `CollectiveBeaconPayloadBuilder`.
     pub fn with_version(mut self, version: u8) -> Self {
         self.version.replace(version);

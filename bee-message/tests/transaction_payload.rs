@@ -165,7 +165,7 @@ fn accessors_eq() {
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
 
-    let payload = TransactionPayloadBuilder::new()
+    let payload = TransactionPayload::builder()
         .with_version(0)
         .with_essence(essence.clone())
         .with_unlock_blocks(unlock_blocks.clone())

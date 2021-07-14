@@ -50,11 +50,11 @@ fn accessors_eq() {
         .with_version(0)
         .with_instance_id(0)
         .with_round(1)
-        .with_partial_public_key(partial_pk.clone())
-        .with_partial_signature(partial_signature.clone())
+        .with_partial_public_key(partial_pk)
+        .with_partial_signature(partial_signature)
         .finish()
         .unwrap();
-    
+
     assert_eq!(beacon.version(), 0);
     assert_eq!(beacon.instance_id(), 0);
     assert_eq!(beacon.round(), 1);

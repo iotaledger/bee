@@ -53,9 +53,9 @@ fn accessors_eq() {
     let salt_declaration = SaltDeclarationPayload::builder()
         .with_version(0)
         .with_node_id(32)
-        .with_salt(salt.clone())
+        .with_salt(salt)
         .with_timestamp(timestamp)
-        .with_signature(signature.clone())
+        .with_signature(signature)
         .finish()
         .unwrap();
 
