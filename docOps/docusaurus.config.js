@@ -6,7 +6,7 @@ module.exports = {
   title: 'Bee',
   tagline: 'Official IOTA Bee Software',
   url: 'https://bee.docs.iota.org/',
-  baseUrl: '/bee/',
+  baseUrl: '/',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   favicon: '/img/logo/favicon.ico',
