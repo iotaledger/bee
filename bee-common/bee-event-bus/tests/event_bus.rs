@@ -3,9 +3,12 @@
 
 use bee_event_bus::EventBus;
 
-use std::sync::{
-    atomic::{AtomicU64, Ordering},
-    Arc,
+use std::{
+    any::TypeId,
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc,
+    },
 };
 
 struct Event1(u64);
@@ -17,7 +20,7 @@ struct Bound3;
 
 #[test]
 fn add_listener_dispatch() {
-    let bus = EventBus::new();
+    let bus = EventBus::<'_, TypeId>::new();
     let _counter = Arc::new(AtomicU64::new(0));
 
     let counter = _counter.clone();
@@ -47,7 +50,7 @@ fn add_listener_dispatch() {
 
 #[test]
 fn add_static_listener_dispatch() {
-    let bus = EventBus::new();
+    let bus = EventBus::<'_, TypeId>::new();
     let _counter = Arc::new(AtomicU64::new(0));
 
     let counter = _counter.clone();
@@ -62,7 +65,7 @@ fn add_static_listener_dispatch() {
 
 #[test]
 fn add_listener_remove_dispatch() {
-    let bus = EventBus::new();
+    let bus = EventBus::<'_, TypeId>::new();
     let _counter = Arc::new(AtomicU64::new(0));
 
     let counter = _counter.clone();
@@ -91,7 +94,7 @@ fn add_listener_remove_dispatch() {
 
 #[test]
 fn dispatch_without_listeners() {
-    let bus = EventBus::new();
+    let bus = EventBus::<'_, TypeId>::new();
 
     bus.dispatch(Event1(1));
     bus.dispatch(Event2(1, 2));
