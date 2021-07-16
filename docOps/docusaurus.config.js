@@ -116,4 +116,15 @@ module.exports = {
       },
     ],
   ],
+
+  plugins: [
+    [
+      'docusaurus-plugin-includes',
+      {
+        sharedFolders: [
+          { source: '../.github/', target: '.github'},
+        ],
+      },
+    ],
+  ],
 };
