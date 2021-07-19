@@ -81,7 +81,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let salt_declaration_a = SaltDeclarationPayload::builder()
         .with_version(0)
         .with_node_id(32)

@@ -61,33 +61,6 @@ fn unpack_valid() {
 }
 
 #[test]
-fn round_trip() {
-    let message_a = MessageBuilder::new()
-        .with_parents(
-            Parents::new(vec![
-                Parent::Strong(MessageId::new(hex::decode(PARENT_1).unwrap().try_into().unwrap())),
-                Parent::Strong(MessageId::new(hex::decode(PARENT_2).unwrap().try_into().unwrap())),
-                Parent::Weak(MessageId::new(hex::decode(PARENT_3).unwrap().try_into().unwrap())),
-            ])
-            .unwrap(),
-        )
-        .with_issuer_public_key(rand_bytes_array())
-        .with_issue_timestamp(rand_number())
-        .with_sequence_number(rand_number())
-        .with_payload(Payload::from(
-            IndexationPayload::new(0, rand_bytes(32), rand_bytes(256)).unwrap(),
-        ))
-        .with_nonce(0)
-        .with_signature(rand_bytes_array())
-        .finish()
-        .unwrap();
-
-    let message_b = Message::unpack_from_slice(message_a.pack_to_vec().unwrap()).unwrap();
-
-    assert_eq!(message_a, message_b);
-}
-
-#[test]
 fn packed_len() {
     let message_a = MessageBuilder::new()
         .with_parents(
@@ -113,4 +86,31 @@ fn packed_len() {
         message_a.packed_len(),
         1 + 1 + 32 + 32 + 32 + 32 + 8 + 4 + 1 + 4 + 1 + 4 + 32 + 4 + 256 + 8 + 64 + 8,
     );
+}
+
+#[test]
+fn packable_round_trip() {
+    let message_a = MessageBuilder::new()
+        .with_parents(
+            Parents::new(vec![
+                Parent::Strong(MessageId::new(hex::decode(PARENT_1).unwrap().try_into().unwrap())),
+                Parent::Strong(MessageId::new(hex::decode(PARENT_2).unwrap().try_into().unwrap())),
+                Parent::Weak(MessageId::new(hex::decode(PARENT_3).unwrap().try_into().unwrap())),
+            ])
+            .unwrap(),
+        )
+        .with_issuer_public_key(rand_bytes_array())
+        .with_issue_timestamp(rand_number())
+        .with_sequence_number(rand_number())
+        .with_payload(Payload::from(
+            IndexationPayload::new(0, rand_bytes(32), rand_bytes(256)).unwrap(),
+        ))
+        .with_nonce(0)
+        .with_signature(rand_bytes_array())
+        .finish()
+        .unwrap();
+
+    let message_b = Message::unpack_from_slice(message_a.pack_to_vec().unwrap()).unwrap();
+
+    assert_eq!(message_a, message_b);
 }

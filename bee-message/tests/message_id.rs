@@ -78,7 +78,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
     let packed_message_id = message_id.pack_to_vec().unwrap();
 

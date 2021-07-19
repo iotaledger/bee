@@ -77,7 +77,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let beacon_a = BeaconPayload::builder()
         .with_version(0)
         .with_instance_id(0)

@@ -49,10 +49,8 @@ fn split_valid() {
 
 #[test]
 fn new_invalid() {
-    let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
-
     assert!(matches!(
-        OutputId::new(transaction_id, 127),
+        OutputId::new(TransactionId::from_str(TRANSACTION_ID).unwrap(), 127),
         Err(ValidationError::InvalidOutputIndex(127))
     ));
 }
@@ -143,7 +141,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let output_id_1 = OutputId::from_str(OUTPUT_ID).unwrap();
     let output_id_2 = OutputId::unpack_from_slice(output_id_1.pack_to_vec().unwrap()).unwrap();
 

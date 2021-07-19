@@ -66,7 +66,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
     let packed_transaction_id = transaction_id.pack_to_vec().unwrap();
 

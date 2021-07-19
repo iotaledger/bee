@@ -73,7 +73,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let data_a = DataPayload::new(0, rand_bytes(255)).unwrap();
     let data_b = DataPayload::unpack_from_slice(data_a.pack_to_vec().unwrap()).unwrap();
 

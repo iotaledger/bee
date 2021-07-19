@@ -7,6 +7,8 @@ use bee_packable::Packable;
 use core::str::FromStr;
 
 const OUTPUT_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00";
+const OUTPUT_ID_INVALID_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f00";
+const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
 fn kind() {
@@ -29,17 +31,28 @@ fn debug_impl() {
 #[test]
 fn new_valid() {
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
-    let input = UtxoInput::new(*output_id.transaction_id(), output_id.index()).unwrap();
 
-    assert_eq!(input.output_id(), &output_id);
+    assert_eq!(
+        UtxoInput::new(*output_id.transaction_id(), output_id.index())
+            .unwrap()
+            .output_id(),
+        &output_id
+    );
+}
+
+#[test]
+fn new_invalid() {
+    assert!(matches!(
+        UtxoInput::new(TransactionId::from_str(TRANSACTION_ID).unwrap(), 127),
+        Err(ValidationError::InvalidOutputIndex(127))
+    ));
 }
 
 #[test]
 fn from_valid() {
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
-    let input: UtxoInput = output_id.into();
 
-    assert_eq!(input.output_id(), &output_id);
+    assert_eq!(UtxoInput::from(output_id).output_id(), &output_id);
 }
 
 #[test]
@@ -51,6 +64,14 @@ fn from_str_valid() {
 }
 
 #[test]
+fn from_str_invalid() {
+    assert!(matches!(
+        UtxoInput::from_str(OUTPUT_ID_INVALID_INDEX),
+        Err(ValidationError::InvalidOutputIndex(127))
+    ));
+}
+
+#[test]
 fn from_str_to_str() {
     assert_eq!(UtxoInput::from_str(OUTPUT_ID).unwrap().to_string(), OUTPUT_ID);
 }
@@ -58,18 +79,14 @@ fn from_str_to_str() {
 #[test]
 fn packed_len() {
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
+    let input = UtxoInput::new(*output_id.transaction_id(), output_id.index()).unwrap();
 
-    assert_eq!(
-        UtxoInput::new(*output_id.transaction_id(), output_id.index())
-            .unwrap()
-            .packed_len(),
-        32 + 2
-    );
-    assert_eq!(output_id.pack_to_vec().unwrap().len(), 32 + 2);
+    assert_eq!(input.packed_len(), 32 + 2);
+    assert_eq!(input.pack_to_vec().unwrap().len(), 32 + 2);
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
     let input_1 = UtxoInput::new(*output_id.transaction_id(), output_id.index()).unwrap();
     let input_2 = UtxoInput::unpack_from_slice(input_1.pack_to_vec().unwrap()).unwrap();
