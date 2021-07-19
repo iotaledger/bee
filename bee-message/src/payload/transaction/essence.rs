@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    constants::{INPUT_OUTPUT_COUNT_RANGE, IOTA_SUPPLY},
-    input::Input,
-    output::{Output, SignatureLockedSingleOutput},
+    input::{Input, INPUT_COUNT_RANGE},
+    output::{Output, SignatureLockedSingleOutput, OUTPUT_COUNT_RANGE},
     payload::{Payload, PayloadPackError},
-    MessagePackError, MessageUnpackError, ValidationError,
+    MessagePackError, MessageUnpackError, ValidationError, IOTA_SUPPLY,
 };
 
 use bee_ord::is_sorted;
@@ -24,7 +23,8 @@ use core::{
 /// Length (in bytes) of Transaction Essence pledge IDs (node IDs relating to pledge mana).
 pub const PLEDGE_ID_LENGTH: usize = 32;
 
-const PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX: usize = *INPUT_OUTPUT_COUNT_RANGE.end();
+const PREFIXED_INPUTS_LENGTH_MAX: usize = *INPUT_COUNT_RANGE.end();
+const PREFIXED_OUTPUTS_LENGTH_MAX: usize = *OUTPUT_COUNT_RANGE.end();
 
 /// Error encountered packing a Transaction Essence.
 #[derive(Debug)]
@@ -173,9 +173,9 @@ impl Packable for TransactionEssence {
 
     fn packed_len(&self) -> usize {
         // Unwraps are safe, since inputs/outputs lengths are alread validated.
-        let prefixed_inputs: VecPrefix<Input, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX> =
+        let prefixed_inputs: VecPrefix<Input, u32, PREFIXED_INPUTS_LENGTH_MAX> =
             self.inputs.clone().try_into().unwrap();
-        let prefixed_outputs: VecPrefix<Output, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX> =
+        let prefixed_outputs: VecPrefix<Output, u32, PREFIXED_OUTPUTS_LENGTH_MAX> =
             self.outputs.clone().try_into().unwrap();
 
         self.timestamp.packed_len()
@@ -192,9 +192,8 @@ impl Packable for TransactionEssence {
         self.consensus_pledge_id.pack(packer).map_err(PackError::infallible)?;
 
         // Unwraps are safe, since inputs/outputs lengths are already validated.
-        let input_prefixed: VecPrefix<Input, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX> =
-            self.inputs.clone().try_into().unwrap();
-        let output_prefixed: VecPrefix<Output, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX> =
+        let input_prefixed: VecPrefix<Input, u32, PREFIXED_INPUTS_LENGTH_MAX> = self.inputs.clone().try_into().unwrap();
+        let output_prefixed: VecPrefix<Output, u32, PREFIXED_OUTPUTS_LENGTH_MAX> =
             self.outputs.clone().try_into().unwrap();
 
         input_prefixed
@@ -218,7 +217,7 @@ impl Packable for TransactionEssence {
         let consensus_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         // Inputs syntactical validation
-        let inputs = VecPrefix::<Input, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX>::unpack(unpacker);
+        let inputs = VecPrefix::<Input, u32, PREFIXED_INPUTS_LENGTH_MAX>::unpack(unpacker);
 
         let inputs_vec: Vec<Input> = if let Err(unpack_err) = inputs {
             match unpack_err {
@@ -246,7 +245,7 @@ impl Packable for TransactionEssence {
         validate_inputs_sorted(&inputs_vec).map_err(|e| UnpackError::Packable(e.into()))?;
 
         // Outputs syntactical validation
-        let outputs = VecPrefix::<Output, u32, PREFIXED_INPUTS_OUTPUTS_LENGTH_MAX>::unpack(unpacker);
+        let outputs = VecPrefix::<Output, u32, PREFIXED_OUTPUTS_LENGTH_MAX>::unpack(unpacker);
 
         let outputs_vec: Vec<Output> = if let Err(unpack_err) = outputs {
             match unpack_err {
@@ -402,7 +401,7 @@ impl TransactionEssenceBuilder {
 }
 
 fn validate_input_count(len: usize) -> Result<(), ValidationError> {
-    if !INPUT_OUTPUT_COUNT_RANGE.contains(&len) {
+    if !INPUT_COUNT_RANGE.contains(&len) {
         Err(ValidationError::InvalidInputCount(len))
     } else {
         Ok(())
@@ -432,7 +431,7 @@ fn validate_inputs_sorted(inputs: &[Input]) -> Result<(), ValidationError> {
 }
 
 fn validate_output_count(len: usize) -> Result<(), ValidationError> {
-    if !INPUT_OUTPUT_COUNT_RANGE.contains(&len) {
+    if !OUTPUT_COUNT_RANGE.contains(&len) {
         Err(ValidationError::InvalidOutputCount(len))
     } else {
         Ok(())

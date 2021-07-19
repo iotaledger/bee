@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    constants::INPUT_OUTPUT_INDEX_RANGE,
     error::{MessageUnpackError, ValidationError},
+    output::OUTPUT_INDEX_RANGE,
     payload::transaction::{TransactionId, TRANSACTION_ID_LENGTH},
 };
 
@@ -128,6 +128,14 @@ impl FromStr for OutputId {
     }
 }
 
+fn validate_index(index: u16) -> Result<(), ValidationError> {
+    if !OUTPUT_INDEX_RANGE.contains(&index) {
+        Err(ValidationError::InvalidOutputIndex(index))
+    } else {
+        Ok(())
+    }
+}
+
 impl core::fmt::Display for OutputId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "{}{}", self.transaction_id, hex::encode(self.index.to_le_bytes()))
@@ -137,13 +145,5 @@ impl core::fmt::Display for OutputId {
 impl core::fmt::Debug for OutputId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "OutputId({})", self)
-    }
-}
-
-fn validate_index(index: u16) -> Result<(), ValidationError> {
-    if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
-        Err(ValidationError::InvalidOutputIndex(index))
-    } else {
-        Ok(())
     }
 }
