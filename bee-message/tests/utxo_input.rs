@@ -31,7 +31,7 @@ fn new_valid() {
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
     let input = UtxoInput::new(*output_id.transaction_id(), output_id.index()).unwrap();
 
-    assert_eq!(*input.output_id(), output_id);
+    assert_eq!(input.output_id(), &output_id);
 }
 
 #[test]
@@ -39,7 +39,7 @@ fn from_valid() {
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
     let input: UtxoInput = output_id.into();
 
-    assert_eq!(*input.output_id(), output_id);
+    assert_eq!(input.output_id(), &output_id);
 }
 
 #[test]

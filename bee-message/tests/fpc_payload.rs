@@ -36,7 +36,7 @@ fn conflict_accessors_eq() {
     let transaction_id = TransactionId::from(rand_bytes_array());
     let conflict = Conflict::new(transaction_id, 0, 0);
 
-    assert_eq!(*conflict.transaction_id(), transaction_id);
+    assert_eq!(conflict.transaction_id(), &transaction_id);
     assert_eq!(conflict.opinion(), 0);
     assert_eq!(conflict.round(), 0);
 }
@@ -46,7 +46,7 @@ fn timestamp_accessors_eq() {
     let message_id = MessageId::from(rand_bytes_array());
     let timestamp = Timestamp::new(message_id, 0, 0);
 
-    assert_eq!(*timestamp.message_id(), message_id);
+    assert_eq!(timestamp.message_id(), &message_id);
     assert_eq!(timestamp.opinion(), 0);
     assert_eq!(timestamp.round(), 0);
 }

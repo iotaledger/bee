@@ -62,7 +62,7 @@ fn accessors_eq() {
     let data = DataPayload::new(0, bytes.clone()).unwrap();
 
     assert_eq!(data.version(), 0);
-    assert_eq!(*data.data(), bytes);
+    assert_eq!(data.data(), bytes);
 }
 
 #[test]

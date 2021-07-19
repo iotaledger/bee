@@ -270,10 +270,10 @@ fn accessors_eq() {
         .unwrap();
 
     assert_eq!(essence.timestamp(), timestamp);
-    assert_eq!(*essence.access_pledge_id(), access_pledge_id);
-    assert_eq!(*essence.consensus_pledge_id(), consensus_pledge_id);
-    assert_eq!(*essence.inputs(), inputs);
-    assert_eq!(*essence.outputs(), outputs);
+    assert_eq!(essence.access_pledge_id(), &access_pledge_id);
+    assert_eq!(essence.consensus_pledge_id(), &consensus_pledge_id);
+    assert_eq!(essence.inputs(), &inputs);
+    assert_eq!(essence.outputs(), &outputs);
 }
 
 #[test]
