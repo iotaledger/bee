@@ -21,10 +21,15 @@ fn kind() {
 }
 
 #[test]
+fn display_impl() {
+    assert_eq!(format!("{}", BlsAddress::from_str(BLS_ADDRESS).unwrap()), BLS_ADDRESS);
+}
+
+#[test]
 fn debug_impl() {
     assert_eq!(
         format!("{:?}", BlsAddress::from_str(BLS_ADDRESS).unwrap()),
-        "BlsAddress(58501b4f0c2d569f3db0c09c85c74c5f9fbf1e89bc30aae12f02212a86a6412ca69903941fa870ff64c01697d7c62b2cd7)"
+        "BlsAddress(".to_owned() + BLS_ADDRESS + ")"
     );
 }
 

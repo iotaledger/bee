@@ -16,10 +16,15 @@ const OUTPUT_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d100
 const OUTPUT_ID_INVALID_LEN: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6497f";
 
 #[test]
+fn display_impl() {
+    assert_eq!(format!("{}", OutputId::from_str(OUTPUT_ID).unwrap()), OUTPUT_ID);
+}
+
+#[test]
 fn debug_impl() {
     assert_eq!(
         format!("{:?}", OutputId::from_str(OUTPUT_ID).unwrap()),
-        "OutputId(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6492a00)"
+        "OutputId(".to_owned() + OUTPUT_ID + ")"
     );
 }
 

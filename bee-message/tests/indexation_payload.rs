@@ -15,13 +15,24 @@ fn kind() {
 }
 
 #[test]
+fn display_impl() {
+    assert_eq!(
+        format!(
+            "{}",
+            PaddedIndex::new(hex::decode(PADDED_INDEX).unwrap().try_into().unwrap())
+        ),
+        PADDED_INDEX
+    );
+}
+
+#[test]
 fn debug_impl() {
     assert_eq!(
         format!(
             "{:?}",
             PaddedIndex::new(hex::decode(PADDED_INDEX).unwrap().try_into().unwrap())
         ),
-        "PaddedIndex(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64952fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+        "PaddedIndex(".to_owned() + PADDED_INDEX + ")"
     );
 }
 

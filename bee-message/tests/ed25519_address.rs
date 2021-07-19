@@ -17,10 +17,18 @@ fn kind() {
 }
 
 #[test]
+fn display_impl() {
+    assert_eq!(
+        format!("{}", Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+        ED25519_ADDRESS
+    );
+}
+
+#[test]
 fn debug_impl() {
     assert_eq!(
         format!("{:?}", Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
-        "Ed25519Address(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+        "Ed25519Address(".to_owned() + ED25519_ADDRESS + ")"
     );
 }
 
