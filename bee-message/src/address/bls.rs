@@ -85,7 +85,7 @@ impl AsRef<[u8]> for BlsAddress {
 
 impl core::fmt::Display for BlsAddress {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", hex::encode(self.0.clone()))
+        write!(f, "{}", hex::encode(&self))
     }
 }
 

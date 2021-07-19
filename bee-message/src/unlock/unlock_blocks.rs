@@ -208,14 +208,14 @@ fn validate_unlock_block_variants(unlock_blocks: &[UnlockBlock]) -> Result<(), V
     Ok(())
 }
 
-fn validate_unlock_block_variant(
+fn validate_unlock_block_variant<'a>(
     idx: usize,
-    unlock_block: &UnlockBlock,
-    unlock_blocks: &[UnlockBlock],
-) -> Result<Option<SignatureUnlock>, ValidationError> {
+    unlock_block: &'a UnlockBlock,
+    unlock_blocks: &'a [UnlockBlock],
+) -> Result<Option<&'a SignatureUnlock>, ValidationError> {
     match unlock_block {
         UnlockBlock::Reference(r) => validate_unlock_block_reference(&r, idx, unlock_blocks).map(|_| None),
-        UnlockBlock::Signature(s) => Ok(Some(s.clone())),
+        UnlockBlock::Signature(s) => Ok(Some(s)),
     }
 }
 
