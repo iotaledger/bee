@@ -102,9 +102,7 @@ impl fmt::Display for UnlockBlocksUnpackError {
 /// * Ensure `Reference` blocks specify a previous existing `Signature` block.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct UnlockBlocks {
-    inner: Vec<UnlockBlock>,
-}
+pub struct UnlockBlocks(Vec<UnlockBlock>);
 
 impl UnlockBlocks {
     /// Creates a new `UnlockBlocks`.
@@ -112,14 +110,14 @@ impl UnlockBlocks {
         validate_unlock_block_count(unlock_blocks.len())?;
         validate_unlock_block_variants(&unlock_blocks)?;
 
-        Ok(Self { inner: unlock_blocks })
+        Ok(Self(unlock_blocks))
     }
 
     /// Gets an `UnlockBlock` from an `UnlockBlocks`.
     /// Returns the referenced unlock block if the requested unlock block was a reference.
     pub fn get(&self, index: usize) -> Option<&UnlockBlock> {
-        match self.inner.get(index) {
-            Some(UnlockBlock::Reference(reference)) => self.inner.get(reference.index() as usize),
+        match self.0.get(index) {
+            Some(UnlockBlock::Reference(reference)) => self.0.get(reference.index() as usize),
             Some(unlock_block) => Some(unlock_block),
             None => None,
         }
@@ -130,7 +128,7 @@ impl Deref for UnlockBlocks {
     type Target = [UnlockBlock];
 
     fn deref(&self) -> &Self::Target {
-        &self.inner.as_slice()
+        &self.0.as_slice()
     }
 }
 
@@ -141,14 +139,14 @@ impl Packable for UnlockBlocks {
     fn packed_len(&self) -> usize {
         // Unwrap is safe, since UnlockBlock count is already validated.
         let prefixed: VecPrefix<UnlockBlock, u16, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX> =
-            self.inner.clone().try_into().unwrap();
+            self.0.clone().try_into().unwrap();
         prefixed.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         // Unwrap is safe, since UnlockBlock count is already validated.
         let prefixed: VecPrefix<UnlockBlock, u16, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX> =
-            self.inner.clone().try_into().unwrap();
+            self.0.clone().try_into().unwrap();
         prefixed
             .pack(packer)
             .map_err(PackError::coerce::<UnlockBlocksPackError>)
@@ -182,7 +180,7 @@ impl Packable for UnlockBlocks {
         validate_unlock_block_count(inner.len()).map_err(|e| UnpackError::Packable(e.into()))?;
         validate_unlock_block_variants(&inner).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        Ok(Self { inner })
+        Ok(Self(inner))
     }
 }
 
