@@ -78,8 +78,7 @@ fn from_str_to_str() {
 
 #[test]
 fn packed_len() {
-    let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
-    let input = UtxoInput::new(*output_id.transaction_id(), output_id.index()).unwrap();
+    let input = UtxoInput::from_str(OUTPUT_ID).unwrap();
 
     assert_eq!(input.packed_len(), 32 + 2);
     assert_eq!(input.pack_to_vec().unwrap().len(), 32 + 2);
@@ -87,8 +86,7 @@ fn packed_len() {
 
 #[test]
 fn packable_round_trip() {
-    let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
-    let input_1 = UtxoInput::new(*output_id.transaction_id(), output_id.index()).unwrap();
+    let input_1 = UtxoInput::from_str(OUTPUT_ID).unwrap();
     let input_2 = UtxoInput::unpack_from_slice(input_1.pack_to_vec().unwrap()).unwrap();
 
     assert_eq!(input_1, input_2);
