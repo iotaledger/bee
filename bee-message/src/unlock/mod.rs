@@ -7,11 +7,22 @@ mod unlock_blocks;
 pub use reference::{ReferenceUnlock, ReferenceUnlockUnpackError};
 pub use unlock_blocks::{UnlockBlocks, UnlockBlocksPackError, UnlockBlocksUnpackError};
 
-use crate::{signature::SignatureUnlock, MessageUnpackError, ValidationError};
+use crate::{input::INPUT_COUNT_MAX, signature::SignatureUnlock, MessageUnpackError, ValidationError};
 
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
-use core::{convert::Infallible, fmt};
+use core::{
+    convert::Infallible,
+    fmt,
+    ops::{Range, RangeInclusive},
+};
+
+/// The maximum number of unlock blocks for a transaction.
+pub const UNLOCK_BLOCK_COUNT_MAX: usize = INPUT_COUNT_MAX;
+/// The range of valid numbers of unlock blocks for a transaction [1..127].
+pub const UNLOCK_BLOCK_COUNT_RANGE: RangeInclusive<usize> = 1..=UNLOCK_BLOCK_COUNT_MAX;
+/// The valid range of indices for unlock blocks for a transaction [0..126].
+pub const UNLOCK_BLOCK_INDEX_RANGE: Range<u16> = 0..UNLOCK_BLOCK_COUNT_MAX as u16;
 
 /// Error encountered unpacking an `UnlockBlock`.
 #[derive(Debug)]

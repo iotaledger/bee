@@ -17,8 +17,6 @@ mod message_id;
 
 /// A module that provides types and syntactic validations of addresses.
 pub mod address;
-/// A module that contains constants related to messages.
-pub mod constants;
 /// A module that provides error types for validation and packing/unpacking.
 pub mod error;
 /// A module that provides types and syntactic validations of inputs.
@@ -42,3 +40,6 @@ pub use error::{MessagePackError, MessageUnpackError, ValidationError};
 pub use message::{Message, MESSAGE_LENGTH_RANGE};
 pub use message_builder::MessageBuilder;
 pub use message_id::{MessageId, MESSAGE_ID_LENGTH};
+
+/// The total number of IOTA tokens in circulation.
+pub const IOTA_SUPPLY: u64 = 2_779_530_283_277_761;

@@ -5,7 +5,10 @@ mod output_id;
 mod signature_locked_asset;
 mod signature_locked_single;
 
-pub use crate::error::{MessageUnpackError, ValidationError};
+pub use crate::{
+    error::{MessageUnpackError, ValidationError},
+    input::INPUT_COUNT_MAX,
+};
 
 pub use output_id::{OutputId, OutputIdUnpackError, OUTPUT_ID_LENGTH};
 pub use signature_locked_asset::{
@@ -17,7 +20,18 @@ pub use signature_locked_single::{
 
 use bee_packable::{PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker};
 
-use core::{convert::Infallible, fmt};
+use core::{
+    convert::Infallible,
+    fmt,
+    ops::{Range, RangeInclusive},
+};
+
+/// The maximum number of outputs for a transaction.
+pub const OUTPUT_COUNT_MAX: usize = INPUT_COUNT_MAX;
+/// The range of valid numbers of outputs for a transaction [1..127].
+pub const OUTPUT_COUNT_RANGE: RangeInclusive<usize> = 1..=OUTPUT_COUNT_MAX;
+/// The valid range of indices for outputs for a transaction [0..126].
+pub const OUTPUT_INDEX_RANGE: Range<u16> = 0..OUTPUT_COUNT_MAX as u16;
 
 /// Error encountered unpacking a transaction output.
 #[derive(Debug)]

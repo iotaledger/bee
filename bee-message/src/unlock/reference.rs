@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{constants::INPUT_OUTPUT_INDEX_RANGE, error::ValidationError, MessageUnpackError};
+use crate::{error::ValidationError, unlock::UNLOCK_BLOCK_INDEX_RANGE, MessageUnpackError};
 
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
@@ -42,7 +42,7 @@ impl ReferenceUnlock {
 
     /// Creates a new `ReferenceUnlock`.
     pub fn new(index: u16) -> Result<Self, ValidationError> {
-        if !INPUT_OUTPUT_INDEX_RANGE.contains(&index) {
+        if !UNLOCK_BLOCK_INDEX_RANGE.contains(&index) {
             return Err(ValidationError::InvalidReferenceIndex(index));
         }
 

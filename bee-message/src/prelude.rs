@@ -3,7 +3,6 @@
 
 pub use crate::{
     address::{Address, BlsAddress, Ed25519Address, BLS_ADDRESS_LENGTH, ED25519_ADDRESS_LENGTH},
-    constants::IOTA_SUPPLY,
     error::{MessagePackError, MessageUnpackError, ValidationError},
     input::{Input, UtxoInput},
     output::{
@@ -21,5 +20,5 @@ pub use crate::{
     },
     signature::{Ed25519Signature, SignatureUnlock},
     unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
-    Message, MessageBuilder, MessageId, MESSAGE_ID_LENGTH, MESSAGE_LENGTH_RANGE,
+    Message, MessageBuilder, MessageId, IOTA_SUPPLY, MESSAGE_ID_LENGTH, MESSAGE_LENGTH_RANGE,
 };
