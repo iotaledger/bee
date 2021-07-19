@@ -116,7 +116,7 @@ fn unpack_invalid_no_strong_parents() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let id_a = MessageId::new([
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
     ]);

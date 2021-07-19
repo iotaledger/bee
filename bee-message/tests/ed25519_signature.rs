@@ -25,7 +25,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
     let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
     let sig = Ed25519Signature::new(pub_key_bytes, sig_bytes);

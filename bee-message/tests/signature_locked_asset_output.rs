@@ -71,7 +71,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let output_a = SignatureLockedAssetOutput::new(
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         vec![

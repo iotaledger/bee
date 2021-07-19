@@ -32,7 +32,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let application_msg_a = ApplicationMessagePayload::new(0, 1);
 
     let application_msg_b =

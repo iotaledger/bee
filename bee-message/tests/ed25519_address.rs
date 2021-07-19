@@ -80,17 +80,17 @@ fn try_from_bech32() {
 }
 
 #[test]
-fn round_trip() {
-    let address = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
-    let packed_address = address.pack_to_vec().unwrap();
-
-    assert_eq!(address, Ed25519Address::unpack_from_slice(packed_address).unwrap());
-}
-
-#[test]
 fn packed_len() {
     let address = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
 
     assert_eq!(address.packed_len(), 32);
     assert_eq!(address.pack_to_vec().unwrap().len(), 32);
+}
+
+#[test]
+fn packable_round_trip() {
+    let address = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
+    let packed_address = address.pack_to_vec().unwrap();
+
+    assert_eq!(address, Ed25519Address::unpack_from_slice(packed_address).unwrap());
 }

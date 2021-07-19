@@ -73,7 +73,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let output_1 =
         SignatureLockedSingleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 1_000)
             .unwrap();

@@ -57,7 +57,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip_ed25519() {
+fn packable_round_trip_ed25519() {
     let signature_1 = SignatureUnlock::from(Ed25519Signature::new(rand_bytes_array(), rand_bytes_array()));
     let signature_bytes = signature_1.pack_to_vec().unwrap();
     let signature_2 = SignatureUnlock::unpack_from_slice(signature_bytes.clone()).unwrap();

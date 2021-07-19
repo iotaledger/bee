@@ -133,20 +133,6 @@ fn unpack_invalid_index_length_more_than_max() {
 }
 
 #[test]
-fn round_trip() {
-    let index = rand_bytes(32);
-    let mut padded_index = index.clone();
-    padded_index.append(&mut vec![0u8; 32]);
-
-    let indexation_1 =
-        IndexationPayload::new(0, index, [0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2].to_vec()).unwrap();
-
-    let indexation_2 = IndexationPayload::unpack_from_slice(indexation_1.pack_to_vec().unwrap()).unwrap();
-
-    assert_eq!(indexation_1, indexation_2);
-}
-
-#[test]
 fn packed_len() {
     let indexation = IndexationPayload::new(
         0,
@@ -157,4 +143,18 @@ fn packed_len() {
 
     assert_eq!(indexation.packed_len(), 1 + 10 + 4 + 4 + 8);
     assert_eq!(indexation.pack_to_vec().unwrap().len(), 1 + 10 + 4 + 4 + 8);
+}
+
+#[test]
+fn packable_round_trip() {
+    let index = rand_bytes(32);
+    let mut padded_index = index.clone();
+    padded_index.append(&mut vec![0u8; 32]);
+
+    let indexation_1 =
+        IndexationPayload::new(0, index, [0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2].to_vec()).unwrap();
+
+    let indexation_2 = IndexationPayload::unpack_from_slice(indexation_1.pack_to_vec().unwrap()).unwrap();
+
+    assert_eq!(indexation_1, indexation_2);
 }

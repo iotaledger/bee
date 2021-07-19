@@ -304,7 +304,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
 
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());

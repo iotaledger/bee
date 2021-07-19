@@ -55,7 +55,16 @@ fn bech32_string_to_address() {
 }
 
 #[test]
-fn round_trip_ed25519() {
+fn packed_len_ed25519() {
+    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
+
+    let address = Address::from(Ed25519Address::new(bytes));
+
+    assert_eq!(address.packed_len(), 32 + 1);
+}
+
+#[test]
+fn packable_round_trip_ed25519() {
     let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
 
     let address = Address::from(Ed25519Address::new(bytes));
@@ -63,13 +72,4 @@ fn round_trip_ed25519() {
 
     assert_eq!(address_packed.len(), address.packed_len());
     assert_eq!(address, Address::unpack_from_slice(address_packed).unwrap());
-}
-
-#[test]
-fn packed_len_ed25519() {
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
-
-    let address = Address::from(Ed25519Address::new(bytes));
-
-    assert_eq!(address.packed_len(), 32 + 1);
 }

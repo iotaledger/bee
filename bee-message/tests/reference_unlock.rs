@@ -61,7 +61,7 @@ fn packed_len() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let reference_1 = ReferenceUnlock::try_from(42).unwrap();
     let reference_2 = ReferenceUnlock::unpack_from_slice(reference_1.pack_to_vec().unwrap()).unwrap();
 

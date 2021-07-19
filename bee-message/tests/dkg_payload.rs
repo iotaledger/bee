@@ -70,7 +70,7 @@ fn encryped_deal_unwrap() {
 }
 
 #[test]
-fn encrypted_deal_round_trip() {
+fn encrypted_deal_packable_round_trip() {
     let deal_a = EncryptedDeal::builder()
         .with_dh_key(rand_bytes(128))
         .with_nonce(rand_bytes(12))
@@ -172,7 +172,7 @@ fn dkg_packed_len() {
 }
 
 #[test]
-fn dkg_round_trip() {
+fn dkg_packable_round_trip() {
     let dkg_a = DkgPayload::builder()
         .with_version(0)
         .with_instance_id(1)
