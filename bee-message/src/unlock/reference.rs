@@ -10,8 +10,10 @@ use core::{
     fmt,
 };
 
+/// Error encountered unpacking a `ReferenceUnlock`.
 #[derive(Debug)]
 pub enum ReferenceUnlockUnpackError {
+    /// Validating a `ReferenceUnlock` failed.
     ValidationError(ValidationError),
 }
 
