@@ -64,7 +64,7 @@ impl fmt::Display for ValidationError {
             Self::InvalidAddress => write!(f, "invalid address provided"),
             Self::InvalidAddressKind(kind) => write!(f, "invalid address kind: {}", kind),
             Self::InvalidAssetBalanceLength(len) => {
-                write!(f, "invalid asset allowance balance count: {}", len)
+                write!(f, "invalid asset balance count: {}", len)
             }
             Self::InvalidAmount(amount) => write!(f, "invalid amount: {}", amount),
             Self::InvalidEncryptedDealLength(len) => write!(f, "invalid encrypted deal length: {}", len),
