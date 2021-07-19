@@ -64,9 +64,9 @@ fn accessors_eq() {
     assert_eq!(beacon.version(), 0);
     assert_eq!(beacon.instance_id(), 0);
     assert_eq!(beacon.round(), 1);
-    assert_eq!(*beacon.prev_signature(), prev_signature);
-    assert_eq!(*beacon.signature(), signature);
-    assert_eq!(*beacon.distributed_public_key(), distributed_pk);
+    assert_eq!(beacon.prev_signature(), prev_signature);
+    assert_eq!(beacon.signature(), signature);
+    assert_eq!(beacon.distributed_public_key(), distributed_pk);
 }
 
 #[test]

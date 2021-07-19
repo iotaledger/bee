@@ -173,8 +173,8 @@ fn accessors_eq() {
         .unwrap();
 
     assert_eq!(payload.version(), 0);
-    assert_eq!(*payload.essence(), essence);
-    assert_eq!(*payload.unlock_blocks(), unlock_blocks);
+    assert_eq!(payload.essence(), &essence);
+    assert_eq!(payload.unlock_blocks(), &unlock_blocks);
 }
 
 #[test]

@@ -58,8 +58,8 @@ fn accessors_eq() {
     assert_eq!(beacon.version(), 0);
     assert_eq!(beacon.instance_id(), 0);
     assert_eq!(beacon.round(), 1);
-    assert_eq!(*beacon.partial_public_key(), partial_pk);
-    assert_eq!(*beacon.partial_signature(), partial_signature);
+    assert_eq!(beacon.partial_public_key(), partial_pk);
+    assert_eq!(beacon.partial_signature(), partial_signature);
 }
 
 #[test]

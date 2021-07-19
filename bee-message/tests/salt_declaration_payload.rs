@@ -60,10 +60,10 @@ fn accessors_eq() {
 
     assert_eq!(salt_declaration.version(), 0);
     assert_eq!(salt_declaration.node_id(), 32);
-    assert_eq!(*salt_declaration.salt().bytes(), salt_bytes);
+    assert_eq!(salt_declaration.salt().bytes(), salt_bytes);
     assert_eq!(salt_declaration.salt().expiry_time(), expiry_time);
     assert_eq!(salt_declaration.timestamp(), timestamp);
-    assert_eq!(*salt_declaration.signature(), signature);
+    assert_eq!(salt_declaration.signature(), &signature);
 }
 
 #[test]

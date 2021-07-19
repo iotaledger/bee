@@ -33,7 +33,7 @@ fn new_valid() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
     let output_id = OutputId::new(transaction_id, 42).unwrap();
 
-    assert_eq!(*output_id.transaction_id(), transaction_id);
+    assert_eq!(output_id.transaction_id(), &transaction_id);
     assert_eq!(output_id.index(), 42);
 }
 
@@ -63,7 +63,7 @@ fn try_from_valid() {
     let output_id_bytes: [u8; OUTPUT_ID_LENGTH] = hex::decode(OUTPUT_ID).unwrap().try_into().unwrap();
     let output_id = OutputId::try_from(output_id_bytes).unwrap();
 
-    assert_eq!(*output_id.transaction_id(), transaction_id);
+    assert_eq!(output_id.transaction_id(), &transaction_id);
     assert_eq!(output_id.index(), 42);
 }
 
@@ -82,7 +82,7 @@ fn from_str_valid() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
     let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
 
-    assert_eq!(*output_id.transaction_id(), transaction_id);
+    assert_eq!(output_id.transaction_id(), &transaction_id);
     assert_eq!(output_id.index(), 42);
 }
 

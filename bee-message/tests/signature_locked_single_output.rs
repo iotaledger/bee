@@ -18,7 +18,7 @@ fn new_valid_min_amount() {
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let output = SignatureLockedSingleOutput::new(address.clone(), 1).unwrap();
 
-    assert_eq!(*output.address(), address);
+    assert_eq!(output.address(), &address);
     assert_eq!(output.amount(), 1);
 }
 
@@ -27,7 +27,7 @@ fn new_valid_max_amount() {
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let output = SignatureLockedSingleOutput::new(address.clone(), IOTA_SUPPLY).unwrap();
 
-    assert_eq!(*output.address(), address);
+    assert_eq!(output.address(), &address);
     assert_eq!(output.amount(), IOTA_SUPPLY);
 }
 

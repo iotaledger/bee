@@ -39,7 +39,7 @@ fn accessors_eq() {
 
     let output = SignatureLockedAssetOutput::new(address.clone(), balances.clone()).unwrap();
 
-    assert_eq!(*output.address(), address);
+    assert_eq!(output.address(), &address);
     assert_eq!(output.balance_iter().cloned().collect::<Vec<AssetBalance>>(), balances);
 }
 
@@ -50,7 +50,7 @@ fn asset_balance_accessors_eq() {
 
     let balance = AssetBalance::new(id, amount);
 
-    assert_eq!(*balance.id(), id);
+    assert_eq!(balance.id(), &id);
     assert_eq!(balance.balance(), amount);
 }
 

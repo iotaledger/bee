@@ -39,11 +39,11 @@ fn encrypted_deal_accessors_eq() {
         .finish()
         .unwrap();
 
-    assert_eq!(*deal.dh_key(), dh_key);
-    assert_eq!(*deal.nonce(), nonce);
-    assert_eq!(*deal.encrypted_share(), encrypted_share);
+    assert_eq!(deal.dh_key(), dh_key);
+    assert_eq!(deal.nonce(), nonce);
+    assert_eq!(deal.encrypted_share(), encrypted_share);
     assert_eq!(deal.threshold(), 10);
-    assert_eq!(*deal.commitments(), commitments);
+    assert_eq!(deal.commitments(), commitments);
 }
 
 #[test]
@@ -142,7 +142,7 @@ fn accessors_eq() {
     assert_eq!(dkg.instance_id(), 1);
     assert_eq!(dkg.from_index(), 20);
     assert_eq!(dkg.to_index(), 32);
-    assert_eq!(*dkg.deal(), deal);
+    assert_eq!(dkg.deal(), &deal);
 }
 
 #[test]
