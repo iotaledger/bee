@@ -12,10 +12,15 @@ const MESSAGE_ID_INVALID_LEN_TOO_SHORT: &str = "52fdfc072182654f163f5f0f9a621d72
 const MESSAGE_ID_INVALID_LEN_TOO_LONG: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64900";
 
 #[test]
+fn display_impl() {
+    assert_eq!(format!("{}", MessageId::from_str(MESSAGE_ID).unwrap()), MESSAGE_ID);
+}
+
+#[test]
 fn debug_impl() {
     assert_eq!(
         format!("{:?}", MessageId::from_str(MESSAGE_ID).unwrap()),
-        "MessageId(52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649)"
+        "MessageId(".to_owned() + MESSAGE_ID + ")"
     );
 }
 
