@@ -123,6 +123,7 @@ module.exports = {
       {
         sharedFolders: [
           { source: '../.github/', target: '.github'},
+          { source: '../', target:'README.md'}
         ],
       },
     ],
