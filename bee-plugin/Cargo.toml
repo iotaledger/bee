@@ -1,0 +1,16 @@
+[package]
+name = "bee-plugin"
+version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
+edition = "2018"
+description = "The bee node API for plugins"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "framework", "plugin" ]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-event-bus = { path = "../bee-common/bee-event-bus" }
+
+tokio = { version = "1.6", features = [ "macros", "rt-multi-thread", "sync" ] }
