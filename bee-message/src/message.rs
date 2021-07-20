@@ -22,6 +22,9 @@ pub const MESSAGE_PUBLIC_KEY_LENGTH: usize = 32;
 /// Length (in bytes) of a message signature.
 pub const MESSAGE_SIGNATURE_LENGTH: usize = 64;
 
+/// Messages are of version 1.
+const MESSAGE_VERSION: u8 = 1;
+
 /// Represents the object that nodes gossip around the network.
 ///
 /// `Message`s must:
@@ -123,7 +126,8 @@ impl Packable for Message {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        self.parents.packed_len()
+        MESSAGE_VERSION.packed_len()
+            + self.parents.packed_len()
             + self.issuer_public_key.packed_len()
             + self.issue_timestamp.packed_len()
             + self.sequence_number.packed_len()
@@ -133,6 +137,7 @@ impl Packable for Message {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        MESSAGE_VERSION.pack(packer).map_err(PackError::infallible)?;
         self.parents.pack(packer)?;
         self.issuer_public_key.pack(packer).map_err(PackError::infallible)?;
         self.issue_timestamp.pack(packer).map_err(PackError::infallible)?;
@@ -145,6 +150,9 @@ impl Packable for Message {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        validate_message_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
+
         let parents = Parents::unpack(unpacker)?;
         let issuer_public_key = <[u8; MESSAGE_PUBLIC_KEY_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
         let issue_timestamp = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
@@ -173,6 +181,14 @@ impl Packable for Message {
 pub(crate) fn validate_message_len(len: usize) -> Result<(), ValidationError> {
     if !MESSAGE_LENGTH_RANGE.contains(&len) {
         Err(ValidationError::InvalidMessageLength(len))
+    } else {
+        Ok(())
+    }
+}
+
+fn validate_message_version(version: u8) -> Result<(), ValidationError> {
+    if version != MESSAGE_VERSION {
+        Err(ValidationError::InvalidMessageVersion(version))
     } else {
         Ok(())
     }
