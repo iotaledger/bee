@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugin::{streamer::PluginStreamer, EventId, PluginId, UniqueId};
+use crate::{streamer::PluginStreamer, EventId, PluginId, UniqueId};
 
 use bee_event_bus::EventBus;
 

@@ -1,14 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugin::{handler::PluginHandler, EventId, PluginId, UniqueId};
+use crate::{handler::PluginHandler, EventId, PluginId, UniqueId};
 
 use bee_event_bus::EventBus;
 
 use std::{collections::HashMap, error::Error, process::Command, sync::Arc};
 
 /// The bee node plugin manager.
-pub(crate) struct PluginManager {
+pub struct PluginManager {
     /// Counter to create new and unique `PluginId` values.
     count: usize,
     /// Handlers for each plugin.
@@ -19,7 +19,7 @@ pub(crate) struct PluginManager {
 
 impl PluginManager {
     /// Creates a new and empty plugin manager.
-    pub(crate) fn new(bus: Arc<EventBus<'static, UniqueId>>) -> Self {
+    pub fn new(bus: Arc<EventBus<'static, UniqueId>>) -> Self {
         Self {
             count: 0,
             handlers: Default::default(),
@@ -28,7 +28,7 @@ impl PluginManager {
     }
 
     /// Loads a new plugin from the specified command and returns the `PluginId` for that plugin.
-    pub(crate) fn load_plugin(&mut self, mut command: Command) -> Result<PluginId, Box<dyn Error>> {
+    pub fn load_plugin(&mut self, mut command: Command) -> Result<PluginId, Box<dyn Error>> {
         let process = command.spawn()?;
 
         // FIXME: do the handshake and retrieve the event IDs.
@@ -48,8 +48,8 @@ impl PluginManager {
         Ok(id)
     }
 
-    /// UNloads a plugin with the specified identifier.
-    pub(crate) fn unload_plugin(&mut self, id: PluginId) {
+    /// Unloads a plugin with the specified identifier.
+    pub fn unload_plugin(&mut self, id: PluginId) {
         if let Some(handler) = self.handlers.remove(&id) {
             handler.shutdown(&self.bus);
         }

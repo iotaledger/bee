@@ -5,12 +5,12 @@ mod handler;
 mod manager;
 mod streamer;
 
-pub(crate) use manager::PluginManager;
+pub use manager::PluginManager;
 
 use std::any::TypeId;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum UniqueId {
+pub enum UniqueId {
     Type(TypeId),
     Plugin(PluginId),
 }
@@ -28,9 +28,9 @@ impl From<PluginId> for UniqueId {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
-pub(crate) struct PluginId(usize);
+pub struct PluginId(usize);
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
-pub(crate) enum EventId {
+pub enum EventId {
     Dummy,
 }
