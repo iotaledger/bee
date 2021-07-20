@@ -1,6 +1,6 @@
 # A Framework For Building IOTA Nodes, Clients, and Applications in Rust
 
-![Badge](../static/img/Bee.png "Badge")
+![Badge](.github/Bee.png "Badge")
 
 
 [![Discord](https://img.shields.io/badge/Discord-9cf.svg?logo=discord "Discord")](https://discord.iota.org/")
