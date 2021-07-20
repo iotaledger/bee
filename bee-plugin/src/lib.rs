@@ -4,7 +4,11 @@
 mod handler;
 mod manager;
 mod streamer;
+mod grpc {
+    tonic::include_proto!("plugin");
+}
 
+pub use grpc::EventId;
 pub use manager::PluginManager;
 
 use std::any::TypeId;
@@ -29,8 +33,3 @@ impl From<PluginId> for UniqueId {
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub struct PluginId(usize);
-
-#[derive(Clone, Copy, Hash, PartialEq, Eq)]
-pub enum EventId {
-    Dummy,
-}

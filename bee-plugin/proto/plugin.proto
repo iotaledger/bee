@@ -1,0 +1,31 @@
+// Copyright 2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+package plugin;
+
+service Plugin {
+    rpc Handshake(HandshakeRequest) returns (HandshakeReply);
+    rpc Shutdown(ShutdownRequest) returns (ShutdownReply);
+    rpc ProcessDummyEvent(stream DummyEvent) returns (ProcessReply);
+}
+
+message HandshakeRequest {}
+
+message HandshakeReply {
+    string version = 1;
+    repeated EventId ids = 2;
+}
+
+message ShutdownRequest {}
+
+message ShutdownReply {}
+
+enum EventId {
+    DUMMY = 0;
+}
+
+message DummyEvent {}
+
+message ProcessReply {}
+

@@ -1,9 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{handler::PluginHandler, EventId, PluginId, UniqueId};
+use crate::{
+    grpc::{plugin_client::PluginClient, HandshakeRequest},
+    handler::PluginHandler,
+    EventId, PluginId, UniqueId,
+};
 
 use bee_event_bus::EventBus;
+
+use tonic::Request;
 
 use std::{collections::HashMap, error::Error, process::Command, sync::Arc};
 
@@ -28,19 +34,23 @@ impl PluginManager {
     }
 
     /// Loads a new plugin from the specified command and returns the `PluginId` for that plugin.
-    pub fn load_plugin(&mut self, mut command: Command) -> Result<PluginId, Box<dyn Error>> {
+    pub async fn load_plugin(&mut self, mut command: Command) -> Result<PluginId, Box<dyn Error>> {
         let process = command.spawn()?;
 
-        // FIXME: do the handshake and retrieve the event IDs.
-        let event_ids: Vec<EventId> = vec![];
+        let mut client = PluginClient::connect("http://[::1]:50051").await?;
+
+        let handshake_response = client.handshake(Request::new(HandshakeRequest {})).await?;
+
+        let event_ids: Vec<i32> = handshake_response.into_inner().ids;
 
         let id = PluginId(self.count);
-        let mut handler = PluginHandler::new(id, process);
+        let mut handler = PluginHandler::new(id, process, client);
 
         self.count += 1;
 
         for event_id in event_ids {
-            handler.register_callback(event_id, &self.bus);
+            let event_id = EventId::from_i32(event_id).unwrap();
+            handler.register_callback(EventId::from(event_id), &self.bus);
         }
 
         self.handlers.insert(id, handler);
@@ -49,9 +59,11 @@ impl PluginManager {
     }
 
     /// Unloads a plugin with the specified identifier.
-    pub fn unload_plugin(&mut self, id: PluginId) {
+    pub async fn unload_plugin(&mut self, id: PluginId) -> Result<(), Box<dyn Error>> {
         if let Some(handler) = self.handlers.remove(&id) {
-            handler.shutdown(&self.bus);
+            handler.shutdown(&self.bus).await?;
         }
+
+        Ok(())
     }
 }
