@@ -28,6 +28,7 @@ pub enum ValidationError {
     InvalidIndexationIndexLength(usize),
     InvalidInputCount(usize),
     InvalidMessageLength(usize),
+    InvalidMessageVersion(u8),
     InvalidOutputCount(usize),
     InvalidOutputIndex(u16),
     InvalidParentsCount(usize),
@@ -80,6 +81,7 @@ impl fmt::Display for ValidationError {
             }
             Self::InvalidInputCount(count) => write!(f, "invalid input count: {}", count),
             Self::InvalidMessageLength(len) => write!(f, "invalid message length: {}", len),
+            Self::InvalidMessageVersion(version) => write!(f, "invalid message version: {}", version),
             Self::InvalidOutputCount(count) => write!(f, "invalid output count: {}", count),
             Self::InvalidOutputIndex(index) => write!(f, "Inavlid output index: {}", index),
             Self::InvalidParentsCount(count) => write!(f, "invalid parents count: {}", count),
