@@ -15,7 +15,7 @@ const ActionList = [
   },
   {
     title: 'Build',
-    link: 'post_installation/post_installation',
+    link: 'setup_a_node',
     description: (
       <>
         Follow our tutorial to run your own IOTA Bee node.
