@@ -1,33 +1,17 @@
 # Configuration
 
-Bee uses the Toml standard as config file. If you are unsure about some syntax have a look at the official specs [here](https://toml.io).
-The default config file is `config.toml`. You can change the path or name of the config file by using the `-c` or `--config` flag. 
-For Example: `bee -c config_example.toml`
+Bee uses the Toml standard as a configuration file. If you are unsure about syntax, you can have a look at the [official Toml specifications](https://toml.io).
 
-## Table of content
+The default configuration file is `config.toml`. You can change the configuration file's path or name  by using the `-c` or `--config` flag.
 
-[//]: # "Table of contents created with: http://ecotrust-canada.github.io/markdown-toc/"
+For example: 
 
-- [Logger](#logger)
-  * [outputs](#outputs)
-- [Network](#network)
-    + [peering](#peering)
-- [Protocol](#protocol)
-  * [coordinator](#coordinator)
-    + [public_key_ranges](#public_key_ranges)
-  * [workers](#workers)
-- [REST API](#rest-api)
-- [Snapshot](#snapshot)
-- [Pruning](#pruning)
-- [Storage](#storage)
-  * [storage](#storage-1)
-  * [env](#env)
-- [Tangle](#tangle)
-- [Mqtt](#mqtt)
-- [Dashboard](#dashboard)
-  * [auth](#auth)
+```bash
+bee -c config_example.toml
+```
 
----
+
+## Node
 
 | Name       | Description                                                                                | Type   |
 | :--------- | :----------------------------------------------------------------------------------------- | :----- |
@@ -45,13 +29,13 @@ For Example: `bee -c config_example.toml`
 | level_width         | width of the level section of a log  | integer[usize] |
 | [outputs](#outputs) | config for different log filters     | array          |
 
-### outputs
+### Outputs
 
-| Name         | Description                     | Type             |
-| :----------- | :------------------------------ | :--------------- |
-| name         | standart stream or file         | string           |
-| level_filter | log level filter of an output   | string           |
-| target_fiter | log target filters of an output | array of strings |
+| Name          | Description                     | Type             |
+| :------------ | :------------------------------ | :--------------- |
+| name          | standard stream or file         | string           |
+| level_filter  | log level filter of an output   | string           |
+| target_filter | log target filters of an output | array of strings |
 
 Example:
 
@@ -78,7 +62,7 @@ level_filter   = "error"
 | max_unknown_peers       | max count of allowed unknown peers                          | integer[usize]    |
 | [peering](#peering)     | array of static peers                                       | array of tables   |
 
-#### peering
+#### Peering
 
 | Name    | Description                                                                                          | Type   |
 | :------ | :--------------------------------------------------------------------------------------------------- | :----- |
@@ -107,13 +91,13 @@ alias   = "yet another peer"
 
 ## Protocol
 
-| Name                        | Description           | Type         |
-| :-------------------------- | :-------------------- | :----------- |
-| minimum_pow_score           | the minimum pow score | float[f64]   |
-| [coordinator](#coordinator) | coordinator configs   | table        |
-| [workers](#workers)         | worker configs        | table        |
+| Name                        | Description           | Type       |
+| :-------------------------- | :-------------------- | :--------- |
+| minimum_pow_score           | the minimum pow score | float[f64] |
+| [coordinator](#coordinator) | coordinator configs   | table      |
+| [workers](#workers)         | worker configs        | table      |
 
-### coordinator
+### Coordinator
 
 | Name                                    | Description           | Type            |
 | :-------------------------------------- | :-------------------- | :-------------- |
@@ -128,7 +112,7 @@ alias   = "yet another peer"
 | start      | start       | integer[u32] |
 | end        | end         | integer[u32] |
 
-### workers
+### Workers
 
 | Name                 | Description           | Type           |
 | :------------------- | :-------------------- | :------------- |
@@ -282,12 +266,12 @@ prune_receipts  = false
 | set_disable_auto_compactions               | TO-DO                | bool           |
 | set_unordered_write                        | TO-DO                | bool           |
 | set_use_direct_io_for_flush_and_compaction | TO-DO                | bool           |
-| [storage](#storage)                        | TO-DO                | table          |
+| [storage](#storage-1)                        | TO-DO                | table          |
 | set_compaction_style                       | TO-DO                | string         |
 | set_compression_type                       | TO-DO                | string         |
 | [env](#env)                                | TO-DO                | table          |
 
-### storage
+### Storage
 
 | Name                  | Description | Type           |
 | :-------------------- | :---------- | :------------- |
@@ -296,7 +280,7 @@ prune_receipts  = false
 | fetch_output_id_limit | TO-DO       | integer[usize] |
 | iteration_budget      | TO-DO       | integer[usize] |
 
-### env
+### Env
 
 | Name                                 | Description | Type         |
 | :----------------------------------- | :---------- | :----------- |
@@ -344,7 +328,7 @@ set_high_priority_background_threads = 2
 
 | Name            | Description | Type   |
 | :-------------- | :---------- | :----- |
-| below_max_depth | TO-DO     | string |
+| below_max_depth | TO-DO       | string |
 
 Example
 ```toml
@@ -372,7 +356,7 @@ address = "tcp://localhost:1883"
 | port | dashboard port | integer[u16] |
 | auth | dashboard auth | table        |
 
-### auth
+### Auth
 
 | Name            | Description                                                  | Type         |
 | :-------------- | :----------------------------------------------------------- | :----------- |
