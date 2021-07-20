@@ -1,7 +1,6 @@
 # A Framework For Building IOTA Nodes, Clients, and Applications in Rust
 
-![Badge](.github/Bee.png "Badge")
-
+![Badge](https://github.com/iotaledger/bee/blob/chrysalis-pt-2/.github/Bee.png?raw=true "Badge")
 
 [![Discord](https://img.shields.io/badge/Discord-9cf.svg?logo=discord "Discord")](https://discord.iota.org/")
 [![StackExchange](https://img.shields.io/badge/StackExchange-9cf.svg?logo=stackexchange "StackExchange")](https://iota.stackexchange.com/)
