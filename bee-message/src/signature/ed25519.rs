@@ -24,10 +24,7 @@ impl Ed25519Signature {
 
     /// Creates a new `Ed25519Signature`.
     pub fn new(public_key: [u8; ED25519_PUBLIC_KEY_LENGTH], signature: [u8; ED25519_SIGNATURE_LENGTH]) -> Self {
-        Self {
-            public_key,
-            signature,
-        }
+        Self { public_key, signature }
     }
 
     /// Returns the public key of an `Ed25519Signature`.
