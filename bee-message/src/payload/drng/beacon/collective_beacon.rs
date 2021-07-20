@@ -4,14 +4,11 @@
 use super::{BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH, BEACON_SIGNATURE_LENGTH};
 use crate::ValidationError;
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
-
-use alloc::boxed::Box;
-use core::convert::{Infallible, TryInto};
+use bee_packable::Packable;
 
 /// Message decsribing a dRNG `CollectiveBeacon`.
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
+#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CollectiveBeaconPayload {
     /// The version of the `CollectiveBeaconPayload`.
     version: u8,
@@ -20,11 +17,14 @@ pub struct CollectiveBeaconPayload {
     /// The round of the current beacon.
     round: u64,
     /// The collective signature of the previous beacon.
-    prev_signature: Box<[u8]>,
+    #[cfg_attr(feature = "enable-serde", serde(with = "serde_big_array::BigArray"))]
+    prev_signature: [u8; BEACON_SIGNATURE_LENGTH],
     /// The collective signature of the current beacon.
-    signature: Box<[u8]>,
+    #[cfg_attr(feature = "enable-serde", serde(with = "serde_big_array::BigArray"))]
+    signature: [u8; BEACON_SIGNATURE_LENGTH],
     /// The distributed public key.
-    distributed_public_key: Box<[u8]>,
+    #[cfg_attr(feature = "enable-serde", serde(with = "serde_big_array::BigArray"))]
+    distributed_public_key: [u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH],
 }
 
 impl CollectiveBeaconPayload {
@@ -64,65 +64,6 @@ impl CollectiveBeaconPayload {
     /// Returns the distributed public key of a `CollectiveBeaconPayload`.
     pub fn distributed_public_key(&self) -> &[u8] {
         &self.distributed_public_key
-    }
-}
-
-impl Packable for CollectiveBeaconPayload {
-    type PackError = Infallible;
-    type UnpackError = Infallible;
-
-    fn packed_len(&self) -> usize {
-        self.version.packed_len()
-            + self.instance_id.packed_len()
-            + self.round.packed_len()
-            + BEACON_SIGNATURE_LENGTH
-            + BEACON_SIGNATURE_LENGTH
-            + BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.version.pack(packer).map_err(PackError::infallible)?;
-        self.instance_id.pack(packer).map_err(PackError::infallible)?;
-        self.round.pack(packer).map_err(PackError::infallible)?;
-
-        // The size of `self.prev_signature` is known to be 96 bytes.
-        let prev_sig_bytes: [u8; BEACON_SIGNATURE_LENGTH] = self.prev_signature.to_vec().try_into().unwrap();
-        prev_sig_bytes.pack(packer).map_err(PackError::infallible)?;
-
-        // The size of `self.signature` is known to be 96 bytes.
-        let sig_bytes: [u8; BEACON_SIGNATURE_LENGTH] = self.signature.to_vec().try_into().unwrap();
-        sig_bytes.pack(packer).map_err(PackError::infallible)?;
-
-        // The size of `self.distributed_public_key` is known to be 48 bytes.
-        let distributed_pk_bytes: [u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH] =
-            self.distributed_public_key.to_vec().try_into().unwrap();
-        distributed_pk_bytes.pack(packer).map_err(PackError::infallible)?;
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let instance_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let round = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let prev_signature = <[u8; BEACON_SIGNATURE_LENGTH]>::unpack(unpacker)
-            .map_err(UnpackError::infallible)?
-            .into();
-        let signature = <[u8; BEACON_SIGNATURE_LENGTH]>::unpack(unpacker)
-            .map_err(UnpackError::infallible)?
-            .into();
-        let distributed_public_key = <[u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH]>::unpack(unpacker)
-            .map_err(UnpackError::infallible)?
-            .into();
-
-        Ok(Self {
-            version,
-            instance_id,
-            round,
-            prev_signature,
-            signature,
-            distributed_public_key,
-        })
     }
 }
 

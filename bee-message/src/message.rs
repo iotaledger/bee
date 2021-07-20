@@ -10,7 +10,7 @@ use crypto::{
     signatures::ed25519,
 };
 
-use alloc::{boxed::Box, vec::Vec};
+use alloc::vec::Vec;
 use core::{convert::TryInto, ops::RangeInclusive};
 
 /// Range (in bytes) of a valid message length.
@@ -28,7 +28,7 @@ pub const MESSAGE_SIGNATURE_LENGTH: usize = 64;
 /// * Have a length (in bytes) within `MESSAGE_LENGTH_RANGE`.
 /// * Ensure all applicable data is appropriately validated.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
     /// Message [Parents].
     pub(crate) parents: Parents,
@@ -43,7 +43,8 @@ pub struct Message {
     /// The result of the Proof of Work in order for the message to be accepted into the tangle.
     pub(crate) nonce: u64,
     /// Signature signing the above message fields.
-    pub(crate) signature: Box<[u8]>,
+    #[cfg_attr(feature = "enable-serde", serde(with = "serde_big_array::BigArray"))]
+    pub(crate) signature: [u8; MESSAGE_SIGNATURE_LENGTH],
 }
 
 impl Message {
@@ -138,9 +139,7 @@ impl Packable for Message {
         self.sequence_number.pack(packer).map_err(PackError::infallible)?;
         self.payload.pack(packer)?;
         self.nonce.pack(packer).map_err(PackError::infallible)?;
-
-        let sig_bytes: [u8; MESSAGE_SIGNATURE_LENGTH] = self.signature.to_vec().try_into().unwrap();
-        sig_bytes.pack(packer).map_err(PackError::infallible)?;
+        self.signature.pack(packer).map_err(PackError::infallible)?;
 
         Ok(())
     }
@@ -152,9 +151,7 @@ impl Packable for Message {
         let sequence_number = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
         let payload = Option::<Payload>::unpack(unpacker).map_err(UnpackError::coerce)?;
         let nonce = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let signature = <[u8; MESSAGE_SIGNATURE_LENGTH]>::unpack(unpacker)
-            .map_err(UnpackError::infallible)?
-            .into();
+        let signature = <[u8; MESSAGE_SIGNATURE_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         let message = Self {
             parents,

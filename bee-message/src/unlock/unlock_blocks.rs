@@ -100,7 +100,7 @@ impl fmt::Display for UnlockBlocksUnpackError {
 /// * Ensure all signatures in `Signature` blocks are unique across the collection.
 /// * Ensure `Reference` blocks specify a previous existing `Signature` block.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct UnlockBlocks(Vec<UnlockBlock>);
 
 impl UnlockBlocks {

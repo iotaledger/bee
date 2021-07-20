@@ -45,7 +45,7 @@ pub const OUTPUT_ID_LENGTH: usize = TRANSACTION_ID_LENGTH + core::mem::size_of::
 /// An `OutputId` must:
 /// * Have an `index` that falls within `INPUT_OUTPUT_INDEX_RANGE`.
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OutputId {
     transaction_id: TransactionId,
     index: u16,

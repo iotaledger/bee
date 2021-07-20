@@ -13,7 +13,7 @@ use core::{convert::From, str::FromStr};
 
 /// Represents an input referencing an output.
 #[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Packable)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = MessageUnpackError)]
 pub struct UtxoInput(OutputId);
 
