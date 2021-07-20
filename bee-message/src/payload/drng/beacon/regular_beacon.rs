@@ -112,12 +112,10 @@ impl BeaconPayloadBuilder {
         let round = self.round.ok_or(ValidationError::MissingField("round"))?;
         let partial_public_key = self
             .partial_public_key
-            .ok_or(ValidationError::MissingField("partial_public_key"))?
-            .into();
+            .ok_or(ValidationError::MissingField("partial_public_key"))?;
         let partial_signature = self
             .partial_signature
-            .ok_or(ValidationError::MissingField("partial_signature"))?
-            .into();
+            .ok_or(ValidationError::MissingField("partial_signature"))?;
 
         Ok(BeaconPayload {
             version,

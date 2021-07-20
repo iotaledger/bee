@@ -26,7 +26,7 @@ impl Ed25519Signature {
     pub fn new(public_key: [u8; ED25519_PUBLIC_KEY_LENGTH], signature: [u8; ED25519_SIGNATURE_LENGTH]) -> Self {
         Self {
             public_key,
-            signature: signature.into(),
+            signature,
         }
     }
 
@@ -36,7 +36,7 @@ impl Ed25519Signature {
     }
 
     /// Return the actual signature of an `Ed25519Signature`.
-    pub fn signature(&self) -> &[u8] {
+    pub fn signature(&self) -> &[u8; ED25519_SIGNATURE_LENGTH] {
         &self.signature
     }
 }

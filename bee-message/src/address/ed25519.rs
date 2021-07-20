@@ -49,8 +49,7 @@ impl Ed25519Address {
         }
 
         if !PublicKey::from_compressed_bytes(*signature.public_key())?
-            // This unwrap is fine as the length of the signature has already been verified at construction.
-            .verify(&Signature::from_bytes(signature.signature().try_into().unwrap()), msg)
+            .verify(&Signature::from_bytes(*signature.signature()), msg)
         {
             return Err(ValidationError::InvalidSignature);
         }
