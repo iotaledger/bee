@@ -21,7 +21,6 @@ pub mod receipts;
 pub mod receipts_at;
 pub mod remove_peer;
 pub mod submit_message;
-pub mod submit_message_raw;
 pub mod tips;
 pub mod transaction_included_message;
 pub mod treasury;
@@ -167,12 +166,6 @@ pub(crate) fn filter<B: StorageBackend>(
         network_id,
         rest_api_config,
         protocol_config,
-    ))
-    .or(submit_message_raw::filter(
-        public_routes.clone(),
-        allowed_ips.clone(),
-        tangle.clone(),
-        message_submitter,
     ))
     .or(tips::filter(public_routes.clone(), allowed_ips.clone(), tangle.clone()))
     .or(treasury::filter(

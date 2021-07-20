@@ -3,7 +3,7 @@
 
 use crate::{
     endpoints::{
-        config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE},
+        config::{RestApiConfig, ROUTE_SUBMIT_MESSAGE, ROUTE_SUBMIT_MESSAGE_RAW},
         filters::{with_message_submitter, with_network_id, with_protocol_config, with_rest_api_config, with_tangle},
         permission::has_permission,
         rejection::CustomRejection,
@@ -13,6 +13,7 @@ use crate::{
     types::{body::SuccessBody, dtos::PayloadDto, responses::SubmitMessageResponse},
 };
 
+use bee_common::packable::Packable;
 use bee_message::{parents::Parents, payload::Payload, Message, MessageBuilder, MessageId};
 use bee_pow::providers::{miner::MinerBuilder, NonceProviderBuilder};
 use bee_protocol::workers::{config::ProtocolConfig, MessageSubmitterError, MessageSubmitterWorkerEvent};
@@ -40,16 +41,27 @@ pub(crate) fn filter<B: StorageBackend>(
     rest_api_config: RestApiConfig,
     protocol_config: ProtocolConfig,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    self::path()
-        .and(warp::post())
-        .and(has_permission(ROUTE_SUBMIT_MESSAGE, public_routes, allowed_ips))
-        .and(warp::body::json())
-        .and(with_tangle(tangle))
-        .and(with_message_submitter(message_submitter))
-        .and(with_network_id(network_id))
-        .and(with_rest_api_config(rest_api_config))
-        .and(with_protocol_config(protocol_config))
-        .and_then(submit_message)
+    self::path().and(warp::post()).and(
+        (warp::header::exact("content-type", "application/json")
+            .and(has_permission(
+                ROUTE_SUBMIT_MESSAGE,
+                public_routes.clone(),
+                allowed_ips.clone(),
+            ))
+            .and(warp::body::json())
+            .and(with_tangle(tangle.clone()))
+            .and(with_message_submitter(message_submitter.clone()))
+            .and(with_network_id(network_id))
+            .and(with_rest_api_config(rest_api_config))
+            .and(with_protocol_config(protocol_config))
+            .and_then(submit_message))
+        .or(warp::header::exact("content-type", "application/octet-stream")
+            .and(has_permission(ROUTE_SUBMIT_MESSAGE_RAW, public_routes, allowed_ips))
+            .and(warp::body::bytes())
+            .and(with_tangle(tangle))
+            .and(with_message_submitter(message_submitter))
+            .and_then(submit_message_raw)),
+    )
 }
 
 pub(crate) async fn submit_message<B: StorageBackend>(
@@ -200,6 +212,26 @@ pub(crate) async fn build_message(
             .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?
     };
     Ok(message)
+}
+
+pub(crate) async fn submit_message_raw<B: StorageBackend>(
+    buf: warp::hyper::body::Bytes,
+    tangle: ResourceHandle<MsTangle<B>>,
+    message_submitter: mpsc::UnboundedSender<MessageSubmitterWorkerEvent>,
+) -> Result<impl Reply, Rejection> {
+    let message = Message::unpack(&mut &(*buf)).map_err(|e| {
+        reject::custom(CustomRejection::BadRequest(format!(
+            "can not submit message: invalid bytes provided: the message format is not respected: {}",
+            e
+        )))
+    })?;
+    let message_id = forward_to_message_submitter(message, tangle, message_submitter).await?;
+    Ok(warp::reply::with_status(
+        warp::reply::json(&SuccessBody::new(SubmitMessageResponse {
+            message_id: message_id.to_string(),
+        })),
+        StatusCode::CREATED,
+    ))
 }
 
 pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
