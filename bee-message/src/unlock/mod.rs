@@ -52,7 +52,7 @@ impl fmt::Display for UnlockBlockUnpackError {
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(
-    feature = "serde",
+    feature = "enable-serde",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]

@@ -75,7 +75,7 @@ impl fmt::Display for SaltDeclarationUnpackError {
 
 /// Represents a `Salt` used in a `SaltDeclarationPayload`.
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Salt {
     /// The value of the `Salt`.
     bytes: Vec<u8>,
@@ -150,7 +150,7 @@ fn validate_bytes_length(len: usize) -> Result<(), ValidationError> {
 
 /// A `SaltDeclarationPayload`.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SaltDeclarationPayload {
     /// The version of the `SaltDeclarationPayload`.
     version: u8,

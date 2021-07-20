@@ -72,7 +72,7 @@ impl fmt::Display for DataUnpackError {
 /// A `DataPayload` must:
 /// * Not exceed `MAXIMUM_PAYLOAD_LEN` in bytes.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DataPayload {
     /// The version of the `DataPayload`.
     version: u8,
