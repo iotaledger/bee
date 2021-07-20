@@ -1,18 +1,26 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{streamer::PluginStreamer, EventId, PluginId, UniqueId};
+use crate::{
+    grpc::{plugin_client::PluginClient, EventId, ShutdownRequest},
+    streamer::PluginStreamer,
+    PluginId, UniqueId,
+};
 
 use bee_event_bus::EventBus;
 
 use tokio::{
-    spawn,
+    select, spawn,
     sync::{mpsc::unbounded_channel, oneshot::Sender},
+    time::sleep,
 };
+use tonic::{transport::Channel, Request};
 
 use std::{
     collections::{hash_map::Entry, HashMap},
+    error::Error,
     process::Child,
+    time::Duration,
 };
 
 macro_rules! spawn_streamers {
@@ -42,16 +50,18 @@ pub(crate) struct PluginHandler {
     shutdowns: HashMap<EventId, Sender<()>>,
     /// The OS process running the plugin.
     process: Child,
+    client: PluginClient<Channel>,
     /// The identifier of the plugin.
     id: PluginId,
 }
 
 impl PluginHandler {
     /// Creates a new plugin handler from a process running the plugin logic.
-    pub(crate) fn new(id: PluginId, process: Child) -> Self {
+    pub(crate) fn new(id: PluginId, process: Child, client: PluginClient<Channel>) -> Self {
         Self {
             shutdowns: Default::default(),
             process,
+            client,
             id,
         }
     }
@@ -68,13 +78,24 @@ impl PluginHandler {
 
     /// Shutdowns the plugin by shutting down all the plugin streamers, removing the plugin
     /// callbacks from the event bus and killing the plugin process.
-    pub(crate) fn shutdown(mut self, bus: &EventBus<'static, UniqueId>) {
+    pub(crate) async fn shutdown(mut self, bus: &EventBus<'static, UniqueId>) -> Result<(), Box<dyn Error>> {
         for (_id, shutdown) in self.shutdowns {
             shutdown.send(()).unwrap();
         }
         bus.remove_listeners_with_id(self.id.into());
 
-        // FIXME: send the shutdown signal via gRPC
-        self.process.kill().unwrap();
+        let shutdown = self.client.shutdown(Request::new(ShutdownRequest {}));
+        let delay = sleep(Duration::from_secs(30));
+
+        select! {
+            result = shutdown => {
+                result?;
+            },
+            _ = delay => (),
+        }
+
+        self.process.kill()?;
+
+        Ok(())
     }
 }
