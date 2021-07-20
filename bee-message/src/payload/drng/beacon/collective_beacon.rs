@@ -140,9 +140,9 @@ impl CollectiveBeaconPayloadBuilder {
             version,
             instance_id,
             round,
-            prev_signature: prev_signature.into(),
-            signature: signature.into(),
-            distributed_public_key: distributed_public_key.into(),
+            prev_signature,
+            signature,
+            distributed_public_key,
         })
     }
 }

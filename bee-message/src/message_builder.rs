@@ -84,7 +84,7 @@ impl MessageBuilder {
             .ok_or(ValidationError::MissingField("sequence_number"))?;
 
         let nonce = self.nonce.ok_or(ValidationError::MissingField("nonce"))?;
-        let signature = self.signature.ok_or(ValidationError::MissingField("signature"))?.into();
+        let signature = self.signature.ok_or(ValidationError::MissingField("signature"))?;
 
         let message = Message {
             parents,
