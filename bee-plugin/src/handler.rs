@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    grpc::{plugin_client::PluginClient, EventId, ShutdownRequest},
+    grpc::{plugin_client::PluginClient, DummyEvent, EventId, ShutdownRequest},
     streamer::PluginStreamer,
     PluginId, UniqueId,
 };
@@ -10,6 +10,7 @@ use crate::{
 use bee_event_bus::EventBus;
 
 use tokio::{
+    process::Child,
     select, spawn,
     sync::{mpsc::unbounded_channel, oneshot::Sender},
     time::sleep,
@@ -19,19 +20,20 @@ use tonic::{transport::Channel, Request};
 use std::{
     collections::{hash_map::Entry, HashMap},
     error::Error,
-    process::Child,
     time::Duration,
 };
 
 macro_rules! spawn_streamers {
-    ($plugin_id:expr, $event_id:ident, $bus:ident, $shutdown:ident, $($event_var:pat => $event_ty:ty),*) => {{
+    ($plugin_id:expr, $event_id:ident, $bus:ident, $client:expr, $shutdown:ident, $($event_var:pat => $event_ty:ty),*) => {{
         match $event_id {
             $(
                 $event_var => {
                     let (tx, rx) = unbounded_channel::<$event_ty>();
 
-                    spawn(async {
-                        let mut streamer = PluginStreamer::new(rx, $shutdown);
+                    let client = $client.clone();
+
+                    spawn(async move {
+                        let mut streamer = PluginStreamer::new(rx, $shutdown, client);
                         streamer.run().await;
                     });
 
@@ -72,7 +74,7 @@ impl PluginHandler {
             let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
             entry.insert(shutdown_tx);
 
-            spawn_streamers!(self.id, event_id, bus, shutdown_rx, EventId::Dummy => ())
+            spawn_streamers!(self.id, event_id, bus, &self.client, shutdown_rx, EventId::Dummy => DummyEvent)
         }
     }
 
@@ -94,7 +96,7 @@ impl PluginHandler {
             _ = delay => (),
         }
 
-        self.process.kill()?;
+        self.process.kill().await?;
 
         Ok(())
     }
