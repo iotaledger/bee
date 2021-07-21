@@ -4,11 +4,10 @@
 use bee_message::{
     error::{IndexationUnpackError, MessageUnpackError, ValidationError},
     payload::indexation::{IndexationPayload, PaddedIndex},
+    util::hex_decode,
 };
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
-
-use core::convert::TryInto;
 
 const PADDED_INDEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64952fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
@@ -20,10 +19,7 @@ fn kind() {
 #[test]
 fn display_impl() {
     assert_eq!(
-        format!(
-            "{}",
-            PaddedIndex::new(hex::decode(PADDED_INDEX).unwrap().try_into().unwrap())
-        ),
+        format!("{}", PaddedIndex::new(hex_decode(PADDED_INDEX).unwrap())),
         PADDED_INDEX
     );
 }
@@ -31,10 +27,7 @@ fn display_impl() {
 #[test]
 fn debug_impl() {
     assert_eq!(
-        format!(
-            "{:?}",
-            PaddedIndex::new(hex::decode(PADDED_INDEX).unwrap().try_into().unwrap())
-        ),
+        format!("{:?}", PaddedIndex::new(hex_decode(PADDED_INDEX).unwrap())),
         "PaddedIndex(".to_owned() + PADDED_INDEX + ")"
     );
 }

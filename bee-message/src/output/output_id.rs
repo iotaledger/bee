@@ -5,11 +5,11 @@ use crate::{
     error::{MessageUnpackError, ValidationError},
     output::OUTPUT_INDEX_RANGE,
     payload::transaction::{TransactionId, TRANSACTION_ID_LENGTH},
+    util::hex_decode,
 };
 
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
-use alloc::borrow::ToOwned;
 use core::{
     convert::{From, Infallible, TryFrom, TryInto},
     fmt,
@@ -119,12 +119,7 @@ impl FromStr for OutputId {
     type Err = ValidationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; OUTPUT_ID_LENGTH] = hex::decode(s)
-            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
-            .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength(OUTPUT_ID_LENGTH * 2, s.len()))?;
-
-        bytes.try_into()
+        OutputId::try_from(hex_decode(s)?)
     }
 }
 

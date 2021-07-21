@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::ValidationError, signature::Ed25519Signature};
+use crate::{error::ValidationError, signature::Ed25519Signature, util::hex_decode};
 
 use bee_packable::packable::Packable;
 
@@ -10,8 +10,7 @@ use crypto::{
     signatures::ed25519::{PublicKey, Signature},
 };
 
-use alloc::borrow::ToOwned;
-use core::{convert::TryInto, str::FromStr};
+use core::str::FromStr;
 
 /// The number of bytes in an Ed25519 address.
 /// See <https://en.wikipedia.org/wiki/EdDSA#Ed25519> for more information.
@@ -68,12 +67,7 @@ impl FromStr for Ed25519Address {
     type Err = ValidationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; ED25519_ADDRESS_LENGTH] = hex::decode(s)
-            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
-            .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength(ED25519_ADDRESS_LENGTH * 2, s.len()))?;
-
-        Ok(Ed25519Address::from(bytes))
+        Ok(Ed25519Address::from(hex_decode(s)?))
     }
 }
 

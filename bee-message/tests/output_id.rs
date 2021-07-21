@@ -5,13 +5,11 @@ use bee_message::{
     error::{MessageUnpackError, ValidationError},
     output::{OutputId, OUTPUT_ID_LENGTH},
     payload::transaction::TransactionId,
+    util::hex_decode,
 };
 use bee_packable::{Packable, UnpackError};
 
-use core::{
-    convert::{TryFrom, TryInto},
-    str::FromStr,
-};
+use core::{convert::TryFrom, str::FromStr};
 
 const TRANSACTION_ID: &str = "d5c8b35f87a915c61f0d1b4af1f5d4a11b2bb4070d5c500074c74c752577b59c";
 const OUTPUT_ID: &str = "d5c8b35f87a915c61f0d1b4af1f5d4a11b2bb4070d5c500074c74c752577b59c2a00";
@@ -62,8 +60,7 @@ fn new_invalid() {
 #[test]
 fn try_from_valid() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
-    let output_id_bytes: [u8; OUTPUT_ID_LENGTH] = hex::decode(OUTPUT_ID).unwrap().try_into().unwrap();
-    let output_id = OutputId::try_from(output_id_bytes).unwrap();
+    let output_id = OutputId::try_from(hex_decode(OUTPUT_ID).unwrap()).unwrap();
 
     assert_eq!(output_id.transaction_id(), &transaction_id);
     assert_eq!(output_id.index(), 42);
@@ -71,10 +68,8 @@ fn try_from_valid() {
 
 #[test]
 fn try_from_invalid() {
-    let output_id_bytes: [u8; OUTPUT_ID_LENGTH] = hex::decode(OUTPUT_ID_INVALID_INDEX).unwrap().try_into().unwrap();
-
     assert!(matches!(
-        OutputId::try_from(output_id_bytes),
+        OutputId::try_from(hex_decode(OUTPUT_ID_INVALID_INDEX).unwrap()),
         Err(ValidationError::InvalidOutputIndex(127))
     ));
 }

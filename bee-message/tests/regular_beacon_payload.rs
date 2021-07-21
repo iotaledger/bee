@@ -1,10 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::payload::drng::BeaconPayload;
+use bee_message::{payload::drng::BeaconPayload, util::hex_decode};
 use bee_packable::Packable;
-
-use core::convert::TryInto;
 
 const BEACON_PARTIAL_PUBLIC_KEY: &str = "55914b063d6342d89680c90b3617877c0dd5c1b88fce7e19d24904ebe56aaca9835d458d77f61\
     bb2a250805e25ab6be095f2a498419f89056157b29cb088271c93253e1b420f52d893abe4d76be718964d0f322991a253ef6a66c17ec586244\
@@ -24,8 +22,8 @@ fn new_valid() {
         .with_version(0)
         .with_instance_id(0)
         .with_round(1)
-        .with_partial_public_key(hex::decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap().try_into().unwrap())
-        .with_partial_signature(hex::decode(BEACON_SIGNATURE).unwrap().try_into().unwrap())
+        .with_partial_public_key(hex_decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap())
+        .with_partial_signature(hex_decode(BEACON_SIGNATURE).unwrap())
         .finish();
 
     assert!(beacon.is_ok());
@@ -43,8 +41,8 @@ fn unpack_valid() {
 
 #[test]
 fn accessors_eq() {
-    let partial_pk: [u8; 96] = hex::decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap().try_into().unwrap();
-    let partial_signature: [u8; 96] = hex::decode(BEACON_SIGNATURE).unwrap().try_into().unwrap();
+    let partial_pk = hex_decode::<96>(BEACON_PARTIAL_PUBLIC_KEY).unwrap();
+    let partial_signature = hex_decode::<96>(BEACON_SIGNATURE).unwrap();
 
     let beacon = BeaconPayload::builder()
         .with_version(0)
@@ -68,8 +66,8 @@ fn packed_len() {
         .with_version(0)
         .with_instance_id(0)
         .with_round(1)
-        .with_partial_public_key(hex::decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap().try_into().unwrap())
-        .with_partial_signature(hex::decode(BEACON_SIGNATURE).unwrap().try_into().unwrap())
+        .with_partial_public_key(hex_decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap())
+        .with_partial_signature(hex_decode(BEACON_SIGNATURE).unwrap())
         .finish()
         .unwrap();
 
@@ -82,8 +80,8 @@ fn packable_round_trip() {
         .with_version(0)
         .with_instance_id(0)
         .with_round(1)
-        .with_partial_public_key(hex::decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap().try_into().unwrap())
-        .with_partial_signature(hex::decode(BEACON_SIGNATURE).unwrap().try_into().unwrap())
+        .with_partial_public_key(hex_decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap())
+        .with_partial_signature(hex_decode(BEACON_SIGNATURE).unwrap())
         .finish()
         .unwrap();
 

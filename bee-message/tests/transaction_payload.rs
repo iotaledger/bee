@@ -9,11 +9,10 @@ use bee_message::{
     payload::transaction::{TransactionEssence, TransactionId, TransactionPayload},
     signature::{Ed25519Signature, SignatureUnlock},
     unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
+    util::hex_decode,
 };
 use bee_packable::Packable;
 use bee_test::rand::{bytes::rand_bytes_array, number::rand_number};
-
-use core::convert::TryInto;
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
@@ -35,16 +34,12 @@ fn invalid_no_essence() {
 
 #[test]
 fn invalid_no_unlock_blocks() {
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
-
+    let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
     let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
-
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
-    let address = Address::from(Ed25519Address::new(bytes));
+    let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-
     let essence = TransactionEssence::builder()
         .with_timestamp(rand_number())
         .with_access_pledge_id(rand_bytes_array())
@@ -53,7 +48,6 @@ fn invalid_no_unlock_blocks() {
         .with_outputs(vec![output])
         .finish()
         .unwrap();
-
     let payload = TransactionPayload::builder()
         .with_version(0)
         .with_essence(essence)
@@ -67,16 +61,12 @@ fn invalid_no_unlock_blocks() {
 
 #[test]
 fn invalid_too_few_unlock_blocks() {
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
-
+    let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
     let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
-
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
-    let address = Address::from(Ed25519Address::new(bytes));
+    let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-
     let essence = TransactionEssence::builder()
         .with_timestamp(rand_number())
         .with_access_pledge_id(rand_bytes_array())
@@ -85,13 +75,12 @@ fn invalid_too_few_unlock_blocks() {
         .with_outputs(vec![output])
         .finish()
         .unwrap();
-
-    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
-    let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
-    let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
+    let signature = Ed25519Signature::new(
+        hex_decode(ED25519_PUBLIC_KEY).unwrap(),
+        hex_decode(ED25519_SIGNATURE).unwrap(),
+    );
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block]).unwrap();
-
     let payload = TransactionPayload::builder()
         .with_version(0)
         .with_essence(essence)
@@ -107,15 +96,11 @@ fn invalid_too_few_unlock_blocks() {
 
 #[test]
 fn invalid_too_many_unlock_blocks() {
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
-
+    let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
     let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
-    let address = Address::from(Ed25519Address::new(bytes));
+    let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-
     let essence = TransactionEssence::builder()
         .with_timestamp(rand_number())
         .with_access_pledge_id(rand_bytes_array())
@@ -124,14 +109,13 @@ fn invalid_too_many_unlock_blocks() {
         .with_outputs(vec![output])
         .finish()
         .unwrap();
-
-    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
-    let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
-    let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
+    let signature = Ed25519Signature::new(
+        hex_decode(ED25519_PUBLIC_KEY).unwrap(),
+        hex_decode(ED25519_SIGNATURE).unwrap(),
+    );
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
-
     let payload = TransactionPayload::builder()
         .with_version(0)
         .with_essence(essence)
@@ -147,16 +131,12 @@ fn invalid_too_many_unlock_blocks() {
 
 #[test]
 fn accessors_eq() {
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
-
+    let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
     let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
-
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
-    let address = Address::from(Ed25519Address::new(bytes));
+    let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-
     let essence = TransactionEssence::builder()
         .with_timestamp(rand_number())
         .with_access_pledge_id(rand_bytes_array())
@@ -165,14 +145,13 @@ fn accessors_eq() {
         .with_outputs(vec![output])
         .finish()
         .unwrap();
-
-    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
-    let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
-    let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
+    let signature = Ed25519Signature::new(
+        hex_decode(ED25519_PUBLIC_KEY).unwrap(),
+        hex_decode(ED25519_SIGNATURE).unwrap(),
+    );
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
-
     let payload = TransactionPayload::builder()
         .with_version(0)
         .with_essence(essence.clone())
@@ -187,16 +166,12 @@ fn accessors_eq() {
 
 #[test]
 fn packed_len() {
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
-
+    let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
     let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
-
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
-    let address = Address::from(Ed25519Address::new(bytes));
+    let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-
     let essence = TransactionEssence::builder()
         .with_timestamp(rand_number())
         .with_access_pledge_id(rand_bytes_array())
@@ -205,14 +180,13 @@ fn packed_len() {
         .with_outputs(vec![output])
         .finish()
         .unwrap();
-
-    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
-    let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
-    let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
+    let signature = Ed25519Signature::new(
+        hex_decode(ED25519_PUBLIC_KEY).unwrap(),
+        hex_decode(ED25519_SIGNATURE).unwrap(),
+    );
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
-
     let payload = TransactionPayload::builder()
         .with_version(0)
         .with_essence(essence)
@@ -228,16 +202,12 @@ fn packed_len() {
 
 #[test]
 fn packable_round_trip() {
-    let txid = TransactionId::new(hex::decode(TRANSACTION_ID).unwrap().try_into().unwrap());
-
+    let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
     let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
     let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
-
-    let bytes: [u8; 32] = hex::decode(ED25519_ADDRESS).unwrap().try_into().unwrap();
-    let address = Address::from(Ed25519Address::new(bytes));
+    let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-
     let essence = TransactionEssence::builder()
         .with_timestamp(rand_number())
         .with_access_pledge_id(rand_bytes_array())
@@ -246,21 +216,19 @@ fn packable_round_trip() {
         .with_outputs(vec![output])
         .finish()
         .unwrap();
-
-    let pub_key_bytes: [u8; 32] = hex::decode(ED25519_PUBLIC_KEY).unwrap().try_into().unwrap();
-    let sig_bytes: [u8; 64] = hex::decode(ED25519_SIGNATURE).unwrap().try_into().unwrap();
-    let signature = Ed25519Signature::new(pub_key_bytes, sig_bytes);
+    let signature = Ed25519Signature::new(
+        hex_decode(ED25519_PUBLIC_KEY).unwrap(),
+        hex_decode(ED25519_SIGNATURE).unwrap(),
+    );
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
-
     let payload_a = TransactionPayload::builder()
         .with_version(0)
         .with_essence(essence)
         .with_unlock_blocks(unlock_blocks)
         .finish()
         .unwrap();
-
     let payload_b = TransactionPayload::unpack_from_slice(payload_a.pack_to_vec().unwrap()).unwrap();
 
     assert_eq!(payload_a, payload_b);

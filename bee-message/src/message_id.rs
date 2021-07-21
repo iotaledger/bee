@@ -1,12 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::ValidationError;
+use crate::{error::ValidationError, util::hex_decode};
 
 use bee_packable::packable::Packable;
 
-use alloc::borrow::ToOwned;
-use core::{convert::TryInto, str::FromStr};
+use core::str::FromStr;
 
 /// The length of a message identifier.
 pub const MESSAGE_ID_LENGTH: usize = 32;
@@ -39,12 +38,7 @@ impl FromStr for MessageId {
     type Err = ValidationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; MESSAGE_ID_LENGTH] = hex::decode(s)
-            .map_err(|_| ValidationError::InvalidHexadecimalChar(s.to_owned()))?
-            .try_into()
-            .map_err(|_| ValidationError::InvalidHexadecimalLength(MESSAGE_ID_LENGTH * 2, s.len()))?;
-
-        Ok(MessageId::from(bytes))
+        Ok(MessageId::from(hex_decode(s)?))
     }
 }
 

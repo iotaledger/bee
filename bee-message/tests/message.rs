@@ -4,6 +4,7 @@
 use bee_message::{
     parents::{Parent, Parents},
     payload::{indexation::IndexationPayload, Payload},
+    util::hex_decode,
     Message, MessageBuilder, MessageId,
 };
 use bee_packable::Packable;
@@ -11,8 +12,6 @@ use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,
 };
-
-use core::convert::TryInto;
 
 const PARENT_1: &str = "4cfd028fe4789dd3f4518cb67810c77772c0af52261fc767e68b64015931849e";
 const PARENT_2: &str = "9bbda9ed78333088a81c73842e242a34e56703c389cba974b11d83828f421a82";
@@ -23,9 +22,9 @@ fn new_valid() {
     let message = MessageBuilder::new()
         .with_parents(
             Parents::new(vec![
-                Parent::Strong(MessageId::new(hex::decode(PARENT_1).unwrap().try_into().unwrap())),
-                Parent::Strong(MessageId::new(hex::decode(PARENT_2).unwrap().try_into().unwrap())),
-                Parent::Weak(MessageId::new(hex::decode(PARENT_3).unwrap().try_into().unwrap())),
+                Parent::Strong(MessageId::new(hex_decode(PARENT_1).unwrap())),
+                Parent::Strong(MessageId::new(hex_decode(PARENT_2).unwrap())),
+                Parent::Weak(MessageId::new(hex_decode(PARENT_3).unwrap())),
             ])
             .unwrap(),
         )
@@ -69,9 +68,9 @@ fn packed_len() {
     let message_a = MessageBuilder::new()
         .with_parents(
             Parents::new(vec![
-                Parent::Strong(MessageId::new(hex::decode(PARENT_1).unwrap().try_into().unwrap())),
-                Parent::Strong(MessageId::new(hex::decode(PARENT_2).unwrap().try_into().unwrap())),
-                Parent::Weak(MessageId::new(hex::decode(PARENT_3).unwrap().try_into().unwrap())),
+                Parent::Strong(MessageId::new(hex_decode(PARENT_1).unwrap())),
+                Parent::Strong(MessageId::new(hex_decode(PARENT_2).unwrap())),
+                Parent::Weak(MessageId::new(hex_decode(PARENT_3).unwrap())),
             ])
             .unwrap(),
         )
@@ -97,9 +96,9 @@ fn packable_round_trip() {
     let message_a = MessageBuilder::new()
         .with_parents(
             Parents::new(vec![
-                Parent::Strong(MessageId::new(hex::decode(PARENT_1).unwrap().try_into().unwrap())),
-                Parent::Strong(MessageId::new(hex::decode(PARENT_2).unwrap().try_into().unwrap())),
-                Parent::Weak(MessageId::new(hex::decode(PARENT_3).unwrap().try_into().unwrap())),
+                Parent::Strong(MessageId::new(hex_decode(PARENT_1).unwrap())),
+                Parent::Strong(MessageId::new(hex_decode(PARENT_2).unwrap())),
+                Parent::Weak(MessageId::new(hex_decode(PARENT_3).unwrap())),
             ])
             .unwrap(),
         )
