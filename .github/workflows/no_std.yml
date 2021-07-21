@@ -17,6 +17,7 @@ jobs:
         crates: [
           "bee-common/bee-ord",
           "bee-common/bee-packable"
+          "bee-message",
         ]
 
     steps:
