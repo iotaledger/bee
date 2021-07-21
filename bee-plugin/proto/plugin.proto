@@ -7,7 +7,7 @@ package plugin;
 service Plugin {
     rpc Handshake(HandshakeRequest) returns (HandshakeReply);
     rpc Shutdown(ShutdownRequest) returns (ShutdownReply);
-    rpc ProcessDummyEvent(stream DummyEvent) returns (ProcessReply);
+    rpc ProcessDummyEvent(DummyEvent) returns (ProcessReply);
 }
 
 message HandshakeRequest {}

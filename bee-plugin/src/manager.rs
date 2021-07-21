@@ -9,9 +9,10 @@ use crate::{
 
 use bee_event_bus::EventBus;
 
+use tokio::process::Command;
 use tonic::Request;
 
-use std::{collections::HashMap, error::Error, process::Command, sync::Arc};
+use std::{collections::HashMap, error::Error, sync::Arc, time::Duration};
 
 /// The bee node plugin manager.
 pub struct PluginManager {
@@ -35,7 +36,11 @@ impl PluginManager {
 
     /// Loads a new plugin from the specified command and returns the `PluginId` for that plugin.
     pub async fn load_plugin(&mut self, mut command: Command) -> Result<PluginId, Box<dyn Error>> {
+        command.kill_on_drop(true);
+
         let process = command.spawn()?;
+
+        tokio::time::sleep(Duration::from_secs(1)).await;
 
         let mut client = PluginClient::connect("http://[::1]:50051").await?;
 

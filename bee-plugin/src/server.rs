@@ -1,12 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::grpc::{
-    plugin_server::Plugin as GrpcPlugin, HandshakeReply, HandshakeRequest, ProcessReply, ShutdownReply, ShutdownRequest,
-};
-pub use crate::grpc::{DummyEvent, EventId};
+use std::error::Error;
 
-use tonic::{Request, Response, Status, Streaming};
+pub use crate::grpc::DummyEvent;
+use crate::grpc::{
+    plugin_server::{Plugin as GrpcPlugin, PluginServer},
+    EventId, HandshakeReply, HandshakeRequest, ProcessReply, ShutdownReply, ShutdownRequest,
+};
+
+use tonic::{transport::Server, Request, Response, Status};
 
 #[tonic::async_trait]
 pub trait Plugin: Send + Sync + 'static {
@@ -28,15 +31,22 @@ impl<T: Plugin> GrpcPlugin for T {
         Ok(Response::new(ShutdownReply {}))
     }
 
-    async fn process_dummy_event(
-        &self,
-        request: Request<Streaming<DummyEvent>>,
-    ) -> Result<Response<ProcessReply>, Status> {
-        let mut stream = request.into_inner();
-        while let Some(event) = stream.message().await? {
-            self.process_dummy_event(event).await;
-        }
+    async fn process_dummy_event(&self, request: Request<DummyEvent>) -> Result<Response<ProcessReply>, Status> {
+        self.process_dummy_event(request.into_inner()).await;
 
         Ok(Response::new(ProcessReply {}))
     }
+}
+
+pub async fn serve_plugin<T: Plugin>(plugin: T) -> Result<(), Box<dyn Error>> {
+    let addr = "[::1]:50051".parse()?;
+
+    println!("Server is running");
+
+    Server::builder()
+        .add_service(PluginServer::new(plugin))
+        .serve(addr)
+        .await?;
+
+    Ok(())
 }
