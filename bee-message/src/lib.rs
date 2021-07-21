@@ -29,8 +29,6 @@ pub mod output;
 pub mod parents;
 /// A module that provides types and syntactic validations of payloads.
 pub mod payload;
-/// A prelude for the `bee-message` crate.
-pub mod prelude;
 /// A module that provides types and syntactic validations of signatures.
 pub mod signature;
 /// A module that provides types and syntactic validations of unlock blocks.

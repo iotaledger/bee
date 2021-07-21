@@ -1,7 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{parents::Parent, prelude::*};
+use bee_message::{
+    error::{MessageUnpackError, ValidationError},
+    parents::{Parent, Parents},
+    MessageId,
+};
 use bee_packable::{Packable, UnpackError};
 
 // TODO: Add MessageId functions to bee-test
