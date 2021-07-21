@@ -1,7 +1,18 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::prelude::*;
+use bee_message::{
+    address::{Address, Ed25519Address},
+    error::ValidationError,
+    input::{Input, UtxoInput},
+    output::{Output, SignatureLockedSingleOutput},
+    payload::{
+        data::DataPayload,
+        transaction::{TransactionEssence, TransactionId},
+        Payload,
+    },
+    IOTA_SUPPLY,
+};
 use bee_packable::Packable;
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},

@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::prelude::*;
+use bee_message::{error::ValidationError, input::UtxoInput, output::OutputId, payload::transaction::TransactionId};
 use bee_packable::Packable;
 
 use core::str::FromStr;

@@ -1,7 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{error::UnlockBlockUnpackError, prelude::*};
+use bee_message::{
+    error::{MessageUnpackError, UnlockBlockUnpackError},
+    unlock::UnlockBlock,
+};
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
 
