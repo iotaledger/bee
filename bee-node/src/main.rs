@@ -8,7 +8,7 @@ use bee_node::{
     cli::NodeCliArgs,
     config::{NodeConfigBuilder, DEFAULT_NODE_CONFIG_PATH},
 };
-use bee_plugin::{PluginManager, UniqueId, server::DummyEvent};
+use bee_plugin::{server::DummyEvent, PluginManager, UniqueId};
 
 use std::{sync::Arc, time::Duration};
 

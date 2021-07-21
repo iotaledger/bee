@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_plugin::{
-    server::{DummyEvent, Plugin, serve_plugin},
+    server::{serve_plugin, DummyEvent, Plugin},
     EventId,
 };
 
-use std::sync::{
-    atomic::{AtomicUsize, Ordering},
-    Arc,
+use std::{
+    error::Error,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
 };
 
 struct Counter {
@@ -38,7 +41,9 @@ impl Plugin for Counter {
 }
 
 #[tokio::main(flavor = "multi_thread")]
-async fn main() {
-    let counter = Counter { inner: Arc::new(0.into()) };
-    serve_plugin(counter).await.unwrap();
+async fn main() -> Result<(), Box<dyn Error>> {
+    let counter = Counter {
+        inner: Arc::new(0.into()),
+    };
+    serve_plugin(counter).await
 }

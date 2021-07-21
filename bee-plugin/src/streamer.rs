@@ -1,7 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::grpc::{plugin_client::PluginClient, DummyEvent};
+use crate::{
+    error::PluginError,
+    grpc::{plugin_client::PluginClient, DummyEvent},
+};
 
 use tokio::{
     select,
@@ -28,7 +31,9 @@ impl PluginStreamer<DummyEvent> {
                 _ = &mut self.shutdown => break,
                 event = self.rx.recv() => match event {
                     Some(event) => {
-                        self.client.process_dummy_event(event).await;
+                        if let Err(err) = self.client.process_dummy_event(event).await {
+                            eprintln!("{}", PluginError::from(err))
+                        }
                     },
                     None => break,
                 }

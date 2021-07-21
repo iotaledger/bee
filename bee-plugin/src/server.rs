@@ -1,12 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::error::Error;
-
 pub use crate::grpc::DummyEvent;
-use crate::grpc::{
-    plugin_server::{Plugin as GrpcPlugin, PluginServer},
-    EventId, HandshakeReply, HandshakeRequest, ProcessReply, ShutdownReply, ShutdownRequest,
+use crate::{
+    error::PluginError,
+    grpc::{
+        plugin_server::{Plugin as GrpcPlugin, PluginServer},
+        EventId, HandshakeReply, HandshakeRequest, ProcessReply, ShutdownReply, ShutdownRequest,
+    },
 };
 
 use tonic::{transport::Server, Request, Response, Status};
@@ -38,10 +39,8 @@ impl<T: Plugin> GrpcPlugin for T {
     }
 }
 
-pub async fn serve_plugin<T: Plugin>(plugin: T) -> Result<(), Box<dyn Error>> {
+pub async fn serve_plugin<T: Plugin>(plugin: T) -> Result<(), PluginError> {
     let addr = "[::1]:50051".parse()?;
-
-    println!("Server is running");
 
     Server::builder()
         .add_service(PluginServer::new(plugin))

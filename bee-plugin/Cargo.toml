@@ -16,7 +16,8 @@ tonic-build = "0.5"
 [dependencies]
 bee-event-bus = { path = "../bee-common/bee-event-bus" }
 
+futures = "0.3"
 prost = "0.8"
+thiserror = "1.0"
 tonic = "0.5"
 tokio = { version = "1.6", features = [ "macros", "rt-multi-thread", "process", "sync" ] }
-futures = "*"
