@@ -13,8 +13,7 @@ service Plugin {
 message HandshakeRequest {}
 
 message HandshakeReply {
-    string version = 1;
-    repeated EventId ids = 2;
+    repeated EventId ids = 1;
 }
 
 message ShutdownRequest {}
