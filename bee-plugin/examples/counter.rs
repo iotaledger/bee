@@ -3,7 +3,7 @@
 
 use bee_plugin::{
     server::{serve_plugin, DummyEvent, Plugin},
-    EventId,
+    EventId, PluginError,
 };
 
 use std::sync::{
@@ -38,9 +38,9 @@ impl Plugin for Counter {
 }
 
 #[tokio::main(flavor = "multi_thread")]
-async fn main() {
+async fn main() -> Result<(), PluginError> {
     let counter = Counter {
         inner: Arc::new(0.into()),
     };
-    serve_plugin(counter).await.unwrap();
+    serve_plugin(counter).await
 }

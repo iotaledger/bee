@@ -164,6 +164,7 @@ dependencies = [
  "bee-event-bus",
  "futures",
  "prost",
+ "thiserror",
  "tokio",
  "tonic",
  "tonic-build",

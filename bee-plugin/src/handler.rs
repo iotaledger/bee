@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    error::PluginError,
     grpc::{plugin_client::PluginClient, DummyEvent, EventId, ShutdownRequest},
     streamer::PluginStreamer,
     PluginId, UniqueId,
@@ -19,7 +20,6 @@ use tonic::{transport::Channel, Request};
 
 use std::{
     collections::{hash_map::Entry, HashMap},
-    error::Error,
     time::Duration,
 };
 
@@ -38,7 +38,9 @@ macro_rules! spawn_streamers {
                     });
 
                     $bus.add_listener_with_id(move |event: &$event_ty| {
-                        tx.send(event.clone()).unwrap()
+                        if let Err(err) = tx.send(event.clone()) {
+                            println!("failed to send event: {}", err);
+                        }
                     }, UniqueId::Plugin($plugin_id));
                 }
             )*
@@ -80,9 +82,11 @@ impl PluginHandler {
 
     /// Shutdowns the plugin by shutting down all the plugin streamers, removing the plugin
     /// callbacks from the event bus and killing the plugin process.
-    pub(crate) async fn shutdown(mut self, bus: &EventBus<'static, UniqueId>) -> Result<(), Box<dyn Error>> {
+    pub(crate) async fn shutdown(mut self, bus: &EventBus<'static, UniqueId>) -> Result<(), PluginError> {
         for (_id, shutdown) in self.shutdowns {
-            shutdown.send(()).unwrap();
+            // If sending fails, this means that the receiver was already dropped which means that
+            // the streamer is already gone.
+            shutdown.send(()).ok();
         }
         bus.remove_listeners_with_id(self.id.into());
 
