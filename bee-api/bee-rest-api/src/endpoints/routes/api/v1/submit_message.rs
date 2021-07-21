@@ -259,16 +259,16 @@ pub(crate) async fn forward_to_message_submitter<B: StorageBackend>(
             ))
         })?;
 
-    let result = waiter.await.map_err(|_| {
-        // TODO: report back from HasherWorker and replace following line with:
-        // error!("can not submit message: {:?}",e);
-        reject::custom(CustomRejection::BadRequest(
-            "invalid message recognized by hash-cache".to_string(),
+    match waiter.await.map_err(|e| {
+        error!("can not submit message: {}", e);
+        reject::custom(CustomRejection::ServiceUnavailable(
+            "can not submit message".to_string(),
         ))
-    })?;
-
-    match result {
+    })? {
         Ok(message_id) => Ok(message_id),
-        Err(e) => Err(reject::custom(CustomRejection::BadRequest(e.to_string()))),
+        Err(e) => Err(reject::custom(CustomRejection::BadRequest(format!(
+            "can not submit message: message is invalid: {}",
+            e
+        )))),
     }
 }

@@ -35,7 +35,7 @@ use futures::{
     task::{Context, Poll},
     FutureExt, Stream, StreamExt,
 };
-use log::{info, trace, warn};
+use log::{error, info, trace, warn};
 use pin_project::pin_project;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
@@ -266,6 +266,15 @@ impl Stream for BatchStream {
                     // If the message was already received, we skip it and poll again.
                     if !cache.insert(&event.message_packet.bytes) {
                         trace!("Message already received.");
+
+                        if let Some(notifier) = event.notifier {
+                            if let Err(e) =
+                                notifier.send(Err(MessageSubmitterError("message already received".to_string())))
+                            {
+                                error!("failed to send error: {:?}.", e);
+                            }
+                        }
+
                         // TODO put it back
                         // metrics.known_messages_inc();
                         // if let Some(peer_id) = event.from {
