@@ -1,12 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::ValidationError;
+use crate::{error::ValidationError, util::hex_decode};
 
 use bee_packable::Packable;
 
-use alloc::borrow::ToOwned;
-use core::{convert::TryInto, str::FromStr};
+use core::str::FromStr;
 
 /// The number of bytes in a BLS address.
 pub const BLS_ADDRESS_LENGTH: usize = 49;
@@ -46,12 +45,7 @@ impl FromStr for BlsAddress {
     type Err = ValidationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; BLS_ADDRESS_LENGTH] = hex::decode(s)
-            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
-            .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength(BLS_ADDRESS_LENGTH * 2, s.len()))?;
-
-        Ok(BlsAddress::from(bytes))
+        Ok(BlsAddress::from(hex_decode(s)?))
     }
 }
 

@@ -33,6 +33,8 @@ pub mod payload;
 pub mod signature;
 /// A module that provides types and syntactic validations of unlock blocks.
 pub mod unlock;
+/// A module that provides utilities.
+pub mod util;
 
 pub use error::{MessagePackError, MessageUnpackError, ValidationError};
 pub use message::{Message, MESSAGE_LENGTH_RANGE};

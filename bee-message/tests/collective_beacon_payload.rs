@@ -1,10 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::payload::drng::CollectiveBeaconPayload;
+use bee_message::{payload::drng::CollectiveBeaconPayload, util::hex_decode};
 use bee_packable::Packable;
-
-use core::convert::TryInto;
 
 const BEACON_SIGNATURE_0: &str = "55914b063d6342d89680c90b3617877c0dd5c1b88fce7e19d24904ebe56aaca9835d458d77f61bb2a250\
     805e25ab6be095f2a498419f89056157b29cb088271c93253e1b420f52d893abe4d76be718964d0f322991a253ef6a66c17ec5862441";
@@ -26,9 +24,9 @@ fn new_valid() {
         .with_version(0)
         .with_instance_id(0)
         .with_round(1)
-        .with_prev_signature(hex::decode(BEACON_SIGNATURE_0).unwrap().try_into().unwrap())
-        .with_signature(hex::decode(BEACON_SIGNATURE_1).unwrap().try_into().unwrap())
-        .with_distributed_public_key(hex::decode(BEACON_DISTRIBUTED_PUBLIC_KEY).unwrap().try_into().unwrap())
+        .with_prev_signature(hex_decode(BEACON_SIGNATURE_0).unwrap())
+        .with_signature(hex_decode(BEACON_SIGNATURE_1).unwrap())
+        .with_distributed_public_key(hex_decode(BEACON_DISTRIBUTED_PUBLIC_KEY).unwrap())
         .finish();
 
     assert!(beacon.is_ok());
@@ -47,9 +45,9 @@ fn unpack_valid() {
 
 #[test]
 fn accessors_eq() {
-    let prev_signature: [u8; 96] = hex::decode(BEACON_SIGNATURE_0).unwrap().try_into().unwrap();
-    let signature: [u8; 96] = hex::decode(BEACON_SIGNATURE_1).unwrap().try_into().unwrap();
-    let distributed_pk: [u8; 48] = hex::decode(BEACON_DISTRIBUTED_PUBLIC_KEY).unwrap().try_into().unwrap();
+    let prev_signature = hex_decode::<96>(BEACON_SIGNATURE_0).unwrap();
+    let signature = hex_decode::<96>(BEACON_SIGNATURE_1).unwrap();
+    let distributed_pk = hex_decode::<48>(BEACON_DISTRIBUTED_PUBLIC_KEY).unwrap();
 
     let beacon = CollectiveBeaconPayload::builder()
         .with_version(0)
@@ -75,9 +73,9 @@ fn packed_len() {
         .with_version(0)
         .with_instance_id(0)
         .with_round(1)
-        .with_prev_signature(hex::decode(BEACON_SIGNATURE_0).unwrap().try_into().unwrap())
-        .with_signature(hex::decode(BEACON_SIGNATURE_1).unwrap().try_into().unwrap())
-        .with_distributed_public_key(hex::decode(BEACON_DISTRIBUTED_PUBLIC_KEY).unwrap().try_into().unwrap())
+        .with_prev_signature(hex_decode(BEACON_SIGNATURE_0).unwrap())
+        .with_signature(hex_decode(BEACON_SIGNATURE_1).unwrap())
+        .with_distributed_public_key(hex_decode(BEACON_DISTRIBUTED_PUBLIC_KEY).unwrap())
         .finish()
         .unwrap();
 
@@ -90,9 +88,9 @@ fn packable_round_trip() {
         .with_version(0)
         .with_instance_id(0)
         .with_round(1)
-        .with_prev_signature(hex::decode(BEACON_SIGNATURE_0).unwrap().try_into().unwrap())
-        .with_signature(hex::decode(BEACON_SIGNATURE_1).unwrap().try_into().unwrap())
-        .with_distributed_public_key(hex::decode(BEACON_DISTRIBUTED_PUBLIC_KEY).unwrap().try_into().unwrap())
+        .with_prev_signature(hex_decode(BEACON_SIGNATURE_0).unwrap())
+        .with_signature(hex_decode(BEACON_SIGNATURE_1).unwrap())
+        .with_distributed_public_key(hex_decode(BEACON_DISTRIBUTED_PUBLIC_KEY).unwrap())
         .finish()
         .unwrap();
 

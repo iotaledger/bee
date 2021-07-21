@@ -1,12 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::ValidationError;
+use crate::{error::ValidationError, util::hex_decode};
 
 use bee_packable::packable::Packable;
 
-use alloc::borrow::ToOwned;
-use core::{convert::TryInto, str::FromStr};
+use core::str::FromStr;
 
 /// The length of a transaction identifier.
 pub const TRANSACTION_ID_LENGTH: usize = 32;
@@ -34,12 +33,7 @@ impl FromStr for TransactionId {
     type Err = ValidationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: [u8; TRANSACTION_ID_LENGTH] = hex::decode(s)
-            .map_err(|_| Self::Err::InvalidHexadecimalChar(s.to_owned()))?
-            .try_into()
-            .map_err(|_| Self::Err::InvalidHexadecimalLength(TRANSACTION_ID_LENGTH * 2, s.len()))?;
-
-        Ok(TransactionId::from(bytes))
+        Ok(TransactionId::from(hex_decode::<TRANSACTION_ID_LENGTH>(s)?))
     }
 }
 
