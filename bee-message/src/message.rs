@@ -10,7 +10,6 @@ use crypto::{
     signatures::ed25519,
 };
 
-use alloc::vec::Vec;
 use core::{convert::TryInto, ops::RangeInclusive};
 
 /// Range (in bytes) of a valid message length.
@@ -52,12 +51,12 @@ pub struct Message {
 
 impl Message {
     /// Computes the identifier of the message.
-    pub fn id(&self) -> (MessageId, Vec<u8>) {
+    pub fn id(&self) -> MessageId {
         let bytes = self.pack_to_vec().unwrap();
 
         let id = Blake2b256::digest(&bytes);
 
-        (MessageId::new(id.into()), bytes)
+        MessageId::new(id.into())
     }
 
     /// Returns the parents of a `Message`.
