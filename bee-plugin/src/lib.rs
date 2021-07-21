@@ -7,6 +7,7 @@ mod streamer;
 mod grpc {
     tonic::include_proto!("plugin");
 }
+pub mod server;
 
 pub use grpc::EventId;
 pub use manager::PluginManager;
