@@ -16,6 +16,21 @@ struct Counter {
     inner: Arc<AtomicUsize>,
 }
 
+impl Counter {
+    fn new() -> Self {
+        Self {
+            inner: Arc::new(AtomicUsize::new(0)),
+        }
+    }
+    fn increase(&self) {
+        let count = self.inner.fetch_add(1, Ordering::Relaxed) + 1;
+
+        if count % 100 == 0 {
+            println!("the count is {}", count);
+        }
+    }
+}
+
 #[async_trait::async_trait]
 impl Plugin for Counter {
     fn handshake() -> Vec<EventId> {
@@ -30,19 +45,13 @@ impl Plugin for Counter {
     }
 
     async fn process_dummy_event(&self, _event: DummyEvent) {
-        let count = self.inner.fetch_add(1, Ordering::Relaxed) + 1;
-
-        if count % 100 == 0 {
-            println!("the count is {}", count);
-        }
+        self.increase();
     }
 }
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), PluginError> {
-    let counter = Counter {
-        inner: Arc::new(0.into()),
-    };
+    let counter = Counter::new();
 
     serve_plugin(counter).await?;
 
