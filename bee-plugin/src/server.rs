@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-use tonic::{transport::Server, Request, Response, Status};
+use tonic::{transport::Server, Request, Response, Status, Streaming};
 
 #[tonic::async_trait]
 pub trait Plugin: Send + Sync + 'static {
@@ -32,8 +32,15 @@ impl<T: Plugin> GrpcPlugin for T {
         Ok(Response::new(ShutdownReply {}))
     }
 
-    async fn process_dummy_event(&self, request: Request<DummyEvent>) -> Result<Response<ProcessReply>, Status> {
-        self.process_dummy_event(request.into_inner()).await;
+    async fn process_dummy_event(
+        &self,
+        request: Request<Streaming<DummyEvent>>,
+    ) -> Result<Response<ProcessReply>, Status> {
+        let mut stream = request.into_inner();
+
+        while let Some(message) = stream.message().await? {
+            self.process_dummy_event(message).await;
+        }
 
         Ok(Response::new(ProcessReply {}))
     }
