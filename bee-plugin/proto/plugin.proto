@@ -8,6 +8,7 @@ service Plugin {
     rpc Handshake(HandshakeRequest) returns (HandshakeReply);
     rpc Shutdown(ShutdownRequest) returns (ShutdownReply);
     rpc ProcessDummyEvent(stream DummyEvent) returns (ProcessReply);
+    rpc ProcessSillyEvent(stream SillyEvent) returns (ProcessReply);
 }
 
 message HandshakeRequest {}
@@ -22,9 +23,11 @@ message ShutdownReply {}
 
 enum EventId {
     DUMMY = 0;
+    SILLY = 1;
 }
 
 message DummyEvent {}
 
-message ProcessReply {}
+message SillyEvent {}
 
+message ProcessReply {}

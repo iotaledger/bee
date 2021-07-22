@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::grpc::{plugin_client::PluginClient, DummyEvent};
+use crate::grpc::{plugin_client::PluginClient, DummyEvent, SillyEvent};
 
 use tokio::{
     select,
@@ -28,11 +28,18 @@ impl<T> PluginStreamer<T> {
     }
 }
 
-impl PluginStreamer<DummyEvent> {
-    pub(crate) async fn run(mut self) {
-        select! {
-            _ = &mut self.shutdown => (),
-            _ = self.client.process_dummy_event(self.stream) => (),
+macro_rules! impl_streamer {
+    ($ty:ty, $method:ident) => {
+        impl PluginStreamer<$ty> {
+            pub(crate) async fn run(mut self) {
+                select! {
+                    _ = &mut self.shutdown => (),
+                    _ = self.client.$method(self.stream) => (),
+                }
+            }
         }
-    }
+    };
 }
+
+impl_streamer!(DummyEvent, process_dummy_event);
+impl_streamer!(SillyEvent, process_silly_event);

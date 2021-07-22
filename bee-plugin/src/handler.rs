@@ -3,7 +3,7 @@
 
 use crate::{
     error::PluginError,
-    grpc::{plugin_client::PluginClient, DummyEvent, EventId, ShutdownRequest},
+    grpc::{plugin_client::PluginClient, DummyEvent, EventId, ShutdownRequest, SillyEvent},
     streamer::PluginStreamer,
     PluginId, UniqueId,
 };
@@ -75,7 +75,7 @@ impl PluginHandler {
             let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
             entry.insert(shutdown_tx);
 
-            spawn_streamers!(self.id, event_id, bus, &self.client, shutdown_rx, EventId::Dummy => DummyEvent)
+            spawn_streamers!(self.id, event_id, bus, &self.client, shutdown_rx, EventId::Dummy => DummyEvent, EventId::Silly => SillyEvent)
         }
     }
 
