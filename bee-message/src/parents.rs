@@ -3,15 +3,16 @@
 
 //! The parents module defines the core data type for storing the messages directly approved by a message.
 
-use crate::{MessageId, MessagePackError, MessageUnpackError, ValidationError, MESSAGE_ID_LENGTH};
+use crate::{MessageId, MessageUnpackError, ValidationError, MESSAGE_ID_LENGTH};
 
 use bee_ord::is_unique_sorted;
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
-use bitvec::prelude::*;
-
-use alloc::{vec, vec::Vec};
-use core::ops::{Deref, RangeInclusive};
+use alloc::vec::Vec;
+use core::{
+    convert::{Infallible, TryFrom, TryInto},
+    ops::RangeInclusive,
+};
 
 /// The range representing the valid number of parents.
 pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
@@ -20,111 +21,85 @@ pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 pub const MESSAGE_MIN_STRONG_PARENTS: usize = 1;
 
 /// An individual message parent, which can be categorized as "strong" or "weak".
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-pub enum Parent {
+#[repr(u8)]
+pub enum ParentsType {
     /// Message parents in which the past cone is "Liked".
-    Strong(MessageId),
+    Strong = 0,
     /// Message parents in which the past cone is "Disliked", but the parents themselves are "Liked".
-    Weak(MessageId),
+    Weak = 1,
+    /// Message parents that are "Liked".
+    Disliked = 2,
+    /// Message parents that are "Disliked".
+    Liked = 3,
 }
 
-impl Parent {
-    /// Returns the `MessageId` of this `Parent`.
-    pub fn id(&self) -> &MessageId {
-        match self {
-            Self::Strong(id) => id,
-            Self::Weak(id) => id,
+impl TryFrom<u8> for ParentsType {
+    type Error = ValidationError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::Strong),
+            1 => Ok(Self::Weak),
+            2 => Ok(Self::Disliked),
+            3 => Ok(Self::Liked),
+            _ => Err(ValidationError::InvalidParentsType(value)),
         }
     }
 }
 
-/// A `Message`'s `Parents` are the `MessageId`s of the messages it directly approves.
-///
-/// `Parents` must:
-/// * Have length within the `MESSAGE_PARENTS_RANGE` range;
-/// * Contain `MESSAGE_MIN_STRONG_PARENTS` strong `Parent`s;
-/// * Be lexicographically sorted;
-/// * Be unique;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Parents {
-    inner: Vec<Parent>,
+/// A block of message parent IDs, all of the same `ParentsType`.
+///
+/// `ParentsBlock`s must:
+/// * Be of a valid `ParentsType`.
+/// * Contain a valid count of parents (1..=8).
+/// * IDs must be unique and lexicographically sorted in their serialized forms.
+pub struct ParentsBlock {
+    ty: ParentsType,
+    ids: Vec<MessageId>,
 }
 
-impl Deref for Parents {
-    type Target = [Parent];
+impl ParentsBlock {
+    /// Creates a new `ParentsBlock`, and validates the ID collection.
+    pub fn new(ty: ParentsType, ids: Vec<MessageId>) -> Result<Self, ValidationError> {
+        validate_parents_count(ids.len())?;
+        validate_parents_unique_sorted(&ids)?;
 
-    fn deref(&self) -> &Self::Target {
-        &self.inner.as_slice()
-    }
-}
-
-#[allow(clippy::len_without_is_empty)]
-impl Parents {
-    /// Creates a new `Parents` instance from a given collection.
-    pub fn new(inner: Vec<Parent>) -> Result<Self, ValidationError> {
-        validate_parents_count(inner.len())?;
-        validate_parents_unique_sorted(&inner)?;
-
-        let strong_count = inner.iter().fold(0usize, |acc, parent| match parent {
-            Parent::Strong(_) => acc + 1,
-            _ => acc,
-        });
-
-        validate_strong_parents_count(strong_count)?;
-
-        Ok(Self { inner })
+        Ok(Self { ty, ids })
     }
 
-    /// Returns the number of message parents.
+    #[allow(clippy::len_without_is_empty)]
+    /// Returns the number of `MessageIDs` in the `ParentsBlock` ID collection.
     pub fn len(&self) -> usize {
-        self.inner.len()
+        self.ids.len()
     }
 
-    /// Returns an `Iterator` over the strong parents of a message.
-    pub fn strong_iter(&self) -> impl Iterator<Item = &MessageId> {
-        self.inner
-            .iter()
-            .filter(|parent| matches!(parent, Parent::Strong(_)))
-            .map(Parent::id)
-    }
-
-    /// Returns an `Iterator` over the weak parents of a message.
-    pub fn weak_iter(&self) -> impl Iterator<Item = &MessageId> {
-        self.inner
-            .iter()
-            .filter(|parent| matches!(parent, Parent::Weak(_)))
-            .map(Parent::id)
+    /// Returns an iterator over the `ParentsBlock` ID collection.
+    pub fn iter(&self) -> impl Iterator<Item = &MessageId> {
+        self.ids.iter()
     }
 }
 
-impl Packable for Parents {
-    type PackError = MessagePackError;
+impl Packable for ParentsBlock {
+    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        0u8.packed_len() + 0u8.packed_len() + self.inner.len() * MESSAGE_ID_LENGTH
+        0u8.packed_len() + 0u8.packed_len() + self.ids.len() * MESSAGE_ID_LENGTH
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        (self.len() as u8).pack(packer).map_err(PackError::infallible)?;
+        (self.ty as u8).pack(packer).map_err(PackError::infallible)?;
+        (self.ids.len() as u8).pack(packer).map_err(PackError::infallible)?;
 
-        let mut bits = bitarr![Lsb0, u8; 0; 8];
-
-        for (i, parent) in self.iter().enumerate() {
-            let is_strong = matches!(parent, Parent::Strong(_));
-            bits.set(i, is_strong);
-        }
-
-        let bits_repr = bits.load::<u8>();
-        bits_repr.pack(packer).map_err(PackError::infallible)?;
-
-        for id in self.iter().map(Parent::id) {
+        for id in &self.ids {
             id.pack(packer).map_err(PackError::infallible)?;
         }
 
@@ -132,32 +107,22 @@ impl Packable for Parents {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let ty = u8::unpack(unpacker)
+            .map_err(UnpackError::infallible)?
+            .try_into()
+            .map_err(|e: ValidationError| UnpackError::Packable(e.into()))?;
+
         let count = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
         validate_parents_count(count as usize).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let bits_repr = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
-
-        let mut bits = bitarr![Lsb0, u8; 0; 8];
-        bits.store(bits_repr);
-        validate_strong_parents_count(bits.count_ones()).map_err(|e| UnpackError::Packable(e.into()))?;
-
-        let mut parents = vec![];
-        parents.reserve(count as usize);
-
-        for i in 0..count {
-            let id = MessageId::unpack(unpacker).map_err(UnpackError::infallible)?;
-
-            // Unwrap is fine here, since `i` has already been validated to be in `MESSAGE_PARENTS_RANGE`.
-            if *bits.get(i as usize).unwrap() {
-                parents.push(Parent::Strong(id))
-            } else {
-                parents.push(Parent::Weak(id))
-            }
+        let mut ids = Vec::with_capacity(count as usize);
+        for _ in 0..count as usize {
+            ids.push(MessageId::unpack(unpacker).map_err(UnpackError::infallible)?);
         }
 
-        validate_parents_unique_sorted(&parents).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_parents_unique_sorted(&ids).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        Ok(Self { inner: parents })
+        Ok(Self { ty, ids })
     }
 }
 
@@ -169,16 +134,8 @@ fn validate_parents_count(count: usize) -> Result<(), ValidationError> {
     }
 }
 
-fn validate_strong_parents_count(count: usize) -> Result<(), ValidationError> {
-    if count < MESSAGE_MIN_STRONG_PARENTS {
-        Err(ValidationError::InvalidStrongParentsCount(count))
-    } else {
-        Ok(())
-    }
-}
-
-fn validate_parents_unique_sorted(parents: &[Parent]) -> Result<(), ValidationError> {
-    if !is_unique_sorted(parents.iter().map(|parent| parent.id().as_ref())) {
+fn validate_parents_unique_sorted(parents: &[MessageId]) -> Result<(), ValidationError> {
+    if !is_unique_sorted(parents.iter()) {
         Err(ValidationError::ParentsNotUniqueSorted)
     } else {
         Ok(())

@@ -1,7 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{parents::Parents, payload::Payload, MessageId, MessagePackError, MessageUnpackError, ValidationError};
+use crate::{
+    parents::ParentsBlock, payload::Payload, MessageId, MessagePackError, MessageUnpackError, ValidationError,
+};
 
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
@@ -10,6 +12,7 @@ use crypto::{
     signatures::ed25519,
 };
 
+use alloc::vec::Vec;
 use core::{convert::TryInto, ops::RangeInclusive};
 
 /// Range (in bytes) of a valid message length.
@@ -20,6 +23,9 @@ pub const MESSAGE_PUBLIC_KEY_LENGTH: usize = 32;
 
 /// Length (in bytes) of a message signature.
 pub const MESSAGE_SIGNATURE_LENGTH: usize = 64;
+
+/// Valid number of `ParentBlocks` for a message.
+pub(crate) const PARENTS_BLOCKS_COUNT_RANGE: RangeInclusive<usize> = 1..=4;
 
 /// Messages are of version 1.
 const MESSAGE_VERSION: u8 = 1;
@@ -32,8 +38,8 @@ const MESSAGE_VERSION: u8 = 1;
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
-    /// Message [Parents].
-    pub(crate) parents: Parents,
+    /// Blocks of message parents. Each block contains a list of parent message IDs grouped by type.
+    pub(crate) parents_blocks: Vec<ParentsBlock>,
     /// The public key of the issuing node.
     pub(crate) issuer_public_key: [u8; MESSAGE_PUBLIC_KEY_LENGTH],
     /// The Unix timestamp at the moment of issue.
@@ -59,9 +65,9 @@ impl Message {
         MessageId::new(id.into())
     }
 
-    /// Returns the parents of a `Message`.
-    pub fn parents(&self) -> &Parents {
-        &self.parents
+    /// Returns the parent blocks of a `Message`.
+    pub fn parents_blocks(&self) -> impl Iterator<Item = &ParentsBlock> {
+        self.parents_blocks.iter()
     }
 
     /// Returns the `Message` issuer public key.
@@ -125,8 +131,11 @@ impl Packable for Message {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
+        let parents_blocks_len = self.parents_blocks().fold(0, |acc, block| acc + block.packed_len());
+
         MESSAGE_VERSION.packed_len()
-            + self.parents.packed_len()
+            + 0u8.packed_len()
+            + parents_blocks_len
             + self.issuer_public_key.packed_len()
             + self.issue_timestamp.packed_len()
             + self.sequence_number.packed_len()
@@ -137,7 +146,14 @@ impl Packable for Message {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         MESSAGE_VERSION.pack(packer).map_err(PackError::infallible)?;
-        self.parents.pack(packer)?;
+        (self.parents_blocks.len() as u8)
+            .pack(packer)
+            .map_err(PackError::infallible)?;
+
+        for block in &self.parents_blocks {
+            block.pack(packer).map_err(PackError::infallible)?;
+        }
+
         self.issuer_public_key.pack(packer).map_err(PackError::infallible)?;
         self.issue_timestamp.pack(packer).map_err(PackError::infallible)?;
         self.sequence_number.pack(packer).map_err(PackError::infallible)?;
@@ -152,7 +168,14 @@ impl Packable for Message {
         let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
         validate_message_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let parents = Parents::unpack(unpacker)?;
+        let parents_blocks_count = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        validate_parents_blocks_count(parents_blocks_count as usize).map_err(|e| UnpackError::Packable(e.into()))?;
+
+        let mut parents_blocks = Vec::with_capacity(parents_blocks_count as usize);
+        for _ in 0..parents_blocks_count {
+            parents_blocks.push(ParentsBlock::unpack(unpacker)?);
+        }
+
         let issuer_public_key = <[u8; MESSAGE_PUBLIC_KEY_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
         let issue_timestamp = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
         let sequence_number = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
@@ -161,7 +184,7 @@ impl Packable for Message {
         let signature = <[u8; MESSAGE_SIGNATURE_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         let message = Self {
-            parents,
+            parents_blocks,
             issuer_public_key,
             issue_timestamp,
             sequence_number,
@@ -180,6 +203,14 @@ impl Packable for Message {
 pub(crate) fn validate_message_len(len: usize) -> Result<(), ValidationError> {
     if !MESSAGE_LENGTH_RANGE.contains(&len) {
         Err(ValidationError::InvalidMessageLength(len))
+    } else {
+        Ok(())
+    }
+}
+
+pub(crate) fn validate_parents_blocks_count(count: usize) -> Result<(), ValidationError> {
+    if !PARENTS_BLOCKS_COUNT_RANGE.contains(&count) {
+        Err(ValidationError::InvalidParentsBlocksCount(count))
     } else {
         Ok(())
     }

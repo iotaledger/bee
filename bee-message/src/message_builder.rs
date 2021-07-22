@@ -3,17 +3,19 @@
 
 use crate::{
     message::{self, Message, MESSAGE_PUBLIC_KEY_LENGTH, MESSAGE_SIGNATURE_LENGTH},
-    parents::Parents,
+    parents::ParentsBlock,
     payload::Payload,
     ValidationError,
 };
 
 use bee_packable::Packable;
 
+use alloc::vec::Vec;
+
 /// A builder to build a `Message`.
 #[derive(Default)]
 pub struct MessageBuilder {
-    parents: Option<Parents>,
+    parents_blocks: Vec<ParentsBlock>,
     issuer_public_key: Option<[u8; MESSAGE_PUBLIC_KEY_LENGTH]>,
     issue_timestamp: Option<u64>,
     sequence_number: Option<u32>,
@@ -28,9 +30,9 @@ impl MessageBuilder {
         Default::default()
     }
 
-    /// Adds parents to a `MessageBuilder`.
-    pub fn with_parents(mut self, parents: Parents) -> Self {
-        self.parents.replace(parents);
+    /// Adds a `ParentsBlock` to a `MessageBuilder`.
+    pub fn add_parents_block(mut self, parents_block: ParentsBlock) -> Self {
+        self.parents_blocks.push(parents_block);
         self
     }
 
@@ -72,7 +74,8 @@ impl MessageBuilder {
 
     /// Finished the `MessageBuilder`, consuming it to build a `Message`.
     pub fn finish(self) -> Result<Message, ValidationError> {
-        let parents = self.parents.ok_or(ValidationError::MissingField("parents"))?;
+        message::validate_parents_blocks_count(self.parents_blocks.len())?;
+
         let issuer_public_key = self
             .issuer_public_key
             .ok_or(ValidationError::MissingField("issuer_public_key"))?;
@@ -87,7 +90,7 @@ impl MessageBuilder {
         let signature = self.signature.ok_or(ValidationError::MissingField("signature"))?;
 
         let message = Message {
-            parents,
+            parents_blocks: self.parents_blocks,
             issuer_public_key,
             issue_timestamp,
             sequence_number,
