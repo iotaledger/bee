@@ -120,6 +120,14 @@ impl From<TransactionUnpackError> for PayloadUnpackError {
     }
 }
 
+/// Common features and attributes of message payloads.
+pub trait MessagePayload {
+    /// Kind of the payload.
+    const KIND: u32;
+    /// Version of the payload.
+    const VERSION: u8;
+}
+
 /// A generic payload that can represent different types defining message payloads.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(
@@ -229,17 +237,17 @@ impl Packable for Payload {
                 ApplicationMessagePayload::KIND
                     .pack(packer)
                     .map_err(PackError::infallible)?;
-                payload.pack(packer).map_err(PackError::infallible)
+                payload.pack(packer)
             }
             Self::Beacon(ref payload) => {
                 BeaconPayload::KIND.pack(packer).map_err(PackError::infallible)?;
-                payload.pack(packer).map_err(PackError::infallible)
+                payload.pack(packer)
             }
             Self::CollectiveBeacon(ref payload) => {
                 CollectiveBeaconPayload::KIND
                     .pack(packer)
                     .map_err(PackError::infallible)?;
-                payload.pack(packer).map_err(PackError::infallible)
+                payload.pack(packer)
             }
             Self::Data(ref payload) => {
                 DataPayload::KIND.pack(packer).map_err(PackError::infallible)?;

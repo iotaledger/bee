@@ -1,7 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{payload::drng::BeaconPayload, util::hex_decode};
+use bee_message::{
+    payload::{drng::BeaconPayload, MessagePayload},
+    util::hex_decode,
+};
 use bee_packable::Packable;
 
 const BEACON_PARTIAL_PUBLIC_KEY: &str = "55914b063d6342d89680c90b3617877c0dd5c1b88fce7e19d24904ebe56aaca9835d458d77f61\
@@ -17,9 +20,13 @@ fn kind() {
 }
 
 #[test]
+fn version() {
+    assert_eq!(BeaconPayload::VERSION, 0);
+}
+
+#[test]
 fn new_valid() {
     let beacon = BeaconPayload::builder()
-        .with_version(0)
         .with_instance_id(0)
         .with_round(1)
         .with_partial_public_key(hex_decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap())
@@ -45,7 +52,6 @@ fn accessors_eq() {
     let partial_signature = hex_decode::<96>(BEACON_SIGNATURE).unwrap();
 
     let beacon = BeaconPayload::builder()
-        .with_version(0)
         .with_instance_id(0)
         .with_round(1)
         .with_partial_public_key(partial_pk)
@@ -53,7 +59,6 @@ fn accessors_eq() {
         .finish()
         .unwrap();
 
-    assert_eq!(beacon.version(), 0);
     assert_eq!(beacon.instance_id(), 0);
     assert_eq!(beacon.round(), 1);
     assert_eq!(beacon.partial_public_key(), partial_pk);
@@ -63,7 +68,6 @@ fn accessors_eq() {
 #[test]
 fn packed_len() {
     let beacon = BeaconPayload::builder()
-        .with_version(0)
         .with_instance_id(0)
         .with_round(1)
         .with_partial_public_key(hex_decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap())
@@ -77,7 +81,6 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let beacon_a = BeaconPayload::builder()
-        .with_version(0)
         .with_instance_id(0)
         .with_round(1)
         .with_partial_public_key(hex_decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap())

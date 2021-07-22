@@ -1,17 +1,20 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH, BEACON_SIGNATURE_LENGTH};
-use crate::ValidationError;
+use crate::{
+    payload::{
+        drng::beacon::{BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH, BEACON_SIGNATURE_LENGTH},
+        MessagePayload,
+    },
+    MessagePackError, MessageUnpackError, ValidationError,
+};
 
-use bee_packable::Packable;
+use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
 /// Message decsribing a dRNG `CollectiveBeacon`.
-#[derive(Clone, Debug, Eq, PartialEq, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct CollectiveBeaconPayload {
-    /// The version of the `CollectiveBeaconPayload`.
-    version: u8,
     /// The identifier of the dRNG instance.
     instance_id: u32,
     /// The round of the current beacon.
@@ -27,18 +30,15 @@ pub struct CollectiveBeaconPayload {
     distributed_public_key: [u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH],
 }
 
-impl CollectiveBeaconPayload {
-    /// The payload kind of a `CollectiveBeaconPayload`.
-    pub const KIND: u32 = 6;
+impl MessagePayload for CollectiveBeaconPayload {
+    const KIND: u32 = 6;
+    const VERSION: u8 = 0;
+}
 
+impl CollectiveBeaconPayload {
     /// Creates a new `CollectiveBeaconPayloadBuilder`.
     pub fn builder() -> CollectiveBeaconPayloadBuilder {
         CollectiveBeaconPayloadBuilder::new()
-    }
-
-    /// Returns the version of a `CollectiveBeaconPayload`.
-    pub fn version(&self) -> u8 {
-        self.version
     }
 
     /// Returns the instance ID of a `CollectiveBeaconPayload`.
@@ -67,10 +67,54 @@ impl CollectiveBeaconPayload {
     }
 }
 
+impl Packable for CollectiveBeaconPayload {
+    type PackError = MessagePackError;
+    type UnpackError = MessageUnpackError;
+
+    fn packed_len(&self) -> usize {
+        Self::VERSION.packed_len()
+            + self.instance_id.packed_len()
+            + self.round.packed_len()
+            + self.prev_signature.packed_len()
+            + self.signature.packed_len()
+            + self.distributed_public_key.packed_len()
+    }
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
+        self.instance_id.pack(packer).map_err(PackError::infallible)?;
+        self.round.pack(packer).map_err(PackError::infallible)?;
+        self.prev_signature.pack(packer).map_err(PackError::infallible)?;
+        self.signature.pack(packer).map_err(PackError::infallible)?;
+        self.distributed_public_key
+            .pack(packer)
+            .map_err(PackError::infallible)?;
+
+        Ok(())
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let _version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let instance_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let round = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let prev_signature = <[u8; BEACON_SIGNATURE_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let signature = <[u8; BEACON_SIGNATURE_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let distributed_public_key =
+            <[u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
+
+        Ok(Self {
+            instance_id,
+            round,
+            prev_signature,
+            signature,
+            distributed_public_key,
+        })
+    }
+}
+
 /// Builder that builds a `CollectiveBeaconPayload`.
 #[derive(Default)]
 pub struct CollectiveBeaconPayloadBuilder {
-    version: Option<u8>,
     instance_id: Option<u32>,
     round: Option<u64>,
     prev_signature: Option<[u8; BEACON_SIGNATURE_LENGTH]>,
@@ -82,12 +126,6 @@ impl CollectiveBeaconPayloadBuilder {
     /// Creates a new `CollectiveBeaconPayloadBuilder`.
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Adds a version to a `CollectiveBeaconPayloadBuilder`.
-    pub fn with_version(mut self, version: u8) -> Self {
-        self.version.replace(version);
-        self
     }
 
     /// Adds an instance ID to a `CollectiveBeaconPayloadBuilder`.
@@ -125,7 +163,6 @@ impl CollectiveBeaconPayloadBuilder {
 
     /// Consumes the `CollectiveBeaconPayloadBuilder` and builds a new `CollectiveBeaconPayload`.
     pub fn finish(self) -> Result<CollectiveBeaconPayload, ValidationError> {
-        let version = self.version.ok_or(ValidationError::MissingField("version"))?;
         let instance_id = self.instance_id.ok_or(ValidationError::MissingField("instance_id"))?;
         let round = self.round.ok_or(ValidationError::MissingField("round"))?;
         let prev_signature = self
@@ -137,7 +174,6 @@ impl CollectiveBeaconPayloadBuilder {
             .ok_or(ValidationError::MissingField("distributed_public_key"))?;
 
         Ok(CollectiveBeaconPayload {
-            version,
             instance_id,
             round,
             prev_signature,

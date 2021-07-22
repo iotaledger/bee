@@ -6,7 +6,10 @@ use bee_message::{
     error::ValidationError,
     input::{Input, UtxoInput},
     output::{Output, SignatureLockedSingleOutput},
-    payload::transaction::{TransactionEssence, TransactionId, TransactionPayload},
+    payload::{
+        transaction::{TransactionEssence, TransactionId, TransactionPayload},
+        MessagePayload,
+    },
     signature::{Ed25519Signature, SignatureUnlock},
     unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
     util::hex_decode,
@@ -26,8 +29,13 @@ fn kind() {
 }
 
 #[test]
+fn version() {
+    assert_eq!(TransactionPayload::VERSION, 0);
+}
+
+#[test]
 fn invalid_no_essence() {
-    let payload = TransactionPayload::builder().with_version(0).finish();
+    let payload = TransactionPayload::builder().finish();
 
     assert!(matches!(payload.unwrap_err(), ValidationError::MissingField("essence"),));
 }
@@ -48,10 +56,7 @@ fn invalid_no_unlock_blocks() {
         .with_outputs(vec![output])
         .finish()
         .unwrap();
-    let payload = TransactionPayload::builder()
-        .with_version(0)
-        .with_essence(essence)
-        .finish();
+    let payload = TransactionPayload::builder().with_essence(essence).finish();
 
     assert!(matches!(
         payload.unwrap_err(),
@@ -82,7 +87,6 @@ fn invalid_too_few_unlock_blocks() {
     let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block]).unwrap();
     let payload = TransactionPayload::builder()
-        .with_version(0)
         .with_essence(essence)
         .with_unlock_blocks(unlock_blocks)
         .finish();
@@ -117,7 +121,6 @@ fn invalid_too_many_unlock_blocks() {
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
     let payload = TransactionPayload::builder()
-        .with_version(0)
         .with_essence(essence)
         .with_unlock_blocks(unlock_blocks)
         .finish();
@@ -153,13 +156,11 @@ fn accessors_eq() {
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
     let payload = TransactionPayload::builder()
-        .with_version(0)
         .with_essence(essence.clone())
         .with_unlock_blocks(unlock_blocks.clone())
         .finish()
         .unwrap();
 
-    assert_eq!(payload.version(), 0);
     assert_eq!(payload.essence(), &essence);
     assert_eq!(payload.unlock_blocks(), &unlock_blocks);
 }
@@ -188,7 +189,6 @@ fn packed_len() {
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
     let payload = TransactionPayload::builder()
-        .with_version(0)
         .with_essence(essence)
         .with_unlock_blocks(unlock_blocks)
         .finish()
@@ -224,7 +224,6 @@ fn packable_round_trip() {
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
     let payload_a = TransactionPayload::builder()
-        .with_version(0)
         .with_essence(essence)
         .with_unlock_blocks(unlock_blocks)
         .finish()

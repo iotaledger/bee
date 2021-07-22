@@ -9,7 +9,7 @@ mod timestamps;
 pub use conflicts::{Conflict, Conflicts};
 pub use timestamps::{Timestamp, Timestamps};
 
-use crate::{MessagePackError, MessageUnpackError, ValidationError};
+use crate::{payload::MessagePayload, MessagePackError, MessageUnpackError, ValidationError};
 
 use bee_packable::{
     error::{PackPrefixError, UnpackPrefixError},
@@ -83,26 +83,21 @@ impl From<UnpackPrefixError<Infallible, u32>> for FpcUnpackError {
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct FpcPayload {
-    /// Version of the FPC statement payload.
-    version: u8,
     /// Collection of opinions on conflicting transactions.
     conflicts: Conflicts,
     /// Collection of opinions on message timestamps.
     timestamps: Timestamps,
 }
 
-impl FpcPayload {
-    /// The payload kind of an `FpcPayload`.
-    pub const KIND: u32 = 2;
+impl MessagePayload for FpcPayload {
+    const KIND: u32 = 2;
+    const VERSION: u8 = 0;
+}
 
+impl FpcPayload {
     /// Returns a new `FpcPayloadBuilder` in order to build an `FpcPayload`.
     pub fn builder() -> FpcPayloadBuilder {
         FpcPayloadBuilder::new()
-    }
-
-    /// Returns the version of an `FpcPayload`.
-    pub fn version(&self) -> u8 {
-        self.version
     }
 
     /// Returns the `Conflicts` of an `FpcPayload`.
@@ -121,11 +116,11 @@ impl Packable for FpcPayload {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        self.version.packed_len() + self.conflicts.packed_len() + self.timestamps.packed_len()
+        Self::VERSION.packed_len() + self.conflicts.packed_len() + self.timestamps.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.version.pack(packer).map_err(PackError::infallible)?;
+        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
         self.conflicts
             .pack(packer)
             .map_err(PackError::coerce::<FpcPackError>)
@@ -139,7 +134,7 @@ impl Packable for FpcPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let _version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         let conflicts = Conflicts::unpack(unpacker)
             .map_err(UnpackError::coerce::<FpcUnpackError>)
@@ -149,18 +144,13 @@ impl Packable for FpcPayload {
             .map_err(UnpackError::coerce::<FpcUnpackError>)
             .map_err(UnpackError::coerce)?;
 
-        Ok(Self {
-            version,
-            conflicts,
-            timestamps,
-        })
+        Ok(Self { conflicts, timestamps })
     }
 }
 
 /// A builder to build an `FpcPayload`.
 #[derive(Default)]
 pub struct FpcPayloadBuilder {
-    version: Option<u8>,
     conflicts: Conflicts,
     timestamps: Timestamps,
 }
@@ -169,12 +159,6 @@ impl FpcPayloadBuilder {
     /// Creates a new `FpcPayloadBuilder`.
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Adds a version number to the `FpcPayloadBuilder`.
-    pub fn with_version(mut self, version: u8) -> Self {
-        self.version.replace(version);
-        self
     }
 
     /// Adds a collection of conflicts to the `FpcPayloadBuilder`.
@@ -191,10 +175,7 @@ impl FpcPayloadBuilder {
 
     /// Finishes an `FpcPayloadBuilder` into an `FpcPayload`.
     pub fn finish(self) -> Result<FpcPayload, ValidationError> {
-        let version = self.version.ok_or(ValidationError::MissingField("version"))?;
-
         Ok(FpcPayload {
-            version,
             conflicts: self.conflicts,
             timestamps: self.timestamps,
         })
