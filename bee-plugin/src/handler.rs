@@ -36,9 +36,10 @@ macro_rules! spawn_streamers {
                         PluginStreamer::new(rx, $shutdown, client).run().await;
                     });
 
+                    log::info!("registering `{}` callback with ID `{:?}`", std::any::type_name::<$event_ty>(), $plugin_id);
                     $bus.add_listener_with_id(move |event: &$event_ty| {
                         if let Err(err) = tx.send(event.clone()) {
-                            println!("failed to send event: {}", err);
+                            log::warn!("failed to send event: {}", err);
                         }
                     }, UniqueId::Plugin($plugin_id));
                 }
@@ -75,7 +76,11 @@ impl PluginHandler {
             let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
             entry.insert(shutdown_tx);
 
-            spawn_streamers!(self.id, event_id, bus, &self.client, shutdown_rx, EventId::Dummy => DummyEvent, EventId::Silly => SillyEvent)
+            spawn_streamers! {
+                self.id, event_id, bus, &self.client, shutdown_rx,
+                EventId::Dummy => DummyEvent,
+                EventId::Silly => SillyEvent
+            }
         }
     }
 
@@ -87,8 +92,10 @@ impl PluginHandler {
             // the streamer is already gone.
             shutdown.send(()).ok();
         }
+        log::info!("removing callbacks with id `{:?}`", self.id);
         bus.remove_listeners_with_id(self.id.into());
 
+        log::info!("sending shutdown request to the plugin `{:?}`", self.id);
         let shutdown = self.client.shutdown(Request::new(ShutdownRequest {}));
         let delay = sleep(Duration::from_secs(30));
 
@@ -96,9 +103,12 @@ impl PluginHandler {
             result = shutdown => {
                 result?;
             },
-            _ = delay => (),
+            _ = delay => {
+                log::warn!("the shutdown request for the plugin `{:?}` timed out", self.id);
+            },
         }
 
+        log::info!("killing process for plugin `{:?}`", self.id);
         self.process.kill().await?;
 
         Ok(())

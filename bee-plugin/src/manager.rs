@@ -10,10 +10,13 @@ use crate::{
 
 use bee_event_bus::EventBus;
 
-use tokio::process::Command;
+use tokio::{
+    process::Command,
+    time::{sleep, Duration},
+};
 use tonic::Request;
 
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::HashMap, sync::Arc};
 
 /// The bee node plugin manager.
 pub struct PluginManager {
@@ -39,20 +42,22 @@ impl PluginManager {
     pub async fn load_plugin(&mut self, mut command: Command) -> Result<PluginId, PluginError> {
         command.kill_on_drop(true);
 
+        let id = PluginId(self.count);
+
+        log::info!("spawning command `{:?}` for the plugin `{:?}`", command, id);
         let process = command.spawn()?;
 
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        sleep(Duration::from_secs(1)).await;
 
+        log::info!("connecting to the plugin `{:?}`", id);
         let mut client = PluginClient::connect("http://[::1]:50051").await?;
 
+        log::info!("handshaking with the plugin `{:?}`", id);
         let handshake_response = client.handshake(Request::new(HandshakeRequest {})).await?;
 
         let raw_ids: Vec<i32> = handshake_response.into_inner().ids;
 
-        let id = PluginId(self.count);
         let mut handler = PluginHandler::new(id, process, client);
-
-        self.count += 1;
 
         for raw_id in raw_ids {
             match EventId::from_i32(raw_id) {
@@ -63,13 +68,17 @@ impl PluginManager {
 
         self.handlers.insert(id, handler);
 
+        self.count += 1;
+
         Ok(id)
     }
 
     /// Unloads a plugin with the specified identifier.
     pub async fn unload_plugin(&mut self, id: PluginId) -> Result<(), PluginError> {
         if let Some(handler) = self.handlers.remove(&id) {
+            log::info!("shutting down the plugin `{:?}`", id);
             handler.shutdown(&self.bus).await?;
+            log::info!("the plugin `{:?}` was shut down successfully", id);
         }
 
         Ok(())
