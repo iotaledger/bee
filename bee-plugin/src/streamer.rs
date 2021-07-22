@@ -29,17 +29,21 @@ impl<T> PluginStreamer<T> {
 }
 
 macro_rules! impl_streamer {
-    ($ty:ty, $method:ident) => {
-        impl PluginStreamer<$ty> {
-            pub(crate) async fn run(mut self) {
-                select! {
-                    _ = &mut self.shutdown => (),
-                    _ = self.client.$method(self.stream) => (),
+    ($($method_name:ident => $event_ty:ty),*) => {
+        $(
+            impl PluginStreamer<$event_ty> {
+                pub(crate) async fn run(mut self) {
+                    select! {
+                        _ = &mut self.shutdown => (),
+                        _ = self.client.$method_name(self.stream) => (),
+                    }
                 }
             }
-        }
+        )*
     };
 }
 
-impl_streamer!(DummyEvent, process_dummy_event);
-impl_streamer!(SillyEvent, process_silly_event);
+impl_streamer! {
+    process_dummy_event => DummyEvent,
+    process_silly_event => SillyEvent
+}

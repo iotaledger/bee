@@ -12,52 +12,52 @@ use crate::{
 
 use tonic::{transport::Server, Request, Response, Status, Streaming};
 
-#[tonic::async_trait]
-pub trait Plugin: Send + Sync + 'static {
-    fn handshake() -> Vec<EventId>;
-    async fn shutdown(&self);
-    async fn process_dummy_event(&self, _event: DummyEvent) {}
-    async fn process_silly_event(&self, _event: SillyEvent) {}
+macro_rules! plugin_trait {
+    ($($method_name:ident => $event_ty:ty),*) => {
+        #[tonic::async_trait]
+        pub trait Plugin: Send + Sync + 'static {
+            fn handshake() -> Vec<EventId>;
+            async fn shutdown(&self);
+            $(async fn $method_name(&self, _event: $event_ty) {})*
+        }
+
+        #[tonic::async_trait]
+        impl<T: Plugin> GrpcPlugin for T {
+            async fn handshake(&self, _request: Request<HandshakeRequest>) -> Result<Response<HandshakeReply>, Status> {
+                Ok(Response::new(HandshakeReply {
+                    ids: Self::handshake()
+                        .into_iter()
+                        .map(|event_id| event_id.into())
+                        .collect(),
+                }))
+            }
+
+            async fn shutdown(&self, _request: Request<ShutdownRequest>) -> Result<Response<ShutdownReply>, Status> {
+                self.shutdown().await;
+                Ok(Response::new(ShutdownReply {}))
+            }
+
+            $(
+                async fn $method_name(
+                    &self,
+                    request: Request<Streaming<$event_ty>>,
+                ) -> Result<Response<ProcessReply>, Status> {
+                    let mut stream = request.into_inner();
+
+                    while let Some(message) = stream.message().await? {
+                        self.$method_name(message).await;
+                    }
+
+                    Ok(Response::new(ProcessReply {}))
+                }
+            )*
+        }
+    };
 }
 
-#[tonic::async_trait]
-impl<T: Plugin> GrpcPlugin for T {
-    async fn handshake(&self, _request: Request<HandshakeRequest>) -> Result<Response<HandshakeReply>, Status> {
-        Ok(Response::new(HandshakeReply {
-            ids: Self::handshake().into_iter().map(|event_id| event_id.into()).collect(),
-        }))
-    }
-
-    async fn shutdown(&self, _request: Request<ShutdownRequest>) -> Result<Response<ShutdownReply>, Status> {
-        self.shutdown().await;
-        Ok(Response::new(ShutdownReply {}))
-    }
-
-    async fn process_dummy_event(
-        &self,
-        request: Request<Streaming<DummyEvent>>,
-    ) -> Result<Response<ProcessReply>, Status> {
-        let mut stream = request.into_inner();
-
-        while let Some(message) = stream.message().await? {
-            self.process_dummy_event(message).await;
-        }
-
-        Ok(Response::new(ProcessReply {}))
-    }
-
-    async fn process_silly_event(
-        &self,
-        request: Request<Streaming<SillyEvent>>,
-    ) -> Result<Response<ProcessReply>, Status> {
-        let mut stream = request.into_inner();
-
-        while let Some(message) = stream.message().await? {
-            self.process_silly_event(message).await;
-        }
-
-        Ok(Response::new(ProcessReply {}))
-    }
+plugin_trait! {
+    process_dummy_event => DummyEvent,
+    process_silly_event => SillyEvent
 }
 
 pub async fn serve_plugin<T: Plugin>(plugin: T) -> Result<(), PluginError> {
