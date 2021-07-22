@@ -19,6 +19,7 @@ async-trait = "0.1"
 [dependencies]
 bee-event-bus = { path = "../bee-common/bee-event-bus" }
 
+log = "0.4"
 prost = "0.8"
 thiserror = "1.0"
 tonic = "0.5"
