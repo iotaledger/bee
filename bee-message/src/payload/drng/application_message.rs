@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::MessagePayload, MessagePackError, MessageUnpackError};
+use crate::{payload::MessagePayload, MessagePackError, MessageUnpackError, ValidationError};
 
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
@@ -46,10 +46,22 @@ impl Packable for ApplicationMessagePayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let _version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
         let instance_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         Ok(Self { instance_id })
+    }
+}
+
+fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
+    if version != ApplicationMessagePayload::VERSION {
+        Err(ValidationError::InvalidPayloadVersion(
+            version,
+            ApplicationMessagePayload::KIND,
+        ))
+    } else {
+        Ok(())
     }
 }

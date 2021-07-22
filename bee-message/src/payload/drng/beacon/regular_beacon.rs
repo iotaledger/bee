@@ -82,7 +82,9 @@ impl Packable for BeaconPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let _version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
+
         let instance_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
         let round = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
         let partial_public_key =
@@ -95,6 +97,14 @@ impl Packable for BeaconPayload {
             partial_public_key,
             partial_signature,
         })
+    }
+}
+
+fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
+    if version != BeaconPayload::VERSION {
+        Err(ValidationError::InvalidPayloadVersion(version, BeaconPayload::KIND))
+    } else {
+        Ok(())
     }
 }
 

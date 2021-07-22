@@ -132,22 +132,6 @@ impl IndexationPayload {
     }
 }
 
-fn validate_index(index: &[u8]) -> Result<(), ValidationError> {
-    if !INDEXATION_INDEX_LENGTH_RANGE.contains(&index.len()) {
-        Err(ValidationError::InvalidIndexationIndexLength(index.len()))
-    } else {
-        Ok(())
-    }
-}
-
-fn validate_data(data: &[u8]) -> Result<(), ValidationError> {
-    if data.len() > *MESSAGE_LENGTH_RANGE.end() {
-        Err(ValidationError::InvalidIndexationDataLength(data.len()))
-    } else {
-        Ok(())
-    }
-}
-
 impl Packable for IndexationPayload {
     type PackError = MessagePackError;
     type UnpackError = MessageUnpackError;
@@ -180,7 +164,8 @@ impl Packable for IndexationPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let _version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
         let index: Vec<u8> = VecPrefix::<u8, u32, PREFIXED_INDEX_LENGTH_MAX>::unpack(unpacker)
             .map_err(UnpackError::coerce::<IndexationUnpackError>)
@@ -197,5 +182,29 @@ impl Packable for IndexationPayload {
         validate_data(&data).map_err(|e| UnpackError::Packable(e.into()))?;
 
         Ok(Self { index, data })
+    }
+}
+
+fn validate_index(index: &[u8]) -> Result<(), ValidationError> {
+    if !INDEXATION_INDEX_LENGTH_RANGE.contains(&index.len()) {
+        Err(ValidationError::InvalidIndexationIndexLength(index.len()))
+    } else {
+        Ok(())
+    }
+}
+
+fn validate_data(data: &[u8]) -> Result<(), ValidationError> {
+    if data.len() > *MESSAGE_LENGTH_RANGE.end() {
+        Err(ValidationError::InvalidIndexationDataLength(data.len()))
+    } else {
+        Ok(())
+    }
+}
+
+fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
+    if version != IndexationPayload::VERSION {
+        Err(ValidationError::InvalidPayloadVersion(version, IndexationPayload::KIND))
+    } else {
+        Ok(())
     }
 }

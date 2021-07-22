@@ -358,7 +358,9 @@ impl Packable for DkgPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let _version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
+
         let instance_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
         let from_index = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
         let to_index = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
@@ -370,6 +372,14 @@ impl Packable for DkgPayload {
             to_index,
             deal,
         })
+    }
+}
+
+fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
+    if version != DkgPayload::VERSION {
+        Err(ValidationError::InvalidPayloadVersion(version, DkgPayload::KIND))
+    } else {
+        Ok(())
     }
 }
 
