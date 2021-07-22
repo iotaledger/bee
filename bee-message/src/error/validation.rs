@@ -36,6 +36,7 @@ pub enum ValidationError {
     InvalidParentsType(u8),
     InvalidPayloadKind(u32),
     InvalidPayloadLength(usize),
+    InvalidPayloadVersion(u8, u32),
     InvalidReferenceIndex(u16),
     InvalidSaltDeclarationBytesLength(usize),
     InvalidSignature,
@@ -91,6 +92,9 @@ impl fmt::Display for ValidationError {
             Self::InvalidParentsType(ty) => write!(f, "invalid parents type: {}", ty),
             Self::InvalidPayloadKind(kind) => write!(f, "invalid payload kind: {}", kind),
             Self::InvalidPayloadLength(len) => write!(f, "invalid payload length: {}", len),
+            Self::InvalidPayloadVersion(version, kind) => {
+                write!(f, "invalid version {} for payload kind {}", version, kind)
+            }
             Self::InvalidReferenceIndex(index) => write!(f, "invalid reference index: {}", index),
             Self::InvalidSaltDeclarationBytesLength(len) => {
                 write!(f, "invalid salt deeclaration bytes length: {}", len)

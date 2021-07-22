@@ -220,7 +220,9 @@ impl Packable for SaltDeclarationPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let _version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
+
         let node_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
         let salt = Salt::unpack(unpacker).map_err(UnpackError::coerce)?;
         let timestamp = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
@@ -232,6 +234,17 @@ impl Packable for SaltDeclarationPayload {
             timestamp,
             signature,
         })
+    }
+}
+
+fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
+    if version != SaltDeclarationPayload::VERSION {
+        Err(ValidationError::InvalidPayloadVersion(
+            version,
+            SaltDeclarationPayload::KIND,
+        ))
+    } else {
+        Ok(())
     }
 }
 

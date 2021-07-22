@@ -168,13 +168,26 @@ impl Packable for TransactionPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let _version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let essence = TransactionEssence::unpack(unpacker)?;
-        let unlock_blocks = UnlockBlocks::unpack(unpacker)?;
+        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
+        let essence = TransactionEssence::unpack(unpacker)?;
+
+        let unlock_blocks = UnlockBlocks::unpack(unpacker)?;
         validate_unlock_block_count(&essence, &unlock_blocks).map_err(|e| UnpackError::Packable(e.into()))?;
 
         Ok(Self { essence, unlock_blocks })
+    }
+}
+
+fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
+    if version != TransactionPayload::VERSION {
+        Err(ValidationError::InvalidPayloadVersion(
+            version,
+            TransactionPayload::KIND,
+        ))
+    } else {
+        Ok(())
     }
 }
 
