@@ -33,8 +33,7 @@ macro_rules! spawn_streamers {
                     let client = $client.clone();
 
                     spawn(async move {
-                        let mut streamer = PluginStreamer::new(rx, $shutdown, client);
-                        streamer.run().await;
+                        PluginStreamer::new(rx, $shutdown, client).run().await;
                     });
 
                     $bus.add_listener_with_id(move |event: &$event_ty| {
