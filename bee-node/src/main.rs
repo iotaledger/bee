@@ -8,7 +8,10 @@ use bee_node::{
     cli::NodeCliArgs,
     config::{NodeConfigBuilder, DEFAULT_NODE_CONFIG_PATH},
 };
-use bee_plugin::{server::DummyEvent, PluginManager, UniqueId};
+use bee_plugin::{
+    server::{DummyEvent, SillyEvent},
+    PluginManager, UniqueId,
+};
 
 use std::{sync::Arc, time::Duration};
 
@@ -38,10 +41,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let process = tokio::process::Command::new("../target/debug/examples/counter");
     let plugin_id = manager.load_plugin(process).await?;
 
+    {
+        let event_bus = Arc::clone(&event_bus);
+        tokio::spawn(async move {
+            for _ in 0..1000 {
+                tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
+                event_bus.dispatch(DummyEvent {})
+            }
+        });
+    }
+
     tokio::spawn(async move {
         for _ in 0..1000 {
             tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
-            event_bus.dispatch(DummyEvent {})
+            event_bus.dispatch(SillyEvent {})
         }
     });
 
