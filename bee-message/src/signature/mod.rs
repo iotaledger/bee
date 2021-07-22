@@ -33,7 +33,7 @@ impl fmt::Display for SignatureUnlockUnpackError {
 /// RFC: <https://github.com/luca-moser/protocol-rfcs/blob/signed-tx-payload/text/0000-transaction-payload/0000-transaction-payload.md#signature-unlock-block>
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(
-    feature = "enable-serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]

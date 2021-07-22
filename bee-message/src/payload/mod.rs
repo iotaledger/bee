@@ -123,7 +123,7 @@ impl From<TransactionUnpackError> for PayloadUnpackError {
 /// A generic payload that can represent different types defining message payloads.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(
-    feature = "enable-serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]

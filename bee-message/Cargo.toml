@@ -11,7 +11,7 @@ keywords = [ "iota", "tangle", "bee", "framework", "message" ]
 homepage = "https://www.iota.org"
 
 [features]
-enable-serde = ["serde", "serde-big-array"]
+serde1 = ["serde", "serde-big-array"]
 
 [dependencies]
 bee-ord = { path = "../bee-common/bee-ord" }

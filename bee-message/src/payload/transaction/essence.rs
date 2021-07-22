@@ -114,7 +114,7 @@ impl fmt::Display for TransactionEssenceUnpackError {
 /// * Ensure that `Output`s are sorted lexicographically in their serialized formns.
 /// * Ensure that the optional `Payload` is of `Indexation` type.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionEssence {
     /// Timestamp of the transaction.
     timestamp: u64,

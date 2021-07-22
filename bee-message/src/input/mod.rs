@@ -42,7 +42,7 @@ impl fmt::Display for InputUnpackError {
 /// A generic input supporting different input kinds.
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 #[cfg_attr(
-    feature = "enable-serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]

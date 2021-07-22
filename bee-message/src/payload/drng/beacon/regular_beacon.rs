@@ -8,7 +8,7 @@ use bee_packable::Packable;
 
 /// Message representing a dRNG `Beacon`.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct BeaconPayload {
     /// The version of the `BeaconPayload`.
     version: u8,
@@ -17,10 +17,10 @@ pub struct BeaconPayload {
     /// The round of the current beacon.
     round: u64,
     /// The public key of the issuer.
-    #[cfg_attr(feature = "enable-serde", serde(with = "serde_big_array::BigArray"))]
+    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))]
     partial_public_key: [u8; BEACON_PARTIAL_PUBLIC_KEY_LENGTH],
     /// The collective signature of the current beacon.
-    #[cfg_attr(feature = "enable-serde", serde(with = "serde_big_array::BigArray"))]
+    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))]
     partial_signature: [u8; BEACON_SIGNATURE_LENGTH],
 }
 

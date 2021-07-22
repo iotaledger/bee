@@ -18,7 +18,7 @@ pub const ED25519_ADDRESS_LENGTH: usize = 32;
 
 /// An Ed25519 address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Ed25519Address([u8; ED25519_ADDRESS_LENGTH]);
 
 #[allow(clippy::len_without_is_empty)]

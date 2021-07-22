@@ -19,7 +19,7 @@ use core::convert::TryFrom;
 /// A generic address supporting different address kinds.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(
-    feature = "enable-serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]

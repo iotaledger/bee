@@ -79,7 +79,7 @@ impl fmt::Display for SignatureLockedAssetUnpackError {
 
 /// Tokenized asset balance information.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct AssetBalance {
     /// The ID of the tokenized asset.
     id: [u8; ASSET_ID_LENGTH],
@@ -106,7 +106,7 @@ impl AssetBalance {
 
 /// An output type which can be unlocked via a signature. It deposits onto one single address.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct SignatureLockedAssetOutput {
     address: Address,
     balances: Vec<AssetBalance>,

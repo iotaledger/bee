@@ -8,7 +8,7 @@ use bee_packable::Packable;
 
 /// Message decsribing a dRNG `CollectiveBeacon`.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct CollectiveBeaconPayload {
     /// The version of the `CollectiveBeaconPayload`.
     version: u8,
@@ -17,13 +17,13 @@ pub struct CollectiveBeaconPayload {
     /// The round of the current beacon.
     round: u64,
     /// The collective signature of the previous beacon.
-    #[cfg_attr(feature = "enable-serde", serde(with = "serde_big_array::BigArray"))]
+    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))]
     prev_signature: [u8; BEACON_SIGNATURE_LENGTH],
     /// The collective signature of the current beacon.
-    #[cfg_attr(feature = "enable-serde", serde(with = "serde_big_array::BigArray"))]
+    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))]
     signature: [u8; BEACON_SIGNATURE_LENGTH],
     /// The distributed public key.
-    #[cfg_attr(feature = "enable-serde", serde(with = "serde_big_array::BigArray"))]
+    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))]
     distributed_public_key: [u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH],
 }
 

@@ -17,7 +17,7 @@ const PREFIXED_TIMESTAMPS_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX / (MESSAGE_ID_L
 /// Provides a convenient collection of `Timestamp`s.
 /// Describes a vote in a given round for a message timestamp.
 #[derive(Clone, Default, Debug, Eq, PartialEq, Packable)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(pack_error = PackPrefixError<Infallible, u32>)]
 #[packable(unpack_error = UnpackPrefixError<Infallible, u32>)]
 pub struct Timestamps {
@@ -42,7 +42,7 @@ impl Timestamps {
 
 /// Describes a vote in a given round for a message timestamp.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Timestamp {
     /// ID of the message that contains the timestamp.
     message_id: MessageId,

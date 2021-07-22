@@ -22,7 +22,7 @@ pub const MESSAGE_MIN_STRONG_PARENTS: usize = 1;
 /// An individual message parent, which can be categorized as "strong" or "weak".
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
-    feature = "enable-serde",
+    feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
@@ -51,7 +51,7 @@ impl Parent {
 /// * Be lexicographically sorted;
 /// * Be unique;
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Parents {
     inner: Vec<Parent>,
 }
