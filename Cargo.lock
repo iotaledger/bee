@@ -161,6 +161,7 @@ dependencies = [
 name = "bee-plugin"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bee-event-bus",
  "futures",
  "prost",

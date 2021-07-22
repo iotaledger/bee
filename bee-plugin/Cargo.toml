@@ -13,6 +13,9 @@ homepage = "https://www.iota.org"
 [build-dependencies]
 tonic-build = "0.5"
 
+[dev-dependencies]
+async-trait = "0.1"
+
 [dependencies]
 bee-event-bus = { path = "../bee-common/bee-event-bus" }
 

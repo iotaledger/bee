@@ -15,7 +15,7 @@ struct Counter {
     inner: Arc<AtomicUsize>,
 }
 
-#[tonic::async_trait]
+#[async_trait::async_trait]
 impl Plugin for Counter {
     fn handshake() -> Vec<EventId> {
         vec![EventId::Dummy]
@@ -42,5 +42,8 @@ async fn main() -> Result<(), PluginError> {
     let counter = Counter {
         inner: Arc::new(0.into()),
     };
-    serve_plugin(counter).await
+
+    serve_plugin(counter).await?;
+
+    Ok(())
 }
