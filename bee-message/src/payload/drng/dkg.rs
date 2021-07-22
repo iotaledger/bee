@@ -3,7 +3,7 @@
 
 use crate::{
     error::{MessagePackError, MessageUnpackError, ValidationError},
-    payload::PAYLOAD_LENGTH_MAX,
+    payload::{MessagePayload, PAYLOAD_LENGTH_MAX},
 };
 
 use bee_packable::{
@@ -293,8 +293,6 @@ fn validate_encrypted_deal_length(len: usize) -> Result<(), ValidationError> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct DkgPayload {
-    /// The version of the `DkgPayload`.
-    version: u8,
     /// The identifier of the dRNG instance.
     instance_id: u32,
     /// The index of the dealer.
@@ -305,18 +303,15 @@ pub struct DkgPayload {
     deal: EncryptedDeal,
 }
 
-impl DkgPayload {
-    /// The payload kind of a `DkgPayload`.
-    pub const KIND: u32 = 4;
+impl MessagePayload for DkgPayload {
+    const KIND: u32 = 4;
+    const VERSION: u8 = 0;
+}
 
+impl DkgPayload {
     /// Creates a new `DkgPayloadBuilder`.
     pub fn builder() -> DkgPayloadBuilder {
         DkgPayloadBuilder::new()
-    }
-
-    /// Returns the version of a `DkgPayload`.
-    pub fn version(&self) -> u8 {
-        self.version
     }
 
     /// Returns the instance ID of a `DkgPayload`.
@@ -345,7 +340,7 @@ impl Packable for DkgPayload {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        self.version.packed_len()
+        Self::VERSION.packed_len()
             + self.instance_id.packed_len()
             + self.from_index.packed_len()
             + self.to_index.packed_len()
@@ -353,7 +348,7 @@ impl Packable for DkgPayload {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.version.pack(packer).map_err(PackError::infallible)?;
+        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
         self.instance_id.pack(packer).map_err(PackError::infallible)?;
         self.from_index.pack(packer).map_err(PackError::infallible)?;
         self.to_index.pack(packer).map_err(PackError::infallible)?;
@@ -363,14 +358,13 @@ impl Packable for DkgPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let _version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
         let instance_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
         let from_index = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
         let to_index = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
         let deal = EncryptedDeal::unpack(unpacker)?;
 
         Ok(Self {
-            version,
             instance_id,
             from_index,
             to_index,
@@ -382,7 +376,6 @@ impl Packable for DkgPayload {
 /// A builder that builds a `DkgPayload`.
 #[derive(Default)]
 pub struct DkgPayloadBuilder {
-    version: Option<u8>,
     instance_id: Option<u32>,
     from_index: Option<u32>,
     to_index: Option<u32>,
@@ -393,12 +386,6 @@ impl DkgPayloadBuilder {
     /// Creates a new `DkgPayloadBuilder`.
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Adds a version to a `DkgPayloadBuilder`.
-    pub fn with_version(mut self, version: u8) -> Self {
-        self.version.replace(version);
-        self
     }
 
     /// Adds an instance ID to a `DkgPayloadBuilder`.
@@ -427,14 +414,12 @@ impl DkgPayloadBuilder {
 
     /// Consumes the `DkgPayloadBuilder` and builds a new `DkgPayload`.
     pub fn finish(self) -> Result<DkgPayload, ValidationError> {
-        let version = self.version.ok_or(ValidationError::MissingField("version"))?;
         let instance_id = self.instance_id.ok_or(ValidationError::MissingField("instance_id"))?;
         let from_index = self.from_index.ok_or(ValidationError::MissingField("from_index"))?;
         let to_index = self.to_index.ok_or(ValidationError::MissingField("to_index"))?;
         let deal = self.deal.ok_or(ValidationError::MissingField("deal"))?;
 
         Ok(DkgPayload {
-            version,
             instance_id,
             from_index,
             to_index,

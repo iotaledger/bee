@@ -5,7 +5,7 @@
 
 mod padded;
 
-use crate::{MessagePackError, MessageUnpackError, ValidationError, MESSAGE_LENGTH_RANGE};
+use crate::{payload::MessagePayload, MessagePackError, MessageUnpackError, ValidationError, MESSAGE_LENGTH_RANGE};
 
 pub use padded::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH};
 
@@ -94,24 +94,24 @@ impl fmt::Display for IndexationUnpackError {
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct IndexationPayload {
-    /// The version of the `IndexationPayload`.
-    version: u8,
     /// The index key of the message.
     index: Vec<u8>,
     /// The data attached to this index.
     data: Vec<u8>,
 }
 
-impl IndexationPayload {
-    /// The payload kind of an `IndexationPayload`.
-    pub const KIND: u32 = 8;
+impl MessagePayload for IndexationPayload {
+    const KIND: u32 = 8;
+    const VERSION: u8 = 0;
+}
 
+impl IndexationPayload {
     /// Creates a new `IndexationPayload`.
-    pub fn new(version: u8, index: Vec<u8>, data: Vec<u8>) -> Result<Self, ValidationError> {
+    pub fn new(index: Vec<u8>, data: Vec<u8>) -> Result<Self, ValidationError> {
         validate_index(&index)?;
         validate_data(&data)?;
 
-        Ok(Self { version, index, data })
+        Ok(Self { index, data })
     }
 
     /// Returns the index of an `IndexationPayload`.
@@ -157,11 +157,11 @@ impl Packable for IndexationPayload {
         let prefixed_index: VecPrefix<u8, u32, PREFIXED_INDEX_LENGTH_MAX> = self.index.clone().try_into().unwrap();
         let prefixed_data: VecPrefix<u8, u32, PREFIXED_DATA_LENGTH_MAX> = self.data.clone().try_into().unwrap();
 
-        self.version.packed_len() + prefixed_index.packed_len() + prefixed_data.packed_len()
+        Self::VERSION.packed_len() + prefixed_index.packed_len() + prefixed_data.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.version.pack(packer).map_err(PackError::infallible)?;
+        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
 
         // Unwrap is safe, since index/data lengths have already been validated.
         let prefixed_index: VecPrefix<u8, u32, PREFIXED_INDEX_LENGTH_MAX> = self.index.clone().try_into().unwrap();
@@ -180,7 +180,7 @@ impl Packable for IndexationPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let _version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         let index: Vec<u8> = VecPrefix::<u8, u32, PREFIXED_INDEX_LENGTH_MAX>::unpack(unpacker)
             .map_err(UnpackError::coerce::<IndexationUnpackError>)
@@ -196,6 +196,6 @@ impl Packable for IndexationPayload {
 
         validate_data(&data).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        Ok(Self { version, index, data })
+        Ok(Self { index, data })
     }
 }

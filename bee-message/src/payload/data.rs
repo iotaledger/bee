@@ -3,8 +3,10 @@
 
 //! Module describing a generic data payload.
 
-use super::PAYLOAD_LENGTH_MAX;
-use crate::{MessagePackError, MessageUnpackError, ValidationError};
+use crate::{
+    payload::{MessagePayload, PAYLOAD_LENGTH_MAX},
+    MessagePackError, MessageUnpackError, ValidationError,
+};
 
 use bee_packable::{
     error::{PackPrefixError, UnpackPrefixError},
@@ -74,26 +76,21 @@ impl fmt::Display for DataUnpackError {
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct DataPayload {
-    /// The version of the `DataPayload`.
-    version: u8,
     /// The raw data in bytes.
     data: Vec<u8>,
 }
 
-impl DataPayload {
-    /// The payload kind of a `DataPayload`.
-    pub const KIND: u32 = 1;
+impl MessagePayload for DataPayload {
+    const KIND: u32 = 1;
+    const VERSION: u8 = 0;
+}
 
+impl DataPayload {
     /// Creates a new `DataPayload`.
-    pub fn new(version: u8, data: Vec<u8>) -> Result<Self, ValidationError> {
+    pub fn new(data: Vec<u8>) -> Result<Self, ValidationError> {
         validate_data_len(data.len())?;
 
-        Ok(Self { version, data })
-    }
-
-    /// Returns the version of a `DataPayload`.
-    pub fn version(&self) -> u8 {
-        self.version
+        Ok(Self { data })
     }
 
     /// Returns the "data" bytes of a `DataPayload`.
@@ -110,11 +107,11 @@ impl Packable for DataPayload {
         // Unwrap is safe, since the data length has already been validated.
         let prefixed_data: VecPrefix<u8, u32, PREFIXED_DATA_LENGTH_MAX> = self.data.clone().try_into().unwrap();
 
-        self.version.packed_len() + prefixed_data.packed_len()
+        Self::VERSION.packed_len() + prefixed_data.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.version.pack(packer).map_err(PackError::infallible)?;
+        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
 
         // Unwrap is safe, since the data length has already been validated.
         let prefixed_data: VecPrefix<u8, u32, PREFIXED_DATA_LENGTH_MAX> = self.data.clone().try_into().unwrap();
@@ -127,7 +124,7 @@ impl Packable for DataPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let _version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
         let data: Vec<u8> = VecPrefix::<u8, u32, PREFIXED_DATA_LENGTH_MAX>::unpack(unpacker)
             .map_err(UnpackError::coerce::<DataUnpackError>)
             .map_err(UnpackError::coerce)?
@@ -135,7 +132,7 @@ impl Packable for DataPayload {
 
         validate_data_len(data.len()).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let payload = Self { version, data };
+        let payload = Self { data };
 
         Ok(payload)
     }

@@ -1,7 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::payload::salt_declaration::{Salt, SaltDeclarationPayload};
+use bee_message::payload::{
+    salt_declaration::{Salt, SaltDeclarationPayload},
+    MessagePayload,
+};
 use bee_packable::Packable;
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
@@ -14,9 +17,13 @@ fn kind() {
 }
 
 #[test]
+fn version() {
+    assert_eq!(SaltDeclarationPayload::VERSION, 0);
+}
+
+#[test]
 fn new_valid() {
     let salt_declaration = SaltDeclarationPayload::builder()
-        .with_version(0)
         .with_node_id(32)
         .with_salt(Salt::new(rand_bytes(64), rand_number()).unwrap())
         .with_timestamp(rand_number())
@@ -50,7 +57,6 @@ fn accessors_eq() {
     let signature = rand_bytes_array();
 
     let salt_declaration = SaltDeclarationPayload::builder()
-        .with_version(0)
         .with_node_id(32)
         .with_salt(salt)
         .with_timestamp(timestamp)
@@ -58,7 +64,6 @@ fn accessors_eq() {
         .finish()
         .unwrap();
 
-    assert_eq!(salt_declaration.version(), 0);
     assert_eq!(salt_declaration.node_id(), 32);
     assert_eq!(salt_declaration.salt().bytes(), salt_bytes);
     assert_eq!(salt_declaration.salt().expiry_time(), expiry_time);
@@ -69,7 +74,6 @@ fn accessors_eq() {
 #[test]
 fn packed_len() {
     let salt_declaration = SaltDeclarationPayload::builder()
-        .with_version(0)
         .with_node_id(32)
         .with_salt(Salt::new(rand_bytes(64), rand_number()).unwrap())
         .with_timestamp(rand_number())
@@ -83,7 +87,6 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let salt_declaration_a = SaltDeclarationPayload::builder()
-        .with_version(0)
         .with_node_id(32)
         .with_salt(Salt::new(rand_bytes(64), rand_number()).unwrap())
         .with_timestamp(rand_number())

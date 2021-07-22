@@ -1,13 +1,21 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::payload::drng::{DkgPayload, EncryptedDeal};
+use bee_message::payload::{
+    drng::{DkgPayload, EncryptedDeal},
+    MessagePayload,
+};
 use bee_packable::Packable;
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]
 fn kind() {
     assert_eq!(DkgPayload::KIND, 4);
+}
+
+#[test]
+fn version() {
+    assert_eq!(DkgPayload::VERSION, 0);
 }
 
 #[test]
@@ -88,7 +96,6 @@ fn encrypted_deal_packable_round_trip() {
 #[test]
 fn dkg_new() {
     let dkg = DkgPayload::builder()
-        .with_version(0)
         .with_instance_id(1)
         .with_from_index(20)
         .with_to_index(32)
@@ -130,7 +137,6 @@ fn accessors_eq() {
         .unwrap();
 
     let dkg = DkgPayload::builder()
-        .with_version(0)
         .with_instance_id(1)
         .with_from_index(20)
         .with_to_index(32)
@@ -138,7 +144,6 @@ fn accessors_eq() {
         .finish()
         .unwrap();
 
-    assert_eq!(dkg.version(), 0);
     assert_eq!(dkg.instance_id(), 1);
     assert_eq!(dkg.from_index(), 20);
     assert_eq!(dkg.to_index(), 32);
@@ -148,7 +153,6 @@ fn accessors_eq() {
 #[test]
 fn dkg_packed_len() {
     let dkg = DkgPayload::builder()
-        .with_version(0)
         .with_instance_id(1)
         .with_from_index(20)
         .with_to_index(32)
@@ -174,7 +178,6 @@ fn dkg_packed_len() {
 #[test]
 fn dkg_packable_round_trip() {
     let dkg_a = DkgPayload::builder()
-        .with_version(0)
         .with_instance_id(1)
         .with_from_index(20)
         .with_to_index(32)

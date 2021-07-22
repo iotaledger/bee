@@ -3,8 +3,11 @@
 
 //! Module describing the salt declaration payload.
 
-use super::PAYLOAD_LENGTH_MAX;
-use crate::{signature::ED25519_PUBLIC_KEY_LENGTH, MessagePackError, MessageUnpackError, ValidationError};
+use crate::{
+    payload::{MessagePayload, PAYLOAD_LENGTH_MAX},
+    signature::ED25519_PUBLIC_KEY_LENGTH,
+    MessagePackError, MessageUnpackError, ValidationError,
+};
 
 use bee_packable::{
     error::{PackPrefixError, UnpackPrefixError},
@@ -152,8 +155,6 @@ fn validate_bytes_length(len: usize) -> Result<(), ValidationError> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct SaltDeclarationPayload {
-    /// The version of the `SaltDeclarationPayload`.
-    version: u8,
     /// The declaring node ID (which may be different from the node ID of the message issuer).
     node_id: u32,
     /// The public salt of the requester.
@@ -164,18 +165,15 @@ pub struct SaltDeclarationPayload {
     signature: [u8; ED25519_PUBLIC_KEY_LENGTH],
 }
 
-impl SaltDeclarationPayload {
-    /// The payload kind of a `SaltDeclarationPayload`.
-    pub const KIND: u32 = 7;
+impl MessagePayload for SaltDeclarationPayload {
+    const KIND: u32 = 7;
+    const VERSION: u8 = 0;
+}
 
+impl SaltDeclarationPayload {
     /// Creates a new `SaltDeclarationPayloadBuilder`.
     pub fn builder() -> SaltDeclarationPayloadBuilder {
         SaltDeclarationPayloadBuilder::new()
-    }
-
-    /// Returns the version of a `SaltDeclarationPayload`.
-    pub fn version(&self) -> u8 {
-        self.version
     }
 
     /// Returns the node ID of a `SaltDeclarationPayload`.
@@ -204,7 +202,7 @@ impl Packable for SaltDeclarationPayload {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        self.version.packed_len()
+        Self::VERSION.packed_len()
             + self.node_id.packed_len()
             + self.salt.packed_len()
             + self.timestamp.packed_len()
@@ -212,7 +210,7 @@ impl Packable for SaltDeclarationPayload {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.version.pack(packer).map_err(PackError::infallible)?;
+        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
         self.node_id.pack(packer).map_err(PackError::infallible)?;
         self.salt.pack(packer).map_err(PackError::coerce)?;
         self.timestamp.pack(packer).map_err(PackError::infallible)?;
@@ -222,14 +220,13 @@ impl Packable for SaltDeclarationPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let _version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
         let node_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
         let salt = Salt::unpack(unpacker).map_err(UnpackError::coerce)?;
         let timestamp = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
         let signature = <[u8; ED25519_PUBLIC_KEY_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         Ok(Self {
-            version,
             node_id,
             salt,
             timestamp,
@@ -241,7 +238,6 @@ impl Packable for SaltDeclarationPayload {
 /// A builder to build a `SaltDeclarationPayload`.
 #[derive(Default)]
 pub struct SaltDeclarationPayloadBuilder {
-    version: Option<u8>,
     node_id: Option<u32>,
     salt: Option<Salt>,
     timestamp: Option<u64>,
@@ -252,12 +248,6 @@ impl SaltDeclarationPayloadBuilder {
     /// Creates a new `SaltDeclarationPayloadBuilder`.
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Adds a version to a `SaltDeclarationPayloadBuilder`.
-    pub fn with_version(mut self, version: u8) -> Self {
-        self.version.replace(version);
-        self
     }
 
     /// Adds a node ID to a `SaltDeclarationPayloadBuilder`.
@@ -286,14 +276,12 @@ impl SaltDeclarationPayloadBuilder {
 
     /// Consumes the `SaltDeclarationPayloadBuilder` and builds a `SaltDeclarationPayload`.
     pub fn finish(self) -> Result<SaltDeclarationPayload, ValidationError> {
-        let version = self.version.ok_or(ValidationError::MissingField("version"))?;
         let node_id = self.node_id.ok_or(ValidationError::MissingField("node_id"))?;
         let salt = self.salt.ok_or(ValidationError::MissingField("salt"))?;
         let timestamp = self.timestamp.ok_or(ValidationError::MissingField("timestamp"))?;
         let signature = self.signature.ok_or(ValidationError::MissingField("signature"))?;
 
         Ok(SaltDeclarationPayload {
-            version,
             node_id,
             salt,
             timestamp,

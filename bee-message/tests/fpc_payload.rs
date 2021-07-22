@@ -5,6 +5,7 @@ use bee_message::{
     payload::{
         fpc::{Conflict, Conflicts, FpcPayload, Timestamp, Timestamps},
         transaction::TransactionId,
+        MessagePayload,
     },
     MessageId,
 };
@@ -19,9 +20,13 @@ fn kind() {
 }
 
 #[test]
+fn version() {
+    assert_eq!(FpcPayload::VERSION, 0);
+}
+
+#[test]
 fn new_valid() {
     let fpc = FpcPayload::builder()
-        .with_version(0)
         .with_conflicts(Conflicts::new(vec![
             Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
             Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
@@ -72,13 +77,11 @@ fn accessors_eq() {
     ]);
 
     let fpc = FpcPayload::builder()
-        .with_version(0)
         .with_conflicts(conflicts.clone())
         .with_timestamps(timestamps.clone())
         .finish()
         .unwrap();
 
-    assert_eq!(fpc.version(), 0);
     assert_eq!(fpc.conflicts().cloned().collect::<Vec<Conflict>>(), conflicts.deref());
     assert_eq!(
         fpc.timestamps().cloned().collect::<Vec<Timestamp>>(),
@@ -113,7 +116,6 @@ fn unpack_valid() {
 #[test]
 fn packable_round_trip() {
     let fpc_a = FpcPayload::builder()
-        .with_version(0)
         .with_conflicts(Conflicts::new(vec![
             Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
             Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),

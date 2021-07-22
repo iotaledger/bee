@@ -3,7 +3,7 @@
 
 use bee_message::{
     error::{DataUnpackError, MessageUnpackError, ValidationError},
-    payload::data::DataPayload,
+    payload::{data::DataPayload, MessagePayload},
 };
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
@@ -14,8 +14,13 @@ fn kind() {
 }
 
 #[test]
+fn version() {
+    assert_eq!(DataPayload::VERSION, 0);
+}
+
+#[test]
 fn new_valid() {
-    let data = DataPayload::new(0, rand_bytes(255));
+    let data = DataPayload::new(rand_bytes(255));
 
     assert!(data.is_ok());
 }
@@ -23,7 +28,7 @@ fn new_valid() {
 #[test]
 fn new_invalid_length() {
     let data_bytes = 65160;
-    let data = DataPayload::new(0, rand_bytes(data_bytes));
+    let data = DataPayload::new(rand_bytes(data_bytes));
 
     println!("Result: {:?}", data);
 
@@ -62,22 +67,21 @@ fn unpack_invalid_length() {
 #[test]
 fn accessors_eq() {
     let bytes = rand_bytes(255);
-    let data = DataPayload::new(0, bytes.clone()).unwrap();
+    let data = DataPayload::new(bytes.clone()).unwrap();
 
-    assert_eq!(data.version(), 0);
     assert_eq!(data.data(), bytes);
 }
 
 #[test]
 fn packed_len() {
-    let data = DataPayload::new(0, rand_bytes(255)).unwrap();
+    let data = DataPayload::new(rand_bytes(255)).unwrap();
 
     assert_eq!(data.packed_len(), 1 + 4 + 255);
 }
 
 #[test]
 fn packable_round_trip() {
-    let data_a = DataPayload::new(0, rand_bytes(255)).unwrap();
+    let data_a = DataPayload::new(rand_bytes(255)).unwrap();
     let data_b = DataPayload::unpack_from_slice(data_a.pack_to_vec().unwrap()).unwrap();
 
     assert_eq!(data_a, data_b);

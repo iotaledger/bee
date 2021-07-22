@@ -9,7 +9,7 @@ use bee_message::{
     payload::{
         data::DataPayload,
         transaction::{TransactionEssence, TransactionId},
-        Payload,
+        MessagePayload, Payload,
     },
     util::hex_decode,
     IOTA_SUPPLY,
@@ -196,7 +196,7 @@ fn invalid_payload_kind() {
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
-    let payload = Payload::from(DataPayload::new(0, rand_bytes(128)).unwrap());
+    let payload = Payload::from(DataPayload::new(rand_bytes(128)).unwrap());
     let essence = TransactionEssence::builder()
         .with_timestamp(rand_number())
         .with_access_pledge_id(rand_bytes_array())

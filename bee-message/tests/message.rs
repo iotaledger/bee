@@ -32,7 +32,7 @@ fn new_valid() {
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
         .with_payload(Payload::from(
-            IndexationPayload::new(0, rand_bytes(32), rand_bytes(256)).unwrap(),
+            IndexationPayload::new(rand_bytes(32), rand_bytes(256)).unwrap(),
         ))
         .with_nonce(0)
         .with_signature(rand_bytes_array())
@@ -78,7 +78,7 @@ fn packed_len() {
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
         .with_payload(Payload::from(
-            IndexationPayload::new(0, rand_bytes(32), rand_bytes(256)).unwrap(),
+            IndexationPayload::new(rand_bytes(32), rand_bytes(256)).unwrap(),
         ))
         .with_nonce(0)
         .with_signature(rand_bytes_array())
@@ -106,7 +106,7 @@ fn packable_round_trip() {
         .with_issue_timestamp(rand_number())
         .with_sequence_number(rand_number())
         .with_payload(Payload::from(
-            IndexationPayload::new(0, rand_bytes(32), rand_bytes(256)).unwrap(),
+            IndexationPayload::new(rand_bytes(32), rand_bytes(256)).unwrap(),
         ))
         .with_nonce(0)
         .with_signature(rand_bytes_array())
