@@ -1,12 +1,12 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub use crate::grpc::{DummyEvent, SillyEvent};
 use crate::{
     error::PluginError,
+    event::*,
     grpc::{
         plugin_server::{Plugin as GrpcPlugin, PluginServer},
-        EventId, HandshakeReply, HandshakeRequest, ProcessReply, ShutdownReply, ShutdownRequest,
+        HandshakeReply, HandshakeRequest, ProcessReply, ShutdownReply, ShutdownRequest,
     },
 };
 
