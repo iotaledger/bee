@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_plugin::{
-    server::{serve_plugin, DummyEvent, Plugin},
-    EventId,
+    event::{DummyEvent, EventId},
+    plugin::{serve_plugin, Plugin},
 };
 
 use std::{

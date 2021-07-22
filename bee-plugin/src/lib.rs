@@ -8,10 +8,10 @@ mod grpc {
     tonic::include_proto!("plugin");
 }
 mod error;
-pub mod server;
+pub mod event;
+pub mod plugin;
 
 pub use error::PluginError;
-pub use grpc::EventId;
 pub use manager::PluginManager;
 
 use std::any::TypeId;

@@ -9,7 +9,7 @@ use bee_node::{
     config::{NodeConfigBuilder, DEFAULT_NODE_CONFIG_PATH},
 };
 use bee_plugin::{
-    server::{DummyEvent, SillyEvent},
+    event::{DummyEvent, SillyEvent},
     PluginManager, UniqueId,
 };
 
