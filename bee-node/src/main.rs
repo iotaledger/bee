@@ -10,10 +10,12 @@ use bee_node::{
 };
 use bee_plugin::{
     event::{DummyEvent, SillyEvent},
-    PluginManager, UniqueId,
+    hotloading::Hotloader,
+    UniqueId,
 };
+use tokio::time::{sleep, Duration};
 
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -36,16 +38,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let event_bus = Arc::new(EventBus::<UniqueId>::new());
 
-    let mut manager = PluginManager::new(Arc::clone(&event_bus));
+    let hotloader = Hotloader::new(Arc::clone(&event_bus));
 
-    let process = tokio::process::Command::new("../target/debug/examples/counter");
-    let plugin_id = manager.load_plugin(process).await?;
+    let handle = tokio::spawn(async move { hotloader.run().await });
+
+    sleep(Duration::from_secs(1)).await;
 
     {
         let event_bus = Arc::clone(&event_bus);
         tokio::spawn(async move {
-            for _ in 0..1000 {
-                tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
+            loop {
+                sleep(Duration::from_millis(1)).await;
                 event_bus.dispatch(DummyEvent {})
             }
         });
@@ -53,14 +56,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tokio::spawn(async move {
         for _ in 0..1000 {
-            tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
+            sleep(Duration::from_millis(1)).await;
             event_bus.dispatch(SillyEvent {})
         }
     });
 
-    tokio::time::sleep(Duration::from_secs(1)).await;
-
-    manager.unload_plugin(plugin_id).await?;
+    handle.await??;
 
     Ok(())
 }
