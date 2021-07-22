@@ -12,9 +12,9 @@ pub const BLS_ADDRESS_LENGTH: usize = 49;
 
 /// A BLS address.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlsAddress(
-    #[cfg_attr(feature = "enable-serde", serde(with = "serde_big_array::BigArray"))] [u8; BLS_ADDRESS_LENGTH],
+    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))] [u8; BLS_ADDRESS_LENGTH],
 );
 
 #[allow(clippy::len_without_is_empty)]

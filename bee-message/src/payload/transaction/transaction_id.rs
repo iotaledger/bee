@@ -13,7 +13,7 @@ pub const TRANSACTION_ID_LENGTH: usize = 32;
 /// A transaction identifier, the BLAKE2b-256 hash of the transaction bytes.
 /// See <https://www.blake2.net/> for more information.
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, Packable)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionId([u8; TRANSACTION_ID_LENGTH]);
 
 impl TransactionId {

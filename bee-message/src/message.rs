@@ -30,7 +30,7 @@ const MESSAGE_VERSION: u8 = 1;
 /// * Have a length (in bytes) within `MESSAGE_LENGTH_RANGE`.
 /// * Ensure all applicable data is appropriately validated.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Message {
     /// Message [Parents].
     pub(crate) parents: Parents,
@@ -45,7 +45,7 @@ pub struct Message {
     /// The result of the Proof of Work in order for the message to be accepted into the tangle.
     pub(crate) nonce: u64,
     /// Signature signing the above message fields.
-    #[cfg_attr(feature = "enable-serde", serde(with = "serde_big_array::BigArray"))]
+    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))]
     pub(crate) signature: [u8; MESSAGE_SIGNATURE_LENGTH],
 }
 

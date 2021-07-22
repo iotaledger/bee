@@ -92,7 +92,7 @@ impl fmt::Display for IndexationUnpackError {
 /// * Contain an index of within `INDEXATION_INDEX_LENGTH_RANGE` bytes.
 /// * Contain data that does not exceed maximum message length in bytes.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct IndexationPayload {
     /// The version of the `IndexationPayload`.
     version: u8,

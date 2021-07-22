@@ -81,7 +81,7 @@ impl From<UnpackPrefixError<Infallible, u32>> for FpcUnpackError {
 
 /// Payload describing opinions on conflicts and timestamps of messages.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct FpcPayload {
     /// Version of the FPC statement payload.
     version: u8,

@@ -21,7 +21,7 @@ const PREFIXED_CONFLICTS_LENGTH_MAX: usize =
 /// Provides a convenient collection of `Conflict`s.
 /// Describes a vote in a given round for a transaction conflict.
 #[derive(Clone, Default, Debug, Eq, PartialEq, Packable)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(pack_error = PackPrefixError<Infallible, u32>)]
 #[packable(unpack_error = UnpackPrefixError<Infallible, u32>)]
 pub struct Conflicts {
@@ -46,7 +46,7 @@ impl Conflicts {
 
 /// Describes a vote in a given round for a transaction conflict.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Conflict {
     /// ID of the conflicting transaction.
     transaction_id: TransactionId,

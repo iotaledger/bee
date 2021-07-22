@@ -5,7 +5,7 @@ use bee_packable::packable::Packable;
 
 /// Message used by a node to declare its willingness to participate in the Committee Selection process.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ApplicationMessagePayload {
     /// The version of the `ApplicationMessagePayload`.
     version: u8,

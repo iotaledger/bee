@@ -75,7 +75,7 @@ impl fmt::Display for DkgUnpackError {
 
 /// Encrypted share structure for a `DkgPayload`.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct EncryptedDeal {
     /// An ephemeral Diffie-Hellman key.
     dh_key: Vec<u8>,
@@ -291,7 +291,7 @@ fn validate_encrypted_deal_length(len: usize) -> Result<(), ValidationError> {
 
 /// The `Deal` messages exchanged to produce a public/private collective key during the DKG phase of dRNG.
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct DkgPayload {
     /// The version of the `DkgPayload`.
     version: u8,

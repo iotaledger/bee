@@ -44,7 +44,7 @@ impl fmt::Display for SignatureLockedSingleUnpackError {
 /// A `SignatureLockedSingleOutput` must:
 /// * Contain an amount <= `IOTA_SUPPLY`.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[cfg_attr(feature = "enable-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct SignatureLockedSingleOutput {
     address: Address,
     amount: u64,
