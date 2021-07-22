@@ -38,9 +38,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let process = tokio::process::Command::new("../target/debug/examples/counter");
     let plugin_id = manager.load_plugin(process).await?;
 
-    for _ in 0..1000 {
-        event_bus.dispatch(DummyEvent {})
-    }
+    tokio::spawn(async move {
+        for _ in 0..1000 {
+            tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
+            event_bus.dispatch(DummyEvent {})
+        }
+    });
 
     tokio::time::sleep(Duration::from_secs(1)).await;
 
