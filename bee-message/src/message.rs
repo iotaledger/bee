@@ -60,6 +60,7 @@ pub struct Message {
 impl Message {
     /// Computes the identifier of the message.
     pub fn id(&self) -> MessageId {
+        // Unwrap is okay here, since packing is infallible.
         let bytes = self.pack_to_vec().unwrap();
 
         let id = Blake2b256::digest(&bytes);
@@ -197,6 +198,7 @@ impl Packable for Message {
             signature,
         };
 
+        // Unwrap is okay, since we have already unpacked a valid message.
         let len = message.pack_to_vec().unwrap().len();
         validate_message_len(len).map_err(|e| UnpackError::Packable(e.into()))?;
 

@@ -55,6 +55,7 @@ impl Address {
 
     /// Encodes this address to a Bech32 string with the hrp (human readable part) argument as prefix.
     pub fn to_bech32(&self, hrp: &str) -> String {
+        // Unwrap is okay here, since packing is infallible.
         let bytes = self.pack_to_vec().unwrap();
 
         bech32::encode(hrp, bytes.to_base32(), Variant::Bech32).expect("invalid address.")

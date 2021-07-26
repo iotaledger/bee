@@ -133,6 +133,7 @@ impl TransactionPayload {
         let mut hasher = Blake2b256::new();
         hasher.update(Self::KIND.to_le_bytes());
 
+        // Unwrap is okay, since packing is infallible.
         let bytes = self.pack_to_vec().unwrap();
 
         hasher.update(bytes);

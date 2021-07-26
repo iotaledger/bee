@@ -189,7 +189,7 @@ impl fmt::Display for MessageUnpackError {
             Self::TransactionEssence(e) => write!(f, "error unpacking TransactionEssence: {}", e),
             Self::UnlockBlock(e) => write!(f, "error unpacking UnlockBlock: {}", e),
             Self::UnlockBlocks(e) => write!(f, "error unpacking UnlockBlocks: {}", e),
-            Self::ValidationError(e) => write!(f, "Validation error occured while unpacking: {}", e),
+            Self::ValidationError(e) => write!(f, "validation error occured while unpacking: {}", e),
         }
     }
 }

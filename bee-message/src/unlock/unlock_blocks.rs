@@ -172,6 +172,7 @@ impl Packable for UnlockBlocks {
                 UnpackError::Unpacker(e) => return Err(UnpackError::Unpacker(e)),
             }
         } else {
+            // Unwrap is fine, we have just checked that this value is `Ok`.
             inner_prefixed.ok().unwrap().into()
         };
 
