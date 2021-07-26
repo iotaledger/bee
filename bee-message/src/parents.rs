@@ -81,6 +81,11 @@ impl ParentsBlock {
         self.ids.len()
     }
 
+    /// Returns the block type.
+    pub fn parents_type(&self) -> ParentsType {
+        self.ty
+    }
+
     /// Returns an iterator over the `ParentsBlock` ID collection.
     pub fn iter(&self) -> impl Iterator<Item = &MessageId> {
         self.ids.iter()

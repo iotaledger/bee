@@ -1,9 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    parents::ParentsBlock, payload::Payload, MessageId, MessagePackError, MessageUnpackError, ValidationError,
-};
+use crate::{MessageId, MessagePackError, MessageUnpackError, ValidationError, parents::{ParentsBlock, ParentsType}, payload::Payload};
 
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
@@ -176,6 +174,8 @@ impl Packable for Message {
             parents_blocks.push(ParentsBlock::unpack(unpacker)?);
         }
 
+        validate_has_strong_parents(&parents_blocks).map_err(|e| UnpackError::Packable(e.into()))?;
+
         let issuer_public_key = <[u8; MESSAGE_PUBLIC_KEY_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
         let issue_timestamp = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
         let sequence_number = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
@@ -214,6 +214,17 @@ pub(crate) fn validate_parents_blocks_count(count: usize) -> Result<(), Validati
     } else {
         Ok(())
     }
+}
+
+pub(crate) fn validate_has_strong_parents(parents_blocks: &[ParentsBlock]) -> Result<(), ValidationError> {
+    for block in parents_blocks.iter() {
+        // `ParentsBlock`s cannot be empty, so no need to check length here.
+        if block.parents_type() == ParentsType::Strong {
+            return Ok(());
+        }
+    }
+
+    Err(ValidationError::InvalidStrongParentsCount(0))
 }
 
 fn validate_message_version(version: u8) -> Result<(), ValidationError> {

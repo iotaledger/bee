@@ -75,6 +75,7 @@ impl MessageBuilder {
     /// Finished the `MessageBuilder`, consuming it to build a `Message`.
     pub fn finish(self) -> Result<Message, ValidationError> {
         message::validate_parents_blocks_count(self.parents_blocks.len())?;
+        message::validate_has_strong_parents(&self.parents_blocks)?;
 
         let issuer_public_key = self
             .issuer_public_key
