@@ -1,7 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{MessageId, MessagePackError, MessageUnpackError, ValidationError, parents::{ParentsBlock, ParentsType}, payload::Payload};
+use crate::{
+    parents::{ParentsBlock, ParentsType},
+    payload::Payload,
+    MessageId, MessagePackError, MessageUnpackError, ValidationError,
+};
 
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 

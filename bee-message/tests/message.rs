@@ -1,7 +1,12 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{Message, MessageBuilder, MessageId, MessageUnpackError, ValidationError, parents::{ParentsBlock, ParentsType}, payload::{indexation::IndexationPayload, Payload}, util::hex_decode};
+use bee_message::{
+    parents::{ParentsBlock, ParentsType},
+    payload::{indexation::IndexationPayload, Payload},
+    util::hex_decode,
+    Message, MessageBuilder, MessageId, MessageUnpackError, ValidationError,
+};
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
@@ -86,7 +91,9 @@ fn unpack_invalid_version() {
 
     assert!(matches!(
         message.err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::ValidationError(ValidationError::InvalidMessageVersion(0)))
+        UnpackError::Packable(MessageUnpackError::ValidationError(
+            ValidationError::InvalidMessageVersion(0)
+        ))
     ));
 }
 
@@ -142,25 +149,13 @@ fn invalid_no_parents_blocks() {
 fn invalid_parents_blocks_more_than_max() {
     let message = MessageBuilder::new()
         .add_parents_block(
-            ParentsBlock::new(
-                ParentsType::Strong,
-                vec![MessageId::new(hex_decode(PARENT_1).unwrap())],
-            )
-            .unwrap(),
+            ParentsBlock::new(ParentsType::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
         )
         .add_parents_block(
-            ParentsBlock::new(
-                ParentsType::Weak,
-                vec![MessageId::new(hex_decode(PARENT_2).unwrap())],
-            )
-            .unwrap(),
+            ParentsBlock::new(ParentsType::Weak, vec![MessageId::new(hex_decode(PARENT_2).unwrap())]).unwrap(),
         )
         .add_parents_block(
-            ParentsBlock::new(
-                ParentsType::Liked,
-                vec![MessageId::new(hex_decode(PARENT_3).unwrap())],
-            )
-            .unwrap(),
+            ParentsBlock::new(ParentsType::Liked, vec![MessageId::new(hex_decode(PARENT_3).unwrap())]).unwrap(),
         )
         .add_parents_block(
             ParentsBlock::new(
@@ -170,11 +165,7 @@ fn invalid_parents_blocks_more_than_max() {
             .unwrap(),
         )
         .add_parents_block(
-            ParentsBlock::new(
-                ParentsType::Strong,
-                vec![MessageId::new(hex_decode(PARENT_5).unwrap())],
-            )
-            .unwrap(),
+            ParentsBlock::new(ParentsType::Strong, vec![MessageId::new(hex_decode(PARENT_5).unwrap())]).unwrap(),
         )
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
