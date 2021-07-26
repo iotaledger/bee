@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    error::MessageUnpackError,
-    signature::{Ed25519Signature, Signature, SignatureUnpackError},
+    signature::{Ed25519Signature, Signature},
     unlock::SignatureUnlock,
 };
-use bee_packable::{Packable, UnpackError};
+use bee_packable::Packable;
 use bee_test::rand::bytes::rand_bytes_array;
 
 #[test]
