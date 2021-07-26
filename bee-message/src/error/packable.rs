@@ -18,7 +18,7 @@ pub use crate::{
         },
         PayloadPackError, PayloadUnpackError,
     },
-    signature::SignatureUnlockUnpackError,
+    signature::SignatureUnpackError,
     unlock::{UnlockBlockUnpackError, UnlockBlocksPackError, UnlockBlocksUnpackError},
     ValidationError,
 };
@@ -101,7 +101,7 @@ pub enum MessageUnpackError {
     SaltDeclaration(SaltDeclarationUnpackError),
     SignatureLockedAsset(SignatureLockedAssetUnpackError),
     SignatureLockedSingle(SignatureLockedSingleUnpackError),
-    SignatureUnlock(SignatureUnlockUnpackError),
+    Signature(SignatureUnpackError),
     Transaction(TransactionUnpackError),
     TransactionEssence(TransactionEssenceUnpackError),
     UnlockBlock(UnlockBlockUnpackError),
@@ -155,11 +155,7 @@ impl_wrapped_variant!(
     SaltDeclarationUnpackError,
     MessageUnpackError::SaltDeclaration
 );
-impl_wrapped_variant!(
-    MessageUnpackError,
-    SignatureUnlockUnpackError,
-    MessageUnpackError::SignatureUnlock
-);
+impl_wrapped_variant!(MessageUnpackError, SignatureUnpackError, MessageUnpackError::Signature);
 impl_wrapped_variant!(MessageUnpackError, ValidationError, MessageUnpackError::ValidationError);
 impl_from_infallible!(MessageUnpackError);
 
@@ -188,7 +184,7 @@ impl fmt::Display for MessageUnpackError {
             Self::SaltDeclaration(e) => write!(f, "error unpacking SaltDeclaration payload: {}", e),
             Self::SignatureLockedAsset(e) => write!(f, "error unpacking SignatureLockedAsset: {}", e),
             Self::SignatureLockedSingle(e) => write!(f, "error unpacking SignatureLockedSingle: {}", e),
-            Self::SignatureUnlock(e) => write!(f, "error unpacking SignatureUnlock: {}", e),
+            Self::Signature(e) => write!(f, "error unpacking Signature: {}", e),
             Self::Transaction(e) => write!(f, "error unpacking Transaction payload: {}", e),
             Self::TransactionEssence(e) => write!(f, "error unpacking TransactionEssence: {}", e),
             Self::UnlockBlock(e) => write!(f, "error unpacking UnlockBlock: {}", e),

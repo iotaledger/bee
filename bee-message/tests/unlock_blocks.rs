@@ -3,8 +3,8 @@
 
 use bee_message::{
     error::ValidationError,
-    signature::{Ed25519Signature, SignatureUnlock},
-    unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
+    signature::{Ed25519Signature, Signature},
+    unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
 };
 use bee_packable::Packable;
 use bee_test::rand::bytes::rand_bytes_array;
@@ -12,10 +12,10 @@ use bee_test::rand::bytes::rand_bytes_array;
 #[test]
 fn kind() {
     assert_eq!(
-        UnlockBlock::from(SignatureUnlock::from(Ed25519Signature::new(
+        UnlockBlock::from(SignatureUnlock::from(Signature::from(Ed25519Signature::new(
             rand_bytes_array(),
             rand_bytes_array(),
-        )))
+        ))))
         .kind(),
         0
     );
@@ -34,7 +34,7 @@ fn new_invalid_first_reference() {
 fn new_invalid_self_reference() {
     assert!(matches!(
         UnlockBlocks::new(vec![
-            SignatureUnlock::from(Ed25519Signature::new([0; 32], [0; 64])).into(),
+            SignatureUnlock::from(Signature::from(Ed25519Signature::new([0; 32], [0; 64]))).into(),
             ReferenceUnlock::new(1).unwrap().into()
         ]),
         Err(ValidationError::InvalidUnlockBlockReference(1)),
@@ -45,9 +45,9 @@ fn new_invalid_self_reference() {
 fn new_invalid_future_reference() {
     assert!(matches!(
         UnlockBlocks::new(vec![
-            SignatureUnlock::from(Ed25519Signature::new([0; 32], [0; 64])).into(),
+            SignatureUnlock::from(Signature::from(Ed25519Signature::new([0; 32], [0; 64]))).into(),
             ReferenceUnlock::new(2).unwrap().into(),
-            SignatureUnlock::from(Ed25519Signature::new([1; 32], [1; 64])).into(),
+            SignatureUnlock::from(Signature::from(Ed25519Signature::new([1; 32], [1; 64]))).into(),
         ]),
         Err(ValidationError::InvalidUnlockBlockReference(1)),
     ));
@@ -57,7 +57,7 @@ fn new_invalid_future_reference() {
 fn new_invalid_reference_reference() {
     assert!(matches!(
         UnlockBlocks::new(vec![
-            SignatureUnlock::from(Ed25519Signature::new([0; 32], [0; 64])).into(),
+            SignatureUnlock::from(Signature::from(Ed25519Signature::new([0; 32], [0; 64]))).into(),
             ReferenceUnlock::new(0).unwrap().into(),
             ReferenceUnlock::new(1).unwrap().into()
         ]),
@@ -69,13 +69,13 @@ fn new_invalid_reference_reference() {
 fn new_invalid_duplicate_signature() {
     assert!(matches!(
         UnlockBlocks::new(vec![
-            SignatureUnlock::from(Ed25519Signature::new([0; 32], [0; 64])).into(),
+            SignatureUnlock::from(Signature::from(Ed25519Signature::new([0; 32], [0; 64]))).into(),
             ReferenceUnlock::new(0).unwrap().into(),
             ReferenceUnlock::new(0).unwrap().into(),
-            SignatureUnlock::from(Ed25519Signature::new([1; 32], [1; 64])).into(),
-            SignatureUnlock::from(Ed25519Signature::new([2; 32], [2; 64])).into(),
-            SignatureUnlock::from(Ed25519Signature::new([2; 32], [2; 64])).into(),
-            SignatureUnlock::from(Ed25519Signature::new([3; 32], [3; 64])).into(),
+            SignatureUnlock::from(Signature::from(Ed25519Signature::new([1; 32], [1; 64]))).into(),
+            SignatureUnlock::from(Signature::from(Ed25519Signature::new([2; 32], [2; 64]))).into(),
+            SignatureUnlock::from(Signature::from(Ed25519Signature::new([2; 32], [2; 64]))).into(),
+            SignatureUnlock::from(Signature::from(Ed25519Signature::new([3; 32], [3; 64]))).into(),
             ReferenceUnlock::new(3).unwrap().into()
         ]),
         Err(ValidationError::DuplicateSignature(5)),
@@ -92,33 +92,32 @@ fn new_invalid_too_many_blocks() {
 
 #[test]
 fn new_valid() {
-    assert!(
-        UnlockBlocks::new(vec![
-            SignatureUnlock::from(Ed25519Signature::new([0; 32], [0; 64])).into(),
-            ReferenceUnlock::new(0).unwrap().into(),
-            ReferenceUnlock::new(0).unwrap().into(),
-            SignatureUnlock::from(Ed25519Signature::new([1; 32], [1; 64])).into(),
-            SignatureUnlock::from(Ed25519Signature::new([2; 32], [2; 64])).into(),
-            SignatureUnlock::from(Ed25519Signature::new([3; 32], [3; 64])).into(),
-            ReferenceUnlock::new(3).unwrap().into(),
-            ReferenceUnlock::new(4).unwrap().into(),
-            ReferenceUnlock::new(3).unwrap().into(),
-            ReferenceUnlock::new(4).unwrap().into(),
-            ReferenceUnlock::new(5).unwrap().into(),
-            SignatureUnlock::from(Ed25519Signature::new([4; 32], [4; 64])).into(),
-            ReferenceUnlock::new(11).unwrap().into(),
-            SignatureUnlock::from(Ed25519Signature::new([5; 32], [5; 64])).into(),
-        ])
-        .is_ok()
-    );
+    assert!(UnlockBlocks::new(vec![
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([0; 32], [0; 64]))).into(),
+        ReferenceUnlock::new(0).unwrap().into(),
+        ReferenceUnlock::new(0).unwrap().into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([1; 32], [1; 64]))).into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([2; 32], [2; 64]))).into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([3; 32], [3; 64]))).into(),
+        ReferenceUnlock::new(3).unwrap().into(),
+        ReferenceUnlock::new(4).unwrap().into(),
+        ReferenceUnlock::new(3).unwrap().into(),
+        ReferenceUnlock::new(4).unwrap().into(),
+        ReferenceUnlock::new(5).unwrap().into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([4; 32], [4; 64]))).into(),
+        ReferenceUnlock::new(11).unwrap().into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([5; 32], [5; 64]))).into(),
+    ])
+    .is_ok());
 }
 
 #[test]
 fn get_none() {
     assert!(
-        UnlockBlocks::new(vec![
-            SignatureUnlock::from(Ed25519Signature::new([0; 32], [0; 64])).into(),
-        ])
+        UnlockBlocks::new(vec![SignatureUnlock::from(Signature::from(Ed25519Signature::new(
+            [0; 32], [0; 64]
+        )))
+        .into(),])
         .unwrap()
         .get(42)
         .is_none()
@@ -127,7 +126,9 @@ fn get_none() {
 
 #[test]
 fn get_signature() {
-    let signature = UnlockBlock::from(SignatureUnlock::from(Ed25519Signature::new([0; 32], [0; 64])));
+    let signature = UnlockBlock::from(SignatureUnlock::from(Signature::from(Ed25519Signature::new(
+        [0; 32], [0; 64],
+    ))));
 
     assert_eq!(
         UnlockBlocks::new(vec![signature.clone()]).unwrap().get(0),
@@ -137,7 +138,9 @@ fn get_signature() {
 
 #[test]
 fn get_signature_through_reference() {
-    let signature = UnlockBlock::from(SignatureUnlock::from(Ed25519Signature::new([0; 32], [0; 64])));
+    let signature = UnlockBlock::from(SignatureUnlock::from(Signature::from(Ed25519Signature::new(
+        [0; 32], [0; 64],
+    ))));
 
     assert_eq!(
         UnlockBlocks::new(vec![signature.clone(), ReferenceUnlock::new(0).unwrap().into()])
@@ -150,12 +153,12 @@ fn get_signature_through_reference() {
 #[test]
 fn packable_round_trip() {
     let blocks_a = UnlockBlocks::new(vec![
-        SignatureUnlock::from(Ed25519Signature::new([0; 32], [0; 64])).into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([0; 32], [0; 64]))).into(),
         ReferenceUnlock::new(0).unwrap().into(),
         ReferenceUnlock::new(0).unwrap().into(),
-        SignatureUnlock::from(Ed25519Signature::new([1; 32], [1; 64])).into(),
-        SignatureUnlock::from(Ed25519Signature::new([2; 32], [2; 64])).into(),
-        SignatureUnlock::from(Ed25519Signature::new([3; 32], [3; 64])).into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([1; 32], [1; 64]))).into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([2; 32], [2; 64]))).into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([3; 32], [3; 64]))).into(),
         ReferenceUnlock::new(3).unwrap().into(),
         ReferenceUnlock::new(4).unwrap().into(),
     ])

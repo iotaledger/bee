@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod reference;
+mod signature;
 mod unlock_blocks;
 
 pub use reference::{ReferenceUnlock, ReferenceUnlockUnpackError};
+pub use signature::SignatureUnlock;
 pub use unlock_blocks::{UnlockBlocks, UnlockBlocksPackError, UnlockBlocksUnpackError};
 
-use crate::{input::INPUT_COUNT_MAX, signature::SignatureUnlock, MessageUnpackError, ValidationError};
+use crate::{input::INPUT_COUNT_MAX, MessageUnpackError, ValidationError};
 
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 

@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    signature::SignatureUnlock,
-    unlock::{ReferenceUnlock, UnlockBlock, UnlockBlockUnpackError, UNLOCK_BLOCK_COUNT_RANGE},
+    unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlockUnpackError, UNLOCK_BLOCK_COUNT_RANGE},
     MessagePackError, MessageUnpackError, ValidationError,
 };
 

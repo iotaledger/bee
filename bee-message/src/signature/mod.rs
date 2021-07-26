@@ -11,42 +11,35 @@ use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
 use core::{convert::Infallible, fmt};
 
-/// Error encountered unpacking a `SignatureUnlock`.
+/// Error encountered unpacking a `Signature`.
 #[derive(Debug)]
 #[allow(missing_docs)]
-pub enum SignatureUnlockUnpackError {
-    InvalidSignatureUnlockKind(u8),
+pub enum SignatureUnpackError {
+    InvalidSignatureKind(u8),
 }
 
-impl fmt::Display for SignatureUnlockUnpackError {
+impl fmt::Display for SignatureUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidSignatureUnlockKind(kind) => write!(f, "invalid SignatureUnlock kind: {}", kind),
+            Self::InvalidSignatureKind(kind) => write!(f, "invalid Signature kind: {}", kind),
         }
     }
 }
 
-/// A `SignatureUnlock` contains a signature which is used to unlock a transaction input.
-///
-/// This is defined as part of the Unspent Transaction Output (UTXO) transaction protocol.
-///
-/// RFC: <https://github.com/luca-moser/protocol-rfcs/blob/signed-tx-payload/text/0000-transaction-payload/0000-transaction-payload.md#signature-unlock-block>
+/// A signature used to validate the authenticity and integrity of a message.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-pub enum SignatureUnlock {
+pub enum Signature {
     /// An Ed25519 signature.
     Ed25519(Ed25519Signature),
 }
 
-impl SignatureUnlock {
-    /// The unlock kind of a `SignatureUnlock`
-    pub const KIND: u8 = 0;
-
-    /// Returns the signature kind of a `SignatureUnlock`.
+impl Signature {
+    /// Returns the signature kind of a `Signature`.
     pub fn kind(&self) -> u8 {
         match self {
             Self::Ed25519(_) => Ed25519Signature::KIND,
@@ -54,13 +47,13 @@ impl SignatureUnlock {
     }
 }
 
-impl From<Ed25519Signature> for SignatureUnlock {
+impl From<Ed25519Signature> for Signature {
     fn from(signature: Ed25519Signature) -> Self {
         Self::Ed25519(signature)
     }
 }
 
-impl Packable for SignatureUnlock {
+impl Packable for Signature {
     type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
@@ -88,7 +81,7 @@ impl Packable for SignatureUnlock {
             }
             kind => {
                 return Err(UnpackError::Packable(
-                    SignatureUnlockUnpackError::InvalidSignatureUnlockKind(kind).into(),
+                    SignatureUnpackError::InvalidSignatureKind(kind).into(),
                 ));
             }
         };

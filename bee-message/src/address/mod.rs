@@ -7,7 +7,7 @@ mod ed25519;
 pub use bls::{BlsAddress, BLS_ADDRESS_LENGTH};
 pub use ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
 
-use crate::{error::ValidationError, signature::SignatureUnlock};
+use crate::{error::ValidationError, signature::Signature};
 
 use bee_packable::Packable;
 
@@ -60,11 +60,11 @@ impl Address {
         bech32::encode(hrp, bytes.to_base32(), Variant::Bech32).expect("invalid address.")
     }
 
-    /// Verifies a [`SignatureUnlock`] for a message against the [`Address`].
-    pub fn verify(&self, msg: &[u8], signature: &SignatureUnlock) -> Result<(), ValidationError> {
+    /// Verifies a [`Signature`] for a message against the [`Address`].
+    pub fn verify(&self, msg: &[u8], signature: &Signature) -> Result<(), ValidationError> {
         match self {
             Address::Ed25519(address) => {
-                let SignatureUnlock::Ed25519(signature) = signature;
+                let Signature::Ed25519(signature) = signature;
                 address.verify(msg, signature)
             }
             Address::Bls(_) => {

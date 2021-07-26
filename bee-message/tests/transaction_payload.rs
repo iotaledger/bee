@@ -10,8 +10,8 @@ use bee_message::{
         transaction::{TransactionEssence, TransactionId, TransactionPayload},
         MessagePayload,
     },
-    signature::{Ed25519Signature, SignatureUnlock},
-    unlock::{ReferenceUnlock, UnlockBlock, UnlockBlocks},
+    signature::{Ed25519Signature, Signature},
+    unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
     util::hex_decode,
 };
 use bee_packable::Packable;
@@ -84,7 +84,7 @@ fn invalid_too_few_unlock_blocks() {
         hex_decode(ED25519_PUBLIC_KEY).unwrap(),
         hex_decode(ED25519_SIGNATURE).unwrap(),
     );
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::from(Signature::Ed25519(signature)));
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block]).unwrap();
     let payload = TransactionPayload::builder()
         .with_essence(essence)
@@ -117,7 +117,7 @@ fn invalid_too_many_unlock_blocks() {
         hex_decode(ED25519_PUBLIC_KEY).unwrap(),
         hex_decode(ED25519_SIGNATURE).unwrap(),
     );
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::from(Signature::Ed25519(signature)));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
     let payload = TransactionPayload::builder()
@@ -152,7 +152,7 @@ fn accessors_eq() {
         hex_decode(ED25519_PUBLIC_KEY).unwrap(),
         hex_decode(ED25519_SIGNATURE).unwrap(),
     );
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::from(Signature::Ed25519(signature)));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
     let payload = TransactionPayload::builder()
@@ -185,7 +185,7 @@ fn packed_len() {
         hex_decode(ED25519_PUBLIC_KEY).unwrap(),
         hex_decode(ED25519_SIGNATURE).unwrap(),
     );
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::from(Signature::Ed25519(signature)));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
     let payload = TransactionPayload::builder()
@@ -220,7 +220,7 @@ fn packable_round_trip() {
         hex_decode(ED25519_PUBLIC_KEY).unwrap(),
         hex_decode(ED25519_SIGNATURE).unwrap(),
     );
-    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::Ed25519(signature));
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::from(Signature::Ed25519(signature)));
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
     let payload_a = TransactionPayload::builder()
