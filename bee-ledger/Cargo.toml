@@ -28,7 +28,7 @@ log = { version = "0.4", optional = true }
 reqwest = { version = "0.11", features = [ "stream" ], optional = true }
 serde = { version = "1.0", features = [ "derive" ], optional = true }
 thiserror = { version = "1.0" }
-tokio = { version = "1.6", features = [ "sync", "fs" ], optional = true }
+tokio = { version = "1.9", features = [ "sync", "fs" ], optional = true }
 tokio-stream = { version = "0.1", optional = true }
 
 [features]
