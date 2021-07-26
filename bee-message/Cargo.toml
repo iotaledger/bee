@@ -11,7 +11,7 @@ keywords = [ "iota", "tangle", "bee", "framework", "message" ]
 homepage = "https://www.iota.org"
 
 [features]
-serde1 = ["serde", "serde-big-array"]
+serde1 = [ "serde", "serde-big-array" ]
 
 [dependencies]
 bee-ord = { path = "../bee-common/bee-ord" }
@@ -25,7 +25,7 @@ hashbrown = { version = "0.11", default-features = false, features = [ "ahash-co
 hex = { version = "0.4", default-features = false }
 iota-crypto = { version = "0.6.0", features = [ "ed25519", "blake2b" ] }
 serde = { version = "1.0", features = [ "derive" ], optional = true }
-serde-big-array = { version = "0.3.2", features = [ "const-generics" ], optional = true }
+serde-big-array = { version = "0.3", features = [ "const-generics" ], optional = true }
 
 [dev-dependencies]
 bee-test = { path = "../bee-test" }
