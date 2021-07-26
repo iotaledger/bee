@@ -16,7 +16,7 @@ use fern::{
 };
 use thiserror::Error;
 
-/// Name of the standard output. [`Test`]
+/// Name of the standard output.
 pub const LOGGER_STDOUT_NAME: &str = "stdout";
 
 /// Errors occuring when initialising a logger backend.
