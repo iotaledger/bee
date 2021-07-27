@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! A module that provides a `Packable` trait to serialize and deserialize types.
+//! A module that provides a [`Packable`] trait to serialize and deserialize types.
 
 #![no_std]
 #![warn(missing_docs)]

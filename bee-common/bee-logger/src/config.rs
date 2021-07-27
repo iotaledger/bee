@@ -33,38 +33,38 @@ pub struct LoggerOutputConfigBuilder {
 }
 
 impl LoggerOutputConfigBuilder {
-    /// Creates a new `LoggerOutputConfigBuilder`.
+    /// Creates a new [`LoggerOutputConfigBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Sets the name of a `LoggerOutputConfigBuilder`.
+    /// Sets the name of a [`LoggerOutputConfigBuilder`].
     pub fn name<'a>(mut self, name: impl Into<Cow<'a, str>>) -> Self {
         self.name.replace(name.into().into_owned());
         self
     }
 
-    /// Sets the level of a `LoggerOutputConfigBuilder`.
+    /// Sets the level of a [`LoggerOutputConfigBuilder`].
     pub fn level_filter(mut self, level: LevelFilter) -> Self {
         self.level_filter.replace(level);
         self
     }
 
-    /// Sets a collection of target filters of a `LoggerOutputConfigBuilder`.
+    /// Sets a collection of target filters of a [`LoggerOutputConfigBuilder`].
     /// A message is logged only if one of the filters is part of the log's metadata target.
     pub fn target_filters(mut self, target_filters: &[&str]) -> Self {
         self.target_filters = Some(target_filters.iter().map(|f| f.to_string()).collect::<Vec<String>>());
         self
     }
 
-    /// Sets a collection of target exclusions of a `LoggerOutputConfigBuilder`.
+    /// Sets a collection of target exclusions of a [`LoggerOutputConfigBuilder`].
     /// A message is not logged if one of the exclusions is part of the log's metadata target.
     pub fn target_exclusions(mut self, target_exclusions: &[&str]) -> Self {
         self.target_exclusions = Some(target_exclusions.iter().map(|f| f.to_string()).collect::<Vec<String>>());
         self
     }
 
-    /// Finishes a `LoggerOutputConfigBuilder` into a `LoggerOutputConfig`.
+    /// Finishes a [`LoggerOutputConfigBuilder`] into a [`LoggerOutputConfig`].
     pub fn finish(self) -> LoggerOutputConfig {
         LoggerOutputConfig {
             name: self.name.unwrap_or_else(|| DEFAULT_OUTPUT_NAME.to_owned()),
@@ -113,31 +113,31 @@ pub struct LoggerConfigBuilder {
 }
 
 impl LoggerConfigBuilder {
-    /// Sets the color flag of a `LoggerConfigBuilder`.
+    /// Sets the color flag of a [`LoggerConfigBuilder`].
     pub fn color_enabled(mut self, color: bool) -> Self {
         self.color_enabled.replace(color);
         self
     }
 
-    /// Sets the target width of a `LoggerConfigBuilder`.
+    /// Sets the target width of a [`LoggerConfigBuilder`].
     pub fn target_width(mut self, width: usize) -> Self {
         self.target_width.replace(width);
         self
     }
 
-    /// Sets the target width of a `LoggerConfigBuilder`.
+    /// Sets the target width of a [`LoggerConfigBuilder`].
     pub fn level_width(mut self, width: usize) -> Self {
         self.level_width.replace(width);
         self
     }
 
-    /// Adds an output builder to a `LoggerConfigBuilder`.
+    /// Adds an output builder to a [`LoggerConfigBuilder`].
     pub fn output(mut self, output: LoggerOutputConfigBuilder) -> Self {
         self.outputs.get_or_insert_with(Vec::new).push(output);
         self
     }
 
-    /// Sets the level of a `LoggerConfigBuilder`.
+    /// Sets the level of a [`LoggerConfigBuilder`].
     pub fn level<'a>(&mut self, name: impl Into<Cow<'a, str>>, level: LevelFilter) {
         let name = name.into();
 
@@ -151,7 +151,7 @@ impl LoggerConfigBuilder {
         }
     }
 
-    /// Finishes a `LoggerConfigBuilder` into a `LoggerConfig`.
+    /// Finishes a [`LoggerConfigBuilder`] into a [`LoggerConfig`].
     pub fn finish(self) -> LoggerConfig {
         LoggerConfig {
             color_enabled: self.color_enabled.unwrap_or(DEFAULT_COLOR_ENABLED),
@@ -179,7 +179,7 @@ pub struct LoggerConfig {
 }
 
 impl LoggerConfig {
-    /// Creates a new `LoggerConfigBuilder`.
+    /// Creates a new [`LoggerConfigBuilder`].
     pub fn build() -> LoggerConfigBuilder {
         LoggerConfigBuilder::default()
     }

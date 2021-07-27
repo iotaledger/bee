@@ -16,8 +16,8 @@ use syn::{
 const VALID_TAG_TYPES: &[&str] = &["u8", "u16", "u32", "u64"];
 
 /// Values of this type contain the information necessary to build either the bodies of the methods
-/// for implementing `Packable` for a struct or the bodies of the branches for implementing
-/// `Packable` for a variant of an enum.
+/// for implementing [`Packable`] for a struct or the bodies of the branches for implementing
+/// [`Packable`] for a variant of an enum.
 ///
 /// Given that this type can be used for either a struct or a variant we will use the term "record"
 /// to refer to both.
@@ -330,7 +330,7 @@ pub(crate) fn gen_bodies_for_enum(
     )
 }
 
-/// Generate the implementation of `Packable`.
+/// Generate the implementation of [`Packable`].
 pub(crate) fn gen_impl(
     ident: &Ident,
     generics: &Generics,

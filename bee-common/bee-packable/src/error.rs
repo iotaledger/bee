@@ -5,17 +5,17 @@
 
 use core::convert::Infallible;
 
-/// Error type raised when `Packable::pack` fails.
+/// Error type raised when [`Packable::pack`](crate::Packable) fails.
 #[derive(Debug)]
 pub enum PackError<T, P> {
-    /// Semantic error. Typically this is `Packable::PackError`.
+    /// Semantic error. Typically this is [`Packable::PackError`](crate::Packable).
     Packable(T),
-    /// Error produced by the packer. Typically this is `Packer::Error`.
+    /// Error produced by the packer. Typically this is [`Packer::Error`](crate::packer::Packer).
     Packer(P),
 }
 
 impl<T, P> PackError<T, P> {
-    /// Map the `Packable` variant of this enum.
+    /// Map the [`Packable`](crate::Packable) variant of this enum.
     pub fn map<V, F: Fn(T) -> V>(self, f: F) -> PackError<V, P> {
         match self {
             Self::Packable(err) => PackError::Packable(f(err)),
@@ -23,7 +23,7 @@ impl<T, P> PackError<T, P> {
         }
     }
 
-    /// Coerce the value by calling `.into()` for the `Packable` variant.
+    /// Coerce the value by calling `.into()` for the [`Packable`](crate::Packable) variant.
     pub fn coerce<V: From<T>>(self) -> PackError<V, P> {
         self.map(|x| x.into())
     }
@@ -36,7 +36,7 @@ impl<T, P> From<P> for PackError<T, P> {
 }
 
 impl<P> PackError<Infallible, P> {
-    /// Coerce the value if the `Packable` variant is `Infallible`.
+    /// Coerce the value if the [`Packable`](crate::Packable) variant is [`Infallible`].
     pub fn infallible<E>(self) -> PackError<E, P> {
         match self {
             Self::Packable(err) => match err {},
@@ -45,17 +45,17 @@ impl<P> PackError<Infallible, P> {
     }
 }
 
-/// Error type raised when `Packable::unpack` fails.
+/// Error type raised when [`Packable::unpack`](crate::Packable) fails.
 #[derive(Debug)]
 pub enum UnpackError<T, U> {
-    /// Semantic error. Typically this is `Packable::UnpackError`.
+    /// Semantic error. Typically this is [`Packable::UnpackError`](crate::Packable).
     Packable(T),
-    /// Error produced by the unpacker. Typically this is `Unpacker::Error`.
+    /// Error produced by the unpacker. Typically this is [`Unpacker::Error`](crate::unpacker::Unpacker).
     Unpacker(U),
 }
 
 impl<T, U> UnpackError<T, U> {
-    /// Maps the `Packable` variant of this enum.
+    /// Maps the [`Packable`](crate::Packable) variant of this enum.
     pub fn map<V, F: Fn(T) -> V>(self, f: F) -> UnpackError<V, U> {
         match self {
             Self::Packable(err) => UnpackError::Packable(f(err)),
@@ -63,7 +63,7 @@ impl<T, U> UnpackError<T, U> {
         }
     }
 
-    /// Coerces the value by calling `.into()` for the `Packable` variant.
+    /// Coerces the value by calling `.into()` for the [`Packable`](crate::Packable) variant.
     pub fn coerce<V: From<T>>(self) -> UnpackError<V, U> {
         self.map(|x| x.into())
     }
@@ -76,7 +76,7 @@ impl<T, U> From<U> for UnpackError<T, U> {
 }
 
 impl<U> UnpackError<Infallible, U> {
-    /// Coerces the value if the `Packable` variant is `Infallible`.
+    /// Coerces the value if the [`Packable`](crate::Packable) variant is [`Infallible`].
     pub fn infallible<E>(self) -> UnpackError<E, U> {
         match self {
             Self::Packable(err) => match err {},
@@ -102,7 +102,8 @@ pub enum PackPrefixError<T, P>
 where
     P: core::convert::TryFrom<usize>,
 {
-    /// Semantic error raised while packing an element of the sequence. Typically this is `Packable::PackError`.`
+    /// Semantic error raised while packing an element of the sequence.
+    /// Typically this is [`Packable::PackError`](crate::Packable).
     Packable(T),
     /// Semantic error raised while packing the prefix of the sequence.
     Prefix(P::Error),
@@ -124,7 +125,8 @@ pub enum UnpackPrefixError<T, P>
 where
     P: core::convert::TryInto<usize>,
 {
-    /// Semantic error raised while unpacking an element of the sequence. Typically this is `Packable::UnpackError`.`
+    /// Semantic error raised while unpacking an element of the sequence.
+    /// Typically this is [`Packable::UnpackError`](crate::Packable).
     Packable(T),
     /// Semantic error raised while unpacking the prefix of the sequence.
     Prefix(P::Error),
