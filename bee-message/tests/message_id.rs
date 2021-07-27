@@ -1,15 +1,17 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{error::ValidationError, MessageId};
+use bee_message::MessageId;
 use bee_packable::Packable;
 
 use core::str::FromStr;
 
 const MESSAGE_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
-const MESSAGE_ID_INVALID_HEX: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64x";
-const MESSAGE_ID_INVALID_LEN_TOO_SHORT: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c6";
-const MESSAGE_ID_INVALID_LEN_TOO_LONG: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c64900";
+
+#[test]
+fn length() {
+    assert_eq!(MessageId::LENGTH, 32);
+}
 
 #[test]
 fn display_impl() {
@@ -25,43 +27,35 @@ fn debug_impl() {
 }
 
 #[test]
-fn from_str_valid() {
-    MessageId::from_str(MESSAGE_ID).unwrap();
-}
-
-#[test]
-fn null() {
+fn new_as_ref() {
     assert_eq!(
-        format!("{:?}", MessageId::null()),
-        "MessageId(0000000000000000000000000000000000000000000000000000000000000000)"
+        MessageId::new([42; MessageId::LENGTH]).as_ref(),
+        &[42; MessageId::LENGTH]
     );
 }
 
 #[test]
-fn from_str_invalid_hex() {
-    assert!(matches!(
-        MessageId::from_str(MESSAGE_ID_INVALID_HEX),
-        Err(ValidationError::InvalidHexadecimalChar(hex))
-            if hex == MESSAGE_ID_INVALID_HEX
-    ));
+fn null_as_ref() {
+    assert_eq!(MessageId::null().as_ref(), &[0; MessageId::LENGTH]);
 }
 
 #[test]
-fn from_str_invalid_len_too_short() {
-    assert!(matches!(
-        MessageId::from_str(MESSAGE_ID_INVALID_LEN_TOO_SHORT),
-        Err(ValidationError::InvalidHexadecimalLength { expected, actual })
-            if expected == MessageId::LENGTH * 2 && actual == MessageId::LENGTH * 2 - 2
-    ));
+fn from_as_ref() {
+    assert_eq!(
+        MessageId::from([42; MessageId::LENGTH]).as_ref(),
+        &[42; MessageId::LENGTH]
+    );
 }
 
 #[test]
-fn from_str_invalid_len_too_long() {
-    assert!(matches!(
-        MessageId::from_str(MESSAGE_ID_INVALID_LEN_TOO_LONG),
-        Err(ValidationError::InvalidHexadecimalLength { expected, actual })
-            if expected == MessageId::LENGTH * 2 && actual == MessageId::LENGTH * 2 + 2
-    ));
+fn from_str_as_ref() {
+    assert_eq!(
+        MessageId::from_str(MESSAGE_ID).unwrap().as_ref(),
+        &[
+            0x52, 0xfd, 0xfc, 0x07, 0x21, 0x82, 0x65, 0x4f, 0x16, 0x3f, 0x5f, 0x0f, 0x9a, 0x62, 0x1d, 0x72, 0x95, 0x66,
+            0xc7, 0x4d, 0x10, 0x03, 0x7c, 0x4d, 0x7b, 0xbb, 0x04, 0x07, 0xd1, 0xe2, 0xc6, 0x49
+        ]
+    );
 }
 
 #[test]
@@ -73,15 +67,14 @@ fn from_to_str() {
 fn packed_len() {
     let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
 
-    assert_eq!(message_id.packed_len(), 32);
-    assert_eq!(message_id.pack_to_vec().unwrap().len(), 32);
+    assert_eq!(message_id.packed_len(), MessageId::LENGTH);
+    assert_eq!(message_id.pack_to_vec().unwrap().len(), MessageId::LENGTH);
 }
 
 #[test]
 fn packable_round_trip() {
-    let message_id = MessageId::from_str(MESSAGE_ID).unwrap();
-    let packed_message_id = message_id.pack_to_vec().unwrap();
+    let message_id_1 = MessageId::from_str(MESSAGE_ID).unwrap();
+    let message_id_2 = MessageId::unpack_from_slice(message_id_1.pack_to_vec().unwrap()).unwrap();
 
-    assert_eq!(packed_message_id.len(), message_id.packed_len());
-    assert_eq!(message_id, MessageId::unpack_from_slice(packed_message_id).unwrap());
+    assert_eq!(message_id_1, message_id_2);
 }

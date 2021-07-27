@@ -7,19 +7,19 @@ use bee_packable::packable::Packable;
 
 use core::str::FromStr;
 
-/// A message identifier, the BLAKE2b-256 hash of the message bytes.
+/// A [`Message`] identifier, the BLAKE2b-256 hash of the message bytes.
 /// See <https://www.blake2.net/> for more information.
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageId([u8; Self::LENGTH]);
 
 impl MessageId {
-    /// The length (in bytes) of a [`MessageId`].
+    /// The length, in bytes, of a [`MessageId`].
     pub const LENGTH: usize = 32;
 
     /// Creates a new [`MessageId`].
     pub fn new(bytes: [u8; Self::LENGTH]) -> Self {
-        bytes.into()
+        Self(bytes)
     }
 
     /// Create a null [`MessageId`].
@@ -30,7 +30,7 @@ impl MessageId {
 
 impl From<[u8; Self::LENGTH]> for MessageId {
     fn from(bytes: [u8; Self::LENGTH]) -> Self {
-        Self(bytes)
+        Self::new(bytes)
     }
 }
 
