@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::handshake::InvalidHandshake;
+
 use thiserror::Error;
 
 use std::net::AddrParseError;
@@ -15,6 +17,6 @@ pub enum PluginError {
     StatusError(#[from] tonic::Status),
     #[error("address parsing error: {0}")]
     AddressError(#[from] AddrParseError),
-    #[error("invalid event ID {0}")]
-    InvalidEventId(i32),
+    #[error("invalid handshake info: {0}")]
+    Handshake(#[from] InvalidHandshake),
 }

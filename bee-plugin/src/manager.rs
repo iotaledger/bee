@@ -1,20 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    error::PluginError,
-    grpc::{plugin_client::PluginClient, EventId, HandshakeRequest},
-    handler::PluginHandler,
-    PluginId, UniqueId,
-};
+use crate::{error::PluginError, handler::PluginHandler, PluginId, UniqueId};
 
 use bee_event_bus::EventBus;
 
-use tokio::{
-    process::Command,
-    time::{sleep, Duration},
-};
-use tonic::Request;
+use tokio::process::Command;
 
 use std::{collections::HashMap, sync::Arc};
 
@@ -39,46 +30,24 @@ impl PluginManager {
     }
 
     /// Loads a new plugin from the specified command and returns the `PluginId` for that plugin.
-    pub async fn load_plugin(&mut self, mut command: Command) -> Result<PluginId, PluginError> {
-        command.kill_on_drop(true);
+    pub async fn load_plugin(&mut self, command: Command) -> Result<PluginId, PluginError> {
+        let plugin_id = PluginId(self.count);
 
-        let id = PluginId(self.count);
+        let handler = PluginHandler::new(plugin_id, command, &self.bus).await?;
 
-        log::info!("spawning command `{:?}` for the plugin `{:?}`", command, id);
-        let process = command.spawn()?;
-
-        sleep(Duration::from_secs(1)).await;
-
-        log::info!("connecting to the plugin `{:?}`", id);
-        let mut client = PluginClient::connect("http://[::1]:50051").await?;
-
-        log::info!("handshaking with the plugin `{:?}`", id);
-        let handshake_response = client.handshake(Request::new(HandshakeRequest {})).await?;
-
-        let raw_ids: Vec<i32> = handshake_response.into_inner().ids;
-
-        let mut handler = PluginHandler::new(id, process, client);
-
-        for raw_id in raw_ids {
-            match EventId::from_i32(raw_id) {
-                Some(id) => handler.register_callback(id, &self.bus),
-                None => return Err(PluginError::InvalidEventId(raw_id)),
-            };
-        }
-
-        self.handlers.insert(id, handler);
+        self.handlers.insert(plugin_id, handler);
 
         self.count += 1;
 
-        Ok(id)
+        Ok(plugin_id)
     }
 
     /// Unloads a plugin with the specified identifier.
     pub async fn unload_plugin(&mut self, id: PluginId) -> Result<(), PluginError> {
         if let Some(handler) = self.handlers.remove(&id) {
-            log::info!("shutting down the plugin `{:?}`", id);
+            log::info!("shutting down the plugin with ID `{:?}`", id);
             handler.shutdown(&self.bus).await?;
-            log::info!("the plugin `{:?}` was shut down successfully", id);
+            log::info!("the plugin with ID `{:?}` was shut down successfully", id);
         }
 
         Ok(())

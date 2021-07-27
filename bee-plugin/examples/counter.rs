@@ -3,7 +3,7 @@
 
 use bee_plugin::{
     event::{DummyEvent, EventId},
-    plugin::{serve_plugin, Plugin},
+    plugin::{serve_plugin, HandshakeInfo, Plugin},
     PluginError,
 };
 
@@ -33,8 +33,8 @@ impl Counter {
 
 #[async_trait::async_trait]
 impl Plugin for Counter {
-    fn handshake() -> Vec<EventId> {
-        vec![EventId::Dummy]
+    fn handshake_info() -> HandshakeInfo {
+        HandshakeInfo::new("[::1]:50051".parse().unwrap(), "counter", vec![EventId::Dummy])
     }
 
     async fn shutdown(&self) {

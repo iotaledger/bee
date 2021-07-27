@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod handler;
+mod handshake;
 pub mod hotloading;
 mod manager;
 mod streamer;

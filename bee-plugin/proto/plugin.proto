@@ -5,26 +5,14 @@ syntax = "proto3";
 package plugin;
 
 service Plugin {
-    rpc Handshake(HandshakeRequest) returns (HandshakeReply);
     rpc Shutdown(ShutdownRequest) returns (ShutdownReply);
     rpc ProcessDummyEvent(stream DummyEvent) returns (ProcessReply);
     rpc ProcessSillyEvent(stream SillyEvent) returns (ProcessReply);
 }
 
-message HandshakeRequest {}
-
-message HandshakeReply {
-    repeated EventId ids = 1;
-}
-
 message ShutdownRequest {}
 
 message ShutdownReply {}
-
-enum EventId {
-    DUMMY = 0;
-    SILLY = 1;
-}
 
 message DummyEvent {}
 
