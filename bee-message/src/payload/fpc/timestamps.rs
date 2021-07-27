@@ -11,7 +11,8 @@ use bee_packable::{
 use alloc::vec::Vec;
 use core::{convert::Infallible, ops::Deref};
 
-/// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`](crate::payload::fpc::Conflict).
+/// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of
+/// [`Conflict`](crate::payload::fpc::Conflict).
 const PREFIXED_TIMESTAMPS_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX / (MESSAGE_ID_LENGTH + 2 * core::mem::size_of::<u8>());
 
 /// Provides a convenient collection of [`Timestamp`]s.

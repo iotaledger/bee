@@ -96,7 +96,8 @@ impl fmt::Display for UnlockBlocksUnpackError {
 ///
 /// An [`UnlockBlocks`] collection must:
 /// * Contain a number of [`UnlockBlock`]s within [`UNLOCK_BLOCK_COUNT_RANGE`].
-/// * Ensure all signatures in [`SignatureUnlock`](crate::unlock::SignatureUnlock) blocks are unique across the collection.
+/// * Ensure all signatures in [`SignatureUnlock`](crate::unlock::SignatureUnlock) blocks are unique across the
+///   collection.
 /// * Ensure [`ReferenceUnlock`](crate::unlock::ReferenceUnlock) blocks specify a previous existing.
 /// [`SignatureUnlock`](crate::unlock::SignatureUnlock) block.
 #[derive(Clone, Debug, Eq, PartialEq)]
