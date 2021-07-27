@@ -124,7 +124,7 @@ impl MessagePayload for TransactionPayload {
 }
 
 impl TransactionPayload {
-    /// Return a new [`TransactionPayloadBuilder`] to build a [`TransactionPayload`].
+    /// Returns a new [`TransactionPayloadBuilder`] to build a [`TransactionPayload`].
     pub fn builder() -> TransactionPayloadBuilder {
         TransactionPayloadBuilder::new()
     }
@@ -142,12 +142,12 @@ impl TransactionPayload {
         TransactionId::new(hasher.finalize().into())
     }
 
-    /// Return the essence of a [`TransactionPayload`].
+    /// Returns the essence of a [`TransactionPayload`].
     pub fn essence(&self) -> &TransactionEssence {
         &self.essence
     }
 
-    /// Return unlock blocks of a [`TransactionPayload`].
+    /// Returns unlock blocks of a [`TransactionPayload`].
     pub fn unlock_blocks(&self) -> &UnlockBlocks {
         &self.unlock_blocks
     }

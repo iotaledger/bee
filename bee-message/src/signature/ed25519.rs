@@ -32,7 +32,7 @@ impl Ed25519Signature {
         &self.public_key
     }
 
-    /// Return the actual signature of an [`Ed25519Signature`].
+    /// Returns the actual signature of an [`Ed25519Signature`].
     pub fn signature(&self) -> &[u8; ED25519_SIGNATURE_LENGTH] {
         &self.signature
     }

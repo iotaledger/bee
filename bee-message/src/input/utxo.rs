@@ -41,8 +41,8 @@ impl From<OutputId> for UtxoInput {
 impl FromStr for UtxoInput {
     type Err = ValidationError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(UtxoInput(OutputId::from_str(s)?))
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
+        Ok(UtxoInput(OutputId::from_str(hex)?))
     }
 }
 

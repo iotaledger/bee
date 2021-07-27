@@ -118,8 +118,8 @@ impl TryFrom<[u8; OUTPUT_ID_LENGTH]> for OutputId {
 impl FromStr for OutputId {
     type Err = ValidationError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        OutputId::try_from(hex_decode(s)?)
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
+        OutputId::try_from(hex_decode(hex)?)
     }
 }
 

@@ -137,32 +137,32 @@ impl TransactionEssence {
         TransactionEssenceBuilder::new()
     }
 
-    /// Return the timestamp of a Transaction Essence.
+    /// Returns the timestamp of a Transaction Essence.
     pub fn timestamp(&self) -> u64 {
         self.timestamp
     }
 
-    /// Return the node ID to which the access mana of the transaction is pledged.
+    /// Returns the node ID to which the access mana of the transaction is pledged.
     pub fn access_pledge_id(&self) -> &[u8; PLEDGE_ID_LENGTH] {
         &self.access_pledge_id
     }
 
-    /// Return the node ID to which the consensus mana of the transaction is pledged.
+    /// Returns the node ID to which the consensus mana of the transaction is pledged.
     pub fn consensus_pledge_id(&self) -> &[u8; PLEDGE_ID_LENGTH] {
         &self.consensus_pledge_id
     }
 
-    /// Return the inputs of a [`TransactionEssence`].
+    /// Returns the inputs of a [`TransactionEssence`].
     pub fn inputs(&self) -> &[Input] {
         &self.inputs
     }
 
-    /// Return the outputs of a [`TransactionEssence`].
+    /// Returns the outputs of a [`TransactionEssence`].
     pub fn outputs(&self) -> &[Output] {
         &self.outputs
     }
 
-    /// Return the optional payload of a [`TransactionEssence`].
+    /// Returns the optional payload of a [`TransactionEssence`].
     pub fn payload(&self) -> &Option<Payload> {
         &self.payload
     }

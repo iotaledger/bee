@@ -37,8 +37,8 @@ impl From<[u8; MESSAGE_ID_LENGTH]> for MessageId {
 impl FromStr for MessageId {
     type Err = ValidationError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(MessageId::from(hex_decode(s)?))
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
+        Ok(MessageId::from(hex_decode(hex)?))
     }
 }
 

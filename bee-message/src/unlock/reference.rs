@@ -49,7 +49,7 @@ impl ReferenceUnlock {
         Ok(Self(index))
     }
 
-    /// Return the index of a [`ReferenceUnlock`].
+    /// Returns the index of a [`ReferenceUnlock`].
     pub fn index(&self) -> u16 {
         self.0
     }

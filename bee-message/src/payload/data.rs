@@ -151,7 +151,7 @@ fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
 }
 
 fn validate_data_len(len: usize) -> Result<(), ValidationError> {
-    if len > PAYLOAD_LENGTH_MAX {
+    if len > PREFIXED_DATA_LENGTH_MAX {
         Err(ValidationError::InvalidPayloadLength(len))
     } else {
         Ok(())

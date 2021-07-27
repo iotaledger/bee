@@ -32,8 +32,8 @@ impl From<[u8; TRANSACTION_ID_LENGTH]> for TransactionId {
 impl FromStr for TransactionId {
     type Err = ValidationError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(TransactionId::from(hex_decode::<TRANSACTION_ID_LENGTH>(s)?))
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
+        Ok(TransactionId::from(hex_decode::<TRANSACTION_ID_LENGTH>(hex)?))
     }
 }
 

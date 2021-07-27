@@ -44,8 +44,8 @@ impl From<[u8; BLS_ADDRESS_LENGTH]> for BlsAddress {
 impl FromStr for BlsAddress {
     type Err = ValidationError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(BlsAddress::from(hex_decode(s)?))
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
+        Ok(BlsAddress::from(hex_decode(hex)?))
     }
 }
 
