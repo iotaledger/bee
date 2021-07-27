@@ -5,7 +5,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     error::ValidationError,
     input::{Input, UtxoInput},
-    output::{Output, SignatureLockedSingleOutput},
+    output::{Output, OutputId, SignatureLockedSingleOutput},
     payload::{
         data::DataPayload,
         transaction::{TransactionEssence, TransactionId},
@@ -27,8 +27,8 @@ const ED25519_ADDRESS_2: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4
 #[test]
 fn new_valid() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
@@ -62,7 +62,7 @@ fn invalid_input_count() {
 #[test]
 fn invalid_duplicate_utxo() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let utxo_input = UtxoInput::new(txid, 0).unwrap();
+    let utxo_input = UtxoInput::new(OutputId::new(txid, 0).unwrap());
     let input1 = Input::Utxo(utxo_input.clone());
     let input2 = Input::Utxo(utxo_input.clone());
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
@@ -85,8 +85,8 @@ fn invalid_duplicate_utxo() {
 #[test]
 fn invalid_inputs_not_sorted() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
@@ -107,8 +107,8 @@ fn invalid_inputs_not_sorted() {
 #[test]
 fn invalid_output_count() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let essence = TransactionEssence::builder()
         .with_timestamp(rand_number())
         .with_access_pledge_id(rand_bytes_array())
@@ -123,8 +123,8 @@ fn invalid_output_count() {
 #[test]
 fn invalid_output_accumulated_amount() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address1 = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
     let address2 = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_2).unwrap()));
     let output1 = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address1, IOTA_SUPPLY).unwrap());
@@ -146,8 +146,8 @@ fn invalid_output_accumulated_amount() {
 #[test]
 fn invalid_duplicate_output_address() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
     let output1 = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address.clone(), 1000).unwrap());
     let output2 = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address.clone(), 1000).unwrap());
@@ -168,8 +168,8 @@ fn invalid_duplicate_output_address() {
 #[test]
 fn invalid_outputs_not_sorted() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address1 = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
     let address2 = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_2).unwrap()));
     let output1 = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address1, 1000).unwrap());
@@ -191,8 +191,8 @@ fn invalid_outputs_not_sorted() {
 #[test]
 fn invalid_payload_kind() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
@@ -215,8 +215,8 @@ fn invalid_payload_kind() {
 #[test]
 fn accessors_eq() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
@@ -245,8 +245,8 @@ fn accessors_eq() {
 #[test]
 fn packed_len() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
@@ -268,8 +268,8 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());

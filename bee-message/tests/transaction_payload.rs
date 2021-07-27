@@ -5,7 +5,7 @@ use bee_message::{
     address::{Address, Ed25519Address},
     error::ValidationError,
     input::{Input, UtxoInput},
-    output::{Output, SignatureLockedSingleOutput},
+    output::{Output, OutputId, SignatureLockedSingleOutput},
     payload::{
         transaction::{TransactionEssence, TransactionId, TransactionPayload},
         MessagePayload,
@@ -43,8 +43,8 @@ fn invalid_no_essence() {
 #[test]
 fn invalid_no_unlock_blocks() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
@@ -67,8 +67,8 @@ fn invalid_no_unlock_blocks() {
 #[test]
 fn invalid_too_few_unlock_blocks() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
@@ -101,7 +101,7 @@ fn invalid_too_few_unlock_blocks() {
 #[test]
 fn invalid_too_many_unlock_blocks() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
+    let input = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
@@ -135,8 +135,8 @@ fn invalid_too_many_unlock_blocks() {
 #[test]
 fn accessors_eq() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
@@ -168,8 +168,8 @@ fn accessors_eq() {
 #[test]
 fn packed_len() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
@@ -203,8 +203,8 @@ fn packed_len() {
 #[test]
 fn packable_round_trip() {
     let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
-    let input1 = Input::Utxo(UtxoInput::new(txid, 0).unwrap());
-    let input2 = Input::Utxo(UtxoInput::new(txid, 1).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
     let amount = 1_000_000;
     let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
