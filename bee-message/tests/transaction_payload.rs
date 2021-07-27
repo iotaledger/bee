@@ -93,8 +93,8 @@ fn invalid_too_few_unlock_blocks() {
 
     assert!(matches!(
         payload.unwrap_err(),
-        ValidationError::InputUnlockBlockCountMismatch(input_len, unlock_blocks_len)
-            if input_len == 2 && unlock_blocks_len == 1,
+        ValidationError::InputUnlockBlockCountMismatch { inputs, unlock_blocks }
+            if inputs == 2 && unlock_blocks == 1,
     ));
 }
 
@@ -127,8 +127,8 @@ fn invalid_too_many_unlock_blocks() {
 
     assert!(matches!(
         payload.unwrap_err(),
-        ValidationError::InputUnlockBlockCountMismatch(input_len, unlock_blocks_len)
-            if input_len == 1 && unlock_blocks_len == 2,
+        ValidationError::InputUnlockBlockCountMismatch { inputs, unlock_blocks }
+            if inputs == 1 && unlock_blocks == 2,
     ));
 }
 

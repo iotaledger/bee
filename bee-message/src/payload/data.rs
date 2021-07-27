@@ -141,7 +141,10 @@ impl Packable for DataPayload {
 
 fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
     if version != DataPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion(version, DataPayload::KIND))
+        Err(ValidationError::InvalidPayloadVersion {
+            version,
+            payload_kind: DataPayload::KIND,
+        })
     } else {
         Ok(())
     }

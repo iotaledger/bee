@@ -239,10 +239,10 @@ impl Packable for SaltDeclarationPayload {
 
 fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
     if version != SaltDeclarationPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion(
+        Err(ValidationError::InvalidPayloadVersion {
             version,
-            SaltDeclarationPayload::KIND,
-        ))
+            payload_kind: SaltDeclarationPayload::KIND,
+        })
     } else {
         Ok(())
     }

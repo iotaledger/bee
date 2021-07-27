@@ -203,7 +203,10 @@ fn validate_data(data: &[u8]) -> Result<(), ValidationError> {
 
 fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
     if version != IndexationPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion(version, IndexationPayload::KIND))
+        Err(ValidationError::InvalidPayloadVersion {
+            version,
+            payload_kind: IndexationPayload::KIND,
+        })
     } else {
         Ok(())
     }

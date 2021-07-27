@@ -54,7 +54,7 @@ fn from_str_invalid_hex() {
 fn from_str_invalid_len_too_short() {
     assert!(matches!(
         BlsAddress::from_str(BLS_ADDRESS_INVALID_LEN_TOO_SHORT),
-        Err(ValidationError::InvalidHexadecimalLength(expected, actual))
+        Err(ValidationError::InvalidHexadecimalLength { expected, actual })
             if expected == BLS_ADDRESS_LENGTH * 2 && actual == BLS_ADDRESS_LENGTH * 2 - 2
     ));
 }
@@ -63,7 +63,7 @@ fn from_str_invalid_len_too_short() {
 fn from_str_invalid_len_too_long() {
     assert!(matches!(
         BlsAddress::from_str(BLS_ADDRESS_INVALID_LEN_TOO_LONG),
-        Err(ValidationError::InvalidHexadecimalLength(expected, actual))
+        Err(ValidationError::InvalidHexadecimalLength { expected, actual })
             if expected == BLS_ADDRESS_LENGTH * 2 && actual == BLS_ADDRESS_LENGTH * 2 + 2
     ));
 }

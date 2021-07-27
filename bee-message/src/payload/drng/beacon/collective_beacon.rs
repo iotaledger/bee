@@ -116,10 +116,10 @@ impl Packable for CollectiveBeaconPayload {
 
 fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
     if version != CollectiveBeaconPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion(
+        Err(ValidationError::InvalidPayloadVersion {
             version,
-            CollectiveBeaconPayload::KIND,
-        ))
+            payload_kind: CollectiveBeaconPayload::KIND,
+        })
     } else {
         Ok(())
     }

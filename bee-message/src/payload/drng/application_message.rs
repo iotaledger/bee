@@ -57,10 +57,10 @@ impl Packable for ApplicationMessagePayload {
 
 fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
     if version != ApplicationMessagePayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion(
+        Err(ValidationError::InvalidPayloadVersion {
             version,
-            ApplicationMessagePayload::KIND,
-        ))
+            payload_kind: ApplicationMessagePayload::KIND,
+        })
     } else {
         Ok(())
     }

@@ -41,10 +41,10 @@ impl Ed25519Address {
         let address = Blake2b256::digest(signature.public_key());
 
         if self.0 != *address {
-            return Err(ValidationError::SignaturePublicKeyMismatch(
-                hex::encode(self.0),
-                hex::encode(address),
-            ));
+            return Err(ValidationError::SignaturePublicKeyMismatch {
+                expected: hex::encode(self.0),
+                actual: hex::encode(address),
+            });
         }
 
         if !PublicKey::from_compressed_bytes(*signature.public_key())?

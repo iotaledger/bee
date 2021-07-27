@@ -377,7 +377,10 @@ impl Packable for DkgPayload {
 
 fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
     if version != DkgPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion(version, DkgPayload::KIND))
+        Err(ValidationError::InvalidPayloadVersion {
+            version,
+            payload_kind: DkgPayload::KIND,
+        })
     } else {
         Ok(())
     }

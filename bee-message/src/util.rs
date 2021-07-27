@@ -11,5 +11,8 @@ pub fn hex_decode<const N: usize>(hex: &str) -> Result<[u8; N], ValidationError>
     hex::decode(hex)
         .map_err(|_| ValidationError::InvalidHexadecimalChar(hex.to_owned()))?
         .try_into()
-        .map_err(|_| ValidationError::InvalidHexadecimalLength(N * 2, hex.len()))
+        .map_err(|_| ValidationError::InvalidHexadecimalLength {
+            expected: N * 2,
+            actual: hex.len(),
+        })
 }

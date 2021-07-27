@@ -104,7 +104,7 @@ fn from_str_invalid_hex() {
 fn from_str_invalid_len() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_LEN),
-        Err(ValidationError::InvalidHexadecimalLength(expected, actual))
+        Err(ValidationError::InvalidHexadecimalLength { expected, actual })
             if expected == OUTPUT_ID_LENGTH * 2 && actual == OUTPUT_ID_LENGTH * 2 - 2
     ));
 }

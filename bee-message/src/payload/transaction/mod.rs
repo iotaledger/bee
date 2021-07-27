@@ -184,10 +184,10 @@ impl Packable for TransactionPayload {
 
 fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
     if version != TransactionPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion(
+        Err(ValidationError::InvalidPayloadVersion {
             version,
-            TransactionPayload::KIND,
-        ))
+            payload_kind: TransactionPayload::KIND,
+        })
     } else {
         Ok(())
     }
@@ -236,10 +236,10 @@ fn validate_unlock_block_count(
     unlock_blocks: &UnlockBlocks,
 ) -> Result<(), ValidationError> {
     if essence.inputs().len() != unlock_blocks.len() {
-        Err(ValidationError::InputUnlockBlockCountMismatch(
-            essence.inputs().len(),
-            unlock_blocks.len(),
-        ))
+        Err(ValidationError::InputUnlockBlockCountMismatch {
+            inputs: essence.inputs().len(),
+            unlock_blocks: unlock_blocks.len(),
+        })
     } else {
         Ok(())
     }

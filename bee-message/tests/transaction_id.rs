@@ -44,7 +44,7 @@ fn from_str_invalid_hex() {
 fn from_str_invalid_len() {
     assert!(matches!(
         TransactionId::from_str(TRANSACTION_ID_INVALID_LEN),
-        Err(ValidationError::InvalidHexadecimalLength(expected, actual))
+        Err(ValidationError::InvalidHexadecimalLength { expected, actual })
             if expected == MESSAGE_ID_LENGTH * 2 && actual == MESSAGE_ID_LENGTH * 2 - 2
     ));
 }

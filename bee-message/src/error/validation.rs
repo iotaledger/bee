@@ -15,7 +15,7 @@ pub enum ValidationError {
     DuplicateAddress(Address),
     DuplicateSignature(usize),
     DuplicateUtxo(UtxoInput),
-    InputUnlockBlockCountMismatch(usize, usize),
+    InputUnlockBlockCountMismatch { inputs: usize, unlock_blocks: usize },
     InvalidAccumulatedOutput(u128),
     InvalidAddress,
     InvalidAddressKind(u8),
@@ -23,7 +23,7 @@ pub enum ValidationError {
     InvalidAssetBalanceLength(usize),
     InvalidEncryptedDealLength(usize),
     InvalidHexadecimalChar(String),
-    InvalidHexadecimalLength(usize, usize),
+    InvalidHexadecimalLength { expected: usize, actual: usize },
     InvalidIndexationDataLength(usize),
     InvalidIndexationIndexLength(usize),
     InvalidInputCount(usize),
@@ -36,7 +36,7 @@ pub enum ValidationError {
     InvalidParentsType(u8),
     InvalidPayloadKind(u32),
     InvalidPayloadLength(usize),
-    InvalidPayloadVersion(u8, u32),
+    InvalidPayloadVersion { version: u8, payload_kind: u32 },
     InvalidReferenceIndex(u16),
     InvalidSaltDeclarationBytesLength(usize),
     InvalidSignature,
@@ -45,7 +45,7 @@ pub enum ValidationError {
     InvalidUnlockBlockReference(usize),
     MissingField(&'static str),
     ParentsNotUniqueSorted,
-    SignaturePublicKeyMismatch(String, String),
+    SignaturePublicKeyMismatch { expected: String, actual: String },
     TransactionInputsNotSorted,
     TransactionOutputsNotSorted,
 }
@@ -61,8 +61,12 @@ impl fmt::Display for ValidationError {
                 write!(f, "duplicate signature at index: {}", index)
             }
             Self::DuplicateUtxo(utxo) => write!(f, "duplicate UTX {:?} in inputs", utxo),
-            Self::InputUnlockBlockCountMismatch(input, block) => {
-                write!(f, "input count and unlock block count mismatch: {} != {}", input, block,)
+            Self::InputUnlockBlockCountMismatch { inputs, unlock_blocks } => {
+                write!(
+                    f,
+                    "input count and unlock block count mismatch: {} != {}",
+                    inputs, unlock_blocks
+                )
             }
             Self::InvalidAccumulatedOutput(value) => write!(f, "invalid accumulated output balance: {}", value),
             Self::InvalidAddress => write!(f, "invalid address provided"),
@@ -73,7 +77,7 @@ impl fmt::Display for ValidationError {
             Self::InvalidAmount(amount) => write!(f, "invalid amount: {}", amount),
             Self::InvalidEncryptedDealLength(len) => write!(f, "invalid encrypted deal length: {}", len),
             Self::InvalidHexadecimalChar(hex) => write!(f, "invalid hexadecimal character: {}", hex),
-            Self::InvalidHexadecimalLength(expected, actual) => {
+            Self::InvalidHexadecimalLength { expected, actual } => {
                 write!(f, "invalid hexadecimal length: expected {} got {}", expected, actual)
             }
             Self::InvalidIndexationDataLength(len) => {
@@ -92,8 +96,8 @@ impl fmt::Display for ValidationError {
             Self::InvalidParentsType(ty) => write!(f, "invalid parents type: {}", ty),
             Self::InvalidPayloadKind(kind) => write!(f, "invalid payload kind: {}", kind),
             Self::InvalidPayloadLength(len) => write!(f, "invalid payload length: {}", len),
-            Self::InvalidPayloadVersion(version, kind) => {
-                write!(f, "invalid version {} for payload kind {}", version, kind)
+            Self::InvalidPayloadVersion { version, payload_kind } => {
+                write!(f, "invalid version {} for payload kind {}", version, payload_kind)
             }
             Self::InvalidReferenceIndex(index) => write!(f, "invalid reference index: {}", index),
             Self::InvalidSaltDeclarationBytesLength(len) => {
@@ -107,7 +111,7 @@ impl fmt::Display for ValidationError {
             }
             Self::MissingField(field) => write!(f, "missing required field: {}", field),
             Self::ParentsNotUniqueSorted => write!(f, "parents not unique and/or sorted"),
-            Self::SignaturePublicKeyMismatch(expected, actual) => {
+            Self::SignaturePublicKeyMismatch { expected, actual } => {
                 write!(
                     f,
                     "signature public key mismatch: expected {}, got {}",

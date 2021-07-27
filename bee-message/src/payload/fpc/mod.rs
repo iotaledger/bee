@@ -151,7 +151,10 @@ impl Packable for FpcPayload {
 
 fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
     if version != FpcPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion(version, FpcPayload::KIND))
+        Err(ValidationError::InvalidPayloadVersion {
+            version,
+            payload_kind: FpcPayload::KIND,
+        })
     } else {
         Ok(())
     }
