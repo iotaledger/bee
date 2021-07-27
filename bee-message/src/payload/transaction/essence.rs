@@ -474,10 +474,9 @@ fn validate_outputs_sorted(outputs: &[Output]) -> Result<(), ValidationError> {
 }
 
 fn validate_payload(payload: &Option<Payload>) -> Result<(), ValidationError> {
-    if !matches!(*payload, None | Some(Payload::Indexation(_))) {
+    match payload {
+        None | Some(Payload::Indexation(_)) => Ok(()),
         // Unwrap is fine because we just checked that the Option is not None.
-        Err(ValidationError::InvalidPayloadKind(payload.as_ref().unwrap().kind()))
-    } else {
-        Ok(())
+        _ => Err(ValidationError::InvalidPayloadKind(payload.as_ref().unwrap().kind())),
     }
 }
