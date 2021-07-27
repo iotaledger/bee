@@ -108,7 +108,7 @@ module.exports = {
           routeBasePath:'/',
           // Please change this to your repo.
           editUrl:
-            'https://github.com/iotaledger/bee/tree/main/docs',
+            'https://github.com/iotaledger/bee/tree/dev/documentation',
         },
         theme: {
           customCss: require.resolve('./src/css/iota.css'),
