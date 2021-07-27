@@ -21,7 +21,7 @@ pub mod address;
 pub mod error;
 /// A module that provides types and syntactic validations of inputs.
 pub mod input;
-/// A module containing a convenient builder for `Message` construction.
+/// A module containing a convenient builder for [`Message`] construction.
 pub mod message_builder;
 /// A module that provides types and syntactic validations of outputs.
 pub mod output;

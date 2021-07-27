@@ -17,7 +17,7 @@ pub const TRANSACTION_ID_LENGTH: usize = 32;
 pub struct TransactionId([u8; TRANSACTION_ID_LENGTH]);
 
 impl TransactionId {
-    /// Creates a new `TransactionId`.
+    /// Creates a new [`TransactionId`].
     pub fn new(bytes: [u8; TRANSACTION_ID_LENGTH]) -> Self {
         bytes.into()
     }

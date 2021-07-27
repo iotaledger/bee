@@ -17,12 +17,12 @@ pub const MESSAGE_ID_LENGTH: usize = 32;
 pub struct MessageId([u8; MESSAGE_ID_LENGTH]);
 
 impl MessageId {
-    /// Creates a new `MessageId`.
+    /// Creates a new [`MessageId`].
     pub fn new(bytes: [u8; MESSAGE_ID_LENGTH]) -> Self {
         bytes.into()
     }
 
-    /// Create a null `MessageId`.
+    /// Create a null [`MessageId`].
     pub fn null() -> Self {
         Self([0u8; MESSAGE_ID_LENGTH])
     }

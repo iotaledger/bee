@@ -26,7 +26,7 @@ pub const PLEDGE_ID_LENGTH: usize = 32;
 const PREFIXED_INPUTS_LENGTH_MAX: usize = *INPUT_COUNT_RANGE.end();
 const PREFIXED_OUTPUTS_LENGTH_MAX: usize = *OUTPUT_COUNT_RANGE.end();
 
-/// Error encountered packing a Transaction Essence.
+/// Error encountered packing a [`TransactionEssence`].
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum TransactionEssencePackError {
@@ -103,16 +103,17 @@ impl fmt::Display for TransactionEssenceUnpackError {
     }
 }
 
-/// A `TransactionEssence` consuming `Input`s, creating `Output`s and carrying an optional `Payload`.
+/// A [`TransactionEssence`] consuming [`Input`]s, creating [`Output]`s and carrying an optional [`Payload`].
 ///
-/// A `TransactionEssence` must:
-/// * Contain a number of `Input`s within `INPUT_OUTPUT_COUNT_RANGE`.
-/// * Ensure that all `UtxoInput`s are unique.
-/// * Ensure that `Input`s are sorted lexicographically in their serialized forms.
-/// * Contain a number of `Output`s within `INPUT_OUTPUT_COUNT_RANGE`.
-/// * Ensure that `Output` amounts to not total above `IOTA_SUPPLY`.
-/// * Ensure that `Output`s are sorted lexicographically in their serialized formns.
-/// * Ensure that the optional `Payload` is of `Indexation` type.
+/// A [`TransactionEssence`] must:
+/// * Contain a number of [`Input`]s within [`INPUT_COUNT_RANGE`].
+/// * Ensure that all [`UtxoInput`](crate::input::UtxoInput)s are unique.
+/// * Ensure that [`Input`]s are sorted lexicographically in their serialized forms.
+/// * Contain a number of [`Output]`s within [`OUTPUT_COUNT_RANGE`].
+/// * Ensure that [`Output]` amounts to not total above [`IOTA_SUPPLY`].
+/// * Ensure that [`Output]`s are sorted lexicographically in their serialized formns.
+/// * Ensure that the optional [`Payload`] is of [`IndexationPayload`](crate::payload::indexation::IndexationPayload)
+/// type.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionEssence {
@@ -122,16 +123,16 @@ pub struct TransactionEssence {
     access_pledge_id: [u8; PLEDGE_ID_LENGTH],
     /// Node ID to which the consensus mana of the transaction is pledged.
     consensus_pledge_id: [u8; PLEDGE_ID_LENGTH],
-    /// Collection of transaction [Input]s.
+    /// Collection of transaction [`Input`]s.
     inputs: Vec<Input>,
-    /// Collection of transaction [Output]s.
+    /// Collection of transaction [`Output`]s.
     outputs: Vec<Output>,
     /// Optional additional payload.
     payload: Option<Payload>,
 }
 
 impl TransactionEssence {
-    /// Create a new `TransactionEssenceBuilder` to build a `TransactionEssence`.
+    /// Create a new [`TransactionEssenceBuilder`] to build a [`TransactionEssence`].
     pub fn builder() -> TransactionEssenceBuilder {
         TransactionEssenceBuilder::new()
     }
@@ -151,17 +152,17 @@ impl TransactionEssence {
         &self.consensus_pledge_id
     }
 
-    /// Return the inputs of a `TransactionEssence`.
+    /// Return the inputs of a [`TransactionEssence`].
     pub fn inputs(&self) -> &[Input] {
         &self.inputs
     }
 
-    /// Return the outputs of a `TransactionEssence`.
+    /// Return the outputs of a [`TransactionEssence`].
     pub fn outputs(&self) -> &[Output] {
         &self.outputs
     }
 
-    /// Return the optional payload of a `TransactionEssence`.
+    /// Return the optional payload of a [`TransactionEssence`].
     pub fn payload(&self) -> &Option<Payload> {
         &self.payload
     }
@@ -297,7 +298,7 @@ impl Packable for TransactionEssence {
     }
 }
 
-/// A builder to build a `TransactionEssence`.
+/// A builder to build a [`TransactionEssence`].
 #[derive(Debug, Default)]
 pub struct TransactionEssenceBuilder {
     timestamp: Option<u64>,
@@ -309,60 +310,60 @@ pub struct TransactionEssenceBuilder {
 }
 
 impl TransactionEssenceBuilder {
-    /// Creates a new `TransactionEssenceBuilder`.
+    /// Creates a new [`TransactionEssenceBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Adds a timestamp to a `TransactionEssenceBuilder`.
+    /// Adds a timestamp to a [`TransactionEssenceBuilder`].
     pub fn with_timestamp(mut self, timestamp: u64) -> Self {
         self.timestamp.replace(timestamp);
         self
     }
 
-    /// Adds an access pledge ID to a `TransactionEssenceBuilder`.
+    /// Adds an access pledge ID to a [`TransactionEssenceBuilder`].
     pub fn with_access_pledge_id(mut self, access_pledge_id: [u8; PLEDGE_ID_LENGTH]) -> Self {
         self.access_pledge_id.replace(access_pledge_id);
         self
     }
 
-    /// Adds a consensus pledge ID to a `TransactionEssenceBuilder`.
+    /// Adds a consensus pledge ID to a [`TransactionEssenceBuilder`].
     pub fn with_consensus_pledge_id(mut self, consensus_pledge_id: [u8; PLEDGE_ID_LENGTH]) -> Self {
         self.consensus_pledge_id.replace(consensus_pledge_id);
         self
     }
 
-    /// Adds inputs to a `TransactionEssenceBuilder`
+    /// Adds inputs to a [`TransactionEssenceBuilder`]
     pub fn with_inputs(mut self, inputs: Vec<Input>) -> Self {
         self.inputs = inputs;
         self
     }
 
-    /// Add an input to a `TransactionEssenceBuilder`.
+    /// Add an input to a [`TransactionEssenceBuilder`].
     pub fn add_input(mut self, input: Input) -> Self {
         self.inputs.push(input);
         self
     }
 
-    /// Add outputs to a `TransactionEssenceBuilder`.
+    /// Add outputs to a [`TransactionEssenceBuilder`].
     pub fn with_outputs(mut self, outputs: Vec<Output>) -> Self {
         self.outputs = outputs;
         self
     }
 
-    /// Add an output to a `TransactionEssenceBuilder`.
+    /// Add an output to a [`TransactionEssenceBuilder`].
     pub fn add_output(mut self, output: Output) -> Self {
         self.outputs.push(output);
         self
     }
 
-    /// Add a payload to a `TransactionEssenceBuilder`.
+    /// Add a payload to a [`TransactionEssenceBuilder`].
     pub fn with_payload(mut self, payload: Payload) -> Self {
         self.payload.replace(payload);
         self
     }
 
-    /// Finishes a `TransactionEssenceBuilder` into a `TransactionEssence`.
+    /// Finishes a [`TransactionEssenceBuilder`] into a [`TransactionEssence`].
     pub fn finish(self) -> Result<TransactionEssence, ValidationError> {
         let timestamp = self.timestamp.ok_or(ValidationError::MissingField("timestamp"))?;
         let access_pledge_id = self

@@ -157,7 +157,7 @@ pub enum Payload {
 }
 
 impl Payload {
-    /// Returns the payload kind of a `Payload`.
+    /// Returns the payload kind of a [`Payload`].
     pub fn kind(&self) -> u32 {
         match *self {
             Self::ApplicationMessage(_) => ApplicationMessagePayload::KIND,

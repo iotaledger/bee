@@ -26,7 +26,7 @@ pub const UNLOCK_BLOCK_COUNT_RANGE: RangeInclusive<usize> = 1..=UNLOCK_BLOCK_COU
 /// The valid range of indices for unlock blocks for a transaction [0..126].
 pub const UNLOCK_BLOCK_INDEX_RANGE: Range<u16> = 0..UNLOCK_BLOCK_COUNT_MAX as u16;
 
-/// Error encountered unpacking an `UnlockBlock`.
+/// Error encountered unpacking an [`UnlockBlock`].
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum UnlockBlockUnpackError {
@@ -69,7 +69,7 @@ impl_wrapped_variant!(UnlockBlock, SignatureUnlock, UnlockBlock::Signature);
 impl_wrapped_variant!(UnlockBlock, ReferenceUnlock, UnlockBlock::Reference);
 
 impl UnlockBlock {
-    /// Returns the unlock kind of an `UnlockBlock`.
+    /// Returns the unlock kind of an [`UnlockBlock`].
     pub fn kind(&self) -> u8 {
         match self {
             Self::Signature(_) => SignatureUnlock::KIND,

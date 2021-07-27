@@ -18,15 +18,15 @@ use core::{convert::From, str::FromStr};
 pub struct UtxoInput(OutputId);
 
 impl UtxoInput {
-    /// The input kind of a `UtxoInput`.
+    /// The input kind of a [`UtxoInput`].
     pub const KIND: u8 = 0;
 
-    /// Creates a new `UtxoInput`.
+    /// Creates a new [`UtxoInput`].
     pub fn new(id: TransactionId, index: u16) -> Result<Self, ValidationError> {
         Ok(Self(OutputId::new(id, index)?))
     }
 
-    /// Returns the output id of a `UtxoInput`.
+    /// Returns the output id of a [`UtxoInput`].
     pub fn output_id(&self) -> &OutputId {
         &self.0
     }

@@ -14,11 +14,11 @@ use bee_packable::{
 use alloc::vec::Vec;
 use core::{convert::Infallible, ops::Deref};
 
-/// No `Vec` max length specified, so use `PAYLOAD_LENGTH_MAX` / length of `Conflict`.
+/// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
 const PREFIXED_CONFLICTS_LENGTH_MAX: usize =
     PAYLOAD_LENGTH_MAX / (TRANSACTION_ID_LENGTH + 2 * core::mem::size_of::<u8>());
 
-/// Provides a convenient collection of `Conflict`s.
+/// Provides a convenient collection of [`Conflict`]s.
 /// Describes a vote in a given round for a transaction conflict.
 #[derive(Clone, Default, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -38,7 +38,7 @@ impl Deref for Conflicts {
 }
 
 impl Conflicts {
-    /// Creates a new `Conflicts` instance from a vector of `Conflict`s.
+    /// Creates a new [`Conflicts`] instance from a vector of [`Conflict`]s.
     pub fn new(inner: Vec<Conflict>) -> Self {
         Self { inner }
     }
@@ -57,7 +57,7 @@ pub struct Conflict {
 }
 
 impl Conflict {
-    /// Creates a new `Conflict`.
+    /// Creates a new [`Conflict`].
     pub fn new(transaction_id: TransactionId, opinion: u8, round: u8) -> Self {
         Self {
             transaction_id,

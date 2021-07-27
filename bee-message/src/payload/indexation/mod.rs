@@ -88,8 +88,8 @@ impl fmt::Display for IndexationUnpackError {
 
 /// A payload which holds an index and associated data.
 ///
-/// An `IndexationPayload` must:
-/// * Contain an index of within `INDEXATION_INDEX_LENGTH_RANGE` bytes.
+/// An [`IndexationPayload`] must:
+/// * Contain an index of within [`INDEXATION_INDEX_LENGTH_RANGE`] bytes.
 /// * Contain data that does not exceed maximum message length in bytes.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -106,7 +106,7 @@ impl MessagePayload for IndexationPayload {
 }
 
 impl IndexationPayload {
-    /// Creates a new `IndexationPayload`.
+    /// Creates a new [`IndexationPayload`].
     pub fn new(index: Vec<u8>, data: Vec<u8>) -> Result<Self, ValidationError> {
         validate_index(&index)?;
         validate_data(&data)?;
@@ -114,19 +114,19 @@ impl IndexationPayload {
         Ok(Self { index, data })
     }
 
-    /// Returns the index of an `IndexationPayload`.
+    /// Returns the index of an [`IndexationPayload`].
     pub fn index(&self) -> &[u8] {
         &self.index
     }
 
-    /// Returns the padded index of an `IndexationPayload`.
+    /// Returns the padded index of an [`IndexationPayload`].
     pub fn padded_index(&self) -> PaddedIndex {
         let mut padded_index = [0u8; INDEXATION_PADDED_INDEX_LENGTH];
         padded_index[..self.index.len()].copy_from_slice(&self.index);
         PaddedIndex::from(padded_index)
     }
 
-    /// Returns the data of an `IndexationPayload`.
+    /// Returns the data of an [`IndexationPayload`].
     pub fn data(&self) -> &[u8] {
         &self.data
     }

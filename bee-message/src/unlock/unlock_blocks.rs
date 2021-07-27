@@ -22,7 +22,7 @@ use core::{
 
 const PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX: usize = *UNLOCK_BLOCK_COUNT_RANGE.end();
 
-/// Error encountered while packing `UnlockBlocks`.
+/// Error encountered while packing [`UnlockBlocks`].
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum UnlockBlocksPackError {
@@ -46,7 +46,7 @@ impl fmt::Display for UnlockBlocksPackError {
     }
 }
 
-/// Error encountered while unpacking `UnlockBlocks`.
+/// Error encountered while unpacking [`UnlockBlocks`].
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum UnlockBlocksUnpackError {
@@ -94,16 +94,17 @@ impl fmt::Display for UnlockBlocksUnpackError {
 
 /// A collection of unlock blocks.
 ///
-/// An `UnlockBlocks` collection must:
-/// * Contain a number of `UnlockBlock`s within `UNLOCK_BLOCKS_COUNT_RANGE`.
-/// * Ensure all signatures in `Signature` blocks are unique across the collection.
-/// * Ensure `Reference` blocks specify a previous existing `Signature` block.
+/// An [`UnlockBlocks`] collection must:
+/// * Contain a number of [`UnlockBlock`]s within [`UNLOCK_BLOCK_COUNT_RANGE`].
+/// * Ensure all signatures in [`SignatureUnlock`](crate::unlock::SignatureUnlock) blocks are unique across the collection.
+/// * Ensure [`ReferenceUnlock`](crate::unlock::ReferenceUnlock) blocks specify a previous existing.
+/// [`SignatureUnlock`](crate::unlock::SignatureUnlock) block.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct UnlockBlocks(Vec<UnlockBlock>);
 
 impl UnlockBlocks {
-    /// Creates a new `UnlockBlocks`.
+    /// Creates a new [`UnlockBlocks`].
     pub fn new(unlock_blocks: Vec<UnlockBlock>) -> Result<Self, ValidationError> {
         validate_unlock_block_count(unlock_blocks.len())?;
         validate_unlock_block_variants(&unlock_blocks)?;
@@ -111,7 +112,7 @@ impl UnlockBlocks {
         Ok(Self(unlock_blocks))
     }
 
-    /// Gets an `UnlockBlock` from an `UnlockBlocks`.
+    /// Gets an [`UnlockBlock`] from an [`UnlockBlocks`].
     /// Returns the referenced unlock block if the requested unlock block was a reference.
     pub fn get(&self, index: usize) -> Option<&UnlockBlock> {
         match self.0.get(index) {

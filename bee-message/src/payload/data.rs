@@ -71,8 +71,8 @@ impl fmt::Display for DataUnpackError {
 
 /// Generic data payload, containing a collection of bytes.
 ///
-/// A `DataPayload` must:
-/// * Not exceed `MAXIMUM_PAYLOAD_LEN` in bytes.
+/// A [`DataPayload`] must:
+/// * Not exceed [`PAYLOAD_LENGTH_MAX`] in bytes.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct DataPayload {
@@ -86,14 +86,14 @@ impl MessagePayload for DataPayload {
 }
 
 impl DataPayload {
-    /// Creates a new `DataPayload`.
+    /// Creates a new [`DataPayload`].
     pub fn new(data: Vec<u8>) -> Result<Self, ValidationError> {
         validate_data_len(data.len())?;
 
         Ok(Self { data })
     }
 
-    /// Returns the "data" bytes of a `DataPayload`.
+    /// Returns the data bytes of a [`DataPayload`].
     pub fn data(&self) -> &[u8] {
         self.data.as_slice()
     }

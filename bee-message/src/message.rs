@@ -26,7 +26,7 @@ pub const MESSAGE_PUBLIC_KEY_LENGTH: usize = 32;
 /// Length (in bytes) of a message signature.
 pub const MESSAGE_SIGNATURE_LENGTH: usize = 64;
 
-/// Valid number of `ParentBlocks` for a message.
+/// Valid number of [`ParentBlocks`] for a message.
 pub(crate) const PARENTS_BLOCKS_COUNT_RANGE: RangeInclusive<usize> = 1..=4;
 
 /// Messages are of version 1.
@@ -34,8 +34,8 @@ const MESSAGE_VERSION: u8 = 1;
 
 /// Represents the object that nodes gossip around the network.
 ///
-/// `Message`s must:
-/// * Have a length (in bytes) within `MESSAGE_LENGTH_RANGE`.
+/// [`Message`]s must:
+/// * Have a length (in bytes) within [`MESSAGE_LENGTH_RANGE`].
 /// * Ensure all applicable data is appropriately validated.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -68,42 +68,42 @@ impl Message {
         MessageId::new(id.into())
     }
 
-    /// Returns the parent blocks of a `Message`.
+    /// Returns the parent blocks of a [`Message`].
     pub fn parents_blocks(&self) -> impl Iterator<Item = &ParentsBlock> {
         self.parents_blocks.iter()
     }
 
-    /// Returns the `Message` issuer public key.
+    /// Returns the [`Message`] issuer public key.
     pub fn issuer_public_key(&self) -> &[u8; MESSAGE_PUBLIC_KEY_LENGTH] {
         &self.issuer_public_key
     }
 
-    /// Returns the `Message` issuance timestamp.
+    /// Returns the [`Message`] issuance timestamp.
     pub fn issue_timestamp(&self) -> u64 {
         self.issue_timestamp
     }
 
-    /// Returns the sequence number of a `Message`.
+    /// Returns the sequence number of a [`Message`].
     pub fn sequence_number(&self) -> u32 {
         self.sequence_number
     }
 
-    /// Returns the optional payload of a `Message`.
+    /// Returns the optional payload of a [`Message`].
     pub fn payload(&self) -> &Option<Payload> {
         &self.payload
     }
 
-    /// Returns the nonce of a `Message`.
+    /// Returns the nonce of a [`Message`].
     pub fn nonce(&self) -> u64 {
         self.nonce
     }
 
-    /// Returns the `Message` signature.
+    /// Returns the [`Message`] signature.
     pub fn signature(&self) -> &[u8] {
         &self.signature
     }
 
-    /// Hashes the `Message` contents, excluding the signature.
+    /// Hashes the [`Message`] contents, excluding the signature.
     pub fn hash(&self) -> [u8; 32] {
         let mut bytes = self.pack_to_vec().unwrap();
 
@@ -112,7 +112,7 @@ impl Message {
         Blake2b256::digest(&bytes).into()
     }
 
-    /// Verifies the `Message` signature against the contents of the `Message`.
+    /// Verifies the [`Message`] signature against the contents of the [`Message`].
     pub fn verify(&self) -> Result<(), ValidationError> {
         let ed25519_public_key = ed25519::PublicKey::from_compressed_bytes(self.issuer_public_key)?;
 
@@ -224,7 +224,7 @@ pub(crate) fn validate_parents_blocks_count(count: usize) -> Result<(), Validati
 
 pub(crate) fn validate_has_strong_parents(parents_blocks: &[ParentsBlock]) -> Result<(), ValidationError> {
     for block in parents_blocks.iter() {
-        // `ParentsBlock`s cannot be empty, so no need to check length here.
+        // [`ParentsBlock`]s cannot be empty, so no need to check length here.
         if block.parents_type() == ParentsType::Strong {
             return Ok(());
         }

@@ -30,7 +30,7 @@ macro_rules! impl_wrapped_validated {
     };
 }
 
-/// Quickly implements `From<Infallible>` for a given type.
+/// Quickly implements [`From<Infallible>`] for a given type.
 #[macro_export]
 macro_rules! impl_from_infallible {
     ($type:ty) => {

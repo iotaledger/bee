@@ -11,10 +11,10 @@ use bee_packable::{
 use alloc::vec::Vec;
 use core::{convert::Infallible, ops::Deref};
 
-/// No `Vec` max length specified, so use `PAYLOAD_LENGTH_MAX` / length of `Conflict`.
+/// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`](crate::payload::fpc::Conflict).
 const PREFIXED_TIMESTAMPS_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX / (MESSAGE_ID_LENGTH + 2 * core::mem::size_of::<u8>());
 
-/// Provides a convenient collection of `Timestamp`s.
+/// Provides a convenient collection of [`Timestamp`]s.
 /// Describes a vote in a given round for a message timestamp.
 #[derive(Clone, Default, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -34,7 +34,8 @@ impl Deref for Timestamps {
 }
 
 impl Timestamps {
-    /// Creates a new `Conflicts` instance from a vector of `Conflict`s.
+    /// Creates a new [`Conflicts`](crate::payload::fpc::Conflicts) instance from a vector of
+    /// [`Conflict`](crate::payload::fpc::Conflict)s.
     pub fn new(inner: Vec<Timestamp>) -> Self {
         Self { inner }
     }
@@ -53,7 +54,7 @@ pub struct Timestamp {
 }
 
 impl Timestamp {
-    /// Creates a new `Timestamp`.
+    /// Creates a new [`Timestamp`].
     pub fn new(message_id: MessageId, opinion: u8, round: u8) -> Self {
         Self {
             message_id,

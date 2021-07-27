@@ -106,8 +106,9 @@ impl fmt::Display for TransactionUnpackError {
 
 /// A transaction to move funds.
 ///
-/// A `TransactionPayload` must:
-/// * Ensure the number of `UnlockBlock`s matches the number of `Input`s.
+/// A [`TransactionPayload`] must:
+/// * Ensure the number of [`UnlockBlock`](crate::unlock::UnlockBlock) matches the number of
+/// [`Input`](crate::input::Input)s.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionPayload {
@@ -123,12 +124,12 @@ impl MessagePayload for TransactionPayload {
 }
 
 impl TransactionPayload {
-    /// Return a new `TransactionPayloadBuilder` to build a `TransactionPayload`.
+    /// Return a new [`TransactionPayloadBuilder`] to build a [`TransactionPayload`].
     pub fn builder() -> TransactionPayloadBuilder {
         TransactionPayloadBuilder::new()
     }
 
-    /// Computes the identifier of a `TransactionPayload`.
+    /// Computes the identifier of a [`TransactionPayload`].
     pub fn id(&self) -> TransactionId {
         let mut hasher = Blake2b256::new();
         hasher.update(Self::KIND.to_le_bytes());
@@ -141,12 +142,12 @@ impl TransactionPayload {
         TransactionId::new(hasher.finalize().into())
     }
 
-    /// Return the essence of a `TransactionPayload`.
+    /// Return the essence of a [`TransactionPayload`].
     pub fn essence(&self) -> &TransactionEssence {
         &self.essence
     }
 
-    /// Return unlock blocks of a `TransactionPayload`.
+    /// Return unlock blocks of a [`TransactionPayload`].
     pub fn unlock_blocks(&self) -> &UnlockBlocks {
         &self.unlock_blocks
     }
@@ -192,7 +193,7 @@ fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
     }
 }
 
-/// A builder to build a `TransactionPayload`.
+/// A builder to build a [`TransactionPayload`].
 #[derive(Debug, Default)]
 pub struct TransactionPayloadBuilder {
     essence: Option<TransactionEssence>,
@@ -200,24 +201,24 @@ pub struct TransactionPayloadBuilder {
 }
 
 impl TransactionPayloadBuilder {
-    /// Creates a new `TransactionPayloadBuilder`.
+    /// Creates a new [`TransactionPayloadBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Adds an essence to a `TransactionPayloadBuilder`.
+    /// Adds an essence to a [`TransactionPayloadBuilder`].
     pub fn with_essence(mut self, essence: TransactionEssence) -> Self {
         self.essence.replace(essence);
         self
     }
 
-    /// Adds unlock blocks to a `TransactionPayloadBuilder`.
+    /// Adds unlock blocks to a [`TransactionPayloadBuilder`].
     pub fn with_unlock_blocks(mut self, unlock_blocks: UnlockBlocks) -> Self {
         self.unlock_blocks.replace(unlock_blocks);
         self
     }
 
-    /// Finishes a `TransactionPayloadBuilder` into a `TransactionPayload`.
+    /// Finishes a [`TransactionPayloadBuilder`] into a [`TransactionPayload`].
     pub fn finish(self) -> Result<TransactionPayload, ValidationError> {
         let essence = self.essence.ok_or(ValidationError::MissingField("essence"))?;
         let unlock_blocks = self

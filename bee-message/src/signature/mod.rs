@@ -11,7 +11,7 @@ use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
 use core::{convert::Infallible, fmt};
 
-/// Error encountered unpacking a `Signature`.
+/// Error encountered unpacking a [`Signature`].
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum SignatureUnpackError {
@@ -39,7 +39,7 @@ pub enum Signature {
 }
 
 impl Signature {
-    /// Returns the signature kind of a `Signature`.
+    /// Returns the signature kind of a [`Signature`].
     pub fn kind(&self) -> u8 {
         match self {
             Self::Ed25519(_) => Ed25519Signature::KIND,

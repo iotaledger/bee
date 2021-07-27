@@ -11,7 +11,7 @@ pub const INDEXATION_PADDED_INDEX_LENGTH: usize = 64;
 pub struct PaddedIndex([u8; INDEXATION_PADDED_INDEX_LENGTH]);
 
 impl PaddedIndex {
-    /// Creates a new `PaddedIndex`.
+    /// Creates a new [`PaddedIndex`].
     pub fn new(bytes: [u8; INDEXATION_PADDED_INDEX_LENGTH]) -> Self {
         bytes.into()
     }

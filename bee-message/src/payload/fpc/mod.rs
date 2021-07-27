@@ -95,17 +95,17 @@ impl MessagePayload for FpcPayload {
 }
 
 impl FpcPayload {
-    /// Returns a new `FpcPayloadBuilder` in order to build an `FpcPayload`.
+    /// Returns a new [`FpcPayloadBuilder`] in order to build an [`FpcPayload`].
     pub fn builder() -> FpcPayloadBuilder {
         FpcPayloadBuilder::new()
     }
 
-    /// Returns the `Conflicts` of an `FpcPayload`.
+    /// Returns the [`Conflicts`] of an [`FpcPayload`].
     pub fn conflicts(&self) -> impl Iterator<Item = &Conflict> {
         self.conflicts.iter()
     }
 
-    /// Returns the `Timestamps` of an `FpcPayload`.
+    /// Returns the [`Timestamps`] of an [`FpcPayload`].
     pub fn timestamps(&self) -> impl Iterator<Item = &Timestamp> {
         self.timestamps.iter()
     }
@@ -157,7 +157,7 @@ fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
     }
 }
 
-/// A builder to build an `FpcPayload`.
+/// A builder to build an [`FpcPayload`].
 #[derive(Default)]
 pub struct FpcPayloadBuilder {
     conflicts: Conflicts,
@@ -165,24 +165,24 @@ pub struct FpcPayloadBuilder {
 }
 
 impl FpcPayloadBuilder {
-    /// Creates a new `FpcPayloadBuilder`.
+    /// Creates a new [`FpcPayloadBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Adds a collection of conflicts to the `FpcPayloadBuilder`.
+    /// Adds a collection of conflicts to the [`FpcPayloadBuilder`].
     pub fn with_conflicts(mut self, conflicts: Conflicts) -> Self {
         self.conflicts = conflicts;
         self
     }
 
-    /// Adds a collection of timestamps to the `FpcPayloadBuilder`.
+    /// Adds a collection of timestamps to the [`FpcPayloadBuilder`].
     pub fn with_timestamps(mut self, timestamps: Timestamps) -> Self {
         self.timestamps = timestamps;
         self
     }
 
-    /// Finishes an `FpcPayloadBuilder` into an `FpcPayload`.
+    /// Finishes an [`FpcPayloadBuilder`] into an [`FpcPayload`].
     pub fn finish(self) -> Result<FpcPayload, ValidationError> {
         Ok(FpcPayload {
             conflicts: self.conflicts,

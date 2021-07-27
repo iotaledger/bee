@@ -73,7 +73,7 @@ pub enum Output {
 impl_wrapped_variant!(Output, SignatureLockedSingleOutput, Output::SignatureLockedSingle);
 
 impl Output {
-    /// Return the output kind of an `Output`.
+    /// Return the output kind of an [`Output`].
     pub fn kind(&self) -> u8 {
         match self {
             Self::SignatureLockedSingle(_) => SignatureLockedSingleOutput::KIND,

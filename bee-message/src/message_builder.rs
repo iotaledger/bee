@@ -12,7 +12,7 @@ use bee_packable::Packable;
 
 use alloc::vec::Vec;
 
-/// A builder to build a `Message`.
+/// A builder to build a [`Message`].
 #[derive(Default)]
 pub struct MessageBuilder {
     parents_blocks: Vec<ParentsBlock>,
@@ -25,54 +25,54 @@ pub struct MessageBuilder {
 }
 
 impl MessageBuilder {
-    /// Creates a new `MessageBuilder`.
+    /// Creates a new [`MessageBuilder`].
     pub fn new() -> Self {
         Default::default()
     }
 
-    /// Adds a `ParentsBlock` to a `MessageBuilder`.
+    /// Adds a [`ParentsBlock`] to a [`MessageBuilder`].
     pub fn add_parents_block(mut self, parents_block: ParentsBlock) -> Self {
         self.parents_blocks.push(parents_block);
         self
     }
 
-    /// Adds an issuer public key to a `MessageBuilder`.
+    /// Adds an issuer public key to a [`MessageBuilder`].
     pub fn with_issuer_public_key(mut self, issuer_public_key: [u8; MESSAGE_PUBLIC_KEY_LENGTH]) -> Self {
         self.issuer_public_key.replace(issuer_public_key);
         self
     }
 
-    /// Adds an issuance timestamp to a `MessageBuilder`.
+    /// Adds an issuance timestamp to a [`MessageBuilder`].
     pub fn with_issue_timestamp(mut self, issue_timestamp: u64) -> Self {
         self.issue_timestamp.replace(issue_timestamp);
         self
     }
 
-    /// Adds a sequence number to a `MessageBuilder`.
+    /// Adds a sequence number to a [`MessageBuilder`].
     pub fn with_sequence_number(mut self, sequence_number: u32) -> Self {
         self.sequence_number.replace(sequence_number);
         self
     }
 
-    /// Adds a payload to a `MessageBuilder`.
+    /// Adds a payload to a [`MessageBuilder`].
     pub fn with_payload(mut self, payload: Payload) -> Self {
         self.payload.replace(payload);
         self
     }
 
-    /// Adds a nonce provider to a `MessageBuilder`.
+    /// Adds a nonce provider to a [`MessageBuilder`].
     pub fn with_nonce(mut self, nonce: u64) -> Self {
         self.nonce.replace(nonce);
         self
     }
 
-    /// Adds a signature to a `MessageBuilder`.
+    /// Adds a signature to a [`MessageBuilder`].
     pub fn with_signature(mut self, signature: [u8; MESSAGE_SIGNATURE_LENGTH]) -> Self {
         self.signature.replace(signature);
         self
     }
 
-    /// Finished the `MessageBuilder`, consuming it to build a `Message`.
+    /// Finished the [`MessageBuilder`], consuming it to build a [`Message`].
     pub fn finish(self) -> Result<Message, ValidationError> {
         message::validate_parents_blocks_count(self.parents_blocks.len())?;
         message::validate_has_strong_parents(&self.parents_blocks)?;

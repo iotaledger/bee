@@ -55,10 +55,10 @@ impl TryFrom<u8> for ParentsType {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-/// A block of message parent IDs, all of the same `ParentsType`.
+/// A block of message parent IDs, all of the same [`ParentsType`].
 ///
-/// `ParentsBlock`s must:
-/// * Be of a valid `ParentsType`.
+/// [`ParentsBlock`]s must:
+/// * Be of a valid [`ParentsType`].
 /// * Contain a valid count of parents (1..=8).
 /// * IDs must be unique and lexicographically sorted in their serialized forms.
 pub struct ParentsBlock {
@@ -67,7 +67,7 @@ pub struct ParentsBlock {
 }
 
 impl ParentsBlock {
-    /// Creates a new `ParentsBlock`, and validates the ID collection.
+    /// Creates a new [`ParentsBlock`], and validates the ID collection.
     pub fn new(ty: ParentsType, ids: Vec<MessageId>) -> Result<Self, ValidationError> {
         validate_parents_count(ids.len())?;
         validate_parents_unique_sorted(&ids)?;
@@ -76,7 +76,7 @@ impl ParentsBlock {
     }
 
     #[allow(clippy::len_without_is_empty)]
-    /// Returns the number of `MessageIDs` in the `ParentsBlock` ID collection.
+    /// Returns the number of [`MessageId`]s in the [`ParentsBlock`] ID collection.
     pub fn len(&self) -> usize {
         self.ids.len()
     }
@@ -86,7 +86,7 @@ impl ParentsBlock {
         self.ty
     }
 
-    /// Returns an iterator over the `ParentsBlock` ID collection.
+    /// Returns an iterator over the [`ParentsBlock`] ID collection.
     pub fn iter(&self) -> impl Iterator<Item = &MessageId> {
         self.ids.iter()
     }

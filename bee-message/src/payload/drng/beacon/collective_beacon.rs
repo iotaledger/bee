@@ -11,7 +11,7 @@ use crate::{
 
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
-/// Message decsribing a dRNG `CollectiveBeacon`.
+/// Message decsribing a dRNG [`CollectiveBeaconPayload`].
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct CollectiveBeaconPayload {
@@ -36,17 +36,17 @@ impl MessagePayload for CollectiveBeaconPayload {
 }
 
 impl CollectiveBeaconPayload {
-    /// Creates a new `CollectiveBeaconPayloadBuilder`.
+    /// Creates a new [`CollectiveBeaconPayloadBuilder`].
     pub fn builder() -> CollectiveBeaconPayloadBuilder {
         CollectiveBeaconPayloadBuilder::new()
     }
 
-    /// Returns the instance ID of a `CollectiveBeaconPayload`.
+    /// Returns the instance ID of a [`CollectiveBeaconPayload`].
     pub fn instance_id(&self) -> u32 {
         self.instance_id
     }
 
-    /// Returns the round of a `CollectiveBeaconPayload`.
+    /// Returns the round of a [`CollectiveBeaconPayload`].
     pub fn round(&self) -> u64 {
         self.round
     }
@@ -61,7 +61,7 @@ impl CollectiveBeaconPayload {
         &self.signature
     }
 
-    /// Returns the distributed public key of a `CollectiveBeaconPayload`.
+    /// Returns the distributed public key of a [`CollectiveBeaconPayload`].
     pub fn distributed_public_key(&self) -> &[u8] {
         &self.distributed_public_key
     }
@@ -125,7 +125,7 @@ fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
     }
 }
 
-/// Builder that builds a `CollectiveBeaconPayload`.
+/// Builder that builds a [`CollectiveBeaconPayload`].
 #[derive(Default)]
 pub struct CollectiveBeaconPayloadBuilder {
     instance_id: Option<u32>,
@@ -136,36 +136,36 @@ pub struct CollectiveBeaconPayloadBuilder {
 }
 
 impl CollectiveBeaconPayloadBuilder {
-    /// Creates a new `CollectiveBeaconPayloadBuilder`.
+    /// Creates a new [`CollectiveBeaconPayloadBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Adds an instance ID to a `CollectiveBeaconPayloadBuilder`.
+    /// Adds an instance ID to a [`CollectiveBeaconPayloadBuilder`].
     pub fn with_instance_id(mut self, instance_id: u32) -> Self {
         self.instance_id.replace(instance_id);
         self
     }
 
-    /// Adds a round number to a `CollectiveBeaconPayloadBuilder`.
+    /// Adds a round number to a [`CollectiveBeaconPayloadBuilder`].
     pub fn with_round(mut self, round: u64) -> Self {
         self.round.replace(round);
         self
     }
 
-    /// Returns the previous signature of a `CollectiveBeaconPayloadBuilder`.
+    /// Returns the previous signature of a [`CollectiveBeaconPayloadBuilder`].
     pub fn with_prev_signature(mut self, prev_signature: [u8; BEACON_SIGNATURE_LENGTH]) -> Self {
         self.prev_signature.replace(prev_signature);
         self
     }
 
-    /// Returns the current signature of a `CollectiveBeaconPayloadBuilder`.
+    /// Returns the current signature of a [`CollectiveBeaconPayloadBuilder`].
     pub fn with_signature(mut self, signature: [u8; BEACON_SIGNATURE_LENGTH]) -> Self {
         self.signature.replace(signature);
         self
     }
 
-    /// Returns the distributed public key of a `CollectiveBeaconPayloadBuilder`.
+    /// Returns the distributed public key of a [`CollectiveBeaconPayloadBuilder`].
     pub fn with_distributed_public_key(
         mut self,
         distributed_public_key: [u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH],
@@ -174,7 +174,7 @@ impl CollectiveBeaconPayloadBuilder {
         self
     }
 
-    /// Consumes the `CollectiveBeaconPayloadBuilder` and builds a new `CollectiveBeaconPayload`.
+    /// Consumes the [`CollectiveBeaconPayloadBuilder`] and builds a new [`CollectiveBeaconPayload`].
     pub fn finish(self) -> Result<CollectiveBeaconPayload, ValidationError> {
         let instance_id = self.instance_id.ok_or(ValidationError::MissingField("instance_id"))?;
         let round = self.round.ok_or(ValidationError::MissingField("round"))?;

@@ -11,7 +11,7 @@ use crate::{
 
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 
-/// Message representing a dRNG `Beacon`.
+/// Message representing a dRNG [`BeaconPayload`].
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct BeaconPayload {
@@ -33,27 +33,27 @@ impl MessagePayload for BeaconPayload {
 }
 
 impl BeaconPayload {
-    /// Creates a new `BeaconPayloadBuilder`.
+    /// Creates a new [`BeaconPayloadBuilder`].
     pub fn builder() -> BeaconPayloadBuilder {
         BeaconPayloadBuilder::new()
     }
 
-    /// Returns the instance ID of a `BeaconPayload`.
+    /// Returns the instance ID of a [`BeaconPayload`].
     pub fn instance_id(&self) -> u32 {
         self.instance_id
     }
 
-    /// Returns the round number of a `BeaconPayload`.
+    /// Returns the round number of a [`BeaconPayload`].
     pub fn round(&self) -> u64 {
         self.round
     }
 
-    /// Returns the partial public key of a `BeaconPayload`.
+    /// Returns the partial public key of a [`BeaconPayload`].
     pub fn partial_public_key(&self) -> &[u8] {
         &self.partial_public_key
     }
 
-    /// Returns the partial signature of a `BeaconPayload`.
+    /// Returns the partial signature of a [`BeaconPayload`].
     pub fn partial_signature(&self) -> &[u8] {
         &self.partial_signature
     }
@@ -108,7 +108,7 @@ fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
     }
 }
 
-/// Builder than builds a `BeaconPayload`.
+/// Builder than builds a [`BeaconPayload`].
 #[derive(Default)]
 pub struct BeaconPayloadBuilder {
     instance_id: Option<u32>,
@@ -118,36 +118,36 @@ pub struct BeaconPayloadBuilder {
 }
 
 impl BeaconPayloadBuilder {
-    /// Creates a new `BeaconPayloadBuilder`.
+    /// Creates a new [`BeaconPayloadBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Adds an instance ID to a `BeaconPayloadBuilder`.
+    /// Adds an instance ID to a [`BeaconPayloadBuilder`].
     pub fn with_instance_id(mut self, instance_id: u32) -> Self {
         self.instance_id.replace(instance_id);
         self
     }
 
-    /// Adds a round number to a `BeaconPayloadBuilder`.
+    /// Adds a round number to a [`BeaconPayloadBuilder`].
     pub fn with_round(mut self, round: u64) -> Self {
         self.round.replace(round);
         self
     }
 
-    /// Adds a partial public key to a `BeaconPayloadBuilder`.
+    /// Adds a partial public key to a [`BeaconPayloadBuilder`].
     pub fn with_partial_public_key(mut self, partial_public_key: [u8; BEACON_PARTIAL_PUBLIC_KEY_LENGTH]) -> Self {
         self.partial_public_key.replace(partial_public_key);
         self
     }
 
-    /// Adds a partial signature to a `BeaconPayloadBuilder`.
+    /// Adds a partial signature to a [`BeaconPayloadBuilder`].
     pub fn with_partial_signature(mut self, partial_signature: [u8; BEACON_SIGNATURE_LENGTH]) -> Self {
         self.partial_signature.replace(partial_signature);
         self
     }
 
-    /// Consumes the `BeaconPayloadBuilder` and builds a new `BeaconPayload`.
+    /// Consumes the [`BeaconPayloadBuilder`] and builds a new [`BeaconPayload`].
     pub fn finish(self) -> Result<BeaconPayload, ValidationError> {
         let instance_id = self.instance_id.ok_or(ValidationError::MissingField("instance_id"))?;
         let round = self.round.ok_or(ValidationError::MissingField("round"))?;

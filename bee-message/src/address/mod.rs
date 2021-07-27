@@ -34,7 +34,7 @@ pub enum Address {
 }
 
 impl Address {
-    /// Returns the address kind of an `Address`.
+    /// Returns the address kind of an [`Address`].
     pub fn kind(&self) -> u8 {
         match self {
             Self::Ed25519(_) => Ed25519Address::KIND,
@@ -42,7 +42,7 @@ impl Address {
         }
     }
 
-    /// Tries to create an `Address` from a Bech32 encoded string.
+    /// Tries to create an [`Address`] from a Bech32 encoded string.
     pub fn try_from_bech32(addr: &str) -> Result<Self, ValidationError> {
         match bech32::decode(addr) {
             Ok((_hrp, data, _)) => {

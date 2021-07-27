@@ -10,10 +10,10 @@ use core::{
     fmt,
 };
 
-/// Error encountered unpacking a `ReferenceUnlock`.
+/// Error encountered unpacking a [`ReferenceUnlock`].
 #[derive(Debug)]
 pub enum ReferenceUnlockUnpackError {
-    /// Validating a `ReferenceUnlock` failed.
+    /// Validating a [`ReferenceUnlock`] failed.
     ValidationError(ValidationError),
 }
 
@@ -31,16 +31,16 @@ impl fmt::Display for ReferenceUnlockUnpackError {
     }
 }
 
-/// An [`UnlockBlock`](crate::unlock::UnlockBlock) that refers to another unlock block.
+/// An [`UnlockBlock`](crate::unlock::UnlockBlock) that refers to another [`UnlockBlock`](crate::unlock::UnlockBlock).
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReferenceUnlock(u16);
 
 impl ReferenceUnlock {
-    /// The unlock kind of a `ReferenceUnlock`.
+    /// The unlock kind of a [`ReferenceUnlock`].
     pub const KIND: u8 = 1;
 
-    /// Creates a new `ReferenceUnlock`.
+    /// Creates a new [`ReferenceUnlock`].
     pub fn new(index: u16) -> Result<Self, ValidationError> {
         if !UNLOCK_BLOCK_INDEX_RANGE.contains(&index) {
             return Err(ValidationError::InvalidReferenceIndex(index));
@@ -49,7 +49,7 @@ impl ReferenceUnlock {
         Ok(Self(index))
     }
 
-    /// Return the index of a `ReferenceUnlock`.
+    /// Return the index of a [`ReferenceUnlock`].
     pub fn index(&self) -> u16 {
         self.0
     }

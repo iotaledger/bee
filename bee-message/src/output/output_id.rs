@@ -16,7 +16,7 @@ use core::{
     str::FromStr,
 };
 
-/// Error encountered unpacking an `OutputId`.
+/// Error encountered unpacking an [`OutputId`].
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum OutputIdUnpackError {
@@ -37,13 +37,13 @@ impl fmt::Display for OutputIdUnpackError {
     }
 }
 
-/// The length of an `OutputId`.
+/// The length of an [`OutputId`].
 pub const OUTPUT_ID_LENGTH: usize = TRANSACTION_ID_LENGTH + core::mem::size_of::<u16>();
 
-/// The identifier of an `Output`.
+/// The identifier of an [`Output`](crate::output::Output).
 ///
-/// An `OutputId` must:
-/// * Have an `index` that falls within `INPUT_OUTPUT_INDEX_RANGE`.
+/// An [`OutputId`] must:
+/// * Have an index that falls within [`OUTPUT_INDEX_RANGE`].
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct OutputId {
@@ -52,24 +52,24 @@ pub struct OutputId {
 }
 
 impl OutputId {
-    /// Creates a new `OutputId`.
+    /// Creates a new [`OutputId`].
     pub fn new(transaction_id: TransactionId, index: u16) -> Result<Self, ValidationError> {
         validate_index(index)?;
 
         Ok(Self { transaction_id, index })
     }
 
-    /// Returns the `TransactionId` of an `OutputId`.
+    /// Returns the [`TransactionId`] of an [`OutputId`].
     pub fn transaction_id(&self) -> &TransactionId {
         &self.transaction_id
     }
 
-    /// Returns the index of an `OutputId`.
+    /// Returns the index of an [`OutputId`].
     pub fn index(&self) -> u16 {
         self.index
     }
 
-    /// Splits an `OutputId` into its `TransactionId` and index.
+    /// Splits an [`OutputId`] into its [`TransactionId`] and index.
     pub fn split(self) -> (TransactionId, u16) {
         (self.transaction_id, self.index)
     }

@@ -10,7 +10,7 @@ use core::{convert::Infallible, fmt, ops::RangeInclusive};
 /// Valid amounts for a signature locked single output.
 pub const SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
 
-/// Error encountered unpacking a `SignatureLockedSingleOutput`.
+/// Error encountered unpacking a [`SignatureLockedSingleOutput`].
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum SignatureLockedSingleUnpackError {
@@ -41,8 +41,8 @@ impl fmt::Display for SignatureLockedSingleUnpackError {
 
 /// An output type which can be unlocked via a signature. It deposits onto one single address.
 ///
-/// A `SignatureLockedSingleOutput` must:
-/// * Contain an amount <= `IOTA_SUPPLY`.
+/// A [`SignatureLockedSingleOutput`] must:
+/// * Contain an amount <= [`IOTA_SUPPLY`].
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct SignatureLockedSingleOutput {
@@ -51,22 +51,22 @@ pub struct SignatureLockedSingleOutput {
 }
 
 impl SignatureLockedSingleOutput {
-    /// The output kind of a `SignatureLockedSingleOutput`.
+    /// The output kind of a [`SignatureLockedSingleOutput`].
     pub const KIND: u8 = 0;
 
-    /// Creates a new `SignatureLockedSingleOutput`.
+    /// Creates a new [`SignatureLockedSingleOutput`].
     pub fn new(address: Address, amount: u64) -> Result<Self, ValidationError> {
         validate_amount(amount)?;
 
         Ok(Self { address, amount })
     }
 
-    /// Returns the address of a `SignatureLockedSingleOutput`.
+    /// Returns the address of a [`SignatureLockedSingleOutput`].
     pub fn address(&self) -> &Address {
         &self.address
     }
 
-    /// Returns the amount of a `SignatureLockedSingleOutput`.
+    /// Returns the amount of a [`SignatureLockedSingleOutput`].
     pub fn amount(&self) -> u64 {
         self.amount
     }

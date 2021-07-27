@@ -19,12 +19,12 @@ impl MessagePayload for ApplicationMessagePayload {
 }
 
 impl ApplicationMessagePayload {
-    /// Creates a new `ApplicationMessagePayload`.
+    /// Creates a new [`ApplicationMessagePayload`].
     pub fn new(instance_id: u32) -> Self {
         Self { instance_id }
     }
 
-    /// Returns the instance ID of an `ApplicationMesssagePayload`.
+    /// Returns the instance ID of an [`ApplicationMessagePayload`].
     pub fn instance_id(&self) -> u32 {
         self.instance_id
     }
