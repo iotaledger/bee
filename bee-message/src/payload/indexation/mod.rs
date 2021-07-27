@@ -7,7 +7,7 @@ mod padded;
 
 use crate::{payload::MessagePayload, MessagePackError, MessageUnpackError, ValidationError, MESSAGE_LENGTH_RANGE};
 
-pub use padded::{PaddedIndex, INDEXATION_PADDED_INDEX_LENGTH};
+pub use padded::PaddedIndex;
 
 use bee_packable::{
     error::{PackPrefixError, UnpackPrefixError},
@@ -22,7 +22,7 @@ use core::{
 };
 
 /// Valid lengths for an indexation payload index.
-pub const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=INDEXATION_PADDED_INDEX_LENGTH;
+pub const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<usize> = 1..=PaddedIndex::LENGTH;
 
 const PREFIXED_INDEX_LENGTH_MAX: usize = *INDEXATION_INDEX_LENGTH_RANGE.end();
 const PREFIXED_DATA_LENGTH_MAX: usize = *MESSAGE_LENGTH_RANGE.end();
@@ -121,7 +121,7 @@ impl IndexationPayload {
 
     /// Returns the padded index of an [`IndexationPayload`].
     pub fn padded_index(&self) -> PaddedIndex {
-        let mut padded_index = [0u8; INDEXATION_PADDED_INDEX_LENGTH];
+        let mut padded_index = [0u8; PaddedIndex::LENGTH];
         padded_index[..self.index.len()].copy_from_slice(&self.index);
         PaddedIndex::from(padded_index)
     }

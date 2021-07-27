@@ -7,36 +7,29 @@ use bee_packable::Packable;
 
 use core::str::FromStr;
 
-/// The number of bytes in a BLS address.
-pub const BLS_ADDRESS_LENGTH: usize = 49;
-
 /// A BLS address.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct BlsAddress(
-    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))] [u8; BLS_ADDRESS_LENGTH],
-);
+pub struct BlsAddress(#[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))] [u8; Self::LENGTH]);
 
 #[allow(clippy::len_without_is_empty)]
 impl BlsAddress {
-    /// The address kind of a BLS address.
+    /// The address kind of a [`BlsAddress`].
     pub const KIND: u8 = 1;
 
-    /// Creates a new BLS address.
-    pub fn new(address: [u8; BLS_ADDRESS_LENGTH]) -> Self {
-        address.into()
-    }
+    /// The length (in bytes) of a [`BlsAddress`].
+    pub const LENGTH: usize = 49;
 
-    /// Returns the length of a BLS address.
-    pub const fn len(&self) -> usize {
-        BLS_ADDRESS_LENGTH
+    /// Creates a new BLS address.
+    pub fn new(address: [u8; Self::LENGTH]) -> Self {
+        address.into()
     }
 
     // TODO verification
 }
 
-impl From<[u8; BLS_ADDRESS_LENGTH]> for BlsAddress {
-    fn from(bytes: [u8; BLS_ADDRESS_LENGTH]) -> Self {
+impl From<[u8; Self::LENGTH]> for BlsAddress {
+    fn from(bytes: [u8; Self::LENGTH]) -> Self {
         Self(bytes)
     }
 }

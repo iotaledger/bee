@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::PAYLOAD_LENGTH_MAX, MessageId, MESSAGE_ID_LENGTH};
+use crate::{payload::PAYLOAD_LENGTH_MAX, MessageId};
 
 use bee_packable::{
     error::{PackPrefixError, UnpackPrefixError},
@@ -13,7 +13,7 @@ use core::{convert::Infallible, ops::Deref};
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of
 /// [`Conflict`](crate::payload::fpc::Conflict).
-const PREFIXED_TIMESTAMPS_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX / (MESSAGE_ID_LENGTH + 2 * core::mem::size_of::<u8>());
+const PREFIXED_TIMESTAMPS_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX / (MessageId::LENGTH + 2 * core::mem::size_of::<u8>());
 
 /// Provides a convenient collection of [`Timestamp`]s.
 /// Describes a vote in a given round for a message timestamp.
@@ -64,7 +64,7 @@ impl Timestamp {
         }
     }
 
-    /// Returns the ID of message that contains the timestamp.
+    /// Returns the ID of the message that contains the timestamp.
     pub fn message_id(&self) -> &MessageId {
         &self.message_id
     }

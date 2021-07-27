@@ -18,7 +18,7 @@ use bee_packable::{
 
 use core::{convert::Infallible, fmt};
 
-/// Error encountered packing FPC payload.
+/// Error encountered packing an [`FpcPayload`].
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum FpcPackError {
@@ -44,7 +44,7 @@ impl fmt::Display for FpcPackError {
     }
 }
 
-/// Error encountered unpacking FPC payload.
+/// Error encountered unpacking an [`FpcPayload`].
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum FpcUnpackError {

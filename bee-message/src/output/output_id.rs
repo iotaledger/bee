@@ -4,7 +4,7 @@
 use crate::{
     error::{MessageUnpackError, ValidationError},
     output::OUTPUT_INDEX_RANGE,
-    payload::transaction::{TransactionId, TRANSACTION_ID_LENGTH},
+    payload::transaction::TransactionId,
     util::hex_decode,
 };
 
@@ -37,9 +37,6 @@ impl fmt::Display for OutputIdUnpackError {
     }
 }
 
-/// The length of an [`OutputId`].
-pub const OUTPUT_ID_LENGTH: usize = TRANSACTION_ID_LENGTH + core::mem::size_of::<u16>();
-
 /// The identifier of an [`Output`](crate::output::Output).
 ///
 /// An [`OutputId`] must:
@@ -52,6 +49,9 @@ pub struct OutputId {
 }
 
 impl OutputId {
+    /// The length of an [`OutputId`].
+    pub const LENGTH: usize = TransactionId::LENGTH + core::mem::size_of::<u16>();
+
     /// Creates a new [`OutputId`].
     pub fn new(transaction_id: TransactionId, index: u16) -> Result<Self, ValidationError> {
         validate_index(index)?;
@@ -100,15 +100,15 @@ impl Packable for OutputId {
     }
 }
 
-impl TryFrom<[u8; OUTPUT_ID_LENGTH]> for OutputId {
+impl TryFrom<[u8; OutputId::LENGTH]> for OutputId {
     type Error = ValidationError;
 
-    fn try_from(bytes: [u8; OUTPUT_ID_LENGTH]) -> Result<Self, Self::Error> {
-        let (transaction_id, index) = bytes.split_at(TRANSACTION_ID_LENGTH);
+    fn try_from(bytes: [u8; OutputId::LENGTH]) -> Result<Self, Self::Error> {
+        let (transaction_id, index) = bytes.split_at(TransactionId::LENGTH);
 
         Self::new(
             // Unwrap is fine because size is already known and valid.
-            From::<[u8; TRANSACTION_ID_LENGTH]>::from(transaction_id.try_into().unwrap()),
+            From::<[u8; TransactionId::LENGTH]>::from(transaction_id.try_into().unwrap()),
             // Unwrap is fine because size is already known and valid.
             u16::from_le_bytes(index.try_into().unwrap()),
         )

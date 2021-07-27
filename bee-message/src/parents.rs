@@ -3,7 +3,7 @@
 
 //! The parents module defines the core data type for storing the messages directly approved by a message.
 
-use crate::{MessageId, MessageUnpackError, ValidationError, MESSAGE_ID_LENGTH};
+use crate::{MessageId, MessageUnpackError, ValidationError};
 
 use bee_ord::is_unique_sorted;
 use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
@@ -97,7 +97,7 @@ impl Packable for ParentsBlock {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        0u8.packed_len() + 0u8.packed_len() + self.ids.len() * MESSAGE_ID_LENGTH
+        0u8.packed_len() + 0u8.packed_len() + self.ids.len() * MessageId::LENGTH
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {

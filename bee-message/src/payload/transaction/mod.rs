@@ -15,7 +15,7 @@ use crate::{
 pub use essence::{
     TransactionEssence, TransactionEssenceBuilder, TransactionEssencePackError, TransactionEssenceUnpackError,
 };
-pub use transaction_id::{TransactionId, TRANSACTION_ID_LENGTH};
+pub use transaction_id::TransactionId;
 
 use bee_packable::{error::PackPrefixError, PackError, Packable, Packer, UnpackError, Unpacker};
 use crypto::hashes::{blake2b::Blake2b256, Digest};

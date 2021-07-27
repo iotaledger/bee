@@ -12,28 +12,22 @@ use crypto::{
 
 use core::str::FromStr;
 
-/// The number of bytes in an Ed25519 address.
-/// See <https://en.wikipedia.org/wiki/EdDSA#Ed25519> for more information.
-pub const ED25519_ADDRESS_LENGTH: usize = 32;
-
 /// An Ed25519 address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Ed25519Address([u8; ED25519_ADDRESS_LENGTH]);
+pub struct Ed25519Address([u8; Self::LENGTH]);
 
 #[allow(clippy::len_without_is_empty)]
 impl Ed25519Address {
-    /// The address kind of an Ed25519 address.
+    /// The address kind of an [`Ed25519Address`].
     pub const KIND: u8 = 0;
 
-    /// Creates a new Ed25519 address.
-    pub fn new(address: [u8; ED25519_ADDRESS_LENGTH]) -> Self {
-        address.into()
-    }
+    /// The length (in bytes) of an [`Ed25519Address`].
+    pub const LENGTH: usize = 32;
 
-    /// Returns the length of an Ed25519 address.
-    pub const fn len(&self) -> usize {
-        ED25519_ADDRESS_LENGTH
+    /// Creates a new [`Ed25519Address`].
+    pub fn new(address: [u8; Self::LENGTH]) -> Self {
+        address.into()
     }
 
     /// Verifies a [`Ed25519Signature`] for a message against the [`Ed25519Address`].
@@ -57,8 +51,8 @@ impl Ed25519Address {
     }
 }
 
-impl From<[u8; ED25519_ADDRESS_LENGTH]> for Ed25519Address {
-    fn from(bytes: [u8; ED25519_ADDRESS_LENGTH]) -> Self {
+impl From<[u8; Self::LENGTH]> for Ed25519Address {
+    fn from(bytes: [u8; Self::LENGTH]) -> Self {
         Self(bytes)
     }
 }

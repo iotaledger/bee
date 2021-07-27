@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{error::ValidationError, payload::transaction::TransactionId, MESSAGE_ID_LENGTH};
+use bee_message::{error::ValidationError, payload::transaction::TransactionId, MessageId};
 use bee_packable::Packable;
 
 use core::str::FromStr;
@@ -45,7 +45,7 @@ fn from_str_invalid_len() {
     assert!(matches!(
         TransactionId::from_str(TRANSACTION_ID_INVALID_LEN),
         Err(ValidationError::InvalidHexadecimalLength { expected, actual })
-            if expected == MESSAGE_ID_LENGTH * 2 && actual == MESSAGE_ID_LENGTH * 2 - 2
+            if expected == MessageId::LENGTH * 2 && actual == MessageId::LENGTH * 2 - 2
     ));
 }
 

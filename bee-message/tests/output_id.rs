@@ -3,7 +3,7 @@
 
 use bee_message::{
     error::{MessageUnpackError, ValidationError},
-    output::{OutputId, OUTPUT_ID_LENGTH},
+    output::OutputId,
     payload::transaction::TransactionId,
     util::hex_decode,
 };
@@ -105,7 +105,7 @@ fn from_str_invalid_len() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_LEN),
         Err(ValidationError::InvalidHexadecimalLength { expected, actual })
-            if expected == OUTPUT_ID_LENGTH * 2 && actual == OUTPUT_ID_LENGTH * 2 - 2
+            if expected == OutputId::LENGTH * 2 && actual == OutputId::LENGTH * 2 - 2
     ));
 }
 

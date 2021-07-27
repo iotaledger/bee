@@ -1,10 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::payload::{
-    transaction::{TransactionId, TRANSACTION_ID_LENGTH},
-    PAYLOAD_LENGTH_MAX,
-};
+use crate::payload::{transaction::TransactionId, PAYLOAD_LENGTH_MAX};
 
 use bee_packable::{
     error::{PackPrefixError, UnpackPrefixError},
@@ -16,7 +13,7 @@ use core::{convert::Infallible, ops::Deref};
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
 const PREFIXED_CONFLICTS_LENGTH_MAX: usize =
-    PAYLOAD_LENGTH_MAX / (TRANSACTION_ID_LENGTH + 2 * core::mem::size_of::<u8>());
+    PAYLOAD_LENGTH_MAX / (TransactionId::LENGTH + 2 * core::mem::size_of::<u8>());
 
 /// Provides a convenient collection of [`Conflict`]s.
 /// Describes a vote in a given round for a transaction conflict.

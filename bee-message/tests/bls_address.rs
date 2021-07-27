@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    address::{Address, BlsAddress, Ed25519Address, BLS_ADDRESS_LENGTH},
+    address::{Address, BlsAddress, Ed25519Address},
     error::ValidationError,
 };
 use bee_packable::Packable;
@@ -55,7 +55,7 @@ fn from_str_invalid_len_too_short() {
     assert!(matches!(
         BlsAddress::from_str(BLS_ADDRESS_INVALID_LEN_TOO_SHORT),
         Err(ValidationError::InvalidHexadecimalLength { expected, actual })
-            if expected == BLS_ADDRESS_LENGTH * 2 && actual == BLS_ADDRESS_LENGTH * 2 - 2
+            if expected == BlsAddress::LENGTH * 2 && actual == BlsAddress::LENGTH * 2 - 2
     ));
 }
 
@@ -64,7 +64,7 @@ fn from_str_invalid_len_too_long() {
     assert!(matches!(
         BlsAddress::from_str(BLS_ADDRESS_INVALID_LEN_TOO_LONG),
         Err(ValidationError::InvalidHexadecimalLength { expected, actual })
-            if expected == BLS_ADDRESS_LENGTH * 2 && actual == BLS_ADDRESS_LENGTH * 2 + 2
+            if expected == BlsAddress::LENGTH * 2 && actual == BlsAddress::LENGTH * 2 + 2
     ));
 }
 

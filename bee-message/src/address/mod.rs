@@ -4,8 +4,8 @@
 mod bls;
 mod ed25519;
 
-pub use bls::{BlsAddress, BLS_ADDRESS_LENGTH};
-pub use ed25519::{Ed25519Address, ED25519_ADDRESS_LENGTH};
+pub use bls::BlsAddress;
+pub use ed25519::Ed25519Address;
 
 use crate::{error::ValidationError, signature::Signature};
 

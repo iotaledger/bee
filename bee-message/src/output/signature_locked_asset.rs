@@ -14,10 +14,8 @@ use core::{
     fmt,
 };
 
-const ASSET_ID_LENGTH: usize = 32;
-
-/// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / [`ASSET_ID_LENGTH`].
-const PREFIXED_BALANCES_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX / (ASSET_ID_LENGTH + core::mem::size_of::<u64>());
+/// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / [`AssetId::LENGTH`].
+const PREFIXED_BALANCES_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>());
 
 /// Error encountered packing a [`SignatureLockedAssetOutput`].
 #[derive(Debug)]
@@ -77,24 +75,45 @@ impl fmt::Display for SignatureLockedAssetUnpackError {
     }
 }
 
+/// Tokenized asset identifier.
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct AssetId([u8; Self::LENGTH]);
+
+impl AssetId {
+    /// The length (in bytes) of an [`AssetId`].
+    pub const LENGTH: usize = 32;
+
+    /// Creates a new [`AssetId`].
+    pub fn new(bytes: [u8; Self::LENGTH]) -> Self {
+        Self(bytes)
+    }
+}
+
+impl From<[u8; Self::LENGTH]> for AssetId {
+    fn from(bytes: [u8; Self::LENGTH]) -> Self {
+        Self(bytes)
+    }
+}
+
 /// Tokenized asset balance information.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct AssetBalance {
     /// The ID of the tokenized asset.
-    id: [u8; ASSET_ID_LENGTH],
+    id: AssetId,
     /// The balance of the tokenized asset.
     balance: u64,
 }
 
 impl AssetBalance {
     /// Creates a new [`AssetBalance`].
-    pub fn new(id: [u8; 32], balance: u64) -> Self {
+    pub fn new(id: AssetId, balance: u64) -> Self {
         Self { id, balance }
     }
 
     /// Returns the ID of an [`AssetBalance`].
-    pub fn id(&self) -> &[u8] {
+    pub fn id(&self) -> &AssetId {
         &self.id
     }
 
@@ -139,7 +158,7 @@ impl Packable for SignatureLockedAssetOutput {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        self.address.packed_len() + 0u32.packed_len() + self.balances.len() * (ASSET_ID_LENGTH + 0u64.packed_len())
+        self.address.packed_len() + 0u32.packed_len() + self.balances.len() * (AssetId::LENGTH + 0u64.packed_len())
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {

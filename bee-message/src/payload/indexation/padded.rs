@@ -3,22 +3,22 @@
 
 use bee_packable::Packable;
 
-/// Length of an indexation padded index.
-pub const INDEXATION_PADDED_INDEX_LENGTH: usize = 64;
-
 /// An indexation payload index padded with `0` up to the maximum length.
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Packable)]
-pub struct PaddedIndex([u8; INDEXATION_PADDED_INDEX_LENGTH]);
+pub struct PaddedIndex([u8; Self::LENGTH]);
 
 impl PaddedIndex {
+    /// The length (in bytes) of a [`PaddedIndex`].
+    pub const LENGTH: usize = 64;
+
     /// Creates a new [`PaddedIndex`].
-    pub fn new(bytes: [u8; INDEXATION_PADDED_INDEX_LENGTH]) -> Self {
+    pub fn new(bytes: [u8; Self::LENGTH]) -> Self {
         bytes.into()
     }
 }
 
-impl From<[u8; INDEXATION_PADDED_INDEX_LENGTH]> for PaddedIndex {
-    fn from(bytes: [u8; INDEXATION_PADDED_INDEX_LENGTH]) -> Self {
+impl From<[u8; Self::LENGTH]> for PaddedIndex {
+    fn from(bytes: [u8; Self::LENGTH]) -> Self {
         Self(bytes)
     }
 }
@@ -30,7 +30,7 @@ impl AsRef<[u8]> for PaddedIndex {
 }
 
 impl core::ops::Deref for PaddedIndex {
-    type Target = [u8; INDEXATION_PADDED_INDEX_LENGTH];
+    type Target = [u8; Self::LENGTH];
 
     fn deref(&self) -> &Self::Target {
         &self.0

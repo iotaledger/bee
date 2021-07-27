@@ -3,7 +3,7 @@
 
 use bee_message::{
     address::{Address, Ed25519Address},
-    output::{AssetBalance, SignatureLockedAssetOutput},
+    output::{AssetBalance, AssetId, SignatureLockedAssetOutput},
 };
 use bee_packable::Packable;
 use bee_test::rand::bytes::rand_bytes_array;
@@ -22,9 +22,9 @@ fn new_valid() {
     let output = SignatureLockedAssetOutput::new(
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         vec![
-            AssetBalance::new(rand_bytes_array(), 1000),
-            AssetBalance::new(rand_bytes_array(), 1000),
-            AssetBalance::new(rand_bytes_array(), 1000),
+            AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
+            AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
+            AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
         ],
     );
 
@@ -35,9 +35,9 @@ fn new_valid() {
 fn accessors_eq() {
     let address = Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
     let balances = vec![
-        AssetBalance::new(rand_bytes_array(), 1000),
-        AssetBalance::new(rand_bytes_array(), 1000),
-        AssetBalance::new(rand_bytes_array(), 1000),
+        AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
+        AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
+        AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
     ];
 
     let output = SignatureLockedAssetOutput::new(address.clone(), balances.clone()).unwrap();
@@ -48,12 +48,12 @@ fn accessors_eq() {
 
 #[test]
 fn asset_balance_accessors_eq() {
-    let id = rand_bytes_array();
+    let id = AssetId::new(rand_bytes_array());
     let amount = 1000;
 
-    let balance = AssetBalance::new(id, amount);
+    let balance = AssetBalance::new(id.clone(), amount);
 
-    assert_eq!(balance.id(), &id);
+    assert_eq!(*balance.id(), id);
     assert_eq!(balance.balance(), amount);
 }
 
@@ -62,9 +62,9 @@ fn packed_len() {
     let output = SignatureLockedAssetOutput::new(
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         vec![
-            AssetBalance::new(rand_bytes_array(), 1000),
-            AssetBalance::new(rand_bytes_array(), 1000),
-            AssetBalance::new(rand_bytes_array(), 1000),
+            AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
+            AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
+            AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
         ],
     )
     .unwrap();
@@ -78,9 +78,9 @@ fn packable_round_trip() {
     let output_a = SignatureLockedAssetOutput::new(
         Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
         vec![
-            AssetBalance::new(rand_bytes_array(), 1000),
-            AssetBalance::new(rand_bytes_array(), 1000),
-            AssetBalance::new(rand_bytes_array(), 1000),
+            AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
+            AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
+            AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
         ],
     )
     .unwrap();
