@@ -28,22 +28,22 @@ impl Default for NodeCliArgs {
 }
 
 impl NodeCliArgs {
-    /// Creates a new `NodeCliArgs`.
+    /// Creates a new [`NodeCliArgs`].
     pub fn new() -> Self {
         Self::from_args()
     }
 
-    /// Returns the configuration of the `NodeCliArgs`.
+    /// Returns the configuration of the [`NodeCliArgs`].
     pub fn config(&self) -> Option<&str> {
         self.config.as_ref().map(AsRef::as_ref)
     }
 
-    /// Returns the stdout logger level of the `NodeCliArgs`.
+    /// Returns the stdout logger level of the [`NodeCliArgs`].
     pub fn log_level(&self) -> Option<&LevelFilter> {
         self.log_level.as_ref()
     }
 
-    /// Returns the version flag of the `NodeCliArgs`.
+    /// Returns the version flag of the [`NodeCliArgs`].
     pub fn version(&self) -> bool {
         self.version
     }

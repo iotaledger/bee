@@ -28,7 +28,7 @@ impl<'a, T> Default for EventBus<'a, T> {
 }
 
 impl<'a, T: PartialEq> EventBus<'a, T> {
-    /// Creates a new `EventBus`.
+    /// Creates a new [`EventBus`].
     pub fn new() -> Self {
         Self::default()
     }
@@ -56,7 +56,7 @@ impl<'a, T: PartialEq> EventBus<'a, T> {
         }
     }
 
-    /// Removes all event listeners registered with the given `TypeId`.
+    /// Removes all event listeners registered with the given [`TypeId`].
     pub fn remove_listeners_with_id(&self, id: T) {
         self.listeners
             .lock()

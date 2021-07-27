@@ -3,7 +3,7 @@
 
 use crate::unpacker::Unpacker;
 
-/// A `Unpacker` backed by a `&[u8]`.
+/// An [`Unpacker`] backed by a `&[u8]`.
 pub struct SliceUnpacker<'u>(&'u [u8]);
 
 impl<'u> SliceUnpacker<'u> {
@@ -13,7 +13,7 @@ impl<'u> SliceUnpacker<'u> {
     }
 }
 
-/// Error type to be raised when `SliceUnpacker` does not have enough bytes to unpack something.
+/// Error type to be raised when [`SliceUnpacker`] does not have enough bytes to unpack something.
 #[derive(Debug)]
 pub struct UnexpectedEOF {
     /// The required number of bytes.

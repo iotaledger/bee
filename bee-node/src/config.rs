@@ -26,14 +26,14 @@ pub enum Error {
     ConfigFileDeserializationFailed(#[from] toml::de::Error),
 }
 
-/// Builder for the `NodeConfig`.
+/// Builder for the [`NodeConfig`].
 #[derive(Default, Deserialize)]
 pub struct NodeConfigBuilder {
     pub(crate) logger: Option<LoggerConfigBuilder>,
 }
 
 impl NodeConfigBuilder {
-    /// Creates a `NodeConfigBuilder` from a config file.
+    /// Creates a [`NodeConfigBuilder`] from a config file.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
         match fs::read_to_string(path) {
             Ok(toml) => toml::from_str::<Self>(&toml).map_err(Error::ConfigFileDeserializationFailed),
@@ -41,7 +41,7 @@ impl NodeConfigBuilder {
         }
     }
 
-    /// Applies a `NodeCliArgs` to the `NodeConfigBuilder`.
+    /// Applies a [`NodeCliArgs`] to the [`NodeConfigBuilder`].
     pub fn with_cli_args(mut self, args: NodeCliArgs) -> Self {
         if let Some(log_level) = args.log_level {
             if self.logger.is_none() {
@@ -53,7 +53,7 @@ impl NodeConfigBuilder {
         self
     }
 
-    /// Finished the `NodeConfigBuilder` into a `NodeConfig`.
+    /// Finished the [`NodeConfigBuilder`] into a [`NodeConfig`].
     pub fn finish(self) -> NodeConfig {
         NodeConfig {
             logger: self.logger.unwrap_or_default().finish(),
