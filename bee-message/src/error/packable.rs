@@ -180,7 +180,7 @@ impl fmt::Display for MessageUnpackError {
             Self::InvalidOptionTag(tag) => write!(f, "invalid tag for Option: {} is not 0 or 1", tag),
             Self::Output(e) => write!(f, "error unpacking Output: {}", e),
             Self::OutputId(e) => write!(f, "error unpacking OutputId: {}", e),
-            Self::Payload(e) => write!(f, "error unpacking payload: {}", e),
+            Self::Payload(e) => write!(f, "error unpacking Payload: {}", e),
             Self::SaltDeclaration(e) => write!(f, "error unpacking SaltDeclaration payload: {}", e),
             Self::SignatureLockedAsset(e) => write!(f, "error unpacking SignatureLockedAsset: {}", e),
             Self::SignatureLockedSingle(e) => write!(f, "error unpacking SignatureLockedSingle: {}", e),

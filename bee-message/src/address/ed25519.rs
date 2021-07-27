@@ -31,7 +31,7 @@ impl Ed25519Address {
     }
 
     /// Verifies a [`Ed25519Signature`] for a message against the [`Ed25519Address`].
-    pub fn verify(&self, msg: &[u8], signature: &Ed25519Signature) -> Result<(), ValidationError> {
+    pub fn verify(&self, signature: &Ed25519Signature, msg: &[u8]) -> Result<(), ValidationError> {
         let address = Blake2b256::digest(signature.public_key());
 
         if self.0 != *address {

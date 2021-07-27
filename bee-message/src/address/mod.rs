@@ -42,6 +42,14 @@ impl Address {
         }
     }
 
+    /// Returns the length (in bytes) of an [`Address`], depending on the kind.
+    pub fn len(&self) -> usize {
+        match self {
+            Self::Ed25519(_) => Ed25519Address::LENGTH,
+            Self::Bls(_) => BlsAddress::LENGTH,
+        }
+    }
+
     /// Tries to create an [`Address`] from a Bech32 encoded string.
     pub fn try_from_bech32(addr: &str) -> Result<Self, ValidationError> {
         match bech32::decode(addr) {
@@ -66,7 +74,7 @@ impl Address {
         match self {
             Address::Ed25519(address) => {
                 let Signature::Ed25519(signature) = signature;
-                address.verify(msg, signature)
+                address.verify(signature, msg)
             }
             Address::Bls(_) => {
                 // TODO BLS address verification

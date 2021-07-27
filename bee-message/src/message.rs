@@ -18,7 +18,8 @@ use alloc::vec::Vec;
 use core::{convert::TryInto, ops::RangeInclusive};
 
 /// Range (in bytes) of a valid message length.
-pub const MESSAGE_LENGTH_RANGE: RangeInclusive<usize> = 53..=32768;
+/// The maximum length is 64KB, and minimum length is calculated from message containing an empty data payload and two parents.
+pub const MESSAGE_LENGTH_RANGE: RangeInclusive<usize> = 193..=65536;
 
 /// Length (in bytes) of a public key.
 pub const MESSAGE_PUBLIC_KEY_LENGTH: usize = 32;

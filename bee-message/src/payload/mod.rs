@@ -26,7 +26,8 @@ use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 use alloc::boxed::Box;
 use core::{convert::Infallible, fmt};
 
-/// Maximum length (in bytes) of a message payload.
+/// Maximum length (in bytes) of a message payload, defined in the specification:
+/// <https://github.com/iotaledger/IOTA-2.0-Research-Specifications/blob/main/2.3%20Standard%20Payloads%20Layout.md>.
 pub const PAYLOAD_LENGTH_MAX: usize = 65157;
 
 /// Error encountered packing a payload.

@@ -82,7 +82,7 @@ impl fmt::Display for SaltDeclarationUnpackError {
 pub struct Salt {
     /// The value of the [`Salt`].
     bytes: Vec<u8>,
-    /// The expiration time of the [`Salt`].
+    /// The expiry time of the [`Salt`].
     expiry_time: u64,
 }
 

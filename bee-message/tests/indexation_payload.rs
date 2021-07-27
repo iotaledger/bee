@@ -97,8 +97,8 @@ fn new_invalid_index_length_more_than_max() {
 #[test]
 fn new_invalid_data_length_more_than_max() {
     assert!(matches!(
-        IndexationPayload::new(rand_bytes(32), [0u8; 32800].to_vec()),
-        Err(ValidationError::InvalidIndexationDataLength(32800)),
+        IndexationPayload::new(rand_bytes(32), [0u8; 65540].to_vec()),
+        Err(ValidationError::InvalidIndexationDataLength(65540)),
     ));
 }
 

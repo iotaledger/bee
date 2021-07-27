@@ -3,8 +3,6 @@
 
 //! Core data types for messages in the tangle.
 
-//#![deny(missing_docs, warnings)]
-
 #![no_std]
 #![warn(missing_docs)]
 
