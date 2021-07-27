@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncWriteExt, stdout};
 use tonic::{transport::Server, Request, Response, Status, Streaming};
 
 macro_rules! plugin_trait {
@@ -55,15 +55,14 @@ plugin_trait! {
 
 pub async fn serve_plugin<T: Plugin>(plugin: T) -> Result<(), PluginError> {
     let handshake_info = T::handshake_info();
-    let handle = tokio::spawn(
-        Server::builder()
-            .add_service(PluginServer::new(plugin))
-            .serve(handshake_info.address),
-    );
+    let address = handshake_info.address;
 
-    tokio::io::stdout().write_all(handshake_info.emit().as_bytes()).await?;
+    stdout().write_all(handshake_info.emit().as_bytes()).await?;
 
-    handle.await.unwrap().unwrap();
+    Server::builder()
+        .add_service(PluginServer::new(plugin))
+        .serve(address)
+        .await?;
 
     Ok(())
 }

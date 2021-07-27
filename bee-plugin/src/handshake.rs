@@ -11,6 +11,7 @@ use std::{
     net::{AddrParseError, SocketAddr},
 };
 
+/// Information provided by the plugin during the handshake stage.
 pub struct HandshakeInfo {
     pub(crate) address: SocketAddr,
     pub(crate) name: String,
@@ -18,6 +19,8 @@ pub struct HandshakeInfo {
 }
 
 impl HandshakeInfo {
+    /// Creates a new `HandshakeInfo` using the plugin's gRPC server address, the plugin's name for
+    /// logging purposes and the `EventId`s that the plugins will be suscribed to.
     pub fn new(address: SocketAddr, name: &str, event_ids: Vec<EventId>) -> Self {
         Self {
             address,
@@ -50,7 +53,7 @@ impl HandshakeInfo {
         })
     }
 
-    pub fn emit(self) -> String {
+    pub(crate) fn emit(self) -> String {
         let mut buf = String::new();
         write!(&mut buf, "{}|{}", self.address, self.name).unwrap();
 

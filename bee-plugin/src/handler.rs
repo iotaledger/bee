@@ -119,7 +119,32 @@ impl PluginHandler {
 
         let address = format!("http://{}/", handshake_info.address);
         log::info!("connecting to the `{}` plugin at `{}`", name, address);
-        let client = PluginClient::connect(address).await?;
+        let client = async {
+            let mut count = 0;
+            loop {
+                match PluginClient::connect(address.clone()).await {
+                    Ok(client) => break Ok(client),
+                    Err(err) => {
+                        log::warn!("connection to the `{}` plugin failed: {}", name, err);
+                        if count == 5 {
+                            log::warn!("connection to the `{}` plugin will not be retried anymore", name);
+                            break Err(err);
+                        } else {
+                            let secs = 5u64.pow(count);
+                            log::warn!(
+                                "connection to the `{}` plugin will be retried in {} seconds",
+                                name,
+                                secs
+                            );
+                            tokio::time::sleep(tokio::time::Duration::from_secs(secs)).await;
+                            count += 1;
+                        }
+                    }
+                }
+            }
+        }
+        .await?;
+        log::info!("connection to the `{}` plugin was successful", name);
 
         let mut this = Self {
             plugin_id,
