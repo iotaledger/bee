@@ -126,7 +126,7 @@ example that compiles and passes the [documentation tests](https://doc.rust-lang
 
 - All code should be well tested, using unit and integration tests.
 
-- Code must compile and pass our [continuous integration tests](../../.github/workflows).
+- Code must compile and pass our [continuous integration tests](https://github.com/iotaledger/bee/tree/dev/.github/workflows).
 
 - To be compatible with the guidelines of the Eclipse foundation, all code must be licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). This license must be referenced in every crate of the workspace (add [`./LICENSE`] to the crate's top level directory). For Rust crates, every `Cargo.toml` must contain the line `license = "Apache-2.0"`.
 
