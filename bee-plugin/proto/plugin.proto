@@ -14,8 +14,10 @@ message ShutdownRequest {}
 
 message ShutdownReply {}
 
+// A dummy event message.
 message DummyEvent {}
 
+// A silly event message.
 message SillyEvent {}
 
 message ProcessReply {}

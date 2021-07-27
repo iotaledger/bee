@@ -1,6 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! The bee node plugin system.
+
+#![warn(missing_docs)]
+
 mod handler;
 mod handshake;
 pub mod hotloading;
@@ -18,9 +22,12 @@ pub use manager::PluginManager;
 
 use std::any::TypeId;
 
+/// An unique identifier for `EventBus` callbacks.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum UniqueId {
+    /// Identifier for types.
     Type(TypeId),
+    /// Identifier for plugins.
     Plugin(PluginId),
 }
 
@@ -36,5 +43,8 @@ impl From<PluginId> for UniqueId {
     }
 }
 
+/// An unique identifier for each plugin.
+///
+/// Uniqueness is guaranteed inside a single `PluginManager`.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct PluginId(usize);

@@ -5,18 +5,19 @@ use crate::handshake::InvalidHandshake;
 
 use thiserror::Error;
 
-use std::net::AddrParseError;
-
+/// Errors related to plugin management and execution.
 #[derive(Error, Debug)]
 pub enum PluginError {
+    /// IO errors caused by the plugin child process.
     #[error("IO error for children process: {0}")]
     Io(#[from] std::io::Error),
+    /// Transport errors between the node and the plugin.
     #[error("gRPC transport error: {0}")]
     TransportError(#[from] tonic::transport::Error),
+    /// Status errors from the gRPC plugin server.
     #[error("gRPC status error: {0}")]
     StatusError(#[from] tonic::Status),
-    #[error("address parsing error: {0}")]
-    AddressError(#[from] AddrParseError),
+    /// Invalid handshake info errors.
     #[error("invalid handshake info: {0}")]
     Handshake(#[from] InvalidHandshake),
 }

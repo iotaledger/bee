@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Utilities to write plugins.
+
 pub use crate::handshake::HandshakeInfo;
 use crate::{
     error::PluginError,
@@ -11,16 +13,22 @@ use crate::{
     },
 };
 
-use tokio::io::{AsyncWriteExt, stdout};
+use tokio::io::{stdout, AsyncWriteExt};
 use tonic::{transport::Server, Request, Response, Status, Streaming};
 
 macro_rules! plugin_trait {
     ($($method_name:ident => $event_ty:ty),*) => {
+        /// Types that represent a plugin.
         #[tonic::async_trait]
         pub trait Plugin: Send + Sync + 'static {
+            /// Returns the `HandshakeInfo` of the current plugin.
             fn handshake_info() -> HandshakeInfo;
+            /// Prepares the plugin for shutdown.
             async fn shutdown(&self);
-            $(async fn $method_name(&self, _event: $event_ty) {})*
+            $(
+                #[doc = "Handles events the specified type."]
+                async fn $method_name(&self, _event: $event_ty) {}
+            )*
         }
 
         #[tonic::async_trait]
@@ -53,6 +61,7 @@ plugin_trait! {
     process_silly_event => SillyEvent
 }
 
+/// Does the handshake and runs a gRPC server for the specified plugin.
 pub async fn serve_plugin<T: Plugin>(plugin: T) -> Result<(), PluginError> {
     let handshake_info = T::handshake_info();
     let address = handshake_info.address;

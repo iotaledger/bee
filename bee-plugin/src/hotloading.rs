@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Holdloading related utilities.
+
 use crate::{PluginError, PluginId, PluginManager, UniqueId};
 
 use bee_event_bus::EventBus;
@@ -9,29 +11,41 @@ use tokio::{
     time::{sleep, Duration},
 };
 
-use std::{collections::HashMap, path::PathBuf, sync::Arc, time::SystemTime};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::SystemTime,
+};
 
-struct PluginInfo {
-    id: PluginId,
-    last_write: SystemTime,
-}
-
+/// Type that watches a directory for changes and loads every file as a plugin.
 pub struct Hotloader {
+    directory: PathBuf,
     plugins_info: HashMap<PathBuf, PluginInfo>,
     manager: PluginManager,
 }
 
 impl Hotloader {
-    pub fn new(event_bus: Arc<EventBus<'static, UniqueId>>) -> Self {
+    /// Creates a new `Hotloader` that watches the specified directory.
+    pub fn new<P: AsRef<Path> + ?Sized>(directory: &P, event_bus: Arc<EventBus<'static, UniqueId>>) -> Self {
         Self {
+            directory: directory.as_ref().to_owned(),
             plugins_info: HashMap::new(),
             manager: PluginManager::new(event_bus),
         }
     }
 
+    /// Watches for changes in a directory and loads new plugins.
+    ///
+    /// This is done following these rules:
+    /// - If a file is created, it will be executed and loaded as a plugin.
+    /// - If a file is removed, the process for it will be terminated and the plugin will be
+    /// unloaded.
+    /// - If a file is modified, it will behave as if the file was removed and created in
+    /// succession.
     pub async fn run(mut self) -> Result<(), PluginError> {
         loop {
-            let mut dir = tokio::fs::read_dir("./plugins").await?;
+            let mut dir: _ = tokio::fs::read_dir(&self.directory).await?;
 
             let mut last_writes = HashMap::new();
 
@@ -81,4 +95,9 @@ impl Hotloader {
             sleep(Duration::from_secs(1)).await;
         }
     }
+}
+
+struct PluginInfo {
+    id: PluginId,
+    last_write: SystemTime,
 }

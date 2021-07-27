@@ -38,11 +38,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let event_bus = Arc::new(EventBus::<UniqueId>::new());
 
-    let hotloader = Hotloader::new(Arc::clone(&event_bus));
+    let hotloader = Hotloader::new("./plugins", Arc::clone(&event_bus));
 
     let handle = tokio::spawn(async move { hotloader.run().await });
-
-    sleep(Duration::from_secs(1)).await;
 
     {
         let event_bus = Arc::clone(&event_bus);
