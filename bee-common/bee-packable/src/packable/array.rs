@@ -8,6 +8,8 @@ use crate::{
     Packable,
 };
 
+use core::mem::MaybeUninit;
+
 impl<T: Packable, const N: usize> Packable for [T; N] {
     type PackError = T::PackError;
     type UnpackError = T::UnpackError;
@@ -25,11 +27,8 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        use core::mem::MaybeUninit;
-
-        // Safety: an uninitialized array of `MaybeUninit`s is safe to be considered initialized.
-        // FIXME: replace with [`uninit_array`](https://doc.rust-lang.org/std/mem/union.MaybeUninit.html#method.uninit_array)
-        // when stabilized.
+        // Safety: an uninitialized array of [`MaybeUninit`]s is safe to be considered initialized.
+        // FIXME: replace with [`MaybeUninit::uninit_array`] when stabilized.
         let mut array = unsafe { MaybeUninit::<[MaybeUninit<T>; N]>::uninit().assume_init() };
 
         for item in array.iter_mut() {
@@ -42,8 +41,7 @@ impl<T: Packable, const N: usize> Packable for [T; N] {
         }
 
         // Safety: We traversed the whole array and initialized every item.
-        // FIXME: replace with [`array_assume_init`](https://doc.rust-lang.org/std/mem/union.MaybeUninit.html#method.array_assume_init)
-        // when stabilized.
+        // FIXME: replace with [`MaybeUninit::array_assume_init`] when stabilized.
         Ok(unsafe { (&array as *const [MaybeUninit<T>; N] as *const Self).read() })
     }
 }

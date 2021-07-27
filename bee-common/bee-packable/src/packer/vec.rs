@@ -8,7 +8,7 @@ use crate::{packer::Packer, unpacker::SliceUnpacker};
 use alloc::vec::Vec;
 use core::convert::Infallible;
 
-/// A `Packer` backed by a `Vec<u8>`.
+/// A [`Packer`] backed by a [`Vec<u8>`].
 #[derive(Default)]
 pub struct VecPacker(Vec<u8>);
 
@@ -23,12 +23,12 @@ impl VecPacker {
         Self(Vec::with_capacity(capacity))
     }
 
-    /// Uses the backing `Vec<u8>` to create an `Unpacker`.
+    /// Uses the backing [`Vec<u8>`] to create an [`Unpacker`](crate::unpacker::Unpacker).
     pub fn as_slice(&self) -> SliceUnpacker<'_> {
         SliceUnpacker::new(self.0.as_slice())
     }
 
-    /// Consumes the `VecPacker` and returns the inner `Vec<u8>`.
+    /// Consumes the [`VecPacker`] and returns the inner [`Vec<u8>`].
     pub fn into_vec(self) -> Vec<u8> {
         self.0
     }

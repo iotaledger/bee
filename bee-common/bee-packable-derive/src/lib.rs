@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! This crate provides the `Packable` derive macro.
+//! This crate provides the [`Packable`] derive macro.
 
 #![warn(missing_docs)]
 
@@ -12,11 +12,10 @@ use proc_macro_error::{abort, proc_macro_error};
 use quote::{quote, ToTokens};
 use syn::{parse_macro_input, Data, DeriveInput, Type};
 
-/// The `Packable` derive macro.
+/// The [`Packable` derive macro.
 ///
-/// Please refer to the [`Packable` spec] for how to set this up.
-///
-/// [`Packable` spec]: https://github.com/iotaledger/bee/blob/coordicide/docs/dev/specs/packable.md
+/// Please refer to the [`Packable`] spec for how to set this up.
+/// <https://github.com/iotaledger/bee/blob/coordicide/docs/dev/specs/packable.md>
 #[proc_macro_error]
 #[proc_macro_derive(Packable, attributes(packable))]
 pub fn packable(input: TokenStream) -> TokenStream {

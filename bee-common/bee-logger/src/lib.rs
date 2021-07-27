@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! A logger backend for the `log` crate.
+//! A logger backend for the [`log`] crate.
 
 #![warn(missing_docs)]
 
@@ -44,7 +44,7 @@ macro_rules! log_format {
     };
 }
 
-/// Initialises a `fern` logger backend for the `log` crate.
+/// Initialises a [`fern`] logger backend for the [`log`] crate.
 ///
 /// # Arguments
 ///

@@ -14,18 +14,18 @@ use crate::{
 use alloc::vec::Vec;
 use core::{convert::TryFrom, marker::PhantomData};
 
-/// Error encountered when attempting to convert a `Vec<T>` into a `VecPrefix`, where
-/// the length of the source vector exceeds the maximum length of the `VecPrefix`.
+/// Error encountered when attempting to convert a [`Vec<T>`] into a [`VecPrefix`], where
+/// the length of the source vector exceeds the maximum length of the [`VecPrefix`].
 #[derive(Debug, PartialEq, Eq)]
 pub struct PrefixedFromVecError {
-    /// Maximum length of the `VecPrefix`.
+    /// Maximum length of the [`VecPrefix`].
     pub max_len: usize,
     /// Actual length of the source vector.
     pub actual_len: usize,
 }
 
-/// Wrapper type for `Vec<T>` where the length prefix is of type `P`.
-/// The `Vec<T>`'s maximum length is provided by `N`.
+/// Wrapper type for [`Vec<T>`] where the length prefix is of type `P`.
+/// The [`Vec<T>`]'s maximum length is provided by `N`.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct VecPrefix<T, P, const N: usize> {
@@ -34,7 +34,7 @@ pub struct VecPrefix<T, P, const N: usize> {
 }
 
 impl<T, P, const N: usize> VecPrefix<T, P, N> {
-    /// Creates a new empty `VecPrefix<T, P>`.
+    /// Creates a new empty [`VecPrefix<T, P>`].
     pub fn new() -> Self {
         Self {
             inner: Vec::new(),
@@ -42,7 +42,7 @@ impl<T, P, const N: usize> VecPrefix<T, P, N> {
         }
     }
 
-    /// Creates a new empty `VecPrefix<T, P>` with a specified capacity.
+    /// Creates a new empty [`VecPrefix<T, P>`] with a specified capacity.
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             inner: Vec::with_capacity(capacity),
@@ -75,7 +75,7 @@ impl<T, P, const N: usize> TryFrom<Vec<T>> for VecPrefix<T, P, N> {
     }
 }
 
-/// We cannot provide a `From` implementation because `Vec` is not from this crate.
+/// We cannot provide a [`From`] implementation because [`Vec`] is not from this crate.
 #[allow(clippy::from_over_into)]
 impl<T, P, const N: usize> Into<Vec<T>> for VecPrefix<T, P, N> {
     fn into(self) -> Vec<T> {
@@ -101,10 +101,10 @@ macro_rules! impl_wrap_for_vec {
     ($ty:ty) => {
         impl<T, const N: usize> Wrap<VecPrefix<T, $ty, N>> for Vec<T> {
             fn wrap(&self) -> &VecPrefix<T, $ty, N> {
-                // SAFETY: `VecPrefix` has a transparent representation and it is composed of one
-                // `Vec` field and an additional zero-sized type field. This means that `VecPrefix`
-                // has the same layout as `Vec` and any valid `Vec` reference can be casted into a
-                // valid `VecPrefix` reference.
+                // SAFETY: [`VecPrefix`] has a transparent representation and it is composed of one
+                // [`Vec`] field and an additional zero-sized type field. This means that [`VecPrefix`]
+                // has the same layout as [`Vec`] and any valid [`Vec`] reference can be casted into a
+                // valid [`VecPrefix`] reference.
                 unsafe { &*(self as *const Vec<T> as *const VecPrefix<T, $ty, N>) }
             }
         }
