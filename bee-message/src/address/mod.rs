@@ -42,8 +42,8 @@ impl Address {
         }
     }
 
-    /// Returns the length (in bytes) of an [`Address`], depending on the kind.
-    pub fn len(&self) -> usize {
+    /// Returns the length, in bytes, of an [`Address`], depending on the kind.
+    pub fn length(&self) -> usize {
         match self {
             Self::Ed25519(_) => Ed25519Address::LENGTH,
             Self::Bls(_) => BlsAddress::LENGTH,
