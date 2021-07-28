@@ -4,6 +4,7 @@
 extern crate alloc;
 
 use crate::{
+    coerce::{Coerce, CoerceInfallible},
     error::{PackError, PackPrefixError, UnpackError, UnpackPrefixError},
     packer::Packer,
     unpacker::Unpacker,
@@ -129,10 +130,10 @@ macro_rules! impl_packable_for_vec_prefix {
                 <$ty>::try_from(self.len())
                     .map_err(|err| PackError::Packable(PackPrefixError::Prefix(err)))?
                     .pack(packer)
-                    .map_err(PackError::infallible)?;
+                    .infallible()?;
 
                 for item in self.iter() {
-                    item.pack(packer).map_err(PackError::coerce)?;
+                    item.pack(packer).coerce()?;
                 }
 
                 Ok(())
@@ -144,7 +145,7 @@ macro_rules! impl_packable_for_vec_prefix {
 
             fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
                 // The length of any dynamically-sized sequence must be prefixed.
-                let len = <$ty>::unpack(unpacker).map_err(UnpackError::infallible)?;
+                let len = <$ty>::unpack(unpacker).infallible()?;
                 let len = usize::try_from(len).map_err(|err| UnpackError::Packable(UnpackPrefixError::Prefix(err)))?;
 
                 if len > N {
@@ -154,7 +155,7 @@ macro_rules! impl_packable_for_vec_prefix {
                 let mut vec = Self::with_capacity(len);
 
                 for _ in 0..len {
-                    let item = T::unpack(unpacker).map_err(UnpackError::coerce)?;
+                    let item = T::unpack(unpacker).coerce()?;
                     vec.push(item);
                 }
 

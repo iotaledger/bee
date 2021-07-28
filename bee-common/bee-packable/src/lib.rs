@@ -6,6 +6,7 @@
 #![no_std]
 #![warn(missing_docs)]
 
+pub mod coerce;
 pub mod error;
 pub mod packable;
 pub mod packer;
