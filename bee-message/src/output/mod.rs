@@ -65,10 +65,10 @@ impl fmt::Display for OutputUnpackError {
     serde(tag = "type", content = "data")
 )]
 pub enum Output {
-    /// A signature locked asset output.
-    SignatureLockedAsset(SignatureLockedAssetOutput),
     /// A signature locked single output.
     SignatureLockedSingle(SignatureLockedSingleOutput),
+    /// A signature locked asset output.
+    SignatureLockedAsset(SignatureLockedAssetOutput),
 }
 
 impl_wrapped_variant!(Output, SignatureLockedSingleOutput, Output::SignatureLockedSingle);
@@ -77,8 +77,8 @@ impl Output {
     /// Returns the output kind of an [`Output`].
     pub fn kind(&self) -> u8 {
         match self {
-            Self::SignatureLockedAsset(_) => SignatureLockedAssetOutput::KIND,
             Self::SignatureLockedSingle(_) => SignatureLockedSingleOutput::KIND,
+            Self::SignatureLockedAsset(_) => SignatureLockedAssetOutput::KIND,
         }
     }
 }
@@ -90,8 +90,8 @@ impl Packable for Output {
     fn packed_len(&self) -> usize {
         0u8.packed_len()
             + match self {
-                Self::SignatureLockedAsset(output) => output.packed_len(),
                 Self::SignatureLockedSingle(output) => output.packed_len(),
+                Self::SignatureLockedAsset(output) => output.packed_len(),
             }
     }
 
@@ -99,8 +99,8 @@ impl Packable for Output {
         self.kind().pack(packer).map_err(PackError::infallible)?;
 
         match self {
-            Self::SignatureLockedAsset(output) => output.pack(packer).map_err(PackError::coerce)?,
             Self::SignatureLockedSingle(output) => output.pack(packer).map_err(PackError::infallible)?,
+            Self::SignatureLockedAsset(output) => output.pack(packer).map_err(PackError::coerce)?,
         }
 
         Ok(())
@@ -110,11 +110,11 @@ impl Packable for Output {
         let kind = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         let variant = match kind {
-            SignatureLockedAssetOutput::KIND => {
-                Self::SignatureLockedAsset(SignatureLockedAssetOutput::unpack(unpacker)?)
-            }
             SignatureLockedSingleOutput::KIND => {
                 Self::SignatureLockedSingle(SignatureLockedSingleOutput::unpack(unpacker)?)
+            }
+            SignatureLockedAssetOutput::KIND => {
+                Self::SignatureLockedAsset(SignatureLockedAssetOutput::unpack(unpacker)?)
             }
             tag => {
                 Err(UnpackError::Packable(OutputUnpackError::InvalidOutputKind(tag))).map_err(UnpackError::coerce)?
