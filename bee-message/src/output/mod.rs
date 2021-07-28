@@ -6,7 +6,7 @@ mod signature_locked_asset;
 mod signature_locked_single;
 
 pub use crate::{
-    error::{MessageUnpackError, ValidationError},
+    error::{MessagePackError, MessageUnpackError, ValidationError},
     input::INPUT_COUNT_MAX,
 };
 
@@ -21,7 +21,6 @@ pub use signature_locked_single::{
 use bee_packable::{PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker};
 
 use core::{
-    convert::Infallible,
     fmt,
     ops::{Range, RangeInclusive},
 };
@@ -66,6 +65,8 @@ impl fmt::Display for OutputUnpackError {
     serde(tag = "type", content = "data")
 )]
 pub enum Output {
+    /// A signature locked asset output.
+    SignatureLockedAsset(SignatureLockedAssetOutput),
     /// A signature locked single output.
     SignatureLockedSingle(SignatureLockedSingleOutput),
 }
@@ -76,18 +77,20 @@ impl Output {
     /// Returns the output kind of an [`Output`].
     pub fn kind(&self) -> u8 {
         match self {
+            Self::SignatureLockedAsset(_) => SignatureLockedAssetOutput::KIND,
             Self::SignatureLockedSingle(_) => SignatureLockedSingleOutput::KIND,
         }
     }
 }
 
 impl Packable for Output {
-    type PackError = Infallible;
+    type PackError = MessagePackError;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
         0u8.packed_len()
             + match self {
+                Self::SignatureLockedAsset(output) => output.packed_len(),
                 Self::SignatureLockedSingle(output) => output.packed_len(),
             }
     }
@@ -96,6 +99,7 @@ impl Packable for Output {
         self.kind().pack(packer).map_err(PackError::infallible)?;
 
         match self {
+            Self::SignatureLockedAsset(output) => output.pack(packer).map_err(PackError::coerce)?,
             Self::SignatureLockedSingle(output) => output.pack(packer).map_err(PackError::infallible)?,
         }
 
@@ -106,6 +110,9 @@ impl Packable for Output {
         let kind = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         let variant = match kind {
+            SignatureLockedAssetOutput::KIND => {
+                Self::SignatureLockedAsset(SignatureLockedAssetOutput::unpack(unpacker)?)
+            }
             SignatureLockedSingleOutput::KIND => {
                 Self::SignatureLockedSingle(SignatureLockedSingleOutput::unpack(unpacker)?)
             }

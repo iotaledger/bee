@@ -14,7 +14,7 @@ use bee_packable::{
     PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
 };
 
-use alloc::vec::Vec;
+use alloc::{boxed::Box, vec::Vec};
 use core::{
     convert::{Infallible, TryInto},
     fmt,
@@ -32,6 +32,7 @@ const PREFIXED_OUTPUTS_LENGTH_MAX: usize = *OUTPUT_COUNT_RANGE.end();
 pub enum TransactionEssencePackError {
     InvalidInputPrefix,
     InvalidOutputPrefix,
+    OutputPackError(Box<MessagePackError>),
     OptionalPayload(PayloadPackError),
 }
 
@@ -48,11 +49,21 @@ impl From<PackPrefixError<Infallible, u32>> for TransactionEssencePackError {
     }
 }
 
+impl From<PackPrefixError<MessagePackError, u32>> for TransactionEssencePackError {
+    fn from(error: PackPrefixError<MessagePackError, u32>) -> Self {
+        match error {
+            PackPrefixError::Packable(e) => Self::OutputPackError(Box::new(e)),
+            PackPrefixError::Prefix(_) => Self::InvalidOutputPrefix,
+        }
+    }
+}
+
 impl fmt::Display for TransactionEssencePackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidInputPrefix => write!(f, "invalid input prefix"),
             Self::InvalidOutputPrefix => write!(f, "invalid output prefix"),
+            Self::OutputPackError(e) => write!(f, "error packing outputs: {}", e),
             Self::OptionalPayload(e) => write!(f, "error packing payload: {}", e),
         }
     }
@@ -442,6 +453,7 @@ fn validate_output_count(len: usize) -> Result<(), ValidationError> {
 fn validate_output_variant(output: &Output, outputs: &[Output]) -> Result<u64, ValidationError> {
     match output {
         Output::SignatureLockedSingle(single) => validate_single(single, outputs),
+        Output::SignatureLockedAsset(_) => Ok(0),
     }
 }
 
@@ -467,7 +479,8 @@ fn validate_output_total(total: u64) -> Result<(), ValidationError> {
 }
 
 fn validate_outputs_sorted(outputs: &[Output]) -> Result<(), ValidationError> {
-    if !is_sorted(outputs.iter().map(Packable::pack_to_vec)) {
+    // Unwrap is okay here, since we have just unpacked a valid output collection.
+    if !is_sorted(outputs.iter().map(|o| o.pack_to_vec().unwrap())) {
         Err(ValidationError::TransactionOutputsNotSorted)
     } else {
         Ok(())
