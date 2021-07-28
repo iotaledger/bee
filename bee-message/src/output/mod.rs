@@ -102,7 +102,7 @@ impl Packable for Output {
 
         match self {
             Self::SignatureLockedSingle(output) => output.pack(packer).map_err(PackError::infallible)?,
-            Self::SignatureLockedAsset(output) => output.pack(packer).map_err(PackError::coerce)?,
+            Self::SignatureLockedAsset(output) => output.pack(packer)?,
         }
 
         Ok(())

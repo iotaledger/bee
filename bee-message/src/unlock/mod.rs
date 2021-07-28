@@ -108,7 +108,7 @@ impl Packable for UnlockBlock {
 
         let variant = match kind {
             SignatureUnlock::KIND => Self::Signature(SignatureUnlock::unpack(unpacker)?),
-            ReferenceUnlock::KIND => Self::Reference(ReferenceUnlock::unpack(unpacker).map_err(UnpackError::coerce)?),
+            ReferenceUnlock::KIND => Self::Reference(ReferenceUnlock::unpack(unpacker)?),
             tag => {
                 return Err(UnpackError::Packable(
                     UnlockBlockUnpackError::InvalidUnlockBlockKind(tag).into(),

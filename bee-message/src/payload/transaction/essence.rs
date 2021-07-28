@@ -218,7 +218,7 @@ impl Packable for TransactionEssence {
             .map_err(PackError::coerce::<TransactionEssencePackError>)
             .map_err(PackError::coerce)?;
 
-        self.payload.pack(packer).map_err(PackError::coerce)?;
+        self.payload.pack(packer)?;
 
         Ok(())
     }

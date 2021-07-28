@@ -213,7 +213,7 @@ impl Packable for SaltDeclarationPayload {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         Self::VERSION.pack(packer).map_err(PackError::infallible)?;
         self.node_id.pack(packer).map_err(PackError::infallible)?;
-        self.salt.pack(packer).map_err(PackError::coerce)?;
+        self.salt.pack(packer)?;
         self.timestamp.pack(packer).map_err(PackError::infallible)?;
         self.signature.pack(packer).map_err(PackError::infallible)?;
 
@@ -225,7 +225,7 @@ impl Packable for SaltDeclarationPayload {
         validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
         let node_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let salt = Salt::unpack(unpacker).map_err(UnpackError::coerce)?;
+        let salt = Salt::unpack(unpacker)?;
         let timestamp = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
         let signature =
             <[u8; Ed25519Signature::SIGNATURE_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;

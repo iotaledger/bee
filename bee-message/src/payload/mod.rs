@@ -280,16 +280,14 @@ impl Packable for Payload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let payload = match u32::unpack(unpacker).map_err(UnpackError::coerce)? {
-            ApplicationMessagePayload::KIND => Payload::ApplicationMessage(Box::new(
-                ApplicationMessagePayload::unpack(unpacker).map_err(UnpackError::coerce)?,
-            )),
-            BeaconPayload::KIND => {
-                Payload::Beacon(Box::new(BeaconPayload::unpack(unpacker).map_err(UnpackError::coerce)?))
+        let payload = match u32::unpack(unpacker).map_err(UnpackError::infallible)? {
+            ApplicationMessagePayload::KIND => {
+                Payload::ApplicationMessage(Box::new(ApplicationMessagePayload::unpack(unpacker)?))
             }
-            CollectiveBeaconPayload::KIND => Payload::CollectiveBeacon(Box::new(
-                CollectiveBeaconPayload::unpack(unpacker).map_err(UnpackError::coerce)?,
-            )),
+            BeaconPayload::KIND => Payload::Beacon(Box::new(BeaconPayload::unpack(unpacker)?)),
+            CollectiveBeaconPayload::KIND => {
+                Payload::CollectiveBeacon(Box::new(CollectiveBeaconPayload::unpack(unpacker)?))
+            }
             DataPayload::KIND => Payload::Data(Box::new(DataPayload::unpack(unpacker)?)),
             DkgPayload::KIND => Payload::Dkg(Box::new(DkgPayload::unpack(unpacker)?)),
             FpcPayload::KIND => Payload::Fpc(Box::new(FpcPayload::unpack(unpacker)?)),
