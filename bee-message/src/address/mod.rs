@@ -114,6 +114,7 @@ impl TryFrom<String> for Address {
 
 impl core::fmt::Display for Address {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        // Encodes to a base 16 hexadecimal string.
         match self {
             Self::Bls(bls) => write!(f, "{}", hex::encode(bls)),
             Self::Ed25519(ed) => write!(f, "{}", hex::encode(ed)),
