@@ -3,13 +3,24 @@
 
 //! Error coercion utilities.
 
+mod sealed {
+    use crate::error::{PackError, UnpackError};
+
+    pub trait Sealed {}
+
+    impl<T, U, V> Sealed for Result<T, UnpackError<U, V>> {}
+
+    impl<T, U, V> Sealed for Result<T, PackError<U, V>> {}
+}
+
 use core::convert::Infallible;
 
 use crate::error::{PackError, UnpackError};
 
-/// This is `Coerce`.
-pub trait Coerce<T> {
-    /// This is `coerce`.
+/// Trait used to convert `Result` values that contain `PackError` and `UnpackError` as the `Err`
+/// variant.
+pub trait Coerce<T>: sealed::Sealed {
+    /// coerce the value to another result type.
     fn coerce(self) -> T;
 }
 
@@ -24,9 +35,11 @@ impl<T, U, V, W: From<U>> Coerce<Result<T, PackError<W, V>>> for Result<T, PackE
         self.map_err(PackError::<U, V>::coerce::<W>)
     }
 }
-/// This is `CoerceInfallible`.
-pub trait CoerceInfallible<T> {
-    /// This is `infallible`.
+
+/// Trait used to convert `Result` values that contain `PackError<Infallible, _>` and
+/// `UnpackError<Infallible, _>` as the `Err` variant.
+pub trait CoerceInfallible<T>: sealed::Sealed {
+    /// coerce the value to another result type.
     fn infallible(self) -> T;
 }
 
