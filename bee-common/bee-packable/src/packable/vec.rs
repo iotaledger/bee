@@ -4,6 +4,7 @@
 extern crate alloc;
 
 use crate::{
+    coerce::CoerceInfallible,
     error::{PackError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
@@ -18,7 +19,7 @@ impl<T: Packable> Packable for Vec<T> {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         // The length of any dynamically-sized sequence must be prefixed.
-        (self.len() as u64).pack(packer).map_err(PackError::infallible)?;
+        (self.len() as u64).pack(packer).infallible()?;
 
         for item in self.iter() {
             item.pack(packer)?;
@@ -33,7 +34,7 @@ impl<T: Packable> Packable for Vec<T> {
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         // The length of any dynamically-sized sequence must be prefixed.
-        let len = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let len = u64::unpack(unpacker).infallible()?;
 
         let mut vec = Self::with_capacity(len as usize);
 

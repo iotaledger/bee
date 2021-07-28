@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    coerce::CoerceInfallible,
     error::{PackError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
@@ -31,9 +32,9 @@ impl<T: Packable> Packable for Option<T> {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         match self {
-            None => Ok(0u8.pack(packer).map_err(PackError::infallible)?),
+            None => Ok(0u8.pack(packer).infallible()?),
             Some(item) => {
-                1u8.pack(packer).map_err(PackError::infallible)?;
+                1u8.pack(packer).infallible()?;
                 item.pack(packer)
             }
         }
@@ -48,7 +49,7 @@ impl<T: Packable> Packable for Option<T> {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        match u8::unpack(unpacker).map_err(UnpackError::infallible)? {
+        match u8::unpack(unpacker).infallible()? {
             0 => Ok(None),
             1 => Ok(Some(T::unpack(unpacker).map_err(|err| err.coerce())?)),
             n => Err(UnpackError::Packable(Self::UnpackError::UnknownTag(n))),

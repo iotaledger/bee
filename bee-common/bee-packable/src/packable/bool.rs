@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    coerce::CoerceInfallible,
     error::{PackError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
@@ -25,6 +26,6 @@ impl Packable for bool {
 
     /// Booleans are unpacked if the byte used to represent them is non-zero.
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        Ok(u8::unpack(unpacker).map_err(UnpackError::infallible)? != 0)
+        Ok(u8::unpack(unpacker).infallible()? != 0)
     }
 }

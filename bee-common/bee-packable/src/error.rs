@@ -24,7 +24,7 @@ impl<T, P> PackError<T, P> {
     }
 
     /// Coerce the value by calling `.into()` for the [`Packable`](crate::Packable) variant.
-    pub fn coerce<V: From<T>>(self) -> PackError<V, P> {
+    pub(crate) fn coerce<V: From<T>>(self) -> PackError<V, P> {
         self.map(|x| x.into())
     }
 }
@@ -37,7 +37,7 @@ impl<T, P> From<P> for PackError<T, P> {
 
 impl<P> PackError<Infallible, P> {
     /// Coerce the value if the [`Packable`](crate::Packable) variant is [`Infallible`].
-    pub fn infallible<E>(self) -> PackError<E, P> {
+    pub(crate) fn infallible<E>(self) -> PackError<E, P> {
         match self {
             Self::Packable(err) => match err {},
             Self::Packer(err) => PackError::Packer(err),
@@ -64,7 +64,7 @@ impl<T, U> UnpackError<T, U> {
     }
 
     /// Coerces the value by calling `.into()` for the [`Packable`](crate::Packable) variant.
-    pub fn coerce<V: From<T>>(self) -> UnpackError<V, U> {
+    pub(crate) fn coerce<V: From<T>>(self) -> UnpackError<V, U> {
         self.map(|x| x.into())
     }
 }
@@ -77,7 +77,7 @@ impl<T, U> From<U> for UnpackError<T, U> {
 
 impl<U> UnpackError<Infallible, U> {
     /// Coerces the value if the [`Packable`](crate::Packable) variant is [`Infallible`].
-    pub fn infallible<E>(self) -> UnpackError<E, U> {
+    pub(crate) fn infallible<E>(self) -> UnpackError<E, U> {
         match self {
             Self::Packable(err) => match err {},
             Self::Unpacker(err) => UnpackError::Unpacker(err),

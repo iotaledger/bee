@@ -4,6 +4,7 @@
 extern crate alloc;
 
 use crate::{
+    coerce::CoerceInfallible,
     error::{PackError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
@@ -38,7 +39,7 @@ impl<T: Packable> Packable for Box<[T]> {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         // The length of any dynamically-sized sequence must be prefixed.
-        (self.len() as u64).pack(packer).map_err(PackError::infallible)?;
+        (self.len() as u64).pack(packer).infallible()?;
 
         for item in self.iter() {
             item.pack(packer)?;
