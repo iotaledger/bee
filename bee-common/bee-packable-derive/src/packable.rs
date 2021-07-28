@@ -102,11 +102,11 @@ impl Fragments {
             // And this would be
             // ```
             // Ok(Foo {
-            //     bar: <T>::unpack(unpacker).map_err(|x| x.coerce())?,
-            //     baz: <V>::unpack(unpacker).map_err(|x| x.coerce())?,
+            //     bar: <T>::unpack(unpacker).coerce()?,
+            //     baz: <V>::unpack(unpacker).coerce()?,
             // })```
             unpack: quote! {Ok(#name {
-                #(#labels: <#wrappers as Into<#types>>::into(<#wrappers>::unpack(unpacker).map_err(|x| x.coerce())?),)*
+                #(#labels: <#wrappers as Into<#types>>::into(<#wrappers>::unpack(unpacker).coerce()?),)*
             })},
         }
     }
@@ -170,7 +170,7 @@ impl Fragments {
         // the type of the tag is `W`. This would be
         // ```
         // Foo { bar: field_0 , baz: field_1 } => {
-        //     (tag as W).pack(packer)?;
+        //     (tag as W).pack(packer).infallible()?;
         //     <T>::pack(&field_0, packer)?;
         //     <V>::pack(&field_1, packer)?;
         //     Ok(())
@@ -179,7 +179,7 @@ impl Fragments {
         // The cast to `W` is included because `tag` is an integer without type annotations.
         let pack = quote! {
             #pattern => {
-                (#tag as #tag_ty).pack(packer).map_err(|x| x.infallible())?;
+                (#tag as #tag_ty).pack(packer).infallible()?;
                 #pack
             }
         };
@@ -193,8 +193,8 @@ impl Fragments {
         // And this would be
         // ```
         // tag => Ok(Foo {
-        //     bar: <T>::unpack(unpacker).map_err(|x| x.coerce())?,
-        //     baz: <V>::unpack(unpacker).map_err(|x| x.coerce())?,
+        //     bar: <T>::unpack(unpacker).coerce()?,
+        //     baz: <V>::unpack(unpacker).coerce()?,
         // })
         // ```
         let unpack = quote!(#tag => #unpack);
@@ -322,7 +322,7 @@ pub(crate) fn gen_bodies_for_enum(
             }
         },
         quote! {
-            match <#tag_ty>::unpack(unpacker).map_err(|x| x.infallible())? {
+            match <#tag_ty>::unpack(unpacker).infallible()? {
                 #(#unpack_branches,) *
                 tag => Err(bee_packable::error::UnpackError::Packable(bee_packable::error::UnknownTagError(tag).into()))
             }
@@ -348,10 +348,12 @@ pub(crate) fn gen_impl(
             type UnpackError = #unpack_error_type;
 
             fn pack<P: bee_packable::packer::Packer>(&self, packer: &mut P) -> Result<(), bee_packable::error::PackError<Self::PackError, P::Error>> {
+                use bee_packable::coerce::{CoerceInfallible, Coerce};
                 #pack_body
             }
 
             fn unpack<U: bee_packable::unpacker::Unpacker>(unpacker: &mut U) -> Result<Self, bee_packable::error::UnpackError<Self::UnpackError, U::Error>> {
+                use bee_packable::coerce::{CoerceInfallible, Coerce};
                 #unpack_body
             }
 

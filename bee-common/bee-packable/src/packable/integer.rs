@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    coerce::CoerceInfallible,
     error::{PackError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
@@ -54,7 +55,7 @@ impl Packable for usize {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        Ok(u64::unpack(unpacker).map_err(UnpackError::infallible)? as usize)
+        Ok(u64::unpack(unpacker).infallible()? as usize)
     }
 }
 
@@ -79,6 +80,6 @@ impl Packable for isize {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        Ok(i64::unpack(unpacker).map_err(UnpackError::infallible)? as isize)
+        Ok(i64::unpack(unpacker).infallible()? as isize)
     }
 }

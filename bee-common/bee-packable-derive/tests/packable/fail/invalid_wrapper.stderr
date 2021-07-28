@@ -67,4 +67,5 @@ error[E0277]: the trait bound `Infallible: From<UnpackPrefixError<Infallible, u8
    |
    = help: the following implementations were found:
              <Infallible as From<!>>
+   = note: required because of the requirements on the impl of `Coerce<Result<VecPrefix<u64, u8, 128_usize>, UnpackError<Infallible, <U as bee_packable::Unpacker>::Error>>>` for `Result<VecPrefix<u64, u8, 128_usize>, UnpackError<UnpackPrefixError<Infallible, u8>, <U as bee_packable::Unpacker>::Error>>`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)

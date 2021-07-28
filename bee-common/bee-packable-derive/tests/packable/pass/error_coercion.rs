@@ -7,6 +7,7 @@ use bee_packable::{
     error::{PackError, UnknownTagError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
+    coerce::CoerceInfallible,
     Packable,
 };
 
@@ -29,7 +30,7 @@ impl Packable for Picky {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let value = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let value = u8::unpack(unpacker).infallible()?;
 
         if value == 42 {
             Ok(Self(value))
