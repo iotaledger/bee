@@ -7,7 +7,7 @@ use bee_packable::packable::Packable;
 
 use core::str::FromStr;
 
-/// A [`Message`] identifier, the BLAKE2b-256 hash of the message bytes.
+/// A [`Message`](crate::Message) identifier, the BLAKE2b-256 hash of the message bytes.
 /// See <https://www.blake2.net/> for more information.
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

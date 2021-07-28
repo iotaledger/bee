@@ -7,25 +7,26 @@ use bee_packable::packable::Packable;
 
 use core::str::FromStr;
 
-/// A transaction identifier, the BLAKE2b-256 hash of the transaction bytes.
+/// A [`TransactionPayload`](crate::payload::transaction::TransactionPayload) identifier, the BLAKE2b-256 hash of the
+/// transaction payload bytes.
 /// See <https://www.blake2.net/> for more information.
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionId([u8; Self::LENGTH]);
 
 impl TransactionId {
-    /// The length (in bytes) of a [`TransactionId`].
+    /// The length, in bytes, of a [`TransactionId`].
     pub const LENGTH: usize = 32;
 
     /// Creates a new [`TransactionId`].
     pub fn new(bytes: [u8; Self::LENGTH]) -> Self {
-        bytes.into()
+        Self(bytes)
     }
 }
 
 impl From<[u8; Self::LENGTH]> for TransactionId {
     fn from(bytes: [u8; Self::LENGTH]) -> Self {
-        Self(bytes)
+        Self::new(bytes)
     }
 }
 
@@ -33,7 +34,7 @@ impl FromStr for TransactionId {
     type Err = ValidationError;
 
     fn from_str(hex: &str) -> Result<Self, Self::Err> {
-        Ok(TransactionId::from(hex_decode::<{ Self::LENGTH }>(hex)?))
+        Ok(TransactionId::from(hex_decode(hex)?))
     }
 }
 
