@@ -60,4 +60,4 @@ macro_rules! make_test {
 #[rustversion::stable]
 make_test!(packable);
 #[rustversion::not(stable)]
-make_test!(packable, packable_is_structural, invalid_wrapper);
+make_test!(packable, packable_is_structural, invalid_wrapper, duplicated_tag_enum);
