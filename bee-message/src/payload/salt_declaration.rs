@@ -5,7 +5,7 @@
 
 use crate::{
     payload::{MessagePayload, PAYLOAD_LENGTH_MAX},
-    signature::ED25519_PUBLIC_KEY_LENGTH,
+    signature::Ed25519Signature,
     MessagePackError, MessageUnpackError, ValidationError,
 };
 
@@ -162,7 +162,8 @@ pub struct SaltDeclarationPayload {
     /// The timestamp of the payload.
     timestamp: u64,
     /// The node signature.
-    signature: [u8; ED25519_PUBLIC_KEY_LENGTH],
+    #[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))]
+    signature: [u8; Ed25519Signature::SIGNATURE_LENGTH],
 }
 
 impl MessagePayload for SaltDeclarationPayload {
@@ -192,7 +193,7 @@ impl SaltDeclarationPayload {
     }
 
     /// Returns the signature of a [`SaltDeclarationPayload`].
-    pub fn signature(&self) -> &[u8; ED25519_PUBLIC_KEY_LENGTH] {
+    pub fn signature(&self) -> &[u8; Ed25519Signature::SIGNATURE_LENGTH] {
         &self.signature
     }
 }
@@ -226,7 +227,8 @@ impl Packable for SaltDeclarationPayload {
         let node_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
         let salt = Salt::unpack(unpacker).map_err(UnpackError::coerce)?;
         let timestamp = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let signature = <[u8; ED25519_PUBLIC_KEY_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let signature =
+            <[u8; Ed25519Signature::SIGNATURE_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
 
         Ok(Self {
             node_id,
@@ -254,7 +256,7 @@ pub struct SaltDeclarationPayloadBuilder {
     node_id: Option<u32>,
     salt: Option<Salt>,
     timestamp: Option<u64>,
-    signature: Option<[u8; ED25519_PUBLIC_KEY_LENGTH]>,
+    signature: Option<[u8; Ed25519Signature::SIGNATURE_LENGTH]>,
 }
 
 impl SaltDeclarationPayloadBuilder {
@@ -282,7 +284,7 @@ impl SaltDeclarationPayloadBuilder {
     }
 
     /// Adds a signature to a [`SaltDeclarationPayloadBuilder`].
-    pub fn with_signature(mut self, signature: [u8; ED25519_PUBLIC_KEY_LENGTH]) -> Self {
+    pub fn with_signature(mut self, signature: [u8; Ed25519Signature::SIGNATURE_LENGTH]) -> Self {
         self.signature.replace(signature);
         self
     }

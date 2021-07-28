@@ -13,23 +13,41 @@ fn kind() {
 }
 
 #[test]
+fn public_key_length() {
+    assert_eq!(Ed25519Signature::PUBLIC_KEY_LENGTH, 32);
+}
+
+#[test]
+fn signature_length() {
+    assert_eq!(Ed25519Signature::SIGNATURE_LENGTH, 64);
+}
+
+#[test]
+fn new() {
+    let signature = Ed25519Signature::new([21; 32], [42; 64]);
+
+    assert_eq!(signature.public_key(), &[21; 32]);
+    assert_eq!(signature.signature(), &[42; 64]);
+}
+
+#[test]
 fn packed_len() {
-    let sig = Ed25519Signature::new(
+    let signature = Ed25519Signature::new(
         hex_decode(ED25519_PUBLIC_KEY).unwrap(),
         hex_decode(ED25519_SIGNATURE).unwrap(),
     );
 
-    assert_eq!(sig.packed_len(), 32 + 64);
-    assert_eq!(sig.pack_to_vec().unwrap().len(), 32 + 64);
+    assert_eq!(signature.packed_len(), 32 + 64);
+    assert_eq!(signature.pack_to_vec().unwrap().len(), 32 + 64);
 }
 
 #[test]
 fn packable_round_trip() {
-    let sig = Ed25519Signature::new(
+    let signature_1 = Ed25519Signature::new(
         hex_decode(ED25519_PUBLIC_KEY).unwrap(),
         hex_decode(ED25519_SIGNATURE).unwrap(),
     );
-    let sig_packed = sig.pack_to_vec().unwrap();
+    let signature_2 = Ed25519Signature::unpack_from_slice(signature_1.pack_to_vec().unwrap()).unwrap();
 
-    assert_eq!(sig, Ed25519Signature::unpack_from_slice(sig_packed).unwrap());
+    assert_eq!(signature_1, signature_2);
 }

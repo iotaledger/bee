@@ -40,7 +40,7 @@ fn unpack_valid() {
     bytes.extend(rand_bytes_array::<64>());
     bytes.extend(vec![0, 0, 0, 0, 0, 0, 0, 0]);
     bytes.extend(vec![0, 0, 0, 0, 0, 0, 0, 0]);
-    bytes.extend(rand_bytes_array::<32>());
+    bytes.extend(rand_bytes_array::<64>());
 
     let salt_declaration = SaltDeclarationPayload::unpack_from_slice(bytes);
 
@@ -81,7 +81,7 @@ fn packed_len() {
         .finish()
         .unwrap();
 
-    assert_eq!(salt_declaration.packed_len(), 1 + 4 + 4 + 64 + 8 + 8 + 32);
+    assert_eq!(salt_declaration.packed_len(), 1 + 4 + 4 + 64 + 8 + 8 + 64);
 }
 
 #[test]
