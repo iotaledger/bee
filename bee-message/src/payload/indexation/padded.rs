@@ -1,25 +1,28 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::{error::ValidationError, util::hex_decode};
+
 use bee_packable::Packable;
 
-/// An indexation payload index padded with `0` up to the maximum length.
+/// An [`IndexationPayload`](crate::payload::indexation::IndexationPayload) index padded with `0` up to the maximum
+/// length.
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Packable)]
 pub struct PaddedIndex([u8; Self::LENGTH]);
 
 impl PaddedIndex {
-    /// The length (in bytes) of a [`PaddedIndex`].
+    /// The length, in bytes, of a [`PaddedIndex`].
     pub const LENGTH: usize = 64;
 
     /// Creates a new [`PaddedIndex`].
     pub fn new(bytes: [u8; Self::LENGTH]) -> Self {
-        bytes.into()
+        Self(bytes)
     }
 }
 
 impl From<[u8; Self::LENGTH]> for PaddedIndex {
     fn from(bytes: [u8; Self::LENGTH]) -> Self {
-        Self(bytes)
+        Self::new(bytes)
     }
 }
 
@@ -34,6 +37,14 @@ impl core::ops::Deref for PaddedIndex {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl core::str::FromStr for PaddedIndex {
+    type Err = ValidationError;
+
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
+        Ok(PaddedIndex::from(hex_decode(hex)?))
     }
 }
 

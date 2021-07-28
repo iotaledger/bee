@@ -5,8 +5,6 @@ use crate::{error::ValidationError, util::hex_decode};
 
 use bee_packable::packable::Packable;
 
-use core::str::FromStr;
-
 /// A [`Message`](crate::Message) identifier, the BLAKE2b-256 hash of the message bytes.
 /// See <https://www.blake2.net/> for more information.
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, Packable)]
@@ -34,17 +32,25 @@ impl From<[u8; Self::LENGTH]> for MessageId {
     }
 }
 
-impl FromStr for MessageId {
+impl AsRef<[u8]> for MessageId {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl core::ops::Deref for MessageId {
+    type Target = [u8; Self::LENGTH];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl core::str::FromStr for MessageId {
     type Err = ValidationError;
 
     fn from_str(hex: &str) -> Result<Self, Self::Err> {
         Ok(MessageId::from(hex_decode(hex)?))
-    }
-}
-
-impl AsRef<[u8]> for MessageId {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
     }
 }
 

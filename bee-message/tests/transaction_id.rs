@@ -4,7 +4,7 @@
 use bee_message::payload::transaction::TransactionId;
 use bee_packable::Packable;
 
-use core::str::FromStr;
+use core::{ops::Deref, str::FromStr};
 
 const TRANSACTION_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
@@ -33,6 +33,14 @@ fn debug_impl() {
 fn new_as_ref() {
     assert_eq!(
         TransactionId::new([42; TransactionId::LENGTH]).as_ref(),
+        &[42; TransactionId::LENGTH]
+    );
+}
+
+#[test]
+fn new_deref() {
+    assert_eq!(
+        TransactionId::new([42; TransactionId::LENGTH]).deref(),
         &[42; TransactionId::LENGTH]
     );
 }

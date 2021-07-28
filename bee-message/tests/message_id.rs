@@ -4,7 +4,7 @@
 use bee_message::MessageId;
 use bee_packable::Packable;
 
-use core::str::FromStr;
+use core::{ops::Deref, str::FromStr};
 
 const MESSAGE_ID: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
@@ -30,6 +30,14 @@ fn debug_impl() {
 fn new_as_ref() {
     assert_eq!(
         MessageId::new([42; MessageId::LENGTH]).as_ref(),
+        &[42; MessageId::LENGTH]
+    );
+}
+
+#[test]
+fn new_deref() {
+    assert_eq!(
+        MessageId::new([42; MessageId::LENGTH]).deref(),
         &[42; MessageId::LENGTH]
     );
 }

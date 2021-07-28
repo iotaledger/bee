@@ -5,8 +5,6 @@ use crate::{error::ValidationError, util::hex_decode};
 
 use bee_packable::packable::Packable;
 
-use core::str::FromStr;
-
 /// A [`TransactionPayload`](crate::payload::transaction::TransactionPayload) identifier, the BLAKE2b-256 hash of the
 /// transaction payload bytes.
 /// See <https://www.blake2.net/> for more information.
@@ -30,17 +28,25 @@ impl From<[u8; Self::LENGTH]> for TransactionId {
     }
 }
 
-impl FromStr for TransactionId {
+impl AsRef<[u8]> for TransactionId {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl core::ops::Deref for TransactionId {
+    type Target = [u8; Self::LENGTH];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl core::str::FromStr for TransactionId {
     type Err = ValidationError;
 
     fn from_str(hex: &str) -> Result<Self, Self::Err> {
         Ok(TransactionId::from(hex_decode(hex)?))
-    }
-}
-
-impl AsRef<[u8]> for TransactionId {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
     }
 }
 
