@@ -325,7 +325,7 @@ One disadvantage of using `PackError` and `UnpackError` as the error variant
 returned by the `Packable::pack` and `Packable::unpack` methods is that
 conversions between errors must be explicit.  As seen in the `Maybe` example,
 we use the `.coerce()` method to map the error variant to an appropiate type.
-These methods are provided by the following traits:
+This method is provided by the following trait:
 
 ```rust
 pub trait Coerce<T> {
@@ -333,7 +333,7 @@ pub trait Coerce<T> {
 }
 ```
 
-and they are only implemented for the `Result<T, PackError<U, V>>` and
+which is only implemented for the `Result<T, PackError<U, V>>` and
 `Result<T, UnpackError<U, V>` types. These traits take care of mapping the
 `UnpackError::Packable` variant from `T` to `V`. At first sight this could be
 solved by implementing `From<UnpackError<T, U>>` for `UnpackError<V, U>`.

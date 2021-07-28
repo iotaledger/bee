@@ -13,9 +13,9 @@ mod sealed {
     impl<T, U, V> Sealed for Result<T, PackError<U, V>> {}
 }
 
-use core::convert::Infallible;
-
 use crate::error::{PackError, UnpackError};
+
+use core::convert::Infallible;
 
 /// Trait used to convert `Result` values that contain `PackError` and `UnpackError` as the `Err`
 /// variant.
