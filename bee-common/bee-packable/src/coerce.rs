@@ -20,7 +20,7 @@ use core::convert::Infallible;
 /// Trait used to convert `Result` values that contain `PackError` and `UnpackError` as the `Err`
 /// variant.
 pub trait Coerce<T>: sealed::Sealed {
-    /// coerce the value to another result type.
+    /// Coerces the value to another result type.
     fn coerce(self) -> T;
 }
 
@@ -39,7 +39,7 @@ impl<T, U, V, W: From<U>> Coerce<Result<T, PackError<W, V>>> for Result<T, PackE
 /// Trait used to convert `Result` values that contain `PackError<Infallible, _>` and
 /// `UnpackError<Infallible, _>` as the `Err` variant.
 pub trait CoerceInfallible<T>: sealed::Sealed {
-    /// coerce the value to another result type.
+    /// Coerces the value to another result type.
     fn infallible(self) -> T;
 }
 
