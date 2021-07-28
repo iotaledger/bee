@@ -9,7 +9,7 @@ use syn::{
     punctuated::Punctuated,
     spanned::Spanned,
     token::Comma,
-    Attribute, Field, Fields, Generics, Ident, Index, Token, Type, Variant,
+    Attribute, ExprLit, ExprPath, Field, Fields, Generics, Ident, Token, Type, Variant,
 };
 
 /// The names of the types that can be used for tags.
@@ -246,7 +246,7 @@ pub(crate) fn gen_bodies_for_enum(
     }
 
     // Store the tags and names of the variants so we can guarantee that tags are unique.
-    let mut tags = Vec::<(Index, &Ident)>::with_capacity(len);
+    let mut tags = Vec::<ExprTag>::with_capacity(len);
 
     // The branch for packing each variant.
     let mut pack_branches = Vec::with_capacity(len);
@@ -261,31 +261,16 @@ pub(crate) fn gen_bodies_for_enum(
         } = variant;
 
         // Verify that this variant has a `"tag"` attribute with an untyped, unsigned integer on it.
-        let curr_tag = match parse_attr::<Index>("tag", attrs) {
+        let tag = match parse_attr::<ExprTag>("tag", attrs) {
             Some(Ok(tag)) => tag,
-            Some(Err(span)) => abort!(span, "Tags for variants can only be integers without type annotations.",),
+            Some(Err(span)) => abort!(span, "Tags for variants can only be literal or path expressions.",),
             None => abort!(
                 ident.span(),
                 "All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute."
             ),
         };
 
-        // Search for the current tag inside `tags`.
-        match tags.binary_search_by(|(tag, _)| tag.index.cmp(&curr_tag.index)) {
-            // If we already have this tag, then it is duplicated, we error reporting the name of
-            // the variant using it.
-            Ok(pos) => abort!(
-                curr_tag.span,
-                "The tag `{}` is already being used for the `{}` variant.",
-                curr_tag.index,
-                tags[pos].1
-            ),
-            // If we do not have this tag, we store it.
-            Err(pos) => tags.insert(pos, (curr_tag.clone(), ident)),
-        }
-
-        // Keep only the index for the current tag.
-        let tag = proc_macro2::Literal::u64_unsuffixed(curr_tag.index as u64);
+        tags.push(tag.clone());
 
         // Add the `Self::` prefix to the name of the variant.
         let name = quote!(Self::#ident);
@@ -322,6 +307,7 @@ pub(crate) fn gen_bodies_for_enum(
             }
         },
         quote! {
+            #[deny(unreachable_patterns)]
             match <#tag_ty>::unpack(unpacker).infallible()? {
                 #(#unpack_branches,) *
                 tag => Err(bee_packable::error::UnpackError::Packable(bee_packable::error::UnknownTagError(tag).into()))
@@ -414,6 +400,30 @@ pub(crate) fn parse_attr<T: Parse + std::fmt::Debug>(key: &str, attrs: &[Attribu
             }
         }
     }
-
+    #[warn(unreachable_patterns)]
     None
+}
+
+#[derive(Debug, Clone)]
+enum ExprTag {
+    Lit(ExprLit),
+    Path(ExprPath),
+}
+
+impl Parse for ExprTag {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        match ExprLit::parse(input) {
+            Ok(lit) => Ok(Self::Lit(lit)),
+            Err(_) => Ok(Self::Path(ExprPath::parse(input)?)),
+        }
+    }
+}
+
+impl ToTokens for ExprTag {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            Self::Lit(lit) => lit.to_tokens(tokens),
+            Self::Path(path) => path.to_tokens(tokens),
+        }
+    }
 }

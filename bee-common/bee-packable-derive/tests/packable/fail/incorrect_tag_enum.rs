@@ -12,9 +12,9 @@ use core::convert::Infallible;
 #[packable(pack_error = Infallible)]
 #[packable(unpack_error = UnknownTagError<u8>)]
 pub enum OptI32 {
-    #[packable(tag = 0)]
+    #[packable(tag = 0u32)]
     None,
-    #[packable(tag = 0)]
+    #[packable(tag = 1)]
     Some(i32),
 }
 

@@ -1,4 +1,4 @@
-error: Tags for variants can only be integers without type annotations.
+error: Tags for variants can only be literal or path expressions.
   --> $DIR/invalid_tag_enum.rs:15:15
    |
 15 |     #[packable(tag = [0; 32])]
