@@ -208,9 +208,9 @@ impl Packable for Maybe {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        match u8::unpack(unpacker).map_err(UnpackError::coerce)? {
+        match u8::unpack(unpacker).infallible()? {
             0u8 => Ok(Self::Nothing),
-            1u8 => Ok(Self::Just(i32::unpack(unpacker).map_err(UnpackError::coerce)?)),
+            1u8 => Ok(Self::Just(i32::unpack(unpacker).coerce()?)),
             tag => Err(UnpackError::Packable(UnknownTagError(tag))),
         }
     }
@@ -324,32 +324,32 @@ There is only one optional feature for this crate:
 One disadvantage of using `PackError` and `UnpackError` as the error variant
 returned by the `Packable::pack` and `Packable::unpack` methods is that
 conversions between errors must be explicit.  As seen in the `Maybe` example,
-we use the `UnpackError::coerce` method to map the error variant to an
-appropiate type. The signature of this method is
+we use the `.coerce()` method to map the error variant to an appropiate type.
+These methods are provided by the following traits:
 
 ```rust
-impl<T, U> UnpackError<T, U> {
-    pub fn coerce<V: From<T>>(self) -> UnpackError<V, U> { ... }
+pub trait Coerce<T> {
+    fn coerce(self) -> T;
 }
 ```
 
-and it takes care of mapping the `UnpackError::Packable` variant from `T` to
-`V`. At first sight this could be solved by implementing `From<UnpackError<T, U>>`
-for `UnpackError<V, U>`. However, that implementation would overlap with the
-existing implementations in the standard library.
+and they are only implemented for the `Result<T, PackError<U, V>>` and
+`Result<T, UnpackError<U, V>` types. These traits take care of mapping the
+`UnpackError::Packable` variant from `T` to `V`. At first sight this could be
+solved by implementing `From<UnpackError<T, U>>` for `UnpackError<V, U>`.
+However, that implementation would overlap with the existing implementations in
+the standard library.
 
-In a similar fashion we introduced a `UnpackError::infallible` method with the
-following signature
+In a similar fashion we introduced a `CoerceInfallible` trait:
 
 ```rust
-impl<U> UnpackError<Infallible, U> {
-    pub fn infallible<V>(self) -> UnpackError<V, U> { ... }
+pub trait CoerceInfallible<T> {
+    fn infallible(self) -> T;
 }
 ```
 
-with the same philosophy. It is not possible to provide a single `coerce`
-method for both operations because of the same reasons around using the `From`
-trait. These methods also exist for the `PackError` enum.
+with the same philosophy. It is not possible to provide a single `Coerce` trait
+for both operations because of the same reasons around using the `From` trait.
 
 # Alternatives
 
