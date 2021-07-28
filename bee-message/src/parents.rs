@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! The parents module defines the core data type for storing the messages directly approved by a message.
+//! Module that provides types and syntactic validations of message parents.
 
 use crate::{MessageId, MessageUnpackError, ValidationError};
 

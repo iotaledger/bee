@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module that provides types and syntactic validations of inputs.
+
 mod utxo;
 
 pub use utxo::UtxoInput;

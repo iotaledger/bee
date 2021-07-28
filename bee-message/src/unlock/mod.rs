@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module that provides types and syntactic validations of unlock blocks.
+
 mod reference;
 mod signature;
 mod unlock_blocks;

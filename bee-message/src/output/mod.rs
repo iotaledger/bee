@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module that provides types and syntactic validations of outputs.
+
 mod output_id;
 mod signature_locked_asset;
 mod signature_locked_single;

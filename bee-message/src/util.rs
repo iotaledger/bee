@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module that provides utilities.
+
 use crate::error::ValidationError;
 
 use alloc::borrow::ToOwned;

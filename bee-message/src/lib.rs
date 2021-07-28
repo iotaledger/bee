@@ -13,19 +13,12 @@ mod macros;
 mod message;
 mod message_id;
 
-/// A module that provides types and syntactic validations of addresses.
 pub mod address;
-/// A module that provides error types for validation and packing/unpacking.
 pub mod error;
-/// A module that provides types and syntactic validations of inputs.
 pub mod input;
-/// A module containing a convenient builder for [`Message`] construction.
 pub mod message_builder;
-/// A module that provides types and syntactic validations of outputs.
 pub mod output;
-/// A module that provides types and syntactic validations of parents.
 pub mod parents;
-/// A module that provides types and syntactic validations of payloads.
 pub mod payload;
 /// A module that provides types and syntactic validations of signatures.
 pub mod signature;

@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Module that provides types and syntactic validations of signatures.
+
 mod ed25519;
 
 pub use ed25519::Ed25519Signature;
