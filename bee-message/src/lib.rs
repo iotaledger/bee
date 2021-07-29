@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Core data types for messages in the tangle.
+//! Core data types for messages in the Tangle.
 
 #![no_std]
 #![warn(missing_docs)]
@@ -11,12 +11,12 @@ extern crate alloc;
 #[macro_use]
 mod macros;
 mod message;
+mod message_builder;
 mod message_id;
 
 pub mod address;
 pub mod error;
 pub mod input;
-pub mod message_builder;
 pub mod output;
 pub mod parents;
 pub mod payload;

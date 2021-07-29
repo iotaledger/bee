@@ -5,8 +5,6 @@ use crate::output::OutputId;
 
 use bee_packable::packable::Packable;
 
-use core::{convert::From, ops::Deref};
-
 /// An [`Input`](crate::input::Input) referencing an [`Output`](crate::output::Output).
 #[derive(Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Packable, Debug)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -33,7 +31,7 @@ impl From<OutputId> for UtxoInput {
     }
 }
 
-impl Deref for UtxoInput {
+impl core::ops::Deref for UtxoInput {
     type Target = OutputId;
 
     fn deref(&self) -> &Self::Target {
