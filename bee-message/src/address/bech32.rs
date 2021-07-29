@@ -3,8 +3,7 @@
 
 use core::convert::{TryFrom, TryInto};
 
-use super::Address;
-use crate::error::ValidationError;
+use crate::{address::Address, error::ValidationError};
 
 use bee_packable::Packable;
 
@@ -18,7 +17,7 @@ use alloc::{
 };
 
 /// Wrapper for a `Bech32` encoded string.
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Bech32Address(String);
 
 impl Bech32Address {
