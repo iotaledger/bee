@@ -3,8 +3,8 @@
 
 use core::convert::{TryFrom, TryInto};
 
-use crate::error::ValidationError;
 use super::Address;
+use crate::error::ValidationError;
 
 use bee_packable::Packable;
 

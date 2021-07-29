@@ -6,7 +6,7 @@ use crate::{error::ValidationError, util::hex_decode};
 use bee_packable::Packable;
 
 /// A BLS address.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlsAddress(#[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))] [u8; Self::LENGTH]);
 
