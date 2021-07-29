@@ -67,7 +67,7 @@ pub(crate) struct PluginHandler {
     /// The gRPC client.
     client: PluginClient<Channel>,
     /// The task handling stdio redirection.
-    stdio_task: JoinHandle<()>,
+    stdio_task: JoinHandle<Result<(), std::io::Error>>,
 }
 
 impl PluginHandler {
@@ -86,6 +86,7 @@ impl PluginHandler {
         );
         let mut process = command.spawn()?;
 
+        // stderr and stdout are guaranteed to be `Some` because we piped them in the command.
         let stderr = BufReader::new(process.stderr.take().unwrap());
         let mut stdout = BufReader::new(process.stdout.take().unwrap());
 
@@ -101,13 +102,13 @@ impl PluginHandler {
 
             loop {
                 tokio::select! {
-                    res = stdout_lines.next_line() => match res.unwrap() {
+                    res = stdout_lines.next_line() => match res? {
                         Some(line) => {
                             log::info!(target: &target, "{}", line);
                         },
                         None => break,
                     },
-                    res = stderr_lines.next_line() => match res.unwrap() {
+                    res = stderr_lines.next_line() => match res? {
                         Some(line) => {
                             log::warn!(target: &target, "{}", line);
                         },
@@ -115,6 +116,8 @@ impl PluginHandler {
                     }
                 }
             }
+
+            Ok(())
         });
 
         let address = format!("http://{}/", handshake_info.address);

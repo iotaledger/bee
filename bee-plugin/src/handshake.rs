@@ -41,7 +41,9 @@ impl HandshakeInfo {
         let mut event_ids = vec![];
 
         for chunk in chunks {
-            let raw_id: u8 = chunk.parse().unwrap();
+            let raw_id: u8 = chunk
+                .parse()
+                .map_err(|_| InvalidHandshake::ExpectedInteger(chunk.to_owned()))?;
             let event_id = EventId::try_from(raw_id)?;
             event_ids.push(event_id);
         }
@@ -55,9 +57,11 @@ impl HandshakeInfo {
 
     pub(crate) fn emit(self) -> String {
         let mut buf = String::new();
+        // writing to a string buffer cannot fail.
         write!(&mut buf, "{}|{}", self.address, self.name).unwrap();
 
         for id in self.event_ids {
+            // writing to a string buffer cannot fail.
             write!(&mut buf, "|{}", id as u8).unwrap();
         }
 
@@ -77,6 +81,8 @@ pub enum InvalidHandshake {
     InvalidAddress(#[from] AddrParseError),
     #[error("invalid event ID {0}")]
     InvalidEventId(u8),
+    #[error("expected integer, found: {0}")]
+    ExpectedInteger(String),
 }
 
 impl From<InvalidEventId> for InvalidHandshake {
