@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    address::{Address, Ed25519Address},
+    address::{Address, Bech32Address, Ed25519Address},
     util::hex_decode,
 };
 use bee_packable::Packable;
+
+use core::convert::TryInto;
 
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
@@ -19,10 +21,10 @@ fn kind() {
 #[test]
 fn generate_bech32_string() {
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
-    let bech32_string = address.to_bech32("iota");
+    let bech32 = Bech32Address::from_address("iota", &address);
 
     assert_eq!(
-        bech32_string,
+        bech32.to_string(),
         "iota1qpf0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryj430ldu"
     );
 }
@@ -30,22 +32,19 @@ fn generate_bech32_string() {
 #[test]
 fn generate_bech32_testnet_string() {
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
-    let bech32_string = address.to_bech32("atoi");
+    let bech32 = Bech32Address::from_address("atoi", &address);
 
     assert_eq!(
-        bech32_string,
+        bech32.to_string(),
         "atoi1qpf0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryjjl77h3"
     );
 }
 
 #[test]
-fn bech32_string_to_address() {
+fn bech32_to_address() {
     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
 
-    let address = Address::try_from_bech32(&address.to_bech32("iota")).unwrap();
-    assert_eq!(address.to_string(), ED25519_ADDRESS);
-
-    let address = Address::try_from_bech32(&address.to_bech32("atoi")).unwrap();
+    let address: Address = Bech32Address::from_address("iota", &address).try_into().unwrap();
     assert_eq!(address.to_string(), ED25519_ADDRESS);
 }
 

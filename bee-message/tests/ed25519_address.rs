@@ -1,10 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::address::Ed25519Address;
+use bee_message::address::{Address, Bech32Address, Ed25519Address};
 use bee_packable::Packable;
 
-use core::{ops::Deref, str::FromStr};
+use core::{convert::TryInto, ops::Deref, str::FromStr};
 
 const ED25519_ADDRESS: &str = "1d389ea27a77c91d0840f93861442a95ca5e882e0d9f9c2f9965815409d939e4";
 
@@ -77,6 +77,14 @@ fn from_to_str() {
         ED25519_ADDRESS,
         Ed25519Address::from_str(ED25519_ADDRESS).unwrap().to_string()
     );
+}
+
+#[test]
+fn try_from_bech32() {
+    let addr = Address::Ed25519(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
+    let bech32 = Bech32Address::from_address("atoi", &addr);
+
+    assert_eq!(addr, bech32.try_into().unwrap());
 }
 
 #[test]

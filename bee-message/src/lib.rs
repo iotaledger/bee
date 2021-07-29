@@ -20,11 +20,8 @@ pub mod message_builder;
 pub mod output;
 pub mod parents;
 pub mod payload;
-/// A module that provides types and syntactic validations of signatures.
 pub mod signature;
-/// A module that provides types and syntactic validations of unlock blocks.
 pub mod unlock;
-/// A module that provides utilities.
 pub mod util;
 
 pub use error::{MessagePackError, MessageUnpackError, ValidationError};
