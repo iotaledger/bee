@@ -8,7 +8,7 @@ use crate::{
     util::hex_decode,
 };
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
 
 use core::{
     convert::{From, Infallible, TryFrom, TryInto},

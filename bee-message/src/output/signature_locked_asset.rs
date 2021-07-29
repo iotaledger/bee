@@ -6,7 +6,7 @@ use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessagePackError, Mes
 use bee_packable::{
     coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
+    BoundedU32, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
 };
 
 use alloc::vec::Vec;
@@ -16,7 +16,7 @@ use core::{
 };
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / [`AssetId::LENGTH`].
-const PREFIXED_BALANCES_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>());
+const PREFIXED_BALANCES_LENGTH_MAX: u32 = (PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>())) as u32;
 
 /// Error encountered packing a [`SignatureLockedAssetOutput`].
 #[derive(Debug)]
@@ -25,8 +25,8 @@ pub enum SignatureLockedAssetPackError {
     InvalidPrefix,
 }
 
-impl From<PackPrefixError<Infallible, u32>> for SignatureLockedAssetPackError {
-    fn from(_: PackPrefixError<Infallible, u32>) -> Self {
+impl From<PackPrefixError<Infallible>> for SignatureLockedAssetPackError {
+    fn from(_: PackPrefixError<Infallible>) -> Self {
         Self::InvalidPrefix
     }
 }
@@ -60,8 +60,8 @@ impl From<UnknownTagError<u8>> for SignatureLockedAssetUnpackError {
     }
 }
 
-impl From<UnpackPrefixError<Infallible, u32>> for SignatureLockedAssetUnpackError {
-    fn from(_: UnpackPrefixError<Infallible, u32>) -> Self {
+impl From<UnpackPrefixError<Infallible>> for SignatureLockedAssetUnpackError {
+    fn from(_: UnpackPrefixError<Infallible>) -> Self {
         Self::InvalidPrefix
     }
 }
@@ -166,7 +166,7 @@ impl Packable for SignatureLockedAssetOutput {
         self.address.pack(packer).infallible()?;
 
         // Unwrap is safe, since length has been validated.
-        let prefixed_balances: VecPrefix<AssetBalance, u32, PREFIXED_BALANCES_LENGTH_MAX> =
+        let prefixed_balances: VecPrefix<AssetBalance, BoundedU32<0, PREFIXED_BALANCES_LENGTH_MAX>> =
             self.balances.clone().try_into().unwrap();
         prefixed_balances
             .pack(packer)
@@ -182,7 +182,7 @@ impl Packable for SignatureLockedAssetOutput {
             .coerce()?;
 
         let balances: Vec<AssetBalance> =
-            VecPrefix::<AssetBalance, u32, PREFIXED_BALANCES_LENGTH_MAX>::unpack(unpacker)
+            VecPrefix::<AssetBalance, BoundedU32<0, PREFIXED_BALANCES_LENGTH_MAX>>::unpack(unpacker)
                 .coerce::<SignatureLockedAssetUnpackError>()
                 .coerce()?
                 .into();
@@ -194,7 +194,7 @@ impl Packable for SignatureLockedAssetOutput {
 }
 
 fn validate_balances_length(len: usize) -> Result<(), ValidationError> {
-    if len > PREFIXED_BALANCES_LENGTH_MAX {
+    if len > PREFIXED_BALANCES_LENGTH_MAX as usize {
         Err(ValidationError::InvalidAssetBalanceLength(len))
     } else {
         Ok(())

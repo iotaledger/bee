@@ -12,7 +12,7 @@ use bee_ord::is_sorted;
 use bee_packable::{
     coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
+    BoundedU32, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
 };
 
 use alloc::{boxed::Box, vec::Vec};
@@ -24,8 +24,10 @@ use core::{
 /// Length (in bytes) of Transaction Essence pledge IDs (node IDs relating to pledge mana).
 pub const PLEDGE_ID_LENGTH: usize = 32;
 
-const PREFIXED_INPUTS_LENGTH_MAX: usize = *INPUT_COUNT_RANGE.end();
-const PREFIXED_OUTPUTS_LENGTH_MAX: usize = *OUTPUT_COUNT_RANGE.end();
+const PREFIXED_INPUTS_LENGTH_MAX: u32 = *INPUT_COUNT_RANGE.end() as u32;
+const PREFIXED_OUTPUTS_LENGTH_MAX: u32 = *OUTPUT_COUNT_RANGE.end() as u32;
+const PREFIXED_INPUTS_LENGTH_MIN: u32 = *INPUT_COUNT_RANGE.start() as u32;
+const PREFIXED_OUTPUTS_LENGTH_MIN: u32 = *OUTPUT_COUNT_RANGE.start() as u32;
 
 /// Error encountered packing a [`TransactionEssence`].
 #[derive(Debug)]
@@ -44,18 +46,15 @@ impl_wrapped_variant!(
 );
 impl_from_infallible!(TransactionEssencePackError);
 
-impl From<PackPrefixError<Infallible, u32>> for TransactionEssencePackError {
-    fn from(_: PackPrefixError<Infallible, u32>) -> Self {
+impl From<PackPrefixError<Infallible>> for TransactionEssencePackError {
+    fn from(_: PackPrefixError<Infallible>) -> Self {
         Self::InvalidInputPrefix
     }
 }
 
-impl From<PackPrefixError<MessagePackError, u32>> for TransactionEssencePackError {
-    fn from(error: PackPrefixError<MessagePackError, u32>) -> Self {
-        match error {
-            PackPrefixError::Packable(e) => Self::OutputPackError(Box::new(e)),
-            PackPrefixError::Prefix(_) => Self::InvalidOutputPrefix,
-        }
+impl From<PackPrefixError<MessagePackError>> for TransactionEssencePackError {
+    fn from(error: PackPrefixError<MessagePackError>) -> Self {
+        Self::OutputPackError(Box::new(error.0))
     }
 }
 
@@ -85,14 +84,13 @@ pub enum TransactionEssenceUnpackError {
 
 impl_from_infallible!(TransactionEssenceUnpackError);
 
-impl From<UnpackPrefixError<UnknownTagError<u8>, u32>> for TransactionEssenceUnpackError {
-    fn from(error: UnpackPrefixError<UnknownTagError<u8>, u32>) -> Self {
+impl From<UnpackPrefixError<UnknownTagError<u8>>> for TransactionEssenceUnpackError {
+    fn from(error: UnpackPrefixError<UnknownTagError<u8>>) -> Self {
         match error {
             UnpackPrefixError::InvalidPrefixLength(len) => Self::InvalidOutputPrefixLength(len),
             UnpackPrefixError::Packable(error) => match error {
                 UnknownTagError(tag) => Self::InvalidOutputKind(tag),
             },
-            UnpackPrefixError::Prefix(_) => Self::InvalidOutputPrefix,
         }
     }
 }
@@ -186,9 +184,9 @@ impl Packable for TransactionEssence {
 
     fn packed_len(&self) -> usize {
         // Unwraps are safe, since inputs/outputs lengths are alread validated.
-        let prefixed_inputs: VecPrefix<Input, u32, PREFIXED_INPUTS_LENGTH_MAX> =
+        let prefixed_inputs: VecPrefix<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>> =
             self.inputs.clone().try_into().unwrap();
-        let prefixed_outputs: VecPrefix<Output, u32, PREFIXED_OUTPUTS_LENGTH_MAX> =
+        let prefixed_outputs: VecPrefix<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>> =
             self.outputs.clone().try_into().unwrap();
 
         self.timestamp.packed_len()
@@ -205,8 +203,9 @@ impl Packable for TransactionEssence {
         self.consensus_pledge_id.pack(packer).infallible()?;
 
         // Unwraps are safe, since inputs/outputs lengths are already validated.
-        let input_prefixed: VecPrefix<Input, u32, PREFIXED_INPUTS_LENGTH_MAX> = self.inputs.clone().try_into().unwrap();
-        let output_prefixed: VecPrefix<Output, u32, PREFIXED_OUTPUTS_LENGTH_MAX> =
+        let input_prefixed: VecPrefix<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>> =
+            self.inputs.clone().try_into().unwrap();
+        let output_prefixed: VecPrefix<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>> =
             self.outputs.clone().try_into().unwrap();
 
         input_prefixed
@@ -230,7 +229,8 @@ impl Packable for TransactionEssence {
         let consensus_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack(unpacker).infallible()?;
 
         // Inputs syntactical validation
-        let inputs = VecPrefix::<Input, u32, PREFIXED_INPUTS_LENGTH_MAX>::unpack(unpacker);
+        let inputs =
+            VecPrefix::<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>::unpack(unpacker);
 
         let inputs_vec: Vec<Input> = if let Err(unpack_err) = inputs {
             match unpack_err {
@@ -241,11 +241,6 @@ impl Packable for TransactionEssence {
                         ));
                     }
                     UnpackPrefixError::Packable(err) => return Err(UnpackError::Packable(err)),
-                    UnpackPrefixError::Prefix(_) => {
-                        return Err(UnpackError::Packable(
-                            TransactionEssenceUnpackError::InvalidInputPrefix.into(),
-                        ));
-                    }
                 },
                 UnpackError::Unpacker(e) => return Err(UnpackError::Unpacker(e)),
             }
@@ -258,7 +253,8 @@ impl Packable for TransactionEssence {
         validate_inputs_sorted(&inputs_vec).map_err(|e| UnpackError::Packable(e.into()))?;
 
         // Outputs syntactical validation
-        let outputs = VecPrefix::<Output, u32, PREFIXED_OUTPUTS_LENGTH_MAX>::unpack(unpacker);
+        let outputs =
+            VecPrefix::<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>::unpack(unpacker);
 
         let outputs_vec: Vec<Output> = if let Err(unpack_err) = outputs {
             match unpack_err {
@@ -269,11 +265,6 @@ impl Packable for TransactionEssence {
                         ));
                     }
                     UnpackPrefixError::Packable(err) => return Err(UnpackError::Packable(err)),
-                    UnpackPrefixError::Prefix(_) => {
-                        return Err(UnpackError::Packable(
-                            TransactionEssenceUnpackError::InvalidOutputPrefix.into(),
-                        ));
-                    }
                 },
                 UnpackError::Unpacker(e) => return Err(UnpackError::Unpacker(e)),
             }

@@ -17,7 +17,7 @@ pub use essence::{
 };
 pub use transaction_id::TransactionId;
 
-use bee_packable::{error::PackPrefixError, PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
+use bee_packable::{coerce::*, error::PackPrefixError, PackError, Packable, Packer, UnpackError, Unpacker};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use alloc::boxed::Box;
@@ -44,12 +44,9 @@ impl From<TransactionEssencePackError> for TransactionPackError {
     }
 }
 
-impl From<PackPrefixError<Infallible, u16>> for TransactionPackError {
-    fn from(error: PackPrefixError<Infallible, u16>) -> Self {
-        match error {
-            PackPrefixError::Packable(e) => match e {},
-            PackPrefixError::Prefix(_) => Self::InvalidUnlockBlocksPrefix,
-        }
+impl From<PackPrefixError<Infallible>> for TransactionPackError {
+    fn from(error: PackPrefixError<Infallible>) -> Self {
+        match error.0 {}
     }
 }
 

@@ -7,7 +7,7 @@ use crate::{
     MessageId, MessagePackError, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
@@ -151,9 +151,7 @@ impl Packable for Message {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         MESSAGE_VERSION.pack(packer).infallible()?;
-        (self.parents_blocks.len() as u8)
-            .pack(packer)
-            .infallible()?;
+        (self.parents_blocks.len() as u8).pack(packer).infallible()?;
 
         for block in &self.parents_blocks {
             block.pack(packer).infallible()?;

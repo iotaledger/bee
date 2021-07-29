@@ -11,7 +11,7 @@ use crate::{
 use bee_packable::{
     coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    BoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
 
 use alloc::vec::Vec;
@@ -20,7 +20,7 @@ use core::{
     fmt,
 };
 
-const PREFIXED_DATA_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX - core::mem::size_of::<u8>();
+const PREFIXED_DATA_LENGTH_MAX: u32 = (PAYLOAD_LENGTH_MAX - core::mem::size_of::<u8>()) as u32;
 
 /// Error encountered packing a data payload.
 #[derive(Debug)]
@@ -29,8 +29,8 @@ pub enum DataPackError {
     InvalidPrefix,
 }
 
-impl From<PackPrefixError<Infallible, u32>> for DataPackError {
-    fn from(_: PackPrefixError<Infallible, u32>) -> Self {
+impl From<PackPrefixError<Infallible>> for DataPackError {
+    fn from(_: PackPrefixError<Infallible>) -> Self {
         Self::InvalidPrefix
     }
 }
@@ -51,12 +51,11 @@ pub enum DataUnpackError {
     InvalidPrefixLength(usize),
 }
 
-impl From<UnpackPrefixError<Infallible, u32>> for DataUnpackError {
-    fn from(error: UnpackPrefixError<Infallible, u32>) -> Self {
+impl From<UnpackPrefixError<Infallible>> for DataUnpackError {
+    fn from(error: UnpackPrefixError<Infallible>) -> Self {
         match error {
             UnpackPrefixError::InvalidPrefixLength(len) => Self::InvalidPrefixLength(len),
             UnpackPrefixError::Packable(e) => match e {},
-            UnpackPrefixError::Prefix(_) => Self::InvalidPrefix,
         }
     }
 }
@@ -106,7 +105,8 @@ impl Packable for DataPayload {
 
     fn packed_len(&self) -> usize {
         // Unwrap is safe, since the data length has already been validated.
-        let prefixed_data: VecPrefix<u8, u32, PREFIXED_DATA_LENGTH_MAX> = self.data.clone().try_into().unwrap();
+        let prefixed_data: VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>> =
+            self.data.clone().try_into().unwrap();
 
         Self::VERSION.packed_len() + prefixed_data.packed_len()
     }
@@ -115,7 +115,8 @@ impl Packable for DataPayload {
         Self::VERSION.pack(packer).infallible()?;
 
         // Unwrap is safe, since the data length has already been validated.
-        let prefixed_data: VecPrefix<u8, u32, PREFIXED_DATA_LENGTH_MAX> = self.data.clone().try_into().unwrap();
+        let prefixed_data: VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>> =
+            self.data.clone().try_into().unwrap();
         prefixed_data.pack(packer).coerce::<DataPackError>().coerce()?;
 
         Ok(())
@@ -125,7 +126,7 @@ impl Packable for DataPayload {
         let version = u8::unpack(unpacker).infallible()?;
         validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let data: Vec<u8> = VecPrefix::<u8, u32, PREFIXED_DATA_LENGTH_MAX>::unpack(unpacker)
+        let data: Vec<u8> = VecPrefix::<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<DataUnpackError>()
             .coerce()?
             .into();
@@ -149,7 +150,7 @@ fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
 }
 
 fn validate_data_len(len: usize) -> Result<(), ValidationError> {
-    if len > PREFIXED_DATA_LENGTH_MAX {
+    if len > PREFIXED_DATA_LENGTH_MAX as usize {
         Err(ValidationError::InvalidPayloadLength(len))
     } else {
         Ok(())

@@ -28,10 +28,10 @@ use core::convert::TryFrom;
 #[packable(tag_type = u8)]
 pub enum Address {
     /// An Ed25519 address.
-    #[packable(tag = 0)]
+    #[packable(tag = Ed25519Address::KIND)]
     Ed25519(Ed25519Address),
     /// A BLS address.
-    #[packable(tag = 1)]
+    #[packable(tag = BlsAddress::KIND)]
     Bls(BlsAddress),
 }
 

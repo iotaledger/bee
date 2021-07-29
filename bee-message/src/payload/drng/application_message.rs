@@ -3,7 +3,7 @@
 
 use crate::{payload::MessagePayload, MessagePackError, MessageUnpackError, ValidationError};
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
 
 /// Message used by a node to declare its willingness to participate in the Committee Selection process.
 #[derive(Clone, Debug, Eq, PartialEq)]

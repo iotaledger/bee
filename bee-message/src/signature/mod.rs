@@ -9,7 +9,7 @@ pub use ed25519::Ed25519Signature;
 
 use crate::MessageUnpackError;
 
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::Packable;
 
 use core::{convert::Infallible, fmt};
 
@@ -29,14 +29,18 @@ impl fmt::Display for SignatureUnpackError {
 }
 
 /// A signature used to validate the authenticity and integrity of a message.
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(tag_type = u8, with_error = SignatureUnpackError::InvalidSignatureKind)]
+#[packable(pack_error = Infallible)]
+#[packable(unpack_error = MessageUnpackError)]
 pub enum Signature {
     /// An Ed25519 signature.
+    #[packable(tag = Ed25519Signature::KIND)]
     Ed25519(Ed25519Signature),
 }
 
@@ -52,40 +56,5 @@ impl Signature {
 impl From<Ed25519Signature> for Signature {
     fn from(signature: Ed25519Signature) -> Self {
         Self::Ed25519(signature)
-    }
-}
-
-impl Packable for Signature {
-    type PackError = Infallible;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.kind().packed_len()
-            + match self {
-                Self::Ed25519(s) => s.packed_len(),
-            }
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.kind().pack(packer).infallible()?;
-
-        match self {
-            Self::Ed25519(s) => s.pack(packer).infallible()?,
-        }
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let variant = match u8::unpack(unpacker).infallible()? {
-            Ed25519Signature::KIND => Self::Ed25519(Ed25519Signature::unpack(unpacker).infallible()?),
-            kind => {
-                return Err(UnpackError::Packable(
-                    SignatureUnpackError::InvalidSignatureKind(kind).into(),
-                ));
-            }
-        };
-
-        Ok(variant)
     }
 }

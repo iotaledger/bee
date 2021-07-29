@@ -3,7 +3,7 @@
 
 use crate::{error::ValidationError, unlock::UNLOCK_BLOCK_INDEX_RANGE, MessageUnpackError};
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
 
 use core::{
     convert::{Infallible, TryFrom},

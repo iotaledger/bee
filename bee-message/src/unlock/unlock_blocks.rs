@@ -9,7 +9,7 @@ use crate::{
 use bee_packable::{
     coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    BoundedU16, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
 
 use hashbrown::HashSet;
@@ -21,7 +21,8 @@ use core::{
     ops::Deref,
 };
 
-const PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX: usize = *UNLOCK_BLOCK_COUNT_RANGE.end();
+const PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN: u16 = *UNLOCK_BLOCK_COUNT_RANGE.start() as u16;
+const PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX: u16 = *UNLOCK_BLOCK_COUNT_RANGE.end() as u16;
 
 /// Error encountered while packing [`UnlockBlocks`].
 #[derive(Debug)]
@@ -30,12 +31,9 @@ pub enum UnlockBlocksPackError {
     InvalidPrefix,
 }
 
-impl From<PackPrefixError<Infallible, u16>> for UnlockBlocksPackError {
-    fn from(error: PackPrefixError<Infallible, u16>) -> Self {
-        match error {
-            PackPrefixError::Packable(error) => match error {},
-            PackPrefixError::Prefix(_) => Self::InvalidPrefix,
-        }
+impl From<PackPrefixError<Infallible>> for UnlockBlocksPackError {
+    fn from(error: PackPrefixError<Infallible>) -> Self {
+        match error.0 {}
     }
 }
 
@@ -63,12 +61,11 @@ impl_wrapped_variant!(
     UnlockBlocksUnpackError::ValidationError
 );
 
-impl From<UnpackPrefixError<UnlockBlockUnpackError, u16>> for UnlockBlocksUnpackError {
-    fn from(error: UnpackPrefixError<UnlockBlockUnpackError, u16>) -> Self {
+impl From<UnpackPrefixError<UnlockBlockUnpackError>> for UnlockBlocksUnpackError {
+    fn from(error: UnpackPrefixError<UnlockBlockUnpackError>) -> Self {
         match error {
             UnpackPrefixError::InvalidPrefixLength(len) => Self::InvalidPrefixLength(len),
             UnpackPrefixError::Packable(error) => Self::from(error),
-            UnpackPrefixError::Prefix(_) => Self::InvalidPrefix,
         }
     }
 }
@@ -114,7 +111,7 @@ impl UnlockBlocks {
         Ok(Self(unlock_blocks))
     }
 
-    /// Gets an [`UnlockBlock`] from an [`UnlockBlocks`].
+    /// Gets an [`UnlockBlock`] from an [`UnlockBlockbee-common/bee-packable/src/packable/bounded.rss`].
     /// Returns the referenced unlock block if the requested unlock block was a reference.
     pub fn get(&self, index: usize) -> Option<&UnlockBlock> {
         match self.0.get(index) {
@@ -139,22 +136,29 @@ impl Packable for UnlockBlocks {
 
     fn packed_len(&self) -> usize {
         // Unwrap is safe, since UnlockBlock count is already validated.
-        let prefixed: VecPrefix<UnlockBlock, u16, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX> =
-            self.0.clone().try_into().unwrap();
+        let prefixed: VecPrefix<
+            UnlockBlock,
+            BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>,
+        > = self.0.clone().try_into().unwrap();
         prefixed.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         // Unwrap is safe, since UnlockBlock count is already validated.
-        let prefixed: VecPrefix<UnlockBlock, u16, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX> =
-            self.0.clone().try_into().unwrap();
+        let prefixed: VecPrefix<
+            UnlockBlock,
+            BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>,
+        > = self.0.clone().try_into().unwrap();
         prefixed.pack(packer).coerce::<UnlockBlocksPackError>().coerce()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let inner_prefixed = VecPrefix::<UnlockBlock, u16, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>::unpack(unpacker);
+        let inner_prefixed = VecPrefix::<
+            UnlockBlock,
+            BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>,
+        >::unpack(unpacker);
 
         let inner: Vec<UnlockBlock> = if let Err(unpack_err) = inner_prefixed {
             match unpack_err {
@@ -165,9 +169,6 @@ impl Packable for UnlockBlocks {
                         ));
                     }
                     UnpackPrefixError::Packable(err) => return Err(UnpackError::Packable(err)),
-                    UnpackPrefixError::Prefix(_) => {
-                        return Err(UnpackError::Packable(UnlockBlocksUnpackError::InvalidPrefix.into()));
-                    }
                 },
                 UnpackError::Unpacker(e) => return Err(UnpackError::Unpacker(e)),
             }

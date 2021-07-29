@@ -19,10 +19,10 @@ const PREFIXED_TIMESTAMPS_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX / (MessageId::L
 /// Describes a vote in a given round for a message timestamp.
 #[derive(Clone, Default, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = PackPrefixError<Infallible, u32>)]
-#[packable(unpack_error = UnpackPrefixError<Infallible, u32>)]
+#[packable(pack_error = PackPrefixError<Infallible>)]
+#[packable(unpack_error = UnpackPrefixError<Infallible>)]
 pub struct Timestamps {
-    #[packable(wrapper = VecPrefix<Timestamp, u32, PREFIXED_TIMESTAMPS_LENGTH_MAX>)]
+    #[packable(wrapper = VecPrefix<Timestamp, BoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>)]
     inner: Vec<Timestamp>,
 }
 

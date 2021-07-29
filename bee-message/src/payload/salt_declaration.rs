@@ -12,7 +12,7 @@ use crate::{
 use bee_packable::{
     coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    BoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
 
 use alloc::vec::Vec;
@@ -22,7 +22,7 @@ use core::{
 };
 
 /// Maximum size of payload, minus prefix `u32` and timestamp `u64`.
-const PREFIXED_BYTES_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX - 12;
+const PREFIXED_BYTES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX as u32 - 12;
 
 /// Error encountered packing a salt declaration payload.
 #[derive(Debug)]
@@ -31,12 +31,9 @@ pub enum SaltDeclarationPackError {
     InvalidPrefix,
 }
 
-impl From<PackPrefixError<Infallible, u32>> for SaltDeclarationPackError {
-    fn from(error: PackPrefixError<Infallible, u32>) -> Self {
-        match error {
-            PackPrefixError::Packable(e) => match e {},
-            PackPrefixError::Prefix(_) => Self::InvalidPrefix,
-        }
+impl From<PackPrefixError<Infallible>> for SaltDeclarationPackError {
+    fn from(error: PackPrefixError<Infallible>) -> Self {
+        match error.0 {}
     }
 }
 
@@ -58,12 +55,11 @@ pub enum SaltDeclarationUnpackError {
 
 impl_from_infallible!(SaltDeclarationUnpackError);
 
-impl From<UnpackPrefixError<Infallible, u32>> for SaltDeclarationUnpackError {
-    fn from(error: UnpackPrefixError<Infallible, u32>) -> Self {
+impl From<UnpackPrefixError<Infallible>> for SaltDeclarationUnpackError {
+    fn from(error: UnpackPrefixError<Infallible>) -> Self {
         match error {
             UnpackPrefixError::InvalidPrefixLength(len) => Self::InvalidPrefixLength(len),
             UnpackPrefixError::Packable(e) => match e {},
-            UnpackPrefixError::Prefix(_) => Self::InvalidPrefix,
         }
     }
 }
@@ -112,14 +108,16 @@ impl Packable for Salt {
 
     fn packed_len(&self) -> usize {
         // Unwrap is safe, since bytes length has already been validated.
-        let prefixed_bytes: VecPrefix<u8, u32, PREFIXED_BYTES_LENGTH_MAX> = self.bytes.clone().try_into().unwrap();
+        let prefixed_bytes: VecPrefix<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>> =
+            self.bytes.clone().try_into().unwrap();
 
         prefixed_bytes.packed_len() + self.expiry_time.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         // Unwrap is safe, since bytes length has already been validated.
-        let prefixed_bytes: VecPrefix<u8, u32, PREFIXED_BYTES_LENGTH_MAX> = self.bytes.clone().try_into().unwrap();
+        let prefixed_bytes: VecPrefix<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>> =
+            self.bytes.clone().try_into().unwrap();
         prefixed_bytes
             .pack(packer)
             .coerce::<SaltDeclarationPackError>()
@@ -131,7 +129,7 @@ impl Packable for Salt {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let bytes: Vec<u8> = VecPrefix::<u8, u32, PREFIXED_BYTES_LENGTH_MAX>::unpack(unpacker)
+        let bytes: Vec<u8> = VecPrefix::<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<SaltDeclarationUnpackError>()
             .coerce()?
             .into();
@@ -145,7 +143,7 @@ impl Packable for Salt {
 }
 
 fn validate_bytes_length(len: usize) -> Result<(), ValidationError> {
-    if len > PREFIXED_BYTES_LENGTH_MAX {
+    if len > PREFIXED_BYTES_LENGTH_MAX as usize {
         Err(ValidationError::InvalidSaltDeclarationBytesLength(len))
     } else {
         Ok(())

@@ -9,7 +9,7 @@ pub use utxo::UtxoInput;
 
 use crate::error::{MessageUnpackError, ValidationError};
 
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::Packable;
 
 use core::{
     convert::Infallible,
@@ -42,14 +42,18 @@ impl fmt::Display for InputUnpackError {
 }
 
 /// A generic input supporting different input kinds.
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd, Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(tag_type = u8, with_error = InputUnpackError::InvalidInputKind)]
+#[packable(pack_error = Infallible)]
+#[packable(unpack_error = MessageUnpackError)]
 pub enum Input {
     /// A UTXO input.
+    #[packable(tag = UtxoInput::KIND)]
     Utxo(UtxoInput),
 }
 
@@ -59,44 +63,5 @@ impl Input {
         match self {
             Self::Utxo(_) => UtxoInput::KIND,
         }
-    }
-}
-
-impl Packable for Input {
-    type PackError = Infallible;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.kind().packed_len()
-            + match self {
-                Self::Utxo(utxo) => utxo.packed_len(),
-            }
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.kind().pack(packer).infallible()?;
-
-        match self {
-            Self::Utxo(utxo) => utxo.pack(packer).infallible()?,
-        }
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let kind = u8::unpack(unpacker).infallible()?;
-
-        let variant = match kind {
-            UtxoInput::KIND => Self::Utxo(UtxoInput::unpack(unpacker)?),
-            tag => Err(UnpackError::Packable(InputUnpackError::InvalidInputKind(tag))).coerce()?,
-        };
-
-        Ok(variant)
-    }
-}
-
-impl From<UtxoInput> for Input {
-    fn from(input: UtxoInput) -> Self {
-        Self::Utxo(input)
     }
 }

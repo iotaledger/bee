@@ -9,7 +9,7 @@ use crate::{
     MessagePackError, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
 
 /// Message decsribing a dRNG [`CollectiveBeaconPayload`].
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -86,9 +86,7 @@ impl Packable for CollectiveBeaconPayload {
         self.round.pack(packer).infallible()?;
         self.prev_signature.pack(packer).infallible()?;
         self.signature.pack(packer).infallible()?;
-        self.distributed_public_key
-            .pack(packer)
-            .infallible()?;
+        self.distributed_public_key.pack(packer).infallible()?;
 
         Ok(())
     }
@@ -101,8 +99,7 @@ impl Packable for CollectiveBeaconPayload {
         let round = u64::unpack(unpacker).infallible()?;
         let prev_signature = <[u8; BEACON_SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
         let signature = <[u8; BEACON_SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
-        let distributed_public_key =
-            <[u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH]>::unpack(unpacker).infallible()?;
+        let distributed_public_key = <[u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH]>::unpack(unpacker).infallible()?;
 
         Ok(Self {
             instance_id,

@@ -13,7 +13,7 @@ pub use unlock_blocks::{UnlockBlocks, UnlockBlocksPackError, UnlockBlocksUnpackE
 
 use crate::{input::INPUT_COUNT_MAX, MessageUnpackError, ValidationError};
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
+use bee_packable::Packable;
 
 use core::{
     convert::Infallible,
@@ -54,16 +54,21 @@ impl fmt::Display for UnlockBlockUnpackError {
 }
 
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(tag_type = u8, with_error = UnlockBlockUnpackError::InvalidUnlockBlockKind)]
+#[packable(pack_error = Infallible)]
+#[packable(unpack_error = MessageUnpackError)]
 pub enum UnlockBlock {
     /// A signature unlock block.
+    #[packable(tag = SignatureUnlock::KIND)]
     Signature(SignatureUnlock),
     /// A reference unlock block.
+    #[packable(tag = ReferenceUnlock::KIND)]
     Reference(ReferenceUnlock),
 }
 
@@ -77,45 +82,5 @@ impl UnlockBlock {
             Self::Signature(_) => SignatureUnlock::KIND,
             Self::Reference(_) => ReferenceUnlock::KIND,
         }
-    }
-}
-
-impl Packable for UnlockBlock {
-    type PackError = Infallible;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        0u8.packed_len()
-            + match self {
-                Self::Signature(signature) => signature.packed_len(),
-                Self::Reference(reference) => reference.packed_len(),
-            }
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.kind().pack(packer).infallible()?;
-
-        match self {
-            Self::Signature(signature) => signature.pack(packer).infallible()?,
-            Self::Reference(reference) => reference.pack(packer).infallible()?,
-        }
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let kind = u8::unpack(unpacker).infallible()?;
-
-        let variant = match kind {
-            SignatureUnlock::KIND => Self::Signature(SignatureUnlock::unpack(unpacker)?),
-            ReferenceUnlock::KIND => Self::Reference(ReferenceUnlock::unpack(unpacker)?),
-            tag => {
-                return Err(UnpackError::Packable(
-                    UnlockBlockUnpackError::InvalidUnlockBlockKind(tag).into(),
-                ));
-            }
-        };
-
-        Ok(variant)
     }
 }

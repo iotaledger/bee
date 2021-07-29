@@ -28,12 +28,9 @@ pub enum FpcPackError {
 
 impl_from_infallible!(FpcPackError);
 
-impl From<PackPrefixError<Infallible, u32>> for FpcPackError {
-    fn from(error: PackPrefixError<Infallible, u32>) -> Self {
-        match error {
-            PackPrefixError::Packable(e) => match e {},
-            PackPrefixError::Prefix(_) => Self::InvalidPrefix,
-        }
+impl From<PackPrefixError<Infallible>> for FpcPackError {
+    fn from(error: PackPrefixError<Infallible>) -> Self {
+        match error.0 {}
     }
 }
 
@@ -70,12 +67,11 @@ impl fmt::Display for FpcUnpackError {
     }
 }
 
-impl From<UnpackPrefixError<Infallible, u32>> for FpcUnpackError {
-    fn from(error: UnpackPrefixError<Infallible, u32>) -> Self {
+impl From<UnpackPrefixError<Infallible>> for FpcUnpackError {
+    fn from(error: UnpackPrefixError<Infallible>) -> Self {
         match error {
             UnpackPrefixError::InvalidPrefixLength(len) => Self::InvalidPrefixLength(len),
             UnpackPrefixError::Packable(e) => match e {},
-            UnpackPrefixError::Prefix(_) => Self::InvalidPrefix,
         }
     }
 }
