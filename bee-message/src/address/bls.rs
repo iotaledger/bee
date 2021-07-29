@@ -11,7 +11,7 @@ use bee_packable::Packable;
 pub struct BlsAddress(#[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))] [u8; Self::LENGTH]);
 
 impl BlsAddress {
-    /// The [`Address`] kind of a [`BlsAddress`].
+    /// The [`Address`](crate::address::Address) kind of a [`BlsAddress`].
     pub const KIND: u8 = 1;
     /// The length, in bytes, of a [`BlsAddress`].
     pub const LENGTH: usize = 49;

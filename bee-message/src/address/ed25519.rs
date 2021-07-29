@@ -16,7 +16,7 @@ use crypto::{
 pub struct Ed25519Address([u8; Self::LENGTH]);
 
 impl Ed25519Address {
-    /// The [`Address`] kind of an [`Ed25519Address`].
+    /// The [`Address`](crate::address::Address) kind of an [`Ed25519Address`].
     pub const KIND: u8 = 0;
     /// The length, in bytes, of an [`Ed25519Address`].
     pub const LENGTH: usize = 32;
