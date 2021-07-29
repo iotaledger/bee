@@ -26,7 +26,7 @@ macro_rules! plugin_trait {
             /// Prepares the plugin for shutdown.
             async fn shutdown(&self);
             $(
-                #[doc = "Handles events the specified type."]
+                #[doc = concat!("Handles an event of type `", stringify!($event_ty), "`.")]
                 async fn $method_name(&self, _event: $event_ty) {}
             )*
         }
