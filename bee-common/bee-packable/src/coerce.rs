@@ -29,7 +29,7 @@ impl<T, U, V> PackCoerce<T, U, V> for Result<T, PackError<U, V>> {
     }
 }
 
-/// Trait used to convert `Result` values that use `PackError` as the `Err` variant.
+/// Trait used to convert `Result` values that use `UnpackError` as the `Err` variant.
 pub trait UnpackCoerce<T, U, V>: sealed::Sealed {
     /// Coerces the value to another result type.
     fn coerce<W: From<U>>(self) -> Result<T, UnpackError<W, V>>;
@@ -52,7 +52,8 @@ impl<T, V> PackCoerceInfallible<T, V> for Result<T, PackError<Infallible, V>> {
         self.map_err(PackError::infallible)
     }
 }
-/// Trait used to convert `Result` values that use `PackError<Infallible, _>`as the `Err` variant.
+
+/// Trait used to convert `Result` values that use `UnpackError<Infallible, _>`as the `Err` variant.
 pub trait UnpackCoerceInfallible<T, V>: sealed::Sealed {
     /// Coerces the value to another result type.
     fn infallible<U>(self) -> Result<T, UnpackError<U, V>>;
