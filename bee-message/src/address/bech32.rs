@@ -26,7 +26,7 @@ impl Bech32Address {
             Ok((_, data, _)) => {
                 let _ = Vec::<u8>::from_base32(&data).map_err(|_| ValidationError::InvalidAddress)?;
             }
-            Err(_) => Err(ValidationError::InvalidAddress)?,
+            Err(_) => return Err(ValidationError::InvalidAddress),
         }
 
         Ok(Self(s.to_string()))
