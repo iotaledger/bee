@@ -120,9 +120,7 @@ dependencies = [
 name = "bee-node"
 version = "0.1.0"
 dependencies = [
- "bee-event-bus",
  "bee-logger",
- "bee-plugin",
  "log",
  "serde",
  "structopt",
@@ -163,6 +161,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bee-event-bus",
+ "bee-logger",
  "log",
  "prost",
  "thiserror",

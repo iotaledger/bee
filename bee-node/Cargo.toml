@@ -12,8 +12,6 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-logger = { path = "../bee-common/bee-logger", features = [ "serde" ] }
-bee-event-bus = { path = "../bee-common/bee-event-bus" }
-bee-plugin = { path = "../bee-plugin" }
 
 log = "0.4"
 serde = { version = "1.0", features = [ "derive" ] }
