@@ -5,8 +5,8 @@ use bee_message::{address::Bech32Address, error::ValidationError};
 
 use core::convert::TryFrom;
 
-const VALID_BECH32: [(&str, &str); 6] = [
-    // ("A12UEL5L", "A"),
+const VALID_BECH32: [(&str, &str); 7] = [
+    ("A12UEL5L", "a"),
     ("a12uel5l", "a"),
     (
         "an83characterlonghumanreadablepartthatcontainsthenumber1andtheexcludedcharactersbio1tt5tgs",
@@ -42,6 +42,19 @@ const INVALID_BECH32: [&str; 9] = [
     "1qzzfhee",
 ];
 
+const VALID_ADDRESSES: [(&str, &str, &str); 2] = [
+    (
+        "iota1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6xqgyzyx",
+        "iota",
+        "efdc112efe262b304bcf379b26c31bad029f616ee3ec4aa6345a366e4c9e43a3",
+    ),
+    (
+        "atoi1qrhacyfwlcnzkvzteumekfkrrwks98mpdm37cj4xx3drvmjvnep6x8x4r7t",
+        "atoi",
+        "efdc112efe262b304bcf379b26c31bad029f616ee3ec4aa6345a366e4c9e43a3",
+    ),
+];
+
 #[test]
 fn valid_bech32() {
     for valid in VALID_BECH32 {
@@ -73,5 +86,14 @@ fn invalid_bech32() {
 fn check_hrp() {
     for valid in VALID_BECH32 {
         assert_eq!(Bech32Address::new(valid.0).unwrap().hrp(), valid.1);
+    }
+}
+
+#[test]
+fn valid_addresses() {
+    for valid in VALID_ADDRESSES {
+        let bech32 = Bech32Address::new(valid.0).unwrap();
+        assert_eq!(bech32.hrp(), valid.1);
+        assert_eq!(bech32.data()[1..], hex::decode(valid.2).unwrap());
     }
 }

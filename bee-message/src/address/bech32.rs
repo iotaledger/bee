@@ -22,11 +22,10 @@ pub struct Bech32Address(String);
 impl Bech32Address {
     /// Creates a new [`Bech32Address`].
     pub fn new(s: &str) -> Result<Self, ValidationError> {
-        match bech32::decode(s) {
-            Ok((_, data, _)) => {
-                let _ = Vec::<u8>::from_base32(&data).map_err(|_| ValidationError::InvalidAddress)?;
-            }
-            Err(_) => return Err(ValidationError::InvalidAddress),
+        if let Ok((_, data, _)) = bech32::decode(s) {
+            Vec::<u8>::from_base32(&data).map_err(|_| ValidationError::InvalidAddress)?;
+        } else {
+            return Err(ValidationError::InvalidAddress);
         }
 
         Ok(Self(s.to_string()))
