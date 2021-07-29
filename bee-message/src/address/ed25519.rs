@@ -10,28 +10,24 @@ use crypto::{
     signatures::ed25519::{PublicKey, Signature},
 };
 
-use core::str::FromStr;
-
 /// An Ed25519 address.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Ed25519Address([u8; Self::LENGTH]);
 
-#[allow(clippy::len_without_is_empty)]
 impl Ed25519Address {
-    /// The address kind of an [`Ed25519Address`].
+    /// The [`Address`] kind of an [`Ed25519Address`].
     pub const KIND: u8 = 0;
-
-    /// The length (in bytes) of an [`Ed25519Address`].
+    /// The length, in bytes, of an [`Ed25519Address`].
     pub const LENGTH: usize = 32;
 
     /// Creates a new [`Ed25519Address`].
-    pub fn new(address: [u8; Self::LENGTH]) -> Self {
-        address.into()
+    pub fn new(bytes: [u8; Self::LENGTH]) -> Self {
+        Self(bytes)
     }
 
-    /// Verifies a [`Ed25519Signature`] for a message against the [`Ed25519Address`].
-    pub fn verify(&self, signature: &Ed25519Signature, msg: &[u8]) -> Result<(), ValidationError> {
+    /// Verifies an [`Ed25519Signature`] for a message against the [`Ed25519Address`].
+    pub fn verify(&self, signature: &Ed25519Signature, message: &[u8]) -> Result<(), ValidationError> {
         let address = Blake2b256::digest(signature.public_key());
 
         if self.0 != *address {
@@ -42,7 +38,7 @@ impl Ed25519Address {
         }
 
         if !PublicKey::from_compressed_bytes(*signature.public_key())?
-            .verify(&Signature::from_bytes(*signature.signature()), msg)
+            .verify(&Signature::from_bytes(*signature.signature()), message)
         {
             return Err(ValidationError::InvalidSignature);
         }
@@ -53,21 +49,29 @@ impl Ed25519Address {
 
 impl From<[u8; Self::LENGTH]> for Ed25519Address {
     fn from(bytes: [u8; Self::LENGTH]) -> Self {
-        Self(bytes)
-    }
-}
-
-impl FromStr for Ed25519Address {
-    type Err = ValidationError;
-
-    fn from_str(hex: &str) -> Result<Self, Self::Err> {
-        Ok(Ed25519Address::from(hex_decode(hex)?))
+        Self::new(bytes)
     }
 }
 
 impl AsRef<[u8]> for Ed25519Address {
     fn as_ref(&self) -> &[u8] {
         &self.0
+    }
+}
+
+impl core::ops::Deref for Ed25519Address {
+    type Target = [u8; Self::LENGTH];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl core::str::FromStr for Ed25519Address {
+    type Err = ValidationError;
+
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
+        Ok(Ed25519Address::from(hex_decode(hex)?))
     }
 }
 

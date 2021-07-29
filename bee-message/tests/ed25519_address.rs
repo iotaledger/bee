@@ -1,22 +1,23 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{
-    address::{Address, Ed25519Address},
-    error::ValidationError,
-};
+use bee_message::address::Ed25519Address;
 use bee_packable::Packable;
 
-use core::{convert::TryInto, str::FromStr};
+use core::{ops::Deref, str::FromStr};
 
 const ED25519_ADDRESS: &str = "1d389ea27a77c91d0840f93861442a95ca5e882e0d9f9c2f9965815409d939e4";
-const ED25519_ADDRESS_INVALID_HEX: &str = "x3241ccc0dbb4b2c119787c1903086516d30ed820e1073eb4e536202ac945517";
-const ED25519_ADDRESS_INVALID_LEN_TOO_SHORT: &str = "a1a1047c2f027e57a02f0dc40b0be6ead90e77f1fb1dec164645642c05ece1";
-const ED25519_ADDRESS_INVALID_LEN_TOO_LONG: &str = "79cab94c5953341b884b02f05ddd7080a31207ca972fadff2f602d977d4cf20b00";
+
+// TODO: add `verify` tests
 
 #[test]
 fn kind() {
     assert_eq!(Ed25519Address::KIND, 0);
+}
+
+#[test]
+fn length() {
+    assert_eq!(Ed25519Address::LENGTH, 32);
 }
 
 #[test]
@@ -36,35 +37,38 @@ fn debug_impl() {
 }
 
 #[test]
-fn from_str_valid() {
-    Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
+fn new_as_ref() {
+    assert_eq!(
+        Ed25519Address::new([42; Ed25519Address::LENGTH]).as_ref(),
+        &[42; Ed25519Address::LENGTH]
+    );
 }
 
 #[test]
-fn from_str_invalid_hex() {
-    assert!(matches!(
-        Ed25519Address::from_str(ED25519_ADDRESS_INVALID_HEX),
-        Err(ValidationError::InvalidHexadecimalChar(hex))
-            if hex == ED25519_ADDRESS_INVALID_HEX
-    ));
+fn new_deref() {
+    assert_eq!(
+        Ed25519Address::new([42; Ed25519Address::LENGTH]).deref(),
+        &[42; Ed25519Address::LENGTH]
+    );
 }
 
 #[test]
-fn from_str_invalid_len_too_short() {
-    assert!(matches!(
-        Ed25519Address::from_str(ED25519_ADDRESS_INVALID_LEN_TOO_SHORT),
-        Err(ValidationError::InvalidHexadecimalLength { expected, actual })
-            if expected == Ed25519Address::LENGTH * 2 && actual == Ed25519Address::LENGTH * 2 - 2
-    ));
+fn from_as_ref() {
+    assert_eq!(
+        Ed25519Address::from([42; Ed25519Address::LENGTH]).as_ref(),
+        &[42; Ed25519Address::LENGTH]
+    );
 }
 
 #[test]
-fn from_str_invalid_len_too_long() {
-    assert!(matches!(
-        Ed25519Address::from_str(ED25519_ADDRESS_INVALID_LEN_TOO_LONG),
-        Err(ValidationError::InvalidHexadecimalLength { expected, actual })
-            if expected == Ed25519Address::LENGTH * 2 && actual == Ed25519Address::LENGTH * 2 + 2
-    ));
+fn from_str_as_ref() {
+    assert_eq!(
+        Ed25519Address::from_str(ED25519_ADDRESS).unwrap().as_ref(),
+        &[
+            0x1d, 0x38, 0x9e, 0xa2, 0x7a, 0x77, 0xc9, 0x1d, 0x08, 0x40, 0xf9, 0x38, 0x61, 0x44, 0x2a, 0x95, 0xca, 0x5e,
+            0x88, 0x2e, 0x0d, 0x9f, 0x9c, 0x2f, 0x99, 0x65, 0x81, 0x54, 0x09, 0xd9, 0x39, 0xe4
+        ]
+    );
 }
 
 #[test]
@@ -76,24 +80,17 @@ fn from_to_str() {
 }
 
 #[test]
-fn try_from_bech32() {
-    let addr = Address::Ed25519(Ed25519Address::from_str(ED25519_ADDRESS).unwrap());
-
-    assert_eq!(addr, addr.to_bech32("atoi").try_into().unwrap());
-}
-
-#[test]
 fn packed_len() {
     let address = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
 
-    assert_eq!(address.packed_len(), 32);
-    assert_eq!(address.pack_to_vec().unwrap().len(), 32);
+    assert_eq!(address.packed_len(), Ed25519Address::LENGTH);
+    assert_eq!(address.pack_to_vec().unwrap().len(), Ed25519Address::LENGTH);
 }
 
 #[test]
 fn packable_round_trip() {
-    let address = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
-    let packed_address = address.pack_to_vec().unwrap();
+    let address_1 = Ed25519Address::from_str(ED25519_ADDRESS).unwrap();
+    let address_2 = Ed25519Address::unpack_from_slice(address_1.pack_to_vec().unwrap()).unwrap();
 
-    assert_eq!(address, Ed25519Address::unpack_from_slice(packed_address).unwrap());
+    assert_eq!(address_1, address_2);
 }
