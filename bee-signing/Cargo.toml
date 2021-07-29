@@ -18,4 +18,4 @@ bee-ternary = { version = "0.4.2-alpha", path = "../bee-ternary" }
 rand = "0.8"
 sha3 = "0.9"
 thiserror = "1.0"
-zeroize = "1.1"
+zeroize = "1.4"

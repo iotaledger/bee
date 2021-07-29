@@ -24,13 +24,13 @@ digest = { version = "0.9", optional = true }
 futures = { version = "0.3", optional = true }
 hashbrown = "0.11.2"
 hex = { version = "0.4", optional = true }
-iota-crypto = { version = "0.5", features = [ "blake2b" ], optional = true }
+iota-crypto = { version = "0.6.0", features = [ "blake2b" ], optional = true }
 log = { version = "0.4", optional = true }
 ref-cast = "1.0.6"
 reqwest = { version = "0.11", features = [ "stream" ], optional = true }
 serde = { version = "1.0", features = [ "derive" ], optional = true }
 thiserror = { version = "1.0" }
-tokio = { version = "1.6", features = [ "sync", "fs" ], optional = true }
+tokio = { version = "1.9", features = [ "sync", "fs" ], optional = true }
 tokio-stream = { version = "0.1", optional = true }
 
 [features]
