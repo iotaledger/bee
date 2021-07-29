@@ -1,8 +1,6 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::convert::{TryFrom, TryInto};
-
 use crate::{address::Address, error::ValidationError};
 
 use bee_packable::Packable;
@@ -15,31 +13,43 @@ use alloc::{
     string::{String, ToString},
     vec::Vec,
 };
+use core::convert::{TryFrom, TryInto};
 
-/// Wrapper for a `Bech32` encoded string.
+/// Wrapper for a `Bech32` encoded address string.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Bech32Address(String);
 
 impl Bech32Address {
-    /// Returns the data part of a [`Bech32Address`].
-    pub fn data(&self) -> Box<[u8]> {
-        let (_hrp, data, _) = bech32::decode(&self.0).unwrap();
+    /// Creates a new [`Bech32Address`].
+    pub fn new(s: &str) -> Result<Self, ValidationError> {
+        let _ = bech32::decode(s).map_err(|_| ValidationError::InvalidAddress)?;
 
-        Vec::<u8>::from_base32(&data).unwrap().into_boxed_slice()
+        Ok(Self(s.to_string()))
     }
 
-    /// Returns the hrp part of a [`Bech32Address`].
+    /// Returns the HRP part of a [`Bech32Address`].
     pub fn hrp(&self) -> String {
-        let (hrp, _data, _) = bech32::decode(&self.0).unwrap();
+        // Unwrap is fine since self is valid.
+        let (hrp, _, _) = bech32::decode(&self.0).unwrap();
 
         hrp
     }
 
-    /// Creates a wrapped [`Bech32Address`] from an [`Address`] and a human-readable portion.
+    /// Returns the data part of a [`Bech32Address`].
+    pub fn data(&self) -> Box<[u8]> {
+        // Unwrap is fine since self is valid.
+        let (_, data, _) = bech32::decode(&self.0).unwrap();
+
+        // Unwrap is fine since self is valid.
+        Vec::<u8>::from_base32(&data).unwrap().into_boxed_slice()
+    }
+
+    /// Creates a wrapped [`Bech32Address`] from an [`Address`] and a human-readable part.
     pub fn from_address(hrp: &str, address: &Address) -> Self {
+        // Unwrap is fine since packing to vec can't fail.
         let bytes = address.pack_to_vec().unwrap();
 
-        // Unwrap is fine here, since we know the [`Address`] is valid.
+        // Unwrap is fine since we know the [`Address`] is valid.
         Self(bech32::encode(hrp, bytes.to_base32(), bech32::Variant::Bech32).unwrap())
     }
 }
@@ -56,9 +66,15 @@ impl TryFrom<&str> for Bech32Address {
     type Error = ValidationError;
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
-        let _ = bech32::decode(s).map_err(|_| ValidationError::InvalidAddress)?;
+        Self::new(s)
+    }
+}
 
-        Ok(Self(s.to_string()))
+impl TryFrom<String> for Bech32Address {
+    type Error = ValidationError;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Self::new(&s)
     }
 }
 
