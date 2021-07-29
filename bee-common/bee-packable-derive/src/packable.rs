@@ -62,7 +62,7 @@ impl Fragments {
                 labels.push(proc_macro2::Literal::u64_unsuffixed(index as u64).to_token_stream());
             }
 
-            let wrapper = match parse_attr::<Type>("wrapper", &attrs) {
+            let wrapper = match parse_attr::<Type>("wrapper", attrs) {
                 Some(Ok(ty)) => ty,
                 Some(Err(span)) => abort!(span, "The `wrapper` attribute requires a type for its value."),
                 None => ty.clone(),
