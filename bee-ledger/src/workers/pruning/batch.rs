@@ -55,7 +55,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         .map_err(|e| Error::FetchOperation(Box::new(e)))?
         .ok_or(Error::MissingMilestone(prune_index))?;
 
-    let prune_ms_id = prune_ms.message_id().clone();
+    let prune_ms_id = *prune_ms.message_id();
 
     let mut to_visit: VecDeque<_> = vec![prune_ms_id].into_iter().collect();
     // let mut to_visit: VecDeque<_> = vec![(prune_ms_id, prune_ms_id)].into_iter().collect();
@@ -115,11 +115,10 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
 
         delete_message_and_metadata(storage, batch, &message_id)?;
 
-        // ---
-        // Everything that follows is required to decide whether the message id of pruned message should be kept as a solid entry point.
-        // We keep the set of SEPs as minimal as possible by checking whether there are still messages in future cones (beyond the new pruning index)
-        // that are referencing the current message (similar to a garbage collector).
-        // ---
+        // --- Everything that follows is required to decide whether the message id of pruned message should be kept as
+        // a solid entry point. We keep the set of SEPs as minimal as possible by checking whether there are
+        // still messages in future cones (beyond the new pruning index) that are referencing the current
+        // message (similar to a garbage collector). ---
 
         // Fetch its approvers from storage so that we can decide whether to keep it as an SEP, or not.
         let approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &message_id)
@@ -169,13 +168,14 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
                         log::error!("Cache and Storage have inconsistent metadata for {}", approver_id);
                     }
 
-                    // Note that an approver can still be confirmed by the same milestone despite the breadth-first walk (if it is
-                    // child/approver and sibling at the same time), in other words: conf_index = prune_index is possible.
+                    // Note that an approver can still be confirmed by the same milestone despite the breadth-first walk
+                    // (if it is child/approver and sibling at the same time), in other words:
+                    // conf_index = prune_index is possible.
                     let conf_index = approver_md.milestone_index().unwrap_or_else(|| {
                         // ---
-                        // BUG/FIXME: The invariant ".flags().is_referenced() => (milestone_index().is_some() == true) is violated" due to some
-                        // bug in our tangle impl (probably `update_metadata`), hence we need this mitigation code for now.
-                        // ---
+                        // BUG/FIXME: The invariant ".flags().is_referenced() => (milestone_index().is_some() == true)
+                        // is violated" due to some bug in our tangle impl (probably
+                        // `update_metadata`), hence we need this mitigation code for now. ---
                         log::trace!(
                             "Bug mitigation: Set {}+20 to un/confirmed approver {}",
                             prune_index,
@@ -195,8 +195,8 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
             max_conf_index = max_conf_index.max(approver_conf_index);
         }
 
-        // If the greatest confirmation index of all its approvers is greater than the index we're pruning, then we need to keep its
-        // message id as a solid entry point.
+        // If the greatest confirmation index of all its approvers is greater than the index we're pruning, then we need
+        // to keep its message id as a solid entry point.
         if max_conf_index > *prune_index {
             new_seps.insert(message_id.into(), max_conf_index.into());
 
@@ -261,16 +261,19 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
                     log::trace!("referenced flag not set for {}", unconf_msg_id);
 
                     // ---
-                    // BUG/FIXME: The invariant ".flags().is_referenced() => (milestone_index().is_some() == true) is violated" due to some
-                    // bug in our tangle impl (probably `update_metadata`), hence we need this mitigation code for now.
+                    // BUG/FIXME: The invariant ".flags().is_referenced() => (milestone_index().is_some() == true) is
+                    // violated" due to some bug in our tangle impl (probably `update_metadata`),
+                    // hence we need this mitigation code for now.
                     //
-                    // Bug mitigation: We only prune the messasge if all its approvers are also marked as "not referenced".
+                    // Bug mitigation: We only prune the messasge if all its approvers are also marked as "not
+                    // referenced".
                     //---
                     let unconf_approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &unconf_msg_id)
                         .map_err(|e| Error::FetchOperation(Box::new(e)))?
                         .ok_or(Error::MissingApprovers(*unconf_msg_id))?;
 
-                    // If there's only one approver that was confirmed, then we don't prune it despite the flag indicating otherwise.
+                    // If there's only one approver that was confirmed, then we don't prune it despite the flag
+                    // indicating otherwise.
                     for approver_id in unconf_approvers {
                         if let Some(approver_md) = Fetch::<MessageId, MessageMetadata>::fetch(storage, &approver_id)
                             .map_err(|e| Error::FetchOperation(Box::new(e)))?
