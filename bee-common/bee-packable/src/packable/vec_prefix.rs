@@ -4,7 +4,7 @@
 extern crate alloc;
 
 use crate::{
-    coerce::{Coerce, CoerceInfallible},
+    coerce::*,
     error::{PackError, PackPrefixError, UnpackError, UnpackPrefixError},
     packer::Packer,
     unpacker::Unpacker,
