@@ -3,8 +3,10 @@
 
 use core::convert::{TryFrom, TryInto};
 
-use super::Address;
 use crate::error::ValidationError;
+use super::Address;
+
+use bee_packable::Packable;
 
 use bech32::{self, FromBase32, ToBase32};
 
@@ -14,7 +16,6 @@ use alloc::{
     string::{String, ToString},
     vec::Vec,
 };
-use bee_packable::Packable;
 
 /// Wrapper for a `Bech32` encoded string.
 #[derive(Debug)]
