@@ -3,7 +3,7 @@
 
 use crate::{error::ValidationError, unlock::UNLOCK_BLOCK_INDEX_RANGE, MessageUnpackError};
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
 
 use core::{
     convert::{Infallible, TryFrom},
@@ -72,13 +72,13 @@ impl Packable for ReferenceUnlock {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.0.pack(packer).map_err(PackError::infallible)?;
+        self.0.pack(packer).infallible()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let index = u16::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let index = u16::unpack(unpacker).infallible()?;
 
         ReferenceUnlock::new(index).map_err(|e| UnpackError::Packable(e.into()))
     }

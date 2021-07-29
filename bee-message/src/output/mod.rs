@@ -20,7 +20,7 @@ pub use signature_locked_single::{
     SignatureLockedSingleOutput, SignatureLockedSingleUnpackError, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT,
 };
 
-use bee_packable::{PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker};
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker};
 
 use core::{
     fmt,
@@ -98,10 +98,10 @@ impl Packable for Output {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.kind().pack(packer).map_err(PackError::infallible)?;
+        self.kind().pack(packer).infallible()?;
 
         match self {
-            Self::SignatureLockedSingle(output) => output.pack(packer).map_err(PackError::infallible)?,
+            Self::SignatureLockedSingle(output) => output.pack(packer).infallible()?,
             Self::SignatureLockedAsset(output) => output.pack(packer)?,
         }
 
@@ -109,7 +109,7 @@ impl Packable for Output {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let kind = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let kind = u8::unpack(unpacker).infallible()?;
 
         let variant = match kind {
             SignatureLockedSingleOutput::KIND => {
@@ -118,9 +118,7 @@ impl Packable for Output {
             SignatureLockedAssetOutput::KIND => {
                 Self::SignatureLockedAsset(SignatureLockedAssetOutput::unpack(unpacker)?)
             }
-            tag => {
-                Err(UnpackError::Packable(OutputUnpackError::InvalidOutputKind(tag))).map_err(UnpackError::coerce)?
-            }
+            tag => Err(UnpackError::Packable(OutputUnpackError::InvalidOutputKind(tag))).coerce()?,
         };
 
         Ok(variant)

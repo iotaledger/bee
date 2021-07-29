@@ -10,6 +10,7 @@ use crate::{
 
 use bee_ord::is_sorted;
 use bee_packable::{
+    coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
     PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
 };
@@ -199,9 +200,9 @@ impl Packable for TransactionEssence {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.timestamp.pack(packer).map_err(PackError::infallible)?;
-        self.access_pledge_id.pack(packer).map_err(PackError::infallible)?;
-        self.consensus_pledge_id.pack(packer).map_err(PackError::infallible)?;
+        self.timestamp.pack(packer).infallible()?;
+        self.access_pledge_id.pack(packer).infallible()?;
+        self.consensus_pledge_id.pack(packer).infallible()?;
 
         // Unwraps are safe, since inputs/outputs lengths are already validated.
         let input_prefixed: VecPrefix<Input, u32, PREFIXED_INPUTS_LENGTH_MAX> = self.inputs.clone().try_into().unwrap();
@@ -210,13 +211,13 @@ impl Packable for TransactionEssence {
 
         input_prefixed
             .pack(packer)
-            .map_err(PackError::coerce::<TransactionEssencePackError>)
-            .map_err(PackError::coerce)?;
+            .coerce::<TransactionEssencePackError>()
+            .coerce()?;
 
         output_prefixed
             .pack(packer)
-            .map_err(PackError::coerce::<TransactionEssencePackError>)
-            .map_err(PackError::coerce)?;
+            .coerce::<TransactionEssencePackError>()
+            .coerce()?;
 
         self.payload.pack(packer)?;
 
@@ -224,9 +225,9 @@ impl Packable for TransactionEssence {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let timestamp = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let access_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let consensus_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let timestamp = u64::unpack(unpacker).infallible()?;
+        let access_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack(unpacker).infallible()?;
+        let consensus_pledge_id = <[u8; PLEDGE_ID_LENGTH]>::unpack(unpacker).infallible()?;
 
         // Inputs syntactical validation
         let inputs = VecPrefix::<Input, u32, PREFIXED_INPUTS_LENGTH_MAX>::unpack(unpacker);
@@ -295,7 +296,7 @@ impl Packable for TransactionEssence {
         .map_err(|e| UnpackError::Packable(e.into()))?;
         validate_outputs_sorted(&outputs_vec).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let payload = Option::<Payload>::unpack(unpacker).map_err(UnpackError::coerce)?;
+        let payload = Option::<Payload>::unpack(unpacker).coerce()?;
         validate_payload(&payload).map_err(|e| UnpackError::Packable(e.into()))?;
 
         Ok(Self {

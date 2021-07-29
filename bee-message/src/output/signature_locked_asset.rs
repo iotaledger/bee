@@ -4,6 +4,7 @@
 use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessagePackError, MessageUnpackError, ValidationError};
 
 use bee_packable::{
+    coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
     PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
 };
@@ -162,28 +163,28 @@ impl Packable for SignatureLockedAssetOutput {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.address.pack(packer).map_err(PackError::infallible)?;
+        self.address.pack(packer).infallible()?;
 
         // Unwrap is safe, since length has been validated.
         let prefixed_balances: VecPrefix<AssetBalance, u32, PREFIXED_BALANCES_LENGTH_MAX> =
             self.balances.clone().try_into().unwrap();
         prefixed_balances
             .pack(packer)
-            .map_err(PackError::coerce::<SignatureLockedAssetPackError>)
-            .map_err(PackError::coerce)?;
+            .coerce::<SignatureLockedAssetPackError>()
+            .coerce()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let address = Address::unpack(unpacker)
-            .map_err(UnpackError::coerce::<SignatureLockedAssetUnpackError>)
-            .map_err(UnpackError::coerce)?;
+            .coerce::<SignatureLockedAssetUnpackError>()
+            .coerce()?;
 
         let balances: Vec<AssetBalance> =
             VecPrefix::<AssetBalance, u32, PREFIXED_BALANCES_LENGTH_MAX>::unpack(unpacker)
-                .map_err(UnpackError::coerce::<SignatureLockedAssetUnpackError>)
-                .map_err(UnpackError::coerce)?
+                .coerce::<SignatureLockedAssetUnpackError>()
+                .coerce()?
                 .into();
 
         validate_balances_length(balances.len()).map_err(|e| UnpackError::Packable(e.into()))?;

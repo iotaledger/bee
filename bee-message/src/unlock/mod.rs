@@ -13,7 +13,7 @@ pub use unlock_blocks::{UnlockBlocks, UnlockBlocksPackError, UnlockBlocksUnpackE
 
 use crate::{input::INPUT_COUNT_MAX, MessageUnpackError, ValidationError};
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
 
 use core::{
     convert::Infallible,
@@ -93,18 +93,18 @@ impl Packable for UnlockBlock {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.kind().pack(packer).map_err(PackError::infallible)?;
+        self.kind().pack(packer).infallible()?;
 
         match self {
-            Self::Signature(signature) => signature.pack(packer).map_err(PackError::infallible)?,
-            Self::Reference(reference) => reference.pack(packer).map_err(PackError::infallible)?,
+            Self::Signature(signature) => signature.pack(packer).infallible()?,
+            Self::Reference(reference) => reference.pack(packer).infallible()?,
         }
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let kind = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let kind = u8::unpack(unpacker).infallible()?;
 
         let variant = match kind {
             SignatureUnlock::KIND => Self::Signature(SignatureUnlock::unpack(unpacker)?),

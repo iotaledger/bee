@@ -10,6 +10,7 @@ use crate::{
 };
 
 use bee_packable::{
+    coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
     PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
@@ -121,23 +122,23 @@ impl Packable for Salt {
         let prefixed_bytes: VecPrefix<u8, u32, PREFIXED_BYTES_LENGTH_MAX> = self.bytes.clone().try_into().unwrap();
         prefixed_bytes
             .pack(packer)
-            .map_err(PackError::coerce::<SaltDeclarationPackError>)
-            .map_err(PackError::coerce)?;
+            .coerce::<SaltDeclarationPackError>()
+            .coerce()?;
 
-        self.expiry_time.pack(packer).map_err(PackError::infallible)?;
+        self.expiry_time.pack(packer).infallible()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let bytes: Vec<u8> = VecPrefix::<u8, u32, PREFIXED_BYTES_LENGTH_MAX>::unpack(unpacker)
-            .map_err(UnpackError::coerce::<SaltDeclarationUnpackError>)
-            .map_err(UnpackError::coerce)?
+            .coerce::<SaltDeclarationUnpackError>()
+            .coerce()?
             .into();
 
         validate_bytes_length(bytes.len()).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let expiry_time = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let expiry_time = u64::unpack(unpacker).infallible()?;
 
         Ok(Self { bytes, expiry_time })
     }
@@ -211,24 +212,23 @@ impl Packable for SaltDeclarationPayload {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
-        self.node_id.pack(packer).map_err(PackError::infallible)?;
+        Self::VERSION.pack(packer).infallible()?;
+        self.node_id.pack(packer).infallible()?;
         self.salt.pack(packer)?;
-        self.timestamp.pack(packer).map_err(PackError::infallible)?;
-        self.signature.pack(packer).map_err(PackError::infallible)?;
+        self.timestamp.pack(packer).infallible()?;
+        self.signature.pack(packer).infallible()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).infallible()?;
         validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let node_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let node_id = u32::unpack(unpacker).infallible()?;
         let salt = Salt::unpack(unpacker)?;
-        let timestamp = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let signature =
-            <[u8; Ed25519Signature::SIGNATURE_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let timestamp = u64::unpack(unpacker).infallible()?;
+        let signature = <[u8; Ed25519Signature::SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
 
         Ok(Self {
             node_id,

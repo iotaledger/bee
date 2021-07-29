@@ -6,7 +6,7 @@
 use crate::{MessageId, MessageUnpackError, ValidationError};
 
 use bee_ord::is_unique_sorted;
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
 
 use alloc::vec::Vec;
 use core::{
@@ -101,11 +101,11 @@ impl Packable for ParentsBlock {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        (self.ty as u8).pack(packer).map_err(PackError::infallible)?;
-        (self.ids.len() as u8).pack(packer).map_err(PackError::infallible)?;
+        (self.ty as u8).pack(packer).infallible()?;
+        (self.ids.len() as u8).pack(packer).infallible()?;
 
         for id in &self.ids {
-            id.pack(packer).map_err(PackError::infallible)?;
+            id.pack(packer).infallible()?;
         }
 
         Ok(())
@@ -113,16 +113,16 @@ impl Packable for ParentsBlock {
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let ty = u8::unpack(unpacker)
-            .map_err(UnpackError::infallible)?
+            .infallible()?
             .try_into()
             .map_err(|e: ValidationError| UnpackError::Packable(e.into()))?;
 
-        let count = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let count = u8::unpack(unpacker).infallible()?;
         validate_parents_count(count as usize).map_err(|e| UnpackError::Packable(e.into()))?;
 
         let mut ids = Vec::with_capacity(count as usize);
         for _ in 0..count as usize {
-            ids.push(MessageId::unpack(unpacker).map_err(UnpackError::infallible)?);
+            ids.push(MessageId::unpack(unpacker).infallible()?);
         }
 
         validate_parents_unique_sorted(&ids).map_err(|e| UnpackError::Packable(e.into()))?;

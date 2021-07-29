@@ -12,6 +12,7 @@ pub use padded::PaddedIndex;
 use bee_packable::{
     error::{PackPrefixError, UnpackPrefixError},
     PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    coerce::*,
 };
 
 use alloc::vec::Vec;
@@ -145,38 +146,38 @@ impl Packable for IndexationPayload {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
+        Self::VERSION.pack(packer).infallible()?;
 
         // Unwrap is safe, since index/data lengths have already been validated.
         let prefixed_index: VecPrefix<u8, u32, PREFIXED_INDEX_LENGTH_MAX> = self.index.clone().try_into().unwrap();
         prefixed_index
             .pack(packer)
-            .map_err(PackError::coerce::<IndexationPackError>)
-            .map_err(PackError::coerce)?;
+            .coerce::<IndexationPackError>()
+            .coerce()?;
 
         let prefixed_data: VecPrefix<u8, u32, PREFIXED_DATA_LENGTH_MAX> = self.data.clone().try_into().unwrap();
         prefixed_data
             .pack(packer)
-            .map_err(PackError::coerce::<IndexationPackError>)
-            .map_err(PackError::coerce)?;
+            .coerce::<IndexationPackError>()
+            .coerce()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).infallible()?;
         validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
         let index: Vec<u8> = VecPrefix::<u8, u32, PREFIXED_INDEX_LENGTH_MAX>::unpack(unpacker)
-            .map_err(UnpackError::coerce::<IndexationUnpackError>)
-            .map_err(UnpackError::coerce)?
+            .coerce::<IndexationUnpackError>()
+            .coerce()?
             .into();
 
         validate_index(&index).map_err(|e| UnpackError::Packable(e.into()))?;
 
         let data: Vec<u8> = VecPrefix::<u8, u32, PREFIXED_DATA_LENGTH_MAX>::unpack(unpacker)
-            .map_err(UnpackError::coerce::<IndexationUnpackError>)
-            .map_err(UnpackError::coerce)?
+            .coerce::<IndexationUnpackError>()
+            .coerce()?
             .into();
 
         validate_data(&data).map_err(|e| UnpackError::Packable(e.into()))?;

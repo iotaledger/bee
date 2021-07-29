@@ -21,7 +21,7 @@ use indexation::{IndexationPackError, IndexationPayload, IndexationUnpackError};
 use salt_declaration::{SaltDeclarationPackError, SaltDeclarationPayload, SaltDeclarationUnpackError};
 use transaction::{TransactionPackError, TransactionPayload, TransactionUnpackError};
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
 
 use alloc::boxed::Box;
 use core::{convert::Infallible, fmt};
@@ -235,52 +235,46 @@ impl Packable for Payload {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         match *self {
             Self::ApplicationMessage(ref payload) => {
-                ApplicationMessagePayload::KIND
-                    .pack(packer)
-                    .map_err(PackError::infallible)?;
+                ApplicationMessagePayload::KIND.pack(packer).infallible()?;
                 payload.pack(packer)
             }
             Self::Beacon(ref payload) => {
-                BeaconPayload::KIND.pack(packer).map_err(PackError::infallible)?;
+                BeaconPayload::KIND.pack(packer).infallible()?;
                 payload.pack(packer)
             }
             Self::CollectiveBeacon(ref payload) => {
-                CollectiveBeaconPayload::KIND
-                    .pack(packer)
-                    .map_err(PackError::infallible)?;
+                CollectiveBeaconPayload::KIND.pack(packer).infallible()?;
                 payload.pack(packer)
             }
             Self::Data(ref payload) => {
-                DataPayload::KIND.pack(packer).map_err(PackError::infallible)?;
+                DataPayload::KIND.pack(packer).infallible()?;
                 payload.pack(packer)
             }
             Self::Dkg(ref payload) => {
-                DkgPayload::KIND.pack(packer).map_err(PackError::infallible)?;
+                DkgPayload::KIND.pack(packer).infallible()?;
                 payload.pack(packer)
             }
             Self::Fpc(ref payload) => {
-                FpcPayload::KIND.pack(packer).map_err(PackError::infallible)?;
+                FpcPayload::KIND.pack(packer).infallible()?;
                 payload.pack(packer)
             }
             Self::Indexation(ref payload) => {
-                IndexationPayload::KIND.pack(packer).map_err(PackError::infallible)?;
+                IndexationPayload::KIND.pack(packer).infallible()?;
                 payload.pack(packer)
             }
             Self::SaltDeclaration(ref payload) => {
-                SaltDeclarationPayload::KIND
-                    .pack(packer)
-                    .map_err(PackError::infallible)?;
+                SaltDeclarationPayload::KIND.pack(packer).infallible()?;
                 payload.pack(packer)
             }
             Self::Transaction(ref payload) => {
-                TransactionPayload::KIND.pack(packer).map_err(PackError::infallible)?;
+                TransactionPayload::KIND.pack(packer).infallible()?;
                 payload.pack(packer)
             }
         }
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let payload = match u32::unpack(unpacker).map_err(UnpackError::infallible)? {
+        let payload = match u32::unpack(unpacker).infallible()? {
             ApplicationMessagePayload::KIND => {
                 Payload::ApplicationMessage(Box::new(ApplicationMessagePayload::unpack(unpacker)?))
             }

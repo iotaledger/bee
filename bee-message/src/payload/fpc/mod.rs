@@ -12,6 +12,7 @@ pub use timestamps::{Timestamp, Timestamps};
 use crate::{payload::MessagePayload, MessagePackError, MessageUnpackError, ValidationError};
 
 use bee_packable::{
+    coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
     PackError, Packable, Packer, UnpackError, Unpacker,
 };
@@ -120,30 +121,20 @@ impl Packable for FpcPayload {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
-        self.conflicts
-            .pack(packer)
-            .map_err(PackError::coerce::<FpcPackError>)
-            .map_err(PackError::coerce)?;
-        self.timestamps
-            .pack(packer)
-            .map_err(PackError::coerce::<FpcPackError>)
-            .map_err(PackError::coerce)?;
+        Self::VERSION.pack(packer).infallible()?;
+        self.conflicts.pack(packer).coerce::<FpcPackError>().coerce()?;
+        self.timestamps.pack(packer).coerce::<FpcPackError>().coerce()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).infallible()?;
         validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let conflicts = Conflicts::unpack(unpacker)
-            .map_err(UnpackError::coerce::<FpcUnpackError>)
-            .map_err(UnpackError::coerce)?;
+        let conflicts = Conflicts::unpack(unpacker).coerce::<FpcUnpackError>().coerce()?;
 
-        let timestamps = Timestamps::unpack(unpacker)
-            .map_err(UnpackError::coerce::<FpcUnpackError>)
-            .map_err(UnpackError::coerce)?;
+        let timestamps = Timestamps::unpack(unpacker).coerce::<FpcUnpackError>().coerce()?;
 
         Ok(Self { conflicts, timestamps })
     }

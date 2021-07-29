@@ -9,7 +9,7 @@ use crate::{
     MessagePackError, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
 
 /// Message representing a dRNG [`BeaconPayload`].
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -72,24 +72,23 @@ impl Packable for BeaconPayload {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
-        self.instance_id.pack(packer).map_err(PackError::infallible)?;
-        self.round.pack(packer).map_err(PackError::infallible)?;
-        self.partial_public_key.pack(packer).map_err(PackError::infallible)?;
-        self.partial_signature.pack(packer).map_err(PackError::infallible)?;
+        Self::VERSION.pack(packer).infallible()?;
+        self.instance_id.pack(packer).infallible()?;
+        self.round.pack(packer).infallible()?;
+        self.partial_public_key.pack(packer).infallible()?;
+        self.partial_signature.pack(packer).infallible()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).infallible()?;
         validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let instance_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let round = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let partial_public_key =
-            <[u8; BEACON_PARTIAL_PUBLIC_KEY_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let partial_signature = <[u8; BEACON_SIGNATURE_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let instance_id = u32::unpack(unpacker).infallible()?;
+        let round = u64::unpack(unpacker).infallible()?;
+        let partial_public_key = <[u8; BEACON_PARTIAL_PUBLIC_KEY_LENGTH]>::unpack(unpacker).infallible()?;
+        let partial_signature = <[u8; BEACON_SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
 
         Ok(Self {
             instance_id,

@@ -17,7 +17,7 @@ pub use essence::{
 };
 pub use transaction_id::TransactionId;
 
-use bee_packable::{error::PackPrefixError, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{error::PackPrefixError, PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use alloc::boxed::Box;
@@ -162,7 +162,7 @@ impl Packable for TransactionPayload {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
+        Self::VERSION.pack(packer).infallible()?;
         self.essence.pack(packer)?;
         self.unlock_blocks.pack(packer)?;
 
@@ -170,7 +170,7 @@ impl Packable for TransactionPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).infallible()?;
         validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
         let essence = TransactionEssence::unpack(unpacker)?;

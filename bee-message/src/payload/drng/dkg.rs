@@ -7,6 +7,7 @@ use crate::{
 };
 
 use bee_packable::{
+    coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
     PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
@@ -144,57 +145,48 @@ impl Packable for EncryptedDeal {
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         // The following unwraps are safe, since the [`EncryptedDeal`] length has been validated.
         let prefixed_dh_key: VecPrefix<u8, u32, PREFIXED_LENGTH_MAX> = self.dh_key.clone().try_into().unwrap();
-        prefixed_dh_key
-            .pack(packer)
-            .map_err(PackError::coerce::<DkgPackError>)
-            .map_err(PackError::coerce)?;
+        prefixed_dh_key.pack(packer).coerce::<DkgPackError>().coerce()?;
 
         let prefixed_nonce: VecPrefix<u8, u32, PREFIXED_LENGTH_MAX> = self.nonce.clone().try_into().unwrap();
-        prefixed_nonce
-            .pack(packer)
-            .map_err(PackError::coerce::<DkgPackError>)
-            .map_err(PackError::coerce)?;
+        prefixed_nonce.pack(packer).coerce::<DkgPackError>().coerce()?;
 
         let prefixed_encrypted_share: VecPrefix<u8, u32, PREFIXED_LENGTH_MAX> =
             self.encrypted_share.clone().try_into().unwrap();
         prefixed_encrypted_share
             .pack(packer)
-            .map_err(PackError::coerce::<DkgPackError>)
-            .map_err(PackError::coerce)?;
+            .coerce::<DkgPackError>()
+            .coerce()?;
 
-        self.threshold.pack(packer).map_err(PackError::infallible)?;
+        self.threshold.pack(packer).infallible()?;
 
         let prefixed_commitments: VecPrefix<u8, u32, PREFIXED_LENGTH_MAX> =
             self.commitments.clone().try_into().unwrap();
-        prefixed_commitments
-            .pack(packer)
-            .map_err(PackError::coerce::<DkgPackError>)
-            .map_err(PackError::coerce)?;
+        prefixed_commitments.pack(packer).coerce::<DkgPackError>().coerce()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let dh_key = VecPrefix::<u8, u32, PREFIXED_LENGTH_MAX>::unpack(unpacker)
-            .map_err(UnpackError::coerce::<DkgUnpackError>)
-            .map_err(UnpackError::coerce)?
+            .coerce::<DkgUnpackError>()
+            .coerce()?
             .into();
 
         let nonce = VecPrefix::<u8, u32, PREFIXED_LENGTH_MAX>::unpack(unpacker)
-            .map_err(UnpackError::coerce::<DkgUnpackError>)
-            .map_err(UnpackError::coerce)?
+            .coerce::<DkgUnpackError>()
+            .coerce()?
             .into();
 
         let encrypted_share = VecPrefix::<u8, u32, PREFIXED_LENGTH_MAX>::unpack(unpacker)
-            .map_err(UnpackError::coerce::<DkgUnpackError>)
-            .map_err(UnpackError::coerce)?
+            .coerce::<DkgUnpackError>()
+            .coerce()?
             .into();
 
-        let threshold = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let threshold = u32::unpack(unpacker).infallible()?;
 
         let commitments = VecPrefix::<u8, u32, PREFIXED_LENGTH_MAX>::unpack(unpacker)
-            .map_err(UnpackError::coerce::<DkgUnpackError>)
-            .map_err(UnpackError::coerce)?
+            .coerce::<DkgUnpackError>()
+            .coerce()?
             .into();
 
         let deal = EncryptedDeal {
@@ -348,22 +340,22 @@ impl Packable for DkgPayload {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
-        self.instance_id.pack(packer).map_err(PackError::infallible)?;
-        self.from_index.pack(packer).map_err(PackError::infallible)?;
-        self.to_index.pack(packer).map_err(PackError::infallible)?;
+        Self::VERSION.pack(packer).infallible()?;
+        self.instance_id.pack(packer).infallible()?;
+        self.from_index.pack(packer).infallible()?;
+        self.to_index.pack(packer).infallible()?;
         self.deal.pack(packer)?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).infallible()?;
         validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let instance_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let from_index = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let to_index = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let instance_id = u32::unpack(unpacker).infallible()?;
+        let from_index = u32::unpack(unpacker).infallible()?;
+        let to_index = u32::unpack(unpacker).infallible()?;
         let deal = EncryptedDeal::unpack(unpacker)?;
 
         Ok(Self {

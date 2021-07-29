@@ -8,7 +8,7 @@ use crate::{
     util::hex_decode,
 };
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
 
 use core::{
     convert::{From, Infallible, TryFrom, TryInto},
@@ -84,16 +84,16 @@ impl Packable for OutputId {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.transaction_id.pack(packer).map_err(PackError::infallible)?;
-        self.index.pack(packer).map_err(PackError::infallible)?;
+        self.transaction_id.pack(packer).infallible()?;
+        self.index.pack(packer).infallible()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let transaction_id = TransactionId::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let transaction_id = TransactionId::unpack(unpacker).infallible()?;
 
-        let index = u16::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let index = u16::unpack(unpacker).infallible()?;
         validate_index(index).map_err(|e| UnpackError::Packable(e.into()))?;
 
         Ok(Self { transaction_id, index })

@@ -3,7 +3,7 @@
 
 use crate::{payload::MessagePayload, MessagePackError, MessageUnpackError, ValidationError};
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
 
 /// Message used by a node to declare its willingness to participate in the Committee Selection process.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -39,17 +39,17 @@ impl Packable for ApplicationMessagePayload {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).map_err(PackError::infallible)?;
-        self.instance_id.pack(packer).map_err(PackError::infallible)?;
+        Self::VERSION.pack(packer).infallible()?;
+        self.instance_id.pack(packer).infallible()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).infallible()?;
         validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let instance_id = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let instance_id = u32::unpack(unpacker).infallible()?;
 
         Ok(Self { instance_id })
     }

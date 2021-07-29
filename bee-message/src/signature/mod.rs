@@ -9,7 +9,7 @@ pub use ed25519::Ed25519Signature;
 
 use crate::MessageUnpackError;
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
 
 use core::{convert::Infallible, fmt};
 
@@ -67,20 +67,18 @@ impl Packable for Signature {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.kind().pack(packer).map_err(PackError::infallible)?;
+        self.kind().pack(packer).infallible()?;
 
         match self {
-            Self::Ed25519(s) => s.pack(packer).map_err(PackError::infallible)?,
+            Self::Ed25519(s) => s.pack(packer).infallible()?,
         }
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let variant = match u8::unpack(unpacker).map_err(UnpackError::infallible)? {
-            Ed25519Signature::KIND => {
-                Self::Ed25519(Ed25519Signature::unpack(unpacker).map_err(UnpackError::infallible)?)
-            }
+        let variant = match u8::unpack(unpacker).infallible()? {
+            Ed25519Signature::KIND => Self::Ed25519(Ed25519Signature::unpack(unpacker).infallible()?),
             kind => {
                 return Err(UnpackError::Packable(
                     SignatureUnpackError::InvalidSignatureKind(kind).into(),

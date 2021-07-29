@@ -7,6 +7,7 @@ use crate::{
 };
 
 use bee_packable::{
+    coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
     PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
@@ -147,10 +148,7 @@ impl Packable for UnlockBlocks {
         // Unwrap is safe, since UnlockBlock count is already validated.
         let prefixed: VecPrefix<UnlockBlock, u16, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX> =
             self.0.clone().try_into().unwrap();
-        prefixed
-            .pack(packer)
-            .map_err(PackError::coerce::<UnlockBlocksPackError>)
-            .map_err(PackError::coerce)?;
+        prefixed.pack(packer).coerce::<UnlockBlocksPackError>().coerce()?;
 
         Ok(())
     }

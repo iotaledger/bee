@@ -7,7 +7,7 @@ use crate::{
     MessageId, MessagePackError, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker, coerce::*};
 
 use crypto::{
     hashes::{blake2b::Blake2b256, Digest},
@@ -150,30 +150,30 @@ impl Packable for Message {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        MESSAGE_VERSION.pack(packer).map_err(PackError::infallible)?;
+        MESSAGE_VERSION.pack(packer).infallible()?;
         (self.parents_blocks.len() as u8)
             .pack(packer)
-            .map_err(PackError::infallible)?;
+            .infallible()?;
 
         for block in &self.parents_blocks {
-            block.pack(packer).map_err(PackError::infallible)?;
+            block.pack(packer).infallible()?;
         }
 
-        self.issuer_public_key.pack(packer).map_err(PackError::infallible)?;
-        self.issue_timestamp.pack(packer).map_err(PackError::infallible)?;
-        self.sequence_number.pack(packer).map_err(PackError::infallible)?;
+        self.issuer_public_key.pack(packer).infallible()?;
+        self.issue_timestamp.pack(packer).infallible()?;
+        self.sequence_number.pack(packer).infallible()?;
         self.payload.pack(packer)?;
-        self.nonce.pack(packer).map_err(PackError::infallible)?;
-        self.signature.pack(packer).map_err(PackError::infallible)?;
+        self.nonce.pack(packer).infallible()?;
+        self.signature.pack(packer).infallible()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let version = u8::unpack(unpacker).infallible()?;
         validate_message_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let parents_blocks_count = u8::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let parents_blocks_count = u8::unpack(unpacker).infallible()?;
         validate_parents_blocks_count(parents_blocks_count as usize).map_err(|e| UnpackError::Packable(e.into()))?;
 
         let mut parents_blocks = Vec::with_capacity(parents_blocks_count as usize);
@@ -183,12 +183,12 @@ impl Packable for Message {
 
         validate_has_strong_parents(&parents_blocks).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let issuer_public_key = <[u8; MESSAGE_PUBLIC_KEY_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let issue_timestamp = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let sequence_number = u32::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let payload = Option::<Payload>::unpack(unpacker).map_err(UnpackError::coerce)?;
-        let nonce = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
-        let signature = <[u8; MESSAGE_SIGNATURE_LENGTH]>::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let issuer_public_key = <[u8; MESSAGE_PUBLIC_KEY_LENGTH]>::unpack(unpacker).infallible()?;
+        let issue_timestamp = u64::unpack(unpacker).infallible()?;
+        let sequence_number = u32::unpack(unpacker).infallible()?;
+        let payload = Option::<Payload>::unpack(unpacker).coerce()?;
+        let nonce = u64::unpack(unpacker).infallible()?;
+        let signature = <[u8; MESSAGE_SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
 
         let message = Self {
             parents_blocks,

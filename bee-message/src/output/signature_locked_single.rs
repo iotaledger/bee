@@ -3,7 +3,7 @@
 
 use crate::{address::Address, error::ValidationError, MessageUnpackError, IOTA_SUPPLY};
 
-use bee_packable::{PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker};
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker};
 
 use core::{convert::Infallible, fmt, ops::RangeInclusive};
 
@@ -81,18 +81,18 @@ impl Packable for SignatureLockedSingleOutput {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.address.pack(packer).map_err(PackError::infallible)?;
-        self.amount.pack(packer).map_err(PackError::infallible)?;
+        self.address.pack(packer).infallible()?;
+        self.amount.pack(packer).infallible()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let address = Address::unpack(unpacker)
-            .map_err(UnpackError::coerce::<SignatureLockedSingleUnpackError>)
-            .map_err(UnpackError::coerce)?;
+            .coerce::<SignatureLockedSingleUnpackError>()
+            .coerce()?;
 
-        let amount = u64::unpack(unpacker).map_err(UnpackError::infallible)?;
+        let amount = u64::unpack(unpacker).infallible()?;
         validate_amount(amount).map_err(|e| UnpackError::Packable(e.into()))?;
 
         Ok(Self { address, amount })
