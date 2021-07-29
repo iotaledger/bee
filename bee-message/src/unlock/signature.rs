@@ -5,13 +5,14 @@ use crate::signature::Signature;
 
 use bee_packable::Packable;
 
-/// An [`UnlockBlock`](crate::unlock::UnlockBlock) which is used to unlock an [`Input`](crate::input::Input).
+/// An [`UnlockBlock`](crate::unlock::UnlockBlock) which is used to unlock a signature locked
+/// [`Input`](crate::input::Input).
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct SignatureUnlock(Signature);
 
 impl SignatureUnlock {
-    /// The unlock kind of a [`SignatureUnlock`].
+    /// The [`UnlockBlock`](crate::unlock::UnlockBlock) kind of a [`SignatureUnlock`].
     pub const KIND: u8 = 0;
 
     /// Creates a new [`SignatureUnlock`].
@@ -19,7 +20,7 @@ impl SignatureUnlock {
         Self(signature)
     }
 
-    /// Returns the inner signature of the [`SignatureUnlock`].
+    /// Returns the actual [`Signature`] of the [`SignatureUnlock`].
     pub fn signature(&self) -> &Signature {
         &self.0
     }
@@ -28,5 +29,13 @@ impl SignatureUnlock {
 impl From<Signature> for SignatureUnlock {
     fn from(signature: Signature) -> Self {
         Self::new(signature)
+    }
+}
+
+impl core::ops::Deref for SignatureUnlock {
+    type Target = Signature;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

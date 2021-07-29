@@ -8,39 +8,35 @@ use bee_message::{
 use bee_packable::Packable;
 use bee_test::rand::bytes::rand_bytes_array;
 
+use core::ops::Deref;
+
 #[test]
 fn kind() {
     assert_eq!(SignatureUnlock::KIND, 0);
 }
 
 #[test]
-fn new_valid() {
-    let public_key_bytes = rand_bytes_array();
-    let signature_bytes: [u8; 64] = rand_bytes_array();
-    let signature_unlock = SignatureUnlock::from(Signature::from(Ed25519Signature::new(
-        public_key_bytes,
-        signature_bytes,
-    )));
+fn new_getter() {
+    let signature = Signature::from(Ed25519Signature::new(rand_bytes_array(), rand_bytes_array()));
+    let signature_unlock = SignatureUnlock::new(signature.clone());
 
-    assert!(matches!(signature_unlock.signature(), Signature::Ed25519(signature)
-        if signature.public_key() == &public_key_bytes
-        && signature.signature() == signature_bytes.as_ref()
-    ));
+    assert_eq!(signature_unlock.signature(), &signature);
 }
 
 #[test]
-fn from_valid() {
-    let public_key_bytes = rand_bytes_array();
-    let signature_bytes: [u8; 64] = rand_bytes_array();
-    let signature_unlock = SignatureUnlock::from(Signature::from(Ed25519Signature::new(
-        public_key_bytes,
-        signature_bytes,
-    )));
+fn new_deref() {
+    let signature = Signature::from(Ed25519Signature::new(rand_bytes_array(), rand_bytes_array()));
+    let signature_unlock = SignatureUnlock::new(signature.clone());
 
-    assert!(matches!(signature_unlock.signature(), Signature::Ed25519(signature)
-        if signature.public_key() == &public_key_bytes
-        && signature.signature() == signature_bytes.as_ref()
-    ));
+    assert_eq!(signature_unlock.deref(), &signature);
+}
+
+#[test]
+fn from() {
+    let signature = Signature::from(Ed25519Signature::new(rand_bytes_array(), rand_bytes_array()));
+    let signature_unlock = SignatureUnlock::from(signature.clone());
+
+    assert_eq!(signature_unlock.signature(), &signature);
 }
 
 #[test]
@@ -60,9 +56,7 @@ fn packable_round_trip() {
         rand_bytes_array(),
         rand_bytes_array(),
     )));
-    let signature_unlock_bytes = signature_unlock_1.pack_to_vec().unwrap();
-    let signature_unlock_2 = SignatureUnlock::unpack_from_slice(signature_unlock_bytes.clone()).unwrap();
+    let signature_unlock_2 = SignatureUnlock::unpack_from_slice(signature_unlock_1.pack_to_vec().unwrap()).unwrap();
 
-    assert_eq!(signature_unlock_bytes[0], 0);
     assert_eq!(signature_unlock_1, signature_unlock_2);
 }

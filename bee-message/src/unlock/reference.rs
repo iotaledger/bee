@@ -12,8 +12,8 @@ use core::{
 
 /// Error encountered unpacking a [`ReferenceUnlock`].
 #[derive(Debug)]
+#[allow(missing_docs)]
 pub enum ReferenceUnlockUnpackError {
-    /// Validating a [`ReferenceUnlock`] failed.
     ValidationError(ValidationError),
 }
 
@@ -37,7 +37,7 @@ impl fmt::Display for ReferenceUnlockUnpackError {
 pub struct ReferenceUnlock(u16);
 
 impl ReferenceUnlock {
-    /// The unlock kind of a [`ReferenceUnlock`].
+    /// The [`UnlockBlock`](crate::unlock::UnlockBlock) kind of a [`ReferenceUnlock`].
     pub const KIND: u8 = 1;
 
     /// Creates a new [`ReferenceUnlock`].
@@ -60,6 +60,14 @@ impl TryFrom<u16> for ReferenceUnlock {
 
     fn try_from(index: u16) -> Result<Self, Self::Error> {
         Self::new(index)
+    }
+}
+
+impl core::ops::Deref for ReferenceUnlock {
+    type Target = u16;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

@@ -7,11 +7,18 @@ use bee_message::{
 };
 use bee_packable::{Packable, UnpackError};
 
-use core::convert::TryFrom;
+use core::{convert::TryFrom, ops::Deref};
 
 #[test]
 fn kind() {
     assert_eq!(ReferenceUnlock::KIND, 1);
+}
+
+#[test]
+fn new_valid_deref() {
+    let reference = ReferenceUnlock::new(42).unwrap();
+
+    assert_eq!(*reference.deref(), 42);
 }
 
 #[test]
