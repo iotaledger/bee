@@ -43,7 +43,7 @@ impl<'a, T: PartialEq> EventBus<'a, T> {
             .entry(TypeId::of::<E>())
             .or_default()
             .push((
-                Box::new(move |event| handler(&event.downcast_ref().expect("Invalid event"))),
+                Box::new(move |event| handler(event.downcast_ref().expect("Invalid event"))),
                 id,
             ));
     }
