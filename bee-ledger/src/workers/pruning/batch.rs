@@ -55,10 +55,9 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         .map_err(|e| Error::FetchOperation(Box::new(e)))?
         .ok_or(Error::MissingMilestone(prune_index))?;
 
-    let prune_ms_id = *prune_ms.message_id();
+    let prune_ms_id = prune_ms.message_id().clone();
 
     let mut to_visit: VecDeque<_> = vec![prune_ms_id].into_iter().collect();
-    // let mut to_visit: VecDeque<_> = vec![(prune_ms_id, prune_ms_id)].into_iter().collect();
 
     while let Some(message_id) = to_visit.pop_front() {
         // Skip already visited messages.

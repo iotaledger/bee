@@ -199,6 +199,7 @@ dependencies = [
  "hex",
  "iota-crypto",
  "log",
+ "ref-cast",
  "reqwest",
  "serde",
  "thiserror",
