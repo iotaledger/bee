@@ -95,6 +95,7 @@ version = "0.1.0"
 dependencies = [
  "autocfg",
  "bee-packable-derive",
+ "serde",
 ]
 
 [[package]]

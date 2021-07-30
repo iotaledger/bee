@@ -19,6 +19,7 @@ use core::{convert::TryFrom, marker::PhantomData};
 /// The [`Vec<T>`]'s prefix bounds are provided by `B`, where `B` is a [`Bounded`] type.
 /// The prefix type is the `Bounds` type associated with `B`.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct VecPrefix<T, B: Bounded> {
     inner: Vec<T>,

@@ -15,7 +15,7 @@ serde1 = [ "serde", "serde-big-array" ]
 
 [dependencies]
 bee-ord = { path = "../bee-common/bee-ord" }
-bee-packable = { path = "../bee-common/bee-packable" }
+bee-packable = { path = "../bee-common/bee-packable", features = ["serde"] }
 bee-packable-derive = { path = "../bee-common/bee-packable-derive" }
 
 bech32 = { version = "0.8", default-features = false }

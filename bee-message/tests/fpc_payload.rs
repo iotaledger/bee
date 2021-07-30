@@ -12,7 +12,7 @@ use bee_message::{
 use bee_packable::Packable;
 use bee_test::rand::bytes::rand_bytes_array;
 
-use std::ops::Deref;
+use std::{convert::TryInto, ops::Deref};
 
 #[test]
 fn kind() {
@@ -27,16 +27,24 @@ fn version() {
 #[test]
 fn new_valid() {
     let fpc = FpcPayload::builder()
-        .with_conflicts(Conflicts::new(vec![
-            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
-            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
-            Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
-        ]))
-        .with_timestamps(Timestamps::new(vec![
-            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
-            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
-            Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
-        ]))
+        .with_conflicts(Conflicts::new(
+            vec![
+                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
+                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
+                Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
+            ]
+            .try_into()
+            .unwrap(),
+        ))
+        .with_timestamps(Timestamps::new(
+            vec![
+                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
+                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
+                Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
+            ]
+            .try_into()
+            .unwrap(),
+        ))
         .finish();
 
     assert!(fpc.is_ok());
@@ -64,17 +72,25 @@ fn timestamp_accessors_eq() {
 
 #[test]
 fn accessors_eq() {
-    let conflicts = Conflicts::new(vec![
-        Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
-        Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
-        Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
-    ]);
+    let conflicts = Conflicts::new(
+        vec![
+            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
+        ]
+        .try_into()
+        .unwrap(),
+    );
 
-    let timestamps = Timestamps::new(vec![
-        Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
-        Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
-        Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
-    ]);
+    let timestamps = Timestamps::new(
+        vec![
+            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
+        ]
+        .try_into()
+        .unwrap(),
+    );
 
     let fpc = FpcPayload::builder()
         .with_conflicts(conflicts.clone())
@@ -116,16 +132,24 @@ fn unpack_valid() {
 #[test]
 fn packable_round_trip() {
     let fpc_a = FpcPayload::builder()
-        .with_conflicts(Conflicts::new(vec![
-            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
-            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
-            Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
-        ]))
-        .with_timestamps(Timestamps::new(vec![
-            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
-            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
-            Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
-        ]))
+        .with_conflicts(Conflicts::new(
+            vec![
+                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
+                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
+                Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
+            ]
+            .try_into()
+            .unwrap(),
+        ))
+        .with_timestamps(Timestamps::new(
+            vec![
+                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
+                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
+                Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
+            ]
+            .try_into()
+            .unwrap(),
+        ))
         .finish()
         .unwrap();
 

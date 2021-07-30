@@ -18,3 +18,4 @@ autocfg = "1.0"
 
 [dependencies]
 bee-packable-derive = { path = "../bee-packable-derive" }
+serde = { version = "1.0", features = [ "derive" ], optional = true }

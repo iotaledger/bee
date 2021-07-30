@@ -5,25 +5,36 @@ use crate::{payload::PAYLOAD_LENGTH_MAX, MessageId};
 
 use bee_packable::{
     error::{PackPrefixError, UnpackPrefixError},
-    Packable, VecPrefix,
+    BoundedU32, Packable, VecPrefix,
 };
 
-use alloc::vec::Vec;
-use core::{convert::Infallible, ops::Deref};
+use alloc::vec;
+use core::{
+    convert::{Infallible, TryFrom},
+    ops::Deref,
+};
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of
 /// [`Conflict`](crate::payload::fpc::Conflict).
-const PREFIXED_TIMESTAMPS_LENGTH_MAX: usize = PAYLOAD_LENGTH_MAX / (MessageId::LENGTH + 2 * core::mem::size_of::<u8>());
+const PREFIXED_TIMESTAMPS_LENGTH_MAX: u32 =
+    (PAYLOAD_LENGTH_MAX / (MessageId::LENGTH + 2 * core::mem::size_of::<u8>())) as u32;
 
 /// Provides a convenient collection of [`Timestamp`]s.
 /// Describes a vote in a given round for a message timestamp.
-#[derive(Clone, Default, Debug, Eq, PartialEq, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(pack_error = PackPrefixError<Infallible>)]
 #[packable(unpack_error = UnpackPrefixError<Infallible>)]
 pub struct Timestamps {
-    #[packable(wrapper = VecPrefix<Timestamp, BoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>)]
-    inner: Vec<Timestamp>,
+    inner: VecPrefix<Timestamp, BoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>,
+}
+
+impl Default for Timestamps {
+    fn default() -> Self {
+        Self {
+            inner: VecPrefix::try_from(vec![]).unwrap(),
+        }
+    }
 }
 
 impl Deref for Timestamps {
@@ -37,7 +48,7 @@ impl Deref for Timestamps {
 impl Timestamps {
     /// Creates a new [`Conflicts`](crate::payload::fpc::Conflicts) instance from a vector of
     /// [`Conflict`](crate::payload::fpc::Conflict)s.
-    pub fn new(inner: Vec<Timestamp>) -> Self {
+    pub fn new(inner: VecPrefix<Timestamp, BoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>) -> Self {
         Self { inner }
     }
 }

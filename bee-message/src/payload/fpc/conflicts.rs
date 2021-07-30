@@ -5,25 +5,35 @@ use crate::payload::{transaction::TransactionId, PAYLOAD_LENGTH_MAX};
 
 use bee_packable::{
     error::{PackPrefixError, UnpackPrefixError},
-    Packable, VecPrefix,
+    BoundedU32, Packable, VecPrefix,
 };
 
-use alloc::vec::Vec;
-use core::{convert::Infallible, ops::Deref};
+use alloc::vec;
+use core::{
+    convert::{Infallible, TryFrom},
+    ops::Deref,
+};
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
-const PREFIXED_CONFLICTS_LENGTH_MAX: usize =
-    PAYLOAD_LENGTH_MAX / (TransactionId::LENGTH + 2 * core::mem::size_of::<u8>());
+const PREFIXED_CONFLICTS_LENGTH_MAX: u32 =
+    (PAYLOAD_LENGTH_MAX / (TransactionId::LENGTH + 2 * core::mem::size_of::<u8>())) as u32;
 
 /// Provides a convenient collection of [`Conflict`]s.
 /// Describes a vote in a given round for a transaction conflict.
-#[derive(Clone, Default, Debug, Eq, PartialEq, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(pack_error = PackPrefixError<Infallible>)]
 #[packable(unpack_error = UnpackPrefixError<Infallible>)]
 pub struct Conflicts {
-    #[packable(wrapper = VecPrefix<Conflict, BoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>)]
-    inner: Vec<Conflict>,
+    inner: VecPrefix<Conflict, BoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>,
+}
+
+impl Default for Conflicts {
+    fn default() -> Self {
+        Self {
+            inner: VecPrefix::try_from(vec![]).unwrap(),
+        }
+    }
 }
 
 impl Deref for Conflicts {
@@ -36,7 +46,7 @@ impl Deref for Conflicts {
 
 impl Conflicts {
     /// Creates a new [`Conflicts`] instance from a vector of [`Conflict`]s.
-    pub fn new(inner: Vec<Conflict>) -> Self {
+    pub fn new(inner: VecPrefix<Conflict, BoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>) -> Self {
         Self { inner }
     }
 }
