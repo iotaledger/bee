@@ -3,9 +3,7 @@
 
 mod common;
 
-use bee_packable::{error::UnpackPrefixError, Packable, PrefixedFromVecError, UnpackError, VecPrefix};
-
-use core::convert::TryFrom;
+use bee_packable::{error::UnpackPrefixError, wrap::Wrap, Packable, PrefixedWrapVecError, UnpackError, VecPrefix};
 
 const MAX_LENGTH: usize = 128;
 
@@ -21,7 +19,7 @@ macro_rules! impl_packable_test_for_vec_prefix {
             );
             assert_eq!(
                 common::generic_test(
-                    &VecPrefix::<Option<u32>, $ty, MAX_LENGTH>::try_from(vec![Some(0u32), None]).unwrap()
+                    VecPrefix::<Option<u32>, $ty, MAX_LENGTH>::wrap(&vec![Some(0u32), None]).unwrap()
                 )
                 .0
                 .len(),
@@ -54,13 +52,13 @@ impl_packable_test_for_vec_prefix!(packable_vec_prefix_u64, packable_vec_prefix_
 impl_packable_test_for_vec_prefix!(packable_vec_prefix_u128, packable_vec_prefix_invalid_length_u128, u128);
 
 #[test]
-fn packable_vec_prefix_from_vec_error() {
+fn packable_vec_prefix_wraps_vec_error() {
     let vec = vec![0u8; 16];
-    let prefixed = VecPrefix::<u8, u32, 8>::try_from(vec);
+    let prefixed = VecPrefix::<u8, u32, 8>::wrap(&vec);
 
     assert!(matches!(
         prefixed,
-        Err(PrefixedFromVecError {
+        Err(PrefixedWrapVecError {
             max_len: 8,
             actual_len: 16
         })

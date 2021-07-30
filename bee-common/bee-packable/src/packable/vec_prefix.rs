@@ -15,10 +15,10 @@ use crate::{
 use alloc::vec::Vec;
 use core::{convert::TryFrom, marker::PhantomData};
 
-/// Error encountered when attempting to convert a [`Vec<T>`] into a [`VecPrefix`], where
+/// Error encountered when attempting to wrap a [`Vec<T>`] into a [`VecPrefix`], where
 /// the length of the source vector exceeds the maximum length of the [`VecPrefix`].
 #[derive(Debug, PartialEq, Eq)]
-pub struct PrefixedFromVecError {
+pub struct PrefixedWrapVecError {
     /// Maximum length of the [`VecPrefix`].
     pub max_len: usize,
     /// Actual length of the source vector.
@@ -58,24 +58,6 @@ impl<T, P, const N: usize> Default for VecPrefix<T, P, N> {
     }
 }
 
-impl<T, P, const N: usize> TryFrom<Vec<T>> for VecPrefix<T, P, N> {
-    type Error = PrefixedFromVecError;
-
-    fn try_from(vec: Vec<T>) -> Result<Self, Self::Error> {
-        if vec.len() > N {
-            Err(PrefixedFromVecError {
-                max_len: N,
-                actual_len: vec.len(),
-            })
-        } else {
-            Ok(Self {
-                inner: vec,
-                marker: PhantomData,
-            })
-        }
-    }
-}
-
 /// We cannot provide a [`From`] implementation because [`Vec`] is not from this crate.
 #[allow(clippy::from_over_into)]
 impl<T, P, const N: usize> Into<Vec<T>> for VecPrefix<T, P, N> {
@@ -100,13 +82,22 @@ impl<T, P, const N: usize> core::ops::DerefMut for VecPrefix<T, P, N> {
 
 macro_rules! impl_wrap_for_vec {
     ($ty:ty) => {
-        impl<T, const N: usize> Wrap<VecPrefix<T, $ty, N>> for Vec<T> {
-            fn wrap(&self) -> &VecPrefix<T, $ty, N> {
-                // SAFETY: [`VecPrefix`] has a transparent representation and it is composed of one
-                // [`Vec`] field and an additional zero-sized type field. This means that [`VecPrefix`]
-                // has the same layout as [`Vec`] and any valid [`Vec`] reference can be casted into a
-                // valid [`VecPrefix`] reference.
-                unsafe { &*(self as *const Vec<T> as *const VecPrefix<T, $ty, N>) }
+        impl<'a, T: 'a, const N: usize> Wrap<'a, Vec<T>> for VecPrefix<T, $ty, N> {
+            type Error = PrefixedWrapVecError;
+
+            fn wrap(value: &'a Vec<T>) -> Result<&'a Self, Self::Error> {
+                if value.len() > N {
+                    Err(PrefixedWrapVecError {
+                        max_len: N,
+                        actual_len: value.len(),
+                    })
+                } else {
+                    // SAFETY: [`VecPrefix`] has a transparent representation and it is composed of one
+                    // [`Vec`] field and an additional zero-sized type field. This means that [`VecPrefix`]
+                    // has the same layout as [`Vec`] and any valid [`Vec`] reference can be casted into a
+                    // valid [`VecPrefix`] reference.
+                    Ok(unsafe { &*(value as *const Vec<T> as *const Self) })
+                }
             }
         }
     };
