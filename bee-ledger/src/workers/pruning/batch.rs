@@ -55,7 +55,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         .map_err(|e| Error::FetchOperation(Box::new(e)))?
         .ok_or(Error::MissingMilestone(prune_index))?;
 
-    let prune_ms_id = prune_ms.message_id().clone();
+    let prune_ms_id = *prune_ms.message_id();
 
     let mut to_visit: VecDeque<_> = vec![prune_ms_id].into_iter().collect();
 
@@ -421,7 +421,7 @@ pub async fn delete_receipts<S: StorageBackend>(
     let mut num = 0;
     for receipt in receipts.into_iter() {
         // Receipt
-        Batch::<(MilestoneIndex, Receipt), ()>::batch_delete(storage, batch, &(index.into(), receipt))
+        Batch::<(MilestoneIndex, Receipt), ()>::batch_delete(storage, batch, &(index, receipt))
             .map_err(|e| Error::BatchOperation(Box::new(e)))?;
 
         num += 1;
@@ -430,7 +430,7 @@ pub async fn delete_receipts<S: StorageBackend>(
     Ok(num)
 }
 
-fn unwrap_indexation(payload: Option<&Payload>) -> Option<&Box<IndexationPayload>> {
+fn unwrap_indexation(payload: Option<&Payload>) -> Option<&IndexationPayload> {
     match payload {
         Some(Payload::Indexation(indexation)) => Some(indexation),
         Some(Payload::Transaction(transaction)) =>
