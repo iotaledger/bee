@@ -8,7 +8,6 @@ use crate::{
     error::{PackError, PackPrefixError, UnpackError, UnpackPrefixError},
     packer::Packer,
     unpacker::Unpacker,
-    wrap::Wrap,
     Packable,
 };
 
@@ -76,6 +75,22 @@ impl<T, P, const N: usize> TryFrom<Vec<T>> for VecPrefix<T, P, N> {
     }
 }
 
+impl<'a, T, P, const N: usize> TryFrom<&'a Vec<T>> for &'a VecPrefix<T, P, N> {
+    type Error = PrefixedFromVecError;
+
+    fn try_from(vec: &Vec<T>) -> Result<Self, Self::Error> {
+        if vec.len() > N {
+            Err(PrefixedFromVecError {
+                max_len: N,
+                actual_len: vec.len(),
+            })
+        } else {
+            // SAFETY: `Vec<T>` and `VecPrefix<T, P, N>` have the same layout.
+            Ok(unsafe { &*(vec as *const Vec<T> as *const VecPrefix<T, P, N>) })
+        }
+    }
+}
+
 /// We cannot provide a [`From`] implementation because [`Vec`] is not from this crate.
 #[allow(clippy::from_over_into)]
 impl<T, P, const N: usize> Into<Vec<T>> for VecPrefix<T, P, N> {
@@ -97,27 +112,6 @@ impl<T, P, const N: usize> core::ops::DerefMut for VecPrefix<T, P, N> {
         &mut self.inner
     }
 }
-
-macro_rules! impl_wrap_for_vec {
-    ($ty:ty) => {
-        impl<T, const N: usize> Wrap<VecPrefix<T, $ty, N>> for Vec<T> {
-            fn wrap(&self) -> &VecPrefix<T, $ty, N> {
-                // SAFETY: [`VecPrefix`] has a transparent representation and it is composed of one
-                // [`Vec`] field and an additional zero-sized type field. This means that [`VecPrefix`]
-                // has the same layout as [`Vec`] and any valid [`Vec`] reference can be casted into a
-                // valid [`VecPrefix`] reference.
-                unsafe { &*(self as *const Vec<T> as *const VecPrefix<T, $ty, N>) }
-            }
-        }
-    };
-}
-
-impl_wrap_for_vec!(u8);
-impl_wrap_for_vec!(u16);
-impl_wrap_for_vec!(u32);
-impl_wrap_for_vec!(u64);
-#[cfg(has_u128)]
-impl_wrap_for_vec!(u128);
 
 macro_rules! impl_packable_for_vec_prefix {
     ($ty:ty) => {

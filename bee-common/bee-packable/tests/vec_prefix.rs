@@ -21,7 +21,7 @@ macro_rules! impl_packable_test_for_vec_prefix {
             );
             assert_eq!(
                 common::generic_test(
-                    &VecPrefix::<Option<u32>, $ty, MAX_LENGTH>::try_from(vec![Some(0u32), None]).unwrap()
+                    <&VecPrefix<Option<u32>, $ty, MAX_LENGTH>>::try_from(&vec![Some(0u32), None]).unwrap()
                 )
                 .0
                 .len(),
