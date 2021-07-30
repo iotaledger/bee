@@ -107,12 +107,6 @@ impl<T, P, const N: usize> core::ops::Deref for VecPrefix<T, P, N> {
     }
 }
 
-impl<T, P, const N: usize> core::ops::DerefMut for VecPrefix<T, P, N> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.inner
-    }
-}
-
 macro_rules! impl_packable_for_vec_prefix {
     ($ty:ty) => {
         impl<T: Packable, const N: usize> Packable for VecPrefix<T, $ty, N> {
@@ -146,14 +140,17 @@ macro_rules! impl_packable_for_vec_prefix {
                     return Err(UnpackError::Packable(UnpackPrefixError::InvalidPrefixLength(len)));
                 }
 
-                let mut vec = Self::with_capacity(len);
+                let mut inner = Vec::with_capacity(len);
 
                 for _ in 0..len {
                     let item = T::unpack(unpacker).coerce()?;
-                    vec.push(item);
+                    inner.push(item);
                 }
 
-                Ok(vec)
+                Ok(VecPrefix {
+                    inner,
+                    marker: PhantomData,
+                })
             }
         }
     };
