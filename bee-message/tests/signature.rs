@@ -32,7 +32,7 @@ fn from_ed25519() {
 fn unpack_invalid_kind() {
     assert!(matches!(
         Signature::unpack_from_slice(vec![
-            1, 111, 225, 221, 28, 247, 253, 234, 110, 187, 52, 129, 153, 130, 84, 26, 7, 226, 27, 212, 145, 96, 151,
+            4, 111, 225, 221, 28, 247, 253, 234, 110, 187, 52, 129, 153, 130, 84, 26, 7, 226, 27, 212, 145, 96, 151,
             196, 124, 135, 176, 31, 48, 0, 213, 200, 82, 227, 169, 21, 179, 253, 115, 184, 209, 107, 138, 0, 62, 252,
             20, 255, 24, 193, 203, 255, 137, 142, 158, 25, 171, 86, 195, 20, 70, 56, 136, 204, 2, 219, 254, 218, 2,
             234, 91, 56, 50, 122, 112, 200, 110, 181, 15, 166, 100, 53, 115, 124, 220, 90, 50, 188, 45, 124, 67, 30,
@@ -41,7 +41,7 @@ fn unpack_invalid_kind() {
         .err()
         .unwrap(),
         UnpackError::Packable(MessageUnpackError::Signature(
-            SignatureUnpackError::InvalidSignatureKind(1)
+            SignatureUnpackError::InvalidSignatureKind(4)
         )),
     ));
 }

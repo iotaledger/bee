@@ -11,6 +11,7 @@ use core::fmt;
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum ValidationError {
+    AddressSignatureKindMismatch { expected: u8, actual: u8 },
     CryptoError(CryptoError),
     DuplicateAddress(Address),
     DuplicateSignature(usize),
@@ -55,6 +56,13 @@ impl_wrapped_variant!(ValidationError, CryptoError, ValidationError::CryptoError
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::AddressSignatureKindMismatch { expected, actual } => {
+                write!(
+                    f,
+                    "address and signature kind mismatch: expected {}, got {}",
+                    expected, actual
+                )
+            }
             Self::CryptoError(e) => write!(f, "cryptographic error: {}", e),
             Self::DuplicateAddress(address) => write!(f, "duplicate address {:?} in outputs", address),
             Self::DuplicateSignature(index) => {

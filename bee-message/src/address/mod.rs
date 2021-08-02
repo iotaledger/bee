@@ -53,12 +53,25 @@ impl Address {
     pub fn verify(&self, msg: &[u8], signature: &Signature) -> Result<(), ValidationError> {
         match self {
             Address::Ed25519(address) => {
-                let Signature::Ed25519(signature) = signature;
-                address.verify(signature, msg)
+                if let Signature::Ed25519(signature) = signature {
+                    address.verify(signature, msg)
+                } else {
+                    Err(ValidationError::AddressSignatureKindMismatch {
+                        expected: self.kind(),
+                        actual: signature.kind(),
+                    })
+                }
             }
             Address::Bls(_) => {
-                // TODO BLS address verification
-                Err(ValidationError::InvalidAddressKind(BlsAddress::KIND))
+                if let Signature::Bls(_) = signature {
+                    // TODO BLS address verification
+                    Err(ValidationError::InvalidAddressKind(BlsAddress::KIND))
+                } else {
+                    Err(ValidationError::AddressSignatureKindMismatch {
+                        expected: self.kind(),
+                        actual: signature.kind(),
+                    })
+                }
             }
         }
     }

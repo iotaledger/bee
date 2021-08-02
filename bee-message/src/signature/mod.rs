@@ -3,8 +3,10 @@
 
 //! Module that provides types and syntactic validations of signatures.
 
+mod bls;
 mod ed25519;
 
+pub use bls::BlsSignature;
 pub use ed25519::Ed25519Signature;
 
 use crate::MessageUnpackError;
@@ -42,6 +44,9 @@ pub enum Signature {
     /// An Ed25519 signature.
     #[packable(tag = Ed25519Signature::KIND)]
     Ed25519(Ed25519Signature),
+    /// An BLS signature.
+    #[packable(tag = BlsSignature::KIND)]
+    Bls(BlsSignature),
 }
 
 impl Signature {
@@ -49,6 +54,7 @@ impl Signature {
     pub fn kind(&self) -> u8 {
         match self {
             Self::Ed25519(_) => Ed25519Signature::KIND,
+            Self::Bls(_) => BlsSignature::KIND,
         }
     }
 }
@@ -56,5 +62,11 @@ impl Signature {
 impl From<Ed25519Signature> for Signature {
     fn from(signature: Ed25519Signature) -> Self {
         Self::Ed25519(signature)
+    }
+}
+
+impl From<BlsSignature> for Signature {
+    fn from(signature: BlsSignature) -> Self {
+        Self::Bls(signature)
     }
 }
