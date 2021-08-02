@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use crate::{
+    address::AddressUnpackError,
     input::InputUnpackError,
     output::{
         OutputIdUnpackError, OutputUnpackError, SignatureLockedAssetPackError, SignatureLockedAssetUnpackError,
@@ -88,6 +89,7 @@ impl fmt::Display for MessagePackError {
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum MessageUnpackError {
+    Address(AddressUnpackError),
     Data(DataUnpackError),
     Dkg(DkgUnpackError),
     Fpc(FpcUnpackError),
@@ -134,11 +136,6 @@ impl_wrapped_validated!(
 );
 impl_wrapped_validated!(
     MessageUnpackError,
-    SignatureLockedSingleUnpackError,
-    MessageUnpackError::SignatureLockedSingle
-);
-impl_wrapped_validated!(
-    MessageUnpackError,
     UnlockBlockUnpackError,
     MessageUnpackError::UnlockBlock
 );
@@ -147,6 +144,7 @@ impl_wrapped_validated!(
     UnlockBlocksUnpackError,
     MessageUnpackError::UnlockBlocks
 );
+impl_wrapped_variant!(MessageUnpackError, AddressUnpackError, MessageUnpackError::Address);
 impl_wrapped_variant!(MessageUnpackError, DataUnpackError, MessageUnpackError::Data);
 impl_wrapped_variant!(MessageUnpackError, DkgUnpackError, MessageUnpackError::Dkg);
 impl_wrapped_variant!(MessageUnpackError, FpcUnpackError, MessageUnpackError::Fpc);
@@ -158,6 +156,14 @@ impl_wrapped_variant!(
 impl_wrapped_variant!(MessageUnpackError, SignatureUnpackError, MessageUnpackError::Signature);
 impl_wrapped_variant!(MessageUnpackError, ValidationError, MessageUnpackError::ValidationError);
 impl_from_infallible!(MessageUnpackError);
+
+impl From<SignatureLockedSingleUnpackError> for MessageUnpackError {
+    fn from(error: SignatureLockedSingleUnpackError) -> Self {
+        match error {
+            SignatureLockedSingleUnpackError::ValidationError(e) => Self::ValidationError(e),
+        }
+    }
+}
 
 impl From<UnpackOptionError<MessageUnpackError>> for MessageUnpackError {
     fn from(error: UnpackOptionError<MessageUnpackError>) -> Self {
@@ -171,6 +177,7 @@ impl From<UnpackOptionError<MessageUnpackError>> for MessageUnpackError {
 impl fmt::Display for MessageUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Address(e) => write!(f, "error unpacking Address: {}", e),
             Self::Data(e) => write!(f, "error unpacking Data payload: {}", e),
             Self::Dkg(e) => write!(f, "error unpacking DKG payload: {}", e),
             Self::Fpc(e) => write!(f, "error unpacking FPC payload: {}", e),

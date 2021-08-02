@@ -3,11 +3,7 @@
 
 use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessagePackError, MessageUnpackError, ValidationError};
 
-use bee_packable::{
-    coerce::*,
-    error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
-};
+use bee_packable::{BoundedU32, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix, coerce::*, error::{PackPrefixError, UnpackPrefixError}};
 
 use alloc::vec::Vec;
 use core::{
@@ -43,7 +39,6 @@ impl fmt::Display for SignatureLockedAssetPackError {
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum SignatureLockedAssetUnpackError {
-    InvalidAddressKind(u8),
     InvalidPrefix,
     ValidationError(ValidationError),
 }
@@ -55,8 +50,8 @@ impl_wrapped_variant!(
 );
 
 impl From<UnknownTagError<u8>> for SignatureLockedAssetUnpackError {
-    fn from(error: UnknownTagError<u8>) -> Self {
-        Self::InvalidAddressKind(error.0)
+    fn from(_: UnknownTagError<u8>) -> Self {
+        Self::InvalidPrefix
     }
 }
 
@@ -69,7 +64,6 @@ impl From<UnpackPrefixError<Infallible>> for SignatureLockedAssetUnpackError {
 impl fmt::Display for SignatureLockedAssetUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidAddressKind(kind) => write!(f, "invalid address kind: {}", kind),
             Self::InvalidPrefix => write!(f, "invalid prefix for asset balance vector"),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
@@ -177,9 +171,7 @@ impl Packable for SignatureLockedAssetOutput {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let address = Address::unpack(unpacker)
-            .coerce::<SignatureLockedAssetUnpackError>()
-            .coerce()?;
+        let address = Address::unpack(unpacker).coerce()?;
 
         let balances: Vec<AssetBalance> =
             VecPrefix::<AssetBalance, BoundedU32<0, PREFIXED_BALANCES_LENGTH_MAX>>::unpack(unpacker)

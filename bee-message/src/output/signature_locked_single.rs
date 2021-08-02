@@ -3,7 +3,7 @@
 
 use crate::{address::Address, error::ValidationError, MessagePackError, MessageUnpackError, IOTA_SUPPLY};
 
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker};
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
 
 use core::{fmt, ops::RangeInclusive};
 
@@ -14,7 +14,6 @@ pub const SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum SignatureLockedSingleUnpackError {
-    InvalidAddressKind(u8),
     ValidationError(ValidationError),
 }
 
@@ -24,16 +23,9 @@ impl_wrapped_variant!(
     SignatureLockedSingleUnpackError::ValidationError
 );
 
-impl From<UnknownTagError<u8>> for SignatureLockedSingleUnpackError {
-    fn from(error: UnknownTagError<u8>) -> Self {
-        Self::InvalidAddressKind(error.0)
-    }
-}
-
 impl fmt::Display for SignatureLockedSingleUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidAddressKind(kind) => write!(f, "invalid address kind: {}", kind),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
     }
@@ -88,9 +80,7 @@ impl Packable for SignatureLockedSingleOutput {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let address = Address::unpack(unpacker)
-            .coerce::<SignatureLockedSingleUnpackError>()
-            .coerce()?;
+        let address = Address::unpack(unpacker).coerce()?;
 
         let amount = u64::unpack(unpacker).infallible()?;
         validate_amount(amount).map_err(|e| UnpackError::Packable(e.into()))?;

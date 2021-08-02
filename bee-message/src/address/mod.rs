@@ -11,9 +11,29 @@ pub use self::bech32::Bech32Address;
 pub use bls::BlsAddress;
 pub use ed25519::Ed25519Address;
 
-use crate::{error::ValidationError, signature::Signature};
+use crate::{
+    error::{MessageUnpackError, ValidationError},
+    signature::Signature,
+};
 
 use bee_packable::Packable;
+
+use core::{convert::Infallible, fmt};
+
+/// Error encountered unpacking an [`Address`].
+#[derive(Debug)]
+#[allow(missing_docs)]
+pub enum AddressUnpackError {
+    InvalidKind(u8),
+}
+
+impl fmt::Display for AddressUnpackError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidKind(kind) => write!(f, "invalid Address kind: {}", kind),
+        }
+    }
+}
 
 /// A generic address supporting different address kinds.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
@@ -23,6 +43,9 @@ use bee_packable::Packable;
     serde(tag = "type", content = "data")
 )]
 #[packable(tag_type = u8)]
+#[packable(tag_error = AddressUnpackError::InvalidKind)]
+#[packable(pack_error = Infallible)]
+#[packable(unpack_error = MessageUnpackError)]
 pub enum Address {
     /// An Ed25519 address.
     #[packable(tag = Ed25519Address::KIND)]

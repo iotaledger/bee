@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    address::{Address, BlsAddress, Ed25519Address},
+    address::{Address, AddressUnpackError, BlsAddress, Ed25519Address},
     util::hex_decode,
+    MessageUnpackError,
 };
-use bee_packable::Packable;
+use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes_array;
 
 use core::str::FromStr;
@@ -79,15 +80,15 @@ fn packable_round_trip() {
     assert_eq!(address_1, address_2);
 }
 
-// #[test]
-// fn unpack_invalid_kind() {
-//     assert!(matches!(
-//         Address::unpack_from_slice(vec![
-//             0x04, 0x1d, 0x38, 0x9e, 0xa2, 0x7a, 0x77, 0xc9, 0x1d, 0x08, 0x40, 0xf9, 0x38, 0x61, 0x44, 0x2a, 0x95, 0xca,
-//             0x5e, 0x88, 0x2e, 0x0d, 0x9f, 0x9c, 0x2f, 0x99, 0x65, 0x81, 0x54, 0x09, 0xd9, 0x39, 0xe4
-//         ])
-//         .err()
-//         .unwrap(),
-//         UnpackError::Packable(MessageUnpackError::Signature(SignatureUnpackError::InvalidKind(4))),
-//     ));
-// }
+#[test]
+fn unpack_invalid_kind() {
+    assert!(matches!(
+        Address::unpack_from_slice(vec![
+            0x04, 0x1d, 0x38, 0x9e, 0xa2, 0x7a, 0x77, 0xc9, 0x1d, 0x08, 0x40, 0xf9, 0x38, 0x61, 0x44, 0x2a, 0x95, 0xca,
+            0x5e, 0x88, 0x2e, 0x0d, 0x9f, 0x9c, 0x2f, 0x99, 0x65, 0x81, 0x54, 0x09, 0xd9, 0x39, 0xe4
+        ])
+        .err()
+        .unwrap(),
+        UnpackError::Packable(MessageUnpackError::Address(AddressUnpackError::InvalidKind(4))),
+    ));
+}
