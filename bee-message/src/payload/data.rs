@@ -105,8 +105,7 @@ impl Packable for DataPayload {
 
     fn packed_len(&self) -> usize {
         // Unwrap is safe, since the data length has already been validated.
-        let prefixed_data: VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>> =
-            self.data.clone().try_into().unwrap();
+        let prefixed_data: &VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>> = (&self.data).try_into().unwrap();
 
         Self::VERSION.packed_len() + prefixed_data.packed_len()
     }
@@ -115,8 +114,7 @@ impl Packable for DataPayload {
         Self::VERSION.pack(packer).infallible()?;
 
         // Unwrap is safe, since the data length has already been validated.
-        let prefixed_data: VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>> =
-            self.data.clone().try_into().unwrap();
+        let prefixed_data: &VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>> = (&self.data).try_into().unwrap();
         prefixed_data.pack(packer).coerce::<DataPackError>().coerce()?;
 
         Ok(())

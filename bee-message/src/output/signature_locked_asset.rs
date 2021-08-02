@@ -3,7 +3,11 @@
 
 use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessagePackError, MessageUnpackError, ValidationError};
 
-use bee_packable::{BoundedU32, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix, coerce::*, error::{PackPrefixError, UnpackPrefixError}};
+use bee_packable::{
+    coerce::*,
+    error::{PackPrefixError, UnpackPrefixError},
+    BoundedU32, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
+};
 
 use alloc::vec::Vec;
 use core::{

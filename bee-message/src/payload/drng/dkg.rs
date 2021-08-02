@@ -124,13 +124,12 @@ impl Packable for EncryptedDeal {
 
     fn packed_len(&self) -> usize {
         // Unwraps are safe, since the [`EncryptedDeal`] length has been validated.
-        let prefixed_dh_key: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
-            self.dh_key.clone().try_into().unwrap();
-        let prefixed_nonce: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> = self.nonce.clone().try_into().unwrap();
-        let prefixed_encrypted_share: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
-            self.encrypted_share.clone().try_into().unwrap();
-        let prefixed_commitments: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
-            self.commitments.clone().try_into().unwrap();
+        let prefixed_dh_key: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> = (&self.dh_key).try_into().unwrap();
+        let prefixed_nonce: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> = (&self.nonce).try_into().unwrap();
+        let prefixed_encrypted_share: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
+            (&self.encrypted_share).try_into().unwrap();
+        let prefixed_commitments: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
+            (&self.commitments).try_into().unwrap();
 
         prefixed_dh_key.packed_len()
             + prefixed_nonce.packed_len()
@@ -141,15 +140,15 @@ impl Packable for EncryptedDeal {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         // The following unwraps are safe, since the [`EncryptedDeal`] length has been validated.
-        let prefixed_dh_key: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
-            self.dh_key.clone().try_into().unwrap();
+        let prefixed_dh_key: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> = (&self.dh_key).try_into().unwrap();
         prefixed_dh_key.pack(packer).coerce::<DkgPackError>().coerce()?;
 
-        let prefixed_nonce: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> = self.nonce.clone().try_into().unwrap();
+        let prefixed_nonce: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> = (&self.nonce).try_into().unwrap();
         prefixed_nonce.pack(packer).coerce::<DkgPackError>().coerce()?;
 
-        let prefixed_encrypted_share: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
-            self.encrypted_share.clone().try_into().unwrap();
+        let prefixed_encrypted_share: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
+            (&self.encrypted_share).try_into().unwrap();
+
         prefixed_encrypted_share
             .pack(packer)
             .coerce::<DkgPackError>()
@@ -157,8 +156,8 @@ impl Packable for EncryptedDeal {
 
         self.threshold.pack(packer).infallible()?;
 
-        let prefixed_commitments: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
-            self.commitments.clone().try_into().unwrap();
+        let prefixed_commitments: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
+            (&self.commitments).try_into().unwrap();
         prefixed_commitments.pack(packer).coerce::<DkgPackError>().coerce()?;
 
         Ok(())

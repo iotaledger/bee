@@ -108,16 +108,16 @@ impl Packable for Salt {
 
     fn packed_len(&self) -> usize {
         // Unwrap is safe, since bytes length has already been validated.
-        let prefixed_bytes: VecPrefix<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>> =
-            self.bytes.clone().try_into().unwrap();
+        let prefixed_bytes: &VecPrefix<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>> =
+            (&self.bytes).try_into().unwrap();
 
         prefixed_bytes.packed_len() + self.expiry_time.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         // Unwrap is safe, since bytes length has already been validated.
-        let prefixed_bytes: VecPrefix<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>> =
-            self.bytes.clone().try_into().unwrap();
+        let prefixed_bytes: &VecPrefix<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>> =
+            (&self.bytes).try_into().unwrap();
         prefixed_bytes
             .pack(packer)
             .coerce::<SaltDeclarationPackError>()

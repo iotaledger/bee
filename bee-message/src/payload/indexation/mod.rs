@@ -137,10 +137,10 @@ impl Packable for IndexationPayload {
 
     fn packed_len(&self) -> usize {
         // Unwrap is safe, since index/data lengths have already been validated.
-        let prefixed_index: VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>> =
-            self.index.clone().try_into().unwrap();
-        let prefixed_data: VecPrefix<u8, BoundedU32<PREFIXED_DATA_LENGTH_MIN, PREFIXED_DATA_LENGTH_MAX>> =
-            self.data.clone().try_into().unwrap();
+        let prefixed_index: &VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>> =
+            (&self.index).try_into().unwrap();
+        let prefixed_data: &VecPrefix<u8, BoundedU32<PREFIXED_DATA_LENGTH_MAX, PREFIXED_DATA_LENGTH_MAX>> =
+            (&self.data).try_into().unwrap();
 
         Self::VERSION.packed_len() + prefixed_index.packed_len() + prefixed_data.packed_len()
     }
@@ -149,12 +149,12 @@ impl Packable for IndexationPayload {
         Self::VERSION.pack(packer).infallible()?;
 
         // Unwrap is safe, since index/data lengths have already been validated.
-        let prefixed_index: VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>> =
-            self.index.clone().try_into().unwrap();
+        let prefixed_index: &VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>> =
+            (&self.index).try_into().unwrap();
         prefixed_index.pack(packer).coerce::<IndexationPackError>().coerce()?;
 
-        let prefixed_data: VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_DATA_LENGTH_MAX>> =
-            self.data.clone().try_into().unwrap();
+        let prefixed_data: &VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_DATA_LENGTH_MAX>> =
+            (&self.data).try_into().unwrap();
         prefixed_data.pack(packer).coerce::<IndexationPackError>().coerce()?;
 
         Ok(())
