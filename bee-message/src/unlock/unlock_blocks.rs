@@ -9,7 +9,7 @@ use crate::{
 use bee_packable::{
     coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    BoundedU16, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    BoundedU16, InvalidBoundedU16, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
 
 use hashbrown::HashSet;
@@ -100,15 +100,20 @@ impl fmt::Display for UnlockBlocksUnpackError {
 /// [`SignatureUnlock`](crate::unlock::SignatureUnlock) block.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct UnlockBlocks(Vec<UnlockBlock>);
+pub struct UnlockBlocks(
+    VecPrefix<UnlockBlock, BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>>,
+);
 
 impl UnlockBlocks {
     /// Creates a new [`UnlockBlocks`].
     pub fn new(unlock_blocks: Vec<UnlockBlock>) -> Result<Self, ValidationError> {
-        validate_unlock_block_count(unlock_blocks.len())?;
         validate_unlock_block_variants(&unlock_blocks)?;
 
-        Ok(Self(unlock_blocks))
+        Ok(Self(unlock_blocks.try_into().map_err(
+            |err: InvalidBoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>| {
+                ValidationError::InvalidUnlockBlockCount(err.0 as usize)
+            },
+        )?))
     }
 
     /// Gets an [`UnlockBlock`] from an [`UnlockBlockbee-common/bee-packable/src/packable/bounded.rss`].
@@ -135,60 +140,31 @@ impl Packable for UnlockBlocks {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        // Unwrap is safe, since UnlockBlock count is already validated.
-        let prefixed: VecPrefix<
-            UnlockBlock,
-            BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>,
-        > = self.0.clone().try_into().unwrap();
-        prefixed.packed_len()
+        self.0.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        // Unwrap is safe, since UnlockBlock count is already validated.
-        let prefixed: VecPrefix<
-            UnlockBlock,
-            BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>,
-        > = self.0.clone().try_into().unwrap();
-        prefixed.pack(packer).coerce::<UnlockBlocksPackError>().coerce()?;
+        self.0.pack(packer).coerce::<UnlockBlocksPackError>().coerce()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let inner_prefixed = VecPrefix::<
+        let inner = VecPrefix::<
             UnlockBlock,
             BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>,
-        >::unpack(unpacker);
+        >::unpack(unpacker)
+        .map_err(|unpack_err| {
+            unpack_err.map(|err| match err {
+                UnpackPrefixError::InvalidPrefixLength(len) => UnlockBlocksUnpackError::InvalidPrefixLength(len).into(),
+                UnpackPrefixError::Packable(err) => err,
+            })
+        })
+        .coerce()?;
 
-        let inner: Vec<UnlockBlock> = if let Err(unpack_err) = inner_prefixed {
-            match unpack_err {
-                UnpackError::Packable(e) => match e {
-                    UnpackPrefixError::InvalidPrefixLength(len) => {
-                        return Err(UnpackError::Packable(
-                            UnlockBlocksUnpackError::InvalidPrefixLength(len).into(),
-                        ));
-                    }
-                    UnpackPrefixError::Packable(err) => return Err(UnpackError::Packable(err)),
-                },
-                UnpackError::Unpacker(e) => return Err(UnpackError::Unpacker(e)),
-            }
-        } else {
-            // Unwrap is fine, we have just checked that this value is `Ok`.
-            inner_prefixed.ok().unwrap().into()
-        };
-
-        validate_unlock_block_count(inner.len()).map_err(|e| UnpackError::Packable(e.into()))?;
         validate_unlock_block_variants(&inner).map_err(|e| UnpackError::Packable(e.into()))?;
 
         Ok(Self(inner))
-    }
-}
-
-fn validate_unlock_block_count(len: usize) -> Result<(), ValidationError> {
-    if !UNLOCK_BLOCK_COUNT_RANGE.contains(&len) {
-        Err(ValidationError::InvalidUnlockBlockCount(len))
-    } else {
-        Ok(())
     }
 }
 

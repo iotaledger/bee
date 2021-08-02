@@ -58,8 +58,7 @@ impl fmt::Display for OutputUnpackError {
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[packable(tag_type = u8)]
-#[packable(tag_error = OutputUnpackError::InvalidKind)]
+#[packable(tag_type = u8, with_error = OutputUnpackError::InvalidKind)]
 // TODO infallible ?
 #[packable(pack_error = MessagePackError)]
 #[packable(unpack_error = MessageUnpackError)]

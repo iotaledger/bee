@@ -12,7 +12,7 @@ use bee_ord::is_sorted;
 use bee_packable::{
     coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
+    BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
 };
 
 use alloc::{boxed::Box, vec::Vec};
@@ -134,9 +134,9 @@ pub struct TransactionEssence {
     /// Node ID to which the consensus mana of the transaction is pledged.
     consensus_pledge_id: [u8; PLEDGE_ID_LENGTH],
     /// Collection of transaction [`Input`]s.
-    inputs: Vec<Input>,
+    inputs: VecPrefix<Input, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>,
     /// Collection of transaction [`Output`]s.
-    outputs: Vec<Output>,
+    outputs: VecPrefix<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>,
     /// Optional additional payload.
     payload: Option<Payload>,
 }
@@ -183,17 +183,11 @@ impl Packable for TransactionEssence {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        // Unwraps are safe, since inputs/outputs lengths are alread validated.
-        let prefixed_inputs: &VecPrefix<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>> =
-            (&self.inputs).try_into().unwrap();
-        let prefixed_outputs: &VecPrefix<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>> =
-            (&self.outputs).try_into().unwrap();
-
         self.timestamp.packed_len()
             + self.access_pledge_id.packed_len()
             + self.consensus_pledge_id.packed_len()
-            + prefixed_inputs.packed_len()
-            + prefixed_outputs.packed_len()
+            + self.inputs.packed_len()
+            + self.outputs.packed_len()
             + self.payload.packed_len()
     }
 
@@ -202,18 +196,12 @@ impl Packable for TransactionEssence {
         self.access_pledge_id.pack(packer).infallible()?;
         self.consensus_pledge_id.pack(packer).infallible()?;
 
-        // Unwraps are safe, since inputs/outputs lengths are already validated.
-        let input_prefixed: &VecPrefix<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>> =
-            (&self.inputs).try_into().unwrap();
-        let output_prefixed: &VecPrefix<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>> =
-            (&self.outputs).try_into().unwrap();
-
-        input_prefixed
+        self.inputs
             .pack(packer)
             .coerce::<TransactionEssencePackError>()
             .coerce()?;
 
-        output_prefixed
+        self.outputs
             .pack(packer)
             .coerce::<TransactionEssencePackError>()
             .coerce()?;
@@ -230,54 +218,38 @@ impl Packable for TransactionEssence {
 
         // Inputs syntactical validation
         let inputs =
-            VecPrefix::<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>::unpack(unpacker);
+            VecPrefix::<Input, BoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>>::unpack(unpacker)
+                .map_err(|unpack_err| {
+                    unpack_err.map(|err| match err {
+                        UnpackPrefixError::InvalidPrefixLength(len) => {
+                            TransactionEssenceUnpackError::InvalidInputPrefixLength(len).into()
+                        }
+                        UnpackPrefixError::Packable(err) => err,
+                    })
+                })
+                .coerce()?;
 
-        let inputs_vec: Vec<Input> = if let Err(unpack_err) = inputs {
-            match unpack_err {
-                UnpackError::Packable(e) => match e {
-                    UnpackPrefixError::InvalidPrefixLength(len) => {
-                        return Err(UnpackError::Packable(
-                            TransactionEssenceUnpackError::InvalidInputPrefixLength(len).into(),
-                        ));
-                    }
-                    UnpackPrefixError::Packable(err) => return Err(UnpackError::Packable(err)),
-                },
-                UnpackError::Unpacker(e) => return Err(UnpackError::Unpacker(e)),
-            }
-        } else {
-            inputs.ok().unwrap().into()
-        };
-
-        validate_input_count(inputs_vec.len()).map_err(|e| UnpackError::Packable(e.into()))?;
-        validate_inputs_unique_utxos(&inputs_vec).map_err(|e| UnpackError::Packable(e.into()))?;
-        validate_inputs_sorted(&inputs_vec).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_inputs_unique_utxos(&inputs).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_inputs_sorted(&inputs).map_err(|e| UnpackError::Packable(e.into()))?;
 
         // Outputs syntactical validation
         let outputs =
-            VecPrefix::<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>::unpack(unpacker);
+            VecPrefix::<Output, BoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>>::unpack(unpacker)
+                .map_err(|unpack_err| {
+                    unpack_err.map(|err| match err {
+                        UnpackPrefixError::InvalidPrefixLength(len) => {
+                            TransactionEssenceUnpackError::InvalidOutputPrefixLength(len).into()
+                        }
+                        UnpackPrefixError::Packable(err) => err,
+                    })
+                })
+                .coerce()?;
 
-        let outputs_vec: Vec<Output> = if let Err(unpack_err) = outputs {
-            match unpack_err {
-                UnpackError::Packable(e) => match e {
-                    UnpackPrefixError::InvalidPrefixLength(len) => {
-                        return Err(UnpackError::Packable(
-                            TransactionEssenceUnpackError::InvalidOutputPrefixLength(len).into(),
-                        ));
-                    }
-                    UnpackPrefixError::Packable(err) => return Err(UnpackError::Packable(err)),
-                },
-                UnpackError::Unpacker(e) => return Err(UnpackError::Unpacker(e)),
-            }
-        } else {
-            outputs.ok().unwrap().into()
-        };
-
-        validate_output_count(outputs_vec.len()).map_err(|e| UnpackError::Packable(e.into()))?;
         validate_output_total(
-            outputs_vec
+            outputs
                 .iter()
                 .try_fold(0u64, |total, output| {
-                    let amount = validate_output_variant(output, &outputs_vec)?;
+                    let amount = validate_output_variant(output, &outputs)?;
                     total
                         .checked_add(amount)
                         .ok_or_else(|| ValidationError::InvalidAccumulatedOutput(total as u128 + amount as u128))
@@ -285,7 +257,7 @@ impl Packable for TransactionEssence {
                 .map_err(|e| UnpackError::Packable(e.into()))?,
         )
         .map_err(|e| UnpackError::Packable(e.into()))?;
-        validate_outputs_sorted(&outputs_vec).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_outputs_sorted(&outputs).map_err(|e| UnpackError::Packable(e.into()))?;
 
         let payload = Option::<Payload>::unpack(unpacker).coerce()?;
         validate_payload(&payload).map_err(|e| UnpackError::Packable(e.into()))?;
@@ -294,8 +266,8 @@ impl Packable for TransactionEssence {
             timestamp,
             access_pledge_id,
             consensus_pledge_id,
-            inputs: inputs_vec,
-            outputs: outputs_vec,
+            inputs,
+            outputs,
             payload,
         })
     }
@@ -377,12 +349,10 @@ impl TransactionEssenceBuilder {
             .ok_or(ValidationError::MissingField("consensus_pledge_id"))?;
 
         // Inputs syntactical validation
-        validate_input_count(self.inputs.len())?;
         validate_inputs_unique_utxos(&self.inputs)?;
         validate_inputs_sorted(&self.inputs)?;
 
         // Outputs syntactical validation
-        validate_output_count(self.outputs.len())?;
         validate_output_total(self.outputs.iter().try_fold(0u64, |total, output| {
             let amount = validate_output_variant(output, &self.outputs)?;
             total
@@ -397,18 +367,19 @@ impl TransactionEssenceBuilder {
             timestamp,
             access_pledge_id,
             consensus_pledge_id,
-            inputs: self.inputs,
-            outputs: self.outputs,
+            inputs: self.inputs.try_into().map_err(
+                |err: InvalidBoundedU32<PREFIXED_INPUTS_LENGTH_MIN, PREFIXED_INPUTS_LENGTH_MAX>| {
+                    ValidationError::InvalidInputCount(err.0 as usize)
+                },
+            )?,
+            outputs: self.outputs.try_into().map_err(
+                |err: InvalidBoundedU32<PREFIXED_OUTPUTS_LENGTH_MIN, PREFIXED_OUTPUTS_LENGTH_MAX>| {
+                    ValidationError::InvalidOutputCount(err.0 as usize)
+                },
+            )?,
+
             payload: self.payload,
         })
-    }
-}
-
-fn validate_input_count(len: usize) -> Result<(), ValidationError> {
-    if !INPUT_COUNT_RANGE.contains(&len) {
-        Err(ValidationError::InvalidInputCount(len))
-    } else {
-        Ok(())
     }
 }
 
@@ -429,14 +400,6 @@ fn validate_inputs_unique_utxos(inputs: &[Input]) -> Result<(), ValidationError>
 fn validate_inputs_sorted(inputs: &[Input]) -> Result<(), ValidationError> {
     if !is_sorted(inputs.iter().map(Packable::pack_to_vec)) {
         Err(ValidationError::TransactionInputsNotSorted)
-    } else {
-        Ok(())
-    }
-}
-
-fn validate_output_count(len: usize) -> Result<(), ValidationError> {
-    if !OUTPUT_COUNT_RANGE.contains(&len) {
-        Err(ValidationError::InvalidOutputCount(len))
     } else {
         Ok(())
     }

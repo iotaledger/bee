@@ -44,7 +44,7 @@ macro_rules! bounded {
         }
 
         $(#[$wrapper_doc])*
-        #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
         pub struct $wrapper<const MIN: $ty, const MAX: $ty>($ty);
 
         impl<const MIN: $ty, const MAX: $ty> Bounded for $wrapper<MIN, MAX> {

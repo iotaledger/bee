@@ -12,7 +12,7 @@ pub use padded::PaddedIndex;
 use bee_packable::{
     coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
 
 use alloc::vec::Vec;
@@ -94,9 +94,9 @@ impl fmt::Display for IndexationUnpackError {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct IndexationPayload {
     /// The index key of the message.
-    index: Vec<u8>,
+    index: VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>,
     /// The data attached to this index.
-    data: Vec<u8>,
+    data: VecPrefix<u8, BoundedU32<PREFIXED_DATA_LENGTH_MIN, PREFIXED_DATA_LENGTH_MAX>>,
 }
 
 impl MessagePayload for IndexationPayload {
@@ -107,10 +107,18 @@ impl MessagePayload for IndexationPayload {
 impl IndexationPayload {
     /// Creates a new [`IndexationPayload`].
     pub fn new(index: Vec<u8>, data: Vec<u8>) -> Result<Self, ValidationError> {
-        validate_index(&index)?;
-        validate_data(&data)?;
-
-        Ok(Self { index, data })
+        Ok(Self {
+            index: index.try_into().map_err(
+                |err: InvalidBoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>| {
+                    ValidationError::InvalidIndexationIndexLength(err.0 as usize)
+                },
+            )?,
+            data: data.try_into().map_err(
+                |err: InvalidBoundedU32<PREFIXED_DATA_LENGTH_MIN, PREFIXED_DATA_LENGTH_MAX>| {
+                    ValidationError::InvalidIndexationDataLength(err.0 as usize)
+                },
+            )?,
+        })
     }
 
     /// Returns the index of an [`IndexationPayload`].
@@ -136,26 +144,15 @@ impl Packable for IndexationPayload {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        // Unwrap is safe, since index/data lengths have already been validated.
-        let prefixed_index: &VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>> =
-            (&self.index).try_into().unwrap();
-        let prefixed_data: &VecPrefix<u8, BoundedU32<PREFIXED_DATA_LENGTH_MAX, PREFIXED_DATA_LENGTH_MAX>> =
-            (&self.data).try_into().unwrap();
-
-        Self::VERSION.packed_len() + prefixed_index.packed_len() + prefixed_data.packed_len()
+        Self::VERSION.packed_len() + self.index.packed_len() + self.data.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         Self::VERSION.pack(packer).infallible()?;
 
-        // Unwrap is safe, since index/data lengths have already been validated.
-        let prefixed_index: &VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>> =
-            (&self.index).try_into().unwrap();
-        prefixed_index.pack(packer).coerce::<IndexationPackError>().coerce()?;
+        self.index.pack(packer).coerce::<IndexationPackError>().coerce()?;
 
-        let prefixed_data: &VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_DATA_LENGTH_MAX>> =
-            (&self.data).try_into().unwrap();
-        prefixed_data.pack(packer).coerce::<IndexationPackError>().coerce()?;
+        self.data.pack(packer).coerce::<IndexationPackError>().coerce()?;
 
         Ok(())
     }
@@ -164,39 +161,15 @@ impl Packable for IndexationPayload {
         let version = u8::unpack(unpacker).infallible()?;
         validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let index: Vec<u8> =
-            VecPrefix::<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>::unpack(unpacker)
-                .coerce::<IndexationUnpackError>()
-                .coerce()?
-                .into();
+        let index = VecPrefix::<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>::unpack(unpacker)
+            .coerce::<IndexationUnpackError>()
+            .coerce()?;
 
-        validate_index(&index).map_err(|e| UnpackError::Packable(e.into()))?;
-
-        let data: Vec<u8> =
-            VecPrefix::<u8, BoundedU32<PREFIXED_DATA_LENGTH_MIN, PREFIXED_DATA_LENGTH_MAX>>::unpack(unpacker)
-                .coerce::<IndexationUnpackError>()
-                .coerce()?
-                .into();
-
-        validate_data(&data).map_err(|e| UnpackError::Packable(e.into()))?;
+        let data = VecPrefix::<u8, BoundedU32<PREFIXED_DATA_LENGTH_MIN, PREFIXED_DATA_LENGTH_MAX>>::unpack(unpacker)
+            .coerce::<IndexationUnpackError>()
+            .coerce()?;
 
         Ok(Self { index, data })
-    }
-}
-
-fn validate_index(index: &[u8]) -> Result<(), ValidationError> {
-    if !INDEXATION_INDEX_LENGTH_RANGE.contains(&(index.len() as u32)) {
-        Err(ValidationError::InvalidIndexationIndexLength(index.len()))
-    } else {
-        Ok(())
-    }
-}
-
-fn validate_data(data: &[u8]) -> Result<(), ValidationError> {
-    if data.len() > *MESSAGE_LENGTH_RANGE.end() {
-        Err(ValidationError::InvalidIndexationDataLength(data.len()))
-    } else {
-        Ok(())
     }
 }
 

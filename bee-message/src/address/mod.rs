@@ -42,8 +42,7 @@ impl fmt::Display for AddressUnpackError {
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[packable(tag_type = u8)]
-#[packable(tag_error = AddressUnpackError::InvalidKind)]
+#[packable(tag_type = u8, with_error = AddressUnpackError::InvalidKind)]
 #[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Address {

@@ -37,8 +37,7 @@ impl fmt::Display for SignatureUnpackError {
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[packable(tag_type = u8)]
-#[packable(tag_error = SignatureUnpackError::InvalidSignatureKind)]
+#[packable(tag_type = u8, with_error = SignatureUnpackError::InvalidKind)]
 #[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Signature {

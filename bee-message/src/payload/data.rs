@@ -11,7 +11,7 @@ use crate::{
 use bee_packable::{
     coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
 
 use alloc::vec::Vec;
@@ -77,7 +77,7 @@ impl fmt::Display for DataUnpackError {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct DataPayload {
     /// The raw data in bytes.
-    data: Vec<u8>,
+    data: VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>,
 }
 
 impl MessagePayload for DataPayload {
@@ -88,9 +88,13 @@ impl MessagePayload for DataPayload {
 impl DataPayload {
     /// Creates a new [`DataPayload`].
     pub fn new(data: Vec<u8>) -> Result<Self, ValidationError> {
-        validate_data_len(data.len())?;
-
-        Ok(Self { data })
+        Ok(Self {
+            data: data
+                .try_into()
+                .map_err(|err: InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>| {
+                    ValidationError::InvalidPayloadLength(err.0 as usize)
+                })?,
+        })
     }
 
     /// Returns the data bytes of a [`DataPayload`].
@@ -104,18 +108,13 @@ impl Packable for DataPayload {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        // Unwrap is safe, since the data length has already been validated.
-        let prefixed_data: &VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>> = (&self.data).try_into().unwrap();
-
-        Self::VERSION.packed_len() + prefixed_data.packed_len()
+        Self::VERSION.packed_len() + self.data.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         Self::VERSION.pack(packer).infallible()?;
 
-        // Unwrap is safe, since the data length has already been validated.
-        let prefixed_data: &VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>> = (&self.data).try_into().unwrap();
-        prefixed_data.pack(packer).coerce::<DataPackError>().coerce()?;
+        self.data.pack(packer).coerce::<DataPackError>().coerce()?;
 
         Ok(())
     }
@@ -124,11 +123,9 @@ impl Packable for DataPayload {
         let version = u8::unpack(unpacker).infallible()?;
         validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let data: Vec<u8> = VecPrefix::<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>::unpack(unpacker)
+        let data = VecPrefix::<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<DataUnpackError>()
-            .coerce()?
-            .into();
-        validate_data_len(data.len()).map_err(|e| UnpackError::Packable(e.into()))?;
+            .coerce()?;
 
         let payload = Self { data };
 
@@ -142,14 +139,6 @@ fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
             version,
             payload_kind: DataPayload::KIND,
         })
-    } else {
-        Ok(())
-    }
-}
-
-fn validate_data_len(len: usize) -> Result<(), ValidationError> {
-    if len > PREFIXED_DATA_LENGTH_MAX as usize {
-        Err(ValidationError::InvalidPayloadLength(len))
     } else {
         Ok(())
     }

@@ -9,7 +9,7 @@ use crate::{
 use bee_packable::{
     coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
 
 use alloc::vec::Vec;
@@ -75,15 +75,15 @@ impl fmt::Display for DkgUnpackError {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct EncryptedDeal {
     /// An ephemeral Diffie-Hellman key.
-    dh_key: Vec<u8>,
+    dh_key: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
     /// The nonce used.
-    nonce: Vec<u8>,
+    nonce: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
     /// The ciphertext of the share.
-    encrypted_share: Vec<u8>,
+    encrypted_share: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
     /// The threshold of the secret sharing protocol.
     threshold: u32,
     /// The commitments of the polynomial used to derive the share.
-    commitments: Vec<u8>,
+    commitments: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
 }
 
 impl EncryptedDeal {
@@ -123,42 +123,21 @@ impl Packable for EncryptedDeal {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        // Unwraps are safe, since the [`EncryptedDeal`] length has been validated.
-        let prefixed_dh_key: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> = (&self.dh_key).try_into().unwrap();
-        let prefixed_nonce: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> = (&self.nonce).try_into().unwrap();
-        let prefixed_encrypted_share: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
-            (&self.encrypted_share).try_into().unwrap();
-        let prefixed_commitments: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
-            (&self.commitments).try_into().unwrap();
-
-        prefixed_dh_key.packed_len()
-            + prefixed_nonce.packed_len()
-            + prefixed_encrypted_share.packed_len()
+        self.dh_key.packed_len()
+            + self.nonce.packed_len()
+            + self.encrypted_share.packed_len()
             + self.threshold.packed_len()
-            + prefixed_commitments.packed_len()
+            + self.commitments.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        // The following unwraps are safe, since the [`EncryptedDeal`] length has been validated.
-        let prefixed_dh_key: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> = (&self.dh_key).try_into().unwrap();
-        prefixed_dh_key.pack(packer).coerce::<DkgPackError>().coerce()?;
+        self.nonce.pack(packer).coerce::<DkgPackError>().coerce()?;
 
-        let prefixed_nonce: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> = (&self.nonce).try_into().unwrap();
-        prefixed_nonce.pack(packer).coerce::<DkgPackError>().coerce()?;
-
-        let prefixed_encrypted_share: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
-            (&self.encrypted_share).try_into().unwrap();
-
-        prefixed_encrypted_share
-            .pack(packer)
-            .coerce::<DkgPackError>()
-            .coerce()?;
+        self.encrypted_share.pack(packer).coerce::<DkgPackError>().coerce()?;
 
         self.threshold.pack(packer).infallible()?;
 
-        let prefixed_commitments: &VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>> =
-            (&self.commitments).try_into().unwrap();
-        prefixed_commitments.pack(packer).coerce::<DkgPackError>().coerce()?;
+        self.commitments.pack(packer).coerce::<DkgPackError>().coerce()?;
 
         Ok(())
     }
@@ -166,25 +145,21 @@ impl Packable for EncryptedDeal {
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let dh_key = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<DkgUnpackError>()
-            .coerce()?
-            .into();
+            .coerce()?;
 
         let nonce = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<DkgUnpackError>()
-            .coerce()?
-            .into();
+            .coerce()?;
 
         let encrypted_share = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<DkgUnpackError>()
-            .coerce()?
-            .into();
+            .coerce()?;
 
         let threshold = u32::unpack(unpacker).infallible()?;
 
         let commitments = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<DkgUnpackError>()
-            .coerce()?
-            .into();
+            .coerce()?;
 
         let deal = EncryptedDeal {
             dh_key,
@@ -248,13 +223,35 @@ impl EncryptedDealBuilder {
 
     /// Consumes the [`EncryptedDealBuilder`] and builds a new [`EncryptedDeal`].
     pub fn finish(self) -> Result<EncryptedDeal, ValidationError> {
-        let dh_key = self.dh_key.ok_or(ValidationError::MissingField("dh_key"))?;
-        let nonce = self.nonce.ok_or(ValidationError::MissingField("nonce"))?;
+        let dh_key = self
+            .dh_key
+            .ok_or(ValidationError::MissingField("dh_key"))?
+            .try_into()
+            .map_err(|err: InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>| {
+                ValidationError::InvalidEncryptedDealLength(err.0 as usize)
+            })?;
+        let nonce = self
+            .nonce
+            .ok_or(ValidationError::MissingField("nonce"))?
+            .try_into()
+            .map_err(|err: InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>| {
+                ValidationError::InvalidEncryptedDealLength(err.0 as usize)
+            })?;
         let encrypted_share = self
             .encrypted_share
-            .ok_or(ValidationError::MissingField("encrypted_share"))?;
+            .ok_or(ValidationError::MissingField("encrypted_share"))?
+            .try_into()
+            .map_err(|err: InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>| {
+                ValidationError::InvalidEncryptedDealLength(err.0 as usize)
+            })?;
         let threshold = self.threshold.ok_or(ValidationError::MissingField("threshold"))?;
-        let commitments = self.commitments.ok_or(ValidationError::MissingField("commitments"))?;
+        let commitments = self
+            .commitments
+            .ok_or(ValidationError::MissingField("commitments"))?
+            .try_into()
+            .map_err(|err: InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>| {
+                ValidationError::InvalidEncryptedDealLength(err.0 as usize)
+            })?;
 
         let deal = EncryptedDeal {
             dh_key,
