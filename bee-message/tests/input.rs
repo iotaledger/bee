@@ -3,20 +3,40 @@
 
 use bee_message::{
     error::MessageUnpackError,
-    input::{Input, InputUnpackError},
+    input::{Input, InputUnpackError, UtxoInput},
+    output::OutputId,
+    payload::transaction::TransactionId,
 };
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
 
 #[test]
-fn unpack_valid() {
-    let mut bytes = vec![0];
-    bytes.extend(rand_bytes(32));
-    bytes.extend(vec![0, 0]);
+fn from_utxo() {
+    let input = Input::from(UtxoInput::from(
+        OutputId::new(TransactionId::new([42; TransactionId::LENGTH]), 0).unwrap(),
+    ));
 
-    let input = Input::unpack_from_slice(bytes);
+    assert_eq!(input.kind(), 0);
+}
 
-    assert!(input.is_ok());
+#[test]
+fn packed_len() {
+    let input = Input::from(UtxoInput::from(
+        OutputId::new(TransactionId::new([42; TransactionId::LENGTH]), 0).unwrap(),
+    ));
+
+    assert_eq!(input.packed_len(), 1 + 32 + 2);
+    assert_eq!(input.pack_to_vec().unwrap().len(), 1 + 32 + 2);
+}
+
+#[test]
+fn packable_round_trip() {
+    let input_1 = Input::from(UtxoInput::from(
+        OutputId::new(TransactionId::new([42; TransactionId::LENGTH]), 0).unwrap(),
+    ));
+    let input_2 = Input::unpack_from_slice(input_1.pack_to_vec().unwrap()).unwrap();
+
+    assert_eq!(input_1, input_2);
 }
 
 #[test]
@@ -25,12 +45,10 @@ fn unpack_invalid_tag() {
     bytes.extend(rand_bytes(32));
     bytes.extend(vec![0, 0]);
 
-    let input = Input::unpack_from_slice(bytes);
-
     assert!(matches!(
-        input,
+        Input::unpack_from_slice(bytes),
         Err(UnpackError::Packable(MessageUnpackError::Input(
-            InputUnpackError::InvalidInputKind(1)
+            InputUnpackError::InvalidKind(1)
         ))),
     ));
 }

@@ -17,25 +17,25 @@ use core::{
     ops::{Range, RangeInclusive},
 };
 
-/// The maximum number of inputs for a transaction.
+/// The maximum number of inputs of a transaction.
 pub const INPUT_COUNT_MAX: usize = 127;
-/// The range of valid numbers of inputs for a transaction [1..127].
-pub const INPUT_COUNT_RANGE: RangeInclusive<usize> = 1..=INPUT_COUNT_MAX;
-/// The valid range of indices for inputs for a transaction [0..126].
-pub const INPUT_INDEX_RANGE: Range<u16> = 0..INPUT_COUNT_MAX as u16;
+/// The range of valid numbers of inputs of a transaction.
+pub const INPUT_COUNT_RANGE: RangeInclusive<usize> = 1..=INPUT_COUNT_MAX; //[1..127]
+/// The range of valid indices of inputs of a transaction.
+pub const INPUT_INDEX_RANGE: Range<u16> = 0..INPUT_COUNT_MAX as u16; //[0..126]
 
-/// Error encountered unpacking an input.
+/// Error encountered unpacking an [`Input`].
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum InputUnpackError {
-    InvalidInputKind(u8),
+    InvalidKind(u8),
     ValidationError(ValidationError),
 }
 
 impl fmt::Display for InputUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidInputKind(kind) => write!(f, "invalid input kind: {}", kind),
+            Self::InvalidKind(kind) => write!(f, "invalid input kind: {}", kind),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
     }
@@ -48,7 +48,7 @@ impl fmt::Display for InputUnpackError {
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[packable(tag_type = u8, with_error = InputUnpackError::InvalidInputKind)]
+#[packable(tag_type = u8, with_error = InputUnpackError::InvalidKind)]
 #[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Input {
@@ -63,5 +63,11 @@ impl Input {
         match self {
             Self::Utxo(_) => UtxoInput::KIND,
         }
+    }
+}
+
+impl From<UtxoInput> for Input {
+    fn from(input: UtxoInput) -> Self {
+        Self::Utxo(input)
     }
 }
