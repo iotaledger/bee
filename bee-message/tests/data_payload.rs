@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    error::{DataUnpackError, MessageUnpackError, ValidationError},
-    payload::{data::DataPayload, MessagePayload},
+    error::{MessageUnpackError, ValidationError},
+    payload::{
+        data::{DataPayload, DataUnpackError},
+        MessagePayload,
+    },
 };
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
