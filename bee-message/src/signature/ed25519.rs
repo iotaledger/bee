@@ -4,7 +4,7 @@
 use bee_packable::Packable;
 
 /// An Ed25519 signature.
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Ed25519Signature {
     public_key: [u8; Self::PUBLIC_KEY_LENGTH],

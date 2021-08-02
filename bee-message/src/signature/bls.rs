@@ -4,7 +4,7 @@
 use bee_packable::Packable;
 
 /// A BLS signature.
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlsSignature(#[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))] [u8; Self::LENGTH]);
 

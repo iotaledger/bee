@@ -31,7 +31,7 @@ impl fmt::Display for SignatureUnpackError {
 }
 
 /// A signature used to validate the authenticity and integrity of a message.
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),

@@ -7,7 +7,7 @@ use bee_packable::Packable;
 
 /// An [`UnlockBlock`](crate::unlock::UnlockBlock) which is used to unlock a signature locked
 /// [`Input`](crate::input::Input).
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct SignatureUnlock(Signature);
 

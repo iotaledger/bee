@@ -3,20 +3,53 @@
 
 use bee_message::{
     error::MessageUnpackError,
-    unlock::{UnlockBlock, UnlockBlockUnpackError},
+    signature::{Ed25519Signature, Signature},
+    unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlockUnpackError},
 };
 use bee_packable::{Packable, UnpackError};
-use bee_test::rand::bytes::rand_bytes;
+use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
 
 #[test]
-fn unpack_valid() {
-    let mut bytes = vec![0, 0];
-    bytes.extend(rand_bytes(32));
-    bytes.extend(rand_bytes(64));
+fn from_signature() {
+    let signature = SignatureUnlock::from(Signature::from(Ed25519Signature::new(
+        rand_bytes_array(),
+        rand_bytes_array(),
+    )));
+    let unlock = UnlockBlock::from(signature.clone());
 
-    let unlock_block = UnlockBlock::unpack_from_slice(bytes);
+    assert_eq!(unlock.kind(), 0);
+    assert!(matches!(unlock, UnlockBlock::Signature(unlock) if {unlock == signature}));
+}
 
-    assert!(unlock_block.is_ok());
+#[test]
+fn from_reference() {
+    let reference = ReferenceUnlock::new(42).unwrap();
+    let unlock = UnlockBlock::from(reference.clone());
+
+    assert_eq!(unlock.kind(), 1);
+    assert!(matches!(unlock, UnlockBlock::Reference(unlock) if {unlock == reference}));
+}
+
+#[test]
+fn packed_len() {
+    let unlock = UnlockBlock::from(SignatureUnlock::from(Signature::from(Ed25519Signature::new(
+        rand_bytes_array(),
+        rand_bytes_array(),
+    ))));
+
+    assert_eq!(unlock.packed_len(), 1 + 1 + 32 + 64);
+    assert_eq!(unlock.pack_to_vec().unwrap().len(), 1 + 1 + 32 + 64);
+}
+
+#[test]
+fn packable_round_trip() {
+    let unlock_1 = UnlockBlock::from(SignatureUnlock::from(Signature::from(Ed25519Signature::new(
+        rand_bytes_array(),
+        rand_bytes_array(),
+    ))));
+    let unlock_2 = UnlockBlock::unpack_from_slice(unlock_1.pack_to_vec().unwrap()).unwrap();
+
+    assert_eq!(unlock_1, unlock_2);
 }
 
 #[test]

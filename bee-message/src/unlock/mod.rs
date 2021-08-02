@@ -21,12 +21,12 @@ use core::{
     ops::{Range, RangeInclusive},
 };
 
-/// The maximum number of unlock blocks for a transaction.
+/// The maximum number of unlock blocks of a transaction.
 pub const UNLOCK_BLOCK_COUNT_MAX: usize = INPUT_COUNT_MAX;
-/// The range of valid numbers of unlock blocks for a transaction [1..127].
-pub const UNLOCK_BLOCK_COUNT_RANGE: RangeInclusive<usize> = 1..=UNLOCK_BLOCK_COUNT_MAX;
-/// The valid range of indices for unlock blocks for a transaction [0..126].
-pub const UNLOCK_BLOCK_INDEX_RANGE: Range<u16> = 0..UNLOCK_BLOCK_COUNT_MAX as u16;
+/// The range of valid numbers of unlock blocks of a transaction.
+pub const UNLOCK_BLOCK_COUNT_RANGE: RangeInclusive<usize> = 1..=UNLOCK_BLOCK_COUNT_MAX; // [1..127]
+/// The range of valid indices of unlock blocks of a transaction.
+pub const UNLOCK_BLOCK_INDEX_RANGE: Range<u16> = 0..UNLOCK_BLOCK_COUNT_MAX as u16; // [0..126]
 
 /// Error encountered unpacking an [`UnlockBlock`].
 #[derive(Debug)]
@@ -34,14 +34,6 @@ pub const UNLOCK_BLOCK_INDEX_RANGE: Range<u16> = 0..UNLOCK_BLOCK_COUNT_MAX as u1
 pub enum UnlockBlockUnpackError {
     InvalidKind(u8),
     ValidationError(ValidationError),
-}
-
-impl From<ReferenceUnlockUnpackError> for UnlockBlockUnpackError {
-    fn from(error: ReferenceUnlockUnpackError) -> Self {
-        match error {
-            ReferenceUnlockUnpackError::ValidationError(error) => Self::ValidationError(error),
-        }
-    }
 }
 
 impl fmt::Display for UnlockBlockUnpackError {
@@ -54,7 +46,7 @@ impl fmt::Display for UnlockBlockUnpackError {
 }
 
 /// Defines the mechanism by which a transaction input is authorized to be consumed.
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd, Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
@@ -76,7 +68,7 @@ impl_wrapped_variant!(UnlockBlock, SignatureUnlock, UnlockBlock::Signature);
 impl_wrapped_variant!(UnlockBlock, ReferenceUnlock, UnlockBlock::Reference);
 
 impl UnlockBlock {
-    /// Returns the unlock kind of an [`UnlockBlock`].
+    /// Returns the unlock block kind of an [`UnlockBlock`].
     pub fn kind(&self) -> u8 {
         match self {
             Self::Signature(_) => SignatureUnlock::KIND,

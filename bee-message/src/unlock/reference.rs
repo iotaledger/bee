@@ -32,7 +32,7 @@ impl fmt::Display for ReferenceUnlockUnpackError {
 }
 
 /// An [`UnlockBlock`](crate::unlock::UnlockBlock) that refers to another [`UnlockBlock`](crate::unlock::UnlockBlock).
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ReferenceUnlock(u16);
 
