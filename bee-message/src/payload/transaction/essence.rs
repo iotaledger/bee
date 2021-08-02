@@ -377,7 +377,6 @@ impl TransactionEssenceBuilder {
                     ValidationError::InvalidOutputCount(err.0 as usize)
                 },
             )?,
-
             payload: self.payload,
         })
     }
