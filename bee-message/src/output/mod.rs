@@ -38,14 +38,14 @@ pub const OUTPUT_INDEX_RANGE: Range<u16> = 0..OUTPUT_COUNT_MAX as u16;
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum OutputUnpackError {
-    InvalidOutputKind(u8),
+    InvalidKind(u8),
     ValidationError(ValidationError),
 }
 
 impl fmt::Display for OutputUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidOutputKind(kind) => write!(f, "invalid output kind: {}", kind),
+            Self::InvalidKind(kind) => write!(f, "invalid Output kind: {}", kind),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
     }
@@ -59,7 +59,7 @@ impl fmt::Display for OutputUnpackError {
     serde(tag = "type", content = "data")
 )]
 #[packable(tag_type = u8)]
-#[packable(tag_error = OutputUnpackError::InvalidOutputKind)]
+#[packable(tag_error = OutputUnpackError::InvalidKind)]
 #[packable(pack_error = MessagePackError)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Output {

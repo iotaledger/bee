@@ -30,7 +30,7 @@ fn unpack_invalid_tag() {
     assert!(matches!(
         output,
         Err(UnpackError::Packable(MessageUnpackError::Output(
-            OutputUnpackError::InvalidOutputKind(2)
+            OutputUnpackError::InvalidKind(2)
         ))),
     ));
 }

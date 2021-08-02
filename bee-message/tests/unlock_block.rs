@@ -30,7 +30,7 @@ fn unpack_invalid_tag() {
     assert!(matches!(
         unlock_block,
         Err(UnpackError::Packable(MessageUnpackError::UnlockBlock(
-            UnlockBlockUnpackError::InvalidUnlockBlockKind(2)
+            UnlockBlockUnpackError::InvalidKind(2)
         ))),
     ));
 }

@@ -32,7 +32,7 @@ pub const UNLOCK_BLOCK_INDEX_RANGE: Range<u16> = 0..UNLOCK_BLOCK_COUNT_MAX as u1
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum UnlockBlockUnpackError {
-    InvalidUnlockBlockKind(u8),
+    InvalidKind(u8),
     ValidationError(ValidationError),
 }
 
@@ -47,7 +47,7 @@ impl From<ReferenceUnlockUnpackError> for UnlockBlockUnpackError {
 impl fmt::Display for UnlockBlockUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidUnlockBlockKind(kind) => write!(f, "invalid unlock block kind: {}", kind),
+            Self::InvalidKind(kind) => write!(f, "invalid UnlockBlock kind: {}", kind),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
     }
@@ -60,7 +60,7 @@ impl fmt::Display for UnlockBlockUnpackError {
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[packable(tag_type = u8, with_error = UnlockBlockUnpackError::InvalidUnlockBlockKind)]
+#[packable(tag_type = u8, with_error = UnlockBlockUnpackError::InvalidKind)]
 #[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum UnlockBlock {

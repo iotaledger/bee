@@ -14,8 +14,6 @@ use core::{convert::TryFrom, str::FromStr};
 const TRANSACTION_ID: &str = "d5c8b35f87a915c61f0d1b4af1f5d4a11b2bb4070d5c500074c74c752577b59c";
 const OUTPUT_ID: &str = "d5c8b35f87a915c61f0d1b4af1f5d4a11b2bb4070d5c500074c74c752577b59c2a00";
 const OUTPUT_ID_INVALID_INDEX: &str = "97517860f289cce53fdc7aab2442886147addc88633bcfb6f096e103ab30677d7f00";
-const OUTPUT_ID_INVALID_HEX: &str = "ab049407c8fec3b607788c5104104b6790f5936caa7f47751312f047f1913a647f0x";
-const OUTPUT_ID_INVALID_LEN: &str = "36463a6d28bd0a8d92f920ed44ff069265e1d59ac5c88eaa2451ca279fe17a3b7c";
 
 #[test]
 fn length() {

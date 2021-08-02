@@ -75,7 +75,7 @@ pub enum PayloadUnpackError {
     Dkg(DkgUnpackError),
     Fpc(FpcUnpackError),
     Indexation(IndexationUnpackError),
-    InvalidPayloadKind(u32),
+    InvalidKind(u32),
     SaltDeclaration(SaltDeclarationUnpackError),
     Transaction(TransactionUnpackError),
     ValidationError(ValidationError),
@@ -104,7 +104,7 @@ impl fmt::Display for PayloadUnpackError {
             Self::Dkg(e) => write!(f, "error unpacking DKG payload: {}", e),
             Self::Fpc(e) => write!(f, "error unpacking FPC payload: {}.", e),
             Self::Indexation(e) => write!(f, "error unpacking indexation payload: {}.", e),
-            Self::InvalidPayloadKind(kind) => write!(f, "invalid payload kind: {}.", kind),
+            Self::InvalidKind(kind) => write!(f, "invalid Payload kind: {}.", kind),
             Self::SaltDeclaration(e) => write!(f, "error unpacking salt declaration payload: {}", e),
             Self::Transaction(e) => write!(f, "error unpacking transaction payload: {}", e),
             Self::ValidationError(e) => write!(f, "{}", e),
@@ -136,7 +136,7 @@ pub trait MessagePayload {
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[packable(tag_type = u32, with_error = PayloadUnpackError::InvalidPayloadKind)]
+#[packable(tag_type = u32, with_error = PayloadUnpackError::InvalidKind)]
 #[packable(pack_error = MessagePackError)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Payload {
