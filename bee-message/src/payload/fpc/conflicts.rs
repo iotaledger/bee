@@ -40,7 +40,7 @@ impl Deref for Conflicts {
     type Target = [Conflict];
 
     fn deref(&self) -> &Self::Target {
-        &self.inner.as_slice()
+        self.inner.as_slice()
     }
 }
 

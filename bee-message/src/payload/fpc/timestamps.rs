@@ -41,7 +41,7 @@ impl Deref for Timestamps {
     type Target = [Timestamp];
 
     fn deref(&self) -> &Self::Target {
-        &self.inner.as_slice()
+        self.inner.as_slice()
     }
 }
 

@@ -126,7 +126,7 @@ impl Deref for UnlockBlocks {
     type Target = [UnlockBlock];
 
     fn deref(&self) -> &Self::Target {
-        &self.0.as_slice()
+        self.0.as_slice()
     }
 }
 
@@ -196,7 +196,7 @@ fn validate_unlock_block_variants(unlock_blocks: &[UnlockBlock]) -> Result<(), V
     let mut seen = HashSet::new();
 
     for (idx, unlock_block) in unlock_blocks.iter().enumerate() {
-        let signature = validate_unlock_block_variant(idx, unlock_block, &unlock_blocks)?;
+        let signature = validate_unlock_block_variant(idx, unlock_block, unlock_blocks)?;
 
         if let Some(signature) = signature {
             if !seen.insert(signature) {
@@ -214,8 +214,10 @@ fn validate_unlock_block_variant<'a>(
     unlock_blocks: &'a [UnlockBlock],
 ) -> Result<Option<&'a SignatureUnlock>, ValidationError> {
     match unlock_block {
-        UnlockBlock::Reference(r) => validate_unlock_block_reference(&r, idx, unlock_blocks).map(|_| None),
-        UnlockBlock::Signature(s) => Ok(Some(s)),
+        UnlockBlock::Reference(reference) => {
+            validate_unlock_block_reference(reference, idx, unlock_blocks).map(|_| None)
+        }
+        UnlockBlock::Signature(signature) => Ok(Some(signature)),
     }
 }
 
