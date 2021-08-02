@@ -27,14 +27,14 @@ use core::{
     ops::{Range, RangeInclusive},
 };
 
-/// The maximum number of outputs for a transaction.
+/// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: usize = INPUT_COUNT_MAX;
-/// The range of valid numbers of outputs for a transaction [1..127].
-pub const OUTPUT_COUNT_RANGE: RangeInclusive<usize> = 1..=OUTPUT_COUNT_MAX;
-/// The valid range of indices for outputs for a transaction [0..126].
-pub const OUTPUT_INDEX_RANGE: Range<u16> = 0..OUTPUT_COUNT_MAX as u16;
+/// The range of valid numbers of outputs of a transaction .
+pub const OUTPUT_COUNT_RANGE: RangeInclusive<usize> = 1..=OUTPUT_COUNT_MAX; //[1..127]
+/// The range of valid indices of outputs of a transaction .
+pub const OUTPUT_INDEX_RANGE: Range<u16> = 0..OUTPUT_COUNT_MAX as u16; //[0..126]
 
-/// Error encountered unpacking a transaction output.
+/// Error encountered unpacking an [`Output`].
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum OutputUnpackError {
@@ -51,7 +51,7 @@ impl fmt::Display for OutputUnpackError {
     }
 }
 
-/// A generic output that can represent different types defining the deposit of funds.
+/// A generic output supporting different output kinds.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(
     feature = "serde1",
@@ -60,6 +60,7 @@ impl fmt::Display for OutputUnpackError {
 )]
 #[packable(tag_type = u8)]
 #[packable(tag_error = OutputUnpackError::InvalidKind)]
+// TODO infallible ?
 #[packable(pack_error = MessagePackError)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Output {
