@@ -57,17 +57,13 @@ pub enum Input {
     Utxo(UtxoInput),
 }
 
+impl_wrapped_variant!(Input, UtxoInput, Input::Utxo);
+
 impl Input {
     /// Returns the input kind of an [`Input`].
     pub fn kind(&self) -> u8 {
         match self {
             Self::Utxo(_) => UtxoInput::KIND,
         }
-    }
-}
-
-impl From<UtxoInput> for Input {
-    fn from(input: UtxoInput) -> Self {
-        Self::Utxo(input)
     }
 }

@@ -50,6 +50,9 @@ pub enum Signature {
     Bls(BlsSignature),
 }
 
+impl_wrapped_variant!(Signature, Ed25519Signature, Signature::Ed25519);
+impl_wrapped_variant!(Signature, BlsSignature, Signature::Bls);
+
 impl Signature {
     /// Returns the signature kind of a [`Signature`].
     pub fn kind(&self) -> u8 {
@@ -57,17 +60,5 @@ impl Signature {
             Self::Ed25519(_) => Ed25519Signature::KIND,
             Self::Bls(_) => BlsSignature::KIND,
         }
-    }
-}
-
-impl From<Ed25519Signature> for Signature {
-    fn from(signature: Ed25519Signature) -> Self {
-        Self::Ed25519(signature)
-    }
-}
-
-impl From<BlsSignature> for Signature {
-    fn from(signature: BlsSignature) -> Self {
-        Self::Bls(signature)
     }
 }

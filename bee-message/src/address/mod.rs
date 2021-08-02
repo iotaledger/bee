@@ -55,6 +55,9 @@ pub enum Address {
     Bls(BlsAddress),
 }
 
+impl_wrapped_variant!(Address, Ed25519Address, Address::Ed25519);
+impl_wrapped_variant!(Address, BlsAddress, Address::Bls);
+
 impl Address {
     /// Returns the address kind of an [`Address`].
     pub fn kind(&self) -> u8 {
@@ -97,18 +100,6 @@ impl Address {
                 }
             }
         }
-    }
-}
-
-impl From<Ed25519Address> for Address {
-    fn from(address: Ed25519Address) -> Self {
-        Self::Ed25519(address)
-    }
-}
-
-impl From<BlsAddress> for Address {
-    fn from(address: BlsAddress) -> Self {
-        Self::Bls(address)
     }
 }
 
