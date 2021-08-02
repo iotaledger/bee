@@ -1,11 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::Address, error::ValidationError, MessageUnpackError, IOTA_SUPPLY};
+use crate::{address::Address, error::ValidationError, MessagePackError, MessageUnpackError, IOTA_SUPPLY};
 
 use bee_packable::{coerce::*, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker};
 
-use core::{convert::Infallible, fmt, ops::RangeInclusive};
+use core::{fmt, ops::RangeInclusive};
 
 /// Valid amounts for a signature locked single output.
 pub const SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
@@ -73,7 +73,7 @@ impl SignatureLockedSingleOutput {
 }
 
 impl Packable for SignatureLockedSingleOutput {
-    type PackError = Infallible;
+    type PackError = MessagePackError;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {

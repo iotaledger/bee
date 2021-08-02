@@ -20,7 +20,7 @@ pub use signature_locked_single::{
     SignatureLockedSingleOutput, SignatureLockedSingleUnpackError, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT,
 };
 
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker};
+use bee_packable::Packable;
 
 use core::{
     fmt,
@@ -38,42 +38,41 @@ pub const OUTPUT_INDEX_RANGE: Range<u16> = 0..OUTPUT_COUNT_MAX as u16;
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum OutputUnpackError {
-    InvalidAddressKind(u8),
     InvalidOutputKind(u8),
     ValidationError(ValidationError),
-}
-
-impl From<UnknownTagError<u8>> for OutputUnpackError {
-    fn from(error: UnknownTagError<u8>) -> Self {
-        Self::InvalidAddressKind(error.0)
-    }
 }
 
 impl fmt::Display for OutputUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidAddressKind(kind) => write!(f, "invalid Address kind: {}", kind),
-            Self::InvalidOutputKind(kind) => write!(f, "invalid Output kind: {}", kind),
+            Self::InvalidOutputKind(kind) => write!(f, "invalid output kind: {}", kind),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
     }
 }
 
 /// A generic output that can represent different types defining the deposit of funds.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
+#[packable(tag_type = u8)]
+#[packable(tag_error = OutputUnpackError::InvalidOutputKind)]
+#[packable(pack_error = MessagePackError)]
+#[packable(unpack_error = MessageUnpackError)]
 pub enum Output {
     /// A signature locked single output.
+    #[packable(tag = SignatureLockedSingleOutput::KIND)]
     SignatureLockedSingle(SignatureLockedSingleOutput),
     /// A signature locked asset output.
+    #[packable(tag = SignatureLockedAssetOutput::KIND)]
     SignatureLockedAsset(SignatureLockedAssetOutput),
 }
 
 impl_wrapped_variant!(Output, SignatureLockedSingleOutput, Output::SignatureLockedSingle);
+impl_wrapped_variant!(Output, SignatureLockedAssetOutput, Output::SignatureLockedAsset);
 
 impl Output {
     /// Returns the output kind of an [`Output`].
@@ -82,45 +81,5 @@ impl Output {
             Self::SignatureLockedSingle(_) => SignatureLockedSingleOutput::KIND,
             Self::SignatureLockedAsset(_) => SignatureLockedAssetOutput::KIND,
         }
-    }
-}
-
-impl Packable for Output {
-    type PackError = MessagePackError;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        0u8.packed_len()
-            + match self {
-                Self::SignatureLockedSingle(output) => output.packed_len(),
-                Self::SignatureLockedAsset(output) => output.packed_len(),
-            }
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.kind().pack(packer).infallible()?;
-
-        match self {
-            Self::SignatureLockedSingle(output) => output.pack(packer).infallible()?,
-            Self::SignatureLockedAsset(output) => output.pack(packer)?,
-        }
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let kind = u8::unpack(unpacker).infallible()?;
-
-        let variant = match kind {
-            SignatureLockedSingleOutput::KIND => {
-                Self::SignatureLockedSingle(SignatureLockedSingleOutput::unpack(unpacker)?)
-            }
-            SignatureLockedAssetOutput::KIND => {
-                Self::SignatureLockedAsset(SignatureLockedAssetOutput::unpack(unpacker)?)
-            }
-            tag => Err(UnpackError::Packable(OutputUnpackError::InvalidOutputKind(tag))).coerce()?,
-        };
-
-        Ok(variant)
     }
 }
