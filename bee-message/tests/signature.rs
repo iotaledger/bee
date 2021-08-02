@@ -3,29 +3,43 @@
 
 use bee_message::{
     error::MessageUnpackError,
-    signature::{Ed25519Signature, Signature, SignatureUnpackError},
+    signature::{BlsSignature, Ed25519Signature, Signature, SignatureUnpackError},
 };
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes_array;
 
 #[test]
-fn kind() {
-    assert_eq!(
-        Signature::from(Ed25519Signature::new(rand_bytes_array(), rand_bytes_array(),)).kind(),
-        0,
-    );
+fn from_ed25519() {
+    let ed25519_signature = Ed25519Signature::new(rand_bytes_array(), rand_bytes_array());
+    let signature = Signature::from(ed25519_signature.clone());
+
+    assert_eq!(signature.kind(), 0);
+    assert!(matches!(signature, Signature::Ed25519(signature) if {signature == ed25519_signature}));
 }
 
 #[test]
-fn from_ed25519() {
-    let public_key_bytes = rand_bytes_array();
-    let signature_bytes: [u8; 64] = rand_bytes_array();
-    let signature = Signature::from(Ed25519Signature::new(public_key_bytes, signature_bytes));
+fn from_bls() {
+    let bls_signature = BlsSignature::new(rand_bytes_array());
+    let signature = Signature::from(bls_signature.clone());
 
-    assert!(matches!(signature, Signature::Ed25519(signature)
-        if signature.public_key() == &public_key_bytes
-        && signature.signature() == signature_bytes.as_ref()
-    ));
+    assert_eq!(signature.kind(), 1);
+    assert!(matches!(signature, Signature::Bls(signature) if {signature == bls_signature}));
+}
+
+#[test]
+fn packed_len() {
+    let signature = Signature::from(Ed25519Signature::new(rand_bytes_array(), rand_bytes_array()));
+
+    assert_eq!(signature.packed_len(), 1 + 32 + 64);
+    assert_eq!(signature.pack_to_vec().unwrap().len(), 1 + 32 + 64);
+}
+
+#[test]
+fn packable_round_trip() {
+    let signature_1 = Signature::from(Ed25519Signature::new(rand_bytes_array(), rand_bytes_array()));
+    let signature_2 = Signature::unpack_from_slice(signature_1.pack_to_vec().unwrap()).unwrap();
+
+    assert_eq!(signature_1, signature_2);
 }
 
 #[test]
@@ -40,26 +54,6 @@ fn unpack_invalid_kind() {
         ])
         .err()
         .unwrap(),
-        UnpackError::Packable(MessageUnpackError::Signature(
-            SignatureUnpackError::InvalidSignatureKind(4)
-        )),
+        UnpackError::Packable(MessageUnpackError::Signature(SignatureUnpackError::InvalidKind(4))),
     ));
-}
-
-#[test]
-fn packed_len() {
-    let signature = Signature::from(Ed25519Signature::new(rand_bytes_array(), rand_bytes_array()));
-
-    assert_eq!(signature.packed_len(), 1 + 32 + 64);
-    assert_eq!(signature.pack_to_vec().unwrap().len(), 1 + 32 + 64);
-}
-
-#[test]
-fn packable_round_trip_ed25519() {
-    let signature_1 = Signature::from(Ed25519Signature::new(rand_bytes_array(), rand_bytes_array()));
-    let signature_bytes = signature_1.pack_to_vec().unwrap();
-    let signature_2 = Signature::unpack_from_slice(signature_bytes.clone()).unwrap();
-
-    assert_eq!(signature_bytes[0], 0);
-    assert_eq!(signature_1, signature_2);
 }

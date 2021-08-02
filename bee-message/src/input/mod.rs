@@ -35,7 +35,7 @@ pub enum InputUnpackError {
 impl fmt::Display for InputUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidKind(kind) => write!(f, "invalid input kind: {}", kind),
+            Self::InvalidKind(kind) => write!(f, "invalid Input kind: {}", kind),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
     }

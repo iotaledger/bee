@@ -19,13 +19,13 @@ use core::{convert::Infallible, fmt};
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum SignatureUnpackError {
-    InvalidSignatureKind(u8),
+    InvalidKind(u8),
 }
 
 impl fmt::Display for SignatureUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidSignatureKind(kind) => write!(f, "invalid Signature kind: {}", kind),
+            Self::InvalidKind(kind) => write!(f, "invalid Signature kind: {}", kind),
         }
     }
 }
@@ -37,14 +37,15 @@ impl fmt::Display for SignatureUnpackError {
     derive(serde::Serialize, serde::Deserialize),
     serde(tag = "type", content = "data")
 )]
-#[packable(tag_type = u8, with_error = SignatureUnpackError::InvalidSignatureKind)]
+#[packable(tag_type = u8)]
+#[packable(tag_error = SignatureUnpackError::InvalidSignatureKind)]
 #[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Signature {
     /// An Ed25519 signature.
     #[packable(tag = Ed25519Signature::KIND)]
     Ed25519(Ed25519Signature),
-    /// An BLS signature.
+    /// A BLS signature.
     #[packable(tag = BlsSignature::KIND)]
     Bls(BlsSignature),
 }

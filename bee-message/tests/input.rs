@@ -12,11 +12,11 @@ use bee_test::rand::bytes::rand_bytes;
 
 #[test]
 fn from_utxo() {
-    let input = Input::from(UtxoInput::from(
-        OutputId::new(TransactionId::new([42; TransactionId::LENGTH]), 0).unwrap(),
-    ));
+    let utxo_input = UtxoInput::from(OutputId::new(TransactionId::new([42; TransactionId::LENGTH]), 0).unwrap());
+    let input = Input::from(utxo_input.clone());
 
     assert_eq!(input.kind(), 0);
+    assert!(matches!(input, Input::Utxo(input) if {input == utxo_input}));
 }
 
 #[test]
