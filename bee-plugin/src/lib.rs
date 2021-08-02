@@ -3,7 +3,7 @@
 
 //! The bee node plugin system.
 
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 
 mod handler;
 mod handshake;
@@ -22,7 +22,7 @@ pub use manager::PluginManager;
 
 use std::any::TypeId;
 
-/// An unique identifier for `EventBus` callbacks.
+/// A unique identifier for `EventBus` callbacks.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum UniqueId {
     /// Identifier for types.
@@ -43,7 +43,7 @@ impl From<PluginId> for UniqueId {
     }
 }
 
-/// An unique identifier for each plugin.
+/// A unique identifier for each plugin.
 ///
 /// Uniqueness is guaranteed inside a single `PluginManager`.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]

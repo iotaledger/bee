@@ -7,7 +7,7 @@ pub use crate::grpc::{DummyEvent, SillyEvent};
 
 use std::convert::TryFrom;
 
-/// Identifier for each event type/
+/// Identifier for each event type.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 #[repr(u8)]
 pub enum EventId {

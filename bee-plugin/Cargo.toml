@@ -10,14 +10,6 @@ license = "Apache-2.0"
 keywords = [ "iota", "tangle", "bee", "framework", "plugin" ]
 homepage = "https://www.iota.org"
 
-[build-dependencies]
-tonic-build = { version = "0.5", default-features = false, features = [ "transport", "prost" ]}
-
-[dev-dependencies]
-bee-logger = { path = "../bee-common/bee-logger" }
-
-async-trait = "0.1"
-
 [dependencies]
 bee-event-bus = { path = "../bee-common/bee-event-bus" }
 
@@ -27,3 +19,11 @@ thiserror = "1.0"
 tokio = { version = "1.6", features = [ "macros", "rt-multi-thread", "process", "sync", "fs" ] }
 tokio-stream = "0.1"
 tonic = "0.5"
+
+[dev-dependencies]
+bee-logger = { path = "../bee-common/bee-logger" }
+
+async-trait = "0.1"
+
+[build-dependencies]
+tonic-build = { version = "0.5", default-features = false, features = [ "transport", "prost" ]}

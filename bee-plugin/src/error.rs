@@ -17,7 +17,7 @@ pub enum PluginError {
     /// Status errors from the gRPC plugin server.
     #[error("gRPC status error: {0}")]
     StatusError(#[from] tonic::Status),
-    /// Invalid handshake info errors.
-    #[error("invalid handshake info: {0}")]
+    /// Invalid handshake errors.
+    #[error("invalid handshake: {0}")]
     Handshake(#[from] InvalidHandshake),
 }

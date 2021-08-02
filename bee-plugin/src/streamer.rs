@@ -12,6 +12,7 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use tonic::transport::Channel;
 
+/// Type that streams events of the specified type to the gRPC server of a plugin.
 pub(crate) struct PluginStreamer<T> {
     stream: UnboundedReceiverStream<T>,
     shutdown: Receiver<()>,

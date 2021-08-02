@@ -45,9 +45,10 @@ impl PluginManager {
     /// Unloads a plugin with the specified identifier.
     pub async fn unload_plugin(&mut self, id: PluginId) -> Result<(), PluginError> {
         if let Some(handler) = self.handlers.remove(&id) {
-            log::info!("shutting down the plugin with ID `{:?}`", id);
+            let name = handler.name().to_owned();
+            log::info!("shutting down the `{}` plugin", name);
             handler.shutdown(&self.bus).await?;
-            log::info!("the plugin with ID `{:?}` was shut down successfully", id);
+            log::info!("the `{}` plugin was shut down successfully", name);
         }
 
         Ok(())

@@ -215,4 +215,8 @@ impl PluginHandler {
 
         Ok(())
     }
+
+    pub(crate) fn name(&self) -> &str {
+        &self.name
+    }
 }
