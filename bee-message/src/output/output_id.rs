@@ -13,7 +13,6 @@ use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker
 use core::{
     convert::{From, Infallible, TryFrom, TryInto},
     fmt,
-    str::FromStr,
 };
 
 /// Error encountered unpacking an [`OutputId`].
@@ -75,6 +74,21 @@ impl OutputId {
     }
 }
 
+impl TryFrom<[u8; OutputId::LENGTH]> for OutputId {
+    type Error = ValidationError;
+
+    fn try_from(bytes: [u8; OutputId::LENGTH]) -> Result<Self, Self::Error> {
+        let (transaction_id, index) = bytes.split_at(TransactionId::LENGTH);
+
+        Self::new(
+            // Unwrap is fine because size is already known and valid.
+            From::<[u8; TransactionId::LENGTH]>::from(transaction_id.try_into().unwrap()),
+            // Unwrap is fine because size is already known and valid.
+            u16::from_le_bytes(index.try_into().unwrap()),
+        )
+    }
+}
+
 impl Packable for OutputId {
     type PackError = Infallible;
     type UnpackError = MessageUnpackError;
@@ -92,42 +106,17 @@ impl Packable for OutputId {
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
         let transaction_id = TransactionId::unpack(unpacker).infallible()?;
-
         let index = u16::unpack(unpacker).infallible()?;
-        validate_index(index).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        Ok(Self { transaction_id, index })
+        Self::new(transaction_id, index).map_err(|e| UnpackError::Packable(e.into()))
     }
 }
 
-impl TryFrom<[u8; OutputId::LENGTH]> for OutputId {
-    type Error = ValidationError;
-
-    fn try_from(bytes: [u8; OutputId::LENGTH]) -> Result<Self, Self::Error> {
-        let (transaction_id, index) = bytes.split_at(TransactionId::LENGTH);
-
-        Self::new(
-            // Unwrap is fine because size is already known and valid.
-            From::<[u8; TransactionId::LENGTH]>::from(transaction_id.try_into().unwrap()),
-            // Unwrap is fine because size is already known and valid.
-            u16::from_le_bytes(index.try_into().unwrap()),
-        )
-    }
-}
-
-impl FromStr for OutputId {
+impl core::str::FromStr for OutputId {
     type Err = ValidationError;
 
     fn from_str(hex: &str) -> Result<Self, Self::Err> {
         OutputId::try_from(hex_decode(hex)?)
-    }
-}
-
-fn validate_index(index: u16) -> Result<(), ValidationError> {
-    if !OUTPUT_INDEX_RANGE.contains(&index) {
-        Err(ValidationError::InvalidOutputIndex(index))
-    } else {
-        Ok(())
     }
 }
 
@@ -140,5 +129,13 @@ impl core::fmt::Display for OutputId {
 impl core::fmt::Debug for OutputId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "OutputId({})", self)
+    }
+}
+
+fn validate_index(index: u16) -> Result<(), ValidationError> {
+    if !OUTPUT_INDEX_RANGE.contains(&index) {
+        Err(ValidationError::InvalidOutputIndex(index))
+    } else {
+        Ok(())
     }
 }

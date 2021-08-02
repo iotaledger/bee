@@ -18,6 +18,11 @@ const OUTPUT_ID_INVALID_HEX: &str = "ab049407c8fec3b607788c5104104b6790f5936caa7
 const OUTPUT_ID_INVALID_LEN: &str = "36463a6d28bd0a8d92f920ed44ff069265e1d59ac5c88eaa2451ca279fe17a3b7c";
 
 #[test]
+fn length() {
+    assert_eq!(OutputId::LENGTH, 32 + 2);
+}
+
+#[test]
 fn display_impl() {
     assert_eq!(format!("{}", OutputId::from_str(OUTPUT_ID).unwrap()), OUTPUT_ID);
 }
@@ -31,7 +36,7 @@ fn debug_impl() {
 }
 
 #[test]
-fn new_valid() {
+fn new_valid_getters() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
     let output_id = OutputId::new(transaction_id, 42).unwrap();
 
@@ -40,7 +45,7 @@ fn new_valid() {
 }
 
 #[test]
-fn split_valid() {
+fn new_valid_split() {
     let transaction_id = TransactionId::from_str(TRANSACTION_ID).unwrap();
     let output_id = OutputId::new(transaction_id, 42).unwrap();
     let (transaction_id_s, index) = output_id.split();
@@ -84,7 +89,7 @@ fn from_str_valid() {
 }
 
 #[test]
-fn from_str_invalid_index() {
+fn from_str_invalid() {
     assert!(matches!(
         OutputId::from_str(OUTPUT_ID_INVALID_INDEX),
         Err(ValidationError::InvalidOutputIndex(127))
@@ -92,43 +97,8 @@ fn from_str_invalid_index() {
 }
 
 #[test]
-fn from_str_invalid_hex() {
-    assert!(matches!(
-        OutputId::from_str(OUTPUT_ID_INVALID_HEX),
-        Err(ValidationError::InvalidHexadecimalChar(hex))
-            if hex == OUTPUT_ID_INVALID_HEX
-    ));
-}
-
-#[test]
-fn from_str_invalid_len() {
-    assert!(matches!(
-        OutputId::from_str(OUTPUT_ID_INVALID_LEN),
-        Err(ValidationError::InvalidHexadecimalLength { expected, actual })
-            if expected == OutputId::LENGTH * 2 && actual == OutputId::LENGTH * 2 - 2
-    ));
-}
-
-#[test]
 fn from_str_to_str() {
-    let output_id = OutputId::from_str(OUTPUT_ID).unwrap();
-
-    assert_eq!(output_id.to_string(), OUTPUT_ID);
-}
-
-#[test]
-fn unpack_invalid_index() {
-    let bytes = vec![
-        82, 253, 252, 7, 33, 130, 101, 79, 22, 63, 95, 15, 154, 98, 29, 114, 149, 102, 199, 77, 16, 3, 124, 77, 123,
-        187, 4, 7, 209, 226, 198, 73, 127, 0,
-    ];
-
-    assert!(matches!(
-        OutputId::unpack_from_slice(bytes).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::ValidationError(
-            ValidationError::InvalidOutputIndex(127)
-        )),
-    ));
+    assert_eq!(OutputId::from_str(OUTPUT_ID).unwrap().to_string(), OUTPUT_ID);
 }
 
 #[test]
@@ -145,4 +115,19 @@ fn packable_round_trip() {
     let output_id_2 = OutputId::unpack_from_slice(output_id_1.pack_to_vec().unwrap()).unwrap();
 
     assert_eq!(output_id_1, output_id_2);
+}
+
+#[test]
+fn unpack_invalid_index() {
+    let bytes = vec![
+        82, 253, 252, 7, 33, 130, 101, 79, 22, 63, 95, 15, 154, 98, 29, 114, 149, 102, 199, 77, 16, 3, 124, 77, 123,
+        187, 4, 7, 209, 226, 198, 73, 127, 0,
+    ];
+
+    assert!(matches!(
+        OutputId::unpack_from_slice(bytes).err().unwrap(),
+        UnpackError::Packable(MessageUnpackError::ValidationError(
+            ValidationError::InvalidOutputIndex(127)
+        )),
+    ));
 }
