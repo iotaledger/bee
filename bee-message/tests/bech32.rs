@@ -97,3 +97,33 @@ fn valid_addresses() {
         assert_eq!(bech32.data()[1..], hex::decode(valid.2).unwrap());
     }
 }
+
+// #[test]
+// fn generate_bech32_string() {
+//     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
+//     let bech32 = Bech32Address::from_address("iota", &address);
+//
+//     assert_eq!(
+//         bech32.to_string(),
+//         "iota1qpf0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryj430ldu"
+//     );
+// }
+//
+// #[test]
+// fn generate_bech32_testnet_string() {
+//     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
+//     let bech32 = Bech32Address::from_address("atoi", &address);
+//
+//     assert_eq!(
+//         bech32.to_string(),
+//         "atoi1qpf0mlq8yxpx2nck8a0slxnzr4ef2ek8f5gqxlzd0wasgp73utryjjl77h3"
+//     );
+// }
+//
+// #[test]
+// fn bech32_to_address() {
+//     let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
+//
+//     let address: Address = Bech32Address::from_address("iota", &address).try_into().unwrap();
+//     assert_eq!(address.to_string(), ED25519_ADDRESS);
+// }

@@ -16,7 +16,7 @@ use crate::{error::ValidationError, signature::Signature};
 use bee_packable::Packable;
 
 /// A generic address supporting different address kinds.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(
     feature = "serde1",
     derive(serde::Serialize, serde::Deserialize),
@@ -77,15 +77,15 @@ impl Address {
     }
 }
 
-impl From<BlsAddress> for Address {
-    fn from(address: BlsAddress) -> Self {
-        Self::Bls(address)
-    }
-}
-
 impl From<Ed25519Address> for Address {
     fn from(address: Ed25519Address) -> Self {
         Self::Ed25519(address)
+    }
+}
+
+impl From<BlsAddress> for Address {
+    fn from(address: BlsAddress) -> Self {
+        Self::Bls(address)
     }
 }
 
@@ -93,8 +93,17 @@ impl core::fmt::Display for Address {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         // Encodes to a base 16 hexadecimal string.
         match self {
-            Self::Bls(bls) => write!(f, "{}", hex::encode(bls)),
-            Self::Ed25519(ed) => write!(f, "{}", hex::encode(ed)),
+            Self::Ed25519(address) => write!(f, "{}", hex::encode(address)),
+            Self::Bls(address) => write!(f, "{}", hex::encode(address)),
+        }
+    }
+}
+
+impl core::fmt::Debug for Address {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match self {
+            Self::Ed25519(address) => write!(f, "{:?}", address),
+            Self::Bls(address) => write!(f, "{:?}", address),
         }
     }
 }

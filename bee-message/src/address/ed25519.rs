@@ -77,6 +77,7 @@ impl core::str::FromStr for Ed25519Address {
 
 impl core::fmt::Display for Ed25519Address {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        // Encodes to a base 16 hexadecimal string.
         write!(f, "{}", hex::encode(self.0))
     }
 }

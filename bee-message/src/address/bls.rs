@@ -55,6 +55,7 @@ impl core::str::FromStr for BlsAddress {
 
 impl core::fmt::Display for BlsAddress {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        // Encodes to a base 16 hexadecimal string.
         write!(f, "{}", hex::encode(&self))
     }
 }
