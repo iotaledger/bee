@@ -9,15 +9,18 @@ use crate::{
 use core::convert::{Infallible, TryFrom, TryInto};
 
 /// Trait that provides an interface for bounded integers.
-pub trait Bounded<T> {
+pub trait Bounded {
+    /// The type used to define the bounds.
+    type Bounds;
+
     /// Minimum bounded value.
-    const MIN: T;
+    const MIN: Self::Bounds;
 
     /// Maximum bounded value.
-    const MAX: T;
+    const MAX: Self::Bounds;
 
     /// Actual value.
-    fn value(&self) -> T;
+    fn value(&self) -> Self::Bounds;
 }
 
 macro_rules! bounded_int {
@@ -26,7 +29,9 @@ macro_rules! bounded_int {
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub struct $err<const MIN: $int, const MAX: $int>(pub $int);
 
-        impl<const MIN: $int, const MAX: $int> Bounded<$int> for $err<MIN, MAX> {
+        impl<const MIN: $int, const MAX: $int> Bounded for $err<MIN, MAX> {
+            type Bounds = $int;
+
             const MIN: $int = MIN;
             const MAX: $int = MAX;
 
@@ -39,14 +44,16 @@ macro_rules! bounded_int {
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub struct $ty<const MIN: $int, const MAX: $int>($int);
 
-        impl<const MIN: $int, const MAX: $int> Bounded<$int> for $ty<MIN, MAX> {
+        impl<const MIN: $int, const MAX: $int> Bounded for $ty<MIN, MAX> {
+            type Bounds = $int;
+
             const MIN: $int = MIN;
             const MAX: $int = MAX;
 
             fn value(&self) -> $int {
                 self.0
             }
-        } 
+        }
 
         impl<const MIN: $int, const MAX: $int> TryFrom<$int> for $ty<MIN, MAX> {
             type Error = $err<MIN, MAX>;

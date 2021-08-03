@@ -15,8 +15,7 @@ mod vec;
 mod vec_prefix;
 
 pub use bounded_int::{
-    Bounded,
-    BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
+    Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
     InvalidBoundedU8,
 };
 pub use option::UnpackOptionError;
