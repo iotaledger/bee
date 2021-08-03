@@ -24,8 +24,8 @@ pub trait Bounded {
 }
 
 macro_rules! bounded_int {
-    ($ty:ident, $err:ident, $int:ident) => {
-        #[doc = concat!("Error type encountered when attempting to wrap a [`", stringify!($int), "`] that is not within the given bounds.")]
+    ($(#[$ty_doc:meta])* $ty:ident, $(#[$err_doc:meta])* $err:ident, $int:ident) => {
+        $(#[$err_doc])*
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub struct $err<const MIN: $int, const MAX: $int>(pub $int);
 
@@ -43,7 +43,7 @@ macro_rules! bounded_int {
             }
         }
 
-        #[doc = concat!("Wrapper type for a [`", stringify!($int), "`], providing minimum and maximum value bounds.")]
+        $(#[$ty_doc])*
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub struct $ty<const MIN: $int, const MAX: $int>($int);
 
@@ -95,7 +95,36 @@ macro_rules! bounded_int {
     };
 }
 
-bounded_int!(BoundedU8, InvalidBoundedU8, u8);
-bounded_int!(BoundedU16, InvalidBoundedU16, u16);
-bounded_int!(BoundedU32, InvalidBoundedU32, u32);
-bounded_int!(BoundedU64, InvalidBoundedU64, u64);
+// TODO: replace with #[doc = concat!(<...>)] in macro when CI rust versions are updated.
+
+bounded_int!(
+    /// Wrapper type for a `u8`, providing minimum and maximum value bounds.
+    BoundedU8,
+    /// Error encountered when attempting to wrap a `u8` that is not within the given bounds.
+    InvalidBoundedU8,
+    u8
+);
+
+bounded_int!(
+    /// Wrapper type for a `u16`, providing minimum and maximum value bounds.
+    BoundedU16,
+    /// Error encountered when attempting to wrap a `u16` that is not within the given bounds.
+    InvalidBoundedU16,
+    u16
+);
+
+bounded_int!(
+    /// Wrapper type for a `u32`, providing minimum and maximum value bounds.
+    BoundedU32,
+    /// Error encountered when attempting to wrap a `u32` that is not within the given bounds.
+    InvalidBoundedU32,
+    u32
+);
+
+bounded_int!(
+    /// Wrapper type for a `u64`, providing minimum and maximum value bounds.
+    BoundedU64,
+    /// Error encountered when attempting to wrap a `u64` that is not within the given bounds.
+    InvalidBoundedU64,
+    u64
+);
