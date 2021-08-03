@@ -8,23 +8,12 @@ use crate::{
     error::{PackError, PackPrefixError, UnpackError, UnpackPrefixError},
     packer::Packer,
     unpacker::Unpacker,
-    Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, Packable,
+    Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
+    InvalidBoundedU8, Packable,
 };
 
 use alloc::vec::Vec;
 use core::{convert::TryFrom, marker::PhantomData};
-
-/// Error encountered when attempting to convert a [`Vec<T>`] into a [`VecPrefix`], where
-/// the length of the source vector exceeds the maximum length of the [`VecPrefix`].
-#[derive(Debug, PartialEq, Eq)]
-pub struct PrefixedFromVecError {
-    /// Minimum length of the [`VecPrefix`].
-    pub min_len: usize,
-    /// Maximum length of the [`VecPrefix`].
-    pub max_len: usize,
-    /// Actual length of the source vector.
-    pub actual_len: usize,
-}
 
 /// Wrapper type for [`Vec<T>`] where the length prefix is of type `P`.
 /// The [`Vec<T>`]'s maximum length is provided by `N`.
@@ -48,38 +37,26 @@ macro_rules! impl_vec_prefix {
         }
 
         impl<T, const MIN: $ty, const MAX: $ty> TryFrom<Vec<T>> for VecPrefix<T, $bounded<MIN, MAX>> {
-            type Error = PrefixedFromVecError;
+            type Error = $err<MIN, MAX>;
 
             fn try_from(vec: Vec<T>) -> Result<Self, Self::Error> {
-                if vec.len() > MAX as usize || vec.len() < MIN as usize {
-                    Err(PrefixedFromVecError {
-                        min_len: MIN as usize,
-                        max_len: MAX as usize,
-                        actual_len: vec.len(),
-                    })
-                } else {
-                    Ok(Self {
-                        inner: vec,
-                        bounded: PhantomData,
-                    })
-                }
+                let _ = $bounded::<MIN, MAX>::try_from(vec.len() as $ty)?;
+
+                Ok(Self {
+                    inner: vec,
+                    bounded: PhantomData,
+                })
             }
         }
 
         impl<'a, T, const MIN: $ty, const MAX: $ty> TryFrom<&'a Vec<T>> for &'a VecPrefix<T, $bounded<MIN, MAX>> {
-            type Error = PrefixedFromVecError;
+            type Error = $err<MIN, MAX>;
 
             fn try_from(vec: &Vec<T>) -> Result<Self, Self::Error> {
-                if vec.len() > MAX as usize || vec.len() < MIN as usize {
-                    Err(PrefixedFromVecError {
-                        min_len: MIN as usize,
-                        max_len: MAX as usize,
-                        actual_len: vec.len(),
-                    })
-                } else {
-                    // SAFETY: `Vec<T>` and `VecPrefix<T, P, N>` have the same layout.
-                    Ok(unsafe { &*(vec as *const Vec<T> as *const VecPrefix<T, $bounded<MIN, MAX>>) })
-                }
+                let _ = $bounded::<MIN, MAX>::try_from(vec.len() as $ty)?;
+
+                // SAFETY: `Vec<T>` and `VecPrefix<T, P, N>` have the same layout.
+                Ok(unsafe { &*(vec as *const Vec<T> as *const VecPrefix<T, $bounded<MIN, MAX>>) })
             }
         }
 
@@ -127,7 +104,7 @@ macro_rules! impl_vec_prefix {
                         }
                         UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
                     })?
-                    .value();
+                    .into();
 
                 let mut inner = Vec::with_capacity(len as usize);
 

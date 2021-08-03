@@ -1,3 +1,6 @@
+// Copyright 2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::{
     coerce::CoerceInfallible,
     error::{PackError, UnpackError},
@@ -18,14 +21,11 @@ pub trait Bounded {
 
     /// Maximum bounded value.
     const MAX: Self::Bounds;
-
-    /// Actual value.
-    fn value(&self) -> Self::Bounds;
 }
 
 macro_rules! bounded_int {
-    ($(#[$ty_doc:meta])* $ty:ident, $(#[$err_doc:meta])* $err:ident, $int:ident) => {
-        $(#[$err_doc])*
+    ($ty:ident, $err:ident, $int:ident) => {
+        #[doc = concat!("Error type encountered when attempting to wrap a [`", stringify!($int), "`] that is not within the given bounds.")]
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub struct $err<const MIN: $int, const MAX: $int>(pub $int);
 
@@ -34,13 +34,16 @@ macro_rules! bounded_int {
 
             const MIN: $int = MIN;
             const MAX: $int = MAX;
+        }
 
-            fn value(&self) -> $int {
+        #[allow(clippy::from_over_into)]
+        impl<const MIN: $int, const MAX: $int> Into<$int> for $err<MIN, MAX> {
+            fn into(self) -> $int {
                 self.0
             }
         }
 
-        $(#[$ty_doc])*
+        #[doc = concat!("Wrapper type for a [`", stringify!($int), "`], providing minimum and maximum value bounds.")]
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub struct $ty<const MIN: $int, const MAX: $int>($int);
 
@@ -49,8 +52,11 @@ macro_rules! bounded_int {
 
             const MIN: $int = MIN;
             const MAX: $int = MAX;
+        }
 
-            fn value(&self) -> $int {
+        #[allow(clippy::from_over_into)]
+        impl<const MIN: $int, const MAX: $int> Into<$int> for $ty<MIN, MAX> {
+            fn into(self) -> $int {
                 self.0
             }
         }
@@ -89,34 +95,7 @@ macro_rules! bounded_int {
     };
 }
 
-bounded_int!(
-    /// Wrapper type for a `u8`, providing minimum and maximum value bounds.
-    BoundedU8,
-    /// Error encountered when attempting to wrap a `u8` that is not within the given bounds.
-    InvalidBoundedU8,
-    u8
-);
-
-bounded_int!(
-    /// Wrapper type for a `u16`, providing minimum and maximum value bounds.
-    BoundedU16,
-    /// Error encountered when attempting to wrap a `u16` that is not within the given bounds.
-    InvalidBoundedU16,
-    u16
-);
-
-bounded_int!(
-    /// Wrapper type for a `u32`, providing minimum and maximum value bounds.
-    BoundedU32,
-    /// Error encountered when attempting to wrap a `u32` that is not within the given bounds.
-    InvalidBoundedU32,
-    u32
-);
-
-bounded_int!(
-    /// Wrapper type for a `u64`, providing minimum and maximum value bounds.
-    BoundedU64,
-    /// Error encountered when attempting to wrap a `u64` that is not within the given bounds.
-    InvalidBoundedU64,
-    u64
-);
+bounded_int!(BoundedU8, InvalidBoundedU8, u8);
+bounded_int!(BoundedU16, InvalidBoundedU16, u16);
+bounded_int!(BoundedU32, InvalidBoundedU32, u32);
+bounded_int!(BoundedU64, InvalidBoundedU64, u64);

@@ -4,8 +4,8 @@
 mod common;
 
 use bee_packable::{
-    error::UnpackPrefixError, BoundedU16, BoundedU32, BoundedU64, BoundedU8, Packable, PrefixedFromVecError,
-    UnpackError, VecPrefix,
+    error::UnpackPrefixError, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU32, Packable, UnpackError,
+    VecPrefix,
 };
 
 use core::convert::TryFrom;
@@ -49,12 +49,5 @@ fn packable_vec_prefix_from_vec_error() {
     let vec = vec![0u8; 16];
     let prefixed = VecPrefix::<u8, BoundedU32<1, 8>>::try_from(vec);
 
-    assert!(matches!(
-        prefixed,
-        Err(PrefixedFromVecError {
-            min_len: 1,
-            max_len: 8,
-            actual_len: 16
-        })
-    ));
+    assert!(matches!(prefixed, Err(InvalidBoundedU32(16))));
 }
