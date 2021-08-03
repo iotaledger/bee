@@ -15,8 +15,9 @@ use crate::{
 use alloc::vec::Vec;
 use core::{convert::TryFrom, marker::PhantomData};
 
-/// Wrapper type for [`Vec<T>`] where the length prefix is of type `P`.
-/// The [`Vec<T>`]'s maximum length is provided by `N`.
+/// Wrapper type for [`Vec<T>`] with a length prefix.
+/// The [`Vec<T>`]'s maximum length is provided by `B`, where `B` is a [`Bounded`] type.
+/// The prefix type is the `Bounds` type associated with `B`.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct VecPrefix<T, B: Bounded> {
@@ -26,16 +27,6 @@ pub struct VecPrefix<T, B: Bounded> {
 
 macro_rules! impl_vec_prefix {
     ($ty:ident, $bounded:ident, $err:ident) => {
-        impl<T, const MIN: $ty, const MAX: $ty> VecPrefix<T, $bounded<MIN, MAX>> {
-            /// Creates a new empty [`VecPrefix<T, P>`] with a specified capacity.
-            pub fn with_capacity(capacity: usize) -> Self {
-                Self {
-                    inner: Vec::with_capacity(capacity),
-                    bounded: PhantomData,
-                }
-            }
-        }
-
         impl<T, const MIN: $ty, const MAX: $ty> TryFrom<Vec<T>> for VecPrefix<T, $bounded<MIN, MAX>> {
             type Error = $err<MIN, MAX>;
 
@@ -55,7 +46,7 @@ macro_rules! impl_vec_prefix {
             fn try_from(vec: &Vec<T>) -> Result<Self, Self::Error> {
                 let _ = $bounded::<MIN, MAX>::try_from(vec.len() as $ty)?;
 
-                // SAFETY: `Vec<T>` and `VecPrefix<T, P, N>` have the same layout.
+                // SAFETY: `Vec<T>` and `VecPrefix<T, B>` have the same layout.
                 Ok(unsafe { &*(vec as *const Vec<T> as *const VecPrefix<T, $bounded<MIN, MAX>>) })
             }
         }
