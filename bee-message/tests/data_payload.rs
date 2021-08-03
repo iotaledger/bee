@@ -40,7 +40,7 @@ fn new_invalid_length() {
 
 #[test]
 fn unpack_valid() {
-    let mut bytes = vec![0u8, 255, 0, 0, 0];
+    let mut bytes = vec![255, 0, 0, 0];
 
     bytes.extend(rand_bytes(255));
 
@@ -53,7 +53,7 @@ fn unpack_valid() {
 fn unpack_invalid_length() {
     let data_bytes = 65160;
 
-    let mut bytes = vec![0u8, 0x88, 0xfe, 0, 0];
+    let mut bytes = vec![0x88, 0xfe, 0, 0];
 
     bytes.extend(rand_bytes(data_bytes));
 
@@ -79,7 +79,7 @@ fn accessors_eq() {
 fn packed_len() {
     let data = DataPayload::new(rand_bytes(255)).unwrap();
 
-    assert_eq!(data.packed_len(), 1 + 4 + 255);
+    assert_eq!(data.packed_len(), 4 + 255);
 }
 
 #[test]

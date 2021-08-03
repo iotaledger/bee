@@ -144,12 +144,10 @@ impl Packable for IndexationPayload {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        Self::VERSION.packed_len() + self.index.packed_len() + self.data.packed_len()
+        self.index.packed_len() + self.data.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).infallible()?;
-
         self.index.pack(packer).coerce::<IndexationPackError>().coerce()?;
 
         self.data.pack(packer).coerce::<IndexationPackError>().coerce()?;
@@ -158,9 +156,6 @@ impl Packable for IndexationPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).infallible()?;
-        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
-
         let index = VecPrefix::<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<IndexationUnpackError>()
             .coerce()?;
@@ -170,16 +165,5 @@ impl Packable for IndexationPayload {
             .coerce()?;
 
         Ok(Self { index, data })
-    }
-}
-
-fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
-    if version != IndexationPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion {
-            version,
-            payload_kind: IndexationPayload::KIND,
-        })
-    } else {
-        Ok(())
     }
 }

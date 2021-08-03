@@ -38,7 +38,7 @@ fn new_valid() {
 
 #[test]
 fn unpack_valid() {
-    let mut bytes = vec![0u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+    let mut bytes = vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
 
     bytes.extend(hex::decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap());
     bytes.extend(hex::decode(BEACON_SIGNATURE).unwrap());
@@ -75,7 +75,7 @@ fn packed_len() {
         .finish()
         .unwrap();
 
-    assert_eq!(beacon.packed_len(), 1 + 4 + 8 + 96 + 96);
+    assert_eq!(beacon.packed_len(), 4 + 8 + 96 + 96);
 }
 
 #[test]

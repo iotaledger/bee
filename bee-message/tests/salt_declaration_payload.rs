@@ -35,7 +35,7 @@ fn new_valid() {
 
 #[test]
 fn unpack_valid() {
-    let mut bytes = vec![0u8, 32, 0, 0, 0, 64, 0, 0, 0];
+    let mut bytes = vec![32, 0, 0, 0, 64, 0, 0, 0];
 
     bytes.extend(rand_bytes_array::<64>());
     bytes.extend(vec![0, 0, 0, 0, 0, 0, 0, 0]);
@@ -81,7 +81,7 @@ fn packed_len() {
         .finish()
         .unwrap();
 
-    assert_eq!(salt_declaration.packed_len(), 1 + 4 + 4 + 64 + 8 + 8 + 64);
+    assert_eq!(salt_declaration.packed_len(), 4 + 4 + 64 + 8 + 8 + 64);
 }
 
 #[test]

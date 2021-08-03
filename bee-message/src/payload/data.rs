@@ -108,21 +108,16 @@ impl Packable for DataPayload {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        Self::VERSION.packed_len() + self.data.packed_len()
+        self.data.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).infallible()?;
-
         self.data.pack(packer).coerce::<DataPackError>().coerce()?;
 
         Ok(())
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).infallible()?;
-        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
-
         let data = VecPrefix::<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<DataUnpackError>()
             .coerce()?;
@@ -130,16 +125,5 @@ impl Packable for DataPayload {
         let payload = Self { data };
 
         Ok(payload)
-    }
-}
-
-fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
-    if version != DataPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion {
-            version,
-            payload_kind: DataPayload::KIND,
-        })
-    } else {
-        Ok(())
     }
 }

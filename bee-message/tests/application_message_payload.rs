@@ -16,7 +16,7 @@ fn version() {
 
 #[test]
 fn unpack_valid() {
-    let bytes = vec![0u8, 0, 0, 0, 1];
+    let bytes = vec![0, 0, 0, 1];
 
     assert!(ApplicationMessagePayload::unpack_from_slice(bytes).is_ok());
 }
@@ -32,7 +32,7 @@ fn accessors_eq() {
 fn packed_len() {
     let application_msg = ApplicationMessagePayload::new(1);
 
-    assert_eq!(application_msg.packed_len(), 1 + 4);
+    assert_eq!(application_msg.packed_len(), 4);
 }
 
 #[test]

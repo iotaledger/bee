@@ -113,11 +113,10 @@ impl Packable for FpcPayload {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        Self::VERSION.packed_len() + self.conflicts.packed_len() + self.timestamps.packed_len()
+        self.conflicts.packed_len() + self.timestamps.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).infallible()?;
         self.conflicts.pack(packer).coerce::<FpcPackError>().coerce()?;
         self.timestamps.pack(packer).coerce::<FpcPackError>().coerce()?;
 
@@ -125,25 +124,11 @@ impl Packable for FpcPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).infallible()?;
-        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
-
         let conflicts = Conflicts::unpack(unpacker).coerce::<FpcUnpackError>().coerce()?;
 
         let timestamps = Timestamps::unpack(unpacker).coerce::<FpcUnpackError>().coerce()?;
 
         Ok(Self { conflicts, timestamps })
-    }
-}
-
-fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
-    if version != FpcPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion {
-            version,
-            payload_kind: FpcPayload::KIND,
-        })
-    } else {
-        Ok(())
     }
 }
 

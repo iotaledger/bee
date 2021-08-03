@@ -186,15 +186,10 @@ impl Packable for SaltDeclarationPayload {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        Self::VERSION.packed_len()
-            + self.node_id.packed_len()
-            + self.salt.packed_len()
-            + self.timestamp.packed_len()
-            + self.signature.packed_len()
+        self.node_id.packed_len() + self.salt.packed_len() + self.timestamp.packed_len() + self.signature.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).infallible()?;
         self.node_id.pack(packer).infallible()?;
         self.salt.pack(packer)?;
         self.timestamp.pack(packer).infallible()?;
@@ -204,9 +199,6 @@ impl Packable for SaltDeclarationPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).infallible()?;
-        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
-
         let node_id = u32::unpack(unpacker).infallible()?;
         let salt = Salt::unpack(unpacker)?;
         let timestamp = u64::unpack(unpacker).infallible()?;
@@ -218,17 +210,6 @@ impl Packable for SaltDeclarationPayload {
             timestamp,
             signature,
         })
-    }
-}
-
-fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
-    if version != SaltDeclarationPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion {
-            version,
-            payload_kind: SaltDeclarationPayload::KIND,
-        })
-    } else {
-        Ok(())
     }
 }
 

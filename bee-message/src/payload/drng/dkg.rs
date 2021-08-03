@@ -326,15 +326,13 @@ impl Packable for DkgPayload {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        Self::VERSION.packed_len()
-            + self.instance_id.packed_len()
+        self.instance_id.packed_len()
             + self.from_index.packed_len()
             + self.to_index.packed_len()
             + self.deal.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).infallible()?;
         self.instance_id.pack(packer).infallible()?;
         self.from_index.pack(packer).infallible()?;
         self.to_index.pack(packer).infallible()?;
@@ -344,9 +342,6 @@ impl Packable for DkgPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).infallible()?;
-        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
-
         let instance_id = u32::unpack(unpacker).infallible()?;
         let from_index = u32::unpack(unpacker).infallible()?;
         let to_index = u32::unpack(unpacker).infallible()?;
@@ -358,17 +353,6 @@ impl Packable for DkgPayload {
             to_index,
             deal,
         })
-    }
-}
-
-fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
-    if version != DkgPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion {
-            version,
-            payload_kind: DkgPayload::KIND,
-        })
-    } else {
-        Ok(())
     }
 }
 

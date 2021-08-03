@@ -107,7 +107,7 @@ fn accessors_eq() {
 
 #[test]
 fn unpack_valid() {
-    let mut bytes = vec![0u8, 3, 0, 0, 0];
+    let mut bytes = vec![3, 0, 0, 0];
 
     bytes.extend(rand_bytes_array::<32>());
     bytes.extend(vec![0, 0]);

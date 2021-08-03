@@ -117,7 +117,7 @@ fn dkg_new() {
 #[test]
 fn dkg_unpack_valid() {
     let bytes = vec![
-        0u8, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0,
+        0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0,
     ];
 
     let dkg = DkgPayload::unpack_from_slice(bytes);
@@ -169,10 +169,7 @@ fn dkg_packed_len() {
         .finish()
         .unwrap();
 
-    assert_eq!(
-        dkg.packed_len(),
-        1 + 4 + 4 + 4 + 4 + 4 + 4 + 4 + 4 + 128 + 12 + 128 + 12
-    );
+    assert_eq!(dkg.packed_len(), 4 + 4 + 4 + 4 + 4 + 4 + 4 + 4 + 128 + 12 + 128 + 12);
 }
 
 #[test]

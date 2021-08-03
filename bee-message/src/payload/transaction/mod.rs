@@ -17,7 +17,7 @@ pub use essence::{
 };
 pub use transaction_id::TransactionId;
 
-use bee_packable::{coerce::*, error::PackPrefixError, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{error::PackPrefixError, PackError, Packable, Packer, UnpackError, Unpacker};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use alloc::boxed::Box;
@@ -155,11 +155,10 @@ impl Packable for TransactionPayload {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        Self::VERSION.packed_len() + self.essence.packed_len() + self.unlock_blocks.packed_len()
+        self.essence.packed_len() + self.unlock_blocks.packed_len()
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).infallible()?;
         self.essence.pack(packer)?;
         self.unlock_blocks.pack(packer)?;
 
@@ -167,26 +166,12 @@ impl Packable for TransactionPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).infallible()?;
-        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
-
         let essence = TransactionEssence::unpack(unpacker)?;
 
         let unlock_blocks = UnlockBlocks::unpack(unpacker)?;
         validate_unlock_block_count(&essence, &unlock_blocks).map_err(|e| UnpackError::Packable(e.into()))?;
 
         Ok(Self { essence, unlock_blocks })
-    }
-}
-
-fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
-    if version != TransactionPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion {
-            version,
-            payload_kind: TransactionPayload::KIND,
-        })
-    } else {
-        Ok(())
     }
 }
 

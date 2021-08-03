@@ -72,8 +72,7 @@ impl Packable for CollectiveBeaconPayload {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        Self::VERSION.packed_len()
-            + self.instance_id.packed_len()
+        self.instance_id.packed_len()
             + self.round.packed_len()
             + self.prev_signature.packed_len()
             + self.signature.packed_len()
@@ -81,7 +80,6 @@ impl Packable for CollectiveBeaconPayload {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        Self::VERSION.pack(packer).infallible()?;
         self.instance_id.pack(packer).infallible()?;
         self.round.pack(packer).infallible()?;
         self.prev_signature.pack(packer).infallible()?;
@@ -92,9 +90,6 @@ impl Packable for CollectiveBeaconPayload {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let version = u8::unpack(unpacker).infallible()?;
-        validate_payload_version(version).map_err(|e| UnpackError::Packable(e.into()))?;
-
         let instance_id = u32::unpack(unpacker).infallible()?;
         let round = u64::unpack(unpacker).infallible()?;
         let prev_signature = <[u8; BEACON_SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
@@ -108,17 +103,6 @@ impl Packable for CollectiveBeaconPayload {
             signature,
             distributed_public_key,
         })
-    }
-}
-
-fn validate_payload_version(version: u8) -> Result<(), ValidationError> {
-    if version != CollectiveBeaconPayload::VERSION {
-        Err(ValidationError::InvalidPayloadVersion {
-            version,
-            payload_kind: CollectiveBeaconPayload::KIND,
-        })
-    } else {
-        Ok(())
     }
 }
 
