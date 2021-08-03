@@ -5,27 +5,27 @@ use bee_message::{prelude::MilestoneIndex, MessageId};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("Minimum: {minimum}, Found: {found}")]
+    #[error("pruning target index {selected} below minimum {minimum}")]
     InvalidTargetIndex {
+        selected: MilestoneIndex,
         minimum: MilestoneIndex,
-        found: MilestoneIndex,
     },
 
-    #[error("{0}")]
+    #[error("missing milestone {0}")]
     MissingMilestone(MilestoneIndex),
 
-    #[error("{0}")]
+    #[error("missing message {0}")]
     MissingMessage(MessageId),
 
-    #[error("{0}")]
+    #[error("missing metadata for message {0}")]
     MissingMetadata(MessageId),
 
-    #[error("{0}")]
+    #[error("missing approvers for message {0}")]
     MissingApprovers(MessageId),
 
-    #[error("{0:?}")]
+    #[error("storage batch operation failed due to: {0:?}")]
     BatchOperation(Box<dyn std::error::Error + Send>),
 
-    #[error("{0:?}")]
+    #[error("storage fetch operation failed due to: {0:?}")]
     FetchOperation(Box<dyn std::error::Error + Send>),
 }

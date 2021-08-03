@@ -37,8 +37,8 @@ pub async fn prune<S: StorageBackend>(
 
     if target_index < start_index {
         return Err(Error::InvalidTargetIndex {
+            selected: target_index,
             minimum: start_index,
-            found: target_index,
         });
     }
 
