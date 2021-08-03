@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::fmt::Debug;
+
 use proc_macro2::{Span, TokenStream};
 use proc_macro_error::abort;
 use quote::{format_ident, quote, ToTokens};
@@ -79,12 +81,12 @@ impl Fragments {
             pattern: quote!(#name { #(#labels: #values),* }),
             // This would be
             // ```
-            // <T>::pack(&field_0, packer)?;
-            // <V>::pack(&field_1, packer)?;
+            // <T>::pack(&field_0, packer).coerce()?;
+            // <V>::pack(&field_1, packer).coerce()?;
             // Ok(())
             // ```
             pack: quote! {
-                #(<#types>::pack(#values, packer)?;) *
+                #(<#types>::pack(#values, packer).coerce()?;) *
                 Ok(())
             },
             // This would be `0 + <T>::packed_len(&field_0) + <V>::packed_len(&field_1)`. The `0`
@@ -118,8 +120,8 @@ impl Fragments {
         //     bar: field_0,
         //     baz: field_1,
         // } = self;
-        // <T>::pack(&field_0, packer)?;
-        // <V>::pack(&field_1, packer)?;
+        // <T>::pack(&field_0, packer).coerce()?;
+        // <V>::pack(&field_1, packer).coerce()?;
         // Ok(())
         // ```
         // The whole destructuring thing is done so we can do both variants and structs with the
@@ -162,8 +164,8 @@ impl Fragments {
         // ```
         // Foo { bar: field_0 , baz: field_1 } => {
         //     (tag as W).pack(packer).infallible()?;
-        //     <T>::pack(&field_0, packer)?;
-        //     <V>::pack(&field_1, packer)?;
+        //     <T>::pack(&field_0, packer).coerce()?;
+        //     <V>::pack(&field_1, packer).coerce()?;
         //     Ok(())
         // }
         // ```
@@ -345,7 +347,7 @@ pub(crate) fn gen_impl(
 /// of type `T` from an slice of attributes. Return `Some(Ok(value))` if such attribute exists,
 /// `Some(Err(span))` if the attribute exist but the value cannot be parsed and return `None`
 /// otherwise.
-pub(crate) fn parse_attr<T: Parse + std::fmt::Debug>(key: &str, attrs: &[Attribute]) -> Option<Result<T, Span>> {
+pub(crate) fn parse_attr<T: Parse + Debug>(key: &str, attrs: &[Attribute]) -> Option<Result<T, Span>> {
     for attr in attrs {
         if attr.path.is_ident("packable") {
             let value = attr.parse_args_with(|input: ParseStream| -> syn::Result<Option<T>> {
@@ -394,6 +396,7 @@ pub(crate) fn parse_attr<T: Parse + std::fmt::Debug>(key: &str, attrs: &[Attribu
     #[warn(unreachable_patterns)]
     None
 }
+
 
 #[derive(Debug, Clone)]
 enum ExprTag {
