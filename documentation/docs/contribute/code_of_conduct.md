@@ -1,1 +1,2 @@
-{@include: ../../../.github/CODE_OF_CONDUCT.md}
+# Code of Conduct 
+{@import ../../../.github/CODE_OF_CONDUCT.md}

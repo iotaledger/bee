@@ -1,1 +1,3 @@
-{@include: ../../../.github/SECURITY.md}
+# Security Vulnerabilities
+
+{@import ../../../.github/SECURITY.md}

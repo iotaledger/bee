@@ -1,1 +1,3 @@
-{@include: ../../../.github/CONTRIBUTING.md}
+# Contribute 
+
+{@import ../../../.github/CONTRIBUTING.md}
