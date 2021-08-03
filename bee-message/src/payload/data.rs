@@ -91,6 +91,7 @@ impl DataPayload {
         Ok(Self {
             data: data
                 .try_into()
+                // TODO replace ?
                 .map_err(|err: InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>| {
                     ValidationError::InvalidPayloadLength(err.0 as usize)
                 })?,

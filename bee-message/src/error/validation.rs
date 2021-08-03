@@ -46,6 +46,7 @@ pub enum ValidationError {
     InvalidUnlockBlockReference(usize),
     MissingField(&'static str),
     ParentsNotUniqueSorted,
+    PayloadLengthMismatch { expected: usize, actual: usize },
     SignaturePublicKeyMismatch { expected: String, actual: String },
     TransactionInputsNotSorted,
     TransactionOutputsNotSorted,
@@ -125,6 +126,9 @@ impl fmt::Display for ValidationError {
                     "signature public key mismatch: expected {}, got {}",
                     expected, actual,
                 )
+            }
+            Self::PayloadLengthMismatch { expected, actual } => {
+                write!(f, "payload length mismatch: expected {} got {}", expected, actual)
             }
             Self::TransactionInputsNotSorted => {
                 write!(f, "transaction inputs are not sorted")
