@@ -1,7 +1,7 @@
 mod common;
 
 use bee_packable::{
-    BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
+    Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
     InvalidBoundedU8, Packable, UnpackError,
 };
 
