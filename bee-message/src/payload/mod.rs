@@ -134,13 +134,9 @@ pub trait MessagePayload: Packable + Into<Payload> {
     }
 
     /// Unpacks a payload, its size, type and version.
-    fn unpack_payload<U: Unpacker>(
-        unpacker: &mut U,
-        len: u32,
-    ) -> Result<Payload, UnpackError<Self::UnpackError, U::Error>>
+    fn unpack_payload<U: Unpacker, E>(unpacker: &mut U, len: u32) -> Result<Payload, UnpackError<E, U::Error>>
     where
-        <Self as bee_packable::Packable>::UnpackError: From<MessageUnpackError>,
-        <Self as bee_packable::Packable>::UnpackError: From<ValidationError>,
+        E: From<MessageUnpackError> + From<ValidationError> + From<Self::UnpackError>,
     {
         let version = u8::unpack(unpacker).infallible()?;
 
@@ -238,7 +234,7 @@ impl Packable for Payload {
             Self::Data(p) => p.pack_payload(packer),
             Self::Transaction(p) => p.pack_payload(packer),
             Self::Fpc(p) => p.pack_payload(packer),
-            Self::ApplicationMessage(p) => p.pack_payload(packer),
+            Self::ApplicationMessage(p) => p.pack_payload(packer).infallible(),
             Self::Dkg(p) => p.pack_payload(packer),
             Self::Beacon(p) => p.pack_payload(packer),
             Self::CollectiveBeacon(p) => p.pack_payload(packer),
