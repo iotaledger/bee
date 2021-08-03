@@ -26,14 +26,16 @@ macro_rules! impl_packable_test_for_vec_prefix {
 
         #[test]
         fn $packable_vec_prefix_invalid_length() {
-            let mut bytes = vec![0u8; 65];
-            bytes[0] = 65;
+            const LEN: usize = 65;
+
+            let mut bytes = vec![0u8; LEN + 1];
+            bytes[0] = LEN as u8;
 
             let prefixed = VecPrefix::<u8, $bounded>::unpack_from_slice(bytes);
 
             assert!(matches!(
                 prefixed,
-                Err(UnpackError::Packable(UnpackPrefixError::InvalidPrefixLength(65))),
+                Err(UnpackError::Packable(UnpackPrefixError::InvalidPrefixLength(LEN))),
             ));
         }
     };

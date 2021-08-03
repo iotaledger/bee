@@ -65,7 +65,7 @@ macro_rules! bounded_integer {
             type Error = $err<MIN, MAX>;
 
             fn try_from(value: $int) -> Result<Self, Self::Error> {
-                if (MIN..MAX).contains(&value) {
+                if (MIN..=MAX).contains(&value) {
                     Ok(Self(value))
                 } else {
                     Err($err(value))
