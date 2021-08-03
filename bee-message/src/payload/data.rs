@@ -5,13 +5,12 @@
 
 use crate::{
     payload::{MessagePayload, PAYLOAD_LENGTH_MAX},
-    MessagePackError, MessageUnpackError, ValidationError,
+    ValidationError,
 };
 
 use bee_packable::{
-    coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
 };
 
 use alloc::vec::Vec;
@@ -73,8 +72,10 @@ impl fmt::Display for DataUnpackError {
 ///
 /// A [`DataPayload`] must:
 /// * Not exceed [`PAYLOAD_LENGTH_MAX`] in bytes.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(pack_error = DataPackError)]
+#[packable(unpack_error = DataUnpackError)]
 pub struct DataPayload {
     /// The raw data in bytes.
     data: VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>,
@@ -101,30 +102,5 @@ impl DataPayload {
     /// Returns the data bytes of a [`DataPayload`].
     pub fn data(&self) -> &[u8] {
         self.data.as_slice()
-    }
-}
-
-impl Packable for DataPayload {
-    type PackError = MessagePackError;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.data.packed_len()
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.data.pack(packer).coerce::<DataPackError>().coerce()?;
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let data = VecPrefix::<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>::unpack(unpacker)
-            .coerce::<DataUnpackError>()
-            .coerce()?;
-
-        let payload = Self { data };
-
-        Ok(payload)
     }
 }

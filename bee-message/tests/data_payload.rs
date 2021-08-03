@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    error::{MessageUnpackError, ValidationError},
+    error::ValidationError,
     payload::{
         data::{DataPayload, DataUnpackError},
         MessagePayload,
@@ -61,9 +61,7 @@ fn unpack_invalid_length() {
 
     assert!(matches!(
         data,
-        Err(UnpackError::Packable(MessageUnpackError::Data(
-            DataUnpackError::InvalidPrefixLength(65160)
-        )))
+        Err(UnpackError::Packable(DataUnpackError::InvalidPrefixLength(65160)))
     ));
 }
 

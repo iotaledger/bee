@@ -231,7 +231,7 @@ impl Packable for Payload {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         match self {
-            Self::Data(p) => p.pack_payload(packer),
+            Self::Data(p) => p.pack_payload(packer).coerce(),
             Self::Transaction(p) => p.pack_payload(packer),
             Self::Fpc(p) => p.pack_payload(packer),
             Self::ApplicationMessage(p) => p.pack_payload(packer).infallible(),
