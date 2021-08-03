@@ -68,6 +68,11 @@ impl Message {
     pub fn nonce(&self) -> u64 {
         self.nonce
     }
+
+    /// Destroys the `Message`, and returns ownership over its `Parents`.
+    pub fn into_parents(self) -> Parents {
+        self.parents
+    }
 }
 
 impl Packable for Message {

@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.5.0 - 2021-08-03
+
+### Added
+
+- `pruning` module;
+- `snapshot::condition` module;
+
+### Changed
+
+- `consensus::worker` module to execute pruning if conditions are met;
+
 ## 0.4.0 - 2021-06-01
 
 ### Added
