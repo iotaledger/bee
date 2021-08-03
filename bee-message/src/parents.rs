@@ -28,7 +28,7 @@ pub const MESSAGE_MIN_STRONG_PARENTS: usize = 1;
     serde(tag = "type", content = "data")
 )]
 #[repr(u8)]
-pub enum ParentsType {
+pub enum ParentsKind {
     /// Message parents in which the past cone is "Liked".
     Strong = 0,
     /// Message parents in which the past cone is "Disliked", but the parents themselves are "Liked".
@@ -39,7 +39,7 @@ pub enum ParentsType {
     Liked = 3,
 }
 
-impl TryFrom<u8> for ParentsType {
+impl TryFrom<u8> for ParentsKind {
     type Error = ValidationError;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
@@ -48,47 +48,47 @@ impl TryFrom<u8> for ParentsType {
             1 => Ok(Self::Weak),
             2 => Ok(Self::Disliked),
             3 => Ok(Self::Liked),
-            _ => Err(ValidationError::InvalidParentsType(value)),
+            _ => Err(ValidationError::InvalidParentsKind(value)),
         }
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-/// A block of message parent IDs, all of the same [`ParentsType`].
+/// A block of message parent IDs, all of the same [`ParentsKind`].
 ///
 /// [`ParentsBlock`]s must:
-/// * Be of a valid [`ParentsType`].
+/// * Be of a valid [`ParentsKind`].
 /// * Contain a valid count of parents (1..=8).
 /// * IDs must be unique and lexicographically sorted in their serialized forms.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ParentsBlock {
-    ty: ParentsType,
-    ids: Vec<MessageId>,
+    kind: ParentsKind,
+    references: Vec<MessageId>,
 }
 
 impl ParentsBlock {
     /// Creates a new [`ParentsBlock`], and validates the ID collection.
-    pub fn new(ty: ParentsType, ids: Vec<MessageId>) -> Result<Self, ValidationError> {
-        validate_parents_count(ids.len())?;
-        validate_parents_unique_sorted(&ids)?;
+    pub fn new(kind: ParentsKind, references: Vec<MessageId>) -> Result<Self, ValidationError> {
+        validate_parents_count(references.len())?;
+        validate_parents_unique_sorted(&references)?;
 
-        Ok(Self { ty, ids })
+        Ok(Self { kind, references })
     }
 
     #[allow(clippy::len_without_is_empty)]
     /// Returns the number of [`MessageId`]s in the [`ParentsBlock`] ID collection.
     pub fn len(&self) -> usize {
-        self.ids.len()
+        self.references.len()
     }
 
     /// Returns the block type.
-    pub fn parents_type(&self) -> ParentsType {
-        self.ty
+    pub fn parents_kind(&self) -> ParentsKind {
+        self.kind
     }
 
     /// Returns an iterator over the [`ParentsBlock`] ID collection.
     pub fn iter(&self) -> impl Iterator<Item = &MessageId> {
-        self.ids.iter()
+        self.references.iter()
     }
 }
 
@@ -97,14 +97,14 @@ impl Packable for ParentsBlock {
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
-        0u8.packed_len() + 0u8.packed_len() + self.ids.len() * MessageId::LENGTH
+        0u8.packed_len() + 0u8.packed_len() + self.references.len() * MessageId::LENGTH
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        (self.ty as u8).pack(packer).infallible()?;
-        (self.ids.len() as u8).pack(packer).infallible()?;
+        (self.kind as u8).pack(packer).infallible()?;
+        (self.references.len() as u8).pack(packer).infallible()?;
 
-        for id in &self.ids {
+        for id in &self.references {
             id.pack(packer).infallible()?;
         }
 
@@ -112,7 +112,7 @@ impl Packable for ParentsBlock {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let ty = u8::unpack(unpacker)
+        let kind = u8::unpack(unpacker)
             .infallible()?
             .try_into()
             .map_err(|e: ValidationError| UnpackError::Packable(e.into()))?;
@@ -120,14 +120,14 @@ impl Packable for ParentsBlock {
         let count = u8::unpack(unpacker).infallible()?;
         validate_parents_count(count as usize).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        let mut ids = Vec::with_capacity(count as usize);
+        let mut references = Vec::with_capacity(count as usize);
         for _ in 0..count as usize {
-            ids.push(MessageId::unpack(unpacker).infallible()?);
+            references.push(MessageId::unpack(unpacker).infallible()?);
         }
 
-        validate_parents_unique_sorted(&ids).map_err(|e| UnpackError::Packable(e.into()))?;
+        validate_parents_unique_sorted(&references).map_err(|e| UnpackError::Packable(e.into()))?;
 
-        Ok(Self { ty, ids })
+        Ok(Self { kind, references })
     }
 }
 

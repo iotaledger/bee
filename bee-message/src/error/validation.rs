@@ -34,7 +34,7 @@ pub enum ValidationError {
     InvalidOutputIndex(u16),
     InvalidParentsBlocksCount(usize),
     InvalidParentsCount(usize),
-    InvalidParentsType(u8),
+    InvalidParentsKind(u8),
     InvalidPayloadKind(u32),
     InvalidPayloadLength(usize),
     InvalidPayloadVersion { version: u8, payload_kind: u32 },
@@ -101,7 +101,7 @@ impl fmt::Display for ValidationError {
             Self::InvalidOutputIndex(index) => write!(f, "invalid output index: {}", index),
             Self::InvalidParentsBlocksCount(count) => write!(f, "invalid parents blocks count: {}", count),
             Self::InvalidParentsCount(count) => write!(f, "invalid parents count: {}", count),
-            Self::InvalidParentsType(ty) => write!(f, "invalid parents type: {}", ty),
+            Self::InvalidParentsKind(kind) => write!(f, "invalid parents kind: {}", kind),
             Self::InvalidPayloadKind(kind) => write!(f, "invalid payload kind: {}", kind),
             Self::InvalidPayloadLength(len) => write!(f, "invalid payload length: {}", len),
             Self::InvalidPayloadVersion { version, payload_kind } => {

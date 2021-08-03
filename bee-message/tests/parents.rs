@@ -3,7 +3,7 @@
 
 use bee_message::{
     error::{MessageUnpackError, ValidationError},
-    parents::{ParentsBlock, ParentsType},
+    parents::{ParentsBlock, ParentsKind},
     MessageId,
 };
 use bee_packable::{Packable, UnpackError};
@@ -111,7 +111,7 @@ fn packable_round_trip() {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
     ]);
 
-    let parents_a = ParentsBlock::new(ParentsType::Strong, vec![id_1, id_2]).unwrap();
+    let parents_a = ParentsBlock::new(ParentsKind::Strong, vec![id_1, id_2]).unwrap();
     let parents_b = ParentsBlock::unpack_from_slice(parents_a.pack_to_vec().unwrap()).unwrap();
 
     assert_eq!(parents_a, parents_b);

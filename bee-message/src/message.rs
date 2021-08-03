@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    parents::{ParentsBlock, ParentsType},
+    parents::{ParentsBlock, ParentsKind},
     payload::Payload,
     MessageId, MessagePackError, MessageUnpackError, ValidationError,
 };
@@ -225,7 +225,7 @@ pub(crate) fn validate_parents_blocks_count(count: usize) -> Result<(), Validati
 pub(crate) fn validate_has_strong_parents(parents_blocks: &[ParentsBlock]) -> Result<(), ValidationError> {
     for block in parents_blocks.iter() {
         // [`ParentsBlock`]s cannot be empty, so no need to check length here.
-        if block.parents_type() == ParentsType::Strong {
+        if block.parents_kind() == ParentsKind::Strong {
             return Ok(());
         }
     }
