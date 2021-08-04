@@ -1,9 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::ValidationError, unlock::UNLOCK_BLOCK_INDEX_RANGE, MessageUnpackError};
+use crate::{error::ValidationError, unlock::UNLOCK_BLOCK_INDEX_MAX, MessageUnpackError};
 
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{BoundedU16, InvalidBoundedU16, Packable};
 
 use core::{
     convert::{Infallible, TryFrom},
@@ -31,10 +31,16 @@ impl fmt::Display for ReferenceUnlockUnpackError {
     }
 }
 
+fn invalid_u16_to_validation_error(err: InvalidBoundedU16<0, UNLOCK_BLOCK_INDEX_MAX>) -> ValidationError {
+    ValidationError::InvalidReferenceIndex(err.0)
+}
+
 /// An [`UnlockBlock`](crate::unlock::UnlockBlock) that refers to another [`UnlockBlock`](crate::unlock::UnlockBlock).
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct ReferenceUnlock(u16);
+#[packable(pack_error = Infallible)]
+#[packable(unpack_error = MessageUnpackError, with = invalid_u16_to_validation_error)]
+pub struct ReferenceUnlock(BoundedU16<0, UNLOCK_BLOCK_INDEX_MAX>);
 
 impl ReferenceUnlock {
     /// The [`UnlockBlock`](crate::unlock::UnlockBlock) kind of a [`ReferenceUnlock`].
@@ -42,16 +48,14 @@ impl ReferenceUnlock {
 
     /// Creates a new [`ReferenceUnlock`].
     pub fn new(index: u16) -> Result<Self, ValidationError> {
-        if !UNLOCK_BLOCK_INDEX_RANGE.contains(&index) {
-            return Err(ValidationError::InvalidReferenceIndex(index));
-        }
-
-        Ok(Self(index))
+        Ok(Self(
+            BoundedU16::<0, UNLOCK_BLOCK_INDEX_MAX>::try_from(index).map_err(invalid_u16_to_validation_error)?,
+        ))
     }
 
     /// Returns the index of a [`ReferenceUnlock`].
     pub fn index(&self) -> u16 {
-        self.0
+        self.0.into()
     }
 }
 
@@ -63,31 +67,10 @@ impl TryFrom<u16> for ReferenceUnlock {
     }
 }
 
-impl core::ops::Deref for ReferenceUnlock {
-    type Target = u16;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl Packable for ReferenceUnlock {
-    type PackError = Infallible;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.0.packed_len()
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.0.pack(packer).infallible()?;
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let index = u16::unpack(unpacker).infallible()?;
-
-        ReferenceUnlock::new(index).map_err(|e| UnpackError::Packable(e.into()))
+// We cannot provide a `From` implementation because `u16` is an external type.
+#[allow(clippy::from_over_into)]
+impl Into<u16> for ReferenceUnlock {
+    fn into(self) -> u16 {
+        self.0.into()
     }
 }

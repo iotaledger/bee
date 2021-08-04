@@ -15,18 +15,16 @@ use crate::{input::INPUT_COUNT_MAX, MessageUnpackError, ValidationError};
 
 use bee_packable::Packable;
 
-use core::{
-    convert::Infallible,
-    fmt,
-    ops::{Range, RangeInclusive},
-};
+use core::{convert::Infallible, fmt, ops::RangeInclusive};
 
 /// The maximum number of unlock blocks of a transaction.
 pub const UNLOCK_BLOCK_COUNT_MAX: u16 = INPUT_COUNT_MAX;
 /// The range of valid numbers of unlock blocks of a transaction.
 pub const UNLOCK_BLOCK_COUNT_RANGE: RangeInclusive<u16> = 1..=UNLOCK_BLOCK_COUNT_MAX; // [1..127]
+/// The maximum index of unlock blocks of a transaction.
+pub const UNLOCK_BLOCK_INDEX_MAX: u16 = UNLOCK_BLOCK_COUNT_MAX - 1; // [0..126]
 /// The range of valid indices of unlock blocks of a transaction.
-pub const UNLOCK_BLOCK_INDEX_RANGE: Range<u16> = 0..UNLOCK_BLOCK_COUNT_MAX; // [0..126]
+pub const UNLOCK_BLOCK_INDEX_RANGE: RangeInclusive<u16> = 0..=UNLOCK_BLOCK_INDEX_MAX; // [0..126]
 
 /// Error encountered unpacking an [`UnlockBlock`].
 #[derive(Debug)]
