@@ -3,17 +3,18 @@
 
 use crate::{
     error::{MessageUnpackError, ValidationError},
-    output::OUTPUT_INDEX_RANGE,
     payload::transaction::TransactionId,
     util::hex_decode,
 };
 
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{BoundedU16, InvalidBoundedU16, Packable};
 
 use core::{
     convert::{From, Infallible, TryFrom, TryInto},
     fmt,
 };
+
+use super::OUTPUT_INDEX_MAX;
 
 /// Error encountered unpacking an [`OutputId`].
 #[derive(Debug)]
@@ -28,6 +29,18 @@ impl_wrapped_variant!(
     OutputIdUnpackError::ValidationError
 );
 
+impl From<InvalidBoundedU16<0, OUTPUT_INDEX_MAX>> for ValidationError {
+    fn from(err: InvalidBoundedU16<0, OUTPUT_INDEX_MAX>) -> Self {
+        ValidationError::InvalidOutputIndex(err.0)
+    }
+}
+
+impl From<Infallible> for ValidationError {
+    fn from(err: Infallible) -> Self {
+        match err {}
+    }
+}
+
 impl fmt::Display for OutputIdUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -40,11 +53,13 @@ impl fmt::Display for OutputIdUnpackError {
 ///
 /// An [`OutputId`] must:
 /// * Have an index that falls within [`OUTPUT_INDEX_RANGE`].
-#[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(pack_error = Infallible)]
+#[packable(unpack_error = MessageUnpackError, with = ValidationError::from)]
 pub struct OutputId {
     transaction_id: TransactionId,
-    index: u16,
+    index: BoundedU16<0, OUTPUT_INDEX_MAX>,
 }
 
 impl OutputId {
@@ -53,9 +68,10 @@ impl OutputId {
 
     /// Creates a new [`OutputId`].
     pub fn new(transaction_id: TransactionId, index: u16) -> Result<Self, ValidationError> {
-        validate_index(index)?;
-
-        Ok(Self { transaction_id, index })
+        Ok(Self {
+            transaction_id,
+            index: BoundedU16::<0, OUTPUT_INDEX_MAX>::try_from(index)?,
+        })
     }
 
     /// Returns the [`TransactionId`] of an [`OutputId`].
@@ -65,12 +81,12 @@ impl OutputId {
 
     /// Returns the index of an [`OutputId`].
     pub fn index(&self) -> u16 {
-        self.index
+        self.index.into()
     }
 
     /// Splits an [`OutputId`] into its [`TransactionId`] and index.
     pub fn split(self) -> (TransactionId, u16) {
-        (self.transaction_id, self.index)
+        (self.transaction_id, self.index.into())
     }
 }
 
@@ -89,29 +105,6 @@ impl TryFrom<[u8; OutputId::LENGTH]> for OutputId {
     }
 }
 
-impl Packable for OutputId {
-    type PackError = Infallible;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.transaction_id.packed_len() + self.index.packed_len()
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.transaction_id.pack(packer).infallible()?;
-        self.index.pack(packer).infallible()?;
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let transaction_id = TransactionId::unpack(unpacker).infallible()?;
-        let index = u16::unpack(unpacker).infallible()?;
-
-        Self::new(transaction_id, index).map_err(|e| UnpackError::Packable(e.into()))
-    }
-}
-
 impl core::str::FromStr for OutputId {
     type Err = ValidationError;
 
@@ -122,20 +115,12 @@ impl core::str::FromStr for OutputId {
 
 impl core::fmt::Display for OutputId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}{}", self.transaction_id, hex::encode(self.index.to_le_bytes()))
+        write!(f, "{}{}", self.transaction_id, hex::encode(self.index().to_le_bytes()))
     }
 }
 
 impl core::fmt::Debug for OutputId {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "OutputId({})", self)
-    }
-}
-
-fn validate_index(index: u16) -> Result<(), ValidationError> {
-    if !OUTPUT_INDEX_RANGE.contains(&index) {
-        Err(ValidationError::InvalidOutputIndex(index))
-    } else {
-        Ok(())
     }
 }
