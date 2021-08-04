@@ -1,0 +1,5 @@
+error: The `unpack_error` attribute key requires a type for its value.
+  --> $DIR/invalid_unpack_error_type.rs:12:27
+   |
+12 | #[packable(unpack_error = 1)]
+   |                           ^
