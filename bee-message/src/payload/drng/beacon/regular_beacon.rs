@@ -9,11 +9,13 @@ use crate::{
     MessagePackError, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::Packable;
 
 /// Message representing a dRNG [`BeaconPayload`].
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(pack_error = MessagePackError)]
+#[packable(unpack_error = MessageUnpackError)]
 pub struct BeaconPayload {
     /// The identifier of the dRNG instance.
     instance_id: u32,
@@ -56,41 +58,6 @@ impl BeaconPayload {
     /// Returns the partial signature of a [`BeaconPayload`].
     pub fn partial_signature(&self) -> &[u8] {
         &self.partial_signature
-    }
-}
-
-impl Packable for BeaconPayload {
-    type PackError = MessagePackError;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.instance_id.packed_len()
-            + self.round.packed_len()
-            + self.partial_public_key.packed_len()
-            + self.partial_signature.packed_len()
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.instance_id.pack(packer).infallible()?;
-        self.round.pack(packer).infallible()?;
-        self.partial_public_key.pack(packer).infallible()?;
-        self.partial_signature.pack(packer).infallible()?;
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let instance_id = u32::unpack(unpacker).infallible()?;
-        let round = u64::unpack(unpacker).infallible()?;
-        let partial_public_key = <[u8; BEACON_PARTIAL_PUBLIC_KEY_LENGTH]>::unpack(unpacker).infallible()?;
-        let partial_signature = <[u8; BEACON_SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
-
-        Ok(Self {
-            instance_id,
-            round,
-            partial_public_key,
-            partial_signature,
-        })
     }
 }
 
