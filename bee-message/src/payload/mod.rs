@@ -234,7 +234,7 @@ impl Packable for Payload {
             Self::Data(p) => p.pack_payload(packer).coerce(),
             Self::Transaction(p) => p.pack_payload(packer),
             Self::Fpc(p) => p.pack_payload(packer),
-            Self::ApplicationMessage(p) => p.pack_payload(packer).infallible(),
+            Self::ApplicationMessage(p) => p.pack_payload(packer),
             Self::Dkg(p) => p.pack_payload(packer),
             Self::Beacon(p) => p.pack_payload(packer),
             Self::CollectiveBeacon(p) => p.pack_payload(packer),
