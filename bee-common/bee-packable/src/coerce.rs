@@ -20,11 +20,16 @@ use core::convert::Infallible;
 /// Trait used to convert `Result` values that use `PackError` as the `Err` variant.
 pub trait PackCoerce<T, U, V>: sealed::Sealed {
     /// Coerces the value to another result type.
-    fn coerce<W: From<U>>(self) -> Result<T, PackError<W, V>>;
+    fn coerce<W>(self) -> Result<T, PackError<W, V>>
+    where
+        U: Into<W>;
 }
 
 impl<T, U, V> PackCoerce<T, U, V> for Result<T, PackError<U, V>> {
-    fn coerce<W: From<U>>(self) -> Result<T, PackError<W, V>> {
+    fn coerce<W>(self) -> Result<T, PackError<W, V>>
+    where
+        U: Into<W>,
+    {
         self.map_err(PackError::<U, V>::coerce::<W>)
     }
 }
@@ -32,11 +37,16 @@ impl<T, U, V> PackCoerce<T, U, V> for Result<T, PackError<U, V>> {
 /// Trait used to convert `Result` values that use `UnpackError` as the `Err` variant.
 pub trait UnpackCoerce<T, U, V>: sealed::Sealed {
     /// Coerces the value to another result type.
-    fn coerce<W: From<U>>(self) -> Result<T, UnpackError<W, V>>;
+    fn coerce<W>(self) -> Result<T, UnpackError<W, V>>
+    where
+        U: Into<W>;
 }
 
 impl<T, U, V> UnpackCoerce<T, U, V> for Result<T, UnpackError<U, V>> {
-    fn coerce<W: From<U>>(self) -> Result<T, UnpackError<W, V>> {
+    fn coerce<W>(self) -> Result<T, UnpackError<W, V>>
+    where
+        U: Into<W>,
+    {
         self.map_err(UnpackError::<U, V>::coerce::<W>)
     }
 }
