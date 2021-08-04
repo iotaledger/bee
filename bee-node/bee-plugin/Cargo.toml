@@ -11,7 +11,7 @@ keywords = [ "iota", "tangle", "bee", "framework", "plugin" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
-bee-event-bus = { path = "../bee-common/bee-event-bus" }
+bee-event-bus = { path = "../../bee-common/bee-event-bus" }
 
 log = "0.4"
 prost = "0.8"
@@ -21,7 +21,7 @@ tokio-stream = "0.1"
 tonic = "0.5"
 
 [dev-dependencies]
-bee-logger = { path = "../bee-common/bee-logger" }
+bee-logger = { path = "../../bee-common/bee-logger" }
 
 async-trait = "0.1"
 
