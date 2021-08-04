@@ -52,7 +52,7 @@ impl fmt::Display for OutputIdUnpackError {
 /// The identifier of an [`Output`](crate::output::Output).
 ///
 /// An [`OutputId`] must:
-/// * Have an index that falls within [`OUTPUT_INDEX_RANGE`].
+/// * Have an index that falls within [`OUTPUT_INDEX_RANGE`](crate::output::OUTPUT_INDEX_RANGE).
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(pack_error = Infallible)]
