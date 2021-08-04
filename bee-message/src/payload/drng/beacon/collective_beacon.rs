@@ -9,11 +9,13 @@ use crate::{
     MessagePackError, MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::Packable;
 
 /// Message decsribing a dRNG [`CollectiveBeaconPayload`].
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(pack_error = MessagePackError)]
+#[packable(unpack_error = MessageUnpackError)]
 pub struct CollectiveBeaconPayload {
     /// The identifier of the dRNG instance.
     instance_id: u32,
@@ -64,45 +66,6 @@ impl CollectiveBeaconPayload {
     /// Returns the distributed public key of a [`CollectiveBeaconPayload`].
     pub fn distributed_public_key(&self) -> &[u8] {
         &self.distributed_public_key
-    }
-}
-
-impl Packable for CollectiveBeaconPayload {
-    type PackError = MessagePackError;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.instance_id.packed_len()
-            + self.round.packed_len()
-            + self.prev_signature.packed_len()
-            + self.signature.packed_len()
-            + self.distributed_public_key.packed_len()
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.instance_id.pack(packer).infallible()?;
-        self.round.pack(packer).infallible()?;
-        self.prev_signature.pack(packer).infallible()?;
-        self.signature.pack(packer).infallible()?;
-        self.distributed_public_key.pack(packer).infallible()?;
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let instance_id = u32::unpack(unpacker).infallible()?;
-        let round = u64::unpack(unpacker).infallible()?;
-        let prev_signature = <[u8; BEACON_SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
-        let signature = <[u8; BEACON_SIGNATURE_LENGTH]>::unpack(unpacker).infallible()?;
-        let distributed_public_key = <[u8; BEACON_DISTRIBUTED_PUBLIC_KEY_LENGTH]>::unpack(unpacker).infallible()?;
-
-        Ok(Self {
-            instance_id,
-            round,
-            prev_signature,
-            signature,
-            distributed_public_key,
-        })
     }
 }
 
