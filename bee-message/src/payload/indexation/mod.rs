@@ -10,9 +10,8 @@ use crate::{payload::MessagePayload, MessagePackError, MessageUnpackError, Valid
 pub use padded::PaddedIndex;
 
 use bee_packable::{
-    coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
 };
 
 use alloc::vec::Vec;
@@ -89,8 +88,10 @@ impl fmt::Display for IndexationUnpackError {
 /// An [`IndexationPayload`] must:
 /// * Contain an index of within [`INDEXATION_INDEX_LENGTH_RANGE`] bytes.
 /// * Contain data that does not exceed maximum message length in bytes.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(pack_error = MessagePackError, with = IndexationPackError::from)]
+#[packable(unpack_error = MessageUnpackError, with = IndexationUnpackError::from)]
 pub struct IndexationPayload {
     /// The index key of the message.
     index: VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>,
@@ -135,34 +136,5 @@ impl IndexationPayload {
     /// Returns the data of an [`IndexationPayload`].
     pub fn data(&self) -> &[u8] {
         &self.data
-    }
-}
-
-impl Packable for IndexationPayload {
-    type PackError = MessagePackError;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.index.packed_len() + self.data.packed_len()
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.index.pack(packer).coerce::<IndexationPackError>().coerce()?;
-
-        self.data.pack(packer).coerce::<IndexationPackError>().coerce()?;
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let index = VecPrefix::<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>::unpack(unpacker)
-            .coerce::<IndexationUnpackError>()
-            .coerce()?;
-
-        let data = VecPrefix::<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>::unpack(unpacker)
-            .coerce::<IndexationUnpackError>()
-            .coerce()?;
-
-        Ok(Self { index, data })
     }
 }
