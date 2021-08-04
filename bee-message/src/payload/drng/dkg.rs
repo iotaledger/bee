@@ -278,8 +278,10 @@ fn validate_encrypted_deal_length(len: usize) -> Result<(), ValidationError> {
 }
 
 /// The deal messages exchanged to produce a public/private collective key during the DKG phase of dRNG.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(pack_error = MessagePackError)]
+#[packable(unpack_error = MessageUnpackError)]
 pub struct DkgPayload {
     /// The identifier of the dRNG instance.
     instance_id: u32,
@@ -320,41 +322,6 @@ impl DkgPayload {
     /// Returns the encrypted deal of a [`DkgPayload`].
     pub fn deal(&self) -> &EncryptedDeal {
         &self.deal
-    }
-}
-
-impl Packable for DkgPayload {
-    type PackError = MessagePackError;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.instance_id.packed_len()
-            + self.from_index.packed_len()
-            + self.to_index.packed_len()
-            + self.deal.packed_len()
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.instance_id.pack(packer).infallible()?;
-        self.from_index.pack(packer).infallible()?;
-        self.to_index.pack(packer).infallible()?;
-        self.deal.pack(packer)?;
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let instance_id = u32::unpack(unpacker).infallible()?;
-        let from_index = u32::unpack(unpacker).infallible()?;
-        let to_index = u32::unpack(unpacker).infallible()?;
-        let deal = EncryptedDeal::unpack(unpacker)?;
-
-        Ok(Self {
-            instance_id,
-            from_index,
-            to_index,
-            deal,
-        })
     }
 }
 
