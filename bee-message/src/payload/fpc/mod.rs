@@ -12,9 +12,8 @@ pub use timestamps::{Timestamp, Timestamps};
 use crate::{payload::MessagePayload, MessagePackError, MessageUnpackError, ValidationError};
 
 use bee_packable::{
-    coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    PackError, Packable, Packer, UnpackError, Unpacker,
+    Packable,
 };
 
 use core::{convert::Infallible, fmt};
@@ -77,8 +76,10 @@ impl From<UnpackPrefixError<Infallible>> for FpcUnpackError {
 }
 
 /// Payload describing opinions on conflicts and timestamps of messages.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(pack_error = MessagePackError, with = FpcPackError::from)]
+#[packable(unpack_error = MessageUnpackError, with = FpcUnpackError::from)]
 pub struct FpcPayload {
     /// Collection of opinions on conflicting transactions.
     conflicts: Conflicts,
@@ -105,30 +106,6 @@ impl FpcPayload {
     /// Returns the [`Timestamps`] of an [`FpcPayload`].
     pub fn timestamps(&self) -> impl Iterator<Item = &Timestamp> {
         self.timestamps.iter()
-    }
-}
-
-impl Packable for FpcPayload {
-    type PackError = MessagePackError;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.conflicts.packed_len() + self.timestamps.packed_len()
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.conflicts.pack(packer).coerce::<FpcPackError>().coerce()?;
-        self.timestamps.pack(packer).coerce::<FpcPackError>().coerce()?;
-
-        Ok(())
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let conflicts = Conflicts::unpack(unpacker).coerce::<FpcUnpackError>().coerce()?;
-
-        let timestamps = Timestamps::unpack(unpacker).coerce::<FpcUnpackError>().coerce()?;
-
-        Ok(Self { conflicts, timestamps })
     }
 }
 
