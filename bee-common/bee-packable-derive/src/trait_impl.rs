@@ -27,7 +27,7 @@ impl TraitImpl {
             syn::Data::Enum(data) => Self::from_enum(data, input.generics, input.attrs, input.ident),
             syn::Data::Union(_) => Err(syn::Error::new(
                 input.ident.span(),
-                "the `Packable` trait cannot be derived for unions.",
+                "The `Packable` trait cannot be derived for unions.",
             )),
         }
     }
