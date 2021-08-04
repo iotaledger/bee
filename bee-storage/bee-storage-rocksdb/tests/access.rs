@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[macro_use]
 #[allow(unused_macros)]
 macro_rules! impl_access_test {
     ($name_rocksdb:ident, $name:ident) => {

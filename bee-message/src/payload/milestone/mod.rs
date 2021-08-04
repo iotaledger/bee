@@ -139,7 +139,7 @@ impl MilestonePayload {
             }
 
             let ed25519_public_key =
-                ed25519::PublicKey::from_compressed_bytes(*public_key).map_err(MilestoneValidationError::Crypto)?;
+                ed25519::PublicKey::try_from_bytes(*public_key).map_err(MilestoneValidationError::Crypto)?;
             // This unwrap is fine as the length of the signature has already been verified.
             let ed25519_signature = ed25519::Signature::from_bytes(signature.as_ref().try_into().unwrap());
 
@@ -167,7 +167,7 @@ impl Packable for MilestonePayload {
 
         (self.signatures.len() as u8).pack(writer)?;
         for signature in &self.signatures {
-            writer.write_all(&signature)?;
+            writer.write_all(signature)?;
         }
 
         Ok(())

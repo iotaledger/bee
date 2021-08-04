@@ -6,6 +6,8 @@ use crate::alias;
 use libp2p::{swarm::DialError, Multiaddr, PeerId};
 
 #[derive(Debug, thiserror::Error)]
+// TODO
+#[allow(clippy::enum_variant_names)]
 pub enum Error {
     #[error("Dialing address {0} was denied.")]
     DialingAddressDenied(Multiaddr),

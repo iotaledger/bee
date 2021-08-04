@@ -35,7 +35,7 @@ impl<'a, ID: Clone + PartialEq> Bus<'a, ID> {
     /// Add an event listener bound to a specific event type, `E`, and registered with the given ID.
     pub fn add_listener_raw<E: Any, F: Fn(&E) + Send + Sync + 'a>(&self, id: ID, handler: F) {
         self.listeners.entry(TypeId::of::<E>()).or_default().push((
-            Box::new(move |event| handler(&event.downcast_ref().expect("Invalid event"))),
+            Box::new(move |event| handler(event.downcast_ref().expect("Invalid event"))),
             id,
         ));
     }

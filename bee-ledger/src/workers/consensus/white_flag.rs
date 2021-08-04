@@ -134,9 +134,9 @@ fn apply_regular_essence<B: StorageBackend>(
 
     for (address, diff) in balance_diffs.iter() {
         if diff.is_dust_mutating() {
-            let mut balance = storage::fetch_balance_or_default(storage, &address)?.apply_diff(diff)?;
+            let mut balance = storage::fetch_balance_or_default(storage, address)?.apply_diff(diff)?;
 
-            if let Some(diff) = metadata.balance_diffs.get(&address) {
+            if let Some(diff) = metadata.balance_diffs.get(address) {
                 balance = balance.apply_diff(diff)?;
             }
 
@@ -214,7 +214,7 @@ async fn traverse_past_cone<B: StorageBackend>(
 
     while let Some(message_id) = message_ids.last() {
         if let Some((message, meta)) = tangle
-            .get_vertex(&message_id)
+            .get_vertex(message_id)
             .await
             .as_ref()
             .and_then(|v| v.message_and_metadata().cloned())
