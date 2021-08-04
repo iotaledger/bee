@@ -11,7 +11,7 @@ use crate::{
 
 use core::convert::{Infallible, TryFrom, TryInto};
 
-/// Trait that provides an interface for bounded integers.
+/// Trait that provides an interface for bounded types.
 pub trait Bounded {
     /// The type used to define the bounds.
     type Bounds: PartialOrd;
@@ -54,7 +54,7 @@ macro_rules! bounded {
             const MAX: $ty = MAX;
         }
 
-        // We cannot provide a [`From`] implementation because integer primitives are not in this crate.
+        // We cannot provide a [`From`] implementation because primitives are not in this crate.
         #[allow(clippy::from_over_into)]
         impl<const MIN: $ty, const MAX: $ty> Into<$ty> for $wrapper<MIN, MAX> {
             fn into(self) -> $ty {

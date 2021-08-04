@@ -7,14 +7,14 @@ extern crate alloc;
 
 mod array;
 mod bool;
-mod bounded_integer;
+mod bounded;
 mod r#box;
 mod integer;
 mod option;
 mod vec;
 mod vec_prefix;
 
-pub use bounded_integer::{
+pub use bounded::{
     Bounded, BoundedU16, BoundedU32, BoundedU64, BoundedU8, InvalidBoundedU16, InvalidBoundedU32, InvalidBoundedU64,
     InvalidBoundedU8,
 };

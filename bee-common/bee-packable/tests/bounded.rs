@@ -10,7 +10,7 @@ use bee_packable::{
 
 use core::convert::TryFrom;
 
-macro_rules! impl_bounds_test_for_bounded_integer {
+macro_rules! impl_bounds_test_for_bounded {
     ($name:ident, $wrapper:ty, $error:ident) => {
         #[test]
         fn $name() {
@@ -27,7 +27,7 @@ macro_rules! impl_bounds_test_for_bounded_integer {
     };
 }
 
-macro_rules! impl_packable_test_for_bounded_integer {
+macro_rules! impl_packable_test_for_bounded {
     ($packable_valid_name:ident, $packable_invalid_name:ident, $wrapper:ty, $error:ident, $wrapped:ty) => {
         #[test]
         fn $packable_valid_name() {
@@ -53,12 +53,12 @@ macro_rules! impl_packable_test_for_bounded_integer {
     };
 }
 
-impl_bounds_test_for_bounded_integer!(bounded_u8, BoundedU8<1, 8>, InvalidBoundedU8);
-impl_bounds_test_for_bounded_integer!(bounded_u16, BoundedU16<1, 8>, InvalidBoundedU16);
-impl_bounds_test_for_bounded_integer!(bounded_u32, BoundedU32<1, 8>, InvalidBoundedU32);
-impl_bounds_test_for_bounded_integer!(bounded_u64, BoundedU64<1, 8>, InvalidBoundedU64);
+impl_bounds_test_for_bounded!(bounded_u8, BoundedU8<1, 8>, InvalidBoundedU8);
+impl_bounds_test_for_bounded!(bounded_u16, BoundedU16<1, 8>, InvalidBoundedU16);
+impl_bounds_test_for_bounded!(bounded_u32, BoundedU32<1, 8>, InvalidBoundedU32);
+impl_bounds_test_for_bounded!(bounded_u64, BoundedU64<1, 8>, InvalidBoundedU64);
 
-impl_packable_test_for_bounded_integer!(packable_bounded_u8, packable_bounded_u8_invalid, BoundedU8<1, 8>, InvalidBoundedU8, u8);
-impl_packable_test_for_bounded_integer!(packable_bounded_u16, packable_bounded_u16_invalid, BoundedU16<1, 8>, InvalidBoundedU16, u16);
-impl_packable_test_for_bounded_integer!(packable_bounded_u32, packable_bounded_u32_invalid, BoundedU32<1, 8>, InvalidBoundedU32, u32);
-impl_packable_test_for_bounded_integer!(packable_bounded_u64, packable_bounded_u64_invalid, BoundedU64<1, 8>, InvalidBoundedU64, u64);
+impl_packable_test_for_bounded!(packable_bounded_u8, packable_bounded_u8_invalid, BoundedU8<1, 8>, InvalidBoundedU8, u8);
+impl_packable_test_for_bounded!(packable_bounded_u16, packable_bounded_u16_invalid, BoundedU16<1, 8>, InvalidBoundedU16, u16);
+impl_packable_test_for_bounded!(packable_bounded_u32, packable_bounded_u32_invalid, BoundedU32<1, 8>, InvalidBoundedU32, u32);
+impl_packable_test_for_bounded!(packable_bounded_u64, packable_bounded_u64_invalid, BoundedU64<1, 8>, InvalidBoundedU64, u64);
