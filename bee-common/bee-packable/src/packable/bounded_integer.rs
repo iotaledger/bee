@@ -14,7 +14,7 @@ use core::convert::{Infallible, TryFrom, TryInto};
 /// Trait that provides an interface for bounded integers.
 pub trait Bounded {
     /// The type used to define the bounds.
-    type Bounds;
+    type Bounds: PartialOrd;
 
     /// Minimum bounded value.
     const MIN: Self::Bounds;
@@ -23,59 +23,60 @@ pub trait Bounded {
     const MAX: Self::Bounds;
 }
 
-macro_rules! bounded_integer {
-    ($(#[$ty_doc:meta])* $ty:ident, $(#[$err_doc:meta])* $err:ident, $int:ident) => {
-        $(#[$err_doc])*
+macro_rules! bounded {
+    ($(#[$wrapper_doc:meta])* $wrapper:ident, $(#[$error_doc:meta])* $error:ident, $ty:ident) => {
+        $(#[$error_doc])*
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-        pub struct $err<const MIN: $int, const MAX: $int>(pub $int);
+        pub struct $error<const MIN: $ty, const MAX: $ty>(pub $ty);
 
-        impl<const MIN: $int, const MAX: $int> Bounded for $err<MIN, MAX> {
-            type Bounds = $int;
+        impl<const MIN: $ty, const MAX: $ty> Bounded for $error<MIN, MAX> {
+            type Bounds = $ty;
 
-            const MIN: $int = MIN;
-            const MAX: $int = MAX;
+            const MIN: $ty = MIN;
+            const MAX: $ty = MAX;
         }
 
         #[allow(clippy::from_over_into)]
-        impl<const MIN: $int, const MAX: $int> Into<$int> for $err<MIN, MAX> {
-            fn into(self) -> $int {
+        impl<const MIN: $ty, const MAX: $ty> Into<$ty> for $error<MIN, MAX> {
+            fn into(self) -> $ty {
                 self.0
             }
         }
 
-        $(#[$ty_doc])*
+        $(#[$wrapper_doc])*
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-        pub struct $ty<const MIN: $int, const MAX: $int>($int);
+        pub struct $wrapper<const MIN: $ty, const MAX: $ty>($ty);
 
-        impl<const MIN: $int, const MAX: $int> Bounded for $ty<MIN, MAX> {
-            type Bounds = $int;
+        impl<const MIN: $ty, const MAX: $ty> Bounded for $wrapper<MIN, MAX> {
+            type Bounds = $ty;
 
-            const MIN: $int = MIN;
-            const MAX: $int = MAX;
+            const MIN: $ty = MIN;
+            const MAX: $ty = MAX;
         }
 
+        // We cannot provide a [`From`] implementation because integer primitives are not in this crate.
         #[allow(clippy::from_over_into)]
-        impl<const MIN: $int, const MAX: $int> Into<$int> for $ty<MIN, MAX> {
-            fn into(self) -> $int {
+        impl<const MIN: $ty, const MAX: $ty> Into<$ty> for $wrapper<MIN, MAX> {
+            fn into(self) -> $ty {
                 self.0
             }
         }
 
-        impl<const MIN: $int, const MAX: $int> TryFrom<$int> for $ty<MIN, MAX> {
-            type Error = $err<MIN, MAX>;
+        impl<const MIN: $ty, const MAX: $ty> TryFrom<$ty> for $wrapper<MIN, MAX> {
+            type Error = $error<MIN, MAX>;
 
-            fn try_from(value: $int) -> Result<Self, Self::Error> {
+            fn try_from(value: $ty) -> Result<Self, Self::Error> {
                 if (MIN..=MAX).contains(&value) {
                     Ok(Self(value))
                 } else {
-                    Err($err(value))
+                    Err($error(value))
                 }
             }
         }
 
-        impl<const MIN: $int, const MAX: $int> Packable for $ty<MIN, MAX> {
+        impl<const MIN: $ty, const MAX: $ty> Packable for $wrapper<MIN, MAX> {
             type PackError = Infallible;
-            type UnpackError = $err<MIN, MAX>;
+            type UnpackError = $error<MIN, MAX>;
 
             fn packed_len(&self) -> usize {
                 self.0.packed_len()
@@ -86,7 +87,7 @@ macro_rules! bounded_integer {
             }
 
             fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-                $int::unpack(unpacker)
+                $ty::unpack(unpacker)
                     .infallible()?
                     .try_into()
                     .map_err(UnpackError::Packable)
@@ -97,7 +98,7 @@ macro_rules! bounded_integer {
 
 // TODO: replace with #[doc = concat!(<...>)] in macro when CI rust versions are updated.
 
-bounded_integer!(
+bounded!(
     /// Wrapper type for a `u8`, providing minimum and maximum value bounds.
     BoundedU8,
     /// Error encountered when attempting to wrap a `u8` that is not within the given bounds.
@@ -105,7 +106,7 @@ bounded_integer!(
     u8
 );
 
-bounded_integer!(
+bounded!(
     /// Wrapper type for a `u16`, providing minimum and maximum value bounds.
     BoundedU16,
     /// Error encountered when attempting to wrap a `u16` that is not within the given bounds.
@@ -113,7 +114,7 @@ bounded_integer!(
     u16
 );
 
-bounded_integer!(
+bounded!(
     /// Wrapper type for a `u32`, providing minimum and maximum value bounds.
     BoundedU32,
     /// Error encountered when attempting to wrap a `u32` that is not within the given bounds.
@@ -121,7 +122,7 @@ bounded_integer!(
     u32
 );
 
-bounded_integer!(
+bounded!(
     /// Wrapper type for a `u64`, providing minimum and maximum value bounds.
     BoundedU64,
     /// Error encountered when attempting to wrap a `u64` that is not within the given bounds.

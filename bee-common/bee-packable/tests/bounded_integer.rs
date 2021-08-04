@@ -11,16 +11,16 @@ use bee_packable::{
 use core::convert::TryFrom;
 
 macro_rules! impl_bounds_test_for_bounded_integer {
-    ($name:ident, $ty:ty, $err:ident) => {
+    ($name:ident, $wrapper:ty, $error:ident) => {
         #[test]
         fn $name() {
-            let valid = <$ty>::MIN;
-            assert!(<$ty>::try_from(valid).is_ok());
+            let valid = <$wrapper>::MIN;
+            assert!(<$wrapper>::try_from(valid).is_ok());
 
-            let invalid = <$ty>::MAX + 1;
+            let invalid = <$wrapper>::MAX + 1;
             assert!(matches!(
-                <$ty>::try_from(invalid),
-                Err($err(val))
+                <$wrapper>::try_from(invalid),
+                Err($error(val))
                     if val == invalid,
             ));
         }
@@ -28,13 +28,15 @@ macro_rules! impl_bounds_test_for_bounded_integer {
 }
 
 macro_rules! impl_packable_test_for_bounded_integer {
-    ($packable_valid_name:ident, $packable_invalid_name:ident, $ty:ty, $err:ident, $wrapped:ty) => {
+    ($packable_valid_name:ident, $packable_invalid_name:ident, $wrapper:ty, $error:ident, $wrapped:ty) => {
         #[test]
         fn $packable_valid_name() {
-            let valid = <$ty>::MIN;
+            let valid = <$wrapper>::MIN;
 
             assert_eq!(
-                common::generic_test(&<$ty>::try_from(valid).unwrap()).0.len(),
+                common::generic_test(&<$wrapper>::try_from(valid).unwrap())
+                    .0
+                    .len(),
                 core::mem::size_of::<$wrapped>()
             );
         }
@@ -44,9 +46,9 @@ macro_rules! impl_packable_test_for_bounded_integer {
             let mut bytes = vec![0u8; core::mem::size_of::<$wrapped>()];
             bytes.fill(0);
 
-            let unpacked = <$ty>::unpack_from_slice(&bytes);
+            let unpacked = <$wrapper>::unpack_from_slice(&bytes);
 
-            assert!(matches!(unpacked, Err(UnpackError::Packable($err(0)))))
+            assert!(matches!(unpacked, Err(UnpackError::Packable($error(0)))))
         }
     };
 }
