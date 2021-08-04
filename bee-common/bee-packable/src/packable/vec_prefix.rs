@@ -16,7 +16,7 @@ use alloc::vec::Vec;
 use core::{convert::TryFrom, marker::PhantomData};
 
 /// Wrapper type for [`Vec<T>`] with a length prefix.
-/// The [`Vec<T>`]'s maximum length is provided by `B`, where `B` is a [`Bounded`] type.
+/// The [`Vec<T>`]'s prefix bounds are provided by `B`, where `B` is a [`Bounded`] type.
 /// The prefix type is the `Bounds` type associated with `B`.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[repr(transparent)]
@@ -73,6 +73,7 @@ macro_rules! impl_vec_prefix {
 
             fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
                 // The length of any dynamically-sized sequence must be prefixed.
+                // This unwrap is fine, since we have already validated the length in `try_from`.
                 <$ty>::try_from(self.len()).unwrap().pack(packer).infallible()?;
 
                 for item in self.iter() {
