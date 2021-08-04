@@ -17,7 +17,7 @@ use core::{
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of
 /// [`Conflict`](crate::payload::fpc::Conflict).
 const PREFIXED_TIMESTAMPS_LENGTH_MAX: u32 =
-    (PAYLOAD_LENGTH_MAX / (MessageId::LENGTH + 2 * core::mem::size_of::<u8>())) as u32;
+    PAYLOAD_LENGTH_MAX / (MessageId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32;
 
 /// Provides a convenient collection of [`Timestamp`]s.
 /// Describes a vote in a given round for a message timestamp.

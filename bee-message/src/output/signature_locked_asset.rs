@@ -16,7 +16,7 @@ use core::{
 };
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / [`AssetId::LENGTH`].
-const PREFIXED_BALANCES_LENGTH_MAX: u32 = (PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>())) as u32;
+const PREFIXED_BALANCES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>()) as u32;
 
 /// Error encountered packing a [`SignatureLockedAssetOutput`].
 #[derive(Debug)]

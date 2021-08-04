@@ -19,7 +19,7 @@ use core::{
     fmt,
 };
 
-const PREFIXED_DATA_LENGTH_MAX: u32 = (PAYLOAD_LENGTH_MAX - core::mem::size_of::<u8>()) as u32;
+const PREFIXED_DATA_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - core::mem::size_of::<u8>() as u32;
 
 /// Error encountered packing a data payload.
 #[derive(Debug)]

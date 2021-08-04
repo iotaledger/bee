@@ -16,7 +16,7 @@ use core::{
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
 const PREFIXED_CONFLICTS_LENGTH_MAX: u32 =
-    (PAYLOAD_LENGTH_MAX / (TransactionId::LENGTH + 2 * core::mem::size_of::<u8>())) as u32;
+    PAYLOAD_LENGTH_MAX / (TransactionId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32;
 
 /// Provides a convenient collection of [`Conflict`]s.
 /// Describes a vote in a given round for a transaction conflict.

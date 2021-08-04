@@ -19,7 +19,7 @@ use core::{
 };
 
 /// All [`Vec`] sizes are unconstrained, so use payload max as upper limit.
-const PREFIXED_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX as u32;
+const PREFIXED_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX;
 
 /// Error packing a DKG payload.
 #[derive(Debug)]

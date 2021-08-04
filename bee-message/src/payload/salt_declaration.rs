@@ -22,7 +22,7 @@ use core::{
 };
 
 /// Maximum size of payload, minus prefix `u32` and timestamp `u64`.
-const PREFIXED_BYTES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX as u32 - 12;
+const PREFIXED_BYTES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - 12;
 
 /// Error encountered packing a salt declaration payload.
 #[derive(Debug)]
