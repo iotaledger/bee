@@ -44,7 +44,8 @@ macro_rules! bounded {
         }
 
         $(#[$wrapper_doc])*
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub struct $wrapper<const MIN: $ty, const MAX: $ty>($ty);
 
         impl<const MIN: $ty, const MAX: $ty> Bounded for $wrapper<MIN, MAX> {
