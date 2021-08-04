@@ -1,17 +1,17 @@
 error[E0593]: function is expected to take 1 argument, but it takes 0 arguments
-  --> $DIR/invalid_packable_with.rs:8:44
+  --> $DIR/invalid_packable_with.rs:11:44
    |
-8  | #[packable(pack_error = Impossible, with = Impossible::new)]
+11 | #[packable(pack_error = Impossible, with = Impossible::new)]
    |                                            ^^^^^^^^^^^^^^^ expected function that takes 1 argument
 ...
-18 |     fn new() -> Self {
+21 |     fn new() -> Self {
    |     ---------------- takes 0 arguments
 
 error[E0593]: function is expected to take 1 argument, but it takes 0 arguments
-  --> $DIR/invalid_packable_with.rs:9:46
+  --> $DIR/invalid_packable_with.rs:12:46
    |
-9  | #[packable(unpack_error = Impossible, with = Impossible::new)]
+12 | #[packable(unpack_error = Impossible, with = Impossible::new)]
    |                                              ^^^^^^^^^^^^^^^ expected function that takes 1 argument
 ...
-18 |     fn new() -> Self {
+21 |     fn new() -> Self {
    |     ---------------- takes 0 arguments
