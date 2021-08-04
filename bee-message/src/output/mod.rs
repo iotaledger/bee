@@ -13,9 +13,7 @@ pub use crate::{
 };
 
 pub use output_id::{OutputId, OutputIdUnpackError};
-pub use signature_locked_asset::{
-    AssetBalance, AssetId, SignatureLockedAssetOutput, SignatureLockedAssetPackError, SignatureLockedAssetUnpackError,
-};
+pub use signature_locked_asset::{AssetBalance, AssetId, SignatureLockedAssetOutput, SignatureLockedAssetUnpackError};
 pub use signature_locked_single::{
     SignatureLockedSingleOutput, SignatureLockedSingleUnpackError, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT,
 };
@@ -23,6 +21,7 @@ pub use signature_locked_single::{
 use bee_packable::Packable;
 
 use core::{
+    convert::Infallible,
     fmt,
     ops::{Range, RangeInclusive},
 };
@@ -59,8 +58,7 @@ impl fmt::Display for OutputUnpackError {
     serde(tag = "type", content = "data")
 )]
 #[packable(tag_type = u8, with_error = OutputUnpackError::InvalidKind)]
-// TODO infallible ?
-#[packable(pack_error = MessagePackError)]
+#[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Output {
     /// A signature locked single output.

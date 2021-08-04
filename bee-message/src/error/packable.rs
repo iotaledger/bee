@@ -5,8 +5,7 @@ pub use crate::{
     address::AddressUnpackError,
     input::InputUnpackError,
     output::{
-        OutputIdUnpackError, OutputUnpackError, SignatureLockedAssetPackError, SignatureLockedAssetUnpackError,
-        SignatureLockedSingleUnpackError,
+        OutputIdUnpackError, OutputUnpackError, SignatureLockedAssetUnpackError, SignatureLockedSingleUnpackError,
     },
     payload::{
         data::{DataPackError, DataUnpackError},
@@ -38,7 +37,6 @@ pub enum MessagePackError {
     Indexation(IndexationPackError),
     Payload(PayloadPackError),
     SaltDeclaration(SaltDeclarationPackError),
-    SignatureLockedAsset(SignatureLockedAssetPackError),
     Transaction(TransactionPackError),
     TransactionEssence(TransactionEssencePackError),
     UnlockBlocks(UnlockBlocksPackError),
@@ -53,11 +51,6 @@ impl_wrapped_variant!(
     MessagePackError,
     SaltDeclarationPackError,
     MessagePackError::SaltDeclaration
-);
-impl_wrapped_variant!(
-    MessagePackError,
-    SignatureLockedAssetPackError,
-    MessagePackError::SignatureLockedAsset
 );
 impl_wrapped_variant!(MessagePackError, TransactionPackError, MessagePackError::Transaction);
 impl_wrapped_variant!(
@@ -77,7 +70,6 @@ impl fmt::Display for MessagePackError {
             Self::Indexation(e) => write!(f, "error packing Indexation payload: {}", e),
             Self::Payload(e) => write!(f, "error packing payload: {}", e),
             Self::SaltDeclaration(e) => write!(f, "error packing SaltDeclaration payload: {}", e),
-            Self::SignatureLockedAsset(e) => write!(f, "error packing SignatureLockedAsset: {}", e),
             Self::Transaction(e) => write!(f, "error packing Transaction payload: {}", e),
             Self::TransactionEssence(e) => write!(f, "error packing TransactionEssence: {}", e),
             Self::UnlockBlocks(e) => write!(f, "error packing UnlockBlocks: {}", e),

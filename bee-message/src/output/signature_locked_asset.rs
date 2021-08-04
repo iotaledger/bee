@@ -1,12 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessagePackError, MessageUnpackError, ValidationError};
+use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessageUnpackError, ValidationError};
 
 use bee_packable::{
-    coerce::*,
-    error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
+    coerce::*, error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnknownTagError,
+    UnpackError, Unpacker, VecPrefix,
 };
 
 use alloc::vec::Vec;
@@ -17,27 +16,6 @@ use core::{
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / [`AssetId::LENGTH`].
 const PREFIXED_BALANCES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>()) as u32;
-
-/// Error encountered packing a [`SignatureLockedAssetOutput`].
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum SignatureLockedAssetPackError {
-    InvalidPrefix,
-}
-
-impl From<PackPrefixError<Infallible>> for SignatureLockedAssetPackError {
-    fn from(_: PackPrefixError<Infallible>) -> Self {
-        Self::InvalidPrefix
-    }
-}
-
-impl fmt::Display for SignatureLockedAssetPackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix for asset balance vector"),
-        }
-    }
-}
 
 /// Error encountered unpacking a [`SignatureLockedAssetOutput`].
 #[derive(Debug)]
@@ -158,7 +136,7 @@ impl SignatureLockedAssetOutput {
 }
 
 impl Packable for SignatureLockedAssetOutput {
-    type PackError = MessagePackError;
+    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
@@ -166,12 +144,9 @@ impl Packable for SignatureLockedAssetOutput {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.address.pack(packer).infallible()?;
+        self.address.pack(packer)?;
 
-        self.balances
-            .pack(packer)
-            .coerce::<SignatureLockedAssetPackError>()
-            .coerce()?;
+        self.balances.pack(packer).coerce()?;
 
         Ok(())
     }
