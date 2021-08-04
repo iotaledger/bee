@@ -42,10 +42,10 @@ pub fn exec(tool: &Ed25519Tool) -> Result<(), Ed25519Error> {
             let private = SecretKey::generate().map_err(|_| Ed25519Error::SecretGenerationFailed)?;
             let public = private.public_key();
 
-            println!("Your ed25519 private key:\t{}", hex::encode(private.to_le_bytes()));
+            println!("Your ed25519 private key:\t{}", hex::encode(private.to_bytes()));
             println!(
                 "Your ed25519 public key:\t{}",
-                hex::encode(public.to_compressed_bytes())
+                hex::encode(public.to_bytes())
             );
         }
     }
