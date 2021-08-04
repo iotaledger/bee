@@ -18,11 +18,11 @@ use core::{
 };
 
 /// The maximum number of inputs of a transaction.
-pub const INPUT_COUNT_MAX: usize = 127;
+pub const INPUT_COUNT_MAX: u16 = 127;
 /// The range of valid numbers of inputs of a transaction.
-pub const INPUT_COUNT_RANGE: RangeInclusive<usize> = 1..=INPUT_COUNT_MAX; //[1..127]
+pub const INPUT_COUNT_RANGE: RangeInclusive<u16> = 1..=INPUT_COUNT_MAX; //[1..127]
 /// The range of valid indices of inputs of a transaction.
-pub const INPUT_INDEX_RANGE: Range<u16> = 0..INPUT_COUNT_MAX as u16; //[0..126]
+pub const INPUT_INDEX_RANGE: Range<u16> = 0..INPUT_COUNT_MAX; //[0..126]
 
 /// Error encountered unpacking an [`Input`].
 #[derive(Debug)]

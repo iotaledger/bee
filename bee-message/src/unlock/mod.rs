@@ -22,11 +22,11 @@ use core::{
 };
 
 /// The maximum number of unlock blocks of a transaction.
-pub const UNLOCK_BLOCK_COUNT_MAX: usize = INPUT_COUNT_MAX;
+pub const UNLOCK_BLOCK_COUNT_MAX: u16 = INPUT_COUNT_MAX;
 /// The range of valid numbers of unlock blocks of a transaction.
-pub const UNLOCK_BLOCK_COUNT_RANGE: RangeInclusive<usize> = 1..=UNLOCK_BLOCK_COUNT_MAX; // [1..127]
+pub const UNLOCK_BLOCK_COUNT_RANGE: RangeInclusive<u16> = 1..=UNLOCK_BLOCK_COUNT_MAX; // [1..127]
 /// The range of valid indices of unlock blocks of a transaction.
-pub const UNLOCK_BLOCK_INDEX_RANGE: Range<u16> = 0..UNLOCK_BLOCK_COUNT_MAX as u16; // [0..126]
+pub const UNLOCK_BLOCK_INDEX_RANGE: Range<u16> = 0..UNLOCK_BLOCK_COUNT_MAX; // [0..126]
 
 /// Error encountered unpacking an [`UnlockBlock`].
 #[derive(Debug)]
