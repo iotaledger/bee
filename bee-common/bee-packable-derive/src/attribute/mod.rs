@@ -6,15 +6,15 @@ mod tag;
 mod tag_type;
 mod unpack_error;
 
-use syn::{
-    parse::{Parse, ParseStream},
-    Attribute, Ident, Token,
-};
-
 pub(crate) use pack_error::PackError;
 pub(crate) use tag::Tag;
 pub(crate) use tag_type::TagType;
 pub(crate) use unpack_error::UnpackError;
+
+use syn::{
+    parse::{Parse, ParseStream},
+    Attribute, Ident, Token,
+};
 
 fn parse_attribute<T: Parse>(key: &'static str, attrs: &[Attribute]) -> Option<syn::Result<T>> {
     find_attr(key, attrs).map(|attr| attr.parse_args::<T>())
@@ -26,6 +26,8 @@ fn find_attr<'attr>(key: &'static str, attrs: &'attr [Attribute]) -> Option<&'at
             if let Ok(found_key) = attr.parse_args_with(|input: ParseStream| {
                 let ident = input.parse::<Ident>();
                 if ident.is_ok() {
+                    // Skip the rest of the `ParseStream` to avoid errors. Unwrapping will not
+                    // panic because the `step` argument always returns `Ok`.
                     input
                         .step(|cursor| {
                             let mut rest = *cursor;

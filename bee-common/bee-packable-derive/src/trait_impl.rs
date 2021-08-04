@@ -1,14 +1,14 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
-use syn::{spanned::Spanned, Attribute, DataEnum, DataStruct, DeriveInput, Fields, Generics, Ident, Type, Variant};
-
 use crate::{
     attribute::{PackError, Tag, TagType, UnpackError},
     fragments::Fragments,
 };
+
+use proc_macro2::TokenStream;
+use quote::{quote, ToTokens};
+use syn::{spanned::Spanned, Attribute, DataEnum, DataStruct, DeriveInput, Fields, Generics, Ident, Type, Variant};
 
 pub(crate) struct TraitImpl {
     type_name: Ident,
