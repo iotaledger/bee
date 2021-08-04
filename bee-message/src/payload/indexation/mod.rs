@@ -26,7 +26,6 @@ use core::{
 pub const INDEXATION_INDEX_LENGTH_RANGE: RangeInclusive<u32> = 1..=PaddedIndex::LENGTH as u32;
 
 const PREFIXED_INDEX_LENGTH_MIN: u32 = *INDEXATION_INDEX_LENGTH_RANGE.start() as u32;
-const PREFIXED_DATA_LENGTH_MIN: u32 = *MESSAGE_LENGTH_RANGE.start() as u32;
 const PREFIXED_INDEX_LENGTH_MAX: u32 = *INDEXATION_INDEX_LENGTH_RANGE.end() as u32;
 const PREFIXED_DATA_LENGTH_MAX: u32 = *MESSAGE_LENGTH_RANGE.end() as u32;
 
@@ -96,7 +95,7 @@ pub struct IndexationPayload {
     /// The index key of the message.
     index: VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>,
     /// The data attached to this index.
-    data: VecPrefix<u8, BoundedU32<PREFIXED_DATA_LENGTH_MIN, PREFIXED_DATA_LENGTH_MAX>>,
+    data: VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>,
 }
 
 impl MessagePayload for IndexationPayload {
@@ -113,11 +112,11 @@ impl IndexationPayload {
                     ValidationError::InvalidIndexationIndexLength(err.0 as usize)
                 },
             )?,
-            data: data.try_into().map_err(
-                |err: InvalidBoundedU32<PREFIXED_DATA_LENGTH_MIN, PREFIXED_DATA_LENGTH_MAX>| {
+            data: data
+                .try_into()
+                .map_err(|err: InvalidBoundedU32<0, PREFIXED_DATA_LENGTH_MAX>| {
                     ValidationError::InvalidIndexationDataLength(err.0 as usize)
-                },
-            )?,
+                })?,
         })
     }
 
@@ -160,7 +159,7 @@ impl Packable for IndexationPayload {
             .coerce::<IndexationUnpackError>()
             .coerce()?;
 
-        let data = VecPrefix::<u8, BoundedU32<PREFIXED_DATA_LENGTH_MIN, PREFIXED_DATA_LENGTH_MAX>>::unpack(unpacker)
+        let data = VecPrefix::<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<IndexationUnpackError>()
             .coerce()?;
 

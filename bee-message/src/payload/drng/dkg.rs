@@ -131,6 +131,8 @@ impl Packable for EncryptedDeal {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        self.dh_key.pack(packer).coerce::<DkgPackError>().coerce()?;
+
         self.nonce.pack(packer).coerce::<DkgPackError>().coerce()?;
 
         self.encrypted_share.pack(packer).coerce::<DkgPackError>().coerce()?;

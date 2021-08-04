@@ -9,14 +9,14 @@ use crate::{
 use bee_packable::{
     coerce::*,
     error::{PackPrefixError, UnpackPrefixError},
-    BoundedU16, InvalidBoundedU16, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    BoundedU16, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
 
 use hashbrown::HashSet;
 
 use alloc::vec::Vec;
 use core::{
-    convert::{Infallible, TryInto},
+    convert::{Infallible, TryFrom},
     fmt,
     ops::Deref,
 };
@@ -107,13 +107,15 @@ pub struct UnlockBlocks(
 impl UnlockBlocks {
     /// Creates a new [`UnlockBlocks`].
     pub fn new(unlock_blocks: Vec<UnlockBlock>) -> Result<Self, ValidationError> {
+        let unlock_blocks = VecPrefix::<
+            UnlockBlock,
+            BoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>,
+        >::try_from(unlock_blocks)
+        .map_err(|err| ValidationError::InvalidUnlockBlockCount(err.0 as usize))?;
+
         validate_unlock_block_variants(&unlock_blocks)?;
 
-        Ok(Self(unlock_blocks.try_into().map_err(
-            |err: InvalidBoundedU16<PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN, PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX>| {
-                ValidationError::InvalidUnlockBlockCount(err.0 as usize)
-            },
-        )?))
+        Ok(Self(unlock_blocks))
     }
 
     /// Gets an [`UnlockBlock`] from an [`UnlockBlockbee-common/bee-packable/src/packable/bounded.rss`].

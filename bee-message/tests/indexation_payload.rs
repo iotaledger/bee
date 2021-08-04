@@ -89,8 +89,8 @@ fn unpack_invalid_index_length_less_than_min() {
         IndexationPayload::unpack_from_slice(vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
             .err()
             .unwrap(),
-        UnpackError::Packable(MessageUnpackError::ValidationError(
-            ValidationError::InvalidIndexationIndexLength(0)
+        UnpackError::Packable(MessageUnpackError::Indexation(
+            IndexationUnpackError::InvalidPrefixLength(0)
         )),
     ));
 }
