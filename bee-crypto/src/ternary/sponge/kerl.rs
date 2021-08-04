@@ -73,7 +73,7 @@ impl Sponge for Kerl {
         }
 
         for trits_chunk in input.chunks(HASH_LENGTH) {
-            self.ternary_state.copy_from(&trits_chunk);
+            self.ternary_state.copy_from(trits_chunk);
             // TODO: Convert to `t242` without cloning.
             self.binary_state = self.ternary_state.clone().into_t242().into();
 

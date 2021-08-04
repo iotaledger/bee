@@ -160,7 +160,7 @@ impl NonceProvider for Miner {
 
         let worker_width = u64::MAX / self.num_workers as u64;
         let mut workers = Vec::with_capacity(self.num_workers);
-        let hash = Blake2b256::digest(&bytes);
+        let hash = Blake2b256::digest(bytes);
 
         b1t6::encode::<T1B1Buf>(&hash).iter().for_each(|t| pow_digest.push(t));
 

@@ -120,7 +120,7 @@ impl NetworkBehaviour for IotaGossipProtocol {
     fn addresses_of_peer(&mut self, peer_id: &PeerId) -> Vec<Multiaddr> {
         let addrs = self
             .peers
-            .get(&peer_id)
+            .get(peer_id)
             .map_or(Vec::new(), |conn_info| vec![conn_info.addr.clone()]);
 
         debug!("gossip protocol: addresses of peer {}: {:?}.", alias!(peer_id), addrs);
