@@ -17,10 +17,10 @@ fn for_each_entry(root_path: &Path, f: impl Fn(&Path)) {
 }
 
 macro_rules! make_test {
-    ($name:ident $(, $skip:ident)*) => {
+    ($($skip:ident),*) => {
         #[test]
-        fn $name() {
-            let path = Path::new("tests/").join(stringify!($name));
+        fn packable() {
+            let path = Path::new("tests/");
             let cases = TestCases::new();
 
             for_each_entry(&path.join("pass/"), |path| {
@@ -58,6 +58,11 @@ macro_rules! make_test {
 
 // FIXME: change this when the new error message hits stable.
 #[rustversion::stable]
-make_test!(packable);
+make_test!();
 #[rustversion::not(stable)]
-make_test!(packable, packable_is_structural, invalid_wrapper, duplicated_tag_enum);
+make_test!(
+    packable_is_structural,
+    invalid_wrapper,
+    duplicated_tag_enum,
+    invalid_tag_enum
+);

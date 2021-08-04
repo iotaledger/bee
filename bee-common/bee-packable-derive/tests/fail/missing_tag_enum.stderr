@@ -1,5 +1,5 @@
 error: All variants of an enum that derives `Packable` require a `#[packable(tag = ...)]` attribute.
-  --> $DIR/missing_tag_enum.rs:15:5
+  --> $DIR/missing_tag_enum.rs:14:10
    |
-15 |     None,
-   |     ^^^^
+14 | pub enum OptI32 {
+   |          ^^^^^^
