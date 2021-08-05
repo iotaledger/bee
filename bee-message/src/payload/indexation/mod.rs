@@ -9,12 +9,14 @@ use crate::{payload::MessagePayload, MessageUnpackError, ValidationError, MESSAG
 
 pub use padded::PaddedIndex;
 
-use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
+use bee_packable::{
+    coerce::PackCoerceInfallible, error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, PackError, Packable, Packer,
+    UnpackError, Unpacker, VecPrefix,
+};
 
 use alloc::vec::Vec;
 use core::{
     convert::{Infallible, TryInto},
-    fmt,
     ops::RangeInclusive,
 };
 
@@ -25,46 +27,13 @@ const PREFIXED_INDEX_LENGTH_MIN: u32 = *INDEXATION_INDEX_LENGTH_RANGE.start() as
 const PREFIXED_INDEX_LENGTH_MAX: u32 = *INDEXATION_INDEX_LENGTH_RANGE.end() as u32;
 const PREFIXED_DATA_LENGTH_MAX: u32 = *MESSAGE_LENGTH_RANGE.end() as u32;
 
-/// Error encountered unpacking an indexation payload.
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum IndexationUnpackError {
-    InvalidPrefixLength(usize),
-    ValidationError(ValidationError),
-}
-
-impl_wrapped_variant!(
-    IndexationUnpackError,
-    ValidationError,
-    IndexationUnpackError::ValidationError
-);
-
-impl From<UnpackPrefixError<Infallible>> for IndexationUnpackError {
-    fn from(error: UnpackPrefixError<Infallible>) -> Self {
-        match error {
-            UnpackPrefixError::InvalidPrefixLength(len) => Self::InvalidPrefixLength(len),
-            UnpackPrefixError::Packable(e) => match e {},
-        }
-    }
-}
-
-impl fmt::Display for IndexationUnpackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefixLength(len) => write!(f, "unpacked prefix larger than maximum specified: {}", len),
-            Self::ValidationError(e) => write!(f, "{}", e),
-        }
-    }
-}
-
 /// A payload which holds an index and associated data.
 ///
 /// An [`IndexationPayload`] must:
 /// * Contain an index of within [`INDEXATION_INDEX_LENGTH_RANGE`] bytes.
 /// * Contain data that does not exceed maximum message length in bytes.
-#[derive(Clone, Debug, Eq, PartialEq, Packable)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = MessageUnpackError, with = IndexationUnpackError::from)]
 pub struct IndexationPayload {
     /// The index key of the message.
     index: VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>,
@@ -75,6 +44,44 @@ pub struct IndexationPayload {
 impl MessagePayload for IndexationPayload {
     const KIND: u32 = 8;
     const VERSION: u8 = 0;
+}
+
+impl Packable for IndexationPayload {
+    type PackError = Infallible;
+    type UnpackError = MessageUnpackError;
+
+    fn packed_len(&self) -> usize {
+        self.index.packed_len() + self.data.packed_len()
+    }
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        self.index.pack(packer).infallible()?;
+        self.data.pack(packer).infallible()
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let index = VecPrefix::<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>::unpack(unpacker)
+            .map_err(|unpack_err| {
+                unpack_err.map(|err| match err {
+                    UnpackPrefixError::InvalidPrefixLength(len) => {
+                        ValidationError::InvalidIndexationIndexLength(len).into()
+                    }
+                    UnpackPrefixError::Packable(e) => match e {},
+                })
+            })?;
+
+        let data =
+            VecPrefix::<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>::unpack(unpacker).map_err(|unpack_err| {
+                unpack_err.map(|err| match err {
+                    UnpackPrefixError::InvalidPrefixLength(len) => {
+                        ValidationError::InvalidIndexationDataLength(len).into()
+                    }
+                    UnpackPrefixError::Packable(e) => match e {},
+                })
+            })?;
+
+        Ok(Self { index, data })
+    }
 }
 
 impl IndexationPayload {

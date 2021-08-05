@@ -9,47 +9,28 @@ use crate::{
     MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
+use bee_packable::{
+    coerce::{PackCoerceInfallible, UnpackCoerceInfallible},
+    error::UnpackPrefixError,
+    BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+};
 
 use alloc::vec::Vec;
-use core::{
-    convert::{Infallible, TryInto},
-    fmt,
-};
+use core::convert::{Infallible, TryInto};
 
 /// Maximum size of payload, minus prefix `u32` and timestamp `u64`.
 const PREFIXED_BYTES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - 12;
 
-/// Error encountered unpacking a salt declaration payload.
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum SaltDeclarationUnpackError {
-    InvalidPrefixLength(usize),
-}
-
-impl_from_infallible!(SaltDeclarationUnpackError);
-
-impl From<UnpackPrefixError<Infallible>> for SaltDeclarationUnpackError {
-    fn from(error: UnpackPrefixError<Infallible>) -> Self {
-        match error {
-            UnpackPrefixError::InvalidPrefixLength(len) => Self::InvalidPrefixLength(len),
-            UnpackPrefixError::Packable(e) => match e {},
-        }
-    }
-}
-
-impl fmt::Display for SaltDeclarationUnpackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefixLength(len) => write!(f, "unpacked prefix larger than maximum specified: {}", len),
-        }
+fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
+    match error {
+        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidSaltBytesLength(len),
+        UnpackPrefixError::Packable(e) => match e {},
     }
 }
 
 /// Represents a [`Salt`] used in a [`SaltDeclarationPayload`].
-#[derive(Clone, Debug, PartialEq, Eq, Packable)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = MessageUnpackError, with = SaltDeclarationUnpackError::from)]
 pub struct Salt {
     /// The value of the [`Salt`].
     bytes: VecPrefix<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>,
@@ -64,7 +45,7 @@ impl Salt {
             bytes: bytes
                 .try_into()
                 .map_err(|err: InvalidBoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>| {
-                    ValidationError::InvalidSaltDeclarationBytesLength(err.0 as usize)
+                    ValidationError::InvalidSaltBytesLength(err.0 as usize)
                 })?,
             expiry_time,
         })
@@ -78,6 +59,32 @@ impl Salt {
     /// Returns the expiration time of the [`Salt`].
     pub fn expiry_time(&self) -> u64 {
         self.expiry_time
+    }
+}
+
+impl Packable for Salt {
+    type PackError = Infallible;
+    type UnpackError = MessageUnpackError;
+
+    fn packed_len(&self) -> usize {
+        self.bytes.packed_len() + self.expiry_time.packed_len()
+    }
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        self.bytes.pack(packer).infallible()?;
+        self.expiry_time.pack(packer).infallible()
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let bytes =
+            VecPrefix::<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>::unpack(unpacker).map_err(|err| match err {
+                UnpackError::Packable(err) => UnpackError::Packable(unpack_prefix_to_validation_error(err).into()),
+                UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
+            })?;
+
+        let expiry_time = u64::unpack(unpacker).infallible()?;
+
+        Ok(Self { bytes, expiry_time })
     }
 }
 

@@ -4,51 +4,20 @@
 use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessageUnpackError, ValidationError};
 
 use bee_packable::{
-    coerce::*, error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnknownTagError,
-    UnpackError, Unpacker, VecPrefix,
+    coerce::*, error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnpackError,
+    Unpacker, VecPrefix,
 };
 
 use alloc::vec::Vec;
-use core::{
-    convert::{Infallible, TryInto},
-    fmt,
-};
+use core::convert::{Infallible, TryInto};
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / [`AssetId::LENGTH`].
 const PREFIXED_BALANCES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>()) as u32;
 
-/// Error encountered unpacking a [`SignatureLockedAssetOutput`].
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum SignatureLockedAssetUnpackError {
-    InvalidPrefix,
-    ValidationError(ValidationError),
-}
-
-impl_wrapped_variant!(
-    SignatureLockedAssetUnpackError,
-    ValidationError,
-    SignatureLockedAssetUnpackError::ValidationError
-);
-
-impl From<UnknownTagError<u8>> for SignatureLockedAssetUnpackError {
-    fn from(_: UnknownTagError<u8>) -> Self {
-        Self::InvalidPrefix
-    }
-}
-
-impl From<UnpackPrefixError<Infallible>> for SignatureLockedAssetUnpackError {
-    fn from(_: UnpackPrefixError<Infallible>) -> Self {
-        Self::InvalidPrefix
-    }
-}
-
-impl fmt::Display for SignatureLockedAssetUnpackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix for asset balance vector"),
-            Self::ValidationError(e) => write!(f, "{}", e),
-        }
+fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
+    match error {
+        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidAssetBalanceCount(len),
+        UnpackPrefixError::Packable(e) => match e {},
     }
 }
 
@@ -119,7 +88,7 @@ impl SignatureLockedAssetOutput {
             balances: balances
                 .try_into()
                 .map_err(|err: InvalidBoundedU32<0, PREFIXED_BALANCES_LENGTH_MAX>| {
-                    ValidationError::InvalidAssetBalanceLength(err.0 as usize)
+                    ValidationError::InvalidAssetBalanceCount(err.0 as usize)
                 })?,
         })
     }
@@ -152,8 +121,10 @@ impl Packable for SignatureLockedAssetOutput {
         let address = Address::unpack(unpacker).coerce()?;
 
         let balances = VecPrefix::<AssetBalance, BoundedU32<0, PREFIXED_BALANCES_LENGTH_MAX>>::unpack(unpacker)
-            .coerce::<SignatureLockedAssetUnpackError>()
-            .coerce()?;
+            .map_err(|err| match err {
+                UnpackError::Packable(err) => UnpackError::Packable(unpack_prefix_to_validation_error(err).into()),
+                UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
+            })?;
 
         Ok(Self { address, balances })
     }

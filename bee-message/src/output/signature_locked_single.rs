@@ -5,31 +5,10 @@ use crate::{address::Address, error::ValidationError, MessageUnpackError, IOTA_S
 
 use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
 
-use core::{convert::Infallible, fmt, ops::RangeInclusive};
+use core::{convert::Infallible, ops::RangeInclusive};
 
 /// Valid amounts for a signature locked single output.
 pub const SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT: RangeInclusive<u64> = 1..=IOTA_SUPPLY;
-
-/// Error encountered unpacking a [`SignatureLockedSingleOutput`].
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum SignatureLockedSingleUnpackError {
-    ValidationError(ValidationError),
-}
-
-impl_wrapped_variant!(
-    SignatureLockedSingleUnpackError,
-    ValidationError,
-    SignatureLockedSingleUnpackError::ValidationError
-);
-
-impl fmt::Display for SignatureLockedSingleUnpackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::ValidationError(e) => write!(f, "{}", e),
-        }
-    }
-}
 
 /// An output type which can be unlocked via a signature. It deposits onto one single address.
 ///

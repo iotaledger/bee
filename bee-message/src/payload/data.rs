@@ -11,34 +11,14 @@ use crate::{
 use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
 
 use alloc::vec::Vec;
-use core::{
-    convert::{Infallible, TryInto},
-    fmt,
-};
+use core::convert::{Infallible, TryInto};
 
 const PREFIXED_DATA_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - core::mem::size_of::<u8>() as u32;
 
-/// Error encountered unpacking a data payload.
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum DataUnpackError {
-    InvalidPrefixLength(usize),
-}
-
-impl From<UnpackPrefixError<Infallible>> for DataUnpackError {
-    fn from(error: UnpackPrefixError<Infallible>) -> Self {
-        match error {
-            UnpackPrefixError::InvalidPrefixLength(len) => Self::InvalidPrefixLength(len),
-            UnpackPrefixError::Packable(e) => match e {},
-        }
-    }
-}
-
-impl fmt::Display for DataUnpackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefixLength(len) => write!(f, "unpacked prefix larger than maximum specified: {}", len),
-        }
+fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
+    match error {
+        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidDataPayloadLength(len),
+        UnpackPrefixError::Packable(e) => match e {},
     }
 }
 
@@ -48,7 +28,7 @@ impl fmt::Display for DataUnpackError {
 /// * Not exceed [`PAYLOAD_LENGTH_MAX`] in bytes.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = MessageUnpackError, with = DataUnpackError::from)]
+#[packable(unpack_error = MessageUnpackError, with = unpack_prefix_to_validation_error)]
 pub struct DataPayload {
     /// The raw data in bytes.
     data: VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>,

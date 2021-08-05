@@ -10,10 +10,8 @@ mod signature_locked_single;
 use crate::error::{MessageUnpackError, ValidationError};
 
 pub use output_id::{OutputId, OutputIdUnpackError};
-pub use signature_locked_asset::{AssetBalance, AssetId, SignatureLockedAssetOutput, SignatureLockedAssetUnpackError};
-pub use signature_locked_single::{
-    SignatureLockedSingleOutput, SignatureLockedSingleUnpackError, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT,
-};
+pub use signature_locked_asset::{AssetBalance, AssetId, SignatureLockedAssetOutput};
+pub use signature_locked_single::{SignatureLockedSingleOutput, SIGNATURE_LOCKED_SINGLE_OUTPUT_AMOUNT};
 
 use bee_packable::Packable;
 

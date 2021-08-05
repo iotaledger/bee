@@ -3,10 +3,7 @@
 
 use bee_message::{
     error::ValidationError,
-    payload::{
-        data::{DataPayload, DataUnpackError},
-        MessagePayload,
-    },
+    payload::{data::DataPayload, MessagePayload},
     MessageUnpackError,
 };
 use bee_packable::{Packable, UnpackError};
@@ -62,8 +59,8 @@ fn unpack_invalid_length() {
 
     assert!(matches!(
         data,
-        Err(UnpackError::Packable(MessageUnpackError::Data(
-            DataUnpackError::InvalidPrefixLength(65160)
+        Err(UnpackError::Packable(MessageUnpackError::ValidationError(
+            ValidationError::InvalidDataPayloadLength(65160)
         )))
     ));
 }

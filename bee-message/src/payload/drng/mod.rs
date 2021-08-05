@@ -12,4 +12,4 @@ pub use beacon::{
     collective_beacon::{CollectiveBeaconPayload, CollectiveBeaconPayloadBuilder},
     regular_beacon::{BeaconPayload, BeaconPayloadBuilder},
 };
-pub use dkg::{DkgPayload, DkgPayloadBuilder, DkgUnpackError, EncryptedDeal, EncryptedDealBuilder};
+pub use dkg::{DkgPayload, DkgPayloadBuilder, EncryptedDeal, EncryptedDealBuilder};

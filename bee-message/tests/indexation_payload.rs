@@ -3,10 +3,7 @@
 
 use bee_message::{
     error::{MessageUnpackError, ValidationError},
-    payload::{
-        indexation::{IndexationPayload, IndexationUnpackError},
-        MessagePayload,
-    },
+    payload::{indexation::IndexationPayload, MessagePayload},
 };
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
@@ -89,8 +86,8 @@ fn unpack_invalid_index_length_less_than_min() {
         IndexationPayload::unpack_from_slice(vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
             .err()
             .unwrap(),
-        UnpackError::Packable(MessageUnpackError::Indexation(
-            IndexationUnpackError::InvalidPrefixLength(0)
+        UnpackError::Packable(MessageUnpackError::ValidationError(
+            ValidationError::InvalidIndexationIndexLength(0)
         )),
     ));
 }
@@ -106,10 +103,10 @@ fn unpack_invalid_index_length_more_than_max() {
         ])
         .err()
         .unwrap(),
-        UnpackError::Packable(MessageUnpackError::Indexation(
-            IndexationUnpackError::InvalidPrefixLength(65)
-        ))
-    ),);
+        UnpackError::Packable(MessageUnpackError::ValidationError(
+            ValidationError::InvalidIndexationIndexLength(65)
+        )),
+    ));
 }
 
 #[test]

@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{payload::PAYLOAD_LENGTH_MAX, MessageId};
+use crate::{payload::PAYLOAD_LENGTH_MAX, MessageId, MessageUnpackError, ValidationError};
 
 use bee_packable::{error::UnpackPrefixError, BoundedU32, Packable, VecPrefix};
 
@@ -16,11 +16,18 @@ use core::{
 const PREFIXED_TIMESTAMPS_LENGTH_MAX: u32 =
     PAYLOAD_LENGTH_MAX / (MessageId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32;
 
+fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
+    match error {
+        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidTimestampsCount(len),
+        UnpackPrefixError::Packable(e) => match e {},
+    }
+}
+
 /// Provides a convenient collection of [`Timestamp`]s.
 /// Describes a vote in a given round for a message timestamp.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(unpack_error = UnpackPrefixError<Infallible>)]
+#[packable(unpack_error = MessageUnpackError, with = unpack_prefix_to_validation_error)]
 pub struct Timestamps {
     inner: VecPrefix<Timestamp, BoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>,
 }

@@ -12,11 +12,11 @@ pub mod transaction;
 
 use crate::{MessageUnpackError, ValidationError};
 
-use data::{DataPayload, DataUnpackError};
-use drng::{ApplicationMessagePayload, BeaconPayload, CollectiveBeaconPayload, DkgPayload, DkgUnpackError};
-use fpc::{FpcPayload, FpcUnpackError};
-use indexation::{IndexationPayload, IndexationUnpackError};
-use salt_declaration::{SaltDeclarationPayload, SaltDeclarationUnpackError};
+use data::DataPayload;
+use drng::{ApplicationMessagePayload, BeaconPayload, CollectiveBeaconPayload, DkgPayload};
+use fpc::FpcPayload;
+use indexation::IndexationPayload;
+use salt_declaration::SaltDeclarationPayload;
 use transaction::{TransactionPayload, TransactionUnpackError};
 
 use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
@@ -32,33 +32,15 @@ pub const PAYLOAD_LENGTH_MAX: u32 = 65157;
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum PayloadUnpackError {
-    Data(DataUnpackError),
     Transaction(TransactionUnpackError),
-    Fpc(FpcUnpackError),
-    Dkg(DkgUnpackError),
-    SaltDeclaration(SaltDeclarationUnpackError),
-    Indexation(IndexationUnpackError),
     InvalidKind(u32),
     ValidationError(ValidationError),
 }
 
-impl_wrapped_variant!(PayloadUnpackError, DataUnpackError, PayloadUnpackError::Data);
-impl_wrapped_variant!(
+impl_wrapped_validated!(
     PayloadUnpackError,
     TransactionUnpackError,
     PayloadUnpackError::Transaction
-);
-impl_wrapped_variant!(PayloadUnpackError, FpcUnpackError, PayloadUnpackError::Fpc);
-impl_wrapped_variant!(PayloadUnpackError, DkgUnpackError, PayloadUnpackError::Dkg);
-impl_wrapped_variant!(
-    PayloadUnpackError,
-    SaltDeclarationUnpackError,
-    PayloadUnpackError::SaltDeclaration
-);
-impl_wrapped_variant!(
-    PayloadUnpackError,
-    IndexationUnpackError,
-    PayloadUnpackError::Indexation
 );
 impl_wrapped_variant!(PayloadUnpackError, ValidationError, PayloadUnpackError::ValidationError);
 impl_from_infallible!(PayloadUnpackError);
@@ -66,13 +48,8 @@ impl_from_infallible!(PayloadUnpackError);
 impl fmt::Display for PayloadUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Data(e) => write!(f, "error unpacking data payload: {}", e),
             Self::Transaction(e) => write!(f, "error unpacking transaction payload: {}", e),
-            Self::Fpc(e) => write!(f, "error unpacking FPC payload: {}.", e),
-            Self::Dkg(e) => write!(f, "error unpacking DKG payload: {}", e),
-            Self::SaltDeclaration(e) => write!(f, "error unpacking salt declaration payload: {}", e),
-            Self::Indexation(e) => write!(f, "error unpacking indexation payload: {}.", e),
-            Self::InvalidKind(kind) => write!(f, "invalid Payload kind: {}.", kind),
+            Self::InvalidKind(kind) => write!(f, "invalid payload kind: {}.", kind),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
     }

@@ -12,37 +12,15 @@ use bee_packable::{
 };
 
 use alloc::vec::Vec;
-use core::{
-    convert::{Infallible, TryInto},
-    fmt,
-};
+use core::convert::{Infallible, TryInto};
 
 /// All [`Vec`] sizes are unconstrained, so use payload max as upper limit.
 const PREFIXED_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX;
 
-/// Error unpacking a [`DkgPayload`].
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum DkgUnpackError {
-    InvalidPrefixLength(usize),
-}
-
-impl_from_infallible!(DkgUnpackError);
-
-impl From<UnpackPrefixError<Infallible>> for DkgUnpackError {
-    fn from(error: UnpackPrefixError<Infallible>) -> Self {
-        match error {
-            UnpackPrefixError::InvalidPrefixLength(len) => Self::InvalidPrefixLength(len),
-            UnpackPrefixError::Packable(e) => match e {},
-        }
-    }
-}
-
-impl fmt::Display for DkgUnpackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefixLength(len) => write!(f, "unpacked prefix larger than maximum specified: {}", len),
-        }
+fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
+    match error {
+        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidEncryptedDealLength(len),
+        UnpackPrefixError::Packable(e) => match e {},
     }
 }
 
@@ -115,19 +93,30 @@ impl Packable for EncryptedDeal {
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let dh_key = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker)
-            .coerce::<DkgUnpackError>()
-            .coerce()?;
-        let nonce = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker)
-            .coerce::<DkgUnpackError>()
-            .coerce()?;
-        let encrypted_share = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker)
-            .coerce::<DkgUnpackError>()
-            .coerce()?;
+        let dh_key =
+            VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker).map_err(|err| match err {
+                UnpackError::Packable(err) => UnpackError::Packable(unpack_prefix_to_validation_error(err).into()),
+                UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
+            })?;
+
+        let nonce = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker).map_err(|err| match err {
+            UnpackError::Packable(err) => UnpackError::Packable(unpack_prefix_to_validation_error(err).into()),
+            UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
+        })?;
+
+        let encrypted_share =
+            VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker).map_err(|err| match err {
+                UnpackError::Packable(err) => UnpackError::Packable(unpack_prefix_to_validation_error(err).into()),
+                UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
+            })?;
+
         let threshold = u32::unpack(unpacker).infallible()?;
-        let commitments = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker)
-            .coerce::<DkgUnpackError>()
-            .coerce()?;
+
+        let commitments =
+            VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker).map_err(|err| match err {
+                UnpackError::Packable(err) => UnpackError::Packable(unpack_prefix_to_validation_error(err).into()),
+                UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
+            })?;
 
         let deal = EncryptedDeal {
             dh_key,

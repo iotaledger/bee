@@ -21,7 +21,9 @@ pub enum ValidationError {
     InvalidAddress,
     InvalidAddressKind(u8),
     InvalidAmount(u64),
-    InvalidAssetBalanceLength(usize),
+    InvalidAssetBalanceCount(usize),
+    InvalidConflictsCount(usize),
+    InvalidDataPayloadLength(usize),
     InvalidEncryptedDealLength(usize),
     InvalidHexadecimalChar(String),
     InvalidHexadecimalLength { expected: usize, actual: usize },
@@ -39,9 +41,10 @@ pub enum ValidationError {
     InvalidPayloadLength(usize),
     InvalidPayloadVersion { version: u8, payload_kind: u32 },
     InvalidReferenceIndex(u16),
-    InvalidSaltDeclarationBytesLength(usize),
+    InvalidSaltBytesLength(usize),
     InvalidSignature,
     InvalidStrongParentsCount(usize),
+    InvalidTimestampsCount(usize),
     InvalidUnlockBlockCount(usize),
     InvalidUnlockBlockReference(usize),
     MissingField(&'static str),
@@ -80,10 +83,12 @@ impl fmt::Display for ValidationError {
             Self::InvalidAccumulatedOutput(value) => write!(f, "invalid accumulated output balance: {}", value),
             Self::InvalidAddress => write!(f, "invalid address provided"),
             Self::InvalidAddressKind(kind) => write!(f, "invalid address kind: {}", kind),
-            Self::InvalidAssetBalanceLength(len) => {
+            Self::InvalidAssetBalanceCount(len) => {
                 write!(f, "invalid asset balance count: {}", len)
             }
             Self::InvalidAmount(amount) => write!(f, "invalid amount: {}", amount),
+            Self::InvalidConflictsCount(count) => write!(f, "invalid conflicts count: {}", count),
+            Self::InvalidDataPayloadLength(len) => write!(f, "invalid data payload length: {}", len),
             Self::InvalidEncryptedDealLength(len) => write!(f, "invalid encrypted deal length: {}", len),
             Self::InvalidHexadecimalChar(hex) => write!(f, "invalid hexadecimal character: {}", hex),
             Self::InvalidHexadecimalLength { expected, actual } => {
@@ -109,11 +114,12 @@ impl fmt::Display for ValidationError {
                 write!(f, "invalid version {} for payload kind {}", version, payload_kind)
             }
             Self::InvalidReferenceIndex(index) => write!(f, "invalid reference index: {}", index),
-            Self::InvalidSaltDeclarationBytesLength(len) => {
+            Self::InvalidSaltBytesLength(len) => {
                 write!(f, "invalid salt deeclaration bytes length: {}", len)
             }
             Self::InvalidSignature => write!(f, "invalid signature provided"),
             Self::InvalidStrongParentsCount(count) => write!(f, "invalid strong parents count: {}", count),
+            Self::InvalidTimestampsCount(count) => write!(f, "invalid timestamps count: {}", count),
             Self::InvalidUnlockBlockCount(count) => write!(f, "invalid unlock block count: {}", count),
             Self::InvalidUnlockBlockReference(index) => {
                 write!(f, "invalid unlock block reference: {}", index)
