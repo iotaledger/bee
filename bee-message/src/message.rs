@@ -119,7 +119,7 @@ impl Message {
 
     /// Verifies the [`Message`] signature against the contents of the [`Message`].
     pub fn verify(&self) -> Result<(), ValidationError> {
-        let ed25519_public_key = ed25519::PublicKey::from_compressed_bytes(self.issuer_public_key)?;
+        let ed25519_public_key = ed25519::PublicKey::try_from_bytes(self.issuer_public_key)?;
 
         // Unwrapping is okay here, since the length of the signature is already known to be correct.
         let ed25519_signature = ed25519::Signature::from_bytes(self.signature.to_vec().try_into().unwrap());

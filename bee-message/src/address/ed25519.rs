@@ -37,7 +37,7 @@ impl Ed25519Address {
             });
         }
 
-        if !PublicKey::from_compressed_bytes(*signature.public_key())?
+        if !PublicKey::try_from_bytes(*signature.public_key())?
             .verify(&Signature::from_bytes(*signature.signature()), message)
         {
             return Err(ValidationError::InvalidSignature);
