@@ -91,9 +91,9 @@ fn unpack_invalid_version() {
 
     assert!(matches!(
         message.err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::Validation(
-            ValidationError::InvalidMessageVersion(0)
-        ))
+        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidMessageVersion(
+            0
+        )))
     ));
 }
 

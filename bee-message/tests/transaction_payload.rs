@@ -37,7 +37,10 @@ fn version() {
 fn invalid_no_essence() {
     let payload = TransactionPayload::builder().finish();
 
-    assert!(matches!(payload.unwrap_err(), ValidationError::MissingBuilderField("essence"),));
+    assert!(matches!(
+        payload.unwrap_err(),
+        ValidationError::MissingBuilderField("essence"),
+    ));
 }
 
 #[test]
