@@ -5,7 +5,7 @@
 
 use crate::{
     payload::{MessagePayload, PAYLOAD_LENGTH_MAX},
-    ValidationError,
+    MessagePackError, MessageUnpackError, ValidationError,
 };
 
 use bee_packable::{
@@ -74,8 +74,8 @@ impl fmt::Display for DataUnpackError {
 /// * Not exceed [`PAYLOAD_LENGTH_MAX`] in bytes.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = DataPackError)]
-#[packable(unpack_error = DataUnpackError)]
+#[packable(pack_error = MessagePackError, with = DataPackError::from)]
+#[packable(unpack_error = MessageUnpackError, with = DataUnpackError::from)]
 pub struct DataPayload {
     /// The raw data in bytes.
     data: VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>,

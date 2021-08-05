@@ -7,6 +7,7 @@ use bee_message::{
         data::{DataPayload, DataUnpackError},
         MessagePayload,
     },
+    MessageUnpackError,
 };
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
@@ -61,7 +62,9 @@ fn unpack_invalid_length() {
 
     assert!(matches!(
         data,
-        Err(UnpackError::Packable(DataUnpackError::InvalidPrefixLength(65160)))
+        Err(UnpackError::Packable(MessageUnpackError::Data(
+            DataUnpackError::InvalidPrefixLength(65160)
+        )))
     ));
 }
 
