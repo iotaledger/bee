@@ -6,13 +6,10 @@
 use crate::{
     payload::{MessagePayload, PAYLOAD_LENGTH_MAX},
     signature::Ed25519Signature,
-    MessagePackError, MessageUnpackError, ValidationError,
+    MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{
-    error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
-};
+use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
 
 use alloc::vec::Vec;
 use core::{
@@ -23,38 +20,10 @@ use core::{
 /// Maximum size of payload, minus prefix `u32` and timestamp `u64`.
 const PREFIXED_BYTES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - 12;
 
-/// Error encountered packing a salt declaration payload.
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum SaltDeclarationPackError {
-    InvalidPrefix,
-}
-
-impl From<Infallible> for SaltDeclarationPackError {
-    fn from(err: Infallible) -> Self {
-        match err {}
-    }
-}
-
-impl From<PackPrefixError<Infallible>> for SaltDeclarationPackError {
-    fn from(error: PackPrefixError<Infallible>) -> Self {
-        match error.0 {}
-    }
-}
-
-impl fmt::Display for SaltDeclarationPackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix for salt bytes"),
-        }
-    }
-}
-
 /// Error encountered unpacking a salt declaration payload.
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum SaltDeclarationUnpackError {
-    InvalidPrefix,
     InvalidPrefixLength(usize),
 }
 
@@ -72,7 +41,6 @@ impl From<UnpackPrefixError<Infallible>> for SaltDeclarationUnpackError {
 impl fmt::Display for SaltDeclarationUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix for salt bytes"),
             Self::InvalidPrefixLength(len) => write!(f, "unpacked prefix larger than maximum specified: {}", len),
         }
     }
@@ -81,7 +49,6 @@ impl fmt::Display for SaltDeclarationUnpackError {
 /// Represents a [`Salt`] used in a [`SaltDeclarationPayload`].
 #[derive(Clone, Debug, PartialEq, Eq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = MessagePackError, with = SaltDeclarationPackError::from)]
 #[packable(unpack_error = MessageUnpackError, with = SaltDeclarationUnpackError::from)]
 pub struct Salt {
     /// The value of the [`Salt`].
@@ -117,7 +84,6 @@ impl Salt {
 /// A [`SaltDeclarationPayload`].
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = MessagePackError)]
 #[packable(unpack_error = MessageUnpackError)]
 pub struct SaltDeclarationPayload {
     /// The declaring node ID (which may be different from the node ID of the message issuer).

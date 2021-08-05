@@ -5,13 +5,10 @@
 
 use crate::{
     payload::{MessagePayload, PAYLOAD_LENGTH_MAX},
-    MessagePackError, MessageUnpackError, ValidationError,
+    MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{
-    error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
-};
+use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
 
 use alloc::vec::Vec;
 use core::{
@@ -21,32 +18,10 @@ use core::{
 
 const PREFIXED_DATA_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX - core::mem::size_of::<u8>() as u32;
 
-/// Error encountered packing a data payload.
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum DataPackError {
-    InvalidPrefix,
-}
-
-impl From<PackPrefixError<Infallible>> for DataPackError {
-    fn from(_: PackPrefixError<Infallible>) -> Self {
-        Self::InvalidPrefix
-    }
-}
-
-impl fmt::Display for DataPackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix for data"),
-        }
-    }
-}
-
 /// Error encountered unpacking a data payload.
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum DataUnpackError {
-    InvalidPrefix,
     InvalidPrefixLength(usize),
 }
 
@@ -62,7 +37,6 @@ impl From<UnpackPrefixError<Infallible>> for DataUnpackError {
 impl fmt::Display for DataUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix for data"),
             Self::InvalidPrefixLength(len) => write!(f, "unpacked prefix larger than maximum specified: {}", len),
         }
     }
@@ -74,7 +48,6 @@ impl fmt::Display for DataUnpackError {
 /// * Not exceed [`PAYLOAD_LENGTH_MAX`] in bytes.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = MessagePackError, with = DataPackError::from)]
 #[packable(unpack_error = MessageUnpackError, with = DataUnpackError::from)]
 pub struct DataPayload {
     /// The raw data in bytes.

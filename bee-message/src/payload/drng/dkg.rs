@@ -2,14 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    error::{MessagePackError, MessageUnpackError, ValidationError},
+    error::{MessageUnpackError, ValidationError},
     payload::{MessagePayload, PAYLOAD_LENGTH_MAX},
 };
 
 use bee_packable::{
-    coerce::*,
-    error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    coerce::*, error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnpackError,
+    Unpacker, VecPrefix,
 };
 
 use alloc::vec::Vec;
@@ -21,32 +20,10 @@ use core::{
 /// All [`Vec`] sizes are unconstrained, so use payload max as upper limit.
 const PREFIXED_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX;
 
-/// Error packing a DKG payload.
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum DkgPackError {
-    InvalidPrefix,
-}
-
-impl From<PackPrefixError<Infallible>> for DkgPackError {
-    fn from(error: PackPrefixError<Infallible>) -> Self {
-        match error.0 {}
-    }
-}
-
-impl fmt::Display for DkgPackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix for encrypted deal data"),
-        }
-    }
-}
-
 /// Error unpacking a [`DkgPayload`].
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum DkgUnpackError {
-    InvalidPrefix,
     InvalidPrefixLength(usize),
 }
 
@@ -64,7 +41,6 @@ impl From<UnpackPrefixError<Infallible>> for DkgUnpackError {
 impl fmt::Display for DkgUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix for salt bytes"),
             Self::InvalidPrefixLength(len) => write!(f, "unpacked prefix larger than maximum specified: {}", len),
         }
     }
@@ -119,7 +95,7 @@ impl EncryptedDeal {
 }
 
 impl Packable for EncryptedDeal {
-    type PackError = MessagePackError;
+    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
@@ -131,17 +107,11 @@ impl Packable for EncryptedDeal {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.dh_key.pack(packer).coerce::<DkgPackError>().coerce()?;
-
-        self.nonce.pack(packer).coerce::<DkgPackError>().coerce()?;
-
-        self.encrypted_share.pack(packer).coerce::<DkgPackError>().coerce()?;
-
+        self.dh_key.pack(packer).infallible()?;
+        self.nonce.pack(packer).infallible()?;
+        self.encrypted_share.pack(packer).infallible()?;
         self.threshold.pack(packer).infallible()?;
-
-        self.commitments.pack(packer).coerce::<DkgPackError>().coerce()?;
-
-        Ok(())
+        self.commitments.pack(packer).infallible()
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
@@ -280,7 +250,6 @@ fn validate_encrypted_deal_length(len: usize) -> Result<(), ValidationError> {
 /// The deal messages exchanged to produce a public/private collective key during the DKG phase of dRNG.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = MessagePackError)]
 #[packable(unpack_error = MessageUnpackError)]
 pub struct DkgPayload {
     /// The identifier of the dRNG instance.

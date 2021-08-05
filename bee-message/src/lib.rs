@@ -24,7 +24,7 @@ pub mod signature;
 pub mod unlock;
 pub mod util;
 
-pub use error::{MessagePackError, MessageUnpackError, ValidationError};
+pub use error::{MessageUnpackError, ValidationError};
 pub use message::{Message, MESSAGE_LENGTH_RANGE};
 pub use message_builder::MessageBuilder;
 pub use message_id::MessageId;

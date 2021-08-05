@@ -3,13 +3,11 @@
 
 use crate::{
     unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlockUnpackError, UNLOCK_BLOCK_COUNT_RANGE},
-    MessagePackError, MessageUnpackError, ValidationError,
+    MessageUnpackError, ValidationError,
 };
 
 use bee_packable::{
-    coerce::*,
-    error::{PackPrefixError, UnpackPrefixError},
-    BoundedU16, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    coerce::*, error::UnpackPrefixError, BoundedU16, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
 };
 
 use hashbrown::HashSet;
@@ -23,27 +21,6 @@ use core::{
 
 const PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN: u16 = *UNLOCK_BLOCK_COUNT_RANGE.start();
 const PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX: u16 = *UNLOCK_BLOCK_COUNT_RANGE.end();
-
-/// Error encountered while packing [`UnlockBlocks`].
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum UnlockBlocksPackError {
-    InvalidPrefix,
-}
-
-impl From<PackPrefixError<Infallible>> for UnlockBlocksPackError {
-    fn from(error: PackPrefixError<Infallible>) -> Self {
-        match error.0 {}
-    }
-}
-
-impl fmt::Display for UnlockBlocksPackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix"),
-        }
-    }
-}
 
 /// Error encountered while unpacking [`UnlockBlocks`].
 #[derive(Debug)]
@@ -138,7 +115,7 @@ impl Deref for UnlockBlocks {
 }
 
 impl Packable for UnlockBlocks {
-    type PackError = MessagePackError;
+    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
@@ -146,9 +123,7 @@ impl Packable for UnlockBlocks {
     }
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.0.pack(packer).coerce::<UnlockBlocksPackError>().coerce()?;
-
-        Ok(())
+        self.0.pack(packer).infallible()
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {

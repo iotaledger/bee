@@ -8,74 +8,22 @@ pub use crate::{
         OutputIdUnpackError, OutputUnpackError, SignatureLockedAssetUnpackError, SignatureLockedSingleUnpackError,
     },
     payload::{
-        data::{DataPackError, DataUnpackError},
-        drng::{DkgPackError, DkgUnpackError},
-        fpc::{FpcPackError, FpcUnpackError},
-        indexation::{IndexationPackError, IndexationUnpackError},
-        salt_declaration::{SaltDeclarationPackError, SaltDeclarationUnpackError},
-        transaction::{
-            TransactionEssencePackError, TransactionEssenceUnpackError, TransactionPackError, TransactionUnpackError,
-        },
-        PayloadPackError, PayloadUnpackError,
+        data::DataUnpackError,
+        drng::DkgUnpackError,
+        fpc::FpcUnpackError,
+        indexation::IndexationUnpackError,
+        salt_declaration::SaltDeclarationUnpackError,
+        transaction::{TransactionEssenceUnpackError, TransactionUnpackError},
+        PayloadUnpackError,
     },
     signature::SignatureUnpackError,
-    unlock::{UnlockBlockUnpackError, UnlockBlocksPackError, UnlockBlocksUnpackError},
+    unlock::{UnlockBlockUnpackError, UnlockBlocksUnpackError},
     ValidationError,
 };
 
 pub use bee_packable::UnpackOptionError;
 
 use core::{convert::Infallible, fmt};
-
-/// Error encountered while serializing with [`Packable`](bee_packable::Packable).
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum MessagePackError {
-    Data(DataPackError),
-    Dkg(DkgPackError),
-    Fpc(FpcPackError),
-    Indexation(IndexationPackError),
-    Payload(PayloadPackError),
-    SaltDeclaration(SaltDeclarationPackError),
-    Transaction(TransactionPackError),
-    TransactionEssence(TransactionEssencePackError),
-    UnlockBlocks(UnlockBlocksPackError),
-}
-
-impl_wrapped_variant!(MessagePackError, DataPackError, MessagePackError::Data);
-impl_wrapped_variant!(MessagePackError, DkgPackError, MessagePackError::Dkg);
-impl_wrapped_variant!(MessagePackError, FpcPackError, MessagePackError::Fpc);
-impl_wrapped_variant!(MessagePackError, IndexationPackError, MessagePackError::Indexation);
-impl_wrapped_variant!(MessagePackError, PayloadPackError, MessagePackError::Payload);
-impl_wrapped_variant!(
-    MessagePackError,
-    SaltDeclarationPackError,
-    MessagePackError::SaltDeclaration
-);
-impl_wrapped_variant!(MessagePackError, TransactionPackError, MessagePackError::Transaction);
-impl_wrapped_variant!(
-    MessagePackError,
-    TransactionEssencePackError,
-    MessagePackError::TransactionEssence
-);
-impl_wrapped_variant!(MessagePackError, UnlockBlocksPackError, MessagePackError::UnlockBlocks);
-impl_from_infallible!(MessagePackError);
-
-impl fmt::Display for MessagePackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Data(e) => write!(f, "error packing Data payload: {}", e),
-            Self::Dkg(e) => write!(f, "error packing DKG payload: {}", e),
-            Self::Fpc(e) => write!(f, "error packing FPC payload: {}", e),
-            Self::Indexation(e) => write!(f, "error packing Indexation payload: {}", e),
-            Self::Payload(e) => write!(f, "error packing payload: {}", e),
-            Self::SaltDeclaration(e) => write!(f, "error packing SaltDeclaration payload: {}", e),
-            Self::Transaction(e) => write!(f, "error packing Transaction payload: {}", e),
-            Self::TransactionEssence(e) => write!(f, "error packing TransactionEssence: {}", e),
-            Self::UnlockBlocks(e) => write!(f, "error packing UnlockBlocks: {}", e),
-        }
-    }
-}
 
 /// Error encountered while deserializing with [`Packable`](bee_packable::Packable).
 #[derive(Debug)]

@@ -3,10 +3,7 @@
 
 use crate::payload::{transaction::TransactionId, PAYLOAD_LENGTH_MAX};
 
-use bee_packable::{
-    error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, Packable, VecPrefix,
-};
+use bee_packable::{error::UnpackPrefixError, BoundedU32, Packable, VecPrefix};
 
 use alloc::vec;
 use core::{
@@ -22,7 +19,6 @@ const PREFIXED_CONFLICTS_LENGTH_MAX: u32 =
 /// Describes a vote in a given round for a transaction conflict.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = PackPrefixError<Infallible>)]
 #[packable(unpack_error = UnpackPrefixError<Infallible>)]
 pub struct Conflicts {
     inner: VecPrefix<Conflict, BoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>,

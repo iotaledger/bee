@@ -6,7 +6,7 @@ use crate::{
         drng::beacon::{BEACON_PARTIAL_PUBLIC_KEY_LENGTH, BEACON_SIGNATURE_LENGTH},
         MessagePayload,
     },
-    MessagePackError, MessageUnpackError, ValidationError,
+    MessageUnpackError, ValidationError,
 };
 
 use bee_packable::Packable;
@@ -14,7 +14,6 @@ use bee_packable::Packable;
 /// Message representing a dRNG [`BeaconPayload`].
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = MessagePackError)]
 #[packable(unpack_error = MessageUnpackError)]
 pub struct BeaconPayload {
     /// The identifier of the dRNG instance.

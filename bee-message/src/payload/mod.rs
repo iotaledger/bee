@@ -10,16 +10,14 @@ pub mod indexation;
 pub mod salt_declaration;
 pub mod transaction;
 
-use crate::{MessagePackError, MessageUnpackError, ValidationError};
+use crate::{MessageUnpackError, ValidationError};
 
-use data::{DataPackError, DataPayload, DataUnpackError};
-use drng::{
-    ApplicationMessagePayload, BeaconPayload, CollectiveBeaconPayload, DkgPackError, DkgPayload, DkgUnpackError,
-};
-use fpc::{FpcPackError, FpcPayload, FpcUnpackError};
-use indexation::{IndexationPackError, IndexationPayload, IndexationUnpackError};
-use salt_declaration::{SaltDeclarationPackError, SaltDeclarationPayload, SaltDeclarationUnpackError};
-use transaction::{TransactionPackError, TransactionPayload, TransactionUnpackError};
+use data::{DataPayload, DataUnpackError};
+use drng::{ApplicationMessagePayload, BeaconPayload, CollectiveBeaconPayload, DkgPayload, DkgUnpackError};
+use fpc::{FpcPayload, FpcUnpackError};
+use indexation::{IndexationPayload, IndexationUnpackError};
+use salt_declaration::{SaltDeclarationPayload, SaltDeclarationUnpackError};
+use transaction::{TransactionPayload, TransactionUnpackError};
 
 use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
 
@@ -29,44 +27,6 @@ use core::{convert::Infallible, fmt};
 /// Maximum length (in bytes) of a message payload, defined in the specification:
 /// <https://github.com/iotaledger/IOTA-2.0-Research-Specifications/blob/main/2.3%20Standard%20Payloads%20Layout.md>.
 pub const PAYLOAD_LENGTH_MAX: u32 = 65157;
-
-/// Error encountered packing a payload.
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum PayloadPackError {
-    Data(DataPackError),
-    Transaction(TransactionPackError),
-    Fpc(FpcPackError),
-    Dkg(DkgPackError),
-    SaltDeclaration(SaltDeclarationPackError),
-    Indexation(IndexationPackError),
-}
-
-impl_wrapped_variant!(PayloadPackError, DataPackError, PayloadPackError::Data);
-impl_wrapped_variant!(PayloadPackError, TransactionPackError, PayloadPackError::Transaction);
-impl_wrapped_variant!(PayloadPackError, FpcPackError, PayloadPackError::Fpc);
-impl_wrapped_variant!(PayloadPackError, DkgPackError, PayloadPackError::Dkg);
-impl_wrapped_variant!(
-    PayloadPackError,
-    SaltDeclarationPackError,
-    PayloadPackError::SaltDeclaration
-);
-impl_wrapped_variant!(PayloadPackError, IndexationPackError, PayloadPackError::Indexation);
-
-impl_from_infallible!(PayloadPackError);
-
-impl fmt::Display for PayloadPackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Data(e) => write!(f, "error packing data payload: {}.", e),
-            Self::Transaction(e) => write!(f, "error packing transaction payload: {}", e),
-            Self::Fpc(e) => write!(f, "error packing FPC payload: {}.", e),
-            Self::Dkg(e) => write!(f, "error packing DKG payload: {}", e),
-            Self::SaltDeclaration(e) => write!(f, "error packing salt declaration payload: {}", e),
-            Self::Indexation(e) => write!(f, "error packing indexation payload: {}", e),
-        }
-    }
-}
 
 /// Error encountered unpacking a payload.
 #[derive(Debug)]
@@ -209,7 +169,7 @@ impl Payload {
 }
 
 impl Packable for Payload {
-    type PackError = MessagePackError;
+    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
@@ -231,15 +191,15 @@ impl Packable for Payload {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         match self {
-            Self::Data(p) => p.pack_payload(packer),
+            Self::Data(p) => p.pack_payload(packer).infallible(),
             Self::Transaction(p) => p.pack_payload(packer),
-            Self::Fpc(p) => p.pack_payload(packer),
-            Self::ApplicationMessage(p) => p.pack_payload(packer),
+            Self::Fpc(p) => p.pack_payload(packer).infallible(),
+            Self::ApplicationMessage(p) => p.pack_payload(packer).infallible(),
             Self::Dkg(p) => p.pack_payload(packer),
-            Self::Beacon(p) => p.pack_payload(packer),
-            Self::CollectiveBeacon(p) => p.pack_payload(packer),
-            Self::SaltDeclaration(p) => p.pack_payload(packer),
-            Self::Indexation(p) => p.pack_payload(packer),
+            Self::Beacon(p) => p.pack_payload(packer).infallible(),
+            Self::CollectiveBeacon(p) => p.pack_payload(packer).infallible(),
+            Self::SaltDeclaration(p) => p.pack_payload(packer).infallible(),
+            Self::Indexation(p) => p.pack_payload(packer).infallible(),
         }
     }
 

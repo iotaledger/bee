@@ -1,14 +1,13 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::payload::{MessagePackError, MessagePayload, MessageUnpackError};
+use crate::payload::{MessagePayload, MessageUnpackError};
 
 use bee_packable::Packable;
 
 /// Message used by a node to declare its willingness to participate in the Committee Selection process.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = MessagePackError)]
 #[packable(unpack_error = MessageUnpackError)]
 pub struct ApplicationMessagePayload {
     /// The identifier of the dRNG instance.

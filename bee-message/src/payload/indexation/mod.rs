@@ -5,14 +5,11 @@
 
 mod padded;
 
-use crate::{payload::MessagePayload, MessagePackError, MessageUnpackError, ValidationError, MESSAGE_LENGTH_RANGE};
+use crate::{payload::MessagePayload, MessageUnpackError, ValidationError, MESSAGE_LENGTH_RANGE};
 
 pub use padded::PaddedIndex;
 
-use bee_packable::{
-    error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, InvalidBoundedU32, Packable, VecPrefix,
-};
+use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
 
 use alloc::vec::Vec;
 use core::{
@@ -28,32 +25,10 @@ const PREFIXED_INDEX_LENGTH_MIN: u32 = *INDEXATION_INDEX_LENGTH_RANGE.start() as
 const PREFIXED_INDEX_LENGTH_MAX: u32 = *INDEXATION_INDEX_LENGTH_RANGE.end() as u32;
 const PREFIXED_DATA_LENGTH_MAX: u32 = *MESSAGE_LENGTH_RANGE.end() as u32;
 
-/// Error encountered packing an indexation payload.
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum IndexationPackError {
-    InvalidPrefix,
-}
-
-impl From<PackPrefixError<Infallible>> for IndexationPackError {
-    fn from(error: PackPrefixError<Infallible>) -> Self {
-        match error.0 {}
-    }
-}
-
-impl fmt::Display for IndexationPackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix for index/data"),
-        }
-    }
-}
-
 /// Error encountered unpacking an indexation payload.
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum IndexationUnpackError {
-    InvalidPrefix,
     InvalidPrefixLength(usize),
     ValidationError(ValidationError),
 }
@@ -76,7 +51,6 @@ impl From<UnpackPrefixError<Infallible>> for IndexationUnpackError {
 impl fmt::Display for IndexationUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix for index/data"),
             Self::InvalidPrefixLength(len) => write!(f, "unpacked prefix larger than maximum specified: {}", len),
             Self::ValidationError(e) => write!(f, "{}", e),
         }
@@ -90,7 +64,6 @@ impl fmt::Display for IndexationUnpackError {
 /// * Contain data that does not exceed maximum message length in bytes.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = MessagePackError, with = IndexationPackError::from)]
 #[packable(unpack_error = MessageUnpackError, with = IndexationUnpackError::from)]
 pub struct IndexationPayload {
     /// The index key of the message.

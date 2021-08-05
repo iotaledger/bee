@@ -9,13 +9,13 @@ mod unlock_blocks;
 
 pub use reference::{ReferenceUnlock, ReferenceUnlockUnpackError};
 pub use signature::SignatureUnlock;
-pub use unlock_blocks::{UnlockBlocks, UnlockBlocksPackError, UnlockBlocksUnpackError};
+pub use unlock_blocks::{UnlockBlocks, UnlockBlocksUnpackError};
 
 use crate::{input::INPUT_COUNT_MAX, MessageUnpackError, ValidationError};
 
 use bee_packable::Packable;
 
-use core::{convert::Infallible, fmt, ops::RangeInclusive};
+use core::{fmt, ops::RangeInclusive};
 
 /// The maximum number of unlock blocks of a transaction.
 pub const UNLOCK_BLOCK_COUNT_MAX: u16 = INPUT_COUNT_MAX;
@@ -51,7 +51,6 @@ impl fmt::Display for UnlockBlockUnpackError {
     serde(tag = "type", content = "data")
 )]
 #[packable(tag_type = u8, with_error = UnlockBlockUnpackError::InvalidKind)]
-#[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum UnlockBlock {
     /// A signature unlock block.

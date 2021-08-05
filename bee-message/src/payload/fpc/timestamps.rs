@@ -3,10 +3,7 @@
 
 use crate::{payload::PAYLOAD_LENGTH_MAX, MessageId};
 
-use bee_packable::{
-    error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, Packable, VecPrefix,
-};
+use bee_packable::{error::UnpackPrefixError, BoundedU32, Packable, VecPrefix};
 
 use alloc::vec;
 use core::{
@@ -23,7 +20,6 @@ const PREFIXED_TIMESTAMPS_LENGTH_MAX: u32 =
 /// Describes a vote in a given round for a message timestamp.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = PackPrefixError<Infallible>)]
 #[packable(unpack_error = UnpackPrefixError<Infallible>)]
 pub struct Timestamps {
     inner: VecPrefix<Timestamp, BoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>,

@@ -8,63 +8,23 @@ mod transaction_id;
 
 use crate::{
     payload::MessagePayload,
-    unlock::{UnlockBlocks, UnlockBlocksPackError, UnlockBlocksUnpackError},
-    MessagePackError, MessageUnpackError, ValidationError,
+    unlock::{UnlockBlocks, UnlockBlocksUnpackError},
+    MessageUnpackError, ValidationError,
 };
 
-pub use essence::{
-    TransactionEssence, TransactionEssenceBuilder, TransactionEssencePackError, TransactionEssenceUnpackError,
-};
+pub use essence::{TransactionEssence, TransactionEssenceBuilder, TransactionEssenceUnpackError};
 pub use transaction_id::TransactionId;
 
-use bee_packable::{error::PackPrefixError, PackError, Packable, Packer, UnpackError, Unpacker};
+use bee_packable::{PackError, Packable, Packer, UnpackError, Unpacker};
 use crypto::hashes::{blake2b::Blake2b256, Digest};
 
 use alloc::boxed::Box;
 use core::{convert::Infallible, fmt};
 
-/// Error encountered packing a transaction payload.
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum TransactionPackError {
-    InvalidUnlockBlocksPrefix,
-    TransactionEssence(Box<TransactionEssencePackError>),
-    UnlockBlocks(UnlockBlocksPackError),
-}
-
-impl_wrapped_variant!(
-    TransactionPackError,
-    UnlockBlocksPackError,
-    TransactionPackError::UnlockBlocks
-);
-
-impl From<TransactionEssencePackError> for TransactionPackError {
-    fn from(error: TransactionEssencePackError) -> Self {
-        Self::TransactionEssence(Box::new(error))
-    }
-}
-
-impl From<PackPrefixError<Infallible>> for TransactionPackError {
-    fn from(error: PackPrefixError<Infallible>) -> Self {
-        match error.0 {}
-    }
-}
-
-impl fmt::Display for TransactionPackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidUnlockBlocksPrefix => write!(f, "invalid unlock block vector prefix"),
-            Self::UnlockBlocks(e) => write!(f, "error unpacking UnlockBlocks: {}", e),
-            Self::TransactionEssence(e) => write!(f, "{}", e),
-        }
-    }
-}
-
 /// Error encountered unpacking a transaction payload.
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum TransactionUnpackError {
-    InvalidUnlockBlocksPrefix,
     TransactionEssence(Box<TransactionEssenceUnpackError>),
     UnlockBlocksUnpack(UnlockBlocksUnpackError),
     ValidationError(ValidationError),
@@ -93,7 +53,6 @@ impl From<TransactionEssenceUnpackError> for TransactionUnpackError {
 impl fmt::Display for TransactionUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidUnlockBlocksPrefix => write!(f, "invalid unlock block vector prefix"),
             Self::TransactionEssence(e) => write!(f, "error unpacking transaction essence: {}", e),
             Self::UnlockBlocksUnpack(e) => write!(f, "error unpacking unlock blocks: {}", e),
             Self::ValidationError(e) => write!(f, "{}", e),
@@ -151,7 +110,7 @@ impl TransactionPayload {
 }
 
 impl Packable for TransactionPayload {
-    type PackError = MessagePackError;
+    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
@@ -160,9 +119,7 @@ impl Packable for TransactionPayload {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         self.essence.pack(packer)?;
-        self.unlock_blocks.pack(packer)?;
-
-        Ok(())
+        self.unlock_blocks.pack(packer)
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {

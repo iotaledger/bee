@@ -4,18 +4,17 @@
 use crate::{
     input::{Input, INPUT_COUNT_RANGE},
     output::{Output, SignatureLockedSingleOutput, OUTPUT_COUNT_RANGE},
-    payload::{Payload, PayloadPackError},
-    MessagePackError, MessageUnpackError, ValidationError, IOTA_SUPPLY,
+    payload::Payload,
+    MessageUnpackError, ValidationError, IOTA_SUPPLY,
 };
 
 use bee_ord::is_sorted;
 use bee_packable::{
-    coerce::*,
-    error::{PackPrefixError, UnpackPrefixError},
-    BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnknownTagError, UnpackError, Unpacker, VecPrefix,
+    coerce::*, error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnknownTagError,
+    UnpackError, Unpacker, VecPrefix,
 };
 
-use alloc::{boxed::Box, vec::Vec};
+use alloc::vec::Vec;
 use core::{
     convert::{Infallible, TryInto},
     fmt,
@@ -29,54 +28,12 @@ const PREFIXED_OUTPUTS_LENGTH_MAX: u32 = *OUTPUT_COUNT_RANGE.end() as u32;
 const PREFIXED_INPUTS_LENGTH_MIN: u32 = *INPUT_COUNT_RANGE.start() as u32;
 const PREFIXED_OUTPUTS_LENGTH_MIN: u32 = *OUTPUT_COUNT_RANGE.start() as u32;
 
-/// Error encountered packing a [`TransactionEssence`].
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum TransactionEssencePackError {
-    InvalidInputPrefix,
-    InvalidOutputPrefix,
-    OutputPackError(Box<MessagePackError>),
-    OptionalPayload(PayloadPackError),
-}
-
-impl_wrapped_variant!(
-    TransactionEssencePackError,
-    PayloadPackError,
-    TransactionEssencePackError::OptionalPayload
-);
-impl_from_infallible!(TransactionEssencePackError);
-
-impl From<PackPrefixError<Infallible>> for TransactionEssencePackError {
-    fn from(_: PackPrefixError<Infallible>) -> Self {
-        Self::InvalidInputPrefix
-    }
-}
-
-impl From<PackPrefixError<MessagePackError>> for TransactionEssencePackError {
-    fn from(error: PackPrefixError<MessagePackError>) -> Self {
-        Self::OutputPackError(Box::new(error.0))
-    }
-}
-
-impl fmt::Display for TransactionEssencePackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidInputPrefix => write!(f, "invalid input prefix"),
-            Self::InvalidOutputPrefix => write!(f, "invalid output prefix"),
-            Self::OutputPackError(e) => write!(f, "error packing outputs: {}", e),
-            Self::OptionalPayload(e) => write!(f, "error packing payload: {}", e),
-        }
-    }
-}
-
 /// Error encountered unpacking a Transaction Essence.
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum TransactionEssenceUnpackError {
-    InvalidInputPrefix,
     InvalidInputPrefixLength(usize),
     InvalidOutputKind(u8),
-    InvalidOutputPrefix,
     InvalidOutputPrefixLength(usize),
     InvalidOptionTag(u8),
     ValidationError(ValidationError),
@@ -98,12 +55,10 @@ impl From<UnpackPrefixError<UnknownTagError<u8>>> for TransactionEssenceUnpackEr
 impl fmt::Display for TransactionEssenceUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidInputPrefix => write!(f, "invalid input prefix length"),
             Self::InvalidInputPrefixLength(len) => {
                 write!(f, "unpacked input prefix larger than maximum specified: {}", len)
             }
             Self::InvalidOutputKind(kind) => write!(f, "invalid output kind: {}", kind),
-            Self::InvalidOutputPrefix => write!(f, "invalid output prefix length"),
             Self::InvalidOutputPrefixLength(len) => {
                 write!(f, "unpacked output prefix larger than maximum specified: {}", len)
             }
@@ -179,7 +134,7 @@ impl TransactionEssence {
 }
 
 impl Packable for TransactionEssence {
-    type PackError = MessagePackError;
+    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {
@@ -196,15 +151,9 @@ impl Packable for TransactionEssence {
         self.access_pledge_id.pack(packer).infallible()?;
         self.consensus_pledge_id.pack(packer).infallible()?;
 
-        self.inputs
-            .pack(packer)
-            .coerce::<TransactionEssencePackError>()
-            .coerce()?;
+        self.inputs.pack(packer).infallible()?;
 
-        self.outputs
-            .pack(packer)
-            .coerce::<TransactionEssencePackError>()
-            .coerce()?;
+        self.outputs.pack(packer).infallible()?;
 
         self.payload.pack(packer)?;
 

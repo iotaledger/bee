@@ -4,7 +4,7 @@
 use crate::{
     parents::{ParentsBlock, ParentsKind},
     payload::Payload,
-    MessageId, MessagePackError, MessageUnpackError, ValidationError,
+    MessageId, MessageUnpackError, ValidationError,
 };
 
 use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
@@ -15,7 +15,10 @@ use crypto::{
 };
 
 use alloc::vec::Vec;
-use core::{convert::TryInto, ops::RangeInclusive};
+use core::{
+    convert::{Infallible, TryInto},
+    ops::RangeInclusive,
+};
 
 /// Range (in bytes) of a valid message length.
 /// The maximum length is 64KB, and minimum length is calculated from message containing an empty data payload and two
@@ -132,7 +135,7 @@ impl Message {
 }
 
 impl Packable for Message {
-    type PackError = MessagePackError;
+    type PackError = Infallible;
     type UnpackError = MessageUnpackError;
 
     fn packed_len(&self) -> usize {

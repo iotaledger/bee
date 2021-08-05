@@ -9,37 +9,11 @@ mod timestamps;
 pub use conflicts::{Conflict, Conflicts};
 pub use timestamps::{Timestamp, Timestamps};
 
-use crate::{payload::MessagePayload, MessagePackError, MessageUnpackError, ValidationError};
+use crate::{payload::MessagePayload, MessageUnpackError, ValidationError};
 
-use bee_packable::{
-    error::{PackPrefixError, UnpackPrefixError},
-    Packable,
-};
+use bee_packable::{error::UnpackPrefixError, Packable};
 
 use core::{convert::Infallible, fmt};
-
-/// Error encountered packing an [`FpcPayload`].
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum FpcPackError {
-    InvalidPrefix,
-}
-
-impl_from_infallible!(FpcPackError);
-
-impl From<PackPrefixError<Infallible>> for FpcPackError {
-    fn from(error: PackPrefixError<Infallible>) -> Self {
-        match error.0 {}
-    }
-}
-
-impl fmt::Display for FpcPackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix for conflicts/timestamps"),
-        }
-    }
-}
 
 /// Error encountered unpacking an [`FpcPayload`].
 #[derive(Debug)]
@@ -78,7 +52,6 @@ impl From<UnpackPrefixError<Infallible>> for FpcUnpackError {
 /// Payload describing opinions on conflicts and timestamps of messages.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = MessagePackError, with = FpcPackError::from)]
 #[packable(unpack_error = MessageUnpackError, with = FpcUnpackError::from)]
 pub struct FpcPayload {
     /// Collection of opinions on conflicting transactions.

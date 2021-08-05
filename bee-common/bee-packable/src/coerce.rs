@@ -65,11 +65,9 @@ impl<T, V> PackCoerceInfallible<T, V> for Result<T, PackError<Infallible, V>> {
 
 impl<T, V> PackCoerceInfallible<T, V> for Result<T, PackError<PackPrefixError<Infallible>, V>> {
     fn infallible<U>(self) -> Result<T, PackError<U, V>> {
-        self.map_err(|e| {
-            match e {
-                PackError::Packable(err) => match err.0 {}
-                PackError::Packer(err) => PackError::Packer(err),
-            }
+        self.map_err(|e| match e {
+            PackError::Packable(err) => match err.0 {},
+            PackError::Packer(err) => PackError::Packer(err),
         })
     }
 }

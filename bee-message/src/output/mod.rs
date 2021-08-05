@@ -8,7 +8,7 @@ mod signature_locked_asset;
 mod signature_locked_single;
 
 pub use crate::{
-    error::{MessagePackError, MessageUnpackError, ValidationError},
+    error::{MessageUnpackError, ValidationError},
     input::INPUT_COUNT_MAX,
 };
 
