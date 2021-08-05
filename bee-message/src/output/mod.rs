@@ -20,7 +20,7 @@ pub use signature_locked_single::{
 
 use bee_packable::Packable;
 
-use core::{convert::Infallible, fmt, ops::RangeInclusive};
+use core::{fmt, ops::RangeInclusive};
 
 /// The maximum number of outputs of a transaction.
 pub const OUTPUT_COUNT_MAX: u16 = INPUT_COUNT_MAX;
@@ -56,7 +56,6 @@ impl fmt::Display for OutputUnpackError {
     serde(tag = "type", content = "data")
 )]
 #[packable(tag_type = u8, with_error = OutputUnpackError::InvalidKind)]
-#[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Output {
     /// A signature locked single output.

@@ -13,7 +13,7 @@ use crate::MessageUnpackError;
 
 use bee_packable::Packable;
 
-use core::{convert::Infallible, fmt};
+use core::fmt;
 
 /// Error encountered unpacking a [`Signature`].
 #[derive(Debug)]
@@ -38,7 +38,6 @@ impl fmt::Display for SignatureUnpackError {
     serde(tag = "type", content = "data")
 )]
 #[packable(tag_type = u8, with_error = SignatureUnpackError::InvalidKind)]
-#[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Signature {
     /// An Ed25519 signature.

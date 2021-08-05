@@ -5,10 +5,7 @@ use crate::{error::ValidationError, unlock::UNLOCK_BLOCK_INDEX_MAX, MessageUnpac
 
 use bee_packable::{BoundedU16, InvalidBoundedU16, Packable};
 
-use core::{
-    convert::{Infallible, TryFrom},
-    fmt,
-};
+use core::{convert::TryFrom, fmt};
 
 /// Error encountered unpacking a [`ReferenceUnlock`].
 #[derive(Debug)]
@@ -38,7 +35,6 @@ fn invalid_u16_to_validation_error(err: InvalidBoundedU16<0, UNLOCK_BLOCK_INDEX_
 /// An [`UnlockBlock`](crate::unlock::UnlockBlock) that refers to another [`UnlockBlock`](crate::unlock::UnlockBlock).
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError, with = invalid_u16_to_validation_error)]
 pub struct ReferenceUnlock(BoundedU16<0, UNLOCK_BLOCK_INDEX_MAX>);
 

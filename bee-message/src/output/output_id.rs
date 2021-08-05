@@ -55,7 +55,6 @@ impl fmt::Display for OutputIdUnpackError {
 /// * Have an index that falls within [`OUTPUT_INDEX_RANGE`](crate::output::OUTPUT_INDEX_RANGE).
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError, with = ValidationError::from)]
 pub struct OutputId {
     transaction_id: TransactionId,

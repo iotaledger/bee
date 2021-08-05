@@ -18,7 +18,7 @@ use crate::{
 
 use bee_packable::Packable;
 
-use core::{convert::Infallible, fmt};
+use core::fmt;
 
 /// Error encountered unpacking an [`Address`].
 #[derive(Debug)]
@@ -43,7 +43,6 @@ impl fmt::Display for AddressUnpackError {
     serde(tag = "type", content = "data")
 )]
 #[packable(tag_type = u8, with_error = AddressUnpackError::InvalidKind)]
-#[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Address {
     /// An Ed25519 address.

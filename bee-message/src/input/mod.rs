@@ -12,7 +12,6 @@ use crate::error::{MessageUnpackError, ValidationError};
 use bee_packable::Packable;
 
 use core::{
-    convert::Infallible,
     fmt,
     ops::{Range, RangeInclusive},
 };
@@ -49,7 +48,6 @@ impl fmt::Display for InputUnpackError {
     serde(tag = "type", content = "data")
 )]
 #[packable(tag_type = u8, with_error = InputUnpackError::InvalidKind)]
-#[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError)]
 pub enum Input {
     /// A UTXO input.
