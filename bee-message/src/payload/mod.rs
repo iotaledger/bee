@@ -1,0 +1,253 @@
+// Copyright 2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+//! Module that provides types and syntactic validations of payloads.
+
+pub mod data;
+pub mod drng;
+pub mod fpc;
+pub mod indexation;
+pub mod salt_declaration;
+pub mod transaction;
+
+use crate::{MessageUnpackError, ValidationError};
+
+use data::DataPayload;
+use drng::{ApplicationMessagePayload, BeaconPayload, CollectiveBeaconPayload, DkgPayload};
+use fpc::FpcPayload;
+use indexation::IndexationPayload;
+use salt_declaration::SaltDeclarationPayload;
+use transaction::{TransactionPayload, TransactionUnpackError};
+
+use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
+
+use alloc::boxed::Box;
+use core::{convert::Infallible, fmt};
+
+/// Maximum length (in bytes) of a message payload, defined in the specification:
+/// <https://github.com/iotaledger/IOTA-2.0-Research-Specifications/blob/main/2.3%20Standard%20Payloads%20Layout.md>.
+pub const PAYLOAD_LENGTH_MAX: u32 = 65157;
+
+/// Error encountered unpacking a payload.
+#[derive(Debug)]
+#[allow(missing_docs)]
+pub enum PayloadUnpackError {
+    Transaction(TransactionUnpackError),
+    InvalidKind(u32),
+    Validation(ValidationError),
+}
+
+impl_wrapped_validated!(
+    PayloadUnpackError,
+    PayloadUnpackError::Transaction,
+    TransactionUnpackError
+);
+impl_wrapped_variant!(PayloadUnpackError, PayloadUnpackError::Validation, ValidationError);
+impl_from_infallible!(PayloadUnpackError);
+
+impl fmt::Display for PayloadUnpackError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Transaction(e) => write!(f, "error unpacking transaction payload: {}", e),
+            Self::InvalidKind(kind) => write!(f, "invalid payload kind: {}.", kind),
+            Self::Validation(e) => write!(f, "{}", e),
+        }
+    }
+}
+
+/// Common features and attributes of message payloads.
+pub trait MessagePayload: Packable + Into<Payload> {
+    /// Kind of the payload.
+    const KIND: u32;
+    /// Version of the payload.
+    const VERSION: u8;
+
+    /// Packs a payload, its size, type and version.
+    fn pack_payload<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        (self.packed_len() as u32).pack(packer).infallible()?;
+        Self::KIND.pack(packer).infallible()?;
+        Self::VERSION.pack(packer).infallible()?;
+        self.pack(packer)
+    }
+
+    /// Unpacks a payload, its size, type and version.
+    fn unpack_payload<U: Unpacker, E>(unpacker: &mut U, len: u32) -> Result<Payload, UnpackError<E, U::Error>>
+    where
+        E: From<MessageUnpackError> + From<ValidationError> + From<Self::UnpackError>,
+    {
+        let version = u8::unpack(unpacker).infallible()?;
+
+        if version != Self::VERSION {
+            return Err(ValidationError::InvalidPayloadVersion {
+                version,
+                payload_kind: Self::KIND,
+            })
+            .map_err(|e| UnpackError::Packable(e.into()))?;
+        }
+
+        let payload = Self::unpack(unpacker).coerce()?;
+        let packed_len = payload.packed_len();
+
+        if len as usize != packed_len {
+            return Err(ValidationError::PayloadLengthMismatch {
+                expected: len as usize,
+                actual: packed_len,
+            })
+            .map_err(|e| UnpackError::Packable(e.into()))?;
+        }
+
+        Ok(payload.into())
+    }
+}
+
+/// A generic payload that can represent different types defining message payloads.
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(
+    feature = "serde1",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "type", content = "data")
+)]
+pub enum Payload {
+    /// A pure data payload.
+    Data(Box<DataPayload>),
+    /// A transaction payload.
+    Transaction(Box<TransactionPayload>),
+    /// An FPC payload.
+    Fpc(Box<FpcPayload>),
+    /// A dRNG application message payload.
+    ApplicationMessage(Box<ApplicationMessagePayload>),
+    /// A dRNG DKG payload.
+    Dkg(Box<DkgPayload>),
+    /// A dRNG beacon payload.
+    Beacon(Box<BeaconPayload>),
+    /// A dRNG collective beacon payload.
+    CollectiveBeacon(Box<CollectiveBeaconPayload>),
+    /// A salt declaration payload.
+    SaltDeclaration(Box<SaltDeclarationPayload>),
+    /// An indexation payload.
+    Indexation(Box<IndexationPayload>),
+}
+
+impl Payload {
+    /// Returns the payload kind of a [`Payload`].
+    pub fn kind(&self) -> u32 {
+        match self {
+            Self::Data(_) => DataPayload::KIND,
+            Self::Transaction(_) => TransactionPayload::KIND,
+            Self::Fpc(_) => FpcPayload::KIND,
+            Self::ApplicationMessage(_) => ApplicationMessagePayload::KIND,
+            Self::Dkg(_) => DkgPayload::KIND,
+            Self::Beacon(_) => BeaconPayload::KIND,
+            Self::CollectiveBeacon(_) => CollectiveBeaconPayload::KIND,
+            Self::SaltDeclaration(_) => SaltDeclarationPayload::KIND,
+            Self::Indexation(_) => IndexationPayload::KIND,
+        }
+    }
+}
+
+impl Packable for Payload {
+    type PackError = Infallible;
+    type UnpackError = MessageUnpackError;
+
+    fn packed_len(&self) -> usize {
+        0u32.packed_len()
+            + 0u32.packed_len()
+            + 0u8.packed_len()
+            + match self {
+                Self::Data(p) => p.packed_len(),
+                Self::Transaction(p) => p.packed_len(),
+                Self::Fpc(p) => p.packed_len(),
+                Self::ApplicationMessage(p) => p.packed_len(),
+                Self::Dkg(p) => p.packed_len(),
+                Self::Beacon(p) => p.packed_len(),
+                Self::CollectiveBeacon(p) => p.packed_len(),
+                Self::SaltDeclaration(p) => p.packed_len(),
+                Self::Indexation(p) => p.packed_len(),
+            }
+    }
+
+    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
+        match self {
+            Self::Data(p) => p.pack_payload(packer).infallible(),
+            Self::Transaction(p) => p.pack_payload(packer),
+            Self::Fpc(p) => p.pack_payload(packer).infallible(),
+            Self::ApplicationMessage(p) => p.pack_payload(packer).infallible(),
+            Self::Dkg(p) => p.pack_payload(packer),
+            Self::Beacon(p) => p.pack_payload(packer).infallible(),
+            Self::CollectiveBeacon(p) => p.pack_payload(packer).infallible(),
+            Self::SaltDeclaration(p) => p.pack_payload(packer).infallible(),
+            Self::Indexation(p) => p.pack_payload(packer).infallible(),
+        }
+    }
+
+    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
+        let len = u32::unpack(unpacker).infallible()?;
+
+        match u32::unpack(unpacker).infallible()? {
+            DataPayload::KIND => DataPayload::unpack_payload(unpacker, len),
+            TransactionPayload::KIND => TransactionPayload::unpack_payload(unpacker, len),
+            FpcPayload::KIND => FpcPayload::unpack_payload(unpacker, len),
+            ApplicationMessagePayload::KIND => ApplicationMessagePayload::unpack_payload(unpacker, len),
+            DkgPayload::KIND => DkgPayload::unpack_payload(unpacker, len),
+            BeaconPayload::KIND => BeaconPayload::unpack_payload(unpacker, len),
+            CollectiveBeaconPayload::KIND => CollectiveBeaconPayload::unpack_payload(unpacker, len),
+            SaltDeclarationPayload::KIND => SaltDeclarationPayload::unpack_payload(unpacker, len),
+            IndexationPayload::KIND => IndexationPayload::unpack_payload(unpacker, len),
+            k => Err(UnpackError::Packable(PayloadUnpackError::InvalidKind(k).into())),
+        }
+    }
+}
+
+impl From<DataPayload> for Payload {
+    fn from(payload: DataPayload) -> Self {
+        Self::Data(Box::new(payload))
+    }
+}
+
+impl From<TransactionPayload> for Payload {
+    fn from(payload: TransactionPayload) -> Self {
+        Self::Transaction(Box::new(payload))
+    }
+}
+
+impl From<FpcPayload> for Payload {
+    fn from(payload: FpcPayload) -> Self {
+        Self::Fpc(Box::new(payload))
+    }
+}
+
+impl From<ApplicationMessagePayload> for Payload {
+    fn from(payload: ApplicationMessagePayload) -> Self {
+        Self::ApplicationMessage(Box::new(payload))
+    }
+}
+
+impl From<DkgPayload> for Payload {
+    fn from(payload: DkgPayload) -> Self {
+        Self::Dkg(Box::new(payload))
+    }
+}
+
+impl From<BeaconPayload> for Payload {
+    fn from(payload: BeaconPayload) -> Self {
+        Self::Beacon(Box::new(payload))
+    }
+}
+
+impl From<CollectiveBeaconPayload> for Payload {
+    fn from(payload: CollectiveBeaconPayload) -> Self {
+        Self::CollectiveBeacon(Box::new(payload))
+    }
+}
+
+impl From<SaltDeclarationPayload> for Payload {
+    fn from(payload: SaltDeclarationPayload) -> Self {
+        Self::SaltDeclaration(Box::new(payload))
+    }
+}
+
+impl From<IndexationPayload> for Payload {
+    fn from(payload: IndexationPayload) -> Self {
+        Self::Indexation(Box::new(payload))
+    }
+}

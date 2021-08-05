@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    coerce::CoerceInfallible,
+    coerce::*,
     error::{PackError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
