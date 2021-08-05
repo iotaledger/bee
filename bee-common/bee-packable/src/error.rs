@@ -24,7 +24,10 @@ impl<T, P> PackError<T, P> {
     }
 
     /// Coerce the value by calling `.into()` for the [`Packable`](crate::Packable) variant.
-    pub(crate) fn coerce<V: From<T>>(self) -> PackError<V, P> {
+    pub(crate) fn coerce<V>(self) -> PackError<V, P>
+    where
+        T: Into<V>,
+    {
         self.map(|x| x.into())
     }
 }
@@ -64,7 +67,10 @@ impl<T, U> UnpackError<T, U> {
     }
 
     /// Coerces the value by calling `.into()` for the [`Packable`](crate::Packable) variant.
-    pub(crate) fn coerce<V: From<T>>(self) -> UnpackError<V, U> {
+    pub(crate) fn coerce<V>(self) -> UnpackError<V, U>
+    where
+        T: Into<V>,
+    {
         self.map(|x| x.into())
     }
 }
@@ -103,6 +109,14 @@ pub struct PackPrefixError<T>(pub T);
 impl<T> From<T> for PackPrefixError<T> {
     fn from(err: T) -> Self {
         Self(err)
+    }
+}
+
+// We cannot provide a `From` implementation because `Infallible` is an extern type.
+#[allow(clippy::from_over_into)]
+impl Into<Infallible> for PackPrefixError<Infallible> {
+    fn into(self) -> Infallible {
+        self.0
     }
 }
 

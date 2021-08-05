@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    coerce::CoerceInfallible,
+    coerce::*,
     error::{PackError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
@@ -44,7 +44,8 @@ macro_rules! bounded {
         }
 
         $(#[$wrapper_doc])*
-        #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub struct $wrapper<const MIN: $ty, const MAX: $ty>($ty);
 
         impl<const MIN: $ty, const MAX: $ty> Bounded for $wrapper<MIN, MAX> {

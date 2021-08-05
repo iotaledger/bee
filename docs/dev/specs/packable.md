@@ -328,28 +328,28 @@ we use the `.coerce()` method to map the error variant to an appropiate type.
 This method is provided by the following trait:
 
 ```rust
-pub trait Coerce<T> {
-    fn coerce(self) -> T;
+pub trait PackCoerce<T, U, V> {
+    fn coerce<W: From<U>>(self) -> Result<T, PackError<W, V>>;
 }
 ```
 
-which is only implemented for the `Result<T, PackError<U, V>>` and
-`Result<T, UnpackError<U, V>` types. These traits take care of mapping the
-`UnpackError::Packable` variant from `T` to `V`. At first sight this could be
-solved by implementing `From<UnpackError<T, U>>` for `UnpackError<V, U>`.
-However, that implementation would overlap with the existing implementations in
-the standard library.
+which is only implemented for the `Result<T, PackError<U, V>>` type. Thist
+trait take care of mapping the `PackError::Packable` variant from `T` to `V`.
+At first sight this could be solved by implementing `From<PackError<T, U>>` for
+`PackError<V, U>`.  However, that implementation would overlap with the
+existing implementations in the standard library.
 
-In a similar fashion we introduced a `CoerceInfallible` trait:
+In a similar fashion we introduced a `PackCoerceInfallible` trait:
 
 ```rust
-pub trait CoerceInfallible<T> {
-    fn infallible(self) -> T;
+pub trait PackCoerceInfallible<T, V> {
+    fn infallible<U>(self) -> Result<T, PackError<U, V>>;
 }
 ```
 
 with the same philosophy. It is not possible to provide a single `Coerce` trait
 for both operations because of the same reasons around using the `From` trait.
+Similar traits for the `UnpackError` type are also provided.
 
 # Alternatives
 

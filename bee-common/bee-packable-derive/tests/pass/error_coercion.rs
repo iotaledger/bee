@@ -7,7 +7,7 @@ use bee_packable::{
     error::{PackError, UnknownTagError, UnpackError},
     packer::Packer,
     unpacker::Unpacker,
-    coerce::CoerceInfallible,
+    coerce::*,
     Packable,
 };
 
