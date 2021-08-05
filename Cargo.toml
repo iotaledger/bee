@@ -8,6 +8,7 @@ members = [
   "bee-message",
   "bee-node/bee-node",
   "bee-node/bee-plugin",
+  "bee-protocol",
   "bee-storage/bee-storage",
   "bee-storage/bee-storage-rocksdb",
   "bee-storage/bee-storage-sled",
