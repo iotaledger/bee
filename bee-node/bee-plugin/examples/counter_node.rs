@@ -3,11 +3,7 @@
 
 use bee_event_bus::EventBus;
 use bee_logger::{logger_init, LoggerConfig, LoggerOutputConfigBuilder};
-use bee_plugin::{
-    event::{DummyEvent, SillyEvent},
-    hotloading::Hotloader,
-    UniqueId,
-};
+use bee_plugin::{event::*, hotloading::Hotloader, UniqueId};
 
 use tokio::time::{sleep, Duration};
 
@@ -33,7 +29,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tokio::spawn(async move {
             loop {
                 sleep(Duration::from_millis(1)).await;
-                event_bus.dispatch(DummyEvent {})
+                event_bus.dispatch(MessageParsedEvent {})
             }
         });
     }
@@ -41,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tokio::spawn(async move {
         loop {
             sleep(Duration::from_millis(1)).await;
-            event_bus.dispatch(SillyEvent {})
+            event_bus.dispatch(MessageRejectedEvent {})
         }
     });
 

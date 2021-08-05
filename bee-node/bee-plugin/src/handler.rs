@@ -3,8 +3,8 @@
 
 use crate::{
     error::PluginError,
-    event::EventId,
-    grpc::{plugin_client::PluginClient, DummyEvent, ShutdownRequest, SillyEvent},
+    event::*,
+    grpc::{plugin_client::PluginClient, ShutdownRequest},
     handshake::HandshakeInfo,
     streamer::PluginStreamer,
     PluginId, UniqueId,
@@ -173,8 +173,9 @@ impl PluginHandler {
 
             spawn_streamers! {
                 self, event_id, bus, shutdown_rx,
-                EventId::Dummy => DummyEvent,
-                EventId::Silly => SillyEvent
+                EventId::MessageParsed => MessageParsedEvent,
+                EventId::ParsingFailed => ParsingFailedEvent,
+                EventId::MessageRejected => MessageRejectedEvent
             }
         }
     }

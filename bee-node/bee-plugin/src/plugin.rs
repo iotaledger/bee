@@ -57,8 +57,9 @@ macro_rules! plugin_trait {
 }
 
 plugin_trait! {
-    process_dummy_event => DummyEvent,
-    process_silly_event => SillyEvent
+    process_message_parsed_event => MessageParsedEvent,
+    process_parsing_failed_event => ParsingFailedEvent,
+    process_message_rejected_event => MessageRejectedEvent
 }
 
 /// Does the handshake and runs a gRPC server for the specified plugin.

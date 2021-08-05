@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_plugin::{
-    event::{DummyEvent, EventId},
+    event::*,
     plugin::{serve_plugin, HandshakeInfo, Plugin},
     PluginError,
 };
@@ -34,7 +34,7 @@ impl Counter {
 #[async_trait::async_trait]
 impl Plugin for Counter {
     fn handshake_info() -> HandshakeInfo {
-        HandshakeInfo::new("[::1]:50051".parse().unwrap(), "counter", vec![EventId::Dummy])
+        HandshakeInfo::new("[::1]:50051".parse().unwrap(), "counter", vec![EventId::MessageParsed])
     }
 
     async fn shutdown(&self) {
@@ -44,7 +44,7 @@ impl Plugin for Counter {
         );
     }
 
-    async fn process_dummy_event(&self, _event: DummyEvent) {
+    async fn process_message_parsed_event(&self, _event: MessageParsedEvent) {
         self.increase();
     }
 }

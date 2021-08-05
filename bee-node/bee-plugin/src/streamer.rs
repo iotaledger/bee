@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::grpc::{plugin_client::PluginClient, DummyEvent, SillyEvent};
+use crate::{event::*, grpc::plugin_client::PluginClient};
 
 use tokio::{
     select,
@@ -45,6 +45,7 @@ macro_rules! impl_streamer {
 }
 
 impl_streamer! {
-    process_dummy_event => DummyEvent,
-    process_silly_event => SillyEvent
+    process_message_parsed_event => MessageParsedEvent,
+    process_parsing_failed_event => ParsingFailedEvent,
+    process_message_rejected_event => MessageRejectedEvent
 }

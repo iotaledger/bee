@@ -3,7 +3,7 @@
 
 //! Types for events.
 
-pub use crate::grpc::{DummyEvent, SillyEvent};
+pub use crate::grpc::{MessageParsedEvent, MessageRejectedEvent, ParsingFailedEvent};
 
 use std::convert::TryFrom;
 
@@ -11,10 +11,12 @@ use std::convert::TryFrom;
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 #[repr(u8)]
 pub enum EventId {
-    /// Identifier for `DummyEvent`.
-    Dummy = 0,
-    /// Identifier for `SillyEvent`.
-    Silly = 1,
+    /// Identifier for `MessageParsedEvent`.
+    MessageParsed = 0,
+    /// Identifier for `ParsingFailedEvent`.
+    ParsingFailed = 1,
+    /// Identifier for `MessageRejectedEvent`.
+    MessageRejected = 2,
 }
 
 impl TryFrom<u8> for EventId {
@@ -22,8 +24,9 @@ impl TryFrom<u8> for EventId {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Self::Dummy),
-            1 => Ok(Self::Silly),
+            0 => Ok(Self::MessageParsed),
+            1 => Ok(Self::ParsingFailed),
+            2 => Ok(Self::MessageRejected),
             value => Err(InvalidEventId(value)),
         }
     }
