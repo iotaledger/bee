@@ -86,7 +86,7 @@ fn unpack_invalid_index_length_less_than_min() {
         IndexationPayload::unpack_from_slice(vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
             .err()
             .unwrap(),
-        UnpackError::Packable(MessageUnpackError::ValidationError(
+        UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidIndexationIndexLength(0)
         )),
     ));
@@ -103,7 +103,7 @@ fn unpack_invalid_index_length_more_than_max() {
         ])
         .err()
         .unwrap(),
-        UnpackError::Packable(MessageUnpackError::ValidationError(
+        UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidIndexationIndexLength(65)
         )),
     ));

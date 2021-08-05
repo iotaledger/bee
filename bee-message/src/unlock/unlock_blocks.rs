@@ -29,13 +29,13 @@ pub enum UnlockBlocksUnpackError {
     InvalidPrefix,
     InvalidPrefixLength(usize),
     UnlockBlockUnpack(UnlockBlockUnpackError),
-    ValidationError(ValidationError),
+    Validation(ValidationError),
 }
 
 impl_wrapped_variant!(
     UnlockBlocksUnpackError,
-    ValidationError,
-    UnlockBlocksUnpackError::ValidationError
+    UnlockBlocksUnpackError::Validation,
+    ValidationError
 );
 
 impl From<UnpackPrefixError<UnlockBlockUnpackError>> for UnlockBlocksUnpackError {
@@ -50,7 +50,7 @@ impl From<UnpackPrefixError<UnlockBlockUnpackError>> for UnlockBlocksUnpackError
 impl From<UnlockBlockUnpackError> for UnlockBlocksUnpackError {
     fn from(error: UnlockBlockUnpackError) -> Self {
         match error {
-            UnlockBlockUnpackError::ValidationError(error) => Self::ValidationError(error),
+            UnlockBlockUnpackError::Validation(error) => Self::Validation(error),
             error => Self::UnlockBlockUnpack(error),
         }
     }
@@ -62,7 +62,7 @@ impl fmt::Display for UnlockBlocksUnpackError {
             Self::InvalidPrefix => write!(f, "invalid prefix"),
             Self::InvalidPrefixLength(len) => write!(f, "unpacked prefix larger than maximum specified: {}", len),
             Self::UnlockBlockUnpack(e) => write!(f, "{}", e),
-            Self::ValidationError(e) => write!(f, "{}", e),
+            Self::Validation(e) => write!(f, "{}", e),
         }
     }
 }

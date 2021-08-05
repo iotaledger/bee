@@ -59,7 +59,7 @@ fn unpack_invalid_length() {
 
     assert!(matches!(
         data,
-        Err(UnpackError::Packable(MessageUnpackError::ValidationError(
+        Err(UnpackError::Packable(MessageUnpackError::Validation(
             ValidationError::InvalidDataPayloadLength(65160)
         )))
     ));

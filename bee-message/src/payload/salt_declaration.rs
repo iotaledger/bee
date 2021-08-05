@@ -177,10 +177,14 @@ impl SaltDeclarationPayloadBuilder {
 
     /// Consumes the [`SaltDeclarationPayloadBuilder`] and builds a [`SaltDeclarationPayload`].
     pub fn finish(self) -> Result<SaltDeclarationPayload, ValidationError> {
-        let node_id = self.node_id.ok_or(ValidationError::MissingField("node_id"))?;
-        let salt = self.salt.ok_or(ValidationError::MissingField("salt"))?;
-        let timestamp = self.timestamp.ok_or(ValidationError::MissingField("timestamp"))?;
-        let signature = self.signature.ok_or(ValidationError::MissingField("signature"))?;
+        let node_id = self.node_id.ok_or(ValidationError::MissingBuilderField("node_id"))?;
+        let salt = self.salt.ok_or(ValidationError::MissingBuilderField("salt"))?;
+        let timestamp = self
+            .timestamp
+            .ok_or(ValidationError::MissingBuilderField("timestamp"))?;
+        let signature = self
+            .signature
+            .ok_or(ValidationError::MissingBuilderField("signature"))?;
 
         Ok(SaltDeclarationPayload {
             node_id,

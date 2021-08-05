@@ -64,7 +64,7 @@ fn unpack_invalid_amount() {
         ])
         .err()
         .unwrap(),
-        UnpackError::Packable(MessageUnpackError::ValidationError(ValidationError::InvalidAmount(0))),
+        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidAmount(0))),
     ));
 }
 

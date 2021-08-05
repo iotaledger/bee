@@ -15,17 +15,24 @@ fn version() {
 }
 
 #[test]
+fn new() {
+    let application_msg = ApplicationMessagePayload::new(1);
+
+    assert_eq!(application_msg.instance_id(), 1);
+}
+
+#[test]
+fn from() {
+    let application_msg = ApplicationMessagePayload::from(1);
+
+    assert_eq!(application_msg.instance_id(), 1);
+}
+
+#[test]
 fn unpack_valid() {
     let bytes = vec![0, 0, 0, 1];
 
     assert!(ApplicationMessagePayload::unpack_from_slice(bytes).is_ok());
-}
-
-#[test]
-fn accessors_eq() {
-    let application_msg = ApplicationMessagePayload::new(1);
-
-    assert_eq!(application_msg.instance_id(), 1);
 }
 
 #[test]
@@ -37,10 +44,9 @@ fn packed_len() {
 
 #[test]
 fn packable_round_trip() {
-    let application_msg_a = ApplicationMessagePayload::new(1);
+    let application_msg_1 = ApplicationMessagePayload::new(1);
+    let application_msg_2 =
+        ApplicationMessagePayload::unpack_from_slice(application_msg_1.pack_to_vec().unwrap()).unwrap();
 
-    let application_msg_b =
-        ApplicationMessagePayload::unpack_from_slice(application_msg_a.pack_to_vec().unwrap()).unwrap();
-
-    assert_eq!(application_msg_a, application_msg_b);
+    assert_eq!(application_msg_1, application_msg_2);
 }

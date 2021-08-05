@@ -53,8 +53,8 @@ pub enum Address {
     Bls(BlsAddress),
 }
 
-impl_wrapped_variant!(Address, Ed25519Address, Address::Ed25519);
-impl_wrapped_variant!(Address, BlsAddress, Address::Bls);
+impl_wrapped_variant!(Address, Address::Ed25519, Ed25519Address);
+impl_wrapped_variant!(Address, Address::Bls, BlsAddress);
 
 impl Address {
     /// Returns the address kind of an [`Address`].

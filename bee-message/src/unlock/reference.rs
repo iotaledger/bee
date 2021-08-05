@@ -14,19 +14,19 @@ use core::{
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum ReferenceUnlockUnpackError {
-    ValidationError(ValidationError),
+    Validation(ValidationError),
 }
 
 impl_wrapped_variant!(
     ReferenceUnlockUnpackError,
-    ValidationError,
-    ReferenceUnlockUnpackError::ValidationError
+    ReferenceUnlockUnpackError::Validation,
+    ValidationError
 );
 
 impl fmt::Display for ReferenceUnlockUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::ValidationError(e) => write!(f, "{}", e),
+            Self::Validation(e) => write!(f, "{}", e),
         }
     }
 }

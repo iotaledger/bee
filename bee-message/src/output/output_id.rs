@@ -19,14 +19,10 @@ use core::{
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum OutputIdUnpackError {
-    ValidationError(ValidationError),
+    Validation(ValidationError),
 }
 
-impl_wrapped_variant!(
-    OutputIdUnpackError,
-    ValidationError,
-    OutputIdUnpackError::ValidationError
-);
+impl_wrapped_variant!(OutputIdUnpackError, OutputIdUnpackError::Validation, ValidationError);
 
 impl From<InvalidBoundedU16<0, OUTPUT_INDEX_MAX>> for ValidationError {
     fn from(err: InvalidBoundedU16<0, OUTPUT_INDEX_MAX>) -> Self {
@@ -43,7 +39,7 @@ impl From<Infallible> for ValidationError {
 impl fmt::Display for OutputIdUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::ValidationError(e) => write!(f, "{}", e),
+            Self::Validation(e) => write!(f, "{}", e),
         }
     }
 }

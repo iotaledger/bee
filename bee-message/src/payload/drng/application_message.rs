@@ -5,7 +5,8 @@ use crate::payload::{MessagePayload, MessageUnpackError};
 
 use bee_packable::Packable;
 
-/// Message used by a node to declare its willingness to participate in the Committee Selection process.
+/// [`Payload`](crate::payload::Payload) used by a node to declare its willingness to participate in the Committee
+/// Selection process.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[packable(unpack_error = MessageUnpackError)]
@@ -25,8 +26,14 @@ impl ApplicationMessagePayload {
         Self { instance_id }
     }
 
-    /// Returns the instance ID of an [`ApplicationMessagePayload`].
+    /// Returns the instance identifier of an [`ApplicationMessagePayload`].
     pub fn instance_id(&self) -> u32 {
         self.instance_id
+    }
+}
+
+impl From<u32> for ApplicationMessagePayload {
+    fn from(instance_id: u32) -> Self {
+        ApplicationMessagePayload::new(instance_id)
     }
 }

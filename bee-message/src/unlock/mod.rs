@@ -34,14 +34,14 @@ pub const UNLOCK_BLOCK_INDEX_RANGE: RangeInclusive<u16> = INPUT_INDEX_RANGE; // 
 #[allow(missing_docs)]
 pub enum UnlockBlockUnpackError {
     InvalidKind(u8),
-    ValidationError(ValidationError),
+    Validation(ValidationError),
 }
 
 impl fmt::Display for UnlockBlockUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidKind(kind) => write!(f, "invalid UnlockBlock kind: {}", kind),
-            Self::ValidationError(e) => write!(f, "{}", e),
+            Self::Validation(e) => write!(f, "{}", e),
         }
     }
 }
@@ -64,8 +64,8 @@ pub enum UnlockBlock {
     Reference(ReferenceUnlock),
 }
 
-impl_wrapped_variant!(UnlockBlock, SignatureUnlock, UnlockBlock::Signature);
-impl_wrapped_variant!(UnlockBlock, ReferenceUnlock, UnlockBlock::Reference);
+impl_wrapped_variant!(UnlockBlock, UnlockBlock::Signature, SignatureUnlock);
+impl_wrapped_variant!(UnlockBlock, UnlockBlock::Reference, ReferenceUnlock);
 
 impl UnlockBlock {
     /// Returns the unlock block kind of an [`UnlockBlock`].

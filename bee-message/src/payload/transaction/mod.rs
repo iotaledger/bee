@@ -27,24 +27,24 @@ use core::{convert::Infallible, fmt};
 pub enum TransactionUnpackError {
     TransactionEssence(Box<TransactionEssenceUnpackError>),
     UnlockBlocksUnpack(UnlockBlocksUnpackError),
-    ValidationError(ValidationError),
+    Validation(ValidationError),
 }
 
 impl_wrapped_variant!(
     TransactionUnpackError,
-    UnlockBlocksUnpackError,
-    TransactionUnpackError::UnlockBlocksUnpack
+    TransactionUnpackError::UnlockBlocksUnpack,
+    UnlockBlocksUnpackError
 );
 impl_wrapped_variant!(
     TransactionUnpackError,
-    ValidationError,
-    TransactionUnpackError::ValidationError
+    TransactionUnpackError::Validation,
+    ValidationError
 );
 
 impl From<TransactionEssenceUnpackError> for TransactionUnpackError {
     fn from(error: TransactionEssenceUnpackError) -> Self {
         match error {
-            TransactionEssenceUnpackError::ValidationError(error) => Self::ValidationError(error),
+            TransactionEssenceUnpackError::Validation(error) => Self::Validation(error),
             error => Self::TransactionEssence(Box::new(error)),
         }
     }
@@ -55,7 +55,7 @@ impl fmt::Display for TransactionUnpackError {
         match self {
             Self::TransactionEssence(e) => write!(f, "error unpacking transaction essence: {}", e),
             Self::UnlockBlocksUnpack(e) => write!(f, "error unpacking unlock blocks: {}", e),
-            Self::ValidationError(e) => write!(f, "{}", e),
+            Self::Validation(e) => write!(f, "{}", e),
         }
     }
 }
@@ -159,10 +159,10 @@ impl TransactionPayloadBuilder {
 
     /// Finishes a [`TransactionPayloadBuilder`] into a [`TransactionPayload`].
     pub fn finish(self) -> Result<TransactionPayload, ValidationError> {
-        let essence = self.essence.ok_or(ValidationError::MissingField("essence"))?;
+        let essence = self.essence.ok_or(ValidationError::MissingBuilderField("essence"))?;
         let unlock_blocks = self
             .unlock_blocks
-            .ok_or(ValidationError::MissingField("unlock_blocks"))?;
+            .ok_or(ValidationError::MissingBuilderField("unlock_blocks"))?;
 
         validate_unlock_block_count(&essence, &unlock_blocks)?;
 

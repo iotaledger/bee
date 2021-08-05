@@ -101,14 +101,16 @@ impl BeaconPayloadBuilder {
 
     /// Consumes the [`BeaconPayloadBuilder`] and builds a new [`BeaconPayload`].
     pub fn finish(self) -> Result<BeaconPayload, ValidationError> {
-        let instance_id = self.instance_id.ok_or(ValidationError::MissingField("instance_id"))?;
-        let round = self.round.ok_or(ValidationError::MissingField("round"))?;
+        let instance_id = self
+            .instance_id
+            .ok_or(ValidationError::MissingBuilderField("instance_id"))?;
+        let round = self.round.ok_or(ValidationError::MissingBuilderField("round"))?;
         let partial_public_key = self
             .partial_public_key
-            .ok_or(ValidationError::MissingField("partial_public_key"))?;
+            .ok_or(ValidationError::MissingBuilderField("partial_public_key"))?;
         let partial_signature = self
             .partial_signature
-            .ok_or(ValidationError::MissingField("partial_signature"))?;
+            .ok_or(ValidationError::MissingBuilderField("partial_signature"))?;
 
         Ok(BeaconPayload {
             instance_id,

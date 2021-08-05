@@ -4,7 +4,7 @@
 /// Macro that forwards a given `enum` to a wrapper `enum`, taking the data and moving it to the wrapper enum variant.
 #[macro_export]
 macro_rules! impl_wrapped_variant {
-    ($dst:ty, $src:ty, $variant:path) => {
+    ($dst:ty, $variant:path, $src:ty) => {
         impl From<$src> for $dst {
             fn from(src: $src) -> $dst {
                 $variant(src)
@@ -17,11 +17,11 @@ macro_rules! impl_wrapped_variant {
 /// `enum` variant chain.
 #[macro_export]
 macro_rules! impl_wrapped_validated {
-    ($dst:ident, $src:ident, $variant:path) => {
+    ($dst:ident, $variant:path, $src:ident) => {
         impl From<$src> for $dst {
             fn from(src: $src) -> $dst {
                 match src {
-                    $src::ValidationError(error) => $dst::ValidationError(error),
+                    $src::Validation(error) => $dst::Validation(error),
                     error => $variant(error),
                 }
             }

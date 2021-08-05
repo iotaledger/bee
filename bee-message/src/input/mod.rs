@@ -27,14 +27,14 @@ pub const INPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=INPUT_INDEX_MAX; //[0..12
 #[allow(missing_docs)]
 pub enum InputUnpackError {
     InvalidKind(u8),
-    ValidationError(ValidationError),
+    Validation(ValidationError),
 }
 
 impl fmt::Display for InputUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidKind(kind) => write!(f, "invalid Input kind: {}", kind),
-            Self::ValidationError(e) => write!(f, "{}", e),
+            Self::Validation(e) => write!(f, "{}", e),
         }
     }
 }
@@ -54,7 +54,7 @@ pub enum Input {
     Utxo(UtxoInput),
 }
 
-impl_wrapped_variant!(Input, UtxoInput, Input::Utxo);
+impl_wrapped_variant!(Input, Input::Utxo, UtxoInput);
 
 impl Input {
     /// Returns the input kind of an [`Input`].

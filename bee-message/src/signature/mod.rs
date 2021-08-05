@@ -48,8 +48,8 @@ pub enum Signature {
     Bls(BlsSignature),
 }
 
-impl_wrapped_variant!(Signature, Ed25519Signature, Signature::Ed25519);
-impl_wrapped_variant!(Signature, BlsSignature, Signature::Bls);
+impl_wrapped_variant!(Signature, Signature::Ed25519, Ed25519Signature);
+impl_wrapped_variant!(Signature, Signature::Bls, BlsSignature);
 
 impl Signature {
     /// Returns the signature kind of a [`Signature`].

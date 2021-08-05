@@ -47,7 +47,7 @@ pub enum ValidationError {
     InvalidTimestampsCount(usize),
     InvalidUnlockBlockCount(usize),
     InvalidUnlockBlockReference(usize),
-    MissingField(&'static str),
+    MissingBuilderField(&'static str),
     ParentsNotUniqueSorted,
     PayloadLengthMismatch { expected: usize, actual: usize },
     SignaturePublicKeyMismatch { expected: String, actual: String },
@@ -55,7 +55,7 @@ pub enum ValidationError {
     TransactionOutputsNotSorted,
 }
 
-impl_wrapped_variant!(ValidationError, CryptoError, ValidationError::CryptoError);
+impl_wrapped_variant!(ValidationError, ValidationError::CryptoError, CryptoError);
 
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -124,7 +124,7 @@ impl fmt::Display for ValidationError {
             Self::InvalidUnlockBlockReference(index) => {
                 write!(f, "invalid unlock block reference: {}", index)
             }
-            Self::MissingField(field) => write!(f, "missing required field: {}", field),
+            Self::MissingBuilderField(field) => write!(f, "missing required builder field: {}", field),
             Self::ParentsNotUniqueSorted => write!(f, "parents not unique and/or sorted"),
             Self::SignaturePublicKeyMismatch { expected, actual } => {
                 write!(

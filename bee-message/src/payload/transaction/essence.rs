@@ -34,13 +34,13 @@ const PREFIXED_OUTPUTS_LENGTH_MIN: u32 = *OUTPUT_COUNT_RANGE.start() as u32;
 pub enum TransactionEssenceUnpackError {
     InvalidOutputKind(u8),
     InvalidOptionTag(u8),
-    ValidationError(ValidationError),
+    Validation(ValidationError),
 }
 
 impl_wrapped_variant!(
     TransactionEssenceUnpackError,
-    ValidationError,
-    TransactionEssenceUnpackError::ValidationError
+    TransactionEssenceUnpackError::Validation,
+    ValidationError
 );
 impl_from_infallible!(TransactionEssenceUnpackError);
 
@@ -60,7 +60,7 @@ impl fmt::Display for TransactionEssenceUnpackError {
         match self {
             Self::InvalidOutputKind(kind) => write!(f, "invalid output kind: {}", kind),
             Self::InvalidOptionTag(tag) => write!(f, "invalid tag for Option: {} is not 0 or 1", tag),
-            Self::ValidationError(e) => write!(f, "{}", e),
+            Self::Validation(e) => write!(f, "{}", e),
         }
     }
 }
@@ -276,13 +276,15 @@ impl TransactionEssenceBuilder {
 
     /// Finishes a [`TransactionEssenceBuilder`] into a [`TransactionEssence`].
     pub fn finish(self) -> Result<TransactionEssence, ValidationError> {
-        let timestamp = self.timestamp.ok_or(ValidationError::MissingField("timestamp"))?;
+        let timestamp = self
+            .timestamp
+            .ok_or(ValidationError::MissingBuilderField("timestamp"))?;
         let access_pledge_id = self
             .access_pledge_id
-            .ok_or(ValidationError::MissingField("access_pledge_id"))?;
+            .ok_or(ValidationError::MissingBuilderField("access_pledge_id"))?;
         let consensus_pledge_id = self
             .consensus_pledge_id
-            .ok_or(ValidationError::MissingField("consensus_pledge_id"))?;
+            .ok_or(ValidationError::MissingBuilderField("consensus_pledge_id"))?;
 
         // Inputs syntactical validation
         validate_inputs_unique_utxos(&self.inputs)?;

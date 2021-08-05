@@ -182,29 +182,31 @@ impl EncryptedDealBuilder {
     pub fn finish(self) -> Result<EncryptedDeal, ValidationError> {
         let dh_key = self
             .dh_key
-            .ok_or(ValidationError::MissingField("dh_key"))?
+            .ok_or(ValidationError::MissingBuilderField("dh_key"))?
             .try_into()
             .map_err(|err: InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>| {
                 ValidationError::InvalidEncryptedDealLength(err.0 as usize)
             })?;
         let nonce = self
             .nonce
-            .ok_or(ValidationError::MissingField("nonce"))?
+            .ok_or(ValidationError::MissingBuilderField("nonce"))?
             .try_into()
             .map_err(|err: InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>| {
                 ValidationError::InvalidEncryptedDealLength(err.0 as usize)
             })?;
         let encrypted_share = self
             .encrypted_share
-            .ok_or(ValidationError::MissingField("encrypted_share"))?
+            .ok_or(ValidationError::MissingBuilderField("encrypted_share"))?
             .try_into()
             .map_err(|err: InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>| {
                 ValidationError::InvalidEncryptedDealLength(err.0 as usize)
             })?;
-        let threshold = self.threshold.ok_or(ValidationError::MissingField("threshold"))?;
+        let threshold = self
+            .threshold
+            .ok_or(ValidationError::MissingBuilderField("threshold"))?;
         let commitments = self
             .commitments
-            .ok_or(ValidationError::MissingField("commitments"))?
+            .ok_or(ValidationError::MissingBuilderField("commitments"))?
             .try_into()
             .map_err(|err: InvalidBoundedU32<0, PREFIXED_LENGTH_MAX>| {
                 ValidationError::InvalidEncryptedDealLength(err.0 as usize)
@@ -320,10 +322,14 @@ impl DkgPayloadBuilder {
 
     /// Consumes the [`DkgPayloadBuilder`] and builds a new [`DkgPayload`].
     pub fn finish(self) -> Result<DkgPayload, ValidationError> {
-        let instance_id = self.instance_id.ok_or(ValidationError::MissingField("instance_id"))?;
-        let from_index = self.from_index.ok_or(ValidationError::MissingField("from_index"))?;
-        let to_index = self.to_index.ok_or(ValidationError::MissingField("to_index"))?;
-        let deal = self.deal.ok_or(ValidationError::MissingField("deal"))?;
+        let instance_id = self
+            .instance_id
+            .ok_or(ValidationError::MissingBuilderField("instance_id"))?;
+        let from_index = self
+            .from_index
+            .ok_or(ValidationError::MissingBuilderField("from_index"))?;
+        let to_index = self.to_index.ok_or(ValidationError::MissingBuilderField("to_index"))?;
+        let deal = self.deal.ok_or(ValidationError::MissingBuilderField("deal"))?;
 
         Ok(DkgPayload {
             instance_id,

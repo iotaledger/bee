@@ -34,35 +34,35 @@ pub enum MessageUnpackError {
     TransactionEssence(TransactionEssenceUnpackError),
     UnlockBlock(UnlockBlockUnpackError),
     UnlockBlocks(UnlockBlocksUnpackError),
-    ValidationError(ValidationError),
+    Validation(ValidationError),
 }
 
-impl_wrapped_validated!(MessageUnpackError, InputUnpackError, MessageUnpackError::Input);
-impl_wrapped_validated!(MessageUnpackError, OutputUnpackError, MessageUnpackError::Output);
-impl_wrapped_validated!(MessageUnpackError, PayloadUnpackError, MessageUnpackError::Payload);
+impl_wrapped_validated!(MessageUnpackError, MessageUnpackError::Input, InputUnpackError);
+impl_wrapped_validated!(MessageUnpackError, MessageUnpackError::Output, OutputUnpackError);
+impl_wrapped_validated!(MessageUnpackError, MessageUnpackError::Payload, PayloadUnpackError);
 impl_wrapped_validated!(
     MessageUnpackError,
-    TransactionUnpackError,
-    MessageUnpackError::Transaction
+    MessageUnpackError::Transaction,
+    TransactionUnpackError
 );
 impl_wrapped_validated!(
     MessageUnpackError,
-    TransactionEssenceUnpackError,
-    MessageUnpackError::TransactionEssence
+    MessageUnpackError::TransactionEssence,
+    TransactionEssenceUnpackError
 );
 impl_wrapped_validated!(
     MessageUnpackError,
-    UnlockBlockUnpackError,
-    MessageUnpackError::UnlockBlock
+    MessageUnpackError::UnlockBlock,
+    UnlockBlockUnpackError
 );
 impl_wrapped_validated!(
     MessageUnpackError,
-    UnlockBlocksUnpackError,
-    MessageUnpackError::UnlockBlocks
+    MessageUnpackError::UnlockBlocks,
+    UnlockBlocksUnpackError
 );
-impl_wrapped_variant!(MessageUnpackError, AddressUnpackError, MessageUnpackError::Address);
-impl_wrapped_variant!(MessageUnpackError, SignatureUnpackError, MessageUnpackError::Signature);
-impl_wrapped_variant!(MessageUnpackError, ValidationError, MessageUnpackError::ValidationError);
+impl_wrapped_variant!(MessageUnpackError, MessageUnpackError::Address, AddressUnpackError);
+impl_wrapped_variant!(MessageUnpackError, MessageUnpackError::Signature, SignatureUnpackError);
+impl_wrapped_variant!(MessageUnpackError, MessageUnpackError::Validation, ValidationError);
 impl_from_infallible!(MessageUnpackError);
 
 impl From<UnpackOptionError<MessageUnpackError>> for MessageUnpackError {
@@ -89,7 +89,7 @@ impl fmt::Display for MessageUnpackError {
             Self::TransactionEssence(e) => write!(f, "error unpacking TransactionEssence: {}", e),
             Self::UnlockBlock(e) => write!(f, "error unpacking UnlockBlock: {}", e),
             Self::UnlockBlocks(e) => write!(f, "error unpacking UnlockBlocks: {}", e),
-            Self::ValidationError(e) => write!(f, "validation error occured while unpacking: {}", e),
+            Self::Validation(e) => write!(f, "validation error occured while unpacking: {}", e),
         }
     }
 }

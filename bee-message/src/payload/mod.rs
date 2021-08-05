@@ -34,15 +34,15 @@ pub const PAYLOAD_LENGTH_MAX: u32 = 65157;
 pub enum PayloadUnpackError {
     Transaction(TransactionUnpackError),
     InvalidKind(u32),
-    ValidationError(ValidationError),
+    Validation(ValidationError),
 }
 
 impl_wrapped_validated!(
     PayloadUnpackError,
-    TransactionUnpackError,
-    PayloadUnpackError::Transaction
+    PayloadUnpackError::Transaction,
+    TransactionUnpackError
 );
-impl_wrapped_variant!(PayloadUnpackError, ValidationError, PayloadUnpackError::ValidationError);
+impl_wrapped_variant!(PayloadUnpackError, PayloadUnpackError::Validation, ValidationError);
 impl_from_infallible!(PayloadUnpackError);
 
 impl fmt::Display for PayloadUnpackError {
@@ -50,7 +50,7 @@ impl fmt::Display for PayloadUnpackError {
         match self {
             Self::Transaction(e) => write!(f, "error unpacking transaction payload: {}", e),
             Self::InvalidKind(kind) => write!(f, "invalid payload kind: {}.", kind),
-            Self::ValidationError(e) => write!(f, "{}", e),
+            Self::Validation(e) => write!(f, "{}", e),
         }
     }
 }

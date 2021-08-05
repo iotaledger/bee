@@ -56,9 +56,9 @@ fn try_from_invalid() {
 fn unpack_invalid_index() {
     assert!(matches!(
         ReferenceUnlock::unpack_from_slice(vec![0x2a, 0x2a]).err().unwrap(),
-        UnpackError::Packable(MessageUnpackError::ValidationError(
-            ValidationError::InvalidReferenceIndex(10794)
-        )),
+        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidReferenceIndex(
+            10794
+        ))),
     ));
 }
 

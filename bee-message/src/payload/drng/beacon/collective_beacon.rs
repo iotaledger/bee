@@ -119,15 +119,19 @@ impl CollectiveBeaconPayloadBuilder {
 
     /// Consumes the [`CollectiveBeaconPayloadBuilder`] and builds a new [`CollectiveBeaconPayload`].
     pub fn finish(self) -> Result<CollectiveBeaconPayload, ValidationError> {
-        let instance_id = self.instance_id.ok_or(ValidationError::MissingField("instance_id"))?;
-        let round = self.round.ok_or(ValidationError::MissingField("round"))?;
+        let instance_id = self
+            .instance_id
+            .ok_or(ValidationError::MissingBuilderField("instance_id"))?;
+        let round = self.round.ok_or(ValidationError::MissingBuilderField("round"))?;
         let prev_signature = self
             .prev_signature
-            .ok_or(ValidationError::MissingField("prev_signature"))?;
-        let signature = self.signature.ok_or(ValidationError::MissingField("signature"))?;
+            .ok_or(ValidationError::MissingBuilderField("prev_signature"))?;
+        let signature = self
+            .signature
+            .ok_or(ValidationError::MissingBuilderField("signature"))?;
         let distributed_public_key = self
             .distributed_public_key
-            .ok_or(ValidationError::MissingField("distributed_public_key"))?;
+            .ok_or(ValidationError::MissingBuilderField("distributed_public_key"))?;
 
         Ok(CollectiveBeaconPayload {
             instance_id,

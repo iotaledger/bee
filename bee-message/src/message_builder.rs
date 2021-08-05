@@ -79,16 +79,18 @@ impl MessageBuilder {
 
         let issuer_public_key = self
             .issuer_public_key
-            .ok_or(ValidationError::MissingField("issuer_public_key"))?;
+            .ok_or(ValidationError::MissingBuilderField("issuer_public_key"))?;
         let issue_timestamp = self
             .issue_timestamp
-            .ok_or(ValidationError::MissingField("issue_timestap"))?;
+            .ok_or(ValidationError::MissingBuilderField("issue_timestap"))?;
         let sequence_number = self
             .sequence_number
-            .ok_or(ValidationError::MissingField("sequence_number"))?;
+            .ok_or(ValidationError::MissingBuilderField("sequence_number"))?;
 
-        let nonce = self.nonce.ok_or(ValidationError::MissingField("nonce"))?;
-        let signature = self.signature.ok_or(ValidationError::MissingField("signature"))?;
+        let nonce = self.nonce.ok_or(ValidationError::MissingBuilderField("nonce"))?;
+        let signature = self
+            .signature
+            .ok_or(ValidationError::MissingBuilderField("signature"))?;
 
         let message = Message {
             parents_blocks: self.parents_blocks,

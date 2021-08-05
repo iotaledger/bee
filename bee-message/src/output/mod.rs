@@ -31,14 +31,14 @@ pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; //[0..
 #[allow(missing_docs)]
 pub enum OutputUnpackError {
     InvalidKind(u8),
-    ValidationError(ValidationError),
+    Validation(ValidationError),
 }
 
 impl fmt::Display for OutputUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidKind(kind) => write!(f, "invalid Output kind: {}", kind),
-            Self::ValidationError(e) => write!(f, "{}", e),
+            Self::Validation(e) => write!(f, "{}", e),
         }
     }
 }
@@ -61,8 +61,8 @@ pub enum Output {
     SignatureLockedAsset(SignatureLockedAssetOutput),
 }
 
-impl_wrapped_variant!(Output, SignatureLockedSingleOutput, Output::SignatureLockedSingle);
-impl_wrapped_variant!(Output, SignatureLockedAssetOutput, Output::SignatureLockedAsset);
+impl_wrapped_variant!(Output, Output::SignatureLockedSingle, SignatureLockedSingleOutput);
+impl_wrapped_variant!(Output, Output::SignatureLockedAsset, SignatureLockedAssetOutput);
 
 impl Output {
     /// Returns the output kind of an [`Output`].
