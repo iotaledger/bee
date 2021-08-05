@@ -32,7 +32,7 @@ This section guides you through reporting a bug. Following these guidelines help
 
 Please check the following list:
 
-- Do not open a GitHub issue for [security vulnerabilities](security_vulnerabilities.md). Instead, please contact us at [security@iota.org](mailto:security@iota.org).
+- Do not open a GitHub issue for [security vulnerabilities](https://bee.docs.iota.org/contribute/security_vulnerabilities). Instead, please contact us at [security@iota.org](mailto:security@iota.org).
 
 - Ensure the bug was not already reported by searching on GitHub under [**Issues**](https://github.com/iotaledger/bee/issues). If the bug has already been reported, and the issue is still open, add a comment to the existing issue instead of opening a new one.
 
@@ -148,4 +148,4 @@ Reviewers may ask you to complete additional work, tests, or other changes befor
 
 ## Code of Conduct 
 
-This project and everyone who participate in it is governed by the [IOTA Code of Conduct](code_of_conduct.md).
+This project and everyone who participate in it is governed by the [IOTA Code of Conduct](https://bee.docs.iota.org/contribute/code_of_conduct).

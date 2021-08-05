@@ -1,1 +1,3 @@
-{@include: ../../README.md}
+# Welcome
+
+{@import ../../README.md}
