@@ -74,9 +74,7 @@ impl Packable for SignatureLockedSingleOutput {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         self.address.pack(packer)?;
-        self.amount.pack(packer)?;
-
-        Ok(())
+        self.amount.pack(packer)
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {

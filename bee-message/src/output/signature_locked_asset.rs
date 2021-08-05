@@ -145,10 +145,7 @@ impl Packable for SignatureLockedAssetOutput {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         self.address.pack(packer)?;
-
-        self.balances.pack(packer).coerce()?;
-
-        Ok(())
+        self.balances.pack(packer).infallible()
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {

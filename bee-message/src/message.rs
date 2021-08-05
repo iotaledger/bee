@@ -165,9 +165,7 @@ impl Packable for Message {
         self.sequence_number.pack(packer).infallible()?;
         self.payload.pack(packer)?;
         self.nonce.pack(packer).infallible()?;
-        self.signature.pack(packer).infallible()?;
-
-        Ok(())
+        self.signature.pack(packer).infallible()
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {

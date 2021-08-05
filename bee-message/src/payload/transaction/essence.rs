@@ -150,14 +150,9 @@ impl Packable for TransactionEssence {
         self.timestamp.pack(packer).infallible()?;
         self.access_pledge_id.pack(packer).infallible()?;
         self.consensus_pledge_id.pack(packer).infallible()?;
-
         self.inputs.pack(packer).infallible()?;
-
         self.outputs.pack(packer).infallible()?;
-
-        self.payload.pack(packer)?;
-
-        Ok(())
+        self.payload.pack(packer)
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
