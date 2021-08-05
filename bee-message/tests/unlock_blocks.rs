@@ -85,7 +85,7 @@ fn new_invalid_duplicate_signature() {
 #[test]
 fn new_invalid_too_many_blocks() {
     assert!(matches!(
-        dbg!(UnlockBlocks::new(vec![ReferenceUnlock::new(0).unwrap().into(); 300])),
+        UnlockBlocks::new(vec![ReferenceUnlock::new(0).unwrap().into(); 300]),
         Err(ValidationError::InvalidUnlockBlockCount(300)),
     ));
 }

@@ -31,6 +31,7 @@ impl fmt::Display for ReferenceUnlockUnpackError {
     }
 }
 
+// TODO would be better as a From but conflicts with OutputId impl
 fn invalid_u16_to_validation_error(err: InvalidBoundedU16<0, UNLOCK_BLOCK_INDEX_MAX>) -> ValidationError {
     ValidationError::InvalidReferenceIndex(err.0)
 }

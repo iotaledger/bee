@@ -3,6 +3,7 @@
 
 use crate::{
     error::{MessageUnpackError, ValidationError},
+    output::OUTPUT_INDEX_MAX,
     payload::transaction::TransactionId,
     util::hex_decode,
 };
@@ -13,8 +14,6 @@ use core::{
     convert::{From, Infallible, TryFrom, TryInto},
     fmt,
 };
-
-use super::OUTPUT_INDEX_MAX;
 
 /// Error encountered unpacking an [`OutputId`].
 #[derive(Debug)]
@@ -69,7 +68,7 @@ impl OutputId {
     pub fn new(transaction_id: TransactionId, index: u16) -> Result<Self, ValidationError> {
         Ok(Self {
             transaction_id,
-            index: BoundedU16::<0, OUTPUT_INDEX_MAX>::try_from(index)?,
+            index: index.try_into()?,
         })
     }
 

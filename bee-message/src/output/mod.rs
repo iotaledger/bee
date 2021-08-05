@@ -24,9 +24,9 @@ pub const OUTPUT_COUNT_MAX: u16 = 127;
 /// The range of valid numbers of outputs of a transaction .
 pub const OUTPUT_COUNT_RANGE: RangeInclusive<u16> = 1..=OUTPUT_COUNT_MAX; //[1..127]
 /// The maximum index of outputs of a transaction.
-pub const OUTPUT_INDEX_MAX: u16 = OUTPUT_COUNT_MAX - 1;
+pub const OUTPUT_INDEX_MAX: u16 = OUTPUT_COUNT_MAX - 1; //126
 /// The range of valid indices of outputs of a transaction .
-pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_COUNT_MAX; //[0..126]
+pub const OUTPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=OUTPUT_INDEX_MAX; //[0..126]
 
 /// Error encountered unpacking an [`Output`].
 #[derive(Debug)]
