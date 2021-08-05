@@ -15,7 +15,7 @@ fn kind() {
 }
 
 #[test]
-fn new_valid_deref() {
+fn new_valid() {
     let reference: u16 = ReferenceUnlock::new(42).unwrap().into();
 
     assert_eq!(reference, 42);

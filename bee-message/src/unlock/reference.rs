@@ -5,7 +5,10 @@ use crate::{error::ValidationError, unlock::UNLOCK_BLOCK_INDEX_MAX, MessageUnpac
 
 use bee_packable::{BoundedU16, InvalidBoundedU16, Packable};
 
-use core::{convert::TryFrom, fmt};
+use core::{
+    convert::{TryFrom, TryInto},
+    fmt,
+};
 
 /// Error encountered unpacking a [`ReferenceUnlock`].
 #[derive(Debug)]
@@ -44,9 +47,7 @@ impl ReferenceUnlock {
 
     /// Creates a new [`ReferenceUnlock`].
     pub fn new(index: u16) -> Result<Self, ValidationError> {
-        Ok(Self(
-            BoundedU16::<0, UNLOCK_BLOCK_INDEX_MAX>::try_from(index).map_err(invalid_u16_to_validation_error)?,
-        ))
+        Ok(Self(index.try_into().map_err(invalid_u16_to_validation_error)?))
     }
 
     /// Returns the index of a [`ReferenceUnlock`].

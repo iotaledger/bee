@@ -21,7 +21,7 @@ pub use crate::{
     ValidationError,
 };
 
-pub use bee_packable::UnpackOptionError;
+use bee_packable::UnpackOptionError;
 
 use core::{convert::Infallible, fmt};
 

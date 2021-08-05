@@ -7,10 +7,7 @@ mod output_id;
 mod signature_locked_asset;
 mod signature_locked_single;
 
-pub use crate::{
-    error::{MessageUnpackError, ValidationError},
-    input::INPUT_COUNT_MAX,
-};
+use crate::error::{MessageUnpackError, ValidationError};
 
 pub use output_id::{OutputId, OutputIdUnpackError};
 pub use signature_locked_asset::{AssetBalance, AssetId, SignatureLockedAssetOutput, SignatureLockedAssetUnpackError};
@@ -23,7 +20,7 @@ use bee_packable::Packable;
 use core::{fmt, ops::RangeInclusive};
 
 /// The maximum number of outputs of a transaction.
-pub const OUTPUT_COUNT_MAX: u16 = INPUT_COUNT_MAX;
+pub const OUTPUT_COUNT_MAX: u16 = 127;
 /// The range of valid numbers of outputs of a transaction .
 pub const OUTPUT_COUNT_RANGE: RangeInclusive<u16> = 1..=OUTPUT_COUNT_MAX; //[1..127]
 /// The maximum index of outputs of a transaction.

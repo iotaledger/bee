@@ -118,17 +118,13 @@ impl Packable for EncryptedDeal {
         let dh_key = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<DkgUnpackError>()
             .coerce()?;
-
         let nonce = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<DkgUnpackError>()
             .coerce()?;
-
         let encrypted_share = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<DkgUnpackError>()
             .coerce()?;
-
         let threshold = u32::unpack(unpacker).infallible()?;
-
         let commitments = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker)
             .coerce::<DkgUnpackError>()
             .coerce()?;

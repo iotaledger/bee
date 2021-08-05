@@ -11,20 +11,23 @@ pub use reference::{ReferenceUnlock, ReferenceUnlockUnpackError};
 pub use signature::SignatureUnlock;
 pub use unlock_blocks::{UnlockBlocks, UnlockBlocksUnpackError};
 
-use crate::{input::INPUT_COUNT_MAX, MessageUnpackError, ValidationError};
+use crate::{
+    input::{INPUT_COUNT_MAX, INPUT_COUNT_RANGE, INPUT_INDEX_MAX, INPUT_INDEX_RANGE},
+    MessageUnpackError, ValidationError,
+};
 
 use bee_packable::Packable;
 
 use core::{fmt, ops::RangeInclusive};
 
 /// The maximum number of unlock blocks of a transaction.
-pub const UNLOCK_BLOCK_COUNT_MAX: u16 = INPUT_COUNT_MAX;
+pub const UNLOCK_BLOCK_COUNT_MAX: u16 = INPUT_COUNT_MAX; //127
 /// The range of valid numbers of unlock blocks of a transaction.
-pub const UNLOCK_BLOCK_COUNT_RANGE: RangeInclusive<u16> = 1..=UNLOCK_BLOCK_COUNT_MAX; // [1..127]
+pub const UNLOCK_BLOCK_COUNT_RANGE: RangeInclusive<u16> = INPUT_COUNT_RANGE; // [1..127]
 /// The maximum index of unlock blocks of a transaction.
-pub const UNLOCK_BLOCK_INDEX_MAX: u16 = UNLOCK_BLOCK_COUNT_MAX - 1; // [0..126]
+pub const UNLOCK_BLOCK_INDEX_MAX: u16 = INPUT_INDEX_MAX; // 126
 /// The range of valid indices of unlock blocks of a transaction.
-pub const UNLOCK_BLOCK_INDEX_RANGE: RangeInclusive<u16> = 0..=UNLOCK_BLOCK_INDEX_MAX; // [0..126]
+pub const UNLOCK_BLOCK_INDEX_RANGE: RangeInclusive<u16> = INPUT_INDEX_RANGE; // [0..126]
 
 /// Error encountered unpacking an [`UnlockBlock`].
 #[derive(Debug)]

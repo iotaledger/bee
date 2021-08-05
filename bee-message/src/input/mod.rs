@@ -11,17 +11,16 @@ use crate::error::{MessageUnpackError, ValidationError};
 
 use bee_packable::Packable;
 
-use core::{
-    fmt,
-    ops::{Range, RangeInclusive},
-};
+use core::{fmt, ops::RangeInclusive};
 
 /// The maximum number of inputs of a transaction.
 pub const INPUT_COUNT_MAX: u16 = 127;
 /// The range of valid numbers of inputs of a transaction.
 pub const INPUT_COUNT_RANGE: RangeInclusive<u16> = 1..=INPUT_COUNT_MAX; //[1..127]
+/// The maximum index of inputs of a transaction.
+pub const INPUT_INDEX_MAX: u16 = INPUT_COUNT_MAX - 1; // 126
 /// The range of valid indices of inputs of a transaction.
-pub const INPUT_INDEX_RANGE: Range<u16> = 0..INPUT_COUNT_MAX; //[0..126]
+pub const INPUT_INDEX_RANGE: RangeInclusive<u16> = 0..=INPUT_INDEX_MAX; //[0..126]
 
 /// Error encountered unpacking an [`Input`].
 #[derive(Debug)]
