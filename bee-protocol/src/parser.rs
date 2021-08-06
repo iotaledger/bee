@@ -4,11 +4,11 @@
 use bee_message::Message;
 use bee_packable::Packable;
 
-use crate::{EventBus, StorageEvent, StorageWorker};
+use crate::EventBus;
 
 use backstage::{
-    actor::{Actor, ActorError, EventDriven, Sender, SupervisorEvent, UnboundedTokioChannel},
-    prelude::{Act, ActorScopedRuntime, RegistryAccess, Res},
+    actor::{Actor, ActorError, EventDriven, SupervisorEvent, UnboundedTokioChannel},
+    prelude::{ActorScopedRuntime, RegistryAccess, Res},
 };
 
 use std::{collections::VecDeque, marker::PhantomData};
@@ -51,7 +51,7 @@ impl ParserWorker {
 
 #[async_trait::async_trait]
 impl Actor for ParserWorker {
-    type Dependencies = (Res<EventBus>, Act<StorageWorker>);
+    type Dependencies = Res<EventBus>;
 
     type Event = ParseEvent;
 
@@ -74,7 +74,7 @@ impl Actor for ParserWorker {
     async fn run<Reg: RegistryAccess + Send + Sync, Sup: EventDriven>(
         &mut self,
         rt: &mut ActorScopedRuntime<Self, Reg, Sup>,
-        (bus, storage_worker): Self::Dependencies,
+        bus: Self::Dependencies,
     ) -> Result<(), ActorError>
     where
         Self: Sized,
@@ -90,8 +90,6 @@ impl Actor for ParserWorker {
                         bus.dispatch(MessageParsedEvent {
                             message: message.clone(),
                         });
-
-                        storage_worker.send(StorageEvent::Store { message })?;
                     }
                     Err(err) => match err {
                         bee_packable::UnpackError::Packable(_err) => {

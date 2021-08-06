@@ -16,8 +16,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .add_resource(Arc::new(EventBus::<'static, std::any::TypeId>::new()))
                 .await;
 
-            bus.add_listener::<MessageParsedEvent, _, _>(|_event: &MessageParsedEvent| {
+            let _parser = scope.spawn_actor_unsupervised(ParserWorker::default()).await?;
+
+            let storage = scope.spawn_actor_unsupervised(StorageWorker::default()).await?;
+
+            bus.add_listener::<MessageParsedEvent, _, _>(move |event: &MessageParsedEvent| {
                 println!("MessageParsedEvent triggered!");
+                if let Err(err) = storage.send(StorageEvent::Store {
+                    message: event.message.clone(),
+                }) {
+                    eprintln!("Error calling `store`: {}", err);
+                }
             });
             bus.add_listener::<ParsingFailedEvent, _, _>(|_event: &ParsingFailedEvent| {
                 println!("ParsingFailedEvent triggered!")
@@ -28,12 +37,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             bus.add_listener::<MessageStoredEvent, _, _>(|_event: &MessageStoredEvent| {
                 println!("MessageStoredEvent triggered!")
             });
-
-            let parser = ParserWorker::default();
-            scope.spawn_actor_unsupervised(parser).await?;
-
-            let storage = StorageWorker::default();
-            scope.spawn_actor_unsupervised(storage).await?;
 
             let valid_bytes = vec![
                 1, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
