@@ -1,14 +1,18 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+mod pack_err_with;
 mod pack_error;
 mod tag;
 mod tag_type;
+mod unpack_err_with;
 mod unpack_error;
 
+pub(crate) use pack_err_with::PackErrWith;
 pub(crate) use pack_error::PackError;
 pub(crate) use tag::Tag;
 pub(crate) use tag_type::TagType;
+pub(crate) use unpack_err_with::UnpackErrWith;
 pub(crate) use unpack_error::UnpackError;
 
 use syn::{
