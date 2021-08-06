@@ -15,8 +15,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let bus = scope
                 .add_resource(Arc::new(EventBus::<'static, std::any::TypeId>::new()))
                 .await;
+
             bus.add_listener::<MessageParsedEvent, _, _>(|_event: &MessageParsedEvent| {
-                println!("MessageParsedEvent triggered!")
+                println!("MessageParsedEvent triggered!");
             });
             bus.add_listener::<ParsingFailedEvent, _, _>(|_event: &ParsingFailedEvent| {
                 println!("ParsingFailedEvent triggered!")
@@ -27,6 +28,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let parser = ParserWorker::default();
             scope.spawn_actor_unsupervised(parser).await?;
+
+            let storage = StorageWorker::default();
+            scope.spawn_actor_unsupervised(storage).await?;
 
             let valid_bytes = vec![
                 1, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

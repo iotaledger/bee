@@ -1,6 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_message::Message;
 use bee_packable::Packable;
 
 use crate::EventBus;
@@ -15,7 +16,10 @@ use std::{collections::VecDeque, marker::PhantomData};
 const RECENTLY_SEEN_MAX_LEN: usize = 10;
 
 // FIXME: import this from `bee-plugin` once it is merged.
-pub struct MessageParsedEvent {}
+pub struct MessageParsedEvent { 
+    pub message: Message 
+}
+
 pub struct ParsingFailedEvent {}
 pub struct MessageRejectedEvent {}
 
@@ -79,10 +83,11 @@ impl Actor for ParserWorker {
     {
         while let Some(ParseEvent { bytes }) = rt.next_event().await {
             if !self.is_recent(&bytes) {
-                match bee_message::Message::unpack_from_slice(&bytes) {
-                    Ok(_message) => {
+                match Message::unpack_from_slice(&bytes) {
+                    Ok(message) => {
                         // FIXME: figure out the remaining validation steps.
-                        bus.dispatch(MessageParsedEvent {});
+                        // For now, just send the message.
+                        bus.dispatch(MessageParsedEvent { message });
                     }
                     Err(err) => match err {
                         bee_packable::UnpackError::Packable(_err) => {

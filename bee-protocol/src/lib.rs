@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod parser;
+mod storage;
 
 pub use parser::*;
+pub use storage::*;
 
 use std::sync::Arc;
 
