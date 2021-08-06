@@ -25,6 +25,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             bus.add_listener::<MessageRejectedEvent, _, _>(|_event: &MessageRejectedEvent| {
                 println!("MessageRejectedEvent triggered!")
             });
+            bus.add_listener::<MessageStoredEvent, _, _>(|_event: &MessageStoredEvent| {
+                println!("MessageStoredEvent triggered!")
+            });
 
             let parser = ParserWorker::default();
             scope.spawn_actor_unsupervised(parser).await?;

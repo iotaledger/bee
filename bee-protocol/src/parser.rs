@@ -4,11 +4,11 @@
 use bee_message::Message;
 use bee_packable::Packable;
 
-use crate::EventBus;
+use crate::{EventBus, StorageEvent, StorageWorker};
 
 use backstage::{
-    actor::{Actor, ActorError, EventDriven, SupervisorEvent, UnboundedTokioChannel},
-    prelude::{ActorScopedRuntime, RegistryAccess, Res},
+    actor::{Actor, ActorError, EventDriven, Sender, SupervisorEvent, UnboundedTokioChannel},
+    prelude::{Act, ActorScopedRuntime, RegistryAccess, Res},
 };
 
 use std::{collections::VecDeque, marker::PhantomData};
@@ -16,8 +16,8 @@ use std::{collections::VecDeque, marker::PhantomData};
 const RECENTLY_SEEN_MAX_LEN: usize = 10;
 
 // FIXME: import this from `bee-plugin` once it is merged.
-pub struct MessageParsedEvent { 
-    pub message: Message 
+pub struct MessageParsedEvent {
+    pub message: Message,
 }
 
 pub struct ParsingFailedEvent {}
@@ -51,7 +51,7 @@ impl ParserWorker {
 
 #[async_trait::async_trait]
 impl Actor for ParserWorker {
-    type Dependencies = Res<EventBus>;
+    type Dependencies = (Res<EventBus>, Act<StorageWorker>);
 
     type Event = ParseEvent;
 
@@ -74,7 +74,7 @@ impl Actor for ParserWorker {
     async fn run<Reg: RegistryAccess + Send + Sync, Sup: EventDriven>(
         &mut self,
         rt: &mut ActorScopedRuntime<Self, Reg, Sup>,
-        bus: Self::Dependencies,
+        (bus, storage_worker): Self::Dependencies,
     ) -> Result<(), ActorError>
     where
         Self: Sized,
@@ -87,7 +87,11 @@ impl Actor for ParserWorker {
                     Ok(message) => {
                         // FIXME: figure out the remaining validation steps.
                         // For now, just send the message.
-                        bus.dispatch(MessageParsedEvent { message });
+                        bus.dispatch(MessageParsedEvent {
+                            message: message.clone(),
+                        });
+
+                        storage_worker.send(StorageEvent::Store { message })?;
                     }
                     Err(err) => match err {
                         bee_packable::UnpackError::Packable(_err) => {
