@@ -250,9 +250,9 @@ where
 
     for (output_id, created_output) in metadata.created_outputs {
         bus.dispatch(OutputCreated {
-            message_id: created_output.message_id,
+            message_id: created_output.message_id(),
             output_id,
-            output: created_output.inner,
+            output: created_output.inner(),
         });
     }
 
@@ -261,9 +261,9 @@ where
             Ok(response) => match response {
                 Some(output) => {
                     bus.dispatch(OutputConsumed {
-                        message_id: output.message_id,
+                        message_id: output.message_id(),
                         output_id,
-                        output: output.inner,
+                        output: output.inner(),
                     });
                 }
                 None => {} // can this case even happen? as apply_milestone() will be called before
