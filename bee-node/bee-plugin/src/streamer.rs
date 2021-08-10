@@ -30,7 +30,7 @@ impl<T> PluginStreamer<T> {
 }
 
 macro_rules! impl_streamer {
-    ($($method_name:ident => $event_ty:ty),*) => {
+    ($($event_ty:ty => $method_name:ident),*) => {
         $(
             impl PluginStreamer<$event_ty> {
                 pub(crate) async fn run(mut self) {
@@ -45,7 +45,7 @@ macro_rules! impl_streamer {
 }
 
 impl_streamer! {
-    process_message_parsed_event => MessageParsedEvent,
-    process_parsing_failed_event => ParsingFailedEvent,
-    process_message_rejected_event => MessageRejectedEvent
+    MessageParsedEvent => process_message_parsed_event,
+    ParsingFailedEvent => process_parsing_failed_event,
+    MessageRejectedEvent => process_message_rejected_event
 }
