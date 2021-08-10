@@ -11,6 +11,7 @@ use crate::{
 
 use bee_event_bus::EventBus;
 
+use log::{debug, info, warn};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
     process::{Child, Command},
@@ -34,17 +35,16 @@ macro_rules! spawn_streamers {
             $(
                 $event_var => {
                     let (tx, rx) = unbounded_channel::<$event_ty>();
-
                     let client = $self.client.clone();
 
                     spawn(async move {
                         PluginStreamer::new(rx, $shutdown, client).run().await;
                     });
 
-                    log::info!("registering `{}` callback for the `{}` plugin", type_name::<$event_ty>(), $self.name);
+                    debug!("registering `{}` callback for the `{}` plugin", type_name::<$event_ty>(), $self.name);
                     $bus.add_listener_with_id(move |event: &$event_ty| {
                         if let Err(err) = tx.send(event.clone()) {
-                            log::warn!("failed to send event: {}", err);
+                            warn!("failed to send event: {}", err);
                         }
                     }, UniqueId::Plugin($self.plugin_id));
                 }
@@ -78,10 +78,9 @@ impl PluginHandler {
     ) -> Result<Self, PluginError> {
         command.kill_on_drop(true).stdout(Stdio::piped()).stderr(Stdio::piped());
 
-        log::info!(
+        info!(
             "spawning command `{:?}` for the plugin with ID `{:?}`",
-            command,
-            plugin_id
+            command, plugin_id
         );
         let mut process = command.spawn()?;
 
@@ -103,13 +102,13 @@ impl PluginHandler {
                 tokio::select! {
                     res = stdout_lines.next_line() => match res? {
                         Some(line) => {
-                            log::info!(target: &target, "{}", line);
+                            info!(target: &target, "{}", line);
                         },
                         None => break,
                     },
                     res = stderr_lines.next_line() => match res? {
                         Some(line) => {
-                            log::warn!(target: &target, "{}", line);
+                            warn!(target: &target, "{}", line);
                         },
                         None => break,
                     }
@@ -120,23 +119,22 @@ impl PluginHandler {
         });
 
         let address = format!("http://{}/", handshake_info.address);
-        log::info!("connecting to the `{}` plugin at `{}`", name, address);
+        info!("connecting to the `{}` plugin at `{}`", name, address);
         let client = async {
             let mut count = 0;
             loop {
                 match PluginClient::connect(address.clone()).await {
                     Ok(client) => break Ok(client),
                     Err(err) => {
-                        log::warn!("connection to the `{}` plugin failed: {}", name, err);
+                        warn!("connection to the `{}` plugin failed: {}", name, err);
                         if count == 5 {
-                            log::warn!("connection to the `{}` plugin will not be retried anymore", name);
+                            warn!("connection to the `{}` plugin will not be retried anymore", name);
                             break Err(err);
                         } else {
                             let secs = 5u64.pow(count);
-                            log::warn!(
+                            warn!(
                                 "connection to the `{}` plugin will be retried in {} seconds",
-                                name,
-                                secs
+                                name, secs
                             );
                             tokio::time::sleep(tokio::time::Duration::from_secs(secs)).await;
                             count += 1;
@@ -146,7 +144,7 @@ impl PluginHandler {
             }
         }
         .await?;
-        log::info!("connection to the `{}` plugin was successful", name);
+        info!("connection to the `{}` plugin was successful", name);
 
         let mut this = Self {
             plugin_id,
@@ -187,10 +185,10 @@ impl PluginHandler {
             // the streamer is already gone.
             shutdown.send(()).ok();
         }
-        log::info!("removing callbacks for the `{}` plugin", self.name);
+        info!("removing callbacks for the `{}` plugin", self.name);
         bus.remove_listeners_with_id(self.plugin_id.into());
 
-        log::info!("sending shutdown request to the `{}` plugin", self.name);
+        info!("sending shutdown request to the `{}` plugin", self.name);
         let shutdown = self.client.shutdown(Request::new(ShutdownRequest {}));
         let delay = sleep(Duration::from_secs(30));
 
@@ -199,18 +197,18 @@ impl PluginHandler {
                 result?;
             },
             _ = delay => {
-                log::warn!("the shutdown request for the `{}` plugin timed out", self.name);
+                warn!("the shutdown request for the `{}` plugin timed out", self.name);
             },
         }
 
         self.stdio_task.abort();
         if let Err(err) = self.stdio_task.await {
             if err.is_panic() {
-                log::warn!("stdio redirection for the `{}` plugin panicked: {}", self.name, err);
+                warn!("stdio redirection for the `{}` plugin panicked: {}", self.name, err);
             }
         };
 
-        log::info!("killing process for the `{}` plugin", self.name);
+        info!("killing process for the `{}` plugin", self.name);
         self.process.kill().await?;
 
         Ok(())

@@ -21,14 +21,14 @@ use std::{
 const PLUGIN_CHECK_INTERVAL_MILLIS: u64 = 1000;
 
 /// Type that watches a directory for changes and loads every file as a plugin.
-pub struct Hotloader {
+pub struct PluginHotloader {
     directory: PathBuf,
     plugins_info: HashMap<PathBuf, PluginInfo>,
     manager: PluginManager,
 }
 
-impl Hotloader {
-    /// Creates a new [`Hotloader`] that watches the specified directory.
+impl PluginHotloader {
+    /// Creates a new [`PluginHotloader`] that watches the specified directory.
     pub fn new<P: AsRef<Path> + ?Sized>(directory: &P, event_bus: Arc<EventBus<'static, UniqueId>>) -> Self {
         Self {
             directory: directory.as_ref().to_owned(),
