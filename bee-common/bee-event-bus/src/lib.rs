@@ -3,7 +3,7 @@
 
 //! A crate that provides a generic, type-safe and thread-safe event bus for arbitrary event types.
 
-#![warn(missing_docs)]
+#![deny(missing_docs, warnings)]
 
 use std::{
     any::{Any, TypeId},

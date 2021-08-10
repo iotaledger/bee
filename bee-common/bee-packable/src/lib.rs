@@ -4,7 +4,7 @@
 //! A module that provides a [`Packable`] trait to serialize and deserialize types.
 
 #![no_std]
-#![warn(missing_docs)]
+#![deny(missing_docs, warnings)]
 
 pub mod coerce;
 pub mod error;
