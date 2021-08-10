@@ -22,8 +22,6 @@ pub use error::PluginError;
 pub use manager::PluginManager;
 pub use plugin::{serve_plugin, Plugin};
 
-use std::any::TypeId;
-
 /// A unique identifier for each plugin.
 ///
 /// Uniqueness is guaranteed inside a single [`PluginManager`].
@@ -36,23 +34,13 @@ impl core::fmt::Display for PluginId {
     }
 }
 
-/// A unique identifier for [`EventBus`](bee_event_bus::EventBus) callbacks.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum UniqueId {
-    /// Identifier for types.
-    Type(TypeId),
-    /// Identifier for plugins.
-    Plugin(PluginId),
-}
+/// A unique identifier used by an [`EventBus`] that handles plugin callbacks.
+pub type UniqueId = bee_event_bus::UniqueId<PluginId>;
 
-impl From<TypeId> for UniqueId {
-    fn from(id: TypeId) -> Self {
-        Self::Type(id)
-    }
-}
-
-impl From<PluginId> for UniqueId {
-    fn from(id: PluginId) -> Self {
-        Self::Plugin(id)
+// We cannot provide a `From` implementation because `UniqueId<T>` is defined outside this crate.
+#[allow(clippy::from_over_into)]
+impl Into<UniqueId> for PluginId {
+    fn into(self) -> UniqueId {
+        UniqueId::Object(self)
     }
 }

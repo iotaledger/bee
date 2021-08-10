@@ -46,7 +46,7 @@ macro_rules! spawn_streamers {
                         if let Err(err) = tx.send(event.clone()) {
                             warn!("failed to send event: {}", err);
                         }
-                    }, UniqueId::Plugin($self.plugin_id));
+                    }, UniqueId::Object($self.plugin_id));
                 }
             )*
         }
