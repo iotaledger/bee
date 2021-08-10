@@ -7,31 +7,37 @@ pub use crate::grpc::{MessageParsedEvent, MessageRejectedEvent, ParsingFailedEve
 
 use std::convert::TryFrom;
 
-/// Identifiers for each event type.
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-#[repr(u8)]
-pub enum EventId {
-    /// Identifier for [`MessageParsedEvent`].
-    MessageParsed = 0,
-    /// Identifier for [`ParsingFailedEvent`].
-    ParsingFailed = 1,
-    /// Identifier for [`MessageRejectedEvent`].
-    MessageRejected = 2,
+macro_rules! def_event_id {
+    ($($variant:ident => $int:tt),*) => {
+        /// Identifier for each event type.
+        #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+        #[repr(u8)]
+        pub enum EventId {
+            $(
+                #[doc = concat!("Identifier for [`", stringify!($variant), "Event`].")]
+                $variant = $int,
+            )*
+        }
+
+        impl TryFrom<u8> for EventId {
+            type Error = InvalidEventId;
+
+            fn try_from(value: u8) -> Result<Self, Self::Error> {
+                match value {
+                    $($int => Ok(Self::$variant),)*
+                    value => Err(InvalidEventId(value)),
+                }
+            }
+        }
+    };
 }
 
-/// Error returned while converting an [`u8`] into an [`EventId`].
+def_event_id! {
+    MessageParsed => 0,
+    ParsingFailed => 1,
+    MessageRejected => 2
+}
+
+/// Error returned while converting into an `EventId`.
 #[derive(Debug)]
 pub struct InvalidEventId(pub(crate) u8);
-
-impl TryFrom<u8> for EventId {
-    type Error = InvalidEventId;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::MessageParsed),
-            1 => Ok(Self::ParsingFailed),
-            2 => Ok(Self::MessageRejected),
-            value => Err(InvalidEventId(value)),
-        }
-    }
-}
