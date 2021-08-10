@@ -45,7 +45,7 @@ macro_rules! impl_streamer {
 }
 
 impl_streamer! {
-    MessageParsedEvent => process_message_parsed_event,
-    ParsingFailedEvent => process_parsing_failed_event,
-    MessageRejectedEvent => process_message_rejected_event
+    MessageParsedEvent      => process_message_parsed_event,
+    ParsingFailedEvent      => process_parsing_failed_event,
+    MessageRejectedEvent    => process_message_rejected_event
 }

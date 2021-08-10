@@ -17,7 +17,7 @@ use tokio::io::{stdout, AsyncWriteExt};
 use tonic::{transport::Server, Request, Response, Status, Streaming};
 
 macro_rules! plugin_trait {
-    ($($method_name:ident => $event_ty:ty),*) => {
+    ($($event_ty:ty => $method_name:ident),*) => {
         /// Types that represent a plugin.
         #[tonic::async_trait]
         pub trait Plugin: Send + Sync + 'static {
@@ -57,9 +57,9 @@ macro_rules! plugin_trait {
 }
 
 plugin_trait! {
-    process_message_parsed_event => MessageParsedEvent,
-    process_parsing_failed_event => ParsingFailedEvent,
-    process_message_rejected_event => MessageRejectedEvent
+    MessageParsedEvent      => process_message_parsed_event,
+    ParsingFailedEvent      => process_parsing_failed_event,
+    MessageRejectedEvent    => process_message_rejected_event
 }
 
 /// Does the handshake and runs a gRPC server for the specified plugin.
