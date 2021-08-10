@@ -1,3 +1,3 @@
 # bee-plugin
 
-The bee node API for plugins
+The bee node API for plugins.

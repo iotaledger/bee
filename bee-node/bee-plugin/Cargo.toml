@@ -16,7 +16,7 @@ bee-event-bus = { path = "../../bee-common/bee-event-bus" }
 log = "0.4"
 prost = "0.8"
 thiserror = "1.0"
-tokio = { version = "1.6", features = [ "macros", "rt-multi-thread", "process", "sync", "fs" ] }
+tokio = { version = "1.6", features = [ "macros", "process", "sync", "fs", "time" ] }
 tokio-stream = "0.1"
 tonic = "0.5"
 
