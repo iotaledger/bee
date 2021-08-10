@@ -7,7 +7,11 @@ pub use crate::grpc::{MessageParsedEvent, MessageRejectedEvent, ParsingFailedEve
 
 use std::convert::TryFrom;
 
-macro_rules! def_event_id {
+/// Error returned while converting an [`u8`] into an [`EventId`].
+#[derive(Debug)]
+pub struct InvalidEventId(pub(crate) u8);
+
+macro_rules! define_event_id {
     ($($variant:ident => $int:tt),*) => {
         /// Identifier for each event type.
         #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -32,12 +36,8 @@ macro_rules! def_event_id {
     };
 }
 
-def_event_id! {
+define_event_id! {
     MessageParsed => 0,
     ParsingFailed => 1,
     MessageRejected => 2
 }
-
-/// Error returned while converting into an `EventId`.
-#[derive(Debug)]
-pub struct InvalidEventId(pub(crate) u8);

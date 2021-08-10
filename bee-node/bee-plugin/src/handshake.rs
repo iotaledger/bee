@@ -14,28 +14,27 @@ use std::{
 };
 
 /// Information provided by the plugin during the handshake stage.
-pub struct HandshakeInfo {
-    pub(crate) address: SocketAddr,
+pub struct PluginHandshake {
     pub(crate) name: String,
+    pub(crate) address: SocketAddr,
     pub(crate) event_ids: Vec<EventId>,
 }
 
-impl HandshakeInfo {
-    /// Creates a new [`HandshakeInfo`] using the plugin's gRPC server address, the plugin's name for
-    /// logging purposes and the `EventId`s that the plugins will be suscribed to.
-    pub fn new(address: SocketAddr, name: &str, event_ids: Vec<EventId>) -> Self {
+impl PluginHandshake {
+    /// Creates a new [`PluginHandshake`] using the plugin's name for logging purposes, the plugin's gRPC server
+    /// address, and the [`EventId`]s that the plugins will be suscribed to.
+    pub fn new(name: &str, address: SocketAddr, event_ids: Vec<EventId>) -> Self {
         Self {
-            address,
             name: name.to_owned(),
+            address,
             event_ids,
         }
     }
 
     pub(crate) fn parse(buf: &str) -> Result<Self, InvalidHandshake> {
         let mut chunks = buf.trim().split('|');
-        let address_chunk = chunks.next().ok_or(InvalidHandshake::MissingAddress)?;
-        let address: SocketAddr = address_chunk.parse()?;
         let name = chunks.next().ok_or(InvalidHandshake::MissingName)?.to_string();
+        let address = chunks.next().ok_or(InvalidHandshake::MissingAddress)?.parse()?;
         let mut event_ids = vec![];
 
         for chunk in chunks {
@@ -46,9 +45,9 @@ impl HandshakeInfo {
             event_ids.push(event_id);
         }
 
-        Ok(HandshakeInfo {
-            address,
+        Ok(PluginHandshake {
             name,
+            address,
             event_ids,
         })
     }

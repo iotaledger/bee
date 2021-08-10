@@ -12,13 +12,14 @@ mod grpc {
     tonic::include_proto!("plugin");
 }
 mod error;
+mod handshake;
 mod plugin;
 
 pub mod event;
-pub mod handshake;
 pub mod hotloader;
 
 pub use error::PluginError;
+pub use handshake::PluginHandshake;
 pub use manager::PluginManager;
 pub use plugin::{serve_plugin, Plugin};
 

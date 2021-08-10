@@ -41,10 +41,8 @@ impl PluginHotloader {
     ///
     /// This is done by following these rules:
     /// - If a file is created, it will be loaded and executed as a plugin.
-    /// - If a file is removed, the process for it will be terminated and the plugin will be
-    /// unloaded.
-    /// - If a file is modified, it will behave as if the file was removed and created in
-    /// succession.
+    /// - If a file is removed, the process for it will be terminated and the plugin will be unloaded.
+    /// - If a file is modified, it will behave as if the file was removed and created in succession.
     pub async fn run(mut self) -> Result<(), PluginError> {
         loop {
             let mut dir = tokio::fs::read_dir(&self.directory).await?;
@@ -64,17 +62,17 @@ impl PluginHotloader {
 
             for (path, info) in self.plugins_info.iter_mut() {
                 match last_writes.remove(path) {
-                    // The file still exists
+                    // The file still exists.
                     Some(last_write) => {
                         if info.last_write != last_write {
-                            // The file changed
+                            // The file changed.
                             self.manager.unload(info.id).await?;
                             let command = Command::new(path);
                             info.id = self.manager.load(command).await?;
                             info.last_write = last_write;
                         }
                     }
-                    // The file no longer exists
+                    // The file no longer exists.
                     None => {
                         to_delete.push(path.clone());
                         self.manager.unload(info.id).await?;
@@ -82,8 +80,7 @@ impl PluginHotloader {
                 }
             }
 
-            // remove info for files that no longer exist and load plugins whose files did not
-            // exist before.
+            // Removes info for files that no longer exist and load plugins whose files did not exist before.
             self.sync_plugin_info(to_delete, last_writes).await?;
 
             sleep(Duration::from_millis(PLUGIN_CHECK_INTERVAL_MILLIS)).await;

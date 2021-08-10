@@ -4,9 +4,8 @@
 use crate::{
     event::*,
     grpc::{plugin_client::PluginClient, ShutdownRequest},
-    handshake::HandshakeInfo,
     streamer::PluginStreamer,
-    PluginError, PluginId, UniqueId,
+    PluginError, PluginHandshake, PluginId, UniqueId,
 };
 
 use bee_event_bus::EventBus;
@@ -84,15 +83,15 @@ impl PluginHandler {
         );
         let mut process = command.spawn()?;
 
-        // stderr and stdout are guaranteed to be `Some` because we piped them in the command.
+        // `stderr` and `stdout` are guaranteed to be `Some` because we piped them in the command.
         let stderr = BufReader::new(process.stderr.take().unwrap());
         let mut stdout = BufReader::new(process.stdout.take().unwrap());
 
         let mut buf = String::new();
         stdout.read_line(&mut buf).await?;
-        let handshake_info = HandshakeInfo::parse(&buf)?;
+        let handshake = PluginHandshake::parse(&buf)?;
 
-        let name = format!("{}-{}", handshake_info.name, plugin_id.0);
+        let name = format!("{}-{}", handshake.name, plugin_id.0);
         let target = format!("plugins::{}", name);
         let stdio_task = tokio::spawn(async move {
             let mut stdout_lines = stdout.lines();
@@ -118,7 +117,7 @@ impl PluginHandler {
             Ok(())
         });
 
-        let address = format!("http://{}/", handshake_info.address);
+        let address = format!("http://{}/", handshake.address);
         debug!("connecting to the `{}` plugin at `{}`", name, address);
         let client = async {
             let mut count = 0;
@@ -155,7 +154,7 @@ impl PluginHandler {
             stdio_task,
         };
 
-        for event_id in handshake_info.event_ids {
+        for event_id in handshake.event_ids {
             this.register_callback(event_id, bus);
         }
 
@@ -177,12 +176,12 @@ impl PluginHandler {
         }
     }
 
-    /// Shutdowns the plugin by shutting down all the plugin streamers, removing the plugin
-    /// callbacks from the event bus and killing the plugin process.
+    /// Shutdowns the plugin by shutting down all the plugin streamers, removing the plugin callbacks from the event bus
+    /// and killing the plugin process.
     pub(crate) async fn shutdown(mut self, bus: &EventBus<'static, UniqueId>) -> Result<(), PluginError> {
         for (_id, shutdown) in self.shutdowns {
-            // If sending fails, this means that the receiver was already dropped which means that
-            // the streamer is already gone.
+            // If sending fails, this means that the receiver was already dropped which means that the streamer is
+            // already gone.
             shutdown.send(()).ok();
         }
         debug!("removing callbacks for the `{}` plugin", self.name);

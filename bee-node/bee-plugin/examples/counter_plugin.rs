@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_plugin::{event::*, handshake::HandshakeInfo, serve_plugin, Plugin, PluginError};
+use bee_plugin::{event::*, serve_plugin, Plugin, PluginError, PluginHandshake};
 
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
@@ -30,8 +30,8 @@ impl Counter {
 
 #[async_trait::async_trait]
 impl Plugin for Counter {
-    fn handshake_info() -> HandshakeInfo {
-        HandshakeInfo::new("[::1]:50051".parse().unwrap(), "counter", vec![EventId::MessageParsed])
+    fn handshake() -> PluginHandshake {
+        PluginHandshake::new("counter", "[::1]:50051".parse().unwrap(), vec![EventId::MessageParsed])
     }
 
     async fn shutdown(&self) {

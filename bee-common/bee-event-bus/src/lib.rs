@@ -19,7 +19,7 @@ type Listeners<'a, T> = HashMap<TypeId, Vec<(Box<Listener<'a>>, T)>>;
 pub enum UniqueId<T> {
     /// Identifier for types.
     Type(TypeId),
-    /// Identifier for an object.
+    /// Identifier for objects.
     Object(T),
 }
 

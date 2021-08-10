@@ -9,8 +9,7 @@ use crate::{
         plugin_server::{Plugin as GrpcPlugin, PluginServer},
         ProcessReply, ShutdownReply, ShutdownRequest,
     },
-    handshake::HandshakeInfo,
-    PluginError,
+    PluginError, PluginHandshake,
 };
 
 use tokio::io::{stdout, AsyncWriteExt};
@@ -21,8 +20,8 @@ macro_rules! plugin_trait {
         /// Types that represent a plugin.
         #[tonic::async_trait]
         pub trait Plugin: Send + Sync + 'static {
-            /// Returns the `HandshakeInfo` of the current plugin.
-            fn handshake_info() -> HandshakeInfo;
+            /// Returns the `PluginHandshake` of the current plugin.
+            fn handshake() -> PluginHandshake;
             /// Prepares the plugin for shutdown.
             async fn shutdown(&self);
             $(
@@ -64,10 +63,10 @@ plugin_trait! {
 
 /// Does the handshake and runs a gRPC server for the specified plugin.
 pub async fn serve_plugin<T: Plugin>(plugin: T) -> Result<(), PluginError> {
-    let handshake_info = T::handshake_info();
-    let address = handshake_info.address;
+    let handshake = T::handshake();
+    let address = handshake.address;
 
-    stdout().write_all(handshake_info.emit().as_bytes()).await?;
+    stdout().write_all(handshake.emit().as_bytes()).await?;
 
     Server::builder()
         .add_service(PluginServer::new(plugin))
