@@ -44,7 +44,7 @@ impl PluginManager {
 
         info!("loading plugin with identifier {}", plugin_id);
         let handler = PluginHandler::new(plugin_id, command, &self.bus).await?;
-        info!("loaded plugin {} with identifier {}", handler.name(), plugin_id);
+        info!("loaded plugin {}", handler.name());
 
         self.handlers.insert(plugin_id, handler);
 

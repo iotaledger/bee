@@ -78,7 +78,7 @@ impl PluginHandler {
     ) -> Result<Self, PluginError> {
         command.kill_on_drop(true).stdout(Stdio::piped()).stderr(Stdio::piped());
 
-        info!(
+        debug!(
             "spawning command `{:?}` for the plugin with ID `{:?}`",
             command, plugin_id
         );
@@ -119,7 +119,7 @@ impl PluginHandler {
         });
 
         let address = format!("http://{}/", handshake_info.address);
-        info!("connecting to the `{}` plugin at `{}`", name, address);
+        debug!("connecting to the `{}` plugin at `{}`", name, address);
         let client = async {
             let mut count = 0;
             loop {
@@ -144,7 +144,7 @@ impl PluginHandler {
             }
         }
         .await?;
-        info!("connection to the `{}` plugin was successful", name);
+        debug!("connection to the `{}` plugin was successful", name);
 
         let mut this = Self {
             plugin_id,
@@ -185,10 +185,10 @@ impl PluginHandler {
             // the streamer is already gone.
             shutdown.send(()).ok();
         }
-        info!("removing callbacks for the `{}` plugin", self.name);
+        debug!("removing callbacks for the `{}` plugin", self.name);
         bus.remove_listeners_with_id(self.plugin_id.into());
 
-        info!("sending shutdown request to the `{}` plugin", self.name);
+        debug!("sending shutdown request to the `{}` plugin", self.name);
         let shutdown = self.client.shutdown(Request::new(ShutdownRequest {}));
         let delay = sleep(Duration::from_secs(30));
 
@@ -208,7 +208,7 @@ impl PluginHandler {
             }
         };
 
-        info!("killing process for the `{}` plugin", self.name);
+        debug!("killing process for the `{}` plugin", self.name);
         self.process.kill().await?;
 
         Ok(())

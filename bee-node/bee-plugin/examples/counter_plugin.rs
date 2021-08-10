@@ -1,8 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_logger::{logger_init, LoggerConfig, LoggerOutputConfigBuilder};
-use bee_plugin::{event::*, handshake::HandshakeInfo, serve_plugin, Plugin};
+use bee_plugin::{event::*, handshake::HandshakeInfo, serve_plugin, Plugin, PluginError};
 
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
@@ -19,6 +18,7 @@ impl Counter {
             inner: Arc::new(AtomicUsize::new(0)),
         }
     }
+
     fn increase(&self) {
         let count = self.inner.fetch_add(1, Ordering::Relaxed) + 1;
 
@@ -41,14 +41,13 @@ impl Plugin for Counter {
         );
     }
 
-    async fn process_message_parsed_event(&self, _event: MessageParsedEvent) {
+    async fn process_message_parsed_event(&self, _: MessageParsedEvent) {
         self.increase();
     }
 }
 
 #[tokio::main(flavor = "multi_thread")]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    logger_init(LoggerConfig::build().output(LoggerOutputConfigBuilder::new()).finish())?;
+async fn main() -> Result<(), PluginError> {
     let counter = Counter::new();
 
     serve_plugin(counter).await?;
