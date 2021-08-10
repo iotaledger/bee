@@ -35,15 +35,15 @@ impl PluginHandshake {
         let mut chunks = buf.trim().split('|');
         let name = chunks.next().ok_or(InvalidHandshake::MissingName)?.to_string();
         let address = chunks.next().ok_or(InvalidHandshake::MissingAddress)?.parse()?;
-        let mut event_ids = vec![];
-
-        for chunk in chunks {
-            let raw_id: u8 = chunk
-                .parse()
-                .map_err(|_| InvalidHandshake::ExpectedInteger(chunk.to_owned()))?;
-            let event_id = EventId::try_from(raw_id)?;
-            event_ids.push(event_id);
-        }
+        let event_ids = chunks
+            .map(|chunk| {
+                let raw_id: u8 = chunk
+                    .parse()
+                    .map_err(|_| InvalidHandshake::ExpectedInteger(chunk.to_owned()))?;
+                let event_id = EventId::try_from(raw_id)?;
+                Ok(event_id)
+            })
+            .collect::<Result<Vec<EventId>, InvalidHandshake>>()?;
 
         Ok(PluginHandshake {
             name,
