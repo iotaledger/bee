@@ -24,7 +24,19 @@ pub use plugin::{serve_plugin, Plugin};
 
 use std::any::TypeId;
 
-/// A unique identifier for `EventBus` callbacks.
+/// A unique identifier for each plugin.
+///
+/// Uniqueness is guaranteed inside a single [`PluginManager`].
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Ord, PartialOrd)]
+pub struct PluginId(usize);
+
+impl core::fmt::Display for PluginId {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+/// A unique identifier for [`EventBus`](bee_event_bus::EventBus) callbacks.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum UniqueId {
     /// Identifier for types.
@@ -44,9 +56,3 @@ impl From<PluginId> for UniqueId {
         Self::Plugin(id)
     }
 }
-
-/// A unique identifier for each plugin.
-///
-/// Uniqueness is guaranteed inside a single `PluginManager`.
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub struct PluginId(usize);

@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    error::PluginError,
     event::*,
     grpc::{plugin_client::PluginClient, ShutdownRequest},
     handshake::HandshakeInfo,
     streamer::PluginStreamer,
-    PluginId, UniqueId,
+    PluginError, PluginId, UniqueId,
 };
 
 use bee_event_bus::EventBus;

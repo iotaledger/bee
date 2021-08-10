@@ -1,7 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_plugin::{event::*, handshake::HandshakeInfo, serve_plugin, Plugin, PluginError};
+use bee_logger::{logger_init, LoggerConfig, LoggerOutputConfigBuilder};
+use bee_plugin::{event::*, handshake::HandshakeInfo, serve_plugin, Plugin};
 
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
@@ -46,7 +47,8 @@ impl Plugin for Counter {
 }
 
 #[tokio::main(flavor = "multi_thread")]
-async fn main() -> Result<(), PluginError> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    logger_init(LoggerConfig::build().output(LoggerOutputConfigBuilder::new()).finish())?;
     let counter = Counter::new();
 
     serve_plugin(counter).await?;

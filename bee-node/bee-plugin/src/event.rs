@@ -7,17 +7,21 @@ pub use crate::grpc::{MessageParsedEvent, MessageRejectedEvent, ParsingFailedEve
 
 use std::convert::TryFrom;
 
-/// Identifier for each event type.
+/// Identifiers for each event type.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 #[repr(u8)]
 pub enum EventId {
-    /// Identifier for `MessageParsedEvent`.
+    /// Identifier for [`MessageParsedEvent`].
     MessageParsed = 0,
-    /// Identifier for `ParsingFailedEvent`.
+    /// Identifier for [`ParsingFailedEvent`].
     ParsingFailed = 1,
-    /// Identifier for `MessageRejectedEvent`.
+    /// Identifier for [`MessageRejectedEvent`].
     MessageRejected = 2,
 }
+
+/// Error returned while converting an [`u8`] into an [`EventId`].
+#[derive(Debug)]
+pub struct InvalidEventId(pub(crate) u8);
 
 impl TryFrom<u8> for EventId {
     type Error = InvalidEventId;
@@ -31,7 +35,3 @@ impl TryFrom<u8> for EventId {
         }
     }
 }
-
-/// Error returned while converting into an `EventId`.
-#[derive(Debug)]
-pub struct InvalidEventId(pub(crate) u8);

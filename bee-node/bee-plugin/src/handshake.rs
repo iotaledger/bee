@@ -21,7 +21,7 @@ pub struct HandshakeInfo {
 }
 
 impl HandshakeInfo {
-    /// Creates a new `HandshakeInfo` using the plugin's gRPC server address, the plugin's name for
+    /// Creates a new [`HandshakeInfo`] using the plugin's gRPC server address, the plugin's name for
     /// logging purposes and the `EventId`s that the plugins will be suscribed to.
     pub fn new(address: SocketAddr, name: &str, event_ids: Vec<EventId>) -> Self {
         Self {
@@ -33,13 +33,9 @@ impl HandshakeInfo {
 
     pub(crate) fn parse(buf: &str) -> Result<Self, InvalidHandshake> {
         let mut chunks = buf.trim().split('|');
-
         let address_chunk = chunks.next().ok_or(InvalidHandshake::MissingAddress)?;
-
         let address: SocketAddr = address_chunk.parse()?;
-
         let name = chunks.next().ok_or(InvalidHandshake::MissingName)?.to_string();
-
         let mut event_ids = vec![];
 
         for chunk in chunks {
@@ -59,11 +55,11 @@ impl HandshakeInfo {
 
     pub(crate) fn emit(self) -> String {
         let mut buf = String::new();
-        // writing to a string buffer cannot fail.
+        // Writing to a string buffer cannot fail.
         write!(&mut buf, "{}|{}", self.address, self.name).unwrap();
 
         for id in self.event_ids {
-            // writing to a string buffer cannot fail.
+            // Writing to a string buffer cannot fail.
             write!(&mut buf, "|{}", id as u8).unwrap();
         }
 

@@ -13,16 +13,12 @@ service Plugin {
 }
 
 message ShutdownRequest {}
-
 message ShutdownReply {}
-
 message ProcessReply {}
 
 // Event triggered when a message succesfully passes the parsing stage.
 message MessageParsedEvent {}
-
 // Event triggered when parsing a message fails.
 message ParsingFailedEvent {}
-
 // Event triggered when the syntactical validation of a message fails.
 message MessageRejectedEvent {}

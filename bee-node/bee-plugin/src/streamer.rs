@@ -7,9 +7,7 @@ use tokio::{
     select,
     sync::{mpsc::UnboundedReceiver, oneshot::Receiver},
 };
-
 use tokio_stream::wrappers::UnboundedReceiverStream;
-
 use tonic::transport::Channel;
 
 /// Type that streams events of the specified type to the gRPC server of a plugin.
@@ -20,9 +18,9 @@ pub(crate) struct PluginStreamer<T> {
 }
 
 impl<T> PluginStreamer<T> {
-    pub(crate) fn new(rx: UnboundedReceiver<T>, shutdown: Receiver<()>, client: PluginClient<Channel>) -> Self {
+    pub(crate) fn new(stream: UnboundedReceiver<T>, shutdown: Receiver<()>, client: PluginClient<Channel>) -> Self {
         Self {
-            stream: UnboundedReceiverStream::new(rx),
+            stream: UnboundedReceiverStream::new(stream),
             shutdown,
             client,
         }

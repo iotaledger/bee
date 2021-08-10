@@ -28,7 +28,7 @@ pub struct Hotloader {
 }
 
 impl Hotloader {
-    /// Creates a new `Hotloader` that watches the specified directory.
+    /// Creates a new [`Hotloader`] that watches the specified directory.
     pub fn new<P: AsRef<Path> + ?Sized>(directory: &P, event_bus: Arc<EventBus<'static, UniqueId>>) -> Self {
         Self {
             directory: directory.as_ref().to_owned(),
@@ -68,16 +68,16 @@ impl Hotloader {
                     Some(last_write) => {
                         if info.last_write != last_write {
                             // The file changed
-                            self.manager.unload_plugin(info.id).await?;
+                            self.manager.unload(info.id).await?;
                             let command = Command::new(path);
-                            info.id = self.manager.load_plugin(command).await?;
+                            info.id = self.manager.load(command).await?;
                             info.last_write = last_write;
                         }
                     }
                     // The file no longer exists
                     None => {
                         to_delete.push(path.clone());
-                        self.manager.unload_plugin(info.id).await?;
+                        self.manager.unload(info.id).await?;
                     }
                 }
             }
@@ -100,7 +100,7 @@ impl Hotloader {
         }
         for (path, last_write) in to_load {
             let command = Command::new(&path);
-            let id = self.manager.load_plugin(command).await?;
+            let id = self.manager.load(command).await?;
             self.plugins_info.insert(path, PluginInfo { id, last_write });
         }
 

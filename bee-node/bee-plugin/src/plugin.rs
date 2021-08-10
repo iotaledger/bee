@@ -4,13 +4,13 @@
 //! Utilities to write plugins.
 
 use crate::{
-    error::PluginError,
     event::*,
     grpc::{
         plugin_server::{Plugin as GrpcPlugin, PluginServer},
         ProcessReply, ShutdownReply, ShutdownRequest,
     },
     handshake::HandshakeInfo,
+    PluginError,
 };
 
 use tokio::io::{stdout, AsyncWriteExt};
