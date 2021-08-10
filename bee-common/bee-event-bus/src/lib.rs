@@ -14,7 +14,7 @@ use std::{
 type Listener<'a> = dyn Fn(&dyn Any) + Send + Sync + 'a;
 type Listeners<'a, T> = HashMap<TypeId, Vec<(Box<Listener<'a>>, T)>>;
 
-/// A unique identifier for [`EventBus`](bee_event_bus::EventBus) callbacks.
+/// A unique identifier for [`EventBus`] callbacks.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum UniqueId<T> {
     /// Identifier for types.

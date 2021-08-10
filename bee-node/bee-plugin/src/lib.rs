@@ -34,7 +34,7 @@ impl core::fmt::Display for PluginId {
     }
 }
 
-/// A unique identifier used by an [`EventBus`] that handles plugin callbacks.
+/// A unique identifier used by an [`EventBus`](bee_event_bus::EventBus) that handles plugin callbacks.
 pub type UniqueId = bee_event_bus::UniqueId<PluginId>;
 
 // We cannot provide a `From` implementation because `UniqueId<T>` is defined outside this crate.
