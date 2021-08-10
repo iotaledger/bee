@@ -1,11 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_plugin::{
-    event::*,
-    handshake::HandshakeInfo,
-    PluginError, {serve_plugin, Plugin},
-};
+use bee_plugin::{event::*, handshake::HandshakeInfo, serve_plugin, Plugin, PluginError};
 
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
