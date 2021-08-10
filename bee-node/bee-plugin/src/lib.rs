@@ -1,24 +1,26 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! The bee node plugin system.
+//! The bee node API for plugins.
 
-#![deny(missing_docs)]
+#![deny(missing_docs, warnings)]
 
 mod handler;
-mod handshake;
-pub mod hotloading;
 mod manager;
 mod streamer;
 mod grpc {
     tonic::include_proto!("plugin");
 }
 mod error;
+mod plugin;
+
 pub mod event;
-pub mod plugin;
+pub mod handshake;
+pub mod hotloading;
 
 pub use error::PluginError;
 pub use manager::PluginManager;
+pub use plugin::{serve_plugin, Plugin};
 
 use std::any::TypeId;
 

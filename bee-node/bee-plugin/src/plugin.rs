@@ -3,7 +3,6 @@
 
 //! Utilities to write plugins.
 
-pub use crate::handshake::HandshakeInfo;
 use crate::{
     error::PluginError,
     event::*,
@@ -11,6 +10,7 @@ use crate::{
         plugin_server::{Plugin as GrpcPlugin, PluginServer},
         ProcessReply, ShutdownReply, ShutdownRequest,
     },
+    handshake::HandshakeInfo,
 };
 
 use tokio::io::{stdout, AsyncWriteExt};

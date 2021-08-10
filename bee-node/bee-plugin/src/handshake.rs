@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Handshake definition for the bee plugin system.
+
 use crate::event::{EventId, InvalidEventId};
 
 use thiserror::Error;
@@ -71,7 +73,9 @@ impl HandshakeInfo {
     }
 }
 
+/// Errors occurring while handshaking.
 #[derive(Debug, Error)]
+#[allow(missing_docs)]
 pub enum InvalidHandshake {
     #[error("missing address field")]
     MissingAddress,

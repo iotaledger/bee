@@ -3,8 +3,8 @@
 
 use bee_plugin::{
     event::*,
-    plugin::{serve_plugin, HandshakeInfo, Plugin},
-    PluginError,
+    handshake::HandshakeInfo,
+    PluginError, {serve_plugin, Plugin},
 };
 
 use std::sync::{
