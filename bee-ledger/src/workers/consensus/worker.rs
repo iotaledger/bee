@@ -248,14 +248,28 @@ where
         receipt: migration.is_some(),
     });
 
-    for (_, created_output) in metadata.created_outputs {
-        bus.dispatch(OutputCreated { output: created_output });
+    for (output_id, created_output) in metadata.created_outputs {
+        bus.dispatch(OutputCreated {
+            message_id: created_output.message_id,
+            output_id,
+            output: created_output.inner,
+        });
     }
 
-    for (_, (_, consumed_output)) in metadata.consumed_outputs {
-        bus.dispatch(OutputConsumed {
-            output: consumed_output,
-        });
+    for (output_id, (_, _consumed_output)) in metadata.consumed_outputs {
+        match storage::fetch_output(&*storage, &output_id) {
+            Ok(response) => match response {
+                Some(output) => {
+                    bus.dispatch(OutputConsumed {
+                        message_id: output.message_id,
+                        output_id,
+                        output: output.inner,
+                    });
+                }
+                None => {} // can this case even happen? as apply_milestone() will be called before
+            },
+            Err(_) => {} // can this case even happen? panic?
+        }
     }
 
     Ok(())

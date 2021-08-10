@@ -3,9 +3,11 @@
 
 //! Module containing the event occurring during ledger operations.
 
-use crate::types::{ConsumedOutput, CreatedOutput};
-
-use bee_message::{milestone::MilestoneIndex, MessageId};
+use bee_message::{
+    milestone::MilestoneIndex,
+    output::{Output, OutputId},
+    MessageId,
+};
 use bee_tangle::ConflictReason;
 
 /// An event that indicates that a milestone was confirmed.
@@ -41,17 +43,23 @@ pub struct MessageReferenced {
 }
 
 /// An event that indicates that an output was consumed.
-#[derive(Clone)]
 pub struct OutputConsumed {
-    /// The consumed output.
-    pub output: ConsumedOutput,
+    /// The identifier of the message that contains the transaction that creates the output
+    pub message_id: MessageId,
+    /// The identifier of the created output
+    pub output_id: OutputId,
+    /// The created output
+    pub output: Output,
 }
 
 /// An event that indicates that an output was created.
-#[derive(Clone)]
 pub struct OutputCreated {
-    /// The created output.
-    pub output: CreatedOutput,
+    /// The identifier of the message that contains the transaction that creates the output
+    pub message_id: MessageId,
+    /// The identifier of the created output
+    pub output_id: OutputId,
+    /// The created output
+    pub output: Output,
 }
 
 /// An event that indicates that a snapshot happened.
