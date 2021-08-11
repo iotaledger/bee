@@ -8,19 +8,19 @@ use syn::{
     Attribute, Expr,
 };
 
-pub(crate) struct PackErrWith {
+pub(crate) struct UnpackErrWith {
     pub(crate) with: Option<Expr>,
 }
 
-impl PackErrWith {
+impl UnpackErrWith {
     pub(crate) fn new(attrs: &[Attribute]) -> syn::Result<Self> {
-        super::parse_attribute::<Self>("pack_err_with", attrs).unwrap_or(Ok(Self { with: None }))
+        super::parse_attribute::<Self>("unpack_error_with", attrs).unwrap_or(Ok(Self { with: None }))
     }
 }
 
-impl Parse for PackErrWith {
+impl Parse for UnpackErrWith {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        parse_key("pack_err_with", input)?;
+        parse_key("unpack_error_with", input)?;
         let with = input
             .parse::<Expr>()
             .map_err(|err| syn::Error::new(err.span(), "Expected an expression."))?;

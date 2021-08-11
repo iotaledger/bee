@@ -40,8 +40,8 @@ impl Fragments {
         let mut labels = Vec::with_capacity(len);
         // The value of each field of the record.
         let mut values = Vec::with_capacity(len);
-        let mut pack_err_withs = Vec::with_capacity(len);
-        let mut unpack_err_withs = Vec::with_capacity(len);
+        let mut pack_error_withs = Vec::with_capacity(len);
+        let mut unpack_error_withs = Vec::with_capacity(len);
 
         for (index, Field { ident, ty, attrs, .. }) in fields.iter().enumerate() {
             if NAMED {
@@ -58,16 +58,16 @@ impl Fragments {
             // We will use variables called `field_<index>` for the values of each field.
             values.push(format_ident!("field_{}", index));
 
-            pack_err_withs.push(PackErrWith::new(attrs)?);
-            unpack_err_withs.push(UnpackErrWith::new(attrs)?);
+            pack_error_withs.push(PackErrWith::new(attrs)?);
+            unpack_error_withs.push(UnpackErrWith::new(attrs)?);
         }
 
-        let pack_err_withs = pack_err_withs.iter().map(|attr| {
+        let pack_error_withs = pack_error_withs.iter().map(|attr| {
             attr.with
                 .as_ref()
                 .map_or_else(|| pack_error_with.clone(), ToTokens::to_token_stream)
         });
-        let unpack_err_withs = unpack_err_withs.iter().map(|attr| {
+        let unpack_error_withs = unpack_error_withs.iter().map(|attr| {
             attr.with
                 .as_ref()
                 .map_or_else(|| unpack_error_with.clone(), ToTokens::to_token_stream)
@@ -84,7 +84,7 @@ impl Fragments {
             // Ok(())
             // ```
             pack: quote! {
-                #(<#types>::pack(#values, packer).map_err(|err| err.map(#pack_err_withs)).coerce()?;) *
+                #(<#types>::pack(#values, packer).map_err(|err| err.map(#pack_error_withs)).coerce()?;) *
                 Ok(())
             },
             // This would be `0 + <T>::packed_len(&field_0) + <V>::packed_len(&field_1)`. The `0`
@@ -97,7 +97,7 @@ impl Fragments {
             //     baz: <V>::unpack(unpacker).map_err(|err| err.map(core::convert::identity).coerce()?,
             // })```
             unpack: quote! {Ok(#name {
-                #(#labels: <#types>::unpack(unpacker).map_err(|err| err.map(#unpack_err_withs)).coerce()?,)*
+                #(#labels: <#types>::unpack(unpacker).map_err(|err| err.map(#unpack_error_withs)).coerce()?,)*
             })},
         })
     }

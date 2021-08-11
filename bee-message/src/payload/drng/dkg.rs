@@ -34,7 +34,7 @@ pub struct EncryptedDeal {
     /// The ciphertext of the share.
     encrypted_share: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
     /// The threshold of the secret sharing protocol.
-    #[packable(unpack_err_with = core::convert::identity)]
+    #[packable(unpack_error_with = core::convert::identity)]
     threshold: u32,
     /// The commitments of the polynomial used to derive the share.
     commitments: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,

@@ -49,10 +49,10 @@ fn unpack_prefix_to_invalid_data_length(err: UnpackPrefixError<Infallible>) -> V
 #[packable(unpack_error = MessageUnpackError)]
 pub struct IndexationPayload {
     /// The index key of the message.
-    #[packable(unpack_err_with = unpack_prefix_to_invalid_index_length)]
+    #[packable(unpack_error_with = unpack_prefix_to_invalid_index_length)]
     index: VecPrefix<u8, BoundedU32<PREFIXED_INDEX_LENGTH_MIN, PREFIXED_INDEX_LENGTH_MAX>>,
     /// The data attached to this index.
-    #[packable(unpack_err_with = unpack_prefix_to_invalid_data_length)]
+    #[packable(unpack_error_with = unpack_prefix_to_invalid_data_length)]
     data: VecPrefix<u8, BoundedU32<0, PREFIXED_DATA_LENGTH_MAX>>,
 }
 

@@ -73,7 +73,7 @@ impl AssetBalance {
 #[packable(unpack_error = MessageUnpackError)]
 pub struct SignatureLockedAssetOutput {
     address: Address,
-    #[packable(unpack_err_with = unpack_prefix_to_validation_error)]
+    #[packable(unpack_error_with = unpack_prefix_to_validation_error)]
     balances: VecPrefix<AssetBalance, BoundedU32<0, PREFIXED_BALANCES_LENGTH_MAX>>,
 }
 

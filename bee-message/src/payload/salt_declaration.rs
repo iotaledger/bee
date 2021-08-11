@@ -31,7 +31,7 @@ fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> Va
 #[packable(unpack_error = MessageUnpackError)]
 pub struct Salt {
     /// The value of the [`Salt`].
-    #[packable(unpack_err_with = unpack_prefix_to_validation_error)]
+    #[packable(unpack_error_with = unpack_prefix_to_validation_error)]
     bytes: VecPrefix<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>,
     /// The expiry time of the [`Salt`].
     expiry_time: u64,
