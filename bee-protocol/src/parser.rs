@@ -3,6 +3,7 @@
 
 use bee_message::Message;
 use bee_packable::Packable;
+use bee_plugin::event::*;
 
 use crate::EventBus;
 
@@ -14,14 +15,6 @@ use backstage::{
 use std::{collections::VecDeque, marker::PhantomData};
 
 const RECENTLY_SEEN_MAX_LEN: usize = 10;
-
-// FIXME: import this from `bee-plugin` once it is merged.
-pub struct MessageParsedEvent {
-    pub message: Message,
-}
-
-pub struct ParsingFailedEvent {}
-pub struct MessageRejectedEvent {}
 
 pub struct ParseEvent {
     pub bytes: Vec<u8>,
@@ -84,12 +77,10 @@ impl Actor for ParserWorker {
         while let Some(ParseEvent { bytes }) = rt.next_event().await {
             if !self.is_recent(&bytes) {
                 match Message::unpack_from_slice(&bytes) {
-                    Ok(message) => {
+                    Ok(_) => {
                         // FIXME: figure out the remaining validation steps.
                         // For now, just send the message.
-                        bus.dispatch(MessageParsedEvent {
-                            message: message.clone(),
-                        });
+                        bus.dispatch(MessageParsedEvent {});
                     }
                     Err(err) => match err {
                         bee_packable::UnpackError::Packable(_err) => {

@@ -4,10 +4,10 @@
 mod parser;
 mod storage;
 
+use bee_plugin::UniqueId;
 pub use parser::*;
 pub use storage::*;
 
 use std::sync::Arc;
 
-/// FIXME: use the identifier from `bee-plugin` once it is merged
-type EventBus = Arc<bee_event_bus::EventBus<'static>>;
+type EventBus = Arc<bee_event_bus::EventBus<'static, UniqueId>>;
