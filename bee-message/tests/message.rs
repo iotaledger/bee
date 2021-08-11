@@ -1,13 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::convert::TryFrom;
+
 use bee_message::{
-    parents::{ParentsBlock, ParentsKind},
+    parents::{ParentsBlock, ParentsKind, PREFIXED_PARENTS_LENGTH_MAX, PREFIXED_PARENTS_LENGTH_MIN},
     payload::{indexation::IndexationPayload, Payload},
     util::hex_decode,
     Message, MessageBuilder, MessageId, MessageUnpackError, ValidationError,
 };
-use bee_packable::{Packable, UnpackError};
+use bee_packable::{BoundedU8, Packable, UnpackError, VecPrefix};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,
@@ -23,15 +25,25 @@ const PARENT_5: &str = "f1109e0f2f5532ba8e3ee6838c68d019b4bbf0b5eeb947ff0a7a8154
 fn new_valid() {
     let message = MessageBuilder::new()
         .add_parents_block(
-            ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
+            ParentsBlock::new(
+                ParentsKind::Strong,
+                VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(
+                    vec![MessageId::new(hex_decode(PARENT_1).unwrap())],
+                )
+                .unwrap(),
+            )
+            .unwrap(),
         )
         .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
-                vec![
-                    MessageId::new(hex_decode(PARENT_2).unwrap()),
-                    MessageId::new(hex_decode(PARENT_3).unwrap()),
-                ],
+                VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(
+                    vec![
+                        MessageId::new(hex_decode(PARENT_2).unwrap()),
+                        MessageId::new(hex_decode(PARENT_3).unwrap()),
+                    ],
+                )
+                .unwrap(),
             )
             .unwrap(),
         )
@@ -103,10 +115,13 @@ fn invalid_no_strong_parents() {
         .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
-                vec![
-                    MessageId::new(hex_decode(PARENT_1).unwrap()),
-                    MessageId::new(hex_decode(PARENT_2).unwrap()),
-                ],
+                VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(
+                    vec![
+                        MessageId::new(hex_decode(PARENT_1).unwrap()),
+                        MessageId::new(hex_decode(PARENT_2).unwrap()),
+                    ],
+                )
+                .unwrap(),
             )
             .unwrap(),
         )
@@ -149,23 +164,54 @@ fn invalid_no_parents_blocks() {
 fn invalid_parents_blocks_more_than_max() {
     let message = MessageBuilder::new()
         .add_parents_block(
-            ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
-            ParentsBlock::new(ParentsKind::Weak, vec![MessageId::new(hex_decode(PARENT_2).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
-            ParentsBlock::new(ParentsKind::Liked, vec![MessageId::new(hex_decode(PARENT_3).unwrap())]).unwrap(),
-        )
-        .add_parents_block(
             ParentsBlock::new(
-                ParentsKind::Disliked,
-                vec![MessageId::new(hex_decode(PARENT_4).unwrap())],
+                ParentsKind::Strong,
+                VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(
+                    vec![MessageId::new(hex_decode(PARENT_1).unwrap())],
+                )
+                .unwrap(),
             )
             .unwrap(),
         )
         .add_parents_block(
-            ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_5).unwrap())]).unwrap(),
+            ParentsBlock::new(
+                ParentsKind::Weak,
+                VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(
+                    vec![MessageId::new(hex_decode(PARENT_2).unwrap())],
+                )
+                .unwrap(),
+            )
+            .unwrap(),
+        )
+        .add_parents_block(
+            ParentsBlock::new(
+                ParentsKind::Liked,
+                VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(
+                    vec![MessageId::new(hex_decode(PARENT_3).unwrap())],
+                )
+                .unwrap(),
+            )
+            .unwrap(),
+        )
+        .add_parents_block(
+            ParentsBlock::new(
+                ParentsKind::Disliked,
+                VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(
+                    vec![MessageId::new(hex_decode(PARENT_4).unwrap())],
+                )
+                .unwrap(),
+            )
+            .unwrap(),
+        )
+        .add_parents_block(
+            ParentsBlock::new(
+                ParentsKind::Strong,
+                VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(
+                    vec![MessageId::new(hex_decode(PARENT_5).unwrap())],
+                )
+                .unwrap(),
+            )
+            .unwrap(),
         )
         .with_issuer_public_key(rand_bytes_array())
         .with_issue_timestamp(rand_number())
@@ -187,15 +233,25 @@ fn invalid_parents_blocks_more_than_max() {
 fn packed_len() {
     let message = MessageBuilder::new()
         .add_parents_block(
-            ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
+            ParentsBlock::new(
+                ParentsKind::Strong,
+                VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(
+                    vec![MessageId::new(hex_decode(PARENT_1).unwrap())],
+                )
+                .unwrap(),
+            )
+            .unwrap(),
         )
         .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
-                vec![
-                    MessageId::new(hex_decode(PARENT_2).unwrap()),
-                    MessageId::new(hex_decode(PARENT_3).unwrap()),
-                ],
+                VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(
+                    vec![
+                        MessageId::new(hex_decode(PARENT_2).unwrap()),
+                        MessageId::new(hex_decode(PARENT_3).unwrap()),
+                    ],
+                )
+                .unwrap(),
             )
             .unwrap(),
         )
@@ -220,15 +276,25 @@ fn packed_len() {
 fn packable_round_trip() {
     let message_a = MessageBuilder::new()
         .add_parents_block(
-            ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
+            ParentsBlock::new(
+                ParentsKind::Strong,
+                VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(
+                    vec![MessageId::new(hex_decode(PARENT_1).unwrap())],
+                )
+                .unwrap(),
+            )
+            .unwrap(),
         )
         .add_parents_block(
             ParentsBlock::new(
                 ParentsKind::Weak,
-                vec![
-                    MessageId::new(hex_decode(PARENT_2).unwrap()),
-                    MessageId::new(hex_decode(PARENT_3).unwrap()),
-                ],
+                VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(
+                    vec![
+                        MessageId::new(hex_decode(PARENT_2).unwrap()),
+                        MessageId::new(hex_decode(PARENT_3).unwrap()),
+                    ],
+                )
+                .unwrap(),
             )
             .unwrap(),
         )
