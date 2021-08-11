@@ -41,7 +41,7 @@ impl Plugin for Counter {
         );
     }
 
-    async fn process_message_parsed_event(&self, _: MessageParsedEvent) {
+    async fn process_message_parsed_event(&self, _event: MessageParsedEvent) {
         self.increase();
     }
 }

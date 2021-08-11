@@ -17,15 +17,17 @@ use tonic::{transport::Server, Request, Response, Status, Streaming};
 
 macro_rules! plugin_trait {
     ($($event_ty:ty => $method_name:ident),*) => {
-        /// Types that represent a plugin.
+        /// Type that represents a plugin.
         #[tonic::async_trait]
         pub trait Plugin: Send + Sync + 'static {
             /// Returns the `PluginHandshake` of the current plugin.
             fn handshake() -> PluginHandshake;
+
             /// Prepares the plugin for shutdown.
             async fn shutdown(&self);
+
             $(
-                #[doc = concat!("Handles an event of type `", stringify!($event_ty), "`.")]
+                #[doc = concat!("Processes an event of type `", stringify!($event_ty), "`.")]
                 async fn $method_name(&self, _event: $event_ty) {}
             )*
         }
