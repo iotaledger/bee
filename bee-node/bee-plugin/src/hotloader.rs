@@ -117,7 +117,7 @@ impl PluginHotloader {
                     self.plugins_info.insert(path, PluginInfo { id, last_write });
                 }
                 Err(err) => {
-                    log::warn!("could not load plugin from path `{}`: {}", path.display(), err);
+                    log::warn!("could not load plugin from path \"{}\": {}", path.display(), err);
                     self.ignored_files.insert(path, last_write);
                 }
             }
