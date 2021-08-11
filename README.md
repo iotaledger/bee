@@ -42,7 +42,7 @@ If you want to discuss Bee, or have some questions about it, join us on the
 [IOTA Discord server](https://discord.iota.org/) in the `#bee-dev` and
 `#bee-discussion` channels.
 
-If you want to be a part of development, please see the [contributing guidelines](contribute/contribute.md) for information on how to contribute.
+If you want to be a part of development, please see the [contributing guidelines](https://bee.docs.iota.org/contribute/contribute) for information on how to contribute.
 
 ## Joining the Discussion
 

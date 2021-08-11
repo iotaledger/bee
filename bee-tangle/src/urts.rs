@@ -123,7 +123,7 @@ impl UrtsTipPool {
         let mut to_remove = Vec::new();
 
         for tip in self.tips.keys() {
-            match self.tip_score::<B>(tangle, &tip).await {
+            match self.tip_score::<B>(tangle, tip).await {
                 Score::SemiLazy | Score::Lazy => {
                     to_remove.push(*tip);
                 }
@@ -149,8 +149,8 @@ impl UrtsTipPool {
             // The tip pool only works with solid tips. Therefore, all tips added to the pool can be considered to
             // solid. The solid flag will be set together with omrsi and ymrsi values. Therefore, when a
             // message is solid, omrsi and ymrsi values are available. Therefore, unwrapping here is fine.
-            let omrsi = *tangle.omrsi(&message_id).await.unwrap().index();
-            let ymrsi = *tangle.ymrsi(&message_id).await.unwrap().index();
+            let omrsi = *tangle.omrsi(message_id).await.unwrap().index();
+            let ymrsi = *tangle.ymrsi(message_id).await.unwrap().index();
 
             if smi > ymrsi + YMRSI_DELTA || smi > omrsi + self.below_max_depth {
                 Score::Lazy
@@ -190,7 +190,7 @@ impl UrtsTipPool {
             metadata
                 .time_first_child
                 .filter(|age| age.elapsed().as_secs() > MAX_AGE_SECONDS_AFTER_FIRST_CHILD as u64)
-                .map(|_| non_lazy_tips.remove(&tip))
+                .map(|_| non_lazy_tips.remove(tip))
                 .is_none()
         });
     }

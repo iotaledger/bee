@@ -262,18 +262,18 @@ impl PeerList {
         // - Deny more than the configured unknown peers.
         if peer_id == &self.local_id {
             Err(Error::PeerIsLocal(*peer_id))
-        } else if self.local_addrs.contains(&peer_addr) {
+        } else if self.local_addrs.contains(peer_addr) {
             Err(Error::AddressIsLocal(peer_addr.clone()))
         } else if self.banned_peers.contains(peer_id) {
             Err(Error::PeerIsBanned(*peer_id))
-        } else if self.banned_addrs.contains(&peer_addr) {
+        } else if self.banned_addrs.contains(peer_addr) {
             Err(Error::AddressIsBanned(peer_addr.clone()))
         } else if self
             .satisfies(peer_id, |_, state| state.is_connected())
             .unwrap_or(false)
         {
             Err(Error::PeerIsConnected(*peer_id))
-        } else if !self.contains(&peer_id)
+        } else if !self.contains(peer_id)
             && self.filter_count(|info, _| info.relation.is_unknown()) >= global::max_unknown_peers()
         {
             Err(Error::ExceedsUnknownPeerLimit(global::max_unknown_peers()))

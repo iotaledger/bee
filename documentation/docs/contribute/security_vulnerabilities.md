@@ -1,1 +1,3 @@
-{@include: ../../../.github/SECURITY.md}
+# Responsible Disclosure Policy
+
+{@import ../../../.github/SECURITY.md}

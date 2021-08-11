@@ -50,7 +50,7 @@ pub async fn visit_parents_depth_first<Fut, Metadata, Match, Apply, ElseApply, M
                     if matches(message_id, msg.clone(), meta).await {
                         apply(&message_id, &msg, &meta);
 
-                        parents.extend_from_slice(&msg.parents());
+                        parents.extend_from_slice(msg.parents());
                     } else {
                         else_apply(&message_id, &msg, &meta);
                     }

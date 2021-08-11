@@ -145,7 +145,7 @@ impl<B: StorageBackend> MsTangle<B> {
     pub async fn add_milestone(&self, idx: MilestoneIndex, milestone: Milestone) {
         // TODO: only insert if vacant
         self.inner
-            .update_metadata(&milestone.message_id(), |metadata| {
+            .update_metadata(milestone.message_id(), |metadata| {
                 metadata.flags_mut().set_milestone(true);
                 metadata.set_milestone_index(idx);
                 metadata.set_omrsi(IndexId::new(idx, *milestone.message_id()));
@@ -395,12 +395,12 @@ impl<B: StorageBackend> MsTangle<B> {
 
     /// Insert the given message ID and parents as a tip.
     pub async fn insert_tip(&self, message_id: MessageId, parents: Vec<MessageId>) {
-        self.tip_pool.lock().await.insert(&self, message_id, parents).await;
+        self.tip_pool.lock().await.insert(self, message_id, parents).await;
     }
 
     /// Update tip scores.
     pub async fn update_tip_scores(&self) {
-        self.tip_pool.lock().await.update_scores(&self).await;
+        self.tip_pool.lock().await.update_scores(self).await;
     }
 
     /// Return messages that require approving.

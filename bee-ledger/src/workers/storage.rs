@@ -410,7 +410,7 @@ pub(crate) fn fetch_outputs_for_ed25519_address<B: StorageBackend>(
     storage: &B,
     address: &Ed25519Address,
 ) -> Result<Option<Vec<OutputId>>, Error> {
-    Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&*storage, &address).map_err(|e| Error::Storage(Box::new(e)))
+    Fetch::<Ed25519Address, Vec<OutputId>>::fetch(&*storage, address).map_err(|e| Error::Storage(Box::new(e)))
 }
 
 pub(crate) fn is_output_unspent<B: StorageBackend>(storage: &B, output_id: &OutputId) -> Result<bool, Error> {
