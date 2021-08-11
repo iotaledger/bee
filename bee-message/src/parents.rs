@@ -3,7 +3,7 @@
 
 //! Module that provides types and syntactic validations of message parents.
 
-use crate::{message::MESSAGE_PARENTS_RANGE, MessageId, MessageUnpackError, ValidationError};
+use crate::{MessageId, MessageUnpackError, ValidationError};
 
 use bee_ord::is_unique_sorted;
 use bee_packable::{
@@ -15,9 +15,9 @@ use alloc::vec::Vec;
 use core::convert::{Infallible, TryFrom, TryInto};
 
 /// Minimum number of parents for a valid [`ParentsBlock`].
-pub const PREFIXED_PARENTS_LENGTH_MIN: u8 = *MESSAGE_PARENTS_RANGE.start();
+pub const PREFIXED_PARENTS_LENGTH_MIN: u8 = 1;
 /// Maximum number of parents for a valid [`ParentsBlock`].
-pub const PREFIXED_PARENTS_LENGTH_MAX: u8 = *MESSAGE_PARENTS_RANGE.end();
+pub const PREFIXED_PARENTS_LENGTH_MAX: u8 = 8;
 
 /// Minimum number of strong parents for a valid message.
 pub const MESSAGE_MIN_STRONG_PARENTS: usize = 1;

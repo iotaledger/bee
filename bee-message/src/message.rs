@@ -31,8 +31,6 @@ pub const MESSAGE_PUBLIC_KEY_LENGTH: usize = 32;
 /// Length (in bytes) of a message signature.
 pub const MESSAGE_SIGNATURE_LENGTH: usize = 64;
 
-/// The range representing the valid number of parents.
-pub(crate) const MESSAGE_PARENTS_RANGE: RangeInclusive<u8> = 1..=8;
 /// Valid number of [`ParentBlocks`] for a message.
 pub(crate) const PARENTS_BLOCKS_COUNT_RANGE: RangeInclusive<usize> = 1..=4;
 
