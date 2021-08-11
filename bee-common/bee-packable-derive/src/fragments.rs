@@ -1,6 +1,8 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::attribute::{PackErrorWith, UnpackErrorWith};
+
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{punctuated::Punctuated, token::Comma, Field};
@@ -30,7 +32,7 @@ impl Fragments {
         fields: &Punctuated<Field, Comma>,
         pack_error_with: &TokenStream,
         unpack_error_with: &TokenStream,
-    ) -> Self {
+    ) -> syn::Result<Self> {
         let len = fields.len();
         // The type of each field of the record.
         let mut types = Vec::with_capacity(len);
@@ -38,8 +40,10 @@ impl Fragments {
         let mut labels = Vec::with_capacity(len);
         // The value of each field of the record.
         let mut values = Vec::with_capacity(len);
+        let mut pack_error_withs = Vec::with_capacity(len);
+        let mut unpack_error_withs = Vec::with_capacity(len);
 
-        for (index, Field { ident, ty, .. }) in fields.iter().enumerate() {
+        for (index, Field { ident, ty, attrs, .. }) in fields.iter().enumerate() {
             if NAMED {
                 // This is a named field, which means its `ident` cannot be `None`.
                 labels.push(ident.as_ref().unwrap().to_token_stream());
@@ -53,10 +57,24 @@ impl Fragments {
             types.push(ty);
             // We will use variables called `field_<index>` for the values of each field.
             values.push(format_ident!("field_{}", index));
+
+            pack_error_withs.push(PackErrorWith::new(attrs)?);
+            unpack_error_withs.push(UnpackErrorWith::new(attrs)?);
         }
 
+        let pack_error_withs = pack_error_withs.iter().map(|attr| {
+            attr.with
+                .as_ref()
+                .map_or_else(|| pack_error_with.clone(), ToTokens::to_token_stream)
+        });
+        let unpack_error_withs = unpack_error_withs.iter().map(|attr| {
+            attr.with
+                .as_ref()
+                .map_or_else(|| unpack_error_with.clone(), ToTokens::to_token_stream)
+        });
+
         // Assume that the current record is `Foo { bar: T, baz: V }`.
-        Self {
+        Ok(Self {
             // This would be `Foo { bar: field_0 , baz: field_1 }`.
             pattern: quote!(#name { #(#labels: #values),* }),
             // This would be
@@ -66,7 +84,7 @@ impl Fragments {
             // Ok(())
             // ```
             pack: quote! {
-                #(<#types>::pack(#values, packer).map_err(|err| err.map(#pack_error_with)).coerce()?;) *
+                #(<#types>::pack(#values, packer).map_err(|err| err.map(#pack_error_withs)).coerce()?;) *
                 Ok(())
             },
             // This would be `0 + <T>::packed_len(&field_0) + <V>::packed_len(&field_1)`. The `0`
@@ -79,9 +97,9 @@ impl Fragments {
             //     baz: <V>::unpack(unpacker).map_err(|err| err.map(core::convert::identity).coerce()?,
             // })```
             unpack: quote! {Ok(#name {
-                #(#labels: <#types>::unpack(unpacker).map_err(|err| err.map(#unpack_error_with)).coerce()?,)*
+                #(#labels: <#types>::unpack(unpacker).map_err(|err| err.map(#unpack_error_withs)).coerce()?,)*
             })},
-        }
+        })
     }
 
     /// Consumes the fragments assuming that the record is a struct.

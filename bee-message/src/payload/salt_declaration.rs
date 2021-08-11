@@ -9,11 +9,7 @@ use crate::{
     MessageUnpackError, ValidationError,
 };
 
-use bee_packable::{
-    coerce::{PackCoerceInfallible, UnpackCoerceInfallible},
-    error::UnpackPrefixError,
-    BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
-};
+use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
 
 use alloc::vec::Vec;
 use core::convert::{Infallible, TryInto};
@@ -29,10 +25,12 @@ fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> Va
 }
 
 /// Represents a [`Salt`] used in a [`SaltDeclarationPayload`].
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = MessageUnpackError)]
 pub struct Salt {
     /// The value of the [`Salt`].
+    #[packable(unpack_error_with = unpack_prefix_to_validation_error)]
     bytes: VecPrefix<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>,
     /// The expiry time of the [`Salt`].
     expiry_time: u64,
@@ -59,32 +57,6 @@ impl Salt {
     /// Returns the expiration time of the [`Salt`].
     pub fn expiry_time(&self) -> u64 {
         self.expiry_time
-    }
-}
-
-impl Packable for Salt {
-    type PackError = Infallible;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.bytes.packed_len() + self.expiry_time.packed_len()
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.bytes.pack(packer).infallible()?;
-        self.expiry_time.pack(packer).infallible()
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let bytes =
-            VecPrefix::<u8, BoundedU32<0, PREFIXED_BYTES_LENGTH_MAX>>::unpack(unpacker).map_err(|err| match err {
-                UnpackError::Packable(err) => UnpackError::Packable(unpack_prefix_to_validation_error(err).into()),
-                UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
-            })?;
-
-        let expiry_time = u64::unpack(unpacker).infallible()?;
-
-        Ok(Self { bytes, expiry_time })
     }
 }
 
