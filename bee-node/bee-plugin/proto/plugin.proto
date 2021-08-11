@@ -1,0 +1,24 @@
+// Copyright 2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plugin;
+
+service Plugin {
+    rpc Shutdown(ShutdownRequest) returns (ShutdownReply);
+    rpc ProcessMessageParsedEvent(stream MessageParsedEvent) returns (ProcessReply);
+    rpc ProcessParsingFailedEvent(stream ParsingFailedEvent) returns (ProcessReply);
+    rpc ProcessMessageRejectedEvent(stream MessageRejectedEvent) returns (ProcessReply);
+}
+
+message ShutdownRequest {}
+message ShutdownReply {}
+message ProcessReply {}
+
+// Event triggered when a message succesfully passes the parsing stage.
+message MessageParsedEvent {}
+// Event triggered when parsing a message fails.
+message ParsingFailedEvent {}
+// Event triggered when the syntactical validation of a message fails.
+message MessageRejectedEvent {}
