@@ -43,6 +43,7 @@ pub struct MessageReferenced {
 }
 
 /// An event that indicates that an output was consumed.
+#[derive(Clone)]
 pub struct OutputConsumed {
     /// The identifier of the message that contains the transaction that consumes the output.
     pub message_id: MessageId,
@@ -53,6 +54,7 @@ pub struct OutputConsumed {
 }
 
 /// An event that indicates that an output was created.
+#[derive(Clone)]
 pub struct OutputCreated {
     /// The identifier of the message that contains the transaction that creates the output.
     pub message_id: MessageId,
