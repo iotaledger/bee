@@ -9,11 +9,11 @@ mod unpack_error;
 mod unpack_error_with;
 
 pub(crate) use pack_error::PackError;
-pub(crate) use pack_error_with::PackErrWith;
+pub(crate) use pack_error_with::PackErrorWith;
 pub(crate) use tag::Tag;
 pub(crate) use tag_type::TagType;
 pub(crate) use unpack_error::UnpackError;
-pub(crate) use unpack_error_with::UnpackErrWith;
+pub(crate) use unpack_error_with::UnpackErrorWith;
 
 use syn::{
     parse::{Parse, ParseStream},

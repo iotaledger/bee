@@ -8,17 +8,17 @@ use syn::{
     Attribute, Expr,
 };
 
-pub(crate) struct UnpackErrWith {
+pub(crate) struct UnpackErrorWith {
     pub(crate) with: Option<Expr>,
 }
 
-impl UnpackErrWith {
+impl UnpackErrorWith {
     pub(crate) fn new(attrs: &[Attribute]) -> syn::Result<Self> {
         super::parse_attribute::<Self>("unpack_error_with", attrs).unwrap_or(Ok(Self { with: None }))
     }
 }
 
-impl Parse for UnpackErrWith {
+impl Parse for UnpackErrorWith {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         parse_key("unpack_error_with", input)?;
         let with = input

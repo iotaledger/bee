@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::attribute::{PackErrWith, UnpackErrWith};
+use crate::attribute::{PackErrorWith, UnpackErrorWith};
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
@@ -58,8 +58,8 @@ impl Fragments {
             // We will use variables called `field_<index>` for the values of each field.
             values.push(format_ident!("field_{}", index));
 
-            pack_error_withs.push(PackErrWith::new(attrs)?);
-            unpack_error_withs.push(UnpackErrWith::new(attrs)?);
+            pack_error_withs.push(PackErrorWith::new(attrs)?);
+            unpack_error_withs.push(UnpackErrorWith::new(attrs)?);
         }
 
         let pack_error_withs = pack_error_withs.iter().map(|attr| {
