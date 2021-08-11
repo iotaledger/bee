@@ -269,7 +269,7 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
                     // In other words: If we find at least one confirmed approver, then we know the flag wasn't set
                     // appropriatedly for the current message due to THE bug, and that we cannot prune it.
                     // ---
-                    let unconf_approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, &unconf_msg_id)
+                    let unconf_approvers = Fetch::<MessageId, Vec<MessageId>>::fetch(storage, unconf_msg_id)
                         .map_err(|e| Error::FetchOperation(Box::new(e)))?
                         .ok_or(Error::MissingApprovers(*unconf_msg_id))?;
 
@@ -302,7 +302,7 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
                 let parents = msg.parents();
 
                 // Add message data to the delete batch.
-                delete_message_and_metadata(storage, batch, &unconf_msg_id)?;
+                delete_message_and_metadata(storage, batch, unconf_msg_id)?;
 
                 log::trace!("Pruned unconfirmed msg {} at {}.", unconf_msg_id, prune_index);
 

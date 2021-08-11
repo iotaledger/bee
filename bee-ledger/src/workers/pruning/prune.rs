@@ -63,7 +63,7 @@ pub async fn prune<S: StorageBackend>(
         // NOTE: This is the most costly thing during pruning, because it has to perform a past-cone traversal.
         let batch_confirmed = Instant::now();
         let (mut new_seps, confirmed_metrics) =
-            batch::delete_confirmed_data(tangle, &storage, &mut batch, index, &curr_seps).await?;
+            batch::delete_confirmed_data(tangle, storage, &mut batch, index, &curr_seps).await?;
         timings.batch_confirmed = batch_confirmed.elapsed();
 
         pruning_metrics.new_seps = new_seps.len();
