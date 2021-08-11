@@ -258,7 +258,7 @@ where
 
     for (output_id, (created_output, _consumed_output)) in metadata.consumed_outputs {
         bus.dispatch(OutputConsumed {
-            message_id: *output.message_id(),
+            message_id: *created_output.message_id(),
             output_id,
             output: created_output.inner().clone(),
         });
