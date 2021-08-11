@@ -6,10 +6,7 @@ use crate::{
     payload::{MessagePayload, PAYLOAD_LENGTH_MAX},
 };
 
-use bee_packable::{
-    coerce::*, error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnpackError,
-    Unpacker, VecPrefix,
-};
+use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
 
 use alloc::vec::Vec;
 use core::convert::{Infallible, TryInto};
@@ -25,8 +22,9 @@ fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> Va
 }
 
 /// Encrypted share structure for a [`DkgPayload`].
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = MessageUnpackError, with = unpack_prefix_to_validation_error)]
 pub struct EncryptedDeal {
     /// An ephemeral Diffie-Hellman key.
     dh_key: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
@@ -35,6 +33,7 @@ pub struct EncryptedDeal {
     /// The ciphertext of the share.
     encrypted_share: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
     /// The threshold of the secret sharing protocol.
+    #[packable(unpack_error_with = core::convert::identity)]
     threshold: u32,
     /// The commitments of the polynomial used to derive the share.
     commitments: VecPrefix<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>,
@@ -69,66 +68,6 @@ impl EncryptedDeal {
     /// Adds commitments to an [`EncryptedDealBuilder`].
     pub fn commitments(&self) -> &[u8] {
         self.commitments.as_slice()
-    }
-}
-
-impl Packable for EncryptedDeal {
-    type PackError = Infallible;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.dh_key.packed_len()
-            + self.nonce.packed_len()
-            + self.encrypted_share.packed_len()
-            + self.threshold.packed_len()
-            + self.commitments.packed_len()
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.dh_key.pack(packer).infallible()?;
-        self.nonce.pack(packer).infallible()?;
-        self.encrypted_share.pack(packer).infallible()?;
-        self.threshold.pack(packer).infallible()?;
-        self.commitments.pack(packer).infallible()
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let dh_key =
-            VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker).map_err(|err| match err {
-                UnpackError::Packable(err) => UnpackError::Packable(unpack_prefix_to_validation_error(err).into()),
-                UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
-            })?;
-
-        let nonce = VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker).map_err(|err| match err {
-            UnpackError::Packable(err) => UnpackError::Packable(unpack_prefix_to_validation_error(err).into()),
-            UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
-        })?;
-
-        let encrypted_share =
-            VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker).map_err(|err| match err {
-                UnpackError::Packable(err) => UnpackError::Packable(unpack_prefix_to_validation_error(err).into()),
-                UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
-            })?;
-
-        let threshold = u32::unpack(unpacker).infallible()?;
-
-        let commitments =
-            VecPrefix::<u8, BoundedU32<0, PREFIXED_LENGTH_MAX>>::unpack(unpacker).map_err(|err| match err {
-                UnpackError::Packable(err) => UnpackError::Packable(unpack_prefix_to_validation_error(err).into()),
-                UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
-            })?;
-
-        let deal = EncryptedDeal {
-            dh_key,
-            nonce,
-            encrypted_share,
-            threshold,
-            commitments,
-        };
-
-        validate_encrypted_deal_length(deal.packed_len()).map_err(|e| UnpackError::Packable(e.into()))?;
-
-        Ok(deal)
     }
 }
 

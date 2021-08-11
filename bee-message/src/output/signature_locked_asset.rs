@@ -3,10 +3,7 @@
 
 use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessageUnpackError, ValidationError};
 
-use bee_packable::{
-    coerce::*, error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, PackError, Packable, Packer, UnpackError,
-    Unpacker, VecPrefix,
-};
+use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
 
 use alloc::vec::Vec;
 use core::convert::{Infallible, TryInto};
@@ -70,10 +67,12 @@ impl AssetBalance {
 }
 
 /// An output type which can be unlocked via a signature. It deposits onto one single address.
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[packable(unpack_error = MessageUnpackError)]
 pub struct SignatureLockedAssetOutput {
     address: Address,
+    #[packable(unpack_error_with = unpack_prefix_to_validation_error)]
     balances: VecPrefix<AssetBalance, BoundedU32<0, PREFIXED_BALANCES_LENGTH_MAX>>,
 }
 
@@ -101,31 +100,5 @@ impl SignatureLockedAssetOutput {
     /// Returns the amount of a [`SignatureLockedAssetOutput`].
     pub fn balance_iter(&self) -> impl Iterator<Item = &AssetBalance> {
         self.balances.iter()
-    }
-}
-
-impl Packable for SignatureLockedAssetOutput {
-    type PackError = Infallible;
-    type UnpackError = MessageUnpackError;
-
-    fn packed_len(&self) -> usize {
-        self.address.packed_len() + 0u32.packed_len() + self.balances.len() * (AssetId::LENGTH + 0u64.packed_len())
-    }
-
-    fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
-        self.address.pack(packer)?;
-        self.balances.pack(packer).infallible()
-    }
-
-    fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
-        let address = Address::unpack(unpacker).coerce()?;
-
-        let balances = VecPrefix::<AssetBalance, BoundedU32<0, PREFIXED_BALANCES_LENGTH_MAX>>::unpack(unpacker)
-            .map_err(|err| match err {
-                UnpackError::Packable(err) => UnpackError::Packable(unpack_prefix_to_validation_error(err).into()),
-                UnpackError::Unpacker(err) => UnpackError::Unpacker(err),
-            })?;
-
-        Ok(Self { address, balances })
     }
 }

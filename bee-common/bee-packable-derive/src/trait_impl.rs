@@ -93,11 +93,11 @@ impl TraitImpl {
 
             let (pack_branch, packed_len_branch, unpack_branch) = match fields {
                 Fields::Named(fields) => {
-                    Fragments::new::<true>(name, &fields.named, &pack_error_attr.with, &unpack_error_attr.with)
+                    Fragments::new::<true>(name, &fields.named, &pack_error_attr.with, &unpack_error_attr.with)?
                         .consume_for_variant(&tag, &tag_ty)
                 }
                 Fields::Unnamed(fields) => {
-                    Fragments::new::<false>(name, &fields.unnamed, &pack_error_attr.with, &unpack_error_attr.with)
+                    Fragments::new::<false>(name, &fields.unnamed, &pack_error_attr.with, &unpack_error_attr.with)?
                         .consume_for_variant(&tag, &tag_ty)
                 }
                 Fields::Unit => (
@@ -152,11 +152,11 @@ impl TraitImpl {
 
         let (pack, packed_len, unpack) = match data.fields {
             Fields::Named(fields) => {
-                Fragments::new::<true>(quote!(Self), &fields.named, &pack_error.with, &unpack_error.with)
+                Fragments::new::<true>(quote!(Self), &fields.named, &pack_error.with, &unpack_error.with)?
                     .consume_for_struct()
             }
             Fields::Unnamed(fields) => {
-                Fragments::new::<false>(quote!(Self), &fields.unnamed, &pack_error.with, &unpack_error.with)
+                Fragments::new::<false>(quote!(Self), &fields.unnamed, &pack_error.with, &unpack_error.with)?
                     .consume_for_struct()
             }
             Fields::Unit => (quote!(Ok(())), quote!(0), quote!(Ok(Self))),
