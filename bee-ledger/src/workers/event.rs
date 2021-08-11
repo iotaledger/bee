@@ -44,21 +44,21 @@ pub struct MessageReferenced {
 
 /// An event that indicates that an output was consumed.
 pub struct OutputConsumed {
-    /// The identifier of the message that contains the transaction that consumes the output
+    /// The identifier of the message that contains the transaction that consumes the output.
     pub message_id: MessageId,
-    /// The identifier of the consumed output
+    /// The identifier of the consumed output.
     pub output_id: OutputId,
-    /// The consumed output
+    /// The consumed output.
     pub output: Output,
 }
 
 /// An event that indicates that an output was created.
 pub struct OutputCreated {
-    /// The identifier of the message that contains the transaction that creates the output
+    /// The identifier of the message that contains the transaction that creates the output.
     pub message_id: MessageId,
-    /// The identifier of the created output
+    /// The identifier of the created output.
     pub output_id: OutputId,
-    /// The created output
+    /// The created output.
     pub output: Output,
 }
 
