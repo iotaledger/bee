@@ -102,6 +102,7 @@ fn packable_round_trip() {
     ]);
 
     let parents_a = ParentsBlock::new(ParentsKind::Strong, vec![id_1, id_2]).unwrap();
+
     let parents_b = ParentsBlock::unpack_from_slice(parents_a.pack_to_vec().unwrap()).unwrap();
 
     assert_eq!(parents_a, parents_b);
