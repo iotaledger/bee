@@ -24,7 +24,6 @@ fn unpack_prefix_to_validation_error(error: UnpackPrefixError<Infallible>) -> Va
 /// Encrypted share structure for a [`DkgPayload`].
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[packable(pack_error = Infallible)]
 #[packable(unpack_error = MessageUnpackError, with = unpack_prefix_to_validation_error)]
 pub struct EncryptedDeal {
     /// An ephemeral Diffie-Hellman key.
