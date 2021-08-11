@@ -1,0 +1,30 @@
+[package]
+name = "bee-plugin"
+version = "0.1.0"
+authors = [ "IOTA Stiftung" ]
+edition = "2018"
+description = "The bee node API for plugins"
+readme = "README.md"
+repository = "https://github.com/iotaledger/bee"
+license = "Apache-2.0"
+keywords = [ "iota", "tangle", "bee", "framework", "plugin" ]
+homepage = "https://www.iota.org"
+
+[dependencies]
+bee-event-bus = { path = "../../bee-common/bee-event-bus" }
+
+log = "0.4"
+prost = "0.8"
+thiserror = "1.0"
+tokio = { version = "1.6", features = [ "macros", "process", "sync", "fs", "time" ] }
+tokio-stream = "0.1"
+tonic = "0.5"
+
+[dev-dependencies]
+bee-logger = { path = "../../bee-common/bee-logger" }
+
+async-trait = "0.1"
+tokio = { version = "1.6", features = [ "rt-multi-thread" ] }
+
+[build-dependencies]
+tonic-build = { version = "0.5", default-features = false, features = [ "transport", "prost" ]}
