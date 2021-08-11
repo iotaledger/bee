@@ -19,9 +19,6 @@ const PREFIXED_PARENTS_LENGTH_MIN: u8 = 1;
 /// Maximum number of parents for a valid [`ParentsBlock`].
 const PREFIXED_PARENTS_LENGTH_MAX: u8 = 8;
 
-/// Minimum number of strong parents for a valid message.
-pub const MESSAGE_MIN_STRONG_PARENTS: usize = 1;
-
 /// An individual message parent, which can be categorized as "strong" or "weak".
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(
