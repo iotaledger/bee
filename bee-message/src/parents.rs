@@ -6,19 +6,18 @@
 use crate::{MessageId, MessageUnpackError, ValidationError};
 
 use bee_ord::is_unique_sorted;
-use bee_packable::{coerce::*, PackError, Packable, Packer, UnpackError, Unpacker};
-
-use alloc::vec::Vec;
-use core::{
-    convert::{Infallible, TryFrom, TryInto},
-    ops::RangeInclusive,
+use bee_packable::{
+    coerce::*, error::UnpackPrefixError, BoundedU8, InvalidBoundedU8, PackError, Packable, Packer, UnpackError,
+    Unpacker, VecPrefix,
 };
 
-/// The range representing the valid number of parents.
-pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
+use alloc::vec::Vec;
+use core::convert::{Infallible, TryFrom, TryInto};
 
-/// Minimum number of strong parents for a valid message.
-pub const MESSAGE_MIN_STRONG_PARENTS: usize = 1;
+/// Minimum number of parents for a valid [`ParentsBlock`].
+const PREFIXED_PARENTS_LENGTH_MIN: u8 = 1;
+/// Maximum number of parents for a valid [`ParentsBlock`].
+const PREFIXED_PARENTS_LENGTH_MAX: u8 = 8;
 
 /// An individual message parent, which can be categorized as "strong" or "weak".
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -63,13 +62,19 @@ impl TryFrom<u8> for ParentsKind {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct ParentsBlock {
     kind: ParentsKind,
-    references: Vec<MessageId>,
+    references: VecPrefix<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>,
 }
 
 impl ParentsBlock {
     /// Creates a new [`ParentsBlock`], and validates the ID collection.
     pub fn new(kind: ParentsKind, references: Vec<MessageId>) -> Result<Self, ValidationError> {
-        validate_parents_count(references.len())?;
+        let references: VecPrefix<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>> =
+            references.try_into().map_err(
+                |err: InvalidBoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>| {
+                    ValidationError::InvalidParentsCount(err.0 as usize)
+                },
+            )?;
+
         validate_parents_unique_sorted(&references)?;
 
         Ok(Self { kind, references })
@@ -102,13 +107,7 @@ impl Packable for ParentsBlock {
 
     fn pack<P: Packer>(&self, packer: &mut P) -> Result<(), PackError<Self::PackError, P::Error>> {
         (self.kind as u8).pack(packer).infallible()?;
-        (self.references.len() as u8).pack(packer).infallible()?;
-
-        for id in &self.references {
-            id.pack(packer).infallible()?;
-        }
-
-        Ok(())
+        self.references.pack(packer).infallible()
     }
 
     fn unpack<U: Unpacker>(unpacker: &mut U) -> Result<Self, UnpackError<Self::UnpackError, U::Error>> {
@@ -117,25 +116,20 @@ impl Packable for ParentsBlock {
             .try_into()
             .map_err(|e: ValidationError| UnpackError::Packable(e.into()))?;
 
-        let count = u8::unpack(unpacker).infallible()?;
-        validate_parents_count(count as usize).map_err(|e| UnpackError::Packable(e.into()))?;
-
-        let mut references = Vec::with_capacity(count as usize);
-        for _ in 0..count as usize {
-            references.push(MessageId::unpack(unpacker).infallible()?);
-        }
+        let references =
+            VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::unpack(
+                unpacker,
+            )
+            .map_err(|unpack_err| {
+                unpack_err.map(|err| match err {
+                    UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidParentsCount(len).into(),
+                    UnpackPrefixError::Packable(e) => match e {},
+                })
+            })?;
 
         validate_parents_unique_sorted(&references).map_err(|e| UnpackError::Packable(e.into()))?;
 
         Ok(Self { kind, references })
-    }
-}
-
-fn validate_parents_count(count: usize) -> Result<(), ValidationError> {
-    if !MESSAGE_PARENTS_RANGE.contains(&count) {
-        Err(ValidationError::InvalidParentsCount(count))
-    } else {
-        Ok(())
     }
 }
 
