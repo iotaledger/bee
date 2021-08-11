@@ -52,7 +52,7 @@ impl PluginHandshake {
     }
 
     pub(crate) fn emit(self) -> String {
-        let mut buf = format!("{}|{}", self.address, self.name);
+        let mut buf = format!("{}|{}", self.name, self.address);
 
         for id in self.event_ids {
             // Writing to a string buffer cannot fail.

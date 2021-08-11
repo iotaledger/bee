@@ -44,7 +44,7 @@ impl PluginManager {
 
         info!("loading plugin with identifier {}", plugin_id);
         let handler = PluginHandler::new(plugin_id, command, &self.bus).await?;
-        info!("loaded plugin {}", handler.name());
+        info!("loaded plugin \"{}\"", handler.name());
 
         self.handlers.insert(plugin_id, handler);
 
@@ -56,9 +56,9 @@ impl PluginManager {
         if let Some(handler) = self.handlers.remove(&id) {
             let name = handler.name().to_owned();
 
-            info!("unloading plugin {}", name);
+            info!("unloading plugin \"{}\"", name);
             handler.shutdown(&self.bus).await?;
-            info!("plugin {} was successfully unloaded", name);
+            info!("plugin \"{}\" was successfully unloaded", name);
         } else {
             warn!("tried to unload an unknown plugin with identifier {}", id);
         }

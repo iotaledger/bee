@@ -19,16 +19,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let event_bus = Arc::new(EventBus::<UniqueId>::new());
-    let hotloader = PluginHotloader::new("./plugins", event_bus.clone());
+    let bus = Arc::new(EventBus::<UniqueId>::new());
+    let hotloader = PluginHotloader::new("./plugins", bus.clone());
     let handle = tokio::spawn(async move { hotloader.run().await });
 
     {
-        let event_bus = event_bus.clone();
+        let bus = bus.clone();
         tokio::spawn(async move {
             loop {
                 sleep(Duration::from_millis(1)).await;
-                event_bus.dispatch(MessageParsedEvent {})
+                bus.dispatch(MessageParsedEvent {})
             }
         });
     }
@@ -36,7 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tokio::spawn(async move {
         loop {
             sleep(Duration::from_millis(1)).await;
-            event_bus.dispatch(MessageRejectedEvent {})
+            bus.dispatch(MessageRejectedEvent {})
         }
     });
 
