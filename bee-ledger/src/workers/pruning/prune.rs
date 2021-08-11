@@ -138,7 +138,7 @@ pub async fn prune<S: StorageBackend>(
 
         // Remove old SEPs from the storage.
         //
-        // **NOTE**: This operation must come before the batch is committed.
+        // **WARNING**: This operation must come before the batch is committed!
         //
         // TODO: consider batching deletes rather than using Truncate. Is one faster than the other? Do we care if its
         // atomic or not?

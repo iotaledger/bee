@@ -450,3 +450,21 @@ fn unwrap_indexation(payload: Option<&Payload>) -> Option<&IndexationPayload> {
         _ => None,
     }
 }
+
+// TODO: consider using this instead of 'truncate'
+#[allow(dead_code)]
+pub async fn delete_seps<S: StorageBackend>(
+    storage: &S,
+    batch: &mut S::Batch,
+    seps: &[SolidEntryPoint],
+) -> Result<usize, Error> {
+    let mut num = 0;
+    for sep in seps {
+        Batch::<SolidEntryPoint, MilestoneIndex>::batch_delete(storage, batch, sep)
+            .map_err(|e| Error::BatchOperation(Box::new(e)))?;
+
+        num += 1;
+    }
+
+    Ok(num)
+}
