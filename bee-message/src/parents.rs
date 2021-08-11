@@ -15,9 +15,9 @@ use alloc::vec::Vec;
 use core::convert::{Infallible, TryFrom, TryInto};
 
 /// Minimum number of parents for a valid [`ParentsBlock`].
-pub const PREFIXED_PARENTS_LENGTH_MIN: u8 = 1;
+const PREFIXED_PARENTS_LENGTH_MIN: u8 = 1;
 /// Maximum number of parents for a valid [`ParentsBlock`].
-pub const PREFIXED_PARENTS_LENGTH_MAX: u8 = 8;
+const PREFIXED_PARENTS_LENGTH_MAX: u8 = 8;
 
 /// Minimum number of strong parents for a valid message.
 pub const MESSAGE_MIN_STRONG_PARENTS: usize = 1;
@@ -74,7 +74,7 @@ impl ParentsBlock {
         let references: VecPrefix<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>> =
             references.try_into().map_err(
                 |err: InvalidBoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>| {
-                    ValidationError::InvalidAssetBalanceCount(err.0 as usize)
+                    ValidationError::InvalidParentsCount(err.0 as usize)
                 },
             )?;
 
