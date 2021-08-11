@@ -30,6 +30,7 @@ struct PluginInfo {
 pub struct PluginHotloader {
     directory: PathBuf,
     plugins_info: HashMap<PathBuf, PluginInfo>,
+    ignored_files: HashMap<PathBuf, SystemTime>,
     manager: PluginManager,
 }
 
@@ -39,6 +40,7 @@ impl PluginHotloader {
         Self {
             directory: directory.as_ref().to_owned(),
             plugins_info: HashMap::new(),
+            ignored_files: HashMap::new(),
             manager: PluginManager::new(bus),
         }
     }
@@ -60,6 +62,15 @@ impl PluginHotloader {
                 let metadata = entry.metadata().await?;
 
                 if metadata.is_file() {
+                    let last_write = metadata.modified()?;
+                    if let Some(ignored_last_write) = self.ignored_files.get(&path) {
+                        if *ignored_last_write != last_write {
+                            self.ignored_files.remove(&path);
+                        } else {
+                            continue;
+                        }
+                    }
+
                     last_writes.insert(path, metadata.modified()?);
                 }
             }
@@ -101,8 +112,15 @@ impl PluginHotloader {
         }
         for (path, last_write) in to_load {
             let command = Command::new(&path);
-            let id = self.manager.load(command).await?;
-            self.plugins_info.insert(path, PluginInfo { id, last_write });
+            match self.manager.load(command).await {
+                Ok(id) => {
+                    self.plugins_info.insert(path, PluginInfo { id, last_write });
+                }
+                Err(err) => {
+                    log::warn!("could not load plugin from path `{}`: {}", path.display(), err);
+                    self.ignored_files.insert(path, last_write);
+                }
+            }
         }
 
         Ok(())
