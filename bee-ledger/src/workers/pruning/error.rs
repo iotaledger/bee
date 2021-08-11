@@ -10,22 +10,16 @@ pub enum Error {
         selected: MilestoneIndex,
         minimum: MilestoneIndex,
     },
-
     #[error("missing milestone {0}")]
     MissingMilestone(MilestoneIndex),
-
     #[error("missing message {0}")]
     MissingMessage(MessageId),
-
     #[error("missing metadata for message {0}")]
     MissingMetadata(MessageId),
-
     #[error("missing approvers for message {0}")]
     MissingApprovers(MessageId),
-
     #[error("storage batch operation failed due to: {0:?}")]
     BatchOperation(Box<dyn std::error::Error + Send>),
-
     #[error("storage fetch operation failed due to: {0:?}")]
     FetchOperation(Box<dyn std::error::Error + Send>),
 }
