@@ -69,7 +69,7 @@ pub struct ParentsBlock {
 }
 
 impl ParentsBlock {
-    /// Creates a new [`ParentsBlock`], and valiidates the ID collection.
+    /// Creates a new [`ParentsBlock`], and validates the ID collection.
     pub fn new(kind: ParentsKind, references: Vec<MessageId>) -> Result<Self, ValidationError> {
         let references: VecPrefix<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>> =
             references.try_into().map_err(
