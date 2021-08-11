@@ -256,20 +256,12 @@ where
         });
     }
 
-    for (output_id, (_, _consumed_output)) in metadata.consumed_outputs {
-        match storage::fetch_output(&*storage, &output_id) {
-            Ok(response) => match response {
-                Some(output) => {
-                    bus.dispatch(OutputConsumed {
-                        message_id: *output.message_id(),
-                        output_id,
-                        output: output.inner().clone(),
-                    });
-                }
-                None => {} // can this case even happen? as apply_milestone() will be called before
-            },
-            Err(_) => {} // can this case even happen? panic?
-        }
+    for (output_id, (created_output, _consumed_output)) in metadata.consumed_outputs {
+        bus.dispatch(OutputConsumed {
+            message_id: *output.message_id(),
+            output_id,
+            output: created_output.inner().clone(),
+        });
     }
 
     Ok(())
