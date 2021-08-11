@@ -3,12 +3,10 @@
 
 use bee_message::{
     error::{MessageUnpackError, ValidationError},
-    parents::{ParentsBlock, ParentsKind, PREFIXED_PARENTS_LENGTH_MAX, PREFIXED_PARENTS_LENGTH_MIN},
+    parents::{ParentsBlock, ParentsKind},
     MessageId,
 };
-use bee_packable::{BoundedU8, Packable, UnpackError, VecPrefix};
-
-use core::convert::TryFrom;
+use bee_packable::{Packable, UnpackError};
 
 // TODO: Add MessageId functions to bee-test
 
@@ -103,14 +101,7 @@ fn packable_round_trip() {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
     ]);
 
-    let parents_a = ParentsBlock::new(
-        ParentsKind::Strong,
-        VecPrefix::<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>>::try_from(vec![
-            id_1, id_2,
-        ])
-        .unwrap(),
-    )
-    .unwrap();
+    let parents_a = ParentsBlock::new(ParentsKind::Strong, vec![id_1, id_2]).unwrap();
 
     let parents_b = ParentsBlock::unpack_from_slice(parents_a.pack_to_vec().unwrap()).unwrap();
 

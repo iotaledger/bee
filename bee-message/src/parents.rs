@@ -7,9 +7,11 @@ use crate::{message::MESSAGE_PARENTS_RANGE, MessageId, MessageUnpackError, Valid
 
 use bee_ord::is_unique_sorted;
 use bee_packable::{
-    coerce::*, error::UnpackPrefixError, BoundedU8, PackError, Packable, Packer, UnpackError, Unpacker, VecPrefix,
+    coerce::*, error::UnpackPrefixError, BoundedU8, InvalidBoundedU8, PackError, Packable, Packer, UnpackError,
+    Unpacker, VecPrefix,
 };
 
+use alloc::vec::Vec;
 use core::convert::{Infallible, TryFrom, TryInto};
 
 /// Minimum number of parents for a valid [`ParentsBlock`].
@@ -67,8 +69,15 @@ pub struct ParentsBlock {
 }
 
 impl ParentsBlock {
-    /// Creates a new [`ParentsBlock`], and validates the ID collection.
-    pub fn new(kind: ParentsKind, references: VecPrefix<MessageId, BoundedU8<1, 8>>) -> Result<Self, ValidationError> {
+    /// Creates a new [`ParentsBlock`], and valiidates the ID collection.
+    pub fn new(kind: ParentsKind, references: Vec<MessageId>) -> Result<Self, ValidationError> {
+        let references: VecPrefix<MessageId, BoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>> =
+            references.try_into().map_err(
+                |err: InvalidBoundedU8<PREFIXED_PARENTS_LENGTH_MIN, PREFIXED_PARENTS_LENGTH_MAX>| {
+                    ValidationError::InvalidAssetBalanceCount(err.0 as usize)
+                },
+            )?;
+
         validate_parents_unique_sorted(&references)?;
 
         Ok(Self { kind, references })
