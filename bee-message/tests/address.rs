@@ -92,3 +92,12 @@ fn unpack_invalid_kind() {
         UnpackError::Packable(MessageUnpackError::Address(AddressUnpackError::InvalidKind(4))),
     ));
 }
+
+#[test]
+fn serde_round_trip() {
+    let address_1 = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
+    let json = serde_json::to_string(&address_1).unwrap();
+    let address_2 = serde_json::from_str::<Address>(&json).unwrap();
+
+    assert_eq!(address_1, address_2);
+}

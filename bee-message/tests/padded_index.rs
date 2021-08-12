@@ -73,16 +73,25 @@ fn from_to_str() {
 
 #[test]
 fn packed_len() {
-    let message_id = PaddedIndex::from_str(PADDED_INDEX).unwrap();
+    let padded_index = PaddedIndex::from_str(PADDED_INDEX).unwrap();
 
-    assert_eq!(message_id.packed_len(), PaddedIndex::LENGTH);
-    assert_eq!(message_id.pack_to_vec().unwrap().len(), PaddedIndex::LENGTH);
+    assert_eq!(padded_index.packed_len(), PaddedIndex::LENGTH);
+    assert_eq!(padded_index.pack_to_vec().unwrap().len(), PaddedIndex::LENGTH);
 }
 
 #[test]
 fn packable_round_trip() {
-    let message_id_1 = PaddedIndex::from_str(PADDED_INDEX).unwrap();
-    let message_id_2 = PaddedIndex::unpack_from_slice(message_id_1.pack_to_vec().unwrap()).unwrap();
+    let padded_index_1 = PaddedIndex::from_str(PADDED_INDEX).unwrap();
+    let padded_index_2 = PaddedIndex::unpack_from_slice(padded_index_1.pack_to_vec().unwrap()).unwrap();
 
-    assert_eq!(message_id_1, message_id_2);
+    assert_eq!(padded_index_1, padded_index_2);
+}
+
+#[test]
+fn serde_round_trip() {
+    let padded_index_1 = PaddedIndex::from_str(PADDED_INDEX).unwrap();
+    let json = serde_json::to_string(&padded_index_1).unwrap();
+    let padded_index_2 = serde_json::from_str::<PaddedIndex>(&json).unwrap();
+
+    assert_eq!(padded_index_1, padded_index_2);
 }

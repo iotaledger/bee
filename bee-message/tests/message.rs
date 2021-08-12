@@ -247,3 +247,35 @@ fn packable_round_trip() {
 
     assert_eq!(message_a, message_b);
 }
+
+#[test]
+fn serde_round_trip() {
+    let message_1 = MessageBuilder::new()
+        .add_parents_block(
+            ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
+        )
+        .add_parents_block(
+            ParentsBlock::new(
+                ParentsKind::Weak,
+                vec![
+                    MessageId::new(hex_decode(PARENT_2).unwrap()),
+                    MessageId::new(hex_decode(PARENT_3).unwrap()),
+                ],
+            )
+            .unwrap(),
+        )
+        .with_issuer_public_key(rand_bytes_array())
+        .with_issue_timestamp(rand_number())
+        .with_sequence_number(rand_number())
+        .with_payload(Payload::from(
+            IndexationPayload::new(rand_bytes(32), rand_bytes(256)).unwrap(),
+        ))
+        .with_nonce(0)
+        .with_signature(rand_bytes_array())
+        .finish()
+        .unwrap();
+    let json = serde_json::to_string(&message_1).unwrap();
+    let message_2 = serde_json::from_str::<Message>(&json).unwrap();
+
+    assert_eq!(message_1, message_2);
+}

@@ -134,3 +134,16 @@ fn packable_round_trip() {
 
     assert_eq!(indexation_1, indexation_2);
 }
+
+#[test]
+fn serde_round_trip() {
+    let indexation_payload_1 = IndexationPayload::new(
+        rand_bytes(10),
+        [0x42, 0xff, 0x84, 0xa2, 0x42, 0xff, 0x84, 0xa2].to_vec(),
+    )
+    .unwrap();
+    let json = serde_json::to_string(&indexation_payload_1).unwrap();
+    let indexation_payload_2 = serde_json::from_str::<IndexationPayload>(&json).unwrap();
+
+    assert_eq!(indexation_payload_1, indexation_payload_2);
+}

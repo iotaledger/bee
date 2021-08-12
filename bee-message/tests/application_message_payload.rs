@@ -50,3 +50,12 @@ fn packable_round_trip() {
 
     assert_eq!(application_msg_1, application_msg_2);
 }
+
+#[test]
+fn serde_round_trip() {
+    let application_payload_1 = ApplicationMessagePayload::from(42);
+    let json = serde_json::to_string(&application_payload_1).unwrap();
+    let application_payload_2 = serde_json::from_str::<ApplicationMessagePayload>(&json).unwrap();
+
+    assert_eq!(application_payload_1, application_payload_2);
+}

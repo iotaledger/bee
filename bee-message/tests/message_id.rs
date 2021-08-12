@@ -86,3 +86,12 @@ fn packable_round_trip() {
 
     assert_eq!(message_id_1, message_id_2);
 }
+
+#[test]
+fn serde_round_trip() {
+    let message_id_1 = MessageId::from_str(MESSAGE_ID).unwrap();
+    let json = serde_json::to_string(&message_id_1).unwrap();
+    let message_id_2 = serde_json::from_str::<MessageId>(&json).unwrap();
+
+    assert_eq!(message_id_1, message_id_2);
+}

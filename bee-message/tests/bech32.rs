@@ -127,3 +127,12 @@ fn valid_addresses() {
 //     let address: Address = Bech32Address::from_address("iota", &address).try_into().unwrap();
 //     assert_eq!(address.to_string(), ED25519_ADDRESS);
 // }
+
+#[test]
+fn serde_round_trip() {
+    let bech32_address_1 = Bech32Address::new("split1checkupstagehandshakeupstreamerranterredcaperred2y9e3w").unwrap();
+    let json = serde_json::to_string(&bech32_address_1).unwrap();
+    let bech32_address_2 = serde_json::from_str::<Bech32Address>(&json).unwrap();
+
+    assert_eq!(bech32_address_1, bech32_address_2);
+}

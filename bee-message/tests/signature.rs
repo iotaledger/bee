@@ -57,3 +57,12 @@ fn unpack_invalid_kind() {
         UnpackError::Packable(MessageUnpackError::Signature(SignatureUnpackError::InvalidKind(4))),
     ));
 }
+
+#[test]
+fn serde_round_trip() {
+    let signature_1 = Signature::from(Ed25519Signature::new(rand_bytes_array(), rand_bytes_array()));
+    let json = serde_json::to_string(&signature_1).unwrap();
+    let signature_2 = serde_json::from_str::<Signature>(&json).unwrap();
+
+    assert_eq!(signature_1, signature_2);
+}

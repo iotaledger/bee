@@ -169,3 +169,28 @@ fn packable_round_trip() {
 
     assert_eq!(blocks_a, blocks_b);
 }
+
+#[test]
+fn serde_round_trip() {
+    let unlock_blocks_1 = UnlockBlocks::new(vec![
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([0; 32], [0; 64]))).into(),
+        ReferenceUnlock::new(0).unwrap().into(),
+        ReferenceUnlock::new(0).unwrap().into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([1; 32], [1; 64]))).into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([2; 32], [2; 64]))).into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([3; 32], [3; 64]))).into(),
+        ReferenceUnlock::new(3).unwrap().into(),
+        ReferenceUnlock::new(4).unwrap().into(),
+        ReferenceUnlock::new(3).unwrap().into(),
+        ReferenceUnlock::new(4).unwrap().into(),
+        ReferenceUnlock::new(5).unwrap().into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([4; 32], [4; 64]))).into(),
+        ReferenceUnlock::new(11).unwrap().into(),
+        SignatureUnlock::from(Signature::from(Ed25519Signature::new([5; 32], [5; 64]))).into(),
+    ])
+    .unwrap();
+    let json = serde_json::to_string(&unlock_blocks_1).unwrap();
+    let unlock_blocks_2 = serde_json::from_str::<UnlockBlocks>(&json).unwrap();
+
+    assert_eq!(unlock_blocks_1, unlock_blocks_2);
+}

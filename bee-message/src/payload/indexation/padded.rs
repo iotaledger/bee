@@ -8,7 +8,8 @@ use bee_packable::Packable;
 /// An [`IndexationPayload`](crate::payload::indexation::IndexationPayload) index padded with `0` up to the maximum
 /// length.
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Packable)]
-pub struct PaddedIndex([u8; Self::LENGTH]);
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct PaddedIndex(#[cfg_attr(feature = "serde1", serde(with = "serde_big_array::BigArray"))] [u8; Self::LENGTH]);
 
 impl PaddedIndex {
     /// The length, in bytes, of a [`PaddedIndex`].

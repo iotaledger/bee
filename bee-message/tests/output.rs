@@ -74,3 +74,15 @@ fn unpack_invalid_tag() {
         ))),
     ));
 }
+
+#[test]
+fn serde_round_trip() {
+    let output_1 = Output::from(
+        SignatureLockedSingleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 1_000)
+            .unwrap(),
+    );
+    let json = serde_json::to_string(&output_1).unwrap();
+    let output_2 = serde_json::from_str::<Output>(&json).unwrap();
+
+    assert_eq!(output_1, output_2);
+}

@@ -77,3 +77,12 @@ fn packable_round_trip() {
 
     assert_eq!(reference_1, reference_2);
 }
+
+#[test]
+fn serde_round_trip() {
+    let reference_unlock_1 = ReferenceUnlock::try_from(42).unwrap();
+    let json = serde_json::to_string(&reference_unlock_1).unwrap();
+    let reference_unlock_2 = serde_json::from_str::<ReferenceUnlock>(&json).unwrap();
+
+    assert_eq!(reference_unlock_1, reference_unlock_2);
+}
