@@ -261,8 +261,8 @@ fn serde_round_trip() {
     let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
     let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
     let transaction_payload_1 = TransactionPayload::builder()
-        .with_essence(essence.clone())
-        .with_unlock_blocks(unlock_blocks.clone())
+        .with_essence(essence)
+        .with_unlock_blocks(unlock_blocks)
         .finish()
         .unwrap();
     let json = serde_json::to_string(&transaction_payload_1).unwrap();
