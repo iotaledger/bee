@@ -7,16 +7,19 @@ use std::any::TypeId;
 
 #[test]
 fn from_type_id() {
-    let _unique_id = UniqueId::<u8>::from(TypeId::of::<u8>());
+    let unique_id = UniqueId::<u8>::from(TypeId::of::<u8>());
+
+    assert_eq!(unique_id, UniqueId::Type(TypeId::of::<u8>()));
 }
 
 #[test]
 fn derived_impls() {
-    let _unique_id = UniqueId::Object(42u8);
-    let _unique_id_copy = _unique_id;
-    let _unique_id_clone = _unique_id.clone();
-    let _unique_id_debug = format!("{:?}", _unique_id);
+    let unique_id = UniqueId::Object(42u8);
+    let unique_id_copy = unique_id;
+    let unique_id_clone = unique_id.clone();
+    let unique_id_debug = format!("{:?}", unique_id);
 
-    assert_eq!(_unique_id_copy, _unique_id);
-    assert_eq!(_unique_id_clone, _unique_id);
+    assert_eq!(unique_id_copy, unique_id);
+    assert_eq!(unique_id_clone, unique_id);
+    assert_eq!(unique_id_debug, "Object(42)");
 }
