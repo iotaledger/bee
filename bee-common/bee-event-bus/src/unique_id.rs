@@ -3,7 +3,7 @@
 
 use std::any::TypeId;
 
-/// A unique identifier for [`EventBus`] callbacks.
+/// A unique identifier for [`EventBus`](crate::EventBus) callbacks.
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
 pub enum UniqueId<T> {
     /// Identifier for types.
