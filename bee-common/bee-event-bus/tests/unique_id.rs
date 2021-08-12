@@ -16,6 +16,7 @@ fn from_type_id() {
 fn derived_impls() {
     let unique_id = UniqueId::Object(42u8);
     let unique_id_copy = unique_id;
+    #[allow(clippy::clone_on_copy)]
     let unique_id_clone = unique_id.clone();
     let unique_id_debug = format!("{:?}", unique_id);
 
