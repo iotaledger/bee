@@ -7,7 +7,7 @@
 mod io;
 mod slice;
 
-pub use slice::{SliceUnpacker, UnexpectedEOF};
+pub use slice::SliceUnpacker;
 
 /// A type that can unpack any value that implements [`Packable`](crate::Packable).
 pub trait Unpacker: Sized {

@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{packer::Packer, unpacker::UnexpectedEOF};
+use crate::{error::UnexpectedEOF, packer::Packer};
 
 /// A [`Packer`] backed by a [`&mut [u8}`].
 pub struct SlicePacker<'a> {
