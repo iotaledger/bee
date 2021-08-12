@@ -191,7 +191,7 @@ where
 
                         notify_message(message_id, notifier);
 
-                        bus.dispatch(MessageProcessed { message_id });
+                        bus.dispatch(MessageProcessed { message_id, message: message.clone() });
 
                         // TODO: boolean values are false at this point in time? trigger event from another location?
                         bus.dispatch(VertexCreated {

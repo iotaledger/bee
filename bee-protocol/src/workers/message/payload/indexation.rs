@@ -5,12 +5,14 @@ use crate::{
     types::metrics::NodeMetrics,
     workers::{storage::StorageBackend, MetricsWorker},
 };
+use crate::workers::event::NewIndexationMessage;
 
 use bee_message::{
     payload::{indexation::PaddedIndex, transaction::Essence, Payload},
     MessageId,
 };
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
+use bee_runtime::event::Bus;
 use bee_storage::access::Insert;
 use bee_tangle::MessageRef;
 
@@ -31,13 +33,13 @@ pub(crate) struct IndexationPayloadWorker {
     pub(crate) tx: mpsc::UnboundedSender<IndexationPayloadWorkerEvent>,
 }
 
-fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: MessageId, message: MessageRef) {
+fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: MessageId, message: MessageRef, bus: &Bus<'_>,) {
     let indexation = match message.payload() {
         Some(Payload::Indexation(indexation)) => indexation,
         Some(Payload::Transaction(transaction)) => {
             let Essence::Regular(essence) = transaction.essence();
-
             if let Some(Payload::Indexation(indexation)) = essence.payload() {
+                bus.dispatch(NewIndexationMessage { message_id, message: message.clone(), index: indexation.padded_index() });
                 indexation
             } else {
                 error!(
@@ -85,6 +87,7 @@ where
         let (tx, rx) = mpsc::unbounded_channel();
         let storage = node.storage();
         let metrics = node.resource::<NodeMetrics>();
+        let bus = node.bus();
 
         node.spawn::<Self, _, _>(|shutdown| async move {
             info!("Running.");
@@ -92,7 +95,7 @@ where
             let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
             while let Some(IndexationPayloadWorkerEvent { message_id, message }) = receiver.next().await {
-                process(&*storage, &metrics, message_id, message);
+                process(&*storage, &metrics, message_id, message, &bus);
             }
 
             // Before the worker completely stops, the receiver needs to be drained for indexation payloads to be
@@ -103,7 +106,7 @@ where
 
             while let Some(Some(IndexationPayloadWorkerEvent { message_id, message })) = receiver.next().now_or_never()
             {
-                process(&*storage, &metrics, message_id, message);
+                process(&*storage, &metrics, message_id, message, &bus);
                 count += 1;
             }
 

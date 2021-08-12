@@ -2,12 +2,27 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::MessageId;
+use bee_message::payload::indexation::PaddedIndex;
+use bee_tangle::MessageRef;
 
 /// An event that indicates that a message was processed.
 #[derive(Clone)]
 pub struct MessageProcessed {
     /// Message identifier of the processed message.
     pub message_id: MessageId,
+    /// The processed message
+    pub message: MessageRef,
+}
+
+/// An event that indicates that a message was processed.
+#[derive(Clone)]
+pub struct NewIndexationMessage {
+    /// Message identifier of the processed message.
+    pub message_id: MessageId,
+    /// The indexation message
+    pub message: MessageRef,
+    /// The index of message
+    pub index: PaddedIndex,
 }
 
 /// An event that indicates that a message was solidified.

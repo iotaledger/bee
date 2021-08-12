@@ -1,101 +1,193 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod manager;
-mod topics;
-
+mod broker;
 pub mod config;
+mod error;
+mod event;
+mod handlers;
 
-use config::MqttConfig;
-use manager::MqttManager;
-use topics::*;
+use crate::storage::StorageBackend;
 
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::event::{LatestMilestoneChanged, SolidMilestoneChanged};
+use bee_runtime::node::{Node, NodeBuilder};
 
-use async_trait::async_trait;
-use futures::stream::StreamExt;
-use log::{debug, error, warn};
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::UnboundedReceiverStream;
+use self::{
+    broker::{MqttBroker, MqttBrokerConfig},
+    config::MqttConfig,
+};
 
-use std::{any::Any, convert::Infallible};
+use librumqttd as mqtt;
+use log::debug;
+use rumqttlog::Config as RouterSettings;
 
-#[derive(Default)]
-pub struct Mqtt;
+use std::{collections::HashMap, thread};
+use librumqttd::ConsoleSettings;
 
-fn topic_handler<N, E, T, P, F>(node: &mut N, topic: &'static str, f: F)
-where
-    N: Node,
-    E: Any + Clone + Send + Sync,
-    T: Into<String> + Send,
-    P: Into<Vec<u8>> + Send,
-    F: 'static + Fn(&E) -> (T, P) + Send + Sync,
-{
-    let bus = node.bus();
-    let manager = node.resource::<MqttManager>();
-    let (tx, rx) = mpsc::unbounded_channel();
+const DEFAULT_NEXT_CONNECTION_DELAY: u64 = 1;
+const DEFAULT_CONNECTION_TIMEOUT_MS: u16 = 100;
+const DEFAULT_MAX_CLIENT_ID_LEN: usize = 256;
+const DEFAULT_THROTTLE_DELAY_MS: u64 = 0;
+const DEFAULT_MAX_PAYLOAD_SIZE: usize = 2048;
+const DEFAULT_MAX_INFLIGHT_COUNT: u16 = 500;
+const DEFAULT_MAX_INFLIGHT_SIZE: usize = 1024;
+const DEFAULT_BROKER_ID: usize = 0;
+const DEFAULT_ROUTER_ID: usize = 0;
+const DEFAULT_ROUTER_DIR: &str = "/tmp/rumqttd";
+const DEFAULT_MAX_SEGMENT_SIZE: usize = 1024 * 1024;
+const DEFAULT_MAX_SEGMENT_COUNT: usize = 1024;
+const DEFAULT_MAX_CONNECTIONS: usize = 50;
+const DEFAULT_MAX_INFLIGHT_REQUESTS: usize = 200;
 
-    node.spawn::<Mqtt, _, _>(|shutdown| async move {
-        debug!("Mqtt {} topic handler running.", topic);
+pub async fn init<N: Node>(config: MqttConfig, mut node_builder: N::Builder) -> N::Builder
+    where
+        N::Backend: StorageBackend
+ {
+    let MqttConfig { bind_addr } = config;
 
-        let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
+    let connection_settings = mqtt::ConnectionSettings {
+        connection_timeout_ms: DEFAULT_CONNECTION_TIMEOUT_MS,
+        max_client_id_len: DEFAULT_MAX_CLIENT_ID_LEN,
+        throttle_delay_ms: DEFAULT_THROTTLE_DELAY_MS,
+        max_payload_size: DEFAULT_MAX_PAYLOAD_SIZE,
+        max_inflight_count: DEFAULT_MAX_INFLIGHT_COUNT,
+        max_inflight_size: DEFAULT_MAX_INFLIGHT_SIZE,
+        username: None, // Option<String>,
+        password: None, // Option<String>,
+    };
 
-        while let Some(event) = receiver.next().await {
-            let (topic, payload) = f(&event);
-            manager.send(topic, payload).await;
-        }
+    let server_settings = mqtt::ServerSettings {
+        listen: bind_addr.clone(),
+        cert: None, // Option<ServerCert>,
+        next_connection_delay_ms: DEFAULT_NEXT_CONNECTION_DELAY,
+        connections: connection_settings, // ConnectionSettings,
+    };
 
-        debug!("Mqtt {} topic handler stopped.", topic);
+    let router_settings = RouterSettings {
+        id: DEFAULT_ROUTER_ID,
+        dir: DEFAULT_ROUTER_DIR.into(),
+        max_segment_size: DEFAULT_MAX_SEGMENT_SIZE,
+        max_segment_count: DEFAULT_MAX_SEGMENT_COUNT,
+        max_connections: DEFAULT_MAX_CONNECTIONS,
+    };
+
+    // TODO: TLS server
+    let mut servers = HashMap::with_capacity(1);
+    servers.insert("non_tls".into(), server_settings);
+
+    let config = mqtt::Config {
+        id: DEFAULT_BROKER_ID,
+        router: router_settings,
+        servers,
+        cluster: None,    // Option<HashMap<String, MeshSettings>>,
+        replicator: None, // Option<ConnectionSettings>,
+        console: ConsoleSettings {
+            listen: bind_addr
+        },
+    };
+
+    let mut broker = mqtt::Broker::new(config);
+
+    let mut milestones_latest_tx = broker.link("milestones/latest").expect("linking mqtt sender failed");
+    let mut milestones_confirmed_tx = broker.link("milestones/confirmed").expect("linking mqtt sender failed");
+    let mut messages_tx = broker.link("messages").expect("linking mqtt sender failed");
+    let mut messages_referenced_tx = broker.link("messages/referenced").expect("linking mqtt sender failed");
+    let mut messages_indexation_tx = broker.link("indexation/{index}").expect("linking mqtt sender failed");
+    let mut messages_metadata_tx = broker.link("messages/{id}/metadata").expect("linking mqtt sender failed");
+    let mut outputs_tx = broker.link("outputs/{id}").expect("linking mqtt sender failed");
+    let mut outputs_created_tx = broker.link("outputs/{id}").expect("linking mqtt sender failed");
+    let mut outputs_consumed_tx = broker.link("outputs/{id}").expect("linking mqtt sender failed");
+    let mut transactions_included_message_tx = broker.link(" transactions/{transactionId}/included-message").expect("linking mqtt sender failed");
+    let mut addresses_ouptuts_created_tx = broker.link("addresses/{address}/outputs").expect("linking mqtt sender failed");
+    let mut addresses_ouptuts_consumed_tx = broker.link("addresses/{address}/outputs").expect("linking mqtt sender failed");
+    let mut addresses_ed25519_ouptuts_created_tx = broker.link("addresses/ed25519/{address}/outputs").expect("linking mqtt sender failed");
+    let mut addresses_ed25519_ouptuts_consumed_tx = broker.link("addresses/ed25519/{address}/outputs").expect("linking mqtt sender failed");
+
+    thread::spawn(move || {
+        debug!("Starting MQTT broker.");
+
+        // **NOTE**: That's a blocking call until the end of the program.
+        broker.start().expect("error starting broker");
+
+        debug!("MQTT broker stopped.");
     });
 
-    bus.add_listener::<Mqtt, _, _>(move |event: &E| {
-        if tx.send((*event).clone()).is_err() {
-            warn!("Sending event to mqtt {} topic handler failed.", topic)
-        }
-    });
-}
+    // **Note**: we are only interested in publishing, hence ignore the returned receiver.
 
-#[async_trait]
-impl<N: Node> Worker<N> for Mqtt {
-    type Config = MqttConfig;
-    type Error = Infallible;
+    let _ = milestones_latest_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-    async fn start(node: &mut N, config: Self::Config) -> Result<Self, Self::Error> {
-        match MqttManager::new(config) {
-            Ok(manager) => {
-                // TODO log connected
-                node.register_resource(manager);
+    let _ = milestones_confirmed_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-                topic_handler(node, TOPIC_MILESTONES_LATEST, |_event: &LatestMilestoneChanged| {
-                    (TOPIC_MILESTONES_LATEST, "")
-                });
-                topic_handler(node, TOPIC_MILESTONES_SOLID, |_event: &SolidMilestoneChanged| {
-                    (TOPIC_MILESTONES_SOLID, "")
-                });
-                // topic_handler(node, _TOPIC_MESSAGES, |_event: &_| (_TOPIC_MESSAGES, ""));
-                // topic_handler(node, _TOPIC_MESSAGES_REFERENCED, |_event: &_| {
-                //     (_TOPIC_MESSAGES_REFERENCED, "")
-                // });
-                // topic_handler(node, _TOPIC_MESSAGES_INDEXATION, |_event: &_| {
-                //     (_TOPIC_MESSAGES_INDEXATION, "")
-                // });
-                // topic_handler(node, _TOPIC_MESSAGES_METADATA, |_event: &_| {
-                //     (_TOPIC_MESSAGES_METADATA, "")
-                // });
-                // topic_handler(node, _TOPIC_OUTPUTS, |_event: &_| (_TOPIC_OUTPUTS, ""));
-                // topic_handler(node, _TOPIC_ADDRESSES_OUTPUTS, |_event: &_| {
-                //     (_TOPIC_ADDRESSES_OUTPUTS, "")
-                // });
-                // topic_handler(node, _TOPIC_ADDRESSES_ED25519_OUTPUT, |_event: &_| {
-                //     (_TOPIC_ADDRESSES_ED25519_OUTPUT, "")
-                // });
-            }
-            Err(e) => {
-                error!("Creating mqtt manager failed {:?}.", e);
-            }
-        }
+    let _ = messages_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-        Ok(Self::default())
-    }
+    let _ = messages_referenced_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
+
+     let _ = messages_indexation_tx
+         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+         .expect("mqtt connect error");
+
+     let _ = messages_metadata_tx
+         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+         .expect("mqtt connect error");
+
+     let outputs_rx = outputs_tx
+         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+         .expect("mqtt connect error");
+
+     let _ = outputs_created_tx
+         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+         .expect("mqtt connect error");
+
+     let _ = outputs_consumed_tx
+         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+         .expect("mqtt connect error");
+
+     let transactions_included_message_rx = transactions_included_message_tx
+         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+         .expect("mqtt connect error");
+
+     let _ = addresses_ouptuts_created_tx
+         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+         .expect("mqtt connect error");
+
+     let _ = addresses_ouptuts_consumed_tx
+         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+         .expect("mqtt connect error");
+
+     let _ = addresses_ed25519_ouptuts_created_tx
+         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+         .expect("mqtt connect error");
+
+     let _ = addresses_ed25519_ouptuts_consumed_tx
+         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+         .expect("mqtt connect error");
+
+    let broker_config = MqttBrokerConfig {
+        milestones_latest_tx,
+        milestones_confirmed_tx,
+        messages_tx,
+        messages_referenced_tx,
+        messages_indexation_tx,
+        messages_metadata_tx,
+        outputs_tx,
+        outputs_rx,
+        outputs_created_tx,
+        outputs_consumed_tx,
+        transactions_included_message_tx,
+        transactions_included_message_rx,
+        addresses_ouptuts_created_tx,
+        addresses_ouptuts_consumed_tx,
+        addresses_ed25519_ouptuts_created_tx,
+        addresses_ed25519_ouptuts_consumed_tx,
+    };
+
+    node_builder = node_builder.with_worker_cfg::<MqttBroker>(broker_config);
+    node_builder
 }
