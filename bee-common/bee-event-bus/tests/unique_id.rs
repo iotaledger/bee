@@ -17,5 +17,6 @@ fn derived_impls() {
     let _unique_id_clone = _unique_id.clone();
     let _unique_id_debug = format!("{:?}", _unique_id);
 
+    assert_eq!(_unique_id_copy, _unique_id);
     assert_eq!(_unique_id_clone, _unique_id);
 }
