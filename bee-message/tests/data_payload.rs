@@ -87,3 +87,12 @@ fn packable_round_trip() {
 
     assert_eq!(data_a, data_b);
 }
+
+#[test]
+fn serde_round_trip() {
+    let data_payload_1 = DataPayload::new(rand_bytes(255)).unwrap();
+    let json = serde_json::to_string(&data_payload_1).unwrap();
+    let data_payload_2 = serde_json::from_str::<DataPayload>(&json).unwrap();
+
+    assert_eq!(data_payload_1, data_payload_2);
+}

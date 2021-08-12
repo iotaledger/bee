@@ -67,3 +67,12 @@ fn packable_round_trip() {
 
     assert_eq!(input_1, input_2);
 }
+
+#[test]
+fn serde_round_trip() {
+    let utxo_input_1 = UtxoInput::new(OutputId::from_str(OUTPUT_ID).unwrap());
+    let json = serde_json::to_string(&utxo_input_1).unwrap();
+    let utxo_input_2 = serde_json::from_str::<UtxoInput>(&json).unwrap();
+
+    assert_eq!(utxo_input_1, utxo_input_2);
+}

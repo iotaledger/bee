@@ -157,3 +157,32 @@ fn packable_round_trip() {
 
     assert_eq!(fpc_a, fpc_b);
 }
+
+#[test]
+fn serde_round_trip() {
+    let fpc_payload_1 = FpcPayload::builder()
+        .with_conflicts(Conflicts::new(
+            vec![
+                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
+                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
+                Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
+            ]
+            .try_into()
+            .unwrap(),
+        ))
+        .with_timestamps(Timestamps::new(
+            vec![
+                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
+                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
+                Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
+            ]
+            .try_into()
+            .unwrap(),
+        ))
+        .finish()
+        .unwrap();
+    let json = serde_json::to_string(&fpc_payload_1).unwrap();
+    let fpc_payload_2 = serde_json::from_str::<FpcPayload>(&json).unwrap();
+
+    assert_eq!(fpc_payload_1, fpc_payload_2);
+}

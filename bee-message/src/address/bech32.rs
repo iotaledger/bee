@@ -17,6 +17,7 @@ use core::convert::{TryFrom, TryInto};
 
 /// Wrapper for a `Bech32` encoded address string.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bech32Address(String);
 
 impl Bech32Address {

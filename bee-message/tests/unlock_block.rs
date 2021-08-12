@@ -67,3 +67,12 @@ fn unpack_invalid_tag() {
         ))),
     ));
 }
+
+#[test]
+fn serde_round_trip() {
+    let unlock_block_1 = UnlockBlock::from(ReferenceUnlock::new(42).unwrap());
+    let json = serde_json::to_string(&unlock_block_1).unwrap();
+    let unlock_block_2 = serde_json::from_str::<UnlockBlock>(&json).unwrap();
+
+    assert_eq!(unlock_block_1, unlock_block_2);
+}

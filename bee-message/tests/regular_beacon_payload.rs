@@ -92,3 +92,18 @@ fn packable_round_trip() {
 
     assert_eq!(beacon_a, beacon_b);
 }
+
+#[test]
+fn serde_round_trip() {
+    let regular_beacon_payload_1 = BeaconPayload::builder()
+        .with_instance_id(0)
+        .with_round(1)
+        .with_partial_public_key(hex_decode(BEACON_PARTIAL_PUBLIC_KEY).unwrap())
+        .with_partial_signature(hex_decode(BEACON_SIGNATURE).unwrap())
+        .finish()
+        .unwrap();
+    let json = serde_json::to_string(&regular_beacon_payload_1).unwrap();
+    let regular_beacon_payload_2 = serde_json::from_str::<BeaconPayload>(&json).unwrap();
+
+    assert_eq!(regular_beacon_payload_1, regular_beacon_payload_2);
+}

@@ -89,3 +89,20 @@ fn packable_round_trip() {
 
     assert_eq!(output_a, output_b);
 }
+
+#[test]
+fn serde_round_trip() {
+    let signature_locked_asset_output_1 = SignatureLockedAssetOutput::new(
+        Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()),
+        vec![
+            AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
+            AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
+            AssetBalance::new(AssetId::new(rand_bytes_array()), 1000),
+        ],
+    )
+    .unwrap();
+    let json = serde_json::to_string(&signature_locked_asset_output_1).unwrap();
+    let signature_locked_asset_output_2 = serde_json::from_str::<SignatureLockedAssetOutput>(&json).unwrap();
+
+    assert_eq!(signature_locked_asset_output_1, signature_locked_asset_output_2);
+}

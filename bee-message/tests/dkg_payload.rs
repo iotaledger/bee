@@ -195,3 +195,27 @@ fn dkg_packable_round_trip() {
 
     assert_eq!(dkg_a, dkg_b);
 }
+
+#[test]
+fn serde_round_trip() {
+    let dkg_payload_1 = DkgPayload::builder()
+        .with_instance_id(1)
+        .with_from_index(20)
+        .with_to_index(32)
+        .with_deal(
+            EncryptedDeal::builder()
+                .with_dh_key(rand_bytes(128))
+                .with_nonce(rand_bytes(12))
+                .with_encrypted_share(rand_bytes(128))
+                .with_threshold(10)
+                .with_commitments(rand_bytes(12))
+                .finish()
+                .unwrap(),
+        )
+        .finish()
+        .unwrap();
+    let json = serde_json::to_string(&dkg_payload_1).unwrap();
+    let dkg_payload_2 = serde_json::from_str::<DkgPayload>(&json).unwrap();
+
+    assert_eq!(dkg_payload_1, dkg_payload_2);
+}

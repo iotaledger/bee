@@ -87,3 +87,12 @@ fn packable_round_trip() {
 
     assert_eq!(transaction_id_1, transaction_id_2);
 }
+
+#[test]
+fn serde_round_trip() {
+    let transaction_id_1 = TransactionId::from_str(TRANSACTION_ID).unwrap();
+    let json = serde_json::to_string(&transaction_id_1).unwrap();
+    let transaction_id_2 = serde_json::from_str::<TransactionId>(&json).unwrap();
+
+    assert_eq!(transaction_id_1, transaction_id_2);
+}

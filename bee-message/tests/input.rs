@@ -52,3 +52,14 @@ fn unpack_invalid_tag() {
         ))),
     ));
 }
+
+#[test]
+fn serde_round_trip() {
+    let input_1 = Input::from(UtxoInput::from(
+        OutputId::new(TransactionId::new([42; TransactionId::LENGTH]), 0).unwrap(),
+    ));
+    let json = serde_json::to_string(&input_1).unwrap();
+    let input_2 = serde_json::from_str::<Input>(&json).unwrap();
+
+    assert_eq!(input_1, input_2);
+}

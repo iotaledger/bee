@@ -60,3 +60,15 @@ fn packable_round_trip() {
 
     assert_eq!(signature_unlock_1, signature_unlock_2);
 }
+
+#[test]
+fn serde_round_trip() {
+    let signature_unlock_1 = SignatureUnlock::from(Signature::from(Ed25519Signature::new(
+        rand_bytes_array(),
+        rand_bytes_array(),
+    )));
+    let json = serde_json::to_string(&signature_unlock_1).unwrap();
+    let signature_unlock_2 = serde_json::from_str::<SignatureUnlock>(&json).unwrap();
+
+    assert_eq!(signature_unlock_1, signature_unlock_2);
+}
