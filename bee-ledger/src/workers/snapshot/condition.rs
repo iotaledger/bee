@@ -20,6 +20,7 @@ pub(crate) fn should_snapshot<B: StorageBackend>(
     pruning_depth_min: u32,
     snapshot_config: &SnapshotConfig,
 ) -> Result<(), SkipReason> {
+    // FIXME: `tangle` has not setter for the snapshot index, so it cannot be updated currently.
     let snapshot_index = *tangle.get_snapshot_index();
 
     let snapshot_interval = if tangle.is_synced() {
