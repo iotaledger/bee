@@ -22,9 +22,9 @@ pub use option::UnpackOptionError;
 pub use vec_prefix::VecPrefix;
 
 pub use crate::{
-    error::{PackError, UnknownTagError, UnpackError},
-    packer::{Packer, VecPacker},
-    unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker},
+    error::{PackError, UnexpectedEOF, UnknownTagError, UnpackError},
+    packer::{Packer, SlicePacker, VecPacker},
+    unpacker::{SliceUnpacker, Unpacker},
 };
 
 pub use bee_packable_derive::Packable;

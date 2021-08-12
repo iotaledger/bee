@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::unpacker::Unpacker;
+use crate::{error::UnexpectedEOF, unpacker::Unpacker};
 
 /// An [`Unpacker`] backed by a `&[u8]`.
 pub struct SliceUnpacker<'u>(&'u [u8]);
@@ -11,15 +11,6 @@ impl<'u> SliceUnpacker<'u> {
     pub fn new(slice: &'u [u8]) -> Self {
         Self(slice)
     }
-}
-
-/// Error type to be raised when [`SliceUnpacker`] does not have enough bytes to unpack something.
-#[derive(Debug)]
-pub struct UnexpectedEOF {
-    /// The required number of bytes.
-    pub required: usize,
-    /// The number of bytes the unpacker had.
-    pub had: usize,
 }
 
 impl<'u> Unpacker for SliceUnpacker<'u> {

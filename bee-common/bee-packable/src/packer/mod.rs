@@ -5,8 +5,10 @@
 
 #[cfg(feature = "io")]
 mod io;
+mod slice;
 mod vec;
 
+pub use slice::SlicePacker;
 pub use vec::VecPacker;
 
 /// A type that can pack any value that implements [`Packable`](crate::Packable).
