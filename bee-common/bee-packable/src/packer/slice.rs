@@ -26,6 +26,8 @@ impl<'a> Packer for SlicePacker<'a> {
         match self.slice.get_mut(self.offset..self.offset + len) {
             Some(slice) => {
                 slice.copy_from_slice(bytes);
+                self.offset += len;
+
                 Ok(())
             }
             None => Err(UnexpectedEOF {
