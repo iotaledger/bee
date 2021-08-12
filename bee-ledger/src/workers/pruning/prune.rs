@@ -23,8 +23,10 @@ use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle};
 
 use log::*;
 
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::{Instant, SystemTime};
+use std::{
+    sync::atomic::{AtomicUsize, Ordering},
+    time::{Instant, SystemTime},
+};
 
 const KEEP_INITIAL_SNAPSHOT_SEPS: usize = 50;
 
