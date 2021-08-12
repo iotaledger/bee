@@ -23,7 +23,7 @@ pub use vec_prefix::VecPrefix;
 
 pub use crate::{
     error::{PackError, UnknownTagError, UnpackError},
-    packer::{Packer, VecPacker},
+    packer::{Packer, SlicePacker, VecPacker},
     unpacker::{SliceUnpacker, UnexpectedEOF, Unpacker},
 };
 

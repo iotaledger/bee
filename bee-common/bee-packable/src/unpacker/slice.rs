@@ -13,12 +13,13 @@ impl<'u> SliceUnpacker<'u> {
     }
 }
 
-/// Error type to be raised when [`SliceUnpacker`] does not have enough bytes to unpack something.
+/// Error type to be raised when [`SliceUnpacker`] does not have enough bytes to unpack something
+/// or when ['crate::packer::SlicePacker'] does not have enoug space to pack something.
 #[derive(Debug)]
 pub struct UnexpectedEOF {
     /// The required number of bytes.
     pub required: usize,
-    /// The number of bytes the unpacker had.
+    /// The number of bytes the unpacker had or the number of bytes the packer can receivw.
     pub had: usize,
 }
 
