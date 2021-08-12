@@ -127,3 +127,12 @@ fn unpack_invalid_index() {
         UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidOutputIndex(127))),
     ));
 }
+
+#[test]
+fn serde_round_trip() {
+    let output_id_1 = OutputId::from_str(OUTPUT_ID).unwrap();
+    let json = serde_json::to_string(&output_id_1).unwrap();
+    let output_id_2 = serde_json::from_str::<OutputId>(&json).unwrap();
+
+    assert_eq!(output_id_1, output_id_2);
+}

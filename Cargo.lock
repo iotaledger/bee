@@ -114,6 +114,7 @@ dependencies = [
  "iota-crypto",
  "serde",
  "serde-big-array",
+ "serde_json",
 ]
 
 [[package]]

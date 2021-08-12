@@ -96,3 +96,12 @@ fn packable_round_trip() {
 
     assert_eq!(address_1, address_2);
 }
+
+#[test]
+fn serde_round_trip() {
+    let bls_address_1 = BlsAddress::from_str(BLS_ADDRESS).unwrap();
+    let json = serde_json::to_string(&bls_address_1).unwrap();
+    let bls_address_2 = serde_json::from_str::<BlsAddress>(&json).unwrap();
+
+    assert_eq!(bls_address_1, bls_address_2);
+}

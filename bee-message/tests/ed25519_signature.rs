@@ -51,3 +51,15 @@ fn packable_round_trip() {
 
     assert_eq!(signature_1, signature_2);
 }
+
+#[test]
+fn serde_round_trip() {
+    let ed25519_signature_1 = Ed25519Signature::new(
+        hex_decode(ED25519_PUBLIC_KEY).unwrap(),
+        hex_decode(ED25519_SIGNATURE).unwrap(),
+    );
+    let json = serde_json::to_string(&ed25519_signature_1).unwrap();
+    let ed25519_signature_2 = serde_json::from_str::<Ed25519Signature>(&json).unwrap();
+
+    assert_eq!(ed25519_signature_1, ed25519_signature_2);
+}

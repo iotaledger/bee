@@ -99,3 +99,18 @@ fn packable_round_trip() {
 
     assert_eq!(salt_declaration_a, salt_declaration_b);
 }
+
+#[test]
+fn serde_round_trip() {
+    let salt_declaration_payload_1 = SaltDeclarationPayload::builder()
+        .with_node_id(32)
+        .with_salt(Salt::new(rand_bytes(64), rand_number()).unwrap())
+        .with_timestamp(rand_number())
+        .with_signature(rand_bytes_array())
+        .finish()
+        .unwrap();
+    let json = serde_json::to_string(&salt_declaration_payload_1).unwrap();
+    let salt_declaration_payload_2 = serde_json::from_str::<SaltDeclarationPayload>(&json).unwrap();
+
+    assert_eq!(salt_declaration_payload_1, salt_declaration_payload_2);
+}

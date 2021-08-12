@@ -86,3 +86,13 @@ fn packable_round_trip() {
 
     assert_eq!(output_1, output_2);
 }
+
+#[test]
+fn serde_round_trip() {
+    let signature_locked_single_output_1 =
+        SignatureLockedSingleOutput::new(Address::from(Ed25519Address::from_str(ED25519_ADDRESS).unwrap()), 1).unwrap();
+    let json = serde_json::to_string(&signature_locked_single_output_1).unwrap();
+    let signature_locked_single_output_2 = serde_json::from_str::<SignatureLockedSingleOutput>(&json).unwrap();
+
+    assert_eq!(signature_locked_single_output_1, signature_locked_single_output_2);
+}

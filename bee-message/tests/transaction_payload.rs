@@ -236,3 +236,37 @@ fn packable_round_trip() {
     assert_eq!(payload_a, payload_b);
     assert_eq!(payload_a.id(), payload_b.id());
 }
+
+#[test]
+fn serde_round_trip() {
+    let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
+    let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS).unwrap()));
+    let amount = 1_000_000;
+    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
+    let essence = TransactionEssence::builder()
+        .with_timestamp(rand_number())
+        .with_access_pledge_id(rand_bytes_array())
+        .with_consensus_pledge_id(rand_bytes_array())
+        .with_inputs(vec![input1, input2])
+        .with_outputs(vec![output])
+        .finish()
+        .unwrap();
+    let signature = Ed25519Signature::new(
+        hex_decode(ED25519_PUBLIC_KEY).unwrap(),
+        hex_decode(ED25519_SIGNATURE).unwrap(),
+    );
+    let sig_unlock_block = UnlockBlock::Signature(SignatureUnlock::from(Signature::Ed25519(signature)));
+    let ref_unlock_block = UnlockBlock::Reference(ReferenceUnlock::new(0).unwrap());
+    let unlock_blocks = UnlockBlocks::new(vec![sig_unlock_block, ref_unlock_block]).unwrap();
+    let transaction_payload_1 = TransactionPayload::builder()
+        .with_essence(essence.clone())
+        .with_unlock_blocks(unlock_blocks.clone())
+        .finish()
+        .unwrap();
+    let json = serde_json::to_string(&transaction_payload_1).unwrap();
+    let transaction_payload_2 = serde_json::from_str::<TransactionPayload>(&json).unwrap();
+
+    assert_eq!(transaction_payload_1, transaction_payload_2);
+}

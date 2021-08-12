@@ -286,3 +286,25 @@ fn packable_round_trip() {
 
     assert_eq!(essence_a, essence_b);
 }
+
+#[test]
+fn serde_round_trip() {
+    let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
+    let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
+    let amount = 1_000_000;
+    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
+    let essence_1 = TransactionEssence::builder()
+        .with_timestamp(rand_number())
+        .with_access_pledge_id(rand_bytes_array())
+        .with_consensus_pledge_id(rand_bytes_array())
+        .with_inputs(vec![input1, input2])
+        .with_outputs(vec![output])
+        .finish()
+        .unwrap();
+    let json = serde_json::to_string(&essence_1).unwrap();
+    let essence_2 = serde_json::from_str::<TransactionEssence>(&json).unwrap();
+
+    assert_eq!(essence_1, essence_2);
+}

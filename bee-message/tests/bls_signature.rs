@@ -58,3 +58,12 @@ fn packable_round_trip() {
 
     assert_eq!(signature_1, signature_2);
 }
+
+#[test]
+fn serde_round_trip() {
+    let bls_signature_1 = BlsSignature::new(hex_decode(BLS_SIGNATURE).unwrap());
+    let json = serde_json::to_string(&bls_signature_1).unwrap();
+    let bls_signature_2 = serde_json::from_str::<BlsSignature>(&json).unwrap();
+
+    assert_eq!(bls_signature_1, bls_signature_2);
+}

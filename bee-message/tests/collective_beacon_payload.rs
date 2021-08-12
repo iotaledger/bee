@@ -101,3 +101,19 @@ fn packable_round_trip() {
 
     assert_eq!(beacon_a, beacon_b);
 }
+
+#[test]
+fn serde_round_trip() {
+    let collective_beacon_payload_1 = CollectiveBeaconPayload::builder()
+        .with_instance_id(0)
+        .with_round(1)
+        .with_prev_signature(hex_decode(BEACON_SIGNATURE_0).unwrap())
+        .with_signature(hex_decode(BEACON_SIGNATURE_1).unwrap())
+        .with_distributed_public_key(hex_decode(BEACON_DISTRIBUTED_PUBLIC_KEY).unwrap())
+        .finish()
+        .unwrap();
+    let json = serde_json::to_string(&collective_beacon_payload_1).unwrap();
+    let collective_beacon_payload_2 = serde_json::from_str::<CollectiveBeaconPayload>(&json).unwrap();
+
+    assert_eq!(collective_beacon_payload_1, collective_beacon_payload_2);
+}
