@@ -12,6 +12,7 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-event-bus = { path = "../../bee-common/bee-event-bus" }
+bee-message = { path = "../../bee-message" }
 
 log = "0.4"
 prost = "0.8"
