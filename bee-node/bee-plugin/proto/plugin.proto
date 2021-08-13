@@ -17,8 +17,225 @@ message ShutdownReply {}
 message ProcessReply {}
 
 // Event triggered when a message succesfully passes the parsing stage.
-message MessageParsedEvent {}
+message MessageParsedEvent {
+    // The parsed message.
+    Message message = 1;
+}
+
 // Event triggered when parsing a message fails.
 message ParsingFailedEvent {}
 // Event triggered when the syntactical validation of a message fails.
 message MessageRejectedEvent {}
+
+// A message from the IOTA network.
+message Message {
+    repeated ParentsBlock parents_block = 1;
+    bytes issuer_public_key = 2;
+    uint64 issue_timestamp = 3;
+    uint32 sequence_number = 4;
+    optional Payload payload = 5;
+    uint64 nonce = 6;
+    bytes signature = 7;
+}
+
+message ParentsBlock {
+    ParentsKind kind = 1;
+    repeated MessageId reference = 2;
+}
+
+enum ParentsKind {
+    STRONG = 0;
+    WEAK = 1;
+    DISLIKED = 2;
+    LIKED = 3;
+}
+
+message MessageId {
+    bytes inner = 1;
+}
+
+message Payload {
+    oneof payload_kind {
+        DataPayload data = 1;
+        TransactionPayload transaction = 2;
+        FpcPayload fpc = 3;
+        ApplicationMessagePayload application_message = 4;
+        DkgPayload dkg = 5;
+        BeaconPayload beacon = 6;
+        CollectiveBeaconPayload collective_beacon = 7;
+        SaltDeclarationPayload salt_declaration = 8;
+        IndexationPayload indexation = 9;
+    }
+}
+
+message DataPayload {
+    bytes data = 1;
+}
+
+message TransactionPayload {
+    TransactionEssence essence = 1;
+    repeated UnlockBlock unlock_block = 2;
+}
+
+message UnlockBlock {
+    oneof unlock_block_kind {
+        SignatureUnlock signature = 1;
+        ReferenceUnlock reference = 2;
+    }
+}
+
+message SignatureUnlock {
+    Signature signature = 1;
+}
+
+message Signature {
+    oneof signature_kind {
+        Ed25519Signature ed25519 = 1;
+        BlsSignature bls = 2;
+    }
+}
+
+message Ed25519Signature {
+    bytes public_key = 1;
+    bytes signature = 2;
+}
+
+message BlsSignature {
+    bytes inner = 1;
+}
+
+message ReferenceUnlock {
+    uint32 inner = 1;
+}
+
+message TransactionEssence {
+    uint64 timestamp = 1;
+    bytes access_pledge_id = 2;
+    bytes consensus_pledge_id = 3;
+    repeated Input input = 4;
+    repeated Output output = 5;
+    optional Payload payload = 6;
+}
+
+message Input {
+    oneof input_kind {
+        UtxoInput utxo = 1;
+    }
+}
+
+message UtxoInput {
+    OutputId output_id = 1;
+}
+
+message OutputId {
+    TransactionId transaction_id = 1;
+    uint32 index = 2;
+}
+
+message TransactionId {
+    bytes inner = 1;
+}
+
+message Output {
+    oneof output_kind {
+        SignatureLockedSingleOutput ignature_locked_single = 1;
+        SignatureLockedAssetOutput signature_locked_asset = 2;
+    }
+}
+
+message SignatureLockedSingleOutput {
+    Address address = 1;
+    uint64 amount = 2;
+}
+
+message Address {
+    oneof address_kind {
+        Ed25519Address ed25519 = 1;
+        BlsAddress bls = 2;
+    }
+}
+
+message Ed25519Address {
+    bytes inner = 1;
+}
+
+message BlsAddress {
+    bytes inner = 2;
+}
+
+message SignatureLockedAssetOutput {
+    AssetId id = 1;
+    uint64 balance = 2;
+}
+
+message AssetId {
+    bytes inner = 1;
+}
+
+message FpcPayload {
+    repeated Conflict conflict = 1;
+    repeated Timestamp timestamp = 2;
+}
+
+message Conflict {
+    TransactionId transaction_id = 1;
+    uint32 opinion = 2;
+    uint32 round = 3;
+}
+
+message Timestamp {
+    MessageId message_id = 1;
+    uint32 opinion = 2;
+    uint32 round = 3;
+}
+
+message ApplicationMessagePayload {
+    uint32 instance_id = 1;
+}
+
+message DkgPayload {
+    uint32 instance_id = 1;
+    uint32 from_index = 2;
+    uint32 to_index = 3;
+    EncryptedDeal deal = 4;
+}
+
+message EncryptedDeal {
+    bytes dh_key = 1;
+    bytes nonce = 2;
+    bytes encrpyted_share = 3;
+    uint32 threshold = 4;
+    bytes commitments = 5;
+}
+
+message BeaconPayload {
+    uint32 instance_id = 1;
+    uint64 round = 2;
+    bytes partial_public_key = 3;
+    bytes partial_signature = 4;
+}
+
+message CollectiveBeaconPayload {
+    uint32 instance_id = 1;
+    uint64 round = 2;
+    bytes prev_signature = 3;
+    bytes signature = 4;
+    bytes distributed_public_key = 5;
+}
+
+message SaltDeclarationPayload {
+    uint32 node_id = 1;
+    Salt salt = 2;
+    uint64 timestamp = 3;
+    bytes signature = 4;
+}
+
+message Salt {
+    bytes bytes = 1;
+    uint64 expiry_time = 2;
+}
+
+message IndexationPayload {
+    bytes index = 1;
+    bytes data = 2;
+}
