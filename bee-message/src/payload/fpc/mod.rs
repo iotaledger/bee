@@ -6,8 +6,6 @@
 mod conflict;
 mod timestamp;
 
-use core::convert::Infallible;
-
 pub use conflict::Conflict;
 pub use timestamp::Timestamp;
 
@@ -15,8 +13,9 @@ use crate::{
     payload::{transaction::TransactionId, MessagePayload, PAYLOAD_LENGTH_MAX},
     MessageId, MessageUnpackError, ValidationError,
 };
-
 use bee_packable::{error::UnpackPrefixError, BoundedU32, Packable, VecPrefix};
+
+use core::convert::Infallible;
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
 const PREFIXED_CONFLICTS_LENGTH_MAX: u32 =

@@ -119,7 +119,7 @@ fn unpack_valid() {
 }
 
 #[test]
-fn round_trip() {
+fn packable_round_trip() {
     let fpc_a = FpcPayload::builder()
         .with_conflicts(
             vec![
