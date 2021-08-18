@@ -5,6 +5,8 @@
 
 pub use crate::grpc::Message;
 
+use std::convert::TryInto;
+
 use crate::grpc::{
     address::AddressKind, input::InputKind, output::OutputKind, payload::PayloadKind, signature::SignatureKind,
     unlock_block::UnlockBlockKind, Address, ApplicationMessagePayload, AssetBalance, AssetId, BeaconPayload,
@@ -54,6 +56,13 @@ impl From<&bee_message::MessageId> for MessageId {
         Self {
             inner: message_id.to_vec(),
         }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::MessageId> for MessageId {
+    fn into(self) -> bee_message::MessageId {
+        bee_message::MessageId::new(self.inner.try_into().unwrap())
     }
 }
 
@@ -211,6 +220,13 @@ impl From<&bee_message::payload::transaction::TransactionId> for TransactionId {
     }
 }
 
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::payload::transaction::TransactionId> for TransactionId {
+    fn into(self) -> bee_message::payload::transaction::TransactionId {
+        bee_message::payload::transaction::TransactionId::new(self.inner.try_into().unwrap())
+    }
+}
+
 impl From<&bee_message::output::Output> for Output {
     fn from(output: &bee_message::output::Output) -> Self {
         let output_kind = match output {
@@ -301,6 +317,14 @@ impl From<&bee_message::payload::fpc::FpcPayload> for FpcPayload {
     }
 }
 
+
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::payload::fpc::FpcPayload> for FpcPayload {
+    fn into(self) -> bee_message::payload::fpc::FpcPayload {
+        bee_message::payload::fpc::FpcPayloadBuilder::default().with_conflicts(conflicts)
+    }
+}
+
 impl From<&bee_message::payload::fpc::Conflict> for Conflict {
     fn from(conflict: &bee_message::payload::fpc::Conflict) -> Self {
         Self {
@@ -308,6 +332,17 @@ impl From<&bee_message::payload::fpc::Conflict> for Conflict {
             opinion: conflict.opinion().into(),
             round: conflict.round().into(),
         }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::payload::fpc::Conflict> for Conflict {
+    fn into(self) -> bee_message::payload::fpc::Conflict {
+        bee_message::payload::fpc::Conflict::new(
+            self.transaction_id.unwrap().into(),
+            self.opinion.try_into().unwrap(),
+            self.round.try_into().unwrap(),
+        )
     }
 }
 
@@ -321,11 +356,29 @@ impl From<&bee_message::payload::fpc::Timestamp> for Timestamp {
     }
 }
 
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::payload::fpc::Timestamp> for Timestamp {
+    fn into(self) -> bee_message::payload::fpc::Timestamp {
+        bee_message::payload::fpc::Timestamp::new(
+            self.message_id.unwrap().into(),
+            self.opinion.try_into().unwrap(),
+            self.round.try_into().unwrap(),
+        )
+    }
+}
+
 impl From<&bee_message::payload::drng::ApplicationMessagePayload> for ApplicationMessagePayload {
     fn from(payload: &bee_message::payload::drng::ApplicationMessagePayload) -> Self {
         Self {
             instance_id: payload.instance_id(),
         }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::payload::drng::ApplicationMessagePayload> for ApplicationMessagePayload {
+    fn into(self) -> bee_message::payload::drng::ApplicationMessagePayload {
+        bee_message::payload::drng::ApplicationMessagePayload::new(self.instance_id)
     }
 }
 
@@ -337,6 +390,19 @@ impl From<&bee_message::payload::drng::DkgPayload> for DkgPayload {
             to_index: payload.to_index(),
             deal: Some(payload.deal().into()),
         }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::payload::drng::DkgPayload> for DkgPayload {
+    fn into(self) -> bee_message::payload::drng::DkgPayload {
+        bee_message::payload::drng::DkgPayloadBuilder::default()
+            .with_instance_id(self.instance_id)
+            .with_from_index(self.from_index)
+            .with_to_index(self.to_index)
+            .with_deal(self.deal.unwrap().into())
+            .finish()
+            .unwrap()
     }
 }
 
@@ -352,6 +418,20 @@ impl From<&bee_message::payload::drng::EncryptedDeal> for EncryptedDeal {
     }
 }
 
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::payload::drng::EncryptedDeal> for EncryptedDeal {
+    fn into(self) -> bee_message::payload::drng::EncryptedDeal {
+        bee_message::payload::drng::EncryptedDealBuilder::default()
+            .with_dh_key(self.dh_key)
+            .with_nonce(self.nonce)
+            .with_encrypted_share(self.encrpyted_share)
+            .with_threshold(self.threshold)
+            .with_commitments(self.commitments)
+            .finish()
+            .unwrap()
+    }
+}
+
 impl From<&bee_message::payload::drng::BeaconPayload> for BeaconPayload {
     fn from(payload: &bee_message::payload::drng::BeaconPayload) -> Self {
         Self {
@@ -360,6 +440,19 @@ impl From<&bee_message::payload::drng::BeaconPayload> for BeaconPayload {
             partial_public_key: payload.partial_public_key().to_vec(),
             partial_signature: payload.partial_signature().to_vec(),
         }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::payload::drng::BeaconPayload> for BeaconPayload {
+    fn into(self) -> bee_message::payload::drng::BeaconPayload {
+        bee_message::payload::drng::BeaconPayloadBuilder::default()
+            .with_instance_id(self.instance_id)
+            .with_round(self.round)
+            .with_partial_public_key(self.partial_public_key.try_into().unwrap())
+            .with_partial_signature(self.partial_signature.try_into().unwrap())
+            .finish()
+            .unwrap()
     }
 }
 
@@ -375,6 +468,20 @@ impl From<&bee_message::payload::drng::CollectiveBeaconPayload> for CollectiveBe
     }
 }
 
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::payload::drng::CollectiveBeaconPayload> for CollectiveBeaconPayload {
+    fn into(self) -> bee_message::payload::drng::CollectiveBeaconPayload {
+        bee_message::payload::drng::CollectiveBeaconPayloadBuilder::default()
+            .with_instance_id(self.instance_id)
+            .with_round(self.round)
+            .with_prev_signature(self.prev_signature.try_into().unwrap())
+            .with_signature(self.signature.try_into().unwrap())
+            .with_distributed_public_key(self.distributed_public_key.try_into().unwrap())
+            .finish()
+            .unwrap()
+    }
+}
+
 impl From<&bee_message::payload::salt_declaration::SaltDeclarationPayload> for SaltDeclarationPayload {
     fn from(payload: &bee_message::payload::salt_declaration::SaltDeclarationPayload) -> Self {
         Self {
@@ -383,6 +490,19 @@ impl From<&bee_message::payload::salt_declaration::SaltDeclarationPayload> for S
             timestamp: payload.timestamp(),
             signature: payload.signature().to_vec(),
         }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::payload::salt_declaration::SaltDeclarationPayload> for SaltDeclarationPayload {
+    fn into(self) -> bee_message::payload::salt_declaration::SaltDeclarationPayload {
+        bee_message::payload::salt_declaration::SaltDeclarationPayloadBuilder::new()
+            .with_salt(self.salt.unwrap().into())
+            .with_node_id(self.node_id)
+            .with_timestamp(self.timestamp)
+            .with_signature(self.signature.try_into().unwrap())
+            .finish()
+            .unwrap()
     }
 }
 
@@ -395,11 +515,25 @@ impl From<&bee_message::payload::salt_declaration::Salt> for Salt {
     }
 }
 
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::payload::salt_declaration::Salt> for Salt {
+    fn into(self) -> bee_message::payload::salt_declaration::Salt {
+        bee_message::payload::salt_declaration::Salt::new(self.bytes, self.expiry_time).unwrap()
+    }
+}
+
 impl From<&bee_message::payload::indexation::IndexationPayload> for IndexationPayload {
     fn from(payload: &bee_message::payload::indexation::IndexationPayload) -> Self {
         Self {
             index: payload.index().to_vec(),
             data: payload.data().to_vec(),
         }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<bee_message::payload::indexation::IndexationPayload> for IndexationPayload {
+    fn into(self) -> bee_message::payload::indexation::IndexationPayload {
+        bee_message::payload::indexation::IndexationPayload::new(self.index, self.data).unwrap()
     }
 }
