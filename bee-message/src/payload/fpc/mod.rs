@@ -3,15 +3,43 @@
 
 //! Module describing the FPC statement payload.
 
-mod conflicts;
-mod timestamps;
+mod conflict;
+mod timestamp;
 
-pub use conflicts::{Conflict, Conflicts};
-pub use timestamps::{Timestamp, Timestamps};
+pub use conflict::Conflict;
+pub use timestamp::Timestamp;
 
-use crate::{payload::MessagePayload, MessageUnpackError, ValidationError};
+use crate::{
+    payload::{transaction::TransactionId, MessagePayload, PAYLOAD_LENGTH_MAX},
+    MessageId, MessageUnpackError, ValidationError,
+};
 
-use bee_packable::Packable;
+use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
+
+use alloc::vec::Vec;
+use core::convert::{Infallible, TryInto};
+
+/// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
+const PREFIXED_CONFLICTS_LENGTH_MAX: u32 =
+    PAYLOAD_LENGTH_MAX / (TransactionId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32;
+
+/// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / length of [`Conflict`].
+const PREFIXED_TIMESTAMPS_LENGTH_MAX: u32 =
+    PAYLOAD_LENGTH_MAX / (MessageId::LENGTH + 2 * core::mem::size_of::<u8>()) as u32;
+
+fn unpack_prefix_to_conflict_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
+    match error {
+        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidConflictsCount(len),
+        UnpackPrefixError::Packable(e) => match e {},
+    }
+}
+
+fn unpack_prefix_to_timestamp_validation_error(error: UnpackPrefixError<Infallible>) -> ValidationError {
+    match error {
+        UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidTimestampsCount(len),
+        UnpackPrefixError::Packable(e) => match e {},
+    }
+}
 
 /// Payload describing opinions on conflicts and timestamps of messages.
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
@@ -19,9 +47,11 @@ use bee_packable::Packable;
 #[packable(unpack_error = MessageUnpackError)]
 pub struct FpcPayload {
     /// Collection of opinions on conflicting transactions.
-    conflicts: Conflicts,
+    #[packable(unpack_error_with = unpack_prefix_to_conflict_validation_error)]
+    conflicts: VecPrefix<Conflict, BoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>>,
     /// Collection of opinions on message timestamps.
-    timestamps: Timestamps,
+    #[packable(unpack_error_with = unpack_prefix_to_timestamp_validation_error)]
+    timestamps: VecPrefix<Timestamp, BoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>>,
 }
 
 impl MessagePayload for FpcPayload {
@@ -35,12 +65,12 @@ impl FpcPayload {
         FpcPayloadBuilder::new()
     }
 
-    /// Returns the [`Conflicts`] of an [`FpcPayload`].
+    /// Returns the [`Conflict`]s of an [`FpcPayload`].
     pub fn conflicts(&self) -> impl Iterator<Item = &Conflict> {
         self.conflicts.iter()
     }
 
-    /// Returns the [`Timestamps`] of an [`FpcPayload`].
+    /// Returns the [`Timestamp`]s of an [`FpcPayload`].
     pub fn timestamps(&self) -> impl Iterator<Item = &Timestamp> {
         self.timestamps.iter()
     }
@@ -49,8 +79,8 @@ impl FpcPayload {
 /// A builder to build an [`FpcPayload`].
 #[derive(Default)]
 pub struct FpcPayloadBuilder {
-    conflicts: Conflicts,
-    timestamps: Timestamps,
+    conflicts: Vec<Conflict>,
+    timestamps: Vec<Timestamp>,
 }
 
 impl FpcPayloadBuilder {
@@ -60,13 +90,13 @@ impl FpcPayloadBuilder {
     }
 
     /// Adds a collection of conflicts to the [`FpcPayloadBuilder`].
-    pub fn with_conflicts(mut self, conflicts: Conflicts) -> Self {
+    pub fn with_conflicts(mut self, conflicts: Vec<Conflict>) -> Self {
         self.conflicts = conflicts;
         self
     }
 
     /// Adds a collection of timestamps to the [`FpcPayloadBuilder`].
-    pub fn with_timestamps(mut self, timestamps: Timestamps) -> Self {
+    pub fn with_timestamps(mut self, timestamps: Vec<Timestamp>) -> Self {
         self.timestamps = timestamps;
         self
     }
@@ -74,8 +104,16 @@ impl FpcPayloadBuilder {
     /// Finishes an [`FpcPayloadBuilder`] into an [`FpcPayload`].
     pub fn finish(self) -> Result<FpcPayload, ValidationError> {
         Ok(FpcPayload {
-            conflicts: self.conflicts,
-            timestamps: self.timestamps,
+            conflicts: self.conflicts.try_into().map_err(
+                |err: InvalidBoundedU32<0, PREFIXED_CONFLICTS_LENGTH_MAX>| {
+                    ValidationError::InvalidConflictsCount(err.0 as usize)
+                },
+            )?,
+            timestamps: self.timestamps.try_into().map_err(
+                |err: InvalidBoundedU32<0, PREFIXED_TIMESTAMPS_LENGTH_MAX>| {
+                    ValidationError::InvalidTimestampsCount(err.0 as usize)
+                },
+            )?,
         })
     }
 }
