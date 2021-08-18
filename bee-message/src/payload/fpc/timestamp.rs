@@ -9,9 +9,9 @@ use bee_packable::Packable;
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Timestamp {
-    /// ID of the message that contains the timestamp.
+    /// Identifier of the message that contains the timestamp.
     message_id: MessageId,
-    /// The nodes opinion value in a given round.
+    /// The node's opinion value in a given round.
     opinion: u8,
     /// Voting round number.
     round: u8,
@@ -27,7 +27,7 @@ impl Timestamp {
         }
     }
 
-    /// Returns the ID of the message that contains the timestamp.
+    /// Returns the identifier of the message that contains the timestamp.
     pub fn message_id(&self) -> &MessageId {
         &self.message_id
     }

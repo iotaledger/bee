@@ -9,9 +9,9 @@ use bee_packable::Packable;
 #[derive(Clone, Debug, Eq, PartialEq, Packable)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Conflict {
-    /// ID of the conflicting transaction.
+    /// Identifier of the conflicting transaction.
     transaction_id: TransactionId,
-    /// The nodes opinion value in a given round.
+    /// The node's opinion value in a given round.
     opinion: u8,
     /// Voting round number.
     round: u8,
@@ -27,7 +27,7 @@ impl Conflict {
         }
     }
 
-    /// Returns the ID of the conflicting transaction.
+    /// Returns the identifier of the conflicting transaction.
     pub fn transaction_id(&self) -> &TransactionId {
         &self.transaction_id
     }
