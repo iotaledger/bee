@@ -6,7 +6,8 @@ use serde::Deserialize;
 use multiaddr::{Multiaddr, Protocol};
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 
-pub(crate) const DEFAULT_BIND_ADDR: &str = "/ip4/0.0.0.0/tcp/1883";
+pub(crate) const DEFAULT_SERVER_BIND_ADDR: &str = "/ip4/0.0.0.0/tcp/1883";
+pub(crate) const DEFAULT_CONSOLE_BIND_ADDR: &str = "/ip4/0.0.0.0/tcp/1884";
 
 #[derive(Default, Deserialize)]
 pub struct MqttConfigBuilder {
@@ -48,7 +49,7 @@ impl MqttConfigBuilder {
             let multi_addr = self
                 .server_bind_addr
                 // We made sure that the default value is valid and therefore parseable.
-                .unwrap_or_else(|| DEFAULT_BIND_ADDR.parse().unwrap());
+                .unwrap_or_else(|| DEFAULT_SERVER_BIND_ADDR.parse().unwrap());
             let address = multi_addr
                 .iter()
                 .find_map(|x| match x {
@@ -81,7 +82,7 @@ impl MqttConfigBuilder {
             let multi_addr = self
                 .console_bind_addr
                 // We made sure that the default value is valid and therefore parseable.
-                .unwrap_or_else(|| DEFAULT_BIND_ADDR.parse().unwrap());
+                .unwrap_or_else(|| DEFAULT_CONSOLE_BIND_ADDR.parse().unwrap());
             let address = multi_addr
                 .iter()
                 .find_map(|x| match x {
