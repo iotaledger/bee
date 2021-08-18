@@ -32,7 +32,7 @@ impl Conflict {
         &self.transaction_id
     }
 
-    /// Returns the nodes opinion value in a given round.
+    /// Returns the node's opinion value in a given round.
     pub fn opinion(&self) -> u8 {
         self.opinion
     }
