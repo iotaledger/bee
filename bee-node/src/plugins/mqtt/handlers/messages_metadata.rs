@@ -4,35 +4,36 @@
 use crate::{plugins::mqtt::broker::MqttBroker, storage::StorageBackend};
 
 use bee_ledger::workers::event::MessageReferenced;
-use bee_message::payload::Payload;
+use bee_message::{payload::Payload, MessageId};
 use bee_rest_api::types::{dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse};
 use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
 use bee_tangle::{ConflictReason, MsTangle};
 
+use bee_protocol::workers::event::MessageSolidified;
 use librumqttd::LinkTx;
 use log::{debug, warn};
 use tokio::sync::mpsc;
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
 
-pub(crate) fn spawn<N>(node: &mut N, mut messages_referenced_tx: LinkTx)
+pub(crate) fn spawn<N>(node: &mut N, mut messages_metadata_tx: LinkTx)
 where
     N: Node,
     N::Backend: StorageBackend,
 {
     let tangle = node.resource::<MsTangle<N::Backend>>();
     let bus = node.bus();
-    let (tx, rx) = mpsc::unbounded_channel::<MessageReferenced>();
+    let (tx, rx) = mpsc::unbounded_channel::<MessageId>();
 
     node.spawn::<MqttBroker, _, _>(|shutdown| async move {
-        debug!("MQTT 'messages/referenced' topic handler running.");
+        debug!("MQTT 'message/referenced' topic handler running.");
 
         let mut receiver = ShutdownStream::new(shutdown, UnboundedReceiverStream::new(rx));
 
-        while let Some(event) = receiver.next().await {
-            match tangle.get(&event.message_id).await.map(|m| (*m).clone()) {
+        while let Some(message_id) = receiver.next().await {
+            match tangle.get(&message_id).await.map(|m| (*m).clone()) {
                 Some(message) => {
                     // existing message <=> existing metadata, therefore unwrap() is safe
-                    let metadata = tangle.get_metadata(&event.message_id).await.unwrap();
+                    let metadata = tangle.get_metadata(&message_id).await.unwrap();
 
                     // TODO: access constants from URTS
                     let ymrsi_delta = 8;
@@ -73,16 +74,13 @@ where
                                     LedgerInclusionStateDto::Conflicting
                                 } else {
                                     conflict_reason = None;
-                                    // maybe not checked by the ledger yet, but still
-                                    // returning "included". should
-                                    // `metadata.flags().is_conflicting` return an Option
-                                    // instead?
                                     LedgerInclusionStateDto::Included
                                 }
                             } else {
                                 conflict_reason = None;
                                 LedgerInclusionStateDto::NoTransaction
                             });
+
                             should_reattach = None;
                             should_promote = None;
                         } else if metadata.flags().is_solid() {
@@ -130,7 +128,7 @@ where
                     };
 
                     let payload = serde_json::to_string(&MessageMetadataResponse {
-                        message_id: (&event.message_id).to_string(),
+                        message_id: (&message_id).to_string(),
                         parent_message_ids: message.parents().iter().map(|id| id.to_string()).collect(),
                         is_solid,
                         referenced_by_milestone_index,
@@ -142,20 +140,35 @@ where
                     })
                     .expect("error serializing to json");
 
-                    if let Err(e) = messages_referenced_tx.publish("messages/referenced", false, payload) {
+                    if let Err(e) = messages_metadata_tx.publish("messages/metadata", false, payload) {
                         warn!("Publishing MQTT message failed. Cause: {:?}", e);
                     }
                 }
                 None => panic!("can not find message"),
             }
         }
-        debug!("MQTT 'messages/referenced' topic handler stopped.");
+        debug!("MQTT 'messages/metadata' topic handler stopped.");
     });
 
-    bus.add_listener::<MqttBroker, _, _>(move |event: &MessageReferenced| {
-        // The lifetime of the listeners is tied to the lifetime of the Dashboard worker so they are removed together.
-        // However, topic handlers are shutdown as soon as the signal is received, causing this send to potentially
-        // fail and spam the output. The return is then ignored as not being essential.
-        let _ = tx.send((*event).clone());
-    });
+    {
+        let tx = tx.clone();
+        bus.add_listener::<MqttBroker, _, _>(move |event: &MessageReferenced| {
+            // The lifetime of the listeners is tied to the lifetime of the Dashboard worker so they are removed
+            // together. However, topic handlers are shutdown as soon as the signal is received, causing
+            // this send to potentially fail and spam the output. The return is then ignored as not being
+            // essential.
+            let _ = tx.send(event.message_id);
+        });
+    }
+
+    {
+        let tx = tx.clone();
+        bus.add_listener::<MqttBroker, _, _>(move |event: &MessageSolidified| {
+            // The lifetime of the listeners is tied to the lifetime of the Dashboard worker so they are removed
+            // together. However, topic handlers are shutdown as soon as the signal is received, causing
+            // this send to potentially fail and spam the output. The return is then ignored as not being
+            // essential.
+            let _ = tx.send(event.message_id);
+        });
+    }
 }

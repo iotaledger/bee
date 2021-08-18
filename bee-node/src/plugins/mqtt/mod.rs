@@ -1,20 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::storage::StorageBackend;
-
-use bee_runtime::node::{Node, NodeBuilder};
-
 use self::{
     broker::{MqttBroker, MqttBrokerConfig},
     config::MqttConfig,
 };
 
+use crate::storage::StorageBackend;
+
+use bee_runtime::node::{Node, NodeBuilder};
+
 use librumqttd as mqtt;
+use librumqttd::ConsoleSettings;
 use log::debug;
 use rumqttlog::Config as RouterSettings;
 
-use librumqttd::ConsoleSettings;
 use std::{collections::HashMap, thread};
 
 mod broker;

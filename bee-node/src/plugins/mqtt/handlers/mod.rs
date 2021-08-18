@@ -18,6 +18,7 @@ pub(crate) mod addresses_ouptuts_consumed;
 pub(crate) mod addresses_ouptuts_created;
 pub(crate) mod messages;
 pub(crate) mod messages_indexation;
+pub(crate) mod messages_metadata;
 pub(crate) mod messages_referenced;
 pub(crate) mod milestones_confirmed;
 pub(crate) mod milestones_latest;

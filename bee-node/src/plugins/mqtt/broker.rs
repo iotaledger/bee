@@ -67,6 +67,7 @@ where
         messages::spawn(node, messages_tx);
         messages_referenced::spawn(node, messages_referenced_tx);
         messages_indexation::spawn(node, messages_indexation_tx);
+        messages_metadata::spawn(node, messages_metadata_tx);
         outputs::spawn(node, outputs_tx, outputs_rx);
         outputs_created::spawn(node, outputs_created_tx);
         outputs_consumed::spawn(node, outputs_consumed_tx);
