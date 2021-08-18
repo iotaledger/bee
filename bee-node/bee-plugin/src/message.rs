@@ -8,13 +8,13 @@ pub use crate::grpc::Message;
 use std::convert::TryInto;
 
 use crate::grpc::{
-    address::AddressKind, input::InputKind, output::OutputKind, payload::PayloadKind, signature::SignatureKind,
-    unlock_block::UnlockBlockKind, Address, ApplicationMessagePayload, AssetBalance, AssetId, BeaconPayload,
-    BlsAddress, BlsSignature, CollectiveBeaconPayload, Conflict, DataPayload, DkgPayload, Ed25519Address,
-    Ed25519Signature, EncryptedDeal, FpcPayload, IndexationPayload, Input, MessageId, Output, OutputId, ParentsBlock,
-    ParentsKind, Payload, ReferenceUnlock, Salt, SaltDeclarationPayload, Signature, SignatureLockedAssetOutput,
-    SignatureLockedSingleOutput, SignatureUnlock, Timestamp, TransactionEssence, TransactionId, TransactionPayload,
-    UnlockBlock, UtxoInput,
+    address::Kind as AddressKind, input::Kind as InputKind, output::Kind as OutputKind, payload::Kind as PayloadKind,
+    signature::Kind as SignatureKind, unlock_block::Kind as UnlockBlockKind, Address, ApplicationMessagePayload,
+    AssetBalance, AssetId, BeaconPayload, BlsAddress, BlsSignature, CollectiveBeaconPayload, Conflict, DataPayload,
+    DkgPayload, Ed25519Address, Ed25519Signature, EncryptedDeal, FpcPayload, IndexationPayload, Input, MessageId,
+    Output, OutputId, ParentsBlock, ParentsKind, Payload, ReferenceUnlock, Salt, SaltDeclarationPayload, Signature,
+    SignatureLockedAssetOutput, SignatureLockedSingleOutput, SignatureUnlock, Timestamp, TransactionEssence,
+    TransactionId, TransactionPayload, UnlockBlock, UtxoInput,
 };
 
 impl From<&bee_message::Message> for Message {
@@ -113,7 +113,7 @@ impl Into<bee_message::MessageId> for MessageId {
 
 impl From<&bee_message::payload::Payload> for Payload {
     fn from(payload: &bee_message::payload::Payload) -> Self {
-        let payload_kind = match payload {
+        let kind = match payload {
             bee_message::payload::Payload::Data(payload) => PayloadKind::Data(payload.as_ref().into()),
             bee_message::payload::Payload::Transaction(payload) => {
                 PayloadKind::Transaction(Box::new(payload.as_ref().into()))
@@ -133,16 +133,14 @@ impl From<&bee_message::payload::Payload> for Payload {
             bee_message::payload::Payload::Indexation(payload) => PayloadKind::Indexation(payload.as_ref().into()),
         };
 
-        Self {
-            payload_kind: Some(payload_kind),
-        }
+        Self { kind: Some(kind) }
     }
 }
 
 #[allow(clippy::from_over_into)]
 impl Into<bee_message::payload::Payload> for Payload {
     fn into(self) -> bee_message::payload::Payload {
-        match self.payload_kind.unwrap() {
+        match self.kind.unwrap() {
             PayloadKind::Data(payload) => bee_message::payload::Payload::Data(Box::new(payload.into())),
             PayloadKind::Transaction(payload) => {
                 bee_message::payload::Payload::Transaction(Box::new((*payload).into()))
@@ -204,21 +202,19 @@ impl Into<bee_message::payload::transaction::TransactionPayload> for Transaction
 
 impl From<&bee_message::unlock::UnlockBlock> for UnlockBlock {
     fn from(block: &bee_message::unlock::UnlockBlock) -> Self {
-        let unlock_block_kind = match block {
+        let kind = match block {
             bee_message::unlock::UnlockBlock::Signature(block) => UnlockBlockKind::Signature(block.into()),
             bee_message::unlock::UnlockBlock::Reference(block) => UnlockBlockKind::Reference(block.into()),
         };
 
-        Self {
-            unlock_block_kind: Some(unlock_block_kind),
-        }
+        Self { kind: Some(kind) }
     }
 }
 
 #[allow(clippy::from_over_into)]
 impl Into<bee_message::unlock::UnlockBlock> for UnlockBlock {
     fn into(self) -> bee_message::unlock::UnlockBlock {
-        match self.unlock_block_kind.unwrap() {
+        match self.kind.unwrap() {
             UnlockBlockKind::Signature(block) => bee_message::unlock::UnlockBlock::Signature(block.into()),
             UnlockBlockKind::Reference(block) => bee_message::unlock::UnlockBlock::Reference(block.into()),
         }
@@ -242,21 +238,19 @@ impl Into<bee_message::unlock::SignatureUnlock> for SignatureUnlock {
 
 impl From<&bee_message::signature::Signature> for Signature {
     fn from(signature: &bee_message::signature::Signature) -> Self {
-        let signature_kind = match signature {
+        let kind = match signature {
             bee_message::signature::Signature::Ed25519(signature) => SignatureKind::Ed25519(signature.into()),
             bee_message::signature::Signature::Bls(signature) => SignatureKind::Bls(signature.into()),
         };
 
-        Self {
-            signature_kind: Some(signature_kind),
-        }
+        Self { kind: Some(kind) }
     }
 }
 
 #[allow(clippy::from_over_into)]
 impl Into<bee_message::signature::Signature> for Signature {
     fn into(self) -> bee_message::signature::Signature {
-        match self.signature_kind.unwrap() {
+        match self.kind.unwrap() {
             SignatureKind::Ed25519(signature) => bee_message::signature::Signature::Ed25519(signature.into()),
             SignatureKind::Bls(signature) => bee_message::signature::Signature::Bls(signature.into()),
         }
@@ -345,20 +339,18 @@ impl Into<bee_message::payload::transaction::TransactionEssence> for Transaction
 
 impl From<&bee_message::input::Input> for Input {
     fn from(input: &bee_message::input::Input) -> Self {
-        let input_kind = match input {
+        let kind = match input {
             bee_message::input::Input::Utxo(input) => InputKind::Utxo(input.into()),
         };
 
-        Self {
-            input_kind: Some(input_kind),
-        }
+        Self { kind: Some(kind) }
     }
 }
 
 #[allow(clippy::from_over_into)]
 impl Into<bee_message::input::Input> for Input {
     fn into(self) -> bee_message::input::Input {
-        match self.input_kind.unwrap() {
+        match self.kind.unwrap() {
             InputKind::Utxo(input) => bee_message::input::Input::Utxo(input.into()),
         }
     }
@@ -412,7 +404,7 @@ impl Into<bee_message::payload::transaction::TransactionId> for TransactionId {
 
 impl From<&bee_message::output::Output> for Output {
     fn from(output: &bee_message::output::Output) -> Self {
-        let output_kind = match output {
+        let kind = match output {
             bee_message::output::Output::SignatureLockedSingle(output) => {
                 OutputKind::SignatureLockedSingle(output.into())
             }
@@ -421,16 +413,14 @@ impl From<&bee_message::output::Output> for Output {
             }
         };
 
-        Self {
-            output_kind: Some(output_kind),
-        }
+        Self { kind: Some(kind) }
     }
 }
 
 #[allow(clippy::from_over_into)]
 impl Into<bee_message::output::Output> for Output {
     fn into(self) -> bee_message::output::Output {
-        match self.output_kind.unwrap() {
+        match self.kind.unwrap() {
             OutputKind::SignatureLockedSingle(output) => {
                 bee_message::output::Output::SignatureLockedSingle(output.into())
             }
@@ -459,21 +449,19 @@ impl Into<bee_message::output::SignatureLockedSingleOutput> for SignatureLockedS
 
 impl From<&bee_message::address::Address> for Address {
     fn from(address: &bee_message::address::Address) -> Self {
-        let address_kind = match address {
+        let kind = match address {
             bee_message::address::Address::Ed25519(address) => AddressKind::Ed25519(address.into()),
             bee_message::address::Address::Bls(address) => AddressKind::Bls(address.into()),
         };
 
-        Self {
-            address_kind: Some(address_kind),
-        }
+        Self { kind: Some(kind) }
     }
 }
 
 #[allow(clippy::from_over_into)]
 impl Into<bee_message::address::Address> for Address {
     fn into(self) -> bee_message::address::Address {
-        match self.address_kind.unwrap() {
+        match self.kind.unwrap() {
             AddressKind::Ed25519(address) => bee_message::address::Address::Ed25519(address.into()),
             AddressKind::Bls(address) => bee_message::address::Address::Bls(address.into()),
         }

@@ -62,7 +62,7 @@ message MessageId {
 }
 
 message Payload {
-    oneof payload_kind {
+    oneof kind {
         DataPayload data = 1;
         TransactionPayload transaction = 2;
         FpcPayload fpc = 3;
@@ -85,7 +85,7 @@ message TransactionPayload {
 }
 
 message UnlockBlock {
-    oneof unlock_block_kind {
+    oneof kind {
         SignatureUnlock signature = 1;
         ReferenceUnlock reference = 2;
     }
@@ -96,7 +96,7 @@ message SignatureUnlock {
 }
 
 message Signature {
-    oneof signature_kind {
+    oneof kind {
         Ed25519Signature ed25519 = 1;
         BlsSignature bls = 2;
     }
@@ -125,7 +125,7 @@ message TransactionEssence {
 }
 
 message Input {
-    oneof input_kind {
+    oneof kind {
         UtxoInput utxo = 1;
     }
 }
@@ -144,7 +144,7 @@ message TransactionId {
 }
 
 message Output {
-    oneof output_kind {
+    oneof kind {
         SignatureLockedSingleOutput signature_locked_single = 1;
         SignatureLockedAssetOutput signature_locked_asset = 2;
     }
@@ -156,7 +156,7 @@ message SignatureLockedSingleOutput {
 }
 
 message Address {
-    oneof address_kind {
+    oneof kind {
         Ed25519Address ed25519 = 1;
         BlsAddress bls = 2;
     }
