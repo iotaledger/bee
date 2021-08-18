@@ -23,26 +23,34 @@ mod error;
 mod event;
 mod handlers;
 
-const DEFAULT_NEXT_CONNECTION_DELAY: u64 = 1;
-const DEFAULT_CONNECTION_TIMEOUT_MS: u16 = 100;
-const DEFAULT_MAX_CLIENT_ID_LEN: usize = 256;
-const DEFAULT_THROTTLE_DELAY_MS: u64 = 0;
-const DEFAULT_MAX_PAYLOAD_SIZE: usize = 2048;
-const DEFAULT_MAX_INFLIGHT_COUNT: u16 = 500;
-const DEFAULT_MAX_INFLIGHT_SIZE: usize = 1024;
+// Default settings for the broker.
 const DEFAULT_BROKER_ID: usize = 0;
+
+// Default settings for the router.
 const DEFAULT_ROUTER_ID: usize = 0;
 const DEFAULT_ROUTER_DIR: &str = "/tmp/rumqttd";
-const DEFAULT_MAX_SEGMENT_SIZE: usize = 1024 * 1024;
-const DEFAULT_MAX_SEGMENT_COUNT: usize = 1024;
-const DEFAULT_MAX_CONNECTIONS: usize = 50;
+const DEFAULT_MAX_SEGMENT_SIZE: usize = 10240;
+const DEFAULT_MAX_SEGMENT_COUNT: usize = 10;
+const DEFAULT_MAX_CONNECTIONS: usize = 10001;
+
+// Default settings for the server.
+const DEFAULT_NEXT_CONNECTION_DELAY: u64 = 1;
+const DEFAULT_CONNECTION_TIMEOUT_MS: u16 = 5000;
+const DEFAULT_MAX_CLIENT_ID_LEN: usize = 256;
+const DEFAULT_THROTTLE_DELAY_MS: u64 = 0;
+const DEFAULT_MAX_PAYLOAD_SIZE: usize = 5120;
+const DEFAULT_MAX_INFLIGHT_COUNT: u16 = 200;
+const DEFAULT_MAX_INFLIGHT_SIZE: usize = 1024;
 const DEFAULT_MAX_INFLIGHT_REQUESTS: usize = 200;
 
 pub async fn init<N: Node>(config: MqttConfig, mut node_builder: N::Builder) -> N::Builder
 where
     N::Backend: StorageBackend,
 {
-    let MqttConfig { bind_addr } = config;
+    let MqttConfig {
+        server_bind_addr,
+        console_bind_addr,
+    } = config;
 
     let connection_settings = mqtt::ConnectionSettings {
         connection_timeout_ms: DEFAULT_CONNECTION_TIMEOUT_MS,
@@ -56,7 +64,7 @@ where
     };
 
     let server_settings = mqtt::ServerSettings {
-        listen: bind_addr.clone(),
+        listen: server_bind_addr.clone(),
         cert: None, // Option<ServerCert>,
         next_connection_delay_ms: DEFAULT_NEXT_CONNECTION_DELAY,
         connections: connection_settings, // ConnectionSettings,
@@ -80,7 +88,9 @@ where
         servers,
         cluster: None,    // Option<HashMap<String, MeshSettings>>,
         replicator: None, // Option<ConnectionSettings>,
-        console: ConsoleSettings { listen: bind_addr },
+        console: ConsoleSettings {
+            listen: console_bind_addr,
+        },
     };
 
     let mut broker = mqtt::Broker::new(config);
