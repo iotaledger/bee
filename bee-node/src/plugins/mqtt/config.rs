@@ -3,11 +3,8 @@
 
 use serde::Deserialize;
 
-use std::net::IpAddr;
-use multiaddr::Multiaddr;
-use multiaddr::Protocol;
-use std::net::SocketAddr;
-use std::net::ToSocketAddrs;
+use multiaddr::{Multiaddr, Protocol};
+use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 
 pub(crate) const DEFAULT_BIND_ADDR: &str = "/ip4/0.0.0.0/tcp/1883";
 

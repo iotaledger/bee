@@ -1,43 +1,16 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::event::*;
+use crate::{plugins::mqtt::handlers::*, storage::StorageBackend};
 
-use crate::storage::StorageBackend;
-
-use bee_protocol::workers::event::{MessageProcessed, NewIndexationMessage};
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::event::{ConfirmedMilestoneChanged, LatestMilestoneChanged};
-use bee_common::packable::Packable;
+use bee_runtime::{node::Node, worker::Worker};
 
 use async_trait::async_trait;
-use librumqttd as mqtt;
+
+use librumqttd::{LinkRx, LinkTx};
 use log::*;
-use mqtt::LinkTx;
-// use rumqttlog::Data as Message;
-use tokio::sync::mpsc;
-use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
 
-use std::{
-    any::{Any},
-    convert::Infallible,
-};
-
-use bee_rest_api::types::responses::OutputResponse;
-use bee_ledger::workers::event::{OutputCreated, OutputConsumed, MessageReferenced};
-use chrono::format::format;
-use bee_message::output::Output;
-use bee_message::address::Address;
-use crate::config::NodeConfig;
-
-use crate::plugins::mqtt::handlers::*;
-use librumqttd::LinkRx;
-
-pub(crate) const ___TOPIC_MESSAGES_REFERENCED: &str = "messages/referenced";
-pub(crate) const ___TOPIC_MESSAGES_METADATA: &str = "messages/{messageId}/metadata";
-
-pub(crate) const TOPIC_OUTPUTS: &str = "outputs/{outputId}";
-pub(crate) const _TOPIC_INCLUDED_MESSAGE: &str = "transactions/[transactionId]/included-message";
+use std::convert::Infallible;
 
 pub struct MqttBrokerConfig {
     pub milestones_latest_tx: LinkTx,
@@ -63,8 +36,8 @@ pub struct MqttBroker;
 
 #[async_trait]
 impl<N: Node> Worker<N> for MqttBroker
-    where
-        N::Backend: StorageBackend,
+where
+    N::Backend: StorageBackend,
 {
     type Config = MqttBrokerConfig;
     type Error = Infallible;
@@ -86,7 +59,7 @@ impl<N: Node> Worker<N> for MqttBroker
             addresses_ouptuts_created_tx,
             addresses_ouptuts_consumed_tx,
             addresses_ed25519_ouptuts_created_tx,
-            addresses_ed25519_ouptuts_consumed_tx
+            addresses_ed25519_ouptuts_consumed_tx,
         } = config;
 
         milestones_latest::spawn(node, milestones_latest_tx);

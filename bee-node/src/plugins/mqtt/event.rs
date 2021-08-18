@@ -1,8 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use serde::Serialize;
 use bee_rest_api::types::dtos::OutputDto;
+use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct MilestonePayload {

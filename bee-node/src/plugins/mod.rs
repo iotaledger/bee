@@ -10,7 +10,6 @@ pub mod version_checker;
 #[cfg(feature = "dashboard")]
 pub use dashboard::Dashboard;
 pub use mps::Mps;
-pub use mqtt::Mqtt;
 pub use version_checker::VersionChecker;
 
 use bee_runtime::{event::Bus, node::Node, worker::Worker};

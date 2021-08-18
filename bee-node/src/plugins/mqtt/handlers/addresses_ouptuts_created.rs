@@ -1,40 +1,17 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::super::event::*;
+use crate::{config::NodeConfig, plugins::mqtt::handlers::spawn_static_topic_handler, storage::StorageBackend};
 
-use crate::storage::StorageBackend;
-
-use bee_protocol::workers::event::{MessageProcessed, NewIndexationMessage};
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream, worker::Worker};
-use bee_tangle::event::{ConfirmedMilestoneChanged, LatestMilestoneChanged};
-use bee_common::packable::Packable;
-
-use async_trait::async_trait;
-use log::*;
-use librumqttd as mqtt;
-use mqtt::LinkTx;
-// use rumqttlog::Data as Message;
-use tokio::sync::mpsc;
-use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
-
-use std::{
-    any::{Any},
-    convert::Infallible,
-};
-
-use bee_rest_api::types::responses::OutputResponse;
-use bee_ledger::workers::event::{OutputCreated, OutputConsumed, MessageReferenced};
-use chrono::format::format;
+use bee_ledger::workers::event::OutputCreated;
 use bee_message::output::Output;
-use bee_message::address::Address;
-use crate::config::NodeConfig;
-use crate::plugins::mqtt::handlers::spawn_static_topic_handler;
+use bee_rest_api::types::responses::OutputResponse;
+use bee_runtime::node::Node;
 
-pub(crate) fn spawn<N>(
-    node: &mut N,
-    addresses_ouptuts_created_tx: LinkTx,
-) where
+use librumqttd::LinkTx;
+
+pub(crate) fn spawn<N>(node: &mut N, addresses_ouptuts_created_tx: LinkTx)
+where
     N: Node,
     N::Backend: StorageBackend,
 {
@@ -44,7 +21,6 @@ pub(crate) fn spawn<N>(
         addresses_ouptuts_created_tx,
         "addresses/{address}/outputs created",
         move |event: OutputCreated| {
-
             let output_response_json = serde_json::to_string(&OutputResponse {
                 message_id: event.message_id.to_string(),
                 transaction_id: event.output_id.transaction_id().to_string(),
@@ -53,15 +29,18 @@ pub(crate) fn spawn<N>(
                 output: (&event.output).into(),
                 ledger_index: 0, // TODO: set actual ledger-index
             })
-                .expect("error serializing to json");
+            .expect("error serializing to json");
 
             let address = match event.output {
                 Output::SignatureLockedSingle(o) => *o.address(),
                 Output::SignatureLockedDustAllowance(o) => *o.address(),
-                _ => panic!("output type not supported")
+                _ => panic!("output type not supported"),
             };
 
-            (format!("addresses/{}/outputs", address.to_bech32(&(node_config.bech32_hrp))), output_response_json)
+            (
+                format!("addresses/{}/outputs", address.to_bech32(&(node_config.bech32_hrp))),
+                output_response_json,
+            )
         },
     );
 }

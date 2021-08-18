@@ -1,35 +1,24 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    storage::StorageBackend,
-};
+use crate::{plugins::mqtt::broker::MqttBroker, storage::StorageBackend};
 
-use bee_ledger::workers::event::{MilestoneConfirmed, MessageReferenced};
-use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
-
-use bee_protocol::types::metrics::NodeMetrics;
-use futures::StreamExt;
-use log::{debug, error, warn};
-use tokio::sync::mpsc;
-use tokio_stream::wrappers::UnboundedReceiverStream;
-use crate::plugins::mqtt::broker::MqttBroker;
-use librumqttd as mqtt;
-use mqtt::LinkTx;
-use bee_tangle::{MsTangle, ConflictReason};
+use bee_ledger::workers::event::MessageReferenced;
 use bee_message::payload::Payload;
-use bee_rest_api::types::dtos::LedgerInclusionStateDto;
-use bee_rest_api::types::responses::MessageMetadataResponse;
+use bee_rest_api::types::{dtos::LedgerInclusionStateDto, responses::MessageMetadataResponse};
+use bee_runtime::{node::Node, shutdown_stream::ShutdownStream};
+use bee_tangle::{ConflictReason, MsTangle};
 
-pub(crate) fn spawn<N>(
-    node: &mut N,
-    mut messages_referenced_tx: LinkTx,
-)
-    where
-        N: Node,
-        N::Backend: StorageBackend,
+use librumqttd::LinkTx;
+use log::{debug, warn};
+use tokio::sync::mpsc;
+use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
+
+pub(crate) fn spawn<N>(node: &mut N, mut messages_referenced_tx: LinkTx)
+where
+    N: Node,
+    N::Backend: StorageBackend,
 {
-
     let tangle = node.resource::<MsTangle<N::Backend>>();
     let bus = node.bus();
     let (tx, rx) = mpsc::unbounded_channel::<MessageReferenced>();
@@ -150,7 +139,8 @@ pub(crate) fn spawn<N>(
                         conflict_reason: conflict_reason.map(|c| c as u8),
                         should_promote,
                         should_reattach,
-                    }).expect("error serializing to json");
+                    })
+                    .expect("error serializing to json");
 
                     if let Err(e) = messages_referenced_tx.publish("message/referenced", false, payload) {
                         warn!("Publishing MQTT message failed. Cause: {:?}", e);

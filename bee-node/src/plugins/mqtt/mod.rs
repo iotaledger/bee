@@ -1,12 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod broker;
-pub mod config;
-mod error;
-mod event;
-mod handlers;
-
 use crate::storage::StorageBackend;
 
 use bee_runtime::node::{Node, NodeBuilder};
@@ -20,8 +14,14 @@ use librumqttd as mqtt;
 use log::debug;
 use rumqttlog::Config as RouterSettings;
 
-use std::{collections::HashMap, thread};
 use librumqttd::ConsoleSettings;
+use std::{collections::HashMap, thread};
+
+mod broker;
+pub mod config;
+mod error;
+mod event;
+mod handlers;
 
 const DEFAULT_NEXT_CONNECTION_DELAY: u64 = 1;
 const DEFAULT_CONNECTION_TIMEOUT_MS: u16 = 100;
@@ -39,9 +39,9 @@ const DEFAULT_MAX_CONNECTIONS: usize = 50;
 const DEFAULT_MAX_INFLIGHT_REQUESTS: usize = 200;
 
 pub async fn init<N: Node>(config: MqttConfig, mut node_builder: N::Builder) -> N::Builder
-    where
-        N::Backend: StorageBackend
- {
+where
+    N::Backend: StorageBackend,
+{
     let MqttConfig { bind_addr } = config;
 
     let connection_settings = mqtt::ConnectionSettings {
@@ -80,9 +80,7 @@ pub async fn init<N: Node>(config: MqttConfig, mut node_builder: N::Builder) -> 
         servers,
         cluster: None,    // Option<HashMap<String, MeshSettings>>,
         replicator: None, // Option<ConnectionSettings>,
-        console: ConsoleSettings {
-            listen: bind_addr
-        },
+        console: ConsoleSettings { listen: bind_addr },
     };
 
     let mut broker = mqtt::Broker::new(config);
@@ -92,15 +90,27 @@ pub async fn init<N: Node>(config: MqttConfig, mut node_builder: N::Builder) -> 
     let mut messages_tx = broker.link("messages").expect("linking mqtt sender failed");
     let mut messages_referenced_tx = broker.link("messages/referenced").expect("linking mqtt sender failed");
     let mut messages_indexation_tx = broker.link("indexation/{index}").expect("linking mqtt sender failed");
-    let mut messages_metadata_tx = broker.link("messages/{id}/metadata").expect("linking mqtt sender failed");
+    let mut messages_metadata_tx = broker
+        .link("messages/{id}/metadata")
+        .expect("linking mqtt sender failed");
     let mut outputs_tx = broker.link("outputs/{id}").expect("linking mqtt sender failed");
     let mut outputs_created_tx = broker.link("outputs/{id}").expect("linking mqtt sender failed");
     let mut outputs_consumed_tx = broker.link("outputs/{id}").expect("linking mqtt sender failed");
-    let mut transactions_included_message_tx = broker.link(" transactions/{transactionId}/included-message").expect("linking mqtt sender failed");
-    let mut addresses_ouptuts_created_tx = broker.link("addresses/{address}/outputs").expect("linking mqtt sender failed");
-    let mut addresses_ouptuts_consumed_tx = broker.link("addresses/{address}/outputs").expect("linking mqtt sender failed");
-    let mut addresses_ed25519_ouptuts_created_tx = broker.link("addresses/ed25519/{address}/outputs").expect("linking mqtt sender failed");
-    let mut addresses_ed25519_ouptuts_consumed_tx = broker.link("addresses/ed25519/{address}/outputs").expect("linking mqtt sender failed");
+    let mut transactions_included_message_tx = broker
+        .link(" transactions/{transactionId}/included-message")
+        .expect("linking mqtt sender failed");
+    let mut addresses_ouptuts_created_tx = broker
+        .link("addresses/{address}/outputs")
+        .expect("linking mqtt sender failed");
+    let mut addresses_ouptuts_consumed_tx = broker
+        .link("addresses/{address}/outputs")
+        .expect("linking mqtt sender failed");
+    let mut addresses_ed25519_ouptuts_created_tx = broker
+        .link("addresses/ed25519/{address}/outputs")
+        .expect("linking mqtt sender failed");
+    let mut addresses_ed25519_ouptuts_consumed_tx = broker
+        .link("addresses/ed25519/{address}/outputs")
+        .expect("linking mqtt sender failed");
 
     thread::spawn(move || {
         debug!("Starting MQTT broker.");
@@ -129,45 +139,45 @@ pub async fn init<N: Node>(config: MqttConfig, mut node_builder: N::Builder) -> 
         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
         .expect("mqtt connect error");
 
-     let _ = messages_indexation_tx
-         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
-         .expect("mqtt connect error");
+    let _ = messages_indexation_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-     let _ = messages_metadata_tx
-         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
-         .expect("mqtt connect error");
+    let _ = messages_metadata_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-     let outputs_rx = outputs_tx
-         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
-         .expect("mqtt connect error");
+    let outputs_rx = outputs_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-     let _ = outputs_created_tx
-         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
-         .expect("mqtt connect error");
+    let _ = outputs_created_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-     let _ = outputs_consumed_tx
-         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
-         .expect("mqtt connect error");
+    let _ = outputs_consumed_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-     let transactions_included_message_rx = transactions_included_message_tx
-         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
-         .expect("mqtt connect error");
+    let transactions_included_message_rx = transactions_included_message_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-     let _ = addresses_ouptuts_created_tx
-         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
-         .expect("mqtt connect error");
+    let _ = addresses_ouptuts_created_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-     let _ = addresses_ouptuts_consumed_tx
-         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
-         .expect("mqtt connect error");
+    let _ = addresses_ouptuts_consumed_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-     let _ = addresses_ed25519_ouptuts_created_tx
-         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
-         .expect("mqtt connect error");
+    let _ = addresses_ed25519_ouptuts_created_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
-     let _ = addresses_ed25519_ouptuts_consumed_tx
-         .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
-         .expect("mqtt connect error");
+    let _ = addresses_ed25519_ouptuts_consumed_tx
+        .connect(DEFAULT_MAX_INFLIGHT_REQUESTS)
+        .expect("mqtt connect error");
 
     let broker_config = MqttBrokerConfig {
         milestones_latest_tx,
