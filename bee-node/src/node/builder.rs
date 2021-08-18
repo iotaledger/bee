@@ -239,8 +239,7 @@ impl<B: StorageBackend> NodeBuilder<BeeNode<B>> for BeeNodeBuilder<B> {
 
         // MQTT core plugin
         info!("Initializing MQTT plugin...");
-        let mqtt_config = config.mqtt.clone();
-        let this = mqtt::init::<BeeNode<B>>(mqtt_config, this).await;
+        let this = mqtt::init::<BeeNode<B>>(config.mqtt.clone(), this).await;
 
         let mut this = this.with_worker::<VersionChecker>();
 
