@@ -23,6 +23,7 @@ tonic = "0.5"
 
 [dev-dependencies]
 bee-logger = { path = "../../bee-common/bee-logger" }
+bee-test = { path = "../../bee-test" }
 
 async-trait = "0.1"
 tokio = { version = "1.6", features = [ "rt-multi-thread" ] }

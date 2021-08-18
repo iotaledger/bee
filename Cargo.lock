@@ -164,6 +164,7 @@ dependencies = [
  "bee-event-bus",
  "bee-logger",
  "bee-message",
+ "bee-test",
  "log",
  "prost",
  "thiserror",
