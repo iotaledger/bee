@@ -27,20 +27,27 @@ message ParsingFailedEvent {}
 // Event triggered when the syntactical validation of a message fails.
 message MessageRejectedEvent {}
 
-// A message from the IOTA network.
+// Represents the object that nodes gossip around the network.
 message Message {
-    repeated ParentsBlock parents_block = 1;
+    // Blocks of message parents. Each block contains a list of parent message IDs grouped by type.
+    repeated ParentsBlock parents_blocks = 1;
+    // The public key of the issuing node.
     bytes issuer_public_key = 2;
+    // The Unix timestamp at the moment of issue.
     uint64 issue_timestamp = 3;
+    // The sequence number of the message, indicating the marker sequence it belongs to.
     uint32 sequence_number = 4;
+    // The optional payload of the message.
     Payload payload = 5;
+    // The result of the Proof of Work in order for the message to be accepted into the tangle.
     uint64 nonce = 6;
+    // Signature signing the above message fields.
     bytes signature = 7;
 }
 
 message ParentsBlock {
     ParentsKind kind = 1;
-    repeated MessageId reference = 2;
+    repeated MessageId references = 2;
 }
 
 enum ParentsKind {
@@ -74,7 +81,7 @@ message DataPayload {
 
 message TransactionPayload {
     TransactionEssence essence = 1;
-    repeated UnlockBlock unlock_block = 2;
+    repeated UnlockBlock unlock_blocks = 2;
 }
 
 message UnlockBlock {
@@ -105,15 +112,15 @@ message BlsSignature {
 }
 
 message ReferenceUnlock {
-    uint32 inner = 1;
+    uint32 index = 1;
 }
 
 message TransactionEssence {
     uint64 timestamp = 1;
     bytes access_pledge_id = 2;
     bytes consensus_pledge_id = 3;
-    repeated Input input = 4;
-    repeated Output output = 5;
+    repeated Input inputs = 4;
+    repeated Output outputs = 5;
     Payload payload = 6;
 }
 
@@ -138,7 +145,7 @@ message TransactionId {
 
 message Output {
     oneof output_kind {
-        SignatureLockedSingleOutput ignature_locked_single = 1;
+        SignatureLockedSingleOutput signature_locked_single = 1;
         SignatureLockedAssetOutput signature_locked_asset = 2;
     }
 }
@@ -164,6 +171,11 @@ message BlsAddress {
 }
 
 message SignatureLockedAssetOutput {
+    Address address = 1;
+    repeated AssetBalance balances = 2;
+}
+
+message AssetBalance {
     AssetId id = 1;
     uint64 balance = 2;
 }
@@ -173,8 +185,8 @@ message AssetId {
 }
 
 message FpcPayload {
-    repeated Conflict conflict = 1;
-    repeated Timestamp timestamp = 2;
+    repeated Conflict conflicts = 1;
+    repeated Timestamp timestamps = 2;
 }
 
 message Conflict {

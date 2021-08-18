@@ -6,7 +6,10 @@ use crate::{address::Address, payload::PAYLOAD_LENGTH_MAX, MessageUnpackError, V
 use bee_packable::{error::UnpackPrefixError, BoundedU32, InvalidBoundedU32, Packable, VecPrefix};
 
 use alloc::vec::Vec;
-use core::convert::{Infallible, TryInto};
+use core::{
+    convert::{Infallible, TryInto},
+    ops::Deref,
+};
 
 /// No [`Vec`] max length specified, so use [`PAYLOAD_LENGTH_MAX`] / [`AssetId::LENGTH`].
 const PREFIXED_BALANCES_LENGTH_MAX: u32 = PAYLOAD_LENGTH_MAX / (AssetId::LENGTH + core::mem::size_of::<u64>()) as u32;
@@ -36,6 +39,14 @@ impl AssetId {
 impl From<[u8; Self::LENGTH]> for AssetId {
     fn from(bytes: [u8; Self::LENGTH]) -> Self {
         Self(bytes)
+    }
+}
+
+impl Deref for AssetId {
+    type Target = [u8; Self::LENGTH];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
