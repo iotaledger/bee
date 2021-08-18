@@ -26,6 +26,15 @@ pub struct VecPrefix<T, B: Bounded> {
     bounded: PhantomData<B>,
 }
 
+impl<T, B: Bounded> Default for VecPrefix<T, B> {
+    fn default() -> Self {
+        Self {
+            inner: Vec::new(),
+            bounded: PhantomData,
+        }
+    }
+}
+
 macro_rules! impl_vec_prefix {
     ($ty:ident, $bounded:ident, $err:ident) => {
         impl<T, const MIN: $ty, const MAX: $ty> TryFrom<Vec<T>> for VecPrefix<T, $bounded<MIN, MAX>> {

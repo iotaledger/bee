@@ -3,7 +3,7 @@
 
 use bee_message::{
     payload::{
-        fpc::{Conflict, Conflicts, FpcPayload, Timestamp, Timestamps},
+        fpc::{Conflict, FpcPayload, Timestamp},
         transaction::TransactionId,
         MessagePayload,
     },
@@ -11,8 +11,6 @@ use bee_message::{
 };
 use bee_packable::Packable;
 use bee_test::rand::bytes::rand_bytes_array;
-
-use std::{convert::TryInto, ops::Deref};
 
 #[test]
 fn kind() {
@@ -27,24 +25,16 @@ fn version() {
 #[test]
 fn new_valid() {
     let fpc = FpcPayload::builder()
-        .with_conflicts(Conflicts::new(
-            vec![
-                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
-                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
-                Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
-            ]
-            .try_into()
-            .unwrap(),
-        ))
-        .with_timestamps(Timestamps::new(
-            vec![
-                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
-                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
-                Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
-            ]
-            .try_into()
-            .unwrap(),
-        ))
+        .with_conflicts(vec![
+            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
+        ])
+        .with_timestamps(vec![
+            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
+        ])
         .finish();
 
     assert!(fpc.is_ok());
@@ -72,25 +62,17 @@ fn timestamp_accessors_eq() {
 
 #[test]
 fn accessors_eq() {
-    let conflicts = Conflicts::new(
-        vec![
-            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
-            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
-            Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
-        ]
-        .try_into()
-        .unwrap(),
-    );
+    let conflicts = vec![
+        Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
+        Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
+        Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
+    ];
 
-    let timestamps = Timestamps::new(
-        vec![
-            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
-            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
-            Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
-        ]
-        .try_into()
-        .unwrap(),
-    );
+    let timestamps = vec![
+        Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
+        Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
+        Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
+    ];
 
     let fpc = FpcPayload::builder()
         .with_conflicts(conflicts.clone())
@@ -98,11 +80,8 @@ fn accessors_eq() {
         .finish()
         .unwrap();
 
-    assert_eq!(fpc.conflicts().cloned().collect::<Vec<Conflict>>(), conflicts.deref());
-    assert_eq!(
-        fpc.timestamps().cloned().collect::<Vec<Timestamp>>(),
-        timestamps.deref()
-    );
+    assert_eq!(fpc.conflicts().cloned().collect::<Vec<Conflict>>(), conflicts);
+    assert_eq!(fpc.timestamps().cloned().collect::<Vec<Timestamp>>(), timestamps);
 }
 
 #[test]
@@ -132,24 +111,16 @@ fn unpack_valid() {
 #[test]
 fn packable_round_trip() {
     let fpc_a = FpcPayload::builder()
-        .with_conflicts(Conflicts::new(
-            vec![
-                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
-                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
-                Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
-            ]
-            .try_into()
-            .unwrap(),
-        ))
-        .with_timestamps(Timestamps::new(
-            vec![
-                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
-                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
-                Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
-            ]
-            .try_into()
-            .unwrap(),
-        ))
+        .with_conflicts(vec![
+            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
+        ])
+        .with_timestamps(vec![
+            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
+        ])
         .finish()
         .unwrap();
 
@@ -161,24 +132,16 @@ fn packable_round_trip() {
 #[test]
 fn serde_round_trip() {
     let fpc_payload_1 = FpcPayload::builder()
-        .with_conflicts(Conflicts::new(
-            vec![
-                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
-                Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
-                Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
-            ]
-            .try_into()
-            .unwrap(),
-        ))
-        .with_timestamps(Timestamps::new(
-            vec![
-                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
-                Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
-                Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
-            ]
-            .try_into()
-            .unwrap(),
-        ))
+        .with_conflicts(vec![
+            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 0),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 0, 1),
+            Conflict::new(TransactionId::from(rand_bytes_array()), 1, 2),
+        ])
+        .with_timestamps(vec![
+            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 0),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 0, 1),
+            Timestamp::new(MessageId::from(rand_bytes_array()), 1, 2),
+        ])
         .finish()
         .unwrap();
     let json = serde_json::to_string(&fpc_payload_1).unwrap();
