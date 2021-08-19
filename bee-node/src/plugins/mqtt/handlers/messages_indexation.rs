@@ -4,7 +4,7 @@
 use crate::{plugins::mqtt::handlers::spawn_static_topic_handler, storage::StorageBackend};
 
 use bee_common::packable::Packable;
-use bee_protocol::workers::event::NewIndexationMessage;
+use bee_protocol::workers::event::IndexationMessage;
 use bee_runtime::node::Node;
 
 use librumqttd::LinkTx;
@@ -17,8 +17,8 @@ where
     spawn_static_topic_handler(
         node,
         messages_indexation_tx,
-        "messages/indexation/{index}",
-        |event: NewIndexationMessage| {
+        "messages/indexation/[index]",
+        |event: IndexationMessage| {
             (
                 format!("messages/indexation/{}", event.index.to_string()),
                 event.message.pack_new(),

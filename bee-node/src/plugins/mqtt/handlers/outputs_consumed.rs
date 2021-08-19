@@ -17,7 +17,7 @@ where
     spawn_static_topic_handler(
         node,
         outputs_created_tx,
-        "outputs/{outputId} created",
+        "outputs/[outputId] created",
         |event: OutputConsumed| {
             let output_response_json = serde_json::to_string(&OutputResponse {
                 message_id: event.message_id.to_string(),

@@ -5,7 +5,7 @@ use crate::{
     types::metrics::NodeMetrics,
     workers::{storage::StorageBackend, MetricsWorker},
 };
-use crate::workers::event::NewIndexationMessage;
+use crate::workers::event::IndexationMessage;
 
 use bee_message::{
     payload::{indexation::PaddedIndex, transaction::Essence, Payload},
@@ -39,7 +39,7 @@ fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: Me
         Some(Payload::Transaction(transaction)) => {
             let Essence::Regular(essence) = transaction.essence();
             if let Some(Payload::Indexation(indexation)) = essence.payload() {
-                bus.dispatch(NewIndexationMessage { message_id, message: message.clone(), index: indexation.padded_index() });
+                bus.dispatch(IndexationMessage { message_id, message: message.clone(), index: indexation.padded_index() });
                 indexation
             } else {
                 error!(

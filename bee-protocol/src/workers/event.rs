@@ -16,7 +16,7 @@ pub struct MessageProcessed {
 
 /// An event that indicates that a message was processed.
 #[derive(Clone)]
-pub struct NewIndexationMessage {
+pub struct IndexationMessage {
     /// Message identifier of the processed message.
     pub message_id: MessageId,
     /// The indexation message

@@ -36,7 +36,7 @@ where
     P: Into<Vec<u8>> + Send,
     F: Fn(E) -> (T, P) + Send + Sync + 'static,
 {
-    let event_bus = node.bus();
+    let bus = node.bus();
     let (event_tx, event_rx) = mpsc::unbounded_channel();
 
     node.spawn::<MqttBroker, _, _>(|shutdown| async move {
@@ -56,9 +56,13 @@ where
         debug!("MQTT '{}' topic handler stopped.", handler_name);
     });
 
-    event_bus.add_listener::<MqttBroker, _, _>(move |event: &E| {
+    bus.add_listener::<MqttBroker, _, _>(move |event: &E| {
         if event_tx.send(event.clone()).is_err() {
             warn!("Sending event to MQTT '{}' topic handler failed.", handler_name)
         }
     });
+}
+
+pub(crate) enum HandlerError {
+    InvalidParameterProvided,
 }

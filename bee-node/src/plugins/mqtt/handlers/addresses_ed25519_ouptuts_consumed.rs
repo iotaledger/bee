@@ -18,7 +18,7 @@ where
     spawn_static_topic_handler(
         node,
         addresses_ed25519_ouptuts_created_tx,
-        "addresses/ed25519/{address}/outputs created",
+        "addresses/ed25519/[address]/outputs created",
         |event: OutputConsumed| {
             let output_response_json = serde_json::to_string(&OutputResponse {
                 message_id: event.message_id.to_string(),
