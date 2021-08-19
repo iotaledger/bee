@@ -4,17 +4,17 @@
 use bee_message::{
     address::{Address, Ed25519Address},
     error::ValidationError,
-    input::{Input, UtxoInput},
-    output::{Output, OutputId, SignatureLockedSingleOutput},
+    input::{Input, UtxoInput, INPUT_COUNT_MAX},
+    output::{Output, OutputId, SignatureLockedSingleOutput, OUTPUT_COUNT_MAX},
     payload::{
         data::DataPayload,
         transaction::{TransactionEssence, TransactionId},
         MessagePayload, Payload,
     },
     util::hex_decode,
-    IOTA_SUPPLY,
+    MessageUnpackError, IOTA_SUPPLY,
 };
-use bee_packable::Packable;
+use bee_packable::{Packable, UnpackError};
 use bee_test::rand::{
     bytes::{rand_bytes, rand_bytes_array},
     number::rand_number,
@@ -209,6 +209,73 @@ fn invalid_payload_kind() {
     assert!(matches!(
         essence,
         Err(ValidationError::InvalidPayloadKind(DataPayload::KIND)),
+    ));
+}
+
+#[test]
+fn unpack_invalid_input_count() {
+    let inputs_len = INPUT_COUNT_MAX as usize + 1;
+
+    let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
+    let input = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
+    let amount = 1_000_000;
+    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
+    let timestamp = rand_number::<u64>();
+    let access_pledge_id = rand_bytes_array::<32>();
+    let consensus_pledge_id = rand_bytes_array::<32>();
+    let inputs = vec![input; inputs_len];
+
+    let mut bytes = timestamp.pack_to_vec().unwrap();
+    bytes.extend(access_pledge_id);
+    bytes.extend(consensus_pledge_id);
+    bytes.extend(vec![0x80, 0x00, 0x00, 0x00]);
+
+    for input in inputs {
+        bytes.extend(input.pack_to_vec().unwrap());
+    }
+
+    bytes.extend(vec![0x01, 0x00, 0x00, 0x00]);
+    bytes.extend(output.pack_to_vec().unwrap());
+
+    assert!(matches!(
+        TransactionEssence::unpack_from_slice(bytes).err().unwrap(),
+        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidInputCount(n)))
+            if n == inputs_len
+    ));
+}
+
+#[test]
+fn unpack_invalid_output_count() {
+    let outputs_len = OUTPUT_COUNT_MAX as usize + 1;
+
+    let txid = TransactionId::new(hex_decode(TRANSACTION_ID).unwrap());
+    let input1 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 0).unwrap()));
+    let input2 = Input::Utxo(UtxoInput::new(OutputId::new(txid, 1).unwrap()));
+    let address = Address::from(Ed25519Address::new(hex_decode(ED25519_ADDRESS_1).unwrap()));
+    let amount = 1_000_000;
+    let output = Output::SignatureLockedSingle(SignatureLockedSingleOutput::new(address, amount).unwrap());
+    let timestamp = rand_number::<u64>();
+    let access_pledge_id = rand_bytes_array::<32>();
+    let consensus_pledge_id = rand_bytes_array::<32>();
+    let outputs = vec![output; outputs_len];
+
+    let mut bytes = timestamp.pack_to_vec().unwrap();
+    bytes.extend(access_pledge_id);
+    bytes.extend(consensus_pledge_id);
+    bytes.extend(vec![0x02, 0x00, 0x00, 0x00]);
+    bytes.extend(input1.pack_to_vec().unwrap());
+    bytes.extend(input2.pack_to_vec().unwrap());
+    bytes.extend(vec![0x80, 0x00, 0x00, 0x00]);
+
+    for output in outputs {
+        bytes.extend(output.pack_to_vec().unwrap());
+    }
+
+    assert!(matches!(
+        TransactionEssence::unpack_from_slice(bytes).err().unwrap(),
+        UnpackError::Packable(MessageUnpackError::Validation(ValidationError::InvalidOutputCount(n)))
+            if n == outputs_len
     ));
 }
 

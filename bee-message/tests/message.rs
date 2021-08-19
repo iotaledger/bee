@@ -184,6 +184,49 @@ fn invalid_parents_blocks_more_than_max() {
 }
 
 #[test]
+fn accessors_eq() {
+    let issuer_public_key = rand_bytes_array::<32>();
+    let issue_timestamp = rand_number::<u64>();
+    let sequence_number = rand_number::<u32>();
+    let payload = Payload::from(IndexationPayload::new(rand_bytes(32), rand_bytes(32)).unwrap());
+    let nonce = 0;
+    let signature = rand_bytes_array::<64>();
+
+    let message = MessageBuilder::new()
+        .add_parents_block(
+            ParentsBlock::new(ParentsKind::Strong, vec![MessageId::new(hex_decode(PARENT_1).unwrap())]).unwrap(),
+        )
+        .add_parents_block(
+            ParentsBlock::new(ParentsKind::Weak, vec![MessageId::new(hex_decode(PARENT_2).unwrap())]).unwrap(),
+        )
+        .add_parents_block(
+            ParentsBlock::new(ParentsKind::Liked, vec![MessageId::new(hex_decode(PARENT_3).unwrap())]).unwrap(),
+        )
+        .add_parents_block(
+            ParentsBlock::new(
+                ParentsKind::Disliked,
+                vec![MessageId::new(hex_decode(PARENT_4).unwrap())],
+            )
+            .unwrap(),
+        )
+        .with_issuer_public_key(issuer_public_key)
+        .with_issue_timestamp(issue_timestamp)
+        .with_sequence_number(sequence_number)
+        .with_payload(payload.clone())
+        .with_nonce(nonce)
+        .with_signature(signature)
+        .finish()
+        .unwrap();
+
+    assert_eq!(*message.issuer_public_key(), issuer_public_key);
+    assert_eq!(message.issue_timestamp(), issue_timestamp);
+    assert_eq!(message.sequence_number(), sequence_number);
+    assert_eq!(*message.payload().as_ref().unwrap(), payload);
+    assert_eq!(message.nonce(), nonce);
+    assert_eq!(*message.signature(), signature);
+}
+
+#[test]
 fn packed_len() {
     let message = MessageBuilder::new()
         .add_parents_block(

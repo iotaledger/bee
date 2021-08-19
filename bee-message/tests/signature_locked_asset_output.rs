@@ -4,12 +4,14 @@
 use bee_message::{
     address::{Address, Ed25519Address},
     output::{AssetBalance, AssetId, SignatureLockedAssetOutput},
+    util::hex_decode,
 };
 use bee_packable::Packable;
 use bee_test::rand::bytes::rand_bytes_array;
 
 use core::str::FromStr;
 
+const ASSET_ID: &str = "5be056b7ce1cb91d8d7b6824eaa26d1a85d08e140292e5093aabf9ad6f50c0e2";
 const ED25519_ADDRESS: &str = "52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649";
 
 #[test]
@@ -48,7 +50,7 @@ fn accessors_eq() {
 
 #[test]
 fn asset_balance_accessors_eq() {
-    let id = AssetId::new(rand_bytes_array());
+    let id = AssetId::from(hex_decode(ASSET_ID).unwrap());
     let amount = 1000;
 
     let balance = AssetBalance::new(id.clone(), amount);
