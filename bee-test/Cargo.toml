@@ -11,4 +11,6 @@ keywords = [ "iota", "tangle", "bee", "framework", "test" ]
 homepage = "https://www.iota.org"
 
 [dependencies]
+bee-message = { path = "../bee-message" }
+
 rand = { version = "0.8", features = [ "min_const_gen" ]}
