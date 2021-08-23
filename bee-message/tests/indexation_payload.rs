@@ -4,6 +4,7 @@
 use bee_message::{
     error::{MessageUnpackError, ValidationError},
     payload::{indexation::IndexationPayload, MessagePayload},
+    MESSAGE_LENGTH_RANGE,
 };
 use bee_packable::{Packable, UnpackError};
 use bee_test::rand::bytes::rand_bytes;
@@ -107,6 +108,24 @@ fn unpack_invalid_index_length_more_than_max() {
             ValidationError::InvalidIndexationIndexLength(65)
         )),
     ));
+}
+
+#[test]
+fn unpack_invalid_data_length_more_than_max() {
+    let data_len = MESSAGE_LENGTH_RANGE.end() + 5;
+
+    let mut bytes = vec![0x0A, 0x00, 0x00, 0x00];
+    bytes.extend(rand_bytes(10));
+    bytes.extend(vec![0x05, 0x00, 0x01, 0x00]);
+    bytes.extend(vec![0; data_len]);
+
+    assert!(matches!(
+        IndexationPayload::unpack_from_slice(bytes).err().unwrap(),
+        UnpackError::Packable(MessageUnpackError::Validation(
+            ValidationError::InvalidIndexationDataLength(n)
+        ))
+            if n == data_len
+    ))
 }
 
 #[test]
