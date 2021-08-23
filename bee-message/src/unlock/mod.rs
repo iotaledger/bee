@@ -9,7 +9,7 @@ mod unlock_blocks;
 
 pub use reference::{ReferenceUnlock, ReferenceUnlockUnpackError};
 pub use signature::SignatureUnlock;
-pub use unlock_blocks::{UnlockBlocks, UnlockBlocksUnpackError};
+pub use unlock_blocks::UnlockBlocks;
 
 use crate::{
     input::{INPUT_COUNT_MAX, INPUT_COUNT_RANGE, INPUT_INDEX_MAX, INPUT_INDEX_RANGE},

@@ -10,7 +10,7 @@ pub use crate::{
         PayloadUnpackError,
     },
     signature::SignatureUnpackError,
-    unlock::{UnlockBlockUnpackError, UnlockBlocksUnpackError},
+    unlock::UnlockBlockUnpackError,
     ValidationError,
 };
 
@@ -33,7 +33,6 @@ pub enum MessageUnpackError {
     Transaction(TransactionUnpackError),
     TransactionEssence(TransactionEssenceUnpackError),
     UnlockBlock(UnlockBlockUnpackError),
-    UnlockBlocks(UnlockBlocksUnpackError),
     Validation(ValidationError),
 }
 
@@ -54,11 +53,6 @@ impl_wrapped_validated!(
     MessageUnpackError,
     MessageUnpackError::UnlockBlock,
     UnlockBlockUnpackError
-);
-impl_wrapped_validated!(
-    MessageUnpackError,
-    MessageUnpackError::UnlockBlocks,
-    UnlockBlocksUnpackError
 );
 impl_wrapped_variant!(MessageUnpackError, MessageUnpackError::Address, AddressUnpackError);
 impl_wrapped_variant!(MessageUnpackError, MessageUnpackError::Signature, SignatureUnpackError);
@@ -88,7 +82,6 @@ impl fmt::Display for MessageUnpackError {
             Self::Transaction(e) => write!(f, "error unpacking Transaction payload: {}", e),
             Self::TransactionEssence(e) => write!(f, "error unpacking TransactionEssence: {}", e),
             Self::UnlockBlock(e) => write!(f, "error unpacking UnlockBlock: {}", e),
-            Self::UnlockBlocks(e) => write!(f, "error unpacking UnlockBlocks: {}", e),
             Self::Validation(e) => write!(f, "validation error occured while unpacking: {}", e),
         }
     }

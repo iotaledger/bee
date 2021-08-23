@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlockUnpackError, UNLOCK_BLOCK_COUNT_RANGE},
+    unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UNLOCK_BLOCK_COUNT_RANGE},
     MessageUnpackError, ValidationError,
 };
 
@@ -15,57 +15,11 @@ use hashbrown::HashSet;
 use alloc::vec::Vec;
 use core::{
     convert::{Infallible, TryFrom},
-    fmt,
     ops::Deref,
 };
 
 const PREFIXED_UNLOCK_BLOCKS_LENGTH_MIN: u16 = *UNLOCK_BLOCK_COUNT_RANGE.start();
 const PREFIXED_UNLOCK_BLOCKS_LENGTH_MAX: u16 = *UNLOCK_BLOCK_COUNT_RANGE.end();
-
-/// Error encountered while unpacking [`UnlockBlocks`].
-#[derive(Debug)]
-#[allow(missing_docs)]
-pub enum UnlockBlocksUnpackError {
-    InvalidPrefix,
-    InvalidPrefixLength(usize),
-    UnlockBlockUnpack(UnlockBlockUnpackError),
-    Validation(ValidationError),
-}
-
-impl_wrapped_variant!(
-    UnlockBlocksUnpackError,
-    UnlockBlocksUnpackError::Validation,
-    ValidationError
-);
-
-impl From<UnpackPrefixError<UnlockBlockUnpackError>> for UnlockBlocksUnpackError {
-    fn from(error: UnpackPrefixError<UnlockBlockUnpackError>) -> Self {
-        match error {
-            UnpackPrefixError::InvalidPrefixLength(len) => Self::InvalidPrefixLength(len),
-            UnpackPrefixError::Packable(error) => Self::from(error),
-        }
-    }
-}
-
-impl From<UnlockBlockUnpackError> for UnlockBlocksUnpackError {
-    fn from(error: UnlockBlockUnpackError) -> Self {
-        match error {
-            UnlockBlockUnpackError::Validation(error) => Self::Validation(error),
-            error => Self::UnlockBlockUnpack(error),
-        }
-    }
-}
-
-impl fmt::Display for UnlockBlocksUnpackError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPrefix => write!(f, "invalid prefix"),
-            Self::InvalidPrefixLength(len) => write!(f, "unpacked prefix larger than maximum specified: {}", len),
-            Self::UnlockBlockUnpack(e) => write!(f, "{}", e),
-            Self::Validation(e) => write!(f, "{}", e),
-        }
-    }
-}
 
 /// A collection of unlock blocks.
 ///
@@ -133,11 +87,10 @@ impl Packable for UnlockBlocks {
         >::unpack(unpacker)
         .map_err(|unpack_err| {
             unpack_err.map(|err| match err {
-                UnpackPrefixError::InvalidPrefixLength(len) => UnlockBlocksUnpackError::InvalidPrefixLength(len).into(),
+                UnpackPrefixError::InvalidPrefixLength(len) => ValidationError::InvalidUnlockBlockCount(len).into(),
                 UnpackPrefixError::Packable(err) => err,
             })
-        })
-        .coerce()?;
+        })?;
 
         validate_unlock_block_variants(&inner).map_err(|e| UnpackError::Packable(e.into()))?;
 

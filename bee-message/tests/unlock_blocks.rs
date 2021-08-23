@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bee_message::{
-    error::ValidationError,
+    error::{MessageUnpackError, ValidationError},
     signature::{Ed25519Signature, Signature},
-    unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlocks},
+    unlock::{ReferenceUnlock, SignatureUnlock, UnlockBlock, UnlockBlockUnpackError, UnlockBlocks},
 };
-use bee_packable::Packable;
-use bee_test::rand::bytes::rand_bytes_array;
+use bee_packable::{Packable, UnpackError};
+use bee_test::rand::bytes::{rand_bytes, rand_bytes_array};
 
 #[test]
 fn kind() {
@@ -149,6 +149,21 @@ fn get_signature_through_reference() {
             .get(1),
         Some(&signature)
     );
+}
+
+#[test]
+fn unpack_invalid_unlock_block_kind() {
+    let mut bytes = vec![1, 0];
+    bytes.extend([2, 0]);
+    bytes.extend(rand_bytes(32));
+    bytes.extend(rand_bytes(64));
+
+    let unlock_blocks = UnlockBlocks::unpack_from_slice(bytes);
+
+    assert!(matches!(
+        unlock_blocks.err().unwrap(),
+        UnpackError::Packable(MessageUnpackError::UnlockBlock(UnlockBlockUnpackError::InvalidKind(2))),
+    ));
 }
 
 #[test]

@@ -6,11 +6,7 @@
 mod essence;
 mod transaction_id;
 
-use crate::{
-    payload::MessagePayload,
-    unlock::{UnlockBlocks, UnlockBlocksUnpackError},
-    MessageUnpackError, ValidationError,
-};
+use crate::{payload::MessagePayload, unlock::UnlockBlocks, MessageUnpackError, ValidationError};
 
 pub use essence::{TransactionEssence, TransactionEssenceBuilder, TransactionEssenceUnpackError};
 pub use transaction_id::TransactionId;
@@ -26,15 +22,9 @@ use core::{convert::Infallible, fmt};
 #[allow(missing_docs)]
 pub enum TransactionUnpackError {
     TransactionEssence(Box<TransactionEssenceUnpackError>),
-    UnlockBlocksUnpack(UnlockBlocksUnpackError),
     Validation(ValidationError),
 }
 
-impl_wrapped_variant!(
-    TransactionUnpackError,
-    TransactionUnpackError::UnlockBlocksUnpack,
-    UnlockBlocksUnpackError
-);
 impl_wrapped_variant!(
     TransactionUnpackError,
     TransactionUnpackError::Validation,
@@ -54,7 +44,6 @@ impl fmt::Display for TransactionUnpackError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::TransactionEssence(e) => write!(f, "error unpacking transaction essence: {}", e),
-            Self::UnlockBlocksUnpack(e) => write!(f, "error unpacking unlock blocks: {}", e),
             Self::Validation(e) => write!(f, "{}", e),
         }
     }
