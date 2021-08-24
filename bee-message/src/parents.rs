@@ -15,7 +15,7 @@ use core::ops::{Deref, RangeInclusive};
 /// The range representing the valid number of parents.
 pub const MESSAGE_PARENTS_RANGE: RangeInclusive<usize> = 1..=8;
 
-/// A [`Message`]'s `Parents` are the [`MessageId`]s of the messages it directly approves.
+/// A [`Message`](crate::Message)'s `Parents` are the [`MessageId`]s of the messages it directly approves.
 ///
 /// Parents must be:
 /// * in the `MESSAGE_PARENTS_RANGE` range;
