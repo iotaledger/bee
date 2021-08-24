@@ -247,13 +247,19 @@ where
         receipt: migration.is_some(),
     });
 
-    for (_, created_output) in metadata.created_outputs {
-        bus.dispatch(OutputCreated { output: created_output });
+    for (output_id, created_output) in metadata.created_outputs {
+        bus.dispatch(OutputCreated {
+            message_id: *created_output.message_id(),
+            output_id,
+            output: created_output.inner().clone(),
+        });
     }
 
-    for (_, (_, consumed_output)) in metadata.consumed_outputs {
+    for (output_id, (created_output, _consumed_output)) in metadata.consumed_outputs {
         bus.dispatch(OutputConsumed {
-            output: consumed_output,
+            message_id: *created_output.message_id(),
+            output_id,
+            output: created_output.inner().clone(),
         });
     }
 
