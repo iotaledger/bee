@@ -1,17 +1,16 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{
-    batch,
-    config::PruningConfig,
-    error::Error,
-    metrics::{PruningMetrics, Timings},
-};
-
 use crate::{
     types::snapshot::SnapshotInfo,
     workers::{
         event::PrunedIndex,
+        pruning::{
+            batch,
+            config::PruningConfig,
+            error::Error,
+            metrics::{PruningMetrics, Timings},
+        },
         storage::{self, StorageBackend},
     },
 };

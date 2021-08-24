@@ -69,7 +69,7 @@ impl Message {
         self.nonce
     }
 
-    /// Consumes the `Message`, and returns ownership over its [`Parents`].
+    /// Consumes the [`Message`], and returns ownership over its [`Parents`].
     pub fn into_parents(self) -> Parents {
         self.parents
     }

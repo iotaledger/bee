@@ -1,14 +1,16 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{
-    error::Error,
-    metrics::{ConfirmedMetrics, UnconfirmedMetrics},
-};
-
 use crate::{
     types::{OutputDiff, Receipt},
-    workers::{consensus::worker::EXTRA_PRUNING_DEPTH, storage::StorageBackend},
+    workers::{
+        consensus::worker::EXTRA_PRUNING_DEPTH,
+        pruning::{
+            error::Error,
+            metrics::{ConfirmedMetrics, UnconfirmedMetrics},
+        },
+        storage::StorageBackend,
+    },
 };
 
 use bee_message::{
