@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Winternitz One Time Signature scheme.
-//! https://eprint.iacr.org/2011/191.pdf.
+//! <https://eprint.iacr.org/2011/191.pdf>.
 
 mod normalize;
 mod shake;

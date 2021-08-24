@@ -790,7 +790,7 @@ impl<T: RawEncodingBuf> TritBuf<T> {
 impl TritBuf<T3B1Buf> {
     /// Pad the trit buffer with [`Btrit::Zero`] until the buffer's length is a multiple of 3.
     ///
-    /// This method is often used in conjunction with [`Trites::as_trytes`].
+    /// This method is often used in conjunction with [`Trits::as_trytes`].
     pub fn pad_zeros(&mut self) {
         while self.len() % 3 != 0 {
             self.push(Btrit::Zero);
@@ -799,7 +799,7 @@ impl TritBuf<T3B1Buf> {
 
     /// Pad the trit buffer with [`Btrit::Zero`] until the buffer's length is a multiple of 3.
     ///
-    /// This method is often used in conjunction with [`Trites::as_trytes`].
+    /// This method is often used in conjunction with [`Trits::as_trytes`].
     pub fn padded_zeros(mut self) -> Self {
         self.pad_zeros();
         self

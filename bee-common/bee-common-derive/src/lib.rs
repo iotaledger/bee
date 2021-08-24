@@ -10,8 +10,8 @@ use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
 
 /// Derives an implementation of the trait `core::fmt::Debug` for a secret type that doesn't leak its internal secret.
-/// Implements https://github.com/iotaledger/bee-rfcs/blob/master/text/0042-secret-debug-display.md.
-/// Based on https://github.com/dtolnay/syn/blob/master/examples/heapsize/heapsize_derive/src/lib.rs.
+/// Implements <https://github.com/iotaledger/bee-rfcs/blob/master/text/0042-secret-debug-display.md>.
+/// Based on <https://github.com/dtolnay/syn/blob/master/examples/heapsize/heapsize_derive/src/lib.rs>.
 #[proc_macro_derive(SecretDebug)]
 pub fn derive_secret_debug(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // Parse the input tokens into a syntax tree.
@@ -34,8 +34,8 @@ pub fn derive_secret_debug(input: proc_macro::TokenStream) -> proc_macro::TokenS
 }
 
 /// Derives an implementation of the trait `core::fmt::Display` for a secret type that doesn't leak its internal secret.
-/// Implements https://github.com/iotaledger/bee-rfcs/blob/master/text/0042-secret-debug-display.md.
-/// Based on https://github.com/dtolnay/syn/blob/master/examples/heapsize/heapsize_derive/src/lib.rs.
+/// Implements <https://github.com/iotaledger/bee-rfcs/blob/master/text/0042-secret-debug-display.md>.
+/// Based on <https://github.com/dtolnay/syn/blob/master/examples/heapsize/heapsize_derive/src/lib.rs>.
 #[proc_macro_derive(SecretDisplay)]
 pub fn derive_secret_display(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // Parse the input tokens into a syntax tree.
@@ -58,8 +58,8 @@ pub fn derive_secret_display(input: proc_macro::TokenStream) -> proc_macro::Toke
 }
 
 /// Derives an implementation of the trait `core::ops::Drop` for a secret type that calls `Zeroize::zeroize`.
-/// Implements https://github.com/iotaledger/bee-rfcs/blob/master/text/0044-secret-zeroize-drop.md.
-/// Based on https://github.com/dtolnay/syn/blob/master/examples/heapsize/heapsize_derive/src/lib.rs.
+/// Implements <https://github.com/iotaledger/bee-rfcs/blob/master/text/0044-secret-zeroize-drop.md>.
+/// Based on <https://github.com/dtolnay/syn/blob/master/examples/heapsize/heapsize_derive/src/lib.rs>.
 #[proc_macro_derive(SecretDrop)]
 pub fn derive_secret_drop(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // Parse the input tokens into a syntax tree.

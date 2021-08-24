@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! A SolidEntryPoint is a [`MessageId`] of a message that is solid even if we do not have them
+//! A SolidEntryPoint is a [`MessageId`](bee_message::MessageId) of a message that is solid even if we do not have them
 //! or their past in the database. They often come from a snapshot file and allow a node to solidify
 //! without needing the full tangle history.
 
