@@ -1,0 +1,129 @@
+.header {
+  background: url('/img/background_light.svg') center center/cover;
+}
+
+[data-theme='dark'] .header {
+  background: url('/img/background_dark.svg') center center/cover;
+}
+
+
+hr {
+  border: 1px solid #EEF2FA;
+}
+[data-theme='dark']  hr {
+  border: 1px solid var(--ifm-color-gray-700);
+}
+
+p {
+  letter-spacing: 0.75 px;
+  line-height: 150%;
+  color: #485776;
+}
+[data-theme='dark'] p {
+  color: var(--ifm-color-gray-500);
+}
+
+.title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.title__image {
+  width: 8rem;
+  margin-right: 0.5rem;
+}
+
+.title__text {
+  font-family: 'Metropolis Semi Bold';
+  margin-bottom: 0;
+  font-size: 2.3rem;
+  letter-spacing: 0.02em;
+}
+
+.title__subtext {
+font-size: 1.2rem;
+font-weight: 600;
+color: #909FBE
+
+}
+
+.actionlist {
+  /* margin-left: max(1rem, calc(15% - 5rem));
+  margin-right: max(1rem, calc(15% - 5rem)); */
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+.action {
+  background-color: #FFFFFF;
+  border-radius: var(--ifm-global-radius);
+  height: 100%;
+  cursor: pointer;
+  box-shadow: 0px 2px 6px rgb(19, 31, 55, 0.12);
+}
+
+[data-theme='dark'] .action {
+  background-color: #293858;
+}
+
+.action__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.action__title {
+  padding-top: 1rem;
+  margin: 0;
+  font-size: 1.6rem;
+  letter-spacing: 0.02em;
+  font-family: 'Metropolis Semi Bold';
+}
+
+.action__subtext {
+  font-family: 'Metropolis Semi Bold';
+  font-size: 1.25em;
+  letter-spacing: 0.04em;
+}
+
+.action__button {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  color: var(--ifm-color-emphasis-1000);
+  position: relative;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  background-color: var(--ifm-color-primary);
+  transition: all 0.2s ease;
+}
+
+.action__button:hover {
+  color: var(--ifm-color-emphasis-1000);
+}
+
+.action__icon {
+  color: #FFFFFF;
+  align-items: center;
+  display: flex;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+.action__icon::before {
+  position: absolute;
+}
+
+.action__description {
+  padding-bottom: 0.5rem;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
