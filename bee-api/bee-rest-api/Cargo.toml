@@ -1,6 +1,6 @@
 [package]
 name = "bee-rest-api"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "The default REST API implementation for the IOTA Bee node software."
