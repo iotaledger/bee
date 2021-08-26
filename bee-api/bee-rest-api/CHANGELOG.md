@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.1.1 - 2021-08-26
+
+### Added
+
+- `ledger_index` field to;
+  - `OutputResponse`;
+  - `BalanceAddressResponse`;
+  - `OutputsAddressResponse`;
+
 ## 0.1.0 - 2021-04-20
 
 ### Added
