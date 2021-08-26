@@ -136,7 +136,7 @@ pub struct OutputResponse {
     #[serde(rename = "isSpent")]
     pub is_spent: bool,
     pub output: OutputDto,
-    #[serde(rename = "ledgerIndex")]
+    #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
 }
 
@@ -152,7 +152,7 @@ pub struct BalanceAddressResponse {
     pub balance: u64,
     #[serde(rename = "dustAllowed")]
     pub dust_allowed: bool,
-    #[serde(rename = "ledgerIndex")]
+    #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
 }
 
@@ -170,7 +170,7 @@ pub struct OutputsAddressResponse {
     pub count: usize,
     #[serde(rename = "outputIds")]
     pub output_ids: Vec<String>,
-    #[serde(rename = "ledgerIndex")]
+    #[serde(rename = "ledgerIndex", default)]
     pub ledger_index: u32,
 }
 
