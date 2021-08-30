@@ -74,9 +74,6 @@ impl From<&bee_message::parents::ParentsBlock> for ParentsBlock {
 
 impl Into<bee_message::parents::ParentsBlock> for ParentsBlock {
     fn into(self) -> bee_message::parents::ParentsBlock {
-        // This and every other `unwrap` in an `Into::into` implementation is ok because we assume
-        // that `self` was created from a valid `bee_message::Message` and it has no missing
-        // fields.
         bee_message::parents::ParentsBlock::new(
             ParentsKind::from_i32(self.kind).unwrap().into(),
             self.references.into_iter().map(MessageId::into).collect(),
