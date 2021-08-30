@@ -1,3 +1,6 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Setup a Node
 You can find the source code for Bee in the [official Bee repository](https://github.com/iotaledger/bee).  Before you can install Bee from source, you will need to install some required dependencies.  
 
@@ -7,7 +10,16 @@ You can find the source code for Bee in the [official Bee repository](https://gi
 
 Before starting the installation process, you should make sure your system has all the required dependencies. 
 
-#### Debian
+<Tabs
+groupId="operating-systems"
+defaultValue="debian"
+values={[
+    {label: 'Debian', value: 'debian'},
+    {label: 'macOS', value: 'mac'},
+    {label: 'Windows', value: 'win'},
+]   
+}>
+<TabItem value="debian">
 
 To run a Bee node in a Debian base system you will need to install the following packages:
 
@@ -30,9 +42,10 @@ apt-get upgrade
 apt-get install git npm build-essential cmake pkg-config librocksdb-dev llvm clang libclang-dev libssl-dev
 ```
 
-#### macOS
+</TabItem>
+<TabItem value="mac">
 
-To run a bee node in a macOS system, you will need to install the following packages using the [brew](https://brew.sh/) package manager:
+To run a Bee node in a macOS system, you will need to install the following packages using the [brew](https://brew.sh/) package manager:
 
 - [cmake](https://cmake.org/)
 - [npm](https://www.npmjs.com/)
@@ -49,9 +62,11 @@ After the installer finishes, you can use brew to install the required packages 
 brew install cmake npm
 ```
 
-#### Windows
+</TabItem>
+<TabItem value="win">
 
-To run a bee node in a Windows system, you will need to install the following packages using the [chocolatey](https://chocolatey.org) package manager:
+To run a Bee node in a Windows system, you will need to install the following packages using the 
+[chocolatey](https://chocolatey.org/) package manager:
 
 - [cmake](https://cmake.org/)
 - [nodejs-lts](https://nodejs.org/)
@@ -69,27 +84,52 @@ After the installer finishes, you can use chocolatey to install the required pac
 choco install git --params '/NoAutoCrlf' nodejs-lts cmake --installargs 'ADD_CMAKE_TO_PATH=System' llvm
 ```
 
-::info
+:::info
 You will need to restart Powershell for your changes to take effect.
 :::
+
+</TabItem>
+</Tabs>
 
 ### Installing Rust
 
 You will need to install [Rust](https://www.rust-lang.org/) in order to run a Bee node.  You should install version is [1.51](https://blog.rust-lang.org/2021/03/25/Rust-1.51.0.html), or above.
 
+<Tabs
+  groupId="operating-systems"
+  defaultValue="debian"
+  values={[
+    {label: 'Debian', value: 'debian'},
+    {label: 'macOS', value: 'mac'},
+    {label: 'Windows', value: 'win'},
+  ]
+}>
+<TabItem value="debian">
 
-#### Debian/macOS
-
-You can install Rust in a Debian/macOS system by running the following commands:
+You can install Rust in a Debian system by running the following commands:
 
 ```shell
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source $HOME/.cargo/env
 ```
 
-#### Windows
+</TabItem>
+<TabItem value="mac">
+
+You can install Rust in a macOS system by running the following commands:
+
+```shell
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+```
+
+</TabItem>
+<TabItem value="win">
 
 You can find installation instructions for the Windows system [in the official Rust documentation](https://www.rust-lang.org/learn/get-started).
+
+</TabItem>
+</Tabs>
 
 ### Updating Rust
 
@@ -122,6 +162,41 @@ You can compile Bee in two manners:
 
 If you want to build Bee with its Dashboard, you should run the following commands:
 
+<Tabs
+  groupId="operating-systems"
+  defaultValue="debian"
+  values={[
+    {label: 'Debian', value: 'debian'},
+    {label: 'macOS', value: 'mac'},
+    {label: 'Windows', value: 'win'},
+  ]
+}>
+<TabItem value="debian">
+
+```shell
+git submodule update --init
+cd src/plugins/dashboard/frontend
+npm install
+npm run build-bee
+cd -
+cargo build --release --features dashboard
+```
+
+</TabItem>
+<TabItem value="mac">
+
+```shell
+git submodule update --init
+cd src/plugins/dashboard/frontend
+npm install
+npm run build-bee
+cd -
+cargo build --release --features dashboard
+```
+
+</TabItem>
+<TabItem value="win">
+
 ```shell
 git submodule update --init
 cd src/plugins/dashboard/frontend
@@ -130,6 +205,9 @@ npm run build-bee
 cd ../../../../
 cargo build --release --features dashboard
 ```
+
+</TabItem>
+</Tabs>
 
 ### Without dashboard
 
