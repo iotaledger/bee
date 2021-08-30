@@ -1,39 +1,33 @@
 import React from 'react';
-import clsx from 'clsx';
 import Layout from '@theme/Layout';
-import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import styles from './index.module.css';
-import LandingpageHeader from '../components/LandingpageHeader';
+import LandingPageHeader from '@site/src/components/LandingPageHeader';
 
-function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
-  return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
-      <div className="container">
-        <h1 className="hero__title">{siteConfig.title}</h1>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
-        <div className={styles.buttons}>
-          <Link
-            className="button button--secondary button--lg"
-            to="/docs/intro">
-            Docusaurus Tutorial - 5min ⏱️
-          </Link>
-        </div>
-      </div>
-    </header>
-  );
-}
-
+const actionList = [
+    {
+        title: 'Learn',
+        link: 'welcome',
+        description: 'Learn the Basics about the IOTA Bee node and how it works behind the scenes.'
+    },
+    {
+        title: 'Build',
+        link: 'setup_a_node',
+        description: 'Follow our tutorial to run your own IOTA Bee node.'
+    },
+    {
+        title: 'Participate',
+        link: 'contribute/contribute',
+        description: 'Do you want to be a part of the IOTA mission? Join the IOTA community.'
+    },
+];
+const title = 'Bee';
+const tagline = 'Official IOTA Bee Software';
 export default function Home() {
-  const {siteConfig} = useDocusaurusContext();
-  const title = siteConfig.title;
-  const tagline = siteConfig.tagline
-  return (
-    <Layout
-      title={title}
-      description={tagline}>
-      <LandingpageHeader />
-    </Layout>
-  );
+    const {siteConfig} = useDocusaurusContext();
+
+    return (
+        <Layout title={`${siteConfig.title}`} description={`${siteConfig.tagline}`}>
+            <LandingPageHeader actionList={actionList} title={title} tagline={tagline}/>
+        </Layout>
+    );
 }

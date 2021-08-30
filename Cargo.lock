@@ -220,7 +220,7 @@ dependencies = [
 
 [[package]]
 name = "bee-network"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "async-trait",
  "bee-runtime",
@@ -253,7 +253,7 @@ dependencies = [
 
 [[package]]
 name = "bee-protocol"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bee-message",
  "bee-network",
@@ -261,7 +261,7 @@ dependencies = [
 
 [[package]]
 name = "bee-rest-api"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bee-ledger",
  "bee-message",
