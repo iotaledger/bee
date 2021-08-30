@@ -1,18 +1,22 @@
-# Duplicate this file to config.toml to use it
+# Rename this file to config.toml to use it
 
 identity   = ""
 alias      = "bee"
 bech32_hrp = "iota"
-network_id = "iota"
+network_id = "chrysalis-mainnet"
 
 [logger]
 color_enabled = true
 [[logger.outputs]]
-name          = "stdout"
-level_filter  = "info"
+name              = "stdout"
+level_filter      = "info"
+target_filters    = []
+target_exclusions = []
 [[logger.outputs]]
-name          = "warn.log"
-level_filter  = "warn"
+name              = "warn.log"
+level_filter      = "warn"
+target_filters    = []
+target_exclusions = []
 
 [network]
 bind_address            = "/ip4/0.0.0.0/tcp/15600"
@@ -23,22 +27,23 @@ max_unknown_peers       = 4
 #[[network.peering.peers]]
 #address  = ""
 #alias    = ""
-#[[network.peering.peers]]
-#address  = ""
-#alias    = ""
 
 [protocol]
 minimum_pow_score = 4000
 [protocol.coordinator]
-# public_key_count  = 2
-# [[protocol.coordinator.public_key_ranges]]
-# public_key  = ""
-# start       = 0
-# end         = 0
-# [[protocol.coordinator.public_key_ranges]]
-# public_key  = ""
-# start       = 0
-# end         = 0
+public_key_count  = 2
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "a9b46fe743df783dedd00c954612428b34241f5913cf249d75bed3aafd65e4cd"
+start       = 0
+end         = 777600
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "365fb85e7568b9b32f7359d6cbafa9814472ad0ecbad32d77beaf5dd9e84c6ba"
+start       = 0
+end         = 1555200
+[[protocol.coordinator.public_key_ranges]]
+public_key  = "ba6d07d1a1aea969e7e435f9f7d1b736ea9e0fcb8de400bf855dba7f2a57e947"
+start       = 552960
+end         = 2108160
 [protocol.workers]
 status_interval       = 10
 milestone_sync_count  = 200
@@ -77,6 +82,7 @@ white_flag_solidification_timeout = 2
 full_path         = "./snapshots/mainnet/latest-full_snapshot.bin"
 delta_path        = "./snapshots/mainnet/latest-delta_snapshot.bin"
 download_urls     = [
+    "https://chrysalis-dbfiles.iota.org/snapshots/hornet/"
 ]
 depth             = 50
 interval_synced   = 50
