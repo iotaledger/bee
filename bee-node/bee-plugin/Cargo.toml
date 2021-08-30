@@ -12,6 +12,7 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-event-bus = { path = "../../bee-common/bee-event-bus" }
+bee-message = { path = "../../bee-message" }
 
 log = "0.4"
 prost = "0.8"
@@ -22,6 +23,7 @@ tonic = "0.5"
 
 [dev-dependencies]
 bee-logger = { path = "../../bee-common/bee-logger" }
+bee-test = { path = "../../bee-test" }
 
 async-trait = "0.1"
 tokio = { version = "1.6", features = [ "rt-multi-thread" ] }

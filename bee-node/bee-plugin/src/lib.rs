@@ -17,6 +17,7 @@ mod plugin;
 
 pub mod event;
 pub mod hotloader;
+pub mod message;
 
 pub use error::PluginError;
 pub use handshake::PluginHandshake;
