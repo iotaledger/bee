@@ -185,7 +185,6 @@ dependencies = [
  "bee-runtime",
  "bee-storage",
  "bee-tangle",
- "bee-ternary",
  "chrono",
  "digest",
  "futures",
