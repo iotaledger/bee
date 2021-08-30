@@ -7,7 +7,7 @@ use crate::{
         consensus::worker::EXTRA_PRUNING_DEPTH,
         pruning::{
             error::Error,
-            metrics::{ConfirmedMetrics, UnconfirmedMetrics},
+            metrics::{ConfirmedDataPruningMetrics, MilestoneDataPruningMetrics, UnconfirmedDataPruningMetrics},
         },
         storage::StorageBackend,
     },
@@ -37,13 +37,13 @@ pub struct Edge {
     pub to_child: MessageId,
 }
 
-pub async fn delete_confirmed_data<S: StorageBackend>(
+pub async fn prune_confirmed_data<S: StorageBackend>(
     tangle: &MsTangle<S>,
     storage: &S,
     batch: &mut S::Batch,
     prune_index: MilestoneIndex,
     current_seps: &Seps,
-) -> Result<(Seps, ConfirmedMetrics), Error> {
+) -> Result<(Seps, ConfirmedDataPruningMetrics), Error> {
     // We keep a list of already visited messages.
     let mut visited = Messages::with_capacity(512);
 
@@ -54,7 +54,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
     let mut new_seps = Seps::with_capacity(512);
 
     // We collect stats during the traversal, and return them as a result of this function.
-    let mut metrics = ConfirmedMetrics::default();
+    let mut metrics = ConfirmedDataPruningMetrics::default();
 
     // FIXME: mitigation code
     let mitigation_threshold = tangle.config().below_max_depth() + EXTRA_PRUNING_DEPTH; // = BMD + 5
@@ -108,14 +108,14 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         if let Some(indexation) = unwrap_indexation(payload) {
             let padded_index = indexation.padded_index();
 
-            delete_indexation_data(storage, batch, &(padded_index, message_id))?;
+            prune_indexation_data(storage, batch, &(padded_index, message_id))?;
             metrics.prunable_indexations += 1;
         }
 
         // Delete its edges.
         let parents = msg.parents();
         for parent_id in parents.iter() {
-            delete_edge(storage, batch, &(*parent_id, message_id))?;
+            prune_edge(storage, batch, &(*parent_id, message_id))?;
             metrics.prunable_edges += 1;
         }
 
@@ -126,7 +126,7 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
         visited.insert(message_id);
 
         // Delete its associated data.
-        delete_message_and_metadata(storage, batch, &message_id)?;
+        prune_message_and_metadata(storage, batch, &message_id)?;
 
         // ---
         // Everything that follows is required to decide whether this message's id should be kept as a solid entry
@@ -220,12 +220,12 @@ pub async fn delete_confirmed_data<S: StorageBackend>(
     Ok((new_seps, metrics))
 }
 
-pub async fn delete_unconfirmed_data<S: StorageBackend>(
+pub async fn prune_unconfirmed_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     prune_index: MilestoneIndex,
-) -> Result<UnconfirmedMetrics, Error> {
-    let mut metrics = UnconfirmedMetrics::default();
+) -> Result<UnconfirmedDataPruningMetrics, Error> {
+    let mut metrics = UnconfirmedDataPruningMetrics::default();
 
     let unconf_msgs = match Fetch::<MilestoneIndex, Vec<UnreferencedMessage>>::fetch(storage, &prune_index)
         .map_err(|e| Error::Storage(Box::new(e)))?
@@ -302,7 +302,7 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
                 let parents = msg.parents();
 
                 // Add message data to the delete batch.
-                delete_message_and_metadata(storage, batch, unconf_msg_id)?;
+                prune_message_and_metadata(storage, batch, unconf_msg_id)?;
 
                 log::trace!("Pruned unconfirmed msg {} at {}.", unconf_msg_id, prune_index);
 
@@ -311,14 +311,14 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
                     let message_id = *unconf_msg_id;
 
                     // Add prunable indexations to the delete batch.
-                    delete_indexation_data(storage, batch, &(padded_index, message_id))?;
+                    prune_indexation_data(storage, batch, &(padded_index, message_id))?;
 
                     metrics.prunable_indexations += 1;
                 }
 
                 // Add prunable edges to the delete batch.
                 for parent in parents.iter() {
-                    delete_edge(storage, batch, &(*parent, *unconf_msg_id))?;
+                    prune_edge(storage, batch, &(*parent, *unconf_msg_id))?;
 
                     metrics.prunable_edges += 1;
                 }
@@ -342,8 +342,30 @@ pub async fn delete_unconfirmed_data<S: StorageBackend>(
     Ok(metrics)
 }
 
+pub async fn prune_milestone_data<S: StorageBackend>(
+    storage: &S,
+    batch: &mut S::Batch,
+    prune_index: MilestoneIndex,
+    should_prune_receipts: bool,
+) -> Result<MilestoneDataPruningMetrics, Error> {
+    let mut metrics = MilestoneDataPruningMetrics::default();
+
+    // Add prunable milestones to the delete batch.
+    prune_milestone(storage, batch, prune_index).await?;
+
+    // Add prunable output diffs to the delete batch.
+    prune_output_diff(storage, batch, prune_index).await?;
+
+    // Add prunable receipts the delete batch, if needed.
+    if should_prune_receipts {
+        metrics.receipts = prune_receipts(storage, batch, prune_index).await?;
+    }
+
+    Ok(metrics)
+}
+
 /// Adds a message with its associated metadata to the delete batch.
-fn delete_message_and_metadata<S: StorageBackend>(
+fn prune_message_and_metadata<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     message_id: &MessageId,
@@ -359,7 +381,7 @@ fn delete_message_and_metadata<S: StorageBackend>(
 }
 
 /// Adds an edge to the delete batch.
-fn delete_edge<S: StorageBackend>(
+fn prune_edge<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     edge: &(MessageId, MessageId),
@@ -371,7 +393,7 @@ fn delete_edge<S: StorageBackend>(
 }
 
 /// Adds indexation data to the delete batch.
-fn delete_indexation_data<S: StorageBackend>(
+fn prune_indexation_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     index_message_id: &(PaddedIndex, MessageId),
@@ -383,7 +405,7 @@ fn delete_indexation_data<S: StorageBackend>(
     Ok(())
 }
 
-pub async fn delete_milestone<S: StorageBackend>(
+pub async fn prune_milestone<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     index: MilestoneIndex,
@@ -395,7 +417,7 @@ pub async fn delete_milestone<S: StorageBackend>(
     Ok(())
 }
 
-pub async fn delete_output_diff<S: StorageBackend>(
+pub async fn prune_output_diff<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     index: MilestoneIndex,
@@ -407,7 +429,7 @@ pub async fn delete_output_diff<S: StorageBackend>(
     Ok(())
 }
 
-pub async fn delete_receipts<S: StorageBackend>(
+pub async fn prune_receipts<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     index: MilestoneIndex,
@@ -451,7 +473,7 @@ fn unwrap_indexation(payload: Option<&Payload>) -> Option<&IndexationPayload> {
 
 // TODO: consider using this instead of 'truncate'
 #[allow(dead_code)]
-pub async fn delete_seps<S: StorageBackend>(
+pub async fn prune_seps<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     seps: &[SolidEntryPoint],

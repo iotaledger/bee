@@ -76,15 +76,15 @@ pub async fn prune<S: StorageBackend>(
 
         // Add confirmed data to the delete batch.
         // NOTE: This is the most costly thing during pruning, because it has to perform a past-cone traversal.
-        let batch_confirmed = Instant::now();
-        let (mut new_seps, confirmed_metrics) =
-            batch::delete_confirmed_data(tangle, storage, &mut batch, index, &curr_seps).await?;
-        timings.batch_confirmed = batch_confirmed.elapsed();
+        let batch_confirmed_data = Instant::now();
+        let (mut new_seps, confirmed_data_metrics) =
+            batch::prune_confirmed_data(tangle, storage, &mut batch, index, &curr_seps).await?;
+        timings.batch_confirmed_data = batch_confirmed_data.elapsed();
 
         metrics.new_seps = new_seps.len();
-        metrics.messages = confirmed_metrics.prunable_messages;
-        metrics.edges = confirmed_metrics.prunable_edges;
-        metrics.indexations = confirmed_metrics.prunable_indexations;
+        metrics.messages = confirmed_data_metrics.prunable_messages;
+        metrics.edges = confirmed_data_metrics.prunable_edges;
+        metrics.indexations = confirmed_data_metrics.prunable_indexations;
 
         // Keep still relevant SEPs.
         //
@@ -128,31 +128,38 @@ pub async fn prune<S: StorageBackend>(
         // Update entry point index
         tangle.update_entry_point_index(index);
 
-        // Add prunable milestones to the delete batch.
         let batch_milestones = Instant::now();
-        batch::delete_milestone(storage, &mut batch, index).await?;
-        timings.batch_milestones = batch_milestones.elapsed();
+        let milestone_data_metrics =
+            batch::prune_milestone_data(storage, &mut batch, index, config.prune_receipts()).await?;
+        timings.batch_milestone_data = batch_milestones.elapsed();
 
-        // Add prunable output diffs to the delete batch.
-        let batch_output_diffs = Instant::now();
-        batch::delete_output_diff(storage, &mut batch, index).await?;
-        timings.batch_output_diffs = batch_output_diffs.elapsed();
+        metrics.receipts = milestone_data_metrics.receipts;
 
-        // Add prunable receipts the delete batch (if wanted).
-        if config.prune_receipts() {
-            let batch_receipts = Instant::now();
-            metrics.receipts += batch::delete_receipts(storage, &mut batch, index).await?;
-            timings.batch_receipts = batch_receipts.elapsed();
-        }
+        // // Add prunable milestones to the delete batch.
+        // let batch_milestones = Instant::now();
+        // batch::prune_milestone(storage, &mut batch, index).await?;
+        // timings.batch_milestones = batch_milestones.elapsed();
+        //
+        // // Add prunable output diffs to the delete batch.
+        // let batch_output_diffs = Instant::now();
+        // batch::prune_output_diff(storage, &mut batch, index).await?;
+        // timings.batch_output_diffs = batch_output_diffs.elapsed();
+        //
+        // // Add prunable receipts the delete batch (if wanted).
+        // if config.prune_receipts() {
+        //     let batch_receipts = Instant::now();
+        //     metrics.receipts += batch::prune_receipts(storage, &mut batch, index).await?;
+        //     timings.batch_receipts = batch_receipts.elapsed();
+        // }
 
         // Add unconfirmed data to the delete batch.
-        let batch_unconfirmed = Instant::now();
-        let unconfirmed_metrics = batch::delete_unconfirmed_data(storage, &mut batch, index).await?;
-        timings.batch_unconfirmed = batch_unconfirmed.elapsed();
+        let batch_unconfirmed_data = Instant::now();
+        let unconfirmed_data_metrics = batch::prune_unconfirmed_data(storage, &mut batch, index).await?;
+        timings.batch_unconfirmed_data = batch_unconfirmed_data.elapsed();
 
-        metrics.messages += unconfirmed_metrics.prunable_messages;
-        metrics.edges += unconfirmed_metrics.prunable_edges;
-        metrics.indexations += unconfirmed_metrics.prunable_indexations;
+        metrics.messages += unconfirmed_data_metrics.prunable_messages;
+        metrics.edges += unconfirmed_data_metrics.prunable_edges;
+        metrics.indexations += unconfirmed_data_metrics.prunable_indexations;
 
         // Remove old SEPs from the storage.
         //
@@ -190,8 +197,8 @@ pub async fn prune<S: StorageBackend>(
         timings.full_prune = full_prune.elapsed();
 
         debug!("{:?}.", metrics);
-        debug!("{:?}", confirmed_metrics);
-        debug!("{:?}", unconfirmed_metrics);
+        debug!("{:?}", confirmed_data_metrics);
+        debug!("{:?}", unconfirmed_data_metrics);
         debug!("{:?}.", timings);
         debug!(
             "Entry point index now at {} with {} solid entry points..",

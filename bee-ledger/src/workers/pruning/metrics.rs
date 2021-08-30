@@ -17,7 +17,7 @@ pub struct PruningMetrics {
 }
 
 #[derive(Debug, Default)]
-pub struct ConfirmedMetrics {
+pub struct ConfirmedDataPruningMetrics {
     pub msg_already_visited: usize,
     pub references_sep: usize,
     pub approver_cache_miss: usize,
@@ -32,7 +32,7 @@ pub struct ConfirmedMetrics {
 }
 
 #[derive(Debug, Default)]
-pub struct UnconfirmedMetrics {
+pub struct UnconfirmedDataPruningMetrics {
     pub none_received: bool,
     pub prunable_messages: usize,
     pub prunable_edges: usize,
@@ -42,16 +42,19 @@ pub struct UnconfirmedMetrics {
 }
 
 #[derive(Debug, Default)]
+pub struct MilestoneDataPruningMetrics {
+    pub receipts: usize,
+}
+
+#[derive(Debug, Default)]
 pub struct Timings {
     pub full_prune: Duration,
     pub get_curr_seps: Duration,
     pub filter_curr_seps: Duration,
     pub replace_seps: Duration,
-    pub batch_confirmed: Duration,
-    pub batch_unconfirmed: Duration,
-    pub batch_milestones: Duration,
-    pub batch_output_diffs: Duration,
-    pub batch_receipts: Duration,
+    pub batch_confirmed_data: Duration,
+    pub batch_unconfirmed_data: Duration,
+    pub batch_milestone_data: Duration,
     pub batch_new_seps: Duration,
     pub truncate_curr_seps: Duration,
     pub batch_commit: Duration,
