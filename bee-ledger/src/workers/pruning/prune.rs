@@ -47,9 +47,7 @@ pub async fn prune<S: StorageBackend>(
         });
     }
 
-    if start_index == target_index {
-        info!("Pruning milestone {}...", start_index);
-    } else {
+    if start_index != target_index {
         info!(
             "Pruning from milestone {} to milestone {}...",
             start_index, target_index
@@ -199,10 +197,15 @@ pub async fn prune<S: StorageBackend>(
             "Entry point index now at {} with {} solid entry points..",
             index, num_next_seps
         );
-
-        info!("Pruned milestone {}.", index);
+        debug!("Pruned milestone {}.", index);
 
         bus.dispatch(PrunedIndex { index });
+    }
+
+    if start_index == target_index {
+        info!("Pruned milestone {}.", index);
+    } else {
+        info!("Pruned from milestone {} to milestone {}.", start_index, target_index);
     }
 
     Ok(())
