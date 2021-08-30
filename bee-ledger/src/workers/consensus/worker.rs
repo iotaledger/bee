@@ -292,7 +292,7 @@ where
         let snapshot_depth_min = bmd + EXTRA_SNAPSHOT_DEPTH;
         let snapshot_depth = if snapshot_config.depth() < snapshot_depth_min {
             warn!(
-                "Configuration value for \"depth\" is too low ({}), value changed to {}.",
+                "Configuration value for \"snapshot.depth\" is too low ({}), value changed to {}.",
                 snapshot_config.depth(),
                 snapshot_depth_min
             );
@@ -305,7 +305,7 @@ where
         let pruning_delay_min = snapshot_depth + snapshot_pruning_delta;
         let pruning_delay = if pruning_config.delay() < pruning_delay_min {
             warn!(
-                "Configuration value for \"delay\" is too low ({}), value changed to {}.",
+                "Configuration value for \"pruning.delay\" is too low ({}), value changed to {}.",
                 pruning_config.delay(),
                 pruning_delay_min
             );
@@ -352,7 +352,7 @@ where
                                 // }
                             }
                             Err(reason) => {
-                                info!("Snapshotting skipped: {:?}", reason);
+                                debug!("Snapshotting skipped: {:?}", reason);
                             }
                         }
 
@@ -366,7 +366,7 @@ where
                                 }
                             }
                             Err(reason) => {
-                                info!("Pruning skipped: {:?}", reason);
+                                debug!("Pruning skipped: {:?}", reason);
                             }
                         }
                     }
