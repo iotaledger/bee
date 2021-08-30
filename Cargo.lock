@@ -261,6 +261,7 @@ dependencies = [
  "bee-event-bus",
  "bee-message",
  "bee-packable",
+ "bee-plugin",
  "tokio",
 ]
 

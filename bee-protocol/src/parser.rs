@@ -77,10 +77,10 @@ impl Actor for ParserWorker {
         while let Some(ParseEvent { bytes }) = rt.next_event().await {
             if !self.is_recent(&bytes) {
                 match Message::unpack_from_slice(&bytes) {
-                    Ok(_) => {
-                        // FIXME: figure out the remaining validation steps.
-                        // For now, just send the message.
-                        bus.dispatch(MessageParsedEvent {});
+                    Ok(message) => {
+                        bus.dispatch(MessageParsedEvent {
+                            message: Some((&message).into()),
+                        });
                     }
                     Err(err) => match err {
                         bee_packable::UnpackError::Packable(_err) => {
