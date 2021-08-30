@@ -344,7 +344,7 @@ where
                             continue;
                         }
 
-                        match should_snapshot(&tangle, ledger_index, pruning_delay_min, &snapshot_config) {
+                        match should_snapshot(&tangle, ledger_index, snapshot_depth, &snapshot_config) {
                             Ok(()) => {
                                 // TODO
                                 // if let Err(e) = snapshot(snapshot_config.path(), event.index - snapshot_depth) {
