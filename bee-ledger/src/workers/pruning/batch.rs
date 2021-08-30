@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    types::{OutputDiff, Receipt},
+    types::{ConsumedOutput, CreatedOutput, OutputDiff, Receipt},
     workers::{
         consensus::worker::EXTRA_PRUNING_DEPTH,
         pruning::{
@@ -15,7 +15,7 @@ use crate::{
 
 use bee_message::{
     milestone::Milestone,
-    prelude::{Essence, IndexationPayload, Message, MessageId, MilestoneIndex, PaddedIndex, Payload},
+    prelude::{Essence, IndexationPayload, Message, MessageId, MilestoneIndex, OutputId, PaddedIndex, Payload},
 };
 use bee_storage::access::{Batch, Fetch};
 use bee_tangle::{
@@ -370,10 +370,7 @@ fn prune_message_and_metadata<S: StorageBackend>(
     batch: &mut S::Batch,
     message_id: &MessageId,
 ) -> Result<(), Error> {
-    // Message
     Batch::<MessageId, Message>::batch_delete(storage, batch, message_id).map_err(|e| Error::Storage(Box::new(e)))?;
-
-    // MessageMetadata
     Batch::<MessageId, MessageMetadata>::batch_delete(storage, batch, message_id)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
@@ -386,7 +383,6 @@ fn prune_edge<S: StorageBackend>(
     batch: &mut S::Batch,
     edge: &(MessageId, MessageId),
 ) -> Result<(), Error> {
-    // Edge
     Batch::<(MessageId, MessageId), ()>::batch_delete(storage, batch, edge).map_err(|e| Error::Storage(Box::new(e)))?;
 
     Ok(())
@@ -398,7 +394,6 @@ fn prune_indexation_data<S: StorageBackend>(
     batch: &mut S::Batch,
     index_message_id: &(PaddedIndex, MessageId),
 ) -> Result<(), Error> {
-    // Indexation
     Batch::<(PaddedIndex, MessageId), ()>::batch_delete(storage, batch, index_message_id)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
@@ -410,7 +405,6 @@ pub async fn prune_milestone<S: StorageBackend>(
     batch: &mut S::Batch,
     index: MilestoneIndex,
 ) -> Result<(), Error> {
-    // Milestone
     Batch::<MilestoneIndex, Milestone>::batch_delete(storage, batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
@@ -422,7 +416,17 @@ pub async fn prune_output_diff<S: StorageBackend>(
     batch: &mut S::Batch,
     index: MilestoneIndex,
 ) -> Result<(), Error> {
-    // OutputDiff
+    if let Some(output_diff) =
+        Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index).map_err(|e| Error::Storage(Box::new(e)))?
+    {
+        for consumed_output in output_diff.consumed_outputs() {
+            Batch::<OutputId, ConsumedOutput>::batch_delete(storage, batch, &consumed_output)
+                .map_err(|e| Error::Storage(Box::new(e)))?;
+            Batch::<OutputId, CreatedOutput>::batch_delete(storage, batch, &consumed_output)
+                .map_err(|e| Error::Storage(Box::new(e)))?;
+        }
+    }
+
     Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, batch, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?;
 
@@ -441,7 +445,6 @@ pub async fn prune_receipts<S: StorageBackend>(
 
     let mut num = 0;
     for receipt in receipts.into_iter() {
-        // Receipt
         Batch::<(MilestoneIndex, Receipt), ()>::batch_delete(storage, batch, &(index, receipt))
             .map_err(|e| Error::Storage(Box::new(e)))?;
 

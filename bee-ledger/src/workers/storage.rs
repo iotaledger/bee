@@ -58,6 +58,7 @@ pub trait StorageBackend:
     + Fetch<MilestoneIndex, Milestone>
     + Fetch<MilestoneIndex, Vec<Receipt>>
     + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
+    + Fetch<MilestoneIndex, OutputDiff>
     + Insert<(), SnapshotInfo>
     + Insert<(), LedgerIndex>
     + Insert<(bool, TreasuryOutput), ()>
@@ -98,6 +99,7 @@ impl<T> StorageBackend for T where
         + Fetch<MilestoneIndex, Milestone>
         + Fetch<MilestoneIndex, Vec<Receipt>>
         + Fetch<MilestoneIndex, Vec<UnreferencedMessage>>
+        + Fetch<MilestoneIndex, OutputDiff>
         + Insert<(), SnapshotInfo>
         + Insert<(), LedgerIndex>
         + Insert<(bool, TreasuryOutput), ()>
