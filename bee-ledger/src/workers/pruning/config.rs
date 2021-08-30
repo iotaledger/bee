@@ -7,8 +7,6 @@ use serde::Deserialize;
 
 const DEFAULT_ENABLED: bool = true;
 const DEFAULT_DELAY: u32 = 60480;
-
-/// Receipts are not pruned by default.
 const DEFAULT_PRUNE_RECEIPTS: bool = false;
 
 /// Builder for a [`PruningConfig`].
@@ -20,7 +18,7 @@ pub struct PruningConfigBuilder {
 }
 
 impl PruningConfigBuilder {
-    /// Creates a new instance of this builder.
+    /// Creates a new [`PruningConfigBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
@@ -43,7 +41,7 @@ impl PruningConfigBuilder {
         self
     }
 
-    /// Finishes the builder.
+    /// Finishes the builder into a [`PruningConfig`].
     pub fn finish(self) -> PruningConfig {
         PruningConfig {
             enabled: self.enabled.unwrap_or(DEFAULT_ENABLED),
