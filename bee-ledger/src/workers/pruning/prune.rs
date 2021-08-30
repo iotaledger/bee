@@ -203,7 +203,7 @@ pub async fn prune<S: StorageBackend>(
     }
 
     if start_index == target_index {
-        info!("Pruned milestone {}.", index);
+        info!("Pruned milestone {}.", start_index);
     } else {
         info!("Pruned from milestone {} to milestone {}.", start_index, target_index);
     }
