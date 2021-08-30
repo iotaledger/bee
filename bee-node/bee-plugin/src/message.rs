@@ -2,10 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Types for messages.
+//!
+//! The [`Message`] type exposed here is used for (de)serialization purposes in plugins only. You
+//! should be using [`bee_message::Message`] most of the time. In particular, you should only
+//! create [`Message`] values by converting values of [`bee_message::Message`] using the
+//! [`From::from`] trait. To convert messages back to [`bee_message::Message`] you can use
+//! [`Into::into`]. However, this method is allowed to panic if the message of type [`Message`] was
+//! not created by converting [`bee_message::Message`].
 
 pub use crate::grpc::Message;
-
-use std::convert::TryInto;
 
 use crate::grpc::{
     address::Kind as AddressKind, input::Kind as InputKind, output::Kind as OutputKind, payload::Kind as PayloadKind,
@@ -16,6 +21,8 @@ use crate::grpc::{
     SignatureLockedAssetOutput, SignatureLockedSingleOutput, SignatureUnlock, Timestamp, TransactionEssence,
     TransactionId, TransactionPayload, UnlockBlock, UtxoInput,
 };
+
+use std::convert::TryInto;
 
 impl From<&bee_message::Message> for Message {
     fn from(message: &bee_message::Message) -> Self {
@@ -65,6 +72,9 @@ impl From<&bee_message::parents::ParentsBlock> for ParentsBlock {
 #[allow(clippy::from_over_into)]
 impl Into<bee_message::parents::ParentsBlock> for ParentsBlock {
     fn into(self) -> bee_message::parents::ParentsBlock {
+        // This and every other `unwrap` in an `Into::into` implementation is ok because we assume
+        // that `self` was created from a valid `bee_message::Message` and it has no missing
+        // fields.
         bee_message::parents::ParentsBlock::new(
             ParentsKind::from_i32(self.kind).unwrap().into(),
             self.references.into_iter().map(MessageId::into).collect(),
