@@ -1,18 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    types::snapshot::SnapshotInfo,
-    workers::{
-        event::PrunedIndex,
-        pruning::{
-            batch,
-            config::PruningConfig,
-            error::Error,
-            metrics::{PruningMetrics, Timings},
-        },
-        storage::{self, StorageBackend},
+use crate::workers::{
+    event::PrunedIndex,
+    pruning::{
+        batch,
+        config::PruningConfig,
+        error::Error,
+        metrics::{PruningMetrics, Timings},
     },
+    storage::{self, StorageBackend},
 };
 
 use bee_message::prelude::MilestoneIndex;
@@ -20,7 +17,7 @@ use bee_runtime::event::Bus;
 use bee_storage::access::{Batch, Truncate};
 use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle};
 
-use log::*;
+use log::{debug, info};
 
 use std::{
     sync::atomic::{AtomicUsize, Ordering},
@@ -42,14 +39,6 @@ pub async fn prune<S: StorageBackend>(
 ) -> Result<(), Error> {
     let mut timings = Timings::default();
     let mut pruning_metrics = PruningMetrics::default();
-
-    // FIXME: Until snapshotting is properly implemented we need to write a new `SnapshotInfo` as part of the pruning
-    // step to make sure the database remains consistent (we need to update the entry point index and the pruning
-    // index).
-    let network_id = storage::fetch_snapshot_info(storage)
-        .map_err(|e| Error::Storage(Box::new(e)))?
-        .ok_or(Error::MissingSnapshotInfo)?
-        .network_id();
 
     if target_index < start_index {
         return Err(Error::InvalidTargetIndex {
@@ -181,7 +170,11 @@ pub async fn prune<S: StorageBackend>(
             .duration_since(SystemTime::UNIX_EPOCH)
             .expect("error creating timestamp")
             .as_secs();
-        let snapshot_info = SnapshotInfo::new(network_id, index, index, index, timestamp);
+        let mut snapshot_info = storage::fetch_snapshot_info(storage)
+            .map_err(|e| Error::Storage(Box::new(e)))?
+            .ok_or(Error::MissingSnapshotInfo)?;
+        snapshot_info.update_pruning_index(index);
+        snapshot_info.update_timestamp(timestamp);
         storage::insert_snapshot_info(storage, &snapshot_info).map_err(|e| Error::Storage(Box::new(e)))?;
 
         timings.full_prune = full_prune.elapsed();

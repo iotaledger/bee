@@ -44,9 +44,19 @@ impl SnapshotInfo {
         self.snapshot_index
     }
 
+    /// Updates the snapshot index of a `SnapshotInfo`.
+    pub fn update_snapshot_index(&mut self, index: MilestoneIndex) {
+        self.snapshot_index = index;
+    }
+
     /// Returns the entry point index of a `SnapshotInfo`.
     pub fn entry_point_index(&self) -> MilestoneIndex {
         self.entry_point_index
+    }
+
+    /// Updates the entry point index of a `SnapshotInfo`.
+    pub fn update_entry_point_index(&mut self, index: MilestoneIndex) {
+        self.entry_point_index = index;
     }
 
     /// Returns the pruning index of a `SnapshotInfo`.
@@ -54,9 +64,19 @@ impl SnapshotInfo {
         self.pruning_index
     }
 
+    /// Updates the pruning index of a `SnapshotInfo`.
+    pub fn update_pruning_index(&mut self, index: MilestoneIndex) {
+        self.pruning_index = index;
+    }
+
     /// Returns the timestamp of a `SnapshotInfo`.
     pub fn timestamp(&self) -> u64 {
         self.timestamp
+    }
+
+    /// Updates the timestamp of a `SnapshotInfo`.
+    pub fn update_timestamp(&mut self, timestamp: u64) {
+        self.timestamp = timestamp;
     }
 }
 

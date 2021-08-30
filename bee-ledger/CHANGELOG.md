@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `pruning` module;
 - `snapshot::condition` module;
+- `SnapshotInfo` methods;
+  - `update_snapshot_index`;
+  - `update_entry_point_index`;
+  - `update_pruning_index`;
+  - `update_timestamp`;
 
 ### Changed
 
