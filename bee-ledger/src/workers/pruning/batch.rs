@@ -420,9 +420,9 @@ pub async fn prune_output_diff<S: StorageBackend>(
         Fetch::<MilestoneIndex, OutputDiff>::fetch(storage, &index).map_err(|e| Error::Storage(Box::new(e)))?
     {
         for consumed_output in output_diff.consumed_outputs() {
-            Batch::<OutputId, ConsumedOutput>::batch_delete(storage, batch, &consumed_output)
+            Batch::<OutputId, ConsumedOutput>::batch_delete(storage, batch, consumed_output)
                 .map_err(|e| Error::Storage(Box::new(e)))?;
-            Batch::<OutputId, CreatedOutput>::batch_delete(storage, batch, &consumed_output)
+            Batch::<OutputId, CreatedOutput>::batch_delete(storage, batch, consumed_output)
                 .map_err(|e| Error::Storage(Box::new(e)))?;
         }
     }

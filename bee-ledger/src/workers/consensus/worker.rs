@@ -25,8 +25,7 @@ use bee_tangle::{ConflictReason, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
 use futures::{channel::oneshot, stream::StreamExt};
-use log::debug;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 

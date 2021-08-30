@@ -165,7 +165,6 @@ pub async fn prune<S: StorageBackend>(
         tangle.update_pruning_index(index);
 
         // Write the updated snapshot info to the storage.
-        // TODO: Update the storage with the new snapshot info in the designated module.
         let timestamp = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .expect("error creating timestamp")
