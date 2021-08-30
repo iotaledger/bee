@@ -28,7 +28,7 @@ const KEEP_INITIAL_SNAPSHOT_SEPS: usize = 50;
 
 static NUM_PRUNINGS: AtomicUsize = AtomicUsize::new(0);
 
-/// Performs pruning of old data until `target_index`.
+/// Performs pruning of data from `start_index` to `target_index`.
 pub async fn prune<S: StorageBackend>(
     tangle: &MsTangle<S>,
     storage: &S,
@@ -38,7 +38,7 @@ pub async fn prune<S: StorageBackend>(
     config: &PruningConfig,
 ) -> Result<(), Error> {
     let mut timings = Timings::default();
-    let mut pruning_metrics = PruningMetrics::default();
+    let mut metrics = PruningMetrics::default();
 
     if target_index < start_index {
         return Err(Error::InvalidTargetIndex {
@@ -47,9 +47,21 @@ pub async fn prune<S: StorageBackend>(
         });
     }
 
+    if start_index == target_index {
+        info!("Pruning milestone {}...", start_index);
+    } else {
+        info!(
+            "Pruning from milestone {} to milestone {}...",
+            start_index, target_index
+        );
+    }
+
     for index in *start_index..=*target_index {
-        let index = index.into();
-        info!("Pruning milestone {}...", index);
+        let index = MilestoneIndex(index);
+
+        debug!("Pruning milestone {}...", index);
+
+        //
 
         // Measurement of the full pruning step.
         let full_prune = Instant::now();
@@ -59,7 +71,7 @@ pub async fn prune<S: StorageBackend>(
         let mut curr_seps = tangle.get_solid_entry_points().await;
         timings.get_curr_seps = get_curr_seps.elapsed();
 
-        pruning_metrics.curr_seps = curr_seps.len();
+        metrics.curr_seps = curr_seps.len();
 
         // Start a batch to make changes to the storage in a single atomic step.
         let mut batch = S::batch_begin();
@@ -71,10 +83,10 @@ pub async fn prune<S: StorageBackend>(
             batch::delete_confirmed_data(tangle, storage, &mut batch, index, &curr_seps).await?;
         timings.batch_confirmed = batch_confirmed.elapsed();
 
-        pruning_metrics.new_seps = new_seps.len();
-        pruning_metrics.messages = confirmed_metrics.prunable_messages;
-        pruning_metrics.edges = confirmed_metrics.prunable_edges;
-        pruning_metrics.indexations = confirmed_metrics.prunable_indexations;
+        metrics.new_seps = new_seps.len();
+        metrics.messages = confirmed_metrics.prunable_messages;
+        metrics.edges = confirmed_metrics.prunable_edges;
+        metrics.indexations = confirmed_metrics.prunable_indexations;
 
         // Keep still relevant SEPs.
         //
@@ -93,14 +105,14 @@ pub async fn prune<S: StorageBackend>(
         }
         timings.filter_curr_seps = filter_curr_seps.elapsed();
 
-        pruning_metrics.kept_seps = curr_seps.len();
+        metrics.kept_seps = curr_seps.len();
 
         // Create the union of both sets:
         new_seps.extend(curr_seps);
 
         let num_next_seps = new_seps.len();
 
-        pruning_metrics.next_seps = num_next_seps;
+        metrics.next_seps = num_next_seps;
 
         // Write the new set of SEPs to the storage.
         let batch_new_seps = Instant::now();
@@ -131,7 +143,7 @@ pub async fn prune<S: StorageBackend>(
         // Add prunable receipts the delete batch (if wanted).
         if config.prune_receipts() {
             let batch_receipts = Instant::now();
-            pruning_metrics.receipts += batch::delete_receipts(storage, &mut batch, index).await?;
+            metrics.receipts += batch::delete_receipts(storage, &mut batch, index).await?;
             timings.batch_receipts = batch_receipts.elapsed();
         }
 
@@ -140,9 +152,9 @@ pub async fn prune<S: StorageBackend>(
         let unconfirmed_metrics = batch::delete_unconfirmed_data(storage, &mut batch, index).await?;
         timings.batch_unconfirmed = batch_unconfirmed.elapsed();
 
-        pruning_metrics.messages += unconfirmed_metrics.prunable_messages;
-        pruning_metrics.edges += unconfirmed_metrics.prunable_edges;
-        pruning_metrics.indexations += unconfirmed_metrics.prunable_indexations;
+        metrics.messages += unconfirmed_metrics.prunable_messages;
+        metrics.edges += unconfirmed_metrics.prunable_edges;
+        metrics.indexations += unconfirmed_metrics.prunable_indexations;
 
         // Remove old SEPs from the storage.
         //
@@ -179,14 +191,16 @@ pub async fn prune<S: StorageBackend>(
 
         timings.full_prune = full_prune.elapsed();
 
-        debug!("{:?}.", pruning_metrics);
+        debug!("{:?}.", metrics);
         debug!("{:?}", confirmed_metrics);
         debug!("{:?}", unconfirmed_metrics);
         debug!("{:?}.", timings);
+        debug!(
+            "Entry point index now at {} with {} solid entry points..",
+            index, num_next_seps
+        );
 
-        info!("{} solid entry points.", num_next_seps,);
-        info!("Entry point index now at {}.", index,);
-        info!("Pruning index now at {}.", index);
+        info!("Pruned milestone {}.", index);
 
         bus.dispatch(PrunedIndex { index });
     }
