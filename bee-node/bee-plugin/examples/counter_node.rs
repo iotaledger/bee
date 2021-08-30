@@ -23,16 +23,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let hotloader = PluginHotloader::new("./plugins", bus.clone());
     let handle = tokio::spawn(async move { hotloader.run().await });
 
-    {
-        let bus = bus.clone();
-        tokio::spawn(async move {
-            loop {
-                sleep(Duration::from_millis(1)).await;
-                bus.dispatch(MessageParsedEvent {})
-            }
-        });
-    }
-
     tokio::spawn(async move {
         loop {
             sleep(Duration::from_millis(1)).await;

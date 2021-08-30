@@ -31,7 +31,11 @@ impl Counter {
 #[async_trait::async_trait]
 impl Plugin for Counter {
     fn handshake() -> PluginHandshake {
-        PluginHandshake::new("counter", "[::1]:50051".parse().unwrap(), vec![EventId::MessageParsed])
+        PluginHandshake::new(
+            "counter",
+            "[::1]:50051".parse().unwrap(),
+            vec![EventId::MessageRejected],
+        )
     }
 
     async fn shutdown(&self) {
@@ -41,7 +45,7 @@ impl Plugin for Counter {
         );
     }
 
-    async fn process_message_parsed_event(&self, _event: MessageParsedEvent) {
+    async fn process_message_rejected_event(&self, _event: MessageRejectedEvent) {
         self.increase();
     }
 }
