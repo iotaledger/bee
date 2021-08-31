@@ -14,8 +14,14 @@ use crate::{
 };
 
 use bee_message::{
-    milestone::Milestone,
-    prelude::{Essence, IndexationPayload, Message, MessageId, MilestoneIndex, OutputId, PaddedIndex, Payload},
+    milestone::{Milestone, MilestoneIndex},
+    output::OutputId,
+    payload::{
+        indexation::{IndexationPayload, PaddedIndex},
+        transaction::Essence,
+        Payload,
+    },
+    Message, MessageId,
 };
 use bee_storage::access::{Batch, Fetch};
 use bee_tangle::{

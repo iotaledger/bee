@@ -12,7 +12,7 @@ use crate::workers::{
     storage::{self, StorageBackend},
 };
 
-use bee_message::prelude::MilestoneIndex;
+use bee_message::milestone::MilestoneIndex;
 use bee_runtime::event::Bus;
 use bee_storage::access::{Batch, Truncate};
 use bee_tangle::{solid_entry_point::SolidEntryPoint, MsTangle};

@@ -1,7 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use bee_message::{prelude::MilestoneIndex, MessageId};
+use bee_message::{milestone::MilestoneIndex, MessageId};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
