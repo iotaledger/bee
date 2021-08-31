@@ -1,4 +1,4 @@
-# Rename this file to config.toml to use it
+# Duplicate this file to config.toml to use it
 
 identity   = ""
 alias      = "bee"
