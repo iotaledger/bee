@@ -7,12 +7,8 @@ use crate::{
         consensus::{metadata::WhiteFlagMetadata, state::validate_ledger_state, white_flag},
         error::Error,
         event::{MessageReferenced, MilestoneConfirmed, OutputConsumed, OutputCreated},
-        pruning::{
-            condition::{should_prune, should_snapshot},
-            config::PruningConfig,
-            constants::{PRUNING_THRESHOLD, SOLID_ENTRY_POINT_THRESHOLD_FUTURE, SOLID_ENTRY_POINT_THRESHOLD_PAST},
-        },
-        snapshot::{config::SnapshotConfig, worker::SnapshotWorker},
+        pruning::{condition::should_prune, config::PruningConfig, prune},
+        snapshot::{condition::should_snapshot, config::SnapshotConfig, worker::SnapshotWorker},
         storage::{self, StorageBackend},
     },
 };
@@ -28,13 +24,15 @@ use bee_runtime::{event::Bus, node::Node, shutdown_stream::ShutdownStream, worke
 use bee_tangle::{ConflictReason, MsTangle, TangleWorker};
 
 use async_trait::async_trait;
-
 use futures::{channel::oneshot, stream::StreamExt};
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::TypeId, convert::TryInto};
+
+pub(crate) const EXTRA_SNAPSHOT_DEPTH: u32 = 5;
+pub(crate) const EXTRA_PRUNING_DEPTH: u32 = 5;
 
 /// Commands of the consensus worker.
 #[allow(clippy::type_complexity)]
@@ -288,24 +286,29 @@ where
 
         validate_ledger_state(&*storage)?;
 
-        let depth = if snapshot_config.depth() < SOLID_ENTRY_POINT_THRESHOLD_FUTURE {
+        let bmd = tangle.config().below_max_depth();
+
+        let snapshot_depth_min = bmd + EXTRA_SNAPSHOT_DEPTH;
+        let snapshot_depth = if snapshot_config.depth() < snapshot_depth_min {
             warn!(
-                "Configuration value for \"depth\" is too low ({}), value changed to {}.",
+                "Configuration value for \"snapshot.depth\" is too low ({}), value changed to {}.",
                 snapshot_config.depth(),
-                SOLID_ENTRY_POINT_THRESHOLD_FUTURE
+                snapshot_depth_min
             );
-            SOLID_ENTRY_POINT_THRESHOLD_FUTURE
+            snapshot_depth_min
         } else {
             snapshot_config.depth()
         };
-        let delay_min = snapshot_config.depth() + SOLID_ENTRY_POINT_THRESHOLD_PAST + PRUNING_THRESHOLD + 1;
-        let delay = if pruning_config.delay() < delay_min {
+
+        let snapshot_pruning_delta = bmd + EXTRA_PRUNING_DEPTH;
+        let pruning_delay_min = snapshot_depth + snapshot_pruning_delta;
+        let pruning_delay = if pruning_config.delay() < pruning_delay_min {
             warn!(
-                "Configuration value for \"delay\" is too low ({}), value changed to {}.",
+                "Configuration value for \"pruning.delay\" is too low ({}), value changed to {}.",
                 pruning_config.delay(),
-                delay_min
+                pruning_delay_min
             );
-            delay_min
+            pruning_delay_min
         } else {
             pruning_config.delay()
         };
@@ -340,18 +343,30 @@ where
                             continue;
                         }
 
-                        if should_snapshot(&tangle, MilestoneIndex(*ledger_index), depth, &snapshot_config) {
-                            // TODO
-                            // if let Err(e) = snapshot(snapshot_config.path(), event.index - depth) {
-                            //     error!("Failed to create snapshot: {:?}.", e);
-                            // }
+                        match should_snapshot(&tangle, ledger_index, snapshot_depth, &snapshot_config) {
+                            Ok(()) => {
+                                // TODO
+                                // if let Err(e) = snapshot(snapshot_config.path(), event.index - snapshot_depth) {
+                                //     error!("Failed to create snapshot: {:?}.", e);
+                                // }
+                            }
+                            Err(reason) => {
+                                debug!("Snapshotting skipped: {:?}", reason);
+                            }
                         }
 
-                        if should_prune(&tangle, MilestoneIndex(*ledger_index), delay, &pruning_config) {
-                            // TODO
-                            // if let Err(e) = prune_database(&tangle, MilestoneIndex(*event.index - delay)) {
-                            //     error!("Failed to prune database: {:?}.", e);
-                            // }
+                        match should_prune(&tangle, ledger_index, pruning_delay, &pruning_config) {
+                            Ok((start_index, target_index)) => {
+                                if let Err(e) =
+                                    prune::prune(&tangle, &storage, &bus, start_index, target_index, &pruning_config)
+                                        .await
+                                {
+                                    error!("Pruning failed: {:?}.", e);
+                                }
+                            }
+                            Err(reason) => {
+                                debug!("Pruning skipped: {:?}", reason);
+                            }
                         }
                     }
                     ConsensusWorkerCommand::FetchBalance(address, sender) => {

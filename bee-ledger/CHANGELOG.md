@@ -19,6 +19,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.5.0 - 2021-08-30
+
+### Added
+
+- `pruning` module;
+- `snapshot::condition` module;
+- `SnapshotInfo` methods;
+  - `update_snapshot_index`;
+  - `update_entry_point_index`;
+  - `update_pruning_index`;
+  - `update_timestamp`;
+
+### Changed
+
+- `consensus::worker` module to execute pruning if conditions are met;
+
 ## 0.4.0 - 2021-06-01
 
 ### Added

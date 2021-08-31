@@ -19,4 +19,4 @@ futures = "0.3"
 log = { version = "0.4", features = [ "serde" ] }
 
 [dev-dependencies]
-tokio = { version = "1.9", features = [ "rt", "macros", "time" ] }
+tokio = { version = "1.10", features = [ "rt", "macros", "time" ] }
