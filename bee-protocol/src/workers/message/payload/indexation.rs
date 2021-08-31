@@ -35,7 +35,10 @@ pub(crate) struct IndexationPayloadWorker {
 
 fn process<B: StorageBackend>(storage: &B, metrics: &NodeMetrics, message_id: MessageId, message: MessageRef, bus: &Bus<'_>,) {
     let indexation = match message.payload() {
-        Some(Payload::Indexation(indexation)) => indexation,
+        Some(Payload::Indexation(indexation)) => {
+            bus.dispatch(IndexationMessage { message_id, message: message.clone(), index: indexation.padded_index() });
+            indexation
+        },
         Some(Payload::Transaction(transaction)) => {
             let Essence::Regular(essence) = transaction.essence();
             if let Some(Payload::Indexation(indexation)) = essence.payload() {
