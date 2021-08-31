@@ -52,16 +52,12 @@ pub async fn prune_confirmed_data<S: StorageBackend>(
 ) -> Result<(Seps, ConfirmedDataPruningMetrics), Error> {
     // We keep a list of already visited messages.
     let mut visited = Messages::with_capacity(512);
-
     // We keep a cache of approvers to prevent fetch the same data from the storage more than once.
     let mut approver_cache = ApproverCache::with_capacity(512);
-
     // We collect new SEPs during the traversal, and return them as a result of this function.
     let mut new_seps = Seps::with_capacity(512);
-
     // We collect stats during the traversal, and return them as a result of this function.
     let mut metrics = ConfirmedDataPruningMetrics::default();
-
     // FIXME: mitigation code
     let mitigation_threshold = tangle.config().below_max_depth() + EXTRA_PRUNING_DEPTH; // = BMD + 5
 
@@ -356,13 +352,10 @@ pub async fn prune_milestone_data<S: StorageBackend>(
 ) -> Result<MilestoneDataPruningMetrics, Error> {
     let mut metrics = MilestoneDataPruningMetrics::default();
 
-    // Add prunable milestones to the delete batch.
     prune_milestone(storage, batch, prune_index).await?;
 
-    // Add prunable output diffs to the delete batch.
     prune_output_diff(storage, batch, prune_index).await?;
 
-    // Add prunable receipts the delete batch, if needed.
     if should_prune_receipts {
         metrics.receipts = prune_receipts(storage, batch, prune_index).await?;
     }
@@ -370,7 +363,6 @@ pub async fn prune_milestone_data<S: StorageBackend>(
     Ok(metrics)
 }
 
-/// Adds a message with its associated metadata to the delete batch.
 fn prune_message_and_metadata<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
@@ -383,7 +375,6 @@ fn prune_message_and_metadata<S: StorageBackend>(
     Ok(())
 }
 
-/// Adds an edge to the delete batch.
 fn prune_edge<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
@@ -394,7 +385,6 @@ fn prune_edge<S: StorageBackend>(
     Ok(())
 }
 
-/// Adds indexation data to the delete batch.
 fn prune_indexation_data<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
@@ -406,7 +396,7 @@ fn prune_indexation_data<S: StorageBackend>(
     Ok(())
 }
 
-pub async fn prune_milestone<S: StorageBackend>(
+async fn prune_milestone<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     index: MilestoneIndex,
@@ -417,7 +407,7 @@ pub async fn prune_milestone<S: StorageBackend>(
     Ok(())
 }
 
-pub async fn prune_output_diff<S: StorageBackend>(
+async fn prune_output_diff<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     index: MilestoneIndex,
@@ -431,6 +421,10 @@ pub async fn prune_output_diff<S: StorageBackend>(
             Batch::<OutputId, CreatedOutput>::batch_delete(storage, batch, consumed_output)
                 .map_err(|e| Error::Storage(Box::new(e)))?;
         }
+
+        if let Some(_treasury_diff) = output_diff.treasury_diff() {
+            // TODO
+        }
     }
 
     Batch::<MilestoneIndex, OutputDiff>::batch_delete(storage, batch, &index)
@@ -439,14 +433,14 @@ pub async fn prune_output_diff<S: StorageBackend>(
     Ok(())
 }
 
-pub async fn prune_receipts<S: StorageBackend>(
+async fn prune_receipts<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     index: MilestoneIndex,
 ) -> Result<usize, Error> {
     let receipts = Fetch::<MilestoneIndex, Vec<Receipt>>::fetch(storage, &index)
         .map_err(|e| Error::Storage(Box::new(e)))?
-        // TODO: why no panic?
+        // Fine since Fetch of a Vec<_> always returns Some(Vec<_>).
         .unwrap();
 
     let mut num = 0;
@@ -482,7 +476,7 @@ fn unwrap_indexation(payload: Option<&Payload>) -> Option<&IndexationPayload> {
 
 // TODO: consider using this instead of 'truncate'
 #[allow(dead_code)]
-pub async fn prune_seps<S: StorageBackend>(
+async fn prune_seps<S: StorageBackend>(
     storage: &S,
     batch: &mut S::Batch,
     seps: &[SolidEntryPoint],
