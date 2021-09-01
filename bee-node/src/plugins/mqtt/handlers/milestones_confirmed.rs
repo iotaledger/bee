@@ -27,7 +27,7 @@ where
         |event: MilestoneConfirmed| {
             let response = serde_json::to_string(&MilestoneConfirmedResponse {
                 index: *event.index,
-                timestamp: event.milestone.timestamp(),
+                timestamp: event.timestamp,
             })
             .expect("error serializing to json");
 
